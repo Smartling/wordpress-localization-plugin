@@ -137,7 +137,7 @@ class Smartling_Connector_DB
 
 		dbDelta( self::$query );
 
-		print_r( $this->db->show_errors() );
+		#print_r( $this->db->show_errors() );
 	}
 
 }

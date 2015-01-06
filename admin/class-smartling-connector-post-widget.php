@@ -128,6 +128,11 @@ class Smartling_Connector_Post_Widget
 	}
 
 
+	public function save_to_db($post_id, array $data) {
+		
+	}
+
+
 	public function get_target_locales() {
 
 		$settings = new Smartling_Connector_Settings($plugin_name, $version);
