@@ -20,7 +20,7 @@
 
   "autoload" : {
     "psr-0" : {
-      "Smartling" : "inc"
+      "Smartling" : "inc/"
     }
   },
 
