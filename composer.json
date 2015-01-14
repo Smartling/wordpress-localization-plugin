@@ -1,0 +1,37 @@
+{
+  "name" : "Smartling Wordpress connector",
+
+  "type" : "wordpress-plugin",
+
+  "require" : {
+    "php" : ">=5.3.9",
+
+    "monolog/monolog" : "master-dev",
+    "symfony/dependency-injection" : "~2.4"
+  },
+
+  "require-dev" : {
+    "phpunit/phpunit" : "4.4.*"
+  },
+
+  "config" : {
+    "vendor-dir" : "inc/third-party"
+  },
+
+  "autoload" : {
+    "psr-0" : {
+      "Smartling" : "inc"
+    }
+  },
+
+  "scripts" : {
+    "post-install-cmd" : [
+    ],
+
+    "post-update-cmd" : [
+      "inc/third-party/bin/phpunit -c tests/"
+    ]
+
+  }
+
+}
