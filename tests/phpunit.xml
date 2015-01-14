@@ -2,18 +2,18 @@
 
 <phpunit backupGlobals="false"
          backupStaticAttributes="false"
+         bootstrap="./../inc/autoload.php"
          colors="true"
          convertErrorsToExceptions="true"
          convertNoticesToExceptions="true"
          convertWarningsToExceptions="true"
-         processIsolation="true"
+         processIsolation="false"
          stopOnFailure="false"
          syntaxCheck="false"
-         bootstrap="./bootstrap.php"
 >
     <testsuites>
         <testsuite name="Smartling connector Woordpress plugin suite">
-            <directory>.</directory>
+            <directory suffix=".php">./</directory>
         </testsuite>
     </testsuites>
 </phpunit>

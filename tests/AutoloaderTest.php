@@ -2,19 +2,9 @@
 
 class AutoloaderTest extends PHPUnit_Framework_TestCase
 {
-
-    public function testSmartlingLoaderException()
-    {
-        $this->setExpectedException('SmartlingLoaderException');
-
-        $str = 'Smartling';
-        $classname = $str . str_shuffle($str);
-        $obj = new $classname;
-    }
-
     public function testClassMapAutoloader()
     {
-        $classname = 'SmartlingLoaderException';
+        $classname = '\Smartling\TestClass';
 
         $obj = new $classname;
 
