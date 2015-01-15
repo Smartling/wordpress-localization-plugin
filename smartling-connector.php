@@ -31,6 +31,12 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 /**
+ * run autoloader
+ */
+
+
+
+/**
  * The code that runs during plugin activation.
  * This action is documented in includes/class-smartling-connector-activator.php
  */
