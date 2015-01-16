@@ -1,15 +1,14 @@
 <?php
 
-
 namespace Smartling\Exception;
 
 /**
- * Class AbstractException
+ * Class SmartlingException
  * @package Smartling\Exception
  *
  * Base class for any Smartling Exception
  */
-abstract class AbstractException extends \Exception
+abstract class SmartlingException extends \Exception
 {
 
 }
