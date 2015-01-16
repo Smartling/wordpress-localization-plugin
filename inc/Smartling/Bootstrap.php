@@ -3,8 +3,8 @@
 namespace Smartling;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Monolog\Logger;
-use Monolog\Handler\StreamHandler;
+use Symfony\Component\Config\FileLocator;
+use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
 class Bootstrap {
 
@@ -16,36 +16,28 @@ class Bootstrap {
     public static function getContainer()
     {
         if (is_null(self::$_container)) {
-            self::$_container = new ContainerBuilder();
+
+            $container = new ContainerBuilder();
+
+            self::setCoreParameters($container);
+
+            $configDir = SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . 'inc';
+
+            $fileLocator = new FileLocator($configDir);
+
+            $loader = new YamlFileLoader($container, $fileLocator);
+
+            $loader->load('services.yml');
+
+            self::$_container = $container;
         }
 
         return self::$_container;
     }
 
-    public static function __bootstrap()
+    private static function setCoreParameters(ContainerBuilder $container)
     {
-        self::initLogger();
-    }
-
-    protected static function initLogger()
-    {
-        $container = self::getContainer();
-        /**
-         * @var ContainerBuilder $container
-         */
-        $container->setParameter('logger.channel', SMARTLING_DEFAULT_LOG_CHANNEL);
-
-        $container
-            ->register('logger', 'Monolog\Logger')
-            ->addArgument('%logger.channel%')
-            ->addMethodCall('pushHandler',
-                array(
-                    new StreamHandler(SMARTLING_DEFAULT_LOGFILE, SMARTLING_DEFAULT_LOGLEVEL)
-                )
-            );
-
-        $container->get('logger')->addInfo('Logger initialized.');
-
-
+        // plugin dir (to use in config file)
+        $container->setParameter('plugin.dir', SMARTLING_PLUGIN_DIR);
     }
 }

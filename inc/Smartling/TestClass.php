@@ -10,7 +10,7 @@ namespace Smartling;
  * Just empty class to test PSR-0 autoloader
  */
 class TestClass {
-    public function __construct() {
-        Bootstrap::getContainer()->get('logger')->addInfo('Running unit test of autoloader.');
+    public function __construct($logger) {
+        $logger->info(vsprintf('Autoloader successfully found and loaded \'%s\' class', array(__CLASS__)));
     }
 }
