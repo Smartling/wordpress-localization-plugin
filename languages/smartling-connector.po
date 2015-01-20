@@ -1,0 +1,92 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: 2015-01-20 17:58+0200\n"
+"PO-Revision-Date: 2015-01-20 17:58+0200\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.7.3\n"
+"X-Poedit-Basepath: .\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-KeywordsList: __\n"
+"X-Poedit-SearchPath-0: ../inc/Smartling/WP/view\n"
+
+#: ../inc/Smartling/WP/view/Settings.php:24
+msgid "Account Info"
+msgstr "Account Info"
+
+#: ../inc/Smartling/WP/view/Settings.php:28
+msgid "API Url"
+msgstr "API Url"
+
+#: ../inc/Smartling/WP/view/Settings.php:32
+msgid "Set api url. Default"
+msgstr "Set api url. Default"
+
+#: ../inc/Smartling/WP/view/Settings.php:36
+msgid "Project ID"
+msgstr "Project ID"
+
+#: ../inc/Smartling/WP/view/Settings.php:42
+msgid "Key"
+msgstr "Key"
+
+#: ../inc/Smartling/WP/view/Settings.php:48
+msgid "Current Key"
+msgstr "Current Key"
+
+#: ../inc/Smartling/WP/view/Settings.php:53
+msgid "Retrieval Type"
+msgstr "Retrieval Type"
+
+#: ../inc/Smartling/WP/view/Settings.php:64
+msgid "pseudo"
+msgstr "pseudo"
+
+#: ../inc/Smartling/WP/view/Settings.php:65
+msgid "published"
+msgstr "published"
+
+#: ../inc/Smartling/WP/view/Settings.php:66
+msgid "pending"
+msgstr "pending"
+
+#: ../inc/Smartling/WP/view/Settings.php:73
+msgid "Param for download translate"
+msgstr "Param for download translate"
+
+#: ../inc/Smartling/WP/view/Settings.php:77
+msgid "Target Locales"
+msgstr "Target Locales"
+
+#: ../inc/Smartling/WP/view/Settings.php:106
+msgid "Default Locale"
+msgstr "Default Locale"
+
+#: ../inc/Smartling/WP/view/Settings.php:110
+msgid "Site default language is"
+msgstr "Site default language is"
+
+#: ../inc/Smartling/WP/view/Settings.php:112
+msgid "Change default locale"
+msgstr "Change default locale"
+
+#: ../inc/Smartling/WP/view/Settings.php:128
+msgid "Callback URL"
+msgstr "Callback URL"
+
+#: ../inc/Smartling/WP/view/Settings.php:138
+msgid "Use smartling callback"
+msgstr "Use smartling callback"
+
+#: ../inc/Smartling/WP/view/Settings.php:146
+msgid "Auto authorize"
+msgstr "Auto authorize"
+
+#: ../inc/Smartling/WP/view/Settings.php:156
+msgid "Auto authorize content"
+msgstr "Auto authorize content"

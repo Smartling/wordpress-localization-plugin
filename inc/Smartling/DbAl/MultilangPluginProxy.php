@@ -22,6 +22,12 @@ interface MultilangPluginProxy {
 
     /**
      * Retrieves locale from site option
+     * @return array
+     */
+    function getLocales();
+
+    /**
+     * Retrieves locale from site option
      * @param integer $blogId
      * @return string
      */

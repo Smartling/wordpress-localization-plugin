@@ -26,7 +26,7 @@ class i18n implements  WPHookInterface {
         load_plugin_textdomain(
             $this->pluginInfo->getDomain(),
             false,
-            $this->pluginInfo->getDir() . '/languages/'
+            $this->pluginInfo->getDir() . DIRECTORY_SEPARATOR . 'languages' . DIRECTORY_SEPARATOR
         );
     }
 }

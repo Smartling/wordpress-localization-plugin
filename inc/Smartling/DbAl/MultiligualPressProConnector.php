@@ -22,10 +22,30 @@ class MultiligualPressProConnector extends MultilangPluginAbstract
             } else {
                 foreach ($rawValue as $blogId => $item)
                 {
-                    self::$_blogLocalesCache[$blogId] = $item['lang'];
+                    self::$_blogLocalesCache[$blogId] = array(
+                        "text" => $item['text'],
+                        "lang" => $item['lang']
+                    );
                 }
             }
         }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getLocales() {
+        if (!function_exists('get_site_option')) {
+            $this->directFunFallback('Direct run detected. Required run as Wordpress plugin.');
+        }
+        $this->cacheLocales();
+
+        $locales = array();
+        foreach(self::$_blogLocalesCache as $blogId => $blogLocale) {
+            $locales[] = $blogLocale["text"];
+        }
+
+        return $locales;
     }
 
     /**
@@ -45,7 +65,7 @@ class MultiligualPressProConnector extends MultilangPluginAbstract
 
         $this->helper->restoreBlogId();
 
-        return $locale;
+        return $locale["lang"];
     }
 
     /**

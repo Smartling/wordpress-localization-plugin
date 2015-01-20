@@ -22,11 +22,76 @@ class Settings extends WPAbstract implements WPHookInterface {
         add_menu_page( 'Smartling Connector', 'Smartling Connector', 'Administrator', 'smartling-settings', array( $this, 'view')  );
     }
 
-    public function getLocales(){
-        return array();
+    public function getSiteLocales(){
+        return $this->getMultiLingualConnector()->getLocales();
     }
 
     public function save() {
+        $settings = $_REQUEST['smartling_settings'];
 
+        $options = $this->getPluginInfo()->getOptions();
+        $accountInfo = $options->getAccountInfo();
+        $targetLocales = $options->getLocales();
+
+        if(array_key_exists("apiUrl", $settings)) {
+            $accountInfo->setApiUrl($settings["apiUrl"]);
+        }
+
+        if(array_key_exists("projectId", $settings)) {
+            $accountInfo->setProjectId($settings["projectId"]);
+        }
+
+        if(array_key_exists("apiKey", $settings)) {
+            $accountInfo->setKey($settings["apiKey"]);
+        }
+
+        if(array_key_exists("retrievalType", $settings)) {
+            $accountInfo->setRetrievalType($settings["retrievalType"]);
+        }
+
+        if(array_key_exists("callbackUrl", $settings)) {
+            $accountInfo->setCallBackUrl($settings["callbackUrl"] == "on" ? true : false);
+
+        }
+
+        if(array_key_exists("autoAuthorize", $settings)) {
+            $accountInfo->setAutoAuthorize($settings["autoAuthorize"] == "on" ? true : false);
+        }
+
+        if(array_key_exists("defaultLocale", $settings)) {
+            $targetLocales->setDefaultLocale($settings["defaultLocale"]);
+        }
+
+        if(array_key_exists("targetLocales", $settings)) {
+            $locales = array();
+            foreach ($settings["targetLocales"] as $key => $locale) {
+
+                $locales[] = array(
+                    "locale" => $key,
+                    "target" => $locale["target"],
+                    "enabled" => array_key_exists("enabled", $locale)  && $locale["enabled"] == "on" ? true : false
+                );
+            }
+
+            $existLocales = array();
+            foreach ($targetLocales->getTargetLocales(true) as $targetLocale) {
+                $exist = false;
+                foreach ($locales as $locale) {
+                    if ($locale["locale"] == $targetLocale->getLocale()) {
+                        $exist = true;
+                        break;
+                    }
+                }
+                if (!$exist) {
+                    $existLocales[] = $targetLocale->toArray();
+                }
+            }
+            $locales = array_merge($locales, $existLocales);
+            $targetLocales->setTargetLocales($locales);
+        }
+
+        $options->save();
+
+        wp_redirect($_REQUEST["_wp_http_referer"]);
     }
 }

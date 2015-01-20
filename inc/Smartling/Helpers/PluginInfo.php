@@ -10,13 +10,19 @@ namespace Smartling\Helpers;
 
 
 class PluginInfo {
-    public function __construct($name, $version, $url, $dir, $domain) {
+    public function __construct($name, $version, $url, $dir, $domain, $options) {
         $this->name = $name;
         $this->version = $version;
         $this->url = $url;
         $this->dir = $dir;
         $this->domain = $domain;
+        $this->options = $options;
     }
+
+    /**
+     * @var Options
+     */
+    private $options;
 
     /**
      * @var string
@@ -76,5 +82,13 @@ class PluginInfo {
     public function getDir()
     {
         return $this->dir;
+    }
+
+    /**
+     * @return Options
+     */
+    public function getOptions()
+    {
+        return $this->options;
     }
 }

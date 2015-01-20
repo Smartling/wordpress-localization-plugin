@@ -14,9 +14,9 @@
 		},
 
 		fields: {
-			api_key_real: 'smartling_settings[field_project_key]',
-			project_id:   'smartling_settings[field_project_id]',
-			api_key:      'api_key',
+			api_key_real: 'smartling_settings[apiKey]',
+			project_id:   'smartling_settings[projectId]',
+			api_key:      'apiKey',
 			mandatory: [
 				'smartling_settings[field_api_url]',
 				'smartling_settings[field_project_type]',

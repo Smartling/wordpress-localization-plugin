@@ -28,6 +28,8 @@ services:
     class: Smartling\Helpers\SiteHelper
     arguments:
       - "@logger"
+  plugin.options:
+      class: Smartling\Helpers\Options
 
   plugin.info:
       class: Smartling\Helpers\PluginInfo
@@ -37,6 +39,7 @@ services:
         - %plugin.url%
         - %plugin.dir%
         - %plugin.domain%
+        - '@plugin.options'
 
   multilang.proxy:
     class: Smartling\DbAl\MultiligualPressProConnector

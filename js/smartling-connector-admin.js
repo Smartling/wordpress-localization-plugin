@@ -1,7 +1,7 @@
 (function( $ ) {
 	'use strict';
 
-	var localizationOptons = {
+	var localizationOptions = {
 
 		selectors: {
 			form:               '#smartling-form',
@@ -9,30 +9,30 @@
 			submit:             '#submit',
 			errors_container:   '.display-errors',
 			errors:             '.display-errors .error',
-			set_default_locale: '#chenge-default-locale',
+			set_default_locale: '#change-default-locale',
 			default_locales:    '#default-locales'
 		},
 
 		fields: {
-			api_key_real: 'smartling_settings[field_project_key]',
-			project_id:   'smartling_settings[field_project_id]',
-			api_key:      'api_key',
+			api_key_real: 'smartling_settings[apiKey]',
+			project_id:   'smartling_settings[projectId]',
+			api_key:      'apiKey',
 			mandatory: [
-				'smartling_settings[field_api_url]',
-				'smartling_settings[field_project_type]',
-				'smartling_settings[field_project_authorize]',
-				'smartling_settings[field_project_key]'
-			],
+				'smartling_settings[apiUrl]',
+				'smartling_settings[projectId]',
+				'smartling_settings[retrievalType]',
+				'smartling_settings[apiKey]'
+			]
 		},
 
 		patterns: {
-			project_id: /^([a-z0-9]{9})$/,
-			api_key:    /^([a-z0-9]{12})$/,
+			project_id: /^([a-z0-9])$/,
+			api_key:    /^([a-z0-9])$/
 		},
 
 		errorsMsg: {
-			api_key:   'Key length must be twelve chars.',
-			project_id: 'Project ID length must be  nine chars.',
+			api_key:   'Key length must be n chars.',
+			project_id: 'Project ID length must be n chars.',
 			default: function(name) {
 				if ( name !== undefined ) {
 					return name + ' field is mandatory.';
@@ -44,7 +44,6 @@
 		init: function()
 		{
 			$( this.selectors.form ).on( 'click', this.selectors.submit, $.proxy( this.onSubmit, this ) );
-			// $( this.selectors.post_widget ).on( 'click', this.selectors.submit, $.proxy( this.onTranslationSend, this ) );
 			$(this.selectors.form + ',' + this.selectors.post_widget).on( 'click', 'input:checkbox', $.proxy( this.setCheckboxValue, this ) );
 			$( this.selectors.set_default_locale ).on( 'click', $.proxy( this.onChangeDefaultLocale, this ) );
 
@@ -150,14 +149,13 @@
 				valid      = true,
 				self       = this;
 			
-				console.log(!real_key.length);
 			$.each(fields, function(index, val) {
 				
 				if ( val['name'] == self.fields.api_key_real ) {
 
 					if (  self.patterns.api_key.test(new_key) ) {
 
-						self.setFieldValue(self.fields.api_key_real,new_key);
+						self.setFieldValue(self.fields.api_key_real, new_key);
 
 					} else if ( !self.patterns.api_key.test(new_key) && new_key !== '' ) {
 
@@ -210,12 +208,12 @@
 
 			return valid;
 		}
-	}
+	};
 
 
 	 $(function() {
 		
-		localizationOptons.init();
+		localizationOptions.init();
 
 	 });
 	 
