@@ -58,7 +58,7 @@ class SubmissionEntity {
 
     /**
      * unique identifier of source content
-     * @var mixed
+     * @var string
      */
     private $sourceGUID             =   null;
 
@@ -82,7 +82,7 @@ class SubmissionEntity {
 
     /**
      * unique identifier of target content
-     * @var mixed
+     * @var string
      */
     private $targetGUID             =   null;
 
@@ -109,6 +109,28 @@ class SubmissionEntity {
      * @var integer
      */
     private $sourceWordsTranslated  =   null;
+
+    /**
+     * @var string
+     */
+    private $status = null;
+
+    /**
+     * @return string
+     */
+    public function getStatus()
+    {
+        return $this->status;
+    }
+
+    /**
+     * @param string $status
+     */
+    public function setStatus($status)
+    {
+        $this->status = $status;
+    }
+
 
     /**
      * @return int|null
@@ -202,7 +224,7 @@ class SubmissionEntity {
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getSourceGUID()
     {
@@ -210,7 +232,7 @@ class SubmissionEntity {
     }
 
     /**
-     * @param mixed $sourceGUID
+     * @param string $sourceGUID
      */
     public function setSourceGUID($sourceGUID)
     {
@@ -266,7 +288,7 @@ class SubmissionEntity {
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getTargetGUID()
     {
@@ -274,7 +296,7 @@ class SubmissionEntity {
     }
 
     /**
-     * @param mixed $targetGUID
+     * @param string $targetGUID
      */
     public function setTargetGUID($targetGUID)
     {
