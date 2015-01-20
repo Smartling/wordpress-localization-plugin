@@ -1,11 +1,12 @@
 parameters:
-  logger.channel: default
+  plugin.name: smartling-connector
+  plugin.version: 1.0
+  plugin.domain: smartling-connector
+  wp.hooks: ['wp.i18n', 'wp.settings']
 
+  logger.channel: default
   logger.filehandler.standard.filename: %plugin.dir%/logfile.log
   logger.filehandler.standard.loglevel: DEBUG
-
-
-
 
 services:
 
@@ -28,9 +29,29 @@ services:
     arguments:
       - "@logger"
 
+  plugin.info:
+      class: Smartling\Helpers\PluginInfo
+      arguments:
+        - %plugin.name%
+        - %plugin.version%
+        - %plugin.url%
+        - %plugin.dir%
+        - %plugin.domain%
+
   multilang.proxy:
     class: Smartling\DbAl\MultiligualPressProConnector
     arguments:
       - "@logger"
       - "@site.helper"
       - "@multilang_plugins"
+  wp.i18n:
+    class: Smartling\WP\i18n
+    arguments:
+      - "@plugin.info"
+
+  wp.settings:
+    class: Smartling\WP\Settings
+    arguments:
+      - "@logger"
+      - "@multilang.proxy"
+      - "@plugin.info"

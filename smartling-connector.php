@@ -12,8 +12,8 @@
  * @package           Plugin_Name
  *
  * @wordpress-plugin
- * Plugin Name:       WordPress Smartling Connector
- * Plugin URI:        http://webinerds.com/
+ * Plugin Name:       Smartling Connector
+ * Plugin URI:        http://smartling.com/
  * Description:       This is a short description of what the plugin does. It's displayed in the WordPress dashboard.
  * Version:           1.0.0
  * Author:            Webinerds
@@ -36,8 +36,7 @@ use Smartling\Bootstrap;
 
 $bootstrap = new Bootstrap();
 
-add_action('plugins_loaded', array($bootstrap,'detectMultilangPlugins'), 999);
-
+add_action('plugins_loaded', array($bootstrap,'load'), 999);
 
 /**
  * The code that runs during plugin activation.
@@ -85,4 +84,4 @@ function run_smartling_connector() {
 	#var_dump($title);
 }
 
-run_smartling_connector();
+//run_smartling_connector();

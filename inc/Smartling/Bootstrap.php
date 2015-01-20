@@ -2,6 +2,7 @@
 
 namespace Smartling;
 
+use Smartling\WP\WPHookInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
@@ -57,6 +58,23 @@ class Bootstrap {
     {
         // plugin dir (to use in config file)
         $container->setParameter('plugin.dir', SMARTLING_PLUGIN_DIR);
+        $container->setParameter('plugin.url', plugin_dir_url(SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . '..'));
+    }
+
+    public function registerHooks() {
+        $hooks = $this->getContainer()->getParameter('wp.hooks');
+        foreach($hooks as $hook) {
+            $object = $this->getContainer()->get($hook);
+            if($object instanceof WPHookInterface) {
+                $object->register();
+            }
+        }
+    }
+
+    public function load() {
+        $this->detectMultilangPlugins();
+        $this->registerHooks();
+        $this->run();
     }
 
     /**
@@ -94,15 +112,10 @@ class Bootstrap {
 
         $cur_blog_id = $di_container->get('site.helper')->getCurrentBlogId();
         $cur_locale = $di_container->get('multilang.proxy')->getBlogLocaleById($cur_blog_id);
-
-
-        die($cur_locale);
-
    }
 
-    public function runSmartligConnectorPlugin()
+    public function run()
     {
-        $plugin = new Smartling_Connector();
-        $plugin->run();
+
     }
 }
