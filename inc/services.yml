@@ -2,7 +2,7 @@ parameters:
   plugin.name: smartling-connector
   plugin.version: 1.0
   plugin.domain: smartling-connector
-  wp.hooks: ['wp.i18n', 'wp.settings', 'wp.post', 'wp.taxonomy']
+  wp.hooks: ['wp.i18n', 'wp.submissions', 'wp.settings', 'wp.post', 'wp.taxonomy']
 
   logger.channel: default
   logger.filehandler.standard.filename: %plugin.dir%/logfile.log
@@ -60,6 +60,13 @@ services:
 
   wp.settings:
     class: Smartling\WP\Settings
+    arguments:
+      - "@logger"
+      - "@multilang.proxy"
+      - "@plugin.info"
+
+  wp.submissions:
+    class: Smartling\WP\Submissions
     arguments:
       - "@logger"
       - "@multilang.proxy"

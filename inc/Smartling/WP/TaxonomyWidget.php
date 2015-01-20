@@ -11,9 +11,6 @@ namespace Smartling\WP;
 
 class TaxonomyWidget extends WPAbstract implements WPHookInterface  {
     public function register() {
-        add_action('add_meta_boxes', array($this, 'box'));
-        add_action('save_post', array($this, 'save'));
-
         add_action('admin_init',  array($this, 'init'));
     }
 

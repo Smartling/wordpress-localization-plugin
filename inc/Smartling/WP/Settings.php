@@ -15,11 +15,12 @@ class Settings extends WPAbstract implements WPHookInterface {
         wp_enqueue_style( $this->getPluginInfo()->getName(), $this->getPluginInfo()->getUrl() . '/css/smartling-connector-admin.css', array(), $this->getPluginInfo()->getVersion(), 'all' );
         wp_enqueue_script( $this->getPluginInfo()->getName(), $this->getPluginInfo()->getUrl() . '/js/smartling-connector-admin.js', array( 'jquery' ),  $this->getPluginInfo()->getVersion(), false );
         add_action('admin_menu', array($this, 'menu'));
+        add_action('network_admin_menu', array($this, 'menu'));
         add_action('admin_post_smartling_settings', array($this, 'save'));
     }
 
     public function menu() {
-        add_menu_page( 'Smartling Connector', 'Smartling Connector', 'Administrator', 'smartling-settings', array( $this, 'view')  );
+        add_submenu_page('smartling-submissions', 'Settings', 'Settings', 'Administrator', 'smartling-settings', array( $this, 'view' ) );
     }
 
     public function getSiteLocales(){
