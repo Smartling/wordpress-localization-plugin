@@ -1,5 +1,4 @@
 <?php
-
 /**
  * The plugin bootstrap file
  *
@@ -30,10 +29,14 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-/**
- * run autoloader
- */
+// run Smartling autoloader
+require_once plugin_dir_path( __FILE__ ) . 'inc/autoload.php';
 
+use Smartling\Bootstrap;
+
+$bootstrap = new Bootstrap();
+
+add_action('plugins_loaded', array($bootstrap,'detectMultilangPlugins'), 999);
 
 
 /**

@@ -3,12 +3,10 @@
 /**
  * Smartling settings
  */
-defined('SM_DS') || define('SM_DS', DIRECTORY_SEPARATOR);
-
 defined('SMARTLING_PLUGIN_DIR') ||
 	define(
 		'SMARTLING_PLUGIN_DIR',
-		realpath(pathinfo(__FILE__, PATHINFO_DIRNAME) . SM_DS . '..' . SM_DS)
+		realpath(pathinfo(__FILE__, PATHINFO_DIRNAME) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR)
 	);
 
 /**
@@ -16,7 +14,7 @@ defined('SMARTLING_PLUGIN_DIR') ||
  * Generates an \Exception if composer autoload file not found.
  */
 $composerAutoLoadScriptFile
-	= SMARTLING_PLUGIN_DIR . SM_DS . 'inc' . SM_DS . 'third-party' . SM_DS . 'autoload.php';
+	= SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . 'inc' . DIRECTORY_SEPARATOR . 'third-party' . DIRECTORY_SEPARATOR . 'autoload.php';
 
 if (file_exists($composerAutoLoadScriptFile) && is_readable($composerAutoLoadScriptFile)) {
 	/** @noinspection PhpIncludeInspection */
@@ -28,3 +26,6 @@ if (file_exists($composerAutoLoadScriptFile) && is_readable($composerAutoLoadScr
 			array($composerAutoLoadScriptFile)
 		), 1);
 }
+
+error_reporting(E_ALL ^ E_STRICT);
+ini_set('display_errors', 'on');

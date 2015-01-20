@@ -5,6 +5,8 @@ parameters:
   logger.filehandler.standard.loglevel: DEBUG
 
 
+
+
 services:
 
   fileLoggerHandlerStandard:
@@ -20,3 +22,15 @@ services:
       - "%logger.channel%"
     calls:
       - [pushHandler, ["@fileLoggerHandlerStandard"]]
+
+  site.helper:
+    class: Smartling\Helpers\SiteHelper
+    arguments:
+      - "@logger"
+
+  multilang.proxy:
+    class: Smartling\DbAl\MultiligualPressProConnector
+    arguments:
+      - "@logger"
+      - "@site.helper"
+      - "@multilang_plugins"
