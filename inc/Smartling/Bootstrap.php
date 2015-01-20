@@ -77,6 +77,18 @@ class Bootstrap {
         $this->run();
     }
 
+    public function activate() {
+        $this->getContainer()->get('site.db')->install();
+    }
+
+    public function deactivate() {
+    }
+
+    public function uninstall() {
+        $this->getContainer()->get('plugin.options')->uninstall();
+        $this->getContainer()->get('site.db')->uninstall();
+    }
+
     /**
      * @throws MultilingualPluginNotFoundException
      */
@@ -109,9 +121,6 @@ class Bootstrap {
         }
 
         $di_container->set('multilang_plugins', $mlPluginsStatuses);
-
-        $cur_blog_id = $di_container->get('site.helper')->getCurrentBlogId();
-        $cur_locale = $di_container->get('multilang.proxy')->getBlogLocaleById($cur_blog_id);
    }
 
     public function run()

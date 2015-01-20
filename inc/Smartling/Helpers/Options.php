@@ -44,6 +44,11 @@ class Options {
         $this->getLocales()->get(self::SMARTLING_LOCALES);
     }
 
+    public function uninstall() {
+        delete_site_option(self::SMARTLING_ACCOUNT_INFO);
+        delete_site_option(self::SMARTLING_LOCALES);
+    }
+
     /**
      * @return AccountInfo
      */

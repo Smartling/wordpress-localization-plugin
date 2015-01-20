@@ -24,6 +24,14 @@ class SmartlingToWordpressDatabaseAccessWrapper
     }
 
     /**
+     * @return \wpdb
+     */
+    public function getWpdb()
+    {
+        return $this->wpdb;
+    }
+
+    /**
      * Executes SQL query and returns the result
      * @param $query
      * @return mixed

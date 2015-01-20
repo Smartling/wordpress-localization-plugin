@@ -28,6 +28,12 @@ services:
     class: Smartling\Helpers\SiteHelper
     arguments:
       - "@logger"
+
+  site.db:
+    class: Smartling\DbAl\DB
+    arguments:
+      - "@logger"
+
   plugin.options:
       class: Smartling\Helpers\Options
 
