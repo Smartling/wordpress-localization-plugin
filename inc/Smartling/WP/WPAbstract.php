@@ -58,7 +58,7 @@ abstract class WPAbstract {
         return $this->multiLingualConnector;
     }
 
-    public function view() {
+    public function view($data = null) {
         $class = get_called_class();
         $class = str_replace("Smartling\\WP\\", "", $class);
         require_once plugin_dir_path( __FILE__ ) . 'view/' . $class . ".php";
