@@ -74,7 +74,7 @@ class SubmissionTable extends \WP_List_Table {
         }
     }
 
-    function column_title($item){
+    function column_name($item){
 
         //Build row actions
         $actions = array(
