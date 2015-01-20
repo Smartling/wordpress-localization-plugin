@@ -4,9 +4,6 @@ parameters:
   logger.filehandler.standard.filename: %plugin.dir%/logfile.log
   logger.filehandler.standard.loglevel: DEBUG
 
-
-
-
 services:
 
   fileLoggerHandlerStandard:

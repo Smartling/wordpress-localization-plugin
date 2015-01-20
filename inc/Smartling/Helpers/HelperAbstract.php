@@ -2,11 +2,13 @@
 
 namespace Smartling\Helpers;
 
+use Psr\Log\LoggerInterface;
+
 Abstract class HelperAbstract {
 
     private $_logger = null;
 
-    public function __construct($logger) {
+    public function __construct(LoggerInterface $logger) {
         $this->_logger = $logger;
     }
 

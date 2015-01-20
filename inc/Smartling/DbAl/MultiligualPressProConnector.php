@@ -1,35 +1,26 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: para
- * Date: 15.01.15
- * Time: 17:08
- */
 
 namespace Smartling\DbAl;
 
-use Smartling\Exception\SmartlingConfigException;
+use Psr\Log\LoggerInterface;
 use Smartling\Helpers\SiteHelper;
 
 class MultiligualPressProConnector extends MultilangPluginAbstract
 {
 
-    private $helper = null;
-
-    private $logger = null;
+    const MULTILINGUAL_PRESS_PRO_SITE_OPTION = 'inpsyde_multilingual';
 
     protected static $_blogLocalesCache = array();
-
 
     private function cacheLocales()
     {
         if (empty(self::$_blogLocalesCache)) {
-            $raw = get_site_option('inpsyde_multilingual', false, false);
+            $rawValue = get_site_option(self::MULTILINGUAL_PRESS_PRO_SITE_OPTION, false, false);
 
-            if (false === $raw) {
+            if (false === $rawValue) {
                 throw new \Exception('Multilingual press PRO is not installed/configured.');
             } else {
-                foreach ($raw as $blogId => $item)
+                foreach ($rawValue as $blogId => $item)
                 {
                     self::$_blogLocalesCache[$blogId] = $item['lang'];
                 }
@@ -37,10 +28,13 @@ class MultiligualPressProConnector extends MultilangPluginAbstract
         }
     }
 
-    function getBlogLocaleById($blogId)
+    /**
+     * @inheritdoc
+     */
+    public function getBlogLocaleById($blogId)
     {
         if (!function_exists('get_site_option')) {
-            $this->fallbackErrorMessage('Direct run detected. Required run as Wordpress plugin.');
+            $this->directFunFallback('Direct run detected. Required run as Wordpress plugin.');
         }
 
         $this->cacheLocales();
@@ -54,18 +48,23 @@ class MultiligualPressProConnector extends MultilangPluginAbstract
         return $locale;
     }
 
-    function getLnkedBlogsByBlodId($blogId)
+    /**
+     * @inheritdoc
+     */
+    public function getLnkedBlogsByBlodId($blogId)
     {
         // TODO: Implement getLnkedBlogsByBlodId() method.
     }
 
-    function __construct($logger, SiteHelper $helper, $ml_plugin_statuses)
+    /**
+     * @inheritdoc
+     */
+    public function __construct(LoggerInterface $logger, SiteHelper $helper, array $ml_plugin_statuses)
     {
+        parent::__construct($logger, $helper, $ml_plugin_statuses);
+
         if (false === $ml_plugin_statuses['multilingual-press-pro']) {
             throw new \Exception('Active plugin not found Exception');
         }
-
-        $this->logger = $logger;
-        $this->helper = $helper;
     }
 }
