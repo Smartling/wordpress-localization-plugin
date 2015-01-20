@@ -14,8 +14,6 @@ class PostWidget extends WPAbstract implements WPHookInterface  {
     const WIDGET_DATA_NAME = 'smartling_post_widget_data';
 
     public function register() {
-        wp_enqueue_style( $this->getPluginInfo()->getName(), $this->getPluginInfo()->getUrl() . '/css/smartling-connector-admin.css', array(), $this->getPluginInfo()->getVersion(), 'all' );
-        wp_enqueue_script( $this->getPluginInfo()->getName(), $this->getPluginInfo()->getUrl() . '/js/smartling-connector-admin.js', array( 'jquery' ),  $this->getPluginInfo()->getVersion(), false );
         add_action('add_meta_boxes', array($this, 'box'));
         add_action('save_post', array($this, 'save'));
     }

@@ -1,10 +1,8 @@
 
-
-<div class="">
     <div id="smartling-post-widget">
 
         <div class="fields">
-            <p>Translate this post into:</p>
+            <h3>Translate this post into:</h3>
             <?php
 
             $locales = $this->getPluginInfo()->getOptions()->getLocales()->getTargetLocales();
@@ -35,11 +33,6 @@
         <div class="bottom">
             <input type="submit" value="Send to Smartling" class="button button-primary" id="submit" name="submit">
             <input type="submit" value="Download" class="button button-primary" id="submit" name="submit">
-            <!-- 			<div class="submit">
-                            <a href="#" id="submit" class="button button-primary button-large">Send</a>
-                            <input name="save" type="submit" class="button button-primary button-large" id="publish" accesskey="p" value="Send 2">
-                        </div> -->
         </div>
     </div>
-</div>
 
