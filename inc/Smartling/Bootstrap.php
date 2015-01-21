@@ -58,7 +58,14 @@ class Bootstrap {
     {
         // plugin dir (to use in config file)
         $container->setParameter('plugin.dir', SMARTLING_PLUGIN_DIR);
-        $container->setParameter('plugin.url', plugin_dir_url(SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . '..'));
+
+        $pluginUrl = '';
+
+        if(defined(SMARTLING_CLI_EXECUTION) && false === SMARTLING_CLI_EXECUTION) {
+            $pluginUrl = plugin_dir_url(SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . '..');
+        }
+
+        $container->setParameter('plugin.url', $pluginUrl);
     }
 
     public function registerHooks() {
@@ -73,8 +80,12 @@ class Bootstrap {
 
     public function load() {
         $this->detectMultilangPlugins();
-        $this->registerHooks();
-        $this->run();
+
+        if (defined('SMARTLING_CLI_EXECUTION') && SMARTLING_CLI_EXECUTION === false) {
+            $this->registerHooks();
+            $this->run();
+        }
+
     }
 
     public function activate() {
