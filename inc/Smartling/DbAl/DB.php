@@ -19,7 +19,7 @@ class DB extends SmartlingToWordpressDatabaseAccessWrapper {
 
     public function install() {
         $query = $this->prepareSql();
-        dbDelta($query);
+        $this->getWpdb()->query($query);
     }
 
     public function uninstall() {
