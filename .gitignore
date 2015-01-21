@@ -1,5 +1,9 @@
+### COMPOSER ###
+composer.*
+!composer.json
+!composer.phar
+
+inc/third-party/*
+
+#do not keep logs
 *.log
-
-inc/third-party
-/composer.lock
-
