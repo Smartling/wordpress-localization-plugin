@@ -1,21 +1,32 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: sergey@slepokurov.com
- * Date: 20.01.2015
- * Time: 12:01
- */
-namespace Smartling\WP;
 
-use Smartling\WP\WPHookInterface;
+namespace Smartling\WP;
 
 class Settings extends WPAbstract implements WPHookInterface {
 
+    public function wp_enqueue()
+    {
+        wp_enqueue_style(
+            $this->getPluginInfo()->getName(),
+            $this->getPluginInfo()->getUrl() . '/css/smartling-connector-admin.css',
+            array(),
+            $this->getPluginInfo()->getVersion(),
+            'all'
+        );
+
+        wp_enqueue_script(
+            $this->getPluginInfo()->getName(),
+            $this->getPluginInfo()->getUrl() . '/js/smartling-connector-admin.js',
+            array('jquery'),
+            $this->getPluginInfo()->getVersion(),
+            false
+        );
+    }
+
     public function register() {
-        wp_enqueue_style( $this->getPluginInfo()->getName(), $this->getPluginInfo()->getUrl() . '/css/smartling-connector-admin.css', array(), $this->getPluginInfo()->getVersion(), 'all' );
-        wp_enqueue_script( $this->getPluginInfo()->getName(), $this->getPluginInfo()->getUrl() . '/js/smartling-connector-admin.js', array( 'jquery' ),  $this->getPluginInfo()->getVersion(), false );
-        add_action('admin_menu', array($this, 'menu'));
-        add_action('network_admin_menu', array($this, 'menu'));
+        add_action('wp_enqueue_scripts',            array($this, 'wp_enqueue'));
+        add_action('admin_menu',                    array($this, 'menu'));
+        add_action('network_admin_menu',            array($this, 'menu'));
         add_action('admin_post_smartling_settings', array($this, 'save'));
     }
 
