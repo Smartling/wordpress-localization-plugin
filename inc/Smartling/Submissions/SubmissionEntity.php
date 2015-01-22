@@ -20,6 +20,99 @@ class SubmissionEntity {
      */
     private $helper = null;
 
+    public static $fieldsDefinition = array(
+        'id'                    => 'INT UNSIGNED NOT NULL AUTO_INCREMENT',
+        'sourceTitle'           => 'VARCHAR(255) NOT NULL',
+        'sourceBlog'            => 'INT UNSIGNED NOT NULL',
+        'sourceContentHash'     => 'CHAR(32) NULL',
+        'contentType'           => 'VARCHAR(32) NOT NULL',
+        'sourceGUID'            => 'VARCHAR(255) NOT NULL',
+        'fileUri'               => 'VARCHAR(255) NOT NULL',
+        'targetLocale'          => 'VARCHAR(16) NOT NULL',
+        'targetBlog'            => 'INT UNSIGNED NOT NULL',
+        'targetGUID'            => 'VARCHAR(255) NOT NULL',
+        'submitter'             => 'VARCHAR(255) NOT NULL',
+        'submissionDate'        => 'INT UNSIGNED NOT NULL',
+        'sourceWordsCount'      => 'INT UNSIGNED NOT NULL',
+        'sourceWordsTranslated' => 'INT UNSIGNED NOT NULL',
+        'status'                => 'VARCHAR(16) NOT NULL',
+    );
+
+    public static $indexes = array(
+        array(
+            'type'      =>  'primary',
+            'columns'   =>  array('id')
+        ),
+        array(
+            'type'      =>  'index',
+            'columns'   =>  array('contentType')
+        ),
+    );
+
+    /**
+     * Magic wrapper for fields
+     * may be used as virtual setter, e.g.:
+     *      $object->contentType = $value
+     * instead of
+     *      $object->setContentType($value)
+     *
+     * @param string $key
+     * @param mixed $value
+     */
+    public function __set($key, $value)
+    {
+        if (in_array($key, array_keys(self::$fieldsDefinition))) {
+
+            $setter = 'set' . ucfirst($key);
+
+            $this->$setter($value);
+        }
+    }
+
+    /**
+     * Magic wrapper for fields
+     * may be used as virtual setter, e.g.:
+     *      $value = $object->contentType
+     * instead of
+     *      $value = $object->getContentType()
+     *
+     * @param string $key
+     */
+    public function __get($key)
+    {
+        if (in_array($key, array_keys(self::$fieldsDefinition))) {
+
+            $getter = 'get' . ucfirst($key);
+
+            return $this->$getter();
+        }
+    }
+
+    /**
+     * Converts associative array to SubmissionEntity
+     * array keys must match field names;
+     * @param array $array
+     * @param LoggerInterface $logger
+     * @param ContentTypeHelper $ct_helper
+     * @return SubmissionEntity
+     */
+    public static function fromArray(array $array, LoggerInterface $logger, ContentTypeHelper $ct_helper)
+    {
+        $obj = new self($logger, $ct_helper);
+
+        foreach($array as $field => $value){
+            $obj->$field = $value;
+        }
+
+        return $obj;
+
+    }
+
+    /**
+     * Constructor
+     * @param LoggerInterface $logger
+     * @param ContentTypeHelper $ct_helper
+     */
     public function __construct(LoggerInterface $logger, ContentTypeHelper $ct_helper)
     {
         $this->logger = $logger;
@@ -220,7 +313,6 @@ class SubmissionEntity {
 
             throw new \InvalidArgumentException($message);
         }
-
     }
 
     /**
@@ -381,9 +473,4 @@ class SubmissionEntity {
 
         return (int) $percentage * 100;
     }
-
-
-
-
-
 }

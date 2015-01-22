@@ -2,44 +2,34 @@
 
 namespace Smartling\DbAl;
 
+use Psr\Log\LoggerInterface;
+use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
+
 class DB extends SmartlingToWordpressDatabaseAccessWrapper {
+
+    public function __construct(LoggerInterface $logger)
+    {
+        parent::__construct($logger);
+
+        $this->buildTableDefinitions();
+    }
 
     /**
      * Plugin tables definition based on array
      * @var array
      */
-    private $tables = array(
-        array(
-            'name' => '_smartling_submissions',
-            'columns' => array(
-                'id'                    => 'INT UNSIGNED NOT NULL AUTO_INCREMENT',
-                'sourceTitle'           => 'VARCHAR(255) NOT NULL',
-                'sourceBlog'            => 'INT UNSIGNED NOT NULL',
-                'sourceContentHash'     => 'CHAR(32) NULL',
-                'contentType'           => 'VARCHAR(32) NOT NULL',
-                'sourceGUID'            => 'VARCHAR(255) NOT NULL',
-                'fileUri'               => 'VARCHAR(255) NOT NULL',
-                'targetLocale'          => 'VARCHAR(16) NOT NULL',
-                'targetBlog'            => 'INT UNSIGNED NOT NULL',
-                'targetGUID'            => 'VARCHAR(255) NOT NULL',
-                'submitter'             => 'VARCHAR(255) NOT NULL',
-                'submissionDate'        => 'INT UNSIGNED NOT NULL',
-                'sourceWordsCount'      => 'INT UNSIGNED NOT NULL',
-                'sourceWordsTranslated' => 'INT UNSIGNED NOT NULL',
-                'status'                => 'VARCHAR(16) NOT NULL',
-            ),
-            'indexes' => array(
-                array(
-                    'type'      =>  'primary',
-                    'columns'   =>  array('id')
-                ),
-                array(
-                    'type'      =>  'index',
-                    'columns'   =>  array('contentType')
-                ),
-            )
-        ),
-    );
+    private $tables = array();
+
+    private function buildTableDefinitions()
+    {
+        // Submissions
+        $this->tables[] = array(
+            'name'      => SubmissionManager::SUBMISSIONS_TABLE_NAME,
+            'columns'   => SubmissionEntity::$fieldsDefinition,
+            'indexes'   => SubmissionEntity::$indexes,
+        );
+    }
 
     /**
      * Is executed on plugin activation
@@ -183,5 +173,24 @@ class DB extends SmartlingToWordpressDatabaseAccessWrapper {
         $sql = 'CREATE TABLE IF NOT EXISTS ' . $table . ' ( ' . $schema . ' ' . $add . ' ) ' . $charset_collate . ';';
 
         return $sql;
+    }
+
+    /**
+     * Escape string value
+     * @param string $string
+     * @return mixed
+     */
+    function escape($string)
+    {
+        return $this->getWpdb()->_escape($string);
+    }
+
+    /**
+     * @param string $tableName
+     * @return mixed
+     */
+    function completeTableName($tableName)
+    {
+        return $this->getWpdb()->base_prefix . $tableName;
     }
 }

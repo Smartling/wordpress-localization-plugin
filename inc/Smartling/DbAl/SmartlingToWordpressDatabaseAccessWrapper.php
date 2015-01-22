@@ -5,7 +5,7 @@ namespace Smartling\DbAl;
 
 use Psr\Log\LoggerInterface;
 
-class SmartlingToWordpressDatabaseAccessWrapper
+abstract class SmartlingToWordpressDatabaseAccessWrapper
     extends SmartlingToCMSDatabaseAccessWrapperAbstract
     implements SmartlingToCMSDatabaseAccessWrapper
 {
@@ -36,8 +36,13 @@ class SmartlingToWordpressDatabaseAccessWrapper
      * @param $query
      * @return mixed
      */
-    function query($query)
+    public function query($query)
     {
         return $this->wpdb->query($query);
+    }
+
+    public function fetch($query)
+    {
+        return $this->getWpdb()->get_results($query);
     }
 }

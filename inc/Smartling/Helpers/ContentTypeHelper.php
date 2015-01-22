@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: user
- * Date: 20.01.2015
- * Time: 14:34
- */
 
 namespace Smartling\Helpers;
 

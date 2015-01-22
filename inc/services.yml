@@ -24,6 +24,18 @@ services:
     calls:
       - [pushHandler, ["@fileLoggerHandlerStandard"]]
 
+  manager.submission:
+    class: Smartling\Submissions\SubmissionManager
+    arguments:
+     - "@logger"
+     - "@site.db"
+     - "@helper.content_type"
+
+  helper.content_type:
+    class: Smartling\Helpers\ContentTypeHelper
+    arguments:
+      - "@logger"
+
   site.helper:
     class: Smartling\Helpers\SiteHelper
     arguments:
