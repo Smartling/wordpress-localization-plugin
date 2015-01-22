@@ -31,7 +31,6 @@
     ],
 
     "post-update-cmd" : [
-      "inc/third-party/bin/phpunit -c tests/"
     ]
 
   }

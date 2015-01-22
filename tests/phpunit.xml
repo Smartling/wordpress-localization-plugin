@@ -7,13 +7,24 @@
          convertErrorsToExceptions="true"
          convertNoticesToExceptions="true"
          convertWarningsToExceptions="true"
-         processIsolation="false"
+         processIsolation="true"
          stopOnFailure="false"
-         syntaxCheck="false"
+         syntaxCheck="true"
+         verbose="true"
 >
     <testsuites>
         <testsuite name="Smartling connector Woordpress plugin suite">
-            <directory suffix=".php">./</directory>
+            <directory suffix="Test.php" phpVersion="5.3.0" phpVersionOperator=">=">./</directory>
         </testsuite>
     </testsuites>
+
+    <logging>
+
+        <log type="json" target="./../phpunit.log.json"/>
+
+        <log type="junit" target="./../phpunit.log.xml"/>
+
+        <log type="testdox-text" target="php://stdout"/>
+
+    </logging>
 </phpunit>
