@@ -13,7 +13,7 @@ msgstr ""
 "X-Poedit-Basepath: .\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-KeywordsList: __\n"
-"X-Poedit-SearchPath-0: ../inc/Smartling/WP/view\n"
+"X-Poedit-SearchPath-0: ../inc/Smartling/WP/View\n"
 
 #: ../inc/Smartling/WP/view/Settings.php:24
 msgid "Account Info"

@@ -190,10 +190,12 @@ abstract class EntityManagerAbstract {
 
             $offset = (((int) $pageOptions['page']) - 1) * $limit;
 
-            $part .= vsprintf(' LIMIT %d,%d', array($limit, $offset));
+            $part .= vsprintf(' LIMIT %d,%d', array($offset, $limit));
         }
 
         return $part;
     }
+
+
 
 }

@@ -8,6 +8,8 @@ parameters:
   logger.filehandler.standard.filename: %plugin.dir%/logfile.log
   logger.filehandler.standard.loglevel: DEBUG
 
+  submission.pagesize: 5
+
 services:
 
   fileLoggerHandlerStandard:
@@ -30,6 +32,7 @@ services:
      - "@logger"
      - "@site.db"
      - "@helper.content_type"
+     - "%submission.pagesize%"
 
   helper.content_type:
     class: Smartling\Helpers\ContentTypeHelper
@@ -78,11 +81,12 @@ services:
       - "@plugin.info"
 
   wp.submissions:
-    class: Smartling\WP\Submissions
+    class: Smartling\WP\Controller\SubmissionsPageController
     arguments:
       - "@logger"
       - "@multilang.proxy"
       - "@plugin.info"
+      - "@manager.submission"
 
   wp.post:
     class: Smartling\WP\PostWidget

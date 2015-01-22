@@ -1,41 +1,46 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: sergey@slepokurov.com
- * Date: 20.01.2015
- * Time: 14:46
- */
 
 namespace Smartling\WP;
 
-use Monolog\Logger;
-use Smartling\DbAl\MultiligualPressProConnector;
+use Psr\Log\LoggerInterface;
+use Smartling\DbAl\MultilangPluginProxy;
 use Smartling\Helpers\PluginInfo;
 
 abstract class WPAbstract {
+
     /**
-     * @var Logger
+     * @var LoggerInterface
      */
     private $logger;
+
     /**
      * @var PluginInfo
      */
     private $pluginInfo;
 
     /**
-     * @var MultiligualPressProConnector
+     * @var MultilangPluginProxy
      */
     private $multiLingualConnector;
 
-
-    public function __construct(Logger $logger, MultiligualPressProConnector $multiLingualConnector, PluginInfo $pluginInfo) {
+    /**
+     * Constructor
+     * @param LoggerInterface $logger
+     * @param MultilangPluginProxy $multiLingualConnector
+     * @param PluginInfo $pluginInfo
+     */
+    public function __construct(
+        LoggerInterface $logger,
+        MultilangPluginProxy $multiLingualConnector,
+        PluginInfo $pluginInfo
+    ) {
         $this->logger = $logger;
         $this->multiLingualConnector = $multiLingualConnector;
         $this->pluginInfo = $pluginInfo;
     }
 
     /**
-     * @return Logger
+     * @return LoggerInterface
      */
     public function getLogger()
     {
@@ -51,16 +56,22 @@ abstract class WPAbstract {
     }
 
     /**
-     * @return MultiligualPressProConnector
+     * @return MultilangPluginProxy
      */
-    public function getMultiLingualConnector()
+    public function getConnector()
     {
         return $this->multiLingualConnector;
     }
 
+    /**
+     * @param null $data
+     */
     public function view($data = null) {
         $class = get_called_class();
-        $class = str_replace("Smartling\\WP\\", "", $class);
-        require_once plugin_dir_path( __FILE__ ) . 'view/' . $class . ".php";
+        $class = str_replace("Smartling\\WP\\Controller", "", $class);
+
+        $class = str_replace("Controller", "", $class);
+
+        require_once plugin_dir_path( __FILE__ ) . 'View/' . $class . ".php";
     }
 }

@@ -38,6 +38,41 @@ class SubmissionEntity {
         'status'                => 'VARCHAR(16) NOT NULL',
     );
 
+    public static $fieldsLabels = array(
+        'id'                    => 'ID',
+        'sourceTitle'           => 'Title',
+        'sourceBlog'            => 'Source Blog ID',
+        'sourceContentHash'     => 'Content hash',
+        'contentType'           => 'Type',
+        'sourceGUID'            => 'Source URI',
+        'fileUri'               => 'Smartling File URI',
+        'targetLocale'          => 'Locale',
+        'targetBlog'            => 'Target Blog ID',
+        'targetGUID'            => 'Target URI',
+        'submitter'             => 'Submitter',
+        'submissionDate'        => 'Submitted',
+        'sourceWordsCount'      => 'Words',
+        'sourceWordsTranslated' => 'Words translated',
+        'status'                => 'Status',
+    );
+
+    public static $fieldsSortable = array(
+        'id',
+        'sourceTitle',
+        'sourceBlog',
+        'contentType',
+        'sourceGUID',
+        'fileUri',
+        'targetLocale',
+        'targetBlog',
+        'targetGUID',
+        'submitter',
+        'submissionDate',
+        'sourceWordsCount',
+        'sourceWordsTranslated',
+        'status',
+    );
+
     public static $indexes = array(
         array(
             'type'      =>  'primary',
@@ -105,7 +140,18 @@ class SubmissionEntity {
         }
 
         return $obj;
+    }
 
+    public function toArray()
+    {
+        $arr = array();
+
+
+        foreach(array_keys(self::$fieldsDefinition) as $field) {
+            $arr[$field] = $this->$field;
+        }
+
+        return $arr;
     }
 
     /**

@@ -18,6 +18,19 @@ class SubmissionManager extends EntityManagerAbstract {
     private $helper = null;
 
     /**
+     * @var int
+     */
+    private $pageSize;
+
+    /**
+     * @return int
+     */
+    public function getPageSize()
+    {
+        return $this->pageSize;
+    }
+
+    /**
      * @param LoggerInterface $logger
      * @param SmartlingToCMSDatabaseAccessWrapper $dbal
      * @param ContentTypeHelper $helper
@@ -25,10 +38,12 @@ class SubmissionManager extends EntityManagerAbstract {
     public function __construct(
         LoggerInterface $logger,
         SmartlingToCMSDatabaseAccessWrapper $dbal,
-        ContentTypeHelper $helper)
+        ContentTypeHelper $helper,
+        $pageSize)
     {
         parent::__construct($logger, $dbal);
         $this->helper = $helper;
+        $this->pageSize = (int) $pageSize;
     }
 
     private function validateContentType($contentType)
@@ -85,6 +100,7 @@ class SubmissionManager extends EntityManagerAbstract {
      * @param $sortOptions
      * @param $pageOptions
      *
+     * @param $totalCount
      * @return array of SubmissionEntity or empty array
      *
      * $sortOptions is an array that keys are SubmissionEntity fields and values are 'ASC' or 'DESC'
@@ -97,14 +113,20 @@ class SubmissionManager extends EntityManagerAbstract {
      *
      * e.g.: array('limit' => 20, 'page' => 1)
      */
-    public function getEntities($contentType = null, $status = null, $sortOptions = null, $pageOptions = null)
+    public function getEntities($contentType = null, $status = null, $sortOptions = null, $pageOptions = null, & $totalCount)
     {
+        $totalCount = 0;
+
         $validRequest = $this->validateRequest($contentType, $sortOptions, $pageOptions);
+
+
 
         $result = array();
 
         if ($validRequest) {
             $query = $this->buildQuery($contentType, $status, $sortOptions, $pageOptions);
+
+            $totalCount = $this->dbal->query($query);
 
             $result = $this->fetchData($query);
         }
@@ -169,7 +191,15 @@ class SubmissionManager extends EntityManagerAbstract {
         return $query;
     }
 
+    public function getColumnsLabels()
+    {
+        return SubmissionEntity::$fieldsLabels;
+    }
 
+    public function getSortableFields()
+    {
+        return SubmissionEntity::$fieldsSortable;
+    }
 
     public function storeEntity(SubmissionEntity $entity){}
 }
