@@ -20,7 +20,7 @@ class Bootstrap {
      * Initializes DI Container from YAML config file
      * @throws SmartlingConfigException
      */
-    protected function _initContainer()
+    protected static function _initContainer()
     {
         $container = new ContainerBuilder();
 
@@ -39,6 +39,25 @@ class Bootstrap {
         }
 
         self::$_container = $container;
+    }
+
+    /**
+     * Extracts mixed from container
+     * @param string $id
+     * @param bool $is_param
+     * @return mixed
+     */
+    protected function fromContainer($id, $is_param = false)
+    {
+        $container = self::getContainer();
+        $content = null;
+
+        if ($is_param) {
+            $content = $container->getParameter($id);
+        } else {
+            $content = $container->get($id);
+        }
+        return $content;
     }
 
     /**
@@ -69,9 +88,9 @@ class Bootstrap {
     }
 
     public function registerHooks() {
-        $hooks = $this->getContainer()->getParameter('wp.hooks');
+        $hooks = $this->fromContainer('wp.hooks', true);
         foreach($hooks as $hook) {
-            $object = $this->getContainer()->get($hook);
+            $object = $this->fromContainer($hook);
             if($object instanceof WPHookInterface) {
                 $object->register();
             }
@@ -89,15 +108,16 @@ class Bootstrap {
     }
 
     public function activate() {
-        $this->getContainer()->get('site.db')->install();
+        $this->fromContainer('site.db')->install();
     }
 
     public function deactivate() {
+
     }
 
     public function uninstall() {
-        $this->getContainer()->get('plugin.options')->uninstall();
-        $this->getContainer()->get('site.db')->uninstall();
+        $this->fromContainer('plugin.options')->uninstall();
+        $this->fromContainer('site.db')->uninstall();
     }
 
     /**
@@ -105,9 +125,7 @@ class Bootstrap {
      */
     public function detectMultilangPlugins()
     {
-        $di_container = self::getContainer();
-
-        $logger = $di_container->get('logger');
+        $logger = $this->fromContainer('logger');
 
         $mlPluginsStatuses =
             array(
@@ -131,7 +149,7 @@ class Bootstrap {
             throw new MultilingualPluginNotFoundException('No active multilingual plugins found.');
         }
 
-        $di_container->set('multilang_plugins', $mlPluginsStatuses);
+        self::getContainer()->set('multilang_plugins', $mlPluginsStatuses);
    }
 
     public function run()
