@@ -6,4 +6,7 @@ composer.*
 inc/third-party/*
 
 #do not keep logs
+#smartling logs
 *.log
+#unit tests logs
+phpunit.log.*
