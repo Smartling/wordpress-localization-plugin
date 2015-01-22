@@ -1,63 +1,137 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: sergey@slepokurov.com
- * Date: 20.01.2015
- * Time: 21:46
- */
 
 namespace Smartling\DbAl;
 
-
-use Psr\Log\LoggerInterface;
-
 class DB extends SmartlingToWordpressDatabaseAccessWrapper {
-    public function __construct(LoggerInterface $logger)
-    {
-        parent::__construct($logger);
-    }
 
+    /**
+     * Plugin tables definition based on array
+     * @var array
+     */
+    private $tables = array(
+        array(
+            'name' => '_smartling_submissions',
+            'columns' => array(
+                'id'                    => 'INT UNSIGNED NOT NULL AUTO_INCREMENT',
+                'sourceTitle'           => 'VARCHAR(255) NOT NULL',
+                'sourceBlog'            => 'INT UNSIGNED NOT NULL',
+                'sourceContentHash'     => 'CHAR(32) NULL',
+                'contentType'           => 'VARCHAR(32) NOT NULL',
+                'sourceGUID'            => 'VARCHAR(255) NOT NULL',
+                'fileUri'               => 'VARCHAR(255) NOT NULL',
+                'targetLocale'          => 'VARCHAR(16) NOT NULL',
+                'targetBlog'            => 'INT UNSIGNED NOT NULL',
+                'targetGUID'            => 'VARCHAR(255) NOT NULL',
+                'submitter'             => 'VARCHAR(255) NOT NULL',
+                'submissionDate'        => 'INT UNSIGNED NOT NULL',
+                'sourceWordsCount'      => 'INT UNSIGNED NOT NULL',
+                'sourceWordsTranslated' => 'INT UNSIGNED NOT NULL',
+                'status'                => 'VARCHAR(16) NOT NULL',
+            ),
+            'indexes' => array(
+                array(
+                    'type'      =>  'primary',
+                    'columns'   =>  array('id')
+                ),
+                array(
+                    'type'      =>  'index',
+                    'columns'   =>  array('contentType')
+                ),
+            )
+        ),
+    );
+
+    /**
+     * Is executed on plugin activation
+     */
     public function install() {
-        $query = $this->prepareSql();
-        $this->getWpdb()->query($query);
+        foreach ($this->tables as $tableDefinition) {
+            $query = $this->prepareSql($tableDefinition);
+            $this->logger->info('installing tables', array($query));
+            $this->getWpdb()->query($query);
+        }
     }
 
-    public function uninstall() {
-        $this->getWpdb()->query("DROP TABLE IF EXISTS " . $this->getTableName());
-    }
-    private function getTableName() {
+    /**
+     * Is executed on plugin deactivation
+     */
+    public function uninstall()
+    {
+        foreach ($this->tables as $tableDefinition) {
+            $table = $this->getTableName($tableDefinition);
 
-        return $this->getWpdb()->base_prefix . 'smartling_translation';
-    }
-
-    private function getSchema() {
-        return array(
-            'id'             => 'INT NOT NULL AUTO_INCREMENT',
-            'post_id'        => 'INT NOT NULL',
-            'name'           => 'varchar(255) NOT NULL',
-            'type'           => 'varchar(255)',
-            'locale'         => 'varchar(30) NOT NULL',
-            'status'         => 'varchar(20)',
-            'progress'       => 'TINYINT NOT NULL DEFAULT 0',
-            'submittedAt' => 'TIMESTAMP',
-            'submitter'      => 'varchar(30) NOT NULL',
-            'appliedAt'   => 'DATETIME',
-            'applier'        => 'varchar(30)'
-        );
+            $this->logger->info('uninstalling tables', array($table));
+            $this->getWpdb()->query("DROP TABLE IF EXISTS " . $table);
+        }
     }
 
-    private function getPrimaryKey() {
-
-        return 'id';
+    /**
+     * Extracts table name from tableDefinition
+     * @param array $tableDefinition
+     * @return string
+     */
+    private function getTableName(array $tableDefinition)
+    {
+        return $this->getWpdb()->base_prefix . $tableDefinition['name'];
     }
 
-
-    private function getIndex() {
-
-        return 'INDEX ( `post_id` )';
+    /**
+     * Extracts columns definition from tableDefinition
+     * @param array $tableDefinition
+     * @return array
+     */
+    private function getSchema(array $tableDefinition)
+    {
+        return $tableDefinition['columns'];
     }
 
-    public function getCharsetCollate() {
+    /**
+     * Extracts primary key from tableDefinition
+     * @param array $tableDefinition
+     * @return array
+     */
+    private function getPrimaryKey(array $tableDefinition)
+    {
+        foreach ($tableDefinition['indexes'] as $indexDefinition) {
+            if ($indexDefinition['type'] == 'primary') {
+                return $indexDefinition['columns'];
+            } else {
+                continue;
+            }
+        }
+        return array();
+    }
+
+    /**
+     * Extracts indexes definitions from tableDefinition
+     * @param array $tableDefinition
+     * @return string
+     */
+    private function getIndex(array $tableDefinition)
+    {
+        $_indexes = array();
+
+        foreach ($tableDefinition['indexes'] as $indexDefinition) {
+            if ($indexDefinition['type'] == 'primary') {
+                continue;
+            } else {
+                $_indexes[] = vsprintf(
+                    "%s (%s)",
+                    array(
+                        strtoupper($indexDefinition['type']),
+                        '`' . implode('`, `', $indexDefinition['columns']) . '`'
+                    )
+                );
+            }
+        }
+        return implode(', ', $_indexes);
+    }
+
+    /**
+     * Gets Character set and collation for table
+     * @return string
+     */
+    private function getCharsetCollate() {
         if ( !empty( $this->getWpdb()->charset )
             && FALSE !== stripos( $this->getWpdb()->charset, 'utf')) {
             $collate = "DEFAULT CHARACTER SET " . $this->getWpdb()->charset;
@@ -71,26 +145,35 @@ class DB extends SmartlingToWordpressDatabaseAccessWrapper {
         return $collate;
     }
 
-    public function arrayToSqlColumn( Array $array ) {
+    /**
+     * @param array $columns
+     * @return string
+     */
+    private function arrayToSqlColumn(array $columns) {
         $out = '';
-        foreach ( $array as $key => $properties ) {
-            $out .= "{$key} {$properties},\n";
+        foreach ($columns as $name => $type ) {
+            $out .= "`{$name}` {$type}, ";
         }
         return $out;
     }
 
-    public function prepareSql() {
+    /**
+     * Builds SQL query to create a table from definition array
+     * @param $tableDefinition
+     * @return string
+     */
+    private function prepareSql(array $tableDefinition) {
 
-        $table           = $this->getTableName();
-        $pk              = $this->getPrimaryKey();
-        $columns         = $this->getSchema();
+        $table           = $this->getTableName($tableDefinition);
+        $pk              = $this->getPrimaryKey($tableDefinition);
+        $columns         = $this->getSchema($tableDefinition);
         $schema          = $this->arrayToSqlColumn($columns);
-        $index           = $this->getIndex();
+        $index           = $this->getIndex($tableDefinition);
         $charset_collate = $this->getCharsetCollate();
         $add             = '';
 
         if ( !empty ( $pk ) ) {
-            $add .= "PRIMARY KEY  ($pk)"; // two spaces!
+            $add .= vsprintf("PRIMARY KEY  (%s)", array(implode(', ', $pk)));
         }
 
         if ( !empty ( $index ) ) {
