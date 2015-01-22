@@ -31,7 +31,17 @@ class Settings extends WPAbstract implements WPHookInterface {
     }
 
     public function menu() {
-        add_submenu_page('smartling-submissions', 'Settings', 'Settings', 'Administrator', 'smartling-settings', array( $this, 'view' ) );
+        add_submenu_page(
+            'smartling-submissions',
+            'Settings',
+            'Settings',
+            'Administrator',
+            'smartling-settings',
+            array(
+                $this,
+                'view'
+            )
+        );
     }
 
     public function getSiteLocales(){
