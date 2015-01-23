@@ -12,10 +12,48 @@ class SubmissionManager extends EntityManagerAbstract {
 
     const SUBMISSIONS_TABLE_NAME = '_smartling_submissions';
 
+    const SUBMISSION_STATUS_NOT_TRANSLATED  = 'Not Translated';
+    const SUBMISSION_STATUS_NEW             = 'New';
+    const SUBMISSION_STATUS_IN_PROGRESS     = 'In Progress';
+    const SUBMISSION_STATUS_TRANSLATED      = 'Translated';
+    const SUBMISSION_STATUS_FAILED          = 'Failed';
+
+    private $submissionStatuses = array(
+        self::SUBMISSION_STATUS_NOT_TRANSLATED,
+        self::SUBMISSION_STATUS_NEW,
+        self::SUBMISSION_STATUS_IN_PROGRESS,
+        self::SUBMISSION_STATUS_TRANSLATED,
+        self::SUBMISSION_STATUS_FAILED,
+    );
+
+    /**
+     * @return array
+     */
+    public function getSubmissionStatuses()
+    {
+        return $this->submissionStatuses;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDefaultSubmissionStatus()
+    {
+        return self::SUBMISSION_STATUS_IN_PROGRESS;
+    }
+
     /**
      * @var ContentTypeHelper
      */
     private $helper = null;
+
+    /**
+     * @return ContentTypeHelper
+     */
+    public function getHelper()
+    {
+        return $this->helper;
+    }
 
     /**
      * @var int
@@ -119,19 +157,23 @@ class SubmissionManager extends EntityManagerAbstract {
 
         $validRequest = $this->validateRequest($contentType, $sortOptions, $pageOptions);
 
-
-
         $result = array();
 
         if ($validRequest) {
             $query = $this->buildQuery($contentType, $status, $sortOptions, $pageOptions);
 
-            $totalCount = $this->dbal->query($query);
+            $totalCount = $this->dbal->query($this->buildCountQuery($contentType, $status, $sortOptions));
 
             $result = $this->fetchData($query);
+
         }
 
         return $result;
+    }
+
+    public function search($searchText)
+    {
+
     }
 
     /**
@@ -157,6 +199,30 @@ class SubmissionManager extends EntityManagerAbstract {
         }
 
         return $obj;
+    }
+
+    public function buildCountQuery($contentType, $status, $sortOptions)
+    {
+        $whereOptions = array();
+
+        if (!is_null($contentType)) {
+            $whereOptions['contentType'] = $contentType;
+        }
+
+        if (!is_null($status)) {
+            $whereOptions['status'] = $this->dbal->escape($status);
+        }
+
+        $query = $this->buildSelectQuery(
+            self::SUBMISSIONS_TABLE_NAME,
+            array_keys(SubmissionEntity::$fieldsDefinition),
+            $whereOptions,
+            $sortOptions,
+            null
+        );
+
+        $this->logger->info($query);
+        return $query;
     }
 
     /**

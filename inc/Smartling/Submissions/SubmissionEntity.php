@@ -33,8 +33,8 @@ class SubmissionEntity {
         'targetGUID'            => 'VARCHAR(255) NOT NULL',
         'submitter'             => 'VARCHAR(255) NOT NULL',
         'submissionDate'        => 'INT UNSIGNED NOT NULL',
-        'sourceWordsCount'      => 'INT UNSIGNED NOT NULL',
-        'sourceWordsTranslated' => 'INT UNSIGNED NOT NULL',
+        'approvedStringCount'      => 'INT UNSIGNED NOT NULL',
+        'completedStringCount' => 'INT UNSIGNED NOT NULL',
         'status'                => 'VARCHAR(16) NOT NULL',
     );
 
@@ -42,34 +42,35 @@ class SubmissionEntity {
         'id'                    => 'ID',
         'sourceTitle'           => 'Title',
         'sourceBlog'            => 'Source Blog ID',
-        'sourceContentHash'     => 'Content hash',
+        //'sourceContentHash'     => 'Content hash',
         'contentType'           => 'Type',
         'sourceGUID'            => 'Source URI',
         'fileUri'               => 'Smartling File URI',
         'targetLocale'          => 'Locale',
         'targetBlog'            => 'Target Blog ID',
-        'targetGUID'            => 'Target URI',
+        //'targetGUID'            => 'Target URI',
         'submitter'             => 'Submitter',
         'submissionDate'        => 'Submitted',
-        'sourceWordsCount'      => 'Words',
-        'sourceWordsTranslated' => 'Words translated',
+        'approvedStringCount'   => 'Approved Words',
+        'progress'              => 'Progress',
         'status'                => 'Status',
     );
 
     public static $fieldsSortable = array(
         'id',
         'sourceTitle',
-        'sourceBlog',
+        //'sourceBlog',
         'contentType',
-        'sourceGUID',
+        //'sourceGUID',
         'fileUri',
         'targetLocale',
-        'targetBlog',
-        'targetGUID',
+        //'targetBlog',
+        //'targetGUID',
         'submitter',
         'submissionDate',
-        'sourceWordsCount',
-        'sourceWordsTranslated',
+        'approvedStringCount',
+        //'completedStringCount',
+        'progress',
         'status',
     );
 
@@ -150,6 +151,8 @@ class SubmissionEntity {
         foreach(array_keys(self::$fieldsDefinition) as $field) {
             $arr[$field] = $this->$field;
         }
+
+        $arr['progress'] = $this->getCompletionPercentage() . '%';
 
         return $arr;
     }
@@ -241,13 +244,13 @@ class SubmissionEntity {
      * Count of words in source content
      * @var integer
      */
-    private $sourceWordsCount       =   null;
+    private $approvedStringCount       =   null;
 
     /**
      * Count of translated words
      * @var integer
      */
-    private $sourceWordsTranslated  =   null;
+    private $completedStringCount  =   null;
 
     /**
      * @var string
@@ -476,41 +479,41 @@ class SubmissionEntity {
     /**
      * @return int
      */
-    public function getSourceWordsCount()
+    public function getApprovedStringCount()
     {
-        return (int) $this->sourceWordsCount;
+        return (int) $this->approvedStringCount;
     }
 
     /**
-     * @param int $sourceWordsCount
+     * @param int $approvedStringCount
      */
-    public function setSourceWordsCount($sourceWordsCount)
+    public function setApprovedStringCount($approvedStringCount)
     {
-        $this->sourceWordsCount = (int) $sourceWordsCount;
+        $this->approvedStringCount = (int) $approvedStringCount;
     }
 
     /**
      * @return int
      */
-    public function getSourceWordsTranslated()
+    public function getCompletedStringCount()
     {
-        return (int) $this->sourceWordsTranslated;
+        return (int) $this->completedStringCount;
     }
 
     /**
-     * @param int $sourceWordsTranslated
+     * @param int $completedStringCount
      */
-    public function setSourceWordsTranslated($sourceWordsTranslated)
+    public function setCompletedStringCount($completedStringCount)
     {
-        $this->sourceWordsTranslated = (int) $sourceWordsTranslated;
+        $this->completedStringCount = (int) $completedStringCount;
     }
 
     public function getCompletionPercentage()
     {
         $percentage = 0;
 
-        if (0 != $this->getSourceWordsCount()) {
-            $percentage = $this->getSourceWordsTranslated() / $this->getSourceWordsCount();
+        if (0 != $this->getApprovedStringCount()) {
+            $percentage = $this->getCompletedStringCount() / $this->getApprovedStringCount();
         }
 
         if ($percentage > 1) {

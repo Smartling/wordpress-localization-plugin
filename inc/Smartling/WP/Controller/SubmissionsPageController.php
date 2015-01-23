@@ -3,7 +3,8 @@
 namespace Smartling\WP\Controller;
 
 use Psr\Log\LoggerInterface;
-use Smartling\DbAl\MultilangPluginProxy;
+use Smartling\DbAl\MultilingualPluginProxyInterface;
+use Smartling\Helpers\ContentTypeHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\View\SubmissionTableWidget;
@@ -26,13 +27,13 @@ class SubmissionsPageController
 
     /**
      * @param LoggerInterface $logger
-     * @param MultilangPluginProxy $multiLingualConnector
+     * @param MultilingualPluginProxyInterface $multiLingualConnector
      * @param PluginInfo $pluginInfo
      * @param SubmissionManager $manager
      */
     public function __construct(
         LoggerInterface $logger,
-        MultilangPluginProxy $multiLingualConnector,
+        MultilingualPluginProxyInterface $multiLingualConnector,
         PluginInfo $pluginInfo,
         SubmissionManager $manager
     )

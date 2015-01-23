@@ -5,7 +5,7 @@ namespace Smartling\DbAl;
 use Psr\Log\LoggerInterface;
 use Smartling\Helpers\SiteHelper;
 
-class MultiligualPressProConnector extends MultilangPluginAbstract
+class MultiligualPressProConnector extends MultilingualPluginAbstract
 {
 
     const MULTILINGUAL_PRESS_PRO_SITE_OPTION = 'inpsyde_multilingual';
@@ -71,14 +71,6 @@ class MultiligualPressProConnector extends MultilangPluginAbstract
     /**
      * @inheritdoc
      */
-    public function getLnkedBlogsByBlodId($blogId)
-    {
-        // TODO: Implement getLnkedBlogsByBlodId() method.
-    }
-
-    /**
-     * @inheritdoc
-     */
     public function __construct(LoggerInterface $logger, SiteHelper $helper, array $ml_plugin_statuses)
     {
         parent::__construct($logger, $helper, $ml_plugin_statuses);
@@ -86,5 +78,15 @@ class MultiligualPressProConnector extends MultilangPluginAbstract
         if (false === $ml_plugin_statuses['multilingual-press-pro']) {
             throw new \Exception('Active plugin not found Exception');
         }
+    }
+
+    /**
+     * Retrieves blog ids linked to given blog
+     * @param integer $blogId
+     * @return array
+     */
+    function getLinkedBlogIdsByBlogId($blogId)
+    {
+        // TODO: Implement getLinkedBlogIdsByBlogId() method.
     }
 }

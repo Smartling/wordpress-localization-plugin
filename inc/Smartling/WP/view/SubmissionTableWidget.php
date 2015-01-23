@@ -2,6 +2,8 @@
 
 namespace Smartling\WP\View;
 
+use Smartling\Helpers\Html\InputHelper;
+use Smartling\Helpers\Html\SelectFilterHelper;
 use Smartling\Submissions\SubmissionManager;
 
 /**
@@ -11,7 +13,20 @@ use Smartling\Submissions\SubmissionManager;
 class SubmissionTableWidget extends \WP_List_Table
 {
 
+    private $_custom_controls_namespace
+        = 'smartling-submissions-page';
 
+    private $source = null;
+
+    /**
+     * @var SelectFilterHelper
+     */
+    private $typeSelect = null;
+
+    /**
+     * @var SelectFilterHelper
+     */
+    private $statusSelect = null;
 
     private $_settings = array(
         'singular'  => 'submission',
@@ -30,6 +45,7 @@ class SubmissionTableWidget extends \WP_List_Table
     public function __construct(SubmissionManager $manager)
     {
         $this->manager = $manager;
+        $this->source = $_POST;
 
         parent::__construct($this->_settings);
     }
@@ -73,7 +89,10 @@ class SubmissionTableWidget extends \WP_List_Table
         return $this->manager->getColumnsLabels();
     }
 
-    function get_sortable_columns() {
+    /**
+     * @inheritdoc
+     */
+    public function get_sortable_columns() {
 
         $fields = $this->manager->getSortableFields();
 
@@ -86,10 +105,13 @@ class SubmissionTableWidget extends \WP_List_Table
         return $sortable_columns;
     }
 
-    function get_bulk_actions() {
+    /**
+     * @inheritdoc
+     */
+    public function get_bulk_actions() {
         $actions = array(
-            'send'    => 'Send',
-            'download'    => 'Download'
+            'send'          => 'Send',
+            'download'      => 'Download'
         );
         return $actions;
     }
@@ -105,26 +127,38 @@ class SubmissionTableWidget extends \WP_List_Table
         }
     }
 
-    function prepare_items() {
+    /**
+     * @inheritdoc
+     */
+    public function prepare_items() {
 
         $pageSize   = $this->manager->getPageSize();
         $pageNum    = $this->get_pagenum();
 
-        $pageOptions = array('limit' => $pageSize, 'page' => $pageNum);
+        $pageOptions = array(
+            'limit' => $pageSize,
+            'page'  => $pageNum
+        );
 
-        $columns = $this->get_columns();
-
-        $hidden = array();
-
-        $sortable = $this->get_sortable_columns();
-
-        $this->_column_headers = array($columns, $hidden, $sortable);
+        $this->_column_headers = array(
+            $this->get_columns(),
+            array('id'),
+            $this->get_sortable_columns()
+        );
 
         $this->process_bulk_action();
 
         $total = 0;
 
-        $data = $this->manager->getEntities(null, null, null, $pageOptions, $total);
+        $typeFilter = $this->getTypeSelect()->getValue('any');
+
+        $typeFilter = 'any' === $typeFilter ? null : $typeFilter;
+
+        $statusFilter = $this->getStatusSelect()->getValue('any');
+
+        $statusFilter = 'any' === $statusFilter ? null : $statusFilter;
+
+        $data = $this->manager->getEntities($typeFilter, $statusFilter, null, $pageOptions, $total);
 
         $dataAsArray = array();
 
@@ -153,4 +187,81 @@ class SubmissionTableWidget extends \WP_List_Table
         $result = strcmp($a[$orderby], $b[$orderby]); //Determine sort order
         return ($order==='asc') ? $result : -$result; //Send final sort direction to usort
     }
+
+    /**
+     * @return SelectFilterHelper
+     */
+    public function getStatusSelect()
+    {
+        if (is_null($this->statusSelect)) {
+            $statuses_list = $this->manager->getSubmissionStatuses();
+            $default = $this->manager->getDefaultSubmissionStatus();
+            $statuses = array('any' => 'Any');
+            foreach($statuses_list as $status){
+                $statuses[$status] = $status;
+            }
+
+            $this->statusSelect = new SelectFilterHelper(
+                $this->source,
+                $this->_custom_controls_namespace,
+                'status',
+                'Status',
+                $statuses,
+                $default
+            );
+        }
+
+        return $this->statusSelect;
+    }
+
+    /**
+     * @return SelectFilterHelper
+     */
+    public function getTypeSelect()
+    {
+        if (is_null($this->typeSelect)) {
+            $types = array_flip($this->manager->getHelper()->getReverseMap());
+
+            $types = array_map('ucfirst', $types);
+
+            $types = array_merge(array('any' => 'Any'), $types);
+
+            $this->typeSelect = new SelectFilterHelper(
+                $this->source,
+                $this->_custom_controls_namespace,
+                'content-type',
+                'Type',
+                $types,
+                'any'
+            );
+        }
+
+        return $this->typeSelect;
+    }
+
+
+    /**
+     * Renders button
+     * @param $label
+     * @return string
+     */
+    public function renderJSSubmitButtion($label)
+    {
+        $inputHTMLHelper = new InputHelper(
+            $this->source,
+            $this->_custom_controls_namespace,
+            'go-and-filter',
+            $label,
+            array(
+                'type'      => 'submit',
+                'class'     => 'button action'
+            )
+        );
+
+        return $inputHTMLHelper->render();
+    }
+
+
+
+
 }

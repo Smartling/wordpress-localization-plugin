@@ -6,11 +6,11 @@ use Psr\Log\LoggerInterface;
 use Smartling\Helpers\SiteHelper;
 
 /**
- * Interface MultilangPluginProxy
+ * Interface MultilingualPluginProxyInterface
  *
  * @package Smartling\DbAl
  */
-interface MultilangPluginProxy {
+interface MultilingualPluginProxyInterface {
 
     /**
      * Constructor
@@ -38,5 +38,5 @@ interface MultilangPluginProxy {
      * @param integer $blogId
      * @return array
      */
-    function getLnkedBlogsByBlodId($blogId);
+    function getLinkedBlogIdsByBlogId($blogId);
 }

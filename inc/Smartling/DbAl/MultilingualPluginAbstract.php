@@ -5,10 +5,20 @@ use Psr\Log\LoggerInterface;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Helpers\SiteHelper;
 
-abstract class MultilangPluginAbstract implements MultilangPluginProxy
+/**
+ * Class MultilingualPluginAbstract
+ * @package Smartling\DbAl
+ */
+abstract class MultilingualPluginAbstract implements MultilingualPluginProxyInterface
 {
+    /**
+     * @var SiteHelper
+     */
     protected $helper = null;
 
+    /**
+     * @var LoggerInterface
+     */
     private $logger = null;
 
     /**
