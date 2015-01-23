@@ -16,6 +16,4 @@ Abstract class HelperAbstract {
     {
         $this->_logger->error($message);
     }
-
-
 }

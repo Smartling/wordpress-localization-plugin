@@ -2,19 +2,25 @@
 
 namespace Smartling\DbAl;
 
-
 use Psr\Log\LoggerInterface;
 
+/**
+ * Class SmartlingToWordpressDatabaseAccessWrapper
+ * @package Smartling\DbAl
+ */
 abstract class SmartlingToWordpressDatabaseAccessWrapper
     extends SmartlingToCMSDatabaseAccessWrapperAbstract
     implements SmartlingToCMSDatabaseAccessWrapper
 {
 
     /**
-     * @var \wpdb $wpdb
+     * @var \wpdb
      */
     private $wpdb = null;
 
+    /**
+     * @param LoggerInterface $logger
+     */
     public function __construct(LoggerInterface $logger)
     {
         parent::__construct($logger);
@@ -32,15 +38,16 @@ abstract class SmartlingToWordpressDatabaseAccessWrapper
     }
 
     /**
-     * Executes SQL query and returns the result
-     * @param $query
-     * @return mixed
+     * @inheritdoc
      */
     public function query($query)
     {
         return $this->wpdb->query($query);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function fetch($query)
     {
         return $this->getWpdb()->get_results($query);

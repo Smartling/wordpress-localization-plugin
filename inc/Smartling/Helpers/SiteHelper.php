@@ -17,9 +17,6 @@ class SiteHelper extends HelperAbstract{
 
     protected static $_flatBlogIdCache = array();
 
-
-
-
     /**
      * Fallback for direct run if Wordpress functionality is not reachable
      * @throws SmartlingDirectRunRuntimeException
@@ -44,8 +41,6 @@ class SiteHelper extends HelperAbstract{
             }
         }
     }
-
-
 
     /**
      * @return array

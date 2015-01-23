@@ -192,10 +192,6 @@ abstract class EntityManagerAbstract {
 
             $part .= vsprintf(' LIMIT %d,%d', array($offset, $limit));
         }
-
         return $part;
     }
-
-
-
 }
