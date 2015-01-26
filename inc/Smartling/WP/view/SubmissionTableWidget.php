@@ -320,8 +320,9 @@ class SubmissionTableWidget extends \WP_List_Table
         $id = $name = $this->buildHtmlTagName ('go-and-filter');
 
         $options = array (
-            'id'   => $id,
-            'name' => $name,
+            'id'    => $id,
+            'name'  => $name,
+            'class' => 'button action',
 
         );
 
