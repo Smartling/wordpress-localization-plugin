@@ -2,6 +2,7 @@
 
 namespace Smartling;
 
+use Psr\Log\LoggerInterface;
 use Smartling\WP\WPHookInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -15,6 +16,29 @@ class Bootstrap {
      * @var ContainerBuilder $container
      */
     private static $_container = null;
+
+    /**
+     * @var LoggerInterface
+     */
+    private static $_logger = null;
+
+    /**
+     * @return LoggerInterface
+     * @throws \Exception
+     */
+    public static function getLogger()
+    {
+        $object = self::getContainer()->get('logger');
+
+        if ($object instanceof LoggerInterface)
+        {
+            return $object;
+        } else {
+            $message = "Something went wrong with initialization of DI Container and logger cannot be retrieved.";
+            throw new \Exception($message);
+        }
+    }
+
 
     /**
      * Initializes DI Container from YAML config file
@@ -39,6 +63,7 @@ class Bootstrap {
         }
 
         self::$_container = $container;
+        self::$_logger = $container->get('logger');
     }
 
     /**
@@ -125,7 +150,10 @@ class Bootstrap {
      */
     public function detectMultilangPlugins()
     {
-        $logger = $this->fromContainer('logger');
+        /**
+         * @var LoggerInterface $logger
+         */
+        $logger = self::getContainer()->get('logger');
 
         $mlPluginsStatuses =
             array(
@@ -134,13 +162,13 @@ class Bootstrap {
                 'wpml'                      => false,
             );
 
-        $logger->addInfo('Searching for Wordpress multilingual plugins');
+        $logger->info('Searching for Wordpress multilingual plugins');
 
         $_found = false;
 
         if (class_exists('Mlp_Load_Controller', false)) {
             $mlPluginsStatuses['multilingual-press-pro'] = true;
-            $logger->addInfo('found "multilingual-press-pro" plugin');
+            $logger->info('found "multilingual-press-pro" plugin');
 
             $_found = true;
         }

@@ -1,14 +1,17 @@
 <?php
 
 namespace Smartling\Submissions;
+
 use Psr\Log\LoggerInterface;
-use Smartling\Helpers\ContentTypeHelper;
+use Smartling\Helpers\WordpressContentTypeHelper;
 
 /**
  * Class SubmissionEntity
+ *
  * @package Smartling\Submissions
  */
-class SubmissionEntity {
+class SubmissionEntity
+{
 
     /**
      * @var LoggerInterface
@@ -16,47 +19,59 @@ class SubmissionEntity {
     private $logger = null;
 
     /**
-     * @var ContentTypeHelper
+     * @var WordpressContentTypeHelper
      */
     private $helper = null;
 
-    public static $fieldsDefinition = array(
-        'id'                    => 'INT UNSIGNED NOT NULL AUTO_INCREMENT',
-        'sourceTitle'           => 'VARCHAR(255) NOT NULL',
-        'sourceBlog'            => 'INT UNSIGNED NOT NULL',
-        'sourceContentHash'     => 'CHAR(32) NULL',
-        'contentType'           => 'VARCHAR(32) NOT NULL',
-        'sourceGUID'            => 'VARCHAR(255) NOT NULL',
-        'fileUri'               => 'VARCHAR(255) NOT NULL',
-        'targetLocale'          => 'VARCHAR(16) NOT NULL',
-        'targetBlog'            => 'INT UNSIGNED NOT NULL',
-        'targetGUID'            => 'VARCHAR(255) NOT NULL',
-        'submitter'             => 'VARCHAR(255) NOT NULL',
-        'submissionDate'        => 'INT UNSIGNED NOT NULL',
-        'approvedStringCount'      => 'INT UNSIGNED NOT NULL',
+    /**
+     * @var array
+     */
+    public static $fieldsDefinition = array (
+        'id'                   => 'INT UNSIGNED NOT NULL AUTO_INCREMENT',
+        'sourceTitle'          => 'VARCHAR(255) NOT NULL',
+        'sourceBlog'           => 'INT UNSIGNED NOT NULL',
+        'sourceContentHash'    => 'CHAR(32) NULL',
+        'contentType'          => 'VARCHAR(32) NOT NULL',
+        'sourceGUID'           => 'VARCHAR(255) NOT NULL',
+        'fileUri'              => 'VARCHAR(255) NOT NULL',
+        'targetLocale'         => 'VARCHAR(16) NOT NULL',
+        'targetBlog'           => 'INT UNSIGNED NOT NULL',
+        'targetGUID'           => 'VARCHAR(255) NOT NULL',
+        'submitter'            => 'VARCHAR(255) NOT NULL',
+        'submissionDate'       => 'INT UNSIGNED NOT NULL',
+        'approvedStringCount'  => 'INT UNSIGNED NOT NULL',
         'completedStringCount' => 'INT UNSIGNED NOT NULL',
-        'status'                => 'VARCHAR(16) NOT NULL',
+        'status'               => 'VARCHAR(16) NOT NULL',
     );
 
-    public static $fieldsLabels = array(
-        'id'                    => 'ID',
-        'sourceTitle'           => 'Title',
-        'sourceBlog'            => 'Source Blog ID',
-        //'sourceContentHash'     => 'Content hash',
-        'contentType'           => 'Type',
-        'sourceGUID'            => 'Source URI',
-        'fileUri'               => 'Smartling File URI',
-        'targetLocale'          => 'Locale',
-        'targetBlog'            => 'Target Blog ID',
-        //'targetGUID'            => 'Target URI',
-        'submitter'             => 'Submitter',
-        'submissionDate'        => 'Submitted',
-        'approvedStringCount'   => 'Approved Words',
-        'progress'              => 'Progress',
-        'status'                => 'Status',
-    );
+    /**
+     * @return array
+     */
+    public static function getFieldLabels()
+    {
+        return array (
+            'id'                  => __('ID'),
+            'sourceTitle'         => __('Title'),
+            'sourceBlog'          => __('Source Blog ID'),
+            //'sourceContentHash'     => 'Content hash',
+            'contentType'         => __('Type'),
+            'sourceGUID'          => __('Source URI'),
+            'fileUri'             => __('Smartling File URI'),
+            'targetLocale'        => __('Locale'),
+            'targetBlog'          => __('Target Blog ID'),
+            //'targetGUID'            => 'Target URI',
+            'submitter'           => __('Submitter'),
+            'submissionDate'      => __('Submitted'),
+            'approvedStringCount' => __('Approved Words'),
+            'progress'            => __('Progress'),
+            'status'              => __('Status'),
+        );
+    }
 
-    public static $fieldsSortable = array(
+    /**
+     * @var array
+     */
+    public static $fieldsSortable = array (
         'id',
         'sourceTitle',
         //'sourceBlog',
@@ -74,14 +89,17 @@ class SubmissionEntity {
         'status',
     );
 
-    public static $indexes = array(
-        array(
-            'type'      =>  'primary',
-            'columns'   =>  array('id')
+    /**
+     * @var array
+     */
+    public static $indexes = array (
+        array (
+            'type'    => 'primary',
+            'columns' => array ('id')
         ),
-        array(
-            'type'      =>  'index',
-            'columns'   =>  array('contentType')
+        array (
+            'type'    => 'index',
+            'columns' => array ('contentType')
         ),
     );
 
@@ -93,13 +111,13 @@ class SubmissionEntity {
      *      $object->setContentType($value)
      *
      * @param string $key
-     * @param mixed $value
+     * @param mixed  $value
      */
-    public function __set($key, $value)
+    public function __set ($key, $value)
     {
-        if (in_array($key, array_keys(self::$fieldsDefinition))) {
+        if (in_array ($key, array_keys (self::$fieldsDefinition))) {
 
-            $setter = 'set' . ucfirst($key);
+            $setter = 'set' . ucfirst ($key);
 
             $this->$setter($value);
         }
@@ -114,11 +132,11 @@ class SubmissionEntity {
      *
      * @param string $key
      */
-    public function __get($key)
+    public function __get ($key)
     {
-        if (in_array($key, array_keys(self::$fieldsDefinition))) {
+        if (in_array ($key, array_keys (self::$fieldsDefinition))) {
 
-            $getter = 'get' . ucfirst($key);
+            $getter = 'get' . ucfirst ($key);
 
             return $this->$getter();
         }
@@ -127,130 +145,147 @@ class SubmissionEntity {
     /**
      * Converts associative array to SubmissionEntity
      * array keys must match field names;
-     * @param array $array
-     * @param LoggerInterface $logger
-     * @param ContentTypeHelper $ct_helper
+     *
+     * @param array                      $array
+     * @param LoggerInterface            $logger
+     *
      * @return SubmissionEntity
      */
-    public static function fromArray(array $array, LoggerInterface $logger, ContentTypeHelper $ct_helper)
+    public static function fromArray (array $array, LoggerInterface $logger)
     {
-        $obj = new self($logger, $ct_helper);
+        $obj = new self($logger);
 
-        foreach($array as $field => $value){
+        foreach ($array as $field => $value) {
             $obj->$field = $value;
         }
 
         return $obj;
     }
 
-    public function toArray()
+    /**
+     * @return array
+     */
+    public function toArray ()
     {
-        $arr = array();
+        $arr = array ();
 
 
-        foreach(array_keys(self::$fieldsDefinition) as $field) {
+        foreach (array_keys (self::$fieldsDefinition) as $field) {
             $arr[$field] = $this->$field;
         }
 
-        $arr['progress'] = $this->getCompletionPercentage() . '%';
+        $arr['progress'] = $this->getCompletionPercentage () . '%';
 
         return $arr;
     }
 
     /**
      * Constructor
-     * @param LoggerInterface $logger
-     * @param ContentTypeHelper $ct_helper
+     *
+     * @param LoggerInterface            $logger
      */
-    public function __construct(LoggerInterface $logger, ContentTypeHelper $ct_helper)
+    public function __construct (LoggerInterface $logger)
     {
         $this->logger = $logger;
-        $this->helper = $ct_helper;
     }
 
     /**
      * Submission unique id
+     *
      * @var null|integer
      */
-    private $id                     =   null;
+    private $id = null;
 
     /**
      * Submission Entity title
+     *
      * @var string
      */
-    private $sourceTitle            =   null;
+    private $sourceTitle = null;
 
     /**
      * Source content blog id
+     *
      * @var integer
      */
-    private $sourceBlog             =   null;
+    private $sourceBlog = null;
 
     /**
      * Hash of source content to find out if it is changed
+     *
      * @var string
      */
-    private $sourceContentHash      =   null;
+    private $sourceContentHash = null;
 
     /**
-     * ContentType as a constant from Smartling\Helpers\ContentTypeHelper
+     * ContentType as a constant from Smartling\Helpers\WordpressContentTypeHelper
+     *
      * @var string
      */
-    private $contentType            =   null;
+    private $contentType = null;
 
     /**
      * unique identifier of source content
+     *
      * @var string
      */
-    private $sourceGUID             =   null;
+    private $sourceGUID = null;
 
     /**
      * Smartling API content package unique identifier
+     *
      * @var string
      */
-    private $fileUri                =   null;
+    private $fileUri = null;
 
     /**
      * Target locale
+     *
      * @var string
      */
-    private $targetLocale           =   null;
+    private $targetLocale = null;
 
     /**
      * Id of linked blog to place the translation on 'download'
+     *
      * @var integer
      */
-    private $targetBlog             =   null;
+    private $targetBlog = null;
 
     /**
      * unique identifier of target content
+     *
      * @var string
      */
-    private $targetGUID             =   null;
+    private $targetGUID = null;
 
     /**
      * Submitter identity
+     *
      * @var string
      */
-    private $submitter              =   null;
+    private $submitter = null;
 
     /**
      * Date and Time of submission
+     *
      * @var string
      */
-    private $submissionDate         =   null;
+    private $submissionDate = null;
 
     /**
      * Count of words in source content
+     *
      * @var integer
      */
-    private $approvedStringCount       =   null;
+    private $approvedStringCount = null;
 
     /**
      * Count of translated words
+     *
      * @var integer
      */
-    private $completedStringCount  =   null;
+    private $completedStringCount = null;
 
     /**
      * @var string
@@ -260,7 +295,7 @@ class SubmissionEntity {
     /**
      * @return string
      */
-    public function getStatus()
+    public function getStatus ()
     {
         return $this->status;
     }
@@ -268,7 +303,7 @@ class SubmissionEntity {
     /**
      * @param string $status
      */
-    public function setStatus($status)
+    public function setStatus ($status)
     {
         $this->status = $status;
     }
@@ -277,7 +312,7 @@ class SubmissionEntity {
     /**
      * @return int|null
      */
-    public function getId()
+    public function getId ()
     {
         return $this->id;
     }
@@ -285,7 +320,7 @@ class SubmissionEntity {
     /**
      * @param int $id
      */
-    public function setId($id)
+    public function setId ($id)
     {
         $this->id = (int) $id;
     }
@@ -293,7 +328,7 @@ class SubmissionEntity {
     /**
      * @return string
      */
-    public function getSourceTitle()
+    public function getSourceTitle ()
     {
         return $this->sourceTitle;
     }
@@ -301,7 +336,7 @@ class SubmissionEntity {
     /**
      * @param string $sourceTitle
      */
-    public function setSourceTitle($sourceTitle)
+    public function setSourceTitle ($sourceTitle)
     {
         $this->sourceTitle = $sourceTitle;
     }
@@ -309,7 +344,7 @@ class SubmissionEntity {
     /**
      * @return int
      */
-    public function getSourceBlog()
+    public function getSourceBlog ()
     {
         return (int) $this->sourceBlog;
     }
@@ -317,7 +352,7 @@ class SubmissionEntity {
     /**
      * @param int $sourceBlog
      */
-    public function setSourceBlog($sourceBlog)
+    public function setSourceBlog ($sourceBlog)
     {
         $this->sourceBlog = (int) $sourceBlog;
     }
@@ -325,7 +360,7 @@ class SubmissionEntity {
     /**
      * @return string
      */
-    public function getSourceContentHash()
+    public function getSourceContentHash ()
     {
         return $this->sourceContentHash;
     }
@@ -333,7 +368,7 @@ class SubmissionEntity {
     /**
      * @param string $sourceContentHash
      */
-    public function setSourceContentHash($sourceContentHash)
+    public function setSourceContentHash ($sourceContentHash)
     {
         $this->sourceContentHash = $sourceContentHash;
     }
@@ -341,7 +376,7 @@ class SubmissionEntity {
     /**
      * @return string
      */
-    public function getContentType()
+    public function getContentType ()
     {
         return $this->contentType;
     }
@@ -349,16 +384,17 @@ class SubmissionEntity {
     /**
      * @param string $contentType
      */
-    public function setContentType($contentType)
+    public function setContentType ($contentType)
     {
-        $reverseMap = $this->helper->getReverseMap();
+        $reverseMap = WordpressContentTypeHelper::getReverseMap();
 
-        if (in_array($contentType, array_keys($reverseMap))) {
+        if (in_array ($contentType, array_keys ($reverseMap))) {
             $this->contentType = $reverseMap[$contentType];
         } else {
-            $message = vsprintf("Invalid content type. Got '%s', expected one of: %s", array($contentType, implode(',', $reverseMap)));
+            $message = vsprintf ("Invalid content type. Got '%s', expected one of: %s",
+                array ($contentType, implode (',', $reverseMap)));
 
-            $this->logger->error($message);
+            $this->logger->error ($message);
 
             throw new \InvalidArgumentException($message);
         }
@@ -367,7 +403,7 @@ class SubmissionEntity {
     /**
      * @return string
      */
-    public function getSourceGUID()
+    public function getSourceGUID ()
     {
         return $this->sourceGUID;
     }
@@ -375,7 +411,7 @@ class SubmissionEntity {
     /**
      * @param string $sourceGUID
      */
-    public function setSourceGUID($sourceGUID)
+    public function setSourceGUID ($sourceGUID)
     {
         $this->sourceGUID = $sourceGUID;
     }
@@ -383,7 +419,7 @@ class SubmissionEntity {
     /**
      * @return string
      */
-    public function getFileUri()
+    public function getFileUri ()
     {
         return $this->fileUri;
     }
@@ -391,7 +427,7 @@ class SubmissionEntity {
     /**
      * @param string $fileUri
      */
-    public function setFileUri($fileUri)
+    public function setFileUri ($fileUri)
     {
         $this->fileUri = $fileUri;
     }
@@ -399,7 +435,7 @@ class SubmissionEntity {
     /**
      * @return string
      */
-    public function getTargetLocale()
+    public function getTargetLocale ()
     {
         return $this->targetLocale;
     }
@@ -407,7 +443,7 @@ class SubmissionEntity {
     /**
      * @param string $targetLocale
      */
-    public function setTargetLocale($targetLocale)
+    public function setTargetLocale ($targetLocale)
     {
         $this->targetLocale = $targetLocale;
     }
@@ -415,7 +451,7 @@ class SubmissionEntity {
     /**
      * @return int
      */
-    public function getTargetBlog()
+    public function getTargetBlog ()
     {
         return (int) $this->targetBlog;
     }
@@ -423,7 +459,7 @@ class SubmissionEntity {
     /**
      * @param int $targetBlog
      */
-    public function setTargetBlog($targetBlog)
+    public function setTargetBlog ($targetBlog)
     {
         $this->targetBlog = (int) $targetBlog;
     }
@@ -431,7 +467,7 @@ class SubmissionEntity {
     /**
      * @return string
      */
-    public function getTargetGUID()
+    public function getTargetGUID ()
     {
         return $this->targetGUID;
     }
@@ -439,7 +475,7 @@ class SubmissionEntity {
     /**
      * @param string $targetGUID
      */
-    public function setTargetGUID($targetGUID)
+    public function setTargetGUID ($targetGUID)
     {
         $this->targetGUID = $targetGUID;
     }
@@ -447,7 +483,7 @@ class SubmissionEntity {
     /**
      * @return string
      */
-    public function getSubmitter()
+    public function getSubmitter ()
     {
         return $this->submitter;
     }
@@ -455,7 +491,7 @@ class SubmissionEntity {
     /**
      * @param string $submitter
      */
-    public function setSubmitter($submitter)
+    public function setSubmitter ($submitter)
     {
         $this->submitter = $submitter;
     }
@@ -463,7 +499,7 @@ class SubmissionEntity {
     /**
      * @return string
      */
-    public function getSubmissionDate()
+    public function getSubmissionDate ()
     {
         return $this->submissionDate;
     }
@@ -471,7 +507,7 @@ class SubmissionEntity {
     /**
      * @param string $submissionDate
      */
-    public function setSubmissionDate($submissionDate)
+    public function setSubmissionDate ($submissionDate)
     {
         $this->submissionDate = $submissionDate;
     }
@@ -479,7 +515,7 @@ class SubmissionEntity {
     /**
      * @return int
      */
-    public function getApprovedStringCount()
+    public function getApprovedStringCount ()
     {
         return (int) $this->approvedStringCount;
     }
@@ -487,7 +523,7 @@ class SubmissionEntity {
     /**
      * @param int $approvedStringCount
      */
-    public function setApprovedStringCount($approvedStringCount)
+    public function setApprovedStringCount ($approvedStringCount)
     {
         $this->approvedStringCount = (int) $approvedStringCount;
     }
@@ -495,7 +531,7 @@ class SubmissionEntity {
     /**
      * @return int
      */
-    public function getCompletedStringCount()
+    public function getCompletedStringCount ()
     {
         return (int) $this->completedStringCount;
     }
@@ -503,17 +539,17 @@ class SubmissionEntity {
     /**
      * @param int $completedStringCount
      */
-    public function setCompletedStringCount($completedStringCount)
+    public function setCompletedStringCount ($completedStringCount)
     {
         $this->completedStringCount = (int) $completedStringCount;
     }
 
-    public function getCompletionPercentage()
+    public function getCompletionPercentage ()
     {
         $percentage = 0;
 
-        if (0 != $this->getApprovedStringCount()) {
-            $percentage = $this->getCompletedStringCount() / $this->getApprovedStringCount();
+        if (0 != $this->getApprovedStringCount ()) {
+            $percentage = $this->getCompletedStringCount () / $this->getApprovedStringCount ();
         }
 
         if ($percentage > 1) {

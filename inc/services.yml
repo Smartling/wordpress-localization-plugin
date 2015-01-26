@@ -31,13 +31,7 @@ services:
     arguments:
      - "@logger"
      - "@site.db"
-     - "@helper.content_type"
      - "%submission.pagesize%"
-
-  helper.content_type:
-    class: Smartling\Helpers\ContentTypeHelper
-    arguments:
-      - "@logger"
 
   site.helper:
     class: Smartling\Helpers\SiteHelper

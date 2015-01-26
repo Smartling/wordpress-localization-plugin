@@ -3,7 +3,7 @@
 namespace Smartling\WP;
 
 use Psr\Log\LoggerInterface;
-use Smartling\DbAl\MultilingualPluginProxyInterface;
+use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\PluginInfo;
 
 abstract class WPAbstract {
@@ -19,19 +19,19 @@ abstract class WPAbstract {
     private $pluginInfo;
 
     /**
-     * @var MultilingualPluginProxyInterface
+     * @var LocalizationPluginProxyInterface
      */
     private $multiLingualConnector;
 
     /**
      * Constructor
      * @param LoggerInterface $logger
-     * @param MultilingualPluginProxyInterface $multiLingualConnector
+     * @param LocalizationPluginProxyInterface $multiLingualConnector
      * @param PluginInfo $pluginInfo
      */
     public function __construct(
         LoggerInterface $logger,
-        MultilingualPluginProxyInterface $multiLingualConnector,
+        LocalizationPluginProxyInterface $multiLingualConnector,
         PluginInfo $pluginInfo
     ) {
         $this->logger = $logger;
@@ -56,7 +56,7 @@ abstract class WPAbstract {
     }
 
     /**
-     * @return MultilingualPluginProxyInterface
+     * @return LocalizationPluginProxyInterface
      */
     public function getConnector()
     {

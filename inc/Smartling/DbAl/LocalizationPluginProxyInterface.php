@@ -6,11 +6,11 @@ use Psr\Log\LoggerInterface;
 use Smartling\Helpers\SiteHelper;
 
 /**
- * Interface MultilingualPluginProxyInterface
+ * Interface LocalizationPluginProxyInterface
  *
  * @package Smartling\DbAl
  */
-interface MultilingualPluginProxyInterface {
+interface LocalizationPluginProxyInterface {
 
     /**
      * Constructor

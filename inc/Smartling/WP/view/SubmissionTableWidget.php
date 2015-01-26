@@ -2,36 +2,55 @@
 
 namespace Smartling\WP\View;
 
-use Smartling\Helpers\Html\InputHelper;
-use Smartling\Helpers\Html\SelectFilterHelper;
+use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionManager;
 
 /**
  * Class SubmissionTableWidget
+ *
  * @package Smartling\WP\View
  */
 class SubmissionTableWidget extends \WP_List_Table
 {
 
+    /**
+     * @var string
+     */
     private $_custom_controls_namespace
         = 'smartling-submissions-page';
 
+    /**
+     * the source array with request data
+     *
+     * @var array
+     */
     private $source = null;
 
     /**
-     * @var SelectFilterHelper
+     * base name of Content-type filtering select
      */
-    private $typeSelect = null;
+    const CONTENT_TYPE_SELECT_ELEMENT_NAME = 'content-type';
 
     /**
-     * @var SelectFilterHelper
+     * base name of status filtering select
      */
-    private $statusSelect = null;
+    const SUBMISSION_STATUS_SELECT_ELEMENT_NAME = 'status';
 
-    private $_settings = array(
-        'singular'  => 'submission',
-        'plural'    => 'submissions',
-        'ajax'      => false
+    /**
+     * default values of custom form elements on page
+     *
+     * @var array
+     */
+    private $defaultValues = array (
+        self::CONTENT_TYPE_SELECT_ELEMENT_NAME      => 'any',
+        self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME => null,
+    );
+
+    private $_settings = array (
+        'singular' => 'submission',
+        'plural'   => 'submissions',
+        'ajax'     => false
     );
 
     /**
@@ -42,64 +61,77 @@ class SubmissionTableWidget extends \WP_List_Table
     /**
      * @param SubmissionManager $manager
      */
-    public function __construct(SubmissionManager $manager)
+    public function __construct (SubmissionManager $manager)
     {
         $this->manager = $manager;
         $this->source = $_POST;
 
-        parent::__construct($this->_settings);
+        $this->defaultValues[self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME] = $manager->getDefaultSubmissionStatus ();
+
+        parent::__construct ($this->_settings);
     }
 
-    function column_default($item, $column_name){
-        switch($column_name){
+    function column_default ($item, $column_name)
+    {
+        switch ($column_name) {
             default:
                 return $item[$column_name];
         }
     }
 
-    function column_name($item){
+    function column_name ($item)
+    {
 
         //Build row actions
-        $actions = array(
-            'send'      => sprintf('<a href="?page=%s&action=%s&submission=%s">Send</a>', $_REQUEST['page'], 'send', $item['id']),
-            'download'    => sprintf('<a href="?page=%s&action=%s&submission=%s">Download</a>', $_REQUEST['page'], 'download', $item['id']),
+        $actions = array (
+            'send'     => sprintf ('<a href="?page=%s&action=%s&submission=%s">Send</a>', $_REQUEST['page'], 'send',
+                $item['id']),
+            'download' => sprintf ('<a href="?page=%s&action=%s&submission=%s">Download</a>', $_REQUEST['page'],
+                'download', $item['id']),
         );
 
         //Return the title contents
-        return sprintf('%1$s <span style="color:silver">(id:%2$s)</span>%3$s',
-            /*$1%s*/ $item['sourceTitle'],
-            /*$2%s*/ $item['id'],
-            /*$3%s*/ $this->row_actions($actions)
+        return sprintf ('%1$s <span style="color:silver">(id:%2$s)</span>%3$s',
+            /*$1%s*/
+            $item['sourceTitle'],
+            /*$2%s*/
+            $item['id'],
+            /*$3%s*/
+            $this->row_actions ($actions)
         );
     }
 
-    function column_cb($item){
-        return sprintf(
-            '<input type="checkbox" name="%1$s[]" value="%2$s" />',
-            /*$1%s*/ $this->_args['singular'],  //Let's simply repurpose the table's singular label ("movie")
-            /*$2%s*/ $item['id']                //The value of the checkbox should be the record's id
-        );
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function get_columns()
+    function column_cb ($item)
     {
-        return $this->manager->getColumnsLabels();
+        return sprintf (
+            '<input type="checkbox" name="%1$s[]" value="%2$s" />',
+            /*$1%s*/
+            $this->_args['singular'],  //Let's simply repurpose the table's singular label ("movie")
+            /*$2%s*/
+            $item['id']                //The value of the checkbox should be the record's id
+        );
     }
 
     /**
      * @inheritdoc
      */
-    public function get_sortable_columns() {
+    public function get_columns ()
+    {
+        return $this->manager->getColumnsLabels ();
+    }
 
-        $fields = $this->manager->getSortableFields();
+    /**
+     * @inheritdoc
+     */
+    public function get_sortable_columns ()
+    {
 
-        $sortable_columns = array();
+        $fields = $this->manager->getSortableFields ();
 
-        foreach($fields as $field){
-            $sortable_columns[$field] = array($field, false);
+        $sortable_columns = array ();
+
+        foreach ($fields as $field) {
+            $sortable_columns[$field] = array ($field, false);
         }
 
         return $sortable_columns;
@@ -108,21 +140,24 @@ class SubmissionTableWidget extends \WP_List_Table
     /**
      * @inheritdoc
      */
-    public function get_bulk_actions() {
-        $actions = array(
-            'send'          => 'Send',
-            'download'      => 'Download'
+    public function get_bulk_actions ()
+    {
+        $actions = array (
+            'send'     => 'Send',
+            'download' => 'Download'
         );
+
         return $actions;
     }
 
-    function process_bulk_action() {
-        switch($this->current_action()) {
+    function process_bulk_action ()
+    {
+        switch ($this->current_action ()) {
             case "download":
-                wp_die('Items downloading!');
+                wp_die ('Items downloading!');
                 break;
             case "send":
-                wp_die('Items sending');
+                wp_die ('Items sending');
                 break;
         }
     }
@@ -130,138 +165,193 @@ class SubmissionTableWidget extends \WP_List_Table
     /**
      * @inheritdoc
      */
-    public function prepare_items() {
+    public function prepare_items ()
+    {
 
-        $pageSize   = $this->manager->getPageSize();
-        $pageNum    = $this->get_pagenum();
+        $pageSize = $this->manager->getPageSize ();
+        $pageNum = $this->get_pagenum ();
 
-        $pageOptions = array(
+        $pageOptions = array (
             'limit' => $pageSize,
             'page'  => $pageNum
         );
 
-        $this->_column_headers = array(
-            $this->get_columns(),
-            array('id'),
-            $this->get_sortable_columns()
+        $this->_column_headers = array (
+            $this->get_columns (),
+            array ('id'),
+            $this->get_sortable_columns ()
         );
 
-        $this->process_bulk_action();
+        $this->process_bulk_action ();
 
         $total = 0;
 
-        $typeFilter = $this->getTypeSelect()->getValue('any');
+        $contentTypeFilterValue = $this->getFormElementValue (
+            self::CONTENT_TYPE_SELECT_ELEMENT_NAME,
+            $this->defaultValues[self::CONTENT_TYPE_SELECT_ELEMENT_NAME]
+        );
 
-        $typeFilter = 'any' === $typeFilter ? null : $typeFilter;
+        $contentTypeFilterValue = 'any' === $contentTypeFilterValue ? null : $contentTypeFilterValue;
 
-        $statusFilter = $this->getStatusSelect()->getValue('any');
+        $statusFilterValue = $this->getFormElementValue (
+            self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME,
+            $this->defaultValues[self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME]
+        );
 
-        $statusFilter = 'any' === $statusFilter ? null : $statusFilter;
+        $statusFilterValue = 'any' === $statusFilterValue ? null : $statusFilterValue;
 
-        $data = $this->manager->getEntities($typeFilter, $statusFilter, null, $pageOptions, $total);
+        $data = $this->manager->getEntities ($contentTypeFilterValue, $statusFilterValue, null, $pageOptions, $total);
 
-        $dataAsArray = array();
+        $dataAsArray = array ();
 
-        foreach($data as $element) {
-            $dataAsArray[] = $element->toArray();
+        foreach ($data as $element) {
+            $dataAsArray[] = $element->toArray ();
         }
 
         $data = $dataAsArray;
 
-        if(count($data) > 1) {
-            usort($data, array($this, 'usort_reorder'));
+        if (count ($data) > 1) {
+            usort ($data, array ($this, 'usort_reorder'));
         }
 
         $this->items = $data;
 
-        $this->set_pagination_args( array(
+        $this->set_pagination_args (array (
             'total_items' => $total,
             'per_page'    => $pageSize,
-            'total_pages' => ceil($total/$pageSize)
-        ) );
+            'total_pages' => ceil ($total / $pageSize)
+        ));
     }
 
-    function usort_reorder($a,$b){
+    function usort_reorder ($a, $b)
+    {
         $orderby = (!empty($_REQUEST['orderby'])) ? $_REQUEST['orderby'] : 'name'; //If no sort, default to title
         $order = (!empty($_REQUEST['order'])) ? $_REQUEST['order'] : 'asc'; //If no order, default to asc
-        $result = strcmp($a[$orderby], $b[$orderby]); //Determine sort order
-        return ($order==='asc') ? $result : -$result; //Send final sort direction to usort
+        $result = strcmp ($a[$orderby], $b[$orderby]); //Determine sort order
+        return ($order === 'asc') ? $result : - $result; //Send final sort direction to usort
     }
 
     /**
-     * @return SelectFilterHelper
+     * @return string
      */
-    public function getStatusSelect()
+    public function statusSelectRender ()
     {
-        if (is_null($this->statusSelect)) {
-            $statuses_list = $this->manager->getSubmissionStatuses();
-            $default = $this->manager->getDefaultSubmissionStatus();
-            $statuses = array('any' => 'Any');
-            foreach($statuses_list as $status){
-                $statuses[$status] = $status;
-            }
+        $controlName = 'status';
 
-            $this->statusSelect = new SelectFilterHelper(
-                $this->source,
-                $this->_custom_controls_namespace,
-                'status',
-                'Status',
-                $statuses,
-                $default
+        $statuses = $this->manager->getSubmissionStatusLabels ();
+
+        // add 'Any' to turn off filter
+        $statuses = array_merge (array ('any' => __ ('Any')), $statuses);
+
+        $value = $this->getFormElementValue (
+            $controlName,
+            $this->defaultValues[$controlName]
+        );
+
+        $html = HtmlTagGeneratorHelper::tag (
+                'label',
+                __ ('Status'),
+                array (
+                    'for' => $this->buildHtmlTagName ($controlName),
+                )
+            ) . HtmlTagGeneratorHelper::tag (
+                'select',
+                HtmlTagGeneratorHelper::renderSelectOptions (
+                    $value,
+                    $statuses
+                ),
+                array (
+                    'id'   => $this->buildHtmlTagName ($controlName),
+                    'name' => $this->buildHtmlTagName ($controlName)
+                )
             );
-        }
 
-        return $this->statusSelect;
+        return $html;
     }
 
     /**
-     * @return SelectFilterHelper
+     * @return string
      */
-    public function getTypeSelect()
+    public function contentTypeSelectRender ()
     {
-        if (is_null($this->typeSelect)) {
-            $types = array_flip($this->manager->getHelper()->getReverseMap());
+        $controlName = 'content-type';
 
-            $types = array_map('ucfirst', $types);
+        $types = WordpressContentTypeHelper::getLabelMap ();
 
-            $types = array_merge(array('any' => 'Any'), $types);
+        // add 'Any' to turn off filter
+        $types = array_merge (array ('any' => __ ('Any')), $types);
 
-            $this->typeSelect = new SelectFilterHelper(
-                $this->source,
-                $this->_custom_controls_namespace,
-                'content-type',
-                'Type',
-                $types,
-                'any'
+        $value = $this->getFormElementValue (
+            $controlName,
+            $this->defaultValues[$controlName]
+        );
+
+        $html = HtmlTagGeneratorHelper::tag (
+                'label',
+                __ ('Type'),
+                array (
+                    'for' => $this->buildHtmlTagName ($controlName),
+                )
+            ) . HtmlTagGeneratorHelper::tag (
+                'select',
+                HtmlTagGeneratorHelper::renderSelectOptions (
+                    $value,
+                    $types
+                ),
+                array (
+                    'id'   => $this->buildHtmlTagName ($controlName),
+                    'name' => $this->buildHtmlTagName ($controlName)
+                )
             );
-        }
 
-        return $this->typeSelect;
+        return $html;
     }
 
 
     /**
      * Renders button
+     *
      * @param $label
+     *
      * @return string
      */
-    public function renderJSSubmitButtion($label)
+    public function renderSubmitButton ($label)
     {
-        $inputHTMLHelper = new InputHelper(
-            $this->source,
-            $this->_custom_controls_namespace,
-            'go-and-filter',
-            $label,
-            array(
-                'type'      => 'submit',
-                'class'     => 'button action'
-            )
+        $id = $name = $this->buildHtmlTagName ('go-and-filter');
+
+        $options = array (
+            'id'   => $id,
+            'name' => $name,
+
         );
 
-        return $inputHTMLHelper->render();
+        return $inputHTMLHelper = HtmlTagGeneratorHelper::submitButton ($label, $options);
     }
 
+    /**
+     * Retrieves from source array value for input element
+     *
+     * @param string $name
+     * @param mixed  $defaultValue
+     *
+     * @return mixed
+     */
+    private function getFormElementValue ($name, $defaultValue)
+    {
+        return isset($this->source[$this->buildHtmlTagName ($name)])
+            ? $this->source[$this->buildHtmlTagName ($name)]
+            : $defaultValue;
+    }
 
-
-
+    /**
+     * Builds unique name attribute value for HTML Form element tag
+     *
+     * @param string $name
+     *
+     * @return string
+     */
+    private function buildHtmlTagName ($name)
+    {
+        return $this->_custom_controls_namespace . '-' . $name;
+    }
 }

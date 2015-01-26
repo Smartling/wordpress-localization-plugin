@@ -6,10 +6,11 @@ use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Helpers\SiteHelper;
 
 /**
- * Class MultilingualPluginAbstract
+ * Class LocalizationPluginAbstract
+ *
  * @package Smartling\DbAl
  */
-abstract class MultilingualPluginAbstract implements MultilingualPluginProxyInterface
+abstract class LocalizationPluginAbstract implements LocalizationPluginProxyInterface
 {
     /**
      * @var SiteHelper
@@ -24,7 +25,7 @@ abstract class MultilingualPluginAbstract implements MultilingualPluginProxyInte
     /**
      * @inheritdoc
      */
-    public function __construct(LoggerInterface $logger, SiteHelper $helper, array $ml_plugin_statuses)
+    public function __construct (LoggerInterface $logger, SiteHelper $helper, array $ml_plugin_statuses)
     {
         $this->logger = $logger;
         $this->helper = $helper;
@@ -32,11 +33,12 @@ abstract class MultilingualPluginAbstract implements MultilingualPluginProxyInte
 
     /**
      * Fallback for direct run if Wordpress functionality is not reachable
+     *
      * @throws SmartlingDirectRunRuntimeException
      */
-    protected function directFunFallback($message)
+    protected function directRunFallback ($message)
     {
-        $this->logger->error($message);
+        $this->logger->error ($message);
 
         throw new SmartlingDirectRunRuntimeException($message);
     }
