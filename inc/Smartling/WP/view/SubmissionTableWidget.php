@@ -200,7 +200,7 @@ class SubmissionTableWidget extends \WP_List_Table
 
         $statusFilterValue = 'any' === $statusFilterValue ? null : $statusFilterValue;
 
-        $data = $this->manager->getEntities ($contentTypeFilterValue, $statusFilterValue, null, $pageOptions, $total);
+        $data = $this->manager->getEntities ($contentTypeFilterValue, $statusFilterValue, array(), $pageOptions, $total);
 
         $dataAsArray = array ();
 
