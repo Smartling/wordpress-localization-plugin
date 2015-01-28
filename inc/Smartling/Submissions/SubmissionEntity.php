@@ -10,552 +10,514 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  *
  * @package Smartling\Submissions
  */
-class SubmissionEntity
-{
-
-    /**
-     * @var LoggerInterface
-     */
-    private $logger = null;
-
-    /**
-     * @var WordpressContentTypeHelper
-     */
-    private $helper = null;
-
-    /**
-     * @var array
-     */
-    public static $fieldsDefinition = array (
-        'id'                   => 'INT UNSIGNED NOT NULL AUTO_INCREMENT',
-        'sourceTitle'          => 'VARCHAR(255) NOT NULL',
-        'sourceBlog'           => 'INT UNSIGNED NOT NULL',
-        'sourceContentHash'    => 'CHAR(32) NULL',
-        'contentType'          => 'VARCHAR(32) NOT NULL',
-        'sourceGUID'           => 'VARCHAR(255) NOT NULL',
-        'fileUri'              => 'VARCHAR(255) NOT NULL',
-        'targetLocale'         => 'VARCHAR(16) NOT NULL',
-        'targetBlog'           => 'INT UNSIGNED NOT NULL',
-        'targetGUID'           => 'VARCHAR(255) NOT NULL',
-        'submitter'            => 'VARCHAR(255) NOT NULL',
-        'submissionDate'       => 'INT UNSIGNED NOT NULL',
-        'approvedStringCount'  => 'INT UNSIGNED NOT NULL',
-        'completedStringCount' => 'INT UNSIGNED NOT NULL',
-        'status'               => 'VARCHAR(16) NOT NULL',
-    );
-
-    /**
-     * @return array
-     */
-    public static function getFieldLabels()
-    {
-        return array (
-            'id'                  => __('ID'),
-            'sourceTitle'         => __('Title'),
-            'sourceBlog'          => __('Source Blog ID'),
-            //'sourceContentHash'     => 'Content hash',
-            'contentType'         => __('Type'),
-            'sourceGUID'          => __('Source URI'),
-            'fileUri'             => __('Smartling File URI'),
-            'targetLocale'        => __('Locale'),
-            'targetBlog'          => __('Target Blog ID'),
-            //'targetGUID'            => 'Target URI',
-            'submitter'           => __('Submitter'),
-            'submissionDate'      => __('Submitted'),
-            'approvedStringCount' => __('Approved Words'),
-            'progress'            => __('Progress'),
-            'status'              => __('Status'),
-        );
-    }
-
-    /**
-     * @var array
-     */
-    public static $fieldsSortable = array (
-        'id',
-        'sourceTitle',
-        //'sourceBlog',
-        'contentType',
-        //'sourceGUID',
-        'fileUri',
-        'targetLocale',
-        //'targetBlog',
-        //'targetGUID',
-        'submitter',
-        'submissionDate',
-        'approvedStringCount',
-        //'completedStringCount',
-        'progress',
-        'status',
-    );
-
-    /**
-     * @var array
-     */
-    public static $indexes = array (
-        array (
-            'type'    => 'primary',
-            'columns' => array ('id')
-        ),
-        array (
-            'type'    => 'index',
-            'columns' => array ('contentType')
-        ),
-    );
-
-    /**
-     * Magic wrapper for fields
-     * may be used as virtual setter, e.g.:
-     *      $object->contentType = $value
-     * instead of
-     *      $object->setContentType($value)
-     *
-     * @param string $key
-     * @param mixed  $value
-     */
-    public function __set ($key, $value)
-    {
-        if (in_array ($key, array_keys (self::$fieldsDefinition))) {
-
-            $setter = 'set' . ucfirst ($key);
-
-            $this->$setter($value);
-        }
-    }
-
-    /**
-     * Magic wrapper for fields
-     * may be used as virtual setter, e.g.:
-     *      $value = $object->contentType
-     * instead of
-     *      $value = $object->getContentType()
-     *
-     * @param string $key
-     */
-    public function __get ($key)
-    {
-        if (in_array ($key, array_keys (self::$fieldsDefinition))) {
-
-            $getter = 'get' . ucfirst ($key);
-
-            return $this->$getter();
-        }
-    }
-
-    /**
-     * Converts associative array to SubmissionEntity
-     * array keys must match field names;
-     *
-     * @param array                      $array
-     * @param LoggerInterface            $logger
-     *
-     * @return SubmissionEntity
-     */
-    public static function fromArray (array $array, LoggerInterface $logger)
-    {
-        $obj = new self($logger);
-
-        foreach ($array as $field => $value) {
-            $obj->$field = $value;
-        }
-
-        return $obj;
-    }
-
-    /**
-     * @return array
-     */
-    public function toArray ()
-    {
-        $arr = array ();
-
-
-        foreach (array_keys (self::$fieldsDefinition) as $field) {
-            $arr[$field] = $this->$field;
-        }
-
-        $arr['progress'] = $this->getCompletionPercentage () . '%';
-
-        return $arr;
-    }
-
-    /**
-     * Constructor
-     *
-     * @param LoggerInterface            $logger
-     */
-    public function __construct (LoggerInterface $logger)
-    {
-        $this->logger = $logger;
-    }
-
-    /**
-     * Submission unique id
-     *
-     * @var null|integer
-     */
-    private $id = null;
-
-    /**
-     * Submission Entity title
-     *
-     * @var string
-     */
-    private $sourceTitle = null;
-
-    /**
-     * Source content blog id
-     *
-     * @var integer
-     */
-    private $sourceBlog = null;
-
-    /**
-     * Hash of source content to find out if it is changed
-     *
-     * @var string
-     */
-    private $sourceContentHash = null;
-
-    /**
-     * ContentType as a constant from Smartling\Helpers\WordpressContentTypeHelper
-     *
-     * @var string
-     */
-    private $contentType = null;
-
-    /**
-     * unique identifier of source content
-     *
-     * @var string
-     */
-    private $sourceGUID = null;
-
-    /**
-     * Smartling API content package unique identifier
-     *
-     * @var string
-     */
-    private $fileUri = null;
-
-    /**
-     * Target locale
-     *
-     * @var string
-     */
-    private $targetLocale = null;
-
-    /**
-     * Id of linked blog to place the translation on 'download'
-     *
-     * @var integer
-     */
-    private $targetBlog = null;
-
-    /**
-     * unique identifier of target content
-     *
-     * @var string
-     */
-    private $targetGUID = null;
-
-    /**
-     * Submitter identity
-     *
-     * @var string
-     */
-    private $submitter = null;
-
-    /**
-     * Date and Time of submission
-     *
-     * @var string
-     */
-    private $submissionDate = null;
-
-    /**
-     * Count of words in source content
-     *
-     * @var integer
-     */
-    private $approvedStringCount = null;
-
-    /**
-     * Count of translated words
-     *
-     * @var integer
-     */
-    private $completedStringCount = null;
-
-    /**
-     * @var string
-     */
-    private $status = null;
-
-    /**
-     * @return string
-     */
-    public function getStatus ()
-    {
-        return $this->status;
-    }
-
-    /**
-     * @param string $status
-     */
-    public function setStatus ($status)
-    {
-        $this->status = $status;
-    }
-
-
-    /**
-     * @return int|null
-     */
-    public function getId ()
-    {
-        return $this->id;
-    }
-
-    /**
-     * @param int $id
-     */
-    public function setId ($id)
-    {
-        $this->id = (int) $id;
-    }
-
-    /**
-     * @return string
-     */
-    public function getSourceTitle ()
-    {
-        return $this->sourceTitle;
-    }
-
-    /**
-     * @param string $sourceTitle
-     */
-    public function setSourceTitle ($sourceTitle)
-    {
-        $this->sourceTitle = $sourceTitle;
-    }
-
-    /**
-     * @return int
-     */
-    public function getSourceBlog ()
-    {
-        return (int) $this->sourceBlog;
-    }
-
-    /**
-     * @param int $sourceBlog
-     */
-    public function setSourceBlog ($sourceBlog)
-    {
-        $this->sourceBlog = (int) $sourceBlog;
-    }
-
-    /**
-     * @return string
-     */
-    public function getSourceContentHash ()
-    {
-        return $this->sourceContentHash;
-    }
-
-    /**
-     * @param string $sourceContentHash
-     */
-    public function setSourceContentHash ($sourceContentHash)
-    {
-        $this->sourceContentHash = $sourceContentHash;
-    }
-
-    /**
-     * @return string
-     */
-    public function getContentType ()
-    {
-        return $this->contentType;
-    }
-
-    /**
-     * @param string $contentType
-     */
-    public function setContentType ($contentType)
-    {
-        $reverseMap = WordpressContentTypeHelper::getReverseMap();
-
-        if (in_array ($contentType, array_keys ($reverseMap))) {
-            $this->contentType = $reverseMap[$contentType];
-        } else {
-            $message = vsprintf ("Invalid content type. Got '%s', expected one of: %s",
-                array ($contentType, implode (',', $reverseMap)));
-
-            $this->logger->error ($message);
-
-            throw new \InvalidArgumentException($message);
-        }
-    }
-
-    /**
-     * @return string
-     */
-    public function getSourceGUID ()
-    {
-        return $this->sourceGUID;
-    }
-
-    /**
-     * @param string $sourceGUID
-     */
-    public function setSourceGUID ($sourceGUID)
-    {
-        $this->sourceGUID = $sourceGUID;
-    }
-
-    /**
-     * @return string
-     */
-    public function getFileUri ()
-    {
-        return $this->fileUri;
-    }
-
-    /**
-     * @param string $fileUri
-     */
-    public function setFileUri ($fileUri)
-    {
-        $this->fileUri = $fileUri;
-    }
-
-    /**
-     * @return string
-     */
-    public function getTargetLocale ()
-    {
-        return $this->targetLocale;
-    }
-
-    /**
-     * @param string $targetLocale
-     */
-    public function setTargetLocale ($targetLocale)
-    {
-        $this->targetLocale = $targetLocale;
-    }
-
-    /**
-     * @return int
-     */
-    public function getTargetBlog ()
-    {
-        return (int) $this->targetBlog;
-    }
-
-    /**
-     * @param int $targetBlog
-     */
-    public function setTargetBlog ($targetBlog)
-    {
-        $this->targetBlog = (int) $targetBlog;
-    }
-
-    /**
-     * @return string
-     */
-    public function getTargetGUID ()
-    {
-        return $this->targetGUID;
-    }
-
-    /**
-     * @param string $targetGUID
-     */
-    public function setTargetGUID ($targetGUID)
-    {
-        $this->targetGUID = $targetGUID;
-    }
-
-    /**
-     * @return string
-     */
-    public function getSubmitter ()
-    {
-        return $this->submitter;
-    }
-
-    /**
-     * @param string $submitter
-     */
-    public function setSubmitter ($submitter)
-    {
-        $this->submitter = $submitter;
-    }
-
-    /**
-     * @return string
-     */
-    public function getSubmissionDate ()
-    {
-        return $this->submissionDate;
-    }
-
-    /**
-     * @param string $submissionDate
-     */
-    public function setSubmissionDate ($submissionDate)
-    {
-        $this->submissionDate = $submissionDate;
-    }
-
-    /**
-     * @return int
-     */
-    public function getApprovedStringCount ()
-    {
-        return (int) $this->approvedStringCount;
-    }
-
-    /**
-     * @param int $approvedStringCount
-     */
-    public function setApprovedStringCount ($approvedStringCount)
-    {
-        $this->approvedStringCount = (int) $approvedStringCount;
-    }
-
-    /**
-     * @return int
-     */
-    public function getCompletedStringCount ()
-    {
-        return (int) $this->completedStringCount;
-    }
-
-    /**
-     * @param int $completedStringCount
-     */
-    public function setCompletedStringCount ($completedStringCount)
-    {
-        $this->completedStringCount = (int) $completedStringCount;
-    }
-
-    public function getCompletionPercentage ()
-    {
-        $percentage = 0;
-
-        if (0 != $this->getApprovedStringCount ()) {
-            $percentage = $this->getCompletedStringCount () / $this->getApprovedStringCount ();
-        }
-
-        if ($percentage > 1) {
-            $percentage = 1;
-        }
-
-        return (int) $percentage * 100;
-    }
+class SubmissionEntity {
+
+	/**
+	 * @var LoggerInterface
+	 */
+	private $logger = null;
+
+	/**
+	 * @var WordpressContentTypeHelper
+	 */
+	private $helper = null;
+
+	/**
+	 * @var array
+	 */
+	public static $fieldsDefinition = array (
+		'id'                   => 'INT UNSIGNED NOT NULL AUTO_INCREMENT',
+		'sourceTitle'          => 'VARCHAR(255) NOT NULL',
+		'sourceBlog'           => 'INT UNSIGNED NOT NULL',
+		'sourceContentHash'    => 'CHAR(32) NULL',
+		'contentType'          => 'VARCHAR(32) NOT NULL',
+		'sourceGUID'           => 'VARCHAR(255) NOT NULL',
+		'fileUri'              => 'VARCHAR(255) NOT NULL',
+		'targetLocale'         => 'VARCHAR(16) NOT NULL',
+		'targetBlog'           => 'INT UNSIGNED NOT NULL',
+		'targetGUID'           => 'VARCHAR(255) NOT NULL',
+		'submitter'            => 'VARCHAR(255) NOT NULL',
+		'submissionDate'       => 'INT UNSIGNED NOT NULL',
+		'approvedStringCount'  => 'INT UNSIGNED NOT NULL',
+		'completedStringCount' => 'INT UNSIGNED NOT NULL',
+		'status'               => 'VARCHAR(16) NOT NULL',
+	);
+
+	/**
+	 * @return array
+	 */
+	public static function getFieldLabels () {
+		return array (
+			'id'                  => __( 'ID' ),
+			'sourceTitle'         => __( 'Title' ),
+			'sourceBlog'          => __( 'Source Blog ID' ),
+			//'sourceContentHash'     => 'Content hash',
+			'contentType'         => __( 'Type' ),
+			'sourceGUID'          => __( 'Source URI' ),
+			'fileUri'             => __( 'Smartling File URI' ),
+			'targetLocale'        => __( 'Locale' ),
+			'targetBlog'          => __( 'Target Blog ID' ),
+			//'targetGUID'            => 'Target URI',
+			'submitter'           => __( 'Submitter' ),
+			'submissionDate'      => __( 'Submitted' ),
+			'approvedStringCount' => __( 'Approved Words' ),
+			'progress'            => __( 'Progress' ),
+			'status'              => __( 'Status' ),
+		);
+	}
+
+	/**
+	 * @var array
+	 */
+	public static $fieldsSortable = array (
+		'id',
+		'sourceTitle',
+		//'sourceBlog',
+		'contentType',
+		//'sourceGUID',
+		'fileUri',
+		'targetLocale',
+		//'targetBlog',
+		//'targetGUID',
+		'submitter',
+		'submissionDate',
+		'approvedStringCount',
+		//'completedStringCount',
+		'progress',
+		'status',
+	);
+
+	/**
+	 * @var array
+	 */
+	public static $indexes = array (
+		array (
+			'type'    => 'primary',
+			'columns' => array ( 'id' )
+		),
+		array (
+			'type'    => 'index',
+			'columns' => array ( 'contentType' )
+		),
+	);
+
+	/**
+	 * Magic wrapper for fields
+	 * may be used as virtual setter, e.g.:
+	 *      $object->contentType = $value
+	 * instead of
+	 *      $object->setContentType($value)
+	 *
+	 * @param string $key
+	 * @param mixed  $value
+	 */
+	public function __set ( $key, $value ) {
+		if ( in_array( $key, array_keys( self::$fieldsDefinition ) ) ) {
+
+			$setter = 'set' . ucfirst( $key );
+
+			$this->$setter( $value );
+		}
+	}
+
+	/**
+	 * Magic wrapper for fields
+	 * may be used as virtual setter, e.g.:
+	 *      $value = $object->contentType
+	 * instead of
+	 *      $value = $object->getContentType()
+	 *
+	 * @param string $key
+	 */
+	public function __get ( $key ) {
+		if ( in_array( $key, array_keys( self::$fieldsDefinition ) ) ) {
+
+			$getter = 'get' . ucfirst( $key );
+
+			return $this->$getter();
+		}
+	}
+
+	/**
+	 * Converts associative array to SubmissionEntity
+	 * array keys must match field names;
+	 *
+	 * @param array           $array
+	 * @param LoggerInterface $logger
+	 *
+	 * @return SubmissionEntity
+	 */
+	public static function fromArray ( array $array, LoggerInterface $logger ) {
+		$obj = new self( $logger );
+
+		foreach ( $array as $field => $value ) {
+			$obj->$field = $value;
+		}
+
+		return $obj;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function toArray () {
+		$arr = array ();
+
+
+		foreach ( array_keys( self::$fieldsDefinition ) as $field ) {
+			$arr[ $field ] = $this->$field;
+		}
+
+		$arr['progress'] = $this->getCompletionPercentage() . '%';
+
+		return $arr;
+	}
+
+	/**
+	 * Constructor
+	 *
+	 * @param LoggerInterface $logger
+	 */
+	public function __construct ( LoggerInterface $logger ) {
+		$this->logger = $logger;
+	}
+
+	/**
+	 * Submission unique id
+	 *
+	 * @var null|integer
+	 */
+	private $id = null;
+
+	/**
+	 * Submission Entity title
+	 *
+	 * @var string
+	 */
+	private $sourceTitle = null;
+
+	/**
+	 * Source content blog id
+	 *
+	 * @var integer
+	 */
+	private $sourceBlog = null;
+
+	/**
+	 * Hash of source content to find out if it is changed
+	 *
+	 * @var string
+	 */
+	private $sourceContentHash = null;
+
+	/**
+	 * ContentType as a constant from Smartling\Helpers\WordpressContentTypeHelper
+	 *
+	 * @var string
+	 */
+	private $contentType = null;
+
+	/**
+	 * unique identifier of source content
+	 *
+	 * @var string
+	 */
+	private $sourceGUID = null;
+
+	/**
+	 * Smartling API content package unique identifier
+	 *
+	 * @var string
+	 */
+	private $fileUri = null;
+
+	/**
+	 * Target locale
+	 *
+	 * @var string
+	 */
+	private $targetLocale = null;
+
+	/**
+	 * Id of linked blog to place the translation on 'download'
+	 *
+	 * @var integer
+	 */
+	private $targetBlog = null;
+
+	/**
+	 * unique identifier of target content
+	 *
+	 * @var string
+	 */
+	private $targetGUID = null;
+
+	/**
+	 * Submitter identity
+	 *
+	 * @var string
+	 */
+	private $submitter = null;
+
+	/**
+	 * Date and Time of submission
+	 *
+	 * @var string
+	 */
+	private $submissionDate = null;
+
+	/**
+	 * Count of words in source content
+	 *
+	 * @var integer
+	 */
+	private $approvedStringCount = null;
+
+	/**
+	 * Count of translated words
+	 *
+	 * @var integer
+	 */
+	private $completedStringCount = null;
+
+	/**
+	 * @var string
+	 */
+	private $status = null;
+
+	/**
+	 * @return string
+	 */
+	public function getStatus () {
+		return $this->status;
+	}
+
+	/**
+	 * @param string $status
+	 */
+	public function setStatus ( $status ) {
+		$this->status = $status;
+	}
+
+
+	/**
+	 * @return int|null
+	 */
+	public function getId () {
+		return $this->id;
+	}
+
+	/**
+	 * @param int $id
+	 */
+	public function setId ( $id ) {
+		$this->id = (int) $id;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getSourceTitle () {
+		return $this->sourceTitle;
+	}
+
+	/**
+	 * @param string $sourceTitle
+	 */
+	public function setSourceTitle ( $sourceTitle ) {
+		$this->sourceTitle = $sourceTitle;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getSourceBlog () {
+		return (int) $this->sourceBlog;
+	}
+
+	/**
+	 * @param int $sourceBlog
+	 */
+	public function setSourceBlog ( $sourceBlog ) {
+		$this->sourceBlog = (int) $sourceBlog;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getSourceContentHash () {
+		return $this->sourceContentHash;
+	}
+
+	/**
+	 * @param string $sourceContentHash
+	 */
+	public function setSourceContentHash ( $sourceContentHash ) {
+		$this->sourceContentHash = $sourceContentHash;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getContentType () {
+		return $this->contentType;
+	}
+
+	/**
+	 * @param string $contentType
+	 */
+	public function setContentType ( $contentType ) {
+		$reverseMap = WordpressContentTypeHelper::getReverseMap();
+
+		if ( in_array( $contentType, array_keys( $reverseMap ) ) ) {
+			$this->contentType = $reverseMap[ $contentType ];
+		} else {
+			$message = vsprintf( "Invalid content type. Got '%s', expected one of: %s",
+				array ( $contentType, implode( ',', $reverseMap ) ) );
+
+			$this->logger->error( $message );
+
+			throw new \InvalidArgumentException( $message );
+		}
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getSourceGUID () {
+		return $this->sourceGUID;
+	}
+
+	/**
+	 * @param string $sourceGUID
+	 */
+	public function setSourceGUID ( $sourceGUID ) {
+		$this->sourceGUID = $sourceGUID;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getFileUri () {
+		return $this->fileUri;
+	}
+
+	/**
+	 * @param string $fileUri
+	 */
+	public function setFileUri ( $fileUri ) {
+		$this->fileUri = $fileUri;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getTargetLocale () {
+		return $this->targetLocale;
+	}
+
+	/**
+	 * @param string $targetLocale
+	 */
+	public function setTargetLocale ( $targetLocale ) {
+		$this->targetLocale = $targetLocale;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getTargetBlog () {
+		return (int) $this->targetBlog;
+	}
+
+	/**
+	 * @param int $targetBlog
+	 */
+	public function setTargetBlog ( $targetBlog ) {
+		$this->targetBlog = (int) $targetBlog;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getTargetGUID () {
+		return $this->targetGUID;
+	}
+
+	/**
+	 * @param string $targetGUID
+	 */
+	public function setTargetGUID ( $targetGUID ) {
+		$this->targetGUID = $targetGUID;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getSubmitter () {
+		return $this->submitter;
+	}
+
+	/**
+	 * @param string $submitter
+	 */
+	public function setSubmitter ( $submitter ) {
+		$this->submitter = $submitter;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getSubmissionDate () {
+		return $this->submissionDate;
+	}
+
+	/**
+	 * @param string $submissionDate
+	 */
+	public function setSubmissionDate ( $submissionDate ) {
+		$this->submissionDate = $submissionDate;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getApprovedStringCount () {
+		return (int) $this->approvedStringCount;
+	}
+
+	/**
+	 * @param int $approvedStringCount
+	 */
+	public function setApprovedStringCount ( $approvedStringCount ) {
+		$this->approvedStringCount = (int) $approvedStringCount;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getCompletedStringCount () {
+		return (int) $this->completedStringCount;
+	}
+
+	/**
+	 * @param int $completedStringCount
+	 */
+	public function setCompletedStringCount ( $completedStringCount ) {
+		$this->completedStringCount = (int) $completedStringCount;
+	}
+
+	public function getCompletionPercentage () {
+		$percentage = 0;
+
+		if ( 0 != $this->getApprovedStringCount() ) {
+			$percentage = $this->getCompletedStringCount() / $this->getApprovedStringCount();
+		}
+
+		if ( $percentage > 1 ) {
+			$percentage = 1;
+		}
+
+		return (int) $percentage * 100;
+	}
 }

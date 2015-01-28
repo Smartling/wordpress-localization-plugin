@@ -74,7 +74,7 @@ class ConditionBuilder {
 	 *
 	 * @return string
 	 */
-	public static function buildBlock( $condition, $parameters ) {
+	public static function buildBlock ( $condition, $parameters ) {
 		if ( ! self::validate( $condition, $parameters ) ) {
 			throw new \InvalidArgumentException( 'Invalid condition or parameters' );
 		}
@@ -90,7 +90,7 @@ class ConditionBuilder {
 	 *
 	 * @return bool
 	 */
-	private static function validate( $condition, $parameters ) {
+	private static function validate ( $condition, $parameters ) {
 		return
 			self::validateCondition( $condition )
 			&& self::validateParametersCount( $condition, $parameters );
@@ -104,8 +104,8 @@ class ConditionBuilder {
 	 *
 	 * @return bool
 	 */
-	private static function validateParametersCount( $condition, $parameters ) {
-		return count( $parameters ) == preg_match_all( '|(%s)|ius', $condition );
+	private static function validateParametersCount ( $condition, $parameters ) {
+		return count( $parameters ) === preg_match_all( '|(%s)|ius', $condition );
 	}
 
 	/**
@@ -115,7 +115,7 @@ class ConditionBuilder {
 	 *
 	 * @return bool
 	 */
-	private static function validateCondition( $condition ) {
+	private static function validateCondition ( $condition ) {
 		$conditions = array (
 			self::CONDITION_SIGN_EQ,
 			self::CONDITION_SIGN_NOT_EQ,

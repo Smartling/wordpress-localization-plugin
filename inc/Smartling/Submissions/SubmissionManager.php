@@ -11,6 +11,11 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Helpers\WordpressContentTypeHelper;
 
+/**
+ * Class SubmissionManager
+ *
+ * @package Smartling\Submissions
+ */
 class SubmissionManager extends EntityManagerAbstract {
 
 	/**
@@ -57,7 +62,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	/**
 	 * @return array
 	 */
-	public function getSubmissionStatusLabels() {
+	public function getSubmissionStatusLabels () {
 		return array (
 			self::SUBMISSION_STATUS_NOT_TRANSLATED => __( self::SUBMISSION_STATUS_NOT_TRANSLATED ),
 			self::SUBMISSION_STATUS_NEW            => __( self::SUBMISSION_STATUS_NEW ),
@@ -70,14 +75,14 @@ class SubmissionManager extends EntityManagerAbstract {
 	/**
 	 * @return array
 	 */
-	public function getSubmissionStatuses() {
+	public function getSubmissionStatuses () {
 		return $this->submissionStatuses;
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getDefaultSubmissionStatus() {
+	public function getDefaultSubmissionStatus () {
 		return self::SUBMISSION_STATUS_IN_PROGRESS;
 	}
 
@@ -89,7 +94,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	/**
 	 * @return WordpressContentTypeHelper
 	 */
-	public function getHelper() {
+	public function getHelper () {
 		return $this->helper;
 	}
 
@@ -101,7 +106,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	/**
 	 * @return int
 	 */
-	public function getPageSize() {
+	public function getPageSize () {
 		return $this->pageSize;
 	}
 
@@ -109,7 +114,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	 * @param LoggerInterface                     $logger
 	 * @param SmartlingToCMSDatabaseAccessWrapper $dbal
 	 */
-	public function __construct( LoggerInterface $logger, SmartlingToCMSDatabaseAccessWrapper $dbal, $pageSize ) {
+	public function __construct ( LoggerInterface $logger, SmartlingToCMSDatabaseAccessWrapper $dbal, $pageSize ) {
 		parent::__construct( $logger, $dbal );
 		$this->pageSize = (int) $pageSize;
 	}
@@ -119,7 +124,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	 *
 	 * @return bool
 	 */
-	private function validateContentType( $contentType ) {
+	private function validateContentType ( $contentType ) {
 		return
 			is_null( $contentType )
 			|| in_array( $contentType, array_keys( WordpressContentTypeHelper::getReverseMap() ) );
@@ -130,7 +135,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	 *
 	 * @return array of SubmissionEntity or empty array
 	 */
-	private function fetchData( $query ) {
+	private function fetchData ( $query ) {
 		$results = array ();
 
 		$res = $this->dbal->fetch( $query );
@@ -153,7 +158,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	 *
 	 * @return bool
 	 */
-	private function validateRequest( $contentType, $sortOptions, $pageOptions ) {
+	private function validateRequest ( $contentType, $sortOptions, $pageOptions ) {
 		$fSortOptionsAreValid = QueryBuilder::validateSortOptions(
 			array_keys(
 				SubmissionEntity::$fieldsDefinition
@@ -190,7 +195,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	 *
 	 * e.g.: array('limit' => 20, 'page' => 1)
 	 */
-	public function getEntities(
+	public function getEntities (
 		$contentType = null,
 		$status = null,
 		$sortOptions = null,
@@ -206,9 +211,9 @@ class SubmissionManager extends EntityManagerAbstract {
 		if ( $validRequest ) {
 			$dataQuery = $this->buildQuery( $contentType, $status, $sortOptions, $pageOptions );
 
-			$countQuery = $this->buildCountQuery( $contentType, $status, $sortOptions );
+			$countQuery = $this->buildCountQuery( $contentType, $status );
 
-			$totalCount = $this->dbal->fetch($countQuery);
+			$totalCount = $this->dbal->fetch( $countQuery );
 
 			// extracting from result
 			$totalCount = (int) $totalCount[0]->cnt;
@@ -219,8 +224,53 @@ class SubmissionManager extends EntityManagerAbstract {
 		return $result;
 	}
 
-	public function search( $searchText ) {
+	public function search (
+		$searchText,
+		array $searchFields = array (),
+		$contentType = null,
+		$status = null,
+		$sortOptions,
+		$pageOptions,
+		& $totalCount
+	) {
 
+		$searchText = trim( $searchText );
+
+		$totalCount = 0;
+
+		$validRequest = ! empty( $searchFields ) && $this->validateRequest( $contentType, $sortOptions, $pageOptions );
+
+		$result = array ();
+
+		if ( $validRequest ) {
+
+			$searchText = "%{$searchText}%";
+
+			$block = ConditionBlock::getConditionBlock( ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR );
+
+			foreach ( $searchFields as $field ) {
+				$block->addCondition(
+					Condition::getCondition(
+						ConditionBuilder::CONDITION_SIGN_LIKE,
+						$field,
+						array ( $searchText )
+					)
+				);
+			}
+
+			$dataQuery = $this->buildQuery( $contentType, $status, $sortOptions, $pageOptions, $block );
+
+			$countQuery = $this->buildCountQuery( $contentType, $status, $block );
+
+			$totalCount = $this->dbal->fetch( $countQuery );
+
+			// extracting from result
+			$totalCount = (int) $totalCount[0]->cnt;
+
+			$result = $this->fetchData( $dataQuery );
+		}
+
+		return $result;
 	}
 
 	/**
@@ -231,7 +281,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	 *
 	 * @return null|SubmissionEntity
 	 */
-	public function getEntityById( $id ) {
+	public function getEntityById ( $id ) {
 		$query = $this->buildSelectQuery(
 			self::SUBMISSIONS_TABLE_NAME,
 			array_keys( SubmissionEntity::$fieldsDefinition ),
@@ -249,28 +299,34 @@ class SubmissionManager extends EntityManagerAbstract {
 		return $obj;
 	}
 
-	public function buildCountQuery( $contentType, $status, $sortOptions ) {
+	public function buildCountQuery ( $contentType, $status, ConditionBlock $baseCondition = null ) {
 
-		$whereOptions = ( ! is_null( $contentType ) || ! is_null( $status ) )
-			? ConditionBlock::getConditionBlock( ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND )
-			: null;
+		$whereOptions = null;
 
-		if ( ! is_null( $contentType ) ) {
-			$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'contentType',
-				array ( $contentType ) );
-			$whereOptions->addCondition( $condition );
-		}
+		if ( ! is_null( $contentType ) || ! is_null( $status ) ) {
+			$whereOptions = ConditionBlock::getConditionBlock( ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND );
+			if ( $baseCondition instanceof ConditionBlock ) {
+				$whereOptions->addConditionBlock( $baseCondition );
+			}
 
-		if ( ! is_null( $status ) ) {
-			$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'status', array ( $status ) );
-			$whereOptions->addCondition( $condition );
+			if ( ! is_null( $contentType ) ) {
+				$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'contentType',
+					array ( $contentType ) );
+				$whereOptions->addCondition( $condition );
+			}
+
+			if ( ! is_null( $status ) ) {
+				$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'status',
+					array ( $status ) );
+				$whereOptions->addCondition( $condition );
+			}
 		}
 
 		$query = QueryBuilder::buildSelectQuery(
 			$this->dbal->completeTableName( self::SUBMISSIONS_TABLE_NAME ),
-			array(array('COUNT(*)', 'cnt')),
+			array ( array ( 'COUNT(*)', 'cnt' ) ),
 			$whereOptions,
-			$sortOptions,
+			array (),
 			null
 		);
 
@@ -282,28 +338,42 @@ class SubmissionManager extends EntityManagerAbstract {
 	/**
 	 * Builds SELECT query for Submissions
 	 *
-	 * @param string     $contentType
-	 * @param string     $status
-	 * @param array|null $sortOptions
-	 * @param array|null $pageOptions
+	 * @param string         $contentType
+	 * @param string         $status
+	 * @param array|null     $sortOptions
+	 * @param array|null     $pageOptions
+	 *
+	 * @param ConditionBlock $baseCondition
 	 *
 	 * @return string
 	 */
-	private function buildQuery( $contentType, $status, $sortOptions, $pageOptions ) {
+	private function buildQuery (
+		$contentType,
+		$status,
+		$sortOptions,
+		$pageOptions,
+		ConditionBlock $baseCondition = null
+	) {
 
-		$whereOptions = ( ! is_null( $contentType ) || ! is_null( $status ) )
-			? ConditionBlock::getConditionBlock( ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND )
-			: null;
+		$whereOptions = null;
 
-		if ( ! is_null( $contentType ) ) {
-			$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'contentType',
-				array ( $contentType ) );
-			$whereOptions->addCondition( $condition );
-		}
+		if ( ! is_null( $contentType ) || ! is_null( $status ) ) {
+			$whereOptions = ConditionBlock::getConditionBlock( ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND );
+			if ( $baseCondition instanceof ConditionBlock ) {
+				$whereOptions->addConditionBlock( $baseCondition );
+			}
 
-		if ( ! is_null( $status ) ) {
-			$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'status', array ( $status ) );
-			$whereOptions->addCondition( $condition );
+			if ( ! is_null( $contentType ) ) {
+				$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'contentType',
+					array ( $contentType ) );
+				$whereOptions->addCondition( $condition );
+			}
+
+			if ( ! is_null( $status ) ) {
+				$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'status',
+					array ( $status ) );
+				$whereOptions->addCondition( $condition );
+			}
 		}
 
 		$query = QueryBuilder::buildSelectQuery(
@@ -319,14 +389,14 @@ class SubmissionManager extends EntityManagerAbstract {
 		return $query;
 	}
 
-	public function getColumnsLabels() {
+	public function getColumnsLabels () {
 		return SubmissionEntity::getFieldLabels();
 	}
 
-	public function getSortableFields() {
+	public function getSortableFields () {
 		return SubmissionEntity::$fieldsSortable;
 	}
 
-	public function storeEntity( SubmissionEntity $entity ) {
+	public function storeEntity ( SubmissionEntity $entity ) {
 	}
 }

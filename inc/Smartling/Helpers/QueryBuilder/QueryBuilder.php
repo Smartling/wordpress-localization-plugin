@@ -37,7 +37,7 @@ class QueryBuilder {
 	 * @throws \InvalidArgumentException
 	 * @return bool
 	 */
-	public static function validateSortOptions( array $fieldNames, array $sortOptions = array () ) {
+	public static function validateSortOptions ( array $fieldNames, array $sortOptions = array () ) {
 		if ( ! is_array( $sortOptions ) ) {
 			throw new \InvalidArgumentException(
 				'Sorting options MUST always be an array',
@@ -81,7 +81,7 @@ class QueryBuilder {
 	 *
 	 * @return bool true or false
 	 */
-	public static function validatePageOptions( $pageOptions ) {
+	public static function validatePageOptions ( $pageOptions ) {
 		$valid = null;
 
 		switch ( true ) {
@@ -130,7 +130,7 @@ class QueryBuilder {
 	 *
 	 * @return string
 	 */
-	public static function buildSelectQuery(
+	public static function buildSelectQuery (
 		$tableName,
 		$fieldsList,
 		ConditionBlock $conditions = null,
@@ -138,7 +138,7 @@ class QueryBuilder {
 		$pageOptions
 	) {
 
-		$fieldsString = self::buildFieldListString($fieldsList);
+		$fieldsString = self::buildFieldListString( $fieldsList );
 
 		$query = vsprintf(
 			"SELECT %s FROM %s",
@@ -159,28 +159,96 @@ class QueryBuilder {
 		return $query;
 	}
 
+	/**
+	 * @param                $tableName
+	 * @param ConditionBlock $conditions
+	 * @param null           $pageOptions
+	 *
+	 * @return string
+	 */
+	public static function buildDeleteQuery ( $tableName, ConditionBlock $conditions = null, $pageOptions = null ) {
+		$query = vsprintf( 'DELETE FROM %s', array ( self::escapeName( $tableName ) ) );
+
+		if ( $conditions instanceof ConditionBlock ) {
+			$query .= vsprintf( ' WHERE %s', array ( (string) $conditions ) );
+		}
+
+		$query .= self::buildLimitSubQuery( $pageOptions, true );
+
+		return $query;
+	}
+
+	/**
+	 * @param                $tableName
+	 * @param array          $fieldValueList
+	 * @param ConditionBlock $conditions
+	 * @param null           $pageOptions
+	 *
+	 * @return string
+	 */
+	public static function buildUpdateQuery (
+		$tableName,
+		array $fieldValueList,
+		ConditionBlock $conditions = null,
+		$pageOptions = null
+	) {
+		$template = 'UPDATE %s SET %s';
+
+		$query = vsprintf( $template, array (
+			self::escapeName( $tableName ),
+			self::buildAssignmentSubQuery( $fieldValueList )
+		) );
+
+		if ( $conditions instanceof ConditionBlock ) {
+			$query .= vsprintf( ' WHERE %s', array ( (string) $conditions ) );
+		}
+
+		if ( null !== $pageOptions ) {
+			$query .= self::buildLimitSubQuery( $pageOptions, true );
+		}
+
+		return $query;
+	}
+
+	/**
+	 * @param string $tableName
+	 * @param array  $fieldValueList
+	 *
+	 * @return string
+	 */
+	public static function buildInsertQuery ( $tableName, array $fieldValueList ) {
+		$template = 'INSERT INTO %s (%s) VALUES (%s)';
+
+		$query = vsprintf( $template, array (
+			self::escapeName( $tableName ),
+			self::buildFieldListString( array_keys( $fieldValueList ) ),
+			implode( ',', array_map( function ( $item ) {
+				return "'{$item}'";
+			}, self::escapeValues( array_values( $fieldValueList ) ) ) )
+		) );
+
+		return $query;
+	}
 
 	/**
 	 * @param array $fieldList
 	 *
 	 * @return string
 	 */
-	private static function buildFieldListString(array $fieldList )
-	{
-		$prebuild = array();
+	public static function buildFieldListString ( array $fieldList ) {
+		$prebuild = array ();
 
-		foreach ($fieldList as $field)
-		{
-			if (is_array($field)) {
-				$fld = reset($field);
-				$alias = end($field);
-				$prebuild[] = self::escapeName($fld) . ' AS ' . self::escapeName($alias);
+		foreach ( $fieldList as $field ) {
+			if ( is_array( $field ) ) {
+				$fld        = reset( $field );
+				$alias      = end( $field );
+				$prebuild[] = self::escapeName( $fld ) . ' AS ' . self::escapeName( $alias );
 			} else {
-				$prebuild[] = self::escapeName($field);
+				$prebuild[] = self::escapeName( $field );
 			}
 		}
 
-		return implode(', ', $prebuild);
+		return implode( ', ', $prebuild );
 	}
 
 	/**
@@ -188,7 +256,7 @@ class QueryBuilder {
 	 *
 	 * @return string
 	 */
-	private static function buildSortSubQuery( array  $sortOptions ) {
+	private static function buildSortSubQuery ( array  $sortOptions ) {
 		$part = '';
 
 		if ( ! empty( $sortOptions ) ) {
@@ -205,23 +273,70 @@ class QueryBuilder {
 	}
 
 	/**
-	 * @param $pageOptions
+	 * @param array $pageOptions
+	 * @param bool  $ignorePage (for update|delete purposes)
 	 *
 	 * @return string
 	 */
-	private static function buildLimitSubQuery( $pageOptions ) {
+	private static function buildLimitSubQuery ( $pageOptions, $ignorePage = false ) {
 		$part = '';
 
-		if ( ! is_null( $pageOptions ) ) {
-
+		if ( null !== $pageOptions ) {
 			$limit = (int) $pageOptions['limit'];
-
-			$offset = ( ( (int) $pageOptions['page'] ) - 1 ) * $limit;
-
-			$part .= vsprintf( ' LIMIT %d,%d', array ( $offset, $limit ) );
+			if ( true === $ignorePage ) {
+				$part .= vsprintf( ' LIMIT %d', array ( $limit ) );
+			} else {
+				$offset = ( ( (int) $pageOptions['page'] ) - 1 ) * $limit;
+				$part .= vsprintf( ' LIMIT %d,%d', array ( $offset, $limit ) );
+			}
 		}
 
 		return $part;
+	}
+
+	/**
+	 * @param array $fieldValueList
+	 *
+	 * @return string
+	 */
+	private static function buildAssignmentSubQuery ( array $fieldValueList ) {
+		$subQueryParts = array ();
+
+		foreach ( $fieldValueList as $column => $value ) {
+			$subQueryParts[] = vsprintf( '%s = %s',
+				array ( self::escapeName( $column ), self::escapeValue( $value ) ) );
+		}
+
+		return implode( ', ', $subQueryParts );
+
+	}
+
+	/**
+	 * Escapes a value to be safe for SQL
+	 *
+	 * @param $value
+	 *
+	 * @return string
+	 */
+	public static function escapeValue ( $value ) {
+		return addslashes( trim( $value ) );
+	}
+
+	/**
+	 * Escapes an array of values to be safe for SQL
+	 *
+	 * @param array $values
+	 *
+	 * @return array
+	 */
+	public static function escapeValues ( array $values ) {
+		$result = array ();
+
+		foreach ( $values as $value ) {
+			$result[] = self::escapeValue( $value );
+		}
+
+		return $result;
 	}
 
 	/**
@@ -231,23 +346,20 @@ class QueryBuilder {
 	 *
 	 * @return string
 	 */
-	public static function escapeName( $fieldName ) {
-		$tmp = strtolower(trim($fieldName));
+	public static function escapeName ( $fieldName ) {
+		$tmp = strtolower( trim( $fieldName ) );
 
 		$is_function = false;
 
-		foreach (self::$sqlFunctionNames as $functionName) {
-			$pos = strpos($tmp, $functionName . '(');
+		foreach ( self::$sqlFunctionNames as $functionName ) {
+			$pos = strpos( $tmp, $functionName . '(' );
 
-			if (false !== $pos && 0 == $pos) {
+			if ( false !== $pos && 0 == $pos ) {
 				$is_function = true;
 				break;
 			}
 		}
 
-
 		return $is_function ? $fieldName : "`{$fieldName}`";
 	}
-
-
 }

@@ -29,7 +29,7 @@ class ConditionBlock {
 	 *
 	 * @return ConditionBlock
 	 */
-	public static function getConditionBlock( $conditionOperator ) {
+	public static function getConditionBlock ( $conditionOperator = ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND) {
 		return new self( $conditionOperator );
 	}
 
@@ -38,7 +38,7 @@ class ConditionBlock {
 	 *
 	 * @param $conditionOperator
 	 */
-	public function __construct( $conditionOperator ) {
+	public function __construct ( $conditionOperator ) {
 		if ( ! $this->validateOperator( $conditionOperator ) ) {
 			throw new \InvalidArgumentException( 'Invalid operator' );
 		}
@@ -51,7 +51,7 @@ class ConditionBlock {
 	 *
 	 * @return bool
 	 */
-	private function validateOperator( $operator ) {
+	private function validateOperator ( $operator ) {
 		$validOperators = array (
 			ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR,
 			ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND
@@ -65,7 +65,7 @@ class ConditionBlock {
 	 *
 	 * @param Condition $condition
 	 */
-	public function addCondition( Condition $condition ) {
+	public function addCondition ( Condition $condition ) {
 		$this->conditions[] = $condition;
 	}
 
@@ -74,7 +74,7 @@ class ConditionBlock {
 	 *
 	 * @param ConditionBlock $block
 	 */
-	public function addConditionBlock( ConditionBlock $block ) {
+	public function addConditionBlock ( ConditionBlock $block ) {
 		$this->blocks[] = $block;
 	}
 
@@ -83,7 +83,7 @@ class ConditionBlock {
 	 *
 	 * @return string
 	 */
-	public function __toString() {
+	public function __toString () {
 		$preRendered = array ();
 
 		foreach ( $this->conditions as $condition ) {

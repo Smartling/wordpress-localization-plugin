@@ -43,7 +43,7 @@ class ArrayHelper {
 	 *
 	 * @return array the array representation of the object
 	 */
-	public static function toArray( $object, $properties = array (), $recursive = true ) {
+	public static function toArray ( $object, $properties = array (), $recursive = true ) {
 		if ( is_array( $object ) ) {
 			if ( $recursive ) {
 				foreach ( $object as $key => $value ) {
@@ -100,7 +100,7 @@ class ArrayHelper {
 	 *
 	 * @return array the merged array (the original arrays are not changed.)
 	 */
-	public static function merge( $a, $b ) {
+	public static function merge ( $a, $b ) {
 		$args = func_get_args();
 		$res  = array_shift( $args );
 		while ( ! empty( $args ) ) {
@@ -159,7 +159,7 @@ class ArrayHelper {
 	 *
 	 * @return mixed the value of the element if found, default value otherwise
 	 */
-	public static function getValue( $array, $key, $default = null ) {
+	public static function getValue ( $array, $key, $default = null ) {
 		if ( $key instanceof \Closure ) {
 			return $key( $array, $default );
 		}
@@ -202,7 +202,7 @@ class ArrayHelper {
 	 *
 	 * @return mixed|null the value of the element if found, default value otherwise
 	 */
-	public static function remove( &$array, $key, $default = null ) {
+	public static function remove ( &$array, $key, $default = null ) {
 		if ( is_array( $array ) && ( isset( $array[ $key ] ) || array_key_exists( $key, $array ) ) ) {
 			$value = $array[ $key ];
 			unset( $array[ $key ] );
@@ -247,7 +247,7 @@ class ArrayHelper {
 	 *
 	 * @return array the indexed array
 	 */
-	public static function index( $array, $key ) {
+	public static function index ( $array, $key ) {
 		$result = array ();
 		foreach ( $array as $element ) {
 			$value            = static::getValue( $element, $key );
@@ -284,7 +284,7 @@ class ArrayHelper {
 	 *
 	 * @return array the list of column values
 	 */
-	public static function getColumn( $array, $name, $keepKeys = true ) {
+	public static function getColumn ( $array, $name, $keepKeys = true ) {
 		$result = array ();
 		if ( $keepKeys ) {
 			foreach ( $array as $k => $element ) {
@@ -341,7 +341,7 @@ class ArrayHelper {
 	 *
 	 * @return array
 	 */
-	public static function map( $array, $from, $to, $group = null ) {
+	public static function map ( $array, $from, $to, $group = null ) {
 		$result = array ();
 		foreach ( $array as $element ) {
 			$key   = static::getValue( $element, $from );
@@ -367,7 +367,7 @@ class ArrayHelper {
 	 *
 	 * @return boolean whether the array contains the specified key
 	 */
-	public static function keyExists( $key, $array, $caseSensitive = true ) {
+	public static function keyExists ( $key, $array, $caseSensitive = true ) {
 		if ( $caseSensitive ) {
 			return array_key_exists( $key, $array );
 		} else {
@@ -404,7 +404,7 @@ class ArrayHelper {
 	 * @throws \InvalidArgumentException if the $direction or $sortFlag parameters do not have
 	 * correct number of elements as that of $key.
 	 */
-	public static function multisort( &$array, $key, $direction = SORT_ASC, $sortFlag = SORT_REGULAR ) {
+	public static function multisort ( &$array, $key, $direction = SORT_ASC, $sortFlag = SORT_REGULAR ) {
 		$keys = is_array( $key ) ? $key : array ( $key );
 		if ( empty( $keys ) || empty( $array ) ) {
 			return;
@@ -446,7 +446,7 @@ class ArrayHelper {
 	 * @return array the encoded data
 	 * @see http://www.php.net/manual/en/function.htmlspecialchars.php
 	 */
-	public static function htmlEncode( $data, $valuesOnly = true, $charset = 'UTF-8' ) {
+	public static function htmlEncode ( $data, $valuesOnly = true, $charset = 'UTF-8' ) {
 		if ( $charset === null ) {
 			$charset = 'UTF-8';
 		}
@@ -480,7 +480,7 @@ class ArrayHelper {
 	 * @return array the decoded data
 	 * @see http://www.php.net/manual/en/function.htmlspecialchars-decode.php
 	 */
-	public static function htmlDecode( $data, $valuesOnly = true ) {
+	public static function htmlDecode ( $data, $valuesOnly = true ) {
 		$d = array ();
 		foreach ( $data as $key => $value ) {
 			if ( ! $valuesOnly && is_string( $key ) ) {
@@ -512,7 +512,7 @@ class ArrayHelper {
 	 *
 	 * @return boolean whether the array is associative
 	 */
-	public static function isAssociative( $array, $allStrings = true ) {
+	public static function isAssociative ( $array, $allStrings = true ) {
 		if ( ! is_array( $array ) || empty( $array ) ) {
 			return false;
 		}
@@ -550,7 +550,7 @@ class ArrayHelper {
 	 *
 	 * @return boolean whether the array is associative
 	 */
-	public static function isIndexed( $array, $consecutive = false ) {
+	public static function isIndexed ( $array, $consecutive = false ) {
 		if ( ! is_array( $array ) ) {
 			return false;
 		}

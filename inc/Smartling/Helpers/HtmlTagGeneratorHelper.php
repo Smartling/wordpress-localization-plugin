@@ -70,7 +70,7 @@ class HtmlTagGeneratorHelper {
 	 * @see decode()
 	 * @see http://www.php.net/manual/en/function.htmlspecialchars.php
 	 */
-	public static function encode( $content, $doubleEncode = true ) {
+	public static function encode ( $content, $doubleEncode = true ) {
 		return htmlspecialchars( $content, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8', $doubleEncode );
 	}
 
@@ -84,7 +84,7 @@ class HtmlTagGeneratorHelper {
 	 * @see encode()
 	 * @see http://www.php.net/manual/en/function.htmlspecialchars-decode.php
 	 */
-	public static function decode( $content ) {
+	public static function decode ( $content ) {
 		return htmlspecialchars_decode( $content, ENT_QUOTES );
 	}
 
@@ -109,7 +109,7 @@ class HtmlTagGeneratorHelper {
 	 * @see beginTag()
 	 * @see endTag()
 	 */
-	public static function tag( $name, $content = '', $options = array () ) {
+	public static function tag ( $name, $content = '', $options = array () ) {
 		$html = "<$name" . static::renderTagAttributes( $options ) . '>';
 
 		return isset( static::$voidElements[ strtolower( $name ) ] ) ? $html : "$html$content</$name>";
@@ -128,7 +128,7 @@ class HtmlTagGeneratorHelper {
 	 * @see endTag()
 	 * @see tag()
 	 */
-	public static function beginTag( $name, $options = array () ) {
+	public static function beginTag ( $name, $options = array () ) {
 		return "<$name" . static::renderTagAttributes( $options ) . '>';
 	}
 
@@ -141,7 +141,7 @@ class HtmlTagGeneratorHelper {
 	 * @see beginTag()
 	 * @see tag()
 	 */
-	public static function endTag( $name ) {
+	public static function endTag ( $name ) {
 		return "</$name>";
 	}
 
@@ -161,7 +161,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated mailto link
 	 */
-	public static function mailto( $text, $email = null, $options = array () ) {
+	public static function mailto ( $text, $email = null, $options = array () ) {
 		$options['href'] = 'mailto:' . ( $email === null ? $text : $email );
 
 		return static::tag( 'a', $text, $options );
@@ -182,7 +182,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated label tag
 	 */
-	public static function label( $content, $for = null, $options = array () ) {
+	public static function label ( $content, $for = null, $options = array () ) {
 		$options['for'] = $for;
 
 		return static::tag( 'label', $content, $options );
@@ -201,7 +201,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated button tag
 	 */
-	public static function button( $content = 'Button', $options = array () ) {
+	public static function button ( $content = 'Button', $options = array () ) {
 		if ( ! isset( $options['type'] ) ) {
 			$options['type'] = 'button';
 		}
@@ -222,7 +222,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated submit button tag
 	 */
-	public static function submitButton( $content = 'Submit', $options = array () ) {
+	public static function submitButton ( $content = 'Submit', $options = array () ) {
 		$options['type'] = 'submit';
 
 		return static::button( $content, $options );
@@ -241,7 +241,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated reset button tag
 	 */
-	public static function resetButton( $content = 'Reset', $options = array () ) {
+	public static function resetButton ( $content = 'Reset', $options = array () ) {
 		$options['type'] = 'reset';
 
 		return static::button( $content, $options );
@@ -260,7 +260,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated input tag
 	 */
-	public static function input( $type, $name = null, $value = null, $options = array () ) {
+	public static function input ( $type, $name = null, $value = null, $options = array () ) {
 		$options['type']  = $type;
 		$options['name']  = $name;
 		$options['value'] = $value === null ? null : (string) $value;
@@ -279,7 +279,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated button tag
 	 */
-	public static function buttonInput( $label = 'Button', $options = array () ) {
+	public static function buttonInput ( $label = 'Button', $options = array () ) {
 		$options['type']  = 'button';
 		$options['value'] = $label;
 
@@ -297,7 +297,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated button tag
 	 */
-	public static function submitInput( $label = 'Submit', $options = array () ) {
+	public static function submitInput ( $label = 'Submit', $options = array () ) {
 		$options['type']  = 'submit';
 		$options['value'] = $label;
 
@@ -314,7 +314,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated button tag
 	 */
-	public static function resetInput( $label = 'Reset', $options = array () ) {
+	public static function resetInput ( $label = 'Reset', $options = array () ) {
 		$options['type']  = 'reset';
 		$options['value'] = $label;
 
@@ -333,7 +333,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated text input tag
 	 */
-	public static function textInput( $name, $value = null, $options = array () ) {
+	public static function textInput ( $name, $value = null, $options = array () ) {
 		return static::input( 'text', $name, $value, $options );
 	}
 
@@ -349,7 +349,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated hidden input tag
 	 */
-	public static function hiddenInput( $name, $value = null, $options = array () ) {
+	public static function hiddenInput ( $name, $value = null, $options = array () ) {
 		return static::input( 'hidden', $name, $value, $options );
 	}
 
@@ -365,7 +365,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated password input tag
 	 */
-	public static function passwordInput( $name, $value = null, $options = array () ) {
+	public static function passwordInput ( $name, $value = null, $options = array () ) {
 		return static::input( 'password', $name, $value, $options );
 	}
 
@@ -382,7 +382,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated text area tag
 	 */
-	public static function textarea( $name, $value = '', $options = array () ) {
+	public static function textarea ( $name, $value = '', $options = array () ) {
 		$options['name'] = $name;
 
 		return static::tag( 'textarea', static::encode( $value ), $options );
@@ -412,7 +412,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated radio button tag
 	 */
-	public static function radio( $name, $checked = false, $options = array () ) {
+	public static function radio ( $name, $checked = false, $options = array () ) {
 		$options['checked'] = (bool) $checked;
 		$value              = array_key_exists( 'value', $options ) ? $options['value'] : '1';
 		if ( isset( $options['uncheck'] ) ) {
@@ -458,7 +458,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated checkbox tag
 	 */
-	public static function checkbox( $name, $checked = false, $options = array () ) {
+	public static function checkbox ( $name, $checked = false, $options = array () ) {
 		$options['checked'] = (bool) $checked;
 		$value              = array_key_exists( 'value', $options ) ? $options['value'] : '1';
 		if ( isset( $options['uncheck'] ) ) {
@@ -520,7 +520,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated drop-down list tag
 	 */
-	public static function dropDownList( $name, $selection = null, $items = array (), $options = array () ) {
+	public static function dropDownList ( $name, $selection = null, $items = array (), $options = array () ) {
 		if ( ! empty( $options['multiple'] ) ) {
 			return static::listBox( $name, $selection, $items, $options );
 		}
@@ -573,7 +573,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated list box tag
 	 */
-	public static function listBox( $name, $selection = null, $items = array (), $options = array () ) {
+	public static function listBox ( $name, $selection = null, $items = array (), $options = array () ) {
 		if ( ! array_key_exists( 'size', $options ) ) {
 			$options['size'] = 4;
 		}
@@ -631,7 +631,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated checkbox list
 	 */
-	public static function checkboxList( $name, $selection = null, $items = array (), $options = array () ) {
+	public static function checkboxList ( $name, $selection = null, $items = array (), $options = array () ) {
 		if ( substr( $name, - 2 ) !== '[]' ) {
 			$name .= '[]';
 		}
@@ -704,7 +704,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated radio button list
 	 */
-	public static function radioList( $name, $selection = null, $items = array (), $options = array () ) {
+	public static function radioList ( $name, $selection = null, $items = array (), $options = array () ) {
 		$encode      = ! isset( $options['encode'] ) || $options['encode'];
 		$formatter   = isset( $options['item'] ) ? $options['item'] : null;
 		$itemOptions = isset( $options['itemOptions'] ) ? $options['itemOptions'] : array ();
@@ -766,7 +766,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated unordered list. An empty list tag will be returned if `$items` is empty.
 	 */
-	public static function ul( $items, $options = array () ) {
+	public static function ul ( $items, $options = array () ) {
 		$tag         = isset( $options['tag'] ) ? $options['tag'] : 'ul';
 		$encode      = ! isset( $options['encode'] ) || $options['encode'];
 		$formatter   = isset( $options['item'] ) ? $options['item'] : null;
@@ -816,7 +816,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated ordered list. An empty string is returned if `$items` is empty.
 	 */
-	public static function ol( $items, $options = array () ) {
+	public static function ol ( $items, $options = array () ) {
 		$options['tag'] = 'ol';
 
 		return static::ul( $items, $options );
@@ -844,7 +844,7 @@ class HtmlTagGeneratorHelper {
 	 *
 	 * @return string the generated list options
 	 */
-	public static function renderSelectOptions( $selection, $items, &$tagOptions = array () ) {
+	public static function renderSelectOptions ( $selection, $items, &$tagOptions = array () ) {
 		$lines        = array ();
 		$encodeSpaces = ArrayHelper::remove( $tagOptions, 'encodeSpaces', false );
 		if ( isset( $tagOptions['prompt'] ) ) {
@@ -862,9 +862,10 @@ class HtmlTagGeneratorHelper {
 			if ( is_array( $value ) ) {
 				$groupAttrs          = isset( $groups[ $key ] ) ? $groups[ $key ] : array ();
 				$groupAttrs['label'] = $key;
-				$attrs               = array ( 'options'      => $options,
-				                               'groups'       => $groups,
-				                               'encodeSpaces' => $encodeSpaces
+				$attrs               = array (
+					'options'      => $options,
+					'groups'       => $groups,
+					'encodeSpaces' => $encodeSpaces
 				);
 				$content             = static::renderSelectOptions( $selection, $value, $attrs );
 				$lines[]             = static::tag( 'optgroup', "\n" . $content . "\n", $groupAttrs );
@@ -907,7 +908,7 @@ class HtmlTagGeneratorHelper {
 	 * into a string with a leading white space (so that it can be directly appended to the tag name
 	 * in a tag. If there is no attribute, an empty string will be returned.
 	 */
-	public static function renderTagAttributes( $attributes ) {
+	public static function renderTagAttributes ( $attributes ) {
 		if ( count( $attributes ) > 1 ) {
 			$sorted = array ();
 			foreach ( static::$attributeOrder as $name ) {
@@ -947,7 +948,7 @@ class HtmlTagGeneratorHelper {
 	 * @param array  $options the options to be modified.
 	 * @param string $class   the CSS class to be added
 	 */
-	public static function addCssClass( &$options, $class ) {
+	public static function addCssClass ( &$options, $class ) {
 		if ( isset( $options['class'] ) ) {
 			$classes = ' ' . $options['class'] . ' ';
 			if ( strpos( $classes, ' ' . $class . ' ' ) === false ) {
@@ -964,7 +965,7 @@ class HtmlTagGeneratorHelper {
 	 * @param array  $options the options to be modified.
 	 * @param string $class   the CSS class to be removed
 	 */
-	public static function removeCssClass( &$options, $class ) {
+	public static function removeCssClass ( &$options, $class ) {
 		if ( isset( $options['class'] ) ) {
 			$classes = array_unique( preg_split( '/\s+/', $options['class'] . ' ' . $class, - 1,
 				PREG_SPLIT_NO_EMPTY ) );
@@ -998,7 +999,7 @@ class HtmlTagGeneratorHelper {
 	 * @return string the attribute name without prefix and suffix.
 	 * @throws \InvalidArgumentException if the attribute name contains non-word characters.
 	 */
-	public static function getAttributeName( $attribute ) {
+	public static function getAttributeName ( $attribute ) {
 		if ( preg_match( '/(^|.*\])([\w\.]+)(\[.*|$)/', $attribute, $matches ) ) {
 			return $matches[2];
 		} else {

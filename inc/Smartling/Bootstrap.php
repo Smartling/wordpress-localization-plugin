@@ -12,176 +12,172 @@ use Smartling\Exception\SmartlingConfigException;
 
 class Bootstrap {
 
-    /**
-     * @var ContainerBuilder $container
-     */
-    private static $_container = null;
+	/**
+	 * @var ContainerBuilder $container
+	 */
+	private static $_container = null;
 
-    /**
-     * @var LoggerInterface
-     */
-    private static $_logger = null;
+	/**
+	 * @var LoggerInterface
+	 */
+	private static $_logger = null;
 
-    /**
-     * @return LoggerInterface
-     * @throws \Exception
-     */
-    public static function getLogger()
-    {
-        $object = self::getContainer()->get('logger');
+	/**
+	 * @return LoggerInterface
+	 * @throws \Exception
+	 */
+	public static function getLogger () {
+		$object = self::getContainer()->get( 'logger' );
 
-        if ($object instanceof LoggerInterface)
-        {
-            return $object;
-        } else {
-            $message = "Something went wrong with initialization of DI Container and logger cannot be retrieved.";
-            throw new \Exception($message);
-        }
-    }
+		if ( $object instanceof LoggerInterface ) {
+			return $object;
+		} else {
+			$message = "Something went wrong with initialization of DI Container and logger cannot be retrieved.";
+			throw new \Exception( $message );
+		}
+	}
 
 
-    /**
-     * Initializes DI Container from YAML config file
-     * @throws SmartlingConfigException
-     */
-    protected static function _initContainer()
-    {
-        $container = new ContainerBuilder();
+	/**
+	 * Initializes DI Container from YAML config file
+	 *
+	 * @throws SmartlingConfigException
+	 */
+	protected static function _initContainer () {
+		$container = new ContainerBuilder();
 
-        self::setCoreParameters($container);
+		self::setCoreParameters( $container );
 
-        $configDir = SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . 'inc';
+		$configDir = SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . 'inc';
 
-        $fileLocator = new FileLocator($configDir);
+		$fileLocator = new FileLocator( $configDir );
 
-        $loader = new YamlFileLoader($container, $fileLocator);
+		$loader = new YamlFileLoader( $container, $fileLocator );
 
-        try {
-            $loader->load('services.yml');
-        } catch (\Exception $e) {
-            throw new SmartlingConfigException('Error in YAML configuration file', 0, $e);
-        }
+		try {
+			$loader->load( 'services.yml' );
+		} catch ( \Exception $e ) {
+			throw new SmartlingConfigException( 'Error in YAML configuration file', 0, $e );
+		}
 
-        self::$_container = $container;
-        self::$_logger = $container->get('logger');
-    }
+		self::$_container = $container;
+		self::$_logger    = $container->get( 'logger' );
+	}
 
-    /**
-     * Extracts mixed from container
-     * @param string $id
-     * @param bool $is_param
-     * @return mixed
-     */
-    protected function fromContainer($id, $is_param = false)
-    {
-        $container = self::getContainer();
-        $content = null;
+	/**
+	 * Extracts mixed from container
+	 *
+	 * @param string $id
+	 * @param bool   $is_param
+	 *
+	 * @return mixed
+	 */
+	protected function fromContainer ( $id, $is_param = false ) {
+		$container = self::getContainer();
+		$content   = null;
 
-        if ($is_param) {
-            $content = $container->getParameter($id);
-        } else {
-            $content = $container->get($id);
-        }
-        return $content;
-    }
+		if ( $is_param ) {
+			$content = $container->getParameter( $id );
+		} else {
+			$content = $container->get( $id );
+		}
 
-    /**
-     * @return ContainerBuilder
-     * @throws SmartlingConfigException
-     */
-    public static function getContainer()
-    {
-        if (is_null(self::$_container)) {
-            self::_initContainer();
-        }
+		return $content;
+	}
 
-        return self::$_container;
-    }
+	/**
+	 * @return ContainerBuilder
+	 * @throws SmartlingConfigException
+	 */
+	public static function getContainer () {
+		if ( is_null( self::$_container ) ) {
+			self::_initContainer();
+		}
 
-    private static function setCoreParameters(ContainerBuilder $container)
-    {
-        // plugin dir (to use in config file)
-        $container->setParameter('plugin.dir', SMARTLING_PLUGIN_DIR);
+		return self::$_container;
+	}
 
-        $pluginUrl = '';
+	private static function setCoreParameters ( ContainerBuilder $container ) {
+		// plugin dir (to use in config file)
+		$container->setParameter( 'plugin.dir', SMARTLING_PLUGIN_DIR );
 
-        if(defined(SMARTLING_CLI_EXECUTION) && false === SMARTLING_CLI_EXECUTION) {
-            $pluginUrl = plugin_dir_url(SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . '..');
-        }
+		$pluginUrl = '';
 
-        $container->setParameter('plugin.url', $pluginUrl);
-    }
+		if ( defined( SMARTLING_CLI_EXECUTION ) && false === SMARTLING_CLI_EXECUTION ) {
+			$pluginUrl = plugin_dir_url( SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . '..' );
+		}
 
-    public function registerHooks() {
-        $hooks = $this->fromContainer('wp.hooks', true);
-        foreach($hooks as $hook) {
-            $object = $this->fromContainer($hook);
-            if($object instanceof WPHookInterface) {
-                $object->register();
-            }
-        }
-    }
+		$container->setParameter( 'plugin.url', $pluginUrl );
+	}
 
-    public function load() {
-        $this->detectMultilangPlugins();
+	public function registerHooks () {
+		$hooks = $this->fromContainer( 'wp.hooks', true );
+		foreach ( $hooks as $hook ) {
+			$object = $this->fromContainer( $hook );
+			if ( $object instanceof WPHookInterface ) {
+				$object->register();
+			}
+		}
+	}
 
-        if (defined('SMARTLING_CLI_EXECUTION') && SMARTLING_CLI_EXECUTION === false) {
-            $this->registerHooks();
-            $this->run();
-        }
+	public function load () {
+		$this->detectMultilangPlugins();
 
-    }
+		if ( defined( 'SMARTLING_CLI_EXECUTION' ) && SMARTLING_CLI_EXECUTION === false ) {
+			$this->registerHooks();
+			$this->run();
+		}
 
-    public function activate() {
-        $this->fromContainer('site.db')->install();
-    }
+	}
 
-    public function deactivate() {
+	public function activate () {
+		$this->fromContainer( 'site.db' )->install();
+	}
 
-    }
+	public function deactivate () {
 
-    public function uninstall() {
-        $this->fromContainer('plugin.options')->uninstall();
-        $this->fromContainer('site.db')->uninstall();
-    }
+	}
 
-    /**
-     * @throws MultilingualPluginNotFoundException
-     */
-    public function detectMultilangPlugins()
-    {
-        /**
-         * @var LoggerInterface $logger
-         */
-        $logger = self::getContainer()->get('logger');
+	public function uninstall () {
+		$this->fromContainer( 'plugin.options' )->uninstall();
+		$this->fromContainer( 'site.db' )->uninstall();
+	}
 
-        $mlPluginsStatuses =
-            array(
-                'multilingual-press-pro'    => false,
-                'polylang'                  => false,
-                'wpml'                      => false,
-            );
+	/**
+	 * @throws MultilingualPluginNotFoundException
+	 */
+	public function detectMultilangPlugins () {
+		/**
+		 * @var LoggerInterface $logger
+		 */
+		$logger = self::getContainer()->get( 'logger' );
 
-        $logger->info('Searching for Wordpress multilingual plugins');
+		$mlPluginsStatuses =
+			array (
+				'multilingual-press-pro' => false,
+				'polylang'               => false,
+				'wpml'                   => false,
+			);
 
-        $_found = false;
+		$logger->info( 'Searching for Wordpress multilingual plugins' );
 
-        if (class_exists('Mlp_Load_Controller', false)) {
-            $mlPluginsStatuses['multilingual-press-pro'] = true;
-            $logger->info('found "multilingual-press-pro" plugin');
+		$_found = false;
 
-            $_found = true;
-        }
+		if ( class_exists( 'Mlp_Load_Controller', false ) ) {
+			$mlPluginsStatuses['multilingual-press-pro'] = true;
+			$logger->info( 'found "multilingual-press-pro" plugin' );
 
-        if (false === $_found) {
-            throw new MultilingualPluginNotFoundException('No active multilingual plugins found.');
-        }
+			$_found = true;
+		}
 
-        self::getContainer()->set('multilang_plugins', $mlPluginsStatuses);
-   }
+		if ( false === $_found ) {
+			throw new MultilingualPluginNotFoundException( 'No active multilingual plugins found.' );
+		}
 
-    public function run()
-    {
+		self::getContainer()->set( 'multilang_plugins', $mlPluginsStatuses );
+	}
 
-    }
+	public function run () {
+
+	}
 }

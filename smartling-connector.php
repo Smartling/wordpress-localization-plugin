@@ -35,7 +35,7 @@ use Smartling\Bootstrap;
 
 $bootstrap = new Bootstrap();
 
-add_action('plugins_loaded', array($bootstrap, 'load'), 999);
+add_action( 'plugins_loaded', array ( $bootstrap, 'load' ), 999 );
 
-register_activation_hook( __FILE__, array($bootstrap, 'activate') );
-register_deactivation_hook( __FILE__, array($bootstrap, 'deactivate') );
+register_activation_hook( __FILE__, array ( $bootstrap, 'activate' ) );
+register_deactivation_hook( __FILE__, array ( $bootstrap, 'deactivate' ) );

@@ -31,7 +31,7 @@ class WordpressContentTypeHelper {
 	 *
 	 * @throws SmartlingDirectRunRuntimeException
 	 */
-	private static function checkRuntimeState() {
+	private static function checkRuntimeState () {
 		if ( ! function_exists( '__' ) ) {
 			$message = 'I10n Wordpress function not available on direct execution.';
 			throw new SmartlingDirectRunRuntimeException( $message );
@@ -53,7 +53,7 @@ class WordpressContentTypeHelper {
 	 * @return array
 	 * @throws SmartlingDirectRunRuntimeException
 	 */
-	public static function getReverseMap() {
+	public static function getReverseMap () {
 		self::checkRuntimeState();
 
 		return self::$_reverse_map;
@@ -63,7 +63,7 @@ class WordpressContentTypeHelper {
 	 * @return array
 	 * @throws SmartlingDirectRunRuntimeException
 	 */
-	public static function getLabelMap() {
+	public static function getLabelMap () {
 		self::checkRuntimeState();
 
 		// has to be hardcoded because i10n parser must see direct calls of __(CONSTANT STRING)

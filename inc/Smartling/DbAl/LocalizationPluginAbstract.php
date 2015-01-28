@@ -10,37 +10,34 @@ use Smartling\Helpers\SiteHelper;
  *
  * @package Smartling\DbAl
  */
-abstract class LocalizationPluginAbstract implements LocalizationPluginProxyInterface
-{
-    /**
-     * @var SiteHelper
-     */
-    protected $helper = null;
+abstract class LocalizationPluginAbstract implements LocalizationPluginProxyInterface {
+	/**
+	 * @var SiteHelper
+	 */
+	protected $helper = null;
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger = null;
+	/**
+	 * @var LoggerInterface
+	 */
+	private $logger = null;
 
-    /**
-     * @inheritdoc
-     */
-    public function __construct (LoggerInterface $logger, SiteHelper $helper, array $ml_plugin_statuses)
-    {
-        $this->logger = $logger;
-        $this->helper = $helper;
-    }
+	/**
+	 * @inheritdoc
+	 */
+	public function __construct ( LoggerInterface $logger, SiteHelper $helper, array $ml_plugin_statuses ) {
+		$this->logger = $logger;
+		$this->helper = $helper;
+	}
 
-    /**
-     * Fallback for direct run if Wordpress functionality is not reachable
-     *
-     * @throws SmartlingDirectRunRuntimeException
-     */
-    protected function directRunFallback ($message)
-    {
-        $this->logger->error ($message);
+	/**
+	 * Fallback for direct run if Wordpress functionality is not reachable
+	 *
+	 * @throws SmartlingDirectRunRuntimeException
+	 */
+	protected function directRunFallback ( $message ) {
+		$this->logger->error( $message );
 
-        throw new SmartlingDirectRunRuntimeException($message);
-    }
+		throw new SmartlingDirectRunRuntimeException( $message );
+	}
 
 }

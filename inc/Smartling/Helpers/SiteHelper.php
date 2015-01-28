@@ -22,7 +22,7 @@ class SiteHelper {
 	/**
 	 * @param LoggerInterface $logger
 	 */
-	public function __construct( LoggerInterface $logger ) {
+	public function __construct ( LoggerInterface $logger ) {
 		$this->_logger = $logger;
 	}
 
@@ -41,7 +41,7 @@ class SiteHelper {
 	 *
 	 * @throws SmartlingDirectRunRuntimeException
 	 */
-	private function directRunDetectedFallback() {
+	private function directRunDetectedFallback () {
 		$message = "Direct run detected. Required run as Wordpress plugin.";
 
 		$this->fallbackErrorMessage( $message );
@@ -49,7 +49,7 @@ class SiteHelper {
 		throw new SmartlingDirectRunRuntimeException( $message );
 	}
 
-	private function cacheSites() {
+	private function cacheSites () {
 		if ( empty( self::$_siteCache ) ) {
 			$sites = wp_get_sites();
 
@@ -64,7 +64,7 @@ class SiteHelper {
 	 * @return array
 	 * @throws SmartlingDirectRunRuntimeException
 	 */
-	public function listSites() {
+	public function listSites () {
 		! function_exists( 'wp_get_sites' )
 		&& $this->directRunDetectedFallback();
 
@@ -80,7 +80,7 @@ class SiteHelper {
 	 * @throws SmartlingDirectRunRuntimeException
 	 * @throws InvalidArgumentException
 	 */
-	public function listBlogs( $siteId = 1 ) {
+	public function listBlogs ( $siteId = 1 ) {
 		! function_exists( 'wp_get_sites' )
 		&& $this->directRunDetectedFallback();
 
@@ -98,7 +98,7 @@ class SiteHelper {
 	 * @return integer
 	 * @throws SmartlingDirectRunRuntimeException
 	 */
-	public function getCurrentSiteId() {
+	public function getCurrentSiteId () {
 		if ( function_exists( 'get_current_site' ) ) {
 			return get_current_site()->id;
 		} else {
@@ -110,7 +110,7 @@ class SiteHelper {
 	 * @return int
 	 * @throws SmartlingDirectRunRuntimeException
 	 */
-	public function getCurrentBlogId() {
+	public function getCurrentBlogId () {
 		if ( function_exists( 'get_current_blog_id' ) ) {
 			return get_current_blog_id();
 		} else {
@@ -123,7 +123,7 @@ class SiteHelper {
 	 *
 	 * @throws SmartlingDirectRunRuntimeException
 	 */
-	public function switchBlogId( $blogId ) {
+	public function switchBlogId ( $blogId ) {
 		$this->cacheSites();
 
 		if ( ! in_array( $blogId, self::$_flatBlogIdCache ) ) {
@@ -141,7 +141,7 @@ class SiteHelper {
 
 	}
 
-	public function restoreBlogId() {
+	public function restoreBlogId () {
 		if ( ! function_exists( 'restore_current_blog' ) || ! function_exists( 'ms_is_switched' ) ) {
 			$this->directRunDetectedFallback();
 		}
@@ -154,7 +154,7 @@ class SiteHelper {
 		restore_current_blog();
 	}
 
-	public function getCurrentBlogLocale() {
+	public function getCurrentBlogLocale () {
 
 	}
 }

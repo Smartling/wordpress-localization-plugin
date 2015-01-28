@@ -10,90 +10,84 @@ use Smartling\Helpers\SiteHelper;
  *
  * @package Smartling\DbAl
  */
-class MultiligualPressProConnector extends LocalizationPluginAbstract
-{
+class MultiligualPressProConnector extends LocalizationPluginAbstract {
 
-    const MULTILINGUAL_PRESS_PRO_SITE_OPTION = 'inpsyde_multilingual';
+	const MULTILINGUAL_PRESS_PRO_SITE_OPTION = 'inpsyde_multilingual';
 
-    protected static $_blogLocalesCache = array ();
+	protected static $_blogLocalesCache = array ();
 
-    private function cacheLocales ()
-    {
-        if (empty(self::$_blogLocalesCache)) {
-            $rawValue = get_site_option (self::MULTILINGUAL_PRESS_PRO_SITE_OPTION, false, false);
+	private function cacheLocales () {
+		if ( empty( self::$_blogLocalesCache ) ) {
+			$rawValue = get_site_option( self::MULTILINGUAL_PRESS_PRO_SITE_OPTION, false, false );
 
-            if (false === $rawValue) {
-                throw new \Exception('Multilingual press PRO is not installed/configured.');
-            } else {
-                foreach ($rawValue as $blogId => $item) {
-                    self::$_blogLocalesCache[$blogId] = array (
-                        "text" => $item['text'],
-                        "lang" => $item['lang']
-                    );
-                }
-            }
-        }
-    }
+			if ( false === $rawValue ) {
+				throw new \Exception( 'Multilingual press PRO is not installed/configured.' );
+			} else {
+				foreach ( $rawValue as $blogId => $item ) {
+					self::$_blogLocalesCache[ $blogId ] = array (
+						"text" => $item['text'],
+						"lang" => $item['lang']
+					);
+				}
+			}
+		}
+	}
 
-    /**
-     * @inheritdoc
-     */
-    public function getLocales ()
-    {
-        if (!function_exists ('get_site_option')) {
-            $this->directRunFallback ('Direct run detected. Required run as Wordpress plugin.');
-        }
-        $this->cacheLocales ();
+	/**
+	 * @inheritdoc
+	 */
+	public function getLocales () {
+		if ( ! function_exists( 'get_site_option' ) ) {
+			$this->directRunFallback( 'Direct run detected. Required run as Wordpress plugin.' );
+		}
+		$this->cacheLocales();
 
-        $locales = array ();
-        foreach (self::$_blogLocalesCache as $blogId => $blogLocale) {
-            $locales[] = $blogLocale["text"];
-        }
+		$locales = array ();
+		foreach ( self::$_blogLocalesCache as $blogId => $blogLocale ) {
+			$locales[] = $blogLocale["text"];
+		}
 
-        return $locales;
-    }
+		return $locales;
+	}
 
-    /**
-     * @inheritdoc
-     */
-    public function getBlogLocaleById ($blogId)
-    {
-        if (!function_exists ('get_site_option')) {
-            $this->directRunFallback ('Direct run detected. Required run as Wordpress plugin.');
-        }
+	/**
+	 * @inheritdoc
+	 */
+	public function getBlogLocaleById ( $blogId ) {
+		if ( ! function_exists( 'get_site_option' ) ) {
+			$this->directRunFallback( 'Direct run detected. Required run as Wordpress plugin.' );
+		}
 
-        $this->cacheLocales ();
+		$this->cacheLocales();
 
-        $this->helper->switchBlogId ($blogId);
+		$this->helper->switchBlogId( $blogId );
 
-        $locale = self::$_blogLocalesCache[$this->helper->getCurrentBlogId ()];
+		$locale = self::$_blogLocalesCache[ $this->helper->getCurrentBlogId() ];
 
-        $this->helper->restoreBlogId ();
+		$this->helper->restoreBlogId();
 
-        return $locale["lang"];
-    }
+		return $locale["lang"];
+	}
 
-    /**
-     * @inheritdoc
-     */
-    public function __construct (LoggerInterface $logger, SiteHelper $helper, array $ml_plugin_statuses)
-    {
-        parent::__construct ($logger, $helper, $ml_plugin_statuses);
+	/**
+	 * @inheritdoc
+	 */
+	public function __construct ( LoggerInterface $logger, SiteHelper $helper, array $ml_plugin_statuses ) {
+		parent::__construct( $logger, $helper, $ml_plugin_statuses );
 
-        if (false === $ml_plugin_statuses['multilingual-press-pro']) {
-            throw new \Exception('Active plugin not found Exception');
-        }
-    }
+		if ( false === $ml_plugin_statuses['multilingual-press-pro'] ) {
+			throw new \Exception( 'Active plugin not found Exception' );
+		}
+	}
 
-    /**
-     * Retrieves blog ids linked to given blog
-     *
-     * @param integer $blogId
-     *
-     * @return array
-     */
-    function getLinkedBlogIdsByBlogId ($blogId)
-    {
-        // TODO: Implement getLinkedBlogIdsByBlogId() method.
-    }
+	/**
+	 * Retrieves blog ids linked to given blog
+	 *
+	 * @param integer $blogId
+	 *
+	 * @return array
+	 */
+	function getLinkedBlogIdsByBlogId ( $blogId ) {
+		// TODO: Implement getLinkedBlogIdsByBlogId() method.
+	}
 }

@@ -4,30 +4,28 @@ namespace Smartling\DbAl;
 
 use Psr\Log\LoggerInterface;
 
-abstract class EntityManagerAbstract
-{
+abstract class EntityManagerAbstract {
 
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
+	/**
+	 * @var LoggerInterface
+	 */
+	protected $logger;
 
-    /**
-     * @var SmartlingToCMSDatabaseAccessWrapper
-     */
-    protected $dbal;
+	/**
+	 * @var SmartlingToCMSDatabaseAccessWrapper
+	 */
+	protected $dbal;
 
-    /**
-     * Constructor
-     *
-     * @param LoggerInterface                     $logger
-     * @param SmartlingToCMSDatabaseAccessWrapper $dbal
-     */
-    public function __construct (LoggerInterface $logger, SmartlingToCMSDatabaseAccessWrapper $dbal)
-    {
-        $this->logger = $logger;
-        $this->dbal = $dbal;
-    }
+	/**
+	 * Constructor
+	 *
+	 * @param LoggerInterface                     $logger
+	 * @param SmartlingToCMSDatabaseAccessWrapper $dbal
+	 */
+	public function __construct ( LoggerInterface $logger, SmartlingToCMSDatabaseAccessWrapper $dbal ) {
+		$this->logger = $logger;
+		$this->dbal   = $dbal;
+	}
 
 
 }
