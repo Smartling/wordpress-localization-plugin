@@ -13,7 +13,7 @@
          verbose="true"
 >
     <testsuites>
-        <testsuite name="Smartling connector Woordpress plugin suite">
+        <testsuite name="Smartling connector Wordpress plugin suite">
             <directory suffix="Test.php" phpVersion="5.3.0" phpVersionOperator=">=">./</directory>
         </testsuite>
     </testsuites>
@@ -24,7 +24,7 @@
 
         <log type="junit" target="./../phpunit.log.xml"/>
 
-        <log type="testdox-text" target="php://stdout"/>
+        <log type="testdox-text" target="./../phpunit.log.txt"/>
 
     </logging>
 </phpunit>
