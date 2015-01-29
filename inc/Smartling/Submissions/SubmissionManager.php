@@ -389,14 +389,50 @@ class SubmissionManager extends EntityManagerAbstract {
 		return $query;
 	}
 
+	/**
+	 * @return array
+	 */
 	public function getColumnsLabels () {
 		return SubmissionEntity::getFieldLabels();
 	}
 
+	/**
+	 * @return array
+	 */
 	public function getSortableFields () {
 		return SubmissionEntity::$fieldsSortable;
 	}
 
+	/**
+	 * Stores SubmissionEntity to database. (fills id in needed)
+	 *
+	 * @param SubmissionEntity $entity
+	 */
 	public function storeEntity ( SubmissionEntity $entity ) {
+		$entityId = $entity->id;
+
+		$is_insert = false;
+
+		if ( in_array( $entity, array ( 0, null ), true ) ) {
+			// insert
+			$is_insert  = true;
+			$storeQuery = QueryBuilder::buildInsertQuery( $this->dbal->completeTableName( self::SUBMISSIONS_TABLE_NAME ),
+				$entity->toArray( false ) );
+		} else {
+			// update
+			$conditionBlock = ConditionBlock::getConditionBlock();
+			$conditionBlock->addCondition( Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'id',
+				array ( $entityId ) ) );
+			$storeQuery = QueryBuilder::buildUpdateQuery( $this->dbal->completeTableName( self::SUBMISSIONS_TABLE_NAME ),
+				$entity->toArray( false ), $conditionBlock, array ( 'limit' => 1 ) );
+		}
+
+		$result = $this->dbal->query( $storeQuery );
+
+		if ( true === $is_insert && false !== $result ) {
+			$entityFields       = $entity->toArray( false );
+			$entityFields['id'] = $this->dbal->getLastInsertedId();
+			$entity             = SubmissionEntity::fromArray( $entityFields, $this->logger );
+		}
 	}
 }
