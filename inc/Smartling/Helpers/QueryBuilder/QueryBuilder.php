@@ -299,7 +299,7 @@ class QueryBuilder {
 	 *
 	 * @return string
 	 */
-	private static function buildAssignmentSubQuery ( array $fieldValueList ) {
+	public static function buildAssignmentSubQuery ( array $fieldValueList ) {
 		$subQueryParts = array ();
 
 		foreach ( $fieldValueList as $column => $value ) {

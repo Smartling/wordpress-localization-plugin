@@ -15,12 +15,7 @@ class SubmissionEntity {
 	/**
 	 * @var LoggerInterface
 	 */
-	private $logger = null;
-
-	/**
-	 * @var WordpressContentTypeHelper
-	 */
-	private $helper = null;
+	private $logger;
 
 	/**
 	 * @var array
@@ -163,7 +158,6 @@ class SubmissionEntity {
 	public function toArray () {
 		$arr = array ();
 
-
 		foreach ( array_keys( self::$fieldsDefinition ) as $field ) {
 			$arr[ $field ] = $this->$field;
 		}
@@ -187,103 +181,103 @@ class SubmissionEntity {
 	 *
 	 * @var null|integer
 	 */
-	private $id = null;
+	private $id;
 
 	/**
 	 * Submission Entity title
 	 *
 	 * @var string
 	 */
-	private $sourceTitle = null;
+	private $sourceTitle;
 
 	/**
 	 * Source content blog id
 	 *
 	 * @var integer
 	 */
-	private $sourceBlog = null;
+	private $sourceBlog;
 
 	/**
 	 * Hash of source content to find out if it is changed
 	 *
 	 * @var string
 	 */
-	private $sourceContentHash = null;
+	private $sourceContentHash;
 
 	/**
-	 * ContentType as a constant from Smartling\Helpers\WordpressContentTypeHelper
+	 * ContentType as a constant from WordpressContentTypeHelper
 	 *
 	 * @var string
 	 */
-	private $contentType = null;
+	private $contentType;
 
 	/**
 	 * unique identifier of source content
 	 *
 	 * @var string
 	 */
-	private $sourceGUID = null;
+	private $sourceGUID;
 
 	/**
 	 * Smartling API content package unique identifier
 	 *
 	 * @var string
 	 */
-	private $fileUri = null;
+	private $fileUri;
 
 	/**
 	 * Target locale
 	 *
 	 * @var string
 	 */
-	private $targetLocale = null;
+	private $targetLocale;
 
 	/**
 	 * Id of linked blog to place the translation on 'download'
 	 *
 	 * @var integer
 	 */
-	private $targetBlog = null;
+	private $targetBlog;
 
 	/**
 	 * unique identifier of target content
 	 *
 	 * @var string
 	 */
-	private $targetGUID = null;
+	private $targetGUID;
 
 	/**
 	 * Submitter identity
 	 *
 	 * @var string
 	 */
-	private $submitter = null;
+	private $submitter;
 
 	/**
 	 * Date and Time of submission
 	 *
 	 * @var string
 	 */
-	private $submissionDate = null;
+	private $submissionDate;
 
 	/**
 	 * Count of words in source content
 	 *
 	 * @var integer
 	 */
-	private $approvedStringCount = null;
+	private $approvedStringCount;
 
 	/**
 	 * Count of translated words
 	 *
 	 * @var integer
 	 */
-	private $completedStringCount = null;
+	private $completedStringCount;
 
 	/**
 	 * @var string
 	 */
-	private $status = null;
+	private $status;
 
 	/**
 	 * @return string
@@ -372,7 +366,7 @@ class SubmissionEntity {
 		if ( in_array( $contentType, array_keys( $reverseMap ) ) ) {
 			$this->contentType = $reverseMap[ $contentType ];
 		} else {
-			$message = vsprintf( "Invalid content type. Got '%s', expected one of: %s",
+			$message = vsprintf( 'Invalid content type. Got \'%s\', expected one of: %s',
 				array ( $contentType, implode( ',', $reverseMap ) ) );
 
 			$this->logger->error( $message );
@@ -507,10 +501,13 @@ class SubmissionEntity {
 		$this->completedStringCount = (int) $completedStringCount;
 	}
 
+	/**
+	 * @return int
+	 */
 	public function getCompletionPercentage () {
 		$percentage = 0;
 
-		if ( 0 != $this->getApprovedStringCount() ) {
+		if ( 0 !== $this->getApprovedStringCount() ) {
 			$percentage = $this->getCompletedStringCount() / $this->getApprovedStringCount();
 		}
 

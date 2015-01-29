@@ -18,7 +18,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapper {
 	/**
 	 * @var \wpdb
 	 */
-	private $wpdb = null;
+	private $wpdb;
 
 	/**
 	 * @param LoggerInterface $logger
@@ -236,5 +236,12 @@ class DB implements SmartlingToCMSDatabaseAccessWrapper {
 	 */
 	public function fetch ( $query ) {
 		return $this->getWpdb()->get_results( $query );
+	}
+
+	/**
+	 * @return integer
+	 */
+	function getLastInsertedId () {
+		return $this->wpdb->insert_id;
 	}
 }

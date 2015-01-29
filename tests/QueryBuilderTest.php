@@ -171,7 +171,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 			'page'  => 4
 		);
 
-		$sorting = array(
+		$sorting = array (
 			'id' => 'ASC'
 		);
 
@@ -209,8 +209,8 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 			'page'  => 4
 		);
 
-		$sorting = array(
-			'id' => 'ASC',
+		$sorting = array (
+			'id'     => 'ASC',
 			'status' => 'DESC'
 		);
 
@@ -233,17 +233,129 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 		$this->assertTrue( $actualResult === $expectedResult );
 	}
 
-	public function testInsertSimple()
-	{
+	public function testInsertSimple () {
 		$table = 'fooTable';
 
 		$fields = array (
 			'id' => 5
 		);
 
-		$expectedResult = "INSERT INTO `{$table}` (" . QueryBuilder::buildFieldListString(array_keys($fields)) . ") VALUES ('5')";
+		$expectedResult = "INSERT INTO `{$table}` (" . QueryBuilder::buildFieldListString( array_keys( $fields ) ) . ") VALUES ('5')";
 
-		$actualResult = QueryBuilder::buildInsertQuery($table, $fields);
+		$actualResult = QueryBuilder::buildInsertQuery( $table, $fields );
+
+		$this->assertTrue( $actualResult === $expectedResult );
+	}
+
+	public function testDeleteSimple () {
+		$table = 'fooTable';
+
+		$expectedResult = "DELETE FROM " . QueryBuilder::escapeName( $table );
+
+		$actualResult = QueryBuilder::buildDeleteQuery( $table );
+
+		$this->assertTrue( $actualResult === $expectedResult );
+	}
+
+	public function testDeleteWithCondition () {
+		$table = 'fooTable';
+
+		$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'id', array ( 5 ) );
+
+		$block = ConditionBlock::getConditionBlock();
+
+		$block->addCondition( $condition );
+
+		$expectedResult = "DELETE FROM " . QueryBuilder::escapeName( $table ) . ' WHERE ' . $block->__toString();
+
+		$actualResult = QueryBuilder::buildDeleteQuery( $table, $block );
+
+		$this->assertTrue( $actualResult === $expectedResult );
+	}
+
+	public function testDeleteWithConditionAndLimit () {
+		$table = 'fooTable';
+
+		$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'id', array ( 5 ) );
+
+		$pageOptions = array (
+			'page'  => 100,
+			'limit' => 1
+		);
+
+		$block = ConditionBlock::getConditionBlock();
+
+		$block->addCondition( $condition );
+
+		$expectedResult = "DELETE FROM " . QueryBuilder::escapeName( $table ) . ' WHERE ' . $block->__toString() . ' LIMIT ' . $pageOptions['limit'];
+
+		$actualResult = QueryBuilder::buildDeleteQuery( $table, $block, $pageOptions );
+
+		$this->assertTrue( $actualResult === $expectedResult );
+	}
+
+	public function testSimpleFieldValuePairAssignment () {
+		$fieldValuePairs = array (
+			'a' => 5
+		);
+
+		$expectedResult = QueryBuilder::escapeName( 'a' ) . ' = ' . QueryBuilder::escapeValue( 5 );
+		$actualResult   = QueryBuilder::buildAssignmentSubQuery( $fieldValuePairs );
+
+		$this->assertTrue( $actualResult === $expectedResult );
+	}
+
+	public function testUpdateSimple () {
+		$fieldValuePairs = array (
+			'a' => 5
+		);
+
+		$table = 'fooTable';
+
+		$expectedResult = "UPDATE " . QueryBuilder::escapeName( $table ) . ' SET ' . QueryBuilder::buildAssignmentSubQuery( $fieldValuePairs );
+
+		$actualResult = QueryBuilder::buildUpdateQuery( $table, $fieldValuePairs );
+
+		$this->assertTrue( $actualResult === $expectedResult );
+	}
+
+	public function testUpdateWithCondition () {
+		$fieldValuePairs = array (
+			'a' => 5
+		);
+
+		$block = ConditionBlock::getConditionBlock();
+		$block->addCondition( Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'a', array ( 5 ) ) );
+
+		$table = 'fooTable';
+
+		$expectedResult = QueryBuilder::buildUpdateQuery( $table, $fieldValuePairs ) . ' WHERE ' . $block->__toString();
+
+		$actualResult = QueryBuilder::buildUpdateQuery( $table, $fieldValuePairs, $block );
+
+		$this->assertTrue( $actualResult === $expectedResult );
+
+	}
+
+	public function testUpdateWithConditionAndLimit () {
+		$fieldValuePairs = array (
+			'a' => 5
+		);
+
+		$pageOptions = array (
+			'page'  => 100,
+			'limit' => 1
+		);
+
+		$block = ConditionBlock::getConditionBlock();
+		$block->addCondition( Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'a', array ( 5 ) ) );
+
+		$table = 'fooTable';
+
+		$expectedResult = QueryBuilder::buildUpdateQuery( $table, $fieldValuePairs,
+				$block ) . ' LIMIT ' . $pageOptions['limit'];
+
+		$actualResult = QueryBuilder::buildUpdateQuery( $table, $fieldValuePairs, $block, $pageOptions );
 
 		$this->assertTrue( $actualResult === $expectedResult );
 	}

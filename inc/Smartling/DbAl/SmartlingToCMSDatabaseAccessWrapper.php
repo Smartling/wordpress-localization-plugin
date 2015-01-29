@@ -61,4 +61,9 @@ interface SmartlingToCMSDatabaseAccessWrapper {
 	 * @return mixed
 	 */
 	function completeTableName ( $tableName );
+
+	/**
+	 * @return integer
+	 */
+	function getLastInsertedId();
 }
