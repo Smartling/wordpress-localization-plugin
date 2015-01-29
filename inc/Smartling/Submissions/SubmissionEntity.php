@@ -8,6 +8,22 @@ use Smartling\Helpers\WordpressContentTypeHelper;
 /**
  * Class SubmissionEntity
  *
+ * @property integer|null $id
+ * @property string       $sourceTitle
+ * @property integer|null $sourceBlog
+ * @property string|null  $sourceContentHash
+ * @property string       $contentType
+ * @property string       $sourceGUID
+ * @property string       $fileUri
+ * @property string       $targetLocale
+ * @property integer      $targetBlog
+ * @property string       $targetGUID
+ * @property string       $submitter
+ * @property integer      $submissionDate
+ * @property integer      $approvedStringCount
+ * @property integer      $completedStringCount
+ * @property string       $status
+ *
  * @package Smartling\Submissions
  */
 class SubmissionEntity {
