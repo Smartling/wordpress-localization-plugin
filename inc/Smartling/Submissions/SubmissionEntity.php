@@ -36,6 +36,16 @@ class SubmissionEntity {
 	/**
 	 * @var array
 	 */
+	private $initialFields = array ();
+
+	/**
+	 * @var bool
+	 */
+	private $initialValuesFixed = false;
+
+	/**
+	 * @var array
+	 */
 	public static $fieldsDefinition = array (
 		'id'                   => 'INT UNSIGNED NOT NULL AUTO_INCREMENT',
 		'sourceTitle'          => 'VARCHAR(255) NOT NULL',
@@ -127,6 +137,10 @@ class SubmissionEntity {
 
 			$setter = 'set' . ucfirst( $key );
 
+			if ( ! $this->initialValuesFixed && ! array_key_exists( $key, $this->initialFields ) ) {
+				$this->initialFields[ $key ] = $value;
+			}
+
 			$this->$setter( $value );
 		}
 	}
@@ -149,6 +163,28 @@ class SubmissionEntity {
 		}
 	}
 
+	public function fixInitialValues () {
+		$this->initialValuesFixed = true;
+	}
+
+	public function getChangedFields () {
+		$fieldList = array_keys( self::$fieldsDefinition );
+
+		$changedFields = array ();
+
+		foreach ( $fieldList as $field ) {
+			$initiallValue = array_key_exists( $field, $this->initialFields ) ?
+				$this->initialFields[ $field ] : null;
+			$currentValue  = $this->$field;
+
+			if ( $initiallValue !== $currentValue ) {
+				$changedFields[ $field ] = $currentValue;
+			}
+		}
+
+		return $changedFields;
+	}
+
 	/**
 	 * Converts associative array to SubmissionEntity
 	 * array keys must match field names;
@@ -165,20 +201,28 @@ class SubmissionEntity {
 			$obj->$field = $value;
 		}
 
+		// Fix initial values to detect what fields were changed.
+		$obj->fixInitialValues();
+
 		return $obj;
 	}
 
 	/**
+	 * @param bool $addVirtualColumns
+	 *
 	 * @return array
 	 */
-	public function toArray () {
+	public function toArray ( $addVirtualColumns = true ) {
 		$arr = array ();
 
 		foreach ( array_keys( self::$fieldsDefinition ) as $field ) {
 			$arr[ $field ] = $this->$field;
 		}
 
-		$arr['progress'] = $this->getCompletionPercentage() . '%';
+		if ( true === $addVirtualColumns ) {
+			$arr['progress'] = $this->getCompletionPercentage() . '%';
+		}
+
 
 		return $arr;
 	}
