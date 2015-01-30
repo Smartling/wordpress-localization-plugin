@@ -4,7 +4,7 @@ namespace Smartling\Submissions;
 
 use Psr\Log\LoggerInterface;
 use Smartling\DbAl\EntityManagerAbstract;
-use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapper;
+use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
@@ -69,10 +69,14 @@ class SubmissionManager extends EntityManagerAbstract {
 	}
 
 	/**
-	 * @param LoggerInterface                     $logger
-	 * @param SmartlingToCMSDatabaseAccessWrapper $dbal
+	 * @param LoggerInterface                              $logger
+	 * @param SmartlingToCMSDatabaseAccessWrapperInterface $dbal
 	 */
-	public function __construct ( LoggerInterface $logger, SmartlingToCMSDatabaseAccessWrapper $dbal, $pageSize ) {
+	public function __construct (
+		LoggerInterface $logger,
+		SmartlingToCMSDatabaseAccessWrapperInterface $dbal,
+		$pageSize
+	) {
 		parent::__construct( $logger, $dbal );
 		$this->pageSize = (int) $pageSize;
 	}

@@ -2,7 +2,7 @@
 
 namespace Smartling\WP\View;
 
-use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapper;
+use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionManager;
@@ -82,7 +82,7 @@ class SubmissionTableWidget extends \WP_List_Table {
 
 		if ( false !== $column ) {
 			$direction = strtoupper( $this->getFromSource( $orderDirectionKey,
-				SmartlingToCMSDatabaseAccessWrapper::SORT_OPTION_ASC ) );
+				SmartlingToCMSDatabaseAccessWrapperInterface::SORT_OPTION_ASC ) );
 
 			$options[] = array ( $column => $direction );
 		}
@@ -156,8 +156,8 @@ class SubmissionTableWidget extends \WP_List_Table {
 	 */
 	public function get_bulk_actions () {
 		$actions = array (
-			'send'     => __ ('Send'),
-			'download' => __ ('Download'),
+			'send'     => __( 'Send' ),
+			'download' => __( 'Download' ),
 			/*'generate_fake' => 'Generate',
 			'update_last' => 'UPdate',*/
 		);

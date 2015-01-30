@@ -3,10 +3,10 @@
 namespace Smartling\Base;
 
 /**
- * Arrayable is the interface that should be implemented by classes who want to support customizable representation of
- * their instances.
+ * ArrayableInterface is the interface that should be implemented by classes who want to support customizable
+ * representation of their instances.
  *
- * For example, if a class implements Arrayable, by calling [[toArray()]], an instance of this class
+ * For example, if a class implements ArrayableInterface, by calling [[toArray()]], an instance of this class
  * can be turned into an array (including all its embedded objects) which can then be further transformed easily
  * into other formats, such as JSON, XML.
  *
@@ -16,7 +16,7 @@ namespace Smartling\Base;
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since  2.0
  */
-interface Arrayable {
+interface ArrayableInterface {
 	/**
 	 * Returns the list of fields that should be returned by default by [[toArray()]] when no specific fields are
 	 * specified.

@@ -12,17 +12,17 @@ abstract class EntityManagerAbstract {
 	protected $logger;
 
 	/**
-	 * @var SmartlingToCMSDatabaseAccessWrapper
+	 * @var SmartlingToCMSDatabaseAccessWrapperInterface
 	 */
 	protected $dbal;
 
 	/**
 	 * Constructor
 	 *
-	 * @param LoggerInterface                     $logger
-	 * @param SmartlingToCMSDatabaseAccessWrapper $dbal
+	 * @param LoggerInterface                              $logger
+	 * @param SmartlingToCMSDatabaseAccessWrapperInterface $dbal
 	 */
-	public function __construct ( LoggerInterface $logger, SmartlingToCMSDatabaseAccessWrapper $dbal ) {
+	public function __construct ( LoggerInterface $logger, SmartlingToCMSDatabaseAccessWrapperInterface $dbal ) {
 		$this->logger = $logger;
 		$this->dbal   = $dbal;
 	}

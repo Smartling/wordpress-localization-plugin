@@ -2,7 +2,7 @@
 
 namespace Smartling\Helpers;
 
-use Smartling\Base\Arrayable;
+use Smartling\Base\ArrayableInterface;
 
 class ArrayHelper {
 	/**
@@ -70,7 +70,7 @@ class ArrayHelper {
 					return $recursive ? static::toArray( $result, $properties ) : $result;
 				}
 			}
-			if ( $object instanceof Arrayable ) {
+			if ( $object instanceof ArrayableInterface ) {
 				$result = $object->toArray();
 			} else {
 				$result = array ();

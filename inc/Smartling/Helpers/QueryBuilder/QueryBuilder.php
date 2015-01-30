@@ -2,7 +2,7 @@
 
 namespace Smartling\Helpers\QueryBuilder;
 
-use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapper;
+use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 
 /**
@@ -62,8 +62,8 @@ class QueryBuilder {
 		$valid = true;
 
 		$fieldValues = array (
-			SmartlingToCMSDatabaseAccessWrapper::SORT_OPTION_ASC,
-			SmartlingToCMSDatabaseAccessWrapper::SORT_OPTION_DESC
+			SmartlingToCMSDatabaseAccessWrapperInterface::SORT_OPTION_ASC,
+			SmartlingToCMSDatabaseAccessWrapperInterface::SORT_OPTION_DESC
 		);
 
 		foreach ( $sortOptions as $field => $order ) {

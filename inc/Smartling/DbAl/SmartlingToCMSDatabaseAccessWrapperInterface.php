@@ -5,11 +5,11 @@ namespace Smartling\DbAl;
 use Psr\Log\LoggerInterface;
 
 /**
- * Interface SmartlingToCMSDatabaseAccessWrapper
+ * Interface SmartlingToCMSDatabaseAccessWrapperInterface
  *
  * @package Smartling\DbAl
  */
-interface SmartlingToCMSDatabaseAccessWrapper {
+interface SmartlingToCMSDatabaseAccessWrapperInterface {
 
 	/**
 	 * the look of acs sort direction

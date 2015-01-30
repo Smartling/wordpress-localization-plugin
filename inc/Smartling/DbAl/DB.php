@@ -6,7 +6,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
-class DB implements SmartlingToCMSDatabaseAccessWrapper {
+class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 
 	/**
 	 * Plugin tables definition based on array

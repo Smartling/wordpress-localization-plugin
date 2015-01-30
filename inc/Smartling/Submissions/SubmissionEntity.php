@@ -404,7 +404,7 @@ class SubmissionEntity {
 			$this->status = $status;
 		} else {
 			$message = vsprintf( 'Invalid content type. Got \'%s\', expected one of: %s',
-				array ( $status, implode( ',',  self::$submissionStatuses ) ) );
+				array ( $status, implode( ',', self::$submissionStatuses ) ) );
 
 			$this->logger->error( $message );
 
@@ -634,6 +634,6 @@ class SubmissionEntity {
 			$percentage = 1;
 		}
 
-		return (int) ($percentage * 100);
+		return (int) ( $percentage * 100 );
 	}
 }
