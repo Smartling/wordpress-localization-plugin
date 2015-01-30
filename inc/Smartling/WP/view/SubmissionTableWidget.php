@@ -17,15 +17,14 @@ class SubmissionTableWidget extends \WP_List_Table {
 	/**
 	 * @var string
 	 */
-	private $_custom_controls_namespace
-		= 'smartling-submissions-page';
+	private $_custom_controls_namespace = 'smartling-submissions-page';
 
 	/**
 	 * the source array with request data
 	 *
 	 * @var array
 	 */
-	private $source = null;
+	private $source;
 
 	/**
 	 * base name of Content-type filtering select
@@ -157,8 +156,10 @@ class SubmissionTableWidget extends \WP_List_Table {
 	 */
 	public function get_bulk_actions () {
 		$actions = array (
-			'send'     => 'Send',
-			'download' => 'Download'
+			'send'     => __ ('Send'),
+			'download' => __ ('Download'),
+			/*'generate_fake' => 'Generate',
+			'update_last' => 'UPdate',*/
 		);
 
 		return $actions;
@@ -172,11 +173,64 @@ class SubmissionTableWidget extends \WP_List_Table {
 			case "send":
 				wp_die( 'Items sending' );
 				break;
+			/*case "generate_fake":
+			{
+
+				$data = array (
+				'id'                   => null,
+				'sourceTitle'          => 'Automatic generated title',
+				'sourceBlog'           => 1,
+				'sourceContentHash'    => md5(''),
+				'contentType'          => WordpressContentTypeHelper::CONTENT_TYPE_POST,
+				'sourceGUID'           => '/ol"olo',
+				'fileUri'              => "/tralala'",
+				'targetLocale'         => 'es_US',
+				'targetBlog'           => 5,
+				'targetGUID'           => '',
+				'submitter'            => 'admin',
+				'submissionDate'       => time(),
+				'approvedStringCount'  => 37,
+				'completedStringCount' => 14,
+				'status'               => 'New',
+			);
+
+				$entity =
+
+				$this->manager->createSubmission($data);
+				$this->manager->storeEntity($entity);
+
+
+
+				break;
+			}
+			case "update_last":
+			{
+				$total = 0;
+				$entities = $this->manager->getEntities(null, null, array(), null, $total);
+
+				$data = $entities[0];
+
+				$data->status = 'In Progress';
+
+				$this->manager->storeEntity($data);
+
+				//var_dump($data);
+
+
+
+
+				break;
+			}
+			*/
+
+
 		}
 	}
 
-	private function getContentTypeFilterValue()
-	{
+	/**
+	 * @return string|null
+	 */
+	private function getContentTypeFilterValue () {
 		$value = $this->getFormElementValue(
 			self::CONTENT_TYPE_SELECT_ELEMENT_NAME,
 			$this->defaultValues[ self::CONTENT_TYPE_SELECT_ELEMENT_NAME ]
@@ -185,8 +239,10 @@ class SubmissionTableWidget extends \WP_List_Table {
 		return 'any' === $value ? null : $value;
 	}
 
-	private function getStatusFilterValue()
-	{
+	/**
+	 * @return string|null
+	 */
+	private function getStatusFilterValue () {
 		$value = $this->getFormElementValue(
 			self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME,
 			$this->defaultValues[ self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME ]
@@ -358,7 +414,7 @@ class SubmissionTableWidget extends \WP_List_Table {
 	 * @return mixed
 	 */
 	private function getFromSource ( $keyName, $defaultValue ) {
-		return array_key_exists($keyName,$this->source ) ? $this->source[ $keyName ] : $defaultValue;
+		return array_key_exists( $keyName, $this->source ) ? $this->source[ $keyName ] : $defaultValue;
 	}
 
 	/**

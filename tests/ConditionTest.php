@@ -33,8 +33,7 @@ class ConditionTest extends PHPUnit_Framework_TestCase {
 		$this->assertTrue( $actualResult === $expectedResult );
 	}
 
-	public function testAutomaticValueEscapingSlash()
-	{
+	public function testAutomaticValueEscapingSlash () {
 		$conditionType = ConditionBuilder::CONDITION_SIGN_EQ;
 
 		$field = 'foo';
@@ -51,8 +50,7 @@ class ConditionTest extends PHPUnit_Framework_TestCase {
 		$this->assertTrue( $actualResult === $expectedResult );
 	}
 
-	public function testAutomaticValueEscapingSingleQuote()
-	{
+	public function testAutomaticValueEscapingSingleQuote () {
 		$conditionType = ConditionBuilder::CONDITION_SIGN_EQ;
 
 		$field = 'foo';
@@ -69,8 +67,7 @@ class ConditionTest extends PHPUnit_Framework_TestCase {
 		$this->assertTrue( $actualResult === $expectedResult );
 	}
 
-	public function testAutomaticValueEscapingDoubleQuote()
-	{
+	public function testAutomaticValueEscapingDoubleQuote () {
 		$conditionType = ConditionBuilder::CONDITION_SIGN_EQ;
 
 		$field = 'foo';

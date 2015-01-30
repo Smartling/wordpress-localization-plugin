@@ -176,12 +176,12 @@ class SubmissionManager extends EntityManagerAbstract {
 	}
 
 	/**
-	 * @param null $contentType
-	 * @param null $status
-	 * @param      $sortOptions
-	 * @param      $pageOptions
+	 * @param null       $contentType
+	 * @param null       $status
+	 * @param array      $sortOptions
+	 * @param null|array $pageOptions
 	 *
-	 * @param      $totalCount
+	 * @param reference  $totalCount
 	 *
 	 * @return array of SubmissionEntity or empty array
 	 *
@@ -198,12 +198,10 @@ class SubmissionManager extends EntityManagerAbstract {
 	public function getEntities (
 		$contentType = null,
 		$status = null,
-		$sortOptions = null,
+		array $sortOptions = array (),
 		$pageOptions = null,
-		& $totalCount
+		& $totalCount = 0
 	) {
-		$totalCount = 0;
-
 		$validRequest = $this->validateRequest( $contentType, $sortOptions, $pageOptions );
 
 		$result = array ();
@@ -224,14 +222,26 @@ class SubmissionManager extends EntityManagerAbstract {
 		return $result;
 	}
 
+
+	/**
+	 * @param string      $searchText
+	 * @param array       $searchFields
+	 * @param null|string $contentType
+	 * @param null|string $status
+	 * @param array       $sortOptions
+	 * @param null|array  $pageOptions
+	 * @param int         $totalCount
+	 *
+	 * @return array
+	 */
 	public function search (
 		$searchText,
 		array $searchFields = array (),
 		$contentType = null,
 		$status = null,
-		$sortOptions,
-		$pageOptions,
-		& $totalCount
+		array $sortOptions = array (),
+		$pageOptions = null,
+		& $totalCount = 0
 	) {
 
 		$searchText = trim( $searchText );
@@ -407,32 +417,50 @@ class SubmissionManager extends EntityManagerAbstract {
 	 * Stores SubmissionEntity to database. (fills id in needed)
 	 *
 	 * @param SubmissionEntity $entity
+	 *
+	 * @return SubmissionEntity
 	 */
 	public function storeEntity ( SubmissionEntity $entity ) {
 		$entityId = $entity->id;
 
-		$is_insert = false;
+		$is_insert = in_array( $entityId, array ( 0, null ), true );
 
-		if ( in_array( $entity, array ( 0, null ), true ) ) {
-			// insert
-			$is_insert  = true;
+		$fields = $entity->toArray( false );
+		unset ( $fields['id'] );
+
+		if ( $is_insert ) {
 			$storeQuery = QueryBuilder::buildInsertQuery( $this->dbal->completeTableName( self::SUBMISSIONS_TABLE_NAME ),
-				$entity->toArray( false ) );
+				$fields );
 		} else {
 			// update
 			$conditionBlock = ConditionBlock::getConditionBlock();
 			$conditionBlock->addCondition( Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'id',
 				array ( $entityId ) ) );
 			$storeQuery = QueryBuilder::buildUpdateQuery( $this->dbal->completeTableName( self::SUBMISSIONS_TABLE_NAME ),
-				$entity->toArray( false ), $conditionBlock, array ( 'limit' => 1 ) );
+				$fields, $conditionBlock, array ( 'limit' => 1 ) );
 		}
+
+		// log store query before execution
+		$this->logger->info( $storeQuery );
 
 		$result = $this->dbal->query( $storeQuery );
 
 		if ( true === $is_insert && false !== $result ) {
 			$entityFields       = $entity->toArray( false );
 			$entityFields['id'] = $this->dbal->getLastInsertedId();
-			$entity             = SubmissionEntity::fromArray( $entityFields, $this->logger );
+			// update reference to entity
+			$entity = SubmissionEntity::fromArray( $entityFields, $this->logger );
 		}
+
+		return $entity;
+	}
+
+	/**
+	 * @param array $fields
+	 *
+	 * @return SubmissionEntity
+	 */
+	public function createSubmission ( array $fields ) {
+		return SubmissionEntity::fromArray( $fields, $this->logger );
 	}
 }

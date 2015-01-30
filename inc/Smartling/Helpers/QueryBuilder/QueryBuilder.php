@@ -304,7 +304,7 @@ class QueryBuilder {
 
 		foreach ( $fieldValueList as $column => $value ) {
 			$subQueryParts[] = vsprintf( '%s = %s',
-				array ( self::escapeName( $column ), self::escapeValue( $value ) ) );
+				array ( self::escapeName( $column ), '\'' . self::escapeValue( $value ) . '\'' ) );
 		}
 
 		return implode( ', ', $subQueryParts );

@@ -65,5 +65,5 @@ interface SmartlingToCMSDatabaseAccessWrapper {
 	/**
 	 * @return integer
 	 */
-	function getLastInsertedId();
+	function getLastInsertedId ();
 }

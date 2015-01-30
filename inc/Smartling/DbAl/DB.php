@@ -21,9 +21,16 @@ class DB implements SmartlingToCMSDatabaseAccessWrapper {
 	private $wpdb;
 
 	/**
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
+	/**
 	 * @param LoggerInterface $logger
 	 */
 	public function __construct ( LoggerInterface $logger ) {
+
+		$this->logger = $logger;
 
 		$this->buildTableDefinitions();
 

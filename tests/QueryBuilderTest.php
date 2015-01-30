@@ -299,7 +299,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 			'a' => 5
 		);
 
-		$expectedResult = QueryBuilder::escapeName( 'a' ) . ' = ' . QueryBuilder::escapeValue( 5 );
+		$expectedResult = QueryBuilder::escapeName( 'a' ) . ' = ' . '\'' . QueryBuilder::escapeValue( 5 ) . '\'';
 		$actualResult   = QueryBuilder::buildAssignmentSubQuery( $fieldValuePairs );
 
 		$this->assertTrue( $actualResult === $expectedResult );

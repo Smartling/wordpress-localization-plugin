@@ -29,7 +29,9 @@ class ConditionBlock {
 	 *
 	 * @return ConditionBlock
 	 */
-	public static function getConditionBlock ( $conditionOperator = ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND) {
+	public static function getConditionBlock (
+		$conditionOperator = ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND
+	) {
 		return new self( $conditionOperator );
 	}
 

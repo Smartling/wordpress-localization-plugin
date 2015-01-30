@@ -47,7 +47,7 @@ class Condition {
 	protected function __construct ( $condition, $field, array $values ) {
 		$this->condition = $condition;
 		$this->field     = QueryBuilder::escapeName( $field );
-		$this->values    = QueryBuilder::escapeValues($values);
+		$this->values    = QueryBuilder::escapeValues( $values );
 	}
 
 	/**
