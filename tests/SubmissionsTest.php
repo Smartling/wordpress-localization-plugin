@@ -1,5 +1,6 @@
 <?php
 
+use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
@@ -20,6 +21,14 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 		parent::__construct( $name, $data, $dataName );
 
 		$this->container = Bootstrap::getContainer();
+	}
+
+	private function registerLocalizationFnuction () {
+		if ( ! function_exists( '__' ) ) {
+			function __ ( $text, $scope = '' ) {
+				return $text;
+			}
+		}
 	}
 
 	/**
@@ -59,6 +68,95 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 		$this->container->set( 'site.db', $dbalMock );
 	}
 
+	public function testSubmissionEntityValidations () {
+		/**
+		 * @var LoggerInterface $logger
+		 */
+		$logger = $this->container->get( 'logger' );
+
+		$entity = new SubmissionEntity( $logger );
+
+		$entity->setId( '100' );
+
+		$this->assertTrue( 100 === $entity->getId() );
+
+		$entity->setApprovedStringCount( 0 );
+		$entity->setCompletedStringCount( 100 );
+
+		$this->assertTrue( 0 === $entity->getCompletionPercentage() );
+
+		$entity->setApprovedStringCount( 50 );
+		$entity->setCompletedStringCount( 100 );
+
+		$this->assertTrue( 100 === $entity->getCompletionPercentage() );
+
+		$entity->setApprovedStringCount( 100 );
+		$entity->setCompletedStringCount( 30 );
+
+		$this->assertTrue( 30 === $entity->getCompletionPercentage() );
+
+		$entity->setApprovedStringCount( 30 );
+		$entity->setCompletedStringCount( 10 );
+
+		$this->assertTrue( 33 === $entity->getCompletionPercentage() );
+
+	}
+
+	public function testSubmissionStatusValidationAsValid () {
+		$this->registerLocalizationFnuction();
+
+
+		/**
+		 * @var LoggerInterface $logger
+		 */
+		$logger = $this->container->get( 'logger' );
+
+		$entity = new SubmissionEntity( $logger );
+
+		$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_NEW );
+	}
+
+	/**
+	 * @expectedException \InvalidArgumentException
+	 */
+	public function testSubmissionStatusValidationAsInvalid () {
+		$this->registerLocalizationFnuction();
+		/**
+		 * @var LoggerInterface $logger
+		 */
+		$logger = $this->container->get( 'logger' );
+
+		$entity = new SubmissionEntity( $logger );
+
+		$entity->setStatus( 'ololo' );
+	}
+
+	public function testSubmissionContentTypeValidationAsValid () {
+		$this->registerLocalizationFnuction();
+		/**
+		 * @var LoggerInterface $logger
+		 */
+		$logger = $this->container->get( 'logger' );
+
+		$entity = new SubmissionEntity( $logger );
+
+		$entity->setContentType( WordpressContentTypeHelper::CONTENT_TYPE_POST );
+	}
+
+	/**
+	 * @expectedException \InvalidArgumentException
+	 */
+	public function testSubmissionContentTypeValidationAsInvalid () {
+		$this->registerLocalizationFnuction();
+		/**
+		 * @var LoggerInterface $logger
+		 */
+		$logger = $this->container->get( 'logger' );
+
+		$entity = new SubmissionEntity( $logger );
+
+		$entity->setContentType( 'ololo' );
+	}
 
 	public function testSubmissionEntityCreation () {
 		$this->replaceDbAlInContainer();
@@ -177,7 +275,7 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 		$mock->expects( $this->at( 0 ) )->method( 'completeTableName' )->willReturn( 'wp_mock_table_name' );
 		$mock->expects( $this->at( 3 ) )->method( 'fetch' )->willReturn( $fields ); // select
 		$mock->expects( $this->at( 1 ) )->method( 'completeTableName' )->willReturn( 'wp_mock_table_name' );
-		$mock->expects( $this->at( 2 ) )->method( 'fetch' )->willReturn($countResponse );       // count
+		$mock->expects( $this->at( 2 ) )->method( 'fetch' )->willReturn( $countResponse );       // count
 
 		$total = 0;
 

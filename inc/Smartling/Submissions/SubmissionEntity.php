@@ -65,6 +65,56 @@ class SubmissionEntity {
 	);
 
 	/**
+	 * Submission Status  'Not Translated'
+	 */
+	const SUBMISSION_STATUS_NOT_TRANSLATED = 'Not Translated';
+
+	/**
+	 * Submission Status  'New'
+	 */
+	const SUBMISSION_STATUS_NEW = 'New';
+
+	/**
+	 * Submission Status  'In Progress'
+	 */
+	const SUBMISSION_STATUS_IN_PROGRESS = 'In Progress';
+
+	/**
+	 * Submission Status  'Translated'
+	 */
+	const SUBMISSION_STATUS_TRANSLATED = 'Translated';
+
+	/**
+	 * Submission Status  'Failed'
+	 */
+	const SUBMISSION_STATUS_FAILED = 'Failed';
+
+	/**+
+	 * @var array Submission Statuses
+	 */
+	public static $submissionStatuses = array (
+		self::SUBMISSION_STATUS_NOT_TRANSLATED,
+		self::SUBMISSION_STATUS_NEW,
+		self::SUBMISSION_STATUS_IN_PROGRESS,
+		self::SUBMISSION_STATUS_TRANSLATED,
+		self::SUBMISSION_STATUS_FAILED,
+	);
+
+	/**
+	 * @return array
+	 */
+	public static function getSubmissionStatusLabels () {
+		return array (
+			self::SUBMISSION_STATUS_NOT_TRANSLATED => __( self::SUBMISSION_STATUS_NOT_TRANSLATED ),
+			self::SUBMISSION_STATUS_NEW            => __( self::SUBMISSION_STATUS_NEW ),
+			self::SUBMISSION_STATUS_IN_PROGRESS    => __( self::SUBMISSION_STATUS_IN_PROGRESS ),
+			self::SUBMISSION_STATUS_TRANSLATED     => __( self::SUBMISSION_STATUS_TRANSLATED ),
+			self::SUBMISSION_STATUS_FAILED         => __( self::SUBMISSION_STATUS_FAILED ),
+		);
+	}
+
+
+	/**
 	 * @return array
 	 */
 	public static function getFieldLabels () {
@@ -350,7 +400,16 @@ class SubmissionEntity {
 	 * @param string $status
 	 */
 	public function setStatus ( $status ) {
-		$this->status = $status;
+		if ( in_array( $status, self::$submissionStatuses ) ) {
+			$this->status = $status;
+		} else {
+			$message = vsprintf( 'Invalid content type. Got \'%s\', expected one of: %s',
+				array ( $status, implode( ',',  self::$submissionStatuses ) ) );
+
+			$this->logger->error( $message );
+
+			throw new \InvalidArgumentException( $message );
+		}
 	}
 
 
@@ -575,6 +634,6 @@ class SubmissionEntity {
 			$percentage = 1;
 		}
 
-		return (int) $percentage * 100;
+		return (int) ($percentage * 100);
 	}
 }

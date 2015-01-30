@@ -24,72 +24,30 @@ class SubmissionManager extends EntityManagerAbstract {
 	const SUBMISSIONS_TABLE_NAME = '_smartling_submissions';
 
 	/**
-	 * Submission Status  'Not Translated'
-	 */
-	const SUBMISSION_STATUS_NOT_TRANSLATED = 'Not Translated';
-
-	/**
-	 * Submission Status  'New'
-	 */
-	const SUBMISSION_STATUS_NEW = 'New';
-
-	/**
-	 * Submission Status  'In Progress'
-	 */
-	const SUBMISSION_STATUS_IN_PROGRESS = 'In Progress';
-
-	/**
-	 * Submission Status  'Translated'
-	 */
-	const SUBMISSION_STATUS_TRANSLATED = 'Translated';
-
-	/**
-	 * Submission Status  'Failed'
-	 */
-	const SUBMISSION_STATUS_FAILED = 'Failed';
-
-	/**+
-	 * @var array Submission Statuses
-	 */
-	private $submissionStatuses = array (
-		self::SUBMISSION_STATUS_NOT_TRANSLATED,
-		self::SUBMISSION_STATUS_NEW,
-		self::SUBMISSION_STATUS_IN_PROGRESS,
-		self::SUBMISSION_STATUS_TRANSLATED,
-		self::SUBMISSION_STATUS_FAILED,
-	);
-
-	/**
 	 * @return array
 	 */
 	public function getSubmissionStatusLabels () {
-		return array (
-			self::SUBMISSION_STATUS_NOT_TRANSLATED => __( self::SUBMISSION_STATUS_NOT_TRANSLATED ),
-			self::SUBMISSION_STATUS_NEW            => __( self::SUBMISSION_STATUS_NEW ),
-			self::SUBMISSION_STATUS_IN_PROGRESS    => __( self::SUBMISSION_STATUS_IN_PROGRESS ),
-			self::SUBMISSION_STATUS_TRANSLATED     => __( self::SUBMISSION_STATUS_TRANSLATED ),
-			self::SUBMISSION_STATUS_FAILED         => __( self::SUBMISSION_STATUS_FAILED ),
-		);
+		return SubmissionEntity::getSubmissionStatusLabels();
 	}
 
 	/**
 	 * @return array
 	 */
 	public function getSubmissionStatuses () {
-		return $this->submissionStatuses;
+		return SubmissionEntity::$submissionStatuses;
 	}
 
 	/**
 	 * @return string
 	 */
 	public function getDefaultSubmissionStatus () {
-		return self::SUBMISSION_STATUS_IN_PROGRESS;
+		return SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS;
 	}
 
 	/**
 	 * @var WordpressContentTypeHelper
 	 */
-	private $helper = null;
+	private $helper;
 
 	/**
 	 * @return WordpressContentTypeHelper
