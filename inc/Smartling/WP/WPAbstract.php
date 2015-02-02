@@ -66,10 +66,10 @@ abstract class WPAbstract {
 	 */
 	public function view ( $data = null ) {
 		$class = get_called_class();
-		$class = str_replace( "Smartling\\WP\\Controller", "", $class );
+		$class = str_replace( 'Smartling\\WP\\Controller', '', $class );
 
-		$class = str_replace( "Controller", "", $class );
+		$class = str_replace( 'Controller', '', $class );
 
-		require_once plugin_dir_path( __FILE__ ) . 'View/' . $class . ".php";
+		require_once plugin_dir_path( __FILE__ ) . 'View/' . $class . '.php';
 	}
 }

@@ -73,7 +73,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 			$table = $this->getTableName( $tableDefinition );
 
 			$this->logger->info( 'uninstalling tables', array ( $table ) );
-			$this->getWpdb()->query( "DROP TABLE IF EXISTS " . $table );
+			$this->getWpdb()->query( 'DROP TABLE IF EXISTS ' . $table );
 		}
 	}
 
@@ -133,7 +133,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 				continue;
 			} else {
 				$_indexes[] = vsprintf(
-					"%s (%s)",
+					'%s (%s)',
 					array (
 						strtoupper( $indexDefinition['type'] ),
 						'`' . implode( '`, `', $indexDefinition['columns'] ) . '`'
@@ -154,13 +154,13 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 		if ( ! empty( $this->getWpdb()->charset )
 		     && false !== stripos( $this->getWpdb()->charset, 'utf' )
 		) {
-			$collate = "DEFAULT CHARACTER SET " . $this->getWpdb()->charset;
+			$collate = 'DEFAULT CHARACTER SET ' . $this->getWpdb()->charset;
 		} else {
-			$collate = "DEFAULT CHARACTER SET utf8";
+			$collate = 'DEFAULT CHARACTER SET utf8';
 		}
 
 		if ( ! empty( $this->getWpdb()->collate ) ) {
-			$collate .= " COLLATE " . $this->getWpdb()->collate;
+			$collate .= ' COLLATE ' . $this->getWpdb()->collate;
 		}
 
 		return $collate;
@@ -174,7 +174,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 	private function arrayToSqlColumn ( array $columns ) {
 		$out = '';
 		foreach ( $columns as $name => $type ) {
-			$out .= "`{$name}` {$type}, ";
+			$out .= vsprintf('`%s` %s, ', array($name,$type));
 		}
 
 		return $out;
@@ -198,11 +198,11 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 		$add             = '';
 
 		if ( ! empty ( $pk ) ) {
-			$add .= vsprintf( "PRIMARY KEY  (%s)", array ( implode( ', ', $pk ) ) );
+			$add .= vsprintf( 'PRIMARY KEY  (%s)', array ( implode( ', ', $pk ) ) );
 		}
 
 		if ( ! empty ( $index ) ) {
-			$add .= ", $index";
+			$add .= vsprintf(', %s', array($index));
 		}
 
 		$sql = 'CREATE TABLE IF NOT EXISTS ' . $table . ' ( ' . $schema . ' ' . $add . ' ) ' . $charset_collate . ';';

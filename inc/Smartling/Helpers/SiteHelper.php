@@ -42,7 +42,7 @@ class SiteHelper {
 	 * @throws SmartlingDirectRunRuntimeException
 	 */
 	private function directRunDetectedFallback () {
-		$message = "Direct run detected. Required run as Wordpress plugin.";
+		$message = 'Direct run detected. Required run as Wordpress plugin.';
 
 		$this->fallbackErrorMessage( $message );
 

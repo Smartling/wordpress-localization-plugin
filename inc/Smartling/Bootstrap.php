@@ -32,7 +32,7 @@ class Bootstrap {
 		if ( $object instanceof LoggerInterface ) {
 			return $object;
 		} else {
-			$message = "Something went wrong with initialization of DI Container and logger cannot be retrieved.";
+			$message = 'Something went wrong with initialization of DI Container and logger cannot be retrieved.';
 			throw new \Exception( $message );
 		}
 	}

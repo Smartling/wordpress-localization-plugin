@@ -62,35 +62,35 @@ class Settings extends WPAbstract implements WPHookInterface {
 			$accountInfo->setProjectId( $settings["projectId"] );
 		}
 
-		if ( array_key_exists( "apiKey", $settings ) ) {
-			$accountInfo->setKey( $settings["apiKey"] );
+		if ( array_key_exists( 'apiKey', $settings ) ) {
+			$accountInfo->setKey( $settings['apiKey'] );
 		}
 
-		if ( array_key_exists( "retrievalType", $settings ) ) {
-			$accountInfo->setRetrievalType( $settings["retrievalType"] );
+		if ( array_key_exists( 'retrievalType', $settings ) ) {
+			$accountInfo->setRetrievalType( $settings['retrievalType'] );
 		}
 
-		if ( array_key_exists( "callbackUrl", $settings ) ) {
-			$accountInfo->setCallBackUrl( $settings["callbackUrl"] == "on" ? true : false );
+		if ( array_key_exists( 'callbackUrl', $settings ) ) {
+			$accountInfo->setCallBackUrl( $settings['callbackUrl'] == 'on' ? true : false );
 
 		}
 
-		if ( array_key_exists( "autoAuthorize", $settings ) ) {
-			$accountInfo->setAutoAuthorize( $settings["autoAuthorize"] == "on" ? true : false );
+		if ( array_key_exists( 'autoAuthorize', $settings ) ) {
+			$accountInfo->setAutoAuthorize( $settings['autoAuthorize'] == 'on' ? true : false );
 		}
 
-		if ( array_key_exists( "defaultLocale", $settings ) ) {
-			$targetLocales->setDefaultLocale( $settings["defaultLocale"] );
+		if ( array_key_exists( 'defaultLocale', $settings ) ) {
+			$targetLocales->setDefaultLocale( $settings['defaultLocale'] );
 		}
 
-		if ( array_key_exists( "targetLocales", $settings ) ) {
+		if ( array_key_exists( 'targetLocales', $settings ) ) {
 			$locales = array ();
-			foreach ( $settings["targetLocales"] as $key => $locale ) {
+			foreach ( $settings['targetLocales'] as $key => $locale ) {
 
 				$locales[] = array (
-					"locale"  => $key,
-					"target"  => $locale["target"],
-					"enabled" => array_key_exists( "enabled", $locale ) && $locale["enabled"] == "on" ? true : false
+					'locale'  => $key,
+					'target'  => $locale['target'],
+					'enabled' => array_key_exists( 'enabled', $locale ) && $locale['enabled'] == 'on' ? true : false
 				);
 			}
 
@@ -98,7 +98,7 @@ class Settings extends WPAbstract implements WPHookInterface {
 			foreach ( $targetLocales->getTargetLocales( true ) as $targetLocale ) {
 				$exist = false;
 				foreach ( $locales as $locale ) {
-					if ( $locale["locale"] == $targetLocale->getLocale() ) {
+					if ( $locale['locale'] == $targetLocale->getLocale() ) {
 						$exist = true;
 						break;
 					}
@@ -113,6 +113,6 @@ class Settings extends WPAbstract implements WPHookInterface {
 
 		$options->save();
 
-		wp_redirect( $_REQUEST["_wp_http_referer"] );
+		wp_redirect( $_REQUEST['_wp_http_referer'] );
 	}
 }

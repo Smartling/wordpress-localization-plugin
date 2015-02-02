@@ -216,7 +216,7 @@ class SubmissionManager extends EntityManagerAbstract {
 
 		if ( $validRequest ) {
 
-			$searchText = "%{$searchText}%";
+			$searchText = vsprintf('%%%s%%',array($searchText));
 
 			$block = ConditionBlock::getConditionBlock( ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR );
 

@@ -10,12 +10,12 @@ namespace Smartling\Helpers;
 
 
 class Options {
-	const SMARTLING_ACCOUNT_INFO = "smartling_options";
-	const SMARTLING_LOCALES = "smartling_locales";
+	const SMARTLING_ACCOUNT_INFO = 'smartling_options';
+	const SMARTLING_LOCALES = 'smartling_locales';
 	private $retrievalTypes = array (
-		"pseudo",
-		"published",
-		"pending"
+		'pseudo',
+		'published',
+		'pending'
 	);
 
 	/**
@@ -71,7 +71,7 @@ class Options {
 }
 
 class AccountInfo {
-	private $apiUrl = "https://api.smartling.com/v1";
+	private $apiUrl = 'https://api.smartling.com/v1';
 	private $projectId;
 	private $key;
 	private $retrievalType;
@@ -165,12 +165,12 @@ class AccountInfo {
 	public function get ( $key ) {
 		$values = get_site_option( $key );
 		if ( $values ) {
-			$this->setApiUrl( $values["apiUrl"] );
-			$this->setProjectId( $values["projectId"] );
-			$this->setKey( $values["key"] );
-			$this->setRetrievalType( $values["retrievalType"] );
-			$this->setCallBackUrl( $values["callBackUrl"] );
-			$this->setAutoAuthorize( $values["autoAuthorize"] );
+			$this->setApiUrl( $values['apiUrl'] );
+			$this->setProjectId( $values['projectId'] );
+			$this->setKey( $values['key'] );
+			$this->setRetrievalType( $values['retrievalType'] );
+			$this->setCallBackUrl( $values['callBackUrl'] );
+			$this->setAutoAuthorize( $values['autoAuthorize'] );
 		}
 
 		return $values;
@@ -188,12 +188,12 @@ class AccountInfo {
 
 	public function toArray () {
 		return array (
-			"apiUrl"        => trim( $this->getApiUrl() ),
-			"projectId"     => trim( $this->getProjectId() ),
-			"key"           => trim( $this->getKey() ),
-			"retrievalType" => trim( $this->getRetrievalType() ),
-			"callBackUrl"   => trim( $this->getCallBackUrl() ),
-			"autoAuthorize" => trim( $this->getAutoAuthorize() )
+			'apiUrl'        => trim( $this->getApiUrl() ),
+			'projectId'     => trim( $this->getProjectId() ),
+			'key'           => trim( $this->getKey() ),
+			'retrievalType' => trim( $this->getRetrievalType() ),
+			'callBackUrl'   => trim( $this->getCallBackUrl() ),
+			'autoAuthorize' => trim( $this->getAutoAuthorize() )
 		);
 	}
 }
@@ -216,8 +216,8 @@ class Locales {
 	public function get ( $key ) {
 		$values = get_site_option( $key );
 		if ( $values ) {
-			$this->setDefaultLocale( $values["defaultLocale"] );
-			$this->setTargetLocales( $values["targetLocales"] );
+			$this->setDefaultLocale( $values['defaultLocale'] );
+			$this->setTargetLocales( $values['targetLocales'] );
 		}
 
 		return $values;
@@ -241,8 +241,8 @@ class Locales {
 		}
 
 		return array (
-			"defaultLocale" => trim( $this->getDefaultLocale() ),
-			"targetLocales" => $targetLocales
+			'defaultLocale' => trim( $this->getDefaultLocale() ),
+			'targetLocales' => $targetLocales
 		);
 	}
 
@@ -285,7 +285,7 @@ class Locales {
 		$locales = array ();
 		if ( $targetLocales ) {
 			foreach ( $targetLocales as $raw ) {
-				$locales[] = new TargetLocale( $raw["locale"], $raw["target"], $raw["enabled"] );
+				$locales[] = new TargetLocale( $raw['locale'], $raw['target'], $raw['enabled'] );
 			}
 		}
 
@@ -357,9 +357,9 @@ class TargetLocale {
 
 	public function toArray () {
 		return array (
-			"locale"  => $this->getLocale(),
-			"target"  => $this->getTarget(),
-			"enabled" => $this->getEnabled()
+			'locale'  => $this->getLocale(),
+			'target'  => $this->getTarget(),
+			'enabled' => $this->getEnabled()
 		);
 	}
 }

@@ -18,7 +18,7 @@ abstract class SmartlingException extends \Exception {
 	 * @param int        $code
 	 * @param \Exception $previous
 	 */
-	public function __construct ( $message = "", $code = 0, \Exception $previous = null ) {
+	public function __construct ( $message = '', $code = 0, \Exception $previous = null ) {
 		parent::__construct( $this, $code, $previous );
 
 		$this->tryLogException( $this );
@@ -34,7 +34,7 @@ abstract class SmartlingException extends \Exception {
 		try {
 			$message = $exception->getMessage();
 
-			$fileString = vsprintf( "%s : %d", array ( $exception->getFile(), $exception->getLine() ) );
+			$fileString = vsprintf( '%s : %d', array ( $exception->getFile(), $exception->getLine() ) );
 
 			$trace = $exception->getTraceAsString();
 

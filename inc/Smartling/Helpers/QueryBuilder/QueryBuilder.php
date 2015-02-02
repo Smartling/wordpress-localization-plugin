@@ -141,7 +141,7 @@ class QueryBuilder {
 		$fieldsString = self::buildFieldListString( $fieldsList );
 
 		$query = vsprintf(
-			"SELECT %s FROM %s",
+			'SELECT %s FROM %s',
 			array (
 				$fieldsString,
 				self::escapeName( $tableName )
@@ -223,7 +223,7 @@ class QueryBuilder {
 			self::escapeName( $tableName ),
 			self::buildFieldListString( array_keys( $fieldValueList ) ),
 			implode( ',', array_map( function ( $item ) {
-				return "'{$item}'";
+				return vsprintf('\'$item\'', array($item));
 			}, self::escapeValues( array_values( $fieldValueList ) ) ) )
 		) );
 
@@ -263,10 +263,10 @@ class QueryBuilder {
 			$preOptions = array ();
 
 			foreach ( $sortOptions as $filed => $value ) {
-				$preOptions[] = vsprintf( "`%s` %s", array ( $filed, $value ) );
+				$preOptions[] = vsprintf( '`%s` %s', array ( $filed, $value ) );
 			}
 
-			$part .= vsprintf( " ORDER BY %s", array ( implode( ' , ', $preOptions ) ) );
+			$part .= vsprintf( ' ORDER BY %s', array ( implode( ' , ', $preOptions ) ) );
 		}
 
 		return $part;
@@ -360,6 +360,6 @@ class QueryBuilder {
 			}
 		}
 
-		return $is_function ? $fieldName : "`{$fieldName}`";
+		return $is_function ? $fieldName : '`{$fieldName}`';
 	}
 }

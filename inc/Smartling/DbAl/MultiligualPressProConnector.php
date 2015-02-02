@@ -25,8 +25,8 @@ class MultiligualPressProConnector extends LocalizationPluginAbstract {
 			} else {
 				foreach ( $rawValue as $blogId => $item ) {
 					self::$_blogLocalesCache[ $blogId ] = array (
-						"text" => $item['text'],
-						"lang" => $item['lang']
+						'text' => $item['text'],
+						'lang' => $item['lang']
 					);
 				}
 			}
@@ -44,7 +44,7 @@ class MultiligualPressProConnector extends LocalizationPluginAbstract {
 
 		$locales = array ();
 		foreach ( self::$_blogLocalesCache as $blogId => $blogLocale ) {
-			$locales[] = $blogLocale["text"];
+			$locales[] = $blogLocale['text'];
 		}
 
 		return $locales;
@@ -66,7 +66,7 @@ class MultiligualPressProConnector extends LocalizationPluginAbstract {
 
 		$this->helper->restoreBlogId();
 
-		return $locale["lang"];
+		return $locale['lang'];
 	}
 
 	/**
