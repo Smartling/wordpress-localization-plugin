@@ -354,12 +354,12 @@ class QueryBuilder {
 		foreach ( self::$sqlFunctionNames as $functionName ) {
 			$pos = strpos( $tmp, $functionName . '(' );
 
-			if ( false !== $pos && 0 == $pos ) {
+			if ( false !== $pos && 0 === $pos ) {
 				$is_function = true;
 				break;
 			}
 		}
 
-		return $is_function ? $fieldName : '`{$fieldName}`';
+		return $is_function ? $fieldName : "`{$fieldName}`";
 	}
 }

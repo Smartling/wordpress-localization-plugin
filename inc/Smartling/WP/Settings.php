@@ -54,12 +54,12 @@ class Settings extends WPAbstract implements WPHookInterface {
 		$accountInfo   = $options->getAccountInfo();
 		$targetLocales = $options->getLocales();
 
-		if ( array_key_exists( "apiUrl", $settings ) ) {
-			$accountInfo->setApiUrl( $settings["apiUrl"] );
+		if ( array_key_exists( 'apiUrl', $settings ) ) {
+			$accountInfo->setApiUrl( $settings['apiUrl'] );
 		}
 
-		if ( array_key_exists( "projectId", $settings ) ) {
-			$accountInfo->setProjectId( $settings["projectId"] );
+		if ( array_key_exists( 'projectId', $settings ) ) {
+			$accountInfo->setProjectId( $settings['projectId'] );
 		}
 
 		if ( array_key_exists( 'apiKey', $settings ) ) {

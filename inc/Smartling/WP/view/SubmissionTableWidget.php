@@ -97,42 +97,53 @@ class SubmissionTableWidget extends \WP_List_Table {
 		}
 	}
 
-	function column_name ( $item ) {
+	/**
+	 * @param $item
+	 *
+	 * @return string
+	 */
+	function applyRowActions ( $item ) {
+
+		$linkTemplate = '?page=%s&action=%s&' . $this->buildHtmlTagName( $this->_args['singular'] ) . '=%s';
 
 		//Build row actions
 		$actions = array (
-			'send'     => sprintf( '<a href="?page=%s&action=%s&submission=%s">Send</a>', $_REQUEST['page'], 'send',
-				$item['id'] ),
-			'download' => sprintf( '<a href="?page=%s&action=%s&submission=%s">Download</a>', $_REQUEST['page'],
-				'download', $item['id'] ),
+			'send'     => HtmlTagGeneratorHelper::tag( 'a', __( 'Send' ), array (
+				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'send', $item['id'] ) )
+			) ),
+			'download' => HtmlTagGeneratorHelper::tag( 'a', __( 'Download' ), array (
+				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'download', $item['id'] ) )
+			) )
 		);
 
 		//Return the title contents
-		return sprintf( '%1$s <span style="color:silver">(id:%2$s)</span>%3$s',
-			/*$1%s*/
-			$item['sourceTitle'],
-			/*$2%s*/
-			$item['id'],
-			/*$3%s*/
-			$this->row_actions( $actions )
-		);
+		return vsprintf( '%s %s', array ( $item['sourceTitle'], $this->row_actions( $actions ) ) );
 	}
 
-	function column_cb ( $item ) {
-		return sprintf(
-			'<input type="checkbox" name="%1$s[]" value="%2$s" />',
-			/*$1%s*/
-			$this->_args['singular'],  //Let's simply repurpose the table's singular label ("movie")
-			/*$2%s*/
-			$item['id']                //The value of the checkbox should be the record's id
-		);
+	/**
+	 * Generates a checkbox for a row to add row to bulk actions
+	 *
+	 * @param array $item
+	 *
+	 * @return string
+	 */
+	public function column_cb ( array $item ) {
+		return HtmlTagGeneratorHelper::tag( 'input', '', array (
+			'type'  => 'checkbox',
+			'name'  => $this->buildHtmlTagName( $this->_args['singular'] ) . '[]',
+			'value' => $item['id'],
+		) );
 	}
 
 	/**
 	 * @inheritdoc
 	 */
 	public function get_columns () {
-		return $this->manager->getColumnsLabels();
+		$columns = $this->manager->getColumnsLabels();
+
+		$columns = array_merge( array ( 'bulkActionCb' => '' ), $columns );
+
+		return $columns;
 	}
 
 	/**
@@ -289,8 +300,15 @@ class SubmissionTableWidget extends \WP_List_Table {
 		$dataAsArray = array ();
 
 		foreach ( $data as $element ) {
-			$dataAsArray[] = $element->toArray();
+			$row = $element->toArray();
+
+			$row['sourceTitle'] = $this->applyRowActions( $row );
+
+			$row = array_merge( array ( 'bulkActionCb' => $this->column_cb( $row ) ), $row );
+
+			$dataAsArray[] = $row;
 		}
+
 
 		$this->items = $dataAsArray;
 
