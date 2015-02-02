@@ -3,6 +3,7 @@
 namespace Smartling\Helpers;
 
 use Psr\Log\LoggerInterface;
+use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 
 /**
@@ -17,7 +18,7 @@ class SiteHelper {
 	/**
 	 * @var LoggerInterface
 	 */
-	private $_logger = null;
+	private $_logger;
 
 	/**
 	 * @param LoggerInterface $logger
@@ -154,7 +155,13 @@ class SiteHelper {
 		restore_current_blog();
 	}
 
-	public function getCurrentBlogLocale () {
-
+	/**
+	 * Returns locale of current blog
+	 * @param LocalizationPluginProxyInterface $localizationPlugin
+	 *
+	 * @return string
+	 */
+	public function getCurrentBlogLocale (LocalizationPluginProxyInterface $localizationPlugin) {
+		return $localizationPlugin->getBlogLocaleById($this->getCurrentBlogId());
 	}
 }

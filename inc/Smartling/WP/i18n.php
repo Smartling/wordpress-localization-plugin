@@ -1,27 +1,30 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: sergey@slepokurov.com
- * Date: 20.01.2015
- * Time: 14:28
- */
 
 namespace Smartling\WP;
 
-use Smartling\WP\WPHookInterface;
 use Smartling\Helpers\PluginInfo;
 
-
+/**
+ * Class i18n
+ *
+ * @package Smartling\WP
+ */
 class i18n implements WPHookInterface {
 	/**
 	 * @var PluginInfo
 	 */
 	private $pluginInfo;
 
+	/**
+	 * @param PluginInfo $pluginInfo
+	 */
 	public function __construct ( PluginInfo $pluginInfo ) {
 		$this->pluginInfo = $pluginInfo;
 	}
 
+	/**
+	 * @inheritdoc
+	 */
 	public function register () {
 		load_plugin_textdomain(
 			$this->pluginInfo->getDomain(),

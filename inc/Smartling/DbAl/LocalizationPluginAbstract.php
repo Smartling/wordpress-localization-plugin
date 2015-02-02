@@ -14,12 +14,12 @@ abstract class LocalizationPluginAbstract implements LocalizationPluginProxyInte
 	/**
 	 * @var SiteHelper
 	 */
-	protected $helper = null;
+	protected $helper;
 
 	/**
 	 * @var LoggerInterface
 	 */
-	private $logger = null;
+	private $logger;
 
 	/**
 	 * @inheritdoc
