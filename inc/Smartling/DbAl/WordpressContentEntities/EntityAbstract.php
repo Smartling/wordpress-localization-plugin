@@ -105,11 +105,12 @@ abstract class EntityAbstract {
 			case 'set' : {
 				$field        = $this->getFieldNameByMethodName( $method );
 				$this->$field = reset( $params ); // get the very first arg
+				break;
 			}
 			case 'get' : {
 				$field = $this->getFieldNameByMethodName( $method );
-
 				return $this->$field; // get the very first arg
+				break;
 			}
 			default : {
 				$template = 'Method \'%s\' does not exists in class \'%s\'';
