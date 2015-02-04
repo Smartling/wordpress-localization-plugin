@@ -45,7 +45,7 @@ class SettingsController extends WPAbstract implements WPHookInterface {
 	}
 
 	public function getSiteLocales () {
-		return $this->getMultiLingualConnector()->getLocales();
+		return $this->getConnector()->getLocales();
 	}
 
 	public function save () {
