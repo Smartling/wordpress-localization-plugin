@@ -66,7 +66,7 @@ abstract class WPAbstract {
 	 */
 	public function view ( $data = null ) {
 		$class = get_called_class();
-		$class = str_replace( 'Smartling\\WP\\Controller', '', $class );
+		$class = str_replace( 'Smartling\\WP\\Controller\\', '', $class );
 
 		$class = str_replace( 'Controller', '', $class );
 
