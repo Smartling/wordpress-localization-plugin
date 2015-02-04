@@ -6,10 +6,10 @@
  * Time: 23:19
  */
 
-namespace Smartling\WP;
+namespace Smartling\WP\Controller;
 
 
-class TaxonomyWidget extends WPAbstract implements WPHookInterface {
+class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 	public function register () {
 		add_action( 'admin_init', array ( $this, 'init' ) );
 	}

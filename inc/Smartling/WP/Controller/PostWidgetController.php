@@ -6,10 +6,10 @@
  * Time: 22:47
  */
 
-namespace Smartling\WP;
+namespace Smartling\WP\Controller;
 
 
-class PostWidget extends WPAbstract implements WPHookInterface {
+class PostWidgetController extends WPAbstract implements WPHookInterface {
 	const WIDGET_NAME = 'smartling_connector_post_widget';
 	const WIDGET_DATA_NAME = 'smartling_post_widget_data';
 
