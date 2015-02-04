@@ -1,7 +1,8 @@
 <?php
 
 namespace Smartling\WP\Controller;
-
+use Smartling\WP\WPAbstract;
+use Smartling\WP\WPHookInterface;
 class SettingsController extends WPAbstract implements WPHookInterface {
 
 	public function wp_enqueue () {

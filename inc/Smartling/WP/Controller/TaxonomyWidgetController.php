@@ -7,7 +7,8 @@
  */
 
 namespace Smartling\WP\Controller;
-
+use Smartling\WP\WPAbstract;
+use Smartling\WP\WPHookInterface;
 
 class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 	public function register () {

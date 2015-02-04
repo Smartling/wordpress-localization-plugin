@@ -7,7 +7,8 @@
  */
 
 namespace Smartling\WP\Controller;
-
+use Smartling\WP\WPAbstract;
+use Smartling\WP\WPHookInterface;
 
 class PostWidgetController extends WPAbstract implements WPHookInterface {
 	const WIDGET_NAME = 'smartling_connector_post_widget';
