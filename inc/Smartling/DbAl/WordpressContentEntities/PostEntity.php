@@ -39,6 +39,7 @@ class PostEntity extends EntityAbstract {
 
 	/**
 	 * Standard 'post' content-type fields
+	 *
 	 * @var array
 	 */
 	protected $fields = array (
@@ -68,39 +69,22 @@ class PostEntity extends EntityAbstract {
 	);
 
 	/**
-	 * List of fields that affect the hash of the entity
-	 * @var array
-	 */
-	protected $hashAffectingFields = array (
-		'ID',
-		'post_author',
-		'post_content',
-		'post_title',
-		'post_status',
-		'comment_status',
-		'post_name',
-		'post_parent',
-		'guid',
-		'post_type',
-	);
-
-	/**
-	 * @inheritdoc
-	 */
-	public function calculateHash () {
-		$sourceSting = '';
-
-		foreach ( $this->hashAffectingFields as $fieldName ) {
-			$sourceSting .= $this->$fieldName;
-		}
-
-		return md5( $sourceSting );
-	}
-
-	/**
 	 * @inheritdoc
 	 */
 	public function __construct ( LoggerInterface $logger ) {
+		$this->hashAffectingFields = array (
+			'ID',
+			'post_author',
+			'post_content',
+			'post_title',
+			'post_status',
+			'comment_status',
+			'post_name',
+			'post_parent',
+			'guid',
+			'post_type',
+		);
+
 		parent::__construct( $logger );
 
 		$this->setEntityFields( $this->fields );
@@ -127,14 +111,7 @@ class PostEntity extends EntityAbstract {
 		$post = get_post( $guid, ARRAY_A );
 
 		if ( null !== $post ) {
-
-			foreach ( $this->fields as $fieldName ) {
-				$this->$fieldName = $post[ $fieldName ];
-			}
-
-			$this->hash = $this->calculateHash();
-
-			return (object) $this;
+			return $this->resultToEntity( (object) $post, $this );
 		} else {
 			$this->entityNotFound( WordpressContentTypeHelper::CONTENT_TYPE_POST, $guid );
 		}
@@ -143,7 +120,44 @@ class PostEntity extends EntityAbstract {
 	/**
 	 * @inheritdoc
 	 */
-	public function set ( EntityAbstract $entity ) {
-		// TODO: Implement set() method.
+	public function set ( EntityAbstract $entity = null ) {
+		$instance = null === $entity ? $this : $entity;
+
+		$res = wp_insert_post( $instance->toArray(), true );
+
+		return $res;
+	}
+
+	/**
+	 * Loads ALL entities from database
+	 *
+	 * @return array
+	 */
+	public function getAll () {
+
+		$arguments = array (
+			'numberposts'      => '',
+			'offset'           => 0,
+			'category'         => 0,
+			'orderby'          => 'date',
+			'order'            => 'DESC',
+			'include'          => array (),
+			'exclude'          => array (),
+			'meta_key'         => '',
+			'meta_value'       => '',
+			'post_type'        => 'post',
+			'suppress_filters' => true
+		);
+
+		$posts = get_posts( $arguments );
+
+		$result = array ();
+
+		foreach ( $posts as $post ) {
+			$result[] = $this->resultToEntity( $post );
+		}
+
+		return $result;
+
 	}
 }

@@ -13,15 +13,6 @@ use Smartling\Exception\EntityNotFoundException;
 abstract class EntityAbstract {
 
 	/**
-	 * Wordpress date-time format
-	 */
-	const DATE_TIME_FORMAT = 'Y-m-d H:i:s';
-
-	/**
-	 * @var \DateTimeZone
-	 */
-	private $timezone;
-	/**
 	 * The guid field name for the entity. Most times it should be 'id'
 	 *
 	 * @var string
@@ -29,35 +20,42 @@ abstract class EntityAbstract {
 	private $guidField = '';
 
 	/**
-	 * @param \DateTime $dateTime
+	 * List of fields that affect the hash of the entity
 	 *
-	 * @return string
+	 * @var array
 	 */
-	protected function dateToString(\DateTime $dateTime)
-	{
-		return $dateTime->format(self::DATE_TIME_FORMAT);
-	}
-
-	/**
-	 * @param $dateTime
-	 *
-	 * @return \DateTime
-	 */
-	protected function stringToDate($dateTime)
-	{
-		return \DateTime::createFromFormat(self::DATE_TIME_FORMAT, $dateTime, $this->timezone);
-	}
+	protected $hashAffectingFields;
 
 	/**
 	 * @var array
 	 */
-	private $entityFields = array ('hash');
+	private $entityFields = array ( 'hash' );
+
+	private $entityArrayState = array ();
+
+	private function initEntityArrayState () {
+		if ( empty( $this->entityArrayState ) ) {
+			foreach ( $this->entityFields as $field ) {
+				$this->entityArrayState[ $field ] = null;
+			}
+		}
+	}
 
 	/**
 	 * @param array $entityFields
 	 */
 	public function setEntityFields ( array $entityFields ) {
-		$this->entityFields = array_merge(array('hash'), $entityFields);
+		$this->entityFields = array_merge( array ( 'hash' ), $entityFields );
+
+		$this->initEntityArrayState();
+	}
+
+	/**
+	 * Transforms entity instance into array
+	 * @return array
+	 */
+	public function toArray () {
+		return $this->entityArrayState;
 	}
 
 	/**
@@ -68,8 +66,8 @@ abstract class EntityAbstract {
 	 * @return
 	 */
 	public function __get ( $fieldName ) {
-		if ( array_key_exists( $fieldName, $this->entityFields ) ) {
-			return $this->entityFields[ $fieldName ];
+		if ( array_key_exists( $fieldName, $this->entityArrayState ) ) {
+			return $this->entityArrayState[ $fieldName ];
 		}
 	}
 
@@ -80,8 +78,8 @@ abstract class EntityAbstract {
 	 * @param $fieldValue
 	 */
 	public function __set ( $fieldName, $fieldValue ) {
-		if ( array_key_exists( $fieldName, $this->entityFields ) ) {
-			$this->entityFields[ $fieldName ] = $fieldValue;
+		if ( array_key_exists( $fieldName, $this->entityArrayState ) ) {
+			$this->entityArrayState[ $fieldName ] = $fieldValue;
 		}
 	}
 
@@ -109,6 +107,7 @@ abstract class EntityAbstract {
 			}
 			case 'get' : {
 				$field = $this->getFieldNameByMethodName( $method );
+
 				return $this->$field; // get the very first arg
 				break;
 			}
@@ -120,7 +119,6 @@ abstract class EntityAbstract {
 			}
 		}
 	}
-
 
 	/**
 	 * @var LoggerInterface
@@ -142,7 +140,7 @@ abstract class EntityAbstract {
 	public function __construct ( LoggerInterface $logger ) {
 		$this->logger = $logger;
 
-		$this->timezone = new \DateTimeZone('UTC');
+		$this->timezone = new \DateTimeZone( 'UTC' );
 	}
 
 	/**
@@ -169,20 +167,56 @@ abstract class EntityAbstract {
 	abstract public function get ( $guid );
 
 	/**
+	 * Loads ALL entities from database
+	 *
+	 * @return mixed
+	 */
+	abstract public function getAll ();
+
+	/**
 	 * Stores entity to database
 	 *
 	 * @param EntityAbstract $entity
 	 *
 	 * @return mixed
 	 */
-	abstract public function set ( EntityAbstract $entity );
+	abstract public function set ( EntityAbstract $entity = null);
 
 	/**
 	 * Calculates the hash of entity
 	 *
 	 * @return string
 	 */
-	abstract public function calculateHash();
+	public function calculateHash () {
+		$sourceSting = '';
+
+		foreach ( $this->hashAffectingFields as $fieldName ) {
+			$sourceSting .= $this->$fieldName;
+		}
+
+		return md5( $sourceSting );
+	}
+
+	/**
+	 * Converts object into EntityAbstract child
+	 *
+	 * @param object         $post
+	 * @param EntityAbstract $entity
+	 *
+	 * @return EntityAbstract
+	 */
+	protected function resultToEntity ( $post, $entity = null ) {
+		if ( null === $entity ) {
+			$className = get_class($this);
+
+			$entity = new $className( $this->getLogger() );
+		}
+		foreach ( $this->fields as $fieldName ) {
+			$entity->$fieldName = $post->$fieldName;
+		}
+		$entity->hash = $this->calculateHash();
+		return $entity;
+	}
 
 	protected function entityNotFound ( $type, $guid ) {
 		$template = 'The \'%s\' entity with guid \'%s\' not found';
