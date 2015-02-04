@@ -13,16 +13,6 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
  */
 class QueryBuilder {
 	/**
-	 * Exception code for bad sort options
-	 */
-	const EXCEPTION_CODE_INVALID_SORT_OPTIONS = 1;
-
-	/**
-	 * Exception code for bad field list
-	 */
-	const EXCEPTION_CODE_INVALID_FIELD_LIST = 2;
-
-	/**
 	 * Exception code for empty field list
 	 */
 	const EXCEPTION_CODE_EMPTY_FIELD_LIST = 4;
@@ -38,21 +28,7 @@ class QueryBuilder {
 	 * @return bool
 	 */
 	public static function validateSortOptions ( array $fieldNames, array $sortOptions = array () ) {
-		if ( ! is_array( $sortOptions ) ) {
-			throw new \InvalidArgumentException(
-				'Sorting options MUST always be an array',
-				self::EXCEPTION_CODE_INVALID_SORT_OPTIONS
-			);
-		}
-
-		if ( ! is_array( $fieldNames ) ) {
-			throw new \InvalidArgumentException(
-				'Field name list MUST always be an array',
-				self::EXCEPTION_CODE_INVALID_FIELD_LIST
-			);
-		}
-
-		if ( ! is_array( $fieldNames ) ) {
+		if ( empty( $fieldNames ) ) {
 			throw new \InvalidArgumentException(
 				'Field list CANNOT be empty',
 				self::EXCEPTION_CODE_EMPTY_FIELD_LIST

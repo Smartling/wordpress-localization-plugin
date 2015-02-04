@@ -2,10 +2,7 @@
 
 namespace Smartling\WP\View;
 
-use Smartling\Bootstrap;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
-use Smartling\DbAl\WordpressContentEntities\PageEntity;
-use Smartling\DbAl\WordpressContentEntities\PostEntity;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionManager;
@@ -301,16 +298,6 @@ class SubmissionTableWidget extends \WP_List_Table {
 		}
 
 		$dataAsArray = array ();
-
-
-		$logger = Bootstrap::getContainer()->get('logger');
-
-
-
-		$postEntity = new PostEntity($logger);
-		$pageEntity = new PageEntity($logger);
-
-		var_dump(array($postEntity->get(5),$pageEntity->get(2) ));
 
 		foreach ( $data as $element ) {
 			$row = $element->toArray();

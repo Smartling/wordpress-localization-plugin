@@ -80,9 +80,9 @@ class SubmissionEntity {
 	const SUBMISSION_STATUS_IN_PROGRESS = 'In Progress';
 
 	/**
-	 * Submission Status  'Translated'
+	 * Submission Status  'Completed'
 	 */
-	const SUBMISSION_STATUS_TRANSLATED = 'Translated';
+	const SUBMISSION_STATUS_COMPLETED = 'Completed';
 
 	/**
 	 * Submission Status  'Failed'
@@ -96,7 +96,7 @@ class SubmissionEntity {
 		self::SUBMISSION_STATUS_NOT_TRANSLATED,
 		self::SUBMISSION_STATUS_NEW,
 		self::SUBMISSION_STATUS_IN_PROGRESS,
-		self::SUBMISSION_STATUS_TRANSLATED,
+		self::SUBMISSION_STATUS_COMPLETED,
 		self::SUBMISSION_STATUS_FAILED,
 	);
 
@@ -108,7 +108,7 @@ class SubmissionEntity {
 			self::SUBMISSION_STATUS_NOT_TRANSLATED => __( self::SUBMISSION_STATUS_NOT_TRANSLATED ),
 			self::SUBMISSION_STATUS_NEW            => __( self::SUBMISSION_STATUS_NEW ),
 			self::SUBMISSION_STATUS_IN_PROGRESS    => __( self::SUBMISSION_STATUS_IN_PROGRESS ),
-			self::SUBMISSION_STATUS_TRANSLATED     => __( self::SUBMISSION_STATUS_TRANSLATED ),
+			self::SUBMISSION_STATUS_COMPLETED     => __( self::SUBMISSION_STATUS_COMPLETED ),
 			self::SUBMISSION_STATUS_FAILED         => __( self::SUBMISSION_STATUS_FAILED ),
 		);
 	}
