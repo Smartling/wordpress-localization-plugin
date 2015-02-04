@@ -68,7 +68,7 @@ services:
       - "@plugin.info"
 
   wp.settings:
-    class: Smartling\WP\Settings
+    class: Smartling\WP\Controller\Settings
     arguments:
       - "@logger"
       - "@multilang.proxy"
@@ -83,14 +83,14 @@ services:
       - "@manager.submission"
 
   wp.post:
-    class: Smartling\WP\PostWidget
+    class: Smartling\WP\Controller\PostWidget
     arguments:
       - "@logger"
       - "@multilang.proxy"
       - "@plugin.info"
 
   wp.taxonomy:
-      class: Smartling\WP\TaxonomyWidget
+      class: Smartling\WP\Controller\TaxonomyWidget
       arguments:
         - "@logger"
         - "@multilang.proxy"
