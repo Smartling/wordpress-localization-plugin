@@ -4,6 +4,7 @@ namespace Smartling\DbAl;
 
 use Psr\Log\LoggerInterface;
 use Smartling\Helpers\SiteHelper;
+use Smartling\Submissions\SubmissionEntity;
 
 /**
  * Interface LocalizationPluginProxyInterface
@@ -45,4 +46,30 @@ interface LocalizationPluginProxyInterface {
 	 * @return array
 	 */
 	function getLinkedBlogIdsByBlogId ( $blogId );
+
+	/**
+	 * Returns linked content
+	 *
+	 * @param int    $sourceBlogId
+	 * @param int    $sourceContentId
+	 * @param string $contentType
+	 *
+	 * @return array
+	 * ( <blog_id> => <content_id> )
+	 */
+	function getLinkedObjects ( $sourceBlogId, $sourceContentId, $contentType );
+
+	/**
+	 * @param SubmissionEntity $submission
+	 *
+	 * @return bool
+	 */
+	function linkObjects ( SubmissionEntity $submission );
+
+	/**
+	 * @param SubmissionEntity $submission
+	 *
+	 * @return bool
+	 */
+	function  unlinkObjects ( SubmissionEntity $submission );
 }
