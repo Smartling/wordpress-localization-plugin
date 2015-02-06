@@ -3,6 +3,8 @@
 namespace Smartling\Submissions;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Bootstrap;
+use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\WordpressContentTypeHelper;
 
 /**
@@ -108,7 +110,7 @@ class SubmissionEntity {
 			self::SUBMISSION_STATUS_NOT_TRANSLATED => __( self::SUBMISSION_STATUS_NOT_TRANSLATED ),
 			self::SUBMISSION_STATUS_NEW            => __( self::SUBMISSION_STATUS_NEW ),
 			self::SUBMISSION_STATUS_IN_PROGRESS    => __( self::SUBMISSION_STATUS_IN_PROGRESS ),
-			self::SUBMISSION_STATUS_COMPLETED     => __( self::SUBMISSION_STATUS_COMPLETED ),
+			self::SUBMISSION_STATUS_COMPLETED      => __( self::SUBMISSION_STATUS_COMPLETED ),
 			self::SUBMISSION_STATUS_FAILED         => __( self::SUBMISSION_STATUS_FAILED ),
 		);
 	}
