@@ -58,7 +58,7 @@ class SubmissionEntity {
 		'fileUri'              => 'VARCHAR(255) NULL',
 		'targetLocale'         => 'VARCHAR(16) NOT NULL',
 		'targetBlog'           => 'INT UNSIGNED NOT NULL',
-		'targetGUID'           => 'VARCHAR(255) NOT NULL',
+		'targetGUID'           => 'VARCHAR(255) NULL',
 		'submitter'            => 'VARCHAR(255) NOT NULL',
 		'submissionDate'       => 'DATETIME NOT NULL',
 		'approvedStringCount'  => 'INT UNSIGNED NULL',
@@ -548,7 +548,7 @@ class SubmissionEntity {
 		$path = $this->getFileUri();
 
 		if(strlen($path) > 0){
-			str_replace('.xml', '.' . $this->getTargetLocale() . '.xml', $path);
+			$path = str_replace('.xml', '.' . $this->getTargetLocale() . '.xml', $path);
 		}
 
 		return $path;

@@ -490,7 +490,7 @@ class SubmissionManager extends EntityManagerAbstract {
 		$path = $processor->toXml($entity);
 		$entity->setFileUri($path);
 		$entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_NOT_TRANSLATED);
-		$this->storeEntity($entity);
+		$entity = $this->storeEntity($entity);
 	}
 
 	public function upload(SubmissionEntity $entity) {
@@ -499,17 +499,24 @@ class SubmissionManager extends EntityManagerAbstract {
 		$status = $api->uploadFile($entity, $xml);
 		if($status) {
 			$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS );
-			$this->storeEntity($entity);
+			$entity = $this->storeEntity($entity);
 		}
 	}
 
 	public function download(SubmissionEntity $entity) {
 		$api = new ApiWrapper($this->getEntityHelper()->getPluginInfo()->getOptions(), $this->getLogger());
 		$xml = $api->downloadFile($entity);
-		if($xml) {
+		if(strlen($xml) > 0) {
 			file_put_contents($entity->getTargetFileUri(), $xml);
 			$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_COMPLETED );
-			$this->storeEntity($entity);
+			//TODO temporary %
+			$entity->setApprovedStringCount(100);
+			$entity->setCompletedStringCount(100);
+
+			$processor = new EntityProcessor($this->getEntityHelper(), $this->getLogger());
+			$processor->fromXml($entity);
+
+			$entity = $this->storeEntity($entity);
 		}
 	}
 }

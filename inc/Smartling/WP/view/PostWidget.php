@@ -7,14 +7,20 @@
 		$locales = $this->getPluginInfo()->getOptions()->getLocales()->getTargetLocales();
 
 		foreach ( $locales as  $locale ) {
-			$value   = false;
-			$checked = '';
-			$status = '';
-			if($data["submission"] != null) {
-				$value = true;
-				$checked = 'checked="checked"';
-				$percent = $data["submission"]->getCompletionPercentage();
-				$status = $data["submission"]->getStatusColor();
+			$value      = false;
+			$checked    = '';
+			$status     = '';
+			$submission = null;
+			if ( $data["submissions"] != null ) {
+				foreach ( $data["submissions"] as $item ) {
+					if($item->getTargetBlog() == $locale->getBlog()) {
+						$value   = true;
+						$checked = 'checked="checked"';
+						$percent = $item->getCompletionPercentage();
+						$status  = $item->getStatusColor();
+						break;
+					}
+				}
 			}
 
 			//$value   = $values[0][ 'locale_' . $locale->getLocale() ];

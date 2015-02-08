@@ -71,6 +71,7 @@ services:
        - "@plugin.info"
        - "@multilang.proxy"
        - "@site.helper"
+       - "@logger"
 
   wp.i18n:
     class: Smartling\WP\i18n

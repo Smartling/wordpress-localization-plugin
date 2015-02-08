@@ -58,22 +58,23 @@ class EntityProcessor {
 	}
 
 	/**
-	 * @return array
+	 * @return PostEntity
 	 */
-	private function getEntityInArray($id, $type) {
+	private function getEntity($type) {
 		$entity = null;
 		switch($type) {
 			case 'post':
 				$entity = new PostEntity($this->getLogger());
 		}
 
-		return $entity ? $entity->get($id)->toArray() : array();
+		return $entity;
 	}
 
 	public function toXml(SubmissionEntity $entity) {
 		$fields = $this->getMapper($entity->getContentType())->getFields();
 
-		$object = array_intersect_key($this->getEntityInArray($entity->getSourceGUID(), $entity->getContentType()), array_flip($fields));
+		$entityArray = $this->getEntity($entity->getContentType())->get($entity->getSourceGUID());
+		$object = array_intersect_key($entityArray, array_flip($fields));
 
 		$xml = $this->initXml();
 	    $data = $this->arrayToXml($object, $xml);
@@ -89,21 +90,30 @@ class EntityProcessor {
 
 	public function fromXml(SubmissionEntity $entity) {
 		$xml = new \DOMDocument();
-		$xml->load($entity->getTargetLocale());
-		
+		$xml->load($entity->getTargetFileUri());
+		$xpath = new \DOMXPath($xml);
+
 		$fields = $this->getMapper($entity->getContentType())->getFields();
 
+		$wpEntity = $this->getEntity($entity->getContentType());
+		if($entity->getTargetGUID() == null) {
+			$helper = $this->getEntityHelper();
+			$targetId = $helper->createTarget($entity->getSourceGUID(), $entity->getTargetBlog(), $entity->getContentType());
+			$entity->setTargetGUID($targetId);
+			$this->getEntityHelper()->getConnector()->linkObjects($entity);
+		}
 
-		$xml = $this->initXml();
-		$data = $this->arrayToXml($object, $xml);
-		$xml->appendChild($data);
-
-		$folder = $this->getEntityHelper()->getPluginInfo()->getUpload();
-		$name = $this->buildXmlFileName($entity);
-		$path = $folder . DIRECTORY_SEPARATOR . $name;
-
-		$xml->save($path);
-		return $path;
+		$this->getEntityHelper()->getSiteHelper()->switchBlogId($entity->getTargetBlog());
+		$data = $wpEntity->get($entity->getTargetGUID());
+		foreach($fields as $field) {
+			$item = $xpath->query('//string[@name="' . $field .'"]')->item(0);
+			if($item) {
+				$data[$field] = (string)$item->nodeValue;
+			}
+		}
+		$wpEntity->update($data);
+		$this->getEntityHelper()->getSiteHelper()->restoreBlogId();
+		return true;
 	}
 
 	private function initXml() {

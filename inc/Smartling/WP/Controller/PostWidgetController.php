@@ -46,18 +46,9 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 
 			if($originalId) {
 				$submissions = $this->getManager()->getEntityBySourceGuid( $originalId );
-				if ( $submissions ) {
-					foreach ( $submissions as $item ) {
-						/** @var SubmissionEntity $item */
-						if ( $item->getTargetBlog() == $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId() ) {
-							$submission = $item;
-							break;
-						}
-					}
-				}
 			}
 			$this->view( array(
-				"submission" => $submission,
+				"submissions" => $submissions,
 				"post" => $post
 				)
 			);
@@ -67,6 +58,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 	}
 
 	public function save ( $post_id ) {
+		remove_action( 'save_post', array ( $this, 'save' ) );
 		if ( ! isset( $_POST['smartling_connector_nonce'] ) ) {
 			return $post_id;
 		}
@@ -94,66 +86,71 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 
 		$data = $_POST['smartling_post_widget'];
 		$locales = array();
-		foreach($data["locales"] as $key => $locale) {
-			if(array_key_exists( 'enabled', $locale ) && $locale['enabled'] == 'on') {
-				$locales[$key] = $locale['locale'] ;
+		if($data != null && array_key_exists("locales", $data)) {
+			foreach ( $data["locales"] as $key => $locale ) {
+				if ( array_key_exists( 'enabled', $locale ) && $locale['enabled'] == 'on' ) {
+					$locales[ $key ] = $locale['locale'];
+				}
+			}
+			if ( count( $locales ) > 0 ) {
+				$postEntity = new PostEntity( $this->getLogger() );
+
+				$originalId  = $this->getEntityHelper()->getOriginal( $post_id );
+				$post        = $postEntity->get( $originalId );
+				$manager     = $this->getManager();
+				$submissions = $manager->getEntityBySourceGuid( $originalId );
+
+				switch ( $_POST['submit'] ) {
+					case 'Send to Smartling':
+						foreach ( $locales as $key => $locale ) {
+							$submission = null;
+							if ( $submissions ) {
+								foreach ( $submissions as $item ) {
+									/** @var SubmissionEntity $item */
+									if ( $item->getTargetBlog() == $key ) {
+										$submission = $item;
+										break;
+									}
+								}
+							}
+							if ( $submission == null ) {
+								$submission = new SubmissionEntity( $this->getLogger() );
+							}
+							$submission->setContentType( 'post' );
+							$submission->setSourceBlog( $this->getPluginInfo()->getOptions()->getLocales()->getDefaultBlog() );
+							$submission->setSourceGUID( $originalId );
+							$submission->setSubmissionDate( date( 'Y-m-d H:i:s' ) );
+							$submission->setSourceTitle( $post["post_title"] );
+							$submission->setSubmitter( $this->getEntityHelper()->getSiteHelper()->getCurrentUserLogin() );
+							$submission->setTargetBlog( $key );
+							$submission->setTargetLocale( $locale );
+							$submission->setTargetGUID( $this->getEntityHelper()->getTarget( $post_id, $key ) );
+							$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_NEW );
+							$submission = $manager->storeEntity( $submission );
+							$manager->generateXml( $submission );
+							$manager->upload( $submission );
+						}
+						break;
+					case 'Download':
+						foreach ( $locales as $key => $locale ) {
+							$submission = null;
+							if ( $submissions ) {
+								foreach ( $submissions as $item ) {
+									/** @var SubmissionEntity $item */
+									if ( $item->getTargetBlog() == $key ) {
+										$submission = $item;
+										break;
+									}
+								}
+							}
+							if ( $submission ) {
+								$manager->download( $submission );
+							}
+						}
+						break;
+				}
 			}
 		}
-		$postEntity = new PostEntity($this->getLogger());
-
-		$originalId = $this->getEntityHelper()->getOriginal($post_id);
-		$post = $postEntity->get($originalId);
-		$manager = $this->getManager();
-		$submissions = $manager->getEntityBySourceGuid($originalId);
-
-		switch ( $_POST['submit'] ) {
-			case 'Send to Smartling':
-				foreach($locales as $key => $locale) {
-					$submission = null;
-					if($submissions) {
-						foreach ( $submissions as $item){
-							/** @var SubmissionEntity $item */
-							if($item->getTargetBlog() == $key) {
-								$submission = $item;
-								break;
-							}
-						}
-					}
-					if($submission == null) {
-						$submission = new SubmissionEntity( $this->getLogger() );
-					}
-					$submission->setContentType('post');
-					$submission->setSourceBlog($this->getPluginInfo()->getOptions()->getLocales()->getDefaultBlog());
-					$submission->setSourceGUID($originalId);
-					$submission->setSubmissionDate(date('Y-m-d H:i:s'));
-					$submission->setSourceTitle($post->getPostTitle());
-					$submission->setSubmitter($this->getEntityHelper()->getSiteHelper()->getCurrentUserLogin());
-					$submission->setTargetBlog($key);
-					$submission->setTargetLocale($locale);
-					$submission->setTargetGUID($this->getEntityHelper()->getTarget($post_id, $key));
-					$submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-					$manager->storeEntity($submission);
-					$manager->generateXml($submission);
-					$manager->upload($submission);
-				}
-				break;
-			case 'Download':
-				foreach($locales as $key => $locale) {
-					$submission = null;
-					if ( $submissions ) {
-						foreach ( $submissions as $item ) {
-							/** @var SubmissionEntity $item */
-							if ( $item->getTargetBlog() == $key ) {
-								$submission = $item;
-								break;
-							}
-						}
-					}
-					if($submission) {
-						$manager->download($submission);
-					}
-				}
-				break;
-		}
+		add_action( 'save_post', array ( $this, 'save' ) );
 	}
 }

@@ -110,11 +110,13 @@ class PostEntity extends EntityAbstract {
 	public function get ( $guid ) {
 		$post = get_post( $guid, ARRAY_A );
 
+		/*
 		if ( null !== $post ) {
 			return $this->resultToEntity( (object) $post, $this );
 		} else {
 			$this->entityNotFound( WordpressContentTypeHelper::CONTENT_TYPE_POST, $guid );
-		}
+		}*/
+		return $post == null ? array() : $post;
 	}
 
 	/**
@@ -126,6 +128,14 @@ class PostEntity extends EntityAbstract {
 		$res = wp_insert_post( $instance->toArray(), true );
 
 		return $res;
+	}
+
+	public function insert(array $post) {
+		return wp_insert_post( $post, true );
+	}
+
+	public function update(array $post) {
+		return wp_update_post( $post, true );
 	}
 
 	/**

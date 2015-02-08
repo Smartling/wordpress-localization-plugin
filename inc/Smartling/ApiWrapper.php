@@ -80,7 +80,9 @@ class ApiWrapper implements ApiWrapperInterface {
 		$this->logger->info( $logMessage, array ( __FILE__, __LINE__ ) );
 
 		// Try to download file.
-		$requestResultRaw = $this->api->downloadFile( $entity->getFileUri(), $this->getSmartLingLocale($entity->getTargetBlog()) );
+		$requestResultRaw = $this->api->downloadFile( $entity->getFileUri(), $this->getSmartLingLocale($entity->getTargetBlog()), array(
+			'retrievalType' => $this->settings->getAccountInfo()->getRetrievalType(),
+		));
 
 		// zero length response
 		if ( 0 === strlen( trim( $requestResultRaw ) ) ) {
