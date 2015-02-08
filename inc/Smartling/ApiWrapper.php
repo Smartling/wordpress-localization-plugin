@@ -272,7 +272,7 @@ class ApiWrapper implements ApiWrapperInterface {
 
 		$params = $paramBuilder->buildParameters();
 
-		$params['translationState'] = strtoupper($this->settings->getAccountInfo()->getRetrievalType());
+	//$params['translationState'] = strtoupper($this->settings->getAccountInfo()->getRetrievalType());
 
 		$uploadResultRaw = $this->api->uploadContent( $xmlString, $params );
 
@@ -315,7 +315,7 @@ class ApiWrapper implements ApiWrapperInterface {
 					implode( ' | ', $_params )
 				) );
 
-			$this->logger->error( $message, array ( __FILE__, __LINE__ ) );
+			$this->logger->error( $message );
 
 			throw new SmartlingFileUploadException( $message, 0, __FILE__, __LINE__ );
 		}
