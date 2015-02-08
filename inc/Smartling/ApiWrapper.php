@@ -7,6 +7,7 @@ use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\Helpers\AccountInfo;
+use Smartling\Helpers\Options;
 use Smartling\SDK\FileUploadParameterBuilder;
 use Smartling\SDK\SmartlingAPI;
 use Smartling\Submissions\SubmissionEntity;
@@ -18,7 +19,7 @@ use Smartling\Submissions\SubmissionEntity;
  */
 class ApiWrapper implements ApiWrapperInterface {
 	/**
-	 * @var AccountInfo
+	 * @var Options
 	 */
 	private $settings;
 
@@ -33,18 +34,18 @@ class ApiWrapper implements ApiWrapperInterface {
 	private $api;
 
 	/**
-	 * @param AccountInfo     $settings
+	 * @param Options     $settings
 	 * @param LoggerInterface $logger
 	 */
-	public function __construct ( AccountInfo $settings, LoggerInterface $logger ) {
+	public function __construct ( Options $settings, LoggerInterface $logger ) {
 		$this->settings = $settings;
 		$this->logger   = $logger;
 
 		$this->setApi(
 			new SmartlingAPI(
-				$settings->getApiUrl(),
-				$settings->getKey(),
-				$settings->getProjectId(),
+				$settings->getAccountInfo()->getApiUrl(),
+				$settings->getAccountInfo()->getKey(),
+				$settings->getAccountInfo()->getProjectId(),
 				SmartlingAPI::PRODUCTION_MODE // TODO: where get the mode
 			)
 		);
@@ -79,13 +80,13 @@ class ApiWrapper implements ApiWrapperInterface {
 		$this->logger->info( $logMessage, array ( __FILE__, __LINE__ ) );
 
 		// Try to download file.
-		$requestResultRaw = $this->api->downloadFile( $entity->getFileUri(), $entity->getTargetLocale() );
+		$requestResultRaw = $this->api->downloadFile( $entity->getFileUri(), $this->getSmartLingLocale($entity->getTargetBlog()) );
 
 		// zero length response
 		if ( 0 === strlen( trim( $requestResultRaw ) ) ) {
 			$logMessage = vsprintf(
 				'Session [%s]. Empty or bad formatted response received by SmartlingAPI with settings: \n %s',
-				array ( $actionMark, json_encode( $this->settings->toArray(), JSON_PRETTY_PRINT ) ) );
+				array ( $actionMark, json_encode( $this->settings->getAccountInfo()->toArray(), JSON_PRETTY_PRINT ) ) );
 
 			$this->logger->error( $logMessage, array ( __FILE__, __LINE__ ) );
 
@@ -104,7 +105,7 @@ class ApiWrapper implements ApiWrapperInterface {
 				'Session [%s]. Trying to download file: \n Project ID : %s\n Action : %s\n URI : %s\n Locale : %s\n Error : response code -> %s and message -> %s',
 				array (
 					$actionMark,
-					$this->settings->getProjectId(),
+					$this->settings->getAccountInfo()->getProjectId(),
 					'download',
 					$entity->getFileUri(),
 					$entity->getTargetLocale(),
@@ -145,7 +146,7 @@ class ApiWrapper implements ApiWrapperInterface {
 
 		}
 
-		$rawResponse = $this->api->getStatus( $entity->getFileUri(), $entity->getTargetLocale() );
+		$rawResponse = $this->api->getStatus( $entity->getFileUri(), $this->getSmartLingLocale($entity->getTargetBlog()) );
 
 		$status_result = json_decode( $rawResponse );
 
@@ -172,7 +173,7 @@ class ApiWrapper implements ApiWrapperInterface {
 				array (
 					$entity->getContentType(),
 					$entity->getSourceGUID(),
-					$this->settings->getProjectId(),
+					$this->settings->getAccountInfo()->getProjectId(),
 					'status',
 					$entity->getFileUri(),
 					$entity->getTargetLocale(),
@@ -218,7 +219,7 @@ class ApiWrapper implements ApiWrapperInterface {
 		if ( ! $result ) {
 			$logMessage = vsprintf( 'Connection test for project: %s and locale: %s FAILED and returned the following result: %s.',
 				array (
-					$this->settings->getProjectId(),
+					$this->settings->getAccountInfo()->getProjectId(),
 					$locale,
 					$server_response
 				) );
@@ -228,6 +229,19 @@ class ApiWrapper implements ApiWrapperInterface {
 		}
 
 		return $result;
+	}
+
+	public function getSmartLingLocale($targetBlog) {
+		$locale = "";
+
+		$locales = $this->settings->getLocales()->getTargetLocales();
+		foreach($locales as $item) {
+			if($item->getBlog() == $targetBlog) {
+				$locale = $item->getTarget();
+				break;
+			}
+		}
+		return $locale;
 	}
 
 	/**
@@ -242,16 +256,16 @@ class ApiWrapper implements ApiWrapperInterface {
 		$paramBuilder = new FileUploadParameterBuilder();
 
 		$paramBuilder->setFileUri( $entity->getFileUri() )
-		             ->setFileType( 'application/xml' )
+		             ->setFileType( 'xml' )
 		             ->setApproved( 0 )
 		             ->setOverwriteApprovedLocales( 0 );
 
-		if ( $this->settings->getAutoAuthorize() ) {
-			$paramBuilder->setLocalesToApprove( array ( $entity->getTargetLocale() ) );
+		if ( $this->settings->getAccountInfo()->getAutoAuthorize() ) {
+			$paramBuilder->setLocalesToApprove( array ( $this->getSmartLingLocale($entity->getTargetBlog() ) ) );
 		}
 
-		if ( $this->settings->getCallBackUrl() ) {
-			$paramBuilder->setCallbackUrl( $this->settings->getCallBackUrl() );
+		if ( $this->settings->getAccountInfo()->getCallBackUrl() ) {
+			$paramBuilder->setCallbackUrl( $this->settings->getAccountInfo()->getCallBackUrl() );
 		}
 
 		$params = $paramBuilder->buildParameters();
@@ -259,7 +273,6 @@ class ApiWrapper implements ApiWrapperInterface {
 		$uploadResultRaw = $this->api->uploadContent( $xmlString, $params );
 
 		$uploadResult = json_decode( $uploadResultRaw );
-
 		if ( 'SUCCESS' === $this->api->getCodeStatus() ) {
 
 			$message = vsprintf(
@@ -289,7 +302,7 @@ class ApiWrapper implements ApiWrapperInterface {
 
 			$message = vsprintf( 'Smartling failed to upload xml file: \nProject Id: %s\nAction: %s\nURI: \nLocale: %s\nError: response code -> %s and message -> %s\nUpload params: %s',
 				array (
-					$this->settings->getProjectId(),
+					$this->settings->getAccountInfo()->getProjectId(),
 					'upload',
 					$entity->getFileUri(),
 					$entity->getTargetLocale(),

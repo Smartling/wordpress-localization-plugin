@@ -36,7 +36,7 @@
 					<br >
 					<?php if ( $key ) { ?>
 						<small ><?php echo __( 'Current Key', $this->getPluginInfo()->getDomain() ) ?>
-							: <?php echo substr( $key, 0, - 4 ) . '****' ?></small >
+							: <?php echo substr( $key, 0, - 10 ) . '**********' ?></small >
 					<?php } ?>
 				</td >
 			</tr >
@@ -69,10 +69,10 @@
 				<td >
 					<?php
 					$locales       = $this->getSiteLocales();
-					$default       = $this->getPluginInfo()->getOptions()->getLocales()->getDefaultLocale();
+					$defaultBlog       = $this->getPluginInfo()->getOptions()->getLocales()->getDefaultBlog();
 					$targetLocales = $this->getPluginInfo()->getOptions()->getLocales()->getTargetLocales();
-					foreach ( $locales as $value ) {
-						if ( $default == $value ) {
+					foreach ( $locales as $key => $value ) {
+						if ( $defaultBlog == $key ) {
 							continue;
 						}
 						$short   = null;
@@ -97,6 +97,9 @@
 								<input type = "text"
 								       name = "smartling_settings[targetLocales][<?php echo $value; ?>][target]"
 								       value = "<?php echo $short; ?>" >
+								<input type = "hidden"
+								       name = "smartling_settings[targetLocales][<?php echo $value; ?>][blog]"
+								       value = "<?php echo $key; ?>" >
 							</p >
 						</div >
 
@@ -108,10 +111,12 @@
 			<tr >
 				<th scope = "row" ><?php echo __( 'Default Locale', $this->getPluginInfo()->getDomain() ) ?></th >
 				<td >
-					<?php $default = $this->getPluginInfo()->getOptions()->getLocales()->getDefaultLocale(); ?>
+					<?php
+					$defaultLocale = $this->getPluginInfo()->getOptions()->getLocales()->getDefaultLocale();
+					$defaultBlog = $this->getPluginInfo()->getOptions()->getLocales()->getDefaultBlog(); ?>
 
 					<p ><?php echo __( 'Site default language is', $this->getPluginInfo()->getDomain() ) ?>
-						: <?php echo $default; ?></p >
+						: <?php echo $defaultLocale; ?></p >
 
 					<p >
 						<a href = "#" id = "change-default-locale" ><?php echo __( 'Change default locale',
@@ -121,10 +126,10 @@
 					<?php $locales = $this->getSiteLocales(); ?>
 					<select name = "smartling_settings[defaultLocale]" id = "default-locales" >
 						<?php foreach ( $locales as $key => $value ) {
-							$checked = $default == $value ? 'selected' : '';
+							$checked = $defaultBlog == $key ? 'selected' : '';
 							?>
 							<option
-								value = "<?php echo $value; ?>" <?php echo $checked; ?>> <?php echo $value; ?> </option >
+								value = "<?php echo "{$key}-{$value}" ?>" <?php echo $checked; ?>> <?php echo $value; ?> </option >
 
 						<?php } ?>
 					</select >

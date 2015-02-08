@@ -89,7 +89,7 @@ abstract class EntityAbstract {
 	 * @return string
 	 */
 	protected function getFieldNameByMethodName ( $method ) {
-		return lcfirst( substr( $method, 2 ) );
+		return strtolower( preg_replace( '/([A-Z])/', '_$1', lcfirst( substr( $method, 3 ) ) ) );
 	}
 
 	/**
@@ -107,7 +107,6 @@ abstract class EntityAbstract {
 			}
 			case 'get' : {
 				$field = $this->getFieldNameByMethodName( $method );
-
 				return $this->$field; // get the very first arg
 				break;
 			}

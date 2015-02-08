@@ -26,8 +26,8 @@
 		} ,
 
 		patterns : {
-			project_id : /^([a-z0-9])$/ ,
-			api_key    : /^([a-z0-9])$/
+			project_id : /^[\w]+$/ ,
+			api_key    : /^[\w.\-]+$/
 		} ,
 
 		errorsMsg : {

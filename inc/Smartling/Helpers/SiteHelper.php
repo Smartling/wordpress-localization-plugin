@@ -120,6 +120,22 @@ class SiteHelper {
 	}
 
 	/**
+	 * @return string
+	 * @throws SmartlingDirectRunRuntimeException
+	 */
+	public function getCurrentUserLogin () {
+		if( function_exists('wp_get_current_user')) {
+			$user = wp_get_current_user();
+			if($user) {
+				return $user->user_login;
+			}
+			return null;
+		} else {
+			$this->directRunDetectedFallback();
+		}
+	}
+
+	/**
 	 * @param $blogId
 	 *
 	 * @throws SmartlingDirectRunRuntimeException

@@ -81,7 +81,7 @@ class MultiligualPressProConnector extends LocalizationPluginAbstract {
 
 		$locales = array ();
 		foreach ( self::$_blogLocalesCache as $blogId => $blogLocale ) {
-			$locales[] = $blogLocale['text'];
+			$locales[$blogId] = $blogLocale['text'];
 		}
 
 		return $locales;

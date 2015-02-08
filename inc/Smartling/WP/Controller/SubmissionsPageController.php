@@ -2,6 +2,7 @@
 
 namespace Smartling\WP\Controller;
 
+use Smartling\Helpers\EntityHelper;
 use Psr\Log\LoggerInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\WordpressContentTypeHelper;
@@ -21,28 +22,6 @@ class SubmissionsPageController
 	implements WPHookInterface {
 
 	/**
-	 * @var SubmissionManager $submissionManager
-	 */
-	private $submissionManager;
-
-	/**
-	 * @param LoggerInterface                  $logger
-	 * @param LocalizationPluginProxyInterface $multiLingualConnector
-	 * @param PluginInfo                       $pluginInfo
-	 * @param SubmissionManager                $manager
-	 */
-	public function __construct (
-		LoggerInterface $logger,
-		LocalizationPluginProxyInterface $multiLingualConnector,
-		PluginInfo $pluginInfo,
-		SubmissionManager $manager
-	) {
-		parent::__construct( $logger, $multiLingualConnector, $pluginInfo );
-
-		$this->submissionManager = $manager;
-	}
-
-	/**
 	 * @inheritdoc
 	 */
 	public function register () {
@@ -57,7 +36,7 @@ class SubmissionsPageController
 
 
 	public function renderPage () {
-		$table = new SubmissionTableWidget( $this->submissionManager );
+		$table = new SubmissionTableWidget( $this->getManager() );
 
 		$this->view( $table );
 	}

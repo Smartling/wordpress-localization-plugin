@@ -3,13 +3,16 @@
 namespace Smartling\Submissions;
 
 use Psr\Log\LoggerInterface;
+use Smartling\ApiWrapper;
 use Smartling\DbAl\EntityManagerAbstract;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Helpers\WordpressContentTypeHelper;
+use Smartling\Processors\EntityProcessor;
 
 /**
  * Class SubmissionManager
@@ -21,7 +24,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	/**
 	 * The table name
 	 */
-	const SUBMISSIONS_TABLE_NAME = '_smartling_submissions';
+	const SUBMISSIONS_TABLE_NAME = 'smartling_submissions';
 
 	/**
 	 * @return array
@@ -62,10 +65,22 @@ class SubmissionManager extends EntityManagerAbstract {
 	private $pageSize;
 
 	/**
+	 * @var EntityHelper
+	 */
+	private $entityHelper;
+
+	/**
 	 * @return int
 	 */
 	public function getPageSize () {
 		return $this->pageSize;
+	}
+
+	/**
+	 * @return EntityHelper
+	 */
+	public function getEntityHelper () {
+		return $this->entityHelper;
 	}
 
 	/**
@@ -75,10 +90,13 @@ class SubmissionManager extends EntityManagerAbstract {
 	public function __construct (
 		LoggerInterface $logger,
 		SmartlingToCMSDatabaseAccessWrapperInterface $dbal,
-		$pageSize
+		$pageSize,
+		$entityHelper
 	) {
 		parent::__construct( $logger, $dbal );
 		$this->pageSize = (int) $pageSize;
+		$this->entityHelper = $entityHelper;
+
 	}
 
 	/**
@@ -254,13 +272,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	 * @return null|SubmissionEntity
 	 */
 	public function getEntityById ( $id ) {
-		$query = $this->buildSelectQuery(
-			self::SUBMISSIONS_TABLE_NAME,
-			array_keys( SubmissionEntity::$fieldsDefinition ),
-			array ( 'id' => (int) $id ),
-			null,
-			null
-		);
+		$query = $this->buildSelectQuery(array ( 'id' => (int) $id ));
 
 		$obj = $this->fetchData( $query, false );
 
@@ -269,6 +281,49 @@ class SubmissionManager extends EntityManagerAbstract {
 		}
 
 		return $obj;
+	}
+
+	/**
+	 * Gets SubmissionEntity from database by primary key
+	 * alias to getEntities
+	 *
+	 * @param integer $sourceGuid
+	 *
+	 * @return null|SubmissionEntity
+	 */
+	public function getEntityBySourceGuid ( $sourceGuid ) {
+		$query = $this->buildSelectQuery(array ( 'sourceGUID' => $sourceGuid ));
+
+		$obj = $this->fetchData( $query, false );
+
+		if ( is_array( $obj ) && empty( $obj ) ) {
+			$obj = null;
+		}
+
+		return $obj;
+	}
+	/**
+	*
+	* @return null|string
+	*/
+	public function buildSelectQuery($where) {
+		$whereOptions = ConditionBlock::getConditionBlock( ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND );
+		foreach($where as $key => $item) {
+			$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, $key,
+				array ( $item ) );
+			$whereOptions->addCondition($condition);
+		}
+
+		$query = QueryBuilder::buildSelectQuery(
+			$this->dbal->completeTableName( self::SUBMISSIONS_TABLE_NAME ),
+			array_keys( SubmissionEntity::$fieldsDefinition ),
+			$whereOptions,
+			array (),
+			null
+		);
+		$this->logger->info( $query );
+
+		return $query;
 	}
 
 	public function buildCountQuery ( $contentType, $status, ConditionBlock $baseCondition = null ) {
@@ -406,7 +461,6 @@ class SubmissionManager extends EntityManagerAbstract {
 		$this->logger->info( $storeQuery );
 
 		$result = $this->dbal->query( $storeQuery );
-
 		if ( true === $is_insert && false !== $result ) {
 			$entityFields       = $entity->toArray( false );
 			$entityFields['id'] = $this->dbal->getLastInsertedId();
@@ -424,5 +478,38 @@ class SubmissionManager extends EntityManagerAbstract {
 	 */
 	public function createSubmission ( array $fields ) {
 		return SubmissionEntity::fromArray( $fields, $this->logger );
+	}
+
+	public function generateXmlById($id) {
+		$entity = $this->getEntityById($id);
+		$this->generateXml($entity);
+	}
+
+	public function generateXml(SubmissionEntity $entity) {
+		$processor = new EntityProcessor($this->getEntityHelper(), $this->getLogger());
+		$path = $processor->toXml($entity);
+		$entity->setFileUri($path);
+		$entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_NOT_TRANSLATED);
+		$this->storeEntity($entity);
+	}
+
+	public function upload(SubmissionEntity $entity) {
+		$api = new ApiWrapper($this->getEntityHelper()->getPluginInfo()->getOptions(), $this->getLogger());
+		$xml = file_get_contents($entity->getFileUri());
+		$status = $api->uploadFile($entity, $xml);
+		if($status) {
+			$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS );
+			$this->storeEntity($entity);
+		}
+	}
+
+	public function download(SubmissionEntity $entity) {
+		$api = new ApiWrapper($this->getEntityHelper()->getPluginInfo()->getOptions(), $this->getLogger());
+		$xml = $api->downloadFile($entity);
+		if($xml) {
+			file_put_contents($entity->getTargetFileUri(), $xml);
+			$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_COMPLETED );
+			$this->storeEntity($entity);
+		}
 	}
 }

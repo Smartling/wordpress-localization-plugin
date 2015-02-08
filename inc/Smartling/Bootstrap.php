@@ -100,10 +100,10 @@ class Bootstrap {
 	private static function setCoreParameters ( ContainerBuilder $container ) {
 		// plugin dir (to use in config file)
 		$container->setParameter( 'plugin.dir', SMARTLING_PLUGIN_DIR );
+		$container->setParameter( 'plugin.upload', SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . "upload" );
 
 		$pluginUrl = '';
-
-		if ( defined( SMARTLING_CLI_EXECUTION ) && false === SMARTLING_CLI_EXECUTION ) {
+		if (  defined( 'SMARTLING_CLI_EXECUTION' ) && false === SMARTLING_CLI_EXECUTION ) {
 			$pluginUrl = plugin_dir_url( SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . '..' );
 		}
 
@@ -123,11 +123,10 @@ class Bootstrap {
 	public function load () {
 		$this->detectMultilangPlugins();
 
-		if ( defined( 'SMARTLING_CLI_EXECUTION' ) && SMARTLING_CLI_EXECUTION === false ) {
+		if (  defined( 'SMARTLING_CLI_EXECUTION' ) && SMARTLING_CLI_EXECUTION === false ) {
 			$this->registerHooks();
 			$this->run();
 		}
-
 	}
 
 	public function activate () {
@@ -177,7 +176,14 @@ class Bootstrap {
 		self::getContainer()->set( 'multilang_plugins', $mlPluginsStatuses );
 	}
 
-	public function run () {
+	public function checkUploadFolder() {
+		$path = $this->getContainer()->getParameter( 'plugin.upload' );
+		if(!file_exists($path)) {
+			mkdir($path, 0777);
+		}
+	}
 
+	public function run () {
+		$this->checkUploadFolder();
 	}
 }

@@ -32,6 +32,7 @@ services:
      - "@logger"
      - "@site.db"
      - "%submission.pagesize%"
+     - "@entity.helper"
 
   site.helper:
     class: Smartling\Helpers\SiteHelper
@@ -55,6 +56,7 @@ services:
         - %plugin.dir%
         - %plugin.domain%
         - '@plugin.options'
+        - %plugin.upload%
 
   multilang.proxy:
     class: Smartling\DbAl\MultiligualPressProConnector
@@ -62,6 +64,14 @@ services:
       - "@logger"
       - "@site.helper"
       - "@multilang_plugins"
+
+  entity.helper:
+    class: Smartling\Helpers\EntityHelper
+    arguments:
+       - "@plugin.info"
+       - "@multilang.proxy"
+       - "@site.helper"
+
   wp.i18n:
     class: Smartling\WP\i18n
     arguments:
@@ -73,6 +83,8 @@ services:
       - "@logger"
       - "@multilang.proxy"
       - "@plugin.info"
+      - "@entity.helper"
+      - "@manager.submission"
 
   wp.submissions:
     class: Smartling\WP\Controller\SubmissionsPageController
@@ -80,6 +92,7 @@ services:
       - "@logger"
       - "@multilang.proxy"
       - "@plugin.info"
+      - "@entity.helper"
       - "@manager.submission"
 
   wp.post:
@@ -88,6 +101,8 @@ services:
       - "@logger"
       - "@multilang.proxy"
       - "@plugin.info"
+      - "@entity.helper"
+      - "@manager.submission"
 
   wp.taxonomy:
       class: Smartling\WP\Controller\TaxonomyWidgetController
@@ -95,3 +110,6 @@ services:
         - "@logger"
         - "@multilang.proxy"
         - "@plugin.info"
+        - "@entity.helper"
+        - "@manager.submission"
+

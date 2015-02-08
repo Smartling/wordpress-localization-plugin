@@ -10,13 +10,14 @@ namespace Smartling\Helpers;
 
 
 class PluginInfo {
-	public function __construct ( $name, $version, $url, $dir, $domain, $options ) {
+	public function __construct ( $name, $version, $url, $dir, $domain, $options, $upload ) {
 		$this->name    = $name;
 		$this->version = $version;
 		$this->url     = $url;
 		$this->dir     = $dir;
 		$this->domain  = $domain;
 		$this->options = $options;
+		$this->upload  = $upload;
 	}
 
 	/**
@@ -44,6 +45,18 @@ class PluginInfo {
 	 * @var string
 	 */
 	private $dir;
+
+	/**
+	 * @var string
+	 */
+	private $upload;
+
+	/**
+	 * @return string
+	 */
+	public function getUpload () {
+		return $this->upload;
+	}
 
 	/**
 	 * @return string

@@ -55,14 +55,14 @@ class SubmissionEntity {
 		'sourceContentHash'    => 'CHAR(32) NULL',
 		'contentType'          => 'VARCHAR(32) NOT NULL',
 		'sourceGUID'           => 'VARCHAR(255) NOT NULL',
-		'fileUri'              => 'VARCHAR(255) NOT NULL',
+		'fileUri'              => 'VARCHAR(255) NULL',
 		'targetLocale'         => 'VARCHAR(16) NOT NULL',
 		'targetBlog'           => 'INT UNSIGNED NOT NULL',
 		'targetGUID'           => 'VARCHAR(255) NOT NULL',
 		'submitter'            => 'VARCHAR(255) NOT NULL',
-		'submissionDate'       => 'INT UNSIGNED NOT NULL',
-		'approvedStringCount'  => 'INT UNSIGNED NOT NULL',
-		'completedStringCount' => 'INT UNSIGNED NOT NULL',
+		'submissionDate'       => 'DATETIME NOT NULL',
+		'approvedStringCount'  => 'INT UNSIGNED NULL',
+		'completedStringCount' => 'INT UNSIGNED NULL',
 		'status'               => 'VARCHAR(16) NOT NULL',
 	);
 
@@ -414,6 +414,23 @@ class SubmissionEntity {
 		}
 	}
 
+	public function getStatusColor() {
+		switch($this->getStatus()) {
+			case self::SUBMISSION_STATUS_NOT_TRANSLATED:
+			case self::SUBMISSION_STATUS_NEW:
+				return "yellow";
+			case self::SUBMISSION_STATUS_IN_PROGRESS:
+				return "blue";
+			case self::SUBMISSION_STATUS_COMPLETED:
+				return "green";
+			case self::SUBMISSION_STATUS_FAILED:
+				return "red";
+			default:
+				return "";
+		}
+		return "";
+	}
+
 
 	/**
 	 * @return int|null
@@ -522,6 +539,19 @@ class SubmissionEntity {
 	 */
 	public function setFileUri ( $fileUri ) {
 		$this->fileUri = $fileUri;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getTargetFileUri() {
+		$path = $this->getFileUri();
+
+		if(strlen($path) > 0){
+			str_replace('.xml', '.' . $this->getTargetLocale() . '.xml', $path);
+		}
+
+		return $path;
 	}
 
 	/**

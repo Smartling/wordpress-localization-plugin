@@ -27,10 +27,12 @@ class Options {
 	 */
 	private $locales;
 
+
 	function __construct () {
 		$this->accountInfo = new AccountInfo();
 		$this->locales     = new Locales();
 		$this->get();
+
 	}
 
 	public function save () {
@@ -205,6 +207,10 @@ class Locales {
 	 */
 	private $defaultLocale;
 	/**
+	 * @var int
+	 */
+	private $defaultBlog;
+	/**
 	 * @var TargetLocale[]
 	 */
 	private $targetLocales;
@@ -218,6 +224,7 @@ class Locales {
 		if ( $values ) {
 			$this->setDefaultLocale( $values['defaultLocale'] );
 			$this->setTargetLocales( $values['targetLocales'] );
+			$this->setDefaultBlog( $values['defaultBlog'] );
 		}
 
 		return $values;
@@ -242,6 +249,7 @@ class Locales {
 
 		return array (
 			'defaultLocale' => trim( $this->getDefaultLocale() ),
+			'defaultBlog' => $this->getDefaultBlog(),
 			'targetLocales' => $targetLocales
 		);
 	}
@@ -281,11 +289,25 @@ class Locales {
 		$this->defaultLocale = $defaultLocale;
 	}
 
+	/**
+	 * @return int
+	 */
+	public function getDefaultBlog () {
+		return $this->defaultBlog;
+	}
+
+	/**
+	 * @param int $defaultBlog
+	 */
+	public function setDefaultBlog ( $defaultBlog ) {
+		$this->defaultBlog = $defaultBlog;
+	}
+
 	private function parseTargetLocales ( $targetLocales ) {
 		$locales = array ();
 		if ( $targetLocales ) {
 			foreach ( $targetLocales as $raw ) {
-				$locales[] = new TargetLocale( $raw['locale'], $raw['target'], $raw['enabled'] );
+				$locales[] = new TargetLocale( $raw['locale'], $raw['target'], $raw['enabled'], $raw["blog"] );
 			}
 		}
 
@@ -303,14 +325,19 @@ class TargetLocale {
 	 */
 	private $target;
 	/**
+	 * @var int
+	 */
+	private $blog;
+	/**
 	 * @var boolean
 	 */
 	private $enabled;
 
-	function __construct ( $locale, $target, $enabled ) {
+	function __construct ( $locale, $target, $enabled, $blog) {
 		$this->locale  = $locale;
 		$this->target  = $target;
 		$this->enabled = $enabled;
+		$this->blog = $blog;
 	}
 
 	/**
@@ -355,11 +382,26 @@ class TargetLocale {
 		$this->enabled = $enabled;
 	}
 
+	/**
+	 * @return int
+	 */
+	public function getBlog () {
+		return $this->blog;
+	}
+
+	/**
+	 * @param int $blog
+	 */
+	public function setBlog ( $blog ) {
+		$this->blog = $blog;
+	}
+
 	public function toArray () {
 		return array (
 			'locale'  => $this->getLocale(),
 			'target'  => $this->getTarget(),
-			'enabled' => $this->getEnabled()
+			'enabled' => $this->getEnabled(),
+			'blog' => $this->getBlog()
 		);
 	}
 }

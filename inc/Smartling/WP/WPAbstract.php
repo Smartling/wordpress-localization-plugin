@@ -2,9 +2,11 @@
 
 namespace Smartling\WP;
 
+use Smartling\Helpers\EntityHelper;
 use Psr\Log\LoggerInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\PluginInfo;
+use Smartling\Submissions\SubmissionManager;
 
 abstract class WPAbstract {
 
@@ -21,23 +23,53 @@ abstract class WPAbstract {
 	/**
 	 * @var LocalizationPluginProxyInterface
 	 */
-	private $multiLingualConnector;
+	private $connector;
+
+	/**
+	 * @var EntityHelper
+	 */
+	private $entityHelper;
+
+	/**
+	 * @var SubmissionManager
+	 */
+	private $manager;
 
 	/**
 	 * Constructor
 	 *
 	 * @param LoggerInterface                  $logger
-	 * @param LocalizationPluginProxyInterface $multiLingualConnector
+	 * @param LocalizationPluginProxyInterface $connector
 	 * @param PluginInfo                       $pluginInfo
+	 * @param EntityHelper                     $entityHelper
+	 * @param SubmissionManager                $manager
 	 */
 	public function __construct (
 		LoggerInterface $logger,
-		LocalizationPluginProxyInterface $multiLingualConnector,
-		PluginInfo $pluginInfo
+		LocalizationPluginProxyInterface $connector,
+		PluginInfo $pluginInfo,
+		EntityHelper $entityHelper,
+		SubmissionManager $manager
 	) {
 		$this->logger                = $logger;
-		$this->multiLingualConnector = $multiLingualConnector;
+		$this->connector             = $connector;
 		$this->pluginInfo            = $pluginInfo;
+		$this->entityHelper          = $entityHelper;
+		$this->manager               = $manager;
+	}
+
+	/**
+	 * @return SubmissionManager
+	 */
+	public function getManager () {
+		return $this->manager;
+	}
+
+	/**
+	 * @return EntityHelper
+	 */
+	public function getEntityHelper () {
+		return $this->entityHelper;
 	}
 
 	/**
@@ -58,7 +90,7 @@ abstract class WPAbstract {
 	 * @return LocalizationPluginProxyInterface
 	 */
 	public function getConnector () {
-		return $this->multiLingualConnector;
+		return $this->connector;
 	}
 
 	/**

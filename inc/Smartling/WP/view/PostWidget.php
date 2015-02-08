@@ -5,27 +5,33 @@
 		<?php
 
 		$locales = $this->getPluginInfo()->getOptions()->getLocales()->getTargetLocales();
-		$values  = get_post_meta( $data->ID, 'smartling_post_widget_data' );
 
-		foreach ( $locales as $index => $locale ) {
+		foreach ( $locales as  $locale ) {
 			$value   = false;
 			$checked = '';
-			if ( $values && $values[0] ) {
-				$value   = $values[0][ 'locale_' . $locale->getLocale() ];
-				$checked = $value == 'true' ? 'checked="checked"' : '';
+			$status = '';
+			if($data["submission"] != null) {
+				$value = true;
+				$checked = 'checked="checked"';
+				$percent = $data["submission"]->getCompletionPercentage();
+				$status = $data["submission"]->getStatusColor();
 			}
+
+			//$value   = $values[0][ 'locale_' . $locale->getLocale() ];
 			?>
 
 			<p >
 				<label >
-					<input type = "hidden" name = "smartling_post_widget[locale_<?php echo $locale->getLocale(); ?>]"
-					       value = "<?php echo $value; ?>" >
+					<input type = "hidden" name = "smartling_post_widget[locales][<?php echo $locale->getBlog(); ?>][blog]"
+					       value = "<?php echo $locale->getBlog(); ?>" >
+					<input type = "hidden" name = "smartling_post_widget[locales][<?php echo $locale->getBlog(); ?>][locale]"
+					       value = "<?php echo $locale->getLocale(); ?>" >
 					<input type = "checkbox" <?php echo $checked; ?>
-					       name = "locale_<?php echo $locale->getLocale(); ?>" >
+					       name = "smartling_post_widget[locales][<?php echo $locale->getBlog(); ?>][enabled]" >
 					<span ><?php echo $locale->getLocale(); ?></span >
 				</label >
-				<?php if ( $value == 'true' ) { ?>
-					<span title = "In Progress" class = "widget-btn yellow" ><span >24%</span ></span >
+				<?php if ( $value ) { ?>
+					<span title = "In Progress" class = "widget-btn <?php echo $status ?>" ><span><?php echo $percent?>%</span></span >
 				<?php } ?>
 			</p >
 

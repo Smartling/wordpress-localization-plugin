@@ -12,6 +12,13 @@ abstract class EntityManagerAbstract {
 	protected $logger;
 
 	/**
+	 * @return LoggerInterface
+	 */
+	public function getLogger () {
+		return $this->logger;
+	}
+
+	/**
 	 * @var SmartlingToCMSDatabaseAccessWrapperInterface
 	 */
 	protected $dbal;
