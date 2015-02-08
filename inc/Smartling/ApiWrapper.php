@@ -270,6 +270,8 @@ class ApiWrapper implements ApiWrapperInterface {
 
 		$params = $paramBuilder->buildParameters();
 
+		$params['translationState'] = strtoupper($this->settings->getAccountInfo()->getRetrievalType());
+
 		$uploadResultRaw = $this->api->uploadContent( $xmlString, $params );
 
 		$uploadResult = json_decode( $uploadResultRaw );
