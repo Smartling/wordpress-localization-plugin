@@ -253,7 +253,7 @@ class ApiWrapper implements ApiWrapperInterface {
 	 * @return bool
 	 * @throws SmartlingFileUploadException
 	 */
-	public function uploadFile ( SubmissionEntity $entity, $xmlString ) {
+	public function uploadFile ( SubmissionEntity $entity, $xmPath ) {
 
 		$paramBuilder = new FileUploadParameterBuilder();
 
@@ -273,9 +273,8 @@ class ApiWrapper implements ApiWrapperInterface {
 		$params = $paramBuilder->buildParameters();
 
 	//$params['translationState'] = strtoupper($this->settings->getAccountInfo()->getRetrievalType());
-
-		$uploadResultRaw = $this->api->uploadContent( $xmlString, $params );
-
+		$uploadResultRaw = $this->api->uploadFile( $xmPath, $params );
+		
 		$uploadResult = json_decode( $uploadResultRaw );
 		if ( 'SUCCESS' === $this->api->getCodeStatus() ) {
 

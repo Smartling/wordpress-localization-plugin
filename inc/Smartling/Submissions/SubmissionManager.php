@@ -495,8 +495,7 @@ class SubmissionManager extends EntityManagerAbstract {
 
 	public function upload(SubmissionEntity $entity) {
 		$api = new ApiWrapper($this->getEntityHelper()->getPluginInfo()->getOptions(), $this->getLogger());
-		$xml = file_get_contents($entity->getFileUri());
-		$status = $api->uploadFile($entity, $xml);
+		$status = $api->uploadFile($entity, $entity->getFileUri());
 		if($status) {
 			$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS );
 			$entity = $this->storeEntity($entity);
