@@ -161,7 +161,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	 * @param array      $sortOptions
 	 * @param null|array $pageOptions
 	 *
-	 * @param reference  $totalCount
+	 * @param int $totalCount (reference)
 	 *
 	 * @return array of SubmissionEntity or empty array
 	 *
@@ -363,6 +363,29 @@ class SubmissionManager extends EntityManagerAbstract {
 	}
 
 	/**
+	 * Search submission by params
+	 *
+	 * @param array $params
+	 *
+	 * @return array
+	 */
+	public function find(array $params = array())
+	{
+		$block = new ConditionBlock( ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND );
+
+		foreach ($params as $field => $value) {
+			$condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, $field, array($value));
+
+			$block->addCondition($condition);
+		}
+
+		$query = $this->buildQuery(null,null,array(),null,$block);
+
+		return $this->fetchData($query);
+
+	}
+
+	/**
 	 * Builds SELECT query for Submissions
 	 *
 	 * @param string         $contentType
@@ -478,45 +501,5 @@ class SubmissionManager extends EntityManagerAbstract {
 	 */
 	public function createSubmission ( array $fields ) {
 		return SubmissionEntity::fromArray( $fields, $this->logger );
-	}
-
-	public function generateXmlById($id) {
-		$entity = $this->getEntityById($id);
-		$this->generateXml($entity);
-	}
-
-	public function generateXml(SubmissionEntity $entity) {
-		$processor = new EntityProcessor($this->getEntityHelper(), $this->getLogger());
-		$path = $processor->toXml($entity);
-		$entity->setFileUri($path);
-		$entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_NOT_TRANSLATED);
-		$entity = $this->storeEntity($entity);
-	}
-
-	public function upload(SubmissionEntity $entity) {
-		$api = new ApiWrapper($this->getEntityHelper()->getPluginInfo()->getOptions(), $this->getLogger());
-		$xml = file_get_contents($entity->getFileUri());
-		$status = $api->uploadFile($entity, $xml);
-		if($status) {
-			$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS );
-			$entity = $this->storeEntity($entity);
-		}
-	}
-
-	public function download(SubmissionEntity $entity) {
-		$api = new ApiWrapper($this->getEntityHelper()->getPluginInfo()->getOptions(), $this->getLogger());
-		$xml = $api->downloadFile($entity);
-		if(strlen($xml) > 0) {
-			file_put_contents($entity->getTargetFileUri(), $xml);
-			$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_COMPLETED );
-			//TODO temporary %
-			$entity->setApprovedStringCount(100);
-			$entity->setCompletedStringCount(100);
-
-			$processor = new EntityProcessor($this->getEntityHelper(), $this->getLogger());
-			$processor->fromXml($entity);
-
-			$entity = $this->storeEntity($entity);
-		}
 	}
 }

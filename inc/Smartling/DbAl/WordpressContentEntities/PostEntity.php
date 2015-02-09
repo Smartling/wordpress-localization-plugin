@@ -3,7 +3,6 @@
 namespace Smartling\DbAl\WordpressContentEntities;
 
 use Psr\Log\LoggerInterface;
-use Smartling\Helpers\WordpressContentTypeHelper;
 
 /**
  * Class PostEntity
@@ -110,13 +109,12 @@ class PostEntity extends EntityAbstract {
 	public function get ( $guid ) {
 		$post = get_post( $guid, ARRAY_A );
 
-		/*
 		if ( null !== $post ) {
 			return $this->resultToEntity( (object) $post, $this );
 		} else {
 			$this->entityNotFound( WordpressContentTypeHelper::CONTENT_TYPE_POST, $guid );
-		}*/
-		return $post == null ? array() : $post;
+		}
+		return $post === null ? array() : $post;
 	}
 
 	/**
@@ -169,5 +167,10 @@ class PostEntity extends EntityAbstract {
 
 		return $result;
 
+	}
+
+	public function getTitle()
+	{
+		return $this->post_title;
 	}
 }

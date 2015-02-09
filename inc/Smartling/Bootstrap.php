@@ -3,6 +3,7 @@
 namespace Smartling;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Helpers\XmlEncoder;
 use Smartling\WP\WPHookInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;

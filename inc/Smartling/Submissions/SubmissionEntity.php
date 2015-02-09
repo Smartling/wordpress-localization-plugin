@@ -2,9 +2,8 @@
 
 namespace Smartling\Submissions;
 
+use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
-use Smartling\Bootstrap;
-use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\WordpressContentTypeHelper;
 
 /**
@@ -91,7 +90,7 @@ class SubmissionEntity {
 	 */
 	const SUBMISSION_STATUS_FAILED = 'Failed';
 
-	/**+
+	/**
 	 * @var array Submission Statuses
 	 */
 	public static $submissionStatuses = array (
@@ -114,7 +113,6 @@ class SubmissionEntity {
 			self::SUBMISSION_STATUS_FAILED         => __( self::SUBMISSION_STATUS_FAILED ),
 		);
 	}
-
 
 	/**
 	 * @return array
@@ -400,6 +398,8 @@ class SubmissionEntity {
 
 	/**
 	 * @param string $status
+	 *
+	 * @return SubmissionEntity
 	 */
 	public function setStatus ( $status ) {
 		if ( in_array( $status, self::$submissionStatuses ) ) {
@@ -410,12 +410,17 @@ class SubmissionEntity {
 
 			$this->logger->error( $message );
 
-			throw new \InvalidArgumentException( $message );
+			throw new InvalidArgumentException( $message );
 		}
+
+		return $this;
 	}
 
-	public function getStatusColor() {
-		switch($this->getStatus()) {
+	/**
+	 * @return string
+	 */
+	public function getStatusColor () {
+		switch ( $this->getStatus() ) {
 			case self::SUBMISSION_STATUS_NOT_TRANSLATED:
 			case self::SUBMISSION_STATUS_NEW:
 				return "yellow";
@@ -428,6 +433,7 @@ class SubmissionEntity {
 			default:
 				return "";
 		}
+
 		return "";
 	}
 
@@ -441,9 +447,13 @@ class SubmissionEntity {
 
 	/**
 	 * @param int $id
+	 *
+	 * @return SubmissionEntity
 	 */
 	public function setId ( $id ) {
 		$this->id = (int) $id;
+
+		return $this;
 	}
 
 	/**
@@ -455,9 +465,13 @@ class SubmissionEntity {
 
 	/**
 	 * @param string $sourceTitle
+	 *
+	 * @return SubmissionEntity
 	 */
 	public function setSourceTitle ( $sourceTitle ) {
 		$this->sourceTitle = $sourceTitle;
+
+		return $this;
 	}
 
 	/**
@@ -469,9 +483,13 @@ class SubmissionEntity {
 
 	/**
 	 * @param int $sourceBlog
+	 *
+	 * @return SubmissionEntity
 	 */
 	public function setSourceBlog ( $sourceBlog ) {
 		$this->sourceBlog = (int) $sourceBlog;
+
+		return $this;
 	}
 
 	/**
@@ -483,9 +501,13 @@ class SubmissionEntity {
 
 	/**
 	 * @param string $sourceContentHash
+	 *
+	 * @return SubmissionEntity
 	 */
 	public function setSourceContentHash ( $sourceContentHash ) {
 		$this->sourceContentHash = $sourceContentHash;
+
+		return $this;
 	}
 
 	/**
@@ -497,6 +519,8 @@ class SubmissionEntity {
 
 	/**
 	 * @param string $contentType
+	 *
+	 * @return SubmissionEntity
 	 */
 	public function setContentType ( $contentType ) {
 		$reverseMap = WordpressContentTypeHelper::getReverseMap();
@@ -511,6 +535,8 @@ class SubmissionEntity {
 
 			throw new \InvalidArgumentException( $message );
 		}
+
+		return $this;
 	}
 
 	/**
@@ -522,33 +548,52 @@ class SubmissionEntity {
 
 	/**
 	 * @param string $sourceGUID
+	 *
+	 * @return SubmissionEntity
 	 */
 	public function setSourceGUID ( $sourceGUID ) {
 		$this->sourceGUID = $sourceGUID;
+
+		return $this;
 	}
 
 	/**
 	 * @return string
 	 */
 	public function getFileUri () {
+		if ( empty( $this->fileUri ) ) {
+			$this->setFileUri(
+				vsprintf( '/%s/%s/%s/%s.xml', array (
+					$this->getSourceBlog(),
+					$this->getSourceGUID(),
+					$this->getTargetBlog(),
+					$this->getSourceTitle()
+				) )
+			);
+		}
+
 		return $this->fileUri;
 	}
 
 	/**
 	 * @param string $fileUri
+	 *
+	 * @return SubmissionEntity
 	 */
 	public function setFileUri ( $fileUri ) {
 		$this->fileUri = $fileUri;
+
+		return $this;
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getTargetFileUri() {
+	public function getTargetFileUri () {
 		$path = $this->getFileUri();
 
-		if(strlen($path) > 0){
-			$path = str_replace('.xml', '.' . $this->getTargetLocale() . '.xml', $path);
+		if ( strlen( $path ) > 0 ) {
+			$path = str_replace( '.xml', '.' . $this->getTargetLocale() . '.xml', $path );
 		}
 
 		return $path;
@@ -563,9 +608,13 @@ class SubmissionEntity {
 
 	/**
 	 * @param string $targetLocale
+	 *
+	 * @return SubmissionEntity
 	 */
 	public function setTargetLocale ( $targetLocale ) {
 		$this->targetLocale = $targetLocale;
+
+		return $this;
 	}
 
 	/**
@@ -577,9 +626,13 @@ class SubmissionEntity {
 
 	/**
 	 * @param int $targetBlog
+	 *
+	 * @return SubmissionEntity
 	 */
 	public function setTargetBlog ( $targetBlog ) {
 		$this->targetBlog = (int) $targetBlog;
+
+		return $this;
 	}
 
 	/**
@@ -591,9 +644,13 @@ class SubmissionEntity {
 
 	/**
 	 * @param string $targetGUID
+	 *
+	 * @return SubmissionEntity
 	 */
 	public function setTargetGUID ( $targetGUID ) {
 		$this->targetGUID = $targetGUID;
+
+		return $this;
 	}
 
 	/**
@@ -605,9 +662,13 @@ class SubmissionEntity {
 
 	/**
 	 * @param string $submitter
+	 *
+	 * @return SubmissionEntity
 	 */
 	public function setSubmitter ( $submitter ) {
 		$this->submitter = $submitter;
+
+		return $this;
 	}
 
 	/**
@@ -619,9 +680,13 @@ class SubmissionEntity {
 
 	/**
 	 * @param string $submissionDate
+	 *
+	 * @return SubmissionEntity
 	 */
 	public function setSubmissionDate ( $submissionDate ) {
 		$this->submissionDate = $submissionDate;
+
+		return $this;
 	}
 
 	/**
@@ -633,9 +698,13 @@ class SubmissionEntity {
 
 	/**
 	 * @param int $approvedStringCount
+	 *
+	 * @return SubmissionEntity
 	 */
 	public function setApprovedStringCount ( $approvedStringCount ) {
 		$this->approvedStringCount = (int) $approvedStringCount;
+
+		return $this;
 	}
 
 	/**
@@ -647,9 +716,13 @@ class SubmissionEntity {
 
 	/**
 	 * @param int $completedStringCount
+	 *
+	 * @return SubmissionEntity
 	 */
 	public function setCompletedStringCount ( $completedStringCount ) {
 		$this->completedStringCount = (int) $completedStringCount;
+
+		return $this;
 	}
 
 	/**

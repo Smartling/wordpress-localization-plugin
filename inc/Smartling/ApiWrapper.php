@@ -6,10 +6,9 @@ use Psr\Log\LoggerInterface;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
-use Smartling\Helpers\AccountInfo;
-use Smartling\Helpers\Options;
 use Smartling\SDK\FileUploadParameterBuilder;
 use Smartling\SDK\SmartlingAPI;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -18,8 +17,9 @@ use Smartling\Submissions\SubmissionEntity;
  * @package Smartling
  */
 class ApiWrapper implements ApiWrapperInterface {
+
 	/**
-	 * @var Options
+	 * @var SettingsManager
 	 */
 	private $settings;
 
@@ -34,18 +34,18 @@ class ApiWrapper implements ApiWrapperInterface {
 	private $api;
 
 	/**
-	 * @param Options     $settings
+	 * @param SettingsManager $settingsManager
 	 * @param LoggerInterface $logger
 	 */
-	public function __construct ( Options $settings, LoggerInterface $logger ) {
-		$this->settings = $settings;
+	public function __construct ( SettingsManager $settingsManager, LoggerInterface $logger ) {
+		$this->settings = $settingsManager;
 		$this->logger   = $logger;
 
 		$this->setApi(
 			new SmartlingAPI(
-				$settings->getAccountInfo()->getApiUrl(),
-				$settings->getAccountInfo()->getKey(),
-				$settings->getAccountInfo()->getProjectId(),
+				$settingsManager->getAccountInfo()->getApiUrl(),
+				$settingsManager->getAccountInfo()->getKey(),
+				$settingsManager->getAccountInfo()->getProjectId(),
 				SmartlingAPI::PRODUCTION_MODE // TODO: where get the mode
 			)
 		);
@@ -80,9 +80,13 @@ class ApiWrapper implements ApiWrapperInterface {
 		$this->logger->info( $logMessage, array ( __FILE__, __LINE__ ) );
 
 		// Try to download file.
-		$requestResultRaw = $this->api->downloadFile( $entity->getFileUri(), $this->getSmartLingLocale($entity->getTargetBlog()), array(
-			'retrievalType' => $this->settings->getAccountInfo()->getRetrievalType(),
-		));
+		$requestResultRaw = $this->api->downloadFile(
+			$entity->getFileUri(),
+			$this->getSmartLingLocale( $entity->getTargetBlog() ),
+			array (
+				'retrievalType' => $this->settings->getAccountInfo()->getRetrievalType(),
+			)
+		);
 
 		// zero length response
 		if ( 0 === strlen( trim( $requestResultRaw ) ) ) {
@@ -148,7 +152,8 @@ class ApiWrapper implements ApiWrapperInterface {
 
 		}
 
-		$rawResponse = $this->api->getStatus( $entity->getFileUri(), $this->getSmartLingLocale($entity->getTargetBlog()) );
+		$rawResponse = $this->api->getStatus( $entity->getFileUri(),
+			$this->getSmartLingLocale( $entity->getTargetBlog() ) );
 
 		$status_result = json_decode( $rawResponse );
 
@@ -233,16 +238,17 @@ class ApiWrapper implements ApiWrapperInterface {
 		return $result;
 	}
 
-	public function getSmartLingLocale($targetBlog) {
+	public function getSmartLingLocale ( $targetBlog ) {
 		$locale = "";
 
 		$locales = $this->settings->getLocales()->getTargetLocales();
-		foreach($locales as $item) {
-			if($item->getBlog() == $targetBlog) {
+		foreach ( $locales as $item ) {
+			if ( $item->getBlog() == $targetBlog ) {
 				$locale = $item->getTarget();
 				break;
 			}
 		}
+
 		return $locale;
 	}
 
@@ -263,7 +269,7 @@ class ApiWrapper implements ApiWrapperInterface {
 		             ->setOverwriteApprovedLocales( 0 );
 
 		if ( $this->settings->getAccountInfo()->getAutoAuthorize() ) {
-			$paramBuilder->setLocalesToApprove( array ( $this->getSmartLingLocale($entity->getTargetBlog() ) ) );
+			$paramBuilder->setLocalesToApprove( array ( $this->getSmartLingLocale( $entity->getTargetBlog() ) ) );
 		}
 
 		if ( $this->settings->getAccountInfo()->getCallBackUrl() ) {
@@ -271,8 +277,6 @@ class ApiWrapper implements ApiWrapperInterface {
 		}
 
 		$params = $paramBuilder->buildParameters();
-
-	//$params['translationState'] = strtoupper($this->settings->getAccountInfo()->getRetrievalType());
 
 		$uploadResultRaw = $this->api->uploadContent( $xmlString, $params );
 

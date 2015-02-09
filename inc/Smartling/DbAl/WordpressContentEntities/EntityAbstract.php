@@ -31,6 +31,11 @@ abstract class EntityAbstract {
 	 */
 	private $entityFields = array ( 'hash' );
 
+	/**
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
 	private $entityArrayState = array ();
 
 	private function initEntityArrayState () {
@@ -120,9 +125,9 @@ abstract class EntityAbstract {
 	}
 
 	/**
-	 * @var LoggerInterface
+	 * @return mixed
 	 */
-	private $logger;
+	abstract public function getTitle();
 
 	/**
 	 * @return LoggerInterface
@@ -138,8 +143,6 @@ abstract class EntityAbstract {
 	 */
 	public function __construct ( LoggerInterface $logger ) {
 		$this->logger = $logger;
-
-		$this->timezone = new \DateTimeZone( 'UTC' );
 	}
 
 	/**

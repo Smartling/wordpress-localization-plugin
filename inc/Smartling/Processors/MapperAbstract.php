@@ -1,15 +1,13 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: sergey@slepokurov.com
- * Date: 06.02.2015
- * Time: 9:33
- */
 
 namespace Smartling\Processors;
 
-
-class MapperAbstract {
+/**
+ * Class MapperAbstract
+ *
+ * @package Smartling\Processors
+ */
+abstract class MapperAbstract {
 
 	/**
 	 * @var array
@@ -19,14 +17,14 @@ class MapperAbstract {
 	/**
 	 * return array
 	 */
-	public function getFields() {
+	public function getFields () {
 		return $this->fields;
 	}
 
 	/**
 	 * @param array
 	 */
-	protected function setFields($fields) {
+	protected function setFields ( $fields ) {
 		$this->fields = $fields;
 	}
 }

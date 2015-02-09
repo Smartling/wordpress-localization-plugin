@@ -1,20 +1,23 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: sergey@slepokurov.com
- * Date: 06.02.2015
- * Time: 9:35
- */
 
 namespace Smartling\Processors;
 
-
+/**
+ * Class PostMapper
+ *
+ * @package Smartling\Processors
+ */
 class PostMapper extends MapperAbstract {
 
+	/**
+	 * Constructor
+	 */
 	function __construct () {
-		$this->setFields(array(
-			"post_title",
-			"post_content"
-		));
+		$this->setFields(
+			array (
+				'post_title',
+				'post_content'
+			)
+		);
 	}
 }

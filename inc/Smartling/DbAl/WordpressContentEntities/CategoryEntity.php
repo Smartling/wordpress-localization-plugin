@@ -120,4 +120,10 @@ class CategoryEntity extends EntityAbstract {
 	}
 
 
+	public function getTitle()
+	{
+		return $this->name;
+	}
+
+
 }

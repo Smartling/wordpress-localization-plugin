@@ -7,7 +7,10 @@
  */
 
 namespace Smartling\WP\Controller;
+use Smartling\Base\SmartlingCore;
+use Smartling\Bootstrap;
 use Smartling\DbAl\WordpressContentEntities\PostEntity;
+use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\WPAbstract;
@@ -57,6 +60,11 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 		}
 	}
 
+	/**
+	 * @param $post_id
+	 *
+	 * @return mixed
+	 */
 	public function save ( $post_id ) {
 		remove_action( 'save_post', array ( $this, 'save' ) );
 		if ( ! isset( $_POST['smartling_connector_nonce'] ) ) {
@@ -83,15 +91,17 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 			}
 		}
 
-
 		$data = $_POST['smartling_post_widget'];
 		$locales = array();
-		if($data != null && array_key_exists("locales", $data)) {
-			foreach ( $data["locales"] as $key => $locale ) {
-				if ( array_key_exists( 'enabled', $locale ) && $locale['enabled'] == 'on' ) {
+
+		if(null !== $data && array_key_exists('locales', $data)) {
+
+			foreach ( $data['locales'] as $key => $locale ) {
+				if ( array_key_exists( 'enabled', $locale ) && 'on' === $locale['enabled'] ) {
 					$locales[ $key ] = $locale['locale'];
 				}
 			}
+
 			if ( count( $locales ) > 0 ) {
 				$postEntity = new PostEntity( $this->getLogger() );
 
@@ -103,32 +113,22 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 				switch ( $_POST['submit'] ) {
 					case 'Send to Smartling':
 						foreach ( $locales as $key => $locale ) {
-							$submission = null;
-							if ( $submissions ) {
-								foreach ( $submissions as $item ) {
-									/** @var SubmissionEntity $item */
-									if ( $item->getTargetBlog() == $key ) {
-										$submission = $item;
-										break;
-									}
-								}
-							}
-							if ( $submission == null ) {
-								$submission = new SubmissionEntity( $this->getLogger() );
-							}
-							$submission->setContentType( 'post' );
-							$submission->setSourceBlog( $this->getPluginInfo()->getOptions()->getLocales()->getDefaultBlog() );
-							$submission->setSourceGUID( $originalId );
-							$submission->setSubmissionDate( date( 'Y-m-d H:i:s' ) );
-							$submission->setSourceTitle( $post["post_title"] );
-							$submission->setSubmitter( $this->getEntityHelper()->getSiteHelper()->getCurrentUserLogin() );
-							$submission->setTargetBlog( $key );
-							$submission->setTargetLocale( $locale );
-							$submission->setTargetGUID( $this->getEntityHelper()->getTarget( $post_id, $key ) );
-							$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_NEW );
-							$submission = $manager->storeEntity( $submission );
-							$manager->generateXml( $submission );
-							$manager->upload( $submission );
+							/**
+							 * @var SmartlingCore $core
+							 */
+							$core = Bootstrap::getContainer()->get('entrypoint');
+
+							$result = $core->sendForTranslation(
+								WordpressContentTypeHelper::CONTENT_TYPE_POST,
+								$this->getPluginInfo()->getOptions()->getLocales()->getDefaultBlog(),
+								(int) $this->getEntityHelper()->getOriginal( $post_id ),
+								(int) $key,
+								$this->getEntityHelper()->getTarget( $post_id, $key )
+							);
+
+							$submission = $core->getLastSubmissionEntity();
+
+
 						}
 						break;
 					case 'Download':

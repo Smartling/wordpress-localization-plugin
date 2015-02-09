@@ -1,4 +1,5 @@
 parameters:
+
   plugin.name: smartling-connector
   plugin.version: 1.0
   plugin.domain: smartling-connector
@@ -10,14 +11,55 @@ parameters:
 
   submission.pagesize: 5
 
+
 services:
+
+  wrapper.sdk.api.smartling:
+    class: Smartling\ApiWrapper
+    arguments:
+    - "@manager.settings"
+    - "@logger"
+
+  entrypoint:
+    class: Smartling\Base\SmartlingCore
+    calls:
+      - [ "setLogger", [ "@logger" ]]
+      - [ "setSubmissionManager", [ "@manager.submission" ]]
+      - [ "setSettings", [ "@manager.settings" ]]
+      - [ "setSiteHelper", [ "@site.helper" ]]
+      - [ "setApiWrapper", [ "@wrapper.sdk.api.smartling" ]]
+      - [ "setMultilangProxy", [ "@multilang.proxy" ]]
+
+  wrapper.entity.post:
+    class: Smartling\DbAl\WordpressContentEntities\PostEntity
+    arguments:
+      - "@logger"
+
+  mapper.post:
+    class: Smartling\Processors\PostMapper
+
+
+  factory.propertyMapper:
+    class: Smartling\Processors\PropertyMapperFactory
+    arguments:
+      - "@logger"
+    calls:
+      - [ "registerMapper", ["post", "@mapper.post"]]
+
+
+  factory.contentIO:
+    class: Smartling\Processors\ContentEntitiesIOFactory
+    arguments:
+      - "@logger"
+    calls:
+      - [ "registerMapper", ["post", "@wrapper.entity.post"]]
+
 
   fileLoggerHandlerStandard:
     class: Monolog\Handler\StreamHandler
     arguments:
       - "%logger.filehandler.standard.filename%"
       - "%logger.filehandler.standard.loglevel%"
-
 
   logger:
     class: Monolog\Logger
@@ -44,19 +86,22 @@ services:
     arguments:
       - "@logger"
 
-  plugin.options:
-      class: Smartling\Helpers\Options
+  manager.settings:
+    class: Smartling\Settings\SettingsManager
+    arguments:
+      - "@logger"
+      - "@factory.propertyMapper"
 
   plugin.info:
       class: Smartling\Helpers\PluginInfo
       arguments:
-        - %plugin.name%
-        - %plugin.version%
-        - %plugin.url%
-        - %plugin.dir%
-        - %plugin.domain%
-        - '@plugin.options'
-        - %plugin.upload%
+        - "%plugin.name%"
+        - "%plugin.version%"
+        - "%plugin.url%"
+        - "%plugin.dir%"
+        - "%plugin.domain%"
+        - "@manager.settings"
+        - "%plugin.upload%"
 
   multilang.proxy:
     class: Smartling\DbAl\MultiligualPressProConnector
