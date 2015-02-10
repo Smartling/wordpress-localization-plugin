@@ -131,7 +131,7 @@ class EntityHelper {
 		$curBlog = $this->getSiteHelper()->getCurrentBlogId();
 		$defBlog = $this->getSettingsManager()->getLocales()->getDefaultBlog();
 
-		var_dump($curBlog,$defBlog);
+		//var_dump($curBlog,$defBlog);
 
 		if ( $curBlog === $defBlog ) {
 			//TODO mb some collision

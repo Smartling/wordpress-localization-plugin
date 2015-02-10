@@ -484,6 +484,14 @@ class SubmissionManager extends EntityManagerAbstract {
 		$this->logger->info( $storeQuery );
 
 		$result = $this->dbal->query( $storeQuery );
+
+		if (false === $result) {
+			$message = vsprintf('Failed saving submission entity to database with following error message: %s',
+			array($this->dbal->getLastErrorMessage()));
+
+			$this->getLogger()->error($message);
+		}
+
 		if ( true === $is_insert && false !== $result ) {
 			$entityFields       = $entity->toArray( false );
 			$entityFields['id'] = $this->dbal->getLastInsertedId();

@@ -4,6 +4,11 @@ namespace Smartling\DbAl;
 
 use Psr\Log\LoggerInterface;
 
+/**
+ * Class EntityManagerAbstract
+ *
+ * @package Smartling\DbAl
+ */
 abstract class EntityManagerAbstract {
 
 	/**

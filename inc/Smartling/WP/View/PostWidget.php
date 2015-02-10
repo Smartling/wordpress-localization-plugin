@@ -7,7 +7,7 @@
 		/**
 		 * @var array $locales
 		 */
-		$locales = $this->getPluginInfo()->getOptions()->getLocales()->getTargetLocales();
+		$locales = $this->getPluginInfo()->getSettingsManager()->getLocales()->getTargetLocales();
 
 		foreach ( $locales as  $locale ) {
 			$value      = false;

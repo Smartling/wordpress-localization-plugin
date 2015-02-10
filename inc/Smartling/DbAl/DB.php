@@ -251,4 +251,11 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 	function getLastInsertedId () {
 		return $this->wpdb->insert_id;
 	}
+
+	/**
+	 * @return string
+	 */
+	function getLastErrorMessage () {
+		return $this->getWpdb()->last_error;
+	}
 }

@@ -1,12 +1,14 @@
 <?php
 namespace Smartling\Base;
 
+use DateTime;
 use Psr\Log\LoggerInterface;
 
 use Smartling\ApiWrapperInterface;
 use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
+use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Processors\ContentEntitiesIOFactory;
@@ -308,6 +310,9 @@ class SmartlingCore {
 				)
 			);
 			$entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+			$entity->setSubmitter($this->getCurrentUserID());
+			$entity->setSourceTitle('');
+			$entity->setSubmissionDate(DateTimeHelper::dateTimeToString(new DateTime()));
 
 			// generate URI
 			$entity->getFileUri();
@@ -316,5 +321,13 @@ class SmartlingCore {
 		}
 
 		return $entity;
+	}
+
+	/**
+	 * @return int
+	 */
+	protected function getCurrentUserID()
+	{
+		return get_current_user_id();
 	}
 }

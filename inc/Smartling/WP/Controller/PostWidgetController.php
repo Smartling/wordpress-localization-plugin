@@ -7,6 +7,7 @@ use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\WordpressContentEntities\PostEntity;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPAbstract;
@@ -72,7 +73,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 				)
 			);
 		} else {
-			echo __( '<p>Need to save the post</p>' );
+			echo '<p>' . __( 'Need to save the post' ) . '</p>';
 		}
 	}
 
@@ -121,7 +122,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 			if ( count( $locales ) > 0 ) {
 				$postEntity = new PostEntity( $this->getLogger() );
 
-				$originalId  = $this->getEntityHelper()->getOriginal( $post_id );
+				$originalId  = $this->getEntityHelper()->getOriginalContentId( $post_id );
 				$post        = $postEntity->get( $originalId );
 				$manager     = $this->getManager();
 				$submissions = $manager->getEntityBySourceGuid( $originalId );
@@ -137,7 +138,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 							$result = $core->sendForTranslation(
 								WordpressContentTypeHelper::CONTENT_TYPE_POST,
 								$this->getPluginInfo()->getSettingsManager()->getLocales()->getDefaultBlog(),
-								(int) $this->getEntityHelper()->getOriginal( $post_id ),
+								(int) $this->getEntityHelper()->getOriginalContentId( $post_id ),
 								(int) $key,
 								$this->getEntityHelper()->getTarget( $post_id, $key )
 							);

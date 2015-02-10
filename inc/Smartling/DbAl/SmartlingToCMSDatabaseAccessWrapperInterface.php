@@ -22,13 +22,6 @@ interface SmartlingToCMSDatabaseAccessWrapperInterface {
 	const SORT_OPTION_DESC = 'DESC';
 
 	/**
-	 * Constructor
-	 *
-	 * @param LoggerInterface $logger
-	 */
-	function __construct ( LoggerInterface $logger );
-
-	/**
 	 * Executes SQL query and returns the result
 	 *
 	 * @param $query
@@ -66,4 +59,9 @@ interface SmartlingToCMSDatabaseAccessWrapperInterface {
 	 * @return integer
 	 */
 	function getLastInsertedId ();
+
+	/**
+	 * @return string
+	 */
+	function getLastErrorMessage();
 }
