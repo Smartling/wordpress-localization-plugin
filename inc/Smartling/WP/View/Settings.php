@@ -16,7 +16,7 @@ $settingsManager = $pluginInfo->getSettingsManager();
 	<h2 ><?= get_admin_page_title() ?></h2 >
 
 	<div class = "display-errors" ></div >
-	<form id = "smartling-form" action = "admin-post.php" method = "POST" >
+	<form id = "smartling-form" action = "/wp-admin/admin-post.php" method = "POST" >
 		<input type = "hidden" name = "action" value = "smartling_settings" >
 		<?php wp_nonce_field( 'smartling_connector_settings', 'smartling_connector_nonce' ); ?>
 		<?php wp_referer_field(); ?>
