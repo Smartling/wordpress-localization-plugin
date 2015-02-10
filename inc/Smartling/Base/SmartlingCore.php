@@ -9,6 +9,7 @@ use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\XmlEncoder;
+use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -49,6 +50,11 @@ class SmartlingCore {
 	 * @var SubmissionEntity
 	 */
 	private $lastSubmissionEntity;
+
+	/**
+	 * @var ContentEntitiesIOFactory
+	 */
+	private $contentIoFactory;
 
 	/**
 	 * @return SubmissionEntity
@@ -145,6 +151,22 @@ class SmartlingCore {
 	public function setSettings ( SettingsManager $settings ) {
 		$this->settings = $settings;
 	}
+
+	/**
+	 * @return ContentEntitiesIOFactory
+	 */
+	public function getContentIoFactory () {
+		return $this->contentIoFactory;
+	}
+
+	/**
+	 * @param ContentEntitiesIOFactory $contentIoFactory
+	 */
+	public function setContentIoFactory ( $contentIoFactory ) {
+		$this->contentIoFactory = $contentIoFactory;
+	}
+
+
 
 	/**
 	 * @param string   $contentType

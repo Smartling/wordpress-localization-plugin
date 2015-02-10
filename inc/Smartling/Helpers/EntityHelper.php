@@ -1,26 +1,25 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: sergey@slepokurov.com
- * Date: 08.02.2015
- * Time: 16:26
- */
 
 namespace Smartling\Helpers;
 
-
 use Psr\Log\LoggerInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
-use Smartling\DbAl\WordpressContentEntities\PostEntity;
-use Smartling\Helpers\Options;
-use Smartling\Helpers\PluginInfo;
-use Smartling\Helpers\SiteHelper;
+use Smartling\Exception\SmartlingDbException;
+use Smartling\Processors\ContentEntitiesIOFactory;
+use Smartling\Settings\SettingsManager;
 
+/**
+ * Class EntityHelper
+ *
+ * @package Smartling\Helpers
+ */
 class EntityHelper {
+
 	/**
 	 * @var PluginInfo
 	 */
 	private $pluginInfo;
+
 	/**
 	 * @return LocalizationPluginProxyInterface
 	 */
@@ -36,19 +35,10 @@ class EntityHelper {
 	 */
 	private $logger;
 
-	public function __construct ($pluginInfo, $connector, $siteHelper, $logger ) {
-		$this->pluginInfo = $pluginInfo;
-		$this->connector = $connector;
-		$this->siteHelper = $siteHelper;
-		$this->logger = $logger;
-	}
-
 	/**
-	 * @return LoggerInterface
+	 * @var ContentEntitiesIOFactory
 	 */
-	public function getLogger () {
-		return $this->logger;
-	}
+	private $contentIoFactory;
 
 	/**
 	 * @return PluginInfo
@@ -58,10 +48,10 @@ class EntityHelper {
 	}
 
 	/**
-	 * @return Options
+	 * @param PluginInfo $pluginInfo
 	 */
-	public function getOptions () {
-		return $this->getPluginInfo()->getOptions();
+	public function setPluginInfo ( $pluginInfo ) {
+		$this->pluginInfo = $pluginInfo;
 	}
 
 	/**
@@ -72,6 +62,13 @@ class EntityHelper {
 	}
 
 	/**
+	 * @param LocalizationPluginProxyInterface $connector
+	 */
+	public function setConnector ( $connector ) {
+		$this->connector = $connector;
+	}
+
+	/**
 	 * @return SiteHelper
 	 */
 	public function getSiteHelper () {
@@ -79,42 +76,103 @@ class EntityHelper {
 	}
 
 	/**
-	 * @param int $id
-	 * @param string $type
-	 * @return int
-	 * @throws \Exception not found original
+	 * @param SiteHelper $siteHelper
 	 */
-	public function getOriginal($id, $type = 'post') {
-		if($this->getSiteHelper()->getCurrentBlogId() == $this->getOptions()->getLocales()->getDefaultBlog()) {
+	public function setSiteHelper ( $siteHelper ) {
+		$this->siteHelper = $siteHelper;
+	}
+
+	/**
+	 * @return LoggerInterface
+	 */
+	public function getLogger () {
+		return $this->logger;
+	}
+
+	/**
+	 * @param LoggerInterface $logger
+	 */
+	public function setLogger ( $logger ) {
+		$this->logger = $logger;
+	}
+
+	/**
+	 * @return SettingsManager
+	 */
+	public function getSettingsManager () {
+		return $this->getPluginInfo()->getSettingsManager();
+	}
+
+	/**
+	 * @return ContentEntitiesIOFactory
+	 */
+	//public function getContentIoFactory () {
+	//	return $this->contentIoFactory;
+	//}
+
+	/**
+	 * @param ContentEntitiesIOFactory $contentIoFactory
+	 */
+	public function setContentIoFactory ( $contentIoFactory ) {
+		$this->contentIoFactory = $contentIoFactory;
+	}
+
+	/**
+	 * Returns id of original content linked to given or throws the exception
+	 *
+	 * @param int    $id
+	 * @param string $type
+	 *
+	 * @return int
+	 * @throws SmartlingDbException
+	 */
+	public function getOriginalContentId ( $id, $type = WordpressContentTypeHelper::CONTENT_TYPE_POST ) {
+
+		$curBlog = $this->getSiteHelper()->getCurrentBlogId();
+		$defBlog = $this->getSettingsManager()->getLocales()->getDefaultBlog();
+
+		var_dump($curBlog,$defBlog);
+
+		if ( $curBlog === $defBlog ) {
 			//TODO mb some collision
 			return $id;
 		}
 
-		$linked = $this->getConnector()->getLinkedObjects($this->getSiteHelper()->getCurrentBlogId(), $id, $type);
-		foreach($linked as $key => $item) {
-			if($key == $this->getOptions()->getLocales()->getDefaultBlog()) {
-				return $item;
+		$linkedObjects = $this->getConnector()->getLinkedObjects( $curBlog, $id, $type );
+
+		foreach ( $linkedObjects as $blogId => $contentId ) {
+			if ( $blogId === $defBlog ) {
+				return $contentId;
 			}
 		}
 
-	//	throw new \Exception("We can't find original item");
-		return null;
+		$message = vsprintf( 'For given content-type: \'%s\' id:%s in blog %s link to original content id not found',
+			array (
+				$type,
+				$id,
+				$curBlog
+			) );
+
+		$this->getLogger()->error( $message );
+
+		throw new SmartlingDbException ( $message );
 	}
 
 	/**
-	 * @param int $id
+	 * @param int    $id
 	 * @param string $type
+	 *
 	 * @return int
 	 * @throws \Exception not found original
 	 */
-	public function getTarget($id, $targetBlog, $type = 'post') {
-		if($this->getSiteHelper()->getCurrentBlogId() == $targetBlog) {
+	public function getTarget ( $id, $targetBlog, $type = 'post' ) {
+		if ( $this->getSiteHelper()->getCurrentBlogId() == $targetBlog ) {
 			return $id;
 		}
 
-		$linked = $this->getConnector()->getLinkedObjects($this->getSiteHelper()->getCurrentBlogId(), $id, $type);
-		foreach($linked as $key => $item) {
-			if($key == $targetBlog) {
+		$linked = $this->getConnector()->getLinkedObjects( $this->getSiteHelper()->getCurrentBlogId(), $id, $type );
+		foreach ( $linked as $key => $item ) {
+			if ( $key == $targetBlog ) {
 				return $item;
 			}
 		}
@@ -123,18 +181,19 @@ class EntityHelper {
 	}
 
 	/**
-	 * @param int $id
+	 * @param int    $id
 	 * @param string $type
+	 *
 	 * @return int
 	 * @throws \Exception not found original
 	 */
-	public function createTarget($sourceId, $targetBlog, $type = 'post') {
-		$targetId = $this->getTarget($sourceId, $targetBlog, $type);
-		if($targetId == null) {
-			$postEntity = new PostEntity($this->getLogger());
-			$post = $postEntity->get($sourceId);
+	public function createTarget ( $sourceId, $targetBlog, $type = 'post' ) {
+		$targetId = $this->getTarget( $sourceId, $targetBlog, $type );
+		if ( $targetId == null ) {
+			$postEntity = new PostEntity( $this->getLogger() );
+			$post       = $postEntity->get( $sourceId );
 
-			$args = array(
+			$args = array (
 				'comment_status' => $post["comment_status"],
 				'ping_status'    => $post["ping_status"],
 				'post_author'    => $post["post_author"],
@@ -150,8 +209,8 @@ class EntityHelper {
 				'menu_order'     => $post["menu_order"]
 			);
 
-			$this->getSiteHelper()->switchBlogId($targetBlog);
-			$targetId = $postEntity->insert($args);
+			$this->getSiteHelper()->switchBlogId( $targetBlog );
+			$targetId = $postEntity->insert( $args );
 			$this->getSiteHelper()->restoreBlogId();
 			//TODO Duplicate taxonomies, duplicate metainfo
 		}

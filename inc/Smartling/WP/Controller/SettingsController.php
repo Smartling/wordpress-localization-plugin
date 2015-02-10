@@ -52,7 +52,7 @@ class SettingsController extends WPAbstract implements WPHookInterface {
 	public function save () {
 		$settings = $_REQUEST['smartling_settings'];
 
-		$options       = $this->getPluginInfo()->getOptions();
+		$options       = $this->getPluginInfo()->getSettingsManager();
 		$accountInfo   = $options->getAccountInfo();
 		$targetLocales = $options->getLocales();
 

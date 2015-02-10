@@ -4,6 +4,9 @@
 		<h3 >Translate this post into:</h3 >
 		<?php
 
+		/**
+		 * @var array $locales
+		 */
 		$locales = $this->getPluginInfo()->getOptions()->getLocales()->getTargetLocales();
 
 		foreach ( $locales as  $locale ) {
@@ -11,9 +14,9 @@
 			$checked    = '';
 			$status     = '';
 			$submission = null;
-			if ( $data["submissions"] != null ) {
-				foreach ( $data["submissions"] as $item ) {
-					if($item->getTargetBlog() == $locale->getBlog()) {
+			if ( null !== $data['submissions'] ) {
+				foreach ( $data['submissions'] as $item ) {
+					if($item->getTargetBlog() === $locale->getBlog()) {
 						$value   = true;
 						$checked = 'checked="checked"';
 						$percent = $item->getCompletionPercentage();
@@ -49,4 +52,3 @@
 		<input type = "submit" value = "Download" class = "button button-primary" id = "submit" name = "submit" >
 	</div >
 </div >
-

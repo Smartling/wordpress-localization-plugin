@@ -13,10 +13,12 @@ class Locales {
 	 * @var string
 	 */
 	private $defaultLocale;
+
 	/**
 	 * @var int
 	 */
 	private $defaultBlog;
+
 	/**
 	 * @var TargetLocale[]
 	 */
@@ -116,7 +118,7 @@ class Locales {
 	 * @return int
 	 */
 	public function getDefaultBlog () {
-		return $this->defaultBlog;
+		return (int) $this->defaultBlog;
 	}
 
 	/**

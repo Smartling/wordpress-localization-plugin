@@ -1,59 +1,73 @@
+<?php
+/**
+ * @var PluginInfo $pluginInfo
+ */
+use Smartling\Helpers\PluginInfo;
+use Smartling\Settings\TargetLocale;
+
+$pluginInfo = $this->getPluginInfo();
+
+$domain = $pluginInfo->getDomain();
+
+$settingsManager = $pluginInfo->getSettingsManager();
+?>
+
 <div class = "wrap" >
-	<h2 ><?php echo get_admin_page_title() ?></h2 >
+	<h2 ><?= get_admin_page_title() ?></h2 >
 
 	<div class = "display-errors" ></div >
 	<form id = "smartling-form" action = "admin-post.php" method = "POST" >
 		<input type = "hidden" name = "action" value = "smartling_settings" >
 		<?php wp_nonce_field( 'smartling_connector_settings', 'smartling_connector_nonce' ); ?>
 		<?php wp_referer_field(); ?>
-		<h3 ><?php echo __( 'Account Info', $this->getPluginInfo()->getDomain() ) ?></h3 >
+		<h3 ><?= __( 'Account Info', $domain ) ?></h3 >
 		<table class = "form-table" >
 			<tbody >
 			<tr >
-				<th scope = "row" ><?php echo __( 'API Url', $this->getPluginInfo()->getDomain() ) ?></th >
+				<th scope = "row" ><?= __( 'API Url', $domain ) ?></th >
 				<td >
 					<input type = "text" name = "smartling_settings[apiUrl]"
-					       value = "<?php echo $this->getPluginInfo()->getOptions()->getAccountInfo()->getApiUrl(); ?>" >
+					       value = "<?= $settingsManager->getAccountInfo()->getApiUrl(); ?>" >
 					<br >
-					<small ><?php echo __( 'Set api url. Default', $this->getPluginInfo()->getDomain() ) ?>:
+					<small ><?= __( 'Set api url. Default', $domain ) ?>:
 						https://api.smartling.com/v1
 					</small >
 				</td >
 			</tr >
 			<tr >
-				<th scope = "row" ><?php echo __( 'Project ID', $this->getPluginInfo()->getDomain() ) ?></th >
+				<th scope = "row" ><?= __( 'Project ID', $domain ) ?></th >
 				<td >
 					<input type = "text" name = "smartling_settings[projectId]"
-					       value = "<?php echo $this->getPluginInfo()->getOptions()->getAccountInfo()->getProjectId(); ?>" >
+					       value = "<?= $settingsManager->getAccountInfo()->getProjectId(); ?>" >
 				</td >
 			</tr >
 			<tr >
-				<th scope = "row" ><?php echo __( 'Key', $this->getPluginInfo()->getDomain() ) ?></th >
+				<th scope = "row" ><?= __( 'Key', $domain ) ?></th >
 				<td >
-					<?php $key = $this->getPluginInfo()->getOptions()->getAccountInfo()->getKey(); ?>
+					<?php $key = $settingsManager->getAccountInfo()->getKey(); ?>
 					<input type = "text" id = "api_key" name = "apiKey" value = "" >
-					<input type = "hidden" name = "smartling_settings[apiKey]" value = "<?php echo $key ?>" >
+					<input type = "hidden" name = "smartling_settings[apiKey]" value = "<?= $key ?>" >
 					<br >
 					<?php if ( $key ) { ?>
-						<small ><?php echo __( 'Current Key', $this->getPluginInfo()->getDomain() ) ?>
-							: <?php echo substr( $key, 0, - 10 ) . '**********' ?></small >
+						<small ><?= __( 'Current Key', $domain ) ?>
+							: <?= substr( $key, 0, - 10 ) . '**********' ?></small >
 					<?php } ?>
 				</td >
 			</tr >
 			<tr >
-				<th scope = "row" ><?php echo __( 'Retrieval Type', $this->getPluginInfo()->getDomain() ) ?></th >
+				<th scope = "row" ><?= __( 'Retrieval Type', $domain ) ?></th >
 				<td >
 					<?php
-					$option  = $this->getPluginInfo()->getOptions()->getAccountInfo()->getRetrievalType();
-					$buttons = $this->getPluginInfo()->getOptions()->getRetrievalTypes();
+					$option  = $settingsManager->getAccountInfo()->getRetrievalType();
+					$buttons = $settingsManager->getRetrievalTypes();
 					$checked = $option ? $option : $buttons[1];
 					foreach ( $buttons as $button ) {
 						?>
 						<label class = "radio-label" >
 							<p >
-								<input type = "radio" <?php echo $button == $checked ? 'checked="checked"' : ''; ?>
-								       name = "smartling_settings[retrievalType]" value = "<?php echo $button; ?>" >
-								<?php echo __( $button, $this->getPluginInfo()->getDomain() ); ?>
+								<input type = "radio" <?= $button == $checked ? 'checked="checked"' : ''; ?>
+								       name = "smartling_settings[retrievalType]" value = "<?= $button; ?>" >
+								<?= __( $button, $domain ); ?>
 							</p >
 						</label >
 						<br >
@@ -65,12 +79,18 @@
 				</td >
 			</tr >
 			<tr >
-				<th scope = "row" ><?php echo __( 'Target Locales', $this->getPluginInfo()->getDomain() ) ?></th >
+				<th scope = "row" ><?= __( 'Target Locales', $domain ) ?></th >
 				<td >
 					<?php
-					$locales       = $this->getSiteLocales();
-					$defaultBlog       = $this->getPluginInfo()->getOptions()->getLocales()->getDefaultBlog();
-					$targetLocales = $this->getPluginInfo()->getOptions()->getLocales()->getTargetLocales();
+					/**
+					 * @var array $locales
+					 */
+					$locales     = $this->getSiteLocales();
+					$defaultBlog = $settingsManager->getLocales()->getDefaultBlog();
+					/**
+					 * @var array $targetLocales
+					 */
+					$targetLocales = $settingsManager->getLocales()->getTargetLocales();
 					foreach ( $locales as $key => $value ) {
 						if ( $defaultBlog == $key ) {
 							continue;
@@ -78,6 +98,9 @@
 						$short   = null;
 						$checked = '';
 						foreach ( $targetLocales as $target ) {
+							/**
+							 * @var TargetLocale $target
+							 */
 							if ( $target->getLocale() == $value ) {
 								$short   = $target->getTarget();
 								$checked = $target->getEnabled() ? 'checked="checked"' : '';
@@ -90,16 +113,16 @@
 						<div >
 							<p class = "plugin-locales" >
 								<label class = "radio-label" >
-									<input type = "checkbox" <?php echo $checked; ?>
-									       name = "smartling_settings[targetLocales][<?php echo $value; ?>][enabled]" >
-									<span ><?php echo $value; ?></span >
+									<input type = "checkbox" <?= $checked; ?>
+									       name = "smartling_settings[targetLocales][<?= $value; ?>][enabled]" >
+									<span ><?= $value; ?></span >
 								</label >
 								<input type = "text"
-								       name = "smartling_settings[targetLocales][<?php echo $value; ?>][target]"
-								       value = "<?php echo $short; ?>" >
+								       name = "smartling_settings[targetLocales][<?= $value; ?>][target]"
+								       value = "<?= $short; ?>" >
 								<input type = "hidden"
-								       name = "smartling_settings[targetLocales][<?php echo $value; ?>][blog]"
-								       value = "<?php echo $key; ?>" >
+								       name = "smartling_settings[targetLocales][<?= $value; ?>][blog]"
+								       value = "<?= $key; ?>" >
 							</p >
 						</div >
 
@@ -109,18 +132,18 @@
 				</td >
 			</tr >
 			<tr >
-				<th scope = "row" ><?php echo __( 'Default Locale', $this->getPluginInfo()->getDomain() ) ?></th >
+				<th scope = "row" ><?= __( 'Default Locale', $domain ) ?></th >
 				<td >
 					<?php
-					$defaultLocale = $this->getPluginInfo()->getOptions()->getLocales()->getDefaultLocale();
-					$defaultBlog = $this->getPluginInfo()->getOptions()->getLocales()->getDefaultBlog(); ?>
+					$defaultLocale = $settingsManager->getLocales()->getDefaultLocale();
+					$defaultBlog   = $settingsManager->getLocales()->getDefaultBlog(); ?>
 
-					<p ><?php echo __( 'Site default language is', $this->getPluginInfo()->getDomain() ) ?>
-						: <?php echo $defaultLocale; ?></p >
+					<p ><?= __( 'Site default language is', $this->getPluginInfo()->getDomain() ) ?>
+						: <?= $defaultLocale; ?></p >
 
 					<p >
-						<a href = "#" id = "change-default-locale" ><?php echo __( 'Change default locale',
-								$this->getPluginInfo()->getDomain() ) ?></a >
+						<a href = "#" id = "change-default-locale" ><?= __( 'Change default locale',
+								$domain ) ?></a >
 					</p >
 					<br >
 					<?php $locales = $this->getSiteLocales(); ?>
@@ -136,16 +159,16 @@
 				</td >
 			</tr >
 			<tr style = "display: none;" >
-				<th scope = "row" ><?php echo __( 'Callback URL', $this->getPluginInfo()->getDomain() ) ?></th >
+				<th scope = "row" ><?= __( 'Callback URL', $domain ) ?></th >
 				<td >
 					<label class = "radio-label" >
 						<p >
 							<?php
-							$option  = $this->getPluginInfo()->getOptions()->getAccountInfo()->getCallBackUrl();
+							$option  = $settingsManager->getAccountInfo()->getCallBackUrl();
 							$checked = $option == true ? 'checked="checked"' : '';
 							?>
-							<input type = "checkbox" name = "smartling_settings[callbackUrl]" <?php echo $checked; ?> >
-							<?php echo __( 'Use smartling callback', $this->getPluginInfo()->getDomain() ) ?>:
+							<input type = "checkbox" name = "smartling_settings[callbackUrl]" <?= $checked; ?> >
+							<?= __( 'Use smartling callback', $domain ) ?>:
 							/smartling/callback/%cron_key
 						</p >
 					</label >
@@ -154,17 +177,17 @@
 				</td >
 			</tr >
 			<tr >
-				<th scope = "row" ><?php echo __( 'Auto authorize', $this->getPluginInfo()->getDomain() ) ?></th >
+				<th scope = "row" ><?= __( 'Auto authorize', $domain ) ?></th >
 				<td >
 					<label class = "radio-label" >
 						<p >
 							<?php
-							$option  = $this->getPluginInfo()->getOptions()->getAccountInfo()->getAutoAuthorize();
+							$option  = $settingsManager->getAccountInfo()->getAutoAuthorize();
 							$checked = $option == true ? 'checked="checked"' : '';
 							?>
 							<input type = "checkbox"
-							       name = "smartling_settings[autoAuthorize]" <?php echo $checked; ?> >
-							<?php echo __( 'Auto authorize content', $this->getPluginInfo()->getDomain() ) ?>
+							       name = "smartling_settings[autoAuthorize]" <?= $checked; ?> / >
+							<?= __( 'Auto authorize content', $domain ) ?>
 						</p >
 					</label >
 				</td >

@@ -98,7 +98,7 @@ class SettingsConfigurationProfile {
 	/**
 	 * @return boolean
 	 */
-	public function isCallBackUrl () {
+	public function getCallBackUrl () {
 		return $this->callBackUrl;
 	}
 
@@ -112,7 +112,7 @@ class SettingsConfigurationProfile {
 	/**
 	 * @return boolean
 	 */
-	public function isAutoAuthorize () {
+	public function getAutoAuthorize () {
 		return $this->autoAuthorize;
 	}
 

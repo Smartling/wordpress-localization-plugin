@@ -3,6 +3,7 @@
 namespace Smartling\DbAl\WordpressContentEntities;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Helpers\WordpressContentTypeHelper;
 
 /**
  * Class PostEntity
@@ -106,11 +107,21 @@ class PostEntity extends EntityAbstract {
 	/**
 	 * @inheritdoc
 	 */
+	protected function getNonClonableFields ()
+	{
+		return array(
+			'comment_count',
+		);
+	}
+
+	/**
+	 * @inheritdoc
+	 */
 	public function get ( $guid ) {
 		$post = get_post( $guid, ARRAY_A );
 
 		if ( null !== $post ) {
-			return $this->resultToEntity( (object) $post, $this );
+			return $this->resultToEntity( $post, $this );
 		} else {
 			$this->entityNotFound( WordpressContentTypeHelper::CONTENT_TYPE_POST, $guid );
 		}

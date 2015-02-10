@@ -57,6 +57,7 @@ abstract class EntityAbstract {
 
 	/**
 	 * Transforms entity instance into array
+	 *
 	 * @return array
 	 */
 	public function toArray () {
@@ -112,6 +113,7 @@ abstract class EntityAbstract {
 			}
 			case 'get' : {
 				$field = $this->getFieldNameByMethodName( $method );
+
 				return $this->$field; // get the very first arg
 				break;
 			}
@@ -127,7 +129,7 @@ abstract class EntityAbstract {
 	/**
 	 * @return mixed
 	 */
-	abstract public function getTitle();
+	abstract public function getTitle ();
 
 	/**
 	 * @return LoggerInterface
@@ -182,7 +184,7 @@ abstract class EntityAbstract {
 	 *
 	 * @return mixed
 	 */
-	abstract public function set ( EntityAbstract $entity = null);
+	abstract public function set ( EntityAbstract $entity = null );
 
 	/**
 	 * Calculates the hash of entity
@@ -202,21 +204,24 @@ abstract class EntityAbstract {
 	/**
 	 * Converts object into EntityAbstract child
 	 *
-	 * @param object         $post
+	 * @param object         $arr
 	 * @param EntityAbstract $entity
 	 *
 	 * @return EntityAbstract
 	 */
-	protected function resultToEntity ( $post, $entity = null ) {
+	protected function resultToEntity ( array $arr, $entity = null ) {
 		if ( null === $entity ) {
-			$className = get_class($this);
+			$className = get_class( $this );
 
 			$entity = new $className( $this->getLogger() );
 		}
 		foreach ( $this->fields as $fieldName ) {
-			$entity->$fieldName = $post->$fieldName;
+			if ( array_key_exists( $fieldName, $arr ) ) {
+				$entity->$fieldName = $arr[$fieldName];
+			}
 		}
 		$entity->hash = $this->calculateHash();
+
 		return $entity;
 	}
 
@@ -227,5 +232,25 @@ abstract class EntityAbstract {
 		$this->getLogger()->info( $message );
 
 		throw new EntityNotFoundException( $message );
+	}
+
+	/**
+	 * @return array
+	 */
+	protected abstract function getNonClonableFields ();
+
+	/**
+	 * @return EntityAbstract
+	 */
+	public function __clone () {
+		$nonCloneFields = $this->getNonClonableFields();
+
+		$myFields = $this->toArray();
+
+		foreach ( $nonCloneFields as $field ) {
+			unset ( $myFields[ $field ] );
+		}
+
+		$this->resultToEntity($myFields, $this);
 	}
 }

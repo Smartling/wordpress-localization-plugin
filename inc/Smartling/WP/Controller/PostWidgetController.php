@@ -1,36 +1,48 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: sergey@slepokurov.com
- * Date: 20.01.2015
- * Time: 22:47
- */
 
 namespace Smartling\WP\Controller;
+
+use SebastianBergmann\Exporter\Exception;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\WordpressContentEntities\PostEntity;
+use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
+/**
+ * Class PostWidgetController
+ *
+ * @package Smartling\WP\Controller
+ */
 class PostWidgetController extends WPAbstract implements WPHookInterface {
+
 	const WIDGET_NAME = 'smartling_connector_post_widget';
+
 	const WIDGET_DATA_NAME = 'smartling_post_widget_data';
 
+	const CONNECTOR_NONCE = 'smartling_connector_nonce';
+
+	/**
+	 * @inheritdoc
+	 */
 	public function register () {
 		add_action( 'add_meta_boxes', array ( $this, 'box' ) );
 		add_action( 'save_post', array ( $this, 'save' ) );
 	}
 
+	/**
+	 * add_meta_boxes hook
+	 * @param string $post_type
+	 */
 	public function box ( $post_type ) {
-		$post_types = array ( 'post' );
+		$post_types = array ( WordpressContentTypeHelper::CONTENT_TYPE_POST );
 		if ( in_array( $post_type, $post_types ) ) {
 			add_meta_box(
 				self::WIDGET_NAME,
-				'Smartling Post Widget',
+				__( 'Smartling Post Widget' ),
 				array ( $this, 'preView' ),
 				$post_type,
 				'side',
@@ -39,24 +51,28 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 		}
 	}
 
+	/**
+	 * @param $post
+	 */
 	public function preView ( $post ) {
-		wp_nonce_field( self::WIDGET_NAME, 'smartling_connector_nonce' );
-		if ( $post->post_content
-		     && $post->post_title
-		) {
-			$originalId = $this->getEntityHelper()->getOriginal($post->ID);
-			$submission = null;
+		wp_nonce_field( self::WIDGET_NAME, self::CONNECTOR_NONCE );
 
-			if($originalId) {
-				$submissions = $this->getManager()->getEntityBySourceGuid( $originalId );
-			}
-			$this->view( array(
-				"submissions" => $submissions,
-				"post" => $post
+		if ( $post->post_content && $post->post_title ) {
+
+			$originalId = $this->getEntityHelper()->getOriginalContentId($post->ID);
+
+			$submissions = $this->getManager()->find(array(
+				'sourceGUID' => $originalId,
+				'contentType' => WordpressContentTypeHelper::CONTENT_TYPE_POST
+			));
+
+			$this->view( array (
+					'submissions' => $submissions,
+					'post'        => $post
 				)
 			);
 		} else {
-			echo '<p>Need to save the post</p>';
+			echo __( '<p>Need to save the post</p>' );
 		}
 	}
 
@@ -91,10 +107,10 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 			}
 		}
 
-		$data = $_POST['smartling_post_widget'];
-		$locales = array();
+		$data    = $_POST['smartling_post_widget'];
+		$locales = array ();
 
-		if(null !== $data && array_key_exists('locales', $data)) {
+		if ( null !== $data && array_key_exists( 'locales', $data ) ) {
 
 			foreach ( $data['locales'] as $key => $locale ) {
 				if ( array_key_exists( 'enabled', $locale ) && 'on' === $locale['enabled'] ) {
@@ -116,17 +132,15 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 							/**
 							 * @var SmartlingCore $core
 							 */
-							$core = Bootstrap::getContainer()->get('entrypoint');
+							$core = Bootstrap::getContainer()->get( 'entrypoint' );
 
 							$result = $core->sendForTranslation(
 								WordpressContentTypeHelper::CONTENT_TYPE_POST,
-								$this->getPluginInfo()->getOptions()->getLocales()->getDefaultBlog(),
+								$this->getPluginInfo()->getSettingsManager()->getLocales()->getDefaultBlog(),
 								(int) $this->getEntityHelper()->getOriginal( $post_id ),
 								(int) $key,
 								$this->getEntityHelper()->getTarget( $post_id, $key )
 							);
-
-							$submission = $core->getLastSubmissionEntity();
 
 
 						}

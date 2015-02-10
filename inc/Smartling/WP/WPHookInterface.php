@@ -8,6 +8,7 @@ namespace Smartling\WP;
  * @package Smartling\WP
  */
 interface WPHookInterface {
+
 	/**
 	 * Registers wp hook handlers. Invoked by wordpress.
 	 *

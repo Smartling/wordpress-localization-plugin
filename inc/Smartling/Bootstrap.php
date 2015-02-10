@@ -139,7 +139,7 @@ class Bootstrap {
 	}
 
 	public function uninstall () {
-		$this->fromContainer( 'plugin.options' )->uninstall();
+		$this->fromContainer( 'manager.settings' )->uninstall();
 		$this->fromContainer( 'site.db' )->uninstall();
 	}
 

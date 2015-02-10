@@ -29,6 +29,7 @@ services:
       - [ "setSiteHelper", [ "@site.helper" ]]
       - [ "setApiWrapper", [ "@wrapper.sdk.api.smartling" ]]
       - [ "setMultilangProxy", [ "@multilang.proxy" ]]
+      - [ "setContentIoFactory", [ "@factory.contentIO" ]]
 
   wrapper.entity.post:
     class: Smartling\DbAl\WordpressContentEntities\PostEntity
@@ -112,11 +113,12 @@ services:
 
   entity.helper:
     class: Smartling\Helpers\EntityHelper
-    arguments:
-       - "@plugin.info"
-       - "@multilang.proxy"
-       - "@site.helper"
-       - "@logger"
+    calls:
+      - [ "setLogger", [ "@logger" ]]
+      - [ "setPluginInfo", [ "@plugin.info" ]]
+      - [ "setConnector", [ "@multilang.proxy" ]]
+      - [ "setSiteHelper", [ "@site.helper" ]]
+      - [ "setContentIoFactory", [ "@factory.contentIO" ]]
 
   wp.i18n:
     class: Smartling\WP\i18n

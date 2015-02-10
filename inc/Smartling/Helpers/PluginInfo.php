@@ -1,29 +1,39 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: sergey@slepokurov.com
- * Date: 20.01.2015
- * Time: 12:40
- */
 
 namespace Smartling\Helpers;
 
+use Smartling\Settings\SettingsManager;
 
+/**
+ * Class PluginInfo
+ *
+ * @package Smartling\Helpers
+ */
 class PluginInfo {
-	public function __construct ( $name, $version, $url, $dir, $domain, $options, $upload ) {
-		$this->name    = $name;
-		$this->version = $version;
-		$this->url     = $url;
-		$this->dir     = $dir;
-		$this->domain  = $domain;
-		$this->options = $options;
-		$this->upload  = $upload;
+
+	/**
+	 * @param string          $name
+	 * @param string          $version
+	 * @param string          $url
+	 * @param string          $dir
+	 * @param string          $domain
+	 * @param SettingsManager $settingsManager
+	 * @param string          $upload
+	 */
+	public function __construct ( $name, $version, $url, $dir, $domain, $settingsManager, $upload ) {
+		$this->name            = $name;
+		$this->version         = $version;
+		$this->url             = $url;
+		$this->dir             = $dir;
+		$this->domain          = $domain;
+		$this->settingsManager = $settingsManager;
+		$this->upload          = $upload;
 	}
 
 	/**
-	 * @var Options
+	 * @var SettingsManager
 	 */
-	private $options;
+	private $settingsManager;
 
 	/**
 	 * @var string
@@ -52,17 +62,10 @@ class PluginInfo {
 	private $upload;
 
 	/**
-	 * @return string
+	 * @return SettingsManager
 	 */
-	public function getUpload () {
-		return $this->upload;
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getDomain () {
-		return $this->domain;
+	public function getSettingsManager () {
+		return $this->settingsManager;
 	}
 
 	/**
@@ -82,6 +85,13 @@ class PluginInfo {
 	/**
 	 * @return string
 	 */
+	public function getDomain () {
+		return $this->domain;
+	}
+
+	/**
+	 * @return string
+	 */
 	public function getUrl () {
 		return $this->url;
 	}
@@ -94,9 +104,9 @@ class PluginInfo {
 	}
 
 	/**
-	 * @return Options
+	 * @return string
 	 */
-	public function getOptions () {
-		return $this->options;
+	public function getUpload () {
+		return $this->upload;
 	}
 }

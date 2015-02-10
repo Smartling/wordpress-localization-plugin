@@ -26,7 +26,7 @@ class ContentEntitiesIOFactory extends ProcessorFactoryAbstract {
 	 * @param EntityAbstract $mapper
 	 * @param bool           $force
 	 */
-	public function registerMapper ( $contentType, EntityAbstract $mapper, $force = false ) {
+	public function registerMapper ( $contentType, $mapper, $force = false ) {
 		parent::registerMapper( $contentType, $mapper, $force );
 	}
 
