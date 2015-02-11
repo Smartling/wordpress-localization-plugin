@@ -2,14 +2,18 @@
 namespace Smartling\Base;
 
 use DateTime;
+use Exception;
 use Psr\Log\LoggerInterface;
 
 use Smartling\ApiWrapperInterface;
 use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
+use Smartling\Exception\SmartlingDbException;
+use Smartling\Exception\SmartlingException;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\SiteHelper;
+use Smartling\Helpers\WordpressUserHelper;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Settings\SettingsManager;
@@ -22,6 +26,21 @@ use Smartling\Submissions\SubmissionManager;
  * @package Smartling\Base
  */
 class SmartlingCore {
+
+	/**
+	 * Mode to send data to smartling directly
+	 */
+	const SEND_MODE_STREAM = 1;
+
+	/**
+	 * Mode to send data to smartling via temporary file
+	 */
+	const SEND_MODE_FILE = 2;
+
+	/**
+	 * current mode to send data to Smartling
+	 */
+	const SEND_MODE = self::SEND_MODE_FILE;
 
 	/**
 	 * @var LoggerInterface
@@ -168,7 +187,61 @@ class SmartlingCore {
 		$this->contentIoFactory = $contentIoFactory;
 	}
 
+	private function linkObjectsBySubmission(SubmissionEntity $entity)
+	{
+		return $this->getMultilangProxy()->linkObjects($entity);
+	}
 
+	public function sendForTranslationBySubmissionId($id)
+	{
+		return $this->sendForTranslationBySubmission($this->prepareSubmissionEntityById($id));
+	}
+
+	public function sendForTranslationBySubmission(SubmissionEntity $submission)
+	{
+		$contentEntity = $this->readContentEntity( $submission );
+
+		if (null === $submission->getId()) {
+			$submission->setSourceContentHash( $contentEntity->calculateHash() );
+
+			$submission->setSourceTitle( $contentEntity->getTitle() );
+
+			// generate URI
+			$submission->getFileUri();
+
+			$submission = $this->getSubmissionManager()->storeEntity( $submission );
+		}
+
+		$translatableFields = $this->getTranslatableFields( $submission->getContentType() );
+
+		$dataForConversion = $this->cutOffFields( $contentEntity->toArray(), $translatableFields );
+
+		$xml = XmlEncoder::xmlEncode( $dataForConversion );
+
+		$result = false;
+
+		try {
+			$result = self::SEND_MODE === self::SEND_MODE_FILE
+				? $this->sendFile($submission, $xml )
+				: $this->sendStream($submission, $xml );
+
+			if (true === $result) {
+				$submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
+			} else {
+				$submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+			}
+		} catch (SmartlingException $e){
+			$submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+		} catch (Exception $e){
+			$submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+		}
+
+		$submission = $this->getSubmissionManager()->storeEntity( $submission );
+
+		$this->lastSubmissionEntity = $submission;
+
+		return $result;
+	}
 
 	/**
 	 * @param string   $contentType
@@ -184,43 +257,107 @@ class SmartlingCore {
 		$submission = $this->prepareSubmissionEntity( $contentType, $sourceBlog, $sourceEntity, $targetBlog,
 			$targetEntity );
 
-		$contentEntity = $this->readContentEntity( $submission );
+		return $this->sendForTranslationBySubmission($submission);
+	}
 
-		$submission->setSourceContentHash($contentEntity->calculateHash());
+	/**
+	 * Sends data to smartling directly
+	 *
+	 * @param SubmissionEntity $submission
+	 * @param string           $xmlFileContent
+	 *
+	 * @return bool
+	 */
+	protected function sendStream ( SubmissionEntity $submission, $xmlFileContent ) {
+		return $this->getApiWrapper()->uploadContent( $submission, $xmlFileContent, true );
+	}
 
-		$submission->setSourceTitle($contentEntity->getTitle());
+	/**
+	 * Sends data to smartling via temporary file
+	 *
+	 * @param SubmissionEntity $submission
+	 * @param string           $xmlFileContent
+	 *
+	 * @return bool
+	 */
+	protected function sendFile ( SubmissionEntity $submission, $xmlFileContent ) {
+		$tmp_file = tempnam( sys_get_temp_dir(), '_smartling_temp_' );
 
-		$submission = $this->getSubmissionManager()->storeEntity($submission);
+		file_put_contents( $tmp_file, $xmlFileContent );
 
-		$translatableFields = $this->getTranslatableFields( $submission->getContentType() );
+		$result = $this->getApiWrapper()->uploadContent( $submission, '', false, $tmp_file );
 
-		$dataForConversion = $this->cutOffFields( $contentEntity->toArray(), $translatableFields );
-
-		$xml = XmlEncoder::xmlEncode( $dataForConversion );
-
-		$result = $this->getApiWrapper()->uploadFile( $submission, $xml );
-
-		$this->lastSubmissionEntity = $submission;
+		unlink( $tmp_file );
 
 		return $result;
 	}
 
-	public function downloadTranslation( $contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null)
+	public function downloadTranslationBySubmission(SubmissionEntity $entity)
 	{
+		$data = $this->getApiWrapper()->downloadFile($entity);
+
+		$translatableFields = $this->getTranslatableFields( $entity->getContentType() );
+
+		$structure = XmlEncoder::xmlDecode($translatableFields, $data);
+
+		$targetId = (int) $entity->getTargetGUID();
+
+		if (0 === $targetId)
+		{
+			// need to clone original content first.
+			$originalEntity = $this->readContentEntity($entity);
+
+			$clone = clone $originalEntity;
+
+			$this->getSiteHelper()->switchBlogId($entity->getTargetBlog());
+
+			$ioWrapper = $this->getContentIOWrapper($entity);
+
+			$clone->ID = null;
+
+			$result = $ioWrapper->set($clone);
+
+			$this->getSiteHelper()->restoreBlogId();
+
+			$entity->setTargetGUID($result);
+
+			$entity = $this->getSubmissionManager()->storeEntity($entity);
+
+			$this->linkObjectsBySubmission($entity);
+		}
+
+		$this->getSiteHelper()->switchBlogId($entity->getTargetBlog());
+
+		$targetContent = $this->getContentIOWrapper($entity)->get($entity->getTargetGUID());
+
+		foreach ($structure as $field => $value) {
+			$targetContent->$field = $value;
+		}
+
+		//$targetContent->setEntityFields($structure);
+
+		$this->getContentIOWrapper($entity)->set($targetContent);
+
+		$this->getSiteHelper()->restoreBlogId();
+	}
+
+	public function downloadTranslationBySubmissionId($id)
+	{
+		return $this->downloadTranslationBySubmission($this->prepareSubmissionEntityById($id));
+	}
+
+	public function downloadTranslation (
+		$contentType,
+		$sourceBlog,
+		$sourceEntity,
+		$targetBlog,
+		$targetEntity = null
+	) {
 		$submission = $this->prepareSubmissionEntity( $contentType, $sourceBlog, $sourceEntity, $targetBlog,
 			$targetEntity );
 
-		$xmlString = $this->getApiWrapper()->downloadFile($submission);
+		return $this->downloadTranslationBySubmission($submission);
 
-		$translatableFields = $this->getTranslatableFields( $submission->getContentType() );
-
-		$data = XmlEncoder::xmlDecode($translatableFields, $xmlString);
-
-		if (null !== $submission->getTargetGUID()) {
-			// update
-		} else {
-			// create
-		}
 	}
 
 	/**
@@ -244,18 +381,19 @@ class SmartlingCore {
 		return $this->settings->getMapperWrapper()->getMapper( $contentType )->getFields();
 	}
 
+	private function getContentIOWrapper(SubmissionEntity $entity )
+	{
+		return $this->getContentIoFactory()->getMapper( $entity->getContentType());
+	}
+
 	/**
 	 * @param SubmissionEntity $entity
 	 *
 	 * @return EntityAbstract
 	 */
 	private function readContentEntity ( SubmissionEntity $entity ) {
-		$di = Bootstrap::getContainer();
 
-		/**
-		 * @var EntityAbstract $contentIOWrapper
-		 */
-		$contentIOWrapper = $di->get( 'factory.contentIO' )->getMapper( $entity->getContentType() );
+		$contentIOWrapper = $this->getContentIOWrapper($entity);
 
 		if ( $this->getSiteHelper()->getCurrentBlogId() === $entity->getSourceBlog() ) {
 			$contentEntity = $contentIOWrapper->get( $entity->getSourceGUID() );
@@ -266,6 +404,50 @@ class SmartlingCore {
 		}
 
 		return $contentEntity;
+	}
+
+	/**
+	 * Checks and updates submission with given ID
+	 * @param $id
+	 *
+	 * @return array of error messages
+	 */
+	public function checkSubmissionById($id)
+	{
+		$messages = array();
+
+		try {
+			$submission = $this->prepareSubmissionEntityById($id);
+
+			$submission = $this->getApiWrapper()->getStatus($submission);
+
+			$submission = $this->getSubmissionManager()->storeEntity($submission);
+		} catch (SmartlingException $e) {
+			$messages[] = $e->getMessage();
+		} catch (Exception $e) {
+			$messages[] = $e->getMessage();
+		}
+
+		return $messages;
+	}
+
+
+	private function prepareSubmissionEntityById($id)
+	{
+		$params = array (
+			'id' => $id,
+		);
+
+		$entities = $this->getSubmissionManager()->find( $params );
+
+		if ( count( $entities ) > 0 ) {
+			return reset( $entities );
+		} else {
+			$message = vsprintf('Requested SubmissionEntity with id=%s does not exist.', array($id));
+
+			$this->getLogger()->error($message);
+			throw new SmartlingDbException($message);
+		}
 	}
 
 	/**
@@ -309,25 +491,14 @@ class SmartlingCore {
 					$entity->getTargetBlog()
 				)
 			);
-			$entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-			$entity->setSubmitter($this->getCurrentUserID());
-			$entity->setSourceTitle('');
-			$entity->setSubmissionDate(DateTimeHelper::dateTimeToString(new DateTime()));
-
-			// generate URI
-			$entity->getFileUri();
-
-			$entity = $this->getSubmissionManager()->storeEntity( $entity );
+			$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_NEW );
+			$entity->setSubmitter( WordpressUserHelper::getUserLogin() );
+			$entity->setSourceTitle( '' );
+			$entity->setSubmissionDate( DateTimeHelper::dateTimeToString( new DateTime() ) );
 		}
 
 		return $entity;
 	}
 
-	/**
-	 * @return int
-	 */
-	protected function getCurrentUserID()
-	{
-		return get_current_user_id();
-	}
+
 }

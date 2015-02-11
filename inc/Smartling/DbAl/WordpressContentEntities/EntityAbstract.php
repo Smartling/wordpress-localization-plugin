@@ -166,7 +166,7 @@ abstract class EntityAbstract {
 	 *
 	 * @param $guid
 	 *
-	 * @return mixed
+	 * @return EntityAbstract
 	 */
 	abstract public function get ( $guid );
 
@@ -251,6 +251,6 @@ abstract class EntityAbstract {
 			unset ( $myFields[ $field ] );
 		}
 
-		$this->resultToEntity($myFields, $this);
+		$this->resultToEntity($myFields);
 	}
 }

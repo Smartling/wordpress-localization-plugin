@@ -2,6 +2,8 @@
 
 namespace Smartling\WP\View;
 
+use Smartling\Base\SmartlingCore;
+use Smartling\Bootstrap;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
@@ -90,7 +92,7 @@ class SubmissionTableWidget extends \WP_List_Table {
 		return $options;
 	}
 
-	function column_default ( $item, $column_name ) {
+	public function column_default ( $item, $column_name ) {
 		switch ( $column_name ) {
 			default:
 				return $item[ $column_name ];
@@ -102,17 +104,20 @@ class SubmissionTableWidget extends \WP_List_Table {
 	 *
 	 * @return string
 	 */
-	function applyRowActions ( $item ) {
+	public function applyRowActions ( $item ) {
 
 		$linkTemplate = '?page=%s&action=%s&' . $this->buildHtmlTagName( $this->_args['singular'] ) . '=%s';
 
 		//Build row actions
 		$actions = array (
-			'send'     => HtmlTagGeneratorHelper::tag( 'a', __( 'Send' ), array (
-				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'send', $item['id'] ) )
+			'send'     => HtmlTagGeneratorHelper::tag( 'a', __( 'Resend' ), array (
+				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'sendSingle', $item['id'] ) )
 			) ),
 			'download' => HtmlTagGeneratorHelper::tag( 'a', __( 'Download' ), array (
-				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'download', $item['id'] ) )
+				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'downloadSingle', $item['id'] ) )
+			) ),
+			'check'    => HtmlTagGeneratorHelper::tag( 'a', __( 'Check Status' ), array (
+				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'checkSingle', $item['id'] ) )
 			) )
 		);
 
@@ -167,16 +172,18 @@ class SubmissionTableWidget extends \WP_List_Table {
 	 */
 	public function get_bulk_actions () {
 		$actions = array (
-			'send'     => __( 'Send' ),
+			'send'     => __( 'Resend' ),
 			'download' => __( 'Download' ),
-			/*'generate_fake' => 'Generate',
-			'update_last' => 'UPdate',*/
+			'check'    => __( 'Check Status' ),
 		);
 
 		return $actions;
 	}
 
-	function process_bulk_action () {
+	/**
+	 * Handles actions for multiply objects
+	 */
+	private function processBulkAction () {
 		switch ( $this->current_action() ) {
 			case "download":
 				wp_die( 'Items downloading!' );
@@ -184,58 +191,48 @@ class SubmissionTableWidget extends \WP_List_Table {
 			case "send":
 				wp_die( 'Items sending' );
 				break;
-			/*case "generate_fake":
-			{
-
-				$data = array (
-				'id'                   => null,
-				'sourceTitle'          => 'Automatic generated title',
-				'sourceBlog'           => 1,
-				'sourceContentHash'    => md5(''),
-				'contentType'          => WordpressContentTypeHelper::CONTENT_TYPE_POST,
-				'sourceGUID'           => '/ol"olo',
-				'fileUri'              => "/tralala'",
-				'targetLocale'         => 'es_US',
-				'targetBlog'           => 5,
-				'targetGUID'           => '',
-				'submitter'            => 'admin',
-				'submissionDate'       => time(),
-				'approvedStringCount'  => 37,
-				'completedStringCount' => 14,
-				'status'               => 'New',
-			);
-
-				$entity =
-
-				$this->manager->createSubmission($data);
-				$this->manager->storeEntity($entity);
-
-
-
+			case "check":
+				var_dump( $_GET );
+				wp_die( 'Checking Items' );
 				break;
-			}
-			case "update_last":
-			{
-				$total = 0;
-				$entities = $this->manager->getEntities(null, null, array(), null, $total);
-
-				$data = $entities[0];
-
-				$data->status = 'In Progress';
-
-				$this->manager->storeEntity($data);
-
-				//var_dump($data);
-
-
-
-
-				break;
-			}
-			*/
 
 
 		}
+	}
+
+	/**
+	 * Handles actions for single object
+	 */
+	private function processSingleAction () {
+		$submissionId = (int) $this->getFormElementValue( 'submission', 0 );
+		if ( $submissionId > 0 ) {
+			/**
+			 * @var SmartlingCore $ep
+			 */
+			$ep = Bootstrap::getContainer()->get( 'entrypoint' );
+
+			switch ( $this->current_action() ) {
+				case "downloadSingle":
+					$messages = $ep->downloadTranslationBySubmissionId( $submissionId );
+					break;
+				case "sendSingle":
+					$messages = $ep->sendForTranslationBySubmissionId($submissionId);
+					break;
+				case "checkSingle":
+					$messages = $ep->checkSubmissionById( $submissionId );
+					break;
+			}
+		}
+
+		// TODO: ? where to show error messages?
+	}
+
+	/**
+	 * Handles actions
+	 */
+	private function processAction () {
+		$this->processBulkAction();
+		$this->processSingleAction();
 	}
 
 	/**
@@ -277,7 +274,7 @@ class SubmissionTableWidget extends \WP_List_Table {
 			$this->get_sortable_columns()
 		);
 
-		$this->process_bulk_action();
+		$this->processAction();
 
 		$total = 0;
 
@@ -410,7 +407,7 @@ class SubmissionTableWidget extends \WP_List_Table {
 
 		);
 
-		return $inputHTMLHelper = HtmlTagGeneratorHelper::submitButton( $label, $options );
+		return HtmlTagGeneratorHelper::submitButton( $label, $options );
 	}
 
 	/**

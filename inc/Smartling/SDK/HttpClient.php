@@ -253,7 +253,7 @@ class HttpClient {
                             $data['file'] = '@' . realpath($data['file']);
                         }
                         else {
-                            $data['file'] = new CURLFile(realpath($data['file']));
+                            $data['file'] = new \CURLFile(realpath($data['file']));
                         }
                     }
                 }

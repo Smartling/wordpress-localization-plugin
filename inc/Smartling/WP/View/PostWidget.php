@@ -5,18 +5,21 @@
 		<?php
 
 		/**
-		 * @var array $locales
+		 * @var TargetLocale[] $locales
 		 */
+		use Smartling\Settings\TargetLocale;
+
 		$locales = $this->getPluginInfo()->getSettingsManager()->getLocales()->getTargetLocales();
 
-		foreach ( $locales as  $locale ) {
+		foreach ( $locales as $locale ) {
 			$value      = false;
 			$checked    = '';
 			$status     = '';
 			$submission = null;
 			if ( null !== $data['submissions'] ) {
 				foreach ( $data['submissions'] as $item ) {
-					if($item->getTargetBlog() === $locale->getBlog()) {
+
+					if ( $item->getTargetBlog() == $locale->getBlog() ) {
 						$value   = true;
 						$checked = 'checked="checked"';
 						$percent = $item->getCompletionPercentage();
@@ -31,24 +34,25 @@
 
 			<p >
 				<label >
-					<input type = "hidden" name = "smartling_post_widget[locales][<?php echo $locale->getBlog(); ?>][blog]"
-					       value = "<?php echo $locale->getBlog(); ?>" >
-					<input type = "hidden" name = "smartling_post_widget[locales][<?php echo $locale->getBlog(); ?>][locale]"
-					       value = "<?php echo $locale->getLocale(); ?>" >
-					<input type = "checkbox" <?php echo $checked; ?>
-					       name = "smartling_post_widget[locales][<?php echo $locale->getBlog(); ?>][enabled]" >
-					<span ><?php echo $locale->getLocale(); ?></span >
+					<input type = "hidden" name = "smartling_post_widget[locales][<?= $locale->getBlog(); ?>][blog]"
+					       value = "<?= $locale->getBlog(); ?>" >
+					<input type = "hidden" name = "smartling_post_widget[locales][<?= $locale->getBlog(); ?>][locale]"
+					       value = "<?= $locale->getLocale(); ?>" >
+					<input type = "checkbox" <?= $checked; ?>
+					       name = "smartling_post_widget[locales][<?= $locale->getBlog(); ?>][enabled]" >
+					<span ><?= $locale->getLocale(); ?></span >
 				</label >
 				<?php if ( $value ) { ?>
-					<span title = "In Progress" class = "widget-btn <?php echo $status ?>" ><span><?php echo $percent?>%</span></span >
+					<span title = "<?= __($item->getStatus()); ?>" class = "widget-btn <?= $item->getStatusColor() ?>" ><span ><?= $item->getCompletionPercentage() ?>%</span ></span >
 				<?php } ?>
 			</p >
 
 		<?php } ?>
 	</div >
 	<div class = "bottom" >
-		<input type = "submit" value = "Send to Smartling" class = "button button-primary" id = "submit"
+		<input type = "submit" value = "<?= __( 'Send to Smartling' ); ?>" class = "button button-primary" id = "submit"
 		       name = "submit" >
-		<input type = "submit" value = "Download" class = "button button-primary" id = "submit" name = "submit" >
+		<input type = "submit" value = "<?= __( 'Download' ); ?>" class = "button button-primary" id = "submit"
+		       name = "submit" >
 	</div >
 </div >

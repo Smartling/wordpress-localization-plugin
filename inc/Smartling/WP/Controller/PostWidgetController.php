@@ -36,6 +36,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 
 	/**
 	 * add_meta_boxes hook
+	 *
 	 * @param string $post_type
 	 */
 	public function box ( $post_type ) {
@@ -60,12 +61,12 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 
 		if ( $post->post_content && $post->post_title ) {
 
-			$originalId = $this->getEntityHelper()->getOriginalContentId($post->ID);
+			$originalId = $this->getEntityHelper()->getOriginalContentId( $post->ID );
 
-			$submissions = $this->getManager()->find(array(
-				'sourceGUID' => $originalId,
+			$submissions = $this->getManager()->find( array (
+				'sourceGUID'  => $originalId,
 				'contentType' => WordpressContentTypeHelper::CONTENT_TYPE_POST
-			));
+			) );
 
 			$this->view( array (
 					'submissions' => $submissions,
@@ -119,21 +120,15 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 				}
 			}
 
+			/**
+			 * @var SmartlingCore $core
+			 */
+			$core = Bootstrap::getContainer()->get( 'entrypoint' );
+
 			if ( count( $locales ) > 0 ) {
-				$postEntity = new PostEntity( $this->getLogger() );
-
-				$originalId  = $this->getEntityHelper()->getOriginalContentId( $post_id );
-				$post        = $postEntity->get( $originalId );
-				$manager     = $this->getManager();
-				$submissions = $manager->getEntityBySourceGuid( $originalId );
-
 				switch ( $_POST['submit'] ) {
-					case 'Send to Smartling':
+					case __( 'Send to Smartling' ):
 						foreach ( $locales as $key => $locale ) {
-							/**
-							 * @var SmartlingCore $core
-							 */
-							$core = Bootstrap::getContainer()->get( 'entrypoint' );
 
 							$result = $core->sendForTranslation(
 								WordpressContentTypeHelper::CONTENT_TYPE_POST,
@@ -143,25 +138,22 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 								$this->getEntityHelper()->getTarget( $post_id, $key )
 							);
 
-
 						}
 						break;
-					case 'Download':
-						foreach ( $locales as $key => $locale ) {
-							$submission = null;
-							if ( $submissions ) {
-								foreach ( $submissions as $item ) {
-									/** @var SubmissionEntity $item */
-									if ( $item->getTargetBlog() == $key ) {
-										$submission = $item;
-										break;
-									}
-								}
-							}
-							if ( $submission ) {
-								$manager->download( $submission );
-							}
+					case __( 'Download' ):
+						$originalId = $this->getEntityHelper()->getOriginalContentId( $post_id );
+
+						$submissions = $this->getManager()->find(
+							array (
+								'sourceGUID'  => $originalId,
+								'contentType' => WordpressContentTypeHelper::CONTENT_TYPE_POST
+							)
+						);
+
+						foreach ( $submissions as $submission ) {
+							$core->downloadTranslationBySubmission( $submission );
 						}
+
 						break;
 				}
 			}

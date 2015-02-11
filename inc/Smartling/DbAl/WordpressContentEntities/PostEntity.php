@@ -3,6 +3,7 @@
 namespace Smartling\DbAl\WordpressContentEntities;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Exception\SmartlingDataUpdateException;
 use Smartling\Helpers\WordpressContentTypeHelper;
 
 /**
@@ -107,9 +108,8 @@ class PostEntity extends EntityAbstract {
 	/**
 	 * @inheritdoc
 	 */
-	protected function getNonClonableFields ()
-	{
-		return array(
+	protected function getNonClonableFields () {
+		return array (
 			'comment_count',
 		);
 	}
@@ -125,7 +125,8 @@ class PostEntity extends EntityAbstract {
 		} else {
 			$this->entityNotFound( WordpressContentTypeHelper::CONTENT_TYPE_POST, $guid );
 		}
-		return $post === null ? array() : $post;
+
+		return $post === null ? array () : $post;
 	}
 
 	/**
@@ -136,14 +137,33 @@ class PostEntity extends EntityAbstract {
 
 		$res = wp_insert_post( $instance->toArray(), true );
 
-		return $res;
+		if ( is_wp_error( $res ) ) {
+
+			$msgFields = array();
+
+			$curFields = $entity->toArray();
+
+			foreach ($curFields as $field => $value) {
+				$msgFields[] = vsprintf("%s = %s",array($field, $value));
+			}
+
+			$message = vsprintf( 'An error had happened while saving post to database: %s. Params: %s',
+				array ( implode( ' | ', $res->get_error_messages() ), implode( ' || ', $msgFields ) ) );
+
+			$this->getLogger()->error( $message );
+
+			throw new SmartlingDataUpdateException( $message );
+
+		}
+
+		return (int) $res;
 	}
 
-	public function insert(array $post) {
+	public function insert ( array $post ) {
 		return wp_insert_post( $post, true );
 	}
 
-	public function update(array $post) {
+	public function update ( array $post ) {
 		return wp_update_post( $post, true );
 	}
 
@@ -180,8 +200,7 @@ class PostEntity extends EntityAbstract {
 
 	}
 
-	public function getTitle()
-	{
+	public function getTitle () {
 		return $this->post_title;
 	}
 }

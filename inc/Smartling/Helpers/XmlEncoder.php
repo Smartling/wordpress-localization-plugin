@@ -84,7 +84,7 @@ class XmlEncoder {
 	public static function xmlDecode ( array $fields, $content ) {
 		$xml = self::initXml();
 
-		$xml->load( $content );
+		$xml->loadXML( $content );
 
 		$xpath = new DOMXPath( $xml );
 

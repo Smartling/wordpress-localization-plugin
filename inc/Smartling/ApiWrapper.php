@@ -209,6 +209,7 @@ class ApiWrapper implements ApiWrapperInterface {
 
 		$entity->setApprovedStringCount( $status_result->response->data->approvedStringCount );
 		$entity->setCompletedStringCount( $status_result->response->data->completedStringCount );
+		$entity->setWordCount($status_result->response->data->wordCount);
 
 		return $entity;
 	}
@@ -254,13 +255,11 @@ class ApiWrapper implements ApiWrapperInterface {
 
 	/**
 	 * @param SubmissionEntity $entity
-	 * @param                  $xmlString
 	 *
-	 * @return bool
-	 * @throws SmartlingFileUploadException
+	 * @return array
 	 */
-	public function uploadFile ( SubmissionEntity $entity, $xmlString ) {
-
+	private function buildParams(SubmissionEntity $entity)
+	{
 		$paramBuilder = new FileUploadParameterBuilder();
 
 		$paramBuilder->setFileUri( $entity->getFileUri() )
@@ -276,9 +275,28 @@ class ApiWrapper implements ApiWrapperInterface {
 			$paramBuilder->setCallbackUrl( $this->settings->getAccountInfo()->getCallBackUrl() );
 		}
 
-		$params = $paramBuilder->buildParameters();
+		return $paramBuilder->buildParameters();
+	}
 
-		$uploadResultRaw = $this->api->uploadContent( $xmlString, $params );
+	/**
+	 * @param SubmissionEntity $entity
+	 * @param string           $xmlString
+	 *
+	 * @param bool             $is_stream
+	 * @param string           $filename
+	 *
+	 * @return bool
+	 * @throws SmartlingFileUploadException
+	 */
+	public function uploadContent ( SubmissionEntity $entity, $xmlString = '', $is_stream = false, $filename = '') {
+
+		$params = $this->buildParams($entity);
+
+		if (true === $is_stream) {
+			$uploadResultRaw = $this->api->uploadContent( $xmlString, $params );
+		} else {
+			$uploadResultRaw = $this->api->uploadFile($filename, $params );
+		}
 
 		$uploadResult = json_decode( $uploadResultRaw );
 		if ( 'SUCCESS' === $this->api->getCodeStatus() ) {

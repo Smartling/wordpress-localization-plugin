@@ -62,6 +62,7 @@ class SubmissionEntity {
 		'submissionDate'       => 'DATETIME NOT NULL',
 		'approvedStringCount'  => 'INT UNSIGNED NULL',
 		'completedStringCount' => 'INT UNSIGNED NULL',
+		'wordCount'            => 'INT UNSIGNED NULL',
 		'status'               => 'VARCHAR(16) NOT NULL',
 	);
 
@@ -119,21 +120,19 @@ class SubmissionEntity {
 	 */
 	public static function getFieldLabels () {
 		return array (
-			'id'                  => __( 'ID' ),
-			'sourceTitle'         => __( 'Title' ),
-			'sourceBlog'          => __( 'Source Blog ID' ),
-			//'sourceContentHash'     => 'Content hash',
-			'contentType'         => __( 'Type' ),
-			'sourceGUID'          => __( 'Source URI' ),
-			'fileUri'             => __( 'Smartling File URI' ),
-			'targetLocale'        => __( 'Locale' ),
-			'targetBlog'          => __( 'Target Blog ID' ),
-			//'targetGUID'            => 'Target URI',
-			'submitter'           => __( 'Submitter' ),
-			'submissionDate'      => __( 'Submitted' ),
-			'approvedStringCount' => __( 'Approved Words' ),
-			'progress'            => __( 'Progress' ),
-			'status'              => __( 'Status' ),
+			'id'             => __( 'ID' ),
+			'sourceTitle'    => __( 'Title' ),
+			'sourceBlog'     => __( 'Source Blog ID' ),
+			'contentType'    => __( 'Type' ),
+			'sourceGUID'     => __( 'Source URI' ),
+			'fileUri'        => __( 'Smartling File URI' ),
+			'targetLocale'   => __( 'Locale' ),
+			'targetBlog'     => __( 'Target Blog ID' ),
+			'submitter'      => __( 'Submitter' ),
+			'submissionDate' => __( 'Submitted' ),
+			'wordCount'      => __( 'Words' ),
+			'progress'       => __( 'Progress' ),
+			'status'         => __( 'Status' ),
 		);
 	}
 
@@ -143,17 +142,12 @@ class SubmissionEntity {
 	public static $fieldsSortable = array (
 		'id',
 		'sourceTitle',
-		//'sourceBlog',
 		'contentType',
-		//'sourceGUID',
 		'fileUri',
 		'targetLocale',
-		//'targetBlog',
-		//'targetGUID',
 		'submitter',
 		'submissionDate',
-		'approvedStringCount',
-		//'completedStringCount',
+		'wordCount',
 		'progress',
 		'status',
 	);
@@ -371,7 +365,7 @@ class SubmissionEntity {
 	private $submissionDate;
 
 	/**
-	 * Count of words in source content
+	 * Count of approved strings in source content
 	 *
 	 * @var integer
 	 */
@@ -384,10 +378,31 @@ class SubmissionEntity {
 	 */
 	private $completedStringCount;
 
+	/*
+	 * Count of words in source content
+	 *
+	 * @var int
+	 */
+	private $wordCount = 0;
+
 	/**
 	 * @var string
 	 */
 	private $status;
+
+	/**
+	 * @return int
+	 */
+	public function getWordCount () {
+		return $this->wordCount;
+	}
+
+	/**
+	 * @param int $wordCount
+	 */
+	public function setWordCount ( $wordCount ) {
+		$this->wordCount = (int) $wordCount;
+	}
 
 	/**
 	 * @return string
@@ -562,14 +577,19 @@ class SubmissionEntity {
 	 */
 	public function getFileUri () {
 		if ( empty( $this->fileUri ) ) {
-			$this->setFileUri(
-				vsprintf( '/%s/%s/%s/%s.xml', array (
-					$this->getSourceBlog(),
-					$this->getSourceGUID(),
-					$this->getTargetBlog(),
-					$this->getSourceTitle()
-				) )
-			);
+
+			$fileUri = vsprintf( '/blog-%s/%s-%s/%s/%s-%s.xml', array (
+				$this->getSourceBlog(),
+				$this->getContentType(),
+				$this->getSourceGUID(),
+				$this->getTargetLocale(),
+				$this->getSourceTitle(),
+				$this->getSourceContentHash()
+			) );
+
+			$fileUri = str_replace(' ', '_', $fileUri);
+
+			$this->setFileUri( $fileUri );
 		}
 
 		return $this->fileUri;
@@ -581,22 +601,14 @@ class SubmissionEntity {
 	 * @return SubmissionEntity
 	 */
 	public function setFileUri ( $fileUri ) {
+
+		if ( mb_strlen( $fileUri ) > 255 ) {
+			$fileUri = '...' . mb_substr( $fileUri, - 253 );
+		}
+
 		$this->fileUri = $fileUri;
 
 		return $this;
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getTargetFileUri () {
-		$path = $this->getFileUri();
-
-		if ( strlen( $path ) > 0 ) {
-			$path = str_replace( '.xml', '.' . $this->getTargetLocale() . '.xml', $path );
-		}
-
-		return $path;
 	}
 
 	/**

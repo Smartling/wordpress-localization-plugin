@@ -424,6 +424,8 @@ class SubmissionManager extends EntityManagerAbstract {
 					array ( $status ) );
 				$whereOptions->addCondition( $condition );
 			}
+		} else {
+			$whereOptions = $baseCondition;
 		}
 
 		$query = QueryBuilder::buildSelectQuery(
