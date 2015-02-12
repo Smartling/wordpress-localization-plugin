@@ -299,6 +299,8 @@ class SubmissionTableWidget extends \WP_List_Table {
 		foreach ( $data as $element ) {
 			$row = $element->toArray();
 
+			//$row["fileUri"] = $row["fileUri"] != null ? basename($row["fileUri"]) : null;
+
 			$row['sourceTitle'] = $this->applyRowActions( $row );
 
 			$row = array_merge( array ( 'bulkActionCb' => $this->column_cb( $row ) ), $row );
