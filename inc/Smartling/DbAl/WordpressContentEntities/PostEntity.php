@@ -73,7 +73,7 @@ class PostEntity extends EntityAbstract {
 	 * @inheritdoc
 	 */
 	public function __construct ( LoggerInterface $logger ) {
-		$this->hashAffectingFields = array (
+		$this->hashAffectingFields = array_merge($this->hashAffectingFields,array (
 			'ID',
 			'post_author',
 			'post_content',
@@ -84,7 +84,7 @@ class PostEntity extends EntityAbstract {
 			'post_parent',
 			'guid',
 			'post_type',
-		);
+		));
 
 		parent::__construct( $logger );
 
@@ -111,6 +111,7 @@ class PostEntity extends EntityAbstract {
 	protected function getNonClonableFields () {
 		return array (
 			'comment_count',
+			'guid',
 		);
 	}
 

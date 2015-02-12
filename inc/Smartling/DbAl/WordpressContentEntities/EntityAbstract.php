@@ -24,7 +24,7 @@ abstract class EntityAbstract {
 	 *
 	 * @var array
 	 */
-	protected $hashAffectingFields;
+	protected $hashAffectingFields = array();
 
 	/**
 	 * @var array

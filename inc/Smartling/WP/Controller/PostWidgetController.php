@@ -5,11 +5,7 @@ namespace Smartling\WP\Controller;
 use SebastianBergmann\Exporter\Exception;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
-use Smartling\DbAl\WordpressContentEntities\PostEntity;
-use Smartling\Exception\SmartlingDbException;
-use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
-use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
@@ -20,11 +16,15 @@ use Smartling\WP\WPHookInterface;
  */
 class PostWidgetController extends WPAbstract implements WPHookInterface {
 
-	const WIDGET_NAME = 'smartling_connector_post_widget';
+	const WIDGET_NAME = 'smartling_connector_widget';
 
-	const WIDGET_DATA_NAME = 'smartling_post_widget_data';
+	const WIDGET_DATA_NAME = 'smartling_post_based_widget';
 
 	const CONNECTOR_NONCE = 'smartling_connector_nonce';
+
+	protected $servedContentType = WordpressContentTypeHelper::CONTENT_TYPE_POST;
+
+	protected $needSave = 'Need to save the post';
 
 	/**
 	 * @inheritdoc
@@ -40,7 +40,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 	 * @param string $post_type
 	 */
 	public function box ( $post_type ) {
-		$post_types = array ( WordpressContentTypeHelper::CONTENT_TYPE_POST );
+		$post_types = array ( $this->servedContentType );
 		if ( in_array( $post_type, $post_types ) ) {
 			add_meta_box(
 				self::WIDGET_NAME,
@@ -65,7 +65,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 
 			$submissions = $this->getManager()->find( array (
 				'sourceGUID'  => $originalId,
-				'contentType' => WordpressContentTypeHelper::CONTENT_TYPE_POST
+				'contentType' => $this->servedContentType,
 			) );
 
 			$this->view( array (
@@ -74,8 +74,44 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 				)
 			);
 		} else {
-			echo '<p>' . __( 'Need to save the post' ) . '</p>';
+			echo '<p>' . __( $this->needSave ) . '</p>';
 		}
+	}
+
+	/**
+	 * @param $post_id
+	 *
+	 * @return bool
+	 */
+	private function runValidation ( $post_id ) {
+		if ( ! array_key_exists( self::CONNECTOR_NONCE, $_POST ) ) {
+			return false;
+		}
+
+		$nonce = $_POST[ self::CONNECTOR_NONCE ];
+
+		if ( ! wp_verify_nonce( $nonce, self::WIDGET_NAME ) ) {
+			return false;
+		}
+
+		if ( defined( 'DOING_AUTOSAVE' ) && true === DOING_AUTOSAVE ) {
+			return false;
+		}
+
+		if ( $this->servedContentType !== $_POST['post_type'] ) {
+			return false;
+		}
+
+		return $this->isAllowedToSave( $post_id );
+	}
+
+	/**
+	 * @param $post_id
+	 *
+	 * @return bool
+	 */
+	protected function isAllowedToSave ( $post_id ) {
+		return current_user_can( 'edit_post', $post_id );
 	}
 
 	/**
@@ -84,39 +120,22 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 	 * @return mixed
 	 */
 	public function save ( $post_id ) {
+
 		remove_action( 'save_post', array ( $this, 'save' ) );
-		if ( ! isset( $_POST['smartling_connector_nonce'] ) ) {
+
+		if ( false === $this->runValidation( $post_id ) ) {
 			return $post_id;
 		}
 
-		$nonce = $_POST['smartling_connector_nonce'];
+		$data = $_POST[ self::WIDGET_DATA_NAME ];
 
-		if ( ! wp_verify_nonce( $nonce, self::WIDGET_NAME ) ) {
-			return $post_id;
-		}
-
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return $post_id;
-		}
-
-		if ( 'page' == $_POST['post_type'] ) {
-			if ( ! current_user_can( 'edit_page', $post_id ) ) {
-				return $post_id;
-			}
-		} else {
-			if ( ! current_user_can( 'edit_post', $post_id ) ) {
-				return $post_id;
-			}
-		}
-
-		$data    = $_POST['smartling_post_widget'];
 		$locales = array ();
 
 		if ( null !== $data && array_key_exists( 'locales', $data ) ) {
 
-			foreach ( $data['locales'] as $key => $locale ) {
-				if ( array_key_exists( 'enabled', $locale ) && 'on' === $locale['enabled'] ) {
-					$locales[ $key ] = $locale['locale'];
+			foreach ( $data['locales'] as $blogId => $blogName ) {
+				if ( array_key_exists( 'enabled', $blogName ) && 'on' === $blogName['enabled'] ) {
+					$locales[ $blogId ] = $blogName['locale'];
 				}
 			}
 
@@ -128,14 +147,18 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 			if ( count( $locales ) > 0 ) {
 				switch ( $_POST['submit'] ) {
 					case __( 'Send to Smartling' ):
-						foreach ( $locales as $key => $locale ) {
+
+						$sourceBlog = $this->getPluginInfo()->getSettingsManager()->getLocales()->getDefaultBlog();
+						$originalId = (int) $this->getEntityHelper()->getOriginalContentId( $post_id );
+
+						foreach ( $locales as $blogId => $blogName ) {
 
 							$result = $core->sendForTranslation(
-								WordpressContentTypeHelper::CONTENT_TYPE_POST,
-								$this->getPluginInfo()->getSettingsManager()->getLocales()->getDefaultBlog(),
-								(int) $this->getEntityHelper()->getOriginalContentId( $post_id ),
-								(int) $key,
-								$this->getEntityHelper()->getTarget( $post_id, $key )
+								$this->servedContentType,
+								$sourceBlog,
+								$originalId,
+								(int) $blogId,
+								$this->getEntityHelper()->getTarget( $post_id, $blogId )
 							);
 
 						}
@@ -146,7 +169,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 						$submissions = $this->getManager()->find(
 							array (
 								'sourceGUID'  => $originalId,
-								'contentType' => WordpressContentTypeHelper::CONTENT_TYPE_POST
+								'contentType' => $this->servedContentType
 							)
 						);
 

@@ -3,7 +3,7 @@ parameters:
   plugin.name: smartling-connector
   plugin.version: 1.0
   plugin.domain: smartling-connector
-  wp.hooks: ['wp.i18n', 'wp.submissions', 'wp.settings', 'wp.post', 'wp.taxonomy']
+  wp.hooks: ['wp.i18n', 'wp.submissions', 'wp.settings', 'wp.post', 'wp.page', 'wp.taxonomy']
 
   logger.channel: default
   logger.filehandler.standard.filename: %plugin.dir%/logfile.log
@@ -36,9 +36,16 @@ services:
     arguments:
       - "@logger"
 
+  wrapper.entity.page:
+    class: Smartling\DbAl\WordpressContentEntities\PageEntity
+    arguments:
+      - "@logger"
+
   mapper.post:
     class: Smartling\Processors\PostMapper
 
+  mapper.page:
+    class: Smartling\Processors\PageMapper
 
   factory.propertyMapper:
     class: Smartling\Processors\PropertyMapperFactory
@@ -46,6 +53,7 @@ services:
       - "@logger"
     calls:
       - [ "registerMapper", ["post", "@mapper.post"]]
+      - [ "registerMapper", ["page", "@mapper.page"]]
 
 
   factory.contentIO:
@@ -54,7 +62,7 @@ services:
       - "@logger"
     calls:
       - [ "registerMapper", ["post", "@wrapper.entity.post"]]
-
+      - [ "registerMapper", ["page", "@wrapper.entity.page"]]
 
   fileLoggerHandlerStandard:
     class: Monolog\Handler\StreamHandler
@@ -145,6 +153,15 @@ services:
 
   wp.post:
     class: Smartling\WP\Controller\PostWidgetController
+    arguments:
+      - "@logger"
+      - "@multilang.proxy"
+      - "@plugin.info"
+      - "@entity.helper"
+      - "@manager.submission"
+
+  wp.page:
+    class: Smartling\WP\Controller\PageWidgetController
     arguments:
       - "@logger"
       - "@multilang.proxy"

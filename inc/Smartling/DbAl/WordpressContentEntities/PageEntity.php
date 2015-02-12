@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Smartling\DbAl\WordpressContentEntities;
-
 
 use Psr\Log\LoggerInterface;
 
@@ -25,7 +23,7 @@ class PageEntity extends PostEntity {
 		);
 
 		$this->fields = array_merge( $this->fields, $ownFields );
-		$this->hashAffectingFields = array_merge( $this->hashAffectingFields, $ownFields );
+		$this->hashAffectingFields = array_merge( array(), $ownFields );
 
 		parent::__construct( $logger );
 	}

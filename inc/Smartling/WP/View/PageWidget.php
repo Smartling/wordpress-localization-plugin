@@ -7,9 +7,9 @@
 		 * @var TargetLocale[] $locales
 		 */
 		use Smartling\Settings\TargetLocale;
-		use Smartling\WP\Controller\PostWidgetController;
+		use Smartling\WP\Controller\PageWidgetController;
 
-		$nameKey = PostWidgetController::WIDGET_DATA_NAME;
+		$nameKey = PageWidgetController::WIDGET_DATA_NAME;
 
 		$locales = $this->getPluginInfo()->getSettingsManager()->getLocales()->getTargetLocales();
 

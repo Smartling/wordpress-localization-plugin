@@ -8,6 +8,7 @@ use Mlp_Site_Relations;
 use Mlp_Site_Relations_Interface;
 use Psr\Log\LoggerInterface;
 use Smartling\Helpers\SiteHelper;
+use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
 use wpdb;
 
@@ -169,8 +170,12 @@ class MultiligualPressProConnector extends LocalizationPluginAbstract {
 	function linkObjects ( SubmissionEntity $submission ) {
 		$relations = $this->initContentRelationSubsystem();
 
+		$contentType = $submission->getContentType() === WordpressContentTypeHelper::CONTENT_TYPE_PAGE
+			? WordpressContentTypeHelper::CONTENT_TYPE_POST
+			: $submission->getContentType();
+
 		return $relations->set_relation( $submission->sourceBlog, $submission->targetBlog, $submission->sourceGUID,
-			$submission->targetGUID, $submission->contentType );
+			$submission->targetGUID, $contentType );
 	}
 
 	/**
