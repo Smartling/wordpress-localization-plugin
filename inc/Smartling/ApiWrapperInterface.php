@@ -16,11 +16,6 @@ use Smartling\Submissions\SubmissionEntity;
 interface ApiWrapperInterface {
 
 	/**
-	 * @param SmartlingAPI $api
-	 */
-	function setApi ( SmartlingAPI $api );
-
-	/**
 	 * @param SubmissionEntity $entity
 	 *
 	 * @return string
@@ -48,11 +43,10 @@ interface ApiWrapperInterface {
 	 * @param SubmissionEntity $entity
 	 * @param string           $xmlString
 	 *
-	 * @param bool             $is_stream
 	 * @param string           $filename
 	 *
 	 * @return bool
 	 * @throws SmartlingFileUploadException
 	 */
-	public function uploadContent ( SubmissionEntity $entity, $xmlString = '', $is_stream = false, $filename = '');
+	public function uploadContent ( SubmissionEntity $entity, $xmlString = '', $filename = '');
 }

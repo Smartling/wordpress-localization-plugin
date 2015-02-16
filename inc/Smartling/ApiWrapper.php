@@ -41,21 +41,14 @@ class ApiWrapper implements ApiWrapperInterface {
 		$this->settings = $settingsManager;
 		$this->logger   = $logger;
 
-		$this->setApi(
+		$this->api =
 			new SmartlingAPI(
 				$settingsManager->getAccountInfo()->getApiUrl(),
 				$settingsManager->getAccountInfo()->getKey(),
 				$settingsManager->getAccountInfo()->getProjectId(),
 				SmartlingAPI::PRODUCTION_MODE // TODO: where get the mode
-			)
-		);
-	}
 
-	/**
-	 * @param SmartlingAPI $api
-	 */
-	public function setApi ( SmartlingAPI $api ) {
-		$this->api = $api;
+			);
 	}
 
 	/**
@@ -209,7 +202,7 @@ class ApiWrapper implements ApiWrapperInterface {
 
 		$entity->setApprovedStringCount( $status_result->response->data->approvedStringCount );
 		$entity->setCompletedStringCount( $status_result->response->data->completedStringCount );
-		$entity->setWordCount($status_result->response->data->wordCount);
+		$entity->setWordCount( $status_result->response->data->wordCount );
 
 		return $entity;
 	}
@@ -239,7 +232,12 @@ class ApiWrapper implements ApiWrapperInterface {
 		return $result;
 	}
 
-	public function getSmartLingLocale ( $targetBlog ) {
+	/**
+	 * @param $targetBlog
+	 *
+	 * @return string
+	 */
+	private function getSmartLingLocale ( $targetBlog ) {
 		$locale = "";
 
 		$locales = $this->settings->getLocales()->getTargetLocales();
@@ -258,8 +256,7 @@ class ApiWrapper implements ApiWrapperInterface {
 	 *
 	 * @return array
 	 */
-	private function buildParams(SubmissionEntity $entity)
-	{
+	private function buildParams ( SubmissionEntity $entity ) {
 		$paramBuilder = new FileUploadParameterBuilder();
 
 		$paramBuilder->setFileUri( $entity->getFileUri() )
@@ -282,20 +279,19 @@ class ApiWrapper implements ApiWrapperInterface {
 	 * @param SubmissionEntity $entity
 	 * @param string           $xmlString
 	 *
-	 * @param bool             $is_stream
 	 * @param string           $filename
 	 *
 	 * @return bool
 	 * @throws SmartlingFileUploadException
 	 */
-	public function uploadContent ( SubmissionEntity $entity, $xmlString = '', $is_stream = false, $filename = '') {
+	public function uploadContent ( SubmissionEntity $entity, $xmlString = '', $filename = '' ) {
 
-		$params = $this->buildParams($entity);
+		$params = $this->buildParams( $entity );
 
-		if (true === $is_stream) {
+		if ( '' !== $xmlString ) {
 			$uploadResultRaw = $this->api->uploadContent( $xmlString, $params );
 		} else {
-			$uploadResultRaw = $this->api->uploadFile($filename, $params );
+			$uploadResultRaw = $this->api->uploadFile( $filename, $params );
 		}
 
 		$uploadResult = json_decode( $uploadResultRaw );

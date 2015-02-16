@@ -269,7 +269,7 @@ class SmartlingCore {
 	 * @return bool
 	 */
 	protected function sendStream ( SubmissionEntity $submission, $xmlFileContent ) {
-		return $this->getApiWrapper()->uploadContent( $submission, $xmlFileContent, true );
+		return $this->getApiWrapper()->uploadContent( $submission, $xmlFileContent );
 	}
 
 	/**
@@ -285,7 +285,7 @@ class SmartlingCore {
 
 		file_put_contents( $tmp_file, $xmlFileContent );
 
-		$result = $this->getApiWrapper()->uploadContent( $submission, '', false, $tmp_file );
+		$result = $this->getApiWrapper()->uploadContent( $submission, '', $tmp_file );
 
 		unlink( $tmp_file );
 
