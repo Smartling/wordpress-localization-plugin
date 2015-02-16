@@ -315,7 +315,7 @@ class SmartlingCore {
 			$this->setValues( $targetContent, $structure );
 
 		} else {
-			$targetContent = $this->getContentIOWrapper( $entity )->get( $entity->getTargetGUID() );
+			$targetContent = $this->readTargetContentEntity( $entity );
 		}
 
 		$this->saveEntity( $entity->getContentType(), $entity->getTargetBlog(), $targetContent );
@@ -417,6 +417,21 @@ class SmartlingCore {
 		} else {
 			$this->getSiteHelper()->switchBlogId( $entity->getSourceBlog() );
 			$contentEntity = $contentIOWrapper->get( $entity->getSourceGUID() );
+			$this->getSiteHelper()->restoreBlogId();
+		}
+
+		return $contentEntity;
+	}
+
+	private function readTargetContentEntity ( SubmissionEntity $entity ) {
+
+		$contentIOWrapper = $this->getContentIOWrapper( $entity );
+
+		if ( $this->getSiteHelper()->getCurrentBlogId() === $entity->getTargetBlog() ) {
+			$contentEntity = $contentIOWrapper->get( $entity->getTargetGUID() );
+		} else {
+			$this->getSiteHelper()->switchBlogId( $entity->getTargetBlog() );
+			$contentEntity = $contentIOWrapper->get( $entity->getTargetGUID() );
 			$this->getSiteHelper()->restoreBlogId();
 		}
 
