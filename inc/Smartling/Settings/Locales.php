@@ -72,7 +72,7 @@ class Locales {
 
 		return array (
 			'defaultLocale' => trim( $this->getDefaultLocale() ),
-			'defaultBlog' => $this->getDefaultBlog(),
+			'defaultBlog'   => $this->getDefaultBlog(),
 			'targetLocales' => $targetLocales
 		);
 	}

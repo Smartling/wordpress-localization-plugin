@@ -121,6 +121,10 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 	 */
 	public function save ( $post_id ) {
 
+		if ( wp_is_post_revision( $post_id ) ) {
+			return;
+		}
+
 		remove_action( 'save_post', array ( $this, 'save' ) );
 
 		if ( false === $this->runValidation( $post_id ) ) {

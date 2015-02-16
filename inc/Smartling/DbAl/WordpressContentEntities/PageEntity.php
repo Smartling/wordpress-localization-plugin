@@ -22,8 +22,8 @@ class PageEntity extends PostEntity {
 			'page_template'
 		);
 
-		$this->fields = array_merge( $this->fields, $ownFields );
-		$this->hashAffectingFields = array_merge( array(), $ownFields );
+		$this->fields              = array_merge( $this->fields, $ownFields );
+		$this->hashAffectingFields = array_merge( array (), $ownFields );
 
 		parent::__construct( $logger );
 	}

@@ -184,19 +184,28 @@ class SubmissionTableWidget extends \WP_List_Table {
 	 * Handles actions for multiply objects
 	 */
 	private function processBulkAction () {
-		switch ( $this->current_action() ) {
-			case "download":
-				wp_die( 'Items downloading!' );
-				break;
-			case "send":
-				wp_die( 'Items sending' );
-				break;
-			case "check":
-				var_dump( $_GET );
-				wp_die( 'Checking Items' );
-				break;
+		/**
+		 * @var array $submissions
+		 */
+		$submissions = (int) $this->getFormElementValue( 'submission', array () );
 
+		/**
+		 * @var SmartlingCore $ep
+		 */
+		$ep = Bootstrap::getContainer()->get( 'entrypoint' );
 
+		foreach ( $submissions as $submission ) {
+			switch ( $this->current_action() ) {
+				case "download":
+					$messages = $ep->downloadTranslationBySubmissionId( $submission );
+					break;
+				case "send":
+					$messages = $ep->sendForTranslationBySubmissionId( $submission );
+					break;
+				case "check":
+					$messages = $ep->checkSubmissionById( $submission );
+					break;
+			}
 		}
 	}
 
@@ -216,7 +225,7 @@ class SubmissionTableWidget extends \WP_List_Table {
 					$messages = $ep->downloadTranslationBySubmissionId( $submissionId );
 					break;
 				case "sendSingle":
-					$messages = $ep->sendForTranslationBySubmissionId($submissionId);
+					$messages = $ep->sendForTranslationBySubmissionId( $submissionId );
 					break;
 				case "checkSingle":
 					$messages = $ep->checkSubmissionById( $submissionId );

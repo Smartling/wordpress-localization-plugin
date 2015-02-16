@@ -65,7 +65,7 @@ class SettingsManager {
 	 */
 	function __construct ( LoggerInterface $logger, PropertyMapperFactory $mapperWrapper ) {
 
-		$this->logger         = $logger;
+		$this->logger        = $logger;
 		$this->mapperWrapper = $mapperWrapper;
 
 		$this->accountInfo = new SettingsConfigurationProfile();
@@ -78,7 +78,7 @@ class SettingsManager {
 	 *
 	 * @return SettingsConfigurationProfile
 	 */
-	public function getAccountInfo ($blogId = 1) {
+	public function getAccountInfo ( $blogId = 1 ) {
 		return $this->accountInfo;
 	}
 

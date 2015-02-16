@@ -18,8 +18,7 @@ class PageWidgetController extends PostWidgetController {
 	/**
 	 * @inheritdoc
 	 */
-	protected function isAllowedToSave($post_id)
-	{
+	protected function isAllowedToSave ( $post_id ) {
 		return current_user_can( 'edit_page', $post_id );
 	}
 }

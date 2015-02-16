@@ -88,7 +88,7 @@ class XmlEncoder {
 
 		$xpath = new DOMXPath( $xml );
 
-		$output = array();
+		$output = array ();
 
 		foreach ( $fields as $field ) {
 			$item = $xpath->query( '//string[@name="' . $field . '"]' )->item( 0 );

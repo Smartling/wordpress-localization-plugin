@@ -45,16 +45,11 @@
 					<span ><?= $locale->getLocale(); ?></span >
 				</label >
 				<?php if ( $value ) { ?>
-					<span title = "<?= __($item->getStatus()); ?>" class = "widget-btn <?= $item->getStatusColor() ?>" ><span ><?= $item->getCompletionPercentage() ?>%</span ></span >
+					<span title = "<?= __( $item->getStatus() ); ?>" class = "widget-btn <?= $item->getStatusColor() ?>" ><span ><?= $item->getCompletionPercentage() ?>%</span ></span >
 				<?php } ?>
 			</p >
 
 		<?php } ?>
 	</div >
-	<div class = "bottom" >
-		<input type = "submit" value = "<?= __( 'Send to Smartling' ); ?>" class = "button button-primary" id = "submit"
-		       name = "submit" >
-		<input type = "submit" value = "<?= __( 'Download' ); ?>" class = "button button-primary" id = "submit"
-		       name = "submit" >
-	</div >
+	<?= \Smartling\WP\WPAbstract::submitBlock(); ?>
 </div >

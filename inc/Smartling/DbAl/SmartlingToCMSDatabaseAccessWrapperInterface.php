@@ -63,5 +63,5 @@ interface SmartlingToCMSDatabaseAccessWrapperInterface {
 	/**
 	 * @return string
 	 */
-	function getLastErrorMessage();
+	function getLastErrorMessage ();
 }

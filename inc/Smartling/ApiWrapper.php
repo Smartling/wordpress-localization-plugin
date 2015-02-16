@@ -335,7 +335,7 @@ class ApiWrapper implements ApiWrapperInterface {
 
 			$this->logger->error( $message );
 
-			throw new SmartlingFileUploadException( $message, 0, __FILE__, __LINE__ );
+			throw new SmartlingFileUploadException( $message );
 		}
 	}
 }

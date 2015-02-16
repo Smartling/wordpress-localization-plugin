@@ -5,6 +5,7 @@ namespace Smartling\WP;
 use Smartling\Helpers\EntityHelper;
 use Psr\Log\LoggerInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Submissions\SubmissionManager;
 
@@ -51,11 +52,11 @@ abstract class WPAbstract {
 		EntityHelper $entityHelper,
 		SubmissionManager $manager
 	) {
-		$this->logger                = $logger;
-		$this->connector             = $connector;
-		$this->pluginInfo            = $pluginInfo;
-		$this->entityHelper          = $entityHelper;
-		$this->manager               = $manager;
+		$this->logger       = $logger;
+		$this->connector    = $connector;
+		$this->pluginInfo   = $pluginInfo;
+		$this->entityHelper = $entityHelper;
+		$this->manager      = $manager;
 	}
 
 	/**
@@ -103,5 +104,28 @@ abstract class WPAbstract {
 		$class = str_replace( 'Controller', '', $class );
 
 		require_once plugin_dir_path( __FILE__ ) . 'View/' . $class . '.php';
+	}
+
+	public static function submitBlock () {
+		$sendButton = HtmlTagGeneratorHelper::tag( 'input', '', array (
+			'type'  => 'submit',
+			'value' => __( 'Send to Smartling' ),
+			'class' => 'button button-primary',
+			'id'    => 'submit',
+			'name'  => 'submit',
+		) );
+
+		$downloadButton = HtmlTagGeneratorHelper::tag( 'input', '', array (
+			'type'  => 'submit',
+			'value' => __( 'Download' ),
+			'class' => 'button button-primary',
+			'id'    => 'submit',
+			'name'  => 'submit',
+		) );
+
+		$container = HtmlTagGeneratorHelper::tag( 'div', $sendButton . '&nbsp;' . $downloadButton,
+			array ( 'class' => 'bottom' ) );
+
+		return $container;
 	}
 }

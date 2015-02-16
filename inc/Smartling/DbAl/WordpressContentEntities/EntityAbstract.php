@@ -13,18 +13,11 @@ use Smartling\Exception\EntityNotFoundException;
 abstract class EntityAbstract {
 
 	/**
-	 * The guid field name for the entity. Most times it should be 'id'
-	 *
-	 * @var string
-	 */
-	private $guidField = '';
-
-	/**
 	 * List of fields that affect the hash of the entity
 	 *
 	 * @var array
 	 */
-	protected $hashAffectingFields = array();
+	protected $hashAffectingFields = array ();
 
 	/**
 	 * @var array
@@ -148,20 +141,6 @@ abstract class EntityAbstract {
 	}
 
 	/**
-	 * @return string
-	 */
-	public function getGuidField () {
-		return $this->guidField;
-	}
-
-	/**
-	 * @param string $guidField
-	 */
-	public function setGuidField ( $guidField ) {
-		$this->guidField = $guidField;
-	}
-
-	/**
 	 * Loads the entity from database
 	 *
 	 * @param $guid
@@ -204,7 +183,7 @@ abstract class EntityAbstract {
 	/**
 	 * Converts object into EntityAbstract child
 	 *
-	 * @param object         $arr
+	 * @param array          $arr
 	 * @param EntityAbstract $entity
 	 *
 	 * @return EntityAbstract
@@ -217,7 +196,7 @@ abstract class EntityAbstract {
 		}
 		foreach ( $this->fields as $fieldName ) {
 			if ( array_key_exists( $fieldName, $arr ) ) {
-				$entity->$fieldName = $arr[$fieldName];
+				$entity->$fieldName = $arr[ $fieldName ];
 			}
 		}
 		$entity->hash = $this->calculateHash();
@@ -251,6 +230,25 @@ abstract class EntityAbstract {
 			unset ( $myFields[ $field ] );
 		}
 
-		$this->resultToEntity($myFields);
+		$this->resultToEntity( $myFields );
+	}
+
+	/**
+	 * @param null $value
+	 */
+	public function cleanFields ( $value = null ) {
+		foreach ( $this->getNonClonableFields() as $field ) {
+			$this->$field = $value;
+		}
+
+	}
+
+	/**
+	 * @return string
+	 */
+	public abstract function getPrimaryFieldName ();
+
+	public function getPK () {
+		return (int) $this->{$this->getPrimaryFieldName()};
 	}
 }

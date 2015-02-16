@@ -74,5 +74,12 @@ class WordpressContentTypeHelper {
 		);
 	}
 
-
+	/**
+	 * @return array
+	 */
+	public static function getSupportedTaxonomyTypes () {
+		return array (
+			self::CONTENT_TYPE_CATEGORY,
+		);
+	}
 }

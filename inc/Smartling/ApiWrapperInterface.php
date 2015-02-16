@@ -48,5 +48,5 @@ interface ApiWrapperInterface {
 	 * @return bool
 	 * @throws SmartlingFileUploadException
 	 */
-	public function uploadContent ( SubmissionEntity $entity, $xmlString = '', $filename = '');
+	public function uploadContent ( SubmissionEntity $entity, $xmlString = '', $filename = '' );
 }

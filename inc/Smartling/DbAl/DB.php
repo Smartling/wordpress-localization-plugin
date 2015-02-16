@@ -174,7 +174,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 	private function arrayToSqlColumn ( array $columns ) {
 		$out = '';
 		foreach ( $columns as $name => $type ) {
-			$out .= vsprintf('`%s` %s, ', array($name,$type));
+			$out .= vsprintf( '`%s` %s, ', array ( $name, $type ) );
 		}
 
 		return $out;
@@ -202,7 +202,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 		}
 
 		if ( ! empty ( $index ) ) {
-			$add .= vsprintf(', %s', array($index));
+			$add .= vsprintf( ', %s', array ( $index ) );
 		}
 
 		$sql = 'CREATE TABLE IF NOT EXISTS ' . $table . ' ( ' . $schema . ' ' . $add . ' ) ' . $charset_collate . ';';

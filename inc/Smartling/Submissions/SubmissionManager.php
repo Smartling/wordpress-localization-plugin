@@ -94,7 +94,7 @@ class SubmissionManager extends EntityManagerAbstract {
 		$entityHelper
 	) {
 		parent::__construct( $logger, $dbal );
-		$this->pageSize = (int) $pageSize;
+		$this->pageSize     = (int) $pageSize;
 		$this->entityHelper = $entityHelper;
 
 	}
@@ -161,7 +161,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	 * @param array      $sortOptions
 	 * @param null|array $pageOptions
 	 *
-	 * @param int $totalCount (reference)
+	 * @param int        $totalCount (reference)
 	 *
 	 * @return array of SubmissionEntity or empty array
 	 *
@@ -234,7 +234,7 @@ class SubmissionManager extends EntityManagerAbstract {
 
 		if ( $validRequest ) {
 
-			$searchText = vsprintf('%%%s%%',array($searchText));
+			$searchText = vsprintf( '%%%s%%', array ( $searchText ) );
 
 			$block = ConditionBlock::getConditionBlock( ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR );
 
@@ -272,7 +272,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	 * @return null|SubmissionEntity
 	 */
 	public function getEntityById ( $id ) {
-		$query = $this->buildSelectQuery(array ( 'id' => (int) $id ));
+		$query = $this->buildSelectQuery( array ( 'id' => (int) $id ) );
 
 		$obj = $this->fetchData( $query, false );
 
@@ -292,7 +292,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	 * @return null|SubmissionEntity
 	 */
 	public function getEntityBySourceGuid ( $sourceGuid ) {
-		$query = $this->buildSelectQuery(array ( 'sourceGUID' => $sourceGuid ));
+		$query = $this->buildSelectQuery( array ( 'sourceGUID' => $sourceGuid ) );
 
 		$obj = $this->fetchData( $query, false );
 
@@ -302,16 +302,17 @@ class SubmissionManager extends EntityManagerAbstract {
 
 		return $obj;
 	}
+
 	/**
-	*
-	* @return null|string
-	*/
-	public function buildSelectQuery($where) {
+	 *
+	 * @return null|string
+	 */
+	public function buildSelectQuery ( $where ) {
 		$whereOptions = ConditionBlock::getConditionBlock( ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND );
-		foreach($where as $key => $item) {
+		foreach ( $where as $key => $item ) {
 			$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, $key,
 				array ( $item ) );
-			$whereOptions->addCondition($condition);
+			$whereOptions->addCondition( $condition );
 		}
 
 		$query = QueryBuilder::buildSelectQuery(
@@ -369,19 +370,18 @@ class SubmissionManager extends EntityManagerAbstract {
 	 *
 	 * @return array
 	 */
-	public function find(array $params = array())
-	{
+	public function find ( array $params = array () ) {
 		$block = new ConditionBlock( ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND );
 
-		foreach ($params as $field => $value) {
-			$condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, $field, array($value));
+		foreach ( $params as $field => $value ) {
+			$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, $field, array ( $value ) );
 
-			$block->addCondition($condition);
+			$block->addCondition( $condition );
 		}
 
-		$query = $this->buildQuery(null,null,array(),null,$block);
+		$query = $this->buildQuery( null, null, array (), null, $block );
 
-		return $this->fetchData($query);
+		return $this->fetchData( $query );
 
 	}
 
@@ -487,11 +487,11 @@ class SubmissionManager extends EntityManagerAbstract {
 
 		$result = $this->dbal->query( $storeQuery );
 
-		if (false === $result) {
-			$message = vsprintf('Failed saving submission entity to database with following error message: %s',
-			array($this->dbal->getLastErrorMessage()));
+		if ( false === $result ) {
+			$message = vsprintf( 'Failed saving submission entity to database with following error message: %s',
+				array ( $this->dbal->getLastErrorMessage() ) );
 
-			$this->getLogger()->error($message);
+			$this->getLogger()->error( $message );
 		}
 
 		if ( true === $is_insert && false !== $result ) {

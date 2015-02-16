@@ -587,7 +587,7 @@ class SubmissionEntity {
 				$this->getSourceContentHash()
 			) );
 
-			$fileUri = str_replace(' ', '_', $fileUri);
+			$fileUri = str_replace( ' ', '_', $fileUri );
 
 			$this->setFileUri( $fileUri );
 		}

@@ -73,7 +73,7 @@ class PostEntity extends EntityAbstract {
 	 * @inheritdoc
 	 */
 	public function __construct ( LoggerInterface $logger ) {
-		$this->hashAffectingFields = array_merge($this->hashAffectingFields,array (
+		$this->hashAffectingFields = array_merge( $this->hashAffectingFields, array (
 			'ID',
 			'post_author',
 			'post_content',
@@ -84,7 +84,7 @@ class PostEntity extends EntityAbstract {
 			'post_parent',
 			'guid',
 			'post_type',
-		));
+		) );
 
 		parent::__construct( $logger );
 
@@ -112,6 +112,7 @@ class PostEntity extends EntityAbstract {
 		return array (
 			'comment_count',
 			'guid',
+			'ID'
 		);
 	}
 
@@ -140,12 +141,12 @@ class PostEntity extends EntityAbstract {
 
 		if ( is_wp_error( $res ) ) {
 
-			$msgFields = array();
+			$msgFields = array ();
 
 			$curFields = $entity->toArray();
 
-			foreach ($curFields as $field => $value) {
-				$msgFields[] = vsprintf("%s = %s",array($field, $value));
+			foreach ( $curFields as $field => $value ) {
+				$msgFields[] = vsprintf( "%s = %s", array ( $field, $value ) );
 			}
 
 			$message = vsprintf( 'An error had happened while saving post to database: %s. Params: %s',
@@ -158,14 +159,6 @@ class PostEntity extends EntityAbstract {
 		}
 
 		return (int) $res;
-	}
-
-	public function insert ( array $post ) {
-		return wp_insert_post( $post, true );
-	}
-
-	public function update ( array $post ) {
-		return wp_update_post( $post, true );
 	}
 
 	/**
@@ -203,5 +196,12 @@ class PostEntity extends EntityAbstract {
 
 	public function getTitle () {
 		return $this->post_title;
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getPrimaryFieldName () {
+		return 'ID';
 	}
 }

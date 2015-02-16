@@ -45,7 +45,7 @@ class ConditionBlock {
 			throw new \InvalidArgumentException( 'Invalid operator' );
 		}
 
-		$this->operator = vsprintf(' %s ', array($conditionOperator));
+		$this->operator = vsprintf( ' %s ', array ( $conditionOperator ) );
 	}
 
 	/**

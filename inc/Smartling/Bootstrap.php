@@ -3,6 +3,7 @@
 namespace Smartling;
 
 use Psr\Log\LoggerInterface;
+use Smartling\DbAl\WordpressContentEntities\CategoryEntityAbstract;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\WP\WPHookInterface;
 use Symfony\Component\Config\FileLocator;
@@ -104,7 +105,7 @@ class Bootstrap {
 		$container->setParameter( 'plugin.upload', SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . "upload" );
 
 		$pluginUrl = '';
-		if (  defined( 'SMARTLING_CLI_EXECUTION' ) && false === SMARTLING_CLI_EXECUTION ) {
+		if ( defined( 'SMARTLING_CLI_EXECUTION' ) && false === SMARTLING_CLI_EXECUTION ) {
 			$pluginUrl = plugin_dir_url( SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . '..' );
 		}
 
@@ -124,7 +125,7 @@ class Bootstrap {
 	public function load () {
 		$this->detectMultilangPlugins();
 
-		if (  defined( 'SMARTLING_CLI_EXECUTION' ) && SMARTLING_CLI_EXECUTION === false ) {
+		if ( defined( 'SMARTLING_CLI_EXECUTION' ) && SMARTLING_CLI_EXECUTION === false ) {
 			$this->registerHooks();
 			$this->run();
 		}
@@ -177,10 +178,10 @@ class Bootstrap {
 		self::getContainer()->set( 'multilang_plugins', $mlPluginsStatuses );
 	}
 
-	public function checkUploadFolder() {
+	public function checkUploadFolder () {
 		$path = $this->getContainer()->getParameter( 'plugin.upload' );
-		if(!file_exists($path)) {
-			mkdir($path, 0777);
+		if ( ! file_exists( $path ) ) {
+			mkdir( $path, 0777 );
 		}
 	}
 

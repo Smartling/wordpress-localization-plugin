@@ -1,6 +1,7 @@
 <?php
 
 namespace Smartling\WP\Controller;
+
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
@@ -17,7 +18,7 @@ class SettingsController extends WPAbstract implements WPHookInterface {
 		wp_register_style(
 			$this->getPluginInfo()->getName(),
 			$this->getPluginInfo()->getUrl() . '/css/smartling-connector-admin.css',
-			array(),
+			array (),
 			$this->getPluginInfo()->getVersion(),
 			'all'
 		);
@@ -82,9 +83,9 @@ class SettingsController extends WPAbstract implements WPHookInterface {
 		}
 
 		if ( array_key_exists( 'defaultLocale', $settings ) ) {
-			$default = explode("-", $settings['defaultLocale']);
+			$default = explode( "-", $settings['defaultLocale'] );
 
-			if(count($default) == 2) {
+			if ( count( $default ) == 2 ) {
 				$targetLocales->setDefaultBlog( $default[0] );
 				$targetLocales->setDefaultLocale( $default[1] );
 			}
@@ -97,7 +98,7 @@ class SettingsController extends WPAbstract implements WPHookInterface {
 					'locale'  => $key,
 					'target'  => $locale['target'],
 					'enabled' => array_key_exists( 'enabled', $locale ) && $locale['enabled'] == 'on' ? true : false,
-					'blog' => $locale['blog']
+					'blog'    => $locale['blog']
 				);
 			}
 			$existLocales = array ();

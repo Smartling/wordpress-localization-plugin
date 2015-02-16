@@ -124,11 +124,12 @@ class SiteHelper {
 	 * @throws SmartlingDirectRunRuntimeException
 	 */
 	public function getCurrentUserLogin () {
-		if( function_exists('wp_get_current_user')) {
+		if ( function_exists( 'wp_get_current_user' ) ) {
 			$user = wp_get_current_user();
-			if($user) {
+			if ( $user ) {
 				return $user->user_login;
 			}
+
 			return null;
 		} else {
 			$this->directRunDetectedFallback();
@@ -173,11 +174,12 @@ class SiteHelper {
 
 	/**
 	 * Returns locale of current blog
+	 *
 	 * @param LocalizationPluginProxyInterface $localizationPlugin
 	 *
 	 * @return string
 	 */
-	public function getCurrentBlogLocale (LocalizationPluginProxyInterface $localizationPlugin) {
-		return $localizationPlugin->getBlogLocaleById($this->getCurrentBlogId());
+	public function getCurrentBlogLocale ( LocalizationPluginProxyInterface $localizationPlugin ) {
+		return $localizationPlugin->getBlogLocaleById( $this->getCurrentBlogId() );
 	}
 }
