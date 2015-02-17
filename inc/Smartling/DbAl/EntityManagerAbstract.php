@@ -34,7 +34,7 @@ abstract class EntityManagerAbstract {
 	 * @param LoggerInterface                              $logger
 	 * @param SmartlingToCMSDatabaseAccessWrapperInterface $dbal
 	 */
-	public function __construct ( LoggerInterface $logger, SmartlingToCMSDatabaseAccessWrapperInterface $dbal ) {
+	public function __construct ( LoggerInterface $logger, $dbal ) {
 		$this->logger = $logger;
 		$this->dbal   = $dbal;
 	}

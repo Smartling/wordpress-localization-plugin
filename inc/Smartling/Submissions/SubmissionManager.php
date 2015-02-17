@@ -89,7 +89,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	 */
 	public function __construct (
 		LoggerInterface $logger,
-		SmartlingToCMSDatabaseAccessWrapperInterface $dbal,
+		$dbal,
 		$pageSize,
 		$entityHelper
 	) {

@@ -21,12 +21,25 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 		parent::__construct( $name, $data, $dataName );
 
 		$this->container = Bootstrap::getContainer();
+
+		$bs = new Bootstrap();
+		$bs->load();
+
+		$this->registerWordpressFunctions();
 	}
 
-	private function registerLocalizationFnuction () {
+	private function registerLocalizationFunction () {
 		if ( ! function_exists( '__' ) ) {
 			function __ ( $text, $scope = '' ) {
 				return $text;
+			}
+		}
+	}
+
+	private function registerWordpressFunctions () {
+		if ( ! function_exists( 'get_site_option' ) ) {
+			function get_site_option ( $key, $default = null, $useCache = true ) {
+				return array ();
 			}
 		}
 	}
@@ -103,7 +116,7 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testSubmissionStatusValidationAsValid () {
-		$this->registerLocalizationFnuction();
+		$this->registerLocalizationFunction();
 
 
 		/**
@@ -120,7 +133,7 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 	 * @expectedException \InvalidArgumentException
 	 */
 	public function testSubmissionStatusValidationAsInvalid () {
-		$this->registerLocalizationFnuction();
+		$this->registerLocalizationFunction();
 		/**
 		 * @var LoggerInterface $logger
 		 */
@@ -132,7 +145,7 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testSubmissionContentTypeValidationAsValid () {
-		$this->registerLocalizationFnuction();
+		$this->registerLocalizationFunction();
 		/**
 		 * @var LoggerInterface $logger
 		 */
@@ -147,7 +160,7 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 	 * @expectedException \InvalidArgumentException
 	 */
 	public function testSubmissionContentTypeValidationAsInvalid () {
-		$this->registerLocalizationFnuction();
+		$this->registerLocalizationFunction();
 		/**
 		 * @var LoggerInterface $logger
 		 */

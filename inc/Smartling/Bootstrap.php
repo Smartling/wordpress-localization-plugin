@@ -148,7 +148,7 @@ class Bootstrap {
 	/**
 	 * @throws MultilingualPluginNotFoundException
 	 */
-	public function detectMultilangPlugins () {
+	public function detectMultilangPlugins ( $scielent = true ) {
 		/**
 		 * @var LoggerInterface $logger
 		 */
@@ -173,7 +173,13 @@ class Bootstrap {
 		}
 
 		if ( false === $_found ) {
-			throw new MultilingualPluginNotFoundException( 'No active multilingual plugins found.' );
+			$message = 'No active multilingual plugins found.';
+
+			$logger->warning( $message );
+
+			if ( ! $scielent ) {
+				throw new MultilingualPluginNotFoundException( $message );
+			}
 		}
 
 		self::getContainer()->set( 'multilang_plugins', $mlPluginsStatuses );

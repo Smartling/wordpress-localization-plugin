@@ -13,7 +13,7 @@ class PluginScannerTest extends PHPUnit_Framework_TestCase {
 	public function testNoPluginFoundException () {
 		$bootstrap = new Bootstrap();
 
-		$bootstrap->detectMultilangPlugins();
+		$bootstrap->detectMultilangPlugins( false );
 	}
 
 }
