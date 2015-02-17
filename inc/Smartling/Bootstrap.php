@@ -133,10 +133,11 @@ class Bootstrap {
 
 	public function activate () {
 		$this->fromContainer( 'site.db' )->install();
+		$this->fromContainer( 'wp.cron' )->install();
 	}
 
 	public function deactivate () {
-
+		$this->fromContainer( 'wp.cron' )->uninstall();
 	}
 
 	public function uninstall () {

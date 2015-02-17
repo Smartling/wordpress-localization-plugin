@@ -3,7 +3,7 @@ parameters:
   plugin.name: smartling-connector
   plugin.version: 1.0
   plugin.domain: smartling-connector
-  wp.hooks: ['wp.i18n', 'wp.submissions', 'wp.settings', 'wp.post', 'wp.page', 'wp.taxonomy']
+  wp.hooks: ['wp.cron', 'wp.i18n', 'wp.submissions', 'wp.settings', 'wp.post', 'wp.page', 'wp.taxonomy']
 
   logger.channel: default
   logger.filehandler.standard.filename: %plugin.dir%/logfile.log
@@ -137,6 +137,12 @@ services:
       - [ "setConnector", [ "@multilang.proxy" ]]
       - [ "setSiteHelper", [ "@site.helper" ]]
       - [ "setContentIoFactory", [ "@factory.contentIO" ]]
+
+  wp.cron:
+    class: Smartling\WP\JobEngine
+    arguments:
+      - "@logger"
+      - "@plugin.info"
 
   wp.i18n:
     class: Smartling\WP\i18n

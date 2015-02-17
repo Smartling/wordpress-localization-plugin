@@ -193,18 +193,19 @@ class SubmissionTableWidget extends \WP_List_Table {
 		 * @var SmartlingCore $ep
 		 */
 		$ep = Bootstrap::getContainer()->get( 'entrypoint' );
-
-		foreach ( $submissions as $submission ) {
-			switch ( $this->current_action() ) {
-				case "download":
-					$messages = $ep->downloadTranslationBySubmissionId( $submission );
-					break;
-				case "send":
-					$messages = $ep->sendForTranslationBySubmissionId( $submission );
-					break;
-				case "check":
-					$messages = $ep->checkSubmissionById( $submission );
-					break;
+		if($submissions) {
+			foreach ( $submissions as $submission ) {
+				switch ( $this->current_action() ) {
+					case "download":
+						$messages = $ep->downloadTranslationBySubmissionId( $submission );
+						break;
+					case "send":
+						$messages = $ep->sendForTranslationBySubmissionId( $submission );
+						break;
+					case "check":
+						$messages = $ep->checkSubmissionById( $submission );
+						break;
+				}
 			}
 		}
 	}

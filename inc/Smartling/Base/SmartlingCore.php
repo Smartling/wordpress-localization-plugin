@@ -451,6 +451,27 @@ class SmartlingCore {
 		try {
 			$submission = $this->prepareSubmissionEntityById( $id );
 
+			$this->checkSubmissionByEntity($submission);
+		} catch ( SmartlingException $e ) {
+			$messages[] = $e->getMessage();
+		} catch ( Exception $e ) {
+			$messages[] = $e->getMessage();
+		}
+
+		return $messages;
+	}
+
+	/**
+	 * Checks and updates submission with given ID
+	 *
+	 * @param $id
+	 *
+	 * @return array of error messages
+	 */
+	public function checkSubmissionByEntity ( $submission ) {
+		$messages = array ();
+
+		try {
 			$submission = $this->getApiWrapper()->getStatus( $submission );
 
 			$submission = $this->getSubmissionManager()->storeEntity( $submission );
@@ -529,6 +550,20 @@ class SmartlingCore {
 		}
 
 		return $entity;
+	}
+
+	public function bulkCheckInProgress() {
+		$entities = $this->getSubmissionManager()->find( array(
+			'status' => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS
+		));
+
+		foreach($entities as &$entity) {
+			/** @var SubmissionEntity $entity */
+			$this->checkSubmissionByEntity($entity);
+			if($entity->getCompletionPercentage() == 100) {
+				$this->downloadTranslationBySubmission($entity);
+			}
+		}
 	}
 
 
