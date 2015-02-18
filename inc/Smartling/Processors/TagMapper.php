@@ -3,11 +3,11 @@
 namespace Smartling\Processors;
 
 /**
- * Class CategoryMapper
+ * Class TagMapper
  *
  * @package Smartling\Processors
  */
-class CategoryMapper extends MapperAbstract {
+class TagMapper extends MapperAbstract {
 
 	/**
 	 * Constructor

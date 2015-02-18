@@ -187,13 +187,14 @@ class SubmissionTableWidget extends \WP_List_Table {
 		/**
 		 * @var array $submissions
 		 */
-		$submissions = (int) $this->getFormElementValue( 'submission', array () );
+		$submissions = $this->getFormElementValue( 'submission', array () );
 
 		/**
 		 * @var SmartlingCore $ep
 		 */
 		$ep = Bootstrap::getContainer()->get( 'entrypoint' );
-		if($submissions) {
+
+		if(is_array($submissions)) {
 			foreach ( $submissions as $submission ) {
 				switch ( $this->current_action() ) {
 					case "download":

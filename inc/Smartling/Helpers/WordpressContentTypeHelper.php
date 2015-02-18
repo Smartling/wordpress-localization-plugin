@@ -26,6 +26,11 @@ class WordpressContentTypeHelper {
 	const CONTENT_TYPE_CATEGORY = 'category';
 
 	/**
+	 * Wordpress category type identity
+	 */
+	const CONTENT_TYPE_POST_TAG = 'post_tag';
+
+	/**
 	 * Checks if Wordpress i10n function __ is registered
 	 * if not - throws an SmartlingDirectRunRuntimeException exception
 	 *
@@ -46,7 +51,8 @@ class WordpressContentTypeHelper {
 	private static $_reverse_map = array (
 		'post'     => self::CONTENT_TYPE_POST,
 		'page'     => self::CONTENT_TYPE_PAGE,
-		'category' => self::CONTENT_TYPE_CATEGORY
+		'category' => self::CONTENT_TYPE_CATEGORY,
+		'post_tag' => self::CONTENT_TYPE_POST_TAG
 	);
 
 	/**
@@ -71,6 +77,7 @@ class WordpressContentTypeHelper {
 			self::CONTENT_TYPE_POST     => __( 'Post' ),
 			self::CONTENT_TYPE_PAGE     => __( 'Page' ),
 			self::CONTENT_TYPE_CATEGORY => __( 'Category' ),
+			self::CONTENT_TYPE_POST_TAG => __( 'Tag' )
 		);
 	}
 
@@ -80,6 +87,7 @@ class WordpressContentTypeHelper {
 	public static function getSupportedTaxonomyTypes () {
 		return array (
 			self::CONTENT_TYPE_CATEGORY,
+			self::CONTENT_TYPE_POST_TAG
 		);
 	}
 }

@@ -46,6 +46,11 @@ services:
     arguments:
       - "@logger"
 
+  wrapper.entity.tag:
+    class: Smartling\DbAl\WordpressContentEntities\TagEntity
+    arguments:
+      - "@logger"
+
   mapper.post:
     class: Smartling\Processors\PostMapper
 
@@ -55,6 +60,9 @@ services:
   mapper.category:
     class: Smartling\Processors\CategoryMapper
 
+  mapper.tag:
+    class: Smartling\Processors\TagMapper
+
   factory.propertyMapper:
     class: Smartling\Processors\PropertyMapperFactory
     arguments:
@@ -63,6 +71,7 @@ services:
       - [ "registerMapper", ["post", "@mapper.post"]]
       - [ "registerMapper", ["page", "@mapper.page"]]
       - [ "registerMapper", ["category", "@mapper.category"]]
+      - [ "registerMapper", ["post_tag", "@mapper.tag"]]
 
 
   factory.contentIO:
@@ -73,6 +82,7 @@ services:
       - [ "registerMapper", ["post", "@wrapper.entity.post"]]
       - [ "registerMapper", ["page", "@wrapper.entity.page"]]
       - [ "registerMapper", ["category", "@wrapper.entity.category"]]
+      - [ "registerMapper", ["post_tag", "@wrapper.entity.tag"]]
 
   fileLoggerHandlerStandard:
     class: Monolog\Handler\StreamHandler
