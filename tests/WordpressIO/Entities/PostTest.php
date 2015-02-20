@@ -77,7 +77,7 @@ class PostTest extends PHPUnit_Framework_TestCase {
 
 		$wrapper = $this->ioFactory->getMapper( $type );
 
-		$this->assertTrue( $wrapper instanceof PostEntity );
+		self::assertTrue( $wrapper instanceof PostEntity );
 	}
 
 	public function testGetPostWrapperException () {
@@ -87,7 +87,7 @@ class PostTest extends PHPUnit_Framework_TestCase {
 		try {
 			$wrapper = $this->ioFactory->getMapper( $type );
 		} catch ( SmartlingInvalidFactoryArgumentException $e ) {
-			$this->assertTrue( $e instanceof SmartlingInvalidFactoryArgumentException );
+			self::assertTrue( $e instanceof SmartlingInvalidFactoryArgumentException );
 		}
 	}
 
@@ -99,15 +99,15 @@ class PostTest extends PHPUnit_Framework_TestCase {
 		$result = $wrapper->get( 1 );
 
 
-		$this->assertTrue( $result instanceof PostEntity );
+		self::assertTrue( $result instanceof PostEntity );
 
-		$this->assertTrue( $result->ID === 1 );
+		self::assertTrue( $result->ID === 1 );
 
-		$this->assertTrue( $result->post_title === 'Here goes the title' );
+		self::assertTrue( $result->post_title === 'Here goes the title' );
 
-		$this->assertTrue( $result->guid === '/here-goes-the-title' );
+		self::assertTrue( $result->guid === '/here-goes-the-title' );
 
-		$this->assertTrue( $result->post_type === $type );
+		self::assertTrue( $result->post_type === $type );
 	}
 
 	public function testClonePost () {
@@ -121,9 +121,9 @@ class PostTest extends PHPUnit_Framework_TestCase {
 
 		$originalClass = get_class( $result );
 
-		$this->assertTrue( $clone instanceof $originalClass );
+		self::assertTrue( $clone instanceof $originalClass );
 
-		$this->assertTrue( $clone !== $result );
+		self::assertTrue( $clone !== $result );
 
 	}
 
@@ -138,7 +138,7 @@ class PostTest extends PHPUnit_Framework_TestCase {
 
 		$clone->cleanFields();
 
-		$this->assertTrue( null === $clone->ID );
+		self::assertTrue( null === $clone->ID );
 	}
 
 	public function testCreatePost () {
@@ -163,7 +163,7 @@ class PostTest extends PHPUnit_Framework_TestCase {
 
 		$id = $wrapper->set( $clone );
 
-		$this->assertTrue( 2 === $id );
+		self::assertTrue( 2 === $id );
 	}
 
 	public function testUpdatePost () {
@@ -183,6 +183,6 @@ class PostTest extends PHPUnit_Framework_TestCase {
 
 		$id = $wrapper->set( $result );
 
-		$this->assertTrue( 1 === $id );
+		self::assertTrue( 1 === $id );
 	}
 }

@@ -17,7 +17,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = QueryBuilder::escapeName( $field );
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testFieldNameEscapingFunctionName () {
@@ -27,7 +27,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = QueryBuilder::escapeName( $field );
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testFieldListBuilderWithOneField () {
@@ -39,7 +39,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = QueryBuilder::buildFieldListString( $fields );
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testFieldListBuilderWithTwoField () {
@@ -52,7 +52,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = QueryBuilder::buildFieldListString( $fields );
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testFieldListBuilderWithAlias () {
@@ -64,7 +64,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = QueryBuilder::buildFieldListString( $fields );
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testFieldListBuilderComplex () {
@@ -79,7 +79,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = QueryBuilder::buildFieldListString( $fields );
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testSelectSimple () {
@@ -96,7 +96,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = QueryBuilder::buildSelectQuery( $table, $fields, null, array (), null );
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testSelectWithLimit () {
@@ -121,7 +121,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = QueryBuilder::buildSelectQuery( $table, $fields, null, array (), $limitOptions );
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testSelectWithCondition () {
@@ -153,7 +153,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = QueryBuilder::buildSelectQuery( $table, $fields, $block, array (), $limitOptions );
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testSelectWithSorting () {
@@ -191,7 +191,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = QueryBuilder::buildSelectQuery( $table, $fields, $block, $sorting, $limitOptions );
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testSelectWithComplexSorting () {
@@ -230,7 +230,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = QueryBuilder::buildSelectQuery( $table, $fields, $block, $sorting, $limitOptions );
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testInsertSimple () {
@@ -244,7 +244,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = QueryBuilder::buildInsertQuery( $table, $fields );
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testDeleteSimple () {
@@ -254,7 +254,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = QueryBuilder::buildDeleteQuery( $table );
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testDeleteWithCondition () {
@@ -270,7 +270,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = QueryBuilder::buildDeleteQuery( $table, $block );
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testDeleteWithConditionAndLimit () {
@@ -291,7 +291,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = QueryBuilder::buildDeleteQuery( $table, $block, $pageOptions );
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testSimpleFieldValuePairAssignment () {
@@ -302,7 +302,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 		$expectedResult = QueryBuilder::escapeName( 'a' ) . ' = ' . '\'' . QueryBuilder::escapeValue( 5 ) . '\'';
 		$actualResult   = QueryBuilder::buildAssignmentSubQuery( $fieldValuePairs );
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testUpdateSimple () {
@@ -316,7 +316,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = QueryBuilder::buildUpdateQuery( $table, $fieldValuePairs );
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testUpdateWithCondition () {
@@ -333,7 +333,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = QueryBuilder::buildUpdateQuery( $table, $fieldValuePairs, $block );
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 
 	}
 
@@ -357,7 +357,7 @@ class QueryBuilderTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = QueryBuilder::buildUpdateQuery( $table, $fieldValuePairs, $block, $pageOptions );
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 }

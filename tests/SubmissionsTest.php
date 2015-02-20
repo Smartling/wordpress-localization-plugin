@@ -91,27 +91,27 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 
 		$entity->setId( '100' );
 
-		$this->assertTrue( 100 === $entity->getId() );
+		self::assertTrue( 100 === $entity->getId() );
 
 		$entity->setApprovedStringCount( 0 );
 		$entity->setCompletedStringCount( 100 );
 
-		$this->assertTrue( 0 === $entity->getCompletionPercentage() );
+		self::assertTrue( 0 === $entity->getCompletionPercentage() );
 
 		$entity->setApprovedStringCount( 50 );
 		$entity->setCompletedStringCount( 100 );
 
-		$this->assertTrue( 100 === $entity->getCompletionPercentage() );
+		self::assertTrue( 100 === $entity->getCompletionPercentage() );
 
 		$entity->setApprovedStringCount( 100 );
 		$entity->setCompletedStringCount( 30 );
 
-		$this->assertTrue( 30 === $entity->getCompletionPercentage() );
+		self::assertTrue( 30 === $entity->getCompletionPercentage() );
 
 		$entity->setApprovedStringCount( 30 );
 		$entity->setCompletedStringCount( 10 );
 
-		$this->assertTrue( 33 === $entity->getCompletionPercentage() );
+		self::assertTrue( 33 === $entity->getCompletionPercentage() );
 
 	}
 
@@ -201,7 +201,7 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 
 		$current_id = $entity->id;
 
-		$this->assertTrue( $current_id === null );
+		self::assertTrue( $current_id === null );
 	}
 
 	public function testEntitySavingToDatabase () {
@@ -245,7 +245,7 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 
 		$new_id = $newEntity->id;
 
-		$this->assertTrue( $new_id === 88 );
+		self::assertTrue( $new_id === 88 );
 	}
 
 	public function testEntityReadFromDatabase () {
@@ -297,7 +297,7 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 
 		$expected = 1 === $total && ( $entities[0] instanceof SubmissionEntity );
 
-		$this->assertTrue( $expected );
+		self::assertTrue( $expected );
 	}
 
 }

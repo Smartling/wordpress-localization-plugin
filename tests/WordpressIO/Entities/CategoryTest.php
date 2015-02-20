@@ -54,7 +54,7 @@ class CategoryTest extends PHPUnit_Framework_TestCase {
 
 		$wrapper = $this->ioFactory->getMapper( $type );
 
-		$this->assertTrue( $wrapper instanceof CategoryEntity );
+		self::assertTrue( $wrapper instanceof CategoryEntity );
 	}
 
 
@@ -65,7 +65,7 @@ class CategoryTest extends PHPUnit_Framework_TestCase {
 		try {
 			$wrapper = $this->ioFactory->getMapper( $type );
 		} catch ( SmartlingInvalidFactoryArgumentException $e ) {
-			$this->assertTrue( $e instanceof SmartlingInvalidFactoryArgumentException );
+			self::assertTrue( $e instanceof SmartlingInvalidFactoryArgumentException );
 		}
 	}
 
@@ -77,15 +77,15 @@ class CategoryTest extends PHPUnit_Framework_TestCase {
 		$result = $wrapper->get( 1 );
 
 
-		$this->assertTrue( $result instanceof CategoryEntity );
+		self::assertTrue( $result instanceof CategoryEntity );
 
-		$this->assertTrue( $result->term_id === 1 );
+		self::assertTrue( $result->term_id === 1 );
 
-		$this->assertTrue( $result->name === 'Fake Category' );
+		self::assertTrue( $result->name === 'Fake Category' );
 
-		$this->assertTrue( $result->slug === 'fake-category' );
+		self::assertTrue( $result->slug === 'fake-category' );
 
-		$this->assertTrue( $result->taxonomy === $type );
+		self::assertTrue( $result->taxonomy === $type );
 	}
 
 	public function testCloneCategory () {
@@ -99,9 +99,9 @@ class CategoryTest extends PHPUnit_Framework_TestCase {
 
 		$originalClass = get_class( $result );
 
-		$this->assertTrue( $clone instanceof $originalClass );
+		self::assertTrue( $clone instanceof $originalClass );
 
-		$this->assertTrue( $clone !== $result );
+		self::assertTrue( $clone !== $result );
 
 	}
 
@@ -116,7 +116,7 @@ class CategoryTest extends PHPUnit_Framework_TestCase {
 
 		$clone->cleanFields();
 
-		$this->assertTrue( null === $clone->term_id );
+		self::assertTrue( null === $clone->term_id );
 	}
 
 
@@ -142,7 +142,7 @@ class CategoryTest extends PHPUnit_Framework_TestCase {
 
 		$id = $wrapper->set( $clone );
 
-		$this->assertTrue( 2 === $id );
+		self::assertTrue( 2 === $id );
 	}
 
 
@@ -163,6 +163,6 @@ class CategoryTest extends PHPUnit_Framework_TestCase {
 
 		$id = $wrapper->set( $result );
 
-		$this->assertTrue( 1 === $id );
+		self::assertTrue( 1 === $id );
 	}
 }

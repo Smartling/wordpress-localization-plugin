@@ -15,7 +15,7 @@ class ConditionBlockTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = $block->__toString();
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testTwoConditionBlockOperatorAnd () {
@@ -31,7 +31,7 @@ class ConditionBlockTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = $block->__toString();
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testTwoConditionBlockOperatorOr () {
@@ -47,7 +47,7 @@ class ConditionBlockTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = $block->__toString();
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testConditionBlockOfTwoConditionBlocks () {
@@ -73,7 +73,7 @@ class ConditionBlockTest extends PHPUnit_Framework_TestCase {
 
 		$actualResult = $block->__toString();
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 }

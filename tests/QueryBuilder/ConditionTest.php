@@ -30,7 +30,7 @@ class ConditionTest extends PHPUnit_Framework_TestCase {
 		$condition    = Condition::getCondition( $conditionType, $field, array ( $value ) );
 		$actualResult = $condition->__toString();
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testAutomaticValueEscapingSlash () {
@@ -47,7 +47,7 @@ class ConditionTest extends PHPUnit_Framework_TestCase {
 		$condition    = Condition::getCondition( $conditionType, $field, array ( $value ) );
 		$actualResult = $condition->__toString();
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testAutomaticValueEscapingSingleQuote () {
@@ -64,7 +64,7 @@ class ConditionTest extends PHPUnit_Framework_TestCase {
 		$condition    = Condition::getCondition( $conditionType, $field, array ( $value ) );
 		$actualResult = $condition->__toString();
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testAutomaticValueEscapingDoubleQuote () {
@@ -81,7 +81,7 @@ class ConditionTest extends PHPUnit_Framework_TestCase {
 		$condition    = Condition::getCondition( $conditionType, $field, array ( $value ) );
 		$actualResult = $condition->__toString();
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testMoreCondition () {
@@ -96,7 +96,7 @@ class ConditionTest extends PHPUnit_Framework_TestCase {
 		$condition    = Condition::getCondition( $conditionType, $field, array ( $value ) );
 		$actualResult = $condition->__toString();
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testMoreOrEqCondition () {
@@ -111,7 +111,7 @@ class ConditionTest extends PHPUnit_Framework_TestCase {
 		$condition    = Condition::getCondition( $conditionType, $field, array ( $value ) );
 		$actualResult = $condition->__toString();
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testLessCondition () {
@@ -126,7 +126,7 @@ class ConditionTest extends PHPUnit_Framework_TestCase {
 		$condition    = Condition::getCondition( $conditionType, $field, array ( $value ) );
 		$actualResult = $condition->__toString();
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testLessOrEqCondition () {
@@ -141,7 +141,7 @@ class ConditionTest extends PHPUnit_Framework_TestCase {
 		$condition    = Condition::getCondition( $conditionType, $field, array ( $value ) );
 		$actualResult = $condition->__toString();
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testNotEqCondition () {
@@ -156,7 +156,7 @@ class ConditionTest extends PHPUnit_Framework_TestCase {
 		$condition    = Condition::getCondition( $conditionType, $field, array ( $value ) );
 		$actualResult = $condition->__toString();
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testLikeCondition () {
@@ -171,7 +171,7 @@ class ConditionTest extends PHPUnit_Framework_TestCase {
 		$condition    = Condition::getCondition( $conditionType, $field, array ( $value ) );
 		$actualResult = $condition->__toString();
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 	public function testBetweenCondition () {
@@ -188,7 +188,7 @@ class ConditionTest extends PHPUnit_Framework_TestCase {
 		$condition    = Condition::getCondition( $conditionType, $field, array ( $value, $anotherValue ) );
 		$actualResult = $condition->__toString();
 
-		$this->assertTrue( $actualResult === $expectedResult );
+		self::assertTrue( $actualResult === $expectedResult );
 	}
 
 

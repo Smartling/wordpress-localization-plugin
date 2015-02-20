@@ -24,6 +24,6 @@ class AutoloaderTest extends PHPUnit_Framework_TestCase {
 
 		$obj = new $classname( $this->logger );
 
-		$this->assertInstanceOf( $classname, $obj );
+		self::assertInstanceOf( $classname, $obj );
 	}
 }

@@ -51,7 +51,7 @@ class TagTest extends PHPUnit_Framework_TestCase {
 
 		$wrapper = $this->ioFactory->getMapper( $type );
 
-		$this->assertTrue( $wrapper instanceof TagEntity );
+		self::assertTrue( $wrapper instanceof TagEntity );
 	}
 
 	public function testGetTagWrapperException () {
@@ -61,7 +61,7 @@ class TagTest extends PHPUnit_Framework_TestCase {
 		try {
 			$wrapper = $this->ioFactory->getMapper( $type );
 		} catch ( SmartlingInvalidFactoryArgumentException $e ) {
-			$this->assertTrue( $e instanceof SmartlingInvalidFactoryArgumentException );
+			self::assertTrue( $e instanceof SmartlingInvalidFactoryArgumentException );
 		}
 	}
 
@@ -73,15 +73,15 @@ class TagTest extends PHPUnit_Framework_TestCase {
 		$result = $wrapper->get( 1 );
 
 
-		$this->assertTrue( $result instanceof TagEntity );
+		self::assertTrue( $result instanceof TagEntity );
 
-		$this->assertTrue( $result->term_id === 1 );
+		self::assertTrue( $result->term_id === 1 );
 
-		$this->assertTrue( $result->name === 'Fake Tag' );
+		self::assertTrue( $result->name === 'Fake Tag' );
 
-		$this->assertTrue( $result->slug === 'fake-tag' );
+		self::assertTrue( $result->slug === 'fake-tag' );
 
-		$this->assertTrue( $result->taxonomy === $type );
+		self::assertTrue( $result->taxonomy === $type );
 	}
 
 	public function testCloneTag () {
@@ -95,9 +95,9 @@ class TagTest extends PHPUnit_Framework_TestCase {
 
 		$originalClass = get_class( $result );
 
-		$this->assertTrue( $clone instanceof $originalClass );
+		self::assertTrue( $clone instanceof $originalClass );
 
-		$this->assertTrue( $clone !== $result );
+		self::assertTrue( $clone !== $result );
 
 	}
 
@@ -112,7 +112,7 @@ class TagTest extends PHPUnit_Framework_TestCase {
 
 		$clone->cleanFields();
 
-		$this->assertTrue( null === $clone->term_id );
+		self::assertTrue( null === $clone->term_id );
 	}
 
 
@@ -138,7 +138,7 @@ class TagTest extends PHPUnit_Framework_TestCase {
 
 		$id = $wrapper->set( $clone );
 
-		$this->assertTrue( 2 === $id );
+		self::assertTrue( 2 === $id );
 	}
 
 
@@ -159,6 +159,6 @@ class TagTest extends PHPUnit_Framework_TestCase {
 
 		$id = $wrapper->set( $result );
 
-		$this->assertTrue( 1 === $id );
+		self::assertTrue( 1 === $id );
 	}
 }
