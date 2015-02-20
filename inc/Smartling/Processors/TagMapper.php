@@ -7,17 +7,6 @@ namespace Smartling\Processors;
  *
  * @package Smartling\Processors
  */
-class TagMapper extends MapperAbstract {
+class TagMapper extends TaxonomyMapperAbstract {
 
-	/**
-	 * Constructor
-	 */
-	function __construct () {
-		$this->setFields(
-			array (
-				'name',
-				'description'
-			)
-		);
-	}
 }

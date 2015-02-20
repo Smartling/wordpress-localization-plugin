@@ -97,4 +97,18 @@ class SettingsManagerTest extends PHPUnit_Framework_TestCase {
 
 		self::assertTrue($ai instanceof SettingsConfigurationProfile);
 	}
+
+	public function testAutoAuthorizeIsTrue()
+	{
+		/**
+		 * @var SettingsManager $manager
+		 */
+		$manager = Bootstrap::getContainer()->get( 'manager.settings' );
+
+		$manager->get();
+
+		$ai = $manager->getAccountInfo();
+
+		self::assertTrue($ai->getAutoAuthorize());
+	}
 }
