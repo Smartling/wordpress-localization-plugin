@@ -2,16 +2,20 @@
 
 namespace Smartling\Submissions;
 
+use DateTime;
 use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapper;
 use Smartling\DbAl\EntityManagerAbstract;
+use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Helpers\WordpressContentTypeHelper;
+use Smartling\Helpers\WordpressUserHelper;
 use Smartling\Processors\EntityProcessor;
 
 /**
@@ -368,7 +372,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	 *
 	 * @param array $params
 	 *
-	 * @return array
+	 * @return SubmissionEntity[]
 	 */
 	public function find ( array $params = array () ) {
 		$block = new ConditionBlock( ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND );
@@ -511,5 +515,59 @@ class SubmissionManager extends EntityManagerAbstract {
 	 */
 	public function createSubmission ( array $fields ) {
 		return SubmissionEntity::fromArray( $fields, $this->logger );
+	}
+
+	/**
+	 * Loads from database or creates a new instance of SubmissionEntity
+	 *
+	 * @param string                           $contentType
+	 * @param int                              $sourceBlog
+	 * @param int                              $sourceEntity
+	 * @param int                              $targetBlog
+	 * @param LocalizationPluginProxyInterface $localizationPluginProxy
+	 * @param null|int                         $targetEntity
+	 *
+	 * @return SubmissionEntity
+	 */
+	public function getSubmissionEntity (
+		$contentType,
+		$sourceBlog,
+		$sourceEntity,
+		$targetBlog,
+		LocalizationPluginProxyInterface $localizationPluginProxy,
+		$targetEntity = null
+	) {
+
+		$entity = null;
+
+		$params = array (
+			'contentType' => $contentType,
+			'sourceBlog'  => $sourceBlog,
+			'sourceGUID'  => $sourceEntity,
+			'targetBlog'  => $targetBlog,
+		);
+
+		if ( null !== $targetEntity ) {
+			$params['targetGUID'] = $targetEntity;
+		}
+
+		$entities = $this->find( $params );
+
+		if ( count( $entities ) > 0 ) {
+			$entity = reset( $entities );
+		} else {
+			$entity = $this->createSubmission( $params );
+			$entity->setTargetLocale(
+				$localizationPluginProxy->getBlogLocaleById(
+					$entity->getTargetBlog()
+				)
+			);
+			$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_NEW );
+			$entity->setSubmitter( WordpressUserHelper::getUserLogin() );
+			$entity->setSourceTitle( '' );
+			$entity->setSubmissionDate( DateTimeHelper::nowAsString() );
+		}
+
+		return $entity;
 	}
 }

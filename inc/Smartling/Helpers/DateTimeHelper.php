@@ -90,4 +90,14 @@ class DateTimeHelper {
 	public static function dateTimeToTimestamp ( \DateTime $dateTime ) {
 		return $dateTime->getTimestamp();
 	}
+
+	/**
+	 * Returns current date and time as a string like '2014-18-14 22:18:63' in UTC timezone
+	 *
+	 * @return string
+	 */
+	public static function nowAsString()
+	{
+		return self::dateTimeToString(new \DateTime('now', self::getDefaultTimezone()));
+	}
 }
