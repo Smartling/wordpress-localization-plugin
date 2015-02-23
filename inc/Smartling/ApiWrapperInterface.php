@@ -49,4 +49,9 @@ interface ApiWrapperInterface {
 	 * @throws SmartlingFileUploadException
 	 */
 	public function uploadContent ( SubmissionEntity $entity, $xmlString = '', $filename = '' );
+
+	/**
+	 * @param SmartlingAPI $api
+	 */
+	public function setApi ();
 }

@@ -31,7 +31,7 @@ class ApiWrapper implements ApiWrapperInterface {
 	/**
 	 * @var SmartlingAPI
 	 */
-	private $api;
+	protected $api;
 
 	/**
 	 * @param SettingsManager $settingsManager
@@ -41,14 +41,17 @@ class ApiWrapper implements ApiWrapperInterface {
 		$this->settings = $settingsManager;
 		$this->logger   = $logger;
 
-		$this->api =
-			new SmartlingAPI(
-				$settingsManager->getAccountInfo()->getApiUrl(),
-				$settingsManager->getAccountInfo()->getKey(),
-				$settingsManager->getAccountInfo()->getProjectId(),
-				SmartlingAPI::PRODUCTION_MODE // TODO: where get the mode
+		$this->setApi();
+	}
 
-			);
+	public function setApi () {
+		$this->api = new SmartlingAPI(
+			$this->settings->getAccountInfo()->getApiUrl(),
+			$this->settings->getAccountInfo()->getKey(),
+			$this->settings->getAccountInfo()->getProjectId(),
+			SmartlingAPI::PRODUCTION_MODE // TODO: where get the mode
+
+		);
 	}
 
 	/**
@@ -184,7 +187,7 @@ class ApiWrapper implements ApiWrapperInterface {
 
 			$this->logger->error( $logMessage, array ( __FILE__, __LINE__ ) );
 
-			throw new SmartlingFileDownloadException( $logMessage, 0, __FILE__, __LINE__ );
+			throw new SmartlingFileDownloadException( $logMessage );
 
 		}
 

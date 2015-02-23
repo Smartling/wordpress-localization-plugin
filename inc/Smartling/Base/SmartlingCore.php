@@ -171,10 +171,6 @@ class SmartlingCore {
 		$this->contentIoFactory = $contentIoFactory;
 	}
 
-	private function linkObjectsBySubmission ( SubmissionEntity $entity ) {
-		return $this->getMultilangProxy()->linkObjects( $entity );
-	}
-
 	public function sendForTranslationBySubmissionId ( $id ) {
 		return $this->sendForTranslationBySubmission( $this->loadSubmissionEntityById( $id ) );
 	}
@@ -182,26 +178,18 @@ class SmartlingCore {
 	public function sendForTranslationBySubmission ( SubmissionEntity $submission ) {
 		$contentEntity = $this->readContentEntity( $submission );
 
-
 		if ( null === $submission->getId() ) {
 			$submission->setSourceContentHash( $contentEntity->calculateHash() );
-
 			$submission->setSourceTitle( $contentEntity->getTitle() );
 
 			// generate URI
 			$submission->getFileUri();
-
 			$submission = $this->getSubmissionManager()->storeEntity( $submission );
-
-
 		}
 
 		$translatableFields = $this->getTranslatableFields( $submission->getContentType() );
-
 		$dataForConversion = $this->cutOffFields( $contentEntity->toArray(), $translatableFields );
-
 		$xml = XmlEncoder::xmlEncode( $dataForConversion );
-
 		$result = false;
 
 		try {
@@ -211,8 +199,6 @@ class SmartlingCore {
 
 			$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS );
 
-		} catch ( SmartlingException $e ) {
-			$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_FAILED );
 		} catch ( Exception $e ) {
 			$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_FAILED );
 		}
@@ -306,7 +292,7 @@ class SmartlingCore {
 
 				$entity = $this->getSubmissionManager()->storeEntity( $entity );
 
-				$this->linkObjectsBySubmission( $entity );
+				$this->getMultilangProxy()->linkObjects( $entity );
 			}
 		} catch ( Exception $e ) {
 			$messages[] = $e->getMessage();
