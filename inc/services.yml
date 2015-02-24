@@ -1,7 +1,7 @@
 parameters:
 
   plugin.name: smartling-connector
-  plugin.version: 1.0
+  plugin.version: 1.0.0-dev
   plugin.domain: smartling-connector
   wp.hooks: ['wp.cron', 'wp.i18n', 'wp.submissions', 'wp.settings', 'wp.post', 'wp.page', 'wp.taxonomy']
 

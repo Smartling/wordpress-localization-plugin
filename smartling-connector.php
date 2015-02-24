@@ -15,7 +15,7 @@
  * Plugin Name:       Smartling Connector
  * Plugin URI:        http://smartling.com/
  * Description:       This is a short description of what the plugin does. It's displayed in the WordPress dashboard.
- * Version:           1.0.0 @2015/02/19
+ * Version:           1.0.0-dev @2015/02/24
  * Author:            SmartLing
  * Author URI:        http://smartling.com/
  * License:           GPL-2.0+
