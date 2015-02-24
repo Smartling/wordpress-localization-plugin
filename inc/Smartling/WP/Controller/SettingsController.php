@@ -9,7 +9,7 @@ class SettingsController extends WPAbstract implements WPHookInterface {
 
 	public function wp_enqueue () {
 		wp_enqueue_script(
-			$this->getPluginInfo()->getName(),
+			$this->getPluginInfo()->getName() . "settings",
 			$this->getPluginInfo()->getUrl() . 'js/smartling-connector-admin.js',
 			array ( 'jquery' ),
 			$this->getPluginInfo()->getVersion(),

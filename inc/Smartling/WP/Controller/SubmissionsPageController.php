@@ -29,7 +29,7 @@ class SubmissionsPageController
 
 	public function wp_enqueue () {
 		wp_enqueue_script(
-			$this->getPluginInfo()->getName(),
+			$this->getPluginInfo()->getName() . "submission",
 			$this->getPluginInfo()->getUrl() . 'js/smartling-submissions-page.js',
 			array ( 'jquery' ),
 			$this->getPluginInfo()->getVersion(),

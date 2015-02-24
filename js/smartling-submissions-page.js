@@ -8,23 +8,23 @@
 			ids : []
 		},
 		timer: null,
-		delay: 100000,
-		init: function() {
-			$('#submissions-filter').on('click', '.tablenav-pages a, .manage-column.sortable a, .manage-column.sorted a', function(e) {
+		delay: 10000,
+		init: function(content) {
+			content.on('click', '.tablenav-pages a, .manage-column.sortable a, .manage-column.sorted a', function(e) {
 				e.preventDefault();
 				var query = this.search.substring( 1 );
 				var action = list.parseQuery("sort", query);
 				list.update(action);
 			});
 
-			$('#submissions-filter' ).on('click', '.pagination-links a', function(e) {
+			content.on('click', '.pagination-links a', function(e) {
 				e.preventDefault();
 				var query = this.search.substring( 1 );
 				var action = list.parseQuery("sort", query);
 				list.update(action);
 			});
 
-			$('#submissions-filter').on('keyup', 'input[name=paged]',  function(e) {
+			content.on('keyup', 'input[name=paged]',  function(e) {
 				if ( 13 == e.which ) {
 					e.preventDefault();
 				}
@@ -55,7 +55,7 @@
 				break;
 			case "sort" :
 				if(query) {
-				//	list.data.page = list.__query( query , 'page' );
+					list.data.page = list.__query( query , 'page' );
 					list.data.paged = list.__query( query , 'paged' ) || '1';
 					list.data.order = list.__query( query , 'order' ) || 'asc';
 					list.data.orderby = list.__query( query , 'orderby' ) || 'title';
@@ -73,7 +73,7 @@
 		},
 		autoUpdate: function() {
 			this.timer = setTimeout( function() {
-				this.getIds();
+				list.getIds();
 				list.update('ajax_submissions_update_status');
 			}, this.delay);
 		},
@@ -122,7 +122,10 @@
 		}
 	};
 	$(function() {
-		list.init();
+		var content = $('#submissions-filter');
+		if(content.length > 0) {
+			list.init(content);
+		}
 	});
 
 })(jQuery);

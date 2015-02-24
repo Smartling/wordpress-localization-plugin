@@ -204,9 +204,10 @@
 
 
 	$( function () {
-
-		localizationOptions.init();
-
+		var content = $('#smartling-form');
+		if(content.length > 0) {
+			localizationOptions.init();
+		}
 	} );
 
 })( jQuery );

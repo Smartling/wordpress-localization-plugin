@@ -524,7 +524,7 @@ class SmartlingCore {
 	public function bulkCheckByIds(array $items) {
 		foreach($items as $item) {
 			/** @var SubmissionEntity $entity */
-			$entity = $this->prepareSubmissionEntityById( $item );
+			$entity = $this->loadSubmissionEntityById( $item );
 			$this->checkSubmissionByEntity( $entity );
 			$this->checkEntityForDownload( $entity );
 		}
