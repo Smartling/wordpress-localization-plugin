@@ -578,13 +578,11 @@ class SubmissionEntity {
 	public function getFileUri () {
 		if ( empty( $this->fileUri ) ) {
 
-			$fileUri = vsprintf( '/blog-%s/%s-%s/%s/%s-%s.xml', array (
-				$this->getSourceBlog(),
-				$this->getContentType(),
-				$this->getSourceGUID(),
-				$this->getTargetLocale(),
+			$fileUri = vsprintf( '%s_%s_%s_%s.xml', array (
 				$this->getSourceTitle(),
-				$this->getSourceContentHash()
+				$this->getContentType(),
+				$this->getSourceBlog(),
+				$this->getSourceGUID()
 			) );
 
 			$fileUri = str_replace( ' ', '_', $fileUri );
