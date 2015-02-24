@@ -115,6 +115,9 @@ services:
     arguments:
       - "@logger"
 
+  site.cache:
+    class: Smartling\Helpers\Cache
+
   manager.settings:
     class: Smartling\Settings\SettingsManager
     arguments:
@@ -167,6 +170,7 @@ services:
       - "@plugin.info"
       - "@entity.helper"
       - "@manager.submission"
+      - "@site.cache"
 
   wp.submissions:
     class: Smartling\WP\Controller\SubmissionsPageController
@@ -176,6 +180,7 @@ services:
       - "@plugin.info"
       - "@entity.helper"
       - "@manager.submission"
+      - "@site.cache"
 
   wp.post:
     class: Smartling\WP\Controller\PostWidgetController
@@ -185,6 +190,7 @@ services:
       - "@plugin.info"
       - "@entity.helper"
       - "@manager.submission"
+      - "@site.cache"
 
   wp.page:
     class: Smartling\WP\Controller\PageWidgetController
@@ -194,6 +200,7 @@ services:
       - "@plugin.info"
       - "@entity.helper"
       - "@manager.submission"
+      - "@site.cache"
 
   wp.taxonomy:
       class: Smartling\WP\Controller\TaxonomyWidgetController
@@ -203,4 +210,5 @@ services:
         - "@plugin.info"
         - "@entity.helper"
         - "@manager.submission"
+        - "@site.cache"
 

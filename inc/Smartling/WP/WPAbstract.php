@@ -2,6 +2,7 @@
 
 namespace Smartling\WP;
 
+use Smartling\Helpers\Cache;
 use Smartling\Helpers\EntityHelper;
 use Psr\Log\LoggerInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
@@ -37,6 +38,11 @@ abstract class WPAbstract {
 	private $manager;
 
 	/**
+	 * @var Cache
+	 */
+	private $cache;
+
+	/**
 	 * Constructor
 	 *
 	 * @param LoggerInterface                  $logger
@@ -44,19 +50,29 @@ abstract class WPAbstract {
 	 * @param PluginInfo                       $pluginInfo
 	 * @param EntityHelper                     $entityHelper
 	 * @param SubmissionManager                $manager
+	 * @param Cache                            $cache
 	 */
 	public function __construct (
 		LoggerInterface $logger,
 		LocalizationPluginProxyInterface $connector,
 		PluginInfo $pluginInfo,
 		EntityHelper $entityHelper,
-		SubmissionManager $manager
+		SubmissionManager $manager,
+		Cache $cache
 	) {
 		$this->logger       = $logger;
 		$this->connector    = $connector;
 		$this->pluginInfo   = $pluginInfo;
 		$this->entityHelper = $entityHelper;
 		$this->manager      = $manager;
+		$this->cache        = $cache;
+	}
+
+	/**
+	 * @return Cache
+	 */
+	public function getCache () {
+		return $this->cache;
 	}
 
 	/**

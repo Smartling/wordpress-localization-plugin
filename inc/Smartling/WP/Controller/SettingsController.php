@@ -10,14 +10,14 @@ class SettingsController extends WPAbstract implements WPHookInterface {
 	public function wp_enqueue () {
 		wp_enqueue_script(
 			$this->getPluginInfo()->getName(),
-			$this->getPluginInfo()->getUrl() . '/js/smartling-connector-admin.js',
+			$this->getPluginInfo()->getUrl() . 'js/smartling-connector-admin.js',
 			array ( 'jquery' ),
 			$this->getPluginInfo()->getVersion(),
 			false
 		);
 		wp_register_style(
 			$this->getPluginInfo()->getName(),
-			$this->getPluginInfo()->getUrl() . '/css/smartling-connector-admin.css',
+			$this->getPluginInfo()->getUrl() . 'css/smartling-connector-admin.css',
 			array (),
 			$this->getPluginInfo()->getVersion(),
 			'all'

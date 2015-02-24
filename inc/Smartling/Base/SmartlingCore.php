@@ -453,7 +453,12 @@ class SmartlingCore {
 		return $messages;
 	}
 
-
+	/**
+	 * @param $id
+	 *
+	 * @return mixed
+	 * @throws SmartlingDbException
+	 */
 	private function loadSubmissionEntityById ( $id ) {
 		$params = array (
 			'id' => $id,
@@ -491,6 +496,15 @@ class SmartlingCore {
 			$targetBlog, $this->getMultilangProxy(), $targetEntity );
 	}
 
+	/**
+	 * @param SubmissionEntity $entity
+	 */
+	public function checkEntityForDownload(SubmissionEntity $entity) {
+		if ( 100 === $entity->getCompletionPercentage() ) {
+			$this->downloadTranslationBySubmission( $entity );
+		}
+	}
+
 	public function bulkCheckInProgress () {
 		$entities = $this->getSubmissionManager()->find( array (
 			'status' => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS
@@ -498,9 +512,21 @@ class SmartlingCore {
 
 		foreach ( $entities as $entity ) {
 			$this->checkSubmissionByEntity( $entity );
-			if ( 100 === $entity->getCompletionPercentage() ) {
-				$this->downloadTranslationBySubmission( $entity );
-			}
+			$this->checkEntityForDownload( $entity );
+		}
+	}
+	
+	/**
+	 * @param array $items
+	 *
+	 * @throws SmartlingDbException
+	 */
+	public function bulkCheckByIds(array $items) {
+		foreach($items as $item) {
+			/** @var SubmissionEntity $entity */
+			$entity = $this->prepareSubmissionEntityById( $item );
+			$this->checkSubmissionByEntity( $entity );
+			$this->checkEntityForDownload( $entity );
 		}
 	}
 }
