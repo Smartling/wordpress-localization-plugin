@@ -67,7 +67,7 @@ done
 [ "x$SITE_PASS" == "x" ] && { logit err "--site-pass should be set"; usage; }
 
 ## dependencies for smartling-connector, separated by ';'
-DEPENDENCIES=multilingual-press
+DEPENDENCIES=multilingual-press;ad-code-manager;post-customizer;wordpress-seo;facebook
 
 curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
 WPCLI=./wp-cli.phar
