@@ -115,3 +115,40 @@
 #smartling-form .plugin-locales input[type=text] {
     width : 50px;
 }
+
+#bulkActionCb {
+    width : 31px;
+}
+
+#contentType {
+    width : 100px;
+}
+
+#targetLocale {
+    width : 75px;
+}
+
+#submissionDate {
+    width : 150px;
+}
+
+#appliedDate {
+    width : 150px;
+}
+
+#wordCount {
+    width : 75px;
+}
+
+#progress {
+    width : 100px;
+}
+
+#status {
+    width : 100px;
+}
+
+#submitter{
+    width : 100px;
+    max-width: 150px;
+}

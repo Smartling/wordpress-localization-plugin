@@ -112,7 +112,7 @@ class SubmissionsPageController
 
 
 	public function menu () {
-		add_menu_page( 'Submissions', 'Smartling Connector', 'Administrator', 'smartling-submissions',
+		add_menu_page( 'Submissions Board', 'Smartling Connector', 'Administrator', 'smartling-submissions-page',
 			array ( $this, 'renderPage' ) );
 	}
 

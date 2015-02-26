@@ -20,7 +20,8 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  * @property integer      $targetBlog
  * @property string       $targetGUID
  * @property string       $submitter
- * @property integer      $submissionDate
+ * @property string       $submissionDate
+ * @property string|null  $appliedDate
  * @property integer      $approvedStringCount
  * @property integer      $completedStringCount
  * @property string       $status
@@ -60,6 +61,7 @@ class SubmissionEntity {
 		'targetGUID'           => 'VARCHAR(255) NULL',
 		'submitter'            => 'VARCHAR(255) NOT NULL',
 		'submissionDate'       => 'DATETIME NOT NULL',
+		'appliedDate'          => 'DATETIME NULL',
 		'approvedStringCount'  => 'INT UNSIGNED NULL',
 		'completedStringCount' => 'INT UNSIGNED NULL',
 		'wordCount'            => 'INT UNSIGNED NULL',
@@ -122,14 +124,15 @@ class SubmissionEntity {
 		return array (
 			'id'             => __( 'ID' ),
 			'sourceTitle'    => __( 'Title' ),
-			'sourceBlog'     => __( 'Source Blog ID' ),
+			//'sourceBlog'     => __( 'Source Blog ID' ),
 			'contentType'    => __( 'Type' ),
-			'sourceGUID'     => __( 'Source URI' ),
+			//'sourceGUID'     => __( 'Source URI' ),
 			'fileUri'        => __( 'Smartling File URI' ),
 			'targetLocale'   => __( 'Locale' ),
-			'targetBlog'     => __( 'Target Blog ID' ),
+			//'targetBlog'     => __( 'Target Blog ID' ),
 			'submitter'      => __( 'Submitter' ),
-			'submissionDate' => __( 'Submitted' ),
+			'submissionDate' => __( 'Time Submitted' ),
+			'appliedDate'    => __( 'Time Applied' ),
 			'wordCount'      => __( 'Words' ),
 			'progress'       => __( 'Progress' ),
 			'status'         => __( 'Status' ),
@@ -378,7 +381,7 @@ class SubmissionEntity {
 	 */
 	private $completedStringCount;
 
-	/*
+	/**
 	 * Count of words in source content
 	 *
 	 * @var int
@@ -389,6 +392,11 @@ class SubmissionEntity {
 	 * @var string
 	 */
 	private $status;
+
+	/**
+	 * @var string|null
+	 */
+	private $appliedDate;
 
 	/**
 	 * @return int
@@ -698,6 +706,22 @@ class SubmissionEntity {
 
 		return $this;
 	}
+
+	/**
+	 * @return null|string
+	 */
+	public function getAppliedDate () {
+		return $this->appliedDate;
+	}
+
+	/**
+	 * @param null|string $appliedDate
+	 */
+	public function setAppliedDate ( $appliedDate ) {
+		$this->appliedDate = $appliedDate;
+	}
+
+
 
 	/**
 	 * @return int

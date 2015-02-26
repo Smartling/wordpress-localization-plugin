@@ -116,9 +116,9 @@ class SubmissionTableWidget extends \WP_List_Table {
 			'download' => HtmlTagGeneratorHelper::tag( 'a', __( 'Download' ), array (
 				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'downloadSingle', $item['id'] ) )
 			) ),
-			'check'    => HtmlTagGeneratorHelper::tag( 'a', __( 'Check Status' ), array (
+			/*'check'    => HtmlTagGeneratorHelper::tag( 'a', __( 'Check Status' ), array (
 				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'checkSingle', $item['id'] ) )
-			) )
+			) )*/
 		);
 
 		//Return the title contents
@@ -194,7 +194,7 @@ class SubmissionTableWidget extends \WP_List_Table {
 		 */
 		$ep = Bootstrap::getContainer()->get( 'entrypoint' );
 
-		if(is_array($submissions)) {
+		if ( is_array( $submissions ) ) {
 			foreach ( $submissions as $submission ) {
 				switch ( $this->current_action() ) {
 					case "download":
@@ -307,12 +307,24 @@ class SubmissionTableWidget extends \WP_List_Table {
 
 		$dataAsArray = array ();
 
+		$file_uri_max_chars = 50;
+
 		foreach ( $data as $element ) {
 			$row = $element->toArray();
 
 			//$row["fileUri"] = $row["fileUri"] != null ? basename($row["fileUri"]) : null;
 
 			$row['sourceTitle'] = $this->applyRowActions( $row );
+			$row['appliedDate'] = '0000-00-00 00:00:00' === $row['appliedDate'] ? __( 'Never' ) : $row['appliedDate'];
+
+			if ( mb_strlen( $row['fileUri'], 'utf8' ) > $file_uri_max_chars ) {
+				$orig     = $row['fileUri'];
+				$shrinked = mb_substr( $orig, 0, $file_uri_max_chars - 3, 'utf8' ) . '...';
+
+				$row['fileUri'] = HtmlTagGeneratorHelper::tag( 'span', $shrinked, array ( 'title' => $orig ) );
+
+			}
+
 
 			$row = array_merge( array ( 'bulkActionCb' => $this->column_cb( $row ) ), $row );
 
@@ -456,12 +468,12 @@ class SubmissionTableWidget extends \WP_List_Table {
 		return $this->_custom_controls_namespace . '-' . $name;
 	}
 
-	function display() {
+	function display () {
 		wp_nonce_field( 'ajax-custom-list-nonce', 'ajax_submissions_update_status_nonce' );
 		parent::display();
 	}
 
-	function ajax_response() {
+	function ajax_response () {
 		check_ajax_referer( 'ajax-custom-list-nonce', 'ajax_submissions_update_status_nonce' );
 
 		$this->prepare_items();
@@ -470,8 +482,7 @@ class SubmissionTableWidget extends \WP_List_Table {
 		ob_start();
 		if ( ! empty( $_REQUEST['no_placeholder'] ) ) {
 			$this->display_rows();
-		}
-		else {
+		} else {
 			$this->display_rows_or_placeholder();
 		}
 		$rows = ob_get_clean();
@@ -481,21 +492,23 @@ class SubmissionTableWidget extends \WP_List_Table {
 		$headers = ob_get_clean();
 
 		ob_start();
-		$this->pagination('top');
+		$this->pagination( 'top' );
 		$pagination_top = ob_get_clean();
 
 		ob_start();
-		$this->pagination('bottom');
+		$this->pagination( 'bottom' );
 		$pagination_bottom = ob_get_clean();
 
-		$response = array( 'rows' => $rows );
-		$response['pagination']['top'] = $pagination_top;
+		$response                         = array ( 'rows' => $rows );
+		$response['pagination']['top']    = $pagination_top;
 		$response['pagination']['bottom'] = $pagination_bottom;
-		$response['column_headers'] = $headers;
-		if ( isset( $total_items ) )
-			$response['total_items_i18n'] = sprintf( _n( '1 item', '%s items', $total_items ), number_format_i18n( $total_items ) );
+		$response['column_headers']       = $headers;
+		if ( isset( $total_items ) ) {
+			$response['total_items_i18n'] = sprintf( _n( '1 item', '%s items', $total_items ),
+				number_format_i18n( $total_items ) );
+		}
 		if ( isset( $total_pages ) ) {
-			$response['total_pages'] = $total_pages;
+			$response['total_pages']      = $total_pages;
 			$response['total_pages_i18n'] = number_format_i18n( $total_pages );
 		}
 		die( json_encode( $response ) );

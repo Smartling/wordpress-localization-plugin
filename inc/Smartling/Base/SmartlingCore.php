@@ -9,6 +9,7 @@ use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingException;
+use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Processors\ContentEntitiesIOFactory;
@@ -294,6 +295,9 @@ class SmartlingCore {
 
 				$this->getMultilangProxy()->linkObjects( $entity );
 			}
+
+			$entity->appliedDate = DateTimeHelper::nowAsString();
+			$entity = $this->getSubmissionManager()->storeEntity( $entity );
 		} catch ( Exception $e ) {
 			$messages[] = $e->getMessage();
 		}
