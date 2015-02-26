@@ -1,8 +1,27 @@
 <div id = "smartling-post-widget" >
+
+	<script>
+		function sm_check_all()
+		{
+			var boxes = document.getElementsByClassName('mcheck');
+			for (var i = 0; i < boxes.length; i++) { boxes[i].setAttribute('checked','checked'); }
+		}
+
+		function sm_uncheck_all()
+		{
+			var boxes=document.getElementsByClassName('mcheck');
+			for (var i = 0; i < boxes.length; i++) { boxes[i].removeAttribute('checked'); }
+		}
+	</script>
+
 	<h2 >Smartling connector actions</h2 >
 
-	<div class = "fields" >
-		<h3 >Translate this <?= $data['term']->taxonomy; ?> into:</h3 >
+	<h3 >Translate this <?= $data['term']->taxonomy; ?> into:</h3 >
+
+	<a href="#" onclick="sm_check_all();return false;">Check All</a> / <a href="#" onclick="sm_uncheck_all();return false;">Uncheck All</a>
+	<table class = "form-table" style="width: 400px;" >
+		<tbody >
+
 		<?php
 
 		use Smartling\Settings\TargetLocale;
@@ -32,27 +51,31 @@
 					}
 				}
 			}
-
-			//$value   = $values[0][ 'locale_' . $locale->getLocale() ];
 			?>
-
-			<p >
-				<label >
-					<input type = "hidden" name = "<?= $nameKey; ?>[locales][<?= $locale->getBlog(); ?>][blog]"
-					       value = "<?= $locale->getBlog(); ?>" >
-					<input type = "hidden" name = "<?= $nameKey; ?>[locales][<?= $locale->getBlog(); ?>][locale]"
-					       value = "<?= $locale->getLocale(); ?>" >
-					<input type = "checkbox" <?= $checked; ?>
-					       name = "<?= $nameKey; ?>[locales][<?= $locale->getBlog(); ?>][enabled]" >
-					<span ><?= $locale->getLocale(); ?></span >
-				</label >
-				<?php if ( $value ) { ?>
-					<span title = "<?= __( $item->getStatus() ); ?>" class = "widget-btn <?= $item->getStatusColor() ?>" ><span ><?= $item->getCompletionPercentage() ?>%</span ></span >
-				<?php } ?>
-			</p >
-
+			<tr class = "form-field" >
+				<td width="200px;">
+					<label >
+						<input type = "hidden" name = "<?= $nameKey; ?>[locales][<?= $locale->getBlog(); ?>][blog]" value = "<?= $locale->getBlog(); ?>" >
+						<input type = "hidden" name = "<?= $nameKey; ?>[locales][<?= $locale->getBlog(); ?>][locale]" value = "<?= $locale->getLocale(); ?>" >
+						<input class = "mcheck" type = "checkbox" <?= $checked; ?> name = "<?= $nameKey; ?>[locales][<?= $locale->getBlog(); ?>][enabled]" >
+						<span ><?= $locale->getLocale(); ?></span >
+					</label >
+				</td >
+				<td style="text-align: left;">
+					<?php if ( $value ) { ?>
+						<span title = "<?= __( $item->getStatus() ); ?>"
+						      class = "widget-btn <?= $item->getStatusColor() ?>" ><span ><?= $item->getCompletionPercentage() ?>%</span ></span >
+					<?php } ?>
+				</td >
+			</tr >
 		<?php } ?>
+		</td >
+		</tr >
 
-	</div >
+
+
+		</tbody >
+
+	</table >
 	<?= \Smartling\WP\WPAbstract::submitBlock(); ?>
 </div >

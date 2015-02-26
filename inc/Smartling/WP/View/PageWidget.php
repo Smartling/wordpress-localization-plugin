@@ -1,7 +1,22 @@
+<script>
+	function sm_check_all()
+	{
+		var boxes = document.getElementsByClassName('mcheck');
+		for (var i = 0; i < boxes.length; i++) { boxes[i].setAttribute('checked','checked'); }
+	}
+
+	function sm_uncheck_all()
+	{
+		var boxes=document.getElementsByClassName('mcheck');
+		for (var i = 0; i < boxes.length; i++) { boxes[i].removeAttribute('checked'); }
+	}
+</script>
+
 <div id = "smartling-post-widget" >
 
 	<div class = "fields" >
 		<h3 >Translate this post into:</h3 >
+		<a href="#" onclick="sm_check_all();return false;">Check All</a> / <a href="#" onclick="sm_uncheck_all();return false;">Uncheck All</a>
 		<?php
 		/**
 		 * @var TargetLocale[] $locales
@@ -40,7 +55,7 @@
 					       value = "<?= $locale->getBlog(); ?>" >
 					<input type = "hidden" name = "<?= $nameKey; ?>[locales][<?= $locale->getBlog(); ?>][locale]"
 					       value = "<?= $locale->getLocale(); ?>" >
-					<input type = "checkbox" <?= $checked; ?>
+					<input class = "mcheck" type = "checkbox" <?= $checked; ?>
 					       name = "<?= $nameKey; ?>[locales][<?= $locale->getBlog(); ?>][enabled]" >
 					<span ><?= $locale->getLocale(); ?></span >
 				</label >
