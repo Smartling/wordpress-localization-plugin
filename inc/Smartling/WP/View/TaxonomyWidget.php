@@ -8,7 +8,7 @@ use Smartling\WP\WPAbstract;
 <div id = "smartling-post-widget" >
 	<h2 >Smartling connector actions</h2 >
 
-	<h3 >Translate this <?= $data['term']->taxonomy; ?> into:</h3 >
+	<h3 ><?= __( vsprintf( 'Translate this %s into', array ( $data['term']->taxonomy ) ) ); ?></h3 >
 	<?= WPAbstract::checkUncheckBlock(); ?>
 	<table class = "form-table" style = "width: 400px;" >
 		<tbody >

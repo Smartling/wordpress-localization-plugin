@@ -7,7 +7,7 @@ use Smartling\WP\WPAbstract;
 ?>
 <div id = "smartling-post-widget" >
 	<div class = "fields" >
-		<h3 >Translate this post into:</h3 >
+		<h3 ><?= __( 'Translate this page into:' ); ?></h3 >
 		<?= WPAbstract::checkUncheckBlock(); ?>
 		<?php
 		$nameKey = PageWidgetController::WIDGET_DATA_NAME;
