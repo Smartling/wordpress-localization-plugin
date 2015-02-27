@@ -34,7 +34,7 @@ class SettingsController extends WPAbstract implements WPHookInterface {
 
 	public function menu () {
 		add_submenu_page(
-			'smartling-submissions',
+			'smartling-submissions-page',
 			'Settings',
 			'Settings',
 			'Administrator',
