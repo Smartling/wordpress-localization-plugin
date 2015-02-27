@@ -7,6 +7,6 @@ namespace Smartling\Exception;
  *
  * @package Smartling\Exception
  */
-class SmartlingInvalidFactoryArgumentException extends SmartlingException {
+class SmartlingInvalidFactoryArgumentException extends SmartlingExceptionAbstract {
 
 }

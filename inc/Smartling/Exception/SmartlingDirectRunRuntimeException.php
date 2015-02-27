@@ -2,6 +2,6 @@
 
 namespace Smartling\Exception;
 
-class SmartlingDirectRunRuntimeException extends SmartlingException {
+class SmartlingDirectRunRuntimeException extends SmartlingExceptionAbstract {
 
 }

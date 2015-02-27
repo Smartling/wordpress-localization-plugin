@@ -2,6 +2,6 @@
 
 namespace Smartling\Exception;
 
-class SmartligFileDownloadException extends SmartlingException {
+class SmartligFileDownloadException extends SmartlingExceptionAbstract {
 
 }

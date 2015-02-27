@@ -2,6 +2,6 @@
 
 namespace Smartling\Exception;
 
-class SmartlingConfigException extends SmartlingException {
+class SmartlingConfigException extends SmartlingExceptionAbstract {
 
 }

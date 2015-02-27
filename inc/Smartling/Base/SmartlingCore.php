@@ -8,7 +8,7 @@ use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\SmartlingDbException;
-use Smartling\Exception\SmartlingException;
+use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\XmlEncoder;
@@ -425,7 +425,7 @@ class SmartlingCore {
 			$submission = $this->loadSubmissionEntityById( $id );
 
 			$this->checkSubmissionByEntity( $submission );
-		} catch ( SmartlingException $e ) {
+		} catch ( SmartlingExceptionAbstract $e ) {
 			$messages[] = $e->getMessage();
 		} catch ( Exception $e ) {
 			$messages[] = $e->getMessage();
@@ -448,7 +448,7 @@ class SmartlingCore {
 			$submission = $this->getApiWrapper()->getStatus( $submission );
 
 			$submission = $this->getSubmissionManager()->storeEntity( $submission );
-		} catch ( SmartlingException $e ) {
+		} catch ( SmartlingExceptionAbstract $e ) {
 			$messages[] = $e->getMessage();
 		} catch ( Exception $e ) {
 			$messages[] = $e->getMessage();

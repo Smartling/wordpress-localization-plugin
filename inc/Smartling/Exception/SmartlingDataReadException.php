@@ -2,6 +2,6 @@
 
 namespace Smartling\Exception;
 
-class SmartlingDataReadException extends SmartlingException {
+class SmartlingDataReadException extends SmartlingExceptionAbstract {
 
 }
