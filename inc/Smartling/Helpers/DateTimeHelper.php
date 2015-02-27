@@ -96,8 +96,7 @@ class DateTimeHelper {
 	 *
 	 * @return string
 	 */
-	public static function nowAsString()
-	{
-		return self::dateTimeToString(new \DateTime('now', self::getDefaultTimezone()));
+	public static function nowAsString () {
+		return self::dateTimeToString( new \DateTime( 'now', self::getDefaultTimezone() ) );
 	}
 }

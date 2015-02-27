@@ -51,7 +51,7 @@ class SmartlingApiMock extends SmartlingAPI {
 		return $this->mockUpload();
 	}
 
-	private function mockUpload() {
+	private function mockUpload () {
 		return null;
 	}
 
@@ -62,7 +62,7 @@ class SmartlingApiMock extends SmartlingAPI {
 		$type = WordpressContentTypeHelper::CONTENT_TYPE_POST;
 
 		$factory = Bootstrap::getContainer()->get( 'factory.propertyMapper' );
-		$faker = Factory::create();
+		$faker   = Factory::create();
 
 
 		$wrapper = $factory->getMapper( $type );
@@ -72,13 +72,13 @@ class SmartlingApiMock extends SmartlingAPI {
 		 */
 		$fields = $wrapper->getFields();
 
-		$data = array();
+		$data = array ();
 
 		foreach ( $fields as $field ) {
-			$data[$field] = $faker->realText(180);
+			$data[ $field ] = $faker->realText( 180 );
 		}
 
-		$encodedXML = XmlEncoder::xmlEncode($data);
+		$encodedXML = XmlEncoder::xmlEncode( $data );
 
 		return $encodedXML;
 	}

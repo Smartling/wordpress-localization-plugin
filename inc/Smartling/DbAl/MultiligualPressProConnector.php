@@ -117,7 +117,7 @@ class MultiligualPressProConnector extends LocalizationPluginAbstract {
 
 		parent::__construct( $logger, $helper, $ml_plugin_statuses );
 
-		if ( false === $ml_plugin_statuses['multilingual-press-pro'] && defined( 'SMARTLING_CLI_EXECUTION' ) && SMARTLING_CLI_EXECUTION === false) {
+		if ( false === $ml_plugin_statuses['multilingual-press-pro'] && defined( 'SMARTLING_CLI_EXECUTION' ) && SMARTLING_CLI_EXECUTION === false ) {
 			throw new \Exception( 'Active plugin not found Exception' );
 		}
 	}

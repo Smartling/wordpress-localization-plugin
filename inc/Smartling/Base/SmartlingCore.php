@@ -189,9 +189,9 @@ class SmartlingCore {
 		}
 
 		$translatableFields = $this->getTranslatableFields( $submission->getContentType() );
-		$dataForConversion = $this->cutOffFields( $contentEntity->toArray(), $translatableFields );
-		$xml = XmlEncoder::xmlEncode( $dataForConversion );
-		$result = false;
+		$dataForConversion  = $this->cutOffFields( $contentEntity->toArray(), $translatableFields );
+		$xml                = XmlEncoder::xmlEncode( $dataForConversion );
+		$result             = false;
 
 		try {
 			$result = self::SEND_MODE === self::SEND_MODE_FILE
@@ -258,7 +258,7 @@ class SmartlingCore {
 	}
 
 	public function downloadTranslationBySubmission ( SubmissionEntity $entity ) {
-		$messages = array();
+		$messages = array ();
 
 		try {
 			$data = $this->getApiWrapper()->downloadFile( $entity );
@@ -297,7 +297,7 @@ class SmartlingCore {
 			}
 
 			$entity->appliedDate = DateTimeHelper::nowAsString();
-			$entity = $this->getSubmissionManager()->storeEntity( $entity );
+			$entity              = $this->getSubmissionManager()->storeEntity( $entity );
 		} catch ( Exception $e ) {
 			$messages[] = $e->getMessage();
 		}
@@ -503,7 +503,7 @@ class SmartlingCore {
 	/**
 	 * @param SubmissionEntity $entity
 	 */
-	public function checkEntityForDownload(SubmissionEntity $entity) {
+	public function checkEntityForDownload ( SubmissionEntity $entity ) {
 		if ( 100 === $entity->getCompletionPercentage() ) {
 			$this->downloadTranslationBySubmission( $entity );
 		}
@@ -519,14 +519,14 @@ class SmartlingCore {
 			$this->checkEntityForDownload( $entity );
 		}
 	}
-	
+
 	/**
 	 * @param array $items
 	 *
 	 * @throws SmartlingDbException
 	 */
-	public function bulkCheckByIds(array $items) {
-		foreach($items as $item) {
+	public function bulkCheckByIds ( array $items ) {
+		foreach ( $items as $item ) {
 			/** @var SubmissionEntity $entity */
 			$entity = $this->loadSubmissionEntityById( $item );
 			$this->checkSubmissionByEntity( $entity );

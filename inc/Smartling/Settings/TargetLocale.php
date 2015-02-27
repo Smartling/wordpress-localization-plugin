@@ -88,7 +88,7 @@ class TargetLocale {
 	 * @return int
 	 */
 	public function getBlog () {
-		return $this->blog;
+		return (int) $this->blog;
 	}
 
 	/**

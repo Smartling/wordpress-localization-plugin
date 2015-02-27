@@ -144,4 +144,93 @@ abstract class WPAbstract {
 
 		return $container;
 	}
+
+	public static function localeSelectionCheckboxBlock ( $namePrefix, $blog_id, $blog_name, $enabled = false ) {
+		$parts = array ();
+
+		$parts[] = HtmlTagGeneratorHelper::tag( 'input', '', array (
+			'type'  => 'hidden',
+			'name'  => vsprintf( '%s[locales][%s][blog]', array ( $namePrefix, $blog_id ) ),
+			'value' => $blog_id
+		) );
+
+
+		$parts[] = HtmlTagGeneratorHelper::tag( 'input', '', array (
+			'type'  => 'hidden',
+			'name'  => vsprintf( '%s[locales][%s][locale]', array ( $namePrefix, $blog_id ) ),
+			'value' => $blog_name
+		) );
+
+		$checkboxAttributes = array (
+			'name'  => vsprintf( '%s[locales][%s][enabled]', array ( $namePrefix, $blog_id ) ),
+			'class' => 'mcheck',
+			'type'  => 'checkbox'
+		);
+
+		if ( true === $enabled ) {
+			$checkboxAttributes['checked'] = 'checked';
+		}
+
+		$parts[] = HtmlTagGeneratorHelper::tag( 'input', '', $checkboxAttributes );
+
+		$parts[] = HtmlTagGeneratorHelper::tag( 'span', $blog_name, array () );
+
+
+		$container = HtmlTagGeneratorHelper::tag( 'label', implode( '', $parts ), array () );
+
+		return $container;
+	}
+
+	public static function localeSelectionTranslationStatusBlock ( $statusText, $statusColor, $percentage ) {
+		return HtmlTagGeneratorHelper::tag(
+			'span',
+			HtmlTagGeneratorHelper::tag(
+				'span',
+				vsprintf( '%s%%', array ( $percentage ) ),
+				array ()
+			),
+			array (
+				'title' => $statusText,
+				'class' => vsprintf( 'widget-btn %s', array ( $statusColor ) )
+			)
+		);
+	}
+
+	public static function checkUncheckBlock () {
+		$output = "function bulkCheck(className , action) {
+			var elements = document.getElementsByClassName( className );
+			switch (action) {
+				case 'check':
+				{
+					for ( var i = 0 ; i < elements.length ; i ++ ) {
+					elements[ i ].setAttribute( 'checked' , 'checked' );
+				}
+				break;
+			}
+				case 'uncheck':
+				{
+					for ( var i = 0 ; i < elements.length ; i ++ ) {
+					elements[ i ].removeAttribute( 'checked' );
+				}
+				break;
+			}
+			}
+		}";
+
+		$output = HtmlTagGeneratorHelper::tag( 'script', $output, array () );
+
+		$check = HtmlTagGeneratorHelper::tag( 'a', __( 'Check All' ), array (
+			'href'    => '#',
+			'onclick' => 'bulkCheck(\'mcheck\',\'check\');return false;'
+		) );
+
+		$unCheck = HtmlTagGeneratorHelper::tag( 'a', __( 'Uncheck All' ), array (
+			'href'    => '#',
+			'onclick' => 'bulkCheck(\'mcheck\',\'uncheck\');return false;'
+		) );
+
+		return $output . HtmlTagGeneratorHelper::tag( 'span', vsprintf( '%s / %s', array ( $check, $unCheck ) ) );
+
+
+	}
 }

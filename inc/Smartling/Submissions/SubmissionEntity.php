@@ -722,7 +722,6 @@ class SubmissionEntity {
 	}
 
 
-
 	/**
 	 * @return int
 	 */

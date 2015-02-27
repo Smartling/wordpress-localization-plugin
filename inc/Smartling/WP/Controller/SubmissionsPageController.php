@@ -41,20 +41,20 @@ class SubmissionsPageController
 	 * @inheritdoc
 	 */
 	public function register () {
-		add_action( 'wp_ajax_ajax_submissions_update_status',  array ( $this, 'ajaxHandler' ) );
-		add_action( 'wp_ajax_ajax_submissions',  array ( $this, 'ajaxHandler' ) );
+		add_action( 'wp_ajax_ajax_submissions_update_status', array ( $this, 'ajaxHandler' ) );
+		add_action( 'wp_ajax_ajax_submissions', array ( $this, 'ajaxHandler' ) );
 		add_action( 'admin_enqueue_scripts', array ( $this, 'wp_enqueue' ) );
 		add_action( 'admin_menu', array ( $this, 'menu' ) );
 		add_action( 'network_admin_menu', array ( $this, 'menu' ) );
 	}
 
 
-	public function ajaxHandler() {
-		if($_REQUEST["action"] == "ajax_submissions_update_status") {
+	public function ajaxHandler () {
+		if ( $_REQUEST["action"] == "ajax_submissions_update_status" ) {
 
 			$items = $this->checkItems( $_REQUEST["ids"] );
 
-			if(count($items) > 0) {
+			if ( count( $items ) > 0 ) {
 				/**
 				 * @var SmartlingCore $ep
 				 */
@@ -63,7 +63,7 @@ class SubmissionsPageController
 			}
 		}
 
-		$wp_list_table = new SubmissionTableWidget($this->getManager());
+		$wp_list_table = new SubmissionTableWidget( $this->getManager() );
 		$wp_list_table->ajax_response();
 	}
 
@@ -72,19 +72,19 @@ class SubmissionsPageController
 	 *
 	 * @return array
 	 */
-	public function checkItems(array $items) {
-		$result = array();
-		$cache = $this->getCache();
+	public function checkItems ( array $items ) {
+		$result = array ();
+		$cache  = $this->getCache();
 
-		$cachedItems = $cache->get(self::SUBMISSION_CHECKED_KEY);
+		$cachedItems = $cache->get( self::SUBMISSION_CHECKED_KEY );
 
-		$now = new \DateTime("now");
-		$slide = new \DateTime("now");
-		$slide = $slide->add(new \DateInterval(self::CACHE_SLIDE_EXPIRATION));
-		foreach($items as $item) {
+		$now   = new \DateTime( "now" );
+		$slide = new \DateTime( "now" );
+		$slide = $slide->add( new \DateInterval( self::CACHE_SLIDE_EXPIRATION ) );
+		foreach ( $items as $item ) {
 			$isCached = false;
-			if($cachedItems) {
-				foreach($cachedItems as &$cachedItem) {
+			if ( $cachedItems ) {
+				foreach ( $cachedItems as &$cachedItem ) {
 					if ( $cachedItem["item"] == $item ) {
 						$isCached = true;
 						if ( $cachedItem["expiration"] <= $now ) {
@@ -96,16 +96,16 @@ class SubmissionsPageController
 				}
 			}
 
-			if(!$isCached) {
-				$cachedItems[] = array(
-					"item" => $item,
+			if ( ! $isCached ) {
+				$cachedItems[] = array (
+					"item"       => $item,
 					"expiration" => $slide
 				);
-				$result[] = $item;
+				$result[]      = $item;
 			}
 		}
 
-		$cache->set(self::SUBMISSION_CHECKED_KEY, $cachedItems, self::CACHE_EXPIRATION);
+		$cache->set( self::SUBMISSION_CHECKED_KEY, $cachedItems, self::CACHE_EXPIRATION );
 
 		return $result;
 	}
