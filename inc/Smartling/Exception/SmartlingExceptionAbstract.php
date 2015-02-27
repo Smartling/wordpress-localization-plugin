@@ -3,12 +3,12 @@
 namespace Smartling\Exception;
 
 /**
- * Class SmartlingException
+ * Class SmartlingExceptionAbstract
  *
  * @package Smartling\Exception
  *
  * Base class for any Smartling Exception
  */
-abstract class SmartlingException extends \Exception {
+abstract class SmartlingExceptionAbstract extends \Exception {
 
 }
