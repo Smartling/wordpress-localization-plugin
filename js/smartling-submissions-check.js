@@ -35,13 +35,13 @@
 				case this.types.widget:
 					$('.submission-id').each(function(){
 						var el = $(this);
-						list.data.ids.push(el.val());
+						statusChecker.data.ids.push(el.val());
 					});
 				break;
 				case this.types.page:
 					$('.wp-list-table td.id').each(function() {
 						var el = $(this);
-						list.data.ids.push(el.text());
+						statusChecker.data.ids.push(el.text());
 					});
 				break;
 			}
