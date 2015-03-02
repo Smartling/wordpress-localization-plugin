@@ -202,7 +202,6 @@
 		}
 	};
 
-
 	$( function () {
 		var content = $('#smartling-form');
 		if(content.length > 0) {
@@ -211,3 +210,24 @@
 	} );
 
 })( jQuery );
+
+
+function bulkCheck(className , action) {
+	var elements = document.getElementsByClassName( className );
+	switch (action) {
+	case 'check':
+	{
+		for ( var i = 0 ; i < elements.length ; i ++ ) {
+			elements[ i ].setAttribute( 'checked' , 'checked' );
+		}
+		break;
+	}
+	case 'uncheck':
+	{
+		for ( var i = 0 ; i < elements.length ; i ++ ) {
+			elements[ i ].removeAttribute( 'checked' );
+		}
+		break;
+	}
+	}
+}
