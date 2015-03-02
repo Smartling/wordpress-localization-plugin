@@ -75,17 +75,18 @@ class SettingsController extends WPAbstract implements WPHookInterface {
 
 		if ( array_key_exists( 'callbackUrl', $settings ) ) {
 			$accountInfo->setCallBackUrl( $settings['callbackUrl'] == 'on' ? true : false );
-
 		}
 
 		if ( array_key_exists( 'autoAuthorize', $settings ) ) {
-			$accountInfo->setAutoAuthorize( $settings['autoAuthorize'] == 'on' ? true : false );
+			$accountInfo->setAutoAuthorize( 'on' === $settings['autoAuthorize'] );
+		} else {
+			$accountInfo->setAutoAuthorize( false );
 		}
 
 		if ( array_key_exists( 'defaultLocale', $settings ) ) {
 			$default = explode( "-", $settings['defaultLocale'] );
 
-			if ( count( $default ) == 2 ) {
+			if ( 2 === count( $default ) ) {
 				$targetLocales->setDefaultBlog( $default[0] );
 				$targetLocales->setDefaultLocale( $default[1] );
 			}
@@ -97,7 +98,7 @@ class SettingsController extends WPAbstract implements WPHookInterface {
 				$locales[] = array (
 					'locale'  => $key,
 					'target'  => $locale['target'],
-					'enabled' => array_key_exists( 'enabled', $locale ) && $locale['enabled'] == 'on' ? true : false,
+					'enabled' => array_key_exists( 'enabled', $locale ) && 'on' === $locale['enabled'],
 					'blog'    => $locale['blog']
 				);
 			}
