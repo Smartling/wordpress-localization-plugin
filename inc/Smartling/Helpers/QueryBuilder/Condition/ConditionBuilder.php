@@ -2,6 +2,8 @@
 
 namespace Smartling\Helpers\QueryBuilder\Condition;
 
+use Smartling\Helpers\QueryBuilder\QueryBuilder;
+
 /**
  * Class ConditionBuilder
  *
@@ -77,6 +79,20 @@ class ConditionBuilder {
 	public static function buildBlock ( $condition, $parameters ) {
 		if ( ! self::validate( $condition, $parameters ) ) {
 			throw new \InvalidArgumentException( 'Invalid condition or parameters' );
+		}
+
+		if ( in_array( $condition, array ( self::CONDITION_SIGN_IN, self::CONDITION_SIGN_NOT_IN ) ) ) {
+			foreach ( $parameters as $index => & $param ) {
+				if ( $index > 0 ) {
+					$param = vsprintf( '\'%s\'', array ( QueryBuilder::escapeValue( $param ) ) );
+				}
+			}
+
+			$field = reset( $parameters );
+			unset( $parameters[0] );
+			$values = implode( ', ', $parameters );
+
+			$parameters = array ( $field, $values );
 		}
 
 		return vsprintf( $condition, $parameters );
