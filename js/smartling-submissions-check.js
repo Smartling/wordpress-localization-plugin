@@ -3,7 +3,7 @@
  */
 (function($) {
 
-	var list = {
+	var statusChecker = {
 		types: {
 			widget: 0,
 			page: 1
@@ -12,8 +12,6 @@
 		data:  {
 			ids : []
 		},
-		timer: null,
-		delay: 10000,
 		init: function() {
 			this.type = this.detect();
 			if(this.type != null) {
@@ -98,7 +96,7 @@
 		}
 	};
 	$(function() {
-		list.init();
+		statusChecker.init();
 	});
 
 })(jQuery);
