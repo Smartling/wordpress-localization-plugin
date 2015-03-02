@@ -187,4 +187,14 @@ $settingsManager = $pluginInfo->getSettingsManager();
 		</table >
 		<?php submit_button(); ?>
 	</form >
+
+	<p >
+	<ul >
+		<li >
+			<a href = "/wp-admin/admin-post.php?action=smartling_run_cron" target = "_blank" >
+				<?= __( 'Trigger cron tasks (only for smartling connector, opens in a new window)' ); ?>
+			</a >
+		</li >
+	</ul >
+	</p>
 </div >

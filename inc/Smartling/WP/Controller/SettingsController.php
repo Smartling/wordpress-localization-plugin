@@ -2,6 +2,8 @@
 
 namespace Smartling\WP\Controller;
 
+use Smartling\Bootstrap;
+use Smartling\WP\JobEngine;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
@@ -30,6 +32,7 @@ class SettingsController extends WPAbstract implements WPHookInterface {
 		add_action( 'admin_menu', array ( $this, 'menu' ) );
 		add_action( 'network_admin_menu', array ( $this, 'menu' ) );
 		add_action( 'admin_post_smartling_settings', array ( $this, 'save' ) );
+		add_action( 'admin_post_smartling_run_cron', array ( $this, 'run_cron' ) );
 	}
 
 	public function menu () {
@@ -45,6 +48,25 @@ class SettingsController extends WPAbstract implements WPHookInterface {
 			)
 		);
 	}
+
+	/**
+	 * Starts cron job
+	 * @throws \Exception
+	 */
+	public function run_cron()
+	{
+		ignore_user_abort(true);
+		set_time_limit(0);
+
+		/**
+		 * @var JobEngine $jobEngine
+		 */
+		$jobEngine = Bootstrap::getContainer()->get('wp.cron');
+		$jobEngine->doWork();
+
+		wp_die('Cron job triggered. Now you can safely close this window / browser tab.');
+	}
+
 
 	public function getSiteLocales () {
 		return $this->getConnector()->getLocales();
