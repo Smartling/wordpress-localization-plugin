@@ -1,3 +1,10 @@
+<style>
+	tr.form-field td.sm_sh
+	{
+		padding-top: 3px;
+		padding-bottom: 4px;
+	}
+</style>
 <?php
 use Smartling\Settings\TargetLocale;
 use Smartling\Submissions\SubmissionEntity;
@@ -39,7 +46,7 @@ use Smartling\WP\WPAbstract;
 			}
 			?>
 			<tr class = "form-field" >
-				<td width = "200px;" >
+				<td class="sm_sh" width = "200px;" >
 					<?= WPAbstract::localeSelectionCheckboxBlock(
 						$nameKey,
 						$locale->getBlog(),
@@ -47,7 +54,7 @@ use Smartling\WP\WPAbstract;
 						$value
 					); ?>
 				</td >
-				<td style = "text-align: left;" >
+				<td class="sm_sh" style = "text-align: left;" >
 					<?php if ( $value ) { ?>
 						<?= WPAbstract::localeSelectionTranslationStatusBlock(
 							__( $item->getStatus() ),
