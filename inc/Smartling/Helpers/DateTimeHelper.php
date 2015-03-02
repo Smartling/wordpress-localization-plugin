@@ -146,7 +146,7 @@ class DateTimeHelper {
 	 */
 	public static function getWordpressTimeZone () {
 		if ( null === self::$wp_local_timezone ) {
-			self::$wp_local_timezone = new DateTimeZone( get_option( 'timezone_string' ) );
+			self::$wp_local_timezone = new DateTimeZone( get_option( 'timezone_string', 'UTC' ) );
 		}
 
 		return self::$wp_local_timezone;
