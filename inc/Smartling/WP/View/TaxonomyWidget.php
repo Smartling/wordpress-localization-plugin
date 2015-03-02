@@ -16,6 +16,8 @@ use Smartling\WP\WPAbstract;
 	<h2 >Smartling connector actions</h2 >
 
 	<h3 ><?= __( vsprintf( 'Translate this %s into', array ( $data['term']->taxonomy ) ) ); ?></h3 >
+	<h3 ><?= __( vsprintf( 'Translate this %s into',
+			array ( WordpressContentTypeHelper::getLocalizedContentType( $data['term']->taxonomy ) ) ) ); ?></h3 >
 	<?= WPAbstract::checkUncheckBlock(); ?>
 	<table class = "form-table" style = "width: 400px;" >
 		<tbody >

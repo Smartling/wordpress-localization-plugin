@@ -3,6 +3,7 @@
 namespace Smartling\Helpers;
 
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
+use Smartling\Exception\SmartlingNotSupportedContentException;
 
 /**
  * Class WordpressContentTypeHelper
@@ -89,5 +90,23 @@ class WordpressContentTypeHelper {
 			self::CONTENT_TYPE_CATEGORY,
 			self::CONTENT_TYPE_POST_TAG
 		);
+	}
+
+	/**
+	 * @param $contentType
+	 *
+	 * @return string
+	 * @throws SmartlingNotSupportedContentException
+	 */
+	public static function getLocalizedContentType ( $contentType ) {
+		$map = self::getLabelMap();
+
+		if ( array_key_exists( $contentType, $map ) ) {
+			return $map[ $contentType ];
+		} else {
+			throw new SmartlingNotSupportedContentException( vsprintf( 'Content-type \'%s\' is not supported yet.',
+				array ( $contentType ) ) );
+		}
+
 	}
 }

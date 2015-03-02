@@ -317,6 +317,7 @@ class SubmissionTableWidget extends \WP_List_Table {
 			//$row["fileUri"] = $row["fileUri"] != null ? basename($row["fileUri"]) : null;
 
 			$row['sourceTitle'] = $this->applyRowActions( $row );
+			$row['contentType']    = WordpressContentTypeHelper::getLocalizedContentType($row['contentType']);
 			$row['submissionDate'] = DateTimeHelper::toWordpressLocalDateTime( DateTimeHelper::stringToDateTime( $row['submissionDate'] ) );
 			$row['appliedDate']    = '0000-00-00 00:00:00' === $row['appliedDate'] ? __( 'Never' ) :
 				DateTimeHelper::toWordpressLocalDateTime( DateTimeHelper::stringToDateTime( $row['appliedDate'] ) );
