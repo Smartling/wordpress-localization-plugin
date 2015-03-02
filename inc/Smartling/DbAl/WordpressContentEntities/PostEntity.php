@@ -73,6 +73,9 @@ class PostEntity extends EntityAbstract {
 	 * @inheritdoc
 	 */
 	public function __construct ( LoggerInterface $logger ) {
+		parent::__construct( $logger );
+
+		$this->setType( WordpressContentTypeHelper::CONTENT_TYPE_POST );
 		$this->hashAffectingFields = array_merge( $this->hashAffectingFields, array (
 			'ID',
 			'post_author',
@@ -86,7 +89,6 @@ class PostEntity extends EntityAbstract {
 			'post_type',
 		) );
 
-		parent::__construct( $logger );
 
 		$this->setEntityFields( $this->fields );
 	}
@@ -161,37 +163,43 @@ class PostEntity extends EntityAbstract {
 		return (int) $res;
 	}
 
+
 	/**
-	 * Loads ALL entities from database
+	 * @param string $limit
+	 * @param int    $offset
+	 * @param string $orderBy
+	 * @param string $order
 	 *
 	 * @return array
 	 */
-	public function getAll () {
+	public function getAll ($limit = '', $offset = 0, $orderBy = 'date', $order = 'DESC') {
 
 		$arguments = array (
-			'numberposts'      => '',
-			'offset'           => 0,
+			'posts_per_page'   => $limit,
+			'offset'           => $offset,
 			'category'         => 0,
-			'orderby'          => 'date',
-			'order'            => 'DESC',
+			'orderby'          => $orderBy,
+			'order'            => $order,
 			'include'          => array (),
 			'exclude'          => array (),
 			'meta_key'         => '',
 			'meta_value'       => '',
-			'post_type'        => 'post',
+			'post_type'        => $this->getType(),
 			'suppress_filters' => true
 		);
 
 		$posts = get_posts( $arguments );
 
-		$result = array ();
+		return $posts;
 
-		foreach ( $posts as $post ) {
-			$result[] = $this->resultToEntity( $post );
-		}
+	}
 
-		return $result;
-
+	/**
+	 * @return int
+	 */
+	public function getTotal() {
+		$wp = wp_count_posts($this->getType());
+		return (int)$wp->publish + (int)$wp->future + (int)$wp->draft + (int)$wp->pending + (int)$wp->private + (int)$wp->autoDraft + (int)$wp->inherit;
 	}
 
 	public function getTitle () {

@@ -226,6 +226,33 @@ class SmartlingCore {
 	}
 
 	/**
+	 * @param string   $contentType
+	 * @param int      $sourceBlog
+	 * @param int      $sourceEntity
+	 * @param int      $targetBlog
+	 * @param int|null $targetEntity
+	 *
+	 * @return bool
+	 */
+	public function createForTranslation ( $contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null ) {
+		$submission = $this->prepareSubmissionEntity( $contentType, $sourceBlog, $sourceEntity, $targetBlog,
+			$targetEntity );
+
+		$contentEntity = $this->readContentEntity( $submission );
+
+		if ( null === $submission->getId() ) {
+			$submission->setSourceContentHash( $contentEntity->calculateHash() );
+			$submission->setSourceTitle( $contentEntity->getTitle() );
+
+			// generate URI
+			$submission->getFileUri();
+			$submission = $this->getSubmissionManager()->storeEntity( $submission );
+		}
+
+		return $this->getSubmissionManager()->storeEntity( $submission );
+	}
+
+	/**
 	 * Sends data to smartling directly
 	 *
 	 * @param SubmissionEntity $submission
@@ -509,10 +536,14 @@ class SmartlingCore {
 		}
 	}
 
-	public function bulkCheckInProgress () {
+	public function bulkCheckNewAndInProgress () {
 		$entities = $this->getSubmissionManager()->find( array (
-			'status' => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS
-		) );
+			'status' => array(
+				SubmissionEntity::SUBMISSION_STATUS_NEW,
+				SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
+
+			))
+		);
 
 		foreach ( $entities as $entity ) {
 			$this->checkSubmissionByEntity( $entity );
@@ -531,9 +562,11 @@ class SmartlingCore {
 		foreach ( $items as $item ) {
 			/** @var SubmissionEntity $entity */
 			$entity = $this->loadSubmissionEntityById( $item );
-			$this->checkSubmissionByEntity( $entity );
-			$this->checkEntityForDownload( $entity );
-			$results[] = $entity;
+			if($entity->getStatus() == SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS) {
+				$this->checkSubmissionByEntity( $entity );
+				$this->checkEntityForDownload( $entity );
+				$results[] = $entity;
+			}
 		}
 
 		return $results;

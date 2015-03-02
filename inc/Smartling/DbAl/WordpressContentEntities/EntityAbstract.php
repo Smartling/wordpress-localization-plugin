@@ -13,6 +13,11 @@ use Smartling\Exception\EntityNotFoundException;
 abstract class EntityAbstract {
 
 	/**
+	 * @var string
+	 */
+	protected $type = "abstract";
+
+	/**
 	 * List of fields that affect the hash of the entity
 	 *
 	 * @var array
@@ -149,12 +154,21 @@ abstract class EntityAbstract {
 	 */
 	abstract public function get ( $guid );
 
+
 	/**
-	 * Loads ALL entities from database
+	 * @param string $limit
+	 * @param int    $offset
+	 * @param bool   $orderBy
+	 * @param bool   $order
 	 *
 	 * @return mixed
 	 */
-	abstract public function getAll ();
+	abstract public function getAll ($limit = '', $offset = 0, $orderBy = false, $order = false);
+
+	/**
+	 * @return int
+	 */
+	abstract public function getTotal ();
 
 	/**
 	 * Stores entity to database
@@ -250,5 +264,20 @@ abstract class EntityAbstract {
 
 	public function getPK () {
 		return (int) $this->{$this->getPrimaryFieldName()};
+	}
+
+
+	/**
+	 * @return string
+	 */
+	public function getType () {
+		return $this->type;
+	}
+
+	/**
+	 * @param string $type
+	 */
+	public function setType ( $type ) {
+		$this->type = $type;
 	}
 }

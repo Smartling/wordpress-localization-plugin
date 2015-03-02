@@ -11,13 +11,12 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  * @package Smartling\DbAl\WordpressContentEntities
  */
 class CategoryEntity extends TaxonomyEntityAbstract {
-
 	/**
 	 * @inheritdoc
 	 */
 	public function __construct ( LoggerInterface $logger ) {
-		$this->setTaxonomyType( WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY );
 		parent::__construct( $logger );
+		$this->setType( WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY );
 		$this->setEntityFields( $this->fields );
 	}
 

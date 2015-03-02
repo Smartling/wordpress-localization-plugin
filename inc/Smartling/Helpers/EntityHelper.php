@@ -36,11 +36,6 @@ class EntityHelper {
 	private $logger;
 
 	/**
-	 * @var ContentEntitiesIOFactory
-	 */
-	private $contentIoFactory;
-
-	/**
 	 * @return PluginInfo
 	 */
 	public function getPluginInfo () {
@@ -101,13 +96,6 @@ class EntityHelper {
 	 */
 	public function getSettingsManager () {
 		return $this->getPluginInfo()->getSettingsManager();
-	}
-
-	/**
-	 * @param ContentEntitiesIOFactory $contentIoFactory
-	 */
-	public function setContentIoFactory ( $contentIoFactory ) {
-		$this->contentIoFactory = $contentIoFactory;
 	}
 
 	/**

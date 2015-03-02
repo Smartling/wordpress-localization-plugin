@@ -23,14 +23,6 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  * @property int    $count
  */
 abstract class TaxonomyEntityAbstract extends EntityAbstract {
-
-	/**
-	 * Type of taxonomy ('category','tag', etc.)
-	 *
-	 * @var string
-	 */
-	private $taxonomyType = '';
-
 	/**
 	 * Standard taxonomy fields
 	 *
@@ -49,29 +41,16 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 	);
 
 	/**
-	 * @return string
-	 */
-	public function getTaxonomyType () {
-		return $this->taxonomyType;
-	}
-
-	/**
-	 * @param string $taxonomyType
-	 */
-	public function setTaxonomyType ( $taxonomyType ) {
-		$this->taxonomyType = $taxonomyType;
-	}
-
-	/**
 	 * @inheritdoc
 	 */
 	public function __construct ( LoggerInterface $logger ) {
+		parent::__construct( $logger );
+
 		$this->hashAffectingFields = array (
 			'name',
 			'description',
 		);
 
-		parent::__construct( $logger );
 
 		$this->setEntityFields( $this->fields );
 	}
@@ -92,11 +71,11 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 	 * @throws EntityNotFoundException
 	 */
 	public function get ( $guid ) {
-		$term = get_term( $guid, $this->getTaxonomyType(), ARRAY_A );
+		$term = get_term( $guid, $this->getType(), ARRAY_A );
 
 		if ( $term instanceof \WP_Error ) {
 			$message = vsprintf( 'An error occurred while reading taxonomy id=%s, type=%s: %s',
-				array ( $guid, $this->getTaxonomyType(), $term->get_error_message() ) );
+				array ( $guid, $this->getType(), $term->get_error_message() ) );
 
 			$this->getLogger()->error( $message );
 
@@ -104,7 +83,7 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 		}
 
 		if ( null === $term ) {
-			$this->entityNotFound( $this->getTaxonomyType(), $guid );
+			$this->entityNotFound( $this->getType(), $guid );
 		}
 
 		return $this->resultToEntity( $term, $this );
@@ -116,20 +95,20 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 	 * @return TaxonomyEntityAbstract[]
 	 * @throws SmartlingDbException
 	 */
-	public function getAll () {
+	public function getAll ($limit = '', $offset = '', $orderBy = 'term_id', $order = 'ASC') {
 
 		$taxonomies = array (
-			$this->getTaxonomyType(),
+			$this->getType(),
 		);
 
 		$args = array (
-			'orderby'           => 'term_id',
-			'order'             => 'ASC',
+			'orderby'           => $orderBy,
+			'order'             => $order,
 			'hide_empty'        => false,
 			'exclude'           => array (),
 			'exclude_tree'      => array (),
 			'include'           => array (),
-			'number'            => '',
+			'number'            => $limit,
 			'fields'            => 'all',
 			'slug'              => '',
 			'parent'            => '',
@@ -139,7 +118,7 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 			'name__like'        => '',
 			'description__like' => '',
 			'pad_counts'        => false,
-			'offset'            => '',
+			'offset'            => $offset,
 			'search'            => '',
 			'cache_domain'      => 'core'
 		);
@@ -148,7 +127,7 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 
 		if ( $terms instanceof \WP_Error ) {
 			$message = vsprintf( 'An error occurred while reading all taxonomies of type %s: %s',
-				array ( $this->getTaxonomyType(), $terms->get_error_message() ) );
+				array ( $this->getType(), $terms->get_error_message() ) );
 
 			$this->getLogger()->error( $message );
 
@@ -161,9 +140,15 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 			$result[] = $this->resultToEntity( (array) $term );
 		}
 
-		return $result;
+		return $terms;
 	}
 
+	/**
+	 * @return int
+	 */
+	public function getTotal() {
+		return wp_count_terms($this->getType());
+	}
 
 	/**
 	 * @param EntityAbstract $entity
@@ -205,7 +190,7 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 				'An error occurred while saving taxonomy id=%s, type=%s: %s',
 				array (
 					( $entity->term_id ? $entity->term_id : '<none>' ),
-					$this->getTaxonomyType(),
+					$this->getType(),
 					$result->get_error_message()
 				)
 			);

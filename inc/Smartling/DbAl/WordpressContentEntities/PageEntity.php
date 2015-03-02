@@ -3,6 +3,7 @@
 namespace Smartling\DbAl\WordpressContentEntities;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Helpers\WordpressContentTypeHelper;
 
 /**
  * Class PageEntity
@@ -17,6 +18,7 @@ class PageEntity extends PostEntity {
 	 * @inheritdoc
 	 */
 	public function __construct ( LoggerInterface $logger ) {
+		parent::__construct( $logger );
 
 		$ownFields = array (
 			'page_template'
@@ -25,7 +27,7 @@ class PageEntity extends PostEntity {
 		$this->fields              = array_merge( $this->fields, $ownFields );
 		$this->hashAffectingFields = array_merge( array (), $ownFields );
 
-		parent::__construct( $logger );
+		$this->setType( WordpressContentTypeHelper::CONTENT_TYPE_PAGE );
 	}
 
 }

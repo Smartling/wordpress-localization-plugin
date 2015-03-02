@@ -1,26 +1,34 @@
 <?php
+/**
+ * Created by PhpStorm.
+ * User: sergey@slepokurov.com
+ * Date: 02.03.2015
+ * Time: 11:44
+ */
 
 namespace Smartling\WP\View;
+
 
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
-use Smartling\Helpers\DateTimeHelper;
+use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionManager;
 
 /**
- * Class SubmissionTableWidget
+ * Class BulkSubmitTableWidget
  *
  * @package Smartling\WP\View
  */
-class SubmissionTableWidget extends \WP_List_Table {
+class BulkSubmitTableWidget  extends \WP_List_Table {
 
 	/**
 	 * @var string
 	 */
-	private $_custom_controls_namespace = 'smartling-submissions-page';
+	private $_custom_controls_namespace = 'smartling-bulk-submit-page';
 
 	/**
 	 * the source array with request data
@@ -45,7 +53,7 @@ class SubmissionTableWidget extends \WP_List_Table {
 	 * @var array
 	 */
 	private $defaultValues = array (
-		self::CONTENT_TYPE_SELECT_ELEMENT_NAME      => 'any',
+		self::CONTENT_TYPE_SELECT_ELEMENT_NAME      => WordpressContentTypeHelper::CONTENT_TYPE_POST,
 		self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME => null,
 	);
 
@@ -61,15 +69,47 @@ class SubmissionTableWidget extends \WP_List_Table {
 	private $manager;
 
 	/**
-	 * @param SubmissionManager $manager
+	 * @var EntityHelper
 	 */
-	public function __construct ( SubmissionManager $manager ) {
+	private $entityHelper;
+
+	/**
+	 * @var PluginInfo
+	 */
+	private $pluginInfo;
+
+	/**
+	 * @param SubmissionManager $manager
+	 * @param PluginInfo        $pluginInfo
+	 * @param EntityHelper      $entityHelper
+	 */
+	public function __construct (
+		SubmissionManager $manager,
+		PluginInfo $pluginInfo,
+		EntityHelper $entityHelper ) {
+
 		$this->manager = $manager;
 		$this->source  = $_REQUEST;
+		$this->pluginInfo   = $pluginInfo;
+		$this->entityHelper = $entityHelper;
 
-		$this->defaultValues[ self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME ] = $manager->getDefaultSubmissionStatus();
+		$this->defaultValues[ self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME ] = self::CONTENT_TYPE_SELECT_ELEMENT_NAME;
 
 		parent::__construct( $this->_settings );
+	}
+
+	/**
+	 * @return EntityHelper
+	 */
+	public function getEntityHelper () {
+		return $this->entityHelper;
+	}
+
+	/**
+	 * @return PluginInfo
+	 */
+	public function getPluginInfo () {
+		return $this->pluginInfo;
 	}
 
 	/**
@@ -79,18 +119,17 @@ class SubmissionTableWidget extends \WP_List_Table {
 	 * @return array
 	 */
 	public function getSortingOptions ( $fieldNameKey = 'orderby', $orderDirectionKey = 'order' ) {
-		$options = array ();
-
 		$column = $this->getFromSource( $fieldNameKey, false );
 
 		if ( false !== $column ) {
 			$direction = strtoupper( $this->getFromSource( $orderDirectionKey,
 				SmartlingToCMSDatabaseAccessWrapperInterface::SORT_OPTION_ASC ) );
-
-			$options = array ( $column => $direction );
 		}
 
-		return $options;
+		return array(
+			"orderby" => $column,
+			"order" => $direction
+		);
 	}
 
 	public function column_default ( $item, $column_name ) {
@@ -111,19 +150,13 @@ class SubmissionTableWidget extends \WP_List_Table {
 
 		//Build row actions
 		$actions = array (
-			'send'     => HtmlTagGeneratorHelper::tag( 'a', __( 'Resend' ), array (
-				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'sendSingle', $item['id'] ) )
+			'send'     => HtmlTagGeneratorHelper::tag( 'a', __( 'Send' ), array (
+				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'sendSingle', $item['id'] . '-' . $item["type"] ) )
 			) ),
-			'download' => HtmlTagGeneratorHelper::tag( 'a', __( 'Download' ), array (
-				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'downloadSingle', $item['id'] ) )
-			) ),
-			/*'check'    => HtmlTagGeneratorHelper::tag( 'a', __( 'Check Status' ), array (
-				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'checkSingle', $item['id'] ) )
-			) )*/
 		);
 
 		//Return the title contents
-		return vsprintf( '%s %s', array ( $item['sourceTitle'], $this->row_actions( $actions ) ) );
+		return vsprintf( '%s %s', array ( $item['title'], $this->row_actions( $actions ) ) );
 	}
 
 	/**
@@ -137,8 +170,8 @@ class SubmissionTableWidget extends \WP_List_Table {
 		return HtmlTagGeneratorHelper::tag( 'input', '', array (
 			'type'  => 'checkbox',
 			'name'  => $this->buildHtmlTagName( $this->_args['singular'] ) . '[]',
-			'value' => $item['id'],
-			'id'    => 'submission-id-' . $item['id']
+			'value' => $item['id'] . '-' . $item["type"],
+			'id' => $item['id'] . '-' . $item["type"]
 		) );
 	}
 
@@ -146,11 +179,16 @@ class SubmissionTableWidget extends \WP_List_Table {
 	 * @inheritdoc
 	 */
 	public function get_columns () {
-		$columns = $this->manager->getColumnsLabels();
-
-		$columns = array_merge( array ( 'bulkActionCb' => '' ), $columns );
-
-		return $columns;
+		return array(
+			'bulkActionCb' => "",
+			'id'             => __( 'ID' ),
+			'title'    => __( 'Title' ),
+			'type'    => __( 'Type' ),
+			'author'      => __( 'Author' ),
+			'status' => __( 'Status' ),
+			'locales'    => __( 'Locales' ),
+			'updated'      => __( 'Updated' )
+		);
 	}
 
 	/**
@@ -158,7 +196,12 @@ class SubmissionTableWidget extends \WP_List_Table {
 	 */
 	public function get_sortable_columns () {
 
-		$fields = $this->manager->getSortableFields();
+		$fields = array(
+			"title",
+			"status",
+			"author",
+			"updated"
+		);
 
 		$sortable_columns = array ();
 
@@ -174,9 +217,7 @@ class SubmissionTableWidget extends \WP_List_Table {
 	 */
 	public function get_bulk_actions () {
 		$actions = array (
-			'send'     => __( 'Resend' ),
-			'download' => __( 'Download' ),
-			'check'    => __( 'Check Status' ),
+			'send'     => __( 'Send' ),
 		);
 
 		return $actions;
@@ -186,28 +227,46 @@ class SubmissionTableWidget extends \WP_List_Table {
 	 * Handles actions for multiply objects
 	 */
 	private function processBulkAction () {
+		//var_dump('YO');die();
 		/**
 		 * @var array $submissions
 		 */
 		$submissions = $this->getFormElementValue( 'submission', array () );
+		$locales = array();
+		$data = $_REQUEST[ "bulk-submit-locales" ];
 
-		/**
-		 * @var SmartlingCore $ep
-		 */
-		$ep = Bootstrap::getContainer()->get( 'entrypoint' );
+		if ( null !== $data && array_key_exists( 'locales', $data ) ) {
+			foreach ( $data['locales'] as $blogId => $blogName ) {
+				if ( array_key_exists( 'enabled', $blogName ) && 'on' === $blogName['enabled'] ) {
+					$locales[ $blogId ] = $blogName['locale'];
+				}
+			}
 
-		if ( is_array( $submissions ) ) {
-			foreach ( $submissions as $submission ) {
-				switch ( $this->current_action() ) {
-					case "download":
-						$messages = $ep->downloadTranslationBySubmissionId( $submission );
-						break;
-					case "send":
-						$messages = $ep->sendForTranslationBySubmissionId( $submission );
-						break;
-					case "check":
-						$messages = $ep->checkSubmissionById( $submission );
-						break;
+			/**
+			 * @var SmartlingCore $ep
+			 */
+			$ep = Bootstrap::getContainer()->get( 'entrypoint' );
+
+			if ( is_array( $submissions ) && count( $locales ) > 0 ) {
+				foreach ( $submissions as $submission ) {
+					switch ( $this->current_action() ) {
+						case "send":
+							list( $id, $type ) = explode( '-', $submission );
+							$sourceBlog = $this->getPluginInfo()->getSettingsManager()->getLocales()->getDefaultBlog();
+							$originalId = (int) $this->getEntityHelper()->getOriginalContentId( $id );
+
+							foreach ( $locales as $blogId => $blogName ) {
+
+								$result = $ep->createForTranslation(
+									$type,
+									$sourceBlog,
+									$originalId,
+									(int) $blogId,
+									$this->getEntityHelper()->getTarget( $id, $blogId )
+								);
+							}
+							break;
+					}
 				}
 			}
 		}
@@ -218,22 +277,40 @@ class SubmissionTableWidget extends \WP_List_Table {
 	 */
 	private function processSingleAction () {
 		$submissionId = (int) $this->getFormElementValue( 'submission', 0 );
-		if ( $submissionId > 0 ) {
-			/**
-			 * @var SmartlingCore $ep
-			 */
-			$ep = Bootstrap::getContainer()->get( 'entrypoint' );
+		$locales = array();
+		$data = $_REQUEST[ "bulk-submit-locales" ];
+		if ( null !== $data && array_key_exists( 'locales', $data ) ) {
+			foreach ( $data['locales'] as $blogId => $blogName ) {
+				if ( array_key_exists( 'enabled', $blogName ) && 'on' === $blogName['enabled'] ) {
+					$locales[ $blogId ] = $blogName['locale'];
+				}
+			}
 
-			switch ( $this->current_action() ) {
-				case "downloadSingle":
-					$messages = $ep->downloadTranslationBySubmissionId( $submissionId );
-					break;
-				case "sendSingle":
-					$messages = $ep->sendForTranslationBySubmissionId( $submissionId );
-					break;
-				case "checkSingle":
-					$messages = $ep->checkSubmissionById( $submissionId );
-					break;
+			if ( $submissionId > 0 && count( $locales ) > 0 ) {
+				/**
+				 * @var SmartlingCore $ep
+				 */
+				$ep = Bootstrap::getContainer()->get( 'entrypoint' );
+
+				switch ( $this->current_action() ) {
+					case "sendSingle":
+						list( $id, $type ) = explode( '-', $submissionId );
+
+						$sourceBlog = $this->getPluginInfo()->getSettingsManager()->getLocales()->getDefaultBlog();
+						$originalId = (int) $this->getEntityHelper()->getOriginalContentId( $id );
+
+						foreach ( $locales as $blogId => $blogName ) {
+
+							$result = $ep->createForTranslation(
+								$type,
+								$sourceBlog,
+								$originalId,
+								(int) $blogId,
+								$this->getEntityHelper()->getTarget( $id, $blogId )
+							);
+						}
+						break;
+				}
 			}
 		}
 
@@ -261,18 +338,6 @@ class SubmissionTableWidget extends \WP_List_Table {
 	}
 
 	/**
-	 * @return string|null
-	 */
-	private function getStatusFilterValue () {
-		$value = $this->getFormElementValue(
-			self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME,
-			$this->defaultValues[ self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME ]
-		);
-
-		return 'any' === $value ? null : $value;
-	}
-
-	/**
 	 * @inheritdoc
 	 */
 	public function prepare_items () {
@@ -289,51 +354,28 @@ class SubmissionTableWidget extends \WP_List_Table {
 
 		$this->processAction();
 
-		$total = 0;
 
 		$contentTypeFilterValue = $this->getContentTypeFilterValue();
+		$sortOptions = $this->getSortingOptions();
 
-		$statusFilterValue = $this->getStatusFilterValue();
-
-		$searchText = $this->getFromSource( 's', '' );
-
-		if ( empty( $searchText ) ) {
-			$data = $this->manager->getEntities( $contentTypeFilterValue, $statusFilterValue,
-				$this->getSortingOptions(), $pageOptions,
-				$total );
-		} else {
-			$data = $this->manager->search( $searchText, array ( 'sourceTitle', 'sourceGUID', 'fileUri' ),
-				$contentTypeFilterValue, $statusFilterValue, $this->getSortingOptions(), $pageOptions,
-				$total );
-		}
+		$core = Bootstrap::getContainer()->get( 'entrypoint' );
+		$io = $core->getContentIoFactory()->getMapper( $contentTypeFilterValue );
+		$data = $io->getAll(
+			$pageOptions['limit'],
+			($pageOptions['page'] - 1) * $pageOptions['limit'],
+			$sortOptions["orderby"],
+			$sortOptions["order"]
+		);
+		$total = $io->getTotal();
 
 		$dataAsArray = array ();
-
-		$file_uri_max_chars = 50;
-
-		foreach ( $data as $element ) {
-			$row = $element->toArray();
-
-			//$row["fileUri"] = $row["fileUri"] != null ? basename($row["fileUri"]) : null;
-
-			$row['sourceTitle']    = $this->applyRowActions( $row );
-			$row['contentType']    = WordpressContentTypeHelper::getLocalizedContentType( $row['contentType'] );
-			$row['submissionDate'] = DateTimeHelper::toWordpressLocalDateTime( DateTimeHelper::stringToDateTime( $row['submissionDate'] ) );
-			$row['appliedDate']    = '0000-00-00 00:00:00' === $row['appliedDate'] ? __( 'Never' ) :
-				DateTimeHelper::toWordpressLocalDateTime( DateTimeHelper::stringToDateTime( $row['appliedDate'] ) );
-
-			if ( mb_strlen( $row['fileUri'], 'utf8' ) > $file_uri_max_chars ) {
-				$orig     = $row['fileUri'];
-				$shrinked = mb_substr( $orig, 0, $file_uri_max_chars - 3, 'utf8' ) . '...';
-
-				$row['fileUri'] = HtmlTagGeneratorHelper::tag( 'span', $shrinked, array ( 'title' => $orig ) );
-
+		if($data) {
+			foreach ( $data as $item ) {
+				$row = $this->extractFields($item, $contentTypeFilterValue);
+				//$row['title']  = $this->applyRowActions( $row );
+				$row           = array_merge( array ( 'bulkActionCb' => $this->column_cb( $row ) ), $row );
+				$dataAsArray[] = $row;
 			}
-
-
-			$row = array_merge( array ( 'bulkActionCb' => $this->column_cb( $row ) ), $row );
-
-			$dataAsArray[] = $row;
 		}
 
 
@@ -347,40 +389,37 @@ class SubmissionTableWidget extends \WP_List_Table {
 	}
 
 	/**
-	 * @return string
+	 * @param $item
+	 * @param $type
+	 *
+	 * @return array
 	 */
-	public function statusSelectRender () {
-		$controlName = 'status';
-
-		$statuses = $this->manager->getSubmissionStatusLabels();
-
-		// add 'Any' to turn off filter
-		$statuses = array_merge( array ( 'any' => __( 'Any' ) ), $statuses );
-
-		$value = $this->getFormElementValue(
-			$controlName,
-			$this->defaultValues[ $controlName ]
-		);
-
-		$html = HtmlTagGeneratorHelper::tag(
-				'label',
-				__( 'Status' ),
-				array (
-					'for' => $this->buildHtmlTagName( $controlName ),
-				)
-			) . HtmlTagGeneratorHelper::tag(
-				'select',
-				HtmlTagGeneratorHelper::renderSelectOptions(
-					$value,
-					$statuses
-				),
-				array (
-					'id'   => $this->buildHtmlTagName( $controlName ),
-					'name' => $this->buildHtmlTagName( $controlName )
-				)
-			);
-
-		return $html;
+	private function extractFields($item, $type) {
+		switch($type) {
+			case WordpressContentTypeHelper::CONTENT_TYPE_POST:
+			case WordpressContentTypeHelper::CONTENT_TYPE_PAGE:
+				return  array (
+					"id"      => $item->ID,
+					"title"   => $item->post_title,
+					"type"    => $item->post_type,
+					"author"  => get_the_author_meta( "user_nicename", $item->post_author ),
+					"status"  => $item->post_status,
+					"locales" => null,
+					"updated" => $item->post_date
+				);
+			case WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG:
+			case WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY:
+				return  array (
+					"id"      => $item->term_id,
+					"title"   => $item->name,
+					"type"    => $item->taxonomy,
+					"author"  => get_the_author_meta( "user_nicename", $item->post_author ),
+					"status"  => null,
+					"locales" => null,
+					"updated" => null
+				);
+		}
+		return array();
 	}
 
 	/**
@@ -390,9 +429,6 @@ class SubmissionTableWidget extends \WP_List_Table {
 		$controlName = 'content-type';
 
 		$types = WordpressContentTypeHelper::getLabelMap();
-
-		// add 'Any' to turn off filter
-		$types = array_merge( array ( 'any' => __( 'Any' ) ), $types );
 
 		$value = $this->getFormElementValue(
 			$controlName,
