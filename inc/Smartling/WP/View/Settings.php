@@ -114,7 +114,8 @@ $settingsManager = $pluginInfo->getSettingsManager();
 
 						<div >
 							<p class = "plugin-locales" >
-								<?= WPAbstract::settingsPageTsargetLocaleCheckbox($value,$key, $short,$target->getEnabled() );?>
+								<?= WPAbstract::settingsPageTsargetLocaleCheckbox( $value, $key, $short,
+									$target->getEnabled() ); ?>
 							</p >
 						</div >
 

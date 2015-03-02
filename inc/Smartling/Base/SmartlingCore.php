@@ -527,7 +527,7 @@ class SmartlingCore {
 	 * @throws SmartlingDbException
 	 */
 	public function bulkCheckByIds ( array $items ) {
-		$results = array();
+		$results = array ();
 		foreach ( $items as $item ) {
 			/** @var SubmissionEntity $entity */
 			$entity = $this->loadSubmissionEntityById( $item );
@@ -535,6 +535,7 @@ class SmartlingCore {
 			$this->checkEntityForDownload( $entity );
 			$results[] = $entity;
 		}
+
 		return $results;
 	}
 }

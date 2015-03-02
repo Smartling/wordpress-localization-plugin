@@ -150,12 +150,12 @@ abstract class WPAbstract {
 	 *
 	 * @return string
 	 */
-	public static function inputHidden ($submissionId) {
+	public static function inputHidden ( $submissionId ) {
 		$hiddenId = HtmlTagGeneratorHelper::tag( 'input', '', array (
 			'type'  => 'hidden',
 			'value' => $submissionId,
-			'class'  => 'submission-id',
-			'id' => 'submission-id-' . $submissionId
+			'class' => 'submission-id',
+			'id'    => 'submission-id-' . $submissionId
 		) );
 
 		return $hiddenId;
@@ -248,7 +248,12 @@ abstract class WPAbstract {
 		return $output . HtmlTagGeneratorHelper::tag( 'span', vsprintf( '%s / %s', array ( $check, $unCheck ) ) );
 	}
 
-	public static function settingsPageTsargetLocaleCheckbox ( $displayName, $blogId, $smartlingName = '', $enabled = false ) {
+	public static function settingsPageTsargetLocaleCheckbox (
+		$displayName,
+		$blogId,
+		$smartlingName = '',
+		$enabled = false
+	) {
 		$parts = array ();
 
 		$checkboxProperties = array (

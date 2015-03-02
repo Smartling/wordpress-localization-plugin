@@ -34,6 +34,7 @@ class CheckStatusController extends WPAbstract implements WPHookInterface {
 			false
 		);
 	}
+
 	/**
 	 * @inheritdoc
 	 */
@@ -54,16 +55,16 @@ class CheckStatusController extends WPAbstract implements WPHookInterface {
 				/**
 				 * @var SmartlingCore $ep
 				 */
-				$ep = Bootstrap::getContainer()->get( 'entrypoint' );
+				$ep      = Bootstrap::getContainer()->get( 'entrypoint' );
 				$results = $ep->bulkCheckByIds( $items );
 
-				$response = array();
-				foreach($results as $result) {
+				$response = array ();
+				foreach ( $results as $result ) {
 					/** @var SubmissionEntity $result */
-					$response[] = array(
-						"id" => $result->getId(),
-						"status" => $result->getStatus(),
-						"color" => $result->getStatusColor(),
+					$response[] = array (
+						"id"         => $result->getId(),
+						"status"     => $result->getStatus(),
+						"color"      => $result->getStatusColor(),
 						"percentage" => $result->getCompletionPercentage()
 					);
 				}

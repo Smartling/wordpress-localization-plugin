@@ -78,7 +78,7 @@ class DateTimeHelper {
 	 * Converts \DateTime object to formatted string
 	 *
 	 * @param DateTime $dateTime
-	 * @param string    $format
+	 * @param string   $format
 	 *
 	 * @return string
 	 */
@@ -122,11 +122,9 @@ class DateTimeHelper {
 	/**
 	 * @return string
 	 */
-	public static function getWordpressDateFormat()
-	{
-		if (null === self::$wp_date_format)
-		{
-			self::$wp_date_format = get_option('date_format');
+	public static function getWordpressDateFormat () {
+		if ( null === self::$wp_date_format ) {
+			self::$wp_date_format = get_option( 'date_format' );
 		}
 
 		return self::$wp_date_format;
@@ -135,11 +133,9 @@ class DateTimeHelper {
 	/**
 	 * @return string
 	 */
-	public static function getWordpressTimeFormat()
-	{
-		if (null === self::$wp_time_format)
-		{
-			self::$wp_time_format = get_option('time_format');
+	public static function getWordpressTimeFormat () {
+		if ( null === self::$wp_time_format ) {
+			self::$wp_time_format = get_option( 'time_format' );
 		}
 
 		return self::$wp_time_format;
@@ -148,11 +144,9 @@ class DateTimeHelper {
 	/**
 	 * @return DateTimeZone
 	 */
-	public static function getWordpressTimeZone()
-	{
-		if (null === self::$wp_local_timezone)
-		{
-			self::$wp_local_timezone = new DateTimeZone(get_option('timezone_string'));
+	public static function getWordpressTimeZone () {
+		if ( null === self::$wp_local_timezone ) {
+			self::$wp_local_timezone = new DateTimeZone( get_option( 'timezone_string' ) );
 		}
 
 		return self::$wp_local_timezone;
@@ -161,8 +155,7 @@ class DateTimeHelper {
 	/**
 	 * @return string
 	 */
-	public static function getWordpressDateTimeFormat()
-	{
+	public static function getWordpressDateTimeFormat () {
 		return self::getWordpressDateFormat() . ' ' . self::getWordpressTimeFormat();
 	}
 
@@ -171,11 +164,11 @@ class DateTimeHelper {
 	 *
 	 * @return string
 	 */
-	public static function toWordpressLocalDateTime(DateTime $dateTime)
-	{
+	public static function toWordpressLocalDateTime ( DateTime $dateTime ) {
 		$o = clone $dateTime;
 
-		$o->setTimezone(self::getWordpressTimeZone());
-		return $o->format(self::getWordpressDateTimeFormat());
+		$o->setTimezone( self::getWordpressTimeZone() );
+
+		return $o->format( self::getWordpressDateTimeFormat() );
 	}
 }

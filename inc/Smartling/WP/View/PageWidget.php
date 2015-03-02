@@ -20,21 +20,21 @@ use Smartling\WP\WPAbstract;
 		foreach ( $locales as $locale ) {
 			$value = false;
 
-			$status     = '';
-			$submission = null;
+			$status      = '';
+			$submission  = null;
 			$statusValue = null;
-			$id = null;
+			$id          = null;
 			if ( null !== $data['submissions'] ) {
 				foreach ( $data['submissions'] as $item ) {
 					/**
 					 * @var SubmissionEntity $item
 					 */
 					if ( $item->getTargetBlog() === $locale->getBlog() ) {
-						$value = true;
+						$value       = true;
 						$statusValue = $item->getStatus();
-						$id = $item->getId();
-						$percent = $item->getCompletionPercentage();
-						$status  = $item->getStatusColor();
+						$id          = $item->getId();
+						$percent     = $item->getCompletionPercentage();
+						$status      = $item->getStatusColor();
 						break;
 					}
 				}
