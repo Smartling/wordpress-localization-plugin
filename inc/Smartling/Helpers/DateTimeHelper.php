@@ -2,6 +2,10 @@
 
 namespace Smartling\Helpers;
 
+use DateTime;
+use DateTimeZone;
+
+
 /**
  * Class DateTimeHelper
  *
@@ -10,9 +14,24 @@ namespace Smartling\Helpers;
 class DateTimeHelper {
 
 	/**
-	 * @var \DateTimeZone
+	 * @var DateTimeZone
 	 */
 	private static $tz_object;
+
+	/**
+	 * @var string
+	 */
+	private static $wp_date_format;
+
+	/**
+	 * @var string
+	 */
+	private static $wp_time_format;
+
+	/**
+	 * @var null|DateTimeZone
+	 */
+	private static $wp_local_timezone;
 
 	/**
 	 * Default format string for DateTime
@@ -28,14 +47,14 @@ class DateTimeHelper {
 		if ( null === $timezone ) {
 			$timezone = date_default_timezone_get();
 		}
-		self::$tz_object = new \DateTimeZone( $timezone );
+		self::$tz_object = new DateTimeZone( $timezone );
 	}
 
 	/**
 	 * @return \DateTimeZone
 	 */
 	public static function getDefaultTimezone () {
-		if ( ! ( self::$tz_object instanceof \DateTimeZone ) ) {
+		if ( ! ( self::$tz_object instanceof DateTimeZone ) ) {
 			self::setDefaultTimeZone();
 
 		}
@@ -58,12 +77,12 @@ class DateTimeHelper {
 	/**
 	 * Converts \DateTime object to formatted string
 	 *
-	 * @param \DateTime $dateTime
+	 * @param DateTime $dateTime
 	 * @param string    $format
 	 *
 	 * @return string
 	 */
-	public static function dateTimeToString ( \DateTime $dateTime, $format = self::DATE_TIME_FORMAT_STANDARD ) {
+	public static function dateTimeToString ( DateTime $dateTime, $format = self::DATE_TIME_FORMAT_STANDARD ) {
 		return $dateTime->format( $format );
 	}
 
@@ -72,22 +91,22 @@ class DateTimeHelper {
 	 *
 	 * @param int $dateTime
 	 *
-	 * @return false|\DateTime
+	 * @return false|DateTime
 	 */
 	public static function timestampToDateTime ( $dateTime ) {
-		$dateTimeObject = new \DateTime( 'now', self::getDefaultTimezone() );
+		$dateTimeObject = new DateTime( 'now', self::getDefaultTimezone() );
 
 		return $dateTimeObject->setTimestamp( $dateTime );
 	}
 
 	/**
-	 * Converts \DateTime object to unix timestamp
+	 * Converts DateTime object to unix timestamp
 	 *
-	 * @param \DateTime $dateTime
+	 * @param DateTime $dateTime
 	 *
 	 * @return int
 	 */
-	public static function dateTimeToTimestamp ( \DateTime $dateTime ) {
+	public static function dateTimeToTimestamp ( DateTime $dateTime ) {
 		return $dateTime->getTimestamp();
 	}
 
@@ -97,6 +116,66 @@ class DateTimeHelper {
 	 * @return string
 	 */
 	public static function nowAsString () {
-		return self::dateTimeToString( new \DateTime( 'now', self::getDefaultTimezone() ) );
+		return self::dateTimeToString( new DateTime( 'now', self::getDefaultTimezone() ) );
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function getWordpressDateFormat()
+	{
+		if (null === self::$wp_date_format)
+		{
+			self::$wp_date_format = get_option('date_format');
+		}
+
+		return self::$wp_date_format;
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function getWordpressTimeFormat()
+	{
+		if (null === self::$wp_time_format)
+		{
+			self::$wp_time_format = get_option('time_format');
+		}
+
+		return self::$wp_time_format;
+	}
+
+	/**
+	 * @return DateTimeZone
+	 */
+	public static function getWordpressTimeZone()
+	{
+		if (null === self::$wp_local_timezone)
+		{
+			self::$wp_local_timezone = new DateTimeZone(get_option('timezone_string'));
+		}
+
+		return self::$wp_local_timezone;
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function getWordpressDateTimeFormat()
+	{
+		return self::getWordpressDateFormat() . ' ' . self::getWordpressTimeFormat();
+	}
+
+	/**
+	 * @param DateTime $dateTime
+	 *
+	 * @return string
+	 */
+	public static function toWordpressLocalDateTime(DateTime $dateTime)
+	{
+		$o = clone $dateTime;
+
+		$o->setTimezone(self::getWordpressTimeZone());
+		return $o->format(self::getWordpressDateTimeFormat());
 	}
 }

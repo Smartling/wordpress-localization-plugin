@@ -5,6 +5,7 @@ namespace Smartling\WP\View;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionManager;
@@ -316,7 +317,9 @@ class SubmissionTableWidget extends \WP_List_Table {
 			//$row["fileUri"] = $row["fileUri"] != null ? basename($row["fileUri"]) : null;
 
 			$row['sourceTitle'] = $this->applyRowActions( $row );
-			$row['appliedDate'] = '0000-00-00 00:00:00' === $row['appliedDate'] ? __( 'Never' ) : $row['appliedDate'];
+			$row['submissionDate'] = DateTimeHelper::toWordpressLocalDateTime( DateTimeHelper::stringToDateTime( $row['submissionDate'] ) );
+			$row['appliedDate']    = '0000-00-00 00:00:00' === $row['appliedDate'] ? __( 'Never' ) :
+				DateTimeHelper::toWordpressLocalDateTime( DateTimeHelper::stringToDateTime( $row['appliedDate'] ) );
 
 			if ( mb_strlen( $row['fileUri'], 'utf8' ) > $file_uri_max_chars ) {
 				$orig     = $row['fileUri'];
