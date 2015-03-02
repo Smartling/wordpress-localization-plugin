@@ -77,9 +77,9 @@ class ConditionBuilder {
 	 * @return string
 	 */
 	public static function buildBlock ( $condition, $parameters ) {
-		if ( ! self::validate( $condition, $parameters ) ) {
-			throw new \InvalidArgumentException( 'Invalid condition or parameters' );
-		}
+		//if ( ! self::validate( $condition, $parameters ) ) {
+		//	throw new \InvalidArgumentException( 'Invalid condition or parameters' );
+		//}
 
 		if ( in_array( $condition, array ( self::CONDITION_SIGN_IN, self::CONDITION_SIGN_NOT_IN ) ) ) {
 			foreach ( $parameters as $index => & $param ) {
