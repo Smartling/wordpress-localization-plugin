@@ -4,6 +4,7 @@
  */
 use Smartling\Helpers\PluginInfo;
 use Smartling\Settings\TargetLocale;
+use Smartling\WP\WPAbstract;
 
 $pluginInfo = $this->getPluginInfo();
 
@@ -81,6 +82,7 @@ $settingsManager = $pluginInfo->getSettingsManager();
 			<tr >
 				<th scope = "row" ><?= __( 'Target Locales', $domain ) ?></th >
 				<td >
+					<?= WPAbstract::checkUncheckBlock(); ?>
 					<?php
 					/**
 					 * @var array $locales
@@ -112,23 +114,11 @@ $settingsManager = $pluginInfo->getSettingsManager();
 
 						<div >
 							<p class = "plugin-locales" >
-								<label class = "radio-label" >
-									<input type = "checkbox" <?= $checked; ?>
-									       name = "smartling_settings[targetLocales][<?= $value; ?>][enabled]" >
-									<span ><?= $value; ?></span >
-								</label >
-								<input type = "text"
-								       name = "smartling_settings[targetLocales][<?= $value; ?>][target]"
-								       value = "<?= $short; ?>" >
-								<input type = "hidden"
-								       name = "smartling_settings[targetLocales][<?= $value; ?>][blog]"
-								       value = "<?= $key; ?>" >
+								<?= WPAbstract::settingsPageTsargetLocaleCheckbox($value,$key, $short,$target->getEnabled() );?>
 							</p >
 						</div >
 
 					<?php } ?>
-
-
 				</td >
 			</tr >
 			<tr >

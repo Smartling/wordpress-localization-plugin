@@ -230,7 +230,42 @@ abstract class WPAbstract {
 		) );
 
 		return $output . HtmlTagGeneratorHelper::tag( 'span', vsprintf( '%s / %s', array ( $check, $unCheck ) ) );
+	}
+
+	public static function settingsPageTsargetLocaleCheckbox ( $displayName, $blogId, $smartlingName = '', $enabled = false ) {
+		$parts = array ();
+
+		$checkboxProperties = array (
+			'type'  => 'checkbox',
+			'class' => 'mcheck',
+			'name'  => vsprintf( 'smartling_settings[targetLocales][%s][enabled]', array ( $displayName ) )
+		);
+
+		if ( true === $enabled ) {
+			$checkboxProperties['checked'] = 'checked';
+		}
+
+		$parts[] = HtmlTagGeneratorHelper::tag( 'input', '', $checkboxProperties );
+
+		$parts[] = HtmlTagGeneratorHelper::tag( 'span', htmlspecialchars( $displayName ), array () );
+
+		$parts = array (
+			HtmlTagGeneratorHelper::tag( 'label', implode( '', $parts ), array ( 'class' => 'radio-label' ) )
+		);
+
+		$parts[] = HtmlTagGeneratorHelper::tag( 'input', '', array (
+			'type'  => 'text',
+			'name'  => vsprintf( 'smartling_settings[targetLocales][%s][target]', array ( $displayName ) ),
+			'value' => $smartlingName,
+		) );
+
+		$parts[] = HtmlTagGeneratorHelper::tag( 'input', '', array (
+			'type'  => 'hidden',
+			'name'  => vsprintf( 'smartling_settings[targetLocales][%s][blog]', array ( $displayName ) ),
+			'value' => $blogId,
+		) );
 
 
+		return implode( '', $parts );
 	}
 }
