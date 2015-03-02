@@ -213,27 +213,7 @@ abstract class WPAbstract {
 	}
 
 	public static function checkUncheckBlock () {
-		$output = "function bulkCheck(className , action) {
-			var elements = document.getElementsByClassName( className );
-			switch (action) {
-				case 'check':
-				{
-					for ( var i = 0 ; i < elements.length ; i ++ ) {
-					elements[ i ].setAttribute( 'checked' , 'checked' );
-				}
-				break;
-			}
-				case 'uncheck':
-				{
-					for ( var i = 0 ; i < elements.length ; i ++ ) {
-					elements[ i ].removeAttribute( 'checked' );
-				}
-				break;
-			}
-			}
-		}";
-
-		$output = HtmlTagGeneratorHelper::tag( 'script', $output, array () );
+		$output = "";
 
 		$check = HtmlTagGeneratorHelper::tag( 'a', __( 'Check All' ), array (
 			'href'    => '#',
