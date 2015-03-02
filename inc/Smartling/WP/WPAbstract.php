@@ -145,6 +145,22 @@ abstract class WPAbstract {
 		return $container;
 	}
 
+	/**
+	 * @param $submissionId
+	 *
+	 * @return string
+	 */
+	public static function inputHidden ($submissionId) {
+		$hiddenId = HtmlTagGeneratorHelper::tag( 'input', '', array (
+			'type'  => 'hidden',
+			'value' => $submissionId,
+			'class'  => 'submission-id',
+			'id' => 'submission-id-' . $submissionId
+		) );
+
+		return $hiddenId;
+	}
+
 	public static function localeSelectionCheckboxBlock ( $namePrefix, $blog_id, $blog_name, $enabled = false ) {
 		$parts = array ();
 

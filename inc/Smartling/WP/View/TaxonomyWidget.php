@@ -31,13 +31,17 @@ use Smartling\WP\WPAbstract;
 			$value      = false;
 			$status     = '';
 			$submission = null;
+			$statusValue = null;
+			$id = null;
 			if ( null !== $data['submissions'] ) {
 				foreach ( $data['submissions'] as $item ) {
 					/**
 					 * @var SubmissionEntity $item
 					 */
 					if ( $item->getTargetBlog() === $locale->getBlog() ) {
-						$value   = true;
+						$value = true;
+						$statusValue = $item->getStatus();
+						$id = $item->getId();
 						$percent = $item->getCompletionPercentage();
 						$status  = $item->getStatusColor();
 						break;
@@ -57,9 +61,12 @@ use Smartling\WP\WPAbstract;
 				<td class="sm_sh" style = "text-align: left;" >
 					<?php if ( $value ) { ?>
 						<?= WPAbstract::localeSelectionTranslationStatusBlock(
-							__( $item->getStatus() ),
+							__( $statusValue ),
 							$status,
 							$percent
+						); ?>
+						<?= WPAbstract::inputHidden(
+							$id
 						); ?>
 					<?php } ?>
 				</td >

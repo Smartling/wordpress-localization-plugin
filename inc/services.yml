@@ -3,7 +3,7 @@ parameters:
   plugin.name: smartling-connector
   plugin.version: 1.0.0-dev
   plugin.domain: smartling-connector
-  wp.hooks: ['wp.cron', 'wp.i18n', 'wp.submissions', 'wp.settings', 'wp.post', 'wp.page', 'wp.taxonomy']
+  wp.hooks: ['wp.cron', 'wp.i18n', 'wp.checkStatus', 'wp.submissions', 'wp.settings', 'wp.post', 'wp.page', 'wp.taxonomy']
 
   logger.channel: default
   logger.filehandler.standard.filename: %plugin.dir%/logfile.log
@@ -212,3 +212,12 @@ services:
         - "@manager.submission"
         - "@site.cache"
 
+  wp.checkStatus:
+      class: Smartling\WP\Controller\CheckStatusController
+      arguments:
+        - "@logger"
+        - "@multilang.proxy"
+        - "@plugin.info"
+        - "@entity.helper"
+        - "@manager.submission"
+        - "@site.cache"

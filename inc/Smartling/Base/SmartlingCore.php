@@ -523,14 +523,18 @@ class SmartlingCore {
 	/**
 	 * @param array $items
 	 *
+	 * @return array
 	 * @throws SmartlingDbException
 	 */
 	public function bulkCheckByIds ( array $items ) {
+		$results = array();
 		foreach ( $items as $item ) {
 			/** @var SubmissionEntity $entity */
 			$entity = $this->loadSubmissionEntityById( $item );
 			$this->checkSubmissionByEntity( $entity );
 			$this->checkEntityForDownload( $entity );
+			$results[] = $entity;
 		}
+		return $results;
 	}
 }
