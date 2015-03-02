@@ -163,7 +163,7 @@ abstract class EntityAbstract {
 	 *
 	 * @return mixed
 	 */
-	abstract public function getAll ($limit = '', $offset = 0, $orderBy = false, $order = false);
+	abstract public function getAll ( $limit = '', $offset = 0, $orderBy = false, $order = false );
 
 	/**
 	 * @return int

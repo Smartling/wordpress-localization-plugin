@@ -51,20 +51,20 @@ class SettingsController extends WPAbstract implements WPHookInterface {
 
 	/**
 	 * Starts cron job
+	 *
 	 * @throws \Exception
 	 */
-	public function run_cron()
-	{
-		ignore_user_abort(true);
-		set_time_limit(0);
+	public function run_cron () {
+		ignore_user_abort( true );
+		set_time_limit( 0 );
 
 		/**
 		 * @var JobEngine $jobEngine
 		 */
-		$jobEngine = Bootstrap::getContainer()->get('wp.cron');
+		$jobEngine = Bootstrap::getContainer()->get( 'wp.cron' );
 		$jobEngine->doWork();
 
-		wp_die('Cron job triggered. Now you can safely close this window / browser tab.');
+		wp_die( 'Cron job triggered. Now you can safely close this window / browser tab.' );
 	}
 
 

@@ -172,7 +172,7 @@ class PostEntity extends EntityAbstract {
 	 *
 	 * @return array
 	 */
-	public function getAll ($limit = '', $offset = 0, $orderBy = 'date', $order = 'DESC') {
+	public function getAll ( $limit = '', $offset = 0, $orderBy = 'date', $order = 'DESC' ) {
 
 		$arguments = array (
 			'posts_per_page'   => $limit,
@@ -197,9 +197,10 @@ class PostEntity extends EntityAbstract {
 	/**
 	 * @return int
 	 */
-	public function getTotal() {
-		$wp = wp_count_posts($this->getType());
-		return (int)$wp->publish + (int)$wp->future + (int)$wp->draft + (int)$wp->pending + (int)$wp->private + (int)$wp->autoDraft + (int)$wp->inherit;
+	public function getTotal () {
+		$wp = wp_count_posts( $this->getType() );
+
+		return (int) $wp->publish + (int) $wp->future + (int) $wp->draft + (int) $wp->pending + (int) $wp->private + (int) $wp->autoDraft + (int) $wp->inherit;
 	}
 
 	public function getTitle () {

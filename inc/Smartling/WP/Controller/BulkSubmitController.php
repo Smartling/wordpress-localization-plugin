@@ -46,7 +46,7 @@ class BulkSubmitController
 
 	public function renderPage () {
 		$currentBlogId = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
-		$this->getEntityHelper()->getSiteHelper()->switchBlogId($this->getEntityHelper()->getSettingsManager()->getLocales()->getDefaultBlog());
+		$this->getEntityHelper()->getSiteHelper()->switchBlogId( $this->getEntityHelper()->getSettingsManager()->getLocales()->getDefaultBlog() );
 		$table = new BulkSubmitTableWidget(
 			$this->getManager(),
 			$this->getPluginInfo(),

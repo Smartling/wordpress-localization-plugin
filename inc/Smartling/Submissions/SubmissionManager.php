@@ -378,7 +378,7 @@ class SubmissionManager extends EntityManagerAbstract {
 		$block = new ConditionBlock( ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND );
 
 		foreach ( $params as $field => $value ) {
-			if(is_array($value)) {
+			if ( is_array( $value ) ) {
 				$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_IN, $field, $value );
 			} else {
 				$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, $field, array ( $value ) );

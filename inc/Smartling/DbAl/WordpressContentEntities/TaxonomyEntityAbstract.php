@@ -95,7 +95,7 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 	 * @return TaxonomyEntityAbstract[]
 	 * @throws SmartlingDbException
 	 */
-	public function getAll ($limit = '', $offset = '', $orderBy = 'term_id', $order = 'ASC') {
+	public function getAll ( $limit = '', $offset = '', $orderBy = 'term_id', $order = 'ASC' ) {
 
 		$taxonomies = array (
 			$this->getType(),
@@ -146,8 +146,8 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 	/**
 	 * @return int
 	 */
-	public function getTotal() {
-		return wp_count_terms($this->getType());
+	public function getTotal () {
+		return wp_count_terms( $this->getType() );
 	}
 
 	/**

@@ -234,7 +234,13 @@ class SmartlingCore {
 	 *
 	 * @return bool
 	 */
-	public function createForTranslation ( $contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null ) {
+	public function createForTranslation (
+		$contentType,
+		$sourceBlog,
+		$sourceEntity,
+		$targetBlog,
+		$targetEntity = null
+	) {
 		$submission = $this->prepareSubmissionEntity( $contentType, $sourceBlog, $sourceEntity, $targetBlog,
 			$targetEntity );
 
@@ -538,11 +544,12 @@ class SmartlingCore {
 
 	public function bulkCheckNewAndInProgress () {
 		$entities = $this->getSubmissionManager()->find( array (
-			'status' => array(
-				SubmissionEntity::SUBMISSION_STATUS_NEW,
-				SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
+				'status' => array (
+					SubmissionEntity::SUBMISSION_STATUS_NEW,
+					SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
 
-			))
+				)
+			)
 		);
 
 		foreach ( $entities as $entity ) {
@@ -562,7 +569,7 @@ class SmartlingCore {
 		foreach ( $items as $item ) {
 			/** @var SubmissionEntity $entity */
 			$entity = $this->loadSubmissionEntityById( $item );
-			if($entity->getStatus() == SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS) {
+			if ( $entity->getStatus() == SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS ) {
 				$this->checkSubmissionByEntity( $entity );
 				$this->checkEntityForDownload( $entity );
 				$results[] = $entity;

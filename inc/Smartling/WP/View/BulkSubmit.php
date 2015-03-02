@@ -1,6 +1,7 @@
 <?php
 use Smartling\WP\WPAbstract;
 use Smartling\Settings\TargetLocale;
+
 ?>
 <div class = "wrap" >
 	<h2 ><?= get_admin_page_title(); ?></h2 >
@@ -27,8 +28,8 @@ use Smartling\Settings\TargetLocale;
 					</p ></td >
 				<td style = "display: none;" ><?php $bulkSubmitTable->search_box( __( 'Search' ), 's' ); ?></td >
 			</tr >
-			<tr>
-				<td>
+			<tr >
+				<td >
 					<h3 ><?= __( 'Translate this post into:' ); ?></h3 >
 					<?= WPAbstract::checkUncheckBlock(); ?>
 					<?php
@@ -48,8 +49,8 @@ use Smartling\Settings\TargetLocale;
 							); ?>
 						</p >
 					<?php } ?>
-				</td>
-			</tr>
+				</td >
+			</tr >
 		</table >
 
 

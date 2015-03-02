@@ -23,7 +23,7 @@ use Smartling\Submissions\SubmissionManager;
  *
  * @package Smartling\WP\View
  */
-class BulkSubmitTableWidget  extends \WP_List_Table {
+class BulkSubmitTableWidget extends \WP_List_Table {
 
 	/**
 	 * @var string
@@ -86,10 +86,11 @@ class BulkSubmitTableWidget  extends \WP_List_Table {
 	public function __construct (
 		SubmissionManager $manager,
 		PluginInfo $pluginInfo,
-		EntityHelper $entityHelper ) {
+		EntityHelper $entityHelper
+	) {
 
-		$this->manager = $manager;
-		$this->source  = $_REQUEST;
+		$this->manager      = $manager;
+		$this->source       = $_REQUEST;
 		$this->pluginInfo   = $pluginInfo;
 		$this->entityHelper = $entityHelper;
 
@@ -126,9 +127,9 @@ class BulkSubmitTableWidget  extends \WP_List_Table {
 				SmartlingToCMSDatabaseAccessWrapperInterface::SORT_OPTION_ASC ) );
 		}
 
-		return array(
+		return array (
 			"orderby" => $column,
-			"order" => $direction
+			"order"   => $direction
 		);
 	}
 
@@ -150,8 +151,9 @@ class BulkSubmitTableWidget  extends \WP_List_Table {
 
 		//Build row actions
 		$actions = array (
-			'send'     => HtmlTagGeneratorHelper::tag( 'a', __( 'Send' ), array (
-				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'sendSingle', $item['id'] . '-' . $item["type"] ) )
+			'send' => HtmlTagGeneratorHelper::tag( 'a', __( 'Send' ), array (
+				'href' => vsprintf( $linkTemplate,
+					array ( $_REQUEST['page'], 'sendSingle', $item['id'] . '-' . $item["type"] ) )
 			) ),
 		);
 
@@ -171,7 +173,7 @@ class BulkSubmitTableWidget  extends \WP_List_Table {
 			'type'  => 'checkbox',
 			'name'  => $this->buildHtmlTagName( $this->_args['singular'] ) . '[]',
 			'value' => $item['id'] . '-' . $item["type"],
-			'id' => $item['id'] . '-' . $item["type"]
+			'id'    => $item['id'] . '-' . $item["type"]
 		) );
 	}
 
@@ -179,14 +181,14 @@ class BulkSubmitTableWidget  extends \WP_List_Table {
 	 * @inheritdoc
 	 */
 	public function get_columns () {
-		return array(
+		return array (
 			'bulkActionCb' => "",
-			'id'             => __( 'ID' ),
-			'title'    => __( 'Title' ),
-			'type'    => __( 'Type' ),
-			'author'      => __( 'Author' ),
-			'status' => __( 'Status' ),
-			'locales'    => __( 'Locales' ),
+			'id'           => __( 'ID' ),
+			'title'        => __( 'Title' ),
+			'type'         => __( 'Type' ),
+			'author'       => __( 'Author' ),
+			'status'       => __( 'Status' ),
+			'locales'      => __( 'Locales' ),
 			'updated'      => __( 'Updated' )
 		);
 	}
@@ -196,7 +198,7 @@ class BulkSubmitTableWidget  extends \WP_List_Table {
 	 */
 	public function get_sortable_columns () {
 
-		$fields = array(
+		$fields = array (
 			"title",
 			"status",
 			"author",
@@ -217,7 +219,7 @@ class BulkSubmitTableWidget  extends \WP_List_Table {
 	 */
 	public function get_bulk_actions () {
 		$actions = array (
-			'send'     => __( 'Send' ),
+			'send' => __( 'Send' ),
 		);
 
 		return $actions;
@@ -232,8 +234,8 @@ class BulkSubmitTableWidget  extends \WP_List_Table {
 		 * @var array $submissions
 		 */
 		$submissions = $this->getFormElementValue( 'submission', array () );
-		$locales = array();
-		$data = $_REQUEST[ "bulk-submit-locales" ];
+		$locales     = array ();
+		$data        = $_REQUEST["bulk-submit-locales"];
 
 		if ( null !== $data && array_key_exists( 'locales', $data ) ) {
 			foreach ( $data['locales'] as $blogId => $blogName ) {
@@ -277,8 +279,8 @@ class BulkSubmitTableWidget  extends \WP_List_Table {
 	 */
 	private function processSingleAction () {
 		$submissionId = (int) $this->getFormElementValue( 'submission', 0 );
-		$locales = array();
-		$data = $_REQUEST[ "bulk-submit-locales" ];
+		$locales      = array ();
+		$data         = $_REQUEST["bulk-submit-locales"];
 		if ( null !== $data && array_key_exists( 'locales', $data ) ) {
 			foreach ( $data['locales'] as $blogId => $blogName ) {
 				if ( array_key_exists( 'enabled', $blogName ) && 'on' === $blogName['enabled'] ) {
@@ -356,22 +358,22 @@ class BulkSubmitTableWidget  extends \WP_List_Table {
 
 
 		$contentTypeFilterValue = $this->getContentTypeFilterValue();
-		$sortOptions = $this->getSortingOptions();
+		$sortOptions            = $this->getSortingOptions();
 
-		$core = Bootstrap::getContainer()->get( 'entrypoint' );
-		$io = $core->getContentIoFactory()->getMapper( $contentTypeFilterValue );
-		$data = $io->getAll(
+		$core  = Bootstrap::getContainer()->get( 'entrypoint' );
+		$io    = $core->getContentIoFactory()->getMapper( $contentTypeFilterValue );
+		$data  = $io->getAll(
 			$pageOptions['limit'],
-			($pageOptions['page'] - 1) * $pageOptions['limit'],
+			( $pageOptions['page'] - 1 ) * $pageOptions['limit'],
 			$sortOptions["orderby"],
 			$sortOptions["order"]
 		);
 		$total = $io->getTotal();
 
 		$dataAsArray = array ();
-		if($data) {
+		if ( $data ) {
 			foreach ( $data as $item ) {
-				$row = $this->extractFields($item, $contentTypeFilterValue);
+				$row = $this->extractFields( $item, $contentTypeFilterValue );
 				//$row['title']  = $this->applyRowActions( $row );
 				$row           = array_merge( array ( 'bulkActionCb' => $this->column_cb( $row ) ), $row );
 				$dataAsArray[] = $row;
@@ -394,11 +396,11 @@ class BulkSubmitTableWidget  extends \WP_List_Table {
 	 *
 	 * @return array
 	 */
-	private function extractFields($item, $type) {
-		switch($type) {
+	private function extractFields ( $item, $type ) {
+		switch ( $type ) {
 			case WordpressContentTypeHelper::CONTENT_TYPE_POST:
 			case WordpressContentTypeHelper::CONTENT_TYPE_PAGE:
-				return  array (
+				return array (
 					"id"      => $item->ID,
 					"title"   => $item->post_title,
 					"type"    => $item->post_type,
@@ -409,7 +411,7 @@ class BulkSubmitTableWidget  extends \WP_List_Table {
 				);
 			case WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG:
 			case WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY:
-				return  array (
+				return array (
 					"id"      => $item->term_id,
 					"title"   => $item->name,
 					"type"    => $item->taxonomy,
@@ -419,7 +421,8 @@ class BulkSubmitTableWidget  extends \WP_List_Table {
 					"updated" => null
 				);
 		}
-		return array();
+
+		return array ();
 	}
 
 	/**
