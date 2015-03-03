@@ -45,13 +45,13 @@ $settingsManager = $pluginInfo->getSettingsManager();
 			<tr >
 				<th scope = "row" ><?= __( 'Key', $domain ) ?></th >
 				<td >
-					<?php $key = $settingsManager->getAccountInfo()->getKey(); ?>
+					<?php $blogId = $settingsManager->getAccountInfo()->getKey(); ?>
 					<input type = "text" id = "api_key" name = "apiKey" value = "" >
-					<input type = "hidden" name = "smartling_settings[apiKey]" value = "<?= $key ?>" >
+					<input type = "hidden" name = "smartling_settings[apiKey]" value = "<?= $blogId ?>" >
 					<br >
-					<?php if ( $key ) { ?>
+					<?php if ( $blogId ) { ?>
 						<small ><?= __( 'Current Key', $domain ) ?>
-							: <?= substr( $key, 0, - 10 ) . '**********' ?></small >
+							: <?= substr( $blogId, 0, - 10 ) . '**********' ?></small >
 					<?php } ?>
 				</td >
 			</tr >
@@ -87,25 +87,25 @@ $settingsManager = $pluginInfo->getSettingsManager();
 					/**
 					 * @var array $locales
 					 */
-					$locales     = $this->getSiteLocales();
-					$defaultBlog = $settingsManager->getLocales()->getDefaultBlog();
+					$locales       = $this->getSiteLocales();
+					$defaultBlogId = $settingsManager->getLocales()->getDefaultBlog();
 					/**
 					 * @var array $targetLocales
 					 */
 					$targetLocales = $settingsManager->getLocales()->getTargetLocales();
-					foreach ( $locales as $key => $value ) {
-						if ( $defaultBlog == $key ) {
+					foreach ( $locales as $blogId => $value ) {
+						if ( $defaultBlogId == $blogId ) {
 							continue;
 						}
-						$short   = null;
-						$checked = '';
+						$short   = '';
+						$checked = false;
 						foreach ( $targetLocales as $target ) {
 							/**
 							 * @var TargetLocale $target
 							 */
 							if ( $target->getLocale() == $value ) {
 								$short   = $target->getTarget();
-								$checked = $target->getEnabled() ? 'checked="checked"' : '';
+								$checked = $target->getEnabled();
 								break;
 							}
 						}
@@ -114,8 +114,8 @@ $settingsManager = $pluginInfo->getSettingsManager();
 
 						<div >
 							<p class = "plugin-locales" >
-								<?= WPAbstract::settingsPageTsargetLocaleCheckbox( $value, $key, $short,
-									$target->getEnabled() ); ?>
+								<?= WPAbstract::settingsPageTsargetLocaleCheckbox( $value, $blogId, $short,
+									$checked ); ?>
 							</p >
 						</div >
 
@@ -127,7 +127,7 @@ $settingsManager = $pluginInfo->getSettingsManager();
 				<td >
 					<?php
 					$defaultLocale = $settingsManager->getLocales()->getDefaultLocale();
-					$defaultBlog   = $settingsManager->getLocales()->getDefaultBlog(); ?>
+					$defaultBlogId = $settingsManager->getLocales()->getDefaultBlog(); ?>
 
 					<p ><?= __( 'Site default language is', $this->getPluginInfo()->getDomain() ) ?>
 						: <?= $defaultLocale; ?></p >
@@ -139,11 +139,11 @@ $settingsManager = $pluginInfo->getSettingsManager();
 					<br >
 					<?php $locales = $this->getSiteLocales(); ?>
 					<select name = "smartling_settings[defaultLocale]" id = "default-locales" >
-						<?php foreach ( $locales as $key => $value ) {
-							$checked = $defaultBlog == $key ? 'selected' : '';
+						<?php foreach ( $locales as $blogId => $value ) {
+							$checked = $defaultBlogId == $blogId ? 'selected' : '';
 							?>
 							<option
-								value = "<?php echo "{$key}-{$value}" ?>" <?php echo $checked; ?>> <?php echo $value; ?> </option >
+								value = "<?php echo "{$blogId}-{$value}" ?>" <?php echo $checked; ?>> <?php echo $value; ?> </option >
 
 						<?php } ?>
 					</select >

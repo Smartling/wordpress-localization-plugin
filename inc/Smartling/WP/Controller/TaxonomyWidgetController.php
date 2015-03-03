@@ -89,13 +89,10 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 		}
 	}
 
-
-	private function getTaxonomyTypeById () {
-
-	}
-
 	function save ( $term_id ) {
-
+		if ( ! array_key_exists( 'taxonomy', $_POST ) ) {
+			return;
+		}
 		$termType = $_POST['taxonomy'];
 		//reset(TaxonomyEntityAbstract::detectTermTaxonomyByTermId($term_id));
 
@@ -161,6 +158,5 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 			}
 		}
 		add_action( "edited_{$termType}", array ( $this, 'save' ) );
-
 	}
 }
