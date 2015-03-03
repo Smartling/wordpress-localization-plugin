@@ -77,11 +77,14 @@ class ConditionBuilder {
 	 * @return string
 	 */
 	public static function buildBlock ( $condition, $parameters ) {
-		//if ( ! self::validate( $condition, $parameters ) ) {
-		//	throw new \InvalidArgumentException( 'Invalid condition or parameters' );
-		//}
 
-		if ( in_array( $condition, array ( self::CONDITION_SIGN_IN, self::CONDITION_SIGN_NOT_IN ) ) ) {
+		$customConditions = array ( self::CONDITION_SIGN_IN, self::CONDITION_SIGN_NOT_IN );
+
+		if ( ! ( in_array( $condition, $customConditions ) ) && ! self::validate( $condition, $parameters ) ) {
+			throw new \InvalidArgumentException( 'Invalid condition or parameters' );
+		}
+
+		if ( in_array( $condition, $customConditions ) ) {
 			foreach ( $parameters as $index => & $param ) {
 				if ( $index > 0 ) {
 					$param = vsprintf( '\'%s\'', array ( QueryBuilder::escapeValue( $param ) ) );
