@@ -191,5 +191,31 @@ class ConditionTest extends PHPUnit_Framework_TestCase {
 		self::assertTrue( $actualResult === $expectedResult );
 	}
 
+	public function testInCondition () {
+		$conditionType = ConditionBuilder::CONDITION_SIGN_IN;
 
+		$field = 'foo';
+
+		$values = array ( 'bar', 'baz' );
+
+		$expectedResult = vsprintf( '`%s` IN(\'%s\', \'%s\')', array ( $field, reset( $values ), end( $values ) ) );
+
+		$condition    = Condition::getCondition( $conditionType, $field, $values );
+		$actualResult = $condition->__toString();
+		self::assertTrue( $actualResult === $expectedResult );
+	}
+
+	public function testNotInCondition () {
+		$conditionType = ConditionBuilder::CONDITION_SIGN_NOT_IN;
+
+		$field = 'foo';
+
+		$values = array ( 'bar', 'baz' );
+
+		$expectedResult = vsprintf( '`%s` NOT IN(\'%s\', \'%s\')', array ( $field, reset( $values ), end( $values ) ) );
+
+		$condition    = Condition::getCondition( $conditionType, $field, $values );
+		$actualResult = $condition->__toString();
+		self::assertTrue( $actualResult === $expectedResult );
+	}
 }
