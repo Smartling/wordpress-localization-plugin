@@ -13,6 +13,12 @@
 	?>
 	<div id = "icon-users" class = "icon32" ><br /></div >
 
+	<style >
+		td.bulkActionCb {
+			padding-left : 18px;
+		}
+	</style >
+
 	<!-- Forms are NOT created automatically, so you need to wrap the table in one to use features like bulk actions -->
 	<form id = "submissions-filter" method = "get" >
 		<table width = "100%" >

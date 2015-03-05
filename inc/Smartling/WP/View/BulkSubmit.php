@@ -4,6 +4,15 @@ use Smartling\Settings\TargetLocale;
 
 ?>
 <div class = "wrap" >
+	<style >
+		table.form-table th {
+			display : inline-table;
+		}
+
+		td.bulkActionCb {
+			padding-left : 18px;
+		}
+	</style >
 	<h2 ><?= get_admin_page_title(); ?></h2 >
 
 	<div class = "display-errors" ></div >
@@ -16,21 +25,25 @@ use Smartling\Settings\TargetLocale;
 	 */
 	$bulkSubmitTable->prepare_items();
 	?>
-	<div id = "icon-users" class = "icon32" ><br /></div >
 
-	<!-- Forms are NOT created automatically, so you need to wrap the table in one to use features like bulk actions -->
-	<form id = "bulk-submit-filter" method = "get" >
-		<table width = "100%" >
-			<tr >
-				<td style = "text-align: left;" ><p >
-						<?= $bulkSubmitTable->contentTypeSelectRender(); ?>
-						<?= $bulkSubmitTable->renderSubmitButton( __( 'Apply Filter' ) ); ?>
-					</p ></td >
-				<td style = "display: none;" ><?php $bulkSubmitTable->search_box( __( 'Search' ), 's' ); ?></td >
-			</tr >
+
+	<table class = "form-table" >
+		<tr >
+			<td >
+				<form id = "bulk-submit-type-filter" method = "post" >
+					<input type = "hidden" name = "page" value = "<?= $_REQUEST['page']; ?>" />
+					<?= $bulkSubmitTable->contentTypeSelectRender(); ?>
+					<?= $bulkSubmitTable->renderSubmitButton( __( 'Apply Filter' ) ); ?>
+				</form >
+			</td >
+		</tr >
+	</table >
+
+	<form id = "bulk-submit-main" method = "post" >
+		<table >
 			<tr >
 				<td >
-					<h3 ><?= __( 'Translate this post into:' ); ?></h3 >
+					<h3 ><?= __( 'Translate into:' ); ?></h3 >
 					<?= WPAbstract::checkUncheckBlock(); ?>
 					<?php
 					/**
@@ -42,7 +55,7 @@ use Smartling\Settings\TargetLocale;
 						?>
 						<p >
 							<?= WPAbstract::localeSelectionCheckboxBlock(
-								"bulk-submit-locales",
+								'bulk-submit-locales',
 								$locale->getBlog(),
 								$locale->getLocale(),
 								false
@@ -52,11 +65,11 @@ use Smartling\Settings\TargetLocale;
 				</td >
 			</tr >
 		</table >
-
-
-		<!-- For plugins, we also need to ensure that the form posts back to our current page -->
+		<input type = "hidden" name = "content-type" id = "ct" value = "" />
 		<input type = "hidden" name = "page" value = "<?= $_REQUEST['page']; ?>" />
-		<!-- Now we can render the completed list table -->
+		<input type = "hidden" name = "action" value = "send" />
 		<?php $bulkSubmitTable->display() ?>
+		<?= WPAbstract::sendButton( 'sent-to-smartling-bulk' ); ?>
 	</form >
+
 </div >

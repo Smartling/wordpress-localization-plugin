@@ -17,4 +17,8 @@ class WordpressUserHelper {
 
 		return $ud->user_login;
 	}
+
+	public static function getUserLoginById ( $id ) {
+		return get_the_author_meta( 'user_nicename', $id );
+	}
 }

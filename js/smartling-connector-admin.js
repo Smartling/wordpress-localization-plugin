@@ -203,8 +203,8 @@
 	};
 
 	$( function () {
-		var content = $('#smartling-form');
-		if(content.length > 0) {
+		var content = $( '#smartling-form' );
+		if ( content.length > 0 ) {
 			localizationOptions.init();
 		}
 	} );
@@ -231,3 +231,24 @@ function bulkCheck(className , action) {
 	}
 	}
 }
+
+
+jQuery( document ).ready( function () {
+	jQuery( '.checkall' ).on( 'click' , function (e) {
+		e.stopPropagation();
+		var checked = jQuery( this ).is( ':checked' );
+
+		if ( checked ) {
+			jQuery( '.bulkaction' ).attr( "checked" , "checked" );
+		}
+		else {
+			jQuery( '.bulkaction' ).removeAttr( "checked" );
+		}
+	} );
+
+	jQuery('#sent-to-smartling-bulk' ).on('click', function(e){
+		jQuery('#ct' ).val(jQuery('#smartling-bulk-submit-page-content-type' ).val());
+		return;
+	});
+} );
+

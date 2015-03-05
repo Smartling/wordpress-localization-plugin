@@ -122,14 +122,18 @@ abstract class WPAbstract {
 		require_once plugin_dir_path( __FILE__ ) . 'View/' . $class . '.php';
 	}
 
-	public static function submitBlock () {
-		$sendButton = HtmlTagGeneratorHelper::tag( 'input', '', array (
+	public static function sendButton ( $id = 'submit', $name = 'submit' ) {
+		return HtmlTagGeneratorHelper::tag( 'input', '', array (
 			'type'  => 'submit',
 			'value' => __( 'Send to Smartling' ),
 			'class' => 'button button-primary',
-			'id'    => 'submit',
-			'name'  => 'submit',
+			'id'    => $id,
+			'name'  => $name,
 		) );
+	}
+
+	public static function submitBlock () {
+		$sendButton = self::sendButton();
 
 		$downloadButton = HtmlTagGeneratorHelper::tag( 'input', '', array (
 			'type'  => 'submit',

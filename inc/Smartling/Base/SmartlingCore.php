@@ -554,10 +554,10 @@ class SmartlingCore {
 
 		foreach ( $entities as $entity ) {
 			/** @var SubmissionEntity $entity */
-			if($entity->getStatus() == SubmissionEntity::SUBMISSION_STATUS_NEW) {
-				$this->sendForTranslationBySubmission($entity);
+			if ( $entity->getStatus() == SubmissionEntity::SUBMISSION_STATUS_NEW ) {
+				$this->sendForTranslationBySubmission( $entity );
 			}
-			if($entity->getStatus() == SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS) {
+			if ( $entity->getStatus() == SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS ) {
 				$this->checkSubmissionByEntity( $entity );
 				$this->checkEntityForDownload( $entity );
 			}

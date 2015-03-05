@@ -200,7 +200,29 @@ class PostEntity extends EntityAbstract {
 	public function getTotal () {
 		$wp = wp_count_posts( $this->getType() );
 
-		return (int) $wp->publish + (int) $wp->future + (int) $wp->draft + (int) $wp->pending + (int) $wp->private + (int) $wp->autoDraft + (int) $wp->inherit;
+		$wp = (array) $wp;
+
+		$total = 0;
+
+		$cnt = function ( $name ) use ( $wp ) {
+			return array_key_exists( $name, $wp ) ? (int) $wp[ $name ] : 0;
+		};
+
+		$fields = array (
+			'publish',
+			'future',
+			'draft',
+			'pending',
+			'private',
+			'autoDraft',
+			'inherit'
+		);
+
+		foreach ( $fields as $field ) {
+			$total += $cnt( $field );
+		}
+
+		return $total;
 	}
 
 	public function getTitle () {

@@ -6,8 +6,9 @@ parameters:
   wp.hooks: ['wp.cron', 'wp.i18n', 'wp.checkStatus', 'wp.submissions', 'wp.bulkSubmit', 'wp.settings', 'wp.post', 'wp.page', 'wp.taxonomy']
 
   logger.channel: default
-  logger.filehandler.standard.filename: %plugin.dir%/logfile.log
+  logger.filehandler.standard.filename: %plugin.dir%/logfile
   logger.filehandler.standard.loglevel: DEBUG
+  logger.filehandler.standard.maxfiles: 5
 
   submission.pagesize: 5
 
@@ -90,12 +91,19 @@ services:
       - "%logger.filehandler.standard.filename%"
       - "%logger.filehandler.standard.loglevel%"
 
+  fileLoggerHandlerRotatable:
+     class: Monolog\Handler\RotatingFileHandler
+     arguments:
+       - "%logger.filehandler.standard.filename%"
+       - "%logger.filehandler.standard.maxfiles%"
+       - "%logger.filehandler.standard.loglevel%"
+
   logger:
     class: Monolog\Logger
     arguments:
       - "%logger.channel%"
     calls:
-      - [pushHandler, ["@fileLoggerHandlerStandard"]]
+      - [pushHandler, ["@fileLoggerHandlerRotatable"]]
 
   manager.submission:
     class: Smartling\Submissions\SubmissionManager

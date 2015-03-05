@@ -32,7 +32,7 @@
 
 #smartling-form .form-table th,
 #smartling-form .form-table td {
-    display : block;
+    display : inline-table;
     padding : 3px;
 }
 
@@ -125,7 +125,7 @@
 }
 
 #targetLocale {
-    width : 75px;
+    width : 85px;
 }
 
 #submissionDate {
@@ -137,7 +137,7 @@
 }
 
 #wordCount {
-    width : 75px;
+    width : 85px;
 }
 
 #progress {
@@ -148,7 +148,8 @@
     width : 100px;
 }
 
-#submitter{
-    width : 100px;
-    max-width: 150px;
+#submitter {
+    width     : 100px;
+    max-width : 150px;
 }
+

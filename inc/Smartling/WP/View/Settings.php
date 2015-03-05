@@ -12,12 +12,18 @@ $domain = $pluginInfo->getDomain();
 
 $settingsManager = $pluginInfo->getSettingsManager();
 ?>
-
+<style >
+	table.form-table th {
+		display : inline-table;
+	}
+</style >
 <div class = "wrap" >
 	<h2 ><?= get_admin_page_title() ?></h2 >
 
 	<div class = "display-errors" ></div >
+
 	<form id = "smartling-form" action = "/wp-admin/admin-post.php" method = "POST" >
+
 		<input type = "hidden" name = "action" value = "smartling_settings" >
 		<?php wp_nonce_field( 'smartling_connector_settings', 'smartling_connector_nonce' ); ?>
 		<?php wp_referer_field(); ?>
@@ -56,29 +62,33 @@ $settingsManager = $pluginInfo->getSettingsManager();
 				</td >
 			</tr >
 			<tr >
-				<th scope = "row" ><?= __( 'Retrieval Type', $domain ) ?></th >
+				<th scope = "row" ><?= __( 'Default Locale', $domain ) ?></th >
 				<td >
 					<?php
-					$option  = $settingsManager->getAccountInfo()->getRetrievalType();
-					$buttons = $settingsManager->getRetrievalTypes();
-					$checked = $option ? $option : $buttons[1];
-					foreach ( $buttons as $button ) {
-						?>
-						<label class = "radio-label" >
-							<p >
-								<input type = "radio" <?= $button == $checked ? 'checked="checked"' : ''; ?>
-								       name = "smartling_settings[retrievalType]" value = "<?= $button; ?>" >
-								<?= __( $button, $domain ); ?>
-							</p >
-						</label >
-						<br >
+					$defaultLocale = $settingsManager->getLocales()->getDefaultLocale();
+					$defaultBlogId = $settingsManager->getLocales()->getDefaultBlog(); ?>
 
-					<?php } ?>
+					<p ><?= __( 'Site default language is', $this->getPluginInfo()->getDomain() ) ?>
+						: <?= $defaultLocale; ?></p >
 
-					<small ><?php echo __( 'Param for download translate', $this->getPluginInfo()->getDomain() ) ?>.
-					</small >
+					<p >
+						<a href = "#" id = "change-default-locale" ><?= __( 'Change default locale',
+								$domain ) ?></a >
+					</p >
+					<br >
+					<?php $locales = $this->getSiteLocales(); ?>
+					<select name = "smartling_settings[defaultLocale]" id = "default-locales" >
+						<?php foreach ( $locales as $blogId => $value ) {
+							$checked = $defaultBlogId == $blogId ? 'selected' : '';
+							?>
+							<option
+								value = "<?php echo "{$blogId}-{$value}" ?>" <?php echo $checked; ?>> <?php echo $value; ?> </option >
+
+						<?php } ?>
+					</select >
 				</td >
 			</tr >
+
 			<tr >
 				<th scope = "row" ><?= __( 'Target Locales', $domain ) ?></th >
 				<td >
@@ -123,30 +133,27 @@ $settingsManager = $pluginInfo->getSettingsManager();
 				</td >
 			</tr >
 			<tr >
-				<th scope = "row" ><?= __( 'Default Locale', $domain ) ?></th >
+				<th scope = "row" ><?= __( 'Retrieval Type', $domain ) ?></th >
 				<td >
 					<?php
-					$defaultLocale = $settingsManager->getLocales()->getDefaultLocale();
-					$defaultBlogId = $settingsManager->getLocales()->getDefaultBlog(); ?>
+					$option  = $settingsManager->getAccountInfo()->getRetrievalType();
+					$buttons = $settingsManager->getRetrievalTypes();
+					$checked = $option ? $option : $buttons[1];
+					foreach ( $buttons as $button ) {
+						?>
+						<label class = "radio-label" >
+							<p >
+								<input type = "radio" <?= $button == $checked ? 'checked="checked"' : ''; ?>
+								       name = "smartling_settings[retrievalType]" value = "<?= $button; ?>" >
+								<?= __( $button, $domain ); ?>
+							</p >
+						</label >
+						<br >
 
-					<p ><?= __( 'Site default language is', $this->getPluginInfo()->getDomain() ) ?>
-						: <?= $defaultLocale; ?></p >
+					<?php } ?>
 
-					<p >
-						<a href = "#" id = "change-default-locale" ><?= __( 'Change default locale',
-								$domain ) ?></a >
-					</p >
-					<br >
-					<?php $locales = $this->getSiteLocales(); ?>
-					<select name = "smartling_settings[defaultLocale]" id = "default-locales" >
-						<?php foreach ( $locales as $blogId => $value ) {
-							$checked = $defaultBlogId == $blogId ? 'selected' : '';
-							?>
-							<option
-								value = "<?php echo "{$blogId}-{$value}" ?>" <?php echo $checked; ?>> <?php echo $value; ?> </option >
-
-						<?php } ?>
-					</select >
+					<small ><?php echo __( 'Param for download translate', $this->getPluginInfo()->getDomain() ) ?>.
+					</small >
 				</td >
 			</tr >
 			<tr style = "display: none;" >
@@ -193,6 +200,11 @@ $settingsManager = $pluginInfo->getSettingsManager();
 		<li >
 			<a href = "/wp-admin/admin-post.php?action=smartling_run_cron" target = "_blank" >
 				<?= __( 'Trigger cron tasks (only for smartling connector, opens in a new window)' ); ?>
+			</a >
+		</li >
+		<li >
+			<a href = "/wp-admin/admin-post.php?action=smartling_download_log_file" >
+				<?= __( 'Download current log file' ); ?>
 			</a >
 		</li >
 	</ul >

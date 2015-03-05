@@ -138,7 +138,8 @@ class SubmissionTableWidget extends \WP_List_Table {
 			'type'  => 'checkbox',
 			'name'  => $this->buildHtmlTagName( $this->_args['singular'] ) . '[]',
 			'value' => $item['id'],
-			'id'    => 'submission-id-' . $item['id']
+			'id'    => 'submission-id-' . $item['id'],
+			'class' => 'bulkaction',
 		) );
 	}
 
@@ -148,7 +149,7 @@ class SubmissionTableWidget extends \WP_List_Table {
 	public function get_columns () {
 		$columns = $this->manager->getColumnsLabels();
 
-		$columns = array_merge( array ( 'bulkActionCb' => '' ), $columns );
+		$columns = array_merge( array ( 'bulkActionCb' => '<input type="checkbox" class="checkall" />' ), $columns );
 
 		return $columns;
 	}
@@ -225,13 +226,13 @@ class SubmissionTableWidget extends \WP_List_Table {
 			$ep = Bootstrap::getContainer()->get( 'entrypoint' );
 
 			switch ( $this->current_action() ) {
-				case "downloadSingle":
+				case 'downloadSingle':
 					$messages = $ep->downloadTranslationBySubmissionId( $submissionId );
 					break;
-				case "sendSingle":
+				case 'sendSingle':
 					$messages = $ep->sendForTranslationBySubmissionId( $submissionId );
 					break;
-				case "checkSingle":
+				case 'checkSingle':
 					$messages = $ep->checkSubmissionById( $submissionId );
 					break;
 			}
