@@ -2,16 +2,17 @@
 /**
  * @link              http://example.com
  * @since             1.0.0
- * @package           Plugin_Name
+ * @package           smartling-connector
  *
  * @wordpress-plugin
  * Plugin Name:       Smartling Connector
  * Plugin URI:        http://smartling.com/
  * Description:       This is a short description of what the plugin does. It's displayed in the WordPress dashboard.
- * Version:           1.0.5-dev @2015/03/03
+ * Version:           1.0.6-dev @2015/03/05
  * Author:            SmartLing
  * Author URI:        http://smartling.com/
  * License:           GPL-2.0+
+ * Network:           true
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       smartling-connector
  * Domain Path:       /languages
