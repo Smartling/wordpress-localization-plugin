@@ -12,7 +12,7 @@ class SettingsConfigurationProfile {
 	/**
 	 * @var string
 	 */
-	private $apiUrl = 'https://api.smartling.com/v1';
+	private $apiUrl = 'https://capi.smartling.com/v1';
 
 	/**
 	 * @var string

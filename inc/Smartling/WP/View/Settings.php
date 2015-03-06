@@ -37,7 +37,7 @@ $settingsManager = $pluginInfo->getSettingsManager();
 					       value = "<?= $settingsManager->getAccountInfo()->getApiUrl(); ?>" >
 					<br >
 					<small ><?= __( 'Set api url. Default', $domain ) ?>:
-						https://api.smartling.com/v1
+						https://capi.smartling.com/v1
 					</small >
 				</td >
 			</tr >

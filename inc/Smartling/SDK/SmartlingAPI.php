@@ -9,7 +9,7 @@ class SmartlingAPI {
 	const SANDBOX_MODE = 'SANDBOX';
 	const PRODUCTION_MODE = 'PRODUCTION';
 	const SANDBOX_URL = 'https://sandbox-api.smartling.com/v1';
-	const PRODUCTION_URL = 'https://api.smartling.com/v1';
+	const PRODUCTION_URL = 'https://capi.smartling.com/v1';
 
 	/**
 	 * api base url

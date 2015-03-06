@@ -19,7 +19,7 @@ class SettingsManagerTest extends PHPUnit_Framework_TestCase {
 				switch ( $key ) {
 					case SettingsManager::SMARTLING_ACCOUNT_INFO: {
 						return array (
-							'apiUrl'        => 'https://api.smartling.com/v1',
+							'apiUrl'        => 'https://capi.smartling.com/v1',
 							'projectId'     => 'a',
 							'key'           => 'b',
 							'retrievalType' => 'pseudo',
