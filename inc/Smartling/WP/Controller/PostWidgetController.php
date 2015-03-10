@@ -29,9 +29,11 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 	/**
 	 * @inheritdoc
 	 */
-	public function register () {
-		add_action( 'add_meta_boxes', array ( $this, 'box' ) );
-		add_action( 'save_post', array ( $this, 'save' ) );
+	public function register ( array$diagnosticData = array () ) {
+		if ( false === $diagnosticData['selfBlock'] ) {
+			add_action( 'add_meta_boxes', array ( $this, 'box' ) );
+			add_action( 'save_post', array ( $this, 'save' ) );
+		}
 	}
 
 	/**

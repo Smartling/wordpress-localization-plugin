@@ -2,6 +2,7 @@
 /**
  * @var PluginInfo $pluginInfo
  */
+use Smartling\Bootstrap;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Settings\TargetLocale;
 use Smartling\WP\WPAbstract;
@@ -11,16 +12,38 @@ $pluginInfo = $this->getPluginInfo();
 $domain = $pluginInfo->getDomain();
 
 $settingsManager = $pluginInfo->getSettingsManager();
+
+$data = Bootstrap::getContainer()->get( 'diag' );
+
+$errorMessage = false === $data['selfBlock'] ? '' : nl2br( 'Error:' . PHP_EOL . PHP_EOL . $data['message'] );
 ?>
 <style >
 	table.form-table th {
 		display : inline-table;
 	}
+
+	div.display-errors {
+		margin-top    : 30px;
+		margin-bottom : 30px;
+		border        : solid 1px #ff0000;
+		border-radius : 5px;
+		padding       : 15px;
+		font-size     : 12pt;
+		color         : #ff5555;
+		font-weight   : bold;
+		box-shadow    : 0px 0px 29px 10px rgba(0, 0, 0, 0.75);
+	}
+
+	.hide {
+		display : <?= false === $data['selfBlock'] ? 'none' : 'block' ?>;
+	}
 </style >
+
+
 <div class = "wrap" >
 	<h2 ><?= get_admin_page_title() ?></h2 >
 
-	<div class = "display-errors" ></div >
+	<div class = "display-errors hide" ><?= $errorMessage ?></div >
 
 	<form id = "smartling-form" action = "/wp-admin/admin-post.php" method = "POST" >
 

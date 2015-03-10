@@ -32,8 +32,10 @@ class JobEngine implements WPHookInterface {
 		wp_clear_scheduled_hook( self::CRON_HOOK );
 	}
 
-	public function register () {
-		add_action( self::CRON_HOOK, array ( $this, 'doWork' ) );
+	public function register ( array $diagnosticData = array () ) {
+		if ( false === $diagnosticData['selfBlock'] ) {
+			add_action( self::CRON_HOOK, array ( $this, 'doWork' ) );
+		}
 	}
 
 	/**

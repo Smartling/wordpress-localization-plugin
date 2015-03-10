@@ -38,9 +38,11 @@ class CheckStatusController extends WPAbstract implements WPHookInterface {
 	/**
 	 * @inheritdoc
 	 */
-	public function register () {
-		add_action( 'wp_ajax_ajax_submissions_update_status', array ( $this, 'ajaxHandler' ) );
-		add_action( 'admin_enqueue_scripts', array ( $this, 'wp_enqueue' ) );
+	public function register ( array $diagnosticData = array () ) {
+		if ( false === $diagnosticData['selfBlock'] ) {
+			add_action( 'wp_ajax_ajax_submissions_update_status', array ( $this, 'ajaxHandler' ) );
+			add_action( 'admin_enqueue_scripts', array ( $this, 'wp_enqueue' ) );
+		}
 	}
 
 	/**

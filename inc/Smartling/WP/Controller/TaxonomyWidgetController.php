@@ -4,7 +4,6 @@ namespace Smartling\WP\Controller;
 
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
-use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityAbstract;
 use Smartling\Exception\SmartlingNotSupportedContentException;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\WP\WPAbstract;
@@ -22,8 +21,11 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 	/**
 	 * @inheritdoc
 	 */
-	public function register () {
-		add_action( 'admin_init', array ( $this, 'init' ) );
+	public function register ( array $diagnosticData = array () ) {
+		if ( false === $diagnosticData['selfBlock'] ) {
+			add_action( 'admin_init', array ( $this, 'init' ) );
+		}
+
 	}
 
 	/**

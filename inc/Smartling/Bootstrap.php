@@ -4,7 +4,6 @@ namespace Smartling;
 
 use Psr\Log\LoggerInterface;
 use Smartling\DbAl\WordpressContentEntities\CategoryEntityAbstract;
-use Smartling\Helpers\XmlEncoder;
 use Smartling\WP\WPHookInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -113,11 +112,12 @@ class Bootstrap {
 	}
 
 	public function registerHooks () {
-		$hooks = $this->fromContainer( 'wp.hooks', true );
+		$hooks          = $this->fromContainer( 'wp.hooks', true );
+		$diagnosticData = $this->fromContainer( 'diag' );
 		foreach ( $hooks as $hook ) {
 			$object = $this->fromContainer( $hook );
 			if ( $object instanceof WPHookInterface ) {
-				$object->register();
+				$object->register( $diagnosticData );
 			}
 		}
 	}
@@ -126,6 +126,7 @@ class Bootstrap {
 		$this->detectMultilangPlugins();
 
 		if ( defined( 'SMARTLING_CLI_EXECUTION' ) && SMARTLING_CLI_EXECUTION === false ) {
+			$this->test();
 			$this->registerHooks();
 			$this->run();
 		}
@@ -190,6 +191,35 @@ class Bootstrap {
 		if ( ! file_exists( $path ) ) {
 			mkdir( $path, 0777 );
 		}
+	}
+
+	/**
+	 * Tests if current Wordpress Configuration can work with Smartling Plugin
+	 *
+	 * @return mixed
+	 */
+	protected function test () {
+		/**
+		 * @var array $data
+		 */
+		$data = self::getContainer()->get( 'multilang_plugins' );
+
+		$blockWork = true;
+
+		foreach ( $data as $value ) {
+			// there is at least one plugin that can be used
+			if ( true === $value ) {
+				$blockWork = false;
+				break;
+			}
+		}
+
+		$diagnosticData = array (
+			'selfBlock' => $blockWork,
+			'message'   => 'No active suitable localization plugin found.' . PHP_EOL . 'Some functionality is disabled until needed plugin is installed and activated.' . PHP_EOL . 'Please read installation instructions.'
+		);
+
+		self::getContainer()->set( 'diag', $diagnosticData );
 	}
 
 	public function run () {

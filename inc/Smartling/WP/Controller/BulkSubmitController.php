@@ -25,9 +25,11 @@ class BulkSubmitController
 	/**
 	 * @inheritdoc
 	 */
-	public function register () {
-		add_action( 'admin_menu', array ( $this, 'menu' ) );
-		add_action( 'network_admin_menu', array ( $this, 'menu' ) );
+	public function register ( array $diagnosticData = array () ) {
+		if ( false === $diagnosticData['selfBlock'] ) {
+			add_action( 'admin_menu', array ( $this, 'menu' ) );
+			add_action( 'network_admin_menu', array ( $this, 'menu' ) );
+		}
 	}
 
 	public function menu () {

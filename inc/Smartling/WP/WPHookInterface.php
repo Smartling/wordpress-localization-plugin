@@ -12,7 +12,7 @@ interface WPHookInterface {
 	/**
 	 * Registers wp hook handlers. Invoked by wordpress.
 	 *
-	 * @return void
+	 * @param array $diagnosticData
 	 */
-	public function register ();
+	public function register (array $diagnosticData = array());
 }
