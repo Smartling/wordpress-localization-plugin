@@ -4,6 +4,7 @@ namespace Smartling;
 
 use Psr\Log\LoggerInterface;
 use Smartling\DbAl\WordpressContentEntities\CategoryEntityAbstract;
+use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\WP\WPHookInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -112,12 +113,11 @@ class Bootstrap {
 	}
 
 	public function registerHooks () {
-		$hooks          = $this->fromContainer( 'wp.hooks', true );
-		$diagnosticData = $this->fromContainer( 'diag' );
+		$hooks = $this->fromContainer( 'wp.hooks', true );
 		foreach ( $hooks as $hook ) {
 			$object = $this->fromContainer( $hook );
 			if ( $object instanceof WPHookInterface ) {
-				$object->register( $diagnosticData );
+				$object->register();
 			}
 		}
 	}
@@ -199,6 +199,19 @@ class Bootstrap {
 	 * @return mixed
 	 */
 	protected function test () {
+		$this->testThirdPartyPluginsRequirements();
+
+		$php_extensions = array (
+			'curl',
+			'mbstring'
+		);
+
+		foreach ( $php_extensions as $ext ) {
+			$this->testPhpExtension( $ext );
+		}
+	}
+
+	protected function testThirdPartyPluginsRequirements () {
 		/**
 		 * @var array $data
 		 */
@@ -214,12 +227,35 @@ class Bootstrap {
 			}
 		}
 
-		$diagnosticData = array (
-			'selfBlock' => $blockWork,
-			'message'   => 'No active suitable localization plugin found.' . PHP_EOL . 'Some functionality is disabled until needed plugin is installed and activated.' . PHP_EOL . 'Please read installation instructions.'
-		);
+		if ( true === $blockWork ) {
+			$mainMessage = 'No active suitable localization plugin found.';
 
-		self::getContainer()->set( 'diag', $diagnosticData );
+			self::$_logger->critical( 'Boot :: ' . $mainMessage );
+
+			DiagnosticsHelper::addDiagnosticsMessage(
+				$mainMessage
+				. PHP_EOL
+				. 'Some functionality is disabled until needed plugin is installed and activated.'
+				. PHP_EOL . 'Please read installation instructions.',
+				true
+			);
+		}
+	}
+
+	protected function testPhpExtension ( $extension ) {
+		if ( ! extension_loaded( $extension ) ) {
+			$mainMessage = $extension . ' php extension is required to run the plugin is not installed / activated.';
+
+			self::$_logger->critical( 'Boot :: ' . $mainMessage );
+
+			DiagnosticsHelper::addDiagnosticsMessage(
+				$mainMessage
+				. PHP_EOL
+				. 'Some functionality is disabled until ' . $extension . ' php extension is installed and activated.'
+				. PHP_EOL . 'Please read installation instructions.',
+				true
+			);
+		}
 	}
 
 	public function run () {

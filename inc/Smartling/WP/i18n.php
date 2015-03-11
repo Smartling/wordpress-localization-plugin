@@ -25,7 +25,7 @@ class i18n implements WPHookInterface {
 	/**
 	 * @inheritdoc
 	 */
-	public function register ( array $diagnosticData = array () ) {
+	public function register () {
 		load_plugin_textdomain(
 			$this->pluginInfo->getDomain(),
 			false,

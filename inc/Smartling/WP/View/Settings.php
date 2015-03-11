@@ -2,7 +2,8 @@
 /**
  * @var PluginInfo $pluginInfo
  */
-use Smartling\Bootstrap;
+
+use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Settings\TargetLocale;
 use Smartling\WP\WPAbstract;
@@ -13,9 +14,6 @@ $domain = $pluginInfo->getDomain();
 
 $settingsManager = $pluginInfo->getSettingsManager();
 
-$data = Bootstrap::getContainer()->get( 'diag' );
-
-$errorMessage = false === $data['selfBlock'] ? '' : nl2br( 'Error:' . PHP_EOL . PHP_EOL . $data['message'] );
 ?>
 <style >
 	table.form-table th {
@@ -35,7 +33,16 @@ $errorMessage = false === $data['selfBlock'] ? '' : nl2br( 'Error:' . PHP_EOL . 
 	}
 
 	.hide {
-		display : <?= false === $data['selfBlock'] ? 'none' : 'block' ?>;
+		display : none;
+	}
+
+	div.display-errors ul {
+		list-style : circle;
+	}
+
+	div.display-errors ul li {
+		padding-left : 20px;
+		margin-left  : 20px;
 	}
 </style >
 
@@ -43,7 +50,14 @@ $errorMessage = false === $data['selfBlock'] ? '' : nl2br( 'Error:' . PHP_EOL . 
 <div class = "wrap" >
 	<h2 ><?= get_admin_page_title() ?></h2 >
 
-	<div class = "display-errors hide" ><?= $errorMessage ?></div >
+	<div class = "display-errors <?= DiagnosticsHelper::isBlocked() ? '' : 'hide'; ?>" >
+		Self-diagnostics error messages:
+		<ul >
+			<?php foreach ( DiagnosticsHelper::getMessages() as $errorMessage ) : ?>
+				<li ><?= nl2br( $errorMessage ); ?></li >
+			<?php endforeach; ?>
+		</ul >
+	</div >
 
 	<form id = "smartling-form" action = "/wp-admin/admin-post.php" method = "POST" >
 

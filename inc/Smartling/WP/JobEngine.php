@@ -5,6 +5,7 @@ namespace Smartling\WP;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
+use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\PluginInfo;
 
 /**
@@ -32,8 +33,8 @@ class JobEngine implements WPHookInterface {
 		wp_clear_scheduled_hook( self::CRON_HOOK );
 	}
 
-	public function register ( array $diagnosticData = array () ) {
-		if ( false === $diagnosticData['selfBlock'] ) {
+	public function register () {
+		if ( ! DiagnosticsHelper::isBlocked() ) {
 			add_action( self::CRON_HOOK, array ( $this, 'doWork' ) );
 		}
 	}

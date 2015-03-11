@@ -9,6 +9,7 @@
 namespace Smartling\WP\Controller;
 
 
+use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\WP\View\BulkSubmitTableWidget;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -25,8 +26,8 @@ class BulkSubmitController
 	/**
 	 * @inheritdoc
 	 */
-	public function register ( array $diagnosticData = array () ) {
-		if ( false === $diagnosticData['selfBlock'] ) {
+	public function register () {
+		if ( ! DiagnosticsHelper::isBlocked() ) {
 			add_action( 'admin_menu', array ( $this, 'menu' ) );
 			add_action( 'network_admin_menu', array ( $this, 'menu' ) );
 		}

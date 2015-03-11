@@ -27,7 +27,7 @@ class SettingsController extends WPAbstract implements WPHookInterface {
 		wp_enqueue_style( $this->getPluginInfo()->getName() );
 	}
 
-	public function register ( array$diagnosticData = array () ) {
+	public function register () {
 		add_action( 'admin_enqueue_scripts', array ( $this, 'wp_enqueue' ) );
 		add_action( 'admin_menu', array ( $this, 'menu' ) );
 		add_action( 'network_admin_menu', array ( $this, 'menu' ) );
