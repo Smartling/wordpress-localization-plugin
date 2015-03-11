@@ -28,18 +28,11 @@ class DiagnosticsHelper {
 	 * @param bool   $blockPlugin
 	 */
 	public static function addDiagnosticsMessage ( $message, $blockPlugin = false ) {
-		self::setBlockStatus( $blockPlugin );
 		if ( is_string( $message ) ) {
 			self::$messages[] = $message;
-		}
-	}
-
-	/**
-	 * @param $blocked
-	 */
-	private static function setBlockStatus ( $blocked ) {
-		if ( is_bool( $blocked ) && false === self::$pluginBlocked ) {
-			self::$pluginBlocked = $blocked;
+			if ( true === $blockPlugin ) {
+				self::$pluginBlocked = true;
+			}
 		}
 	}
 
