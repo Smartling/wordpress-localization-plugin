@@ -15,42 +15,12 @@ $domain = $pluginInfo->getDomain();
 $settingsManager = $pluginInfo->getSettingsManager();
 
 ?>
-<style >
-	table.form-table th {
-		display : inline-table;
-	}
-
-	div.display-errors {
-		margin-top    : 30px;
-		margin-bottom : 30px;
-		border        : solid 1px #ff0000;
-		border-radius : 5px;
-		padding       : 15px;
-		font-size     : 12pt;
-		color         : #ff5555;
-		font-weight   : bold;
-		box-shadow    : 0px 0px 29px 10px rgba(0, 0, 0, 0.75);
-	}
-
-	.hide {
-		display : none;
-	}
-
-	div.display-errors ul {
-		list-style : circle;
-	}
-
-	div.display-errors ul li {
-		padding-left : 20px;
-		margin-left  : 20px;
-	}
-</style >
 
 
 <div class = "wrap" >
 	<h2 ><?= get_admin_page_title() ?></h2 >
 
-	<div class = "display-errors <?= DiagnosticsHelper::isBlocked() ? '' : 'hide'; ?>" >
+	<div class = "display-errors-set <?= DiagnosticsHelper::isBlocked() ? '' : 'hide'; ?>" >
 		Self-diagnostics error messages:
 		<ul >
 			<?php foreach ( DiagnosticsHelper::getMessages() as $errorMessage ) : ?>
