@@ -27,6 +27,10 @@ $settingsManager = $pluginInfo->getSettingsManager();
 				<li ><?= nl2br( $errorMessage ); ?></li >
 			<?php endforeach; ?>
 		</ul >
+		<p >
+			Some functionality is disabled until Default blog is set on Settings page. <br />
+			Please read installation instructions.
+		</p >
 	</div >
 
 	<form id = "smartling-form" action = "/wp-admin/admin-post.php" method = "POST" >
