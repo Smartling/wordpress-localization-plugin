@@ -341,4 +341,82 @@ class ApiWrapper implements ApiWrapperInterface {
 			throw new SmartlingFileUploadException( $message );
 		}
 	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getSupportedLocales () {
+		$rawResponse = $this->api->getSupportedLocales();
+		$oResponse   = json_decode( $rawResponse );
+
+		$supportedLocales = array ();
+
+		switch ( true ) {
+			case ( false === $oResponse ) : {
+				$message = vsprintf(
+					'Failed decoding response message in %s in %s:%s. Message:\'%s\'',
+					array (
+						__METHOD__,
+						__FILE__,
+						__LINE__,
+						$rawResponse
+					)
+				);
+
+				$this->logger->error( $message );
+				break;
+			}
+			case ( ! isset( $oResponse->response ) ): {
+				$message = vsprintf(
+					'Response does not contain body in %s in %s:%s. Message:\'%s\'',
+					array (
+						__METHOD__,
+						__FILE__,
+						__LINE__,
+						$rawResponse
+					)
+				);
+
+				$this->logger->error( $message );
+				break;
+			}
+			case ( ( ! isset( $oResponse->response->code ) ) || ( 'SUCCESS' !== $oResponse->response->code ) ): {
+				$message = vsprintf(
+					'Response has no SUCCESS response code in %s in %s:%s. Message:\'%s\'',
+					array (
+						__METHOD__,
+						__FILE__,
+						__LINE__,
+						$rawResponse
+					)
+				);
+
+				$this->logger->error( $message );
+				break;
+			}
+			case ( ( isset( $oResponse->response->messages ) ) && ( 0 < count( $oResponse->response->messages ) ) ): {
+				$message = vsprintf(
+					'Response has error messages in %s in %s:%s. Message:\'%s\'',
+					array (
+						__METHOD__,
+						__FILE__,
+						__LINE__,
+						$rawResponse
+					)
+				);
+
+				$this->logger->error( $message );
+				break;
+			}
+			case ( ( isset( $oResponse->response->data ) ) && isset( $oResponse->response->data->locales ) && is_array( $oResponse->response->data->locales ) ): {
+				foreach ( $oResponse->response->data->locales as $localeDef ) {
+					$supportedLocales[ $localeDef->locale ] = vsprintf( '%s [%s]',
+						array ( $localeDef->name, $localeDef->translated ) );
+				}
+				break;
+			}
+		}
+
+		return $supportedLocales;
+	}
 }

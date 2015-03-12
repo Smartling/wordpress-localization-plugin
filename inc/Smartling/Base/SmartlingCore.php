@@ -584,4 +584,11 @@ class SmartlingCore {
 
 		return $results;
 	}
+
+	/**
+	 * @return array
+	 */
+	public function getProjectLocales () {
+		return $this->getApiWrapper()->getSupportedLocales();
+	}
 }

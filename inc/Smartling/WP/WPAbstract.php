@@ -2,6 +2,8 @@
 
 namespace Smartling\WP;
 
+use Smartling\Base\SmartlingCore;
+use Smartling\Bootstrap;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\EntityHelper;
 use Psr\Log\LoggerInterface;
@@ -258,11 +260,29 @@ abstract class WPAbstract {
 			HtmlTagGeneratorHelper::tag( 'label', implode( '', $parts ), array ( 'class' => 'radio-label' ) )
 		);
 
-		$parts[] = HtmlTagGeneratorHelper::tag( 'input', '', array (
+		/**
+		 * @var SmartlingCore $ep
+		 */
+		$ep      = Bootstrap::getContainer()->get( 'entrypoint' );
+		$locales = $ep->getProjectLocales();
+
+		$parts[] = HtmlTagGeneratorHelper::tag(
+			'select',
+			HtmlTagGeneratorHelper::renderSelectOptions(
+				$smartlingName,
+				$locales
+			),
+			array (
+				//'id'   => $this->buildHtmlTagName( $controlName ),
+				'name' => vsprintf( 'smartling_settings[targetLocales][%s][target]', array ( $displayName ) )
+			) );
+
+
+		/*$parts[] = HtmlTagGeneratorHelper::tag( 'input', '', array (
 			'type'  => 'text',
 			'name'  => vsprintf( 'smartling_settings[targetLocales][%s][target]', array ( $displayName ) ),
 			'value' => $smartlingName,
-		) );
+		) );*/
 
 		$parts[] = HtmlTagGeneratorHelper::tag( 'input', '', array (
 			'type'  => 'hidden',

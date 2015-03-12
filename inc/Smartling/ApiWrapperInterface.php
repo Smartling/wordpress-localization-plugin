@@ -48,10 +48,15 @@ interface ApiWrapperInterface {
 	 * @return bool
 	 * @throws SmartlingFileUploadException
 	 */
-	public function uploadContent ( SubmissionEntity $entity, $xmlString = '', $filename = '' );
+	function uploadContent ( SubmissionEntity $entity, $xmlString = '', $filename = '' );
 
 	/**
-	 * @param SmartlingAPI $api
+	 * Sets up the reference to API SDK
 	 */
-	public function setApi ();
+	function setApi ();
+
+	/**
+	 * @return array
+	 */
+	function getSupportedLocales ();
 }
