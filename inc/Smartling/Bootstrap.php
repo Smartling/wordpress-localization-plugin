@@ -5,6 +5,7 @@ namespace Smartling;
 use Psr\Log\LoggerInterface;
 use Smartling\DbAl\WordpressContentEntities\CategoryEntityAbstract;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPHookInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -209,6 +210,8 @@ class Bootstrap {
 		foreach ( $php_extensions as $ext ) {
 			$this->testPhpExtension( $ext );
 		}
+
+		$this->testPluginSetup();
 	}
 
 	protected function testThirdPartyPluginsRequirements () {
@@ -252,6 +255,30 @@ class Bootstrap {
 				$mainMessage
 				. PHP_EOL
 				. 'Some functionality is disabled until ' . $extension . ' php extension is installed and activated.'
+				. PHP_EOL . 'Please read installation instructions.',
+				true
+			);
+		}
+	}
+
+	protected function testPluginSetup () {
+		/**
+		 * @var SettingsManager $sm
+		 */
+		$sm = self::getContainer()->get( 'manager.settings' );
+
+		$locales = $sm->getLocales();
+
+		if (0 ===  $locales->getDefaultBlog())
+		{
+			$mainMessage = 'Default blog is not set on Settings page';
+
+			self::$_logger->critical( 'Boot :: ' . $mainMessage );
+
+			DiagnosticsHelper::addDiagnosticsMessage(
+				$mainMessage
+				. PHP_EOL
+				. 'Some functionality is disabled until Default blog is set on Settings page.'
 				. PHP_EOL . 'Please read installation instructions.',
 				true
 			);
