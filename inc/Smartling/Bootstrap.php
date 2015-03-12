@@ -276,7 +276,7 @@ class Bootstrap {
 
 			self::$_logger->critical( 'Boot :: ' . $mainMessage );
 
-			DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
+			DiagnosticsHelper::addDiagnosticsMessage( $mainMessage, true );
 		}
 	}
 
@@ -286,7 +286,7 @@ class Bootstrap {
 
 			self::$_logger->critical( 'Boot :: ' . $mainMessage );
 
-			DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
+			DiagnosticsHelper::addDiagnosticsMessage( $mainMessage, true );
 		}
 	}
 
@@ -298,29 +298,26 @@ class Bootstrap {
 
 		$locales = $sm->getLocales();
 
-		if (0 ===  $locales->getDefaultBlog())
-		{
+		if ( 0 === $locales->getDefaultBlog() ) {
 			$mainMessage = 'Default blog is not set on Settings page';
 
 			self::$_logger->critical( 'Boot :: ' . $mainMessage );
 
-			DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
+			DiagnosticsHelper::addDiagnosticsMessage( $mainMessage, true );
 		}
 
 		$accFlag = false;
 
-		foreach ($locales->getTargetLocales(false) as $locale)
-		{
+		foreach ( $locales->getTargetLocales( false ) as $locale ) {
 			$accFlag = $accFlag || $locale->getEnabled();
 		}
 
-		if (false === $accFlag)
-		{
+		if ( false === $accFlag ) {
 			$mainMessage = 'No target locales checked on Settings page.';
 
 			self::$_logger->critical( 'Boot :: ' . $mainMessage );
 
-			DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
+			DiagnosticsHelper::addDiagnosticsMessage( $mainMessage, true );
 		}
 	}
 
