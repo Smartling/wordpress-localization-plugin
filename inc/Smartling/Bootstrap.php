@@ -235,13 +235,7 @@ class Bootstrap {
 
 			self::$_logger->critical( 'Boot :: ' . $mainMessage );
 
-			DiagnosticsHelper::addDiagnosticsMessage(
-				$mainMessage
-				. PHP_EOL
-				. 'Some functionality is disabled until needed plugin is installed and activated.'
-				. PHP_EOL . 'Please read installation instructions.',
-				true
-			);
+			DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
 		}
 	}
 
@@ -251,13 +245,7 @@ class Bootstrap {
 
 			self::$_logger->critical( 'Boot :: ' . $mainMessage );
 
-			DiagnosticsHelper::addDiagnosticsMessage(
-				$mainMessage
-				. PHP_EOL
-				. 'Some functionality is disabled until ' . $extension . ' php extension is installed and activated.'
-				. PHP_EOL . 'Please read installation instructions.',
-				true
-			);
+			DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
 		}
 	}
 
@@ -275,13 +263,23 @@ class Bootstrap {
 
 			self::$_logger->critical( 'Boot :: ' . $mainMessage );
 
-			DiagnosticsHelper::addDiagnosticsMessage(
-				$mainMessage
-				. PHP_EOL
-				. 'Some functionality is disabled until Default blog is set on Settings page.'
-				. PHP_EOL . 'Please read installation instructions.',
-				true
-			);
+			DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
+		}
+
+		$accFlag = false;
+
+		foreach ($locales->getTargetLocales(false) as $locale)
+		{
+			$accFlag = $accFlag || $locale->getEnabled();
+		}
+
+		if (false === $accFlag)
+		{
+			$mainMessage = 'No target locales checked on Settings page.';
+
+			self::$_logger->critical( 'Boot :: ' . $mainMessage );
+
+			DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
 		}
 	}
 
