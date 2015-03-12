@@ -2,6 +2,7 @@
 
 namespace Smartling;
 
+use Exception;
 use Psr\Log\LoggerInterface;
 use Smartling\DbAl\WordpressContentEntities\CategoryEntityAbstract;
 use Smartling\Helpers\DiagnosticsHelper;
@@ -124,12 +125,52 @@ class Bootstrap {
 	}
 
 	public function load () {
+		register_shutdown_function( array ( $this, 'shutdownHandler' ) );
+
 		$this->detectMultilangPlugins();
 
-		if ( defined( 'SMARTLING_CLI_EXECUTION' ) && SMARTLING_CLI_EXECUTION === false ) {
-			$this->test();
-			$this->registerHooks();
-			$this->run();
+		try {
+			if ( defined( 'SMARTLING_CLI_EXECUTION' ) && SMARTLING_CLI_EXECUTION === false ) {
+				$this->test();
+				$this->registerHooks();
+				$this->run();
+			}
+		} catch ( Exception $e ) {
+			$message = "Unhandled exception caught. Disabling plugin.\n";
+			$message .= "Message: '" . $e->getMessage() . "'\n";
+			$message .= "Location: '" . $e->getFile() . ':' . $e->getLine() . "'\n";
+			$message .= "Trace: " . $e->getTraceAsString() . "\n";
+			self::$_logger->emergency( $message );
+			DiagnosticsHelper::addDiagnosticsMessage( $message, true );
+		}
+	}
+
+	/**
+	 * Last chance to know what had happened if Wordpress is down.
+	 */
+	public function shutdownHandler () {
+		$logger = Bootstrap::getLogger();
+
+		$loggingPattern = E_ALL
+		                  ^ E_NOTICE
+		                  ^ E_WARNING
+		                  ^ E_USER_NOTICE
+		                  ^ E_USER_WARNING
+		                  ^ E_STRICT
+		                  ^ E_DEPRECATED;
+
+		$data = error_get_last();
+
+		/**
+		 * @var int $errorType
+		 */
+		$errorType = &$data['type'];
+
+		if ( $errorType && $loggingPattern ) {
+			$message = "An Error occurred and Wordpress is down.\n";
+			$message .= "Message: '" . $data['message'] . "'\n";
+			$message .= "Location: '" . $data['file'] . ':' . $data['line'] . "'\n";
+			$logger->emergency( $message );
 		}
 	}
 
