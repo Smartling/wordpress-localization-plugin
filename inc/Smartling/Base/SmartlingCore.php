@@ -312,12 +312,10 @@ class SmartlingCore {
 
 				$targetContent->cleanFields();
 
-				$this->setValues( $targetContent, $structure );
-
 			} else {
 				$targetContent = $this->readTargetContentEntity( $entity );
-				$this->setValues( $targetContent, $structure );
 			}
+			$this->setValues( $targetContent, $structure );
 			$this->saveEntity( $entity->getContentType(), $entity->getTargetBlog(), $targetContent );
 
 			if ( 0 === $targetId ) {
