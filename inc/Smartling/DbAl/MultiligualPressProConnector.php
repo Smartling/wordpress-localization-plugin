@@ -7,6 +7,7 @@ use Mlp_Content_Relations_Interface;
 use Mlp_Site_Relations;
 use Mlp_Site_Relations_Interface;
 use Psr\Log\LoggerInterface;
+use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
@@ -59,7 +60,13 @@ class MultiligualPressProConnector extends LocalizationPluginAbstract {
 			$rawValue = get_site_option( self::MULTILINGUAL_PRESS_PRO_SITE_OPTION, false, false );
 
 			if ( false === $rawValue ) {
-				throw new \Exception( 'Multilingual press PRO is not installed/configured.' );
+				$message = vsprintf( 'Locales and/or Links are not set with multilingual press plugin.', array () );
+
+				$this->getLogger()->critical( 'SettingsPage:Render ' . $message );
+
+				DiagnosticsHelper::addDiagnosticsMessage( $message, true );
+
+				//throw new \Exception( 'Multilingual press PRO is not installed/configured.' );
 			} else {
 				foreach ( $rawValue as $blogId => $item ) {
 					self::$_blogLocalesCache[ $blogId ] = array (

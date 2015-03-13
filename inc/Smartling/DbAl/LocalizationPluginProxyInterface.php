@@ -23,6 +23,11 @@ interface LocalizationPluginProxyInterface {
 	function __construct ( LoggerInterface $logger, SiteHelper $helper, array $ml_plugin_statuses );
 
 	/**
+	 * @return LoggerInterface
+	 */
+	function getLogger();
+
+	/**
 	 * Retrieves locale from site option
 	 *
 	 * @return array

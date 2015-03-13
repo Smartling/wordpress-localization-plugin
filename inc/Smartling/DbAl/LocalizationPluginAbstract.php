@@ -22,6 +22,13 @@ abstract class LocalizationPluginAbstract implements LocalizationPluginProxyInte
 	private $logger;
 
 	/**
+	 * @return LoggerInterface
+	 */
+	public function getLogger () {
+		return $this->logger;
+	}
+
+	/**
 	 * @inheritdoc
 	 */
 	public function __construct ( LoggerInterface $logger, SiteHelper $helper, array $ml_plugin_statuses ) {

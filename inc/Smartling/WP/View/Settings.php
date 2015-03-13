@@ -14,6 +14,9 @@ $domain = $pluginInfo->getDomain();
 
 $settingsManager = $pluginInfo->getSettingsManager();
 
+$locales = $this->getSiteLocales();
+
+
 ?>
 
 
@@ -87,7 +90,6 @@ $settingsManager = $pluginInfo->getSettingsManager();
 								$domain ) ?></a >
 					</p >
 					<br >
-					<?php $locales = $this->getSiteLocales(); ?>
 					<select name = "smartling_settings[defaultLocale]" id = "default-locales" >
 						<?php foreach ( $locales as $blogId => $value ) {
 							$checked = $defaultBlogId == $blogId ? 'selected' : '';
