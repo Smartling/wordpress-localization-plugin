@@ -316,8 +316,8 @@ class SmartlingCore {
 
 			} else {
 				$targetContent = $this->readTargetContentEntity( $entity );
+				$this->setValues( $targetContent, $structure );
 			}
-
 			$this->saveEntity( $entity->getContentType(), $entity->getTargetBlog(), $targetContent );
 
 			if ( 0 === $targetId ) {
