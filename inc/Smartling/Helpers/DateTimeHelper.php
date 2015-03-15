@@ -14,6 +14,11 @@ use DateTimeZone;
 class DateTimeHelper {
 
 	/**
+	 * UTC Timezone
+	 */
+	const TIMEZONE_UTC = 'UTC';
+
+	/**
 	 * @var DateTimeZone
 	 */
 	private static $tz_object;
@@ -43,7 +48,7 @@ class DateTimeHelper {
 	 *
 	 * @param null|string $timezone If [[null]] is set the timezone from php.ini is used. Default is "UTC'
 	 */
-	public static function setDefaultTimeZone ( $timezone = 'UTC' ) {
+	public static function setDefaultTimeZone ( $timezone = self::TIMEZONE_UTC ) {
 		if ( null === $timezone ) {
 			$timezone = date_default_timezone_get();
 		}
@@ -146,8 +151,8 @@ class DateTimeHelper {
 	 */
 	public static function getWordpressTimeZone () {
 		if ( null === self::$wp_local_timezone ) {
-			$tz                      = get_option( 'timezone_string', 'UTC' );
-			$tz                      = empty( $tz ) ? 'UTC' : $tz;
+			$tz                      = get_option( 'timezone_string', self::TIMEZONE_UTC );
+			$tz                      = empty( $tz ) ? self::TIMEZONE_UTC : $tz;
 			self::$wp_local_timezone = new DateTimeZone( $tz );
 		}
 
