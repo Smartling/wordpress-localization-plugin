@@ -246,23 +246,19 @@ class BulkSubmitTableWidget extends WP_List_Table {
 
 			if ( is_array( $submissions ) && count( $locales ) > 0 ) {
 				foreach ( $submissions as $submission ) {
-					switch ( $this->current_action() ) {
-						case 'send':
-							list( $id, $type ) = explode( '-', $submission );
-							$sourceBlog = $this->getPluginInfo()->getSettingsManager()->getLocales()->getDefaultBlog();
-							$originalId = (int) $this->getEntityHelper()->getOriginalContentId( $id );
+					list( $id, $type ) = explode( '-', $submission );
+					$sourceBlog = $this->getPluginInfo()->getSettingsManager()->getLocales()->getDefaultBlog();
+					$originalId = (int) $this->getEntityHelper()->getOriginalContentId( $id );
 
-							foreach ( $locales as $blogId => $blogName ) {
+					foreach ( $locales as $blogId => $blogName ) {
 
-								$result = $ep->createForTranslation(
-									$type,
-									$sourceBlog,
-									$originalId,
-									(int) $blogId,
-									$this->getEntityHelper()->getTarget( $id, $blogId )
-								);
-							}
-							break;
+						$result = $ep->createForTranslation(
+							$type,
+							$sourceBlog,
+							$originalId,
+							(int) $blogId,
+							$this->getEntityHelper()->getTarget( $id, $blogId )
+						);
 					}
 				}
 			}
@@ -289,24 +285,20 @@ class BulkSubmitTableWidget extends WP_List_Table {
 				 */
 				$ep = Bootstrap::getContainer()->get( 'entrypoint' );
 
-				switch ( $this->current_action() ) {
-					case 'sendSingle':
-						list( $id, $type ) = explode( '-', $submissionId );
+				list( $id, $type ) = explode( '-', $submissionId );
 
-						$sourceBlog = $this->getPluginInfo()->getSettingsManager()->getLocales()->getDefaultBlog();
-						$originalId = (int) $this->getEntityHelper()->getOriginalContentId( $id );
+				$sourceBlog = $this->getPluginInfo()->getSettingsManager()->getLocales()->getDefaultBlog();
+				$originalId = (int) $this->getEntityHelper()->getOriginalContentId( $id );
 
-						foreach ( $locales as $blogId => $blogName ) {
+				foreach ( $locales as $blogId => $blogName ) {
 
-							$result = $ep->createForTranslation(
-								$type,
-								$sourceBlog,
-								$originalId,
-								(int) $blogId,
-								$this->getEntityHelper()->getTarget( $id, $blogId )
-							);
-						}
-						break;
+					$result = $ep->createForTranslation(
+						$type,
+						$sourceBlog,
+						$originalId,
+						(int) $blogId,
+						$this->getEntityHelper()->getTarget( $id, $blogId )
+					);
 				}
 			}
 		}
