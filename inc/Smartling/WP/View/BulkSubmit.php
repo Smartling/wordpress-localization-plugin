@@ -52,6 +52,12 @@ use Smartling\Settings\TargetLocale;
 					$locales = $this->getPluginInfo()->getSettingsManager()->getLocales()->getTargetLocales();
 
 					foreach ( $locales as $locale ) {
+						/**
+						 * @var TargetLocale $locale
+						 */
+						if ( ! $locale->getEnabled() ) {
+							continue;
+						}
 						?>
 						<p >
 							<?= WPAbstract::localeSelectionCheckboxBlock(
