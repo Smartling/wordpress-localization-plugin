@@ -135,14 +135,14 @@ abstract class WPAbstract {
 	}
 
 	public static function submitBlock () {
-		$sendButton = self::sendButton();
+		$sendButton = self::sendButton( '', 'sub' );
 
 		$downloadButton = HtmlTagGeneratorHelper::tag( 'input', '', array (
 			'type'  => 'submit',
 			'value' => __( 'Download' ),
 			'class' => 'button button-primary',
-			'id'    => 'submit',
-			'name'  => 'submit',
+			'id'    => '',
+			'name'  => 'sub',
 		) );
 
 		$container = HtmlTagGeneratorHelper::tag( 'div', $sendButton . '&nbsp;' . $downloadButton,
