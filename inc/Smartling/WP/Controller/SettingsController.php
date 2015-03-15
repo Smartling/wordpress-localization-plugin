@@ -142,7 +142,7 @@ class SettingsController extends WPAbstract implements WPHookInterface {
 			foreach ( $settings['targetLocales'] as $key => $locale ) {
 				$locales[] = array (
 					'locale'  => $key,
-					'target'  => array_key_exists('target', $locale) ? $locale['target'] : -1,
+					'target'  => array_key_exists( 'target', $locale ) ? $locale['target'] : - 1,
 					'enabled' => array_key_exists( 'enabled', $locale ) && 'on' === $locale['enabled'],
 					'blog'    => $locale['blog']
 				);

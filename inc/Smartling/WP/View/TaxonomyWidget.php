@@ -32,8 +32,7 @@ use Smartling\WP\WPAbstract;
 			/**
 			 * @var TargetLocale $locale
 			 */
-			if (!$locale->getEnabled())
-			{
+			if ( ! $locale->getEnabled() ) {
 				continue;
 			}
 
