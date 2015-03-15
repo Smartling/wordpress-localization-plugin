@@ -230,39 +230,7 @@ class SmartlingAPI {
 	 * @return string
 	 */
 	public function getSupportedLocales () {
-		return $this->sendRequest(
-			$this->buildQueryString(
-				'project/locale/list',
-				array (
-					'projectId' => $this->_projectId,
-					'apiKey'    => $this->_apiKey
-				)
-			),
-			array (),
-			'get'
-		);
-	}
-
-	/**
-	 * Builds query string for GET requests
-	 *
-	 * @param string $path
-	 * @param array  $parameters
-	 *
-	 * @return string query string with urlencoded parameter values
-	 */
-	private function buildQueryString ( $path, $parameters ) {
-		$queryString = $path;
-
-		if ( is_array( $parameters ) && 0 < count( $parameters ) ) {
-			$tempArray = array ();
-			foreach ( $parameters as $name => $value ) {
-				$tempArray[] = vsprintf( '%s=%s', array ( $name, urlencode( $value ) ) );
-			}
-			$queryString .= '?' . implode( '&', $tempArray );
-		}
-
-		return $queryString;
+		return $this->sendRequest('project/locale/list', array(), HttpClient::REQUEST_TYPE_GET);
 	}
 
 }
