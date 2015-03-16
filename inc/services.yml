@@ -1,5 +1,9 @@
 parameters:
 
+  multilang_plugins:
+    "multilingual-press-pro": false
+    "polylang": false
+
   plugin.name: smartling-connector
   plugin.version: 1.0.8-dev
   plugin.domain: smartling-connector
@@ -150,7 +154,7 @@ services:
     arguments:
       - "@logger"
       - "@site.helper"
-      - "@multilang_plugins"
+      - "%multilang_plugins%"
 
   entity.helper:
     class: Smartling\Helpers\EntityHelper

@@ -104,7 +104,7 @@ class Bootstrap {
 	private static function setCoreParameters ( ContainerBuilder $container ) {
 		// plugin dir (to use in config file)
 		$container->setParameter( 'plugin.dir', SMARTLING_PLUGIN_DIR );
-		$container->setParameter( 'plugin.upload', SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . "upload" );
+		$container->setParameter( 'plugin.upload', SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . 'upload' );
 
 		$pluginUrl = '';
 		if ( defined( 'SMARTLING_CLI_EXECUTION' ) && false === SMARTLING_CLI_EXECUTION ) {
@@ -175,6 +175,7 @@ class Bootstrap {
 	}
 
 	public function activate () {
+		self::getContainer()->set( 'multilang_plugins', array () );
 		$this->fromContainer( 'site.db' )->install();
 		$this->fromContainer( 'wp.cron' )->install();
 	}
@@ -225,7 +226,7 @@ class Bootstrap {
 			}
 		}
 
-		self::getContainer()->set( 'multilang_plugins', $mlPluginsStatuses );
+		self::getContainer()->setParameter( 'multilang_plugins', $mlPluginsStatuses );
 	}
 
 	public function checkUploadFolder () {
@@ -259,7 +260,7 @@ class Bootstrap {
 		/**
 		 * @var array $data
 		 */
-		$data = self::getContainer()->get( 'multilang_plugins' );
+		$data = self::getContainer()->getParameter( 'multilang_plugins' );
 
 		$blockWork = true;
 
