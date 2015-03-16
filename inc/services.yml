@@ -5,7 +5,7 @@ parameters:
     "polylang": false
 
   plugin.name: smartling-connector
-  plugin.version: 1.0.8-dev
+  plugin.version: 1.0.9-dev
   plugin.domain: smartling-connector
   wp.hooks: ['wp.cron', 'wp.i18n', 'wp.checkStatus', 'wp.submissions', 'wp.bulkSubmit', 'wp.settings', 'wp.post', 'wp.page', 'wp.taxonomy']
 
