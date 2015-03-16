@@ -4,6 +4,7 @@ namespace Smartling\DbAl;
 
 use Mlp_Content_Relations;
 use Mlp_Content_Relations_Interface;
+use Mlp_Helpers;
 use Mlp_Site_Relations;
 use Mlp_Site_Relations_Interface;
 use Psr\Log\LoggerInterface;
@@ -14,11 +15,11 @@ use Smartling\Submissions\SubmissionEntity;
 use wpdb;
 
 /**
- * Class MultiligualPressProConnector
+ * Class MultiligualPressConnector
  *
  * @package Smartling\DbAl
  */
-class MultiligualPressProConnector extends LocalizationPluginAbstract {
+class MultiligualPressConnector extends LocalizationPluginAbstract {
 
 	/**
 	 * option key name
@@ -103,6 +104,7 @@ class MultiligualPressProConnector extends LocalizationPluginAbstract {
 			$this->directRunFallback( 'Direct run detected. Required run as Wordpress plugin.' );
 		}
 
+
 		$this->cacheLocales();
 
 		$this->helper->switchBlogId( $blogId );
@@ -113,6 +115,7 @@ class MultiligualPressProConnector extends LocalizationPluginAbstract {
 
 		return $locale['lang'];
 	}
+
 
 	/**
 	 * @inheritdoc
@@ -200,5 +203,12 @@ class MultiligualPressProConnector extends LocalizationPluginAbstract {
 
 		return $relations->delete_relation( $submission->sourceBlog, $submission->targetBlog, $submission->sourceGUID,
 			$submission->targetGUID, $submission->contentType );
+	}
+
+	/**
+	 * @return string
+	 */
+	function getBlogLanguageById ( $blogId ) {
+		return Mlp_Helpers::get_blog_language( $blogId );
 	}
 }

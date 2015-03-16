@@ -4,6 +4,7 @@
  */
 
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Settings\TargetLocale;
 use Smartling\WP\WPAbstract;
@@ -82,7 +83,7 @@ $locales = $this->getSiteLocales();
 					$defaultLocale = $settingsManager->getLocales()->getDefaultLocale();
 					$defaultBlogId = $settingsManager->getLocales()->getDefaultBlog(); ?>
 
-					<p ><?= __( 'Site default language is', $this->getPluginInfo()->getDomain() ) ?>
+					<p ><?= __( 'Site default language is: ', $this->getPluginInfo()->getDomain() ) ?>
 						: <?= $defaultLocale; ?></p >
 
 					<p >
@@ -90,15 +91,11 @@ $locales = $this->getSiteLocales();
 								$domain ) ?></a >
 					</p >
 					<br >
-					<select name = "smartling_settings[defaultLocale]" id = "default-locales" >
-						<?php foreach ( $locales as $blogId => $value ) {
-							$checked = $defaultBlogId == $blogId ? 'selected' : '';
-							?>
-							<option
-								value = "<?php echo "{$blogId}-{$value}" ?>" <?php echo $checked; ?>> <?php echo $value; ?> </option >
-
-						<?php } ?>
-					</select >
+					<?= HtmlTagGeneratorHelper::tag(
+						'select',
+						HtmlTagGeneratorHelper::renderSelectOptions( $defaultBlogId, $locales ),
+						array ( 'name' => 'smartling_settings[defaultLocale]', 'id' => 'default-locales' ) );
+					?>
 				</td >
 			</tr >
 
@@ -108,37 +105,21 @@ $locales = $this->getSiteLocales();
 					<?= WPAbstract::checkUncheckBlock(); ?>
 					<?php
 					/**
-					 * @var array $locales
-					 */
-					$locales       = $this->getSiteLocales();
-					$defaultBlogId = $settingsManager->getLocales()->getDefaultBlog();
-					/**
 					 * @var array $targetLocales
 					 */
 					$targetLocales = $settingsManager->getLocales()->getTargetLocales();
-					foreach ( $locales as $blogId => $value ) {
-						if ( $defaultBlogId == $blogId ) {
-							continue;
-						}
-						$short   = '';
-						$checked = false;
-						foreach ( $targetLocales as $target ) {
-							/**
-							 * @var TargetLocale $target
-							 */
-							if ( $target->getLocale() == $value ) {
-								$short   = $target->getTarget();
-								$checked = $target->getEnabled();
-								break;
-							}
-						}
-
+					//die(var_dump($targetLocales));
+					foreach ( $targetLocales as $targetLocale ) {
+						/**
+						 * @var TargetLocale $targetLocale
+						 */
 						?>
 
 						<div >
 							<p class = "plugin-locales" >
-								<?= WPAbstract::settingsPageTsargetLocaleCheckbox( $value, $blogId, $short,
-									$checked ); ?>
+								<?= WPAbstract::settingsPageTsargetLocaleCheckbox( $targetLocale->getLocale(),
+									$targetLocale->getBlog(), $targetLocale->getTarget(),
+									$targetLocale->getEnabled() ); ?>
 							</p >
 						</div >
 

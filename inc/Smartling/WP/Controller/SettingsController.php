@@ -3,6 +3,7 @@
 namespace Smartling\WP\Controller;
 
 use Smartling\Bootstrap;
+use Smartling\Settings\TargetLocale;
 use Smartling\WP\JobEngine;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -129,7 +130,7 @@ class SettingsController extends WPAbstract implements WPHookInterface {
 		}
 
 		if ( array_key_exists( 'defaultLocale', $settings ) ) {
-			$default = explode( "-", $settings['defaultLocale'] );
+			$default = explode( '-', $settings['defaultLocale'] );
 
 			if ( 2 === count( $default ) ) {
 				$targetLocales->setDefaultBlog( $default[0] );
@@ -139,28 +140,16 @@ class SettingsController extends WPAbstract implements WPHookInterface {
 
 		if ( array_key_exists( 'targetLocales', $settings ) ) {
 			$locales = array ();
-			foreach ( $settings['targetLocales'] as $key => $locale ) {
-				$locales[] = array (
-					'locale'  => $key,
-					'target'  => array_key_exists( 'target', $locale ) ? $locale['target'] : - 1,
-					'enabled' => array_key_exists( 'enabled', $locale ) && 'on' === $locale['enabled'],
-					'blog'    => $locale['blog']
+			foreach ( $settings['targetLocales'] as $blogId => $settings ) {
+				$definition = array (
+					'locale'  => $options->getLocales()->getTargetLocaleLabel( $blogId ),
+					'target'  => array_key_exists( 'target', $settings ) ? $settings['target'] : - 1,
+					'enabled' => array_key_exists( 'enabled', $settings ) && 'on' === $settings['enabled'],
+					'blog'    => $blogId
 				);
+				$locales[]  = TargetLocale::fromArray( $definition );
 			}
-			$existLocales = array ();
-			foreach ( $targetLocales->getTargetLocales( true ) as $targetLocale ) {
-				$exist = false;
-				foreach ( $locales as $locale ) {
-					if ( $locale['blog'] == $targetLocale->getBlog() ) {
-						$exist = true;
-						break;
-					}
-				}
-				if ( ! $exist ) {
-					$existLocales[] = $targetLocale->toArray();
-				}
-			}
-			$locales = array_merge( $locales, $existLocales );
+
 			$targetLocales->setTargetLocales( $locales );
 		}
 

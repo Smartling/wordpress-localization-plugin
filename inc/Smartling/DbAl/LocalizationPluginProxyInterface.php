@@ -25,7 +25,7 @@ interface LocalizationPluginProxyInterface {
 	/**
 	 * @return LoggerInterface
 	 */
-	function getLogger();
+	function getLogger ();
 
 	/**
 	 * Retrieves locale from site option
@@ -77,4 +77,9 @@ interface LocalizationPluginProxyInterface {
 	 * @return bool
 	 */
 	function  unlinkObjects ( SubmissionEntity $submission );
+
+	/**
+	 * @return string
+	 */
+	function getBlogLanguageById ( $blogId );
 }

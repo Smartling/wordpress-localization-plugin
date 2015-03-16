@@ -245,7 +245,7 @@ abstract class WPAbstract {
 		$checkboxProperties = array (
 			'type'  => 'checkbox',
 			'class' => 'mcheck',
-			'name'  => vsprintf( 'smartling_settings[targetLocales][%s][enabled]', array ( $displayName ) )
+			'name'  => vsprintf( 'smartling_settings[targetLocales][%s][enabled]', array ( $blogId ) )
 		);
 
 		if ( true === $enabled ) {
@@ -273,23 +273,8 @@ abstract class WPAbstract {
 				$locales
 			),
 			array (
-				//'id'   => $this->buildHtmlTagName( $controlName ),
-				'name' => vsprintf( 'smartling_settings[targetLocales][%s][target]', array ( $displayName ) )
+				'name' => vsprintf( 'smartling_settings[targetLocales][%s][target]', array ( $blogId ) )
 			) );
-
-
-		/*$parts[] = HtmlTagGeneratorHelper::tag( 'input', '', array (
-			'type'  => 'text',
-			'name'  => vsprintf( 'smartling_settings[targetLocales][%s][target]', array ( $displayName ) ),
-			'value' => $smartlingName,
-		) );*/
-
-		$parts[] = HtmlTagGeneratorHelper::tag( 'input', '', array (
-			'type'  => 'hidden',
-			'name'  => vsprintf( 'smartling_settings[targetLocales][%s][blog]', array ( $displayName ) ),
-			'value' => $blogId,
-		) );
-
 
 		return implode( '', $parts );
 	}

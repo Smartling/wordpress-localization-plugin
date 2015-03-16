@@ -3,6 +3,8 @@
 namespace Smartling\Settings;
 
 use Psr\Log\LoggerInterface;
+use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Processors\PropertyMapper;
 use Smartling\Processors\PropertyMapperFactory;
 
@@ -60,16 +62,23 @@ class SettingsManager {
 	/**
 	 * Constructor
 	 *
-	 * @param LoggerInterface       $logger
-	 * @param PropertyMapperFactory $mapperWrapper
+	 * @param LoggerInterface                  $logger
+	 * @param PropertyMapperFactory            $mapperWrapper
+	 * @param SiteHelper                       $siteHelper
+	 * @param LocalizationPluginProxyInterface $localizationPluginProxyInterface
 	 */
-	function __construct ( LoggerInterface $logger, PropertyMapperFactory $mapperWrapper ) {
+	function __construct (
+		LoggerInterface $logger,
+		PropertyMapperFactory $mapperWrapper,
+		SiteHelper $siteHelper,
+		LocalizationPluginProxyInterface $localizationPluginProxyInterface
+	) {
 
 		$this->logger        = $logger;
 		$this->mapperWrapper = $mapperWrapper;
 
 		$this->accountInfo = new SettingsConfigurationProfile();
-		$this->locales     = new Locales();
+		$this->locales     = new Locales( $siteHelper, $localizationPluginProxyInterface );
 		$this->get();
 	}
 

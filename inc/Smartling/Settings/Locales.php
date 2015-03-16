@@ -2,12 +2,25 @@
 
 namespace Smartling\Settings;
 
+use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\Helpers\SiteHelper;
+
 /**
  * Class Locales
  *
  * @package Smartling\Settings
  */
 class Locales {
+
+	/**
+	 * @var SiteHelper
+	 */
+	private $siteHelper;
+
+	/**
+	 * @var LocalizationPluginProxyInterface
+	 */
+	private $localizationPluginProxy;
 
 	/**
 	 * @var string
@@ -26,9 +39,14 @@ class Locales {
 
 	/**
 	 * Constructor
+	 *
+	 * @param SiteHelper                       $siteHelper
+	 * @param LocalizationPluginProxyInterface $localizationPluginProxy
 	 */
-	function __construct () {
-		$this->targetLocales = array ();
+	function __construct ( SiteHelper $siteHelper, LocalizationPluginProxyInterface $localizationPluginProxy ) {
+		$this->siteHelper              = $siteHelper;
+		$this->localizationPluginProxy = $localizationPluginProxy;
+		$this->targetLocales           = array ();
 	}
 
 	/**
@@ -43,6 +61,8 @@ class Locales {
 			$this->setTargetLocales( $values['targetLocales'] );
 			$this->setDefaultBlog( $values['defaultBlog'] );
 		}
+
+		$this->rebuildTargetLocalesList();
 
 		return $values;
 	}
@@ -71,7 +91,7 @@ class Locales {
 		}
 
 		return array (
-			'defaultLocale' => trim( $this->getDefaultLocale() ),
+			'defaultLocale' => $this->getTargetLocaleLabel( $this->getDefaultBlog() ),
 			'defaultBlog'   => $this->getDefaultBlog(),
 			'targetLocales' => $targetLocales
 		);
@@ -85,8 +105,8 @@ class Locales {
 	public function getTargetLocales ( $addDefault = false ) {
 		$locales = array ();
 		foreach ( $this->targetLocales as $target ) {
-			if ( $addDefault || $target->getLocale() !== $this->getDefaultLocale() ) {
-				$locales[] = $target;
+			if ( $addDefault || ( (int) $target->getBlog() ) !== $this->getDefaultBlog() ) {
+				$locales[ $target->getBlog() ] = $target;
 			}
 		}
 
@@ -137,10 +157,50 @@ class Locales {
 		$locales = array ();
 		if ( $targetLocales ) {
 			foreach ( $targetLocales as $raw ) {
-				$locales[] = new TargetLocale( $raw['locale'], $raw['target'], $raw['enabled'], $raw["blog"] );
+				if ( $raw instanceof TargetLocale ) {
+					$raw = $raw->toArray();
+				}
+				$locale = TargetLocale::fromArray( $raw );
+				$locale->setLocale( $this->getTargetLocaleLabel( $locale->getBlog() ) );
+				$locales[ $locale->getBlog() ] = $locale;
 			}
 		}
 
 		return $locales;
+	}
+
+	/**
+	 * Generates label like MultilingualPress plugin
+	 *
+	 * @param int $blogId
+	 *
+	 * @return string
+	 */
+	public function getTargetLocaleLabel ( $blogId ) {
+		$this->siteHelper->switchBlogId( $blogId );
+		$blog_name = esc_html( get_bloginfo( 'Name' ) );
+		$this->siteHelper->restoreBlogId();
+
+		return vsprintf( '%s - %s',
+			array ( $blog_name, $this->localizationPluginProxy->getBlogLanguageById( $blogId ) ) );
+	}
+
+	public function rebuildTargetLocalesList () {
+		$currentLocales = $this->getTargetLocales( true );
+		$blogs          = $this->siteHelper->listBlogs();
+		foreach ( $blogs as $blog ) {
+			$blog = (int) $blog;
+			if ( ! array_key_exists( $blog, $currentLocales ) ) {
+				$currentLocales[ $blog ] =
+					new TargetLocale(
+						$this->getTargetLocaleLabel( $blog ),
+						'',
+						false,
+						$blog );
+			} else {
+				$currentLocales[ (int) $blog ]->setLocale( $this->getTargetLocaleLabel( (int) $blog ) );
+			}
+		}
+		$this->setTargetLocales( $currentLocales );
 	}
 }

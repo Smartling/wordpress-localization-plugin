@@ -131,6 +131,8 @@ services:
     arguments:
       - "@logger"
       - "@factory.propertyMapper"
+      - "@site.helper"
+      - "@multilang.proxy"
 
   plugin.info:
       class: Smartling\Helpers\PluginInfo
@@ -144,7 +146,7 @@ services:
         - "%plugin.upload%"
 
   multilang.proxy:
-    class: Smartling\DbAl\MultiligualPressProConnector
+    class: Smartling\DbAl\MultiligualPressConnector
     arguments:
       - "@logger"
       - "@site.helper"

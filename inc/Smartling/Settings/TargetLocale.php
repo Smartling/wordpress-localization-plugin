@@ -38,8 +38,8 @@ class TargetLocale {
 	public function __construct ( $locale, $target, $enabled, $blog ) {
 		$this->locale  = $locale;
 		$this->target  = $target;
-		$this->enabled = $enabled;
-		$this->blog    = $blog;
+		$this->enabled = (bool) $enabled;
+		$this->blog    = (int) $blog;
 	}
 
 	/**
@@ -108,5 +108,14 @@ class TargetLocale {
 			'enabled' => $this->getEnabled(),
 			'blog'    => $this->getBlog()
 		);
+	}
+
+	/**
+	 * @param array $objState
+	 *
+	 * @return TargetLocale
+	 */
+	public static function fromArray ( array $objState ) {
+		return new self( $objState['locale'], $objState['target'], $objState['enabled'], $objState['blog'] );
 	}
 }
