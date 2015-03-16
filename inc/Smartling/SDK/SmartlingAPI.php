@@ -230,7 +230,7 @@ class SmartlingAPI {
 	 * @return string
 	 */
 	public function getSupportedLocales () {
-		return $this->sendRequest('project/locale/list', array(), HttpClient::REQUEST_TYPE_GET);
+		return $this->sendRequest( 'project/locale/list', array (), HttpClient::REQUEST_TYPE_GET );
 	}
 
 }
