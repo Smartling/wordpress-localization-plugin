@@ -5,7 +5,7 @@ BASEDIR=$(dirname $0)
 cd $BASEDIR
 BASEDIR=$(pwd)
 
-BUILD_FILENAME="smartling_connector.zip"
+BUILD_FILENAME="smartling-connector.zip"
 
 TMP_BUILD_DIR=/tmp
 SMARTLING_BUILD_DIR=$TMP_BUILD_DIR/smartling-builds
@@ -35,6 +35,8 @@ rm -Rf ./*.sql
 rm -Rf ./phpunit*
 rm -Rf ./tests
 rm -Rf ./upload
+rm -Rf ./logfile*
+rm -Rf ./*.pid
 
 zip -9 ./$BUILD_FILENAME -r ./*
 
