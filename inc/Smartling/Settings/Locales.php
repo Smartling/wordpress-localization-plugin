@@ -185,21 +185,30 @@ class Locales {
 			$blog_name = esc_html( get_bloginfo( 'Name' ) );
 			$this->siteHelper->restoreBlogId();
 
-			$label = vsprintf( '%s - %s',
-				array ( $blog_name, $this->localizationPluginProxy->getBlogLanguageById( $blogId ) ) );
+			$label = vsprintf(
+				'%s - %s',
+				array (
+					$blog_name,
+					$this->localizationPluginProxy->getBlogLanguageById( $blogId )
+				)
+			);
 		} catch ( InvalidArgumentException $e ) {
-
+			// unexistant $blogId
 		}
 
 		return $label;
 	}
 
+	/**
+	 * Rebuilds the list of target locales
+	 */
 	public function rebuildTargetLocalesList () {
 		$currentLocales = $this->getTargetLocales( true );
 		$blogs          = $this->siteHelper->listBlogs();
 		foreach ( $blogs as $blog ) {
 			$blog = (int) $blog;
 			if ( ! array_key_exists( $blog, $currentLocales ) ) {
+				// create structures for new ones
 				$currentLocales[ $blog ] =
 					new TargetLocale(
 						$this->getTargetLocaleLabel( $blog ),
@@ -207,7 +216,8 @@ class Locales {
 						false,
 						$blog );
 			} else {
-				$currentLocales[ (int) $blog ]->setLocale( $this->getTargetLocaleLabel( (int) $blog ) );
+				// re-generate label (if renamed)
+				$currentLocales[ $blog ]->setLocale( $this->getTargetLocaleLabel( $blog ) );
 			}
 		}
 		$this->setTargetLocales( $currentLocales );

@@ -77,7 +77,7 @@ class SiteHelper {
 	/**
 	 * @param int $siteId
 	 *
-	 * @return mixed
+	 * @return array
 	 * @throws SmartlingDirectRunRuntimeException
 	 * @throws InvalidArgumentException
 	 */
