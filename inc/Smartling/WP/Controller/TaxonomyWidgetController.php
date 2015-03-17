@@ -123,7 +123,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 			$core = Bootstrap::getContainer()->get( 'entrypoint' );
 
 			if ( count( $locales ) > 0 ) {
-				switch ( $_POST['submit'] ) {
+				switch ( $_POST['sub'] ) {
 					case __( 'Send to Smartling' ):
 
 						$sourceBlog = $this->getPluginInfo()->getSettingsManager()->getLocales()->getDefaultBlog();
