@@ -108,13 +108,11 @@ $locales = $this->getSiteLocales();
 					 * @var array $targetLocales
 					 */
 					$targetLocales = $settingsManager->getLocales()->getTargetLocales();
-					//die(var_dump($targetLocales));
 					foreach ( $targetLocales as $targetLocale ) {
 						/**
 						 * @var TargetLocale $targetLocale
 						 */
 						?>
-
 						<div >
 							<p class = "plugin-locales" >
 								<?= WPAbstract::settingsPageTsargetLocaleCheckbox( $targetLocale->getLocale(),
@@ -122,7 +120,6 @@ $locales = $this->getSiteLocales();
 									$targetLocale->getEnabled() ); ?>
 							</p >
 						</div >
-
 					<?php } ?>
 				</td >
 			</tr >

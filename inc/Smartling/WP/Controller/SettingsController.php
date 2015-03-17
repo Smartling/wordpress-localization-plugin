@@ -69,9 +69,15 @@ class SettingsController extends WPAbstract implements WPHookInterface {
 		wp_die( 'Cron job triggered. Now you can safely close this window / browser tab.' );
 	}
 
-
 	public function getSiteLocales () {
-		return $this->getConnector()->getLocales();
+		$blogs       = array_keys( $this->getConnector()->getLocales() );
+		$localesList = array ();
+		$locales     = $this->getPluginInfo()->getSettingsManager()->getLocales();
+		foreach ( $blogs as $blogId ) {
+			$localesList[ $blogId ] = $locales->getTargetLocaleLabel( $blogId );
+		}
+
+		return $localesList;
 	}
 
 	public function download_log () {
@@ -130,12 +136,9 @@ class SettingsController extends WPAbstract implements WPHookInterface {
 		}
 
 		if ( array_key_exists( 'defaultLocale', $settings ) ) {
-			$default = explode( '-', $settings['defaultLocale'] );
-
-			if ( 2 === count( $default ) ) {
-				$targetLocales->setDefaultBlog( $default[0] );
-				$targetLocales->setDefaultLocale( $default[1] );
-			}
+			$defaultBlogId = (int) $settings['defaultLocale'];
+			$targetLocales->setDefaultBlog( $defaultBlogId );
+			$targetLocales->setDefaultLocale( $targetLocales->getTargetLocaleLabel( $defaultBlogId ) );
 		}
 
 		if ( array_key_exists( 'targetLocales', $settings ) ) {

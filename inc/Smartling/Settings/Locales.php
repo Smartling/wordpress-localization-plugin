@@ -2,6 +2,7 @@
 
 namespace Smartling\Settings;
 
+use InvalidArgumentException;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\SiteHelper;
 
@@ -177,12 +178,20 @@ class Locales {
 	 * @return string
 	 */
 	public function getTargetLocaleLabel ( $blogId ) {
-		$this->siteHelper->switchBlogId( $blogId );
-		$blog_name = esc_html( get_bloginfo( 'Name' ) );
-		$this->siteHelper->restoreBlogId();
+		$label = 'Unknown';
 
-		return vsprintf( '%s - %s',
-			array ( $blog_name, $this->localizationPluginProxy->getBlogLanguageById( $blogId ) ) );
+		try {
+			$this->siteHelper->switchBlogId( $blogId );
+			$blog_name = esc_html( get_bloginfo( 'Name' ) );
+			$this->siteHelper->restoreBlogId();
+
+			$label = vsprintf( '%s - %s',
+				array ( $blog_name, $this->localizationPluginProxy->getBlogLanguageById( $blogId ) ) );
+		} catch ( InvalidArgumentException $e ) {
+
+		}
+
+		return $label;
 	}
 
 	public function rebuildTargetLocalesList () {
