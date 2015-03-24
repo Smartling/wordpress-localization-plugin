@@ -24,7 +24,7 @@ class CategoryMapperTest extends PHPUnit_Framework_TestCase {
 	public function testGetPostMapper () {
 		$type = WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY;
 
-		$wrapper = $this->mapperFactory->getMapper( $type );
+		$wrapper = $this->mapperFactory->getHandler( $type );
 
 		self::assertTrue( $wrapper instanceof CategoryMapper );
 	}
@@ -35,7 +35,7 @@ class CategoryMapperTest extends PHPUnit_Framework_TestCase {
 		/**
 		 * @var CategoryMapper $wrapper
 		 */
-		$wrapper = $this->mapperFactory->getMapper( $type );
+		$wrapper = $this->mapperFactory->getHandler( $type );
 
 		$fields = $wrapper->getFields();
 

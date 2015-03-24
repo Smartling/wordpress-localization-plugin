@@ -136,6 +136,21 @@ class PostEntity extends EntityAbstract {
 	/**
 	 * @inheritdoc
 	 */
+	public function getMetadata () {
+		$raw = get_post_meta( $this->ID );
+
+		$formatted = array ();
+
+		foreach ( $raw as $key => $value ) {
+			$formatted[ $key ] = reset( $value );
+		}
+
+		return $formatted;
+	}
+
+	/**
+	 * @inheritdoc
+	 */
 	public function set ( EntityAbstract $entity = null ) {
 		$instance = null === $entity ? $this : $entity;
 
@@ -234,5 +249,29 @@ class PostEntity extends EntityAbstract {
 	 */
 	public function getPrimaryFieldName () {
 		return 'ID';
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function setMetaTag ( $tagName, $tagValue, $unique = true ) {
+		$result = null;
+		if ( metadata_exists( WordpressContentTypeHelper::CONTENT_TYPE_POST, $this->ID, $tagName ) ) {
+			$result = update_post_meta( $this->ID, $tagName, $tagValue );
+		} else {
+			$result = add_post_meta( $this->ID, $tagName, $tagValue, $unique );
+		}
+
+		if ( false === $result ) {
+			$message = vsprintf(
+				'Error saving meta tag "%s" with value "%s" for post "%s"',
+				array (
+					$tagName,
+					$tagValue,
+					$this->ID
+				)
+			);
+			$this->getLogger()->error( $message );
+		}
 	}
 }

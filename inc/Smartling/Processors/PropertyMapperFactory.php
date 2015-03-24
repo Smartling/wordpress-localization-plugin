@@ -5,13 +5,12 @@ namespace Smartling\Processors;
 use Psr\Log\LoggerInterface;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 
-
 /**
  * Class PropertyMapperFactory
  *
  * @package Smartling\Processors
  */
-class PropertyMapperFactory extends ProcessorFactoryAbstract {
+class PropertyMapperFactory extends SmartlingFactoryAbstract {
 
 	/**
 	 * @param LoggerInterface $logger
@@ -27,7 +26,7 @@ class PropertyMapperFactory extends ProcessorFactoryAbstract {
 	 * @param bool           $force
 	 */
 	public function registerMapper ( $contentType, $mapper, $force = false ) {
-		parent::registerMapper( $contentType, $mapper, $force );
+		parent::registerHandler( $contentType, $mapper, $force );
 	}
 
 	/**
@@ -37,7 +36,7 @@ class PropertyMapperFactory extends ProcessorFactoryAbstract {
 	 * @throws SmartlingInvalidFactoryArgumentException
 	 */
 	function getMapper ( $contentType ) {
-		return parent::getMapper( $contentType );
+		return parent::getHandler( $contentType );
 	}
 
 }

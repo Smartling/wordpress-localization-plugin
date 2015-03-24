@@ -28,4 +28,5 @@ class CategoryEntity extends TaxonomyEntityAbstract {
 	}
 
 
+
 }

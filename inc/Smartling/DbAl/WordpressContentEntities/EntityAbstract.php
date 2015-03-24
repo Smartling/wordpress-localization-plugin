@@ -15,7 +15,7 @@ abstract class EntityAbstract {
 	/**
 	 * @var string
 	 */
-	protected $type = "abstract";
+	protected $type = 'abstract';
 
 	/**
 	 * List of fields that affect the hash of the entity
@@ -125,6 +125,11 @@ abstract class EntityAbstract {
 	}
 
 	/**
+	 * @return array;
+	 */
+	abstract public function getMetadata ();
+
+	/**
 	 * @return mixed
 	 */
 	abstract public function getTitle ();
@@ -154,6 +159,12 @@ abstract class EntityAbstract {
 	 */
 	abstract public function get ( $guid );
 
+	/**
+	 * @param string $tagName
+	 * @param string $tagValue
+	 * @param bool   $unique
+	 */
+	abstract public function setMetaTag ( $tagName, $tagValue, $unique = true );
 
 	/**
 	 * @param string $limit

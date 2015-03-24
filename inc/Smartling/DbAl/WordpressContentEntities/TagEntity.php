@@ -27,4 +27,6 @@ class TagEntity extends TaxonomyEntityAbstract {
 	public function getTitle () {
 		return $this->name;
 	}
+
+
 }

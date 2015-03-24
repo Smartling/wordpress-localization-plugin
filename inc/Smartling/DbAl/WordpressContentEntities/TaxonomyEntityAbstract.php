@@ -41,6 +41,17 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 	);
 
 	/**
+	 * @return array;
+	 */
+	public function getMetadata () {
+		// TODO: Implement getMetadata() method.
+	}
+
+	public function setMetaTag ( $tagName, $tagValue, $unique = true ) {
+// TODO: Implement setMetaTag()
+	}
+
+	/**
 	 * @inheritdoc
 	 */
 	public function __construct ( LoggerInterface $logger ) {

@@ -24,7 +24,7 @@ class TagMapperTest extends PHPUnit_Framework_TestCase {
 	public function testGetPostMapper () {
 		$type = WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG;
 
-		$wrapper = $this->mapperFactory->getMapper( $type );
+		$wrapper = $this->mapperFactory->getHandler( $type );
 
 		self::assertTrue( $wrapper instanceof TagMapper );
 	}
@@ -35,7 +35,7 @@ class TagMapperTest extends PHPUnit_Framework_TestCase {
 		/**
 		 * @var TagMapper $wrapper
 		 */
-		$wrapper = $this->mapperFactory->getMapper( $type );
+		$wrapper = $this->mapperFactory->getHandler( $type );
 
 		$fields = $wrapper->getFields();
 

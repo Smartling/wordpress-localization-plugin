@@ -5,6 +5,8 @@ namespace Smartling\Helpers;
 use DOMDocument;
 use DOMElement;
 use DOMXPath;
+use Smartling\Processors\PropertyDescriptor;
+use Smartling\Processors\PropertyProcessors\PropertyProcessorFactory;
 
 /**
  * Class XmlEncoder
@@ -14,6 +16,13 @@ use DOMXPath;
  * @package Smartling\Processors
  */
 class XmlEncoder {
+
+	private static $magicComments = array (
+		'smartling.translate_paths = data/string',
+		'smartling.string_format_paths = html : data/string',
+		'smartling.source_key_paths = data/{string.key}',
+		'smartling.variants_enabled = true',
+	);
 
 	/**
 	 * @return DOMDocument
@@ -32,30 +41,29 @@ class XmlEncoder {
 	 * @return DOMDocument
 	 */
 	private static function setTranslationComments ( DOMDocument $document ) {
-		$document->appendChild( $document->createComment( ' smartling.translate_paths = data/string ' ) );
-		$document->appendChild( $document->createComment( ' smartling.string_format_paths = html : data/string ' ) );
+		foreach ( self::$magicComments as $commentString ) {
+			$document->appendChild( $document->createComment( vsprintf( ' %s ', array ( $commentString ) ) ) );
+		}
 
 		return $document;
 	}
 
 	/**
-	 * @param array       $array
-	 * @param DOMDocument $document
+	 * @param PropertyDescriptor[]     $array
+	 * @param DOMDocument              $document
+	 * @param PropertyProcessorFactory $factory
 	 *
 	 * @return DOMElement
 	 */
-	private static function arrayToXml ( array $array, DOMDocument $document ) {
+	private static function arrayToXml ( array $array, DOMDocument $document, PropertyProcessorFactory $factory ) {
 		$rootNode = $document->createElement( 'data' );
-		foreach ( $array as $key => $value ) {
-			$translationString = $document->createElement( 'string' );
-
-			$attr        = $document->createAttribute( 'name' );
-			$attr->value = $key;
-			$translationString->appendChild( $attr );
-
-			$text = $document->createCDATASection( $value );
-			$translationString->appendChild( $text );
-			$rootNode->appendChild( $translationString );
+		foreach ( $array as $descriptor ) {
+			$node =
+				$factory->getProcessor(
+					$descriptor->getType()
+				)
+				        ->toXML( $document, $descriptor );
+			$rootNode->appendChild( $node );
 		}
 
 		return $rootNode;
@@ -63,40 +71,43 @@ class XmlEncoder {
 
 
 	/**
-	 * @param array $data
+	 * @param PropertyDescriptor[]     $data
+	 * @param PropertyProcessorFactory $factory
 	 *
 	 * @return string
 	 */
-	public static function xmlEncode ( array $data ) {
+	public static function xmlEncode ( array $data, PropertyProcessorFactory $factory ) {
 		$xml     = self::setTranslationComments( self::initXml() );
-		$content = self::arrayToXml( $data, $xml );
+		$content = self::arrayToXml( $data, $xml, $factory );
 		$xml->appendChild( $content );
 
 		return $xml->saveXML();
 	}
 
 	/**
-	 * @param array $fields
-	 * @param       $content
+	 * @param PropertyDescriptor[] $descriptors
+	 * @param                      $content
 	 *
-	 * @return array
+	 * @return PropertyDescriptor[]
 	 */
-	public static function xmlDecode ( array $fields, $content ) {
+	public static function xmlDecode ( array $descriptors, $content, PropertyProcessorFactory $factory ) {
 		$xml = self::initXml();
-
 		$xml->loadXML( $content );
-
 		$xpath = new DOMXPath( $xml );
 
-		$output = array ();
-
-		foreach ( $fields as $field ) {
-			$item = $xpath->query( '//string[@name="' . $field . '"]' )->item( 0 );
+		foreach ( $descriptors as $descriptor ) {
+			$path     = self::buildXPath( $descriptor );
+			$nodeList = $xpath->query( $path );
+			$item     = $nodeList->item( 0 );
 			if ( $item ) {
-				$output[ $field ] = (string) $item->nodeValue;
+				$descriptor->setValue( $factory->getProcessor( $descriptor->getType() )->fromXML( $item ) );
 			}
 		}
 
-		return $output;
+		return $descriptors;
+	}
+
+	private static function buildXPath ( PropertyDescriptor $descriptor ) {
+		return vsprintf( '//string[@name="%s"]', array ( $descriptor->getName() ) );
 	}
 }

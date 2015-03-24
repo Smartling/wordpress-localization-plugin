@@ -18,12 +18,29 @@ parameters:
 
 
 services:
+  processor.property.default:
+    class: Smartling\Processors\PropertyProcessors\PropertyProcessorDefault
+    arguments:
+      - "@logger"
+
+  processor.property.yoast-seo:
+    class: Smartling\Processors\PropertyProcessors\PropertyProcessorYoast
+    arguments:
+      - "@logger"
+
+  factory.processor:
+    class: Smartling\Processors\PropertyProcessors\PropertyProcessorFactory
+    arguments:
+      - "@logger"
+    calls:
+      - [ "registerDefaultProcessor", [ "@processor.property.default" ]]
+      - [ "registerProcessor", [ "@processor.property.yoast-seo" ]]
 
   wrapper.sdk.api.smartling:
     class: Smartling\ApiWrapper
     arguments:
-    - "@manager.settings"
-    - "@logger"
+      - "@manager.settings"
+      - "@logger"
 
   entrypoint:
     class: Smartling\Base\SmartlingCore
@@ -35,6 +52,7 @@ services:
       - [ "setApiWrapper", [ "@wrapper.sdk.api.smartling" ]]
       - [ "setMultilangProxy", [ "@multilang.proxy" ]]
       - [ "setContentIoFactory", [ "@factory.contentIO" ]]
+      - [ "setProcessorFactory", [ "@factory.processor" ]]
 
   wrapper.entity.post:
     class: Smartling\DbAl\WordpressContentEntities\PostEntity
@@ -57,26 +75,26 @@ services:
       - "@logger"
 
   mapper.post:
-    class: Smartling\Processors\PostMapper
+    class: Smartling\Processors\ContentTypeMapper\PostMapper
 
   mapper.page:
-    class: Smartling\Processors\PageMapper
+    class: Smartling\Processors\ContentTypeMapper\PageMapper
 
   mapper.category:
-    class: Smartling\Processors\CategoryMapper
+    class: Smartling\Processors\ContentTypeMapper\CategoryMapper
 
   mapper.tag:
-    class: Smartling\Processors\TagMapper
+    class: Smartling\Processors\ContentTypeMapper\TagMapper
 
   factory.propertyMapper:
     class: Smartling\Processors\PropertyMapperFactory
     arguments:
       - "@logger"
     calls:
-      - [ "registerMapper", ["post", "@mapper.post"]]
-      - [ "registerMapper", ["page", "@mapper.page"]]
-      - [ "registerMapper", ["category", "@mapper.category"]]
-      - [ "registerMapper", ["post_tag", "@mapper.tag"]]
+      - [ "registerHandler", ["post", "@mapper.post"]]
+      - [ "registerHandler", ["page", "@mapper.page"]]
+      - [ "registerHandler", ["category", "@mapper.category"]]
+      - [ "registerHandler", ["post_tag", "@mapper.tag"]]
 
 
   factory.contentIO:
@@ -84,10 +102,10 @@ services:
     arguments:
       - "@logger"
     calls:
-      - [ "registerMapper", ["post", "@wrapper.entity.post"]]
-      - [ "registerMapper", ["page", "@wrapper.entity.page"]]
-      - [ "registerMapper", ["category", "@wrapper.entity.category"]]
-      - [ "registerMapper", ["post_tag", "@wrapper.entity.tag"]]
+      - [ "registerHandler", ["post", "@wrapper.entity.post"]]
+      - [ "registerHandler", ["page", "@wrapper.entity.page"]]
+      - [ "registerHandler", ["category", "@wrapper.entity.category"]]
+      - [ "registerHandler", ["post_tag", "@wrapper.entity.tag"]]
 
   fileLoggerHandlerStandard:
     class: Monolog\Handler\StreamHandler

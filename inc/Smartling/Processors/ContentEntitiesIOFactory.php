@@ -11,7 +11,7 @@ use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
  *
  * @package Smartling\Processors
  */
-class ContentEntitiesIOFactory extends ProcessorFactoryAbstract {
+class ContentEntitiesIOFactory extends SmartlingFactoryAbstract {
 
 	/**
 	 * @param LoggerInterface $logger
@@ -27,7 +27,7 @@ class ContentEntitiesIOFactory extends ProcessorFactoryAbstract {
 	 * @param bool           $force
 	 */
 	public function registerMapper ( $contentType, $mapper, $force = false ) {
-		parent::registerMapper( $contentType, $mapper, $force );
+		parent::registerHandler( $contentType, $mapper, $force );
 	}
 
 	/**
@@ -37,6 +37,6 @@ class ContentEntitiesIOFactory extends ProcessorFactoryAbstract {
 	 * @throws SmartlingInvalidFactoryArgumentException
 	 */
 	function getMapper ( $contentType ) {
-		return parent::getMapper( $contentType );
+		return parent::getHandler( $contentType );
 	}
 }

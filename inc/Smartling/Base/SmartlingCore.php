@@ -13,6 +13,8 @@ use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Processors\ContentEntitiesIOFactory;
+use Smartling\Processors\PropertyDescriptor;
+use Smartling\Processors\PropertyProcessors\PropertyProcessorFactory;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -75,6 +77,11 @@ class SmartlingCore {
 	private $multilangProxy;
 
 	/**
+	 * @var PropertyProcessorFactory
+	 */
+	private $processorFactory;
+
+	/**
 	 * @return ApiWrapperInterface
 	 */
 	public function getApiWrapper () {
@@ -131,6 +138,20 @@ class SmartlingCore {
 	}
 
 	/**
+	 * @return PropertyProcessorFactory
+	 */
+	public function getProcessorFactory () {
+		return $this->processorFactory;
+	}
+
+	/**
+	 * @param PropertyProcessorFactory $processorFactory
+	 */
+	public function setProcessorFactory ( $processorFactory ) {
+		$this->processorFactory = $processorFactory;
+	}
+
+	/**
 	 * @return SubmissionManager
 	 */
 	public function getSubmissionManager () {
@@ -176,6 +197,23 @@ class SmartlingCore {
 		return $this->sendForTranslationBySubmission( $this->loadSubmissionEntityById( $id ) );
 	}
 
+	/**
+	 * @param PropertyDescriptor[] $descriptors
+	 * @param array                $source
+	 */
+	private function fillPropertyDescriptors ( array $descriptors, array $source ) {
+		foreach ( $descriptors as $descriptor ) {
+
+			$index = $descriptor->isMeta() ? 'meta' : 'entity';
+			$name  = $descriptor->getName();
+
+			if ( array_key_exists( $name, $source[ $index ] ) ) {
+				$descriptor->setValue( $source[ $index ][ $name ] );
+			}
+
+		}
+	}
+
 	public function sendForTranslationBySubmission ( SubmissionEntity $submission ) {
 		$contentEntity = $this->readContentEntity( $submission );
 
@@ -188,10 +226,18 @@ class SmartlingCore {
 			$submission = $this->getSubmissionManager()->storeEntity( $submission );
 		}
 
-		$translatableFields = $this->getTranslatableFields( $submission->getContentType() );
-		$dataForConversion  = $this->cutOffFields( $contentEntity->toArray(), $translatableFields );
-		$xml                = XmlEncoder::xmlEncode( $dataForConversion );
-		$result             = false;
+		$source = array (
+			'entity' => $contentEntity->toArray(),
+			'meta'   => $contentEntity->getMetadata()
+		);
+
+		$fieldsForTranslation = $this->getTranslatableFields( $submission->getContentType() );
+
+		$this->fillPropertyDescriptors( $fieldsForTranslation, $source );
+
+		$xml = XmlEncoder::xmlEncode( $fieldsForTranslation, $this->getProcessorFactory() );
+
+		$result = false;
 
 		try {
 			$result = self::SEND_MODE === self::SEND_MODE_FILE
@@ -298,7 +344,7 @@ class SmartlingCore {
 
 			$translatableFields = $this->getTranslatableFields( $entity->getContentType() );
 
-			$structure = XmlEncoder::xmlDecode( $translatableFields, $data );
+			$translatedFields = XmlEncoder::xmlDecode( $translatableFields, $data, $this->getProcessorFactory() );
 
 			$targetId = (int) $entity->getTargetGUID();
 
@@ -315,8 +361,12 @@ class SmartlingCore {
 			} else {
 				$targetContent = $this->readTargetContentEntity( $entity );
 			}
-			$this->setValues( $targetContent, $structure );
+
+			$this->setValues( $targetContent, $translatedFields );
+
 			$this->saveEntity( $entity->getContentType(), $entity->getTargetBlog(), $targetContent );
+
+			$this->saveMetaProperties( $entity->getTargetBlog(), $targetContent, $translatedFields );
 
 			if ( 0 === $targetId ) {
 
@@ -358,9 +408,41 @@ class SmartlingCore {
 		return $entity;
 	}
 
-	private function setValues ( EntityAbstract $entity, array $fields ) {
-		foreach ( $fields as $field => $value ) {
-			$entity->$field = $value;
+	/**
+	 * @param int                  $blogId
+	 * @param EntityAbstract       $entity
+	 * @param PropertyDescriptor[] $properties
+	 *
+	 * @return EntityAbstract
+	 */
+	private function saveMetaProperties ( $blogId, EntityAbstract $entity, array $properties ) {
+		$curBlogId = $this->getSiteHelper()->getCurrentBlogId();
+
+		if ( $blogId !== $curBlogId ) {
+			$this->getSiteHelper()->switchBlogId( $blogId );
+		}
+
+		foreach ( $properties as $property ) {
+			if ( $property->isMeta() ) {
+				$entity->setMetaTag( $property->getName(), $property->getValue() );
+			}
+		}
+
+		if ( $blogId !== $curBlogId ) {
+			$this->getSiteHelper()->restoreBlogId();
+		}
+	}
+
+
+	/**
+	 * @param EntityAbstract       $entity
+	 * @param PropertyDescriptor[] $properties
+	 */
+	private function setValues ( EntityAbstract $entity, array $properties ) {
+		foreach ( $properties as $property ) {
+			if ( ! $property->isMeta() ) {
+				$entity->{$property->getName()} = $property->getValue();
+			}
 		}
 	}
 
@@ -397,7 +479,7 @@ class SmartlingCore {
 	/**
 	 * @param $contentType
 	 *
-	 * @return mixed
+	 * @return PropertyDescriptor[]
 	 */
 	private function getTranslatableFields ( $contentType ) {
 		return $this->settings->getMapperWrapper()->getMapper( $contentType )->getFields();
