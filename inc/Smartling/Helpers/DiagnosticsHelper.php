@@ -53,4 +53,20 @@ class DiagnosticsHelper {
 	public static function getMessages () {
 		return self::$messages;
 	}
+
+	public static function populateErrorsToWordpress () {
+		$messages = self::getMessages();
+
+		if ( 0 < count( $messages ) ) {
+			global $error;
+
+			if ( ! ( $error instanceof \WP_Error ) ) {
+				$error = new \WP_Error();
+				foreach ( $messages as $message ) {
+					$error->add( 'smartling', $message );
+				}
+			}
+		}
+
+	}
 }
