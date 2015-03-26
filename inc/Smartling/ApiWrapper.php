@@ -93,6 +93,15 @@ class ApiWrapper implements ApiWrapperInterface {
 			$this->logger->error( $logMessage, array ( __FILE__, __LINE__ ) );
 
 			throw new SmartlingFileDownloadException( $logMessage, 0, __FILE__, __LINE__ );
+		} else {
+			$message = vsprintf( 'Session [%s]. File downloaded. size: %s bytes, content: \'%s\'',
+				array (
+					$actionMark,
+					strlen( $requestResultRaw ),
+					$requestResultRaw,
+
+				) );
+			$this->logger->debug( $message );
 		}
 
 		$requestResult = json_decode( $requestResultRaw );
