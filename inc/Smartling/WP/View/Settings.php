@@ -23,19 +23,19 @@ $locales = $this->getSiteLocales();
 
 <div class = "wrap" >
 	<h2 ><?= get_admin_page_title() ?></h2 >
+	<?php
+	$messages = DiagnosticsHelper::getMessages();
+	if ( 0 < count( $messages ) ) :
+		?>
+		<div id = "message" class = "error" >
+			<?php
+			foreach ( $messages as $message ) {
+				show_message( $message, true );
+			}
+			?>
+		</div >
+	<?php endif; ?>
 
-	<div class = "display-errors-set <?= DiagnosticsHelper::isBlocked() ? '' : 'hide'; ?>" >
-		Self-diagnostics error messages:
-		<ul >
-			<?php foreach ( DiagnosticsHelper::getMessages() as $errorMessage ) : ?>
-				<li ><?= nl2br( $errorMessage ); ?></li >
-			<?php endforeach; ?>
-		</ul >
-		<p >
-			Some functionality is disabled until Default blog is set on Settings page. <br />
-			Please read installation instructions.
-		</p >
-	</div >
 
 	<form id = "smartling-form" action = "/wp-admin/admin-post.php" method = "POST" >
 
