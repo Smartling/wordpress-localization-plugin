@@ -279,25 +279,28 @@ class BulkSubmitTableWidget extends WP_List_Table {
 				}
 			}
 
+			$type=$this->getFormElementValue($this->buildHtmlTagName('content-type'), null);
+
+			if (null === $type){
+				return;
+			}
+
 			if ( $submissionId > 0 && count( $locales ) > 0 ) {
 				/**
 				 * @var SmartlingCore $ep
 				 */
 				$ep = Bootstrap::getContainer()->get( 'entrypoint' );
 
-				list( $id, $type ) = explode( '-', $submissionId );
-
 				$sourceBlog = $this->getPluginInfo()->getSettingsManager()->getLocales()->getDefaultBlog();
-				$originalId = (int) $this->getEntityHelper()->getOriginalContentId( $id );
+				$originalId = (int) $this->getEntityHelper()->getOriginalContentId( $submissionId );
 
 				foreach ( $locales as $blogId => $blogName ) {
-
 					$result = $ep->createForTranslation(
 						$type,
 						$sourceBlog,
 						$originalId,
 						(int) $blogId,
-						$this->getEntityHelper()->getTarget( $id, $blogId )
+						$this->getEntityHelper()->getTarget( $submissionId, $blogId )
 					);
 				}
 			}
