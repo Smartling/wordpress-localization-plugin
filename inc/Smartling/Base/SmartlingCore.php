@@ -377,7 +377,13 @@ class SmartlingCore {
 				$this->getMultilangProxy()->linkObjects( $entity );
 			}
 
+			if (100 === $entity->getCompletionPercentage())
+			{
+				$entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
+			}
+
 			$entity->appliedDate = DateTimeHelper::nowAsString();
+
 			$entity              = $this->getSubmissionManager()->storeEntity( $entity );
 		} catch ( Exception $e ) {
 			$messages[] = $e->getMessage();
