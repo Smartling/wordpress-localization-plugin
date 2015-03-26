@@ -205,13 +205,13 @@ class Bootstrap {
 				'wpml'                   => false,
 			);
 
-		$logger->info( 'Searching for Wordpress multilingual plugins' );
+		$logger->debug( 'Searching for Wordpress multilingual plugins' );
 
 		$_found = false;
 
 		if ( class_exists( 'Mlp_Load_Controller', false ) ) {
 			$mlPluginsStatuses['multilingual-press-pro'] = true;
-			$logger->info( 'found "multilingual-press-pro" plugin' );
+			$logger->debug( 'found "multilingual-press-pro" plugin' );
 
 			$_found = true;
 		}

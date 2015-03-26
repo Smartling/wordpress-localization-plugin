@@ -326,7 +326,7 @@ class SubmissionManager extends EntityManagerAbstract {
 			array (),
 			null
 		);
-		$this->logger->info( $query );
+		$this->logger->debug( $query );
 
 		return $query;
 	}
@@ -362,7 +362,7 @@ class SubmissionManager extends EntityManagerAbstract {
 			null
 		);
 
-		$this->logger->info( $query );
+		$this->logger->debug( $query );
 
 		return $query;
 	}
@@ -443,7 +443,7 @@ class SubmissionManager extends EntityManagerAbstract {
 			$pageOptions
 		);
 
-		$this->logger->info( $query );
+		$this->logger->debug( $query );
 
 		return $query;
 	}
@@ -490,7 +490,7 @@ class SubmissionManager extends EntityManagerAbstract {
 		}
 
 		// log store query before execution
-		$this->logger->info( $storeQuery );
+		$this->logger->debug( $storeQuery );
 
 		$result = $this->dbal->query( $storeQuery );
 
