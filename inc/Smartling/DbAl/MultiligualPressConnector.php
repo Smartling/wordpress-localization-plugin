@@ -4,7 +4,6 @@ namespace Smartling\DbAl;
 
 use Mlp_Content_Relations;
 use Mlp_Content_Relations_Interface;
-use Mlp_Helpers;
 use Mlp_Site_Relations;
 use Mlp_Site_Relations_Interface;
 use Psr\Log\LoggerInterface;
@@ -205,10 +204,24 @@ class MultiligualPressConnector extends LocalizationPluginAbstract {
 			$submission->targetGUID, $submission->contentType );
 	}
 
+	private function isMultilingualPluginActive () {
+		return class_exists( 'Mlp_Helpers' );
+	}
+
 	/**
+	 * @param int $blogId
+	 *
 	 * @return string
 	 */
-	function getBlogLanguageById ( $blogId ) {
-		return Mlp_Helpers::get_blog_language( $blogId );
+	public function getBlogLanguageById ( $blogId ) {
+		$result = '';
+		if ( $this->isMultilingualPluginActive() ) {
+			$result = \Mlp_Helpers::get_blog_language( $blogId );
+		} else {
+			$message = 'Seems like Multilingual Press plugin is not installed and/or activated. Cannot read blog locale.';
+			$this->getLogger()->warning( $message );
+		}
+
+		return $result;
 	}
 }
