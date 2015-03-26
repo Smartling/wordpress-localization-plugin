@@ -165,12 +165,32 @@ class MultiligualPressConnector extends LocalizationPluginAbstract {
 	}
 
 	/**
+	 * Converts representation of wordpress content types to multilingual content types
+	 *
+	 * @param string $contentType
+	 *
+	 * @return string
+	 */
+	private function convertType ( $contentType ) {
+		$contentType = $contentType === WordpressContentTypeHelper::CONTENT_TYPE_PAGE
+			? WordpressContentTypeHelper::CONTENT_TYPE_POST
+			: $contentType;
+
+		$contentType = in_array( $contentType,
+			WordpressContentTypeHelper::getSupportedTaxonomyTypes() )
+			? 'term'
+			: $contentType;
+
+		return $contentType;
+	}
+
+	/**
 	 * @inheritdoc
 	 */
 	function getLinkedObjects ( $sourceBlogId, $sourceContentId, $contentType ) {
 		$relations = $this->initContentRelationSubsystem();
 
-		return $relations->get_relations( $sourceBlogId, $sourceContentId, $contentType );
+		return $relations->get_relations( $sourceBlogId, $sourceContentId, $this->convertType($contentType) );
 	}
 
 	/**
@@ -181,17 +201,8 @@ class MultiligualPressConnector extends LocalizationPluginAbstract {
 
 		$contentType = $submission->getContentType();
 
-		$contentType = $contentType === WordpressContentTypeHelper::CONTENT_TYPE_PAGE
-			? WordpressContentTypeHelper::CONTENT_TYPE_POST
-			: $contentType;
-
-		$contentType = in_array( $contentType,
-			WordpressContentTypeHelper::getSupportedTaxonomyTypes() )
-			? 'term'
-			: $contentType;
-
 		return $relations->set_relation( $submission->sourceBlog, $submission->targetBlog, $submission->sourceGUID,
-			$submission->targetGUID, $contentType );
+			$submission->targetGUID,  $this->convertType($contentType) );
 	}
 
 	/**
