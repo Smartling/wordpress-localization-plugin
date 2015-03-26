@@ -16,7 +16,7 @@ abstract class TaxonomyMapperAbstract extends MapperAbstract {
 		$this->setFields(
 			array (
 				array (
-					'type'      => 'standard.taxonomy.name',
+					'type'      => 'standard',
 					'meta'      => false,
 					'mandatory' => true,
 					'name'      => 'name',
@@ -24,13 +24,45 @@ abstract class TaxonomyMapperAbstract extends MapperAbstract {
 					'key'       => ''
 				),
 				array (
-					'type'      => 'standard.taxonomy.description',
+					'type'      => 'standard',
 					'meta'      => false,
 					'mandatory' => true,
 					'name'      => 'description',
 					'value'     => '',
 					'key'       => ''
-				)
+				),
+				array (
+					'type'      => 'wordpress-seo',
+					'meta'      => true,
+					'mandatory' => true,
+					'name'      => 'wpseo_bctitle',
+					'value'     => '',
+					'key'       => 'seo'
+				),
+				array (
+					'type'      => 'wordpress-seo',
+					'meta'      => true,
+					'mandatory' => true,
+					'name'      => 'wpseo_metakey',
+					'value'     => '',
+					'key'       => 'seo'
+				),
+				array (
+					'type'      => 'wordpress-seo',
+					'meta'      => true,
+					'mandatory' => true,
+					'name'      => 'wpseo_desc',
+					'value'     => '',
+					'key'       => 'seo'
+				),
+				array (
+					'type'      => 'wordpress-seo',
+					'meta'      => true,
+					'mandatory' => true,
+					'name'      => 'wpseo_title',
+					'value'     => '',
+					'key'       => 'seo'
+				),
 			)
 		);
 	}

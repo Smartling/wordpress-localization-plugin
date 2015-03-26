@@ -40,15 +40,46 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 		'count',
 	);
 
+	private function checkWPSEO () {
+		return class_exists( '\WPSEO_Taxonomy_Meta' );
+	}
+
 	/**
-	 * @return array;
+	 * @inheritdoc
 	 */
 	public function getMetadata () {
-		// TODO: Implement getMetadata() method.
+		$result = array ();
+		if ( $this->checkWPSEO() ) {
+			$result = \WPSEO_Taxonomy_Meta::get_term_meta( $this->term_id, $this->taxonomy );
+		} else {
+			$message = 'Seems like WP-SEO plugin not installed. Cannot get term meta.';
+			$this->getLogger()->notice( $message );
+		}
+
+		return $result;
 	}
 
 	public function setMetaTag ( $tagName, $tagValue, $unique = true ) {
-// TODO: Implement setMetaTag()
+		if ( $this->checkWPSEO() ) {
+			$tax_meta  = get_option( 'wpseo_taxonomy_meta' );
+			$oldValues = $this->getMetadata();
+			$newValues = array_merge( $oldValues, array ( $tagName => $tagValue ) );
+			$clean     = \WPSEO_Taxonomy_Meta::validate_term_meta_data( $newValues, $oldValues );
+			if ( $clean !== array () ) {
+				$tax_meta[ $this->taxonomy ][ $this->term_id ] = $clean;
+			} else {
+				unset( $tax_meta[ $this->taxonomy ][ $this->term_id ] );
+				if ( isset( $tax_meta[ $this->taxonomy ] ) && $tax_meta[ $this->taxonomy ] === array () ) {
+					unset( $tax_meta[ $this->taxonomy ] );
+				}
+			}
+			// Prevent complete array validation
+			$tax_meta['wpseo_already_validated'] = true;
+			update_option( 'wpseo_taxonomy_meta', $tax_meta );
+		} else {
+			$message = 'Seems like WP-SEO plugin not installed. Cannot set term meta.';
+			$this->getLogger()->notice( $message );
+		}
 	}
 
 	/**
@@ -108,6 +139,8 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 	 */
 	public function getAll ( $limit = '', $offset = '', $orderBy = 'term_id', $order = 'ASC' ) {
 
+		$result = array ();
+
 		$taxonomies = array (
 			$this->getType(),
 		);
@@ -143,15 +176,16 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 			$this->getLogger()->error( $message );
 
 			throw new SmartlingDbException( $message );
+		} else {
+			/**
+			 * @var array $terms
+			 */
+			foreach ( $terms as $term ) {
+				$result[] = $this->resultToEntity( (array) $term );
+			}
 		}
 
-		$result = array ();
-
-		foreach ( $terms as $term ) {
-			$result[] = $this->resultToEntity( (array) $term );
-		}
-
-		return $terms;
+		return $result;
 	}
 
 	/**
