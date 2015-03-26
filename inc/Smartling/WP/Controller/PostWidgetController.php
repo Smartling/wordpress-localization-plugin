@@ -148,6 +148,11 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 			return $post_id;
 		}
 
+		if (!array_key_exists(self::WIDGET_DATA_NAME, $_POST))
+		{
+			return;
+		}
+
 		$data = $_POST[ self::WIDGET_DATA_NAME ];
 
 		$locales = array ();
