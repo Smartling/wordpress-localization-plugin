@@ -15,6 +15,8 @@ class PageWidgetController extends PostWidgetController {
 
 	protected $needSave = 'Need to save the page';
 
+	protected $noOriginalFound = 'No original page found';
+
 	/**
 	 * @inheritdoc
 	 */

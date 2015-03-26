@@ -5,6 +5,7 @@ namespace Smartling\WP\Controller;
 use SebastianBergmann\Exporter\Exception;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
+use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\WP\WPAbstract;
@@ -26,6 +27,8 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 	protected $servedContentType = WordpressContentTypeHelper::CONTENT_TYPE_POST;
 
 	protected $needSave = 'Need to save the post';
+
+	protected $noOriginalFound = 'No original post found';
 
 	/**
 	 * @inheritdoc
@@ -64,18 +67,29 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 
 		if ( $post->post_content && $post->post_title ) {
 
-			$originalId = $this->getEntityHelper()->getOriginalContentId( $post->ID );
+			try {
+				$originalId = $this->getEntityHelper()->getOriginalContentId( $post->ID );
 
-			$submissions = $this->getManager()->find( array (
-				'sourceGUID'  => $originalId,
-				'contentType' => $this->servedContentType,
-			) );
+				$submissions = $this->getManager()->find( array (
+					'sourceGUID'  => $originalId,
+					'contentType' => $this->servedContentType,
+				) );
 
-			$this->view( array (
-					'submissions' => $submissions,
-					'post'        => $post
-				)
-			);
+				$this->view( array (
+						'submissions' => $submissions,
+						'post'        => $post
+					)
+				);
+			} catch ( SmartlingDbException $e ) {
+				$message = 'Failed to search for the original post. No source post found for blog %s, post %s. Hiding widget';
+				$this->getLogger()->warning(
+					vsprintf( $message, array (
+						$this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
+						$post->ID
+					) )
+				);
+				echo '<p>' . __( $this->noOriginalFound ) . '</p>';
+			}
 		} else {
 			echo '<p>' . __( $this->needSave ) . '</p>';
 		}

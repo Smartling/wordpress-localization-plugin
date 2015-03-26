@@ -4,6 +4,7 @@ namespace Smartling\WP\Controller;
 
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
+use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingNotSupportedContentException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
@@ -18,6 +19,8 @@ use Smartling\WP\WPHookInterface;
 class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 
 	const WIDGET_DATA_NAME = 'smartling_taxonomy_widget';
+
+	protected $noOriginalFound = 'No original %s found';
 
 	/**
 	 * @inheritdoc
@@ -76,8 +79,10 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 		try {
 			if ( current_user_can( 'publish_posts' ) && $this->getInternalType( $taxonomyType ) ) {
 
+				$originalId = $this->getEntityHelper()->getOriginalContentId( $term->term_id, $taxonomyType );
+
 				$submissions = $this->getManager()->find( array (
-					'sourceGUID'  => $term->term_id,
+					'sourceGUID'  => $originalId,
 					'contentType' => $taxonomyType,
 				) );
 
@@ -89,6 +94,17 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 			}
 		} catch ( SmartlingNotSupportedContentException $e ) {
 			// do not display if not supported yet
+		} catch ( SmartlingDbException $e ) {
+			$message = 'Failed to search for the original taxonomy. No source taxonomy found for blog %s, taxonomy_id %s. Hiding widget';
+			$this->getLogger()->warning(
+				vsprintf( $message, array (
+					$this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
+					$term->term_id
+				) )
+			);
+			/*
+			 * echo '<p>' . __( vsprintf( $this->noOriginalFound, array ( $taxonomyType ) ) ) . '</p>';
+			 */
 		}
 	}
 
@@ -143,7 +159,9 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 						}
 						break;
 					case __( 'Download' ):
+
 						$originalId = $this->getEntityHelper()->getOriginalContentId( $term_id, $termType );
+
 
 						$submissions = $this->getManager()->find(
 							array (
