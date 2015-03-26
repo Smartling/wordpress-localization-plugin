@@ -215,7 +215,7 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 
 		$argFields = array (
 			'name',
-			'slug',
+			//'slug',
 			'parent',
 			'description'
 		);
@@ -223,7 +223,7 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 		$args = array ();
 
 		foreach ( $argFields as $field ) {
-			$argFields[ $field ] = $data[ $field ];
+			$args[ $field ] = $data[ $field ];
 		}
 
 		$result = $update
@@ -261,6 +261,7 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 			'term_id',
 			'parent',
 			'count',
+			'slug',
 		);
 	}
 
