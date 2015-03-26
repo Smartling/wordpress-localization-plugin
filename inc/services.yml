@@ -14,6 +14,10 @@ parameters:
   logger.filehandler.standard.loglevel: DEBUG
   logger.filehandler.standard.maxfiles: 5
 
+  logger.formatter.date: "Y-m-d H:i:s"
+  logger.formatter.output.default: "[%%datetime%%] %%channel%%.%%level_name%%: %%message%% %%context%% %%extra%%\n"
+  logger.formatter.output.short: "[%%datetime%%] %%level_name%%: %%message%%\n"
+
   submission.pagesize: 5
 
 
@@ -107,11 +111,19 @@ services:
       - [ "registerHandler", ["category", "@wrapper.entity.category"]]
       - [ "registerHandler", ["post_tag", "@wrapper.entity.tag"]]
 
+  fileLoggerLineFormatter:
+    class: Monolog\Formatter\LineFormatter
+    arguments:
+      - "%logger.formatter.output.short%"
+      - "%logger.formatter.date%"
+
   fileLoggerHandlerStandard:
     class: Monolog\Handler\StreamHandler
     arguments:
       - "%logger.filehandler.standard.filename%"
       - "%logger.filehandler.standard.loglevel%"
+    calls:
+      - [ "setFormatter", [ "@fileLoggerLineFormatter" ]]
 
   fileLoggerHandlerRotatable:
      class: Monolog\Handler\RotatingFileHandler
@@ -119,6 +131,8 @@ services:
        - "%logger.filehandler.standard.filename%"
        - "%logger.filehandler.standard.maxfiles%"
        - "%logger.filehandler.standard.loglevel%"
+     calls:
+       - [ "setFormatter", [ "@fileLoggerLineFormatter" ]]
 
   logger:
     class: Monolog\Logger
