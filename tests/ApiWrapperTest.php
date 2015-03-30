@@ -36,8 +36,6 @@ class ApiWrapperTest extends PHPUnit_Framework_TestCase {
 		$bs = new Bootstrap();
 		$bs->load();
 
-		$this->mockWordpressApiFunctions();
-
 		$this->container->set( 'multilang.proxy', $this->getTranslationProxyMock() );
 
 		$this->container->set(
@@ -52,171 +50,6 @@ class ApiWrapperTest extends PHPUnit_Framework_TestCase {
 
 		$this->ep = $this->container->get( 'entrypoint' );
 	}
-
-	/**
-	 * emulates wordpress API functions:
-	 * - __()
-	 * - get_site_option()
-	 * - get_current_blog_id()
-	 * - get_current_site()
-	 * - wp_get_current_user()
-	 * - wp_get_sites()
-	 * - is_wp_error()
-	 * - get_post()
-	 * - ms_is_switched()
-	 * - restore_current_blog()
-	 * - switch_to_blog()
-	 * - wp_insert_post()
-	 *
-	 * emulates global constants:
-	 * - ARRAY_A
-	 */
-	private function mockWordpressApiFunctions () {
-
-		defined( 'ARRAY_A' ) || define( 'ARRAY_A', 'ARRAY_A' );
-
-		if ( ! function_exists( '__' ) ) {
-			function __ ( $text, $scope = '' ) {
-				return $text;
-			}
-		}
-
-		if ( ! function_exists( 'get_current_blog_id' ) ) {
-			function get_current_blog_id () {
-				return 1;
-			}
-		}
-
-		if ( ! function_exists( 'get_current_site' ) ) {
-			function get_current_site () {
-				return (object) array ( 'id' => 1 );
-			}
-		}
-
-		if ( ! function_exists( 'wp_get_current_user' ) ) {
-			function wp_get_current_user () {
-				return (object) array ( 'user_login' => 1 );
-			}
-		}
-
-		if ( ! function_exists( 'wp_get_sites' ) ) {
-			function wp_get_sites () {
-				return array (
-					array (
-						'site_id' => 1,
-						'blog_id' => 1
-					),
-					array (
-						'site_id' => 1,
-						'blog_id' => 2
-					),
-				);
-			}
-		}
-
-		if ( ! function_exists( 'ms_is_switched' ) ) {
-			function ms_is_switched () {
-				return true;
-			}
-		}
-
-		if ( ! function_exists( 'restore_current_blog' ) ) {
-			function restore_current_blog () {
-				return true;
-			}
-		}
-
-		if ( ! function_exists( 'switch_to_blog' ) ) {
-			function switch_to_blog ( $blogId ) {
-				return true;
-			}
-		}
-
-		if ( ! function_exists( 'get_site_option' ) ) {
-			function get_site_option ( $key, $default = null, $useCache = true ) {
-				switch ( $key ) {
-					case SettingsManager::SMARTLING_ACCOUNT_INFO: {
-						return array (
-							'apiUrl'        => 'https://capi.smartling.com/v1',
-							'projectId'     => 'a',
-							'key'           => 'b',
-							'retrievalType' => 'pseudo',
-							'callBackUrl'   => '',
-							'autoAuthorize' => true
-						);
-						break;
-					}
-					case SettingsManager::SMARTLING_LOCALES: {
-						return array (
-							'defaultLocale' => 'en-US',
-							'targetLocales' => array (
-								array (
-									'locale'  => 'ru-Ru',
-									'target'  => true,
-									'enabled' => true,
-									'blog'    => 2
-								)
-							),
-							'defaultBlog'   => 1
-
-						);
-						break;
-					}
-				}
-
-			}
-		}
-
-		if ( ! function_exists( 'is_wp_error' ) ) {
-			function is_wp_error ( $something ) {
-				return false;
-			}
-		}
-
-		if ( ! function_exists( 'get_post' ) ) {
-			function get_post ( $id, $returnError ) {
-
-				$date = DateTimeHelper::nowAsString();
-
-				$post = array (
-					'ID'                    => 1,
-					'post_author'           => 1,
-					'post_date'             => $date,
-					'post_date_gmt'         => $date,
-					'post_content'          => 'Test content',
-					'post_title'            => 'Here goes the title',
-					'post_excerpt'          => '',
-					'post_status'           => 'published',
-					'comment_status'        => 'open',
-					'ping_status'           => '',
-					'post_password'         => '',
-					'post_name'             => 'Here goes the title',
-					'to_ping'               => '',
-					'pinged'                => '',
-					'post_modified'         => $date,
-					'post_modified_gmt'     => $date,
-					'post_content_filtered' => '',
-					'post_parent'           => 0,
-					'guid'                  => '/here-goes-the-title',
-					'menu_order'            => 0,
-					'post_type'             => 'post',
-					'post_mime_type'        => 'post',
-					'comment_count'         => 0,
-				);
-
-				return $post;
-			}
-		}
-
-		if ( ! function_exists( 'wp_insert_post' ) ) {
-			function wp_insert_post ( array $fields, $returnError ) {
-				return 2;
-			}
-		}
-
-
-	}
-
 
 	/**
 	 * @return PHPUnit_Framework_MockObject_MockObject
@@ -257,6 +90,7 @@ class ApiWrapperTest extends PHPUnit_Framework_TestCase {
 					'getLinkedObjects',
 					'linkObjects',
 					'unlinkObjects',
+					'getBlogLanguageById'
 				)
 			)
 			->disableOriginalConstructor()
@@ -318,13 +152,13 @@ class ApiWrapperTest extends PHPUnit_Framework_TestCase {
 		$entity = $this->getSubmissionEntity();
 
 		$this->container->get( 'multilang.proxy' )
-			->expects( $this->once() )
-			->method( 'linkObjects' )
-			->willReturn( true );
+		                ->expects( $this->once() )
+		                ->method( 'linkObjects' )
+		                ->willReturn( true );
 
 		$msg = $this->ep->downloadTranslationBySubmission( $entity );
 
-		self::assertTrue( 0 === count( $msg ) );
+		self::assertTrue( 0 === count( $msg ), var_export( $msg, true ) );
 	}
 }
 

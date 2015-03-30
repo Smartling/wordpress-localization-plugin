@@ -5,6 +5,10 @@ namespace Smartling;
 use Faker\Factory;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\XmlEncoder;
+use Smartling\Processors\ContentTypeMapper\PostMapper;
+use Smartling\Processors\PropertyDescriptor;
+use Smartling\Processors\PropertyMapperFactory;
+use Smartling\Processors\PropertyProcessors\PropertyProcessorFactory;
 use Smartling\SDK\SmartlingAPI;
 
 /**
@@ -61,24 +65,34 @@ class SmartlingApiMock extends SmartlingAPI {
 	public function downloadFile ( $fileUri, $locale, $params = array () ) {
 		$type = WordpressContentTypeHelper::CONTENT_TYPE_POST;
 
+		/**
+		 * @var PropertyProcessorFactory $p_factory
+		 */
+
+		$p_factory = Bootstrap::getContainer()->get( 'factory.processor' );
+
+		/**
+		 * @var PropertyMapperFactory $factory
+		 */
+
 		$factory = Bootstrap::getContainer()->get( 'factory.propertyMapper' );
 		$faker   = Factory::create();
-
-
-		$wrapper = $factory->getMapper( $type );
 
 		/**
 		 * @var PostMapper $wrapper
 		 */
+		$wrapper = $factory->getMapper( $type );
+
+		/**
+		 * @var PropertyDescriptor[] $fields
+		 */
 		$fields = $wrapper->getFields();
 
-		$data = array ();
-
 		foreach ( $fields as $field ) {
-			$data[ $field ] = $faker->realText( 180 );
+			$field->setValue($faker->realText( 180 ));
 		}
 
-		$encodedXML = XmlEncoder::xmlEncode( $data );
+		$encodedXML = XmlEncoder::xmlEncode( $fields, $p_factory );
 
 		return $encodedXML;
 	}

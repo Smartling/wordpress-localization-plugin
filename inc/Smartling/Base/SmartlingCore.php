@@ -105,7 +105,7 @@ class SmartlingCore {
 	/**
 	 * @param LocalizationPluginProxyInterface $multilangProxy
 	 */
-	public function setMultilangProxy ( LocalizationPluginProxyInterface $multilangProxy ) {
+	public function setMultilangProxy ( $multilangProxy ) {
 		$this->multilangProxy = $multilangProxy;
 	}
 

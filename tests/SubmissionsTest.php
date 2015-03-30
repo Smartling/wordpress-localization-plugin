@@ -15,6 +15,11 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 	private $container;
 
 	/**
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
+	/**
 	 * @inheritdoc
 	 */
 	public function __construct ( $name = null, array $data = array (), $dataName = '' ) {
@@ -22,26 +27,10 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 
 		$this->container = Bootstrap::getContainer();
 
+		$this->logger = $this->container->get( 'logger' );
+
 		$bs = new Bootstrap();
 		$bs->load();
-
-		$this->registerWordpressFunctions();
-	}
-
-	private function registerLocalizationFunction () {
-		if ( ! function_exists( '__' ) ) {
-			function __ ( $text, $scope = '' ) {
-				return $text;
-			}
-		}
-	}
-
-	private function registerWordpressFunctions () {
-		if ( ! function_exists( 'get_site_option' ) ) {
-			function get_site_option ( $key, $default = null, $useCache = true ) {
-				return array ();
-			}
-		}
 	}
 
 	/**
@@ -82,12 +71,7 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testSubmissionEntityValidations () {
-		/**
-		 * @var LoggerInterface $logger
-		 */
-		$logger = $this->container->get( 'logger' );
-
-		$entity = new SubmissionEntity( $logger );
+		$entity = new SubmissionEntity( $this->logger );
 
 		$entity->setId( '100' );
 
@@ -116,16 +100,7 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testSubmissionStatusValidationAsValid () {
-		$this->registerLocalizationFunction();
-
-
-		/**
-		 * @var LoggerInterface $logger
-		 */
-		$logger = $this->container->get( 'logger' );
-
-		$entity = new SubmissionEntity( $logger );
-
+		$entity = new SubmissionEntity( $this->logger );
 		$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_NEW );
 	}
 
@@ -133,26 +108,12 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 	 * @expectedException \InvalidArgumentException
 	 */
 	public function testSubmissionStatusValidationAsInvalid () {
-		$this->registerLocalizationFunction();
-		/**
-		 * @var LoggerInterface $logger
-		 */
-		$logger = $this->container->get( 'logger' );
-
-		$entity = new SubmissionEntity( $logger );
-
+		$entity = new SubmissionEntity( $this->logger );
 		$entity->setStatus( 'ololo' );
 	}
 
 	public function testSubmissionContentTypeValidationAsValid () {
-		$this->registerLocalizationFunction();
-		/**
-		 * @var LoggerInterface $logger
-		 */
-		$logger = $this->container->get( 'logger' );
-
-		$entity = new SubmissionEntity( $logger );
-
+		$entity = new SubmissionEntity( $this->logger );
 		$entity->setContentType( WordpressContentTypeHelper::CONTENT_TYPE_POST );
 	}
 
@@ -160,14 +121,7 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 	 * @expectedException \InvalidArgumentException
 	 */
 	public function testSubmissionContentTypeValidationAsInvalid () {
-		$this->registerLocalizationFunction();
-		/**
-		 * @var LoggerInterface $logger
-		 */
-		$logger = $this->container->get( 'logger' );
-
-		$entity = new SubmissionEntity( $logger );
-
+		$entity = new SubmissionEntity( $this->logger );
 		$entity->setContentType( 'ololo' );
 	}
 
@@ -237,9 +191,9 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 		 */
 		$mock = $this->container->get( 'site.db' );
 
-		$mock->expects( $this->at( 0 ) )->method( 'completeTableName' )->willReturn( 'wp_mock_table_name' );
-		$mock->expects( $this->at( 1 ) )->method( 'query' )->willReturn( true );
-		$mock->expects( $this->at( 2 ) )->method( 'getLastInsertedId' )->willReturn( 88 );
+		$mock->expects( self::at( 0 ) )->method( 'completeTableName' )->willReturn( 'wp_mock_table_name' );
+		$mock->expects( self::at( 1 ) )->method( 'query' )->willReturn( true );
+		$mock->expects( self::at( 2 ) )->method( 'getLastInsertedId' )->willReturn( 88 );
 
 		$newEntity = $manager->storeEntity( $entity );
 

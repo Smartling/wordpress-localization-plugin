@@ -19,33 +19,6 @@ class CategoryTest extends PHPUnit_Framework_TestCase {
 	public function __construct ( $name = null, array $data = array (), $dataName = '' ) {
 		parent::__construct( $name, $data, $dataName );
 
-		$this->init();
-	}
-
-	private function init () {
-
-
-		defined( 'ARRAY_A' ) || define( 'ARRAY_A', 'ARRAY_A' );
-
-		if ( ! function_exists( 'get_term' ) ) {
-			function get_term ( $id, $taxonomy, $outputFormat ) {
-				$category = array (
-					'term_id'          => 1,
-					'name'             => 'Fake Category',
-					'slug'             => 'fake-category',
-					'term_group'       => 0,
-					'term_taxonomy_id' => 0,
-					'taxonomy'         => 'category',
-					'description'      => '',
-					'parent'           => 0,
-					'count'            => 0
-				);
-
-				return $category;
-			}
-		}
-
-
 		$this->ioFactory = Bootstrap::getContainer()->get( 'factory.contentIO' );
 	}
 
@@ -81,9 +54,9 @@ class CategoryTest extends PHPUnit_Framework_TestCase {
 
 		self::assertTrue( $result->term_id === 1 );
 
-		self::assertTrue( $result->name === 'Fake Category' );
+		self::assertTrue( $result->name === 'Fake Name' );
 
-		self::assertTrue( $result->slug === 'fake-category' );
+		self::assertTrue( $result->slug === 'fake-name' );
 
 		self::assertTrue( $result->taxonomy === $type );
 	}
@@ -121,11 +94,7 @@ class CategoryTest extends PHPUnit_Framework_TestCase {
 
 
 	public function testCreateCategory () {
-		if ( ! function_exists( 'wp_insert_term' ) ) {
-			function wp_insert_term ( $name, $type, $args ) {
-				return array_merge( $args, array ( 'term_id' => 2 ) );
-			}
-		}
+
 
 		$type = WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY;
 
@@ -147,20 +116,11 @@ class CategoryTest extends PHPUnit_Framework_TestCase {
 
 
 	public function testUpdateCategory () {
-		if ( ! function_exists( 'wp_update_term' ) ) {
-			function wp_update_term ( $id, $type, $args ) {
-				return array_merge( $args, array ( 'term_id' => $id ) );
-			}
-		}
-
 		$type = WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY;
 
 		$wrapper = $this->ioFactory->getMapper( $type );
-
 		$result = $wrapper->get( 1 );
-
 		$result->name .= 'new';
-
 		$id = $wrapper->set( $result );
 
 		self::assertTrue( 1 === $id );
