@@ -172,7 +172,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	 * $sortOptions is an array that keys are SubmissionEntity fields and values are 'ASC' or 'DESC'
 	 * or null if no sorting needed
 	 *
-	 * e.g.: array('submissionDate' => 'ASC', 'targetLocale' => 'DESC')
+	 * e.g.: array('submission_date' => 'ASC', 'target_locale' => 'DESC')
 	 *
 	 * $pageOptions is an array that has keys('page' and 'limit') for pagination output purposes purposes
 	 * or null if no pagination needed
@@ -296,7 +296,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	 * @return null|SubmissionEntity
 	 */
 	public function getEntityBySourceGuid ( $sourceGuid ) {
-		$query = $this->buildSelectQuery( array ( 'sourceGUID' => $sourceGuid ) );
+		$query = $this->buildSelectQuery( array ( 'source_id' => $sourceGuid ) );
 
 		$obj = $this->fetchData( $query, false );
 
@@ -342,7 +342,7 @@ class SubmissionManager extends EntityManagerAbstract {
 			}
 
 			if ( ! is_null( $contentType ) ) {
-				$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'contentType',
+				$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'content_type',
 					array ( $contentType ) );
 				$whereOptions->addCondition( $condition );
 			}
@@ -421,7 +421,7 @@ class SubmissionManager extends EntityManagerAbstract {
 			}
 
 			if ( ! is_null( $contentType ) ) {
-				$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'contentType',
+				$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'content_type',
 					array ( $contentType ) );
 				$whereOptions->addCondition( $condition );
 			}
@@ -544,14 +544,14 @@ class SubmissionManager extends EntityManagerAbstract {
 		$entity = null;
 
 		$params = array (
-			'contentType' => $contentType,
-			'sourceBlog'  => $sourceBlog,
-			'sourceGUID'  => $sourceEntity,
-			'targetBlog'  => $targetBlog,
+			'content_type' => $contentType,
+			'source_blog_id'  => $sourceBlog,
+			'source_id'  => $sourceEntity,
+			'target_blog_id'  => $targetBlog,
 		);
 
 		if ( null !== $targetEntity ) {
-			$params['targetGUID'] = $targetEntity;
+			$params['target_id'] = $targetEntity;
 		}
 
 		$entities = $this->find( $params );
@@ -562,12 +562,12 @@ class SubmissionManager extends EntityManagerAbstract {
 			$entity = $this->createSubmission( $params );
 			$entity->setTargetLocale(
 				$localizationPluginProxy->getBlogLocaleById(
-					$entity->getTargetBlog()
+					$entity->getTargetBlogId()
 				)
 			);
 			$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_NEW );
 			$entity->setSubmitter( WordpressUserHelper::getUserLogin() );
-			$entity->setSourceTitle( '' );
+			$entity->setSourceTitle( 'no title' );
 			$entity->setSubmissionDate( DateTimeHelper::nowAsString() );
 		}
 

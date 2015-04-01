@@ -123,7 +123,7 @@ class SubmissionTableWidget extends \WP_List_Table {
 		);
 
 		//Return the title contents
-		return vsprintf( '%s %s', array ( $item['sourceTitle'], $this->row_actions( $actions ) ) );
+		return vsprintf( '%s %s', array ( $item['source_title'], $this->row_actions( $actions ) ) );
 	}
 
 	/**
@@ -303,7 +303,7 @@ class SubmissionTableWidget extends \WP_List_Table {
 				$this->getSortingOptions(), $pageOptions,
 				$total );
 		} else {
-			$data = $this->manager->search( $searchText, array ( 'sourceTitle', 'sourceGUID', 'fileUri' ),
+			$data = $this->manager->search( $searchText, array ( 'source_title', 'source_id', 'file_uri' ),
 				$contentTypeFilterValue, $statusFilterValue, $this->getSortingOptions(), $pageOptions,
 				$total );
 		}
@@ -315,19 +315,19 @@ class SubmissionTableWidget extends \WP_List_Table {
 		foreach ( $data as $element ) {
 			$row = $element->toArray();
 
-			//$row["fileUri"] = $row["fileUri"] != null ? basename($row["fileUri"]) : null;
+			//$row["file_uri"] = $row["file_uri"] != null ? basename($row["file_uri"]) : null;
 
-			$row['sourceTitle']    = $this->applyRowActions( $row );
-			$row['contentType']    = WordpressContentTypeHelper::getLocalizedContentType( $row['contentType'] );
-			$row['submissionDate'] = DateTimeHelper::toWordpressLocalDateTime( DateTimeHelper::stringToDateTime( $row['submissionDate'] ) );
-			$row['appliedDate']    = '0000-00-00 00:00:00' === $row['appliedDate'] ? __( 'Never' ) :
-				DateTimeHelper::toWordpressLocalDateTime( DateTimeHelper::stringToDateTime( $row['appliedDate'] ) );
+			$row['source_title']    = $this->applyRowActions( $row );
+			$row['content_type']    = WordpressContentTypeHelper::getLocalizedContentType( $row['content_type'] );
+			$row['submission_date'] = DateTimeHelper::toWordpressLocalDateTime( DateTimeHelper::stringToDateTime( $row['submission_date'] ) );
+			$row['applied_date']    = '0000-00-00 00:00:00' === $row['applied_date'] ? __( 'Never' ) :
+				DateTimeHelper::toWordpressLocalDateTime( DateTimeHelper::stringToDateTime( $row['applied_date'] ) );
 
-			if ( mb_strlen( $row['fileUri'], 'utf8' ) > $file_uri_max_chars ) {
-				$orig     = $row['fileUri'];
+			if ( mb_strlen( $row['file_uri'], 'utf8' ) > $file_uri_max_chars ) {
+				$orig     = $row['file_uri'];
 				$shrinked = mb_substr( $orig, 0, $file_uri_max_chars - 3, 'utf8' ) . '...';
 
-				$row['fileUri'] = HtmlTagGeneratorHelper::tag( 'span', $shrinked, array ( 'title' => $orig ) );
+				$row['file_uri'] = HtmlTagGeneratorHelper::tag( 'span', $shrinked, array ( 'title' => $orig ) );
 
 			}
 

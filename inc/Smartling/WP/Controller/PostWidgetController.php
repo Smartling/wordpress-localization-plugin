@@ -71,8 +71,8 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 				$originalId = $this->getEntityHelper()->getOriginalContentId( $post->ID );
 
 				$submissions = $this->getManager()->find( array (
-					'sourceGUID'  => $originalId,
-					'contentType' => $this->servedContentType,
+					'source_id'  => $originalId,
+					'content_type' => $this->servedContentType,
 				) );
 
 				$this->view( array (
@@ -194,8 +194,8 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 
 						$submissions = $this->getManager()->find(
 							array (
-								'sourceGUID'  => $originalId,
-								'contentType' => $this->servedContentType
+								'source_id'  => $originalId,
+								'content_type' => $this->servedContentType
 							)
 						);
 

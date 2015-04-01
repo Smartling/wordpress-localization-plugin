@@ -364,8 +364,8 @@ class BulkSubmitTableWidget extends WP_List_Table {
 				$row = $this->extractFields( $item, $contentTypeFilterValue );
 
 				$entities = $this->getManager()->find( array (
-						'sourceGUID'  => $row['id'],
-						'contentType' => $row['type']
+						'source_id'  => $row['id'],
+						'content_type' => $row['type']
 					)
 				);
 

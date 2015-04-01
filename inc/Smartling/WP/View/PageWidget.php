@@ -36,7 +36,7 @@ use Smartling\WP\WPAbstract;
 					/**
 					 * @var SubmissionEntity $item
 					 */
-					if ( $item->getTargetBlog() === $locale->getBlog() ) {
+					if ( $item->getTargetBlogId() === $locale->getBlog() ) {
 						$value       = true;
 						$statusValue = $item->getStatus();
 						$id          = $item->getId();
