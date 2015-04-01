@@ -68,7 +68,7 @@ class ApiWrapper implements ApiWrapperInterface {
 			array (
 				$actionMark,
 				$entity->getFileUri(),
-				$entity->getSourceBlog(),
+				$entity->getSourceBlogId(),
 				$entity->getContentType(),
 				$entity->getTargetLocale()
 			) );
@@ -78,7 +78,7 @@ class ApiWrapper implements ApiWrapperInterface {
 		// Try to download file.
 		$requestResultRaw = $this->api->downloadFile(
 			$entity->getFileUri(),
-			$this->getSmartLingLocale( $entity->getTargetBlog() ),
+			$this->getSmartLingLocale( $entity->getTargetBlogId() ),
 			array (
 				'retrievalType' => $this->settings->getAccountInfo()->getRetrievalType(),
 			)
@@ -93,6 +93,15 @@ class ApiWrapper implements ApiWrapperInterface {
 			$this->logger->error( $logMessage, array ( __FILE__, __LINE__ ) );
 
 			throw new SmartlingFileDownloadException( $logMessage, 0, __FILE__, __LINE__ );
+		} else {
+			$message = vsprintf( 'Session [%s]. File downloaded. size: %s bytes, content: \'%s\'',
+				array (
+					$actionMark,
+					strlen( $requestResultRaw ),
+					$requestResultRaw,
+
+				) );
+			$this->logger->debug( $message );
 		}
 
 		$requestResult = json_decode( $requestResultRaw );
@@ -149,7 +158,7 @@ class ApiWrapper implements ApiWrapperInterface {
 		}
 
 		$rawResponse = $this->api->getStatus( $entity->getFileUri(),
-			$this->getSmartLingLocale( $entity->getTargetBlog() ) );
+			$this->getSmartLingLocale( $entity->getTargetBlogId() ) );
 
 		$status_result = json_decode( $rawResponse );
 
@@ -175,7 +184,7 @@ class ApiWrapper implements ApiWrapperInterface {
 				'Smartling checks status for %s id - %s: \n Project ID : %s\n Action : %s\n URI : %s\n Locale : %s\n Error : response code -> %s and message -> %s',
 				array (
 					$entity->getContentType(),
-					$entity->getSourceGUID(),
+					$entity->getSourceId(),
 					$this->settings->getAccountInfo()->getProjectId(),
 					'status',
 					$entity->getFileUri(),
@@ -195,7 +204,7 @@ class ApiWrapper implements ApiWrapperInterface {
 			'Smartling checks status for %s id - %s. approvedString = %s, completedString = %s',
 			array (
 				$entity->getContentType(),
-				$entity->getSourceGUID(),
+				$entity->getSourceId(),
 				$status_result->response->data->approvedStringCount,
 				$status_result->response->data->completedStringCount
 			)
@@ -268,7 +277,7 @@ class ApiWrapper implements ApiWrapperInterface {
 		             ->setOverwriteApprovedLocales( 0 );
 
 		if ( $this->settings->getAccountInfo()->getAutoAuthorize() ) {
-			$paramBuilder->setLocalesToApprove( array ( $this->getSmartLingLocale( $entity->getTargetBlog() ) ) );
+			$paramBuilder->setLocalesToApprove( array ( $this->getSmartLingLocale( $entity->getTargetBlogId() ) ) );
 		}
 
 		if ( $this->settings->getAccountInfo()->getCallBackUrl() ) {

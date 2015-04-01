@@ -4,16 +4,20 @@ namespace Smartling;
 
 use Exception;
 use Psr\Log\LoggerInterface;
-use Smartling\DbAl\WordpressContentEntities\CategoryEntityAbstract;
+use Smartling\Exception\MultilingualPluginNotFoundException;
+use Smartling\Exception\SmartlingConfigException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPHookInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
-use Smartling\Exception\MultilingualPluginNotFoundException;
-use Smartling\Exception\SmartlingConfigException;
 
+/**
+ * Class Bootstrap
+ *
+ * @package Smartling
+ */
 class Bootstrap {
 
 	/**
@@ -28,7 +32,7 @@ class Bootstrap {
 
 	/**
 	 * @return LoggerInterface
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	public static function getLogger () {
 		$object = self::getContainer()->get( 'logger' );
@@ -37,7 +41,7 @@ class Bootstrap {
 			return $object;
 		} else {
 			$message = 'Something went wrong with initialization of DI Container and logger cannot be retrieved.';
-			throw new \Exception( $message );
+			throw new Exception( $message );
 		}
 	}
 

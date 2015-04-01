@@ -30,7 +30,7 @@ use Smartling\Settings\TargetLocale;
 	<table class = "form-table" >
 		<tr >
 			<td >
-				<form id = "bulk-submit-type-filter" method = "post" >
+				<form id = "bulk-submit-type-filter" method = "get" >
 					<input type = "hidden" name = "page" value = "<?= $_REQUEST['page']; ?>" />
 					<?= $bulkSubmitTable->contentTypeSelectRender(); ?>
 					<?= $bulkSubmitTable->renderSubmitButton( __( 'Apply Filter' ) ); ?>

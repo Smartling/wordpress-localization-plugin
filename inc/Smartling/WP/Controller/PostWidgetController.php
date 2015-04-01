@@ -71,8 +71,8 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 				$originalId = $this->getEntityHelper()->getOriginalContentId( $post->ID );
 
 				$submissions = $this->getManager()->find( array (
-					'sourceGUID'  => $originalId,
-					'contentType' => $this->servedContentType,
+					'source_id'  => $originalId,
+					'content_type' => $this->servedContentType,
 				) );
 
 				$this->view( array (
@@ -148,6 +148,11 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 			return $post_id;
 		}
 
+		if (!array_key_exists(self::WIDGET_DATA_NAME, $_POST))
+		{
+			return;
+		}
+
 		$data = $_POST[ self::WIDGET_DATA_NAME ];
 
 		$locales = array ();
@@ -189,8 +194,8 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 
 						$submissions = $this->getManager()->find(
 							array (
-								'sourceGUID'  => $originalId,
-								'contentType' => $this->servedContentType
+								'source_id'  => $originalId,
+								'content_type' => $this->servedContentType
 							)
 						);
 

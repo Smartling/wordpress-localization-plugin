@@ -15,6 +15,11 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 	private $container;
 
 	/**
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
+	/**
 	 * @inheritdoc
 	 */
 	public function __construct ( $name = null, array $data = array (), $dataName = '' ) {
@@ -22,26 +27,10 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 
 		$this->container = Bootstrap::getContainer();
 
+		$this->logger = $this->container->get( 'logger' );
+
 		$bs = new Bootstrap();
 		$bs->load();
-
-		$this->registerWordpressFunctions();
-	}
-
-	private function registerLocalizationFunction () {
-		if ( ! function_exists( '__' ) ) {
-			function __ ( $text, $scope = '' ) {
-				return $text;
-			}
-		}
-	}
-
-	private function registerWordpressFunctions () {
-		if ( ! function_exists( 'get_site_option' ) ) {
-			function get_site_option ( $key, $default = null, $useCache = true ) {
-				return array ();
-			}
-		}
 	}
 
 	/**
@@ -82,12 +71,7 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testSubmissionEntityValidations () {
-		/**
-		 * @var LoggerInterface $logger
-		 */
-		$logger = $this->container->get( 'logger' );
-
-		$entity = new SubmissionEntity( $logger );
+		$entity = new SubmissionEntity( $this->logger );
 
 		$entity->setId( '100' );
 
@@ -116,16 +100,7 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 	}
 
 	public function testSubmissionStatusValidationAsValid () {
-		$this->registerLocalizationFunction();
-
-
-		/**
-		 * @var LoggerInterface $logger
-		 */
-		$logger = $this->container->get( 'logger' );
-
-		$entity = new SubmissionEntity( $logger );
-
+		$entity = new SubmissionEntity( $this->logger );
 		$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_NEW );
 	}
 
@@ -133,26 +108,12 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 	 * @expectedException \InvalidArgumentException
 	 */
 	public function testSubmissionStatusValidationAsInvalid () {
-		$this->registerLocalizationFunction();
-		/**
-		 * @var LoggerInterface $logger
-		 */
-		$logger = $this->container->get( 'logger' );
-
-		$entity = new SubmissionEntity( $logger );
-
+		$entity = new SubmissionEntity( $this->logger );
 		$entity->setStatus( 'ololo' );
 	}
 
 	public function testSubmissionContentTypeValidationAsValid () {
-		$this->registerLocalizationFunction();
-		/**
-		 * @var LoggerInterface $logger
-		 */
-		$logger = $this->container->get( 'logger' );
-
-		$entity = new SubmissionEntity( $logger );
-
+		$entity = new SubmissionEntity( $this->logger );
 		$entity->setContentType( WordpressContentTypeHelper::CONTENT_TYPE_POST );
 	}
 
@@ -160,14 +121,7 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 	 * @expectedException \InvalidArgumentException
 	 */
 	public function testSubmissionContentTypeValidationAsInvalid () {
-		$this->registerLocalizationFunction();
-		/**
-		 * @var LoggerInterface $logger
-		 */
-		$logger = $this->container->get( 'logger' );
-
-		$entity = new SubmissionEntity( $logger );
-
+		$entity = new SubmissionEntity( $this->logger );
 		$entity->setContentType( 'ololo' );
 	}
 
@@ -180,28 +134,101 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 		$manager = $this->container->get( 'manager.submission' );
 
 		$fields = array (
-			'id'                   => null,
-			'sourceTitle'          => 'Automatic generated title',
-			'sourceBlog'           => 1,
-			'sourceContentHash'    => md5( '' ),
-			'contentType'          => WordpressContentTypeHelper::CONTENT_TYPE_POST,
-			'sourceGUID'           => '/ol"olo',
-			'fileUri'              => "/tralala'",
-			'targetLocale'         => 'es_US',
-			'targetBlog'           => 5,
-			'targetGUID'           => '',
-			'submitter'            => 'admin',
-			'submissionDate'       => time(),
-			'approvedStringCount'  => 37,
-			'completedStringCount' => 14,
-			'status'               => 'New',
+			'id'                     => null,
+			'source_title'           => 'Automatic generated title',
+			'source_blog_id'         => 1,
+			'source_content_hash'    => md5( '' ),
+			'content_type'           => WordpressContentTypeHelper::CONTENT_TYPE_POST,
+			'source_id'              => '/ol"olo',
+			'file_uri'               => "/tralala'",
+			'target_locale'          => 'es_US',
+			'target_blog_id'         => 5,
+			'target_id'              => '',
+			'submitter'              => 'admin',
+			'submission_date'        => time(),
+			'approved_string_count'  => 37,
+			'completed_string_count' => 14,
+			'status'                 => 'New',
 		);
 
 		$entity = $manager->createSubmission( $fields );
 
 		$current_id = $entity->id;
 
-		self::assertTrue( $current_id === null );
+		self::assertTrue( $current_id === null,
+			vsprintf( 'Got: \'%s\'; Expected \'%s\'', array ( $current_id, null ) ) );
+	}
+
+	public function testSubmissionEntityTitleFieldLengthLimitation () {
+		$this->replaceDbAlInContainer();
+
+		/**
+		 * @var SubmissionManager $manager
+		 */
+		$manager = $this->container->get( 'manager.submission' );
+
+
+		$fields = array (
+			'id'                     => null,
+			'source_title'           => implode( '', array_fill( 0, 1024, 'o' ) ),
+			'source_blog_id'         => 1,
+			'source_content_hash'    => md5( '' ),
+			'content_type'           => WordpressContentTypeHelper::CONTENT_TYPE_POST,
+			'source_id'              => '/ol"olo',
+			'target_locale'          => 'es_US',
+			'target_blog_id'         => 5,
+			'submitter'              => 'admin',
+			'submission_date'        => time(),
+			'approved_string_count'  => 37,
+			'completed_string_count' => 14,
+			'status'                 => 'New',
+		);
+
+		/**
+		 * @var SubmissionEntity $entity
+		 */
+		$entity = $manager->createSubmission( $fields );
+
+		$titleLength   = mb_strlen( $entity->getSourceTitle(), 'utf8' );
+
+		self::assertTrue( 255 === $titleLength, vsprintf( 'Expected: %s, got: %s, content: [%s]',
+			array ( 255, $titleLength, $entity->getSourceTitle() ) ) );
+	}
+
+	public function testSubmissionEntityFileUriFieldLengthLimitation () {
+		$this->replaceDbAlInContainer();
+
+		/**
+		 * @var SubmissionManager $manager
+		 */
+		$manager = $this->container->get( 'manager.submission' );
+
+
+		$fields = array (
+			'id'                     => null,
+			'source_title'           => implode( '', array_fill( 0, 1024, 'o' ) ),
+			'source_blog_id'         => 1,
+			'source_content_hash'    => md5( '' ),
+			'content_type'           => WordpressContentTypeHelper::CONTENT_TYPE_POST,
+			'source_id'              => '/ol"olo',
+			'target_locale'          => 'es_US',
+			'target_blog_id'         => 5,
+			'submitter'              => 'admin',
+			'submission_date'        => time(),
+			'approved_string_count'  => 37,
+			'completed_string_count' => 14,
+			'status'                 => 'New',
+		);
+
+		/**
+		 * @var SubmissionEntity $entity
+		 */
+		$entity = $manager->createSubmission( $fields );
+
+		$fileUriLength = mb_strlen( $entity->getFileUri(), 'utf8' );
+
+		self::assertTrue( 255 === $fileUriLength,
+			vsprintf( 'Expected: %s, got: %s, content: [%s]', array ( 255, $fileUriLength, $entity->getFileUri() ) ) );
 	}
 
 	public function testEntitySavingToDatabase () {
@@ -213,21 +240,21 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 		$manager = $this->container->get( 'manager.submission' );
 
 		$fields = array (
-			'id'                   => null,
-			'sourceTitle'          => 'Automatic generated title',
-			'sourceBlog'           => 1,
-			'sourceContentHash'    => md5( '' ),
-			'contentType'          => WordpressContentTypeHelper::CONTENT_TYPE_POST,
-			'sourceGUID'           => '/ol"olo',
-			'fileUri'              => "/tralala'",
-			'targetLocale'         => 'es_US',
-			'targetBlog'           => 5,
-			'targetGUID'           => '',
-			'submitter'            => 'admin',
-			'submissionDate'       => time(),
-			'approvedStringCount'  => 37,
-			'completedStringCount' => 14,
-			'status'               => 'New',
+			'id'                     => null,
+			'source_title'           => 'Automatic generated title',
+			'source_blog_id'         => 1,
+			'source_content_hash'    => md5( '' ),
+			'content_type'           => WordpressContentTypeHelper::CONTENT_TYPE_POST,
+			'source_id'              => '/ol"olo',
+			'file_uri'               => "/tralala'",
+			'target_locale'          => 'es_US',
+			'target_blog_id'         => 5,
+			'target_id'              => '',
+			'submitter'              => 'admin',
+			'submission_date'        => time(),
+			'approved_string_count'  => 37,
+			'completed_string_count' => 14,
+			'status'                 => 'New',
 		);
 
 		$entity = $manager->createSubmission( $fields );
@@ -237,9 +264,9 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 		 */
 		$mock = $this->container->get( 'site.db' );
 
-		$mock->expects( $this->at( 0 ) )->method( 'completeTableName' )->willReturn( 'wp_mock_table_name' );
-		$mock->expects( $this->at( 1 ) )->method( 'query' )->willReturn( true );
-		$mock->expects( $this->at( 2 ) )->method( 'getLastInsertedId' )->willReturn( 88 );
+		$mock->expects( self::at( 0 ) )->method( 'completeTableName' )->willReturn( 'wp_mock_table_name' );
+		$mock->expects( self::at( 1 ) )->method( 'query' )->willReturn( true );
+		$mock->expects( self::at( 2 ) )->method( 'getLastInsertedId' )->willReturn( 88 );
 
 		$newEntity = $manager->storeEntity( $entity );
 
@@ -258,21 +285,21 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 
 		$fields = array (
 			array (
-				'id'                   => null,
-				'sourceTitle'          => 'Automatic generated title',
-				'sourceBlog'           => 1,
-				'sourceContentHash'    => md5( '' ),
-				'contentType'          => WordpressContentTypeHelper::CONTENT_TYPE_POST,
-				'sourceGUID'           => '/ol"olo',
-				'fileUri'              => "/tralala'",
-				'targetLocale'         => 'es_US',
-				'targetBlog'           => 5,
-				'targetGUID'           => '',
-				'submitter'            => 'admin',
-				'submissionDate'       => time(),
-				'approvedStringCount'  => 37,
-				'completedStringCount' => 14,
-				'status'               => 'New',
+				'id'                     => null,
+				'source_title'           => 'Automatic generated title',
+				'source_blog_id'         => 1,
+				'source_content_hash'    => md5( '' ),
+				'content_type'           => WordpressContentTypeHelper::CONTENT_TYPE_POST,
+				'source_id'              => '/ol"olo',
+				'file_uri'               => "/tralala'",
+				'target_locale'          => 'es_US',
+				'target_blog_id'         => 5,
+				'target_id'              => '',
+				'submitter'              => 'admin',
+				'submission_date'        => time(),
+				'approved_string_count'  => 37,
+				'completed_string_count' => 14,
+				'status'                 => 'New',
 			)
 		);
 

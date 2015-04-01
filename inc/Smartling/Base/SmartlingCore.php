@@ -105,7 +105,7 @@ class SmartlingCore {
 	/**
 	 * @param LocalizationPluginProxyInterface $multilangProxy
 	 */
-	public function setMultilangProxy ( LocalizationPluginProxyInterface $multilangProxy ) {
+	public function setMultilangProxy ( $multilangProxy ) {
 		$this->multilangProxy = $multilangProxy;
 	}
 
@@ -217,10 +217,10 @@ class SmartlingCore {
 	public function sendForTranslationBySubmission ( SubmissionEntity $submission ) {
 		$contentEntity = $this->readContentEntity( $submission );
 
-		if ( null === $submission->getId() ) {
-			$submission->setSourceContentHash( $contentEntity->calculateHash() );
-			$submission->setSourceTitle( $contentEntity->getTitle() );
+		$submission->setSourceContentHash( $contentEntity->calculateHash() );
+		$submission->setSourceTitle( $contentEntity->getTitle() );
 
+		if ( null === $submission->getId() ) {
 			// generate URI
 			$submission->getFileUri();
 			$submission = $this->getSubmissionManager()->storeEntity( $submission );
@@ -346,7 +346,7 @@ class SmartlingCore {
 
 			$translatedFields = XmlEncoder::xmlDecode( $translatableFields, $data, $this->getProcessorFactory() );
 
-			$targetId = (int) $entity->getTargetGUID();
+			$targetId = (int) $entity->getTargetId();
 
 			$targetContent = null;
 
@@ -364,21 +364,26 @@ class SmartlingCore {
 
 			$this->setValues( $targetContent, $translatedFields );
 
-			$this->saveEntity( $entity->getContentType(), $entity->getTargetBlog(), $targetContent );
+			$this->saveEntity( $entity->getContentType(), $entity->getTargetBlogId(), $targetContent );
 
-			$this->saveMetaProperties( $entity->getTargetBlog(), $targetContent, $translatedFields );
+			$this->saveMetaProperties( $entity->getTargetBlogId(), $targetContent, $translatedFields );
 
 			if ( 0 === $targetId ) {
 
-				$entity->setTargetGUID( $targetContent->getPK() );
+				$entity->setTargetId( $targetContent->getPK() );
 
 				$entity = $this->getSubmissionManager()->storeEntity( $entity );
 
 				$this->getMultilangProxy()->linkObjects( $entity );
 			}
 
+			if ( 100 === $entity->getCompletionPercentage() ) {
+				$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_COMPLETED );
+			}
+
 			$entity->appliedDate = DateTimeHelper::nowAsString();
-			$entity              = $this->getSubmissionManager()->storeEntity( $entity );
+
+			$entity = $this->getSubmissionManager()->storeEntity( $entity );
 		} catch ( Exception $e ) {
 			$messages[] = $e->getMessage();
 		}
@@ -498,11 +503,11 @@ class SmartlingCore {
 
 		$contentIOWrapper = $this->getContentIOWrapper( $entity );
 
-		if ( $this->getSiteHelper()->getCurrentBlogId() === $entity->getSourceBlog() ) {
-			$contentEntity = $contentIOWrapper->get( $entity->getSourceGUID() );
+		if ( $this->getSiteHelper()->getCurrentBlogId() === $entity->getSourceBlogId() ) {
+			$contentEntity = $contentIOWrapper->get( $entity->getSourceId() );
 		} else {
-			$this->getSiteHelper()->switchBlogId( $entity->getSourceBlog() );
-			$contentEntity = $contentIOWrapper->get( $entity->getSourceGUID() );
+			$this->getSiteHelper()->switchBlogId( $entity->getSourceBlogId() );
+			$contentEntity = $contentIOWrapper->get( $entity->getSourceId() );
 			$this->getSiteHelper()->restoreBlogId();
 		}
 
@@ -513,11 +518,11 @@ class SmartlingCore {
 
 		$contentIOWrapper = $this->getContentIOWrapper( $entity );
 
-		if ( $this->getSiteHelper()->getCurrentBlogId() === $entity->getTargetBlog() ) {
-			$contentEntity = $contentIOWrapper->get( $entity->getTargetGUID() );
+		if ( $this->getSiteHelper()->getCurrentBlogId() === $entity->getTargetBlogId() ) {
+			$contentEntity = $contentIOWrapper->get( $entity->getTargetId() );
 		} else {
-			$this->getSiteHelper()->switchBlogId( $entity->getTargetBlog() );
-			$contentEntity = $contentIOWrapper->get( $entity->getTargetGUID() );
+			$this->getSiteHelper()->switchBlogId( $entity->getTargetBlogId() );
+			$contentEntity = $contentIOWrapper->get( $entity->getTargetId() );
 			$this->getSiteHelper()->restoreBlogId();
 		}
 

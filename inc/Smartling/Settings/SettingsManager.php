@@ -71,7 +71,7 @@ class SettingsManager {
 		LoggerInterface $logger,
 		PropertyMapperFactory $mapperWrapper,
 		SiteHelper $siteHelper,
-		LocalizationPluginProxyInterface $localizationPluginProxyInterface
+		$localizationPluginProxyInterface
 	) {
 
 		$this->logger        = $logger;

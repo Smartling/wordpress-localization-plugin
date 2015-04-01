@@ -44,7 +44,7 @@ class Locales {
 	 * @param SiteHelper                       $siteHelper
 	 * @param LocalizationPluginProxyInterface $localizationPluginProxy
 	 */
-	function __construct ( SiteHelper $siteHelper, LocalizationPluginProxyInterface $localizationPluginProxy ) {
+	function __construct ( SiteHelper $siteHelper, $localizationPluginProxy ) {
 		$this->siteHelper              = $siteHelper;
 		$this->localizationPluginProxy = $localizationPluginProxy;
 		$this->targetLocales           = array ();
@@ -182,7 +182,7 @@ class Locales {
 
 		try {
 			$this->siteHelper->switchBlogId( $blogId );
-			$blog_name = esc_html( get_bloginfo( 'Name' ) );
+			$blog_name = get_bloginfo( 'Name' );
 			$this->siteHelper->restoreBlogId();
 
 			$label = vsprintf(

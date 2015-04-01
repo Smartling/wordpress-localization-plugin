@@ -2,7 +2,8 @@
 
 use Smartling\Bootstrap;
 use Smartling\Helpers\WordpressContentTypeHelper;
-use Smartling\Processors\PageMapper;
+use Smartling\Processors\ContentTypeMapper\PageMapper;
+use Smartling\Processors\PropertyDescriptor;
 use Smartling\Processors\PropertyMapperFactory;
 
 class PageMapperTest extends PHPUnit_Framework_TestCase {
@@ -39,9 +40,6 @@ class PageMapperTest extends PHPUnit_Framework_TestCase {
 
 		$fields = $wrapper->getFields();
 
-		self::assertTrue( $fields === array (
-				'post_title',
-				'post_content'
-			) );
+		self::assertTrue(reset($fields) instanceof PropertyDescriptor);
 	}
 }

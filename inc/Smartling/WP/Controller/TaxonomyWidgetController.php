@@ -82,8 +82,8 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 				$originalId = $this->getEntityHelper()->getOriginalContentId( $term->term_id, $taxonomyType );
 
 				$submissions = $this->getManager()->find( array (
-					'sourceGUID'  => $originalId,
-					'contentType' => $taxonomyType,
+					'source_id'  => $originalId,
+					'content_type' => $taxonomyType,
 				) );
 
 				$this->view( array (
@@ -165,8 +165,8 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 
 						$submissions = $this->getManager()->find(
 							array (
-								'sourceGUID'  => $originalId,
-								'contentType' => $termType
+								'source_id'  => $originalId,
+								'content_type' => $termType
 							)
 						);
 

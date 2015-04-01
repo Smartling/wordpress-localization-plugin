@@ -5,12 +5,12 @@ parameters:
     "polylang": false
 
   plugin.name: smartling-connector
-  plugin.version: 1.0.10-dev
+  plugin.version: 1.0.11
   plugin.domain: smartling-connector
   wp.hooks: ['wp.cron', 'wp.i18n', 'wp.checkStatus', 'wp.submissions', 'wp.bulkSubmit', 'wp.settings', 'wp.post', 'wp.page', 'wp.taxonomy']
 
   logger.channel: default
-  logger.filehandler.standard.filename: %plugin.dir%/logfile
+  logger.filehandler.standard.filename: %plugin.dir%/logs/logfile
   logger.filehandler.standard.loglevel: DEBUG
   logger.filehandler.standard.maxfiles: 5
 

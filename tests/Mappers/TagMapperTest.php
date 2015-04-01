@@ -2,8 +2,9 @@
 
 use Smartling\Bootstrap;
 use Smartling\Helpers\WordpressContentTypeHelper;
+use Smartling\Processors\ContentTypeMapper\TagMapper;
+use Smartling\Processors\PropertyDescriptor;
 use Smartling\Processors\PropertyMapperFactory;
-use Smartling\Processors\TagMapper;
 
 class TagMapperTest extends PHPUnit_Framework_TestCase {
 	/**
@@ -39,9 +40,6 @@ class TagMapperTest extends PHPUnit_Framework_TestCase {
 
 		$fields = $wrapper->getFields();
 
-		self::assertTrue( $fields === array (
-				'name',
-				'description'
-			) );
+		self::assertTrue(reset($fields) instanceof PropertyDescriptor);
 	}
 }
