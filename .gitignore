@@ -11,3 +11,4 @@ inc/third-party/*
 #unit tests logs
 phpunit.log.*
 smartling-cron.pid
+logs/logfile*
