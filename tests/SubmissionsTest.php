@@ -189,7 +189,7 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 		 */
 		$entity = $manager->createSubmission( $fields );
 
-		$titleLength   = mb_strlen( $entity->getSourceTitle(), 'utf8' );
+		$titleLength = mb_strlen( $entity->getSourceTitle(), 'utf8' );
 
 		self::assertTrue( 255 === $titleLength, vsprintf( 'Expected: %s, got: %s, content: [%s]',
 			array ( 255, $titleLength, $entity->getSourceTitle() ) ) );
@@ -227,8 +227,52 @@ class SubmissionsTest extends PHPUnit_Framework_TestCase {
 
 		$fileUriLength = mb_strlen( $entity->getFileUri(), 'utf8' );
 
-		self::assertTrue( 255 === $fileUriLength,
+		self::assertTrue( 255 > $fileUriLength,
 			vsprintf( 'Expected: %s, got: %s, content: [%s]', array ( 255, $fileUriLength, $entity->getFileUri() ) ) );
+	}
+
+	public function testSubmissionEntityFileUriFieldCut () {
+		$this->replaceDbAlInContainer();
+
+		/**
+		 * @var SubmissionManager $manager
+		 */
+		$manager = $this->container->get( 'manager.submission' );
+
+		$longText = 'Pri ut omnes legendos eloquentiam, nam ea dicant reprimique delicatissimi, copiosae definitiones id per. ';
+		$longText .= 'His ad case veritus noluisse, scripta phaedrum eu duo. At quot meliore pri, sale repudiare ut his. ';
+		$longText .= 'Urbanitas consetetur quo ut, prima facilis eum no, sea oblique deleniti suavitate id. Sumo scaevola ';
+		$longText .= 'est ad. Nec velit mediocrem id, solum doming quo in. Eirmod impedit pro id, in modo saperet ius. ';
+		$longText .= 'Ne pri probo honestatis. Dicta nostrud efficiendi cu nec, principes assentior nam in, nam dicam ';
+		$longText .= 'minimum at. Paulo commodo delicata mei et, at sit ipsum persius, id qui assentior incorrupte. ';
+
+
+		$fields = array (
+			'id'                     => null,
+			'source_title'           => $longText,
+			'source_blog_id'         => 1,
+			'source_content_hash'    => md5( '' ),
+			'content_type'           => WordpressContentTypeHelper::CONTENT_TYPE_POST,
+			'source_id'              => '/ol"olo',
+			'target_locale'          => 'es_US',
+			'target_blog_id'         => 5,
+			'submitter'              => 'admin',
+			'submission_date'        => time(),
+			'approved_string_count'  => 37,
+			'completed_string_count' => 14,
+			'status'                 => 'New',
+		);
+
+		/**
+		 * @var SubmissionEntity $entity
+		 */
+		$entity = $manager->createSubmission( $fields );
+
+		$expected = 'Pri ut omnes legendos eloquentiam, nam ea dicant reprimique delicatissimi, copiosae definitiones id per. His ad case veritus noluisse, scripta phaedrum eu duo. At quot meliore pri, sale repudiare ut his. Urbani_post_1_0.xml';
+		$got      = $entity->getFileUri();
+
+		self::assertTrue( $expected === $got,
+			vsprintf( 'Expected: %s, got: %s', array ( $expected, $got ) ) );
 	}
 
 	public function testEntitySavingToDatabase () {

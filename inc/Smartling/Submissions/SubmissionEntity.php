@@ -4,6 +4,7 @@ namespace Smartling\Submissions;
 
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
+use Smartling\Helpers\TextHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 
 /**
@@ -375,11 +376,12 @@ class SubmissionEntity {
 	/**
 	 * @return string
 	 */
-	public function getSourceTitle ( $cutLength = true ) {
+	public function getSourceTitle ( $withReplacement = true ) {
 		$source_title = $this->stateFields['source_title'];
-		if ( $cutLength ) {
+
+		if ( $withReplacement ) {
 			$source_title = mb_strlen( $source_title, 'utf8' ) > 255
-				? mb_substr( $source_title, 0, 252, 'utf8' ) . '...'
+				? TextHelper::mb_wordwrap( $source_title, 252 ) . '...'
 				: $source_title;
 		}
 
@@ -493,7 +495,7 @@ class SubmissionEntity {
 		if ( empty( $this->stateFields['file_uri'] ) ) {
 
 			$fileUri = vsprintf( '%s_%s_%s_%s.xml', array (
-				$this->getSourceTitle( false ),
+				trim( TextHelper::mb_wordwrap( $this->getSourceTitle( false ), 210 ), "\n\r\t,. -_\0\x0B" ),
 				$this->getContentType(),
 				$this->getSourceBlogId(),
 				$this->getSourceId()
@@ -505,17 +507,13 @@ class SubmissionEntity {
 		return $this->stateFields['file_uri'];
 	}
 
+
 	/**
 	 * @param string $file_uri
 	 *
 	 * @return SubmissionEntity
 	 */
-	public function setFileUri ( $file_uri ) {
-		if ( mb_strlen( $file_uri, 'utf-8' ) > 255 ) {
-			$origLength = mb_strlen( $file_uri, 'utf-8' );
-			$startPos   = $origLength - 252;
-			$file_uri   = '...' . mb_substr( $file_uri, $startPos, 252, 'utf8' );
-		}
+	protected function setFileUri ( $file_uri ) {
 		$this->stateFields['file_uri'] = $file_uri;
 
 		return $this;
