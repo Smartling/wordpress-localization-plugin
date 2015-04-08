@@ -7,6 +7,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\Exception\MultilingualPluginNotFoundException;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPHookInterface;
 use Symfony\Component\Config\FileLocator;
@@ -29,6 +30,11 @@ class Bootstrap {
 	 * @var LoggerInterface
 	 */
 	private static $_logger = null;
+
+	public static function setCurrentProfile(ConfigurationProfileEntity $profile)
+	{
+		self::$_container->set('current.profile', $profile);
+	}
 
 	/**
 	 * @return LoggerInterface

@@ -10,8 +10,7 @@ use Smartling\WP\WPHookInterface;
  *
  * @package Smartling\WP\Controller
  */
-class ConfigurationProfilesController extends WPAbstract implements WPHookInterface
-{
+class ConfigurationProfilesController extends WPAbstract implements WPHookInterface {
 
 	public function wp_enqueue () {
 		wp_enqueue_script(
@@ -60,14 +59,14 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
 			'smartling_configuration_profile_list',
 			array (
 				$this,
-				'view'
+				'listProfiles'
 			)
 		);
 	}
 
-	public function listProfiles()
-	{
-		$table = new SubmissionTableWidget( $this->getManager() );
+
+	public function listProfiles () {
+		$table = new ConfigurationProfilesWidget($this->getPluginInfo()->getSettingsManager());
 		$this->view( $table );
 	}
 

@@ -53,8 +53,8 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 			'id'             => 'INT UNSIGNED NOT NULL AUTO_INCREMENT',
 			'profile_name'   => 'VARCHAR(255) NOT NULL',
 			'api_url'        => 'VARCHAR(255) NOT NULL',
-			'project_id'     => 'INT UNSIGNED NOT NULL',
-			'project_key'    => 'CHAR(36) NULL',
+			'project_id'     => 'VARCHAR(9) NOT NULL',
+			'project_key'    => 'CHAR(36) NOT NULL',
 			'is_active'      => 'INT(1) UNSIGNED NOT NULL',
 			'main_locale'    => 'INT UNSIGNED NOT NULL',
 			'auto_authorize' => 'INT(1) UNSIGNED NOT NULL',
@@ -203,7 +203,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	 * @return Locale
 	 */
 	public function getMainLocale () {
-		$this->stateFields['main_locale'];
+		return $this->stateFields['main_locale'];
 	}
 
 	public function setMainLocale ( $mainLocale ) {
@@ -265,16 +265,27 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 		 */
 		$obj = parent::fromArray($array, $logger);
 
-		$obj->setMainLocale(new Locale($obj->getMainLocale()));
+		$locale=new Locale();
+		$locale->setBlogId($obj->getMainLocale());
+
+		$obj->setMainLocale($locale);
 
 		$unserializedTargetLocales = array();
 
-		foreach(json_decode($obj->getTargetLocales(), true) as $targetLocaleArr)
+		$decoded = json_decode($obj->getTargetLocales(), true);
+
+		if (is_array($decoded))
 		{
-			$unserializedTargetLocales[] = TargetLocale::fromArray($targetLocaleArr);
+			foreach($decoded as $targetLocaleArr)
+			{
+				$unserializedTargetLocales[] = TargetLocale::fromArray($targetLocaleArr);
+			}
+			$obj->setTargetLocales($unserializedTargetLocales);
+
+		} else {
+			$obj->setTargetLocales(array());
 		}
 
-		$obj->setTargetLocales($unserializedTargetLocales);
 
 		return $obj;
 	}

@@ -6,18 +6,33 @@
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
-use Smartling\Settings\TargetLocale;
+use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Settings\SettingsManager;
+
 use Smartling\WP\WPAbstract;
 
 $pluginInfo = $this->getPluginInfo();
 
 $domain = $pluginInfo->getDomain();
 
-$settingsManager = $pluginInfo->getSettingsManager();
 
-$locales = $this->getSiteLocales();
+/**
+ * @var SettingsManager $settingsManager
+ */
+$settingsManager = $data;
 
+$profileId = (int) ( $_GET['profileId'] ? : 0 );
 
+if ( 0 === $profileId ) {
+	$profile = $settingsManager->createProfile( array () );
+} else {
+	$profiles = $pluginInfo->getSettingsManager()->getEntityById( $profileId );
+
+	/**
+	 * @var ConfigurationProfileEntity $profile
+	 */
+	$profile = reset( $profiles );
+}
 ?>
 
 
@@ -39,17 +54,43 @@ $locales = $this->getSiteLocales();
 
 	<form id = "smartling-form" action = "/wp-admin/admin-post.php" method = "POST" >
 
-		<input type = "hidden" name = "action" value = "smartling_settings" >
+		<input type = "hidden" name = "action" value = "smartling_configuration_profile_save" >
 		<?php wp_nonce_field( 'smartling_connector_settings', 'smartling_connector_nonce' ); ?>
 		<?php wp_referer_field(); ?>
+		<input type = "hidden" name = "smartling_settings[id]" value = "<?= (int) $profile->getId() ?>" >
+
 		<h3 ><?= __( 'Account Info', $domain ) ?></h3 >
 		<table class = "form-table" >
 			<tbody >
 			<tr >
+				<th scope = "row" ><?= __( 'Profile Name', $domain ) ?></th >
+				<td >
+					<input type = "text" name = "smartling_settings[profileName]"
+					       value = "<?= $profile->getProfileName(); ?>" >
+					<br >
+				</td >
+			</tr >
+			<tr >
+				<th scope = "row" ><?= __( 'Active', $domain ) ?></th >
+				<td >
+					<?=
+					HtmlTagGeneratorHelper::tag(
+						'select',
+						HtmlTagGeneratorHelper::renderSelectOptions(
+							$profile->getIsActive(),
+							array ('true' => __('Active'), 'false' => __('Inactive'))
+						),
+						array ( 'name' => 'smartling_settings[active]' ) );
+
+					?>
+
+				</td >
+			</tr >
+			<tr >
 				<th scope = "row" ><?= __( 'API Url', $domain ) ?></th >
 				<td >
 					<input type = "text" name = "smartling_settings[apiUrl]"
-					       value = "<?= $settingsManager->getAccountInfo()->getApiUrl(); ?>" >
+					       value = "<?= $profile->getApiUrl(); ?>" >
 					<br >
 					<small ><?= __( 'Set api url. Default', $domain ) ?>:
 						https://capi.smartling.com/v1
@@ -60,19 +101,19 @@ $locales = $this->getSiteLocales();
 				<th scope = "row" ><?= __( 'Project ID', $domain ) ?></th >
 				<td >
 					<input type = "text" name = "smartling_settings[projectId]"
-					       value = "<?= $settingsManager->getAccountInfo()->getProjectId(); ?>" >
+					       value = "<?= $profile->getProjectId(); ?>" >
 				</td >
 			</tr >
 			<tr >
 				<th scope = "row" ><?= __( 'Key', $domain ) ?></th >
 				<td >
-					<?php $blogId = $settingsManager->getAccountInfo()->getKey(); ?>
+					<?php $key = $profile->getProjectKey(); ?>
 					<input type = "text" id = "api_key" name = "apiKey" value = "" >
-					<input type = "hidden" name = "smartling_settings[apiKey]" value = "<?= $blogId ?>" >
+					<input type = "hidden" name = "smartling_settings[apiKey]" value = "<?= $key ?>" >
 					<br >
-					<?php if ( $blogId ) { ?>
+					<?php if ( $key ) { ?>
 						<small ><?= __( 'Current Key', $domain ) ?>
-							: <?= substr( $blogId, 0, - 10 ) . '**********' ?></small >
+							: <?= substr( $$key, 0, - 10 ) . '**********' ?></small >
 					<?php } ?>
 				</td >
 			</tr >
@@ -80,11 +121,18 @@ $locales = $this->getSiteLocales();
 				<th scope = "row" ><?= __( 'Default Locale', $domain ) ?></th >
 				<td >
 					<?php
-					$defaultLocale = $settingsManager->getLocales()->getDefaultLocale();
-					$defaultBlogId = $settingsManager->getLocales()->getDefaultBlog(); ?>
+
+					$locales = array ();
+
+					foreach ( $settingsManager->getSiteHelper()->listBlogs() as $blogId ) {
+						$locales[ $blogId ] = $settingsManager->getSiteHelper()->getBlogLabelById( $settingsManager->getPluginProxy(),
+							$blogId );
+					}
+
+					?>
 
 					<p ><?= __( 'Site default language is: ', $this->getPluginInfo()->getDomain() ) ?>
-						: <?= $defaultLocale; ?></p >
+						: <?= $profile->getMainLocale()->getLabel(); ?></p >
 
 					<p >
 						<a href = "#" id = "change-default-locale" ><?= __( 'Change default locale',
@@ -93,7 +141,7 @@ $locales = $this->getSiteLocales();
 					<br >
 					<?= HtmlTagGeneratorHelper::tag(
 						'select',
-						HtmlTagGeneratorHelper::renderSelectOptions( $defaultBlogId, $locales ),
+						HtmlTagGeneratorHelper::renderSelectOptions( $profile->getMainLocale()->getBlogId(), $locales ),
 						array ( 'name' => 'smartling_settings[defaultLocale]', 'id' => 'default-locales' ) );
 					?>
 				</td >
@@ -104,65 +152,57 @@ $locales = $this->getSiteLocales();
 				<td >
 					<?= WPAbstract::checkUncheckBlock(); ?>
 					<?php
-					/**
-					 * @var array $targetLocales
-					 */
-					$targetLocales = $settingsManager->getLocales()->getTargetLocales();
-					foreach ( $targetLocales as $targetLocale ) {
-						/**
-						 * @var TargetLocale $targetLocale
-						 */
+
+					$targetLocales = $profile->getTargetLocales();
+					foreach ( $locales as $blogId => $label ) {
+						$smartlingLocale = - 1;
+						$enabled         = false;
+
+
+						foreach ( $targetLocales as $targetLocale ) {
+							if ( $targetLocale->getBlogId() == $blogId ) {
+								$smartlingLocale = $targetLocale->getSmartlingLocale();
+								$enabled         = $targetLocale->isEnabled();
+								break;
+							}
+
+
+						}
+
 						?>
+
+
 						<div >
 							<p class = "plugin-locales" >
-								<?= WPAbstract::settingsPageTsargetLocaleCheckbox( $targetLocale->getLocale(),
-									$targetLocale->getBlog(), $targetLocale->getTarget(),
-									$targetLocale->getEnabled() ); ?>
+								<?= WPAbstract::settingsPageTsargetLocaleCheckbox( $profile, $label, $blogId,
+									$smartlingLocale, $enabled ); ?>
 							</p >
 						</div >
-					<?php } ?>
+
+					<?php
+
+
+					}
+
+					?>
 				</td >
 			</tr >
 			<tr >
 				<th scope = "row" ><?= __( 'Retrieval Type', $domain ) ?></th >
 				<td >
-					<?php
-					$option  = $settingsManager->getAccountInfo()->getRetrievalType();
-					$buttons = $settingsManager->getRetrievalTypes();
-					$checked = $option ? $option : $buttons[1];
-					foreach ( $buttons as $button ) {
-						?>
-						<label class = "radio-label" >
-							<p >
-								<input type = "radio" <?= $button == $checked ? 'checked="checked"' : ''; ?>
-								       name = "smartling_settings[retrievalType]" value = "<?= $button; ?>" >
-								<?= __( $button, $domain ); ?>
-							</p >
-						</label >
-						<br >
+					<?=
+					HtmlTagGeneratorHelper::tag(
+						'select',
+						HtmlTagGeneratorHelper::renderSelectOptions(
+							$profile->getRetrievalType(),
+							ConfigurationProfileEntity::getRetrievalTypes()
+						),
+						array ( 'name' => 'smartling_settings[retrievalType]' ) );
 
-					<?php } ?>
-
+					?>
+					<br />
 					<small ><?php echo __( 'Param for download translate', $this->getPluginInfo()->getDomain() ) ?>.
 					</small >
-				</td >
-			</tr >
-			<tr style = "display: none;" >
-				<th scope = "row" ><?= __( 'Callback URL', $domain ) ?></th >
-				<td >
-					<label class = "radio-label" >
-						<p >
-							<?php
-							$option  = $settingsManager->getAccountInfo()->getCallBackUrl();
-							$checked = $option == true ? 'checked="checked"' : '';
-							?>
-							<input type = "checkbox" name = "smartling_settings[callbackUrl]" <?= $checked; ?> >
-							<?= __( 'Use smartling callback', $domain ) ?>:
-							/smartling/callback/%cron_key
-						</p >
-					</label >
-					<br >
-
 				</td >
 			</tr >
 			<tr >
@@ -171,7 +211,7 @@ $locales = $this->getSiteLocales();
 					<label class = "radio-label" >
 						<p >
 							<?php
-							$option  = $settingsManager->getAccountInfo()->getAutoAuthorize();
+							$option  = $profile->getAutoAuthorize();
 							$checked = $option == true ? 'checked="checked"' : '';
 							?>
 							<input type = "checkbox"

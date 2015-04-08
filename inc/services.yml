@@ -7,7 +7,17 @@ parameters:
   plugin.name: smartling-connector
   plugin.version: 1.0.11
   plugin.domain: smartling-connector
-  wp.hooks: ['wp.cron', 'wp.i18n', 'wp.checkStatus', 'wp.submissions', 'wp.bulkSubmit', 'wp.settings', 'wp.post', 'wp.page', 'wp.taxonomy']
+  wp.hooks:
+    - 'wp.cron'
+    - 'wp.i18n'
+    - 'wp.checkStatus'
+    - 'wp.submissions'
+    - 'wp.bulkSubmit'
+    - 'wp.settings'
+    - 'wp.settings.edit'
+    - 'wp.post'
+    - 'wp.page'
+    - 'wp.taxonomy'
 
   logger.channel: default
   logger.filehandler.standard.filename: %plugin.dir%/logs/logfile
@@ -21,7 +31,14 @@ parameters:
   submission.pagesize: 5
 
 
+
 services:
+  current.profile:
+    class: Smartling\Settings\ConfigurationProfileEntity;
+    arguments:
+      - "@logger"
+
+
   processor.property.default:
     class: Smartling\Processors\PropertyProcessors\PropertyProcessorDefault
     arguments:
@@ -43,7 +60,7 @@ services:
   wrapper.sdk.api.smartling:
     class: Smartling\ApiWrapper
     arguments:
-      - "@manager.settings"
+      - "@current.profile"
       - "@logger"
 
   entrypoint:
@@ -217,6 +234,18 @@ services:
       - "@entity.helper"
       - "@manager.submission"
       - "@site.cache"
+
+  wp.settings.edit:
+    class: Smartling\WP\Controller\ConfigurationProfileFormController
+    arguments:
+      - "@logger"
+      - "@multilang.proxy"
+      - "@plugin.info"
+      - "@entity.helper"
+      - "@manager.submission"
+      - "@site.cache"
+
+
 
   wp.submissions:
     class: Smartling\WP\Controller\SubmissionsPageController

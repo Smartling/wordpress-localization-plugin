@@ -29,6 +29,15 @@ class SettingsManager extends EntityManagerAbstract {
 		return $result;
 	}
 
+	public function getEntityById($id)
+	{
+		$cond = ConditionBlock::getConditionBlock();
+		$cond->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ,'id',array($id)));
+		$dataQuery  = $this->buildQuery( array(),null, $cond);
+		$result     = $this->fetchData( $dataQuery );
+		return $result;
+	}
+
 	protected function dbResultToEntity ( array $dbRow ) {
 		return ConfigurationProfileEntity::fromArray( (array) $dbRow, $this->getLogger() );
 	}

@@ -8,7 +8,7 @@ use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\SDK\FileUploadParameterBuilder;
 use Smartling\SDK\SmartlingAPI;
-use Smartling\Settings\SettingsManager;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -19,7 +19,7 @@ use Smartling\Submissions\SubmissionEntity;
 class ApiWrapper implements ApiWrapperInterface {
 
 	/**
-	 * @var SettingsManager
+	 * @var ConfigurationProfileEntity
 	 */
 	private $settings;
 
@@ -33,12 +33,8 @@ class ApiWrapper implements ApiWrapperInterface {
 	 */
 	protected $api;
 
-	/**
-	 * @param SettingsManager $settingsManager
-	 * @param LoggerInterface $logger
-	 */
-	public function __construct ( SettingsManager $settingsManager, LoggerInterface $logger ) {
-		$this->settings = $settingsManager;
+	public function __construct ( ConfigurationProfileEntity $configProfile, LoggerInterface $logger ) {
+		$this->settings = $configProfile;
 		$this->logger   = $logger;
 
 		$this->setApi();
@@ -46,10 +42,10 @@ class ApiWrapper implements ApiWrapperInterface {
 
 	public function setApi () {
 		$this->api = new SmartlingAPI(
-			$this->settings->getAccountInfo()->getApiUrl(),
-			$this->settings->getAccountInfo()->getKey(),
-			$this->settings->getAccountInfo()->getProjectId(),
-			SmartlingAPI::PRODUCTION_MODE // TODO: where get the mode
+			$this->settings->getApiUrl(),
+			$this->settings->getProjectKey(),
+			$this->settings->getProjectId(),
+			SmartlingAPI::PRODUCTION_MODE
 
 		);
 	}

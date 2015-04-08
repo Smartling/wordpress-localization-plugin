@@ -10,6 +10,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionManager;
 
 abstract class WPAbstract {
@@ -235,6 +236,7 @@ abstract class WPAbstract {
 	}
 
 	public static function settingsPageTsargetLocaleCheckbox (
+		ConfigurationProfileEntity $profile,
 		$displayName,
 		$blogId,
 		$smartlingName = '',
@@ -260,10 +262,13 @@ abstract class WPAbstract {
 			HtmlTagGeneratorHelper::tag( 'label', implode( '', $parts ), array ( 'class' => 'radio-label' ) )
 		);
 
+		Bootstrap::setCurrentProfile($profile);
+
 		/**
 		 * @var SmartlingCore $ep
 		 */
 		$ep      = Bootstrap::getContainer()->get( 'entrypoint' );
+
 		$locales = $ep->getProjectLocales();
 
 		$parts[] = HtmlTagGeneratorHelper::tag(
