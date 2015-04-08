@@ -64,21 +64,9 @@ class SubmissionManager extends EntityManagerAbstract {
 	}
 
 	/**
-	 * @var int
-	 */
-	private $pageSize;
-
-	/**
 	 * @var EntityHelper
 	 */
 	private $entityHelper;
-
-	/**
-	 * @return int
-	 */
-	public function getPageSize () {
-		return $this->pageSize;
-	}
 
 	/**
 	 * @return EntityHelper
@@ -90,17 +78,14 @@ class SubmissionManager extends EntityManagerAbstract {
 	/**
 	 * @param LoggerInterface                              $logger
 	 * @param SmartlingToCMSDatabaseAccessWrapperInterface $dbal
+	 * @param int                                          $pageSize
+	 * @param EntityHelper                                 $entityHelper
 	 */
-	public function __construct (
-		LoggerInterface $logger,
-		$dbal,
-		$pageSize,
-		$entityHelper
-	) {
-		parent::__construct( $logger, $dbal );
-		$this->pageSize     = (int) $pageSize;
+	public function __construct ( LoggerInterface $logger, $dbal, $pageSize, $entityHelper ) {
+		$siteHelper = $entityHelper->getSiteHelper();
+		$proxy      = $entityHelper->getConnector();
+		parent::__construct( $logger, $dbal, $pageSize, $siteHelper, $proxy );
 		$this->entityHelper = $entityHelper;
-
 	}
 
 	/**
@@ -114,23 +99,8 @@ class SubmissionManager extends EntityManagerAbstract {
 			|| in_array( $contentType, array_keys( WordpressContentTypeHelper::getReverseMap() ) );
 	}
 
-	/**
-	 * @param      $query
-	 *
-	 * @return array of SubmissionEntity or empty array
-	 */
-	private function fetchData ( $query ) {
-		$results = array ();
-
-		$res = $this->dbal->fetch( $query );
-
-		if ( is_array( $res ) ) {
-			foreach ( $res as $row ) {
-				$results[] = SubmissionEntity::fromArray( (array) $row, $this->logger );
-			}
-		}
-
-		return $results;
+	protected function dbResultToEntity ( array $dbRow ) {
+		return SubmissionEntity::fromArray( (array) $dbRow, $this->getLogger() );
 	}
 
 	/**
@@ -145,7 +115,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	private function validateRequest ( $contentType, $sortOptions, $pageOptions ) {
 		$fSortOptionsAreValid = QueryBuilder::validateSortOptions(
 			array_keys(
-				SubmissionEntity::$fieldsDefinition
+				SubmissionEntity::getFieldDefinitions()
 			),
 			$sortOptions
 		);
@@ -195,7 +165,7 @@ class SubmissionManager extends EntityManagerAbstract {
 
 			$countQuery = $this->buildCountQuery( $contentType, $status );
 
-			$totalCount = $this->dbal->fetch( $countQuery );
+			$totalCount = $this->getDbal()->fetch( $countQuery );
 
 			// extracting from result
 			$totalCount = (int) $totalCount[0]->cnt;
@@ -256,7 +226,7 @@ class SubmissionManager extends EntityManagerAbstract {
 
 			$countQuery = $this->buildCountQuery( $contentType, $status, $block );
 
-			$totalCount = $this->dbal->fetch( $countQuery );
+			$totalCount = $this->getDbal()->fetch( $countQuery );
 
 			// extracting from result
 			$totalCount = (int) $totalCount[0]->cnt;
@@ -320,13 +290,13 @@ class SubmissionManager extends EntityManagerAbstract {
 		}
 
 		$query = QueryBuilder::buildSelectQuery(
-			$this->dbal->completeTableName( self::SUBMISSIONS_TABLE_NAME ),
-			array_keys( SubmissionEntity::$fieldsDefinition ),
+			$this->getDbal()->completeTableName( SubmissionEntity::getTableName() ),
+			array_keys( SubmissionEntity::getFieldDefinitions() ),
 			$whereOptions,
 			array (),
 			null
 		);
-		$this->logger->debug( $query );
+		$this->getLogger()->debug( $query );
 
 		return $query;
 	}
@@ -355,14 +325,14 @@ class SubmissionManager extends EntityManagerAbstract {
 		}
 
 		$query = QueryBuilder::buildSelectQuery(
-			$this->dbal->completeTableName( self::SUBMISSIONS_TABLE_NAME ),
+			$this->getDbal()->completeTableName( SubmissionEntity::getTableName() ),
 			array ( array ( 'COUNT(*)', 'cnt' ) ),
 			$whereOptions,
 			array (),
 			null
 		);
 
-		$this->logger->debug( $query );
+		$this->getLogger()->debug( $query );
 
 		return $query;
 	}
@@ -436,14 +406,14 @@ class SubmissionManager extends EntityManagerAbstract {
 		}
 
 		$query = QueryBuilder::buildSelectQuery(
-			$this->dbal->completeTableName( self::SUBMISSIONS_TABLE_NAME ),
-			array_keys( SubmissionEntity::$fieldsDefinition ),
+			$this->getDbal()->completeTableName( SubmissionEntity::getTableName() ),
+			array_keys( SubmissionEntity::getFieldDefinitions() ),
 			$whereOptions,
 			$sortOptions,
 			$pageOptions
 		);
 
-		$this->logger->debug( $query );
+		$this->getLogger()->debug( $query );
 
 		return $query;
 	}
@@ -459,7 +429,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	 * @return array
 	 */
 	public function getSortableFields () {
-		return SubmissionEntity::$fieldsSortable;
+		return SubmissionEntity::getSortableFields();
 	}
 
 	/**
@@ -478,34 +448,34 @@ class SubmissionManager extends EntityManagerAbstract {
 		unset ( $fields['id'] );
 
 		if ( $is_insert ) {
-			$storeQuery = QueryBuilder::buildInsertQuery( $this->dbal->completeTableName( self::SUBMISSIONS_TABLE_NAME ),
+			$storeQuery = QueryBuilder::buildInsertQuery( $this->getDbal()->completeTableName( SubmissionEntity::getTableName() ),
 				$fields );
 		} else {
 			// update
 			$conditionBlock = ConditionBlock::getConditionBlock();
 			$conditionBlock->addCondition( Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'id',
 				array ( $entityId ) ) );
-			$storeQuery = QueryBuilder::buildUpdateQuery( $this->dbal->completeTableName( self::SUBMISSIONS_TABLE_NAME ),
+			$storeQuery = QueryBuilder::buildUpdateQuery( $this->getDbal()->completeTableName( SubmissionEntity::getTableName() ),
 				$fields, $conditionBlock, array ( 'limit' => 1 ) );
 		}
 
 		// log store query before execution
-		$this->logger->debug( $storeQuery );
+		$this->getLogger()->debug( $storeQuery );
 
-		$result = $this->dbal->query( $storeQuery );
+		$result = $this->getDbal()->query( $storeQuery );
 
 		if ( false === $result ) {
 			$message = vsprintf( 'Failed saving submission entity to database with following error message: %s',
-				array ( $this->dbal->getLastErrorMessage() ) );
+				array ( $this->getDbal()->getLastErrorMessage() ) );
 
 			$this->getLogger()->error( $message );
 		}
 
 		if ( true === $is_insert && false !== $result ) {
 			$entityFields       = $entity->toArray( false );
-			$entityFields['id'] = $this->dbal->getLastInsertedId();
+			$entityFields['id'] = $this->getDbal()->getLastInsertedId();
 			// update reference to entity
-			$entity = SubmissionEntity::fromArray( $entityFields, $this->logger );
+			$entity = SubmissionEntity::fromArray( $entityFields, $this->getLogger() );
 		}
 
 		return $entity;
@@ -517,7 +487,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	 * @return SubmissionEntity
 	 */
 	public function createSubmission ( array $fields ) {
-		return SubmissionEntity::fromArray( $fields, $this->logger );
+		return SubmissionEntity::fromArray( $fields, $this->getLogger() );
 	}
 
 	/**
@@ -544,10 +514,10 @@ class SubmissionManager extends EntityManagerAbstract {
 		$entity = null;
 
 		$params = array (
-			'content_type' => $contentType,
-			'source_blog_id'  => $sourceBlog,
-			'source_id'  => $sourceEntity,
-			'target_blog_id'  => $targetBlog,
+			'content_type'   => $contentType,
+			'source_blog_id' => $sourceBlog,
+			'source_id'      => $sourceEntity,
+			'target_blog_id' => $targetBlog,
 		);
 
 		if ( null !== $targetEntity ) {

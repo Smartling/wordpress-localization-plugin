@@ -3,8 +3,8 @@
 namespace Smartling\DbAl;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\Submissions\SubmissionManager;
 
 class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 
@@ -48,9 +48,15 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 	private function buildTableDefinitions () {
 		// Submissions
 		$this->tables[] = array (
-			'name'    => SubmissionManager::SUBMISSIONS_TABLE_NAME,
-			'columns' => SubmissionEntity::$fieldsDefinition,
-			'indexes' => SubmissionEntity::$indexes,
+			'name'    => SubmissionEntity::getTableName(),
+			'columns' => SubmissionEntity::getFieldDefinitions(),
+			'indexes' => SubmissionEntity::getIndexes(),
+		);
+		// Configuration profiles
+		$this->tables[] = array (
+			'name'    => ConfigurationProfileEntity::getTableName(),
+			'columns' => ConfigurationProfileEntity::getFieldDefinitions(),
+			'indexes' => ConfigurationProfileEntity::getIndexes(),
 		);
 	}
 
@@ -60,7 +66,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 	public function install () {
 		foreach ( $this->tables as $tableDefinition ) {
 			$query = $this->prepareSql( $tableDefinition );
-			$this->logger->info( 'installing tables', array ( $query ) );
+			$this->logger->info( vsprintf('installing tables: %s', array ( $query )) );
 			$this->getWpdb()->query( $query );
 		}
 	}

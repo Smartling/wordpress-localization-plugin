@@ -301,24 +301,11 @@ class Bootstrap {
 		 */
 		$sm = self::getContainer()->get( 'manager.settings' );
 
-		$locales = $sm->getLocales();
+		$total    = 0;
+		$profiles = $sm->getEntities( array (), null, $total );
 
-		if ( 0 === $locales->getDefaultBlog() ) {
-			$mainMessage = 'Default blog is not set on Settings page';
-
-			self::$_logger->critical( 'Boot :: ' . $mainMessage );
-
-			DiagnosticsHelper::addDiagnosticsMessage( $mainMessage, true );
-		}
-
-		$accFlag = false;
-
-		foreach ( $locales->getTargetLocales( false ) as $locale ) {
-			$accFlag = $accFlag || $locale->getEnabled();
-		}
-
-		if ( false === $accFlag ) {
-			$mainMessage = 'No target locales checked on Settings page.';
+		if ( 0 === count( $profiles ) ) {
+			$mainMessage = 'No configuration profiles found. Please create at least one on settings page';
 
 			self::$_logger->critical( 'Boot :: ' . $mainMessage );
 

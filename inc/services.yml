@@ -166,7 +166,8 @@ services:
     class: Smartling\Settings\SettingsManager
     arguments:
       - "@logger"
-      - "@factory.propertyMapper"
+      - "@site.db"
+      - "%submission.pagesize%"
       - "@site.helper"
       - "@multilang.proxy"
 
@@ -208,7 +209,7 @@ services:
       - "@plugin.info"
 
   wp.settings:
-    class: Smartling\WP\Controller\SettingsController
+    class: Smartling\WP\Controller\ConfigurationProfilesController
     arguments:
       - "@logger"
       - "@multilang.proxy"

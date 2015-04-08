@@ -4,6 +4,7 @@ namespace Smartling\Submissions;
 
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
+use Smartling\Base\SmartlingEntityAbstract;
 use Smartling\Helpers\TextHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 
@@ -29,50 +30,7 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  *
  * @package Smartling\Submissions
  */
-class SubmissionEntity {
-
-	/**
-	 * @var LoggerInterface
-	 */
-	private $logger;
-
-	/**
-	 * @var array
-	 */
-	private $initialFields = array ();
-
-	/**
-	 * @var array
-	 */
-	private $stateFields = array ();
-
-	/**
-	 * @var bool
-	 */
-	private $initialValuesFixed = false;
-
-	/**
-	 * @var array
-	 */
-	public static $fieldsDefinition = array (
-		'id'                     => 'INT UNSIGNED NOT NULL AUTO_INCREMENT',
-		'source_title'           => 'VARCHAR(255) NOT NULL',
-		'source_blog_id'         => 'INT UNSIGNED NOT NULL',
-		'source_content_hash'    => 'CHAR(32) NULL',
-		'content_type'           => 'VARCHAR(32) NOT NULL',
-		'source_id'              => 'INT UNSIGNED NOT NULL',
-		'file_uri'               => 'VARCHAR(255) NULL',
-		'target_locale'          => 'VARCHAR(16) NOT NULL',
-		'target_blog_id'         => 'INT UNSIGNED NOT NULL',
-		'target_id'              => 'INT UNSIGNED NULL',
-		'submitter'              => 'VARCHAR(255) NOT NULL',
-		'submission_date'        => 'DATETIME NOT NULL',
-		'applied_date'           => 'DATETIME NULL',
-		'approved_string_count'  => 'INT UNSIGNED NULL',
-		'completed_string_count' => 'INT UNSIGNED NULL',
-		'word_count'             => 'INT UNSIGNED NULL',
-		'status'                 => 'VARCHAR(16) NOT NULL',
-	);
+class SubmissionEntity extends SmartlingEntityAbstract {
 
 	/**
 	 * Submission Status  'Not Translated'
@@ -110,6 +68,28 @@ class SubmissionEntity {
 		self::SUBMISSION_STATUS_FAILED,
 	);
 
+	public static function getFieldDefinitions () {
+		return array (
+			'id'                     => 'INT UNSIGNED NOT NULL AUTO_INCREMENT',
+			'source_title'           => 'VARCHAR(255) NOT NULL',
+			'source_blog_id'         => 'INT UNSIGNED NOT NULL',
+			'source_content_hash'    => 'CHAR(32) NULL',
+			'content_type'           => 'VARCHAR(32) NOT NULL',
+			'source_id'              => 'INT UNSIGNED NOT NULL',
+			'file_uri'               => 'VARCHAR(255) NULL',
+			'target_locale'          => 'VARCHAR(16) NOT NULL',
+			'target_blog_id'         => 'INT UNSIGNED NOT NULL',
+			'target_id'              => 'INT UNSIGNED NULL',
+			'submitter'              => 'VARCHAR(255) NOT NULL',
+			'submission_date'        => 'DATETIME NOT NULL',
+			'applied_date'           => 'DATETIME NULL',
+			'approved_string_count'  => 'INT UNSIGNED NULL',
+			'completed_string_count' => 'INT UNSIGNED NULL',
+			'word_count'             => 'INT UNSIGNED NULL',
+			'status'                 => 'VARCHAR(16) NOT NULL',
+		);
+	}
+
 	/**
 	 * @return array
 	 */
@@ -142,153 +122,49 @@ class SubmissionEntity {
 		);
 	}
 
-	/**
-	 * @var array
-	 */
-	public static $fieldsSortable = array (
-		'id',
-		'source_title',
-		'content_type',
-		'file_uri',
-		'target_locale',
-		'submitter',
-		'submission_date',
-		'word_count',
-		'progress',
-		'status',
-	);
-
-	/**
-	 * @var array
-	 */
-	public static $indexes = array (
-		array (
-			'type'    => 'primary',
-			'columns' => array ( 'id' )
-		),
-		array (
-			'type'    => 'index',
-			'columns' => array ( 'content_type' )
-		),
-		array (
-			'type'    => 'index',
-			'columns' => array ( 'source_blog_id', 'source_id', 'content_type' )
-		),
-	);
-
-	private static function under_score2camelCase ( $string ) {
-		$converted = '';
-		foreach ( explode( '_', $string ) as $part ) {
-			$converted .= ucfirst( $part );
-		}
-
-		return $converted;
+	protected static function getInstance ( LoggerInterface $logger ) {
+		return new self( $logger );
 	}
 
+	public static function getSortableFields () {
+		return array (
+			'id',
+			'source_title',
+			'content_type',
+			'file_uri',
+			'target_locale',
+			'submitter',
+			'submission_date',
+			'word_count',
+			'progress',
+			'status',
+		);
+	}
 
-	/**
-	 * Magic wrapper for fields
-	 * may be used as virtual setter, e.g.:
-	 *      $object->content_type = $value
-	 * instead of
-	 *      $object->setContentType($value)
-	 *
-	 * @param string $key
-	 * @param mixed  $value
-	 */
-	public function __set ( $key, $value ) {
-		if ( array_key_exists( $key, $this->stateFields ) ) {
-			$setter = 'set' . self::under_score2camelCase( $key );
-			if ( ! $this->initialValuesFixed && ! array_key_exists( $key, $this->initialFields ) ) {
-				$this->initialFields[ $key ] = $value;
-			}
-			$this->$setter( $value );
-		}
+	public static function getIndexes () {
+		return array (
+			array (
+				'type'    => 'primary',
+				'columns' => array ( 'id' )
+			),
+			array (
+				'type'    => 'index',
+				'columns' => array ( 'content_type' )
+			),
+			array (
+				'type'    => 'index',
+				'columns' => array ( 'source_blog_id', 'source_id', 'content_type' )
+			),
+		);
 	}
 
 	/**
-	 * Magic wrapper for fields
-	 * may be used as virtual setter, e.g.:
-	 *      $value = $object->content_type
-	 * instead of
-	 *      $value = $object->getContentType()
-	 *
-	 * @param string $key
-	 */
-	public function __get ( $key ) {
-		if ( array_key_exists( $key, $this->stateFields ) ) {
-			$getter = 'get' . self::under_score2camelCase( $key );
-
-			return $this->$getter();
-		}
-	}
-
-	public function fixInitialValues () {
-		$this->initialValuesFixed = true;
-	}
-
-	public function getChangedFields () {
-		$changedFields = array ();
-		foreach ( $this->stateFields as $field => $value ) {
-			$initiallValue = array_key_exists( $field, $this->initialFields ) ? $this->initialFields[ $field ] : null;
-			$currentValue  = $value;
-			if ( $initiallValue !== $currentValue ) {
-				$changedFields[ $field ] = $currentValue;
-			}
-		}
-
-		return $changedFields;
-	}
-
-	/**
-	 * Converts associative array to SubmissionEntity
-	 * array keys must match field names;
-	 *
-	 * @param array           $array
-	 * @param LoggerInterface $logger
-	 *
-	 * @return SubmissionEntity
-	 */
-	public static function fromArray ( array $array, LoggerInterface $logger ) {
-		$obj = new self( $logger );
-
-		foreach ( $array as $field => $value ) {
-			$obj->$field = $value;
-		}
-
-		// Fix initial values to detect what fields were changed.
-		$obj->fixInitialValues();
-
-		return $obj;
-	}
-
-	/**
-	 * @param bool $addVirtualColumns
-	 *
 	 * @return array
 	 */
-	public function toArray ( $addVirtualColumns = true ) {
-		$arr = $this->stateFields;
-		if ( true === $addVirtualColumns ) {
-			$arr['progress'] = $this->getCompletionPercentage() . '%';
-		}
-
-		return $arr;
-	}
-
-	/**
-	 * Constructor
-	 *
-	 * @param LoggerInterface $logger
-	 */
-	public function __construct ( LoggerInterface $logger ) {
-		$this->logger = $logger;
-
-		$this->stateFields = array_flip( array_keys( self::$fieldsDefinition ) );
-
-		foreach ( $this->stateFields as & $value ) {
-			$value = null;
-		}
+	protected function getVirtualFields () {
+		return array (
+			'progress' => $this->getCompletionPercentage() . '%'
+		);
 	}
 
 	/**
@@ -507,7 +383,6 @@ class SubmissionEntity {
 		return $this->stateFields['file_uri'];
 	}
 
-
 	/**
 	 * @param string $file_uri
 	 *
@@ -672,5 +547,12 @@ class SubmissionEntity {
 		}
 
 		return (int) ( $percentage * 100 );
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function getTableName () {
+		return 'smartling_submissions';
 	}
 }

@@ -3,6 +3,7 @@
 namespace Smartling\DbAl;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Helpers\SiteHelper;
 
 /**
  * Class EntityManagerAbstract
@@ -14,7 +15,27 @@ abstract class EntityManagerAbstract {
 	/**
 	 * @var LoggerInterface
 	 */
-	protected $logger;
+	private $logger;
+
+	/**
+	 * @var SmartlingToCMSDatabaseAccessWrapperInterface
+	 */
+	private $dbal;
+
+	/**
+	 * @var int
+	 */
+	private $pageSize;
+
+	/**
+	 * @var SiteHelper
+	 */
+	private $siteHelper;
+
+	/**
+	 * @var LocalizationPluginProxyInterface
+	 */
+	private $pluginProxy;
 
 	/**
 	 * @return LoggerInterface
@@ -24,20 +45,99 @@ abstract class EntityManagerAbstract {
 	}
 
 	/**
-	 * @var SmartlingToCMSDatabaseAccessWrapperInterface
+	 * @param LoggerInterface $logger
 	 */
-	protected $dbal;
-
-	/**
-	 * Constructor
-	 *
-	 * @param LoggerInterface                              $logger
-	 * @param SmartlingToCMSDatabaseAccessWrapperInterface $dbal
-	 */
-	public function __construct ( LoggerInterface $logger, $dbal ) {
+	public function setLogger ( $logger ) {
 		$this->logger = $logger;
-		$this->dbal   = $dbal;
 	}
 
+	/**
+	 * @return SmartlingToCMSDatabaseAccessWrapperInterface
+	 */
+	public function getDbal () {
+		return $this->dbal;
+	}
 
+	/**
+	 * @param SmartlingToCMSDatabaseAccessWrapperInterface $dbal
+	 */
+	public function setDbal ( $dbal ) {
+		$this->dbal = $dbal;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getPageSize () {
+		return $this->pageSize;
+	}
+
+	/**
+	 * @param int $pageSize
+	 */
+	public function setPageSize ( $pageSize ) {
+		$this->pageSize = $pageSize;
+	}
+
+	/**
+	 * @return SiteHelper
+	 */
+	public function getSiteHelper () {
+		return $this->siteHelper;
+	}
+
+	/**
+	 * @param SiteHelper $siteHelper
+	 */
+	public function setSiteHelper ( $siteHelper ) {
+		$this->siteHelper = $siteHelper;
+	}
+
+	/**
+	 * @return LocalizationPluginProxyInterface
+	 */
+	public function getPluginProxy () {
+		return $this->pluginProxy;
+	}
+
+	/**
+	 * @param LocalizationPluginProxyInterface $pluginProxy
+	 */
+	public function setPluginProxy ( $pluginProxy ) {
+		$this->pluginProxy = $pluginProxy;
+	}
+
+	/**
+	 * @param LoggerInterface                              $logger
+	 * @param SmartlingToCMSDatabaseAccessWrapperInterface $dbal
+	 * @param int                                          $pageSize
+	 * @param SiteHelper                                   $siteHelper
+	 * @param LocalizationPluginProxyInterface             $localizationPluginProxyInterface
+	 */
+	public function __construct (
+		LoggerInterface $logger,
+		SmartlingToCMSDatabaseAccessWrapperInterface $dbal,
+		$pageSize,
+		SiteHelper $siteHelper,
+		$localizationPluginProxyInterface
+	) {
+		$this->setLogger( $logger );
+		$this->setDbal( $dbal );
+		$this->setPageSize( $pageSize );
+		$this->setSiteHelper( $siteHelper );
+		$this->setPluginProxy( $localizationPluginProxyInterface );
+	}
+
+	protected function fetchData ( $query ) {
+		$results = array ();
+		$res = $this->getDbal()->fetch( $query );
+		if ( is_array( $res ) ) {
+			foreach ( $res as $row ) {
+				$results[] = $this->dbResultToEntity((array) $row);
+			}
+		}
+		return $results;
+	}
+
+	abstract protected function dbResultToEntity(array $dbRow);
 }

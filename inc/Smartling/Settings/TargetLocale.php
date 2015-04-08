@@ -7,73 +7,36 @@ namespace Smartling\Settings;
  *
  * @package Smartling\Settings
  */
-class TargetLocale {
+class TargetLocale extends Locale {
 
 	/**
 	 * @var string
 	 */
-	private $locale;
+	private $smartlingLocale;
 
 	/**
-	 * @var string
-	 */
-	private $target;
-
-	/**
-	 * @var int
-	 */
-	private $blog;
-
-	/**
-	 * @var boolean
+	 * @var bool
 	 */
 	private $enabled;
 
 	/**
-	 * @param $locale
-	 * @param $target
-	 * @param $enabled
-	 * @param $blog
-	 */
-	public function __construct ( $locale, $target, $enabled, $blog ) {
-		$this->locale  = $locale;
-		$this->target  = $target;
-		$this->enabled = (bool) $enabled;
-		$this->blog    = (int) $blog;
-	}
-
-	/**
 	 * @return string
 	 */
-	public function getLocale () {
-		return $this->locale;
+	public function getSmartlingLocale () {
+		return $this->smartlingLocale;
 	}
 
 	/**
-	 * @param string $locale
+	 * @param string $smartlingLocale
 	 */
-	public function setLocale ( $locale ) {
-		$this->locale = $locale;
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getTarget () {
-		return $this->target;
-	}
-
-	/**
-	 * @param string $target
-	 */
-	public function setTarget ( $target ) {
-		$this->target = $target;
+	public function setSmartlingLocale ( $smartlingLocale ) {
+		$this->smartlingLocale = $smartlingLocale;
 	}
 
 	/**
 	 * @return boolean
 	 */
-	public function getEnabled () {
+	public function isEnabled () {
 		return $this->enabled;
 	}
 
@@ -84,29 +47,16 @@ class TargetLocale {
 		$this->enabled = $enabled;
 	}
 
-	/**
-	 * @return int
-	 */
-	public function getBlog () {
-		return (int) $this->blog;
-	}
-
-	/**
-	 * @param int $blog
-	 */
-	public function setBlog ( $blog ) {
-		$this->blog = $blog;
-	}
 
 	/**
 	 * @return array
 	 */
 	public function toArray () {
 		return array (
-			'locale'  => $this->getLocale(),
-			'target'  => $this->getTarget(),
-			'enabled' => $this->getEnabled(),
-			'blog'    => $this->getBlog()
+			'label'           => $this->getLabel(),
+			'smartlingLocale' => $this->getSmartlingLocale(),
+			'enabled'         => $this->isEnabled(),
+			'blogId'          => $this->getBlogId()
 		);
 	}
 
@@ -116,6 +66,22 @@ class TargetLocale {
 	 * @return TargetLocale
 	 */
 	public static function fromArray ( array $objState ) {
-		return new self( $objState['locale'], $objState['target'], $objState['enabled'], $objState['blog'] );
+		$obj = new self();
+		$properties = array(
+			'label',
+			'smartlingLocale',
+			'enabled',
+			'blogId'
+		);
+
+		foreach ($properties as $property)
+		{
+			if(array_key_exists($property, $objState))
+			{
+				$method = vsprintf('set%s',array(ucfirst($property)));
+				$obj->{$method}($objState[$property]);
+			}
+		}
+		return $obj;
 	}
 }

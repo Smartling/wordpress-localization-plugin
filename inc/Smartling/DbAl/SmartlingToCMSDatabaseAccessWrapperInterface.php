@@ -2,8 +2,6 @@
 
 namespace Smartling\DbAl;
 
-use Psr\Log\LoggerInterface;
-
 /**
  * Interface SmartlingToCMSDatabaseAccessWrapperInterface
  *

@@ -172,6 +172,30 @@ class SiteHelper {
 		restore_current_blog();
 	}
 
+	public function getBlogNameById ( $blogId ) {
+		$label = 'Unknown';
+
+		try {
+			$this->switchBlogId( $blogId );
+			$label = get_bloginfo( 'Name' );
+			$this->restoreBlogId();
+		} catch ( InvalidArgumentException $e ) {
+			// unexistant $blogId
+		}
+
+		return $label;
+	}
+
+	public function getBlogLabelById ( LocalizationPluginProxyInterface $localizationPluginProxyInterfacem, $blogId ) {
+		return vsprintf(
+			'%s - %s',
+			array (
+				$this->getBlogNameById( $blogId ),
+				$localizationPluginProxyInterfacem->getBlogLanguageById( $blogId )
+			)
+		);
+	}
+
 	/**
 	 * Returns locale of current blog
 	 *
