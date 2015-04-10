@@ -52,23 +52,6 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 		);
 	}
 
-	/**
-	 * Starts cron job
-	 *
-	 * @throws \Exception
-	 */
-	public function run_cron () {
-		ignore_user_abort( true );
-		set_time_limit( 0 );
-
-		/**
-		 * @var JobEngine $jobEngine
-		 */
-		$jobEngine = Bootstrap::getContainer()->get( 'wp.cron' );
-		$jobEngine->doWork();
-
-		wp_die( 'Cron job triggered. Now you can safely close this window / browser tab.' );
-	}
 
 	public function download_log () {
 		$container = Bootstrap::getContainer();
@@ -92,15 +75,14 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 		die;
 	}
 
-	public function edit()
-	{
-		$this->view($this->getEntityHelper()->getSettingsManager());
+	public function edit () {
+		$this->view( $this->getEntityHelper()->getSettingsManager() );
 	}
 
 	public function save () {
-		$settings = & $_REQUEST['smartling_settings'];
+		$settings = &$_REQUEST['smartling_settings'];
 
-		$profileId = (int) ($settings['id'] ? : 0 );
+		$profileId = (int) ( $settings['id'] ? : 0 );
 
 		$settingsManager = $this->getEntityHelper()->getSettingsManager();
 
@@ -155,7 +137,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 			$defaultBlogId = (int) $settings['defaultLocale'];
 
 			$locale = new Locale();
-			$locale->setBlogId($defaultBlogId);
+			$locale->setBlogId( $defaultBlogId );
 			$locale->setLabel(
 				$this->getEntityHelper()->getSiteHelper()->getBlogLabelById(
 					$this->getEntityHelper()->getConnector(),
@@ -163,7 +145,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 				)
 			);
 
-			$profile->setMainLocale($locale);
+			$profile->setMainLocale( $locale );
 
 
 			//$targetLocales->setDefaultBlog( $defaultBlogId );
@@ -172,20 +154,22 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 
 		if ( array_key_exists( 'targetLocales', $settings ) ) {
 			$locales = array ();
+
 			foreach ( $settings['targetLocales'] as $blogId => $settings ) {
-				$definition = array (
-					'locale'  => $this->getEntityHelper()->getSiteHelper()->getBlogLabelById($this->getEntityHelper()->getConnector(), $blogId ),
-					'target'  => array_key_exists( 'target', $settings ) ? $settings['target'] : - 1,
-					'enabled' => array_key_exists( 'enabled', $settings ) && 'on' === $settings['enabled'],
-					'blog'    => $blogId
-				);
-				$locales[]  = TargetLocale::fromArray( $definition );
+				$tLocale = new TargetLocale();
+				$tLocale->setBlogId( $blogId );
+				$tLocale->setLabel( $this->getEntityHelper()->getSiteHelper()->getBlogLabelById( $this->getEntityHelper()->getConnector(),
+					$blogId ) );
+				$tLocale->setEnabled( array_key_exists( 'enabled', $settings ) && 'on' === $settings['enabled'] );
+				$tLocale->setSmartlingLocale( array_key_exists( 'target', $settings ) ? $settings['target'] : - 1 );
+
+				$locales[] = $tLocale;
 			}
 
 			$profile->setTargetLocales( $locales );
 		}
 
-		$settingsManager->storeEntity($profile);
+		$settingsManager->storeEntity( $profile );
 
 		wp_redirect( '/wp-admin/admin.php?page=smartling_configuration_profile_list' );
 	}

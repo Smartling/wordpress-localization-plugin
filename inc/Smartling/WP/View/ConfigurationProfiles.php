@@ -1,4 +1,5 @@
 <?php
+use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\WP\Controller\ConfigurationProfilesWidget;
 
 ?>
@@ -7,7 +8,18 @@ use Smartling\WP\Controller\ConfigurationProfilesWidget;
 
 		get_admin_page_title(); ?></h2 >
 
-	<div class = "display-errors" ></div >
+	<?php
+	$messages = DiagnosticsHelper::getMessages();
+	if ( 0 < count( $messages ) ) :
+		?>
+		<div id = "message" class = "error" >
+			<?php
+			foreach ( $messages as $message ) {
+				show_message( $message, true );
+			}
+			?>
+		</div >
+	<?php endif; ?>
 	<?php
 
 
@@ -26,8 +38,22 @@ use Smartling\WP\Controller\ConfigurationProfilesWidget;
 		<?= $configurationProfilesTable->renderNewProfileButton(); ?>
 		<!-- For plugins, we also need to ensure that the form posts back to our current page -->
 		<input type = "hidden" name = "page" value = "smartling_configuration_profile_setup" />
-		<input type = "hidden" name = "profileId" value = "0" />
+		<input type = "hidden" name = "profile" value = "0" />
 		<!-- Now we can render the completed list table -->
 		<?php $configurationProfilesTable->display(); ?>
 	</form >
+	<p >
+	<ul >
+		<li >
+			<a href = "/wp-admin/admin-post.php?action=smartling_run_cron" target = "_blank" >
+				<?= __( 'Trigger cron tasks (only for smartling connector, opens in a new window)' ); ?>
+			</a >
+		</li >
+		<li >
+			<a href = "/wp-admin/admin-post.php?action=smartling_download_log_file" >
+				<?= __( 'Download current log file' ); ?>
+			</a >
+		</li >
+	</ul >
+	</p>
 </div >

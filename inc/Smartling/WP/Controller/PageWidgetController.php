@@ -11,10 +11,19 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  */
 class PageWidgetController extends PostWidgetController {
 
+	/**
+	 * @var string
+	 */
 	protected $servedContentType = WordpressContentTypeHelper::CONTENT_TYPE_PAGE;
 
+	/**
+	 * @var string
+	 */
 	protected $needSave = 'Need to save the page';
 
+	/**
+	 * @var string
+	 */
 	protected $noOriginalFound = 'No original page found';
 
 	/**

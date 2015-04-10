@@ -262,24 +262,35 @@ abstract class WPAbstract {
 			HtmlTagGeneratorHelper::tag( 'label', implode( '', $parts ), array ( 'class' => 'radio-label' ) )
 		);
 
-		Bootstrap::setCurrentProfile($profile);
+		Bootstrap::setCurrentProfile( $profile );
 
 		/**
 		 * @var SmartlingCore $ep
 		 */
-		$ep      = Bootstrap::getContainer()->get( 'entrypoint' );
+		$ep = Bootstrap::getContainer()->get( 'entrypoint' );
 
 		$locales = $ep->getProjectLocales();
 
-		$parts[] = HtmlTagGeneratorHelper::tag(
-			'select',
-			HtmlTagGeneratorHelper::renderSelectOptions(
-				$smartlingName,
-				$locales
-			),
-			array (
-				'name' => vsprintf( 'smartling_settings[targetLocales][%s][target]', array ( $blogId ) )
-			) );
+		if ( 0 === count( $locales ) ) {
+			$parts[] = HtmlTagGeneratorHelper::tag(
+				'input',
+				'',
+				array (
+					'name' => vsprintf( 'smartling_settings[targetLocales][%s][target]', array ( $blogId ) ),
+					'type' => 'text'
+				) );
+		} else {
+			$parts[] = HtmlTagGeneratorHelper::tag(
+				'select',
+				HtmlTagGeneratorHelper::renderSelectOptions(
+					$smartlingName,
+					$locales
+				),
+				array (
+					'name' => vsprintf( 'smartling_settings[targetLocales][%s][target]', array ( $blogId ) )
+				) );
+		}
+
 
 		return implode( '', $parts );
 	}

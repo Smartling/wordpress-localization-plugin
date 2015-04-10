@@ -26,17 +26,18 @@ use Smartling\WP\WPAbstract;
 		/**
 		 * @var TargetLocale[] $locales
 		 */
-		$locales = $this->getPluginInfo()->getSettingsManager()->getLocales()->getTargetLocales();
+		$locales = $data['profile']->getTargetLocales();
 
 		foreach ( $locales as $locale ) {
 			/**
 			 * @var TargetLocale $locale
 			 */
-			if ( ! $locale->getEnabled() ) {
+			if ( ! $locale->isEnabled() ) {
 				continue;
 			}
 
-			$value       = false;
+			$value = false;
+
 			$status      = '';
 			$submission  = null;
 			$statusValue = null;
@@ -46,7 +47,7 @@ use Smartling\WP\WPAbstract;
 					/**
 					 * @var SubmissionEntity $item
 					 */
-					if ( $item->getTargetBlogId() === $locale->getBlog() ) {
+					if ( $item->getTargetBlogId() === $locale->getBlogId() ) {
 						$value       = true;
 						$statusValue = $item->getStatus();
 						$id          = $item->getId();
@@ -61,8 +62,8 @@ use Smartling\WP\WPAbstract;
 				<td class = "sm_sh" width = "200px;" >
 					<?= WPAbstract::localeSelectionCheckboxBlock(
 						$nameKey,
-						$locale->getBlog(),
-						$locale->getLocale(),
+						$locale->getBlogId(),
+						$locale->getLabel(),
 						$value
 					); ?>
 				</td >

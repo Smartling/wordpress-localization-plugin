@@ -35,7 +35,7 @@ rm -Rf ./*.sql
 rm -Rf ./phpunit*
 rm -Rf ./tests
 rm -Rf ./upload
-rm -Rf ./logfile*
+rm -Rf ./logs/logfile*
 rm -Rf ./*.pid
 
 zip -9 ./$BUILD_FILENAME -r ./*

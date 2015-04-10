@@ -1,5 +1,4 @@
 parameters:
-
   multilang_plugins:
     "multilingual-press-pro": false
     "polylang": false
@@ -30,14 +29,11 @@ parameters:
 
   submission.pagesize: 5
 
-
-
 services:
   current.profile:
-    class: Smartling\Settings\ConfigurationProfileEntity;
+    class: Smartling\Settings\ConfigurationProfileEntity
     arguments:
       - "@logger"
-
 
   processor.property.default:
     class: Smartling\Processors\PropertyProcessors\PropertyProcessorDefault
@@ -187,6 +183,8 @@ services:
       - "%submission.pagesize%"
       - "@site.helper"
       - "@multilang.proxy"
+    calls:
+      - ["setMapper", ["@factory.propertyMapper"]]
 
   plugin.info:
       class: Smartling\Helpers\PluginInfo
@@ -244,8 +242,6 @@ services:
       - "@entity.helper"
       - "@manager.submission"
       - "@site.cache"
-
-
 
   wp.submissions:
     class: Smartling\WP\Controller\SubmissionsPageController

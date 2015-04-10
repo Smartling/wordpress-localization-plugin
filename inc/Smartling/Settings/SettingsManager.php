@@ -14,7 +14,25 @@ use Smartling\Helpers\QueryBuilder\QueryBuilder;
  * @package Smartling\Settings
  */
 class SettingsManager extends EntityManagerAbstract {
-	public function getEntities ( $sortOptions = array(), $pageOptions = null, & $totalCount ) {
+
+	private $mapper;
+
+	/**
+	 * @return mixed
+	 */
+	public function getMapper () {
+		return $this->mapper;
+	}
+
+	/**
+	 * @param mixed $mapper
+	 */
+	public function setMapper ( $mapper ) {
+		$this->mapper = $mapper;
+	}
+
+
+	public function getEntities ( $sortOptions = array (), $pageOptions = null, & $totalCount ) {
 		$validRequest = $this->validateRequest( $sortOptions, $pageOptions );
 		$result       = array ();
 		if ( $validRequest ) {
@@ -29,12 +47,12 @@ class SettingsManager extends EntityManagerAbstract {
 		return $result;
 	}
 
-	public function getEntityById($id)
-	{
+	public function getEntityById ( $id ) {
 		$cond = ConditionBlock::getConditionBlock();
-		$cond->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ,'id',array($id)));
-		$dataQuery  = $this->buildQuery( array(),null, $cond);
-		$result     = $this->fetchData( $dataQuery );
+		$cond->addCondition( Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'id', array ( $id ) ) );
+		$dataQuery = $this->buildQuery( array (), null, $cond );
+		$result    = $this->fetchData( $dataQuery );
+
 		return $result;
 	}
 
@@ -68,21 +86,37 @@ class SettingsManager extends EntityManagerAbstract {
 		return $query;
 	}
 
-	public function fetchData($query)
-	{
-		$data = parent::fetchData($query);
-		foreach ($data as & $result) {
-			$this->updateLabels($result);
+	public function fetchData ( $query ) {
+		$data = parent::fetchData( $query );
+		foreach ( $data as & $result ) {
+			$this->updateLabels( $result );
 		}
+
 		return $data;
 	}
 
 	public function findEntityByMainLocale ( $mainLocale ) {
-		$conditionBlock = ConditionBlock::getConditionBlock( ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND );
-		$conditionBlock->addCondition( Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'main_locale',
-			array ( $mainLocale ) ) );
-		$conditionBlock->addCondition( Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'active',
-			array ( 1 ) ) );
+
+		$conditionBlock = ConditionBlock::getConditionBlock(
+			ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND
+		);
+
+		$conditionBlock->addCondition(
+			Condition::getCondition(
+				ConditionBuilder::CONDITION_SIGN_EQ,
+				'main_locale',
+				array ( $mainLocale )
+			)
+		);
+
+		$conditionBlock->addCondition(
+			Condition::getCondition(
+				ConditionBuilder::CONDITION_SIGN_EQ,
+				'is_active',
+				array ( 1 )
+			)
+		);
+
 		$result = $this->fetchData( $this->buildQuery( array (), null, $conditionBlock ) );
 
 		return $result;
@@ -105,6 +139,8 @@ class SettingsManager extends EntityManagerAbstract {
 		$is_insert = in_array( $entityId, array ( 0, null ), true );
 
 		$fields = $entity->toArray( false );
+
+
 		unset ( $fields['id'] );
 
 		if ( $is_insert ) {

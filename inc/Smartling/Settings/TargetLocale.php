@@ -66,22 +66,21 @@ class TargetLocale extends Locale {
 	 * @return TargetLocale
 	 */
 	public static function fromArray ( array $objState ) {
-		$obj = new self();
-		$properties = array(
+		$obj        = new self();
+		$properties = array (
 			'label',
 			'smartlingLocale',
 			'enabled',
 			'blogId'
 		);
 
-		foreach ($properties as $property)
-		{
-			if(array_key_exists($property, $objState))
-			{
-				$method = vsprintf('set%s',array(ucfirst($property)));
-				$obj->{$method}($objState[$property]);
+		foreach ( $properties as $property ) {
+			if ( array_key_exists( $property, $objState ) ) {
+				$method = vsprintf( 'set%s', array ( ucfirst( $property ) ) );
+				$obj->{$method}( $objState[ $property ] );
 			}
 		}
+
 		return $obj;
 	}
 }

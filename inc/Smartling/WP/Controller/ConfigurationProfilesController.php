@@ -2,6 +2,8 @@
 
 namespace Smartling\WP\Controller;
 
+use Smartling\Bootstrap;
+use Smartling\WP\JobEngine;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
@@ -64,9 +66,26 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
 		);
 	}
 
+	/**
+	 * Starts cron job
+	 *
+	 * @throws \Exception
+	 */
+	public function run_cron () {
+		ignore_user_abort( true );
+		set_time_limit( 0 );
+
+		/**
+		 * @var JobEngine $jobEngine
+		 */
+		$jobEngine = Bootstrap::getContainer()->get( 'wp.cron' );
+		$jobEngine->doWork();
+
+		wp_die( 'Cron job triggered. Now you can safely close this window / browser tab.' );
+	}
 
 	public function listProfiles () {
-		$table = new ConfigurationProfilesWidget($this->getPluginInfo()->getSettingsManager());
+		$table = new ConfigurationProfilesWidget( $this->getPluginInfo()->getSettingsManager() );
 		$this->view( $table );
 	}
 

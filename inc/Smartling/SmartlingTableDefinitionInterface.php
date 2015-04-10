@@ -7,8 +7,7 @@ namespace Smartling;
  *
  * @package Smartling
  */
-interface SmartlingTableDefinitionInterface
-{
+interface SmartlingTableDefinitionInterface {
 	/**
 	 * @return array
 	 */
@@ -17,20 +16,20 @@ interface SmartlingTableDefinitionInterface
 	/**
 	 * @return array
 	 */
-	static function getFieldDefinitions();
+	static function getFieldDefinitions ();
 
 	/**
 	 * @return array
 	 */
-	static function getSortableFields();
+	static function getSortableFields ();
 
 	/**
 	 * @return array
 	 */
-	static function getIndexes();
+	static function getIndexes ();
 
 	/**
 	 * @return string
 	 */
-	static function getTableName();
+	static function getTableName ();
 }

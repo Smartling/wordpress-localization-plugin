@@ -130,14 +130,15 @@ abstract class EntityManagerAbstract {
 
 	protected function fetchData ( $query ) {
 		$results = array ();
-		$res = $this->getDbal()->fetch( $query );
+		$res     = $this->getDbal()->fetch( $query );
 		if ( is_array( $res ) ) {
 			foreach ( $res as $row ) {
-				$results[] = $this->dbResultToEntity((array) $row);
+				$results[] = $this->dbResultToEntity( (array) $row );
 			}
 		}
+
 		return $results;
 	}
 
-	abstract protected function dbResultToEntity(array $dbRow);
+	abstract protected function dbResultToEntity ( array $dbRow );
 }

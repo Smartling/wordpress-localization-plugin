@@ -82,9 +82,8 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
 	/**
 	 * @return array
 	 */
-	protected function getVirtualFields()
-	{
-		return array();
+	protected function getVirtualFields () {
+		return array ();
 	}
 
 	/**
@@ -95,7 +94,7 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
 	public function toArray ( $addVirtualColumns = true ) {
 		$arr = $this->stateFields;
 		if ( true === $addVirtualColumns ) {
-			$arr = array_merge($arr, $this->getVirtualFields());
+			$arr = array_merge( $arr, $this->getVirtualFields() );
 		}
 
 		return $arr;

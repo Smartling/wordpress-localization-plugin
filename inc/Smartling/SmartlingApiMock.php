@@ -89,7 +89,7 @@ class SmartlingApiMock extends SmartlingAPI {
 		$fields = $wrapper->getFields();
 
 		foreach ( $fields as $field ) {
-			$field->setValue($faker->realText( 180 ));
+			$field->setValue( $faker->realText( 180 ) );
 		}
 
 		$encodedXML = XmlEncoder::xmlEncode( $fields, $p_factory );

@@ -35,7 +35,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 		return array (
 			'id'             => __( 'ID' ),
 			'profile_name'   => __( 'Profile Name' ),
-			'api_url'        => __( 'API URL' ),
+			//'api_url'        => __( 'API URL' ),
 			'project_id'     => __( 'Project ID' ),
 			'project_key'    => __( 'Project KEY' ),
 			'is_active'      => __( 'Active' ),
@@ -160,9 +160,9 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	 * @param $projectId
 	 */
 	public function setProjectId ( $projectId ) {
-		if ( preg_match( vsprintf( '/%s/ius', array ( self::REGEX_PROJECT_ID ) ), trim( $projectId, '/' ) ) ) {
-			$this->stateFields['project_id'] = $projectId;
-		} else {
+		$this->stateFields['project_id'] = $projectId;
+
+		if ( ! preg_match( vsprintf( '/%s/ius', array ( self::REGEX_PROJECT_ID ) ), trim( $projectId, '/' ) ) ) {
 			$this->logger->warning( vsprintf( 'Got invalid project ID: %s', array ( $projectId ) ) );
 		}
 	}
@@ -178,9 +178,10 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	 * @param $projectKey
 	 */
 	public function setProjectKey ( $projectKey ) {
-		if ( preg_match( vsprintf( '/%s/ius', array ( self::REGEX_PROJECT_KEY ) ), trim( $projectKey, '/' ) ) ) {
-			$this->stateFields['project_key'] = $projectKey;
-		} else {
+
+		$this->stateFields['project_key'] = $projectKey;
+
+		if ( ! preg_match( vsprintf( '/%s/ius', array ( self::REGEX_PROJECT_KEY ) ), trim( $projectKey, '/' ) ) ) {
 			$this->logger->warning( vsprintf( 'Got invalid project KEY: %s', array ( $projectKey ) ) );
 		}
 	}
@@ -196,7 +197,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	 * @param $isActive
 	 */
 	public function setIsActive ( $isActive ) {
-		$this->stateFields['is_active'] = (bool) $isActive;
+		$this->stateFields['is_active'] = (int) $isActive;
 	}
 
 	/**
@@ -242,48 +243,46 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 		$this->stateFields['target_locales'] = $targetLocales;
 	}
 
-	public function toArray($addVirtualColumns = true)
-	{
-		$state = parent::toArray(false);
+	public function toArray ( $addVirtualColumns = true ) {
+		$state = parent::toArray( false );
 
 		$state['main_locale'] = $this->getMainLocale()->getBlogId();
 
-		$serializedTargetLocales = array();
-		foreach($this->getTargetLocales() as $targetLocale)
-		{
+		$state['auto_authorize'] = ! $state['auto_authorize'] ? 0 : 1;
+		$state['is_active']      = ! $state['is_active'] ? 0 : 1;
+
+		$serializedTargetLocales = array ();
+		foreach ( $this->getTargetLocales() as $targetLocale ) {
 			$serializedTargetLocales[] = $targetLocale->toArray();
 		}
-		$state['target_locales'] = json_encode($serializedTargetLocales);
+		$state['target_locales'] = json_encode( $serializedTargetLocales );
 
 		return $state;
 	}
 
-	public static function fromArray(array $array, LoggerInterface $logger)
-	{
+	public static function fromArray ( array $array, LoggerInterface $logger ) {
 		/**
 		 * @var ConfigurationProfileEntity $obj
 		 */
-		$obj = parent::fromArray($array, $logger);
+		$obj = parent::fromArray( $array, $logger );
 
-		$locale=new Locale();
-		$locale->setBlogId($obj->getMainLocale());
+		$locale = new Locale();
+		$locale->setBlogId( $obj->getMainLocale() );
 
-		$obj->setMainLocale($locale);
+		$obj->setMainLocale( $locale );
 
-		$unserializedTargetLocales = array();
+		$unserializedTargetLocales = array ();
 
-		$decoded = json_decode($obj->getTargetLocales(), true);
+		$decoded = json_decode( $obj->getTargetLocales(), true );
 
-		if (is_array($decoded))
-		{
-			foreach($decoded as $targetLocaleArr)
-			{
-				$unserializedTargetLocales[] = TargetLocale::fromArray($targetLocaleArr);
+		if ( is_array( $decoded ) ) {
+			foreach ( $decoded as $targetLocaleArr ) {
+				$unserializedTargetLocales[] = TargetLocale::fromArray( $targetLocaleArr );
 			}
-			$obj->setTargetLocales($unserializedTargetLocales);
+			$obj->setTargetLocales( $unserializedTargetLocales );
 
 		} else {
-			$obj->setTargetLocales(array());
+			$obj->setTargetLocales( array () );
 		}
 
 

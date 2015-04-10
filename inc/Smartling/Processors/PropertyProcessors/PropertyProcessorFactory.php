@@ -21,10 +21,9 @@ class PropertyProcessorFactory extends SmartlingFactoryAbstract {
 		parent::__construct( $logger );
 	}
 
-	public function registerDefaultProcessor(PropertyProcessorAbstract $processor)
-	{
-		parent::setAllowDefault(true);
-		parent::setDefaultHandler($processor);
+	public function registerDefaultProcessor ( PropertyProcessorAbstract $processor ) {
+		parent::setAllowDefault( true );
+		parent::setDefaultHandler( $processor );
 	}
 
 	/**
@@ -43,7 +42,7 @@ class PropertyProcessorFactory extends SmartlingFactoryAbstract {
 	 * @return PropertyProcessorAbstract
 	 * @throws SmartlingInvalidFactoryArgumentException
 	 */
-	function getProcessor( $type ) {
+	function getProcessor ( $type ) {
 		return parent::getHandler( $type );
 	}
 }

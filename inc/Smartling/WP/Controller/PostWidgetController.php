@@ -64,22 +64,35 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 	 */
 	public function preView ( $post ) {
 		wp_nonce_field( self::WIDGET_NAME, self::CONNECTOR_NONCE );
-
 		if ( $post->post_content && $post->post_title ) {
-
 			try {
-				$originalId = $this->getEntityHelper()->getOriginalContentId( $post->ID );
+				$eh = $this->getEntityHelper();
 
-				$submissions = $this->getManager()->find( array (
-					'source_id'  => $originalId,
-					'content_type' => $this->servedContentType,
-				) );
+				$currentBlogId = $eh->getSiteHelper()->getCurrentBlogId();
 
-				$this->view( array (
-						'submissions' => $submissions,
-						'post'        => $post
-					)
-				);
+				$profile = $eh
+					->getSettingsManager()
+					->findEntityByMainLocale(
+						$currentBlogId
+					);
+
+				if ( 1 === count( $profile ) ) {
+					$submissions = $this->getManager()->find( array (
+						'source_id'    => $post->ID,
+						'content_type' => $this->servedContentType,
+					) );
+
+					$this->view( array (
+							'submissions' => $submissions,
+							'post'        => $post,
+							'profile'     => reset( $profile ),
+						)
+					);
+				} else {
+					echo '<p>' . __( 'No suitable configuration profile found.' ) . '</p>';
+				}
+
+
 			} catch ( SmartlingDbException $e ) {
 				$message = 'Failed to search for the original post. No source post found for blog %s, post %s. Hiding widget';
 				$this->getLogger()->warning(
@@ -148,8 +161,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 			return $post_id;
 		}
 
-		if (!array_key_exists(self::WIDGET_DATA_NAME, $_POST))
-		{
+		if ( ! array_key_exists( self::WIDGET_DATA_NAME, $_POST ) ) {
 			return;
 		}
 
@@ -174,8 +186,12 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 				switch ( $_POST['sub'] ) {
 					case __( 'Send to Smartling' ):
 
-						$sourceBlog = $this->getPluginInfo()->getSettingsManager()->getLocales()->getDefaultBlog();
-						$originalId = (int) $this->getEntityHelper()->getOriginalContentId( $post_id );
+						$sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
+						$originalId = (int) $post_id;
+
+						$profile = $this->getEntityHelper()->getSettingsManager()->findEntityByMainLocale( $sourceBlog );
+
+						Bootstrap::setCurrentProfile( reset( $profile ) );
 
 						foreach ( $locales as $blogId => $blogName ) {
 
@@ -190,12 +206,16 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 						}
 						break;
 					case __( 'Download' ):
-						$originalId = $this->getEntityHelper()->getOriginalContentId( $post_id );
+
+						$sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
+						$originalId = (int) $post_id;
+
 
 						$submissions = $this->getManager()->find(
 							array (
-								'source_id'  => $originalId,
-								'content_type' => $this->servedContentType
+								'source_id'      => $originalId,
+								'source_blog_id' => $sourceBlog,
+								'content_type'   => $this->servedContentType
 							)
 						);
 

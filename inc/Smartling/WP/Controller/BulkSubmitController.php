@@ -10,6 +10,7 @@ namespace Smartling\WP\Controller;
 
 
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\WP\View\BulkSubmitTableWidget;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -28,8 +29,11 @@ class BulkSubmitController
 	 */
 	public function register () {
 		if ( ! DiagnosticsHelper::isBlocked() ) {
-			add_action( 'admin_menu', array ( $this, 'menu' ) );
-			add_action( 'network_admin_menu', array ( $this, 'menu' ) );
+			//disabled for release
+			//add_action( 'admin_menu', array ( $this, 'menu' ) );
+
+			//never show anymore in network mode
+			//add_action( 'network_admin_menu', array ( $this, 'menu' ) );
 		}
 	}
 
@@ -49,13 +53,20 @@ class BulkSubmitController
 
 	public function renderPage () {
 		$currentBlogId = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
-		$this->getEntityHelper()->getSiteHelper()->switchBlogId( $this->getEntityHelper()->getSettingsManager()->getLocales()->getDefaultBlog() );
-		$table = new BulkSubmitTableWidget(
-			$this->getManager(),
-			$this->getPluginInfo(),
-			$this->getEntityHelper()
-		);
-		$this->view( $table );
-		$this->getEntityHelper()->getSiteHelper()->restoreBlogId();
+
+		$applicableProfiles = $this->getEntityHelper()->getSettingsManager()->findEntityByMainLocale( $currentBlogId );
+
+		if ( 0 === count( $applicableProfiles ) ) {
+			echo HtmlTagGeneratorHelper::tag( 'p', __( 'No suitable profile found for this site.' ) );
+		} else {
+			$profile = reset( $applicableProfiles );
+			$table   = new BulkSubmitTableWidget(
+				$this->getManager(),
+				$this->getPluginInfo(),
+				$this->getEntityHelper(),
+				$profile
+			);
+			$this->view( $table );
+		}
 	}
 }

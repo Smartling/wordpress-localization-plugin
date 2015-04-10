@@ -66,7 +66,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 	public function install () {
 		foreach ( $this->tables as $tableDefinition ) {
 			$query = $this->prepareSql( $tableDefinition );
-			$this->logger->info( vsprintf('installing tables: %s', array ( $query )) );
+			$this->logger->info( vsprintf( 'installing tables: %s', array ( $query ) ) );
 			$this->getWpdb()->query( $query );
 		}
 	}

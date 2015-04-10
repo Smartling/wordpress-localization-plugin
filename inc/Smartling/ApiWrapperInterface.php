@@ -6,6 +6,7 @@ use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\SDK\SmartlingAPI;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -52,8 +53,12 @@ interface ApiWrapperInterface {
 
 	/**
 	 * Sets up the reference to API SDK
+	 *
+	 * @param ConfigurationProfileEntity $profile
+	 *
+	 * @return
 	 */
-	function setApi ();
+	function setApi ( ConfigurationProfileEntity $profile );
 
 	/**
 	 * @return array

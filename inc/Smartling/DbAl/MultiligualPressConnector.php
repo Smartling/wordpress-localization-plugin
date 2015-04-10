@@ -7,6 +7,7 @@ use Mlp_Content_Relations_Interface;
 use Mlp_Site_Relations;
 use Mlp_Site_Relations_Interface;
 use Psr\Log\LoggerInterface;
+use Smartling\Exception\SmartlingConfigException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
@@ -103,14 +104,15 @@ class MultiligualPressConnector extends LocalizationPluginAbstract {
 			$this->directRunFallback( 'Direct run detected. Required run as Wordpress plugin.' );
 		}
 
-
 		$this->cacheLocales();
 
-		$this->helper->switchBlogId( $blogId );
-
-		$locale = self::$_blogLocalesCache[ $this->helper->getCurrentBlogId() ];
-
-		$this->helper->restoreBlogId();
+		if ( array_key_exists( $blogId, self::$_blogLocalesCache ) ) {
+			$locale = self::$_blogLocalesCache[ $this->helper->getCurrentBlogId() ];
+		} else {
+			$message = vsprintf( 'The blog %s is not configured in multilingual press plugin', array ( $blogId ) );
+			$this->getLogger()->warning( $message );
+			$locale = array ( 'lang' => 'unknown' );
+		}
 
 		return $locale['lang'];
 	}
@@ -190,7 +192,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract {
 	function getLinkedObjects ( $sourceBlogId, $sourceContentId, $contentType ) {
 		$relations = $this->initContentRelationSubsystem();
 
-		return $relations->get_relations( $sourceBlogId, $sourceContentId, $this->convertType($contentType) );
+		return $relations->get_relations( $sourceBlogId, $sourceContentId, $this->convertType( $contentType ) );
 	}
 
 	/**
@@ -201,8 +203,12 @@ class MultiligualPressConnector extends LocalizationPluginAbstract {
 
 		$contentType = $submission->getContentType();
 
-		return $relations->set_relation( $submission->sourceBlog, $submission->targetBlog, $submission->sourceGUID,
-			$submission->targetGUID,  $this->convertType($contentType) );
+		return $relations->set_relation(
+			$submission->getSourceBlogId(),
+			$submission->getTargetBlogId(),
+			$submission->getSourceId(),
+			$submission->getTargetId(),
+			$this->convertType( $contentType ) );
 	}
 
 	/**

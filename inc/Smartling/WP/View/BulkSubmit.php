@@ -47,23 +47,24 @@ use Smartling\Settings\TargetLocale;
 					<?= WPAbstract::checkUncheckBlock(); ?>
 					<?php
 					/**
-					 * @var TargetLocale[] $locales
+					 * @var BulkSubmitTableWidget $data
 					 */
-					$locales = $this->getPluginInfo()->getSettingsManager()->getLocales()->getTargetLocales();
+
+					$locales = $data->getProfile()->getTargetLocales();
 
 					foreach ( $locales as $locale ) {
 						/**
 						 * @var TargetLocale $locale
 						 */
-						if ( ! $locale->getEnabled() ) {
+						if ( ! $locale->isEnabled() ) {
 							continue;
 						}
 						?>
 						<p >
 							<?= WPAbstract::localeSelectionCheckboxBlock(
 								'bulk-submit-locales',
-								$locale->getBlog(),
-								$locale->getLocale(),
+								$locale->getBlogId(),
+								$locale->getLabel(),
 								false
 							); ?>
 						</p >

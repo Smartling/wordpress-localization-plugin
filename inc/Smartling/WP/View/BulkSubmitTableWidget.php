@@ -11,6 +11,7 @@ use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressUserHelper;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionManager;
 use WP_List_Table;
 
@@ -69,15 +70,34 @@ class BulkSubmitTableWidget extends WP_List_Table {
 	private $pluginInfo;
 
 	/**
-	 * @param SubmissionManager $manager
-	 * @param PluginInfo        $pluginInfo
-	 * @param EntityHelper      $entityHelper
+	 * @var ConfigurationProfileEntity
 	 */
-	public function __construct ( SubmissionManager $manager, PluginInfo $pluginInfo, EntityHelper $entityHelper ) {
+	private $profile;
+
+	/**
+	 * @return ConfigurationProfileEntity
+	 */
+	public function getProfile () {
+		return $this->profile;
+	}
+
+	/**
+	 * @param SubmissionManager          $manager
+	 * @param PluginInfo                 $pluginInfo
+	 * @param EntityHelper               $entityHelper
+	 * @param ConfigurationProfileEntity $profile
+	 */
+	public function __construct (
+		SubmissionManager $manager,
+		PluginInfo $pluginInfo,
+		EntityHelper $entityHelper,
+		ConfigurationProfileEntity $profile
+	) {
 		$this->manager      = $manager;
 		$this->source       = $_REQUEST;
 		$this->pluginInfo   = $pluginInfo;
 		$this->entityHelper = $entityHelper;
+		$this->profile      = $profile;
 
 		parent::__construct( $this->_settings );
 	}
@@ -247,18 +267,10 @@ class BulkSubmitTableWidget extends WP_List_Table {
 			if ( is_array( $submissions ) && count( $locales ) > 0 ) {
 				foreach ( $submissions as $submission ) {
 					list( $id, $type ) = explode( '-', $submission );
-					$sourceBlog = $this->getPluginInfo()->getSettingsManager()->getLocales()->getDefaultBlog();
-					$originalId = (int) $this->getEntityHelper()->getOriginalContentId( $id );
+					$curBlogId = $this->getProfile()->getMainLocale()->getBlogId();
 
 					foreach ( $locales as $blogId => $blogName ) {
-
-						$result = $ep->createForTranslation(
-							$type,
-							$sourceBlog,
-							$originalId,
-							(int) $blogId,
-							$this->getEntityHelper()->getTarget( $id, $blogId )
-						);
+						$result = $ep->createForTranslation( $type, $curBlogId, $id, (int) $blogId );
 					}
 				}
 			}
@@ -279,9 +291,9 @@ class BulkSubmitTableWidget extends WP_List_Table {
 				}
 			}
 
-			$type=$this->getFormElementValue($this->buildHtmlTagName('content-type'), null);
+			$type = $this->getFormElementValue( $this->buildHtmlTagName( 'content-type' ), null );
 
-			if (null === $type){
+			if ( null === $type ) {
 				return;
 			}
 
@@ -291,22 +303,19 @@ class BulkSubmitTableWidget extends WP_List_Table {
 				 */
 				$ep = Bootstrap::getContainer()->get( 'entrypoint' );
 
-				$sourceBlog = $this->getPluginInfo()->getSettingsManager()->getLocales()->getDefaultBlog();
-				$originalId = (int) $this->getEntityHelper()->getOriginalContentId( $submissionId );
+				$curBlogId = $this->getProfile()->getMainLocale()->getBlogId();
 
 				foreach ( $locales as $blogId => $blogName ) {
 					$result = $ep->createForTranslation(
 						$type,
-						$sourceBlog,
-						$originalId,
+						$curBlogId,
+						$submissionId,
 						(int) $blogId,
 						$this->getEntityHelper()->getTarget( $submissionId, $blogId )
 					);
 				}
 			}
 		}
-
-		// TODO: ? where to show error messages?
 	}
 
 	/**
@@ -348,8 +357,12 @@ class BulkSubmitTableWidget extends WP_List_Table {
 		$contentTypeFilterValue = $this->getContentTypeFilterValue();
 		$sortOptions            = $this->getSortingOptions();
 
-		$core  = Bootstrap::getContainer()->get( 'entrypoint' );
-		$io    = $core->getContentIoFactory()->getMapper( $contentTypeFilterValue );
+		/**
+		 * @var SmartlingCore $core
+		 */
+		$core = Bootstrap::getContainer()->get( 'entrypoint' );
+		$io   = $core->getContentIoFactory()->getMapper( $contentTypeFilterValue );
+
 		$data  = $io->getAll(
 			$pageOptions['limit'],
 			( $pageOptions['page'] - 1 ) * $pageOptions['limit'],
@@ -364,7 +377,7 @@ class BulkSubmitTableWidget extends WP_List_Table {
 				$row = $this->extractFields( $item, $contentTypeFilterValue );
 
 				$entities = $this->getManager()->find( array (
-						'source_id'  => $row['id'],
+						'source_id'    => $row['id'],
 						'content_type' => $row['type']
 					)
 				);

@@ -7,12 +7,17 @@ use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 
+/**
+ * Class ConfigurationProfilesWidget
+ *
+ * @package Smartling\WP\Controller
+ */
 class ConfigurationProfilesWidget extends \WP_List_Table {
 
 	/**
 	 * @var string
 	 */
-	private $_custom_controls_namespace = 'smartling-submissions-page';
+	private $_custom_controls_namespace = 'smartling-profile';
 
 	/**
 	 * the source array with request data
@@ -20,6 +25,7 @@ class ConfigurationProfilesWidget extends \WP_List_Table {
 	 * @var array
 	 */
 	private $source;
+
 
 	private $_settings = array (
 		'singular' => 'profile',
@@ -32,18 +38,24 @@ class ConfigurationProfilesWidget extends \WP_List_Table {
 	 */
 	private $manager;
 
+	/**
+	 * @param SettingsManager $manager
+	 */
 	public function __construct ( SettingsManager $manager ) {
 		$this->manager = $manager;
 		$this->source  = $_REQUEST;
-
 		parent::__construct( $this->_settings );
 	}
 
+	/**
+	 * @param string $fieldNameKey
+	 * @param string $orderDirectionKey
+	 *
+	 * @return array
+	 */
 	public function getSortingOptions ( $fieldNameKey = 'orderby', $orderDirectionKey = 'order' ) {
 		$options = array ();
-
-		$column = $this->getFromSource( $fieldNameKey, false );
-
+		$column  = $this->getFromSource( $fieldNameKey, false );
 		if ( false !== $column ) {
 			$direction = strtoupper( $this->getFromSource( $orderDirectionKey,
 				SmartlingToCMSDatabaseAccessWrapperInterface::SORT_OPTION_ASC ) );
@@ -54,11 +66,14 @@ class ConfigurationProfilesWidget extends \WP_List_Table {
 		return $options;
 	}
 
+	/**
+	 * @param $item
+	 * @param $column_name
+	 *
+	 * @return mixed
+	 */
 	public function column_default ( $item, $column_name ) {
-		switch ( $column_name ) {
-			default:
-				return $item[ $column_name ];
-		}
+		return $item[ $column_name ];
 	}
 
 	/**
@@ -68,12 +83,13 @@ class ConfigurationProfilesWidget extends \WP_List_Table {
 	 */
 	public function applyRowActions ( $item ) {
 
-		$linkTemplate = '?page=%s&action=%s&' . $this->buildHtmlTagName( $this->_args['singular'] ) . '=%s';
+		$linkTemplate = '?page=%s&action=%s&' . $this->_args['singular'] . '=%s';
 
 		//Build row actions
 		$actions = array (
-			'edit'     => HtmlTagGeneratorHelper::tag( 'a', __( 'Edit' ), array (
-				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'edit', $item['id'] ) )
+			'edit' => HtmlTagGeneratorHelper::tag( 'a', __( 'Edit' ), array (
+				'href' => vsprintf( $linkTemplate,
+					array ( 'smartling_configuration_profile_setup', 'edit', $item['id'] ) )
 			) ),
 			/*'delete' => HtmlTagGeneratorHelper::tag( 'a', __( 'Delete' ), array (
 				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'delete', $item['id'] ) )
@@ -81,7 +97,7 @@ class ConfigurationProfilesWidget extends \WP_List_Table {
 		);
 
 		//Return the title contents
-		return vsprintf( '%s %s', array ( $item['profile_name'], $this->row_actions( $actions ) ) );
+		return vsprintf( '%s %s', array ( esc_html__( $item['profile_name'] ), $this->row_actions( $actions ) ) );
 	}
 
 	/**
@@ -105,20 +121,19 @@ class ConfigurationProfilesWidget extends \WP_List_Table {
 	 * @inheritdoc
 	 */
 	public function get_columns () {
-		$columns = ConfigurationProfileEntity::getFieldLabels();
-		//$columns = array_merge( array ( 'bulkActionCb' => '<input type="checkbox" class="checkall" />' ), $columns );
-		return $columns;
+		return ConfigurationProfileEntity::getFieldLabels();;
 	}
 
 	/**
 	 * @inheritdoc
 	 */
 	public function get_sortable_columns () {
-		$fields = ConfigurationProfileEntity::getSortableFields();
+		$fields           = ConfigurationProfileEntity::getSortableFields();
 		$sortable_columns = array ();
 		foreach ( $fields as $field ) {
-			$sortable_columns[ $field ] = array ( $field, false );
+			$sortable_columns[ $field ] = array ( $field, true );
 		}
+
 		return $sortable_columns;
 	}
 
@@ -126,42 +141,21 @@ class ConfigurationProfilesWidget extends \WP_List_Table {
 	 * @inheritdoc
 	 */
 	public function get_bulk_actions () {
-		return array();
+		return array ();
 	}
 
-	/**
-	 * Handles actions for single object
-	 */
-	private function processSingleAction () {
-		$submissionId = (int) $this->getFormElementValue( 'profile', 0 );
-		if ( $submissionId > 0 ) {
-			switch ( $this->current_action() ) {
-				case 'downloadSingle':
-					break;
-			}
-		}
-	}
-
-	/**
-	 * Handles actions
-	 */
-	private function processAction () {
-		$this->processSingleAction();
-	}
-
-	public function renderNewProfileButton()
-	{
+	public function renderNewProfileButton () {
 
 		$options = array (
 			'id'    => $this->buildHtmlTagName( 'createNew' ),
 			'name'  => '',
 			'class' => 'button action',
-			'type'=>'submit',
-			'value'=>__('Add Profile'),
+			'type'  => 'submit',
+			'value' => __( 'Add Profile' ),
 
 		);
 
-		return HtmlTagGeneratorHelper::tag('input', '', $options);
+		return HtmlTagGeneratorHelper::tag( 'input', '', $options );
 	}
 
 	/**
@@ -179,20 +173,24 @@ class ConfigurationProfilesWidget extends \WP_List_Table {
 			$this->get_sortable_columns()
 		);
 
-		$this->processAction();
-
 		$total = 0;
 
-		$data = $this->manager->getEntities(array(), null, $total);
+		$data = $this->manager->getEntities( array (), null, $total );
 
 		$dataAsArray = array ();
-
+		$types       = ConfigurationProfileEntity::getRetrievalTypes();
 		foreach ( $data as $element ) {
 			$row = $element->toArray();
 
-			$row['profile_name']    = $this->applyRowActions( $row );
+			$row['profile_name']   = $this->applyRowActions( $row );
+			$row['project_key']    = mb_substr( $row['project_key'], 0, 9, 'utf8' ) . '...';
+			$row['is_active']      = 0 < $row['is_active'] ? __( 'Yes' ) : __( 'No' );
+			$row['auto_authorize'] = 0 < $row['auto_authorize'] ? __( 'Yes' ) : __( 'No' );
 
-			$dataAsArray[] = $row;
+			$row['retrieval_type'] = $types[ $row['retrieval_type'] ];
+			$row['main_locale']    = $this->manager->getSiteHelper()->getBlogLabelById( $this->manager->getPluginProxy(),
+				$row['main_locale'] );
+			$dataAsArray[]         = $row;
 		}
 
 		$this->items = $dataAsArray;

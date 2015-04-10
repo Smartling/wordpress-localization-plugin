@@ -79,13 +79,11 @@ class PropertyDescriptor {
 
 		$obj = new self();
 
-		foreach ($fields as $field)
-		{
-			if (array_key_exists($field, $state))
-			{
-				$setter = vsprintf('set%s', array(ucfirst($field)));
+		foreach ( $fields as $field ) {
+			if ( array_key_exists( $field, $state ) ) {
+				$setter = vsprintf( 'set%s', array ( ucfirst( $field ) ) );
 
-				$obj->$setter($state[$field]);
+				$obj->$setter( $state[ $field ] );
 			}
 		}
 

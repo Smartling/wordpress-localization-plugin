@@ -5,6 +5,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 
 use Smartling\ApiWrapperInterface;
+use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\SmartlingDbException;
@@ -85,6 +86,8 @@ class SmartlingCore {
 	 * @return ApiWrapperInterface
 	 */
 	public function getApiWrapper () {
+		$this->apiWrapper->setApi( Bootstrap::getConfigurationProfile() );
+
 		return $this->apiWrapper;
 	}
 
@@ -214,7 +217,26 @@ class SmartlingCore {
 		}
 	}
 
+	/**
+	 * Switches the current configuration profile
+	 *
+	 * @param SubmissionEntity $submission
+	 */
+	private function setProfileBySubmission ( SubmissionEntity $submission ) {
+		$origBlogId = $submission->getSourceBlogId();
+		$profile    = $this->getSettings()->findEntityByMainLocale( $origBlogId );
+
+		if ( 0 === count( $profile ) ) {
+			$profile = $this->getSettings()->createProfile( array () );
+		} else {
+			$profile = reset( $profile );
+		}
+
+		Bootstrap::setCurrentProfile( $profile );
+	}
+
 	public function sendForTranslationBySubmission ( SubmissionEntity $submission ) {
+		$this->setProfileBySubmission( $submission );
 		$contentEntity = $this->readContentEntity( $submission );
 
 		$submission->setSourceContentHash( $contentEntity->calculateHash() );
@@ -238,6 +260,7 @@ class SmartlingCore {
 		$xml = XmlEncoder::xmlEncode( $fieldsForTranslation, $this->getProcessorFactory() );
 
 		$result = false;
+
 
 		try {
 			$result = self::SEND_MODE === self::SEND_MODE_FILE
@@ -337,6 +360,7 @@ class SmartlingCore {
 	}
 
 	public function downloadTranslationBySubmission ( SubmissionEntity $entity ) {
+		$this->setProfileBySubmission( $entity );
 		$messages = array ();
 
 		try {
@@ -374,7 +398,7 @@ class SmartlingCore {
 
 				$entity = $this->getSubmissionManager()->storeEntity( $entity );
 
-				$this->getMultilangProxy()->linkObjects( $entity );
+				$result = $this->getMultilangProxy()->linkObjects( $entity );
 			}
 
 			if ( 100 === $entity->getCompletionPercentage() ) {
@@ -438,7 +462,6 @@ class SmartlingCore {
 		}
 	}
 
-
 	/**
 	 * @param EntityAbstract       $entity
 	 * @param PropertyDescriptor[] $properties
@@ -487,7 +510,7 @@ class SmartlingCore {
 	 * @return PropertyDescriptor[]
 	 */
 	private function getTranslatableFields ( $contentType ) {
-		return $this->settings->getMapperWrapper()->getMapper( $contentType )->getFields();
+		return $this->settings->getMapper()->getMapper( $contentType )->getFields();
 	}
 
 	private function getContentIOWrapper ( SubmissionEntity $entity ) {
@@ -560,6 +583,7 @@ class SmartlingCore {
 	 * @return array of error messages
 	 */
 	public function checkSubmissionByEntity ( SubmissionEntity $submission ) {
+		$this->setProfileBySubmission( $submission );
 		$messages = array ();
 
 		try {
@@ -632,17 +656,15 @@ class SmartlingCore {
 				'status' => array (
 					SubmissionEntity::SUBMISSION_STATUS_NEW,
 					SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
-
 				)
 			)
 		);
 
 		foreach ( $entities as $entity ) {
-			/** @var SubmissionEntity $entity */
-			if ( $entity->getStatus() == SubmissionEntity::SUBMISSION_STATUS_NEW ) {
+			if ( $entity->getStatus() === SubmissionEntity::SUBMISSION_STATUS_NEW ) {
 				$this->sendForTranslationBySubmission( $entity );
 			}
-			if ( $entity->getStatus() == SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS ) {
+			if ( $entity->getStatus() === SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS ) {
 				$this->checkSubmissionByEntity( $entity );
 				$this->checkEntityForDownload( $entity );
 			}

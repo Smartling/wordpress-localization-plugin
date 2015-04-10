@@ -87,7 +87,7 @@ class JobEngine implements WPHookInterface {
 			fflush( $fp );
 			flock( $fp, LOCK_UN );
 		} else {
-			$this->getLogger()->info( "Couldn't get the lock!\nCheck {$lockFile} for more info." );
+			$this->getLogger()->critical( "Couldn't get the lock!\nCheck {$lockFile} for more info." );
 		}
 
 		fclose( $fp );

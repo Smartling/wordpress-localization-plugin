@@ -35,8 +35,8 @@ abstract class MapperAbstract {
 	 *
 	 * @return PropertyDescriptor
 	 */
-	protected function buildDescriptor (array $field) {
-		return PropertyDescriptor::fromArray($field);
+	protected function buildDescriptor ( array $field ) {
+		return PropertyDescriptor::fromArray( $field );
 	}
 
 	/**

@@ -31,9 +31,15 @@ class Bootstrap {
 	 */
 	private static $_logger = null;
 
-	public static function setCurrentProfile(ConfigurationProfileEntity $profile)
-	{
-		self::$_container->set('current.profile', $profile);
+	public static function setCurrentProfile ( ConfigurationProfileEntity $profile ) {
+		self::$_container->set( 'current.profile', $profile );
+	}
+
+	/**
+	 * @return ConfigurationProfileEntity
+	 */
+	public static function getConfigurationProfile () {
+		return self::$_container->get( 'current.profile' );
 	}
 
 	/**

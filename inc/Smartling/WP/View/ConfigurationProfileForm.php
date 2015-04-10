@@ -3,7 +3,6 @@
  * @var PluginInfo $pluginInfo
  */
 
-use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -12,16 +11,14 @@ use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPAbstract;
 
 $pluginInfo = $this->getPluginInfo();
-
-$domain = $pluginInfo->getDomain();
-
+$domain     = $pluginInfo->getDomain();
 
 /**
  * @var SettingsManager $settingsManager
  */
 $settingsManager = $data;
 
-$profileId = (int) ( $_GET['profileId'] ? : 0 );
+$profileId = (int) ( $_GET['profile'] ? : 0 );
 
 if ( 0 === $profileId ) {
 	$profile = $settingsManager->createProfile( array () );
@@ -34,26 +31,11 @@ if ( 0 === $profileId ) {
 	$profile = reset( $profiles );
 }
 ?>
-
-
 <div class = "wrap" >
 	<h2 ><?= get_admin_page_title() ?></h2 >
-	<?php
-	$messages = DiagnosticsHelper::getMessages();
-	if ( 0 < count( $messages ) ) :
-		?>
-		<div id = "message" class = "error" >
-			<?php
-			foreach ( $messages as $message ) {
-				show_message( $message, true );
-			}
-			?>
-		</div >
-	<?php endif; ?>
 
 
 	<form id = "smartling-form" action = "/wp-admin/admin-post.php" method = "POST" >
-
 		<input type = "hidden" name = "action" value = "smartling_configuration_profile_save" >
 		<?php wp_nonce_field( 'smartling_connector_settings', 'smartling_connector_nonce' ); ?>
 		<?php wp_referer_field(); ?>
@@ -78,12 +60,10 @@ if ( 0 === $profileId ) {
 						'select',
 						HtmlTagGeneratorHelper::renderSelectOptions(
 							$profile->getIsActive(),
-							array ('true' => __('Active'), 'false' => __('Inactive'))
+							array ( '1' => __( 'Active' ), '0' => __( 'Inactive' ) )
 						),
 						array ( 'name' => 'smartling_settings[active]' ) );
-
 					?>
-
 				</td >
 			</tr >
 			<tr >
@@ -105,7 +85,7 @@ if ( 0 === $profileId ) {
 				</td >
 			</tr >
 			<tr >
-				<th scope = "row" ><?= __( 'Key', $domain ) ?></th >
+				<th scope = "row" ><?= __( 'Project Key', $domain ) ?></th >
 				<td >
 					<?php $key = $profile->getProjectKey(); ?>
 					<input type = "text" id = "api_key" name = "apiKey" value = "" >
@@ -113,7 +93,7 @@ if ( 0 === $profileId ) {
 					<br >
 					<?php if ( $key ) { ?>
 						<small ><?= __( 'Current Key', $domain ) ?>
-							: <?= substr( $$key, 0, - 10 ) . '**********' ?></small >
+							: <?= substr( $key, 0, - 10 ) . '**********' ?></small >
 					<?php } ?>
 				</td >
 			</tr >
@@ -121,16 +101,16 @@ if ( 0 === $profileId ) {
 				<th scope = "row" ><?= __( 'Default Locale', $domain ) ?></th >
 				<td >
 					<?php
-
 					$locales = array ();
-
 					foreach ( $settingsManager->getSiteHelper()->listBlogs() as $blogId ) {
-						$locales[ $blogId ] = $settingsManager->getSiteHelper()->getBlogLabelById( $settingsManager->getPluginProxy(),
-							$blogId );
+						$locales[ $blogId ] = $settingsManager
+							->getSiteHelper()
+							->getBlogLabelById(
+								$settingsManager->getPluginProxy(),
+								$blogId
+							);
 					}
-
 					?>
-
 					<p ><?= __( 'Site default language is: ', $this->getPluginInfo()->getDomain() ) ?>
 						: <?= $profile->getMainLocale()->getLabel(); ?></p >
 
@@ -152,12 +132,14 @@ if ( 0 === $profileId ) {
 				<td >
 					<?= WPAbstract::checkUncheckBlock(); ?>
 					<?php
-
 					$targetLocales = $profile->getTargetLocales();
 					foreach ( $locales as $blogId => $label ) {
+						if ( $blogId === $profile->getMainLocale()->getBlogId() ) {
+							continue;
+						}
+
 						$smartlingLocale = - 1;
 						$enabled         = false;
-
 
 						foreach ( $targetLocales as $targetLocale ) {
 							if ( $targetLocale->getBlogId() == $blogId ) {
@@ -165,12 +147,8 @@ if ( 0 === $profileId ) {
 								$enabled         = $targetLocale->isEnabled();
 								break;
 							}
-
-
 						}
-
 						?>
-
 
 						<div >
 							<p class = "plugin-locales" >
@@ -178,12 +156,8 @@ if ( 0 === $profileId ) {
 									$smartlingLocale, $enabled ); ?>
 							</p >
 						</div >
-
 					<?php
-
-
 					}
-
 					?>
 				</td >
 			</tr >
@@ -225,19 +199,4 @@ if ( 0 === $profileId ) {
 		</table >
 		<?php submit_button(); ?>
 	</form >
-
-	<p >
-	<ul >
-		<li >
-			<a href = "/wp-admin/admin-post.php?action=smartling_run_cron" target = "_blank" >
-				<?= __( 'Trigger cron tasks (only for smartling connector, opens in a new window)' ); ?>
-			</a >
-		</li >
-		<li >
-			<a href = "/wp-admin/admin-post.php?action=smartling_download_log_file" >
-				<?= __( 'Download current log file' ); ?>
-			</a >
-		</li >
-	</ul >
-	</p>
 </div >

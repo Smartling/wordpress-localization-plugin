@@ -7,6 +7,7 @@ use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingNotSupportedContentException;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -79,18 +80,26 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 		try {
 			if ( current_user_can( 'publish_posts' ) && $this->getInternalType( $taxonomyType ) ) {
 
-				$originalId = $this->getEntityHelper()->getOriginalContentId( $term->term_id, $taxonomyType );
+				$curBlogId          = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
+				$applicableProfiles = $this->getEntityHelper()->getSettingsManager()->findEntityByMainLocale( $curBlogId );
 
-				$submissions = $this->getManager()->find( array (
-					'source_id'  => $originalId,
-					'content_type' => $taxonomyType,
-				) );
+				if ( 0 < count( $applicableProfiles ) ) {
+					$submissions = $this->getManager()->find( array (
+						'source_blog_id' => $curBlogId,
+						'source_id'      => $term->term_id,
+						'content_type'   => $taxonomyType,
+					) );
 
-				$this->view( array (
-						'submissions' => $submissions,
-						'term'        => $term
-					)
-				);
+					$this->view( array (
+							'submissions' => $submissions,
+							'term'        => $term,
+							'profile'     => reset( $applicableProfiles ),
+						)
+					);
+				} else {
+					echo HtmlTagGeneratorHelper::tag( 'p', __( 'No suitable configuration profile found.' ) );
+				}
+
 			}
 		} catch ( SmartlingNotSupportedContentException $e ) {
 			// do not display if not supported yet
@@ -113,7 +122,6 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 			return;
 		}
 		$termType = $_POST['taxonomy'];
-		//reset(TaxonomyEntityAbstract::detectTermTaxonomyByTermId($term_id));
 
 		if ( ! in_array( $termType, WordpressContentTypeHelper::getSupportedTaxonomyTypes() ) ) {
 			return;
@@ -139,20 +147,21 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 			$core = Bootstrap::getContainer()->get( 'entrypoint' );
 
 			if ( count( $locales ) > 0 ) {
+
+				$curBlogId          = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
+				$applicableProfiles = $this->getEntityHelper()->getSettingsManager()->findEntityByMainLocale( $curBlogId );
+				Bootstrap::setCurrentProfile( reset( $applicableProfiles ) );
+
 				switch ( $_POST['sub'] ) {
 					case __( 'Send to Smartling' ):
-
-						$sourceBlog = $this->getPluginInfo()->getSettingsManager()->getLocales()->getDefaultBlog();
-						$originalId = (int) $this->getEntityHelper()->getOriginalContentId( $term_id, $termType );
-
 						foreach ( $locales as $blogId => $blogName ) {
 
 							$result = $core->sendForTranslation(
 								$termType,
-								$sourceBlog,
-								$originalId,
+								$curBlogId,
+								$term_id,
 								(int) $blogId,
-								$this->getEntityHelper()->getTarget( $term_id, $blogId )
+								$this->getEntityHelper()->getTarget( $term_id, $blogId, $termType )
 							);
 
 
@@ -160,13 +169,11 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 						break;
 					case __( 'Download' ):
 
-						$originalId = $this->getEntityHelper()->getOriginalContentId( $term_id, $termType );
-
-
 						$submissions = $this->getManager()->find(
 							array (
-								'source_id'  => $originalId,
-								'content_type' => $termType
+								'source_blog_id' => $curBlogId,
+								'source_id'      => $term_id,
+								'content_type'   => $termType,
 							)
 						);
 

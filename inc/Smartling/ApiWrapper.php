@@ -37,16 +37,18 @@ class ApiWrapper implements ApiWrapperInterface {
 		$this->settings = $configProfile;
 		$this->logger   = $logger;
 
-		$this->setApi();
+		$this->setApi( $configProfile );
 	}
 
-	public function setApi () {
-		$this->api = new SmartlingAPI(
-			$this->settings->getApiUrl(),
-			$this->settings->getProjectKey(),
-			$this->settings->getProjectId(),
-			SmartlingAPI::PRODUCTION_MODE
+	public function setApi ( ConfigurationProfileEntity $profile ) {
 
+		$this->settings = $profile;
+
+		$this->api = new SmartlingAPI(
+			$profile->getApiUrl(),
+			$profile->getProjectKey(),
+			$profile->getProjectId(),
+			SmartlingAPI::PRODUCTION_MODE
 		);
 	}
 
@@ -69,14 +71,24 @@ class ApiWrapper implements ApiWrapperInterface {
 				$entity->getTargetLocale()
 			) );
 
-		$this->logger->info( $logMessage, array ( __FILE__, __LINE__ ) );
+		$this->logger->info( $logMessage );
+
+		$smartlingLocale = '';
+
+		foreach ( $this->settings->getTargetLocales() as $locale ) {
+			if ( $locale->getBlogId() == $entity->getTargetBlogId() ) {
+				$smartlingLocale = $locale->getSmartlingLocale();
+				break;
+			}
+		}
+
 
 		// Try to download file.
 		$requestResultRaw = $this->api->downloadFile(
 			$entity->getFileUri(),
-			$this->getSmartLingLocale( $entity->getTargetBlogId() ),
+			$smartlingLocale,
 			array (
-				'retrievalType' => $this->settings->getAccountInfo()->getRetrievalType(),
+				'retrievalType' => $this->settings->getRetrievalType(),
 			)
 		);
 
@@ -84,7 +96,7 @@ class ApiWrapper implements ApiWrapperInterface {
 		if ( 0 === strlen( trim( $requestResultRaw ) ) ) {
 			$logMessage = vsprintf(
 				'Session [%s]. Empty or bad formatted response received by SmartlingAPI with settings: \n %s',
-				array ( $actionMark, json_encode( $this->settings->getAccountInfo()->toArray(), JSON_PRETTY_PRINT ) ) );
+				array ( $actionMark, json_encode( $this->settings->toArray(), JSON_PRETTY_PRINT ) ) );
 
 			$this->logger->error( $logMessage, array ( __FILE__, __LINE__ ) );
 
@@ -112,7 +124,7 @@ class ApiWrapper implements ApiWrapperInterface {
 				'Session [%s]. Trying to download file: \n Project ID : %s\n Action : %s\n URI : %s\n Locale : %s\n Error : response code -> %s and message -> %s',
 				array (
 					$actionMark,
-					$this->settings->getAccountInfo()->getProjectId(),
+					$this->settings->getProjectId(),
 					'download',
 					$entity->getFileUri(),
 					$entity->getTargetLocale(),
@@ -181,7 +193,7 @@ class ApiWrapper implements ApiWrapperInterface {
 				array (
 					$entity->getContentType(),
 					$entity->getSourceId(),
-					$this->settings->getAccountInfo()->getProjectId(),
+					$this->settings->getProjectId(),
 					'status',
 					$entity->getFileUri(),
 					$entity->getTargetLocale(),
@@ -248,10 +260,10 @@ class ApiWrapper implements ApiWrapperInterface {
 	private function getSmartLingLocale ( $targetBlog ) {
 		$locale = "";
 
-		$locales = $this->settings->getLocales()->getTargetLocales();
+		$locales = $this->settings->getTargetLocales();
 		foreach ( $locales as $item ) {
-			if ( $item->getBlog() == $targetBlog ) {
-				$locale = $item->getTarget();
+			if ( $item->getBlogId() == $targetBlog ) {
+				$locale = $item->getSmartlingLocale();
 				break;
 			}
 		}
@@ -272,12 +284,17 @@ class ApiWrapper implements ApiWrapperInterface {
 		             ->setApproved( 0 )
 		             ->setOverwriteApprovedLocales( 0 );
 
-		if ( $this->settings->getAccountInfo()->getAutoAuthorize() ) {
-			$paramBuilder->setLocalesToApprove( array ( $this->getSmartLingLocale( $entity->getTargetBlogId() ) ) );
-		}
+		if ( $this->settings->getAutoAuthorize() ) {
 
-		if ( $this->settings->getAccountInfo()->getCallBackUrl() ) {
-			$paramBuilder->setCallbackUrl( $this->settings->getAccountInfo()->getCallBackUrl() );
+			$slocale = '';
+			foreach ( $this->settings->getTargetLocales() as $locale ) {
+				if ( $locale->getBlogId() == $entity->getTargetBlogId() ) {
+					$slocale = $locale->getSmartlingLocale();
+				}
+
+			}
+
+			$paramBuilder->setLocalesToApprove( array ( $slocale ) );
 		}
 
 		return $paramBuilder->buildParameters();
@@ -332,7 +349,7 @@ class ApiWrapper implements ApiWrapperInterface {
 
 			$message = vsprintf( 'Smartling failed to upload xml file: \nProject Id: %s\nAction: %s\nURI: \nLocale: %s\nError: response code -> %s and message -> %s\nUpload params: %s',
 				array (
-					$this->settings->getAccountInfo()->getProjectId(),
+					$this->settings->getProjectId(),
 					'upload',
 					$entity->getFileUri(),
 					$entity->getTargetLocale(),

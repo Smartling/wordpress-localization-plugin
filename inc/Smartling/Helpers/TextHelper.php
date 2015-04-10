@@ -34,6 +34,10 @@ class TextHelper {
 
 		$cutPosition = 0;
 
+		$stringLength = strlen( $string );
+
+		$width = min( $width, $stringLength );
+
 		foreach ( $breakChars as $char ) {
 			$pos = strpos( $string, $char, $width );
 
