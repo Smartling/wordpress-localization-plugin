@@ -4,7 +4,7 @@ parameters:
     "polylang": false
 
   plugin.name: smartling-connector
-  plugin.version: 1.0.11
+  plugin.version: 1.0.12
   plugin.domain: smartling-connector
   wp.hooks:
     - 'wp.cron'
