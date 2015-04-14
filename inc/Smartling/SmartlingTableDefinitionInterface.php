@@ -32,4 +32,11 @@ interface SmartlingTableDefinitionInterface {
 	 * @return string
 	 */
 	static function getTableName ();
+
+	/**
+	 * @param $fieldName
+	 *
+	 * @return string
+	 */
+	static function getFieldLabel ( $fieldName );
 }

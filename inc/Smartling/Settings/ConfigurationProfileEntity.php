@@ -33,15 +33,15 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	 */
 	static function getFieldLabels () {
 		return array (
-			'id'             => __( 'ID' ),
-			'profile_name'   => __( 'Profile Name' ),
+			'id'               => __( 'ID' ),
+			'profile_name'     => __( 'Profile Name' ),
 			//'api_url'        => __( 'API URL' ),
-			'project_id'     => __( 'Project ID' ),
-			'project_key'    => __( 'Project KEY' ),
-			'is_active'      => __( 'Active' ),
-			'main_locale'    => __( 'Main Locale' ),
-			'auto_authorize' => __( 'Auto Authorize' ),
-			'retrieval_type' => __( 'Retrieval Type' ),
+			'project_id'       => __( 'Project ID' ),
+			'api_key'          => __( 'Api Key' ),
+			'is_active'        => __( 'Active' ),
+			'original_blog_id' => __( 'Main Locale' ),
+			'auto_authorize'   => __( 'Auto Authorize' ),
+			'retrieval_type'   => __( 'Retrieval Type' ),
 		);
 	}
 
@@ -50,18 +50,16 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	 */
 	static function getFieldDefinitions () {
 		return array (
-			'id'             => 'INT UNSIGNED NOT NULL AUTO_INCREMENT',
-			'profile_name'   => 'VARCHAR(255) NOT NULL',
-			'api_url'        => 'VARCHAR(255) NOT NULL',
-			'project_id'     => 'VARCHAR(9) NOT NULL',
-			'project_key'    => 'CHAR(36) NOT NULL',
-			'is_active'      => 'INT(1) UNSIGNED NOT NULL',
-			'main_locale'    => 'INT UNSIGNED NOT NULL',
-			'auto_authorize' => 'INT(1) UNSIGNED NOT NULL',
-			'retrieval_type' => vsprintf(
-				'enum(\'%s\') NOT NULL',
-				array ( implode( '\', \'', array_keys( self::getRetrievalTypes() ) ) ) ),
-			'target_locales' => 'TEXT NULL',
+			'id'               => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
+			'profile_name'     => self::DB_TYPE_STRING_STANDARD,
+			'api_url'          => self::DB_TYPE_STRING_STANDARD,
+			'project_id'       => 'CHAR(9) NOT NULL',
+			'api_key'          => 'CHAR(36) NOT NULL',
+			'is_active'        => self::DB_TYPE_UINT_SWITCH,
+			'original_blog_id' => self::DB_TYPE_U_BIGINT,
+			'auto_authorize'   => self::DB_TYPE_UINT_SWITCH,
+			'retrieval_type'   => self::DB_TYPE_STRING_SMALL,
+			'target_locales'   => 'TEXT NULL',
 		);
 	}
 
@@ -70,12 +68,12 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	 */
 	static function getSortableFields () {
 		return array (
-			'profile_name'   => __( 'Profile Name' ),
-			'project_id'     => __( 'Project ID' ),
-			'is_active'      => __( 'Active' ),
-			'main_locale'    => __( 'Main Locale' ),
-			'auto_authorize' => __( 'Auto Authorize' ),
-			'retrieval_type' => __( 'Retrieval Type' ),
+			'profile_name',
+			'project_id',
+			'is_active',
+			'original_blog_id',
+			'auto_authorize',
+			'retrieval_type',
 		);
 	}
 
@@ -90,11 +88,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 			),
 			array (
 				'type'    => 'index',
-				'columns' => array ( 'main_locale' )
-			),
-			array (
-				'type'    => 'index',
-				'columns' => array ( 'main_locale', 'is_active' )
+				'columns' => array ( 'original_blog_id', 'is_active' )
 			),
 		);
 	}
@@ -139,7 +133,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	 * @return mixed
 	 */
 	public function getApiUrl () {
-		return $this->stateFields['api_url'];
+		return $this->stateFields['api_url'] ? : 'https://capi.smartling.com/v1';
 	}
 
 	/**
@@ -170,16 +164,16 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	/**
 	 * @return mixed
 	 */
-	public function getProjectKey () {
-		return $this->stateFields['project_key'];
+	public function getApiKey () {
+		return $this->stateFields['api_key'];
 	}
 
 	/**
 	 * @param $projectKey
 	 */
-	public function setProjectKey ( $projectKey ) {
+	public function setApiKey ( $projectKey ) {
 
-		$this->stateFields['project_key'] = $projectKey;
+		$this->stateFields['api_key'] = $projectKey;
 
 		if ( ! preg_match( vsprintf( '/%s/ius', array ( self::REGEX_PROJECT_KEY ) ), trim( $projectKey, '/' ) ) ) {
 			$this->logger->warning( vsprintf( 'Got invalid project KEY: %s', array ( $projectKey ) ) );
@@ -203,12 +197,12 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	/**
 	 * @return Locale
 	 */
-	public function getMainLocale () {
-		return $this->stateFields['main_locale'];
+	public function getOriginalBlogId () {
+		return $this->stateFields['original_blog_id'];
 	}
 
-	public function setMainLocale ( $mainLocale ) {
-		$this->stateFields['main_locale'] = $mainLocale;
+	public function setOriginalBlogId ( $mainLocale ) {
+		$this->stateFields['original_blog_id'] = $mainLocale;
 	}
 
 	public function getAutoAuthorize () {
@@ -236,6 +230,10 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	 * @return TargetLocale[]
 	 */
 	public function getTargetLocales () {
+		if ( ! array_key_exists( 'target_locales', $this->stateFields ) ) {
+			$this->setTargetLocales( array () );
+		}
+
 		return $this->stateFields['target_locales'];
 	}
 
@@ -246,14 +244,16 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	public function toArray ( $addVirtualColumns = true ) {
 		$state = parent::toArray( false );
 
-		$state['main_locale'] = $this->getMainLocale()->getBlogId();
+		$state['original_blog_id'] = $this->getOriginalBlogId()->getBlogId();
 
 		$state['auto_authorize'] = ! $state['auto_authorize'] ? 0 : 1;
 		$state['is_active']      = ! $state['is_active'] ? 0 : 1;
 
 		$serializedTargetLocales = array ();
-		foreach ( $this->getTargetLocales() as $targetLocale ) {
-			$serializedTargetLocales[] = $targetLocale->toArray();
+		if ( 0 < count( $this->getTargetLocales() ) ) {
+			foreach ( $this->getTargetLocales() as $targetLocale ) {
+				$serializedTargetLocales[] = $targetLocale->toArray();
+			}
 		}
 		$state['target_locales'] = json_encode( $serializedTargetLocales );
 
@@ -261,30 +261,38 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	}
 
 	public static function fromArray ( array $array, LoggerInterface $logger ) {
+
+		if ( ! array_key_exists( 'target_locales', $array ) ) {
+			$array['target_locales'] = '';
+		}
+
 		/**
 		 * @var ConfigurationProfileEntity $obj
 		 */
 		$obj = parent::fromArray( $array, $logger );
 
 		$locale = new Locale();
-		$locale->setBlogId( $obj->getMainLocale() );
+		$locale->setBlogId( $obj->getOriginalBlogId() );
 
-		$obj->setMainLocale( $locale );
+		$obj->setOriginalBlogId( $locale );
 
 		$unserializedTargetLocales = array ();
 
-		$decoded = json_decode( $obj->getTargetLocales(), true );
+		$curLocales = $obj->getTargetLocales();
 
-		if ( is_array( $decoded ) ) {
-			foreach ( $decoded as $targetLocaleArr ) {
-				$unserializedTargetLocales[] = TargetLocale::fromArray( $targetLocaleArr );
+		if ( is_string( $curLocales ) ) {
+			$decoded = json_decode( $curLocales, true );
+
+			if ( is_array( $decoded ) ) {
+				foreach ( $decoded as $targetLocaleArr ) {
+					$unserializedTargetLocales[] = TargetLocale::fromArray( $targetLocaleArr );
+				}
+				$obj->setTargetLocales( $unserializedTargetLocales );
+
+			} else {
+				$obj->setTargetLocales( array () );
 			}
-			$obj->setTargetLocales( $unserializedTargetLocales );
-
-		} else {
-			$obj->setTargetLocales( array () );
 		}
-
 
 		return $obj;
 	}

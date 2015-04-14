@@ -107,7 +107,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract {
 		$this->cacheLocales();
 
 		if ( array_key_exists( $blogId, self::$_blogLocalesCache ) ) {
-			$locale = self::$_blogLocalesCache[ $this->helper->getCurrentBlogId() ];
+			$locale = self::$_blogLocalesCache[ $blogId ];
 		} else {
 			$message = vsprintf( 'The blog %s is not configured in multilingual press plugin', array ( $blogId ) );
 			$this->getLogger()->warning( $message );

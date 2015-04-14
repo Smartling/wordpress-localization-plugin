@@ -45,7 +45,7 @@ if ( 0 === $profileId ) {
 		<table class = "form-table" >
 			<tbody >
 			<tr >
-				<th scope = "row" ><?= __( 'Profile Name', $domain ) ?></th >
+				<th scope = "row" ><?= ConfigurationProfileEntity::getFieldLabel( 'profile_name' ); ?></th >
 				<td >
 					<input type = "text" name = "smartling_settings[profileName]"
 					       value = "<?= $profile->getProfileName(); ?>" >
@@ -53,7 +53,7 @@ if ( 0 === $profileId ) {
 				</td >
 			</tr >
 			<tr >
-				<th scope = "row" ><?= __( 'Active', $domain ) ?></th >
+				<th scope = "row" ><?= ConfigurationProfileEntity::getFieldLabel( 'is_active' ); ?></th >
 				<td >
 					<?=
 					HtmlTagGeneratorHelper::tag(
@@ -180,7 +180,7 @@ if ( 0 === $profileId ) {
 				</td >
 			</tr >
 			<tr >
-				<th scope = "row" ><?= __( 'Auto authorize', $domain ) ?></th >
+				<th scope = "row" ><?= ConfigurationProfileEntity::getFieldLabel( 'auto_authorize' ); ?></th >
 				<td >
 					<label class = "radio-label" >
 						<p >

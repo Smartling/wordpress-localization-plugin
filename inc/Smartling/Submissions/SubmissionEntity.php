@@ -11,19 +11,19 @@ use Smartling\Helpers\WordpressContentTypeHelper;
 /**
  * Class SubmissionEntity
  *
- * @property int|null       $id
+ * @property int            $id
  * @property string         $source_title
- * @property int|null       $source_blog_id
+ * @property int            $source_blog_id
  * @property string|null    $source_content_hash
  * @property string         $content_type
  * @property int            $source_id
  * @property string         $file_uri
  * @property string         $target_locale
  * @property int            $target_blog_id
- * @property int|null       $target_id
+ * @property int            $target_id
  * @property string         $submitter
  * @property string         $submission_date
- * @property string|null    $applied_date
+ * @property string         $applied_date
  * @property int            $approved_string_count
  * @property int            $completed_string_count
  * @property string         $status
@@ -70,23 +70,23 @@ class SubmissionEntity extends SmartlingEntityAbstract {
 
 	public static function getFieldDefinitions () {
 		return array (
-			'id'                     => 'INT UNSIGNED NOT NULL AUTO_INCREMENT',
-			'source_title'           => 'VARCHAR(255) NOT NULL',
-			'source_blog_id'         => 'INT UNSIGNED NOT NULL',
+			'id'                     => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
+			'source_title'           => self::DB_TYPE_STRING_STANDARD,
+			'source_blog_id'         => self::DB_TYPE_U_BIGINT,
 			'source_content_hash'    => 'CHAR(32) NULL',
 			'content_type'           => 'VARCHAR(32) NOT NULL',
-			'source_id'              => 'INT UNSIGNED NOT NULL',
+			'source_id'              => self::DB_TYPE_U_BIGINT,
 			'file_uri'               => 'VARCHAR(255) NULL',
-			'target_locale'          => 'VARCHAR(16) NOT NULL',
-			'target_blog_id'         => 'INT UNSIGNED NOT NULL',
-			'target_id'              => 'INT UNSIGNED NULL',
-			'submitter'              => 'VARCHAR(255) NOT NULL',
-			'submission_date'        => 'DATETIME NOT NULL',
-			'applied_date'           => 'DATETIME NULL',
-			'approved_string_count'  => 'INT UNSIGNED NULL',
-			'completed_string_count' => 'INT UNSIGNED NULL',
-			'word_count'             => 'INT UNSIGNED NULL',
-			'status'                 => 'VARCHAR(16) NOT NULL',
+			'target_locale'          => self::DB_TYPE_STRING_SMALL,
+			'target_blog_id'         => self::DB_TYPE_U_BIGINT,
+			'target_id'              => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_DEFAULT_ZERO,
+			'submitter'              => self::DB_TYPE_STRING_STANDARD,
+			'submission_date'        => self::DB_TYPE_DATETIME,
+			'applied_date'           => self::DB_TYPE_DATETIME,
+			'approved_string_count'  => self::DB_TYPE_U_BIGINT,
+			'completed_string_count' => self::DB_TYPE_U_BIGINT,
+			'word_count'             => self::DB_TYPE_U_BIGINT,
+			'status'                 => self::DB_TYPE_STRING_SMALL,
 		);
 	}
 

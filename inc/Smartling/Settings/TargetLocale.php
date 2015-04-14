@@ -47,13 +47,11 @@ class TargetLocale extends Locale {
 		$this->enabled = $enabled;
 	}
 
-
 	/**
 	 * @return array
 	 */
 	public function toArray () {
 		return array (
-			'label'           => $this->getLabel(),
 			'smartlingLocale' => $this->getSmartlingLocale(),
 			'enabled'         => $this->isEnabled(),
 			'blogId'          => $this->getBlogId()
@@ -68,7 +66,6 @@ class TargetLocale extends Locale {
 	public static function fromArray ( array $objState ) {
 		$obj        = new self();
 		$properties = array (
-			'label',
 			'smartlingLocale',
 			'enabled',
 			'blogId'

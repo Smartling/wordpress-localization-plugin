@@ -272,7 +272,7 @@ abstract class WPAbstract {
 		$locales = $ep->getProjectLocales();
 
 		if ( 0 === count( $locales ) ) {
-			$parts[] = HtmlTagGeneratorHelper::tag(
+			$sLocale = HtmlTagGeneratorHelper::tag(
 				'input',
 				'',
 				array (
@@ -280,7 +280,7 @@ abstract class WPAbstract {
 					'type' => 'text'
 				) );
 		} else {
-			$parts[] = HtmlTagGeneratorHelper::tag(
+			$sLocale = HtmlTagGeneratorHelper::tag(
 				'select',
 				HtmlTagGeneratorHelper::renderSelectOptions(
 					$smartlingName,
@@ -290,6 +290,11 @@ abstract class WPAbstract {
 					'name' => vsprintf( 'smartling_settings[targetLocales][%s][target]', array ( $blogId ) )
 				) );
 		}
+
+		$parts   = array (
+			HtmlTagGeneratorHelper::tag( 'td', implode( '', $parts ), array ( 'style' => 'display:table-cell;' ) )
+		);
+		$parts[] = HtmlTagGeneratorHelper::tag( 'td', $sLocale, array ( 'style' => 'display:table-cell;' ) );
 
 
 		return implode( '', $parts );

@@ -183,14 +183,14 @@ class ConfigurationProfilesWidget extends \WP_List_Table {
 			$row = $element->toArray();
 
 			$row['profile_name']   = $this->applyRowActions( $row );
-			$row['project_key']    = mb_substr( $row['project_key'], 0, 9, 'utf8' ) . '...';
+			$row['api_key']        = mb_substr( $row['api_key'], 0, 9, 'utf8' ) . '...';
 			$row['is_active']      = 0 < $row['is_active'] ? __( 'Yes' ) : __( 'No' );
 			$row['auto_authorize'] = 0 < $row['auto_authorize'] ? __( 'Yes' ) : __( 'No' );
 
-			$row['retrieval_type'] = $types[ $row['retrieval_type'] ];
-			$row['main_locale']    = $this->manager->getSiteHelper()->getBlogLabelById( $this->manager->getPluginProxy(),
-				$row['main_locale'] );
-			$dataAsArray[]         = $row;
+			$row['retrieval_type']   = $types[ $row['retrieval_type'] ];
+			$row['original_blog_id'] = $this->manager->getSiteHelper()->getBlogLabelById( $this->manager->getPluginProxy(),
+				$row['original_blog_id'] );
+			$dataAsArray[]           = $row;
 		}
 
 		$this->items = $dataAsArray;

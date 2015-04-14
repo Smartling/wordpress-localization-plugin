@@ -199,7 +199,7 @@ class QueryBuilder {
 			self::escapeName( $tableName ),
 			self::buildFieldListString( array_keys( $fieldValueList ) ),
 			implode( ',', array_map( function ( $item ) {
-				return $item == null ? "null" : "'{$item}'";
+				return null === $item ? 'null' : "'{$item}'";
 			}, self::escapeValues( array_values( $fieldValueList ) ) ) )
 		) );
 

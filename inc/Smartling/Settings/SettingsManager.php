@@ -38,10 +38,13 @@ class SettingsManager extends EntityManagerAbstract {
 		if ( $validRequest ) {
 			$dataQuery  = $this->buildQuery( $sortOptions, $pageOptions );
 			$countQuery = $this->buildCountQuery();
-			$totalCount = $this->getDbal()->fetch( $countQuery );
-			// extracting from result
-			$totalCount = (int) $totalCount[0]->cnt;
-			$result     = $this->fetchData( $dataQuery );
+			$tc         = $this->getDbal()->fetch( $countQuery );
+			if ( 1 === count( $tc ) ) {
+				// extracting from result
+				$totalCount = (int) $tc[0]->cnt;
+			}
+
+			$result = $this->fetchData( $dataQuery );
 		}
 
 		return $result;
@@ -104,7 +107,7 @@ class SettingsManager extends EntityManagerAbstract {
 		$conditionBlock->addCondition(
 			Condition::getCondition(
 				ConditionBuilder::CONDITION_SIGN_EQ,
-				'main_locale',
+				'original_blog_id',
 				array ( $mainLocale )
 			)
 		);
@@ -197,9 +200,9 @@ class SettingsManager extends EntityManagerAbstract {
 	}
 
 	protected function updateLabels ( ConfigurationProfileEntity $entity ) {
-		$mainLocaleBlogId = $entity->getMainLocale()->getBlogId();
+		$mainLocaleBlogId = $entity->getOriginalBlogId()->getBlogId();
 		if ( 0 < $mainLocaleBlogId ) {
-			$entity->getMainLocale()->setLabel(
+			$entity->getOriginalBlogId()->setLabel(
 				$this->getSiteHelper()->getBlogLabelById(
 					$this->getPluginProxy(),
 					$mainLocaleBlogId
@@ -207,10 +210,13 @@ class SettingsManager extends EntityManagerAbstract {
 			);
 		}
 
-		foreach ( $entity->getTargetLocales() as $targetLocale ) {
-			$blogId = $targetLocale->getBlogId();
-			if ( 0 < $blogId ) {
-				$targetLocale->setLabel( $this->getSiteHelper()->getBlogLabelById( $this->getPluginProxy(), $blogId ) );
+		if ( 0 < count( $entity->getTargetLocales() ) ) {
+			foreach ( $entity->getTargetLocales() as $targetLocale ) {
+				$blogId = $targetLocale->getBlogId();
+				if ( 0 < $blogId ) {
+					$targetLocale->setLabel( $this->getSiteHelper()->getBlogLabelById( $this->getPluginProxy(),
+						$blogId ) );
+				}
 			}
 		}
 

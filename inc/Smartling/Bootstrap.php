@@ -201,7 +201,6 @@ class Bootstrap {
 	}
 
 	public function uninstall () {
-		$this->fromContainer( 'manager.settings' )->uninstall();
 		$this->fromContainer( 'site.db' )->uninstall();
 	}
 

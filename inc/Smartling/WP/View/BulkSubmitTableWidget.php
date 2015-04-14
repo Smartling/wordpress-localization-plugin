@@ -267,7 +267,7 @@ class BulkSubmitTableWidget extends WP_List_Table {
 			if ( is_array( $submissions ) && count( $locales ) > 0 ) {
 				foreach ( $submissions as $submission ) {
 					list( $id, $type ) = explode( '-', $submission );
-					$curBlogId = $this->getProfile()->getMainLocale()->getBlogId();
+					$curBlogId = $this->getProfile()->getOriginalBlogId()->getBlogId();
 
 					foreach ( $locales as $blogId => $blogName ) {
 						$result = $ep->createForTranslation( $type, $curBlogId, $id, (int) $blogId );
@@ -303,7 +303,7 @@ class BulkSubmitTableWidget extends WP_List_Table {
 				 */
 				$ep = Bootstrap::getContainer()->get( 'entrypoint' );
 
-				$curBlogId = $this->getProfile()->getMainLocale()->getBlogId();
+				$curBlogId = $this->getProfile()->getOriginalBlogId()->getBlogId();
 
 				foreach ( $locales as $blogId => $blogName ) {
 					$result = $ep->createForTranslation(
@@ -377,8 +377,9 @@ class BulkSubmitTableWidget extends WP_List_Table {
 				$row = $this->extractFields( $item, $contentTypeFilterValue );
 
 				$entities = $this->getManager()->find( array (
-						'source_id'    => $row['id'],
-						'content_type' => $row['type']
+						'source_blog_id' => $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
+						'source_id'      => $row['id'],
+						'content_type'   => $row['type']
 					)
 				);
 

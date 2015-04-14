@@ -116,7 +116,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 		}
 
 		if ( array_key_exists( 'apiKey', $settings ) ) {
-			$profile->setProjectKey( $settings['apiKey'] );
+			$profile->setApiKey( $settings['apiKey'] );
 		}
 
 		if ( array_key_exists( 'retrievalType', $settings ) ) {
@@ -145,7 +145,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 				)
 			);
 
-			$profile->setMainLocale( $locale );
+			$profile->setOriginalBlogId( $locale );
 
 
 			//$targetLocales->setDefaultBlog( $defaultBlogId );

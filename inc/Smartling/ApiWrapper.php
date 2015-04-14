@@ -46,7 +46,7 @@ class ApiWrapper implements ApiWrapperInterface {
 
 		$this->api = new SmartlingAPI(
 			$profile->getApiUrl(),
-			$profile->getProjectKey(),
+			$profile->getApiKey(),
 			$profile->getProjectId(),
 			SmartlingAPI::PRODUCTION_MODE
 		);

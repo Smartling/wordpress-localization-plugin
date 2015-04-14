@@ -445,6 +445,13 @@ class SubmissionManager extends EntityManagerAbstract {
 		$is_insert = in_array( $entityId, array ( 0, null ), true );
 
 		$fields = $entity->toArray( false );
+
+		foreach ( $fields as $field => $value ) {
+			if ( null === $value ) {
+				unset( $fields[ $field ] );
+			}
+		}
+
 		unset ( $fields['id'] );
 
 		if ( $is_insert ) {
@@ -521,7 +528,7 @@ class SubmissionManager extends EntityManagerAbstract {
 		);
 
 		if ( null !== $targetEntity ) {
-			$params['target_id'] = $targetEntity;
+			$params['target_id'] = (int) $targetEntity;
 		}
 
 		$entities = $this->find( $params );
@@ -530,11 +537,7 @@ class SubmissionManager extends EntityManagerAbstract {
 			$entity = reset( $entities );
 		} else {
 			$entity = $this->createSubmission( $params );
-			$entity->setTargetLocale(
-				$localizationPluginProxy->getBlogLocaleById(
-					$entity->getTargetBlogId()
-				)
-			);
+			$entity->setTargetLocale( $localizationPluginProxy->getBlogLocaleById( $targetBlog ) );
 			$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_NEW );
 			$entity->setSubmitter( WordpressUserHelper::getUserLogin() );
 			$entity->setSourceTitle( 'no title' );

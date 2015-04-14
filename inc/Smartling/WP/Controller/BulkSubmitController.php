@@ -30,7 +30,7 @@ class BulkSubmitController
 	public function register () {
 		if ( ! DiagnosticsHelper::isBlocked() ) {
 			//disabled for release
-			//add_action( 'admin_menu', array ( $this, 'menu' ) );
+			add_action( 'admin_menu', array ( $this, 'menu' ) );
 
 			//never show anymore in network mode
 			//add_action( 'network_admin_menu', array ( $this, 'menu' ) );
