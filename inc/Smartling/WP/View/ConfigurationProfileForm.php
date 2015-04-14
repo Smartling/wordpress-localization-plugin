@@ -87,7 +87,7 @@ if ( 0 === $profileId ) {
 			<tr >
 				<th scope = "row" ><?= __( 'Project Key', $domain ) ?></th >
 				<td >
-					<?php $key = $profile->getProjectKey(); ?>
+					<?php $key = $profile->getApiKey(); ?>
 					<input type = "text" id = "api_key" name = "apiKey" value = "" >
 					<input type = "hidden" name = "smartling_settings[apiKey]" value = "<?= $key ?>" >
 					<br >
@@ -112,7 +112,7 @@ if ( 0 === $profileId ) {
 					}
 					?>
 					<p ><?= __( 'Site default language is: ', $this->getPluginInfo()->getDomain() ) ?>
-						: <?= $profile->getMainLocale()->getLabel(); ?></p >
+						: <?= $profile->getOriginalBlogId()->getLabel(); ?></p >
 
 					<p >
 						<a href = "#" id = "change-default-locale" ><?= __( 'Change default locale',
@@ -121,7 +121,8 @@ if ( 0 === $profileId ) {
 					<br >
 					<?= HtmlTagGeneratorHelper::tag(
 						'select',
-						HtmlTagGeneratorHelper::renderSelectOptions( $profile->getMainLocale()->getBlogId(), $locales ),
+						HtmlTagGeneratorHelper::renderSelectOptions( $profile->getOriginalBlogId()->getBlogId(),
+							$locales ),
 						array ( 'name' => 'smartling_settings[defaultLocale]', 'id' => 'default-locales' ) );
 					?>
 				</td >
@@ -131,34 +132,34 @@ if ( 0 === $profileId ) {
 				<th scope = "row" ><?= __( 'Target Locales', $domain ) ?></th >
 				<td >
 					<?= WPAbstract::checkUncheckBlock(); ?>
-					<?php
-					$targetLocales = $profile->getTargetLocales();
-					foreach ( $locales as $blogId => $label ) {
-						if ( $blogId === $profile->getMainLocale()->getBlogId() ) {
-							continue;
-						}
-
-						$smartlingLocale = - 1;
-						$enabled         = false;
-
-						foreach ( $targetLocales as $targetLocale ) {
-							if ( $targetLocale->getBlogId() == $blogId ) {
-								$smartlingLocale = $targetLocale->getSmartlingLocale();
-								$enabled         = $targetLocale->isEnabled();
-								break;
+					<table >
+						<?php
+						$targetLocales = $profile->getTargetLocales();
+						foreach ( $locales as $blogId => $label ) {
+							if ( $blogId === $profile->getOriginalBlogId()->getBlogId() ) {
+								continue;
 							}
-						}
-						?>
 
-						<div >
-							<p class = "plugin-locales" >
+							$smartlingLocale = - 1;
+							$enabled         = false;
+
+							foreach ( $targetLocales as $targetLocale ) {
+								if ( $targetLocale->getBlogId() == $blogId ) {
+									$smartlingLocale = $targetLocale->getSmartlingLocale();
+									$enabled         = $targetLocale->isEnabled();
+									break;
+								}
+							}
+							?>
+
+							<tr >
 								<?= WPAbstract::settingsPageTsargetLocaleCheckbox( $profile, $label, $blogId,
 									$smartlingLocale, $enabled ); ?>
-							</p >
-						</div >
-					<?php
-					}
-					?>
+							</tr >
+						<?php
+						}
+						?>
+					</table >
 				</td >
 			</tr >
 			<tr >
