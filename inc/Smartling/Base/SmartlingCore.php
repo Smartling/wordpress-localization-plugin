@@ -16,6 +16,7 @@ use Smartling\Helpers\XmlEncoder;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Processors\PropertyDescriptor;
 use Smartling\Processors\PropertyProcessors\PropertyProcessorFactory;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -86,8 +87,6 @@ class SmartlingCore {
 	 * @return ApiWrapperInterface
 	 */
 	public function getApiWrapper () {
-		$this->apiWrapper->setApi( Bootstrap::getConfigurationProfile() );
-
 		return $this->apiWrapper;
 	}
 
@@ -217,26 +216,7 @@ class SmartlingCore {
 		}
 	}
 
-	/**
-	 * Switches the current configuration profile
-	 *
-	 * @param SubmissionEntity $submission
-	 */
-	private function setProfileBySubmission ( SubmissionEntity $submission ) {
-		$origBlogId = $submission->getSourceBlogId();
-		$profile    = $this->getSettings()->findEntityByMainLocale( $origBlogId );
-
-		if ( 0 === count( $profile ) ) {
-			$profile = $this->getSettings()->createProfile( array () );
-		} else {
-			$profile = reset( $profile );
-		}
-
-		Bootstrap::setCurrentProfile( $profile );
-	}
-
 	public function sendForTranslationBySubmission ( SubmissionEntity $submission ) {
-		$this->setProfileBySubmission( $submission );
 		$contentEntity = $this->readContentEntity( $submission );
 
 		$submission->setSourceContentHash( $contentEntity->calculateHash() );
@@ -360,7 +340,6 @@ class SmartlingCore {
 	}
 
 	public function downloadTranslationBySubmission ( SubmissionEntity $entity ) {
-		$this->setProfileBySubmission( $entity );
 		$messages = array ();
 
 		try {
@@ -583,7 +562,6 @@ class SmartlingCore {
 	 * @return array of error messages
 	 */
 	public function checkSubmissionByEntity ( SubmissionEntity $submission ) {
-		$this->setProfileBySubmission( $submission );
 		$messages = array ();
 
 		try {
@@ -693,9 +671,11 @@ class SmartlingCore {
 	}
 
 	/**
+	 * @param ConfigurationProfileEntity $profile
+	 *
 	 * @return array
 	 */
-	public function getProjectLocales () {
-		return $this->getApiWrapper()->getSupportedLocales();
+	public function getProjectLocales (ConfigurationProfileEntity $profile) {
+		return $this->getApiWrapper()->getSupportedLocales($profile);
 	}
 }

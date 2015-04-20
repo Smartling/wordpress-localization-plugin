@@ -3,12 +3,14 @@
 namespace Smartling;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\SDK\FileUploadParameterBuilder;
 use Smartling\SDK\SmartlingAPI;
 use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -19,7 +21,7 @@ use Smartling\Submissions\SubmissionEntity;
 class ApiWrapper implements ApiWrapperInterface {
 
 	/**
-	 * @var ConfigurationProfileEntity
+	 * @var SettingsManager
 	 */
 	private $settings;
 
@@ -33,17 +35,12 @@ class ApiWrapper implements ApiWrapperInterface {
 	 */
 	protected $api;
 
-	public function __construct ( ConfigurationProfileEntity $configProfile, LoggerInterface $logger ) {
-		$this->settings = $configProfile;
+	public function __construct ( SettingsManager $manager, LoggerInterface $logger ) {
+		$this->settings = $manager;
 		$this->logger   = $logger;
-
-		$this->setApi( $configProfile );
 	}
 
 	public function setApi ( ConfigurationProfileEntity $profile ) {
-
-		$this->settings = $profile;
-
 		$this->api = new SmartlingAPI(
 			$profile->getApiUrl(),
 			$profile->getApiKey(),
@@ -53,12 +50,35 @@ class ApiWrapper implements ApiWrapperInterface {
 	}
 
 	/**
+	 * @param SubmissionEntity $submission
+	 *
+	 * @return ConfigurationProfileEntity
+	 * @throws SmartlingDbException
+	 */
+	private function getConfigurationProfile ( SubmissionEntity $submission ) {
+		$mainBlogId = $submission->getSourceBlogId();
+
+		$possibleProfiles = $this->settings->findEntityByMainLocale( $mainBlogId );
+
+		if ( 0 < count( $possibleProfiles ) ) {
+			return reset( $possibleProfiles );
+		}
+		$message = vsprintf( 'No active profile found for main blog %s', array ( $mainBlogId ) );
+		$this->logger->warning( $message );
+		throw new SmartlingDbException( $message );
+	}
+
+	/**
 	 * @param SubmissionEntity $entity
 	 *
 	 * @return string
 	 * @throws SmartlingFileDownloadException
 	 */
 	public function downloadFile ( SubmissionEntity $entity ) {
+
+		$profile = $this->getConfigurationProfile( $entity );
+
+		$this->setApi( $profile );
 
 		$actionMark = dechex( crc32( microtime() ) ); // simple short note
 
@@ -75,40 +95,37 @@ class ApiWrapper implements ApiWrapperInterface {
 
 		$smartlingLocale = '';
 
-		foreach ( $this->settings->getTargetLocales() as $locale ) {
-			if ( $locale->getBlogId() == $entity->getTargetBlogId() ) {
+		foreach ( $profile->getTargetLocales() as $locale ) {
+			if ( $locale->getBlogId() === $entity->getTargetBlogId() ) {
 				$smartlingLocale = $locale->getSmartlingLocale();
 				break;
 			}
 		}
-
 
 		// Try to download file.
 		$requestResultRaw = $this->api->downloadFile(
 			$entity->getFileUri(),
 			$smartlingLocale,
 			array (
-				'retrievalType' => $this->settings->getRetrievalType(),
+				'retrievalType' => $profile->getRetrievalType(),
 			)
 		);
 
 		// zero length response
-		if ( 0 === strlen( trim( $requestResultRaw ) ) ) {
+		if ( '' === trim( $requestResultRaw ) ) {
 			$logMessage = vsprintf(
 				'Session [%s]. Empty or bad formatted response received by SmartlingAPI with settings: \n %s',
-				array ( $actionMark, json_encode( $this->settings->toArray(), JSON_PRETTY_PRINT ) ) );
-
-			$this->logger->error( $logMessage, array ( __FILE__, __LINE__ ) );
-
-			throw new SmartlingFileDownloadException( $logMessage, 0, __FILE__, __LINE__ );
+				array ( $actionMark, json_encode( $profile->toArray(), JSON_PRETTY_PRINT ) ) );
+			$this->logger->error( $logMessage );
+			throw new SmartlingFileDownloadException( $logMessage );
 		} else {
 			$message = vsprintf( 'Session [%s]. File downloaded. size: %s bytes, content: \'%s\'',
 				array (
 					$actionMark,
 					strlen( $requestResultRaw ),
 					$requestResultRaw,
-
-				) );
+				)
+			);
 			$this->logger->debug( $message );
 		}
 
@@ -132,9 +149,7 @@ class ApiWrapper implements ApiWrapperInterface {
 					implode( ' || ', $messages )
 				)
 			);
-
-			$this->logger->error( $logMessage, array ( __FILE__, __LINE__ ) );
-
+			$this->logger->error( $logMessage );
 			throw new SmartlingFileDownloadException( $logMessage );
 		}
 
@@ -149,35 +164,29 @@ class ApiWrapper implements ApiWrapperInterface {
 	 * @throws SmartlingNetworkException
 	 */
 	public function getStatus ( SubmissionEntity $entity ) {
-
 		if ( null === $entity ) {
-
-			$message = vsprintf( '%s::%s called by %s received null instead of instance of %', array (
-				__CLASS__,
-				__METHOD__,
-				get_called_class(),
-				'SubmissionEntity'
-			) );
-
-			$this->logger->error( $message, array ( __FILE__, __LINE__ ) );
-
-			throw new \InvalidArgumentException( $message, 0, __FILE__, __LINE__ );
-
+			$message = vsprintf(
+				'Received null instead of SubmissionEntity instance, called from %s',
+				array ( get_called_class() )
+			);
+			$this->logger->error( $message );
+			throw new \InvalidArgumentException( $message );
 		}
 
+		$profile = $this->getConfigurationProfile( $entity );
+
+		$this->setApi( $profile );
+
 		$rawResponse = $this->api->getStatus( $entity->getFileUri(),
-			$this->getSmartLingLocale( $entity->getTargetBlogId() ) );
+			$this->getSmartLingLocale( $profile, $entity->getTargetBlogId() ) );
 
 		$status_result = json_decode( $rawResponse );
 
 		if ( null === $status_result ) {
-
 			$message = vsprintf( 'File status commend: downloaded json is broken. JSON: \'%s\'',
 				array ( $rawResponse ) );
-
-			$this->logger->error( $message, array ( __FILE__, __LINE__ ) );
-
-			throw new SmartlingNetworkException( $message, 0, __FILE__, __LINE__ );
+			$this->logger->error( $message );
+			throw new SmartlingNetworkException( $message );
 		}
 
 		if ( ( 'SUCCESS' !== $this->api->getCodeStatus() ) || ! isset( $status_result->response->data ) ) {
@@ -201,11 +210,8 @@ class ApiWrapper implements ApiWrapperInterface {
 					implode( ' || ', $messages )
 				)
 			);
-
-			$this->logger->error( $logMessage, array ( __FILE__, __LINE__ ) );
-
+			$this->logger->error( $logMessage );
 			throw new SmartlingFileDownloadException( $logMessage );
-
 		}
 
 		$logMessage = vsprintf(
@@ -218,7 +224,7 @@ class ApiWrapper implements ApiWrapperInterface {
 			)
 		);
 
-		$this->logger->info( $logMessage, array ( __FILE__, __LINE__ ) );
+		$this->logger->info( $logMessage );
 
 		$entity->setApprovedStringCount( $status_result->response->data->approvedStringCount );
 		$entity->setCompletedStringCount( $status_result->response->data->completedStringCount );
@@ -245,7 +251,7 @@ class ApiWrapper implements ApiWrapperInterface {
 					$server_response
 				) );
 
-			$this->logger->error( $logMessage, array ( __FILE__, __LINE__ ) );
+			$this->logger->error( $logMessage );
 
 		}
 
@@ -253,16 +259,17 @@ class ApiWrapper implements ApiWrapperInterface {
 	}
 
 	/**
-	 * @param $targetBlog
+	 * @param ConfigurationProfileEntity $profile
+	 * @param                            $targetBlog
 	 *
 	 * @return string
 	 */
-	private function getSmartLingLocale ( $targetBlog ) {
-		$locale = "";
+	private function getSmartLingLocale ( ConfigurationProfileEntity $profile, $targetBlog ) {
+		$locale = '';
 
-		$locales = $this->settings->getTargetLocales();
+		$locales = $profile->getTargetLocales();
 		foreach ( $locales as $item ) {
-			if ( $item->getBlogId() == $targetBlog ) {
+			if ( $targetBlog === $item->getBlogId() ) {
 				$locale = $item->getSmartlingLocale();
 				break;
 			}
@@ -279,21 +286,22 @@ class ApiWrapper implements ApiWrapperInterface {
 	private function buildParams ( SubmissionEntity $entity ) {
 		$paramBuilder = new FileUploadParameterBuilder();
 
+		$profile = $this->getConfigurationProfile( $entity );
+
+		$this->setApi( $profile );
+
 		$paramBuilder->setFileUri( $entity->getFileUri() )
 		             ->setFileType( 'xml' )
 		             ->setApproved( 0 )
 		             ->setOverwriteApprovedLocales( 0 );
 
-		if ( $this->settings->getAutoAuthorize() ) {
-
+		if ( $profile->getAutoAuthorize() ) {
 			$slocale = '';
-			foreach ( $this->settings->getTargetLocales() as $locale ) {
-				if ( $locale->getBlogId() == $entity->getTargetBlogId() ) {
+			foreach ( $profile->getTargetLocales() as $locale ) {
+				if ( $locale->getBlogId() === $entity->getTargetBlogId() ) {
 					$slocale = $locale->getSmartlingLocale();
 				}
-
 			}
-
 			$paramBuilder->setLocalesToApprove( array ( $slocale ) );
 		}
 
@@ -310,8 +318,11 @@ class ApiWrapper implements ApiWrapperInterface {
 	 * @throws SmartlingFileUploadException
 	 */
 	public function uploadContent ( SubmissionEntity $entity, $xmlString = '', $filename = '' ) {
-
 		$params = $this->buildParams( $entity );
+
+		$profile = $this->getConfigurationProfile( $entity );
+
+		$this->setApi( $profile );
 
 		if ( '' !== $xmlString ) {
 			$uploadResultRaw = $this->api->uploadContent( $xmlString, $params );
@@ -367,7 +378,10 @@ class ApiWrapper implements ApiWrapperInterface {
 	/**
 	 * @inheritdoc
 	 */
-	public function getSupportedLocales () {
+	public function getSupportedLocales ( ConfigurationProfileEntity $profile ) {
+
+		$this->setApi( $profile );
+
 		$rawResponse = $this->api->getSupportedLocales();
 		$oResponse   = json_decode( $rawResponse );
 
@@ -375,58 +389,22 @@ class ApiWrapper implements ApiWrapperInterface {
 
 		switch ( true ) {
 			case ( false === $oResponse ) : {
-				$message = vsprintf(
-					'Failed decoding response message in %s in %s:%s. Message:\'%s\'',
-					array (
-						__METHOD__,
-						__FILE__,
-						__LINE__,
-						$rawResponse
-					)
-				);
-
+				$message = vsprintf( 'Failed decoding response message. Message:\'%s\'', array ( $rawResponse ) );
 				$this->logger->error( $message );
 				break;
 			}
 			case ( ! isset( $oResponse->response ) ): {
-				$message = vsprintf(
-					'Response does not contain body in %s in %s:%s. Message:\'%s\'',
-					array (
-						__METHOD__,
-						__FILE__,
-						__LINE__,
-						$rawResponse
-					)
-				);
-
+				$message = vsprintf( 'Response does not contain body. Message:\'%s\'', array ( $rawResponse ) );
 				$this->logger->error( $message );
 				break;
 			}
 			case ( ( ! isset( $oResponse->response->code ) ) || ( 'SUCCESS' !== $oResponse->response->code ) ): {
-				$message = vsprintf(
-					'Response has no SUCCESS response code in %s in %s:%s. Message:\'%s\'',
-					array (
-						__METHOD__,
-						__FILE__,
-						__LINE__,
-						$rawResponse
-					)
-				);
-
+				$message = vsprintf( 'Response has no SUCCESS response code. Message:\'%s\'', array ( $rawResponse ) );
 				$this->logger->error( $message );
 				break;
 			}
 			case ( ( isset( $oResponse->response->messages ) ) && ( 0 < count( $oResponse->response->messages ) ) ): {
-				$message = vsprintf(
-					'Response has error messages in %s in %s:%s. Message:\'%s\'',
-					array (
-						__METHOD__,
-						__FILE__,
-						__LINE__,
-						$rawResponse
-					)
-				);
-
+				$message = vsprintf( 'Response has error messages. Message:\'%s\'', array ( $rawResponse ) );
 				$this->logger->error( $message );
 				break;
 			}

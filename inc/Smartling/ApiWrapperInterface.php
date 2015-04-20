@@ -7,6 +7,7 @@ use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\SDK\SmartlingAPI;
 use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -61,7 +62,9 @@ interface ApiWrapperInterface {
 	function setApi ( ConfigurationProfileEntity $profile );
 
 	/**
+	 * @param ConfigurationProfileEntity $profile
+	 *
 	 * @return array
 	 */
-	function getSupportedLocales ();
+	function getSupportedLocales (ConfigurationProfileEntity $profile);
 }

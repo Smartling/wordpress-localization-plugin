@@ -189,10 +189,6 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 						$sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
 						$originalId = (int) $post_id;
 
-						$profile = $this->getEntityHelper()->getSettingsManager()->findEntityByMainLocale( $sourceBlog );
-
-						Bootstrap::setCurrentProfile( reset( $profile ) );
-
 						foreach ( $locales as $blogId => $blogName ) {
 
 							$result = $core->sendForTranslation(

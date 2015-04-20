@@ -262,14 +262,12 @@ abstract class WPAbstract {
 			HtmlTagGeneratorHelper::tag( 'label', implode( '', $parts ), array ( 'class' => 'radio-label' ) )
 		);
 
-		Bootstrap::setCurrentProfile( $profile );
-
 		/**
 		 * @var SmartlingCore $ep
 		 */
 		$ep = Bootstrap::getContainer()->get( 'entrypoint' );
 
-		$locales = $ep->getProjectLocales();
+		$locales = $ep->getProjectLocales($profile);
 
 		if ( 0 === count( $locales ) ) {
 			$sLocale = HtmlTagGeneratorHelper::tag(

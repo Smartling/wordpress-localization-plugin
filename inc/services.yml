@@ -30,11 +30,6 @@ parameters:
   submission.pagesize: 5
 
 services:
-  current.profile:
-    class: Smartling\Settings\ConfigurationProfileEntity
-    arguments:
-      - "@logger"
-
   processor.property.default:
     class: Smartling\Processors\PropertyProcessors\PropertyProcessorDefault
     arguments:
@@ -56,7 +51,7 @@ services:
   wrapper.sdk.api.smartling:
     class: Smartling\ApiWrapper
     arguments:
-      - "@current.profile"
+      - "@manager.settings"
       - "@logger"
 
   entrypoint:

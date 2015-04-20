@@ -98,7 +98,7 @@ class SettingsManager extends EntityManagerAbstract {
 		return $data;
 	}
 
-	public function findEntityByMainLocale ( $mainLocale ) {
+	public function findEntityByMainLocale ( $sourceBlogId ) {
 
 		$conditionBlock = ConditionBlock::getConditionBlock(
 			ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND
@@ -108,7 +108,7 @@ class SettingsManager extends EntityManagerAbstract {
 			Condition::getCondition(
 				ConditionBuilder::CONDITION_SIGN_EQ,
 				'original_blog_id',
-				array ( $mainLocale )
+				array ( $sourceBlogId )
 			)
 		);
 
