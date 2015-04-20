@@ -30,8 +30,15 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
+// We don't do anything on single sites anyway.
+if ( ! is_multisite() )
+{
+	return;
+}
+
 require_once plugin_dir_path( __FILE__ ) . 'inc/autoload.php';
 
+//defined('SMARTLING_COMPLETE_REMOVE') || define('SMARTLING_COMPLETE_REMOVE', true);
 use Smartling\Bootstrap;
 
 $bootstrap = new Bootstrap();

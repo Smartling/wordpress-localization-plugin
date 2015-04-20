@@ -201,7 +201,9 @@ class Bootstrap {
 	}
 
 	public function uninstall () {
-		$this->fromContainer( 'site.db' )->uninstall();
+		if ( defined( 'SMARTLING_COMPLETE_REMOVE' ) ) {
+			$this->fromContainer( 'site.db' )->uninstall();
+		}
 	}
 
 	/**
