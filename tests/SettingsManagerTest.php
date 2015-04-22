@@ -1,114 +1,315 @@
 <?php
 
+use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
-use Smartling\Settings\SettingsConfigurationProfile;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Settings\TargetLocale;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class SettingsManagerTest extends PHPUnit_Framework_TestCase {
 
+
+	/**
+	 * @var ContainerBuilder
+	 */
+	private $container;
+
+	/**
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
+	/**
+	 * @inheritdoc
+	 */
 	public function __construct ( $name = null, array $data = array (), $dataName = '' ) {
 		parent::__construct( $name, $data, $dataName );
 
-		$this->init();
+		$this->container = Bootstrap::getContainer();
+
+		$this->logger = $this->container->get( 'logger' );
+
+		$bs = new Bootstrap();
+		$bs->load();
 	}
 
-	private function init () {
-		if ( ! function_exists( 'get_site_option' ) ) {
-			function get_site_option ( $key, $default = null, $useCache = true ) {
-				switch ( $key ) {
-					case SettingsManager::SMARTLING_ACCOUNT_INFO: {
-						return array (
-							'apiUrl'        => 'https://capi.smartling.com/v1',
-							'projectId'     => 'a',
-							'key'           => 'b',
-							'retrievalType' => 'pseudo',
-							'callBackUrl'   => '',
-							'autoAuthorize' => true
-						);
-						break;
-					}
-					case SettingsManager::SMARTLING_LOCALES: {
-						return array (
-							'defaultLocale' => 'en-US',
-							'targetLocales' => array ( array ( 'locale'  => 'ru-Ru',
-							                                   'target'  => true,
-							                                   'enabled' => true,
-							                                   'blog'    => 2
-							)
-							),
-							'defaultBlog'   => 1
+	/**
+	 * @return PHPUnit_Framework_MockObject_MockObject
+	 */
+	private function setupDbAlMock () {
+		$dbalMock = $this
+			->getMockBuilder( 'Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapper' )
+			->setMethods(
+				array (
+					'query',
+					'completeTableName',
+					'getLastInsertedId',
+					'fetch',
+					'escape',
+					'__construct'
+				)
+			)
+			->setConstructorArgs(
+				array (
+					$this->container->get( 'logger' )
+				)
+			)
+			->setMockClassName( 'MockDb' )
+			->disableProxyingToOriginalMethods()
+			->getMock();
 
-						);
-						break;
-					}
-				}
+		return $dbalMock;
+	}
 
-			}
+	/**
+	 * @param string $id
+	 */
+	private function replaceDbAlInContainer ( $id = 'site.db' ) {
+		$dbalMock = $this->setupDbAlMock();
+
+		$this->container->set( 'site.db', $dbalMock );
+	}
+
+	/**
+	 * @param string   $profileName
+	 * @param int      $isActive
+	 * @param int      $originalBlogId
+	 * @param int      $autoAuthorize
+	 * @param int|null $id
+	 *
+	 * @return array
+	 */
+	private function getProfileDataStructure (
+		$profileName = 'Mock Profile',
+		$isActive = 1,
+		$originalBlogId = 1,
+		$autoAuthorize = 1,
+		$id = null
+	) {
+		return array (
+			'id'               => $id ? : rand( 0, PHP_INT_MAX ),
+			'profile_name'     => $profileName,
+			'api_url'          => 'httpq://mock.api.url/v0',
+			'project_id'       => '123456789',
+			'api_key'          => 'de305d54-75b4-431b-adb2-eb6b9e546014', // wrom wiki
+			'is_active'        => (int) $isActive,
+			'original_blog_id' => (int) $originalBlogId,
+			'auto_authorize'   => (int) $autoAuthorize,
+			'retrieval_type'   => 'pseudo',
+			'target_locales'   => json_encode( array (
+				(object) array (
+					'smartlingLocale' => 'es-ES',
+					'enabled'         => true,
+					'blogId'          => 2
+				),
+				(object) array (
+					'smartlingLocale' => 'fr-FR',
+					'enabled'         => true,
+					'blogId'          => 3
+				),
+				(object) array (
+					'smartlingLocale' => 'fr-FR',
+					'enabled'         => false,
+					'blogId'          => 4
+				),
+			) ),
+		);
+	}
+
+	/**
+	 * @param string   $profileName
+	 * @param int      $isActive
+	 * @param int      $originalBlogId
+	 * @param int      $autoAuthorize
+	 * @param int|null $id
+	 */
+	private function prepareMockProfile (
+		$profileName = 'Mock Profile',
+		$isActive = 1,
+		$originalBlogId = 1,
+		$autoAuthorize = 1,
+		$id = null
+	) {
+		/**
+		 * @var PHPUnit_Framework_MockObject_MockObject $mock
+		 */
+		$mock = $this->container->get( 'site.db' );
+
+		$mock->expects( self::at( 0 ) )->method( 'completeTableName' )->willReturn( 'wp_mock_table_name' );
+		$mock->expects( self::at( 1 ) )->method( 'fetch' )->willReturn(
+			array (
+				(object) $this->getProfileDataStructure( $profileName, $isActive, $originalBlogId, $autoAuthorize, $id )
+			) );
+	}
+
+	/**
+	 * @param int $count
+	 */
+	private function prepareSeveralProfiles ( $count = 2 ) {
+		$set = array ();
+
+		for ( $i = 0; $i < (int) $count; $i ++ ) {
+			$set[] = (object) $this->getProfileDataStructure();
 		}
+
+		/**
+		 * @var PHPUnit_Framework_MockObject_MockObject $mock
+		 */
+		$mock = $this->container->get( 'site.db' );
+
+		$mock->expects( self::at( 0 ) )->method( 'completeTableName' )->willReturn( 'wp_mock_table_name' );
+		$mock->expects( self::at( 1 ) )->method( 'fetch' )->willReturn( $set );
 	}
 
-	public function testSettingsLoad () {
+	public function testReadOneConfigurationProfileFromDatabase () {
+		$this->replaceDbAlInContainer();
+		$this->prepareMockProfile();
+
 		/**
 		 * @var SettingsManager $manager
 		 */
-		$manager = Bootstrap::getContainer()->get( 'manager.settings' );
+		$manager = $this->container->get( 'manager.settings' );
 
-		$manager->get();
+		$entity = $manager->findEntityByMainLocale( 1 );
 
-		$this->assertTrue(is_array($manager->getLocales()->getTargetLocales()));
+		self::assertTrue( 1 === count( $entity ) );
 	}
 
-	public function testCheckTargetLocaleValues()
-	{
+	public function testReadConfigurationProfileByOriginalBlogIdFromDatabase () {
+		$this->replaceDbAlInContainer();
+		$this->prepareMockProfile();
+
 		/**
 		 * @var SettingsManager $manager
 		 */
-		$manager = Bootstrap::getContainer()->get( 'manager.settings' );
+		$manager = $this->container->get( 'manager.settings' );
 
-		$manager->get();
+		$entity = $manager->findEntityByMainLocale( 1 );
 
-		$targetLocales = ($manager->getLocales()->getTargetLocales());
+		$profile = reset( $entity );
+		/**
+		 * @var ConfigurationProfileEntity $profile
+		 */
 
-		self::assertTrue(1 === count($targetLocales));
+		self::assertTrue( 1 === $profile->getOriginalBlogId()->getBlogId() );
+	}
 
+	public function testReadTwoConfigurationProfilesByOriginalBlogIdFromDatabase () {
+		$this->replaceDbAlInContainer();
+		$this->prepareSeveralProfiles();
+
+		/**
+		 * @var SettingsManager $manager
+		 */
+		$manager = $this->container->get( 'manager.settings' );
+
+		$entity = $manager->findEntityByMainLocale( 1 );
+
+		self::assertTrue( 2 === count( $entity ) );
+	}
+
+	public function testConfigurationProfileProperties () {
+		$this->replaceDbAlInContainer();
+		$this->prepareMockProfile( 'test profile' );
+
+		/**
+		 * @var SettingsManager $manager
+		 */
+		$manager = $this->container->get( 'manager.settings' );
+
+		$entity = $manager->findEntityByMainLocale( 1 );
+
+		$profile = reset( $entity );
+		/**
+		 * @var ConfigurationProfileEntity $profile
+		 */
+
+		self::assertTrue( 1 === $profile->getIsActive() );
+		self::assertTrue( true === $profile->getAutoAuthorize() );
+		self::assertTrue( 'test profile' === $profile->getProfileName() );
+
+	}
+
+	public function testConfigurationProfileTargetProfilesProperty () {
+		$this->replaceDbAlInContainer();
+		$this->prepareMockProfile();
+
+		/**
+		 * @var SettingsManager $manager
+		 */
+		$manager = $this->container->get( 'manager.settings' );
+
+		$entity = $manager->findEntityByMainLocale( 1 );
+
+		$profile = reset( $entity );
+		/**
+		 * @var ConfigurationProfileEntity $profile
+		 */
+		$targetLocales = $profile->getTargetLocales();
+		self::assertTrue( is_array( $targetLocales ) );
+		$targetLocale = reset( $targetLocales );
+		self::assertTrue( $targetLocale instanceof TargetLocale );
+	}
+
+	public function testConfigurationProfileTargetProfile () {
+		$this->replaceDbAlInContainer();
+		$this->prepareMockProfile();
+
+		/**
+		 * @var SettingsManager $manager
+		 */
+		$manager = $this->container->get( 'manager.settings' );
+
+		$entity = $manager->findEntityByMainLocale( 1 );
+
+		$profile = reset( $entity );
+		/**
+		 * @var ConfigurationProfileEntity $profile
+		 */
+		$targetLocales = $profile->getTargetLocales();
 		/**
 		 * @var TargetLocale $targetLocale
 		 */
-		$targetLocale = reset($targetLocales);
+		$targetLocale = reset( $targetLocales );
 
-		self::assertTrue($targetLocale instanceof TargetLocale);
-
-		self::assertTrue(2 === $targetLocale->getBlog());
-
-		self::assertTrue(true === $targetLocale->getEnabled());
+		self::assertTrue( 2 === $targetLocale->getBlogId() );
+		self::assertTrue( true === $targetLocale->isEnabled() );
+		self::assertTrue( 'es-ES' === $targetLocale->getSmartlingLocale() );
 	}
 
-	public function testAccountInfo()
-	{
+	public function testSaveConfigurationProfile () {
+		$this->replaceDbAlInContainer();
+		$this->prepareMockProfile();
+
 		/**
 		 * @var SettingsManager $manager
 		 */
-		$manager = Bootstrap::getContainer()->get( 'manager.settings' );
+		$manager = $this->container->get( 'manager.settings' );
 
-		$manager->get();
+		$entity = $manager->findEntityByMainLocale( 1 );
 
-		$ai = $manager->getAccountInfo();
+		$profile = reset( $entity );
 
-		self::assertTrue($ai instanceof SettingsConfigurationProfile);
-	}
-
-	public function testAutoAuthorizeIsTrue()
-	{
 		/**
-		 * @var SettingsManager $manager
+		 * @var ConfigurationProfileEntity $profile
 		 */
-		$manager = Bootstrap::getContainer()->get( 'manager.settings' );
 
-		$manager->get();
+		$profile->setId( 0 ); // force re-insert
 
-		$ai = $manager->getAccountInfo();
+		/**
+		 * @var PHPUnit_Framework_MockObject_MockObject $mock
+		 */
+		$mock = $this->container->get( 'site.db' );
 
-		self::assertTrue($ai->getAutoAuthorize());
+		$mock->expects( self::at( 0 ) )->method( 'completeTableName' )->willReturn( 'wp_mock_table_name' );
+		$mock->expects( self::at( 1 ) )->method( 'query' )->willReturn( true );
+		$mock->expects( self::at( 2 ) )->method( 'getLastInsertedId' )->willReturn( 88 );
+
+		$newEntity = $manager->storeEntity( $profile );
+
+		$new_id = $newEntity->getId();
+
+		self::assertTrue( $new_id === 88 );
 	}
 }

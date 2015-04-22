@@ -250,6 +250,7 @@ class SmartlingCore {
 			$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS );
 
 		} catch ( Exception $e ) {
+			$this->getLogger()->error($e->getMessage());
 			$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_FAILED );
 		}
 
@@ -675,7 +676,7 @@ class SmartlingCore {
 	 *
 	 * @return array
 	 */
-	public function getProjectLocales (ConfigurationProfileEntity $profile) {
-		return $this->getApiWrapper()->getSupportedLocales($profile);
+	public function getProjectLocales ( ConfigurationProfileEntity $profile ) {
+		return $this->getApiWrapper()->getSupportedLocales( $profile );
 	}
 }

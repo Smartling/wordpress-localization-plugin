@@ -116,7 +116,7 @@ abstract class EntityManagerAbstract {
 	 */
 	public function __construct (
 		LoggerInterface $logger,
-		SmartlingToCMSDatabaseAccessWrapperInterface $dbal,
+		$dbal,
 		$pageSize,
 		SiteHelper $siteHelper,
 		$localizationPluginProxyInterface

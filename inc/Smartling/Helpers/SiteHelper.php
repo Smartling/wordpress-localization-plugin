@@ -186,7 +186,7 @@ class SiteHelper {
 		return $label;
 	}
 
-	public function getBlogLabelById ( LocalizationPluginProxyInterface $localizationPluginProxyInterfacem, $blogId ) {
+	public function getBlogLabelById ( $localizationPluginProxyInterfacem, $blogId ) {
 		return vsprintf(
 			'%s - %s',
 			array (

@@ -38,6 +38,15 @@ class ApiWrapperTest extends PHPUnit_Framework_TestCase {
 
 		$this->container->set( 'multilang.proxy', $this->getTranslationProxyMock() );
 
+		$this->container->set( 'site.db', $this->getMockDatabaseAL() );
+
+		$this->prepareSettingsManager();
+		$this->ep = $this->container->get( 'entrypoint' );
+	}
+
+	private function prepareSettingsManager () {
+		$this->prepareMockProfile();
+
 		$this->container->set(
 			'wrapper.sdk.api.smartling',
 			new ApiWrapperMock(
@@ -45,10 +54,6 @@ class ApiWrapperTest extends PHPUnit_Framework_TestCase {
 				$this->container->get( 'logger' )
 			)
 		);
-
-		$this->container->set( 'site.db', $this->getMockDatabaseAL() );
-
-		$this->ep = $this->container->get( 'entrypoint' );
 	}
 
 	/**
@@ -101,7 +106,6 @@ class ApiWrapperTest extends PHPUnit_Framework_TestCase {
 		return $translationMock;
 	}
 
-
 	/**
 	 * @return SubmissionEntity
 	 */
@@ -112,21 +116,21 @@ class ApiWrapperTest extends PHPUnit_Framework_TestCase {
 		$manager = $this->container->get( 'manager.submission' );
 
 		$fields = array (
-			'id'                   => null,
-			'source_title'          => 'Automatic generated title',
-			'source_blog_id'           => 1,
+			'id'                     => null,
+			'source_title'           => 'Automatic generated title',
+			'source_blog_id'         => 1,
 			'source_content_hash'    => md5( '' ),
-			'content_type'          => WordpressContentTypeHelper::CONTENT_TYPE_POST,
-			'source_id'           => '/ol"olo',
-			'file_uri'              => "/tralala'",
-			'target_locale'         => 'es_US',
-			'target_blog_id'           => 2,
-			'target_id'           => '',
-			'submitter'            => 'admin',
-			'submission_date'       => time(),
+			'content_type'           => WordpressContentTypeHelper::CONTENT_TYPE_POST,
+			'source_id'              => '/ol"olo',
+			'file_uri'               => '/tralala\'',
+			'target_locale'          => 'es_US',
+			'target_blog_id'         => 2,
+			'target_id'              => '',
+			'submitter'              => 'admin',
+			'submission_date'        => time(),
 			'approved_string_count'  => 37,
 			'completed_string_count' => 14,
-			'status'               => 'New',
+			'status'                 => 'New'
 		);
 
 		return $manager->createSubmission( $fields );
@@ -137,11 +141,17 @@ class ApiWrapperTest extends PHPUnit_Framework_TestCase {
 
 		$msg = $this->ep->checkSubmissionByEntity( $entity );
 
-		self::assertTrue( 0 === count( $msg ) && 100 === $entity->getCompletionPercentage() );
+		self::assertTrue( 0 === count( $msg ),
+			vsprintf( 'Expected no error messages. Got: ', array ( implode( ',', $msg ) ) ) );
+
+		self::assertTrue( 100 === $entity->getCompletionPercentage() );
 	}
 
 	public function testUpload () {
 		$entity = $this->getSubmissionEntity();
+		$entity->setId( 1 );
+
+		$this->prepareMockProfile();
 
 		$result = $this->ep->sendForTranslationBySubmission( $entity );
 
@@ -160,5 +170,64 @@ class ApiWrapperTest extends PHPUnit_Framework_TestCase {
 
 		self::assertTrue( 0 === count( $msg ), var_export( $msg, true ) );
 	}
+
+
+	/**
+	 * @param string   $profileName
+	 * @param int      $isActive
+	 * @param int      $originalBlogId
+	 * @param int      $autoAuthorize
+	 * @param int|null $id
+	 *
+	 * @return array
+	 */
+	private function getProfileDataStructure (
+		$profileName = 'Mock Profile',
+		$isActive = 1,
+		$originalBlogId = 1,
+		$autoAuthorize = 1,
+		$id = null
+	) {
+		return array (
+			'id'               => $id ? : rand( 0, PHP_INT_MAX ),
+			'profile_name'     => $profileName,
+			'api_url'          => 'httpq://mock.api.url/v0',
+			'project_id'       => '123456789',
+			'api_key'          => 'de305d54-75b4-431b-adb2-eb6b9e546014', // wrom wiki
+			'is_active'        => (int) $isActive,
+			'original_blog_id' => (int) $originalBlogId,
+			'auto_authorize'   => (int) $autoAuthorize,
+			'retrieval_type'   => 'pseudo',
+			'target_locales'   => json_encode( array (
+				(object) array (
+					'smartlingLocale' => 'es-ES',
+					'enabled'         => true,
+					'blogId'          => 2
+				),
+				(object) array (
+					'smartlingLocale' => 'fr-FR',
+					'enabled'         => true,
+					'blogId'          => 3
+				),
+				(object) array (
+					'smartlingLocale' => 'fr-FR',
+					'enabled'         => false,
+					'blogId'          => 4
+				),
+			) ),
+		);
+	}
+
+	private function prepareMockProfile () {
+		/**
+		 * @var PHPUnit_Framework_MockObject_MockObject $mock
+		 */
+		$mock   = $this->container->get( 'site.db' );
+		$struct = array ( (object) $this->getProfileDataStructure() );
+		$mock->expects( self::any() )->method( 'completeTableName' )->willReturn( 'wp_mock_table_name' );
+		$mock->expects( self::any() )->method( 'fetch' )->willReturn( $struct );
+	}
+
+
 }
 

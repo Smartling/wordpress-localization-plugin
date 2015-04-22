@@ -49,6 +49,14 @@ if ( ! function_exists( 'wp_get_sites' ) ) {
 				'site_id' => 1,
 				'blog_id' => 2
 			),
+			array (
+				'site_id' => 1,
+				'blog_id' => 3
+			),
+			array (
+				'site_id' => 1,
+				'blog_id' => 4
+			),
 		);
 	}
 }
