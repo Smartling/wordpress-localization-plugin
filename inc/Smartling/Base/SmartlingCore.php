@@ -250,7 +250,7 @@ class SmartlingCore {
 			$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS );
 
 		} catch ( Exception $e ) {
-			$this->getLogger()->error($e->getMessage());
+			$this->getLogger()->error( $e->getMessage() );
 			$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_FAILED );
 		}
 

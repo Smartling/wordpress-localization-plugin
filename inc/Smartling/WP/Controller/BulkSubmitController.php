@@ -1,13 +1,5 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: sergey@slepokurov.com
- * Date: 02.03.2015
- * Time: 11:44
- */
-
 namespace Smartling\WP\Controller;
-
 
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
@@ -29,11 +21,7 @@ class BulkSubmitController
 	 */
 	public function register () {
 		if ( ! DiagnosticsHelper::isBlocked() ) {
-			//disabled for release
 			add_action( 'admin_menu', array ( $this, 'menu' ) );
-
-			//never show anymore in network mode
-			//add_action( 'network_admin_menu', array ( $this, 'menu' ) );
 		}
 	}
 

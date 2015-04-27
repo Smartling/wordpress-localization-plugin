@@ -147,7 +147,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 			$core = Bootstrap::getContainer()->get( 'entrypoint' );
 
 			if ( count( $locales ) > 0 ) {
-				$curBlogId          = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
+				$curBlogId = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
 
 				switch ( $_POST['sub'] ) {
 					case __( 'Send to Smartling' ):

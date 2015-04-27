@@ -267,7 +267,7 @@ abstract class WPAbstract {
 		 */
 		$ep = Bootstrap::getContainer()->get( 'entrypoint' );
 
-		$locales = $ep->getProjectLocales($profile);
+		$locales = $ep->getProjectLocales( $profile );
 
 		if ( 0 === count( $locales ) ) {
 			$sLocale = HtmlTagGeneratorHelper::tag(

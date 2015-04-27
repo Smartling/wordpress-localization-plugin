@@ -66,5 +66,5 @@ interface ApiWrapperInterface {
 	 *
 	 * @return array
 	 */
-	function getSupportedLocales (ConfigurationProfileEntity $profile);
+	function getSupportedLocales ( ConfigurationProfileEntity $profile );
 }
