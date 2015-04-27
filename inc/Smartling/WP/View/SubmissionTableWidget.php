@@ -6,6 +6,7 @@ use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Helpers\DateTimeHelper;
+use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionManager;
@@ -61,11 +62,18 @@ class SubmissionTableWidget extends \WP_List_Table {
 	private $manager;
 
 	/**
-	 * @param SubmissionManager $manager
+	 * @var EntityHelper
 	 */
-	public function __construct ( SubmissionManager $manager ) {
-		$this->manager = $manager;
-		$this->source  = $_REQUEST;
+	private $entityHelper;
+
+	/**
+	 * @param SubmissionManager $manager
+	 * @param EntityHelper      $entityHelper
+	 */
+	public function __construct ( SubmissionManager $manager, EntityHelper $entityHelper ) {
+		$this->manager      = $manager;
+		$this->source       = $_REQUEST;
+		$this->entityHelper = $entityHelper;
 
 		$this->defaultValues[ self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME ] = $manager->getDefaultSubmissionStatus();
 
@@ -322,6 +330,7 @@ class SubmissionTableWidget extends \WP_List_Table {
 			$row['submission_date'] = DateTimeHelper::toWordpressLocalDateTime( DateTimeHelper::stringToDateTime( $row['submission_date'] ) );
 			$row['applied_date']    = '0000-00-00 00:00:00' === $row['applied_date'] ? __( 'Never' ) :
 				DateTimeHelper::toWordpressLocalDateTime( DateTimeHelper::stringToDateTime( $row['applied_date'] ) );
+			$row['target_locale']   = $this->entityHelper->getConnector()->getBlogNameByLocale( $row['target_locale'] );
 
 			if ( mb_strlen( $row['file_uri'], 'utf8' ) > $file_uri_max_chars ) {
 				$orig     = $row['file_uri'];

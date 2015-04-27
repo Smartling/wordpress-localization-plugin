@@ -186,12 +186,12 @@ class SiteHelper {
 		return $label;
 	}
 
-	public function getBlogLabelById ( $localizationPluginProxyInterfacem, $blogId ) {
+	public function getBlogLabelById ( $localizationPluginProxyInterface, $blogId ) {
 		return vsprintf(
 			'%s - %s',
 			array (
 				$this->getBlogNameById( $blogId ),
-				$localizationPluginProxyInterfacem->getBlogLanguageById( $blogId )
+				$localizationPluginProxyInterface->getBlogLocaleById( $blogId )
 			)
 		);
 	}

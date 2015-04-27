@@ -33,7 +33,7 @@ class SubmissionsPageController
 	}
 
 	public function renderPage () {
-		$table = new SubmissionTableWidget( $this->getManager() );
+		$table = new SubmissionTableWidget( $this->getManager(), $this->getEntityHelper() );
 		$this->view( $table );
 	}
 }

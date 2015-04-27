@@ -9,6 +9,10 @@ use Mlp_Site_Relations_Interface;
 use Psr\Log\LoggerInterface;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\QueryBuilder\Condition\Condition;
+use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
+use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
+use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
@@ -238,6 +242,44 @@ class MultiligualPressConnector extends LocalizationPluginAbstract {
 			$message = 'Seems like Multilingual Press plugin is not installed and/or activated. Cannot read blog locale.';
 			$this->getLogger()->warning( $message );
 		}
+
+		return $result;
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getBlogNameByLocale ( $locale ) {
+		/**
+		 * @var \wpdb $wpdb
+		 */
+		global $wpdb;
+
+		$tableName = 'mlp_languages';
+		$condition = ConditionBlock::getConditionBlock();
+		$condition->addCondition(
+			Condition::getCondition(
+				ConditionBuilder::CONDITION_SIGN_EQ,
+				'wp_locale',
+				array (
+					$locale
+				)
+			)
+		);
+		$query  = QueryBuilder::buildSelectQuery(
+			$wpdb->base_prefix . $tableName,
+			array (
+				'english_name'
+			),
+			$condition,
+			array (),
+			array (
+				'page'  => 1,
+				'limit' => 1
+			)
+		);
+		$r      = $wpdb->get_results( $query, ARRAY_A );
+		$result = 1 === count( $r ) ? $r[0]['english_name'] : $locale;
 
 		return $result;
 	}

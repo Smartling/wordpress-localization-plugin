@@ -163,7 +163,7 @@ class BulkSubmitTableWidget extends WP_List_Table {
 		$actions = array (
 			'send' => HtmlTagGeneratorHelper::tag( 'a', __( 'Send' ), array (
 				'href' => vsprintf( $linkTemplate,
-					array ( $_REQUEST['page'], 'sendSingle', $item['id'] . '-' . $item["type"] ) )
+					array ( $_REQUEST['page'], 'sendSingle', $item['id'] . '-' . $item['type'] ) )
 			) ),
 		);
 
@@ -386,7 +386,8 @@ class BulkSubmitTableWidget extends WP_List_Table {
 				if ( count( $entities ) > 0 ) {
 					$locales = array ();
 					foreach ( $entities as $entity ) {
-						$locales[] = $entity->getTargetLocale();
+						$locales[] =
+							$this->entityHelper->getConnector()->getBlogNameByLocale( $entity->getTargetLocale() );
 					}
 
 					$row['locales'] = implode( ', ', $locales );

@@ -112,7 +112,8 @@ if ( 0 === $profileId ) {
 					}
 					?>
 					<p ><?= __( 'Site default language is: ', $this->getPluginInfo()->getDomain() ) ?>
-						: <?= $profile->getOriginalBlogId()->getLabel(); ?></p >
+						<?= HtmlTagGeneratorHelper::tag( 'strong',
+							$profile->getOriginalBlogId()->getLabel() ); ?></p >
 
 					<p >
 						<a href = "#" id = "change-default-locale" ><?= __( 'Change default locale',

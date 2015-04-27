@@ -82,4 +82,11 @@ interface LocalizationPluginProxyInterface {
 	 * @return string
 	 */
 	function getBlogLanguageById ( $blogId );
+
+	/**
+	 * @param string $locale
+	 *
+	 * @return string mixed
+	 */
+	public function getBlogNameByLocale ( $locale );
 }
