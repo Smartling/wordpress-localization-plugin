@@ -178,7 +178,7 @@ class BulkSubmitTableWidget extends WP_List_Table {
 	 *
 	 * @return string
 	 */
-	public function column_cb ( array $item ) {
+	public function column_cb ( $item ) {
 
 		$t = vsprintf( '%s-%s', array ( $item['id'], $item['type'] ) );
 

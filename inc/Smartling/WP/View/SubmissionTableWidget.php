@@ -133,7 +133,7 @@ class SubmissionTableWidget extends \WP_List_Table {
 	 *
 	 * @return string
 	 */
-	public function column_cb ( array $item ) {
+	public function column_cb ( $item ) {
 		return HtmlTagGeneratorHelper::tag( 'input', '', array (
 			'type'  => 'checkbox',
 			'name'  => $this->buildHtmlTagName( $this->_args['singular'] ) . '[]',
