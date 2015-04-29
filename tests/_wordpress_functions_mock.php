@@ -1,5 +1,6 @@
 <?php
 
+use Smartling\DbAl\MultiligualPressConnector;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Settings\SettingsManager;
 
@@ -82,30 +83,24 @@ if ( ! function_exists( 'switch_to_blog' ) ) {
 if ( ! function_exists( 'get_site_option' ) ) {
 	function get_site_option ( $key, $default = null, $useCache = true ) {
 		switch ( $key ) {
-			case SettingsManager::SMARTLING_ACCOUNT_INFO: {
+			case MultiligualPressConnector::MULTILINGUAL_PRESS_PRO_SITE_OPTION: {
 				return array (
-					'apiUrl'        => 'https://capi.smartling.com/v1',
-					'projectId'     => 'a',
-					'key'           => 'b',
-					'retrievalType' => 'pseudo',
-					'callBackUrl'   => '',
-					'autoAuthorize' => true
-				);
-				break;
-			}
-			case SettingsManager::SMARTLING_LOCALES: {
-				return array (
-					'defaultLocale' => 'en-US',
-					'targetLocales' => array (
-						array (
-							'locale'  => 'ru-Ru',
-							'target'  => true,
-							'enabled' => true,
-							'blog'    => 2
-						)
+					1 => array (
+						'text' => '',
+						'lang' => 'en_US'
 					),
-					'defaultBlog'   => 1
-
+					2 => array (
+						'text' => '',
+						'lang' => 'es_ES'
+					),
+					3 => array (
+						'text' => '',
+						'lang' => 'fr_FR'
+					),
+					4 => array (
+						'text' => '',
+						'lang' => 'ru_RU'
+					),
 				);
 				break;
 			}
