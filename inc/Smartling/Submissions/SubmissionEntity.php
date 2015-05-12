@@ -83,9 +83,9 @@ class SubmissionEntity extends SmartlingEntityAbstract {
 			'submitter'              => self::DB_TYPE_STRING_STANDARD,
 			'submission_date'        => self::DB_TYPE_DATETIME,
 			'applied_date'           => self::DB_TYPE_DATETIME,
-			'approved_string_count'  => self::DB_TYPE_U_BIGINT,
-			'completed_string_count' => self::DB_TYPE_U_BIGINT,
-			'word_count'             => self::DB_TYPE_U_BIGINT,
+			'approved_string_count'  => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_DEFAULT_ZERO,
+			'completed_string_count' => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_DEFAULT_ZERO,
+			'word_count'             => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_DEFAULT_ZERO,
 			'status'                 => self::DB_TYPE_STRING_SMALL,
 		);
 	}
