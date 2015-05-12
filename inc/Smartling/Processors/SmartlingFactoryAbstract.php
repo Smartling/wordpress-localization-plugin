@@ -20,6 +20,13 @@ abstract class SmartlingFactoryAbstract {
 	private $collection = array ();
 
 	/**
+	 * @return array
+	 */
+	protected function getCollection () {
+		return $this->collection;
+	}
+
+	/**
 	 * @var null
 	 */
 	private $defaultHandler = null;

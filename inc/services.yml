@@ -108,7 +108,6 @@ services:
       - [ "registerHandler", ["category", "@mapper.category"]]
       - [ "registerHandler", ["post_tag", "@mapper.tag"]]
 
-
   factory.contentIO:
     class: Smartling\Processors\ContentEntitiesIOFactory
     arguments:
@@ -297,3 +296,13 @@ services:
       - "@entity.helper"
       - "@manager.submission"
       - "@site.cache"
+
+  migration.150512:
+    class: Smartling\DbAl\Migrations\Migration150512
+
+  manager.db.migrations:
+    class: Smartling\DbAl\Migrations\DbMigrationManager
+    arguments:
+      - "@logger"
+    calls:
+      - [ "registerMigration", [ "@migration.150512" ]]

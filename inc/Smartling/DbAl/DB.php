@@ -3,10 +3,15 @@
 namespace Smartling\DbAl;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Bootstrap;
+use Smartling\DbAl\Migrations\DbMigrationManager;
+use Smartling\DbAl\Migrations\SmartlingDbMigrationInterface;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 
 class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
+
+	const SMARTLING_DB_SCHEMA_VERSION = 'smartling_db_ver';
 
 	/**
 	 * Plugin tables definition based on array
@@ -64,11 +69,77 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 	 * Is executed on plugin activation
 	 */
 	public function install () {
-		foreach ( $this->tables as $tableDefinition ) {
-			$query = $this->prepareSql( $tableDefinition );
-			$this->logger->info( vsprintf( 'installing tables: %s', array ( $query ) ) );
-			$this->getWpdb()->query( $query );
+		$currentDbVersion = $this->getSchemaVersion();
+		if ( 0 === $currentDbVersion ) {
+			foreach ( $this->tables as $tableDefinition ) {
+				$query = $this->prepareSql( $tableDefinition );
+				$this->logger->info( vsprintf( 'Installing tables: %s', array ( $query ) ) );
+				$this->getWpdb()->query( $query );
+			}
+			$currentDbVersion ++;
+			$this->setSchemaVersion( $currentDbVersion );
+		} else {
+			$this->schemaUpdate( $currentDbVersion );
 		}
+
+	}
+
+	public function schemaUpdate ( $fromVersion ) {
+		/**
+		 * @var DbMigrationManager $mgr
+		 */
+		$mgr  = Bootstrap::getContainer()->get( 'manager.db.migrations' );
+		$pool = $mgr->getMigrations( $fromVersion );
+		if ( 0 < count( $pool ) ) {
+			$prefix = $this->getWpdb()->base_prefix;
+			foreach ( $pool as $version => $migration ) {
+				/**
+				 * @var SmartlingDbMigrationInterface $migration
+				 */
+				$this->logger->info( 'Starting applying migration ' . $migration->getVersion() );
+				$queries = $migration->getQueries( $prefix );
+				foreach ( $queries as $query ) {
+					$this->logger->debug( 'Executing query: ' . $query );
+					$this->getWpdb()->query( $query );
+				}
+				$this->logger->info( 'Finished applying migration ' . $migration->getVersion() );
+				$this->setSchemaVersion( $migration->getVersion() );
+			}
+		} else {
+			$this->logger->info('Activated. No new migrations found.');
+		}
+	}
+
+	public function getSchemaVersion () {
+		return (int) get_site_option( self::SMARTLING_DB_SCHEMA_VERSION, 0, false );
+	}
+
+	/**
+	 * @param $version
+	 *
+	 * @return bool|null
+	 */
+	public function setSchemaVersion ( $version ) {
+		$currentVersion = $this->getSchemaVersion();
+		$version        = (int) $version;
+		$result         = null;
+		$message        = 'Smartling db schema update ';
+		if ( false === get_site_option( self::SMARTLING_DB_SCHEMA_VERSION, false, false ) ) {
+			$result = add_site_option( self::SMARTLING_DB_SCHEMA_VERSION, $version );
+		} else {
+			$result = update_site_option( self::SMARTLING_DB_SCHEMA_VERSION, $version );
+		}
+
+		if ( true === $result ) {
+			$message .= vsprintf( 'successfully completed from version %d to version %d.',
+				array ( $currentVersion, $version ) );
+
+		} else {
+			$message .= vsprintf( 'failed from version %d to version %d.', array ( $currentVersion, $version ) );
+		}
+		$this->logger->info( $message );
+
+		return $result;
 	}
 
 	/**
