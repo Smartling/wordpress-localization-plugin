@@ -107,7 +107,7 @@ class ConfigurationProfilesWidget extends \WP_List_Table {
 	 *
 	 * @return string
 	 */
-	public function column_cb ( $item ) {
+	protected function column_cb ( $item ) {
 		return HtmlTagGeneratorHelper::tag( 'input', '', array (
 			'type'  => 'checkbox',
 			'name'  => $this->buildHtmlTagName( $this->_args['singular'] ) . '[]',
