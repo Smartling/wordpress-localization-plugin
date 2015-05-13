@@ -323,8 +323,8 @@ class SubmissionTableWidget extends \WP_List_Table {
 		foreach ( $data as $element ) {
 			$row = $element->toArray();
 
-			//$row["file_uri"] = $row["file_uri"] != null ? basename($row["file_uri"]) : null;
-
+			$row["file_uri"]        = htmlentities( $row["file_uri"] );
+			$row['source_title']    = htmlentities( $row['source_title'] );
 			$row['source_title']    = $this->applyRowActions( $row );
 			$row['content_type']    = WordpressContentTypeHelper::getLocalizedContentType( $row['content_type'] );
 			$row['submission_date'] = DateTimeHelper::toWordpressLocalDateTime( DateTimeHelper::stringToDateTime( $row['submission_date'] ) );
