@@ -89,4 +89,26 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
 		$this->view( $table );
 	}
 
+	public function download_log () {
+		$container = Bootstrap::getContainer();
+
+		$pluginDir = $container->getParameter( 'plugin.dir' );
+		$filename  = $container->getParameter( 'logger.filehandler.standard.filename' );
+
+		$fullFilename = vsprintf( '%s-%s',
+			array ( str_replace( '%plugin.dir%', $pluginDir, $filename ), date( 'Y-m-d' ) ) );
+
+		if ( file_exists( $fullFilename ) && is_readable( $fullFilename ) ) {
+			header( 'Content-Type: application/octet-stream' );
+			header( 'Content-Disposition: attachment; filename="' . basename( $fullFilename ) . '.txt"' );
+			header( 'Content-Transfer-Encoding: binary' );
+			header( 'Expires: 0' );
+			header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
+			header( 'Pragma: public' );
+			header( 'Content-Length: ' . filesize( $fullFilename ) ); //Remove
+			readfile( $fullFilename );
+		}
+		die;
+	}
+
 }
