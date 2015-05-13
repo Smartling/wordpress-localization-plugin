@@ -11,20 +11,19 @@ use Smartling\Processors\SmartlingFactoryAbstract;
  */
 class DbMigrationManager extends SmartlingFactoryAbstract {
 
-	public function registerMigration (SmartlingDbMigrationInterface $migration) {
-		$this->registerHandler($migration->getVersion(),$migration);
+	public function registerMigration ( SmartlingDbMigrationInterface $migration ) {
+		$this->registerHandler( $migration->getVersion(), $migration );
 	}
 
 	public function getMigrations ( $fromVersion ) {
-		$pool = array();
-		foreach ($this->getCollection() as $version=>$migration)
-		{
-			if ($version > $fromVersion)
-			{
-				$pool[]=$migration;
+		$pool = array ();
+		foreach ( $this->getCollection() as $version => $migration ) {
+			if ( $version > $fromVersion ) {
+				$pool[] = $migration;
 			}
 		}
-		ksort($pool);
+		ksort( $pool );
+
 		return $pool;
 	}
 }

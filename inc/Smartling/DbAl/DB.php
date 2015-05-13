@@ -97,20 +97,18 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 				 * @var SmartlingDbMigrationInterface $migration
 				 */
 				$this->logger->info( 'Starting applying migration ' . $migration->getVersion() );
-				$queries = $migration->getQueries( $prefix );
+				$queries     = $migration->getQueries( $prefix );
 				$stopMigrate = false;
 				foreach ( $queries as $query ) {
 					$this->logger->debug( 'Executing query: ' . $query );
 					$result = $this->getWpdb()->query( $query );
-					if (false === $result)
-					{
+					if ( false === $result ) {
 						$this->logger->error( 'Error executing query: ' . $this->getWpdb()->last_error );
 					}
 					$stopMigrate = true;
 					break;
 				}
-				if (false === $stopMigrate)
-				{
+				if ( false === $stopMigrate ) {
 					$this->logger->info( 'Finished applying migration ' . $migration->getVersion() );
 					$this->setSchemaVersion( $migration->getVersion() );
 				} else {
@@ -119,7 +117,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 				}
 			}
 		} else {
-			$this->logger->info('Activated. No new migrations found.');
+			$this->logger->info( 'Activated. No new migrations found.' );
 		}
 	}
 
