@@ -71,13 +71,23 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 	public function install () {
 		$currentDbVersion = $this->getSchemaVersion();
 		if ( 0 === $currentDbVersion ) {
-			foreach ( $this->tables as $tableDefinition ) {
-				$query = $this->prepareSql( $tableDefinition );
-				$this->logger->info( vsprintf( 'Installing tables: %s', array ( $query ) ) );
-				$this->getWpdb()->query( $query );
+			// check if there was 1.0.12 version
+			$this->getWpdb()->query( 'SHOW TABLES LIKE \'%smartling%\'' );
+			$res = $this->getWpdb()->num_rows;
+			if ( 0 < $res ) {
+				// 1.0.12 detected
+				$currentDbVersion ++;
+				$this->setSchemaVersion( $currentDbVersion );
+				$this->schemaUpdate( $currentDbVersion );
+			} else {
+				foreach ( $this->tables as $tableDefinition ) {
+					$query = $this->prepareSql( $tableDefinition );
+					$this->logger->info( vsprintf( 'Installing tables: %s', array ( $query ) ) );
+					$this->getWpdb()->query( $query );
+				}
+				$currentDbVersion ++;
+				$this->setSchemaVersion( $currentDbVersion );
 			}
-			$currentDbVersion ++;
-			$this->setSchemaVersion( $currentDbVersion );
 		} else {
 			$this->schemaUpdate( $currentDbVersion );
 		}
@@ -104,15 +114,15 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 					$result = $this->getWpdb()->query( $query );
 					if ( false === $result ) {
 						$this->logger->error( 'Error executing query: ' . $this->getWpdb()->last_error );
+						$stopMigrate = true;
+						break;
 					}
-					$stopMigrate = true;
-					break;
 				}
 				if ( false === $stopMigrate ) {
 					$this->logger->info( 'Finished applying migration ' . $migration->getVersion() );
 					$this->setSchemaVersion( $migration->getVersion() );
 				} else {
-					$this->logger->error( 'Error occurred while applying migration ' . $migration->getVersion() );
+					$this->logger->error( 'Error occurred while applying migration ' . $migration->getVersion() . '. Error: ' . $this->getWpdb()->last_error );
 					break;
 				}
 			}
@@ -329,8 +339,8 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 	/**
 	 * @inheritdoc
 	 */
-	public function fetch ( $query ) {
-		return $this->getWpdb()->get_results( $query );
+	public function fetch ( $query, $output = OBJECT ) {
+		return $this->getWpdb()->get_results( $query, $output );
 	}
 
 	/**
