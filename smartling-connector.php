@@ -8,7 +8,7 @@
  * Plugin Name:       Smartling Connector
  * Plugin URI:        https://www.smartling.com/translation-software/wordpress-translation-plugin/
  * Description:       This is a short description of what the plugin does. It's displayed in the WordPress dashboard.
- * Version:           1.0.14@2015-05-13
+ * Version:           !!DEBUG BUILD!! 1.0.15@2015-05-26
  * Author:            SmartLing
  * Author URI:        https://www.smartling.com
  * License:           GPL-2.0+
