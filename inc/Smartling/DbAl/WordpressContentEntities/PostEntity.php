@@ -258,15 +258,17 @@ class PostEntity extends EntityAbstract {
 		if ( metadata_exists( WordpressContentTypeHelper::CONTENT_TYPE_POST, $this->ID, $tagName ) ) {
 			$result = update_post_meta( $this->ID, $tagName, $tagValue );
 		} else {
+			$this->getLogger()->info( 'adding tag ' . $tagName );
 			$result = add_post_meta( $this->ID, $tagName, $tagValue, $unique );
 		}
 
 		if ( false === $result ) {
 			$message = vsprintf(
-				'Error saving meta tag "%s" with value "%s" for post "%s"',
+				'Error saving meta tag "%s" with value "%s" for "%s" "%s"',
 				array (
 					$tagName,
-					$tagValue,
+					serialize($tagValue),
+					$this->post_type,
 					$this->ID
 				)
 			);

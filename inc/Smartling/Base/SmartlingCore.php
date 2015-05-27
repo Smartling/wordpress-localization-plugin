@@ -365,6 +365,10 @@ class SmartlingCore {
 
 			$targetContent = null;
 
+			$originalEntity = $this->readContentEntity( $entity );
+
+			$originalMetadata = $originalEntity->getMetadata();
+
 			if ( 0 === $targetId ) {
 				// need to clone original content first.
 				$originalEntity = $this->readContentEntity( $entity );
@@ -379,9 +383,9 @@ class SmartlingCore {
 
 			$this->setValues( $targetContent, $translatedFields );
 
-			$this->saveEntity( $entity->getContentType(), $entity->getTargetBlogId(), $targetContent );
+			$targetContent = $this->saveEntity( $entity->getContentType(), $entity->getTargetBlogId(), $targetContent );
 
-			$this->saveMetaProperties( $entity->getTargetBlogId(), $targetContent, $translatedFields, $entity );
+			$this->saveMetaProperties( $originalMetadata, $targetContent, $translatedFields, $entity );
 
 			if ( 0 === $targetId ) {
 
@@ -429,7 +433,7 @@ class SmartlingCore {
 	}
 
 	/**
-	 * @param int                  $blogId
+	 * @param array                  $originalMetadata
 	 * @param EntityAbstract       $entity
 	 * @param PropertyDescriptor[] $properties
 	 *
@@ -438,21 +442,23 @@ class SmartlingCore {
 	 * @return EntityAbstract
 	 */
 	private function saveMetaProperties (
-		$blogId,
+		array $originalMetadata,
 		EntityAbstract $entity,
 		array $properties,
 		SubmissionEntity $submission
 	) {
 		$curBlogId = $this->getSiteHelper()->getCurrentBlogId();
 
-		if ( $blogId !== $curBlogId ) {
-			$this->getSiteHelper()->switchBlogId( $blogId );
+		if ( $submission->getTargetBlogId() !== $curBlogId ) {
+			$this->getSiteHelper()->switchBlogId( $submission->getTargetBlogId() );
 		}
-
-		$originalMetadata = $this->readOriginalMetadata( $submission );
 
 		foreach ( $properties as $property ) {
 			if ( $property->isMeta() ) {
+				if ('' === $property->getValue())
+				{
+					continue;
+				}
 				switch ( $property->getType() ) {
 					case 'serialized-php-array': {
 						// need to overwrite the original values by translated (to keep all other data)
@@ -465,9 +471,7 @@ class SmartlingCore {
 						$tempOrig   = unserialize( $originalMetadata[ $propertyName ] );
 						$tempTrans  = unserialize( $property->getValue() );
 						$translated = array_merge( $tempOrig, $tempTrans );
-
-						$entity->setMetaTag( $propertyName,$translated );
-
+						$entity->setMetaTag( $propertyName, $translated );
 						break;
 					}
 					default : {
@@ -479,7 +483,7 @@ class SmartlingCore {
 			}
 		}
 
-		if ( $blogId !== $curBlogId ) {
+		if ( $submission->getTargetBlogId() !== $curBlogId ) {
 			$this->getSiteHelper()->restoreBlogId();
 		}
 	}
