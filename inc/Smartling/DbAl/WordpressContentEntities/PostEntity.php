@@ -138,7 +138,6 @@ class PostEntity extends EntityAbstract {
 	 */
 	public function getMetadata () {
 		$raw = get_post_meta( $this->ID );
-
 		$formatted = array ();
 
 		foreach ( $raw as $key => $value ) {

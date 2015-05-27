@@ -1,0 +1,35 @@
+<?php
+
+namespace Smartling\WP\Controller;
+
+use Smartling\Helpers\WordpressContentTypeHelper;
+
+/**
+ * Class PolicyWidgetController
+ *
+ * @package Smartling\WP\Controller
+ */
+class PolicyWidgetController extends PostWidgetController {
+
+	/**
+	 * @var string
+	 */
+	protected $servedContentType = WordpressContentTypeHelper::CONTENT_TYPE_POST_POLICY;
+
+	/**
+	 * @var string
+	 */
+	protected $needSave = 'Need to save the policy';
+
+	/**
+	 * @var string
+	 */
+	protected $noOriginalFound = 'No original policy found';
+
+	/**
+	 * @inheritdoc
+	 */
+	protected function isAllowedToSave ( $post_id ) {
+		return current_user_can( 'edit_post', $post_id );
+	}
+}

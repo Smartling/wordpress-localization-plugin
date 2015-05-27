@@ -360,7 +360,7 @@ class ApiWrapper implements ApiWrapperInterface {
 
 			$message = vsprintf( 'Smartling failed to upload xml file: \nProject Id: %s\nAction: %s\nURI: \nLocale: %s\nError: response code -> %s and message -> %s\nUpload params: %s',
 				array (
-					$this->settings->getProjectId(),
+					$profile->getProjectId(),
 					'upload',
 					$entity->getFileUri(),
 					$entity->getTargetLocale(),

@@ -32,6 +32,11 @@ class WordpressContentTypeHelper {
 	const CONTENT_TYPE_POST_TAG = 'post_tag';
 
 	/**
+	 * 'post' based content type
+	 */
+	const CONTENT_TYPE_POST_POLICY = 'policy';
+
+	/**
 	 * Checks if Wordpress i10n function __ is registered
 	 * if not - throws an SmartlingDirectRunRuntimeException exception
 	 *
@@ -53,7 +58,8 @@ class WordpressContentTypeHelper {
 		'post'     => self::CONTENT_TYPE_POST,
 		'page'     => self::CONTENT_TYPE_PAGE,
 		'category' => self::CONTENT_TYPE_CATEGORY,
-		'post_tag' => self::CONTENT_TYPE_POST_TAG
+		'post_tag' => self::CONTENT_TYPE_POST_TAG,
+		'policy'   => self::CONTENT_TYPE_POST_POLICY,
 	);
 
 	/**
@@ -75,10 +81,11 @@ class WordpressContentTypeHelper {
 
 		// has to be hardcoded because i10n parser must see direct calls of __(CONSTANT STRING)
 		return array (
-			self::CONTENT_TYPE_POST     => __( 'Post' ),
-			self::CONTENT_TYPE_PAGE     => __( 'Page' ),
-			self::CONTENT_TYPE_CATEGORY => __( 'Category' ),
-			self::CONTENT_TYPE_POST_TAG => __( 'Tag' )
+			self::CONTENT_TYPE_POST_POLICY => __( 'Policy' ),
+			self::CONTENT_TYPE_POST        => __( 'Post' ),
+			self::CONTENT_TYPE_PAGE        => __( 'Page' ),
+			self::CONTENT_TYPE_CATEGORY    => __( 'Category' ),
+			self::CONTENT_TYPE_POST_TAG    => __( 'Tag' )
 		);
 	}
 

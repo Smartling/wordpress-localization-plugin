@@ -12,6 +12,8 @@ abstract class PropertyProcessorAbstract {
 
 	const XML_NODE_NAME = 'string';
 
+	const XML_STRUCTURED_NODE_NAME = 'structure';
+
 	/**
 	 * Content-type wide property name
 	 */
@@ -73,17 +75,24 @@ abstract class PropertyProcessorAbstract {
 	}
 
 	/**
-	 * @param DOMDocument        $document
-	 * @param PropertyDescriptor $descriptor
+	 * @param DOMDocument              $document
+	 * @param PropertyDescriptor       $descriptor
+	 * @param PropertyProcessorFactory $factory
 	 *
 	 * @return DOMElement
 	 */
-	abstract function toXML ( DOMDocument $document, PropertyDescriptor $descriptor );
+	abstract function toXML (
+		DOMDocument $document,
+		PropertyDescriptor $descriptor,
+		PropertyProcessorFactory $factory
+	);
 
 	/**
-	 * @param DOMNode $node
+	 * @param DOMNode                  $node
+	 *
+	 * @param PropertyProcessorFactory $factory
 	 *
 	 * @return mixed
 	 */
-	abstract function fromXML ( DOMNode $node );
+	abstract function fromXML ( DOMNode $node, PropertyProcessorFactory $factory );
 }

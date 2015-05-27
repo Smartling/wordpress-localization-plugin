@@ -18,8 +18,8 @@ use Smartling\Processors\PropertyProcessors\PropertyProcessorFactory;
 class XmlEncoder {
 
 	private static $magicComments = array (
-		'smartling.translate_paths = data/string',
-		'smartling.string_format_paths = html : data/string',
+		'smartling.translate_paths = data/string, data/structure/string',
+		'smartling.string_format_paths = html : data/string, html: data/structure/string',
 		'smartling.source_key_paths = data/{string.key}',
 		'smartling.variants_enabled = true',
 	);
@@ -58,11 +58,8 @@ class XmlEncoder {
 	private static function arrayToXml ( array $array, DOMDocument $document, PropertyProcessorFactory $factory ) {
 		$rootNode = $document->createElement( 'data' );
 		foreach ( $array as $descriptor ) {
-			$node =
-				$factory->getProcessor(
-					$descriptor->getType()
-				)
-				        ->toXML( $document, $descriptor );
+			$processor = $factory->getProcessor( $descriptor->getType() );
+			$node      = $processor->toXML( $document, $descriptor, $factory );
 			$rootNode->appendChild( $node );
 		}
 
@@ -85,22 +82,34 @@ class XmlEncoder {
 	}
 
 	/**
-	 * @param PropertyDescriptor[] $descriptors
-	 * @param                      $content
+	 * @param string $xmlString
 	 *
-	 * @return PropertyDescriptor[]
+	 * @return DOMXPath
+	 */
+	private static function prepareXPath ( $xmlString ) {
+		$xml = self::initXml();
+		$xml->loadXML( $xmlString );
+		$xpath = new DOMXPath( $xml );
+
+		return $xpath;
+	}
+
+	/**
+	 * @param PropertyDescriptor[]     $descriptors
+	 * @param                          $content
+	 * @param PropertyProcessorFactory $factory
+	 *
+	 * @return \Smartling\Processors\PropertyDescriptor[]
 	 */
 	public static function xmlDecode ( array $descriptors, $content, PropertyProcessorFactory $factory ) {
-		$xml = self::initXml();
-		$xml->loadXML( $content );
-		$xpath = new DOMXPath( $xml );
+		$xpath = self::prepareXPath( $content );
 
 		foreach ( $descriptors as $descriptor ) {
 			$path     = self::buildXPath( $descriptor );
 			$nodeList = $xpath->query( $path );
 			$item     = $nodeList->item( 0 );
 			if ( $item ) {
-				$descriptor->setValue( $factory->getProcessor( $descriptor->getType() )->fromXML( $item ) );
+				$descriptor->setValue( $factory->getProcessor( $descriptor->getType() )->fromXML( $item, $factory ) );
 			}
 		}
 
@@ -108,6 +117,18 @@ class XmlEncoder {
 	}
 
 	private static function buildXPath ( PropertyDescriptor $descriptor ) {
-		return vsprintf( '//string[@name="%s"]', array ( $descriptor->getName() ) );
+		$str = '';
+		switch ( $descriptor->getType() ) {
+			case 'serialized-php-array': {
+				$str = '/data/structure[@name="%s"]';
+				break;
+			}
+			default: {
+				$str = '/data/string[@name="%s"]';
+				break;
+			}
+		}
+
+		return vsprintf( $str, array ( $descriptor->getName() ) );
 	}
 }

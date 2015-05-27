@@ -40,6 +40,25 @@ class PropertyDescriptor {
 	private $key = '';
 
 	/**
+	 * @var array
+	 */
+	private $subFields = array();
+
+	/**
+	 * @return PropertyDescriptor[]
+	 */
+	public function getSubFields () {
+		return $this->subFields;
+	}
+
+	/**
+	 * @param array $subFields
+	 */
+	public function setSubFields ( $subFields ) {
+		$this->subFields = $subFields;
+	}
+
+	/**
 	 * @param $type
 	 * @param $name
 	 */
@@ -85,6 +104,16 @@ class PropertyDescriptor {
 
 				$obj->$setter( $state[ $field ] );
 			}
+		}
+
+		if (array_key_exists('extra', $state) && array_key_exists('fields', $state['extra']))
+		{
+			$subFields = array();
+			foreach ($state['extra']['fields'] as $subState)
+			{
+				$subFields[] = self::fromArray($subState);
+			}
+			$obj->setSubFields($subFields);
 		}
 
 		return $obj;

@@ -19,8 +19,8 @@ class PropertyProcessorYoast extends PropertyProcessorDefault {
 	/**
 	 * @inheritdoc
 	 */
-	public function toXML ( DOMDocument $document, PropertyDescriptor $descriptor ) {
-		$node = parent::toXML( $document, $descriptor );
+	public function toXML ( DOMDocument $document, PropertyDescriptor $descriptor, PropertyProcessorFactory $factory ) {
+		$node = parent::toXML( $document, $descriptor,$factory );
 		if ( '' !== $descriptor->getKey() ) {
 			$node->appendChild( new \DOMAttr( PropertyProcessorAbstract::XML_NODE_ATTR_KEY, $descriptor->getKey() ) );
 		}

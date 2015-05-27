@@ -18,7 +18,7 @@ class PropertyProcessorDefault extends PropertyProcessorAbstract {
 	/**
 	 * @inheritdoc
 	 */
-	public function toXML ( DOMDocument $document, PropertyDescriptor $descriptor ) {
+	public function toXML ( DOMDocument $document, PropertyDescriptor $descriptor, PropertyProcessorFactory $factory ) {
 		$node = $document->createElement( PropertyProcessorAbstract::XML_NODE_NAME );
 
 		$node->appendChild( new DOMAttr( PropertyProcessorAbstract::XML_NODE_ATTR_IDENITY, $descriptor->getName() ) );
@@ -36,7 +36,7 @@ class PropertyProcessorDefault extends PropertyProcessorAbstract {
 	/**
 	 * @inheritdoc
 	 */
-	function fromXML ( DOMNode $node ) {
+	function fromXML ( DOMNode $node, PropertyProcessorFactory $factory  ) {
 		return $node->nodeValue;
 	}
 }

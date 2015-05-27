@@ -27,7 +27,20 @@ abstract class MapperAbstract {
 	 * @param array
 	 */
 	protected function setFields ( $fields ) {
-		$this->fields = $fields;
+		$this->addFields( $fields );
+	}
+
+	protected function addField ( array $field ) {
+		$this->fields[] = $field;
+	}
+
+	protected function addFields ( array $fields ) {
+		foreach ( $fields as $field ) {
+			if ( ! is_array( $field ) ) {
+				continue;
+			}
+			$this->addField( $field );
+		}
 	}
 
 	/**

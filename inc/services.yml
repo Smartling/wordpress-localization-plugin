@@ -17,6 +17,7 @@ parameters:
     - 'wp.post'
     - 'wp.page'
     - 'wp.taxonomy'
+    - 'wp.ext.policy'
 
   logger.channel: default
   logger.filehandler.standard.filename: %plugin.dir%/logs/logfile
@@ -40,6 +41,12 @@ services:
     arguments:
       - "@logger"
 
+  processor.property.serialized.array:
+    class: Smartling\Processors\PropertyProcessors\PropertyProcessorSerializedArray
+    arguments:
+      - "@logger"
+
+
   factory.processor:
     class: Smartling\Processors\PropertyProcessors\PropertyProcessorFactory
     arguments:
@@ -47,6 +54,8 @@ services:
     calls:
       - [ "registerDefaultProcessor", [ "@processor.property.default" ]]
       - [ "registerProcessor", [ "@processor.property.yoast-seo" ]]
+      - [ "registerProcessor", [ "@processor.property.serialized.array" ]]
+
 
   wrapper.sdk.api.smartling:
     class: Smartling\ApiWrapper
@@ -71,6 +80,11 @@ services:
     arguments:
       - "@logger"
 
+  wrapper.entity.ext.policy:
+    class: Smartling\DbAl\WordpressContentEntities\PolicyEntity
+    arguments:
+      - "@logger"
+
   wrapper.entity.page:
     class: Smartling\DbAl\WordpressContentEntities\PageEntity
     arguments:
@@ -88,6 +102,9 @@ services:
 
   mapper.post:
     class: Smartling\Processors\ContentTypeMapper\PostMapper
+
+  mapper.ext.policy:
+    class: Smartling\Processors\ContentTypeMapper\PolicyMapper
 
   mapper.page:
     class: Smartling\Processors\ContentTypeMapper\PageMapper
@@ -107,6 +124,8 @@ services:
       - [ "registerHandler", ["page", "@mapper.page"]]
       - [ "registerHandler", ["category", "@mapper.category"]]
       - [ "registerHandler", ["post_tag", "@mapper.tag"]]
+      - [ "registerHandler", ["policy", "@mapper.ext.policy"]]
+
 
   factory.contentIO:
     class: Smartling\Processors\ContentEntitiesIOFactory
@@ -117,6 +136,7 @@ services:
       - [ "registerHandler", ["page", "@wrapper.entity.page"]]
       - [ "registerHandler", ["category", "@wrapper.entity.category"]]
       - [ "registerHandler", ["post_tag", "@wrapper.entity.tag"]]
+      - [ "registerHandler", ["policy", "@wrapper.entity.ext.policy"]]
 
   fileLoggerLineFormatter:
     class: Monolog\Formatter\LineFormatter
@@ -249,6 +269,16 @@ services:
 
   wp.post:
     class: Smartling\WP\Controller\PostWidgetController
+    arguments:
+      - "@logger"
+      - "@multilang.proxy"
+      - "@plugin.info"
+      - "@entity.helper"
+      - "@manager.submission"
+      - "@site.cache"
+
+  wp.ext.policy:
+    class: Smartling\WP\Controller\PolicyWidgetController
     arguments:
       - "@logger"
       - "@multilang.proxy"

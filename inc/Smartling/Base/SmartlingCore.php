@@ -211,8 +211,18 @@ class SmartlingCore {
 
 			if ( array_key_exists( $name, $source[ $index ] ) ) {
 				$descriptor->setValue( $source[ $index ][ $name ] );
+				if ( 'serialized-php-array' === $descriptor->getType()
+				     && false !== ( $src = unserialize( $source[ $index ][ $name ] ) )
+				) {
+					$subFields = $descriptor->getSubFields();
+					foreach ( $subFields as $subField ) {
+						$subFieldName = $subField->getName();
+						if ( array_key_exists( $subFieldName, $src ) ) {
+							$subField->setValue( $src[ $subFieldName ] );
+						}
+					}
+				}
 			}
-
 		}
 	}
 
@@ -237,8 +247,7 @@ class SmartlingCore {
 
 		$this->fillPropertyDescriptors( $fieldsForTranslation, $source );
 
-		$xml = XmlEncoder::xmlEncode( $fieldsForTranslation, $this->getProcessorFactory() );
-
+		$xml    = XmlEncoder::xmlEncode( $fieldsForTranslation, $this->getProcessorFactory() );
 		$result = false;
 
 
@@ -341,6 +350,8 @@ class SmartlingCore {
 	}
 
 	public function downloadTranslationBySubmission ( SubmissionEntity $entity ) {
+
+
 		$messages = array ();
 
 		try {
@@ -370,7 +381,7 @@ class SmartlingCore {
 
 			$this->saveEntity( $entity->getContentType(), $entity->getTargetBlogId(), $targetContent );
 
-			$this->saveMetaProperties( $entity->getTargetBlogId(), $targetContent, $translatedFields );
+			$this->saveMetaProperties( $entity->getTargetBlogId(), $targetContent, $translatedFields, $entity );
 
 			if ( 0 === $targetId ) {
 
@@ -422,24 +433,76 @@ class SmartlingCore {
 	 * @param EntityAbstract       $entity
 	 * @param PropertyDescriptor[] $properties
 	 *
+	 * @param SubmissionEntity     $submission
+	 *
 	 * @return EntityAbstract
 	 */
-	private function saveMetaProperties ( $blogId, EntityAbstract $entity, array $properties ) {
+	private function saveMetaProperties (
+		$blogId,
+		EntityAbstract $entity,
+		array $properties,
+		SubmissionEntity $submission
+	) {
 		$curBlogId = $this->getSiteHelper()->getCurrentBlogId();
 
 		if ( $blogId !== $curBlogId ) {
 			$this->getSiteHelper()->switchBlogId( $blogId );
 		}
 
+		$originalMetadata = $this->readOriginalMetadata( $submission );
+
 		foreach ( $properties as $property ) {
 			if ( $property->isMeta() ) {
-				$entity->setMetaTag( $property->getName(), $property->getValue() );
+				switch ( $property->getType() ) {
+					case 'serialized-php-array': {
+						// need to overwrite the original values by translated (to keep all other data)
+						$propertyName = $property->getName();
+
+						if ( ! array_key_exists( $propertyName, $originalMetadata ) ) {
+							continue;
+						}
+
+						$tempOrig   = unserialize( $originalMetadata[ $propertyName ] );
+						$tempTrans  = unserialize( $property->getValue() );
+						$translated = array_merge( $tempOrig, $tempTrans );
+
+						$entity->setMetaTag( $propertyName,$translated );
+
+						break;
+					}
+					default : {
+						$entity->setMetaTag( $property->getName(), $property->getValue() );
+						break;
+					}
+				}
+
 			}
 		}
 
 		if ( $blogId !== $curBlogId ) {
 			$this->getSiteHelper()->restoreBlogId();
 		}
+	}
+
+	/**
+	 * Reads from database original metadata
+	 *
+	 * @param SubmissionEntity $submission
+	 *
+	 * @return array
+	 */
+	private function readOriginalMetadata ( SubmissionEntity $submission ) {
+		$originalEntity = $this->readContentEntity( $submission );
+
+		if ( $this->getSiteHelper()->getCurrentBlogId() === $submission->getSourceBlogId() ) {
+			$originalMetadata = $originalEntity->getMetadata();
+		} else {
+			$this->getSiteHelper()->switchBlogId( $submission->getSourceBlogId() );
+			$originalMetadata = $originalEntity->getMetadata();
+			$this->getSiteHelper()->restoreBlogId();
+		}
+
+		return $originalMetadata;
 	}
 
 	/**
