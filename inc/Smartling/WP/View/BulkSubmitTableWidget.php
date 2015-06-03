@@ -13,14 +13,15 @@ use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressUserHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionManager;
-use WP_List_Table;
+use Smartling\WP\Controller\SmartlingListTable;
+
 
 /**
  * Class BulkSubmitTableWidget
  *
  * @package Smartling\WP\View
  */
-class BulkSubmitTableWidget extends WP_List_Table {
+class BulkSubmitTableWidget extends SmartlingListTable {
 
 	/**
 	 * @var string
@@ -471,7 +472,7 @@ class BulkSubmitTableWidget extends WP_List_Table {
 	public function contentTypeSelectRender () {
 		$controlName = 'content-type';
 
-		$types = WordpressContentTypeHelper::getLabelMap();
+		$types = $this->getActiveContentTypes($this->entityHelper->getSiteHelper());
 
 		$value = $this->getFormElementValue(
 			$controlName,

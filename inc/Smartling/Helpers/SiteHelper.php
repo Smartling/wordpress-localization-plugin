@@ -206,4 +206,16 @@ class SiteHelper {
 	public function getCurrentBlogLocale ( LocalizationPluginProxyInterface $localizationPlugin ) {
 		return $localizationPlugin->getBlogLocaleById( $this->getCurrentBlogId() );
 	}
+
+	public function getPostTypes()
+	{
+		return array_values(get_post_types( '', 'names' ));
+
+	}
+
+	public function getTermTypes()
+	{
+		global $wp_taxonomies;
+		return array_keys($wp_taxonomies);
+	}
 }

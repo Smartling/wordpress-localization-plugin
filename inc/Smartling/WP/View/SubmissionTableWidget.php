@@ -10,13 +10,14 @@ use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\WP\Controller\SmartlingListTable;
 
 /**
  * Class SubmissionTableWidget
  *
  * @package Smartling\WP\View
  */
-class SubmissionTableWidget extends \WP_List_Table {
+class SubmissionTableWidget extends SmartlingListTable {
 
 	/**
 	 * @var string
@@ -399,7 +400,7 @@ class SubmissionTableWidget extends \WP_List_Table {
 	public function contentTypeSelectRender () {
 		$controlName = 'content-type';
 
-		$types = WordpressContentTypeHelper::getLabelMap();
+		$types = $this->getActiveContentTypes($this->entityHelper->getSiteHelper());
 
 		// add 'Any' to turn off filter
 		$types = array_merge( array ( 'any' => __( 'Any' ) ), $types );
