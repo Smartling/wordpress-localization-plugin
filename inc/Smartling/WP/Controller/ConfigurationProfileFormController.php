@@ -60,6 +60,8 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 	public function save () {
 		$settings = &$_REQUEST['smartling_settings'];
 
+		$newApiKey = &$_REQUEST['apiKey'];
+
 		$profileId = (int) ( $settings['id'] ? : 0 );
 
 		$settingsManager = $this->getEntityHelper()->getSettingsManager();
@@ -93,8 +95,8 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 			$profile->setProjectId( $settings['projectId'] );
 		}
 
-		if ( array_key_exists( 'apiKey', $settings ) ) {
-			$profile->setApiKey( $settings['apiKey'] );
+		if ( null !== $newApiKey ) {
+			$profile->setApiKey( $newApiKey );
 		}
 
 		if ( array_key_exists( 'retrievalType', $settings ) ) {

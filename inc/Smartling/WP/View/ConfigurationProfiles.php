@@ -1,7 +1,11 @@
 <?php
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\WP\Controller\ConfigurationProfilesWidget;
-
+/**
+ * @var WPAbstract $this
+ * @var WPAbstract self
+ */
+$data = $this->getViewData();
 ?>
 <div class = "wrap" >
 	<h2 ><?=

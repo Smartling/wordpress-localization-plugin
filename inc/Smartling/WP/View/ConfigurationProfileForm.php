@@ -10,6 +10,12 @@ use Smartling\Settings\SettingsManager;
 
 use Smartling\WP\WPAbstract;
 
+/**
+ * @var WPAbstract $this
+ * @var WPAbstract self
+ */
+$data = $this->getViewData();
+
 $pluginInfo = $this->getPluginInfo();
 $domain     = $pluginInfo->getDomain();
 
@@ -89,7 +95,6 @@ if ( 0 === $profileId ) {
 				<td >
 					<?php $key = $profile->getApiKey(); ?>
 					<input type = "text" id = "api_key" name = "apiKey" value = "" >
-					<input type = "hidden" name = "smartling_settings[apiKey]" value = "<?= $key ?>" >
 					<br >
 					<?php if ( $key ) { ?>
 						<small ><?= __( 'Current Key', $domain ) ?>
