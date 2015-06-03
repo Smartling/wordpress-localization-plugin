@@ -371,7 +371,6 @@ class BulkSubmitTableWidget extends WP_List_Table {
 			$sortOptions['order']
 		);
 
-
 		$total = $io->getTotal();
 
 		$dataAsArray = array ();
@@ -440,6 +439,7 @@ class BulkSubmitTableWidget extends WP_List_Table {
 			case WordpressContentTypeHelper::CONTENT_TYPE_PAGE:
 			case WordpressContentTypeHelper::CONTENT_TYPE_POST_POLICY:
 			case WordpressContentTypeHelper::CONTENT_TYPE_POST_PARTNER:
+			case WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL:
 				return array (
 					'id'      => $item->ID,
 					'title'   => $item->post_title,
