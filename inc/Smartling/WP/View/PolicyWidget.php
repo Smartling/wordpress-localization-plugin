@@ -1,71 +1,11 @@
 <?php
-use Smartling\Settings\TargetLocale;
-use Smartling\Submissions\SubmissionEntity;
-use Smartling\WP\Controller\PolicyWidgetController;
+
 use Smartling\WP\WPAbstract;
 
-?>
-<div id = "smartling-post-widget" >
-	<div class = "fields" >
-		<h3 ><?= __( 'Translate this policy into:' ); ?></h3 >
-		<?= WPAbstract::checkUncheckBlock(); ?>
-		<?php
-		$nameKey = PolicyWidgetController::WIDGET_DATA_NAME;
+/**
+ * @var WPAbstract $this
+ * @var WPAbstract self
+ */
 
-		/**
-		 * @var TargetLocale[] $locales
-		 */
-		$locales = $data['profile']->getTargetLocales();
-
-		foreach ( $locales as $locale ) {
-			/**
-			 * @var TargetLocale $locale
-			 */
-			if ( ! $locale->isEnabled() ) {
-				continue;
-			}
-
-			$value = false;
-
-			$status      = '';
-			$submission  = null;
-			$statusValue = null;
-			$id          = null;
-			if ( null !== $data['submissions'] ) {
-				foreach ( $data['submissions'] as $item ) {
-					/**
-					 * @var SubmissionEntity $item
-					 */
-					if ( $item->getTargetBlogId() === $locale->getBlogId() ) {
-						$value       = true;
-						$statusValue = $item->getStatus();
-						$id          = $item->getId();
-						$percent     = $item->getCompletionPercentage();
-						$status      = $item->getStatusColor();
-						break;
-					}
-				}
-			}
-			?>
-			<p >
-				<?= WPAbstract::localeSelectionCheckboxBlock(
-					$nameKey,
-					$locale->getBlogId(),
-					$locale->getLabel(),
-					$value
-				); ?>
-				<?php if ( $value ) { ?>
-					<?= WPAbstract::localeSelectionTranslationStatusBlock(
-						__( $statusValue ),
-						$status,
-						$percent
-					); ?>
-					<?= WPAbstract::inputHidden(
-						$id
-					); ?>
-				<?php } ?>
-			</p >
-		<?php } ?>
-	</div >
-	<?= WPAbstract::submitBlock(); ?>
-</div >
+$this->setWidgetHeader( __( 'Translate this policy into:' ) );
+$this->renderViewScript( 'post-based-content-type.php' );

@@ -32,9 +32,23 @@ class WordpressContentTypeHelper {
 	const CONTENT_TYPE_POST_TAG = 'post_tag';
 
 	/**
+	 * 'term' based content type
+	 */
+	const CONTENT_TYPE_TERM_POLICY_TYPE = 'policy_types';
+	/**
 	 * 'post' based content type
 	 */
 	const CONTENT_TYPE_POST_POLICY = 'policy';
+
+	/**
+	 * 'post' based content type
+	 */
+	const CONTENT_TYPE_POST_PARTNER = 'partner';
+
+	/**
+	 * 'post' based content type
+	 */
+	const CONTENT_TYPE_POST_TESTIMONIAL = 'testimonial';
 
 	/**
 	 * Checks if Wordpress i10n function __ is registered
@@ -55,11 +69,13 @@ class WordpressContentTypeHelper {
 	 * @var array
 	 */
 	private static $_reverse_map = array (
-		'post'     => self::CONTENT_TYPE_POST,
-		'page'     => self::CONTENT_TYPE_PAGE,
-		'category' => self::CONTENT_TYPE_CATEGORY,
-		'post_tag' => self::CONTENT_TYPE_POST_TAG,
-		'policy'   => self::CONTENT_TYPE_POST_POLICY,
+		'post'        => self::CONTENT_TYPE_POST,
+		'page'        => self::CONTENT_TYPE_PAGE,
+		'category'    => self::CONTENT_TYPE_CATEGORY,
+		'post_tag'    => self::CONTENT_TYPE_POST_TAG,
+		'policy'      => self::CONTENT_TYPE_POST_POLICY,
+		'partner'     => self::CONTENT_TYPE_POST_PARTNER,
+		'testimonial' => self::CONTENT_TYPE_POST_TESTIMONIAL,
 	);
 
 	/**
@@ -81,11 +97,13 @@ class WordpressContentTypeHelper {
 
 		// has to be hardcoded because i10n parser must see direct calls of __(CONSTANT STRING)
 		return array (
-			self::CONTENT_TYPE_POST_POLICY => __( 'Policy' ),
-			self::CONTENT_TYPE_POST        => __( 'Post' ),
-			self::CONTENT_TYPE_PAGE        => __( 'Page' ),
-			self::CONTENT_TYPE_CATEGORY    => __( 'Category' ),
-			self::CONTENT_TYPE_POST_TAG    => __( 'Tag' )
+			self::CONTENT_TYPE_POST_POLICY      => __( 'Policy' ),
+			self::CONTENT_TYPE_POST_PARTNER     => __( 'Partner' ),
+			self::CONTENT_TYPE_POST_TESTIMONIAL => __( 'Testimonial' ),
+			self::CONTENT_TYPE_POST             => __( 'Post' ),
+			self::CONTENT_TYPE_PAGE             => __( 'Page' ),
+			self::CONTENT_TYPE_CATEGORY         => __( 'Category' ),
+			self::CONTENT_TYPE_POST_TAG         => __( 'Tag' )
 		);
 	}
 
@@ -95,7 +113,7 @@ class WordpressContentTypeHelper {
 	public static function getSupportedTaxonomyTypes () {
 		return array (
 			self::CONTENT_TYPE_CATEGORY,
-			self::CONTENT_TYPE_POST_TAG
+			self::CONTENT_TYPE_POST_TAG,
 		);
 	}
 
@@ -107,13 +125,10 @@ class WordpressContentTypeHelper {
 	 */
 	public static function getLocalizedContentType ( $contentType ) {
 		$map = self::getLabelMap();
-
 		if ( array_key_exists( $contentType, $map ) ) {
 			return $map[ $contentType ];
 		} else {
-			throw new SmartlingNotSupportedContentException( vsprintf( 'Content-type \'%s\' is not supported yet.',
-				array ( $contentType ) ) );
+			throw new SmartlingNotSupportedContentException( vsprintf( 'Content-type \'%s\' is not supported yet.', array ( $contentType ) ) );
 		}
-
 	}
 }

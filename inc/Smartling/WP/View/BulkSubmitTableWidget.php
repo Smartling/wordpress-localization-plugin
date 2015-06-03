@@ -363,25 +363,35 @@ class BulkSubmitTableWidget extends WP_List_Table {
 		$core = Bootstrap::getContainer()->get( 'entrypoint' );
 		$io   = $core->getContentIoFactory()->getMapper( $contentTypeFilterValue );
 
-		$data  = $io->getAll(
+
+		$data = $io->getAll(
 			$pageOptions['limit'],
 			( $pageOptions['page'] - 1 ) * $pageOptions['limit'],
 			$sortOptions['orderby'],
 			$sortOptions['order']
 		);
+
+
 		$total = $io->getTotal();
 
 		$dataAsArray = array ();
 		if ( $data ) {
 			foreach ( $data as $item ) {
+
 				$row = $this->extractFields( $item, $contentTypeFilterValue );
 
-				$entities = $this->getManager()->find( array (
-						'source_blog_id' => $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
-						'source_id'      => $row['id'],
-						'content_type'   => $row['type']
-					)
-				);
+				$entities = array ();
+
+				if ( isset( $row['id'], $row['type'] ) ) {
+					$entities = $this->getManager()->find( array (
+							'source_blog_id' => $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
+							'source_id'      => $row['id'],
+							'content_type'   => $row['type']
+						)
+					);
+				} else {
+					continue;
+				}
 
 				if ( count( $entities ) > 0 ) {
 					$locales = array ();
@@ -428,6 +438,8 @@ class BulkSubmitTableWidget extends WP_List_Table {
 		switch ( $type ) {
 			case WordpressContentTypeHelper::CONTENT_TYPE_POST:
 			case WordpressContentTypeHelper::CONTENT_TYPE_PAGE:
+			case WordpressContentTypeHelper::CONTENT_TYPE_POST_POLICY:
+			case WordpressContentTypeHelper::CONTENT_TYPE_POST_PARTNER:
 				return array (
 					'id'      => $item->ID,
 					'title'   => $item->post_title,

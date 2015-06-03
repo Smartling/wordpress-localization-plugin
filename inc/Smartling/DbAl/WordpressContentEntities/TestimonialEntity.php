@@ -6,18 +6,17 @@ use Psr\Log\LoggerInterface;
 use Smartling\Helpers\WordpressContentTypeHelper;
 
 /**
- * Class PolicyEntity
+ * Class TestimonialEntity
  *
  * @package Smartling\DbAl\WordpressContentEntities
  */
-class PolicyEntity extends PostEntity {
+class TestimonialEntity extends PostEntity {
 
 	/**
 	 * @inheritdoc
 	 */
 	public function __construct ( LoggerInterface $logger ) {
 		parent::__construct( $logger );
-		$this->setType( WordpressContentTypeHelper::CONTENT_TYPE_POST_POLICY );
+		$this->setType( WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL );
 	}
-
 }

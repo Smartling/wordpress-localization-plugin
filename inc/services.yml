@@ -18,6 +18,8 @@ parameters:
     - 'wp.page'
     - 'wp.taxonomy'
     - 'wp.ext.policy'
+    - 'wp.ext.partner'
+    - 'wp.ext.testimonial'
 
   logger.channel: default
   logger.filehandler.standard.filename: %plugin.dir%/logs/logfile
@@ -80,6 +82,15 @@ services:
     arguments:
       - "@logger"
 
+  wrapper.entity.ext.partner:
+    class: Smartling\DbAl\WordpressContentEntities\PartnerEntity
+    arguments:
+      - "@logger"
+  wrapper.entity.ext.testimonial:
+    class: Smartling\DbAl\WordpressContentEntities\TestimonialEntity
+    arguments:
+      - "@logger"
+
   wrapper.entity.ext.policy:
     class: Smartling\DbAl\WordpressContentEntities\PolicyEntity
     arguments:
@@ -106,6 +117,12 @@ services:
   mapper.ext.policy:
     class: Smartling\Processors\ContentTypeMapper\PolicyMapper
 
+  mapper.ext.testimonial:
+    class: Smartling\Processors\ContentTypeMapper\TestimonialMapper
+
+  mapper.ext.partner:
+    class: Smartling\Processors\ContentTypeMapper\PartnerMapper
+
   mapper.page:
     class: Smartling\Processors\ContentTypeMapper\PageMapper
 
@@ -125,6 +142,8 @@ services:
       - [ "registerHandler", ["category", "@mapper.category"]]
       - [ "registerHandler", ["post_tag", "@mapper.tag"]]
       - [ "registerHandler", ["policy", "@mapper.ext.policy"]]
+      - [ "registerHandler", ["partner", "@mapper.ext.partner"]]
+      - [ "registerHandler", ["testimonial", "@mapper.ext.testimonial"]]
 
 
   factory.contentIO:
@@ -137,6 +156,8 @@ services:
       - [ "registerHandler", ["category", "@wrapper.entity.category"]]
       - [ "registerHandler", ["post_tag", "@wrapper.entity.tag"]]
       - [ "registerHandler", ["policy", "@wrapper.entity.ext.policy"]]
+      - [ "registerHandler", ["partner", "@wrapper.entity.ext.partner"]]
+      - [ "registerHandler", ["testimonial", "@wrapper.entity.ext.testimonial"]]
 
   fileLoggerLineFormatter:
     class: Monolog\Formatter\LineFormatter
@@ -269,6 +290,26 @@ services:
 
   wp.post:
     class: Smartling\WP\Controller\PostWidgetController
+    arguments:
+      - "@logger"
+      - "@multilang.proxy"
+      - "@plugin.info"
+      - "@entity.helper"
+      - "@manager.submission"
+      - "@site.cache"
+
+  wp.ext.partner:
+    class: Smartling\WP\Controller\PartnerWidgetController
+    arguments:
+      - "@logger"
+      - "@multilang.proxy"
+      - "@plugin.info"
+      - "@entity.helper"
+      - "@manager.submission"
+      - "@site.cache"
+
+  wp.ext.testimonial:
+    class: Smartling\WP\Controller\TestimonialWidgetController
     arguments:
       - "@logger"
       - "@multilang.proxy"

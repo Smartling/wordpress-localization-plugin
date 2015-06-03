@@ -27,6 +27,14 @@ class PostMapper extends MapperAbstract {
 					'type'      => 'standard',
 					'meta'      => false,
 					'mandatory' => true,
+					'name'      => 'post_excerpt',
+					'value'     => '',
+					'key'       => ''
+				),
+				array (
+					'type'      => 'standard',
+					'meta'      => false,
+					'mandatory' => true,
 					'name'      => 'post_content',
 					'value'     => '',
 					'key'       => ''

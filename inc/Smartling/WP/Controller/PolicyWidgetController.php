@@ -25,11 +25,4 @@ class PolicyWidgetController extends PostWidgetController {
 	 * @var string
 	 */
 	protected $noOriginalFound = 'No original policy found';
-
-	/**
-	 * @inheritdoc
-	 */
-	protected function isAllowedToSave ( $post_id ) {
-		return current_user_can( 'edit_post', $post_id );
-	}
 }

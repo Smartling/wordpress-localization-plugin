@@ -46,6 +46,43 @@ abstract class WPAbstract {
 	private $cache;
 
 	/**
+	 * @var string
+	 */
+	private $widgetHeader = '';
+
+	private $viewData;
+
+	/**
+	 * @return mixed
+	 */
+	public function getViewData () {
+		return $this->viewData;
+	}
+
+	/**
+	 * @param mixed $viewData
+	 */
+	public function setViewData ( $viewData ) {
+		$this->viewData = $viewData;
+	}
+
+
+
+	/**
+	 * @return string
+	 */
+	public function getWidgetHeader () {
+		return $this->widgetHeader;
+	}
+
+	/**
+	 * @param string $widgetHeader
+	 */
+	public function setWidgetHeader ( $widgetHeader ) {
+		$this->widgetHeader = $widgetHeader;
+	}
+
+	/**
 	 * Constructor
 	 *
 	 * @param LoggerInterface                  $logger
@@ -117,12 +154,17 @@ abstract class WPAbstract {
 	 * @param null $data
 	 */
 	public function view ( $data = null ) {
+		$this->setViewData($data);
 		$class = get_called_class();
 		$class = str_replace( 'Smartling\\WP\\Controller\\', '', $class );
 
 		$class = str_replace( 'Controller', '', $class );
 
-		require_once plugin_dir_path( __FILE__ ) . 'View/' . $class . '.php';
+		$this->renderViewScript( $class . '.php' );
+	}
+
+	public function renderViewScript ( $script ) {
+		require_once plugin_dir_path( __FILE__ ) . 'View/' . $script;
 	}
 
 	public static function sendButton ( $id = 'submit', $name = 'submit' ) {
