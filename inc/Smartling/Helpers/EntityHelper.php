@@ -145,13 +145,13 @@ class EntityHelper {
 	 * @throws \Exception not found original
 	 */
 	public function getTarget ( $id, $targetBlog, $type = 'post' ) {
-		if ( $this->getSiteHelper()->getCurrentBlogId() == $targetBlog ) {
+		if ( $this->getSiteHelper()->getCurrentBlogId() === $targetBlog ) {
 			return $id;
 		}
 
 		$linked = $this->getConnector()->getLinkedObjects( $this->getSiteHelper()->getCurrentBlogId(), $id, $type );
 		foreach ( $linked as $key => $item ) {
-			if ( $key == $targetBlog ) {
+			if ( $key === $targetBlog ) {
 				return $item;
 			}
 		}

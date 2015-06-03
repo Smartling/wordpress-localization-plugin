@@ -145,7 +145,7 @@ if ( 0 === $profileId ) {
 							$enabled         = false;
 
 							foreach ( $targetLocales as $targetLocale ) {
-								if ( $targetLocale->getBlogId() == $blogId ) {
+								if ( $targetLocale->getBlogId() === $blogId ) {
 									$smartlingLocale = $targetLocale->getSmartlingLocale();
 									$enabled         = $targetLocale->isEnabled();
 									break;
@@ -188,7 +188,7 @@ if ( 0 === $profileId ) {
 						<p >
 							<?php
 							$option  = $profile->getAutoAuthorize();
-							$checked = $option == true ? 'checked="checked"' : '';
+							$checked = $option === true ? 'checked="checked"' : '';
 							?>
 							<input type = "checkbox"
 							       name = "smartling_settings[autoAuthorize]" <?= $checked; ?> / >

@@ -728,7 +728,7 @@ class SmartlingCore {
 		foreach ( $items as $item ) {
 			/** @var SubmissionEntity $entity */
 			$entity = $this->loadSubmissionEntityById( $item );
-			if ( $entity->getStatus() == SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS ) {
+			if ( $entity->getStatus() === SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS ) {
 				$this->checkSubmissionByEntity( $entity );
 				$this->checkEntityForDownload( $entity );
 				$results[] = $entity;

@@ -102,7 +102,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 		}
 
 		if ( array_key_exists( 'callbackUrl', $settings ) ) {
-			$profile->setCallBackUrl( $settings['callbackUrl'] == 'on' ? true : false );
+			$profile->setCallBackUrl( $settings['callbackUrl'] === 'on' );
 		}
 
 		if ( array_key_exists( 'autoAuthorize', $settings ) ) {

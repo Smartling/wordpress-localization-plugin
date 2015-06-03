@@ -123,7 +123,7 @@ class HttpClient {
 
 		$mr = $maxredirect === null ? 5 : intval( $maxredirect );
 
-		if ( ini_get( 'open_basedir' ) == '' && ini_get( 'safe_mode' ) == 'Off' ) {
+		if ( ini_get( 'open_basedir' ) === '' && ini_get( 'safe_mode' ) == 'Off' ) {
 
 			curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, $mr > 0 );
 			curl_setopt( $ch, CURLOPT_MAXREDIRS, $mr );

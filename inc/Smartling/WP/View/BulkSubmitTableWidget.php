@@ -412,7 +412,7 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 				}
 
 				//$row['title']  = $this->applyRowActions( $row );
-				$row['updated'] = false != $row['updated'] ? DateTimeHelper::toWordpressLocalDateTime( DateTimeHelper::stringToDateTime( $row['updated'] ) ) : '';
+				$row['updated'] = false !== $row['updated'] ? DateTimeHelper::toWordpressLocalDateTime( DateTimeHelper::stringToDateTime( $row['updated'] ) ) : '';
 				$row            = array_merge( array ( 'bulkActionCb' => $this->column_cb( $row ) ), $row );
 				$dataAsArray[]  = $row;
 			}

@@ -206,7 +206,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 	 */
 	private function getPrimaryKey ( array $tableDefinition ) {
 		foreach ( $tableDefinition['indexes'] as $indexDefinition ) {
-			if ( $indexDefinition['type'] == 'primary' ) {
+			if ( $indexDefinition['type'] === 'primary' ) {
 				return $indexDefinition['columns'];
 			} else {
 				continue;
@@ -227,7 +227,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 		$_indexes = array ();
 
 		foreach ( $tableDefinition['indexes'] as $indexDefinition ) {
-			if ( $indexDefinition['type'] == 'primary' ) {
+			if ( $indexDefinition['type'] === 'primary' ) {
 				continue;
 			} else {
 				$_indexes[] = vsprintf(

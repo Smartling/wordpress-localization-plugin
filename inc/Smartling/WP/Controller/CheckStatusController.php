@@ -50,7 +50,7 @@ class CheckStatusController extends WPAbstract implements WPHookInterface {
 	 * @return array|bool
 	 */
 	public function ajaxHandler () {
-		if ( $_REQUEST["action"] == "ajax_submissions_update_status" ) {
+		if ( $_REQUEST["action"] === "ajax_submissions_update_status" ) {
 
 			$items = $this->checkItems( $_REQUEST["ids"] );
 
@@ -96,7 +96,7 @@ class CheckStatusController extends WPAbstract implements WPHookInterface {
 			$isCached = false;
 			if ( $cachedItems ) {
 				foreach ( $cachedItems as &$cachedItem ) {
-					if ( $cachedItem["item"] == $item ) {
+					if ( $cachedItem["item"] === $item ) {
 						$isCached = true;
 						if ( $cachedItem["expiration"] <= $now ) {
 							$result[]                 = $item;
