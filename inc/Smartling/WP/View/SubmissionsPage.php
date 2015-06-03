@@ -1,3 +1,11 @@
+<?php
+/**
+ * @var WPAbstract $this
+ * @var WPAbstract self
+ */
+$data = $this->getViewData();
+?>
+
 <div class = "wrap" >
 	<h2 ><?= get_admin_page_title(); ?></h2 >
 

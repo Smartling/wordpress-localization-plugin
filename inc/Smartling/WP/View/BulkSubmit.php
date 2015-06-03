@@ -2,6 +2,12 @@
 use Smartling\WP\WPAbstract;
 use Smartling\Settings\TargetLocale;
 
+/**
+ * @var WPAbstract $this
+ * @var WPAbstract self
+ */
+$data = $this->getViewData();
+
 ?>
 <div class = "wrap" >
 	<style >
