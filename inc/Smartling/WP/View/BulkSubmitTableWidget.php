@@ -412,7 +412,7 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 				}
 
 				//$row['title']  = $this->applyRowActions( $row );
-				$row['updated'] = false !== $row['updated'] ? DateTimeHelper::toWordpressLocalDateTime( DateTimeHelper::stringToDateTime( $row['updated'] ) ) : '';
+				$row['updated'] = ! is_empty( $row['updated'] ) ? DateTimeHelper::toWordpressLocalDateTime( DateTimeHelper::stringToDateTime( $row['updated'] ) ) : '';
 				$row            = array_merge( array ( 'bulkActionCb' => $this->column_cb( $row ) ), $row );
 				$dataAsArray[]  = $row;
 			}
@@ -472,7 +472,7 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 	public function contentTypeSelectRender () {
 		$controlName = 'content-type';
 
-		$types = $this->getActiveContentTypes($this->entityHelper->getSiteHelper());
+		$types = $this->getActiveContentTypes( $this->entityHelper->getSiteHelper() );
 
 		$value = $this->getFormElementValue(
 			$controlName,

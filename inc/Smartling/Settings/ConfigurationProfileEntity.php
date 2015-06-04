@@ -172,13 +172,10 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	 * @param $projectKey
 	 */
 	public function setApiKey ( $projectKey ) {
-
-		$old                          = $this->stateFields['api_key'];
-		$this->stateFields['api_key'] = $projectKey;
-
 		if ( ! preg_match( vsprintf( '/%s/ius', array ( self::REGEX_PROJECT_KEY ) ), trim( $projectKey, '/' ) ) ) {
 			$this->logger->warning( vsprintf( 'Got invalid project KEY: %s', array ( $projectKey ) ) );
-			$this->stateFields['api_key'] = $old;
+		} else {
+			$this->stateFields['api_key'] = $projectKey;
 		}
 	}
 
