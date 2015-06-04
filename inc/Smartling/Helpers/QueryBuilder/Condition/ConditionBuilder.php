@@ -124,7 +124,9 @@ class ConditionBuilder {
 	 * @return bool
 	 */
 	private static function validateParametersCount ( $condition, $parameters ) {
-		return count( $parameters ) === preg_match_all( '|(%s)|ius', $condition );
+		$match = null;
+
+		return count( $parameters ) === preg_match_all( '|(%s)|ius', $condition, $match );
 	}
 
 	/**

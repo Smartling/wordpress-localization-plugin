@@ -47,9 +47,9 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
 		add_action( 'admin_post_smartling_configuration_profile_list', array ( $this, 'listProfiles' ) );
 
 
-		add_action( 'admin_post_smartling_run_cron', array ( $this, 'run_cron' ) );
+		add_action( 'admin_post_smartling_run_cron', array ( $this, 'runCron' ) );
 
-		add_action( 'admin_post_smartling_download_log_file', array ( $this, 'download_log' ) );
+		add_action( 'admin_post_smartling_download_log_file', array ( $this, 'downloadLog' ) );
 	}
 
 	public function menu () {
@@ -71,7 +71,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
 	 *
 	 * @throws \Exception
 	 */
-	public function run_cron () {
+	public function runCron () {
 		ignore_user_abort( true );
 		set_time_limit( 0 );
 
@@ -89,7 +89,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
 		$this->view( $table );
 	}
 
-	public function download_log () {
+	public function downloadLog () {
 		$container = Bootstrap::getContainer();
 
 		$pluginDir = $container->getParameter( 'plugin.dir' );

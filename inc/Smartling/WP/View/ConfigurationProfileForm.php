@@ -54,7 +54,7 @@ if ( 0 === $profileId ) {
 				<th scope = "row" ><?= ConfigurationProfileEntity::getFieldLabel( 'profile_name' ); ?></th >
 				<td >
 					<input type = "text" name = "smartling_settings[profileName]"
-					       value = "<?= $profile->getProfileName(); ?>" >
+					       value = "<?= htmlentities( $profile->getProfileName() ); ?>" >
 					<br >
 				</td >
 			</tr >

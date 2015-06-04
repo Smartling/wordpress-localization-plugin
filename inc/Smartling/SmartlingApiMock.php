@@ -59,6 +59,8 @@ class SmartlingApiMock extends SmartlingAPI {
 		return null;
 	}
 
+	const FAKE_TEXT_LENGTH = 180;
+
 	/**
 	 * @inheritdoc
 	 */
@@ -89,7 +91,7 @@ class SmartlingApiMock extends SmartlingAPI {
 		$fields = $wrapper->getFields();
 
 		foreach ( $fields as $field ) {
-			$field->setValue( $faker->realText( 180 ) );
+			$field->setValue( $faker->realText( self::FAKE_TEXT_LENGTH ) );
 		}
 
 		$encodedXML = XmlEncoder::xmlEncode( $fields, $p_factory );
