@@ -30,7 +30,7 @@ parameters:
   logger.formatter.output.default: "[%%datetime%%] %%channel%%.%%level_name%%: %%message%% %%context%% %%extra%%\n"
   logger.formatter.output.short: "[%%datetime%%] %%level_name%%: %%message%%\n"
 
-  submission.pagesize: 5
+  submission.pagesize: 10
 
 services:
   processor.property.default:
