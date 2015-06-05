@@ -2,6 +2,7 @@
 
 namespace Smartling\WP\View;
 
+use DateTime;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
@@ -9,6 +10,7 @@ use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
+use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressUserHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -412,7 +414,16 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 				}
 
 				//$row['title']  = $this->applyRowActions( $row );
-				$row['updated'] = '' !== $row['updated'] ? DateTimeHelper::toWordpressLocalDateTime( DateTimeHelper::stringToDateTime( $row['updated'] ) ) : '';
+
+				$updatedDate = '';
+				if ( ! StringHelper::isNullOrEmpty( $row['updated'] ) ) {
+					$dt = DateTimeHelper::stringToDateTime( $row['updated'] );
+					if ( $dt instanceof DateTime ) {
+						$updatedDate = DateTimeHelper::toWordpressLocalDateTime( $dt );
+					}
+				}
+
+				$row['updated'] = $updatedDate;
 				$row            = array_merge( array ( 'bulkActionCb' => $this->column_cb( $row ) ), $row );
 				$dataAsArray[]  = $row;
 			}
