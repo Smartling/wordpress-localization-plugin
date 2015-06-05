@@ -118,13 +118,23 @@ class SubmissionTableWidget extends SmartlingListTable {
 
 		$linkTemplate = '?page=%s&action=%s&' . $this->buildHtmlTagName( $this->_args['singular'] ) . '=%s';
 
+		$hrefFilters = vsprintf(
+			'&%s=%s&%s=%s',
+			array (
+				$this->buildHtmlTagName( 'content-type' ),
+				$this->getFormElementValue( 'content-type', $this->defaultValues['content-type'] ),
+				$this->buildHtmlTagName( 'status' ),
+				$this->getFormElementValue( 'status', $this->defaultValues['status'] ),
+			)
+		);
+
 		//Build row actions
 		$actions = array (
 			'send'     => HtmlTagGeneratorHelper::tag( 'a', __( 'Resend' ), array (
-				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'sendSingle', $item['id'] ) )
+				'href' => vsprintf( $linkTemplate . $hrefFilters, array ( $_REQUEST['page'], 'sendSingle', $item['id'] ) )
 			) ),
 			'download' => HtmlTagGeneratorHelper::tag( 'a', __( 'Download' ), array (
-				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'downloadSingle', $item['id'] ) )
+				'href' => vsprintf( $linkTemplate . $hrefFilters, array ( $_REQUEST['page'], 'downloadSingle', $item['id'] ) )
 			) ),
 			/*'check'    => HtmlTagGeneratorHelper::tag( 'a', __( 'Check Status' ), array (
 				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'checkSingle', $item['id'] ) )
