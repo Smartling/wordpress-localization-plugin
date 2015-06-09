@@ -8,25 +8,8 @@ use Smartling\WP\Controller\ConfigurationProfilesWidget;
 $data = $this->getViewData();
 ?>
 <div class = "wrap" >
-	<h2 ><?=
-
-		get_admin_page_title(); ?></h2 >
-
+	<h2 ><?= get_admin_page_title(); ?></h2 >
 	<?php
-	$messages = DiagnosticsHelper::getMessages();
-	if ( 0 < count( $messages ) ) :
-		?>
-		<div id = "message" class = "error" >
-			<?php
-			foreach ( $messages as $message ) {
-				show_message( $message, true );
-			}
-			?>
-		</div >
-	<?php endif; ?>
-	<?php
-
-
 	$configurationProfilesTable = $data;
 	/**
 	 * @var ConfigurationProfilesWidget $configurationProfilesTable

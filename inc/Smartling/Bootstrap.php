@@ -217,7 +217,7 @@ class Bootstrap {
 
 		if ( class_exists( 'Mlp_Load_Controller', false ) ) {
 			$mlPluginsStatuses['multilingual-press-pro'] = true;
-			$logger->debug( 'found "multilingual-press-pro" plugin' );
+			$logger->debug( 'found "multilingual-press" plugin' );
 
 			$_found = true;
 		}
@@ -260,6 +260,26 @@ class Bootstrap {
 		}
 
 		$this->testPluginSetup();
+
+		// display adminpanel-wide diagnostic error messgaes.
+		add_action( 'admin_notices', array ( $this, 'displayMessages' ) );
+	}
+
+	public function displayMessages () {
+		$type = 'error';
+		$messages=DiagnosticsHelper::getMessages();
+		if (0 < count($messages))
+		{
+			$msg = '';
+			foreach($messages as $message)
+			{
+				$msg .= vsprintf( '<div class="%s"><p>%s</p></div>', array ( $type, $message ) );
+			}
+
+
+			echo $msg;
+		}
+
 	}
 
 	protected function testThirdPartyPluginsRequirements () {
@@ -279,7 +299,7 @@ class Bootstrap {
 		}
 
 		if ( true === $blockWork ) {
-			$mainMessage = 'No active suitable localization plugin found.';
+			$mainMessage = 'No active suitable localization plugin found. Please install and activate one, e.g.: <a href="/wp-admin/network/plugin-install.php?tab=search&s=multilingual+press">Multilingual Press.</a>';
 
 			self::$_logger->critical( 'Boot :: ' . $mainMessage );
 
@@ -289,7 +309,7 @@ class Bootstrap {
 
 	protected function testPhpExtension ( $extension ) {
 		if ( ! extension_loaded( $extension ) ) {
-			$mainMessage = $extension . ' php extension is required to run the plugin is not installed / activated.';
+			$mainMessage = $extension . ' php extension is required to run the plugin is not installed or enabled.';
 
 			self::$_logger->critical( 'Boot :: ' . $mainMessage );
 
@@ -304,10 +324,10 @@ class Bootstrap {
 		$sm = self::getContainer()->get( 'manager.settings' );
 
 		$total    = 0;
-		$profiles = $sm->getEntities( array (), null, $total );
+		$profiles = $sm->getEntities( array (), null, $total, true );
 
 		if ( 0 === count( $profiles ) ) {
-			$mainMessage = 'No configuration profiles found. Please create at least one on settings page';
+			$mainMessage = 'No active smartling configuration profiles found. Please create at least one on <a href="/wp-admin/admin.php?page=smartling_configuration_profile_list">settings page</a>';
 
 			self::$_logger->critical( 'Boot :: ' . $mainMessage );
 

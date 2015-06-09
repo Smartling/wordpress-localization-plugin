@@ -32,11 +32,28 @@ class SettingsManager extends EntityManagerAbstract {
 	}
 
 
-	public function getEntities ( $sortOptions = array (), $pageOptions = null, & $totalCount ) {
+	public function getEntities ( $sortOptions = array (), $pageOptions = null, & $totalCount, $onlyActive = false ) {
 		$validRequest = $this->validateRequest( $sortOptions, $pageOptions );
 		$result       = array ();
 		if ( $validRequest ) {
-			$dataQuery  = $this->buildQuery( $sortOptions, $pageOptions );
+
+			$cb = null;
+
+			if (true === $onlyActive)
+			{
+				$cb = ConditionBlock::getConditionBlock();
+
+				$cb->addCondition(
+					Condition::getCondition(
+						ConditionBuilder::CONDITION_SIGN_EQ,
+						'is_active',
+						array (
+							1
+						)
+					)
+				);
+			}
+			$dataQuery  = $this->buildQuery( $sortOptions, $pageOptions, $cb );
 			$countQuery = $this->buildCountQuery();
 			$tc         = $this->getDbal()->fetch( $countQuery );
 			if ( 1 === count( $tc ) ) {
