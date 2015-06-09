@@ -9,6 +9,11 @@ use Smartling\DbAl\Migrations\SmartlingDbMigrationInterface;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 
+/**
+ * Class DB
+ *
+ * @package Smartling\DbAl
+ */
 class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 
 	const SMARTLING_DB_SCHEMA_VERSION = 'smartling_db_ver';
@@ -173,6 +178,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 			$this->logger->info( 'uninstalling tables', array ( $table ) );
 			$this->getWpdb()->query( 'DROP TABLE IF EXISTS ' . $table );
 		}
+		delete_site_option(self::SMARTLING_DB_SCHEMA_VERSION);
 	}
 
 	/**
