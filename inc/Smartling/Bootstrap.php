@@ -46,6 +46,9 @@ class Bootstrap {
 		}
 	}
 
+	public static function getCurrentVersion () {
+		return self::getContainer()->getParameter( 'plugin.version' );
+	}
 
 	/**
 	 * Initializes DI Container from YAML config file
