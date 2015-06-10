@@ -172,9 +172,9 @@ class Bootstrap {
 		$errorType = &$data['type'];
 
 		if ( $errorType && $loggingPattern ) {
-			$message = "An Error occurred and Wordpress is down.\n";
-			$message .= "Message: '" . $data['message'] . "'\n";
-			$message .= "Location: '" . $data['file'] . ':' . $data['line'] . "'\n";
+			$message = "An Error (0x{$data['type']}) occurred and Wordpress is down.\n";
+			$message .= "Message: '{$data['message']}'\n";
+			$message .= "Location: '{$data['file']}:{$data['line']}'\n";
 			$logger->emergency( $message );
 		}
 	}
