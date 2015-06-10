@@ -236,7 +236,7 @@ class Bootstrap {
 	}
 
 	public function checkUploadFolder () {
-		$path = $this->getContainer()->getParameter( 'plugin.upload' );
+		$path = self::getContainer()->getParameter( 'plugin.upload' );
 		if ( ! file_exists( $path ) ) {
 			mkdir( $path, 0777 );
 		}
