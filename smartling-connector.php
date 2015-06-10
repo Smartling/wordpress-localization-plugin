@@ -23,13 +23,26 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-require_once plugin_dir_path( __FILE__ ) . 'inc/autoload.php';
+if ( class_exists( 'Smartling\Bootstrap', false ) ) {
+	add_action( 'all_admin_notices', function () {
+		$msg = vsprintf(
+			'Smartling plugin (ver. %s) is already loaded. Skipping plugin load from %s.',
+			array
+			(
+				Smartling\Bootstrap::getContainer()->getParameter( 'plugin.version' ),
+				__FILE__
+			)
+		);
+		echo vsprintf( '<div class="error"><p>%s</p></div>', array ( $msg ) );
+	} );
+} else {
+	require_once plugin_dir_path( __FILE__ ) . 'inc/autoload.php';
 
-use Smartling\Bootstrap;
+	$bootstrap = new Smartling\Bootstrap();
 
-$bootstrap = new Bootstrap();
+	add_action( 'plugins_loaded', array ( $bootstrap, 'load' ), 999 );
 
-add_action( 'plugins_loaded', array ( $bootstrap, 'load' ), 999 );
+	register_activation_hook( __FILE__, array ( $bootstrap, 'activate' ) );
+	register_deactivation_hook( __FILE__, array ( $bootstrap, 'deactivate' ) );
+}
 
-register_activation_hook( __FILE__, array ( $bootstrap, 'activate' ) );
-register_deactivation_hook( __FILE__, array ( $bootstrap, 'deactivate' ) );
