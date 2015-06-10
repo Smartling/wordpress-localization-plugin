@@ -34,6 +34,7 @@ class SubmissionsPageController
 
 	public function renderPage () {
 		$table = new SubmissionTableWidget( $this->getManager(), $this->getEntityHelper() );
+		$table->prepare_items();
 		$this->view( $table );
 	}
 }

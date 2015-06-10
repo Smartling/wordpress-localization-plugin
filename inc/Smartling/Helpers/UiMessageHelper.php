@@ -1,14 +1,23 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: user
- * Date: 10.06.2015
- * Time: 11:04
- */
 
 namespace Smartling\Helpers;
 
-
+/**
+ * Class UiMessageHelper
+ *
+ * @package Smartling\Helpers
+ */
 class UiMessageHelper {
-
+	public static function displayMessages () {
+		$type     = 'error';
+		$messages = DiagnosticsHelper::getMessages();
+		if ( 0 < count( $messages ) ) {
+			$msg = '';
+			foreach ( $messages as $message ) {
+				$msg .= vsprintf( '<div class="%s"><p>%s</p></div>', array ( $type, $message ) );
+			}
+			echo $msg;
+			DiagnosticsHelper::reset();
+		}
+	}
 }

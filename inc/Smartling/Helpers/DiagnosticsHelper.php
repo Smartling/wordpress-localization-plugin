@@ -69,4 +69,8 @@ class DiagnosticsHelper {
 		}
 
 	}
+
+	public static function reset () {
+		self::$messages = array ();
+	}
 }

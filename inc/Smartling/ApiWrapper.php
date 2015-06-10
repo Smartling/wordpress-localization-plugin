@@ -7,6 +7,8 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
+use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\UiMessageHelper;
 use Smartling\SDK\FileUploadParameterBuilder;
 use Smartling\SDK\SmartlingAPI;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -141,7 +143,7 @@ class ApiWrapper implements ApiWrapperInterface {
 				'Session [%s]. Trying to download file: \n Project ID : %s\n Action : %s\n URI : %s\n Locale : %s\n Error : response code -> %s and message -> %s',
 				array (
 					$actionMark,
-					$this->settings->getProjectId(),
+					$profile->getProjectId(),
 					'download',
 					$entity->getFileUri(),
 					$entity->getTargetLocale(),
@@ -149,8 +151,19 @@ class ApiWrapper implements ApiWrapperInterface {
 					implode( ' || ', $messages )
 				)
 			);
+
+			$infoMessage = vsprintf(
+				'Error happened while downloading translation of %s file for %s locale. Smartling response: %s; %s.',
+				array (
+					$entity->getFileUri(),
+					$entity->getTargetLocale(),
+					$code,
+					implode( ', ', $messages )
+				)
+			);
+
 			$this->logger->error( $logMessage );
-			throw new SmartlingFileDownloadException( $logMessage );
+			throw new SmartlingFileDownloadException( $infoMessage );
 		}
 
 		return $requestResultRaw;
@@ -202,7 +215,7 @@ class ApiWrapper implements ApiWrapperInterface {
 				array (
 					$entity->getContentType(),
 					$entity->getSourceId(),
-					$this->settings->getProjectId(),
+					$profile->getProjectId(),
 					'status',
 					$entity->getFileUri(),
 					$entity->getTargetLocale(),

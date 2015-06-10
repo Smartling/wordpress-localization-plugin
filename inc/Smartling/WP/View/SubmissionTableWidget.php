@@ -6,6 +6,7 @@ use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Helpers\DateTimeHelper;
+use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
@@ -131,10 +132,12 @@ class SubmissionTableWidget extends SmartlingListTable {
 		//Build row actions
 		$actions = array (
 			'send'     => HtmlTagGeneratorHelper::tag( 'a', __( 'Resend' ), array (
-				'href' => vsprintf( $linkTemplate . $hrefFilters, array ( $_REQUEST['page'], 'sendSingle', $item['id'] ) )
+				'href' => vsprintf( $linkTemplate . $hrefFilters,
+					array ( $_REQUEST['page'], 'sendSingle', $item['id'] ) )
 			) ),
 			'download' => HtmlTagGeneratorHelper::tag( 'a', __( 'Download' ), array (
-				'href' => vsprintf( $linkTemplate . $hrefFilters, array ( $_REQUEST['page'], 'downloadSingle', $item['id'] ) )
+				'href' => vsprintf( $linkTemplate . $hrefFilters,
+					array ( $_REQUEST['page'], 'downloadSingle', $item['id'] ) )
 			) ),
 			/*'check'    => HtmlTagGeneratorHelper::tag( 'a', __( 'Check Status' ), array (
 				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'checkSingle', $item['id'] ) )
@@ -229,6 +232,11 @@ class SubmissionTableWidget extends SmartlingListTable {
 						$messages = $ep->checkSubmissionById( $submission );
 						break;
 				}
+				if ( is_array( $messages ) ) {
+					foreach ( $messages as $message ) {
+						DiagnosticsHelper::addDiagnosticsMessage( $message );
+					}
+				}
 			}
 		}
 	}
@@ -255,9 +263,12 @@ class SubmissionTableWidget extends SmartlingListTable {
 					$messages = $ep->checkSubmissionById( $submissionId );
 					break;
 			}
+			if ( is_array( $messages ) ) {
+				foreach ( $messages as $message ) {
+					DiagnosticsHelper::addDiagnosticsMessage( $message );
+				}
+			}
 		}
-
-		// TODO: ? where to show error messages?
 	}
 
 	/**
@@ -410,7 +421,7 @@ class SubmissionTableWidget extends SmartlingListTable {
 	public function contentTypeSelectRender () {
 		$controlName = 'content-type';
 
-		$types = $this->getActiveContentTypes($this->entityHelper->getSiteHelper());
+		$types = $this->getActiveContentTypes( $this->entityHelper->getSiteHelper() );
 
 		// add 'Any' to turn off filter
 		$types = array_merge( array ( 'any' => __( 'Any' ) ), $types );

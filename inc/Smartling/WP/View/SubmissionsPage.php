@@ -1,4 +1,6 @@
 <?php
+use Smartling\Helpers\UiMessageHelper;
+
 /**
  * @var WPAbstract $this
  * @var WPAbstract self
@@ -7,17 +9,20 @@ $data = $this->getViewData();
 ?>
 
 <div class = "wrap" >
+
+	<?php UiMessageHelper::displayMessages(); ?>
+
 	<h2 ><?= get_admin_page_title(); ?></h2 >
 
-	<div class = "display-errors" ></div >
 	<?php
+
 	use Smartling\WP\View\SubmissionTableWidget;
 
-	$submissionsTable = $data;
 	/**
 	 * @var SubmissionTableWidget $submissionsTable
 	 */
-	$submissionsTable->prepare_items();
+	$submissionsTable = $data;
+
 	?>
 	<div id = "icon-users" class = "icon32" ><br /></div >
 
@@ -28,7 +33,7 @@ $data = $this->getViewData();
 	</style >
 
 	<!-- Forms are NOT created automatically, so you need to wrap the table in one to use features like bulk actions -->
-	<form id = "submissions-filter" method = "get" >
+	<form id = "submissions-filter" method = "post" >
 		<table width = "100%" >
 			<tr >
 				<td style = "text-align: left;" ><p >

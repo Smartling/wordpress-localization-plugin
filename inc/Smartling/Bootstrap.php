@@ -262,24 +262,7 @@ class Bootstrap {
 		$this->testPluginSetup();
 
 		// display adminpanel-wide diagnostic error messgaes.
-		add_action( 'admin_notices', array ( $this, 'displayMessages' ) );
-	}
-
-	public function displayMessages () {
-		$type = 'error';
-		$messages=DiagnosticsHelper::getMessages();
-		if (0 < count($messages))
-		{
-			$msg = '';
-			foreach($messages as $message)
-			{
-				$msg .= vsprintf( '<div class="%s"><p>%s</p></div>', array ( $type, $message ) );
-			}
-
-
-			echo $msg;
-		}
-
+		add_action( 'all_admin_notices', array ( 'Smartling\Helpers\UiMessageHelper', 'displayMessages' ) );
 	}
 
 	protected function testThirdPartyPluginsRequirements () {
