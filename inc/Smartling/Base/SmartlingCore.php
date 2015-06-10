@@ -435,7 +435,7 @@ class SmartlingCore {
 	}
 
 	/**
-	 * @param array                  $originalMetadata
+	 * @param array                $originalMetadata
 	 * @param EntityAbstract       $entity
 	 * @param PropertyDescriptor[] $properties
 	 *
@@ -457,8 +457,7 @@ class SmartlingCore {
 
 		foreach ( $properties as $property ) {
 			if ( $property->isMeta() ) {
-				if ('' === $property->getValue())
-				{
+				if ( '' === $property->getValue() ) {
 					continue;
 				}
 				switch ( $property->getType() ) {
