@@ -89,8 +89,27 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
 		$this->view( $table );
 	}
 
+	private function signLogFile()
+	{
+		global $wp_version;
+		$sign = array(
+			'*********************************************************',
+			'* Plugin version:    ' . Bootstrap::getCurrentVersion(),
+			'* PHP version:       ' . phpversion(),
+			'* Wordpress version: ' . $wp_version,
+			'*********************************************************',
+		);
+
+		foreach ($sign as $row)
+		{
+			$this->getLogger()->emergency($row);
+		}
+
+	}
+
 	public function downloadLog () {
 		$container = Bootstrap::getContainer();
+		$this->signLogFile();
 
 		$pluginDir = $container->getParameter( 'plugin.dir' );
 		$filename  = $container->getParameter( 'logger.filehandler.standard.filename' );
