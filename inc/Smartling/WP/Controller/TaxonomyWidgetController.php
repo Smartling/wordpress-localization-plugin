@@ -129,6 +129,11 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 
 		remove_action( "edited_{$termType}", array ( $this, 'save' ) );
 
+		if (!isset($_POST[ self::WIDGET_DATA_NAME ]))
+		{
+			return;
+		}
+
 		$data = $_POST[ self::WIDGET_DATA_NAME ];
 
 		$locales = array ();
