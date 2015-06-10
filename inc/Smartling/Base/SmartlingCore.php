@@ -369,6 +369,8 @@ class SmartlingCore {
 
 			$originalMetadata = $originalEntity->getMetadata();
 
+			$originalMetadata = $originalMetadata ? : array ();
+
 			if ( 0 === $targetId ) {
 				// need to clone original content first.
 				$originalEntity = $this->readContentEntity( $entity );
