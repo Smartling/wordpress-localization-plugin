@@ -2,9 +2,12 @@
 
 namespace Smartling\WP\View;
 
+use Exception;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Exception\EntityNotFoundException;
+use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\EntityHelper;
@@ -275,8 +278,16 @@ class SubmissionTableWidget extends SmartlingListTable {
 	 * Handles actions
 	 */
 	private function processAction () {
-		$this->processBulkAction();
-		$this->processSingleAction();
+		try {
+			$this->processBulkAction();
+			$this->processSingleAction();
+		} catch ( EntityNotFoundException $e ) {
+			$msg = 'An error occurred, the database is corrupted. ' . $e->getMessage();
+			DiagnosticsHelper::addDiagnosticsMessage( $msg );
+		} catch ( Exception $e ) {
+
+			DiagnosticsHelper::addDiagnosticsMessage( $e->getMessage() );
+		}
 	}
 
 	/**

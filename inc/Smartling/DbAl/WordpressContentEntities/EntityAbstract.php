@@ -4,6 +4,7 @@ namespace Smartling\DbAl\WordpressContentEntities;
 
 use Psr\Log\LoggerInterface;
 use Smartling\Exception\EntityNotFoundException;
+use Smartling\Helpers\WordpressContentTypeHelper;
 
 /**
  * Class EntityAbstract
@@ -230,9 +231,10 @@ abstract class EntityAbstract {
 	}
 
 	protected function entityNotFound ( $type, $guid ) {
-		$template = 'The \'%s\' entity with guid \'%s\' not found';
 
-		$message = vsprintf( $template, array ( $type, $guid ) );
+		$template = 'The \'%s\' with ID %s not found in the database.';
+
+		$message = vsprintf( $template, array ( WordpressContentTypeHelper::getLocalizedContentType($type), $guid ) );
 		$this->getLogger()->info( $message );
 
 		throw new EntityNotFoundException( $message );
