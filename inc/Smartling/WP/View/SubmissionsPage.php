@@ -33,7 +33,7 @@ $data = $this->getViewData();
 	</style >
 
 	<!-- Forms are NOT created automatically, so you need to wrap the table in one to use features like bulk actions -->
-	<form id = "submissions-filter" method = "post" >
+	<form id = "submissions-filter" method = "get">
 		<table width = "100%" >
 			<tr >
 				<td style = "text-align: left;" ><p >
