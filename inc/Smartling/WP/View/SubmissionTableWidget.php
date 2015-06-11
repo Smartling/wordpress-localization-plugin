@@ -222,17 +222,17 @@ class SubmissionTableWidget extends SmartlingListTable {
 		if ( is_array( $submissions ) ) {
 			foreach ( $submissions as $submission ) {
 				switch ( $this->current_action() ) {
-					case "download":
+					case 'download':
 						$messages = $ep->downloadTranslationBySubmissionId( $submission );
 						break;
-					case "send":
+					case 'send':
 						$messages = $ep->sendForTranslationBySubmissionId( $submission );
 						break;
-					case "check":
+					case 'check':
 						$messages = $ep->checkSubmissionById( $submission );
 						break;
 				}
-				if ( is_array( $messages ) ) {
+				if ( isset( $messages ) && is_array( $messages ) ) {
 					foreach ( $messages as $message ) {
 						DiagnosticsHelper::addDiagnosticsMessage( $message );
 					}
@@ -263,7 +263,7 @@ class SubmissionTableWidget extends SmartlingListTable {
 					$messages = $ep->checkSubmissionById( $submissionId );
 					break;
 			}
-			if ( is_array( $messages ) ) {
+			if ( isset( $messages ) && is_array( $messages ) ) {
 				foreach ( $messages as $message ) {
 					DiagnosticsHelper::addDiagnosticsMessage( $message );
 				}
