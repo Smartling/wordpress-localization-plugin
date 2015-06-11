@@ -211,27 +211,12 @@
 
 })( jQuery );
 
-
 function bulkCheck(className , action) {
-	var elements = document.getElementsByClassName( className );
-	switch (action) {
-	case 'check':
-	{
-		for ( var i = 0 ; i < elements.length ; i ++ ) {
-			elements[ i ].setAttribute( 'checked' , 'checked' );
-		}
-		break;
-	}
-	case 'uncheck':
-	{
-		for ( var i = 0 ; i < elements.length ; i ++ ) {
-			elements[ i ].removeAttribute( 'checked' );
-		}
-		break;
-	}
-	}
+	jQuery.each( jQuery( '.' + className ) , function (i , e) {
+		var act = action;
+		this.checked = 'check' === act;
+	} );
 }
-
 
 jQuery( document ).ready( function () {
 	jQuery( '.checkall' ).on( 'click' , function (e) {
@@ -246,9 +231,9 @@ jQuery( document ).ready( function () {
 		}
 	} );
 
-	jQuery('#sent-to-smartling-bulk' ).on('click', function(e){
-		jQuery('#ct' ).val(jQuery('#smartling-bulk-submit-page-content-type' ).val());
+	jQuery( '#sent-to-smartling-bulk' ).on( 'click' , function (e) {
+		jQuery( '#ct' ).val( jQuery( '#smartling-bulk-submit-page-content-type' ).val() );
 		return;
-	});
+	} );
 } );
 
