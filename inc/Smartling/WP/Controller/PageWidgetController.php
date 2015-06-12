@@ -19,11 +19,6 @@ class PageWidgetController extends PostWidgetController {
 	/**
 	 * @var string
 	 */
-	protected $needSave = 'Need to save the page';
-
-	/**
-	 * @var string
-	 */
 	protected $noOriginalFound = 'No original page found';
 
 	/**

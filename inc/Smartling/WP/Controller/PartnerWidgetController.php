@@ -19,10 +19,5 @@ class PartnerWidgetController extends PostWidgetController {
 	/**
 	 * @var string
 	 */
-	protected $needSave = 'Need to save the partner';
-
-	/**
-	 * @var string
-	 */
 	protected $noOriginalFound = 'No original partner found';
 }

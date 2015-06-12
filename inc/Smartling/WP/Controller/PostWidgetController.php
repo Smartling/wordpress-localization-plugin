@@ -2,7 +2,7 @@
 
 namespace Smartling\WP\Controller;
 
-use SebastianBergmann\Exporter\Exception;
+use Exception;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingDbException;
@@ -26,7 +26,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 
 	protected $servedContentType = WordpressContentTypeHelper::CONTENT_TYPE_POST;
 
-	protected $needSave = 'Need to save the post';
+	protected $needSave = 'Need to have title';
 
 	protected $noOriginalFound = 'No original post found';
 
@@ -64,7 +64,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 	 */
 	public function preView ( $post ) {
 		wp_nonce_field( self::WIDGET_NAME, self::CONNECTOR_NONCE );
-		if ( $post->post_content && $post->post_title ) {
+		if ( $post && $post->post_title && '' !== $post->post_title ) {
 			try {
 				$eh = $this->getEntityHelper();
 
@@ -102,6 +102,9 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 					) )
 				);
 				echo '<p>' . __( $this->noOriginalFound ) . '</p>';
+			} catch (\Exception $e)
+			{
+				$this->getLogger()->error($e->getMessage() . '[' . $e->getFile() . ':' . $e->getLine() . ']');
 			}
 		} else {
 			echo '<p>' . __( $this->needSave ) . '</p>';

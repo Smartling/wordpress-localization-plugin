@@ -19,10 +19,5 @@ class PolicyWidgetController extends PostWidgetController {
 	/**
 	 * @var string
 	 */
-	protected $needSave = 'Need to save the policy';
-
-	/**
-	 * @var string
-	 */
 	protected $noOriginalFound = 'No original policy found';
 }
