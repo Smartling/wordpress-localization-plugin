@@ -76,22 +76,15 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 	public function install () {
 		$currentDbVersion = $this->getSchemaVersion();
 		if ( 0 === $currentDbVersion ) {
+			$currentDbVersion = $this->installDb( $currentDbVersion );
+
 			// check if there was 1.0.12 version
 			$this->getWpdb()->query( 'SHOW TABLES LIKE \'%smartling%\'' );
 			$res = $this->getWpdb()->num_rows;
+
 			if ( 0 < $res ) {
 				// 1.0.12 detected
-				$currentDbVersion ++;
-				$this->setSchemaVersion( $currentDbVersion );
 				$this->schemaUpdate( $currentDbVersion );
-			} else {
-				foreach ( $this->tables as $tableDefinition ) {
-					$query = $this->prepareSql( $tableDefinition );
-					$this->logger->info( vsprintf( 'Installing tables: %s', array ( $query ) ) );
-					$this->getWpdb()->query( $query );
-				}
-				$currentDbVersion ++;
-				$this->setSchemaVersion( $currentDbVersion );
 			}
 		} else {
 			$this->schemaUpdate( $currentDbVersion );
@@ -99,6 +92,21 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 
 	}
 
+	private function installDb ( $currentDbVersion ) {
+		foreach ( $this->tables as $tableDefinition ) {
+			$query = $this->prepareSql( $tableDefinition );
+			$this->logger->info( vsprintf( 'Installing tables: %s', array ( $query ) ) );
+			$this->getWpdb()->query( $query );
+		}
+		$currentDbVersion ++;
+		$this->setSchemaVersion( $currentDbVersion );
+
+		return $currentDbVersion;
+	}
+
+	/**
+	 * @param $fromVersion
+	 */
 	public function schemaUpdate ( $fromVersion ) {
 		/**
 		 * @var DbMigrationManager $mgr
@@ -128,11 +136,22 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 					$this->setSchemaVersion( $migration->getVersion() );
 				} else {
 					$this->logger->error( 'Error occurred while applying migration ' . $migration->getVersion() . '. Error: ' . $this->getWpdb()->last_error );
+					$this->fallbackDatabaseReCreation();
 					break;
 				}
 			}
 		} else {
 			$this->logger->info( 'Activated. No new migrations found.' );
+		}
+	}
+
+	private function fallbackDatabaseReCreation () {
+		$this->logger->error( vsprintf( 'Seems like database is corrupted. Falling back to database re-creation',
+			array () ) );
+
+		if ( - 1 !== (int) get_site_option( self::SMARTLING_DB_SCHEMA_VERSION, - 1, false ) ) {
+			$this->setSchemaVersion( 0 );
+			$this->install();
 		}
 	}
 
@@ -178,7 +197,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 			$this->logger->info( 'uninstalling tables', array ( $table ) );
 			$this->getWpdb()->query( 'DROP TABLE IF EXISTS ' . $table );
 		}
-		delete_site_option(self::SMARTLING_DB_SCHEMA_VERSION);
+		delete_site_option( self::SMARTLING_DB_SCHEMA_VERSION );
 	}
 
 	/**
@@ -333,7 +352,6 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 	function completeTableName ( $tableName ) {
 		return $this->getWpdb()->base_prefix . $tableName;
 	}
-
 
 	/**
 	 * @inheritdoc
