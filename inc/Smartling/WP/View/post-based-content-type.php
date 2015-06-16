@@ -52,8 +52,8 @@ $data = $this->getViewData();
 				}
 			}
 			?>
-		<div style="position: relative; overflow: hidden;">
-			<div style="position: relative; width: 82%; float: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 5px 0;">
+		<div class="smtPostWidget-rowWrapper">
+			<div class="smtPostWidget-row">
 				<?= WPAbstract::localeSelectionCheckboxBlock(
 					$nameKey,
 					$locale->getBlogId(),
@@ -61,7 +61,7 @@ $data = $this->getViewData();
 					$value
 				); ?>
 				</div>
-				<div style="position: relative; left: 42px; top: 3px;">
+				<div class="smtPostWidget-progress">
 				<?php if ( $value ) { ?>
 					<?= WPAbstract::localeSelectionTranslationStatusBlock(
 							__( $statusValue ),
@@ -76,7 +76,7 @@ $data = $this->getViewData();
 			</div>
 			<?php } ?>
 		</div >
-		<div style="margin-top: 10px;">
+		<div class="smtPostWidget-submitBlock">
 			<?= WPAbstract::submitBlock(); ?>
 		</div>
 </div >

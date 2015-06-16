@@ -181,3 +181,27 @@ div.display-errors-set ul li {
     padding-left : 20px;
     margin-left  : 20px;
 }
+
+.smtPostWidget-rowWrapper {
+    position: relative;
+    overflow: hidden;
+}
+
+.smtPostWidget-row {
+    position: relative;
+    width: 82%;
+    float: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 5px 0;
+}
+
+.smtPostWidget-progress {
+    position: relative;
+    left: 42px;
+    top: 3px;
+}
+.smtPostWidget-submitBlock {
+    margin-top: 10px;
+}
