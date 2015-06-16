@@ -73,7 +73,7 @@ $data = $this->getViewData();
 						$value
 					); ?>
 				</div>
-				<div class = "smtPostWidget-progress" style="left: 0px;">
+				<div class = "smtPostWidget-progress" style="left: 15px;">
 					<?php if ( $value ) { ?>
 						<?= WPAbstract::localeSelectionTranslationStatusBlock(
 							__( $statusValue ),
@@ -89,4 +89,4 @@ $data = $this->getViewData();
 		<?php } ?>
 	</div>
 	<?= WPAbstract::submitBlock(); ?>
-</div >
+</div>

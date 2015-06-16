@@ -205,3 +205,9 @@ div.display-errors-set ul li {
 .smtPostWidget-submitBlock {
     margin-top: 10px;
 }
+
+@media screen and (max-width: 782px) {
+    .smtPostWidget-rowWrapper {
+        line-height: 2em;
+    }
+}
