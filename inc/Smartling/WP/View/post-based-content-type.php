@@ -52,25 +52,31 @@ $data = $this->getViewData();
 				}
 			}
 			?>
-			<p >
+		<div style="position: relative; overflow: hidden;">
+			<div style="postion: relative; width: 82%; float: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 5px 0;">
 				<?= WPAbstract::localeSelectionCheckboxBlock(
 					$nameKey,
 					$locale->getBlogId(),
 					$locale->getLabel(),
 					$value
 				); ?>
+				</div>
+				<div style="position: relative; left: 42px; top: 3px;">
 				<?php if ( $value ) { ?>
 					<?= WPAbstract::localeSelectionTranslationStatusBlock(
-						__( $statusValue ),
-						$status,
-						$percent
+							__( $statusValue ),
+							$status,
+							$percent
 					); ?>
 					<?= WPAbstract::inputHidden(
-						$id
+							$id
 					); ?>
 				<?php } ?>
-			</p >
-		<?php } ?>
-	</div >
-	<?= WPAbstract::submitBlock(); ?>
+				</div>
+			</div>
+			<?php } ?>
+		</div >
+		<div style="margin-top: 10px;">
+			<?= WPAbstract::submitBlock(); ?>
+		</div>
 </div >
