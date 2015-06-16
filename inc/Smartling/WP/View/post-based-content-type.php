@@ -53,7 +53,7 @@ $data = $this->getViewData();
 			}
 			?>
 		<div style="position: relative; overflow: hidden;">
-			<div style="postion: relative; width: 82%; float: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 5px 0;">
+			<div style="position: relative; width: 82%; float: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 5px 0;">
 				<?= WPAbstract::localeSelectionCheckboxBlock(
 					$nameKey,
 					$locale->getBlogId(),
