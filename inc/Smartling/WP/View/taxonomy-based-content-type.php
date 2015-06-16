@@ -25,8 +25,7 @@ $data = $this->getViewData();
 	<h3 ><?= __( vsprintf( 'Translate this %s into',
 			array ( WordpressContentTypeHelper::getLocalizedContentType( $data['term']->taxonomy ) ) ) ); ?></h3 >
 	<?= WPAbstract::checkUncheckBlock(); ?>
-	<table class = "form-table" style = "width: 400px;" >
-		<tbody >
+	<div style="width: 400px;">
 		<?php
 		$nameKey = TaxonomyWidgetController::WIDGET_DATA_NAME;
 
@@ -65,16 +64,16 @@ $data = $this->getViewData();
 				}
 			}
 			?>
-			<tr class = "form-field" >
-				<td class = "sm_sh" width = "200px;" >
+			<div class="smtPostWidget-rowWrapper" style="display: inline-block; width: 100%;">
+				<div class="smtPostWidget-row">
 					<?= WPAbstract::localeSelectionCheckboxBlock(
 						$nameKey,
 						$locale->getBlogId(),
 						$locale->getLabel(),
 						$value
 					); ?>
-				</td >
-				<td class = "sm_sh" style = "text-align: left;" >
+				</div>
+				<div class = "smtPostWidget-progress" style="left: 0px;">
 					<?php if ( $value ) { ?>
 						<?= WPAbstract::localeSelectionTranslationStatusBlock(
 							__( $statusValue ),
@@ -85,10 +84,9 @@ $data = $this->getViewData();
 							$id
 						); ?>
 					<?php } ?>
-				</td >
-			</tr >
+				</div>
+			</div>
 		<?php } ?>
-		</tbody >
-	</table >
+	</div>
 	<?= WPAbstract::submitBlock(); ?>
 </div >
