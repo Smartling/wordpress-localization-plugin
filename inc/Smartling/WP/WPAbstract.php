@@ -238,7 +238,7 @@ abstract class WPAbstract {
 
 		$parts[] = HtmlTagGeneratorHelper::tag( 'input', '', $checkboxAttributes );
 
-		$parts[] = HtmlTagGeneratorHelper::tag( 'span', $blog_name, array () );
+		$parts[] = HtmlTagGeneratorHelper::tag( 'span', $blog_name, array ( 'title' => $blog_name ) );
 
 
 		$container = HtmlTagGeneratorHelper::tag( 'label', implode( '', $parts ), array () );
