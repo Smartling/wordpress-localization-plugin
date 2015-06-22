@@ -27,6 +27,7 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  * @property int            $approved_string_count
  * @property int            $completed_string_count
  * @property string         $status
+ * @property int            $is_locked
  *
  * @package Smartling\Submissions
  */
@@ -87,6 +88,7 @@ class SubmissionEntity extends SmartlingEntityAbstract {
 			'completed_string_count' => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_DEFAULT_ZERO,
 			'word_count'             => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_DEFAULT_ZERO,
 			'status'                 => self::DB_TYPE_STRING_SMALL,
+			'is_locked'              => self::DB_TYPE_UINT_SWITCH . ' ' . self::DB_TYPE_DEFAULT_ZERO,
 		);
 	}
 
@@ -179,6 +181,14 @@ class SubmissionEntity extends SmartlingEntityAbstract {
 	 */
 	public function setWordCount ( $word_count ) {
 		$this->stateFields['word_count'] = (int) $word_count;
+	}
+
+	public function getIsLocked () {
+		return (int) $this->stateFields['is_locked'];
+	}
+
+	public function setIsLocked ( $is_locked ) {
+		$this->stateFields['is_locked'] = $is_locked ? 1 : 0;
 	}
 
 	/**

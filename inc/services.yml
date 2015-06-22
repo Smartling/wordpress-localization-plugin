@@ -368,8 +368,24 @@ services:
       - "@manager.submission"
       - "@site.cache"
 
+
+  extension.translation_lock:
+    class: Smartling\Extensions\TranslateLock
+
+  extension.loader:
+    class: Smartling\Extensions\ExtensionLoader
+    arguments:
+      - "@logger"
+    calls:
+      - [ "registerExtension", [ "@extension.translation_lock" ]]
+
+
+
   migration.150512:
     class: Smartling\DbAl\Migrations\Migration150512
+
+  migration.150619:
+    class: Smartling\DbAl\Migrations\Migration150619
 
   manager.db.migrations:
     class: Smartling\DbAl\Migrations\DbMigrationManager
@@ -377,3 +393,4 @@ services:
       - "@logger"
     calls:
       - [ "registerMigration", [ "@migration.150512" ]]
+      - [ "registerMigration", [ "@migration.150619" ]]

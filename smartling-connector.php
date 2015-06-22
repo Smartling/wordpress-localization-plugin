@@ -40,7 +40,7 @@ if ( class_exists( 'Smartling\Bootstrap', false ) ) {
 
 	$bootstrap = new Smartling\Bootstrap();
 
-	add_action( 'plugins_loaded', array ( $bootstrap, 'load' ), 999 );
+	add_action( 'plugins_loaded', array ( $bootstrap, 'load' ), 99 );
 
 	register_activation_hook( __FILE__, array ( $bootstrap, 'activate' ) );
 	register_deactivation_hook( __FILE__, array ( $bootstrap, 'deactivate' ) );

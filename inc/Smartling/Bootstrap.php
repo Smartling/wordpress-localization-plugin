@@ -151,6 +151,8 @@ class Bootstrap {
 			self::$_logger->emergency( $message );
 			DiagnosticsHelper::addDiagnosticsMessage( $message, true );
 		}
+
+		self::getContainer()->get( 'extension.loader' )->runExtensions();
 	}
 
 	/**

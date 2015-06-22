@@ -351,6 +351,15 @@ class SmartlingCore {
 
 	public function downloadTranslationBySubmission ( SubmissionEntity $entity ) {
 
+		if ( 1 === $entity->getIsLocked() ) {
+			$msg = vsprintf('Triggered download of locked entity. Target Blog: %s; Target Id: %s', array(
+				$entity->getTargetBlogId(),
+				$entity->getTargetId()
+			));
+
+			$this->getLogger()->warning($msg);
+			return array ( 'Translation is locked downloading' );
+		}
 
 		$messages = array ();
 
