@@ -10,6 +10,7 @@ use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
+use Smartling\Helpers\Cache;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\XmlEncoder;
@@ -82,6 +83,25 @@ class SmartlingCore {
 	 * @var PropertyProcessorFactory
 	 */
 	private $processorFactory;
+
+	/**
+	 * @var Cache
+	 */
+	private $cache;
+
+	/**
+	 * @return Cache
+	 */
+	public function getCache () {
+		return $this->cache;
+	}
+
+	/**
+	 * @param Cache $cache
+	 */
+	public function setCache ( Cache $cache ) {
+		$this->cache = $cache;
+	}
 
 	/**
 	 * @return ApiWrapperInterface
@@ -754,6 +774,15 @@ class SmartlingCore {
 	 * @return array
 	 */
 	public function getProjectLocales ( ConfigurationProfileEntity $profile ) {
-		return $this->getApiWrapper()->getSupportedLocales( $profile );
+
+		$cacheKey = 'profile.locales.' . $profile->getId();
+		$cached   = $this->getCache()->get( $cacheKey );
+
+		if ( false === $cached ) {
+			$cached = $this->getApiWrapper()->getSupportedLocales( $profile );
+			$this->getCache()->set( $cacheKey, $cached );
+		}
+
+		return $cached;
 	}
 }

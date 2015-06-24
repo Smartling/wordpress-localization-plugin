@@ -76,6 +76,7 @@ services:
       - [ "setMultilangProxy", [ "@multilang.proxy" ]]
       - [ "setContentIoFactory", [ "@factory.contentIO" ]]
       - [ "setProcessorFactory", [ "@factory.processor" ]]
+      - [ "setCache", [ "@site.cache" ]]
 
   wrapper.entity.post:
     class: Smartling\DbAl\WordpressContentEntities\PostEntity
