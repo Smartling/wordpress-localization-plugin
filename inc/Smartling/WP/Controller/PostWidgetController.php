@@ -193,15 +193,14 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 						$originalId = (int) $post_id;
 
 						foreach ( $locales as $blogId => $blogName ) {
-
-							$result = $core->sendForTranslation(
-								$this->servedContentType,
-								$sourceBlog,
-								$originalId,
-								(int) $blogId,
-								$this->getEntityHelper()->getTarget( $post_id, $blogId )
-							);
-
+							$result =
+								$core->createForTranslation(
+									$this->servedContentType,
+									$sourceBlog,
+									$originalId,
+									(int) $blogId,
+									$this->getEntityHelper()->getTarget( $post_id, $blogId)
+								);
 						}
 						break;
 					case __( 'Download' ):

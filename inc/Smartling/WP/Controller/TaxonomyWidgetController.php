@@ -157,15 +157,14 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 				switch ( $_POST['sub'] ) {
 					case __( 'Send to Smartling' ):
 						foreach ( $locales as $blogId => $blogName ) {
-
-							$result = $core->sendForTranslation(
-								$termType,
-								$curBlogId,
-								$term_id,
-								(int) $blogId,
-								$this->getEntityHelper()->getTarget( $term_id, $blogId, $termType )
-							);
-
+							$result =
+								$core->createForTranslation(
+									$termType,
+									$curBlogId,
+									$term_id,
+									(int) $blogId,
+									$this->getEntityHelper()->getTarget( $term_id, $blogId, $termType )
+								);
 
 						}
 						break;
