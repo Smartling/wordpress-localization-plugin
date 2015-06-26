@@ -119,7 +119,7 @@ class TranslateLock implements ExtensionInterface {
 
 		remove_action( 'save_post', array ( $this, 'postSaveHandler' ) );
 
-		$curValue = $_POST['lock_page'] && 'yes' === $_POST['lock_page'] ? 1 : 0;
+		$curValue = array_key_exists( 'lock_page', $_POST ) && 'yes' === $_POST['lock_page'] ? 1 : 0;
 
 		try {
 			$submission = $this->getSubmission( $postId );
