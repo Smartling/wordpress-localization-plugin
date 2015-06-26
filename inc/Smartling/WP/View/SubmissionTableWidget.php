@@ -208,6 +208,15 @@ class SubmissionTableWidget extends SmartlingListTable {
 		return $actions;
 	}
 
+	private function addScreenMessages($messages)
+	{
+		if ( isset( $messages ) && is_array( $messages ) ) {
+			foreach ( $messages as $message ) {
+				DiagnosticsHelper::addDiagnosticsMessage( $message );
+			}
+		}
+	}
+
 	/**
 	 * Handles actions for multiply objects
 	 */
@@ -224,6 +233,9 @@ class SubmissionTableWidget extends SmartlingListTable {
 
 		if ( is_array( $submissions ) ) {
 			foreach ( $submissions as $submission ) {
+
+
+
 				switch ( $this->current_action() ) {
 					case 'download':
 						$messages = $ep->downloadTranslationBySubmissionId( $submission );
@@ -235,11 +247,8 @@ class SubmissionTableWidget extends SmartlingListTable {
 						$messages = $ep->checkSubmissionById( $submission );
 						break;
 				}
-				if ( isset( $messages ) && is_array( $messages ) ) {
-					foreach ( $messages as $message ) {
-						DiagnosticsHelper::addDiagnosticsMessage( $message );
-					}
-				}
+
+
 			}
 		}
 	}
@@ -254,7 +263,7 @@ class SubmissionTableWidget extends SmartlingListTable {
 			 * @var SmartlingCore $ep
 			 */
 			$ep = Bootstrap::getContainer()->get( 'entrypoint' );
-
+			$messages = array();
 			switch ( $this->current_action() ) {
 				case 'downloadSingle':
 					$messages = $ep->downloadTranslationBySubmissionId( $submissionId );
@@ -266,11 +275,7 @@ class SubmissionTableWidget extends SmartlingListTable {
 					$messages = $ep->checkSubmissionById( $submissionId );
 					break;
 			}
-			if ( isset( $messages ) && is_array( $messages ) ) {
-				foreach ( $messages as $message ) {
-					DiagnosticsHelper::addDiagnosticsMessage( $message );
-				}
-			}
+			$this->addScreenMessages($messages);
 		}
 	}
 
