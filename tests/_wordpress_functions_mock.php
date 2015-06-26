@@ -220,3 +220,8 @@ if ( ! function_exists( 'get_term' ) ) {
 		return $category;
 	}
 }
+
+if ( ! function_exists( 'add_action' ) ) {
+	function add_action ( $action, $handler ) {
+	}
+}
