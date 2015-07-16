@@ -49,6 +49,16 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 	}
 
 	/**
+	 * @return DbMigrationManager
+	 */
+	public function getMigrationManager () {
+		/**
+		 * @var DbMigrationManager $mgr
+		 */
+		return Bootstrap::getContainer()->get( 'manager.db.migrations' );
+	}
+
+	/**
 	 * @return \wpdb
 	 */
 	public function getWpdb () {
@@ -76,13 +86,15 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 	public function install () {
 		$currentDbVersion = $this->getSchemaVersion();
 		if ( 0 === $currentDbVersion ) {
-			$currentDbVersion = $this->installDb( $currentDbVersion );
+			$curVer = $currentDbVersion;
+
+			$currentDbVersion = $this->installDb();
 
 			// check if there was 1.0.12 version
 			$this->getWpdb()->query( 'SHOW TABLES LIKE \'%smartling%\'' );
 			$res = $this->getWpdb()->num_rows;
 
-			if ( 0 < $res ) {
+			if ( 0 < $res && 0 === $curVer ) {
 				// 1.0.12 detected
 				$this->schemaUpdate( $currentDbVersion );
 			}
@@ -92,13 +104,13 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 
 	}
 
-	private function installDb ( $currentDbVersion ) {
+	private function installDb () {
 		foreach ( $this->tables as $tableDefinition ) {
 			$query = $this->prepareSql( $tableDefinition );
 			$this->logger->info( vsprintf( 'Installing tables: %s', array ( $query ) ) );
 			$this->getWpdb()->query( $query );
 		}
-		$currentDbVersion ++;
+		$currentDbVersion = $this->getMigrationManager()->getLastMigration();
 		$this->setSchemaVersion( $currentDbVersion );
 
 		return $currentDbVersion;

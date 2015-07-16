@@ -26,4 +26,15 @@ class DbMigrationManager extends SmartlingFactoryAbstract {
 
 		return $pool;
 	}
+
+	public function getLastMigration ()
+	{
+		$ver = 0;
+
+		foreach ( $this->getCollection() as $version => $migration ) {
+			$ver = max($ver, $version);
+		}
+
+		return $ver;
+	}
 }
