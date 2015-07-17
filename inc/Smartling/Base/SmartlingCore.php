@@ -332,6 +332,8 @@ class SmartlingCore {
 			// generate URI
 			$submission->getFileUri();
 			$submission = $this->getSubmissionManager()->storeEntity( $submission );
+		} else {
+			$submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
 		}
 
 		return $this->getSubmissionManager()->storeEntity( $submission );
