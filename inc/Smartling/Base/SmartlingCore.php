@@ -378,7 +378,7 @@ class SmartlingCore {
 			));
 
 			$this->getLogger()->warning($msg);
-			return array ( 'Translation is locked downloading' );
+			return array ( 'Translation is locked for downloading' );
 		}
 
 		$messages = array ();
