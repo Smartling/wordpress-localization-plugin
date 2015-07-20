@@ -15,7 +15,7 @@ use Smartling\Helpers\PluginInfo;
  */
 class JobEngine implements WPHookInterface {
 
-	const CRON_HOOK = 'smartling_cron_hourly_work';
+	const CRON_HOOK = 'smartling_cron_task';
 	const LOCK_NAME = 'smartling-cron.pid';
 
 	public function __construct ( $logger, $pluginInfo ) {
@@ -25,7 +25,7 @@ class JobEngine implements WPHookInterface {
 
 	public function install () {
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
-			wp_schedule_event( time(), 'hourly', self::CRON_HOOK );
+			wp_schedule_event( time(), '5m', self::CRON_HOOK );
 		}
 	}
 

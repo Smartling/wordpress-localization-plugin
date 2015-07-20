@@ -7,6 +7,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\Exception\MultilingualPluginNotFoundException;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\SchedulerHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPHookInterface;
@@ -20,6 +21,12 @@ use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
  * @package Smartling
  */
 class Bootstrap {
+
+	public function __construct()
+	{
+		$scheduleHelper = new SchedulerHelper();
+		add_filter( 'cron_schedules', array ( $scheduleHelper, 'extendWpCron' ) );
+	}
 
 	/**
 	 * @var ContainerBuilder $container
