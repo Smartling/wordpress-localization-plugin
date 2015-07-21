@@ -7,6 +7,7 @@ use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\PluginInfo;
+use Smartling\Helpers\SimpleStorageHelper;
 
 /**
  * Class JobEngine
@@ -18,6 +19,9 @@ class JobEngine implements WPHookInterface {
 	const CRON_HOOK = 'smartling_cron_task';
 	const LOCK_NAME = 'smartling-cron.pid';
 
+	const CRON_INTERVAL = 300;
+	const CRON_TTL = 5;
+
 	public function __construct ( $logger, $pluginInfo ) {
 		$this->logger     = $logger;
 		$this->pluginInfo = $pluginInfo;
@@ -25,7 +29,7 @@ class JobEngine implements WPHookInterface {
 
 	public function install () {
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
-			wp_schedule_event( time(), '5m', self::CRON_HOOK );
+			wp_schedule_event( time(), ( ( self::CRON_INTERVAL / 60 ) . 'm' ), self::CRON_HOOK );
 		}
 	}
 
@@ -74,23 +78,13 @@ class JobEngine implements WPHookInterface {
 	 * Cron job trigger handler
 	 */
 	public function doWork () {
-		$lockFile = $this->getLockFileName();
-		$fp       = fopen( $lockFile, 'w+' );
+		$curLockStatus = SimpleStorageHelper::get( self::LOCK_NAME, 0 );
+		$now           = time();
 		$this->getLogger()->info( 'Cron init' );
-		if ( flock( $fp, LOCK_EX ) ) {
-			ftruncate( $fp, 0 );
-			fwrite( $fp, sprintf( "Started: %s\nPID: %s", date( 'Y-m-d H:i:s' ), getmypid() ) );
-
-			// run check & download
+		if ( $now > $curLockStatus + self::CRON_INTERVAL + self::CRON_TTL ) {
+			SimpleStorageHelper::set( self::LOCK_NAME, $now );
 			$this->job();
-
-			fflush( $fp );
-			flock( $fp, LOCK_UN );
-		} else {
-			$this->getLogger()->critical( "Couldn't get the lock!\nCheck {$lockFile} for more info." );
 		}
-
-		fclose( $fp );
 		$this->getLogger()->info( 'Cron stop' );
 	}
 
