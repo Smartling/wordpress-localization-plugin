@@ -759,7 +759,15 @@ class SmartlingCore {
 		$results = array ();
 		foreach ( $items as $item ) {
 			/** @var SubmissionEntity $entity */
-			$entity = $this->loadSubmissionEntityById( $item );
+			try
+			{
+				$entity = $this->loadSubmissionEntityById( $item );
+			}
+			catch (SmartlingDbException $e)
+			{
+				$this->getLogger()->error('Requested submission that does not exist: ' . (int) $item);
+				continue;
+			}
 			if ( $entity->getStatus() === SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS ) {
 				$this->checkSubmissionByEntity( $entity );
 				$this->checkEntityForDownload( $entity );
