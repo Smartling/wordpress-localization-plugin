@@ -73,6 +73,12 @@ class PostEntity extends EntityAbstract {
 	 * @inheritdoc
 	 */
 	public function __construct ( LoggerInterface $logger ) {
+
+		self::$METADATA_SKIP_LIST = array (
+			'_edit_lock',
+			'_edit_last'
+		);
+
 		parent::__construct( $logger );
 
 		$this->setType( WordpressContentTypeHelper::CONTENT_TYPE_POST );
@@ -137,14 +143,7 @@ class PostEntity extends EntityAbstract {
 	 * @inheritdoc
 	 */
 	public function getMetadata () {
-		$raw = get_post_meta( $this->ID );
-		$formatted = array ();
-
-		foreach ( $raw as $key => $value ) {
-			$formatted[ $key ] = reset( $value );
-		}
-
-		return $formatted;
+		return get_post_meta( $this->ID );;
 	}
 
 	/**
@@ -267,7 +266,7 @@ class PostEntity extends EntityAbstract {
 				'Error saving meta tag "%s" with value "%s" for "%s" "%s"',
 				array (
 					$tagName,
-					serialize($tagValue),
+					serialize( $tagValue ),
 					$this->post_type,
 					$this->ID
 				)
