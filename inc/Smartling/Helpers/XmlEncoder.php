@@ -191,14 +191,14 @@ class XmlEncoder {
 		return $rebuild;
 	}
 
-	private static function prepareSourceArray ( $sourceArray, $strategy='send' ) {
+	private static function prepareSourceArray ( $sourceArray, $strategy = 'send' ) {
 		$sourceArray = self::normalizeSource( $sourceArray );
 
-		foreach ( $sourceArray as & $value ) {
+		/*foreach ( $sourceArray as & $value ) {
 			if ( false !== ( $tmp = @unserialize( $value ) ) ) {
 				$value = $tmp;
 			}
-		}
+		}*/
 
 		foreach ( $sourceArray['meta'] as & $value ) {
 			if ( false !== ( $tmp = @unserialize( $value ) ) ) {
@@ -210,22 +210,12 @@ class XmlEncoder {
 
 		$settings = self::getFieldProcessingParams();
 
-
-
-		if ('send' === $strategy)
-		{
+		if ( 'send' === $strategy ) {
 			$sourceArray = self::removeFields( $sourceArray, $settings['ignore'] );
 			$sourceArray = self::removeFields( $sourceArray, $settings['copy']['name'] );
-		}
-
-		$sourceArray = self::removeValuesByRegExp( $sourceArray, $settings['copy']['regexp'] );
-
-		if ('send' === $strategy)
-		{
+			$sourceArray = self::removeValuesByRegExp( $sourceArray, $settings['copy']['regexp'] );
 			$sourceArray = self::removeEmptyFields( $sourceArray );
 		}
-
-
 
 		return $sourceArray;
 
@@ -313,9 +303,9 @@ class XmlEncoder {
 
 		$nodeList = $xpath->query( $sourcePath );
 
-		$source = self::decodeSource($nodeList->item( 0 )->nodeValue);
+		$source = self::decodeSource( $nodeList->item( 0 )->nodeValue );
 
-		$flatSource = self::prepareSourceArray($source, 'download');
+		$flatSource = self::prepareSourceArray( $source, 'download' );
 
 		foreach ( $fields as $key => $value ) {
 			$flatSource[ $key ] = $value;
@@ -327,8 +317,9 @@ class XmlEncoder {
 			}
 		}
 
-		$settings = self::getFieldProcessingParams();
+		$settings   = self::getFieldProcessingParams();
 		$flatSource = self::removeFields( $flatSource, $settings['ignore'] );
+
 		return self::structurizeArray( $flatSource );;
 	}
 }

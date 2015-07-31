@@ -5,7 +5,6 @@ use Exception;
 use Psr\Log\LoggerInterface;
 
 use Smartling\ApiWrapperInterface;
-use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\SmartlingDbException;
@@ -15,8 +14,6 @@ use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Processors\ContentEntitiesIOFactory;
-use Smartling\Processors\PropertyDescriptor;
-use Smartling\Processors\PropertyProcessors\PropertyProcessorFactory;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;

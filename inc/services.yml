@@ -75,6 +75,18 @@ parameters:
         - 'effective_date'
         - 'icon'
         - 'sm_body_class'
+        - '_wp_page_template'
+        - 'ccb_curated_page' #
+        - 'sm_left_sidebar'
+        - 'sm_hide_sidebar'
+        - 'header_template_meta_box'
+        - 'header_nav_visibility_meta_box'
+        - 'header_sign_in_visibility_meta_box'
+        - 'header_help_visibility_meta_box'
+        - 'footer_template_meta_box'
+        - 'footer_main_menu_visibility_meta_box'
+        - 'language_menu_visibility_meta_box'
+        - 'short_menu_visibility_meta_box'
       regexp: # by value match
         - '^\d+([,\.]\d+)?$'
         - '^(y|yes|n|no|on|off|default|in|out|html|cta\d+|cta|any)$'
