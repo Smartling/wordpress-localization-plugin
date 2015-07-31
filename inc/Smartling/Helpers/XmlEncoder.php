@@ -53,6 +53,17 @@ class XmlEncoder {
 			$document->appendChild( $document->createComment( vsprintf( ' %s ', array ( $commentString ) ) ) );
 		}
 
+		$document->appendChild(
+			$document->createComment(
+				vsprintf(
+					' %s ',
+					array (
+						'Smartling Wordpress Connector v. ' . Bootstrap::getCurrentVersion()
+					)
+				)
+			)
+		);
+
 		return $document;
 	}
 
