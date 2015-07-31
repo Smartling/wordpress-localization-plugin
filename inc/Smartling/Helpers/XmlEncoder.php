@@ -338,6 +338,14 @@ class XmlEncoder {
 			$flatSource[ $key ] = $value;
 		}
 
+		foreach ($flatSource as & $value)
+		{
+			if (is_numeric($value) && is_string($value))
+			{
+				$value +=0;
+			}
+		}
+
 
 		$settings = Bootstrap::getContainer()->getParameter( 'field.processor' );
 

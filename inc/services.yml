@@ -72,6 +72,9 @@ parameters:
         - 'post_author'
         - 'taxonomy'
         - 'background'
+        - 'effective_date'
+        - 'icon'
+        - 'sm_body_class'
       regexp: # by value match
         - '^\d+([,\.]\d+)?$'
         - '^(y|yes|n|no|on|off|default|in|out|html|cta\d+|cta|any)$'
