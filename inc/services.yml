@@ -71,11 +71,12 @@ parameters:
         - 'post_mime_type'
         - 'post_author'
         - 'taxonomy'
+        - 'background'
       regexp: # by value match
         - '^\d+([,\.]\d+)?$'
         - '^(y|yes|n|no|on|off|default|in|out|html|cta\d+|cta|any)$'
         - '^(http:|https:)'
-        - '^(callout|card-list|card-icon-list|cta|cta-hero|cta-sidebar|image-text-list|list-icon|list|nav|template-list|embeds|html)$' # SM CuratedPage markers
+        - '^(callout|card-list|card-icon-list|cta|cta-hero|cta-sidebar|image-text-list|list-icon|list|nav|template-list|embeds|html|basic|select|gold|platinum)$' # SM CuratedPage markers
 
 
 
