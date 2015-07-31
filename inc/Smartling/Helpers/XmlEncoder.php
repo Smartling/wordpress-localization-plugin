@@ -5,12 +5,8 @@ namespace Smartling\Helpers;
 use DOMAttr;
 use DOMCdataSection;
 use DOMDocument;
-use DOMElement;
 use DOMXPath;
 use Smartling\Bootstrap;
-use Smartling\Processors\PropertyDescriptor;
-use Smartling\Processors\PropertyProcessors\PropertyProcessorAbstract;
-use Smartling\Processors\PropertyProcessors\PropertyProcessorFactory;
 
 /**
  * Class XmlEncoder
@@ -29,7 +25,9 @@ class XmlEncoder {
 	);
 
 	const XML_ROOT_NODE_NAME = 'data';
+
 	const XML_STRING_NODE_NAME = 'string';
+
 	const XML_SOURCE_NODE_NAME = 'source';
 
 	/**
@@ -68,25 +66,6 @@ class XmlEncoder {
 	}
 
 	/**
-	 * @param PropertyDescriptor[]     $array
-	 * @param DOMDocument              $document
-	 * @param PropertyProcessorFactory $factory
-	 *
-	 * @return DOMElement
-	 */
-	private static function arrayToXml ( array $array, DOMDocument $document, PropertyProcessorFactory $factory ) {
-		$rootNode = $document->createElement( 'data' );
-		foreach ( $array as $descriptor ) {
-			$processor = $factory->getProcessor( $descriptor->getType() );
-			$node      = $processor->toXML( $document, $descriptor, $factory );
-			$rootNode->appendChild( $node );
-		}
-
-		return $rootNode;
-	}
-
-
-	/**
 	 * @param array  $array
 	 * @param string $base
 	 * @param string $divider
@@ -110,7 +89,6 @@ class XmlEncoder {
 		}
 
 		return $output;
-
 	}
 
 	/**
@@ -123,35 +101,29 @@ class XmlEncoder {
 		$output = array ();
 
 		foreach ( $flatArray as $key => $element ) {
-			$tempArray    = array ();
 			$pathElements = explode( $divider, $key );
-
-			$pointer = &$output;
-
+			$pointer      = &$output;
 			for ( $i = 0; $i < ( count( $pathElements ) - 1 ); $i ++ ) {
-
-				if (!isset($pointer[$pathElements[$i]]))
-				{
-					$pointer[$pathElements[$i]]=array();
+				if ( ! isset( $pointer[ $pathElements[ $i ] ] ) ) {
+					$pointer[ $pathElements[ $i ] ] = array ();
 				}
-
-
-
 				$pointer = &$pointer[ $pathElements[ $i ] ];
-
 			}
-
 			$pointer[ end( $pathElements ) ] = $element;
-
 		}
+
 		return $output;
 	}
 
+	/**
+	 * @param array $source
+	 *
+	 * @return array
+	 */
 	private static function normalizeSource ( array $source ) {
-		$t = &$source['meta'];
-
-		foreach ( $t as & $value ) {
-			if ( is_array($value) && 1 === count( $value ) ) {
+		$pointer = &$source['meta'];
+		foreach ( $pointer as & $value ) {
+			if ( is_array( $value ) && 1 === count( $value ) ) {
 				$value = reset( $value );
 			}
 		}
@@ -159,28 +131,18 @@ class XmlEncoder {
 		return $source;
 	}
 
+	/**
+	 * @return mixed
+	 */
+	private static function getFieldProcessingParams () {
+		return Bootstrap::getContainer()->getParameter( 'field.processor' );
+	}
 
-	private static function optimizeFlatArray ( array $source ) {
-		$settings = Bootstrap::getContainer()->getParameter( 'field.processor' );
+	private static function removeFields ( $array, $list ) {
 
-		$ignoreList = &$settings['ignore'];
-		$rebuild    = array ();
-		foreach ( $source as $key => $value ) {
-			foreach ( $ignoreList as $item ) {
-
-				if ( false !== strpos( $key, urlencode( $item ) ) ) {
-					continue 2;
-				}
-			}
-			$rebuild[ $key ] = $value;
-		}
-
-		$source = $rebuild;
-
-		$ignoreList = &$settings['copy']['name'];
-		$rebuild    = array ();
-		foreach ( $source as $key => $value ) {
-			foreach ( $ignoreList as $item ) {
+		$rebuild = array ();
+		foreach ( $array as $key => $value ) {
+			foreach ( $list as $item ) {
 
 				if ( false !== strpos( $key, urlencode( $item ) ) ) {
 					continue 2;
@@ -189,43 +151,94 @@ class XmlEncoder {
 			$rebuild[ $key ] = $value;
 		}
 
-		$source = $rebuild;
+		return $rebuild;
+	}
 
+	/**
+	 * @param $array
+	 *
+	 * @return array
+	 */
+	private static function removeEmptyFields ( $array ) {
+		$rebuild = array ();
+		foreach ( $array as $key => $value ) {
+			if ( empty( $value ) ) {
+				continue;
+			}
+			$rebuild[ $key ] = $value;
+		}
 
-		$ignoreList = &$settings['copy']['regexp'];
-		$rebuild    = array ();
-		foreach ( $source as $key => $value ) {
+		return $rebuild;
+	}
 
-
-			foreach ( $ignoreList as $item ) {
-
+	/**
+	 * @param $array
+	 * @param $list
+	 *
+	 * @return array
+	 */
+	private static function removeValuesByRegExp ( $array, $list ) {
+		$rebuild = array ();
+		foreach ( $array as $key => $value ) {
+			foreach ( $list as $item ) {
 				if ( preg_match( "/{$item}/ius", $value ) ) {
 					continue 2;
 				}
 			}
-
-
 			$rebuild[ $key ] = $value;
 		}
 
-		$source = $rebuild;
+		return $rebuild;
+	}
 
-		$rebuild = array ();
-		foreach ( $source as $key => $value ) {
+	private static function prepareSourceArray ( $sourceArray, $strategy='send' ) {
+		$sourceArray = self::normalizeSource( $sourceArray );
 
-			if ( empty( $value ) ) {
-				continue;
+		foreach ( $sourceArray as & $value ) {
+			if ( false !== ( $tmp = @unserialize( $value ) ) ) {
+				$value = $tmp;
 			}
-
-			$rebuild[ $key ] = $value;
 		}
 
-		$source = $rebuild;
+		foreach ( $sourceArray['meta'] as & $value ) {
+			if ( false !== ( $tmp = @unserialize( $value ) ) ) {
+				$value = $tmp;
+			}
+		}
 
-		return $source;
+		$sourceArray = self::flatternArray( $sourceArray );
 
+		$settings = self::getFieldProcessingParams();
+
+
+
+		if ('send' === $strategy)
+		{
+			$sourceArray = self::removeFields( $sourceArray, $settings['ignore'] );
+			$sourceArray = self::removeFields( $sourceArray, $settings['copy']['name'] );
+		}
+
+		$sourceArray = self::removeValuesByRegExp( $sourceArray, $settings['copy']['regexp'] );
+
+		if ('send' === $strategy)
+		{
+			$sourceArray = self::removeEmptyFields( $sourceArray );
+		}
+
+
+
+		return $sourceArray;
 
 	}
+
+	private static function encodeSource ( $source, $stringLength = 80 ) {
+		return implode( "\n", str_split( base64_encode( serialize( $source ) ), $stringLength ) );
+	}
+
+	private static function decodeSource ( $source ) {
+		return unserialize( base64_decode( $source ) );
+	}
+
 
 	/**
 	 * @param array $source
@@ -233,45 +246,19 @@ class XmlEncoder {
 	 * @return string
 	 */
 	public static function xmlEncode ( array $source ) {
-
 		$originalSource = $source;
-
-		$source = self::normalizeSource( $source );
-
-		foreach ( $source as & $value ) {
-			if ( false !== ( $tmp = @unserialize( $value ) ) ) {
-				$value = $tmp;
-			}
-		}
-
-		foreach ( $source['meta'] as & $value ) {
-			if ( false !== ( $tmp = @unserialize( $value ) ) ) {
-				$value = $tmp;
-			}
-		}
-
-		$source = self::flatternArray( $source );
-		$source = self::optimizeFlatArray( $source );
-
-		$xml = self::setTranslationComments( self::initXml() );
-
-		$settings = Bootstrap::getContainer()->getParameter( 'field.processor' );
-
-		$ignoreList = &$settings['key'];
-
-		$rnode = $xml->createElement( self::XML_ROOT_NODE_NAME );
-
+		$source         = self::prepareSourceArray( $source );
+		$xml            = self::setTranslationComments( self::initXml() );
+		$settings       = self::getFieldProcessingParams();
+		$keySettings    = &$settings['key'];
+		$rootNode       = $xml->createElement( self::XML_ROOT_NODE_NAME );
 		foreach ( $source as $name => $value ) {
-			$rnode->appendChild( self::rowToXMLNode( $xml, $name, $value, $ignoreList ) );
+			$rootNode->appendChild( self::rowToXMLNode( $xml, $name, $value, $keySettings ) );
 		}
-
-		$xml->appendChild( $rnode );
-
-		$node = $xml->createElement( self::XML_SOURCE_NODE_NAME );
-		$node->appendChild( new DOMCdataSection( implode( "\n",
-			str_split( base64_encode( serialize( $originalSource ) ), 80 ) ) ) );
-
-		$rnode->appendChild( $node );
+		$xml->appendChild( $rootNode );
+		$sourceNode = $xml->createElement( self::XML_SOURCE_NODE_NAME );
+		$sourceNode->appendChild( new DOMCdataSection( self::encodeSource( $originalSource ) ) );
+		$rootNode->appendChild( $sourceNode );
 
 		return $xml->saveXML();
 	}
@@ -315,7 +302,6 @@ class XmlEncoder {
 
 		$nodeList = $xpath->query( $stringPath );
 
-		$source = '';
 		$fields = array ();
 
 		for ( $i = 0; $i < $nodeList->length; $i ++ ) {
@@ -326,72 +312,23 @@ class XmlEncoder {
 		}
 
 		$nodeList = $xpath->query( $sourcePath );
-		$source   = unserialize( base64_decode( $nodeList->item( 0 )->nodeValue ) );
 
-		$source = self::normalizeSource( $source );
+		$source = self::decodeSource($nodeList->item( 0 )->nodeValue);
 
-		foreach ( $source as & $value ) {
-			if ( false !== ( $tmp = @unserialize( $value ) ) ) {
-				$value = $tmp;
-			}
-		}
-
-		foreach ( $source['meta'] as & $value ) {
-			if ( false !== ( $tmp = @unserialize( $value ) ) ) {
-				$value = $tmp;
-			}
-		}
-
-
-		$flatSource = self::flatternArray( $source );
+		$flatSource = self::prepareSourceArray($source, 'download');
 
 		foreach ( $fields as $key => $value ) {
 			$flatSource[ $key ] = $value;
 		}
 
-		foreach ($flatSource as & $value)
-		{
-			if (is_numeric($value) && is_string($value))
-			{
-				$value +=0;
+		foreach ( $flatSource as & $value ) {
+			if ( is_numeric( $value ) && is_string( $value ) ) {
+				$value += 0;
 			}
 		}
 
-
-		$settings = Bootstrap::getContainer()->getParameter( 'field.processor' );
-
-		$ignoreList = &$settings['ignore'];
-		$rebuild    = array ();
-		foreach ( $flatSource as $key => $value ) {
-			foreach ( $ignoreList as $item ) {
-
-				if ( false !== strpos( $key, urlencode( $item ) ) ) {
-					continue 2;
-				}
-			}
-			$rebuild[ $key ] = $value;
-		}
-
-		$flatSource = $rebuild;
-
-		$flatSource = self::structurizeArray( $flatSource );
-
-		return $flatSource;
-	}
-
-	private static function buildXPath ( PropertyDescriptor $descriptor ) {
-		$str = '';
-		switch ( $descriptor->getType() ) {
-			case 'serialized-php-array': {
-				$str = '/data/structure[@name="%s"]';
-				break;
-			}
-			default: {
-				$str = '/data/string[@name="%s"]';
-				break;
-			}
-		}
-
-		return vsprintf( $str, array ( $descriptor->getName() ) );
+		$settings = self::getFieldProcessingParams();
+		$flatSource = self::removeFields( $flatSource, $settings['ignore'] );
+		return self::structurizeArray( $flatSource );;
 	}
 }

@@ -73,12 +73,6 @@ class PostEntity extends EntityAbstract {
 	 * @inheritdoc
 	 */
 	public function __construct ( LoggerInterface $logger ) {
-
-		self::$METADATA_SKIP_LIST = array (
-			'_edit_lock',
-			'_edit_last'
-		);
-
 		parent::__construct( $logger );
 
 		$this->setType( WordpressContentTypeHelper::CONTENT_TYPE_POST );

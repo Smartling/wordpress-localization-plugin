@@ -30,9 +30,6 @@ abstract class EntityAbstract {
 	 */
 	private $entityFields = array ( 'hash' );
 
-
-	public static $METADATA_SKIP_LIST = array();
-
 	/**
 	 * @var LoggerInterface
 	 */

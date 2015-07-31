@@ -96,32 +96,6 @@ parameters:
   submission.pagesize: 10
 
 services:
-  processor.property.default:
-    class: Smartling\Processors\PropertyProcessors\PropertyProcessorDefault
-    arguments:
-      - "@logger"
-
-  processor.property.yoast-seo:
-    class: Smartling\Processors\PropertyProcessors\PropertyProcessorYoast
-    arguments:
-      - "@logger"
-
-  processor.property.serialized.array:
-    class: Smartling\Processors\PropertyProcessors\PropertyProcessorSerializedArray
-    arguments:
-      - "@logger"
-
-
-  factory.processor:
-    class: Smartling\Processors\PropertyProcessors\PropertyProcessorFactory
-    arguments:
-      - "@logger"
-    calls:
-      - [ "registerDefaultProcessor", [ "@processor.property.default" ]]
-      - [ "registerProcessor", [ "@processor.property.yoast-seo" ]]
-      - [ "registerProcessor", [ "@processor.property.serialized.array" ]]
-
-
   wrapper.sdk.api.smartling:
     class: Smartling\ApiWrapper
     arguments:
@@ -138,7 +112,6 @@ services:
       - [ "setApiWrapper", [ "@wrapper.sdk.api.smartling" ]]
       - [ "setMultilangProxy", [ "@multilang.proxy" ]]
       - [ "setContentIoFactory", [ "@factory.contentIO" ]]
-      - [ "setProcessorFactory", [ "@factory.processor" ]]
       - [ "setCache", [ "@site.cache" ]]
 
   wrapper.entity.post:
@@ -174,41 +147,6 @@ services:
     class: Smartling\DbAl\WordpressContentEntities\TagEntity
     arguments:
       - "@logger"
-
-  mapper.post:
-    class: Smartling\Processors\ContentTypeMapper\PostMapper
-
-  mapper.ext.policy:
-    class: Smartling\Processors\ContentTypeMapper\PolicyMapper
-
-  mapper.ext.testimonial:
-    class: Smartling\Processors\ContentTypeMapper\TestimonialMapper
-
-  mapper.ext.partner:
-    class: Smartling\Processors\ContentTypeMapper\PartnerMapper
-
-  mapper.page:
-    class: Smartling\Processors\ContentTypeMapper\PageMapper
-
-  mapper.category:
-    class: Smartling\Processors\ContentTypeMapper\CategoryMapper
-
-  mapper.tag:
-    class: Smartling\Processors\ContentTypeMapper\TagMapper
-
-  factory.propertyMapper:
-    class: Smartling\Processors\PropertyMapperFactory
-    arguments:
-      - "@logger"
-    calls:
-      - [ "registerHandler", ["post", "@mapper.post"]]
-      - [ "registerHandler", ["page", "@mapper.page"]]
-      - [ "registerHandler", ["category", "@mapper.category"]]
-      - [ "registerHandler", ["post_tag", "@mapper.tag"]]
-      - [ "registerHandler", ["policy", "@mapper.ext.policy"]]
-      - [ "registerHandler", ["partner", "@mapper.ext.partner"]]
-      - [ "registerHandler", ["testimonial", "@mapper.ext.testimonial"]]
-
 
   factory.contentIO:
     class: Smartling\Processors\ContentEntitiesIOFactory
@@ -282,8 +220,6 @@ services:
       - "%submission.pagesize%"
       - "@site.helper"
       - "@multilang.proxy"
-    calls:
-      - ["setMapper", ["@factory.propertyMapper"]]
 
   plugin.info:
       class: Smartling\Helpers\PluginInfo

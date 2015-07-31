@@ -14,24 +14,6 @@ use Smartling\Helpers\QueryBuilder\QueryBuilder;
  * @package Smartling\Settings
  */
 class SettingsManager extends EntityManagerAbstract {
-
-	private $mapper;
-
-	/**
-	 * @return mixed
-	 */
-	public function getMapper () {
-		return $this->mapper;
-	}
-
-	/**
-	 * @param mixed $mapper
-	 */
-	public function setMapper ( $mapper ) {
-		$this->mapper = $mapper;
-	}
-
-
 	public function getEntities ( $sortOptions = array (), $pageOptions = null, & $totalCount, $onlyActive = false ) {
 		$validRequest = $this->validateRequest( $sortOptions, $pageOptions );
 		$result       = array ();
@@ -39,8 +21,7 @@ class SettingsManager extends EntityManagerAbstract {
 
 			$cb = null;
 
-			if (true === $onlyActive)
-			{
+			if ( true === $onlyActive ) {
 				$cb = ConditionBlock::getConditionBlock();
 
 				$cb->addCondition(

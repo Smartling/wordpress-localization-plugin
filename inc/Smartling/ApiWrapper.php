@@ -7,8 +7,6 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
-use Smartling\Helpers\DiagnosticsHelper;
-use Smartling\Helpers\UiMessageHelper;
 use Smartling\SDK\FileUploadParameterBuilder;
 use Smartling\SDK\SmartlingAPI;
 use Smartling\Settings\ConfigurationProfileEntity;

@@ -80,11 +80,6 @@ class SmartlingCore {
 	private $multilangProxy;
 
 	/**
-	 * @var PropertyProcessorFactory
-	 */
-	private $processorFactory;
-
-	/**
 	 * @var Cache
 	 */
 	private $cache;
@@ -160,20 +155,6 @@ class SmartlingCore {
 	}
 
 	/**
-	 * @return PropertyProcessorFactory
-	 */
-	public function getProcessorFactory () {
-		return $this->processorFactory;
-	}
-
-	/**
-	 * @param PropertyProcessorFactory $processorFactory
-	 */
-	public function setProcessorFactory ( $processorFactory ) {
-		$this->processorFactory = $processorFactory;
-	}
-
-	/**
 	 * @return SubmissionManager
 	 */
 	public function getSubmissionManager () {
@@ -219,33 +200,6 @@ class SmartlingCore {
 		return $this->sendForTranslationBySubmission( $this->loadSubmissionEntityById( $id ) );
 	}
 
-	/**
-	 * @param PropertyDescriptor[] $descriptors
-	 * @param array                $source
-	 */
-	private function fillPropertyDescriptors ( array $descriptors, array $source ) {
-		foreach ( $descriptors as $descriptor ) {
-
-			$index = $descriptor->isMeta() ? 'meta' : 'entity';
-			$name  = $descriptor->getName();
-
-			if ( array_key_exists( $name, $source[ $index ] ) ) {
-				$descriptor->setValue( $source[ $index ][ $name ] );
-				if ( 'serialized-php-array' === $descriptor->getType()
-				     && false !== ( $src = unserialize( $source[ $index ][ $name ] ) )
-				) {
-					$subFields = $descriptor->getSubFields();
-					foreach ( $subFields as $subField ) {
-						$subFieldName = $subField->getName();
-						if ( array_key_exists( $subFieldName, $src ) ) {
-							$subField->setValue( $src[ $subFieldName ] );
-						}
-					}
-				}
-			}
-		}
-	}
-
 	public function sendForTranslationBySubmission ( SubmissionEntity $submission ) {
 		$contentEntity = $this->readContentEntity( $submission );
 
@@ -265,7 +219,6 @@ class SmartlingCore {
 
 		$xml = XmlEncoder::xmlEncode( $source );
 
-		//die('<pre>'.htmlspecialchars(var_export($xml,true)).'</pre>');
 		$result = false;
 
 		try {
@@ -388,8 +341,6 @@ class SmartlingCore {
 
 			$translatedFields = XmlEncoder::xmlDecode( $data );
 
-			//die('<pre>' . htmlentities(var_export($translatedFields,true)) . '</pre>');
-
 			$targetId = (int) $entity->getTargetId();
 
 			$targetContent = null;
@@ -476,27 +427,6 @@ class SmartlingCore {
 	}
 
 	/**
-	 * Reads from database original metadata
-	 *
-	 * @param SubmissionEntity $submission
-	 *
-	 * @return array
-	 */
-	private function readOriginalMetadata ( SubmissionEntity $submission ) {
-		$originalEntity = $this->readContentEntity( $submission );
-
-		if ( $this->getSiteHelper()->getCurrentBlogId() === $submission->getSourceBlogId() ) {
-			$originalMetadata = $originalEntity->getMetadata();
-		} else {
-			$this->getSiteHelper()->switchBlogId( $submission->getSourceBlogId() );
-			$originalMetadata = $originalEntity->getMetadata();
-			$this->getSiteHelper()->restoreBlogId();
-		}
-
-		return $originalMetadata;
-	}
-
-	/**
 	 * @param EntityAbstract $entity
 	 * @param array          $properties
 	 */
@@ -506,15 +436,11 @@ class SmartlingCore {
 		}
 	}
 
-	public
-	function downloadTranslationBySubmissionId (
-		$id
-	) {
+	public function downloadTranslationBySubmissionId ( $id ) {
 		return $this->downloadTranslationBySubmission( $this->loadSubmissionEntityById( $id ) );
 	}
 
-	public
-	function downloadTranslation (
+	public function downloadTranslation (
 		$contentType,
 		$sourceBlog,
 		$sourceEntity,
@@ -528,38 +454,7 @@ class SmartlingCore {
 
 	}
 
-	/**
-	 * Cuts off all non-translatable fields from array that represents the content entity
-	 *
-	 * @param array $entity
-	 * @param array $translatableFields
-	 *
-	 * @return array
-	 */
-	private
-	function cutOffFields (
-		array $entity,
-		array $translatableFields
-	) {
-		return array_intersect_key( $entity, array_flip( $translatableFields ) );
-	}
-
-	/**
-	 * @param $contentType
-	 *
-	 * @return PropertyDescriptor[]
-	 */
-	private
-	function getTranslatableFields (
-		$contentType
-	) {
-		return $this->settings->getMapper()->getMapper( $contentType )->getFields();
-	}
-
-	private
-	function getContentIOWrapper (
-		SubmissionEntity $entity
-	) {
+	private function getContentIOWrapper ( SubmissionEntity $entity ) {
 		return $this->getContentIoFactory()->getMapper( $entity->getContentType() );
 	}
 
@@ -568,11 +463,7 @@ class SmartlingCore {
 	 *
 	 * @return EntityAbstract
 	 */
-	private
-	function readContentEntity (
-		SubmissionEntity $entity
-	) {
-
+	private function readContentEntity ( SubmissionEntity $entity ) {
 		$contentIOWrapper = $this->getContentIOWrapper( $entity );
 
 		if ( $this->getSiteHelper()->getCurrentBlogId() === $entity->getSourceBlogId() ) {
@@ -586,10 +477,7 @@ class SmartlingCore {
 		return $contentEntity;
 	}
 
-	private
-	function readTargetContentEntity (
-		SubmissionEntity $entity
-	) {
+	private function readTargetContentEntity ( SubmissionEntity $entity ) {
 
 		$contentIOWrapper = $this->getContentIOWrapper( $entity );
 
@@ -611,10 +499,7 @@ class SmartlingCore {
 	 *
 	 * @return array of error messages
 	 */
-	public
-	function checkSubmissionById (
-		$id
-	) {
+	public function checkSubmissionById ( $id ) {
 		$messages = array ();
 
 		try {
@@ -637,10 +522,7 @@ class SmartlingCore {
 	 *
 	 * @return array of error messages
 	 */
-	public
-	function checkSubmissionByEntity (
-		SubmissionEntity $submission
-	) {
+	public function checkSubmissionByEntity ( SubmissionEntity $submission ) {
 		$messages = array ();
 
 		try {
@@ -662,10 +544,7 @@ class SmartlingCore {
 	 * @return mixed
 	 * @throws SmartlingDbException
 	 */
-	private
-	function loadSubmissionEntityById (
-		$id
-	) {
+	private function loadSubmissionEntityById ( $id ) {
 		$params = array (
 			'id' => $id,
 		);
@@ -691,8 +570,7 @@ class SmartlingCore {
 	 *
 	 * @return SubmissionEntity
 	 */
-	private
-	function prepareSubmissionEntity (
+	private function prepareSubmissionEntity (
 		$contentType,
 		$sourceBlog,
 		$sourceEntity,
@@ -706,17 +584,13 @@ class SmartlingCore {
 	/**
 	 * @param SubmissionEntity $entity
 	 */
-	public
-	function checkEntityForDownload (
-		SubmissionEntity $entity
-	) {
+	public function checkEntityForDownload ( SubmissionEntity $entity ) {
 		if ( 100 === $entity->getCompletionPercentage() ) {
 			$this->downloadTranslationBySubmission( $entity );
 		}
 	}
 
-	public
-	function bulkCheckNewAndInProgress () {
+	public function bulkCheckNewAndInProgress () {
 		$entities = $this->getSubmissionManager()->find( array (
 				'status' => array (
 					SubmissionEntity::SUBMISSION_STATUS_NEW,
@@ -742,20 +616,14 @@ class SmartlingCore {
 	 * @return array
 	 * @throws SmartlingDbException
 	 */
-	public
-	function bulkCheckByIds (
-		array $items
-	) {
+	public function bulkCheckByIds ( array $items ) {
 		$results = array ();
 		foreach ( $items as $item ) {
 			/** @var SubmissionEntity $entity */
-			try
-			{
+			try {
 				$entity = $this->loadSubmissionEntityById( $item );
-			}
-			catch (SmartlingDbException $e)
-			{
-				$this->getLogger()->error('Requested submission that does not exist: ' . (int) $item);
+			} catch ( SmartlingDbException $e ) {
+				$this->getLogger()->error( 'Requested submission that does not exist: ' . (int) $item );
 				continue;
 			}
 			if ( $entity->getStatus() === SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS ) {
@@ -773,11 +641,7 @@ class SmartlingCore {
 	 *
 	 * @return array
 	 */
-	public
-	function getProjectLocales (
-		ConfigurationProfileEntity $profile
-	) {
-
+	public function getProjectLocales ( ConfigurationProfileEntity $profile ) {
 		$cacheKey = 'profile.locales.' . $profile->getId();
 		$cached   = $this->getCache()->get( $cacheKey );
 
