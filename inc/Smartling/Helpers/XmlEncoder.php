@@ -97,7 +97,7 @@ class XmlEncoder {
 	 *
 	 * @return array
 	 */
-	protected function structurizeArray ( array $flatArray, $divider = '/' ) {
+	protected static function structurizeArray ( array $flatArray, $divider = '/' ) {
 		$output = array ();
 
 		foreach ( $flatArray as $key => $element ) {
