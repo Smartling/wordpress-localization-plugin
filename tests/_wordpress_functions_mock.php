@@ -225,3 +225,8 @@ if ( ! function_exists( 'add_action' ) ) {
 	function add_action ( $action, $handler ) {
 	}
 }
+
+if ( ! function_exists( 'add_filter' ) ) {
+	function add_filter ( $action, $handler ) {
+	}
+}

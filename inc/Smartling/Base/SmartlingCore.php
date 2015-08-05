@@ -354,8 +354,9 @@ class SmartlingCore {
 			$this->setValues( $targetContent, $translatedFields['entity'] );
 
 			$targetContent = $this->saveEntity( $entity->getContentType(), $entity->getTargetBlogId(), $targetContent );
-
-			$this->saveMetaProperties( $targetContent, $translatedFields, $entity );
+			if ( array_key_exists( 'meta', $translatedFields ) && 0 < count( $translatedFields['meta'] ) ) {
+				$this->saveMetaProperties( $targetContent, $translatedFields, $entity );
+			}
 
 			if ( 0 === $targetId ) {
 

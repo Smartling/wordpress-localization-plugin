@@ -65,36 +65,17 @@ class SmartlingApiMock extends SmartlingAPI {
 	 * @inheritdoc
 	 */
 	public function downloadFile ( $fileUri, $locale, $params = array () ) {
-		$type = WordpressContentTypeHelper::CONTENT_TYPE_POST;
+		$faker = Factory::create();
 
-		/**
-		 * @var PropertyProcessorFactory $p_factory
-		 */
+		$array = [
+			'entity' => [
+				'post_title' => $faker->realText( 80 ),
+				'post_body'  => $faker->realText( 4096 )
+			],
+			'meta'   => [ ]
+		];
 
-		$p_factory = Bootstrap::getContainer()->get( 'factory.processor' );
-
-		/**
-		 * @var PropertyMapperFactory $factory
-		 */
-
-		$factory = Bootstrap::getContainer()->get( 'factory.propertyMapper' );
-		$faker   = Factory::create();
-
-		/**
-		 * @var PostMapper $wrapper
-		 */
-		$wrapper = $factory->getMapper( $type );
-
-		/**
-		 * @var PropertyDescriptor[] $fields
-		 */
-		$fields = $wrapper->getFields();
-
-		foreach ( $fields as $field ) {
-			$field->setValue( $faker->realText( self::FAKE_TEXT_LENGTH ) );
-		}
-
-		$encodedXML = XmlEncoder::xmlEncode( $fields, $p_factory );
+		$encodedXML = XmlEncoder::xmlEncode( $array );
 
 		return $encodedXML;
 	}
