@@ -87,14 +87,29 @@ parameters:
         - 'footer_main_menu_visibility_meta_box'
         - 'language_menu_visibility_meta_box'
         - 'short_menu_visibility_meta_box'
+        - '_call_to_action'
+        - 'call_to_action'
+        - '_dh_display_featured_image'
+        - 'sm_dh_sidebar_order'
+        - 'sm_dh_text_cta_link'
+        - 'sm_dh_footer_cta_link_yellow'
+        - 'sm_dh_cta_type'
+        - 'sm_dh_sidebar_cta_type'
+        - 'sm_dh_footer_cta_link_gray'
+        - 'sm_dh_sidebar_cta_sv_link_yellow'
+        - 'sm_dh_sidebar_cta_sv_link_gray'
+        - '_yoast_wpseo_opengraph-image'
+        - 'sm_dh_sidebar_reach_link'
+        - 'sm_dh_sidebar_audience_link'
+        - '_marketo_sidebar'
+        - '_post_restored_from'
+        - 'sm_dh_button_cta_link'
+        - 'sm_dh_sidebar_cta_au_link_yellow'
       regexp: # by value match
-        - '^\d+([,\.]\d+)?$'
-        - '^(y|yes|n|no|on|off|default|in|out|html|cta\d+|cta|any)$'
-        - '^(http:|https:)'
-        - '^(callout|card-list|card-icon-list|cta|cta-hero|cta-sidebar|image-text-list|list-icon|list|nav|template-list|embeds|html|basic|select|gold|platinum)$' # SM CuratedPage markers
-
-
-
+       - '^\d+([,\.]\d+)?$'
+       - '^(y|yes|n|no|on|off|default|in|out|html|cta\d+|cta|any|null|text|surveys|choose|button)$'
+       - '^(http:|https:|field_)'
+       - '^(callout|card-list|card-icon-list|cta|cta-hero|cta-sidebar|image-text-list|list-icon|list|nav|template-list|embeds|html|basic|select|gold|platinum)$' # SM CuratedPage markers
 
   logger.channel: default
   logger.filehandler.standard.filename: %plugin.dir%/logs/logfile
