@@ -32,6 +32,11 @@ class WordpressContentTypeHelper {
 	const CONTENT_TYPE_POST_TAG = 'post_tag';
 
 	/**
+	 * Wordpress theme menu
+	 */
+	//const CONTENT_TYPE_NAV_MENU = 'nav_menu';
+
+	/**
 	 * 'term' based content type
 	 */
 	const CONTENT_TYPE_TERM_POLICY_TYPE = 'policy_types';
@@ -76,6 +81,7 @@ class WordpressContentTypeHelper {
 		'policy'      => self::CONTENT_TYPE_POST_POLICY,
 		'partner'     => self::CONTENT_TYPE_POST_PARTNER,
 		'testimonial' => self::CONTENT_TYPE_POST_TESTIMONIAL,
+		//'nav_menu'    => self::CONTENT_TYPE_NAV_MENU,
 	);
 
 	/**
@@ -103,7 +109,8 @@ class WordpressContentTypeHelper {
 			self::CONTENT_TYPE_POST             => __( 'Post' ),
 			self::CONTENT_TYPE_PAGE             => __( 'Page' ),
 			self::CONTENT_TYPE_CATEGORY         => __( 'Category' ),
-			self::CONTENT_TYPE_POST_TAG         => __( 'Tag' )
+			self::CONTENT_TYPE_POST_TAG         => __( 'Tag' ),
+			//self::CONTENT_TYPE_NAV_MENU         => __( 'Navigation Menu' ),
 		);
 	}
 
@@ -114,6 +121,7 @@ class WordpressContentTypeHelper {
 		return array (
 			self::CONTENT_TYPE_CATEGORY,
 			self::CONTENT_TYPE_POST_TAG,
+			//self::CONTENT_TYPE_NAV_MENU,
 		);
 	}
 
@@ -128,7 +136,8 @@ class WordpressContentTypeHelper {
 		if ( array_key_exists( $contentType, $map ) ) {
 			return $map[ $contentType ];
 		} else {
-			throw new SmartlingNotSupportedContentException( vsprintf( 'Content-type \'%s\' is not supported yet.', array ( $contentType ) ) );
+			throw new SmartlingNotSupportedContentException( vsprintf( 'Content-type \'%s\' is not supported yet.',
+				array ( $contentType ) ) );
 		}
 	}
 }

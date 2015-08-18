@@ -7,6 +7,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
+use Smartling\Exception\InvalidXMLException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\Cache;
@@ -374,6 +375,18 @@ class SmartlingCore {
 			$entity->appliedDate = DateTimeHelper::nowAsString();
 
 			$entity = $this->getSubmissionManager()->storeEntity( $entity );
+		} catch ( InvalidXMLException $e ) {
+			$entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+			$this->getSubmissionManager()->storeEntity($entity);
+
+			$message=vsprintf("Invalid XML file [%s] received. Submission moved to %s status.",
+				[
+					$entity->getFileUri(),
+					$entity->getStatus()
+				]);
+
+			$this->getLogger()->error($message);
+			$messages[]=$message;
 		} catch ( Exception $e ) {
 			$messages[] = $e->getMessage();
 		}

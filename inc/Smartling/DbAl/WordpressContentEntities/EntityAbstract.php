@@ -252,11 +252,11 @@ abstract class EntityAbstract {
 		$nonCloneFields = $this->getNonClonableFields();
 
 		$myFields = $this->toArray();
-
-		foreach ( $nonCloneFields as $field ) {
-			unset ( $myFields[ $field ] );
-		}
-
+if (is_array($nonCloneFields) && 0<count($nonCloneFields)) {
+	foreach ( $nonCloneFields as $field ) {
+		unset ( $myFields[ $field ] );
+	}
+}
 		$this->resultToEntity( $myFields );
 	}
 

@@ -110,6 +110,7 @@ parameters:
        - '^(y|yes|n|no|on|off|default|in|out|html|cta\d+|cta|any|null|text|surveys|choose|button)$'
        - '^(http:|https:|field_)'
        - '^(callout|card-list|card-icon-list|cta|cta-hero|cta-sidebar|image-text-list|list-icon|list|nav|template-list|embeds|html|basic|select|gold|platinum)$' # SM CuratedPage markers
+       - '^(taxonomy|category|\s*)$'
 
   logger.channel: default
   logger.filehandler.standard.filename: %plugin.dir%/logs/logfile
@@ -140,6 +141,11 @@ services:
       - [ "setMultilangProxy", [ "@multilang.proxy" ]]
       - [ "setContentIoFactory", [ "@factory.contentIO" ]]
       - [ "setCache", [ "@site.cache" ]]
+
+  #wrapper.entity.menu:
+  #  class: Smartling\DbAl\WordpressContentEntities\MenuEntity
+  #  arguments:
+  #    - "@logger"
 
   wrapper.entity.post:
     class: Smartling\DbAl\WordpressContentEntities\PostEntity
@@ -181,6 +187,7 @@ services:
       - "@logger"
     calls:
       - [ "registerHandler", ["post", "@wrapper.entity.post"]]
+      #- [ "registerHandler", ["nav_menu", "@wrapper.entity.menu"]]
       - [ "registerHandler", ["page", "@wrapper.entity.page"]]
       - [ "registerHandler", ["category", "@wrapper.entity.category"]]
       - [ "registerHandler", ["post_tag", "@wrapper.entity.tag"]]

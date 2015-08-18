@@ -7,6 +7,7 @@ use DOMCdataSection;
 use DOMDocument;
 use DOMXPath;
 use Smartling\Bootstrap;
+use Smartling\Exception\InvalidXMLException;
 
 /**
  * Class XmlEncoder
@@ -77,7 +78,7 @@ class XmlEncoder {
 
 		foreach ( $array as $key => $element ) {
 
-			$path = '' === $base ? urlencode( $key ) : implode( $divider, array ( $base, urlencode( $key ) ) );
+			$path = '' === $base ? $key : implode( $divider, array ( $base, $key ) );
 
 			if ( is_array( $element ) ) {
 
@@ -201,6 +202,11 @@ class XmlEncoder {
 		}*/
 
 		foreach ( $sourceArray['meta'] as & $value ) {
+			if ( is_array( $value ) && array_key_exists( 'entity', $value ) && array_key_exists( 'meta', $value ) ) {
+				// nested object detected
+				$value = self::prepareSourceArray( $value, $strategy );
+			}
+
 			if ( false !== ( $tmp = @unserialize( $value ) ) ) {
 				$value = $tmp;
 			}
@@ -228,7 +234,6 @@ class XmlEncoder {
 	private static function decodeSource ( $source ) {
 		return unserialize( base64_decode( $source ) );
 	}
-
 
 	/**
 	 * @param array $source
@@ -275,10 +280,14 @@ class XmlEncoder {
 	 * @param string $xmlString
 	 *
 	 * @return DOMXPath
+	 * @throws InvalidXMLException
 	 */
 	private static function prepareXPath ( $xmlString ) {
-		$xml = self::initXml();
-		$xml->loadXML( $xmlString );
+		$xml    = self::initXml();
+		$result = @$xml->loadXML( $xmlString );
+		if ( false === $result ) {
+			throw new InvalidXMLException( 'Invalid XML Contents' );
+		}
 		$xpath = new DOMXPath( $xml );
 
 		return $xpath;
