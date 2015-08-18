@@ -383,7 +383,7 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 				$row = $this->extractFields( $item, $contentTypeFilterValue );
 
 				$entities = array ();
-var_dump($item);
+
 				if ( isset( $row['id'], $row['type'] ) ) {
 					$entities = $this->getManager()->find( array (
 							'source_blog_id' => $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
@@ -463,7 +463,7 @@ var_dump($item);
 				);
 			case WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG:
 			case WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY:
-			case WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU:
+			//ase WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU:
 				return array (
 					'id'      => $item->term_id,
 					'title'   => $item->name,
