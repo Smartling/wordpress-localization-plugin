@@ -199,6 +199,7 @@ class SmartlingCore {
 	}
 
 	public function sendForTranslationBySubmission ( SubmissionEntity $submission ) {
+
 		$contentEntity = $this->readContentEntity( $submission );
 
 		$submission->setSourceContentHash( $contentEntity->calculateHash() );
@@ -210,12 +211,16 @@ class SmartlingCore {
 			$submission = $this->getSubmissionManager()->storeEntity( $submission );
 		}
 
-		$source = array (
+		$source = [
 			'entity' => $contentEntity->toArray(),
 			'meta'   => $contentEntity->getMetadata()
-		);
+		];
 
 		$xml = XmlEncoder::xmlEncode( $source );
+
+		$clearedSource = XmlEncoder::xmlDecode( $xml );
+
+		$submission = $this->prepareTargetEntity( $submission, $clearedSource );
 
 		$result = false;
 
@@ -319,6 +324,78 @@ class SmartlingCore {
 		return $result;
 	}
 
+	private function simplifyArray ( array $array ) {
+		foreach ( $array as & $element ) {
+			if ( is_array( $element ) && 1 === count( $element ) ) {
+				$element = reset( $element );
+			}
+		}
+
+		return $array;
+	}
+
+	/**
+	 * Prepares a duplicate of source content for target site and links them.
+	 * To be used JUST BEFORE SENDING to Smartling
+	 *
+	 * @param SubmissionEntity $submission
+	 *
+	 * @param array            $cleared
+	 *
+	 * @return SubmissionEntity
+	 */
+	protected function prepareTargetEntity ( SubmissionEntity $submission, array $cleared ) {
+		$update = 0 !== (int) $submission->getTargetId();
+
+		$originalContent = $this->readContentEntity( $submission );
+
+		$original = [
+			'entity' => $originalContent->toArray(),
+			'meta'   => $this->simplifyArray( $originalContent->getMetadata() )
+		];
+
+
+		if ( false === $update ) {
+			$targetContent = clone $originalContent;
+			$targetContent->cleanFields();
+		} else {
+			$targetContent = $this->readTargetContentEntity( $submission );
+		}
+
+		foreach ( $cleared['entity'] as $k => $v ) {
+			$targetContent->{$k} = $v;
+		}
+
+		foreach ( $cleared['meta'] as $k => $v ) {
+			$original['meta'][$k] = $v;
+		}
+
+		$targetContent = $this->saveEntity(
+			$submission->getContentType(),
+			$submission->getTargetBlogId(),
+			$targetContent
+		);
+
+		if ( array_key_exists( 'meta', $original ) && 0 < count( $original['meta'] ) ) {
+			$this->saveMetaProperties(
+				$targetContent,
+				$original,
+				$submission
+			);
+		}
+
+		if ( false === $update ) {
+			$submission->setTargetId( $targetContent->getPK() );
+		}
+
+
+		$submission = $this->getSubmissionManager()->storeEntity( $submission );
+
+		$result = $this->getMultilangProxy()->linkObjects( $submission );
+
+		return $submission;
+	}
+
 	public function downloadTranslationBySubmission ( SubmissionEntity $entity ) {
 
 		if ( 1 === $entity->getIsLocked() ) {
@@ -341,31 +418,14 @@ class SmartlingCore {
 
 			$targetId = (int) $entity->getTargetId();
 
-			$targetContent = null;
-
-			if ( 0 === $targetId ) {
-				// need to clone original content first.
-				$originalEntity = $this->readContentEntity( $entity );
-				$targetContent  = clone $originalEntity;
-				$targetContent->cleanFields();
-			} else {
-				$targetContent = $this->readTargetContentEntity( $entity );
-			}
+			$targetContent = $this->readTargetContentEntity( $entity );
 
 			$this->setValues( $targetContent, $translatedFields['entity'] );
 
 			$targetContent = $this->saveEntity( $entity->getContentType(), $entity->getTargetBlogId(), $targetContent );
+
 			if ( array_key_exists( 'meta', $translatedFields ) && 0 < count( $translatedFields['meta'] ) ) {
 				$this->saveMetaProperties( $targetContent, $translatedFields, $entity );
-			}
-
-			if ( 0 === $targetId ) {
-
-				$entity->setTargetId( $targetContent->getPK() );
-
-				$entity = $this->getSubmissionManager()->storeEntity( $entity );
-
-				$result = $this->getMultilangProxy()->linkObjects( $entity );
 			}
 
 			if ( 100 === $entity->getCompletionPercentage() ) {
@@ -376,17 +436,17 @@ class SmartlingCore {
 
 			$entity = $this->getSubmissionManager()->storeEntity( $entity );
 		} catch ( InvalidXMLException $e ) {
-			$entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
-			$this->getSubmissionManager()->storeEntity($entity);
+			$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_FAILED );
+			$this->getSubmissionManager()->storeEntity( $entity );
 
-			$message=vsprintf("Invalid XML file [%s] received. Submission moved to %s status.",
+			$message = vsprintf( "Invalid XML file [%s] received. Submission moved to %s status.",
 				[
 					$entity->getFileUri(),
 					$entity->getStatus()
-				]);
+				] );
 
-			$this->getLogger()->error($message);
-			$messages[]=$message;
+			$this->getLogger()->error( $message );
+			$messages[] = $message;
 		} catch ( Exception $e ) {
 			$messages[] = $e->getMessage();
 		}

@@ -155,7 +155,7 @@ class PostEntity extends EntityAbstract {
 			$curFields = $entity->toArray();
 
 			foreach ( $curFields as $field => $value ) {
-				$msgFields[] = vsprintf( "%s = %s", array ( $field, $value ) );
+				$msgFields[] = vsprintf( "%s = %s", array ( $field, htmlentities($value) ) );
 			}
 
 			$message = vsprintf( 'An error had happened while saving post to database: %s. Params: %s',
