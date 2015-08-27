@@ -39,7 +39,7 @@ class JobEngine implements WPHookInterface {
 
 	public function register () {
 		if ( ! DiagnosticsHelper::isBlocked() ) {
-			add_action( self::CRON_HOOK, array ( $this, 'doWork' ) );
+			add_action( self::CRON_HOOK, [ $this, 'doWork' ] );
 		}
 	}
 

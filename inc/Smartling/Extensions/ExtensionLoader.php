@@ -25,7 +25,7 @@ class ExtensionLoader extends SmartlingFactoryAbstract {
 					 */
 					$extension->register();
 				} catch ( \Exception $e ) {
-					$this->getLogger()->error('Failed initialization of ' . $name . ' extension.');
+					$this->getLogger()->error( 'Failed initialization of ' . $name . ' extension.' );
 				}
 			}
 		}

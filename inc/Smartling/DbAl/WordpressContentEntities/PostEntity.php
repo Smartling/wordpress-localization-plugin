@@ -43,7 +43,7 @@ class PostEntity extends EntityAbstract {
 	 *
 	 * @var array
 	 */
-	protected $fields = array (
+	protected $fields = [
 		'ID',
 		'post_author',
 		'post_date',
@@ -67,7 +67,7 @@ class PostEntity extends EntityAbstract {
 		'post_type',
 		'post_mime_type',
 		'comment_count',
-	);
+	];
 
 	/**
 	 * @inheritdoc
@@ -76,7 +76,7 @@ class PostEntity extends EntityAbstract {
 		parent::__construct( $logger );
 
 		$this->setType( WordpressContentTypeHelper::CONTENT_TYPE_POST );
-		$this->hashAffectingFields = array_merge( $this->hashAffectingFields, array (
+		$this->hashAffectingFields = array_merge( $this->hashAffectingFields, [
 			'ID',
 			'post_author',
 			'post_content',
@@ -87,7 +87,7 @@ class PostEntity extends EntityAbstract {
 			'post_parent',
 			'guid',
 			'post_type',
-		) );
+		] );
 
 
 		$this->setEntityFields( $this->fields );
@@ -111,11 +111,11 @@ class PostEntity extends EntityAbstract {
 	 * @inheritdoc
 	 */
 	protected function getNonClonableFields () {
-		return array (
+		return [
 			'comment_count',
 			'guid',
-			'ID'
-		);
+			'ID',
+		];
 	}
 
 	/**
@@ -130,7 +130,7 @@ class PostEntity extends EntityAbstract {
 			$this->entityNotFound( WordpressContentTypeHelper::CONTENT_TYPE_POST, $guid );
 		}
 
-		return $post === null ? array () : $post;
+		return $post === null ? [ ] : $post;
 	}
 
 	/**
@@ -150,16 +150,16 @@ class PostEntity extends EntityAbstract {
 
 		if ( is_wp_error( $res ) ) {
 
-			$msgFields = array ();
+			$msgFields = [ ];
 
 			$curFields = $entity->toArray();
 
 			foreach ( $curFields as $field => $value ) {
-				$msgFields[] = vsprintf( "%s = %s", array ( $field, htmlentities($value) ) );
+				$msgFields[] = vsprintf( "%s = %s", [ $field, htmlentities( $value ) ] );
 			}
 
 			$message = vsprintf( 'An error had happened while saving post to database: %s. Params: %s',
-				array ( implode( ' | ', $res->get_error_messages() ), implode( ' || ', $msgFields ) ) );
+				[ implode( ' | ', $res->get_error_messages() ), implode( ' || ', $msgFields ) ] );
 
 			$this->getLogger()->error( $message );
 
@@ -181,19 +181,19 @@ class PostEntity extends EntityAbstract {
 	 */
 	public function getAll ( $limit = '', $offset = 0, $orderBy = 'date', $order = 'DESC' ) {
 
-		$arguments = array (
+		$arguments = [
 			'posts_per_page'   => $limit,
 			'offset'           => $offset,
 			'category'         => 0,
 			'orderby'          => $orderBy,
 			'order'            => $order,
-			'include'          => array (),
-			'exclude'          => array (),
+			'include'          => [ ],
+			'exclude'          => [ ],
 			'meta_key'         => '',
 			'meta_value'       => '',
 			'post_type'        => $this->getType(),
-			'suppress_filters' => true
-		);
+			'suppress_filters' => true,
+		];
 
 		$posts = get_posts( $arguments );
 
@@ -215,15 +215,15 @@ class PostEntity extends EntityAbstract {
 			return array_key_exists( $name, $wp ) ? (int) $wp[ $name ] : 0;
 		};
 
-		$fields = array (
+		$fields = [
 			'publish',
 			'future',
 			'draft',
 			'pending',
 			'private',
 			'autoDraft',
-			'inherit'
-		);
+			'inherit',
+		];
 
 		foreach ( $fields as $field ) {
 			$total += $cnt( $field );
@@ -258,12 +258,12 @@ class PostEntity extends EntityAbstract {
 		if ( false === $result ) {
 			$message = vsprintf(
 				'Error saving meta tag "%s" with value "%s" for "%s" "%s"',
-				array (
+				[
 					$tagName,
 					serialize( $tagValue ),
 					$this->post_type,
-					$this->ID
-				)
+					$this->ID,
+				]
 			);
 			$this->getLogger()->error( $message );
 		}

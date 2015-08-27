@@ -33,20 +33,20 @@ class MenuEntity extends TaxonomyEntityAbstract {
 	 */
 	public function getMetadata () {
 		// getting ids of menu_items
-		$items = get_objects_in_term($this->term_id,$this->getType());
+		$items = get_objects_in_term( $this->term_id, $this->getType() );
 
-		$objects=[];
-		foreach($items as $item)
-		{
-			$item = (int) $item;
-			$entity = new MenuItemEntity($this->getLogger());
-			$entity = $entity->get($item);
-			$arr = [
-				'entity'=>$entity->toArray(),
-				'meta'=>$entity->getMetadata()
+		$objects = [ ];
+		foreach ( $items as $item ) {
+			$item      = (int) $item;
+			$entity    = new MenuItemEntity( $this->getLogger() );
+			$entity    = $entity->get( $item );
+			$arr       = [
+				'entity' => $entity->toArray(),
+				'meta'   => $entity->getMetadata(),
 			];
-			$objects[]=$arr;
+			$objects[] = $arr;
 		}
+
 		return $objects;
 	}
 

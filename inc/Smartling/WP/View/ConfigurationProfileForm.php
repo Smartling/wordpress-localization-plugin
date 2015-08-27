@@ -27,7 +27,7 @@ $settingsManager = $data;
 $profileId = (int) ( $_GET['profile'] ? : 0 );
 
 if ( 0 === $profileId ) {
-	$profile = $settingsManager->createProfile( array () );
+	$profile = $settingsManager->createProfile( [ ] );
 } else {
 	$profiles = $pluginInfo->getSettingsManager()->getEntityById( $profileId );
 
@@ -66,9 +66,9 @@ if ( 0 === $profileId ) {
 						'select',
 						HtmlTagGeneratorHelper::renderSelectOptions(
 							$profile->getIsActive(),
-							array ( '1' => __( 'Active' ), '0' => __( 'Inactive' ) )
+							[ '1' => __( 'Active' ), '0' => __( 'Inactive' ) ]
 						),
-						array ( 'name' => 'smartling_settings[active]' ) );
+						[ 'name' => 'smartling_settings[active]' ] );
 					?>
 				</td >
 			</tr >
@@ -106,7 +106,7 @@ if ( 0 === $profileId ) {
 				<th scope = "row" ><?= __( 'Default Locale', $domain ) ?></th >
 				<td >
 					<?php
-					$locales = array ();
+					$locales = [ ];
 					foreach ( $settingsManager->getSiteHelper()->listBlogs() as $blogId ) {
 						$locales[ $blogId ] = $settingsManager
 							->getSiteHelper()
@@ -129,7 +129,7 @@ if ( 0 === $profileId ) {
 						'select',
 						HtmlTagGeneratorHelper::renderSelectOptions( $profile->getOriginalBlogId()->getBlogId(),
 							$locales ),
-						array ( 'name' => 'smartling_settings[defaultLocale]', 'id' => 'default-locales' ) );
+						[ 'name' => 'smartling_settings[defaultLocale]', 'id' => 'default-locales' ] );
 					?>
 				</td >
 			</tr >
@@ -162,7 +162,7 @@ if ( 0 === $profileId ) {
 								<?= WPAbstract::settingsPageTsargetLocaleCheckbox( $profile, $label, $blogId,
 									$smartlingLocale, $enabled ); ?>
 							</tr >
-						<?php
+							<?php
 						}
 						?>
 					</table >
@@ -178,7 +178,7 @@ if ( 0 === $profileId ) {
 							$profile->getRetrievalType(),
 							ConfigurationProfileEntity::getRetrievalTypes()
 						),
-						array ( 'name' => 'smartling_settings[retrievalType]' ) );
+						[ 'name' => 'smartling_settings[retrievalType]' ] );
 
 					?>
 					<br />

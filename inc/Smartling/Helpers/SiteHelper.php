@@ -30,12 +30,12 @@ class SiteHelper {
 	/**
 	 * @var array
 	 */
-	protected static $_siteCache = array ();
+	protected static $_siteCache = [ ];
 
 	/**
 	 * @var array
 	 */
-	protected static $_flatBlogIdCache = array ();
+	protected static $_flatBlogIdCache = [ ];
 
 	/**
 	 * Fallback for direct run if Wordpress functionality is not reachable
@@ -146,7 +146,7 @@ class SiteHelper {
 
 		if ( ! in_array( $blogId, self::$_flatBlogIdCache ) ) {
 			$message = vsprintf( 'Invalid blogId value. Got %s, expected one of [%s]',
-				array ( $blogId, implode( ',', self::$_flatBlogIdCache ) ) );
+				[ $blogId, implode( ',', self::$_flatBlogIdCache ) ] );
 
 			throw new \InvalidArgumentException( $message );
 		}
@@ -189,10 +189,10 @@ class SiteHelper {
 	public function getBlogLabelById ( $localizationPluginProxyInterface, $blogId ) {
 		return vsprintf(
 			'%s - %s',
-			array (
+			[
 				$this->getBlogNameById( $blogId ),
-				$localizationPluginProxyInterface->getBlogLocaleById( $blogId )
-			)
+				$localizationPluginProxyInterface->getBlogLocaleById( $blogId ),
+			]
 		);
 	}
 
@@ -207,15 +207,14 @@ class SiteHelper {
 		return $localizationPlugin->getBlogLocaleById( $this->getCurrentBlogId() );
 	}
 
-	public function getPostTypes()
-	{
-		return array_values(get_post_types( '', 'names' ));
+	public function getPostTypes () {
+		return array_values( get_post_types( '', 'names' ) );
 
 	}
 
-	public function getTermTypes()
-	{
+	public function getTermTypes () {
 		global $wp_taxonomies;
-		return array_keys($wp_taxonomies);
+
+		return array_keys( $wp_taxonomies );
 	}
 }

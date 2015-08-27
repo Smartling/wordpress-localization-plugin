@@ -47,15 +47,15 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 	 *
 	 * @var array
 	 */
-	private $defaultValues = array (
+	private $defaultValues = [
 		self::CONTENT_TYPE_SELECT_ELEMENT_NAME => WordpressContentTypeHelper::CONTENT_TYPE_POST,
-	);
+	];
 
-	private $_settings = array (
+	private $_settings = [
 		'singular' => 'submission',
 		'plural'   => 'submissions',
-		'ajax'     => false
-	);
+		'ajax'     => false,
+	];
 
 	/**
 	 * @var SubmissionManager $manager
@@ -141,10 +141,10 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 				SmartlingToCMSDatabaseAccessWrapperInterface::SORT_OPTION_ASC ) );
 		}
 
-		return array (
+		return [
 			'orderby' => $column,
-			'order'   => $direction
-		);
+			'order'   => $direction,
+		];
 	}
 
 	public function column_default ( $item, $column_name ) {
@@ -163,15 +163,15 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 		$linkTemplate = '?page=%s&action=%s&' . $this->buildHtmlTagName( $this->_args['singular'] ) . '=%s';
 
 		//Build row actions
-		$actions = array (
-			'send' => HtmlTagGeneratorHelper::tag( 'a', __( 'Send' ), array (
+		$actions = [
+			'send' => HtmlTagGeneratorHelper::tag( 'a', __( 'Send' ), [
 				'href' => vsprintf( $linkTemplate,
-					array ( $_REQUEST['page'], 'sendSingle', $item['id'] . '-' . $item['type'] ) )
-			) ),
-		);
+					[ $_REQUEST['page'], 'sendSingle', $item['id'] . '-' . $item['type'] ] ),
+			] ),
+		];
 
 		//Return the title contents
-		return vsprintf( '%s %s', array ( $item['title'], $this->row_actions( $actions ) ) );
+		return vsprintf( '%s %s', [ $item['title'], $this->row_actions( $actions ) ] );
 	}
 
 	/**
@@ -183,37 +183,37 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 	 */
 	public function column_cb ( $item ) {
 
-		$t = vsprintf( '%s-%s', array ( $item['id'], $item['type'] ) );
+		$t = vsprintf( '%s-%s', [ $item['id'], $item['type'] ] );
 
-		return HtmlTagGeneratorHelper::tag( 'input', '', array (
+		return HtmlTagGeneratorHelper::tag( 'input', '', [
 			'type'  => 'checkbox',
 			'name'  => $this->buildHtmlTagName( $this->_args['singular'] ) . '[]',
 			'value' => $t,
 			'id'    => $t,
 			'class' => 'bulkaction',
-		) );
+		] );
 	}
 
 	/**
 	 * @inheritdoc
 	 */
 	public function get_columns () {
-		return array (
+		return [
 			'bulkActionCb' => HtmlTagGeneratorHelper::tag(
 				'input',
 				'',
-				array (
+				[
 					'type'  => 'checkbox',
-					'class' => 'checkall'
-				)
+					'class' => 'checkall',
+				]
 			),
 			'id'           => __( 'ID' ),
 			'title'        => __( 'Title' ),
 			'author'       => __( 'Author' ),
 			'status'       => __( 'Status' ),
 			'locales'      => __( 'Locales' ),
-			'updated'      => __( 'Updated' )
-		);
+			'updated'      => __( 'Updated' ),
+		];
 	}
 
 	/**
@@ -221,17 +221,17 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 	 */
 	public function get_sortable_columns () {
 
-		$fields = array (
+		$fields = [
 			'title',
 			'status',
 			'author',
-			'updated'
-		);
+			'updated',
+		];
 
-		$sortable_columns = array ();
+		$sortable_columns = [ ];
 
 		foreach ( $fields as $field ) {
-			$sortable_columns[ $field ] = array ( $field, false );
+			$sortable_columns[ $field ] = [ $field, false ];
 		}
 
 		return $sortable_columns;
@@ -241,7 +241,7 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 	 * @inheritdoc
 	 */
 	public function get_bulk_actions () {
-		return array ();
+		return [ ];
 	}
 
 	/**
@@ -251,9 +251,9 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 		/**
 		 * @var array $submissions
 		 */
-		$submissions = $this->getFormElementValue( 'submission', array () );
-		$locales     = array ();
-		$data        = $this->getFromSource( 'bulk-submit-locales', array () );
+		$submissions = $this->getFormElementValue( 'submission', [ ] );
+		$locales     = [ ];
+		$data        = $this->getFromSource( 'bulk-submit-locales', [ ] );
 
 		if ( null !== $data && array_key_exists( 'locales', $data ) ) {
 			foreach ( $data['locales'] as $blogId => $blogName ) {
@@ -285,8 +285,8 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 	 */
 	private function processSingleAction () {
 		$submissionId = (int) $this->getFormElementValue( 'submission', 0 );
-		$locales      = array ();
-		$data         = $this->getFromSource( 'bulk-submit-locales', array () );
+		$locales      = [ ];
+		$data         = $this->getFromSource( 'bulk-submit-locales', [ ] );
 		if ( null !== $data && array_key_exists( 'locales', $data ) ) {
 			foreach ( $data['locales'] as $blogId => $blogName ) {
 				if ( array_key_exists( 'enabled', $blogName ) && 'on' === $blogName['enabled'] ) {
@@ -345,16 +345,16 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 	 * @inheritdoc
 	 */
 	public function prepare_items () {
-		$pageOptions = array (
+		$pageOptions = [
 			'limit' => $this->manager->getPageSize(),
-			'page'  => $this->get_pagenum()
-		);
+			'page'  => $this->get_pagenum(),
+		];
 
-		$this->_column_headers = array (
+		$this->_column_headers = [
 			$this->get_columns(),
-			array ( 'id' ),
-			$this->get_sortable_columns()
-		);
+			[ 'id' ],
+			$this->get_sortable_columns(),
+		];
 		$this->processAction();
 
 		$contentTypeFilterValue = $this->getContentTypeFilterValue();
@@ -376,27 +376,27 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 
 		$total = $io->getTotal();
 
-		$dataAsArray = array ();
+		$dataAsArray = [ ];
 		if ( $data ) {
 			foreach ( $data as $item ) {
 
 				$row = $this->extractFields( $item, $contentTypeFilterValue );
 
-				$entities = array ();
+				$entities = [ ];
 
 				if ( isset( $row['id'], $row['type'] ) ) {
-					$entities = $this->getManager()->find( array (
+					$entities = $this->getManager()->find( [
 							'source_blog_id' => $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
 							'source_id'      => $row['id'],
-							'content_type'   => $row['type']
-						)
+							'content_type'   => $row['type'],
+						]
 					);
 				} else {
 					continue;
 				}
 
 				if ( count( $entities ) > 0 ) {
-					$locales = array ();
+					$locales = [ ];
 					foreach ( $entities as $entity ) {
 						$locales[] =
 							$this->entityHelper->getConnector()->getBlogNameByLocale( $entity->getTargetLocale() );
@@ -410,7 +410,7 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 					$orig     = $row['title'];
 					$shrinked = mb_substr( $orig, 0, $file_uri_max_chars - 3, 'utf8' ) . '...';
 
-					$row['title'] = HtmlTagGeneratorHelper::tag( 'span', $shrinked, array ( 'title' => $orig ) );
+					$row['title'] = HtmlTagGeneratorHelper::tag( 'span', $shrinked, [ 'title' => $orig ] );
 				}
 
 				//$row['title']  = $this->applyRowActions( $row );
@@ -424,7 +424,7 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 				}
 
 				$row['updated'] = $updatedDate;
-				$row            = array_merge( array ( 'bulkActionCb' => $this->column_cb( $row ) ), $row );
+				$row            = array_merge( [ 'bulkActionCb' => $this->column_cb( $row ) ], $row );
 				$dataAsArray[]  = $row;
 			}
 		}
@@ -432,11 +432,11 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 
 		$this->items = $dataAsArray;
 
-		$this->set_pagination_args( array (
+		$this->set_pagination_args( [
 			'total_items' => $total,
 			'per_page'    => $pageOptions['limit'],
-			'total_pages' => ceil( $total / $pageOptions['limit'] )
-		) );
+			'total_pages' => ceil( $total / $pageOptions['limit'] ),
+		] );
 	}
 
 	/**
@@ -452,30 +452,30 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 			case WordpressContentTypeHelper::CONTENT_TYPE_POST_POLICY:
 			case WordpressContentTypeHelper::CONTENT_TYPE_POST_PARTNER:
 			case WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL:
-				return array (
+				return [
 					'id'      => $item->ID,
 					'title'   => $item->post_title,
 					'type'    => $item->post_type,
 					'author'  => WordpressUserHelper::getUserLoginById( (int) $item->post_author ),
 					'status'  => $item->post_status,
 					'locales' => null,
-					'updated' => $item->post_date
-				);
+					'updated' => $item->post_date,
+				];
 			case WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG:
 			case WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY:
-			//ase WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU:
-				return array (
+				//ase WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU:
+				return [
 					'id'      => $item->term_id,
 					'title'   => $item->name,
 					'type'    => $item->taxonomy,
 					'author'  => null,
 					'status'  => null,
 					'locales' => null,
-					'updated' => null
-				);
+					'updated' => null,
+				];
 		}
 
-		return array ();
+		return [ ];
 	}
 
 	/**
@@ -494,19 +494,19 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 		$html = HtmlTagGeneratorHelper::tag(
 				'label',
 				__( 'Type' ),
-				array (
+				[
 					'for' => $this->buildHtmlTagName( $controlName ),
-				)
+				]
 			) . HtmlTagGeneratorHelper::tag(
 				'select',
 				HtmlTagGeneratorHelper::renderSelectOptions(
 					$value,
 					$types
 				),
-				array (
+				[
 					'id'   => $this->buildHtmlTagName( $controlName ),
-					'name' => $this->buildHtmlTagName( $controlName )
-				)
+					'name' => $this->buildHtmlTagName( $controlName ),
+				]
 			);
 
 		return $html;
@@ -522,14 +522,14 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 	public function renderSubmitButton ( $label ) {
 		$id = $name = $this->buildHtmlTagName( 'go-and-filter' );
 
-		$options = array (
+		$options = [
 			'type'  => 'submit',
 			'id'    => $id,
 			//'name'  => $name,
 			'class' => 'button action',
-			'value' => __( $label )
+			'value' => __( $label ),
 
-		);
+		];
 
 		return HtmlTagGeneratorHelper::tag( 'input', '', $options );
 	}

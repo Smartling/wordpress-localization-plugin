@@ -58,7 +58,7 @@ class SmartlingAPI {
 	 *
 	 * @return string
 	 */
-	public function uploadFile ( $path, $params = array () ) {
+	public function uploadFile ( $path, $params = [ ] ) {
 		$params['file'] = $path;
 
 		return $this->sendRequest( 'file/upload', $params, HttpClient::REQUEST_TYPE_POST, true );
@@ -72,7 +72,7 @@ class SmartlingAPI {
 	 *
 	 * @return string
 	 */
-	public function uploadContent ( $content, $params = array () ) {
+	public function uploadContent ( $content, $params = [ ] ) {
 		$params['file'] = $content;
 
 		return $this->sendRequest( 'file/upload', $params, HttpClient::REQUEST_TYPE_POST, false, true );
@@ -86,11 +86,11 @@ class SmartlingAPI {
 	 *
 	 * @return string
 	 */
-	public function downloadFile ( $fileUri, $locale, $params = array () ) {
-		return $this->sendRequest( 'file/get', array_replace_recursive( array (
+	public function downloadFile ( $fileUri, $locale, $params = [ ] ) {
+		return $this->sendRequest( 'file/get', array_replace_recursive( [
 			'fileUri' => $fileUri,
-			'locale'  => $locale
-		), $params ), HttpClient::REQUEST_TYPE_GET );
+			'locale'  => $locale,
+		], $params ), HttpClient::REQUEST_TYPE_GET );
 	}
 
 	/**
@@ -101,11 +101,11 @@ class SmartlingAPI {
 	 *
 	 * @return string
 	 */
-	public function getStatus ( $fileUri, $locale, $params = array () ) {
-		return $this->sendRequest( 'file/status', array_replace_recursive( array (
+	public function getStatus ( $fileUri, $locale, $params = [ ] ) {
+		return $this->sendRequest( 'file/status', array_replace_recursive( [
 			'fileUri' => $fileUri,
-			'locale'  => $locale
-		), $params ), HttpClient::REQUEST_TYPE_GET );
+			'locale'  => $locale,
+		], $params ), HttpClient::REQUEST_TYPE_GET );
 	}
 
 	/**
@@ -116,8 +116,8 @@ class SmartlingAPI {
 	 *
 	 * @return string
 	 */
-	public function getList ( $locale = '', $params = array () ) {
-		$params = ( empty( $locale ) ) ? $params : array_replace_recursive( array ( 'locale' => $locale ), $params );
+	public function getList ( $locale = '', $params = [ ] ) {
+		$params = ( empty( $locale ) ) ? $params : array_replace_recursive( [ 'locale' => $locale ], $params );
 
 		return $this->sendRequest( 'file/list', $params, HttpClient::REQUEST_TYPE_GET );
 	}
@@ -131,10 +131,10 @@ class SmartlingAPI {
 	 * @return string
 	 */
 	public function renameFile ( $fileUri, $newFileUri ) {
-		return $this->sendRequest( 'file/rename', array (
+		return $this->sendRequest( 'file/rename', [
 			'fileUri'    => $fileUri,
 			'newFileUri' => $newFileUri,
-		), HttpClient::REQUEST_TYPE_POST );
+		], HttpClient::REQUEST_TYPE_POST );
 	}
 
 	/**
@@ -145,9 +145,9 @@ class SmartlingAPI {
 	 * @return string
 	 */
 	public function deleteFile ( $fileUri ) {
-		return $this->sendRequest( 'file/delete', array (
+		return $this->sendRequest( 'file/delete', [
 			'fileUri' => $fileUri,
-		), HttpClient::REQUEST_TYPE_DELETE );
+		], HttpClient::REQUEST_TYPE_DELETE );
 	}
 
 	/**
@@ -164,14 +164,14 @@ class SmartlingAPI {
 	 */
 	public function import ( $fileUri, $fileType, $locale, $file, $overwrite = false, $translationState ) {
 
-		return $this->sendRequest( 'file/import', array (
+		return $this->sendRequest( 'file/import', [
 			'fileUri'          => $fileUri,
 			'fileType'         => $fileType,
 			'locale'           => $locale,
 			'file'             => $file,
 			'overwrite'        => $overwrite,
 			'translationState' => $translationState,
-		), HttpClient::REQUEST_TYPE_POST, true );
+		], HttpClient::REQUEST_TYPE_POST, true );
 	}
 
 	/**
@@ -230,7 +230,7 @@ class SmartlingAPI {
 	 * @return string
 	 */
 	public function getSupportedLocales () {
-		return $this->sendRequest( 'project/locale/list', array (), HttpClient::REQUEST_TYPE_GET );
+		return $this->sendRequest( 'project/locale/list', [ ], HttpClient::REQUEST_TYPE_GET );
 	}
 
 }

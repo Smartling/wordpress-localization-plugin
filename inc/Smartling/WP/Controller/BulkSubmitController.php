@@ -21,7 +21,7 @@ class BulkSubmitController
 	 */
 	public function register () {
 		if ( ! DiagnosticsHelper::isBlocked() ) {
-			add_action( 'admin_menu', array ( $this, 'menu' ) );
+			add_action( 'admin_menu', [ $this, 'menu' ] );
 		}
 	}
 
@@ -32,10 +32,10 @@ class BulkSubmitController
 			'Bulk Submit',
 			'Administrator',
 			'smartling-bulk-submit',
-			array (
+			[
 				$this,
-				'renderPage'
-			)
+				'renderPage',
+			]
 		);
 	}
 

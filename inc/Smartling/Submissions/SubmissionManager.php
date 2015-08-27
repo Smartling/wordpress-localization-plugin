@@ -152,13 +152,13 @@ class SubmissionManager extends EntityManagerAbstract {
 	public function getEntities (
 		$contentType = null,
 		$status = null,
-		array $sortOptions = array (),
+		array $sortOptions = [ ],
 		$pageOptions = null,
 		& $totalCount = 0
 	) {
 		$validRequest = $this->validateRequest( $contentType, $sortOptions, $pageOptions );
 
-		$result = array ();
+		$result = [ ];
 
 		if ( $validRequest ) {
 			$dataQuery = $this->buildQuery( $contentType, $status, $sortOptions, $pageOptions );
@@ -190,10 +190,10 @@ class SubmissionManager extends EntityManagerAbstract {
 	 */
 	public function search (
 		$searchText,
-		array $searchFields = array (),
+		array $searchFields = [ ],
 		$contentType = null,
 		$status = null,
-		array $sortOptions = array (),
+		array $sortOptions = [ ],
 		$pageOptions = null,
 		& $totalCount = 0
 	) {
@@ -204,11 +204,11 @@ class SubmissionManager extends EntityManagerAbstract {
 
 		$validRequest = ! empty( $searchFields ) && $this->validateRequest( $contentType, $sortOptions, $pageOptions );
 
-		$result = array ();
+		$result = [ ];
 
 		if ( $validRequest ) {
 
-			$searchText = vsprintf( '%%%s%%', array ( $searchText ) );
+			$searchText = vsprintf( '%%%s%%', [ $searchText ] );
 
 			$block = ConditionBlock::getConditionBlock( ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR );
 
@@ -217,7 +217,7 @@ class SubmissionManager extends EntityManagerAbstract {
 					Condition::getCondition(
 						ConditionBuilder::CONDITION_SIGN_LIKE,
 						$field,
-						array ( $searchText )
+						[ $searchText ]
 					)
 				);
 			}
@@ -246,7 +246,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	 * @return null|SubmissionEntity
 	 */
 	public function getEntityById ( $id ) {
-		$query = $this->buildSelectQuery( array ( 'id' => (int) $id ) );
+		$query = $this->buildSelectQuery( [ 'id' => (int) $id ] );
 
 		$obj = $this->fetchData( $query, false );
 
@@ -266,7 +266,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	 * @return null|SubmissionEntity
 	 */
 	public function getEntityBySourceGuid ( $sourceGuid ) {
-		$query = $this->buildSelectQuery( array ( 'source_id' => $sourceGuid ) );
+		$query = $this->buildSelectQuery( [ 'source_id' => $sourceGuid ] );
 
 		$obj = $this->fetchData( $query, false );
 
@@ -285,7 +285,7 @@ class SubmissionManager extends EntityManagerAbstract {
 		$whereOptions = ConditionBlock::getConditionBlock( ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND );
 		foreach ( $where as $key => $item ) {
 			$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, $key,
-				array ( $item ) );
+				[ $item ] );
 			$whereOptions->addCondition( $condition );
 		}
 
@@ -293,7 +293,7 @@ class SubmissionManager extends EntityManagerAbstract {
 			$this->getDbal()->completeTableName( SubmissionEntity::getTableName() ),
 			array_keys( SubmissionEntity::getFieldDefinitions() ),
 			$whereOptions,
-			array (),
+			[ ],
 			null
 		);
 		$this->getLogger()->debug( $query );
@@ -313,22 +313,22 @@ class SubmissionManager extends EntityManagerAbstract {
 
 			if ( ! is_null( $contentType ) ) {
 				$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'content_type',
-					array ( $contentType ) );
+					[ $contentType ] );
 				$whereOptions->addCondition( $condition );
 			}
 
 			if ( ! is_null( $status ) ) {
 				$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'status',
-					array ( $status ) );
+					[ $status ] );
 				$whereOptions->addCondition( $condition );
 			}
 		}
 
 		$query = QueryBuilder::buildSelectQuery(
 			$this->getDbal()->completeTableName( SubmissionEntity::getTableName() ),
-			array ( array ( 'COUNT(*)', 'cnt' ) ),
+			[ [ 'COUNT(*)', 'cnt' ] ],
 			$whereOptions,
-			array (),
+			[ ],
 			null
 		);
 
@@ -344,20 +344,20 @@ class SubmissionManager extends EntityManagerAbstract {
 	 *
 	 * @return SubmissionEntity[]
 	 */
-	public function find ( array $params = array () ) {
+	public function find ( array $params = [ ] ) {
 		$block = new ConditionBlock( ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND );
 
 		foreach ( $params as $field => $value ) {
 			if ( is_array( $value ) ) {
 				$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_IN, $field, $value );
 			} else {
-				$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, $field, array ( $value ) );
+				$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, $field, [ $value ] );
 			}
 
 			$block->addCondition( $condition );
 		}
 
-		$query = $this->buildQuery( null, null, array (), null, $block );
+		$query = $this->buildQuery( null, null, [ ], null, $block );
 
 		return $this->fetchData( $query );
 	}
@@ -392,13 +392,13 @@ class SubmissionManager extends EntityManagerAbstract {
 
 			if ( ! is_null( $contentType ) ) {
 				$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'content_type',
-					array ( $contentType ) );
+					[ $contentType ] );
 				$whereOptions->addCondition( $condition );
 			}
 
 			if ( ! is_null( $status ) ) {
 				$condition = Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'status',
-					array ( $status ) );
+					[ $status ] );
 				$whereOptions->addCondition( $condition );
 			}
 		} else {
@@ -442,7 +442,7 @@ class SubmissionManager extends EntityManagerAbstract {
 	public function storeEntity ( SubmissionEntity $entity ) {
 		$entityId = $entity->id;
 
-		$is_insert = in_array( $entityId, array ( 0, null ), true );
+		$is_insert = in_array( $entityId, [ 0, null ], true );
 
 		$fields = $entity->toArray( false );
 
@@ -461,9 +461,9 @@ class SubmissionManager extends EntityManagerAbstract {
 			// update
 			$conditionBlock = ConditionBlock::getConditionBlock();
 			$conditionBlock->addCondition( Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'id',
-				array ( $entityId ) ) );
+				[ $entityId ] ) );
 			$storeQuery = QueryBuilder::buildUpdateQuery( $this->getDbal()->completeTableName( SubmissionEntity::getTableName() ),
-				$fields, $conditionBlock, array ( 'limit' => 1 ) );
+				$fields, $conditionBlock, [ 'limit' => 1 ] );
 		}
 
 		// log store query before execution
@@ -473,7 +473,7 @@ class SubmissionManager extends EntityManagerAbstract {
 
 		if ( false === $result ) {
 			$message = vsprintf( 'Failed saving submission entity to database with following error message: %s',
-				array ( $this->getDbal()->getLastErrorMessage() ) );
+				[ $this->getDbal()->getLastErrorMessage() ] );
 
 			$this->getLogger()->error( $message );
 		}
@@ -520,12 +520,12 @@ class SubmissionManager extends EntityManagerAbstract {
 
 		$entity = null;
 
-		$params = array (
+		$params = [
 			'content_type'   => $contentType,
 			'source_blog_id' => $sourceBlog,
 			'source_id'      => $sourceEntity,
 			'target_blog_id' => $targetBlog,
-		);
+		];
 
 		if ( null !== $targetEntity ) {
 			$params['target_id'] = (int) $targetEntity;

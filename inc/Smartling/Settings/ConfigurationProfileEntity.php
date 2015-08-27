@@ -21,18 +21,18 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	}
 
 	static function getRetrievalTypes () {
-		return array (
+		return [
 			'pseudo'    => __( 'Pseudo' ),
 			'published' => __( 'Published' ),
-			'pending'   => __( 'Pending' )
-		);
+			'pending'   => __( 'Pending' ),
+		];
 	}
 
 	/**
 	 * @return array
 	 */
 	static function getFieldLabels () {
-		return array (
+		return [
 			'id'               => __( 'ID' ),
 			'profile_name'     => __( 'Profile Name' ),
 			//'api_url'        => __( 'API URL' ),
@@ -42,14 +42,14 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 			'original_blog_id' => __( 'Main Locale' ),
 			'auto_authorize'   => __( 'Auto Authorize' ),
 			'retrieval_type'   => __( 'Retrieval Type' ),
-		);
+		];
 	}
 
 	/**
 	 * @return array
 	 */
 	static function getFieldDefinitions () {
-		return array (
+		return [
 			'id'               => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
 			'profile_name'     => self::DB_TYPE_STRING_STANDARD,
 			'api_url'          => self::DB_TYPE_STRING_STANDARD,
@@ -60,37 +60,37 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 			'auto_authorize'   => self::DB_TYPE_UINT_SWITCH,
 			'retrieval_type'   => self::DB_TYPE_STRING_SMALL,
 			'target_locales'   => 'TEXT NULL',
-		);
+		];
 	}
 
 	/**
 	 * @return array
 	 */
 	static function getSortableFields () {
-		return array (
+		return [
 			'profile_name',
 			'project_id',
 			'is_active',
 			'original_blog_id',
 			'auto_authorize',
 			'retrieval_type',
-		);
+		];
 	}
 
 	/**
 	 * @return array
 	 */
 	static function getIndexes () {
-		return array (
-			array (
+		return [
+			[
 				'type'    => 'primary',
-				'columns' => array ( 'id' )
-			),
-			array (
+				'columns' => [ 'id' ],
+			],
+			[
 				'type'    => 'index',
-				'columns' => array ( 'original_blog_id', 'is_active' )
-			),
-		);
+				'columns' => [ 'original_blog_id', 'is_active' ],
+			],
+		];
 	}
 
 	/**
@@ -156,8 +156,8 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	public function setProjectId ( $projectId ) {
 		$this->stateFields['project_id'] = $projectId;
 
-		if ( ! preg_match( vsprintf( '/%s/ius', array ( self::REGEX_PROJECT_ID ) ), trim( $projectId, '/' ) ) ) {
-			$this->logger->warning( vsprintf( 'Got invalid project ID: %s', array ( $projectId ) ) );
+		if ( ! preg_match( vsprintf( '/%s/ius', [ self::REGEX_PROJECT_ID ] ), trim( $projectId, '/' ) ) ) {
+			$this->logger->warning( vsprintf( 'Got invalid project ID: %s', [ $projectId ] ) );
 		}
 	}
 
@@ -172,8 +172,8 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	 * @param $projectKey
 	 */
 	public function setApiKey ( $projectKey ) {
-		if ( ! preg_match( vsprintf( '/%s/ius', array ( self::REGEX_PROJECT_KEY ) ), trim( $projectKey, '/' ) ) ) {
-			$this->logger->warning( vsprintf( 'Got invalid project KEY: %s', array ( $projectKey ) ) );
+		if ( ! preg_match( vsprintf( '/%s/ius', [ self::REGEX_PROJECT_KEY ] ), trim( $projectKey, '/' ) ) ) {
+			$this->logger->warning( vsprintf( 'Got invalid project KEY: %s', [ $projectKey ] ) );
 		} else {
 			$this->stateFields['api_key'] = $projectKey;
 		}
@@ -221,7 +221,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 			$this->stateFields['retrieval_type'] = $retrievalType;
 		} else {
 			$this->logger->warning( vsprintf( 'Got invalid retrievalType: %s, expected one of: %s',
-				array ( $retrievalType, implode( ', ', array_keys( self::getRetrievalTypes() ) ) ) ) );
+				[ $retrievalType, implode( ', ', array_keys( self::getRetrievalTypes() ) ) ] ) );
 		}
 	}
 
@@ -230,7 +230,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	 */
 	public function getTargetLocales () {
 		if ( ! array_key_exists( 'target_locales', $this->stateFields ) ) {
-			$this->setTargetLocales( array () );
+			$this->setTargetLocales( [ ] );
 		}
 
 		return $this->stateFields['target_locales'];
@@ -248,7 +248,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 		$state['auto_authorize'] = ! $state['auto_authorize'] ? 0 : 1;
 		$state['is_active']      = ! $state['is_active'] ? 0 : 1;
 
-		$serializedTargetLocales = array ();
+		$serializedTargetLocales = [ ];
 		if ( 0 < count( $this->getTargetLocales() ) ) {
 			foreach ( $this->getTargetLocales() as $targetLocale ) {
 				$serializedTargetLocales[] = $targetLocale->toArray();
@@ -275,7 +275,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 
 		$obj->setOriginalBlogId( $locale );
 
-		$unserializedTargetLocales = array ();
+		$unserializedTargetLocales = [ ];
 
 		$curLocales = $obj->getTargetLocales();
 
@@ -289,7 +289,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 				$obj->setTargetLocales( $unserializedTargetLocales );
 
 			} else {
-				$obj->setTargetLocales( array () );
+				$obj->setTargetLocales( [ ] );
 			}
 		}
 

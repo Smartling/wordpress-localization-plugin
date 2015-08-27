@@ -55,7 +55,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract {
 	/**
 	 * @var array
 	 */
-	protected static $_blogLocalesCache = array ();
+	protected static $_blogLocalesCache = [ ];
 
 	/**
 	 * @throws \Exception
@@ -65,7 +65,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract {
 			$rawValue = get_site_option( self::MULTILINGUAL_PRESS_PRO_SITE_OPTION, false, false );
 
 			if ( false === $rawValue ) {
-				$message = vsprintf( 'Locales and/or Links are not set with multilingual press plugin.', array () );
+				$message = vsprintf( 'Locales and/or Links are not set with multilingual press plugin.', [ ] );
 
 				$this->getLogger()->critical( 'SettingsPage:Render ' . $message );
 
@@ -74,10 +74,10 @@ class MultiligualPressConnector extends LocalizationPluginAbstract {
 				//throw new \Exception( 'Multilingual press PRO is not installed/configured.' );
 			} else {
 				foreach ( $rawValue as $blogId => $item ) {
-					self::$_blogLocalesCache[ $blogId ] = array (
+					self::$_blogLocalesCache[ $blogId ] = [
 						'text' => $item['text'],
-						'lang' => $item['lang']
-					);
+						'lang' => $item['lang'],
+					];
 				}
 			}
 		}
@@ -92,7 +92,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract {
 		}
 		$this->cacheLocales();
 
-		$locales = array ();
+		$locales = [ ];
 		foreach ( self::$_blogLocalesCache as $blogId => $blogLocale ) {
 			$locales[ $blogId ] = $blogLocale['text'];
 		}
@@ -113,9 +113,9 @@ class MultiligualPressConnector extends LocalizationPluginAbstract {
 		if ( array_key_exists( $blogId, self::$_blogLocalesCache ) ) {
 			$locale = self::$_blogLocalesCache[ $blogId ];
 		} else {
-			$message = vsprintf( 'The blog %s is not configured in multilingual press plugin', array ( $blogId ) );
+			$message = vsprintf( 'The blog %s is not configured in multilingual press plugin', [ $blogId ] );
 			$this->getLogger()->warning( $message );
-			$locale = array ( 'lang' => 'unknown' );
+			$locale = [ 'lang' => 'unknown' ];
 		}
 
 		return $locale['lang'];
@@ -161,7 +161,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract {
 
 		$res = $relations->get_related_sites( $blogId );
 
-		$result = array ();
+		$result = [ ];
 
 		foreach ( $res as $site ) {
 			$result[] = (int) $site;
@@ -261,22 +261,22 @@ class MultiligualPressConnector extends LocalizationPluginAbstract {
 			Condition::getCondition(
 				ConditionBuilder::CONDITION_SIGN_EQ,
 				'wp_locale',
-				array (
-					$locale
-				)
+				[
+					$locale,
+				]
 			)
 		);
 		$query  = QueryBuilder::buildSelectQuery(
 			$wpdb->base_prefix . $tableName,
-			array (
-				'english_name'
-			),
+			[
+				'english_name',
+			],
 			$condition,
-			array (),
-			array (
+			[ ],
+			[
 				'page'  => 1,
-				'limit' => 1
-			)
+				'limit' => 1,
+			]
 		);
 		$r      = $wpdb->get_results( $query, ARRAY_A );
 		$result = 1 === count( $r ) ? $r[0]['english_name'] : $locale;

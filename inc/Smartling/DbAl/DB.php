@@ -23,7 +23,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 	 *
 	 * @var array
 	 */
-	private $tables = array ();
+	private $tables = [ ];
 
 	/**
 	 * @var \wpdb
@@ -67,17 +67,17 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 
 	private function buildTableDefinitions () {
 		// Submissions
-		$this->tables[] = array (
+		$this->tables[] = [
 			'name'    => SubmissionEntity::getTableName(),
 			'columns' => SubmissionEntity::getFieldDefinitions(),
 			'indexes' => SubmissionEntity::getIndexes(),
-		);
+		];
 		// Configuration profiles
-		$this->tables[] = array (
+		$this->tables[] = [
 			'name'    => ConfigurationProfileEntity::getTableName(),
 			'columns' => ConfigurationProfileEntity::getFieldDefinitions(),
 			'indexes' => ConfigurationProfileEntity::getIndexes(),
-		);
+		];
 	}
 
 	/**
@@ -107,7 +107,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 	private function installDb () {
 		foreach ( $this->tables as $tableDefinition ) {
 			$query = $this->prepareSql( $tableDefinition );
-			$this->logger->info( vsprintf( 'Installing tables: %s', array ( $query ) ) );
+			$this->logger->info( vsprintf( 'Installing tables: %s', [ $query ] ) );
 			$this->getWpdb()->query( $query );
 		}
 		$currentDbVersion = $this->getMigrationManager()->getLastMigration();
@@ -159,7 +159,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 
 	private function fallbackDatabaseReCreation () {
 		$this->logger->error( vsprintf( 'Seems like database is corrupted. Falling back to database re-creation',
-			array () ) );
+			[ ] ) );
 
 		if ( - 1 !== (int) get_site_option( self::SMARTLING_DB_SCHEMA_VERSION, - 1, false ) ) {
 			$this->setSchemaVersion( 0 );
@@ -189,10 +189,10 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 
 		if ( true === $result ) {
 			$message .= vsprintf( 'successfully completed from version %d to version %d.',
-				array ( $currentVersion, $version ) );
+				[ $currentVersion, $version ] );
 
 		} else {
-			$message .= vsprintf( 'failed from version %d to version %d.', array ( $currentVersion, $version ) );
+			$message .= vsprintf( 'failed from version %d to version %d.', [ $currentVersion, $version ] );
 		}
 		$this->logger->info( $message );
 
@@ -206,7 +206,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 		foreach ( $this->tables as $tableDefinition ) {
 			$table = $this->getTableName( $tableDefinition );
 
-			$this->logger->info( 'uninstalling tables', array ( $table ) );
+			$this->logger->info( 'uninstalling tables', [ $table ] );
 			$this->getWpdb()->query( 'DROP TABLE IF EXISTS ' . $table );
 		}
 		delete_site_option( self::SMARTLING_DB_SCHEMA_VERSION );
@@ -250,7 +250,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 			}
 		}
 
-		return array ();
+		return [ ];
 	}
 
 	/**
@@ -261,7 +261,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 	 * @return string
 	 */
 	private function getIndex ( array $tableDefinition ) {
-		$_indexes = array ();
+		$_indexes = [ ];
 
 		foreach ( $tableDefinition['indexes'] as $indexDefinition ) {
 			if ( $indexDefinition['type'] === 'primary' ) {
@@ -269,10 +269,10 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 			} else {
 				$_indexes[] = vsprintf(
 					'%s (%s)',
-					array (
+					[
 						strtoupper( $indexDefinition['type'] ),
-						'`' . implode( '`, `', $indexDefinition['columns'] ) . '`'
-					)
+						'`' . implode( '`, `', $indexDefinition['columns'] ) . '`',
+					]
 				);
 			}
 		}
@@ -309,7 +309,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 	private function arrayToSqlColumn ( array $columns ) {
 		$out = '';
 		foreach ( $columns as $name => $type ) {
-			$out .= vsprintf( '`%s` %s, ', array ( $name, $type ) );
+			$out .= vsprintf( '`%s` %s, ', [ $name, $type ] );
 		}
 
 		return $out;
@@ -333,11 +333,11 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 		$add             = '';
 
 		if ( ! empty ( $pk ) ) {
-			$add .= vsprintf( 'PRIMARY KEY  (%s)', array ( implode( ', ', $pk ) ) );
+			$add .= vsprintf( 'PRIMARY KEY  (%s)', [ implode( ', ', $pk ) ] );
 		}
 
 		if ( ! empty ( $index ) ) {
-			$add .= vsprintf( ', %s', array ( $index ) );
+			$add .= vsprintf( ', %s', [ $index ] );
 		}
 
 		$sql = 'CREATE TABLE IF NOT EXISTS ' . $table . ' ( ' . $schema . ' ' . $add . ' ) ' . $charset_collate . ';';

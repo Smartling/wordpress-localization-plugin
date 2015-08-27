@@ -23,9 +23,9 @@ $data = $this->getViewData();
 	<h2 >Smartling connector actions</h2 >
 
 	<h3 ><?= __( vsprintf( 'Translate this %s into',
-			array ( WordpressContentTypeHelper::getLocalizedContentType( $data['term']->taxonomy ) ) ) ); ?></h3 >
+			[ WordpressContentTypeHelper::getLocalizedContentType( $data['term']->taxonomy ) ] ) ); ?></h3 >
 	<?= WPAbstract::checkUncheckBlock(); ?>
-	<div style="width: 400px;">
+	<div style = "width: 400px;" >
 		<?php
 		$nameKey = TaxonomyWidgetController::WIDGET_DATA_NAME;
 
@@ -64,16 +64,16 @@ $data = $this->getViewData();
 				}
 			}
 			?>
-			<div class="smtPostWidget-rowWrapper" style="display: inline-block; width: 100%;">
-				<div class="smtPostWidget-row">
+			<div class = "smtPostWidget-rowWrapper" style = "display: inline-block; width: 100%;" >
+				<div class = "smtPostWidget-row" >
 					<?= WPAbstract::localeSelectionCheckboxBlock(
 						$nameKey,
 						$locale->getBlogId(),
 						$locale->getLabel(),
 						$value
 					); ?>
-				</div>
-				<div class = "smtPostWidget-progress" style="left: 15px;">
+				</div >
+				<div class = "smtPostWidget-progress" style = "left: 15px;" >
 					<?php if ( $value ) { ?>
 						<?= WPAbstract::localeSelectionTranslationStatusBlock(
 							__( $statusValue ),
@@ -84,9 +84,9 @@ $data = $this->getViewData();
 							$id
 						); ?>
 					<?php } ?>
-				</div>
-			</div>
+				</div >
+			</div >
 		<?php } ?>
-	</div>
+	</div >
 	<?= WPAbstract::submitBlock(); ?>
-</div>
+</div >

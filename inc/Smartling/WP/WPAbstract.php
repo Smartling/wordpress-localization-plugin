@@ -67,7 +67,6 @@ abstract class WPAbstract {
 	}
 
 
-
 	/**
 	 * @return string
 	 */
@@ -154,7 +153,7 @@ abstract class WPAbstract {
 	 * @param null $data
 	 */
 	public function view ( $data = null ) {
-		$this->setViewData($data);
+		$this->setViewData( $data );
 		$class = get_called_class();
 		$class = str_replace( 'Smartling\\WP\\Controller\\', '', $class );
 
@@ -168,28 +167,28 @@ abstract class WPAbstract {
 	}
 
 	public static function sendButton ( $id = 'submit', $name = 'submit' ) {
-		return HtmlTagGeneratorHelper::tag( 'input', '', array (
+		return HtmlTagGeneratorHelper::tag( 'input', '', [
 			'type'  => 'submit',
 			'value' => __( 'Send to Smartling' ),
 			'class' => 'button button-primary',
 			'id'    => $id,
 			'name'  => $name,
-		) );
+		] );
 	}
 
 	public static function submitBlock () {
 		$sendButton = self::sendButton( '', 'sub' );
 
-		$downloadButton = HtmlTagGeneratorHelper::tag( 'input', '', array (
+		$downloadButton = HtmlTagGeneratorHelper::tag( 'input', '', [
 			'type'  => 'submit',
 			'value' => __( 'Download' ),
 			'class' => 'button button-primary',
 			'id'    => '',
 			'name'  => 'sub',
-		) );
+		] );
 
 		$container = HtmlTagGeneratorHelper::tag( 'div', $sendButton . '&nbsp;' . $downloadButton,
-			array ( 'class' => 'bottom' ) );
+			[ 'class' => 'bottom' ] );
 
 		return $container;
 	}
@@ -200,37 +199,37 @@ abstract class WPAbstract {
 	 * @return string
 	 */
 	public static function inputHidden ( $submissionId ) {
-		$hiddenId = HtmlTagGeneratorHelper::tag( 'input', '', array (
+		$hiddenId = HtmlTagGeneratorHelper::tag( 'input', '', [
 			'type'  => 'hidden',
 			'value' => $submissionId,
 			'class' => 'submission-id',
-			'id'    => 'submission-id-' . $submissionId
-		) );
+			'id'    => 'submission-id-' . $submissionId,
+		] );
 
 		return $hiddenId;
 	}
 
 	public static function localeSelectionCheckboxBlock ( $namePrefix, $blog_id, $blog_name, $enabled = false ) {
-		$parts = array ();
+		$parts = [ ];
 
-		$parts[] = HtmlTagGeneratorHelper::tag( 'input', '', array (
+		$parts[] = HtmlTagGeneratorHelper::tag( 'input', '', [
 			'type'  => 'hidden',
-			'name'  => vsprintf( '%s[locales][%s][blog]', array ( $namePrefix, $blog_id ) ),
-			'value' => $blog_id
-		) );
+			'name'  => vsprintf( '%s[locales][%s][blog]', [ $namePrefix, $blog_id ] ),
+			'value' => $blog_id,
+		] );
 
 
-		$parts[] = HtmlTagGeneratorHelper::tag( 'input', '', array (
+		$parts[] = HtmlTagGeneratorHelper::tag( 'input', '', [
 			'type'  => 'hidden',
-			'name'  => vsprintf( '%s[locales][%s][locale]', array ( $namePrefix, $blog_id ) ),
-			'value' => $blog_name
-		) );
+			'name'  => vsprintf( '%s[locales][%s][locale]', [ $namePrefix, $blog_id ] ),
+			'value' => $blog_name,
+		] );
 
-		$checkboxAttributes = array (
-			'name'  => vsprintf( '%s[locales][%s][enabled]', array ( $namePrefix, $blog_id ) ),
+		$checkboxAttributes = [
+			'name'  => vsprintf( '%s[locales][%s][enabled]', [ $namePrefix, $blog_id ] ),
 			'class' => 'mcheck',
-			'type'  => 'checkbox'
-		);
+			'type'  => 'checkbox',
+		];
 
 		if ( true === $enabled ) {
 			$checkboxAttributes['checked'] = 'checked';
@@ -238,10 +237,10 @@ abstract class WPAbstract {
 
 		$parts[] = HtmlTagGeneratorHelper::tag( 'input', '', $checkboxAttributes );
 
-		$parts[] = HtmlTagGeneratorHelper::tag( 'span', $blog_name, array ( 'title' => $blog_name ) );
+		$parts[] = HtmlTagGeneratorHelper::tag( 'span', $blog_name, [ 'title' => $blog_name ] );
 
 
-		$container = HtmlTagGeneratorHelper::tag( 'label', implode( '', $parts ), array () );
+		$container = HtmlTagGeneratorHelper::tag( 'label', implode( '', $parts ), [ ] );
 
 		return $container;
 	}
@@ -251,30 +250,30 @@ abstract class WPAbstract {
 			'span',
 			HtmlTagGeneratorHelper::tag(
 				'span',
-				vsprintf( '%s%%', array ( $percentage ) ),
-				array ()
+				vsprintf( '%s%%', [ $percentage ] ),
+				[ ]
 			),
-			array (
+			[
 				'title' => $statusText,
-				'class' => vsprintf( 'widget-btn %s', array ( $statusColor ) )
-			)
+				'class' => vsprintf( 'widget-btn %s', [ $statusColor ] ),
+			]
 		);
 	}
 
 	public static function checkUncheckBlock () {
 		$output = "";
 
-		$check = HtmlTagGeneratorHelper::tag( 'a', __( 'Check All' ), array (
+		$check = HtmlTagGeneratorHelper::tag( 'a', __( 'Check All' ), [
 			'href'    => '#',
-			'onclick' => 'bulkCheck(\'mcheck\',\'check\');return false;'
-		) );
+			'onclick' => 'bulkCheck(\'mcheck\',\'check\');return false;',
+		] );
 
-		$unCheck = HtmlTagGeneratorHelper::tag( 'a', __( 'Uncheck All' ), array (
+		$unCheck = HtmlTagGeneratorHelper::tag( 'a', __( 'Uncheck All' ), [
 			'href'    => '#',
-			'onclick' => 'bulkCheck(\'mcheck\',\'uncheck\');return false;'
-		) );
+			'onclick' => 'bulkCheck(\'mcheck\',\'uncheck\');return false;',
+		] );
 
-		return $output . HtmlTagGeneratorHelper::tag( 'span', vsprintf( '%s / %s', array ( $check, $unCheck ) ) );
+		return $output . HtmlTagGeneratorHelper::tag( 'span', vsprintf( '%s / %s', [ $check, $unCheck ] ) );
 	}
 
 	public static function settingsPageTsargetLocaleCheckbox (
@@ -284,13 +283,13 @@ abstract class WPAbstract {
 		$smartlingName = '',
 		$enabled = false
 	) {
-		$parts = array ();
+		$parts = [ ];
 
-		$checkboxProperties = array (
+		$checkboxProperties = [
 			'type'  => 'checkbox',
 			'class' => 'mcheck',
-			'name'  => vsprintf( 'smartling_settings[targetLocales][%s][enabled]', array ( $blogId ) )
-		);
+			'name'  => vsprintf( 'smartling_settings[targetLocales][%s][enabled]', [ $blogId ] ),
+		];
 
 		if ( true === $enabled ) {
 			$checkboxProperties['checked'] = 'checked';
@@ -298,11 +297,11 @@ abstract class WPAbstract {
 
 		$parts[] = HtmlTagGeneratorHelper::tag( 'input', '', $checkboxProperties );
 
-		$parts[] = HtmlTagGeneratorHelper::tag( 'span', htmlspecialchars( $displayName ), array () );
+		$parts[] = HtmlTagGeneratorHelper::tag( 'span', htmlspecialchars( $displayName ), [ ] );
 
-		$parts = array (
-			HtmlTagGeneratorHelper::tag( 'label', implode( '', $parts ), array ( 'class' => 'radio-label' ) )
-		);
+		$parts = [
+			HtmlTagGeneratorHelper::tag( 'label', implode( '', $parts ), [ 'class' => 'radio-label' ] ),
+		];
 
 		/**
 		 * @var SmartlingCore $ep
@@ -315,10 +314,10 @@ abstract class WPAbstract {
 			$sLocale = HtmlTagGeneratorHelper::tag(
 				'input',
 				'',
-				array (
-					'name' => vsprintf( 'smartling_settings[targetLocales][%s][target]', array ( $blogId ) ),
-					'type' => 'text'
-				) );
+				[
+					'name' => vsprintf( 'smartling_settings[targetLocales][%s][target]', [ $blogId ] ),
+					'type' => 'text',
+				] );
 		} else {
 			$sLocale = HtmlTagGeneratorHelper::tag(
 				'select',
@@ -326,15 +325,15 @@ abstract class WPAbstract {
 					$smartlingName,
 					$locales
 				),
-				array (
-					'name' => vsprintf( 'smartling_settings[targetLocales][%s][target]', array ( $blogId ) )
-				) );
+				[
+					'name' => vsprintf( 'smartling_settings[targetLocales][%s][target]', [ $blogId ] ),
+				] );
 		}
 
-		$parts   = array (
-			HtmlTagGeneratorHelper::tag( 'td', implode( '', $parts ), array ( 'style' => 'display:table-cell;' ) )
-		);
-		$parts[] = HtmlTagGeneratorHelper::tag( 'td', $sLocale, array ( 'style' => 'display:table-cell;' ) );
+		$parts   = [
+			HtmlTagGeneratorHelper::tag( 'td', implode( '', $parts ), [ 'style' => 'display:table-cell;' ] ),
+		];
+		$parts[] = HtmlTagGeneratorHelper::tag( 'td', $sLocale, [ 'style' => 'display:table-cell;' ] );
 
 
 		return implode( '', $parts );

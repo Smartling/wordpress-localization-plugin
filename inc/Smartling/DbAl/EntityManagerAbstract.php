@@ -129,7 +129,7 @@ abstract class EntityManagerAbstract {
 	}
 
 	protected function fetchData ( $query ) {
-		$results = array ();
+		$results = [ ];
 		$res     = $this->getDbal()->fetch( $query );
 		if ( is_array( $res ) ) {
 			foreach ( $res as $row ) {

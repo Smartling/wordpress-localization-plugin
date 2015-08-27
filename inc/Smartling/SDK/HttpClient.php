@@ -60,7 +60,7 @@ class HttpClient {
 	 *
 	 * @var array
 	 */
-	protected $_headers = array ();
+	protected $_headers = [ ];
 
 	/**
 	 * stores response content
@@ -191,12 +191,12 @@ class HttpClient {
 		// form field separator
 		$delimiter = '-------------' . uniqid();
 		// file upload fields: name => array(type=>'mime/type',content=>'raw data')
-		$fileFields = array (
-			'file' => array (
+		$fileFields = [
+			'file' => [
 				'type'    => $data['fileType'],
 				'content' => $data[ $this->_fileKey ],
-			),
-		);
+			],
+		];
 		// all other fields (not file upload): name => value
 		$postFields = $data;
 		unset( $postFields[ $this->_fileKey ] );
@@ -226,7 +226,7 @@ class HttpClient {
 		// last delimiter
 		$post_data .= "--" . $delimiter . "--\r\n";
 
-		return array ( 'delimiter' => $delimiter, 'data' => $post_data );
+		return [ 'delimiter' => $delimiter, 'data' => $post_data ];
 	}
 
 	/**
@@ -247,7 +247,7 @@ class HttpClient {
 		curl_setopt( $ch, CURLOPT_SSL_VERIFYPEER, 0 );
 
 		if ( in_array( $this->_method,
-			array ( self::REQUEST_TYPE_POST, self::REQUEST_TYPE_DELETE, self::REQUEST_TYPE_PUT ) ) ) {
+			[ self::REQUEST_TYPE_POST, self::REQUEST_TYPE_DELETE, self::REQUEST_TYPE_PUT ] ) ) {
 
 			if ( $this->_needUploadFile || $this->_needUploadContent ) {
 				if ( $this->_needUploadFile && file_exists( realpath( $data[ $this->_fileKey ] ) ) ) {
@@ -265,10 +265,10 @@ class HttpClient {
 					$data      = $tmp['data'];
 					$delimiter = $tmp['delimiter'];
 
-					curl_setopt( $ch, CURLOPT_HTTPHEADER, array (
+					curl_setopt( $ch, CURLOPT_HTTPHEADER, [
 						'Content-Type: multipart/form-data; boundary=' . $delimiter,
-						'Content-Length: ' . strlen( $data )
-					) );
+						'Content-Length: ' . strlen( $data ),
+					] );
 				}
 			}
 

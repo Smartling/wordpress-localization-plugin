@@ -21,7 +21,7 @@ class DiagnosticsHelper {
 	 *
 	 * @var array
 	 */
-	private static $messages = array ();
+	private static $messages = [ ];
 
 	/**
 	 * @param string $message
@@ -71,6 +71,6 @@ class DiagnosticsHelper {
 	}
 
 	public static function reset () {
-		self::$messages = array ();
+		self::$messages = [ ];
 	}
 }

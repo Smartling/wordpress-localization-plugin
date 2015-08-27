@@ -14,7 +14,7 @@ class UiMessageHelper {
 		if ( 0 < count( $messages ) ) {
 			$msg = '';
 			foreach ( $messages as $message ) {
-				$msg .= vsprintf( '<div class="%s"><p>%s</p></div>', array ( $type, $message ) );
+				$msg .= vsprintf( '<div class="%s"><p>%s</p></div>', [ $type, $message ] );
 			}
 			echo $msg;
 			DiagnosticsHelper::reset();

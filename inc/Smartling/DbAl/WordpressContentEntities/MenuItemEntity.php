@@ -7,7 +7,6 @@ namespace Smartling\DbAl\WordpressContentEntities;
  *
  * @package Smartling\DbAl\WordpressContentEntities
  */
-class MenuItemEntity extends PostEntity
-{
+class MenuItemEntity extends PostEntity {
 
 }

@@ -87,5 +87,5 @@ interface ArrayableInterface {
 	 *
 	 * @return array the array representation of the object
 	 */
-	public function toArray ( array $fields = array (), array $expand = array (), $recursive = true );
+	public function toArray ( array $fields = [ ], array $expand = [ ], $recursive = true );
 }

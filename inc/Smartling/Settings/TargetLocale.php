@@ -51,11 +51,11 @@ class TargetLocale extends Locale {
 	 * @return array
 	 */
 	public function toArray () {
-		return array (
+		return [
 			'smartlingLocale' => $this->getSmartlingLocale(),
 			'enabled'         => $this->isEnabled(),
-			'blogId'          => $this->getBlogId()
-		);
+			'blogId'          => $this->getBlogId(),
+		];
 	}
 
 	/**
@@ -65,15 +65,15 @@ class TargetLocale extends Locale {
 	 */
 	public static function fromArray ( array $objState ) {
 		$obj        = new self();
-		$properties = array (
+		$properties = [
 			'smartlingLocale',
 			'enabled',
-			'blogId'
-		);
+			'blogId',
+		];
 
 		foreach ( $properties as $property ) {
 			if ( array_key_exists( $property, $objState ) ) {
-				$method = vsprintf( 'set%s', array ( ucfirst( $property ) ) );
+				$method = vsprintf( 'set%s', [ ucfirst( $property ) ] );
 				$obj->{$method}( $objState[ $property ] );
 			}
 		}

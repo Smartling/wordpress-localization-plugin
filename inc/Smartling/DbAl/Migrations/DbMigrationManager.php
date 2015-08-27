@@ -16,7 +16,7 @@ class DbMigrationManager extends SmartlingFactoryAbstract {
 	}
 
 	public function getMigrations ( $fromVersion ) {
-		$pool = array ();
+		$pool = [ ];
 		foreach ( $this->getCollection() as $version => $migration ) {
 			if ( $version > $fromVersion ) {
 				$pool[] = $migration;
@@ -27,12 +27,11 @@ class DbMigrationManager extends SmartlingFactoryAbstract {
 		return $pool;
 	}
 
-	public function getLastMigration ()
-	{
+	public function getLastMigration () {
 		$ver = 0;
 
 		foreach ( $this->getCollection() as $version => $migration ) {
-			$ver = max($ver, $version);
+			$ver = max( $ver, $version );
 		}
 
 		return $ver;

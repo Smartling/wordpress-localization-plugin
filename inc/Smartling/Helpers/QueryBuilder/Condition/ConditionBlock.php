@@ -12,12 +12,12 @@ class ConditionBlock {
 	/**
 	 * @var array of Condition
 	 */
-	private $conditions = array ();
+	private $conditions = [ ];
 
 	/**
 	 * @var array of ConditionBlock
 	 */
-	private $blocks = array ();
+	private $blocks = [ ];
 
 	/**
 	 * @var string
@@ -45,7 +45,7 @@ class ConditionBlock {
 			throw new \InvalidArgumentException( 'Invalid operator' );
 		}
 
-		$this->operator = vsprintf( ' %s ', array ( $conditionOperator ) );
+		$this->operator = vsprintf( ' %s ', [ $conditionOperator ] );
 	}
 
 	/**
@@ -54,10 +54,10 @@ class ConditionBlock {
 	 * @return bool
 	 */
 	private function validateOperator ( $operator ) {
-		$validOperators = array (
+		$validOperators = [
 			ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR,
-			ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND
-		);
+			ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND,
+		];
 
 		return in_array( $operator, $validOperators );
 	}
@@ -86,7 +86,7 @@ class ConditionBlock {
 	 * @return string
 	 */
 	public function __toString () {
-		$preRendered = array ();
+		$preRendered = [ ];
 
 		foreach ( $this->conditions as $condition ) {
 			$preRendered[] = (string) $condition;
@@ -96,6 +96,6 @@ class ConditionBlock {
 			$preRendered[] = (string) $block;
 		}
 
-		return vsprintf( '( %s )', array ( implode( $this->operator, $preRendered ) ) );
+		return vsprintf( '( %s )', [ implode( $this->operator, $preRendered ) ] );
 	}
 }

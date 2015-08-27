@@ -213,7 +213,7 @@ class SmartlingCore {
 
 		$source = [
 			'entity' => $contentEntity->toArray(),
-			'meta'   => $contentEntity->getMetadata()
+			'meta'   => $contentEntity->getMetadata(),
 		];
 
 		$xml = XmlEncoder::xmlEncode( $source );
@@ -351,7 +351,7 @@ class SmartlingCore {
 
 		$original = [
 			'entity' => $originalContent->toArray(),
-			'meta'   => $this->simplifyArray( $originalContent->getMetadata() )
+			'meta'   => $this->simplifyArray( $originalContent->getMetadata() ),
 		];
 
 
@@ -367,7 +367,7 @@ class SmartlingCore {
 		}
 
 		foreach ( $cleared['meta'] as $k => $v ) {
-			$original['meta'][$k] = $v;
+			$original['meta'][ $k ] = $v;
 		}
 
 		$targetContent = $this->saveEntity(
@@ -399,17 +399,17 @@ class SmartlingCore {
 	public function downloadTranslationBySubmission ( SubmissionEntity $entity ) {
 
 		if ( 1 === $entity->getIsLocked() ) {
-			$msg = vsprintf( 'Triggered download of locked entity. Target Blog: %s; Target Id: %s', array (
+			$msg = vsprintf( 'Triggered download of locked entity. Target Blog: %s; Target Id: %s', [
 				$entity->getTargetBlogId(),
-				$entity->getTargetId()
-			) );
+				$entity->getTargetId(),
+			] );
 
 			$this->getLogger()->warning( $msg );
 
-			return array ( 'Translation is locked for downloading' );
+			return [ 'Translation is locked for downloading' ];
 		}
 
-		$messages = array ();
+		$messages = [ ];
 
 		try {
 			$data = $this->getApiWrapper()->downloadFile( $entity );
@@ -442,7 +442,7 @@ class SmartlingCore {
 			$message = vsprintf( "Invalid XML file [%s] received. Submission moved to %s status.",
 				[
 					$entity->getFileUri(),
-					$entity->getStatus()
+					$entity->getStatus(),
 				] );
 
 			$this->getLogger()->error( $message );
@@ -571,7 +571,7 @@ class SmartlingCore {
 	 * @return array of error messages
 	 */
 	public function checkSubmissionById ( $id ) {
-		$messages = array ();
+		$messages = [ ];
 
 		try {
 			$submission = $this->loadSubmissionEntityById( $id );
@@ -594,7 +594,7 @@ class SmartlingCore {
 	 * @return array of error messages
 	 */
 	public function checkSubmissionByEntity ( SubmissionEntity $submission ) {
-		$messages = array ();
+		$messages = [ ];
 
 		try {
 			$submission = $this->getApiWrapper()->getStatus( $submission );
@@ -616,16 +616,16 @@ class SmartlingCore {
 	 * @throws SmartlingDbException
 	 */
 	private function loadSubmissionEntityById ( $id ) {
-		$params = array (
+		$params = [
 			'id' => $id,
-		);
+		];
 
 		$entities = $this->getSubmissionManager()->find( $params );
 
 		if ( count( $entities ) > 0 ) {
 			return reset( $entities );
 		} else {
-			$message = vsprintf( 'Requested SubmissionEntity with id=%s does not exist.', array ( $id ) );
+			$message = vsprintf( 'Requested SubmissionEntity with id=%s does not exist.', [ $id ] );
 
 			$this->getLogger()->error( $message );
 			throw new SmartlingDbException( $message );
@@ -662,12 +662,12 @@ class SmartlingCore {
 	}
 
 	public function bulkCheckNewAndInProgress () {
-		$entities = $this->getSubmissionManager()->find( array (
-				'status' => array (
+		$entities = $this->getSubmissionManager()->find( [
+				'status' => [
 					SubmissionEntity::SUBMISSION_STATUS_NEW,
 					SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
-				)
-			)
+				],
+			]
 		);
 
 		foreach ( $entities as $entity ) {
@@ -688,7 +688,7 @@ class SmartlingCore {
 	 * @throws SmartlingDbException
 	 */
 	public function bulkCheckByIds ( array $items ) {
-		$results = array ();
+		$results = [ ];
 		foreach ( $items as $item ) {
 			/** @var SubmissionEntity $entity */
 			try {

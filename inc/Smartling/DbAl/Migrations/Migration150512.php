@@ -19,31 +19,31 @@ class Migration150512 implements SmartlingDbMigrationInterface {
 	}
 
 	public function getQueries ( $tablePrefix = '' ) {
-		return array (
+		return [
 			vsprintf(
 				'ALTER TABLE `%ssmartling_submissions` CHANGE COLUMN `approved_string_count` `approved_string_count` %s %s',
-				array (
+				[
 					$tablePrefix,
 					SmartlingEntityAbstract::DB_TYPE_U_BIGINT,
-					SmartlingEntityAbstract::DB_TYPE_DEFAULT_ZERO
-				)
+					SmartlingEntityAbstract::DB_TYPE_DEFAULT_ZERO,
+				]
 			),
 			vsprintf(
 				'ALTER TABLE `%ssmartling_submissions` CHANGE COLUMN `completed_string_count` `completed_string_count` %s %s',
-				array (
+				[
 					$tablePrefix,
 					SmartlingEntityAbstract::DB_TYPE_U_BIGINT,
-					SmartlingEntityAbstract::DB_TYPE_DEFAULT_ZERO
-				)
+					SmartlingEntityAbstract::DB_TYPE_DEFAULT_ZERO,
+				]
 			),
 			vsprintf(
 				'ALTER TABLE `%ssmartling_submissions` CHANGE COLUMN `word_count` `word_count` %s %s',
-				array (
+				[
 					$tablePrefix,
 					SmartlingEntityAbstract::DB_TYPE_U_BIGINT,
-					SmartlingEntityAbstract::DB_TYPE_DEFAULT_ZERO
-				)
-			)
-		);
+					SmartlingEntityAbstract::DB_TYPE_DEFAULT_ZERO,
+				]
+			),
+		];
 	}
 }

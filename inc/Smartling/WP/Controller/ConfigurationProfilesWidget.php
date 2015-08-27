@@ -27,11 +27,11 @@ class ConfigurationProfilesWidget extends \WP_List_Table {
 	private $source;
 
 
-	private $_settings = array (
+	private $_settings = [
 		'singular' => 'profile',
 		'plural'   => 'profiles',
-		'ajax'     => false
-	);
+		'ajax'     => false,
+	];
 
 	/**
 	 * @var SettingsManager $manager
@@ -54,13 +54,13 @@ class ConfigurationProfilesWidget extends \WP_List_Table {
 	 * @return array
 	 */
 	public function getSortingOptions ( $fieldNameKey = 'orderby', $orderDirectionKey = 'order' ) {
-		$options = array ();
+		$options = [ ];
 		$column  = $this->getFromSource( $fieldNameKey, false );
 		if ( false !== $column ) {
 			$direction = strtoupper( $this->getFromSource( $orderDirectionKey,
 				SmartlingToCMSDatabaseAccessWrapperInterface::SORT_OPTION_ASC ) );
 
-			$options = array ( $column => $direction );
+			$options = [ $column => $direction ];
 		}
 
 		return $options;
@@ -86,18 +86,18 @@ class ConfigurationProfilesWidget extends \WP_List_Table {
 		$linkTemplate = '?page=%s&action=%s&' . $this->_args['singular'] . '=%s';
 
 		//Build row actions
-		$actions = array (
-			'edit' => HtmlTagGeneratorHelper::tag( 'a', __( 'Edit' ), array (
+		$actions = [
+			'edit' => HtmlTagGeneratorHelper::tag( 'a', __( 'Edit' ), [
 				'href' => vsprintf( $linkTemplate,
-					array ( 'smartling_configuration_profile_setup', 'edit', $item['id'] ) )
-			) ),
+					[ 'smartling_configuration_profile_setup', 'edit', $item['id'] ] ),
+			] ),
 			/*'delete' => HtmlTagGeneratorHelper::tag( 'a', __( 'Delete' ), array (
 				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'delete', $item['id'] ) )
 			) ),*/
-		);
+		];
 
 		//Return the title contents
-		return vsprintf( '%s %s', array ( esc_html__( $item['profile_name'] ), $this->row_actions( $actions ) ) );
+		return vsprintf( '%s %s', [ esc_html__( $item['profile_name'] ), $this->row_actions( $actions ) ] );
 	}
 
 	/**
@@ -108,13 +108,13 @@ class ConfigurationProfilesWidget extends \WP_List_Table {
 	 * @return string
 	 */
 	protected function column_cb ( $item ) {
-		return HtmlTagGeneratorHelper::tag( 'input', '', array (
+		return HtmlTagGeneratorHelper::tag( 'input', '', [
 			'type'  => 'checkbox',
 			'name'  => $this->buildHtmlTagName( $this->_args['singular'] ) . '[]',
 			'value' => $item['id'],
 			'id'    => 'submission-id-' . $item['id'],
 			'class' => 'bulkaction',
-		) );
+		] );
 	}
 
 	/**
@@ -129,9 +129,9 @@ class ConfigurationProfilesWidget extends \WP_List_Table {
 	 */
 	public function get_sortable_columns () {
 		$fields           = ConfigurationProfileEntity::getSortableFields();
-		$sortable_columns = array ();
+		$sortable_columns = [ ];
 		foreach ( $fields as $field ) {
-			$sortable_columns[ $field ] = array ( $field, true );
+			$sortable_columns[ $field ] = [ $field, true ];
 		}
 
 		return $sortable_columns;
@@ -141,19 +141,19 @@ class ConfigurationProfilesWidget extends \WP_List_Table {
 	 * @inheritdoc
 	 */
 	public function get_bulk_actions () {
-		return array ();
+		return [ ];
 	}
 
 	public function renderNewProfileButton () {
 
-		$options = array (
+		$options = [
 			'id'    => $this->buildHtmlTagName( 'createNew' ),
 			'name'  => '',
 			'class' => 'button action',
 			'type'  => 'submit',
 			'value' => __( 'Add Profile' ),
 
-		);
+		];
 
 		return HtmlTagGeneratorHelper::tag( 'input', '', $options );
 	}
@@ -162,22 +162,22 @@ class ConfigurationProfilesWidget extends \WP_List_Table {
 	 * @inheritdoc
 	 */
 	public function prepare_items () {
-		$pageOptions = array (
+		$pageOptions = [
 			'limit' => $this->manager->getPageSize(),
-			'page'  => $this->get_pagenum()
-		);
+			'page'  => $this->get_pagenum(),
+		];
 
-		$this->_column_headers = array (
+		$this->_column_headers = [
 			$this->get_columns(),
-			array ( 'id' ),
-			$this->get_sortable_columns()
-		);
+			[ 'id' ],
+			$this->get_sortable_columns(),
+		];
 
 		$total = 0;
 
-		$data = $this->manager->getEntities( array (), null, $total );
+		$data = $this->manager->getEntities( [ ], null, $total );
 
-		$dataAsArray = array ();
+		$dataAsArray = [ ];
 		$types       = ConfigurationProfileEntity::getRetrievalTypes();
 		foreach ( $data as $element ) {
 			$row = $element->toArray();
@@ -195,11 +195,11 @@ class ConfigurationProfilesWidget extends \WP_List_Table {
 
 		$this->items = $dataAsArray;
 
-		$this->set_pagination_args( array (
+		$this->set_pagination_args( [
 			'total_items' => $total,
 			'per_page'    => $pageOptions['limit'],
-			'total_pages' => ceil( $total / $pageOptions['limit'] )
-		) );
+			'total_pages' => ceil( $total / $pageOptions['limit'] ),
+		] );
 	}
 
 	/**

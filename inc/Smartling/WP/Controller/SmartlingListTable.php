@@ -26,7 +26,7 @@ class SmartlingListTable extends WP_List_Table {
 
 		$activeTypes = array_merge( $postTypes, $termTypes );
 
-		$types = array ();
+		$types = [ ];
 
 		foreach ( $activeTypes as $activeType ) {
 			if ( array_key_exists( $activeType, $supportedTypes ) ) {

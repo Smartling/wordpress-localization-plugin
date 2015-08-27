@@ -18,14 +18,14 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
 		wp_enqueue_script(
 			$this->getPluginInfo()->getName() . 'settings',
 			$this->getPluginInfo()->getUrl() . 'js/smartling-connector-admin.js',
-			array ( 'jquery' ),
+			[ 'jquery' ],
 			$this->getPluginInfo()->getVersion(),
 			false
 		);
 		wp_register_style(
 			$this->getPluginInfo()->getName(),
 			$this->getPluginInfo()->getUrl() . 'css/smartling-connector-admin.css',
-			array (),
+			[ ],
 			$this->getPluginInfo()->getVersion(),
 			'all'
 		);
@@ -38,18 +38,18 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
 	 * @return void
 	 */
 	public function register () {
-		add_action( 'admin_enqueue_scripts', array ( $this, 'wp_enqueue' ) );
+		add_action( 'admin_enqueue_scripts', [ $this, 'wp_enqueue' ] );
 
-		add_action( 'admin_menu', array ( $this, 'menu' ) );
-		add_action( 'network_admin_menu', array ( $this, 'menu' ) );
+		add_action( 'admin_menu', [ $this, 'menu' ] );
+		add_action( 'network_admin_menu', [ $this, 'menu' ] );
 
-		add_action( 'admin_post_smartling_configuration_profile_edit', array ( $this, 'edit' ) );
-		add_action( 'admin_post_smartling_configuration_profile_list', array ( $this, 'listProfiles' ) );
+		add_action( 'admin_post_smartling_configuration_profile_edit', [ $this, 'edit' ] );
+		add_action( 'admin_post_smartling_configuration_profile_list', [ $this, 'listProfiles' ] );
 
 
-		add_action( 'admin_post_smartling_run_cron', array ( $this, 'runCron' ) );
+		add_action( 'admin_post_smartling_run_cron', [ $this, 'runCron' ] );
 
-		add_action( 'admin_post_smartling_download_log_file', array ( $this, 'downloadLog' ) );
+		add_action( 'admin_post_smartling_download_log_file', [ $this, 'downloadLog' ] );
 	}
 
 	public function menu () {
@@ -59,10 +59,10 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
 			'Settings',
 			'Administrator',
 			'smartling_configuration_profile_list',
-			array (
+			[
 				$this,
-				'listProfiles'
-			)
+				'listProfiles',
+			]
 		);
 	}
 
@@ -89,20 +89,18 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
 		$this->view( $table );
 	}
 
-	private function signLogFile()
-	{
+	private function signLogFile () {
 		global $wp_version;
-		$sign = array(
+		$sign = [
 			'*********************************************************',
 			'* Plugin version:    ' . Bootstrap::getCurrentVersion(),
 			'* PHP version:       ' . phpversion(),
 			'* Wordpress version: ' . $wp_version,
 			'*********************************************************',
-		);
+		];
 
-		foreach ($sign as $row)
-		{
-			$this->getLogger()->emergency($row);
+		foreach ( $sign as $row ) {
+			$this->getLogger()->emergency( $row );
 		}
 
 	}
@@ -115,7 +113,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
 		$filename  = $container->getParameter( 'logger.filehandler.standard.filename' );
 
 		$fullFilename = vsprintf( '%s-%s',
-			array ( str_replace( '%plugin.dir%', $pluginDir, $filename ), date( 'Y-m-d' ) ) );
+			[ str_replace( '%plugin.dir%', $pluginDir, $filename ), date( 'Y-m-d' ) ] );
 
 		if ( file_exists( $fullFilename ) && is_readable( $fullFilename ) ) {
 			header( 'Content-Type: application/octet-stream' );

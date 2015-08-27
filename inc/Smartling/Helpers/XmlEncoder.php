@@ -18,12 +18,12 @@ use Smartling\Exception\InvalidXMLException;
  */
 class XmlEncoder {
 
-	private static $magicComments = array (
+	private static $magicComments = [
 		'smartling.translate_paths = data/string',
 		'smartling.string_format_paths = html : data/string',
 		'smartling.source_key_paths = data/{string.key}',
 		'smartling.variants_enabled = true',
-	);
+	];
 
 	const XML_ROOT_NODE_NAME = 'data';
 
@@ -49,16 +49,16 @@ class XmlEncoder {
 	 */
 	private static function setTranslationComments ( DOMDocument $document ) {
 		foreach ( self::$magicComments as $commentString ) {
-			$document->appendChild( $document->createComment( vsprintf( ' %s ', array ( $commentString ) ) ) );
+			$document->appendChild( $document->createComment( vsprintf( ' %s ', [ $commentString ] ) ) );
 		}
 
 		$document->appendChild(
 			$document->createComment(
 				vsprintf(
 					' %s ',
-					array (
-						'Smartling Wordpress Connector v. ' . Bootstrap::getCurrentVersion()
-					)
+					[
+						'Smartling Wordpress Connector v. ' . Bootstrap::getCurrentVersion(),
+					]
 				)
 			)
 		);
@@ -74,11 +74,11 @@ class XmlEncoder {
 	 * @return array
 	 */
 	protected static function flatternArray ( array $array, $base = '', $divider = '/' ) {
-		$output = array ();
+		$output = [ ];
 
 		foreach ( $array as $key => $element ) {
 
-			$path = '' === $base ? $key : implode( $divider, array ( $base, $key ) );
+			$path = '' === $base ? $key : implode( $divider, [ $base, $key ] );
 
 			if ( is_array( $element ) ) {
 
@@ -99,14 +99,14 @@ class XmlEncoder {
 	 * @return array
 	 */
 	protected static function structurizeArray ( array $flatArray, $divider = '/' ) {
-		$output = array ();
+		$output = [ ];
 
 		foreach ( $flatArray as $key => $element ) {
 			$pathElements = explode( $divider, $key );
 			$pointer      = &$output;
 			for ( $i = 0; $i < ( count( $pathElements ) - 1 ); $i ++ ) {
 				if ( ! isset( $pointer[ $pathElements[ $i ] ] ) ) {
-					$pointer[ $pathElements[ $i ] ] = array ();
+					$pointer[ $pathElements[ $i ] ] = [ ];
 				}
 				$pointer = &$pointer[ $pathElements[ $i ] ];
 			}
@@ -141,7 +141,7 @@ class XmlEncoder {
 
 	private static function removeFields ( $array, $list ) {
 
-		$rebuild = array ();
+		$rebuild = [ ];
 		foreach ( $array as $key => $value ) {
 			foreach ( $list as $item ) {
 
@@ -161,7 +161,7 @@ class XmlEncoder {
 	 * @return array
 	 */
 	private static function removeEmptyFields ( $array ) {
-		$rebuild = array ();
+		$rebuild = [ ];
 		foreach ( $array as $key => $value ) {
 			if ( empty( $value ) ) {
 				continue;
@@ -179,7 +179,7 @@ class XmlEncoder {
 	 * @return array
 	 */
 	private static function removeValuesByRegExp ( $array, $list ) {
-		$rebuild = array ();
+		$rebuild = [ ];
 		foreach ( $array as $key => $value ) {
 			foreach ( $list as $item ) {
 				if ( preg_match( "/{$item}/ius", $value ) ) {
@@ -301,7 +301,7 @@ class XmlEncoder {
 
 		$nodeList = $xpath->query( $stringPath );
 
-		$fields = array ();
+		$fields = [ ];
 
 		for ( $i = 0; $i < $nodeList->length; $i ++ ) {
 			$item            = $nodeList->item( $i );

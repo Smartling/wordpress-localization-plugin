@@ -50,16 +50,16 @@ class SubmissionTableWidget extends SmartlingListTable {
 	 *
 	 * @var array
 	 */
-	private $defaultValues = array (
+	private $defaultValues = [
 		self::CONTENT_TYPE_SELECT_ELEMENT_NAME      => 'any',
 		self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME => null,
-	);
+	];
 
-	private $_settings = array (
+	private $_settings = [
 		'singular' => 'submission',
 		'plural'   => 'submissions',
-		'ajax'     => false
-	);
+		'ajax'     => false,
+	];
 
 	/**
 	 * @var SubmissionManager $manager
@@ -92,7 +92,7 @@ class SubmissionTableWidget extends SmartlingListTable {
 	 * @return array
 	 */
 	public function getSortingOptions ( $fieldNameKey = 'orderby', $orderDirectionKey = 'order' ) {
-		$options = array ();
+		$options = [ ];
 
 		$column = $this->getFromSource( $fieldNameKey, false );
 
@@ -100,7 +100,7 @@ class SubmissionTableWidget extends SmartlingListTable {
 			$direction = strtoupper( $this->getFromSource( $orderDirectionKey,
 				SmartlingToCMSDatabaseAccessWrapperInterface::SORT_OPTION_ASC ) );
 
-			$options = array ( $column => $direction );
+			$options = [ $column => $direction ];
 		}
 
 		return $options;
@@ -124,31 +124,31 @@ class SubmissionTableWidget extends SmartlingListTable {
 
 		$hrefFilters = vsprintf(
 			'&%s=%s&%s=%s',
-			array (
+			[
 				$this->buildHtmlTagName( 'content-type' ),
 				$this->getFormElementValue( 'content-type', $this->defaultValues['content-type'] ),
 				$this->buildHtmlTagName( 'status' ),
 				$this->getFormElementValue( 'status', $this->defaultValues['status'] ),
-			)
+			]
 		);
 
 		//Build row actions
-		$actions = array (
-			'send'     => HtmlTagGeneratorHelper::tag( 'a', __( 'Resend' ), array (
+		$actions = [
+			'send'     => HtmlTagGeneratorHelper::tag( 'a', __( 'Resend' ), [
 				'href' => vsprintf( $linkTemplate . $hrefFilters,
-					array ( $_REQUEST['page'], 'sendSingle', $item['id'] ) )
-			) ),
-			'download' => HtmlTagGeneratorHelper::tag( 'a', __( 'Download' ), array (
+					[ $_REQUEST['page'], 'sendSingle', $item['id'] ] ),
+			] ),
+			'download' => HtmlTagGeneratorHelper::tag( 'a', __( 'Download' ), [
 				'href' => vsprintf( $linkTemplate . $hrefFilters,
-					array ( $_REQUEST['page'], 'downloadSingle', $item['id'] ) )
-			) ),
+					[ $_REQUEST['page'], 'downloadSingle', $item['id'] ] ),
+			] ),
 			/*'check'    => HtmlTagGeneratorHelper::tag( 'a', __( 'Check Status' ), array (
 				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'checkSingle', $item['id'] ) )
 			) )*/
-		);
+		];
 
 		//Return the title contents
-		return vsprintf( '%s %s', array ( $item['source_title'], $this->row_actions( $actions ) ) );
+		return vsprintf( '%s %s', [ $item['source_title'], $this->row_actions( $actions ) ] );
 	}
 
 	/**
@@ -159,13 +159,13 @@ class SubmissionTableWidget extends SmartlingListTable {
 	 * @return string
 	 */
 	public function column_cb ( $item ) {
-		return HtmlTagGeneratorHelper::tag( 'input', '', array (
+		return HtmlTagGeneratorHelper::tag( 'input', '', [
 			'type'  => 'checkbox',
 			'name'  => $this->buildHtmlTagName( $this->_args['singular'] ) . '[]',
 			'value' => $item['id'],
 			'id'    => 'submission-id-' . $item['id'],
 			'class' => 'bulkaction',
-		) );
+		] );
 	}
 
 	/**
@@ -174,7 +174,7 @@ class SubmissionTableWidget extends SmartlingListTable {
 	public function get_columns () {
 		$columns = $this->manager->getColumnsLabels();
 
-		$columns = array_merge( array ( 'bulkActionCb' => '<input type="checkbox" class="checkall" />' ), $columns );
+		$columns = array_merge( [ 'bulkActionCb' => '<input type="checkbox" class="checkall" />' ], $columns );
 
 		return $columns;
 	}
@@ -186,10 +186,10 @@ class SubmissionTableWidget extends SmartlingListTable {
 
 		$fields = $this->manager->getSortableFields();
 
-		$sortable_columns = array ();
+		$sortable_columns = [ ];
 
 		foreach ( $fields as $field ) {
-			$sortable_columns[ $field ] = array ( $field, false );
+			$sortable_columns[ $field ] = [ $field, false ];
 		}
 
 		return $sortable_columns;
@@ -199,17 +199,16 @@ class SubmissionTableWidget extends SmartlingListTable {
 	 * @inheritdoc
 	 */
 	public function get_bulk_actions () {
-		$actions = array (
+		$actions = [
 			'send'     => __( 'Resend' ),
 			'download' => __( 'Download' ),
 			'check'    => __( 'Check Status' ),
-		);
+		];
 
 		return $actions;
 	}
 
-	private function addScreenMessages($messages)
-	{
+	private function addScreenMessages ( $messages ) {
 		if ( isset( $messages ) && is_array( $messages ) ) {
 			foreach ( $messages as $message ) {
 				DiagnosticsHelper::addDiagnosticsMessage( $message );
@@ -224,7 +223,7 @@ class SubmissionTableWidget extends SmartlingListTable {
 		/**
 		 * @var array $submissions
 		 */
-		$submissions = $this->getFormElementValue( 'submission', array () );
+		$submissions = $this->getFormElementValue( 'submission', [ ] );
 
 		/**
 		 * @var SmartlingCore $ep
@@ -233,7 +232,6 @@ class SubmissionTableWidget extends SmartlingListTable {
 
 		if ( is_array( $submissions ) ) {
 			foreach ( $submissions as $submission ) {
-
 
 
 				switch ( $this->current_action() ) {
@@ -262,8 +260,8 @@ class SubmissionTableWidget extends SmartlingListTable {
 			/**
 			 * @var SmartlingCore $ep
 			 */
-			$ep = Bootstrap::getContainer()->get( 'entrypoint' );
-			$messages = array();
+			$ep       = Bootstrap::getContainer()->get( 'entrypoint' );
+			$messages = [ ];
 			switch ( $this->current_action() ) {
 				case 'downloadSingle':
 					$messages = $ep->downloadTranslationBySubmissionId( $submissionId );
@@ -275,7 +273,7 @@ class SubmissionTableWidget extends SmartlingListTable {
 					$messages = $ep->checkSubmissionById( $submissionId );
 					break;
 			}
-			$this->addScreenMessages($messages);
+			$this->addScreenMessages( $messages );
 		}
 	}
 
@@ -323,16 +321,16 @@ class SubmissionTableWidget extends SmartlingListTable {
 	 * @inheritdoc
 	 */
 	public function prepare_items () {
-		$pageOptions = array (
+		$pageOptions = [
 			'limit' => $this->manager->getPageSize(),
-			'page'  => $this->get_pagenum()
-		);
+			'page'  => $this->get_pagenum(),
+		];
 
-		$this->_column_headers = array (
+		$this->_column_headers = [
 			$this->get_columns(),
-			array ( 'id' ),
-			$this->get_sortable_columns()
-		);
+			[ 'id' ],
+			$this->get_sortable_columns(),
+		];
 
 		$this->processAction();
 
@@ -349,12 +347,12 @@ class SubmissionTableWidget extends SmartlingListTable {
 				$this->getSortingOptions(), $pageOptions,
 				$total );
 		} else {
-			$data = $this->manager->search( $searchText, array ( 'source_title', 'source_id', 'file_uri' ),
+			$data = $this->manager->search( $searchText, [ 'source_title', 'source_id', 'file_uri' ],
 				$contentTypeFilterValue, $statusFilterValue, $this->getSortingOptions(), $pageOptions,
 				$total );
 		}
 
-		$dataAsArray = array ();
+		$dataAsArray = [ ];
 
 		$file_uri_max_chars = 50;
 
@@ -374,12 +372,12 @@ class SubmissionTableWidget extends SmartlingListTable {
 				$orig     = $row['file_uri'];
 				$shrinked = mb_substr( $orig, 0, $file_uri_max_chars - 3, 'utf8' ) . '...';
 
-				$row['file_uri'] = HtmlTagGeneratorHelper::tag( 'span', $shrinked, array ( 'title' => $orig ) );
+				$row['file_uri'] = HtmlTagGeneratorHelper::tag( 'span', $shrinked, [ 'title' => $orig ] );
 
 			}
 
 
-			$row = array_merge( array ( 'bulkActionCb' => $this->column_cb( $row ) ), $row );
+			$row = array_merge( [ 'bulkActionCb' => $this->column_cb( $row ) ], $row );
 
 			$dataAsArray[] = $row;
 		}
@@ -387,11 +385,11 @@ class SubmissionTableWidget extends SmartlingListTable {
 
 		$this->items = $dataAsArray;
 
-		$this->set_pagination_args( array (
+		$this->set_pagination_args( [
 			'total_items' => $total,
 			'per_page'    => $pageOptions['limit'],
-			'total_pages' => ceil( $total / $pageOptions['limit'] )
-		) );
+			'total_pages' => ceil( $total / $pageOptions['limit'] ),
+		] );
 	}
 
 	/**
@@ -403,7 +401,7 @@ class SubmissionTableWidget extends SmartlingListTable {
 		$statuses = $this->manager->getSubmissionStatusLabels();
 
 		// add 'Any' to turn off filter
-		$statuses = array_merge( array ( 'any' => __( 'Any' ) ), $statuses );
+		$statuses = array_merge( [ 'any' => __( 'Any' ) ], $statuses );
 
 		$value = $this->getFormElementValue(
 			$controlName,
@@ -413,19 +411,19 @@ class SubmissionTableWidget extends SmartlingListTable {
 		$html = HtmlTagGeneratorHelper::tag(
 				'label',
 				__( 'Status' ),
-				array (
+				[
 					'for' => $this->buildHtmlTagName( $controlName ),
-				)
+				]
 			) . HtmlTagGeneratorHelper::tag(
 				'select',
 				HtmlTagGeneratorHelper::renderSelectOptions(
 					$value,
 					$statuses
 				),
-				array (
+				[
 					'id'   => $this->buildHtmlTagName( $controlName ),
-					'name' => $this->buildHtmlTagName( $controlName )
-				)
+					'name' => $this->buildHtmlTagName( $controlName ),
+				]
 			);
 
 		return $html;
@@ -440,7 +438,7 @@ class SubmissionTableWidget extends SmartlingListTable {
 		$types = $this->getActiveContentTypes( $this->entityHelper->getSiteHelper() );
 
 		// add 'Any' to turn off filter
-		$types = array_merge( array ( 'any' => __( 'Any' ) ), $types );
+		$types = array_merge( [ 'any' => __( 'Any' ) ], $types );
 
 		$value = $this->getFormElementValue(
 			$controlName,
@@ -450,19 +448,19 @@ class SubmissionTableWidget extends SmartlingListTable {
 		$html = HtmlTagGeneratorHelper::tag(
 				'label',
 				__( 'Type' ),
-				array (
+				[
 					'for' => $this->buildHtmlTagName( $controlName ),
-				)
+				]
 			) . HtmlTagGeneratorHelper::tag(
 				'select',
 				HtmlTagGeneratorHelper::renderSelectOptions(
 					$value,
 					$types
 				),
-				array (
+				[
 					'id'   => $this->buildHtmlTagName( $controlName ),
-					'name' => $this->buildHtmlTagName( $controlName )
-				)
+					'name' => $this->buildHtmlTagName( $controlName ),
+				]
 			);
 
 		return $html;
@@ -478,12 +476,12 @@ class SubmissionTableWidget extends SmartlingListTable {
 	public function renderSubmitButton ( $label ) {
 		$id = $name = $this->buildHtmlTagName( 'go-and-filter' );
 
-		$options = array (
+		$options = [
 			'id'    => $id,
 			'name'  => '',
 			'class' => 'button action',
 
-		);
+		];
 
 		return HtmlTagGeneratorHelper::submitButton( $label, $options );
 	}

@@ -28,7 +28,7 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 	 *
 	 * @var array
 	 */
-	protected $fields = array (
+	protected $fields = [
 		'term_id',
 		'name',
 		'slug',
@@ -38,7 +38,7 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 		'description',
 		'parent',
 		'count',
-	);
+	];
 
 	private function checkWPSEO () {
 		return class_exists( '\WPSEO_Taxonomy_Meta' );
@@ -48,7 +48,7 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 	 * @inheritdoc
 	 */
 	public function getMetadata () {
-		$result = array ();
+		$result = [ ];
 		if ( $this->checkWPSEO() ) {
 			$result = \WPSEO_Taxonomy_Meta::get_term_meta( $this->term_id, $this->taxonomy );
 		} else {
@@ -63,13 +63,13 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 		if ( $this->checkWPSEO() ) {
 			$tax_meta  = get_option( 'wpseo_taxonomy_meta' );
 			$oldValues = $this->getMetadata();
-			$newValues = array_merge( $oldValues, array ( $tagName => $tagValue ) );
+			$newValues = array_merge( $oldValues, [ $tagName => $tagValue ] );
 			$clean     = \WPSEO_Taxonomy_Meta::validate_term_meta_data( $newValues, $oldValues );
-			if ( $clean !== array () ) {
+			if ( $clean !== [ ] ) {
 				$tax_meta[ $this->taxonomy ][ $this->term_id ] = $clean;
 			} else {
 				unset( $tax_meta[ $this->taxonomy ][ $this->term_id ] );
-				if ( isset( $tax_meta[ $this->taxonomy ] ) && $tax_meta[ $this->taxonomy ] === array () ) {
+				if ( isset( $tax_meta[ $this->taxonomy ] ) && $tax_meta[ $this->taxonomy ] === [ ] ) {
 					unset( $tax_meta[ $this->taxonomy ] );
 				}
 			}
@@ -88,10 +88,10 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 	public function __construct ( LoggerInterface $logger ) {
 		parent::__construct( $logger );
 
-		$this->hashAffectingFields = array (
+		$this->hashAffectingFields = [
 			'name',
 			'description',
-		);
+		];
 
 
 		$this->setEntityFields( $this->fields );
@@ -117,7 +117,7 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 
 		if ( $term instanceof \WP_Error ) {
 			$message = vsprintf( 'An error occurred while reading taxonomy id=%s, type=%s: %s',
-				array ( $guid, $this->getType(), $term->get_error_message() ) );
+				[ $guid, $this->getType(), $term->get_error_message() ] );
 
 			$this->getLogger()->error( $message );
 
@@ -139,19 +139,19 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 	 */
 	public function getAll ( $limit = '', $offset = '', $orderBy = 'term_id', $order = 'ASC' ) {
 
-		$result = array ();
+		$result = [ ];
 
-		$taxonomies = array (
+		$taxonomies = [
 			$this->getType(),
-		);
+		];
 
-		$args = array (
+		$args = [
 			'orderby'           => $orderBy,
 			'order'             => $order,
 			'hide_empty'        => false,
-			'exclude'           => array (),
-			'exclude_tree'      => array (),
-			'include'           => array (),
+			'exclude'           => [ ],
+			'exclude_tree'      => [ ],
+			'include'           => [ ],
 			'number'            => $limit,
 			'fields'            => 'all',
 			'slug'              => '',
@@ -164,14 +164,14 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 			'pad_counts'        => false,
 			'offset'            => $offset,
 			'search'            => '',
-			'cache_domain'      => 'core'
-		);
+			'cache_domain'      => 'core',
+		];
 
 		$terms = get_terms( $taxonomies, $args );
 
 		if ( $terms instanceof \WP_Error ) {
 			$message = vsprintf( 'An error occurred while reading all taxonomies of type %s: %s',
-				array ( $this->getType(), $terms->get_error_message() ) );
+				[ $this->getType(), $terms->get_error_message() ] );
 
 			$this->getLogger()->error( $message );
 
@@ -213,14 +213,14 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 
 		$data = $entity->toArray();
 
-		$argFields = array (
+		$argFields = [
 			'name',
 			//'slug',
 			'parent',
-			'description'
-		);
+			'description',
+		];
 
-		$args = array ();
+		$args = [ ];
 
 		foreach ( $argFields as $field ) {
 			$args[ $field ] = $data[ $field ];
@@ -233,11 +233,11 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 		if ( $result instanceof \WP_Error ) {
 			$message = vsprintf(
 				'An error occurred while saving taxonomy id=%s, type=%s: %s',
-				array (
+				[
 					( $entity->term_id ? $entity->term_id : '<none>' ),
 					$this->getType(),
-					$result->get_error_message()
-				)
+					$result->get_error_message(),
+				]
 			);
 
 			$this->getLogger()->error( $message );
@@ -257,24 +257,24 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 	 * @inheritdoc
 	 */
 	protected function getNonClonableFields () {
-		return array (
+		return [
 			'term_id',
 			'parent',
 			'count',
 			'slug',
-		);
+		];
 	}
 
 	public static function detectTermTaxonomyByTermId ( $termId ) {
 		$taxonomies = WordpressContentTypeHelper::getSupportedTaxonomyTypes();
 
-		$args = array (
+		$args = [
 			'orderby'           => 'term_id',
 			'order'             => 'ASC',
 			'hide_empty'        => false,
-			'exclude'           => array (),
-			'exclude_tree'      => array (),
-			'include'           => array (),
+			'exclude'           => [ ],
+			'exclude_tree'      => [ ],
+			'include'           => [ ],
 			'number'            => '',
 			'fields'            => 'all',
 			'slug'              => '',
@@ -287,17 +287,17 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 			'pad_counts'        => false,
 			'offset'            => '',
 			'search'            => '',
-			'cache_domain'      => 'core'
-		);
+			'cache_domain'      => 'core',
+		];
 
 		$terms = get_terms( $taxonomies, $args );
 
 
-		$result = array ();
+		$result = [ ];
 
 		if ( $terms instanceof \WP_Error ) {
 			$message = vsprintf( 'An error occurred while readin all taxonomies of type: %s',
-				array ( $terms->get_error_message() ) );
+				[ $terms->get_error_message() ] );
 
 			throw new SmartlingDbException( $message );
 		} else {

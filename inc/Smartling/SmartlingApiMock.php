@@ -29,29 +29,29 @@ class SmartlingApiMock extends SmartlingAPI {
 		return 'SUCCESS';
 	}
 
-	public function getStatus ( $fileUri, $locale, $params = array () ) {
-		return json_encode( array (
-			'response' => array (
-				'data' => array (
+	public function getStatus ( $fileUri, $locale, $params = [ ] ) {
+		return json_encode( [
+			'response' => [
+				'data' => [
 					'approvedStringCount'  => 100,
 					'completedStringCount' => 500,
-					'wordCount'            => 100500
-				)
-			)
-		) );
+					'wordCount'            => 100500,
+				],
+			],
+		] );
 	}
 
 	/**
 	 * @inheritdoc
 	 */
-	public function uploadContent ( $content, $params = array () ) {
+	public function uploadContent ( $content, $params = [ ] ) {
 		return $this->mockUpload();
 	}
 
 	/**
 	 * @inheritdoc
 	 */
-	public function uploadFile ( $path, $params = array () ) {
+	public function uploadFile ( $path, $params = [ ] ) {
 		return $this->mockUpload();
 	}
 
@@ -64,15 +64,15 @@ class SmartlingApiMock extends SmartlingAPI {
 	/**
 	 * @inheritdoc
 	 */
-	public function downloadFile ( $fileUri, $locale, $params = array () ) {
+	public function downloadFile ( $fileUri, $locale, $params = [ ] ) {
 		$faker = Factory::create();
 
 		$array = [
 			'entity' => [
 				'post_title' => $faker->realText( 80 ),
-				'post_body'  => $faker->realText( 4096 )
+				'post_body'  => $faker->realText( 4096 ),
 			],
-			'meta'   => [ ]
+			'meta'   => [ ],
 		];
 
 		$encodedXML = XmlEncoder::xmlEncode( $array );

@@ -25,7 +25,7 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
 	/**
 	 * @var array
 	 */
-	protected $stateFields = array ();
+	protected $stateFields = [ ];
 
 	/**
 	 * @var bool
@@ -40,7 +40,7 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
 	/**
 	 * @var array
 	 */
-	protected $initialFields = array ();
+	protected $initialFields = [ ];
 
 	protected static function under_score2camelCase ( $string ) {
 		$converted = '';
@@ -92,7 +92,7 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
 	 * @return array
 	 */
 	protected function getVirtualFields () {
-		return array ();
+		return [ ];
 	}
 
 	/**
@@ -135,7 +135,7 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
 	 * @return array
 	 */
 	public function getChangedFields () {
-		$changedFields = array ();
+		$changedFields = [ ];
 		foreach ( $this->stateFields as $field => $value ) {
 			$initiallValue = array_key_exists( $field, $this->initialFields ) ? $this->initialFields[ $field ] : null;
 			$currentValue  = $value;

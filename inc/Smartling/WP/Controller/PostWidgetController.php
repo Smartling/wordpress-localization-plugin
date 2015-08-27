@@ -35,8 +35,8 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 	 */
 	public function register () {
 		if ( ! DiagnosticsHelper::isBlocked() ) {
-			add_action( 'add_meta_boxes', array ( $this, 'box' ) );
-			add_action( 'save_post', array ( $this, 'save' ) );
+			add_action( 'add_meta_boxes', [ $this, 'box' ] );
+			add_action( 'save_post', [ $this, 'save' ] );
 		}
 	}
 
@@ -46,12 +46,12 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 	 * @param string $post_type
 	 */
 	public function box ( $post_type ) {
-		$post_types = array ( $this->servedContentType );
+		$post_types = [ $this->servedContentType ];
 		if ( in_array( $post_type, $post_types ) ) {
 			add_meta_box(
 				self::WIDGET_NAME,
 				__( 'Smartling Post Widget' ),
-				array ( $this, 'preView' ),
+				[ $this, 'preView' ],
 				$post_type,
 				'side',
 				'high'
@@ -77,16 +77,16 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 					);
 
 				if ( 0 < count( $profile ) ) {
-					$submissions = $this->getManager()->find( array (
+					$submissions = $this->getManager()->find( [
 						'source_id'    => $post->ID,
 						'content_type' => $this->servedContentType,
-					) );
+					] );
 
-					$this->view( array (
+					$this->view( [
 							'submissions' => $submissions,
 							'post'        => $post,
 							'profile'     => reset( $profile ),
-						)
+						]
 					);
 				} else {
 					echo '<p>' . __( 'No suitable configuration profile found.' ) . '</p>';
@@ -96,15 +96,14 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 			} catch ( SmartlingDbException $e ) {
 				$message = 'Failed to search for the original post. No source post found for blog %s, post %s. Hiding widget';
 				$this->getLogger()->warning(
-					vsprintf( $message, array (
+					vsprintf( $message, [
 						$this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
-						$post->ID
-					) )
+						$post->ID,
+					] )
 				);
 				echo '<p>' . __( $this->noOriginalFound ) . '</p>';
-			} catch (\Exception $e)
-			{
-				$this->getLogger()->error($e->getMessage() . '[' . $e->getFile() . ':' . $e->getLine() . ']');
+			} catch ( \Exception $e ) {
+				$this->getLogger()->error( $e->getMessage() . '[' . $e->getFile() . ':' . $e->getLine() . ']' );
 			}
 		} else {
 			echo '<p>' . __( $this->needSave ) . '</p>';
@@ -158,7 +157,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 			return;
 		}
 
-		remove_action( 'save_post', array ( $this, 'save' ) );
+		remove_action( 'save_post', [ $this, 'save' ] );
 
 		if ( false === $this->runValidation( $post_id ) ) {
 			return $post_id;
@@ -170,7 +169,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 
 		$data = $_POST[ self::WIDGET_DATA_NAME ];
 
-		$locales = array ();
+		$locales = [ ];
 
 		if ( null !== $data && array_key_exists( 'locales', $data ) ) {
 
@@ -199,7 +198,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 									$sourceBlog,
 									$originalId,
 									(int) $blogId,
-									$this->getEntityHelper()->getTarget( $post_id, $blogId)
+									$this->getEntityHelper()->getTarget( $post_id, $blogId )
 								);
 						}
 						break;
@@ -210,11 +209,11 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 
 
 						$submissions = $this->getManager()->find(
-							array (
+							[
 								'source_id'      => $originalId,
 								'source_blog_id' => $sourceBlog,
-								'content_type'   => $this->servedContentType
-							)
+								'content_type'   => $this->servedContentType,
+							]
 						);
 
 						foreach ( $submissions as $submission ) {
@@ -225,6 +224,6 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 				}
 			}
 		}
-		add_action( 'save_post', array ( $this, 'save' ) );
+		add_action( 'save_post', [ $this, 'save' ] );
 	}
 }

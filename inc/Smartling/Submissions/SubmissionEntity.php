@@ -11,23 +11,23 @@ use Smartling\Helpers\WordpressContentTypeHelper;
 /**
  * Class SubmissionEntity
  *
- * @property int            $id
- * @property string         $source_title
- * @property int            $source_blog_id
- * @property string|null    $source_content_hash
- * @property string         $content_type
- * @property int            $source_id
- * @property string         $file_uri
- * @property string         $target_locale
- * @property int            $target_blog_id
- * @property int            $target_id
- * @property string         $submitter
- * @property string         $submission_date
- * @property string         $applied_date
- * @property int            $approved_string_count
- * @property int            $completed_string_count
- * @property string         $status
- * @property int            $is_locked
+ * @property int         $id
+ * @property string      $source_title
+ * @property int         $source_blog_id
+ * @property string|null $source_content_hash
+ * @property string      $content_type
+ * @property int         $source_id
+ * @property string      $file_uri
+ * @property string      $target_locale
+ * @property int         $target_blog_id
+ * @property int         $target_id
+ * @property string      $submitter
+ * @property string      $submission_date
+ * @property string      $applied_date
+ * @property int         $approved_string_count
+ * @property int         $completed_string_count
+ * @property string      $status
+ * @property int         $is_locked
  *
  * @package Smartling\Submissions
  */
@@ -61,16 +61,16 @@ class SubmissionEntity extends SmartlingEntityAbstract {
 	/**
 	 * @var array Submission Statuses
 	 */
-	public static $submissionStatuses = array (
+	public static $submissionStatuses = [
 		self::SUBMISSION_STATUS_NOT_TRANSLATED,
 		self::SUBMISSION_STATUS_NEW,
 		self::SUBMISSION_STATUS_IN_PROGRESS,
 		self::SUBMISSION_STATUS_COMPLETED,
 		self::SUBMISSION_STATUS_FAILED,
-	);
+	];
 
 	public static function getFieldDefinitions () {
-		return array (
+		return [
 			'id'                     => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
 			'source_title'           => self::DB_TYPE_STRING_STANDARD,
 			'source_blog_id'         => self::DB_TYPE_U_BIGINT,
@@ -89,27 +89,27 @@ class SubmissionEntity extends SmartlingEntityAbstract {
 			'word_count'             => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_DEFAULT_ZERO,
 			'status'                 => self::DB_TYPE_STRING_SMALL,
 			'is_locked'              => self::DB_TYPE_UINT_SWITCH . ' ' . self::DB_TYPE_DEFAULT_ZERO,
-		);
+		];
 	}
 
 	/**
 	 * @return array
 	 */
 	public static function getSubmissionStatusLabels () {
-		return array (
+		return [
 			self::SUBMISSION_STATUS_NOT_TRANSLATED => __( self::SUBMISSION_STATUS_NOT_TRANSLATED ),
 			self::SUBMISSION_STATUS_NEW            => __( self::SUBMISSION_STATUS_NEW ),
 			self::SUBMISSION_STATUS_IN_PROGRESS    => __( self::SUBMISSION_STATUS_IN_PROGRESS ),
 			self::SUBMISSION_STATUS_COMPLETED      => __( self::SUBMISSION_STATUS_COMPLETED ),
 			self::SUBMISSION_STATUS_FAILED         => __( self::SUBMISSION_STATUS_FAILED ),
-		);
+		];
 	}
 
 	/**
 	 * @return array
 	 */
 	public static function getFieldLabels () {
-		return array (
+		return [
 			'id'              => __( 'ID' ),
 			'source_title'    => __( 'Title' ),
 			'content_type'    => __( 'Type' ),
@@ -121,7 +121,7 @@ class SubmissionEntity extends SmartlingEntityAbstract {
 			'word_count'      => __( 'Words' ),
 			'progress'        => __( 'Progress' ),
 			'status'          => __( 'Status' ),
-		);
+		];
 	}
 
 	protected static function getInstance ( LoggerInterface $logger ) {
@@ -129,7 +129,7 @@ class SubmissionEntity extends SmartlingEntityAbstract {
 	}
 
 	public static function getSortableFields () {
-		return array (
+		return [
 			'id',
 			'source_title',
 			'content_type',
@@ -140,33 +140,33 @@ class SubmissionEntity extends SmartlingEntityAbstract {
 			'word_count',
 			'progress',
 			'status',
-		);
+		];
 	}
 
 	public static function getIndexes () {
-		return array (
-			array (
+		return [
+			[
 				'type'    => 'primary',
-				'columns' => array ( 'id' )
-			),
-			array (
+				'columns' => [ 'id' ],
+			],
+			[
 				'type'    => 'index',
-				'columns' => array ( 'content_type' )
-			),
-			array (
+				'columns' => [ 'content_type' ],
+			],
+			[
 				'type'    => 'index',
-				'columns' => array ( 'source_blog_id', 'source_id', 'content_type' )
-			),
-		);
+				'columns' => [ 'source_blog_id', 'source_id', 'content_type' ],
+			],
+		];
 	}
 
 	/**
 	 * @return array
 	 */
 	protected function getVirtualFields () {
-		return array (
-			'progress' => $this->getCompletionPercentage() . '%'
-		);
+		return [
+			'progress' => $this->getCompletionPercentage() . '%',
+		];
 	}
 
 	/**
@@ -209,13 +209,13 @@ class SubmissionEntity extends SmartlingEntityAbstract {
 		} else {
 			$message = vsprintf(
 				'Invalid status value. Got \'%s\', expected one of: %s',
-				array (
+				[
 					$status,
 					implode(
 						',',
 						self::$submissionStatuses
-					)
-				)
+					),
+				]
 			);
 
 			$this->logger->error( $message );
@@ -230,13 +230,13 @@ class SubmissionEntity extends SmartlingEntityAbstract {
 	 * @return string
 	 */
 	public function getStatusColor () {
-		$statusColors = array (
+		$statusColors = [
 			self::SUBMISSION_STATUS_NOT_TRANSLATED => 'yellow',
 			self::SUBMISSION_STATUS_NEW            => 'yellow',
 			self::SUBMISSION_STATUS_IN_PROGRESS    => 'blue',
 			self::SUBMISSION_STATUS_COMPLETED      => 'green',
 			self::SUBMISSION_STATUS_FAILED         => 'red',
-		);
+		];
 
 		return $statusColors[ $this->getStatus() ] ? : '';
 	}
@@ -341,13 +341,13 @@ class SubmissionEntity extends SmartlingEntityAbstract {
 		} else {
 			$message = vsprintf(
 				'Invalid content type. Got \'%s\', expected one of: %s',
-				array (
+				[
 					$content_type,
 					implode(
 						',',
 						$reverseMap
-					)
-				)
+					),
+				]
 			);
 			$this->logger->error( $message );
 			throw new \InvalidArgumentException( $message );
@@ -380,12 +380,12 @@ class SubmissionEntity extends SmartlingEntityAbstract {
 	public function getFileUri () {
 		if ( empty( $this->stateFields['file_uri'] ) ) {
 
-			$fileUri = vsprintf( '%s_%s_%s_%s.xml', array (
+			$fileUri = vsprintf( '%s_%s_%s_%s.xml', [
 				trim( TextHelper::mb_wordwrap( $this->getSourceTitle( false ), 210 ), "\n\r\t,. -_\0\x0B" ),
 				$this->getContentType(),
 				$this->getSourceBlogId(),
-				$this->getSourceId()
-			) );
+				$this->getSourceId(),
+			] );
 
 			$this->setFileUri( $fileUri );
 		}

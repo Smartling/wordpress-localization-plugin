@@ -73,7 +73,7 @@ class WordpressContentTypeHelper {
 	 *
 	 * @var array
 	 */
-	private static $_reverse_map = array (
+	private static $_reverse_map = [
 		'post'        => self::CONTENT_TYPE_POST,
 		'page'        => self::CONTENT_TYPE_PAGE,
 		'category'    => self::CONTENT_TYPE_CATEGORY,
@@ -82,7 +82,7 @@ class WordpressContentTypeHelper {
 		'partner'     => self::CONTENT_TYPE_POST_PARTNER,
 		'testimonial' => self::CONTENT_TYPE_POST_TESTIMONIAL,
 		//'nav_menu'    => self::CONTENT_TYPE_NAV_MENU,
-	);
+	];
 
 	/**
 	 * @return array
@@ -102,7 +102,7 @@ class WordpressContentTypeHelper {
 		self::checkRuntimeState();
 
 		// has to be hardcoded because i10n parser must see direct calls of __(CONSTANT STRING)
-		return array (
+		return [
 			self::CONTENT_TYPE_POST_POLICY      => __( 'Policy' ),
 			self::CONTENT_TYPE_POST_PARTNER     => __( 'Partner' ),
 			self::CONTENT_TYPE_POST_TESTIMONIAL => __( 'Testimonial' ),
@@ -111,18 +111,18 @@ class WordpressContentTypeHelper {
 			self::CONTENT_TYPE_CATEGORY         => __( 'Category' ),
 			self::CONTENT_TYPE_POST_TAG         => __( 'Tag' ),
 			//self::CONTENT_TYPE_NAV_MENU         => __( 'Navigation Menu' ),
-		);
+		];
 	}
 
 	/**
 	 * @return array
 	 */
 	public static function getSupportedTaxonomyTypes () {
-		return array (
+		return [
 			self::CONTENT_TYPE_CATEGORY,
 			self::CONTENT_TYPE_POST_TAG,
 			//self::CONTENT_TYPE_NAV_MENU,
-		);
+		];
 	}
 
 	/**
@@ -137,7 +137,7 @@ class WordpressContentTypeHelper {
 			return $map[ $contentType ];
 		} else {
 			throw new SmartlingNotSupportedContentException( vsprintf( 'Content-type \'%s\' is not supported yet.',
-				array ( $contentType ) ) );
+				[ $contentType ] ) );
 		}
 	}
 }

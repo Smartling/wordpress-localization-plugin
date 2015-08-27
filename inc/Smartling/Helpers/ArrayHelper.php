@@ -43,7 +43,7 @@ class ArrayHelper {
 	 *
 	 * @return array the array representation of the object
 	 */
-	public static function toArray ( $object, $properties = array (), $recursive = true ) {
+	public static function toArray ( $object, $properties = [ ], $recursive = true ) {
 		if ( is_array( $object ) ) {
 			if ( $recursive ) {
 				foreach ( $object as $key => $value ) {
@@ -58,7 +58,7 @@ class ArrayHelper {
 			if ( ! empty( $properties ) ) {
 				$className = get_class( $object );
 				if ( ! empty( $properties[ $className ] ) ) {
-					$result = array ();
+					$result = [ ];
 					foreach ( $properties[ $className ] as $key => $name ) {
 						if ( is_int( $key ) ) {
 							$result[ $name ] = $object->$name;
@@ -73,7 +73,7 @@ class ArrayHelper {
 			if ( $object instanceof ArrayableInterface ) {
 				$result = $object->toArray();
 			} else {
-				$result = array ();
+				$result = [ ];
 				foreach ( $object as $key => $value ) {
 					$result[ $key ] = $value;
 				}
@@ -81,7 +81,7 @@ class ArrayHelper {
 
 			return $recursive ? static::toArray( $result ) : $result;
 		} else {
-			return array ( $object );
+			return [ $object ];
 		}
 	}
 
@@ -248,7 +248,7 @@ class ArrayHelper {
 	 * @return array the indexed array
 	 */
 	public static function index ( $array, $key ) {
-		$result = array ();
+		$result = [ ];
 		foreach ( $array as $element ) {
 			$value            = static::getValue( $element, $key );
 			$result[ $value ] = $element;
@@ -285,7 +285,7 @@ class ArrayHelper {
 	 * @return array the list of column values
 	 */
 	public static function getColumn ( $array, $name, $keepKeys = true ) {
-		$result = array ();
+		$result = [ ];
 		if ( $keepKeys ) {
 			foreach ( $array as $k => $element ) {
 				$result[ $k ] = static::getValue( $element, $name );
@@ -342,7 +342,7 @@ class ArrayHelper {
 	 * @return array
 	 */
 	public static function map ( $array, $from, $to, $group = null ) {
-		$result = array ();
+		$result = [ ];
 		foreach ( $array as $element ) {
 			$key   = static::getValue( $element, $from );
 			$value = static::getValue( $element, $to );
@@ -405,7 +405,7 @@ class ArrayHelper {
 	 * correct number of elements as that of $key.
 	 */
 	public static function multisort ( &$array, $key, $direction = SORT_ASC, $sortFlag = SORT_REGULAR ) {
-		$keys = is_array( $key ) ? $key : array ( $key );
+		$keys = is_array( $key ) ? $key : [ $key ];
 		if ( empty( $keys ) || empty( $array ) ) {
 			return;
 		}
@@ -420,7 +420,7 @@ class ArrayHelper {
 		} elseif ( count( $sortFlag ) !== $n ) {
 			throw new \InvalidArgumentException( 'The length of $sortFlag parameter must be the same as that of $keys.' );
 		}
-		$args = array ();
+		$args = [ ];
 		foreach ( $keys as $i => $key ) {
 			$flag   = $sortFlag[ $i ];
 			$args[] = static::getColumn( $array, $key );
@@ -450,7 +450,7 @@ class ArrayHelper {
 		if ( $charset === null ) {
 			$charset = 'UTF-8';
 		}
-		$d = array ();
+		$d = [ ];
 		foreach ( $data as $key => $value ) {
 			if ( ! $valuesOnly && is_string( $key ) ) {
 				$key = htmlspecialchars( $key, ENT_QUOTES, $charset );
@@ -481,7 +481,7 @@ class ArrayHelper {
 	 * @see http://www.php.net/manual/en/function.htmlspecialchars-decode.php
 	 */
 	public static function htmlDecode ( $data, $valuesOnly = true ) {
-		$d = array ();
+		$d = [ ];
 		foreach ( $data as $key => $value ) {
 			if ( ! $valuesOnly && is_string( $key ) ) {
 				$key = htmlspecialchars_decode( $key, ENT_QUOTES );

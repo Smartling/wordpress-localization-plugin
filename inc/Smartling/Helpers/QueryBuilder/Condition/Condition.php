@@ -54,6 +54,6 @@ class Condition {
 	 * @return string
 	 */
 	public function __toString () {
-		return ConditionBuilder::buildBlock( $this->condition, array_merge( array ( $this->field ), $this->values ) );
+		return ConditionBuilder::buildBlock( $this->condition, array_merge( [ $this->field ], $this->values ) );
 	}
 }

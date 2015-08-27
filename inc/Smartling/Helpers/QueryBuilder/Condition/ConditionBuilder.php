@@ -78,7 +78,7 @@ class ConditionBuilder {
 	 */
 	public static function buildBlock ( $condition, $parameters ) {
 
-		$customConditions = array ( self::CONDITION_SIGN_IN, self::CONDITION_SIGN_NOT_IN );
+		$customConditions = [ self::CONDITION_SIGN_IN, self::CONDITION_SIGN_NOT_IN ];
 
 		if ( ! ( in_array( $condition, $customConditions ) ) && ! self::validate( $condition, $parameters ) ) {
 			throw new \InvalidArgumentException( 'Invalid condition or parameters' );
@@ -87,7 +87,7 @@ class ConditionBuilder {
 		if ( in_array( $condition, $customConditions ) ) {
 			foreach ( $parameters as $index => & $param ) {
 				if ( $index > 0 ) {
-					$param = vsprintf( '\'%s\'', array ( QueryBuilder::escapeValue( $param ) ) );
+					$param = vsprintf( '\'%s\'', [ QueryBuilder::escapeValue( $param ) ] );
 				}
 			}
 
@@ -95,7 +95,7 @@ class ConditionBuilder {
 			unset( $parameters[0] );
 			$values = implode( ', ', $parameters );
 
-			$parameters = array ( $field, $values );
+			$parameters = [ $field, $values ];
 		}
 
 		return vsprintf( $condition, $parameters );
@@ -137,7 +137,7 @@ class ConditionBuilder {
 	 * @return bool
 	 */
 	private static function validateCondition ( $condition ) {
-		$conditions = array (
+		$conditions = [
 			self::CONDITION_SIGN_EQ,
 			self::CONDITION_SIGN_NOT_EQ,
 			self::CONDITION_SIGN_MORE,
@@ -148,7 +148,7 @@ class ConditionBuilder {
 			self::CONDITION_SIGN_LIKE,
 			self::CONDITION_SIGN_IN,
 			self::CONDITION_SIGN_NOT_IN,
-		);
+		];
 
 		return in_array( $condition, $conditions );
 	}

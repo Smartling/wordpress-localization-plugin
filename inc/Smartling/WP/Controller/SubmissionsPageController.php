@@ -19,8 +19,8 @@ class SubmissionsPageController
 	 * @inheritdoc
 	 */
 	public function register () {
-		add_action( 'admin_menu', array ( $this, 'menu' ) );
-		add_action( 'network_admin_menu', array ( $this, 'menu' ) );
+		add_action( 'admin_menu', [ $this, 'menu' ] );
+		add_action( 'network_admin_menu', [ $this, 'menu' ] );
 	}
 
 	public function menu () {
@@ -29,7 +29,7 @@ class SubmissionsPageController
 			'Smartling',
 			'Administrator',
 			'smartling-submissions-page',
-			array ( $this, 'renderPage' ) );
+			[ $this, 'renderPage' ] );
 	}
 
 	public function renderPage () {

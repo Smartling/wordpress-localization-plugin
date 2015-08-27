@@ -16,15 +16,15 @@ class Migration150619 implements SmartlingDbMigrationInterface {
 	}
 
 	public function getQueries ( $tablePrefix = '' ) {
-		return array (
+		return [
 			vsprintf(
 				'ALTER TABLE `%ssmartling_submissions` ADD COLUMN `is_locked` %s %s',
-				array (
+				[
 					$tablePrefix,
 					SmartlingEntityAbstract::DB_TYPE_UINT_SWITCH,
-					SmartlingEntityAbstract::DB_TYPE_DEFAULT_ZERO
-				)
+					SmartlingEntityAbstract::DB_TYPE_DEFAULT_ZERO,
+				]
 			),
-		);
+		];
 	}
 }

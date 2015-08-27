@@ -23,19 +23,19 @@ abstract class EntityAbstract {
 	 *
 	 * @var array
 	 */
-	protected $hashAffectingFields = array ();
+	protected $hashAffectingFields = [ ];
 
 	/**
 	 * @var array
 	 */
-	private $entityFields = array ( 'hash' );
+	private $entityFields = [ 'hash' ];
 
 	/**
 	 * @var LoggerInterface
 	 */
 	private $logger;
 
-	private $entityArrayState = array ();
+	private $entityArrayState = [ ];
 
 	private function initEntityArrayState () {
 		if ( empty( $this->entityArrayState ) ) {
@@ -49,7 +49,7 @@ abstract class EntityAbstract {
 	 * @param array $entityFields
 	 */
 	public function setEntityFields ( array $entityFields ) {
-		$this->entityFields = array_merge( array ( 'hash' ), $entityFields );
+		$this->entityFields = array_merge( [ 'hash' ], $entityFields );
 
 		$this->initEntityArrayState();
 	}
@@ -118,7 +118,7 @@ abstract class EntityAbstract {
 			}
 			default : {
 				$template = 'Method \'%s\' does not exists in class \'%s\'';
-				$message  = vsprintf( $template, array ( $method, get_class( $this ) ) );
+				$message  = vsprintf( $template, [ $method, get_class( $this ) ] );
 				throw new \BadMethodCallException( $message );
 				break;
 			}
@@ -234,7 +234,7 @@ abstract class EntityAbstract {
 
 		$template = 'The \'%s\' with ID %s not found in the database.';
 
-		$message = vsprintf( $template, array ( WordpressContentTypeHelper::getLocalizedContentType($type), $guid ) );
+		$message = vsprintf( $template, [ WordpressContentTypeHelper::getLocalizedContentType( $type ), $guid ] );
 		$this->getLogger()->info( $message );
 
 		throw new EntityNotFoundException( $message );
@@ -252,11 +252,11 @@ abstract class EntityAbstract {
 		$nonCloneFields = $this->getNonClonableFields();
 
 		$myFields = $this->toArray();
-if (is_array($nonCloneFields) && 0<count($nonCloneFields)) {
-	foreach ( $nonCloneFields as $field ) {
-		unset ( $myFields[ $field ] );
-	}
-}
+		if ( is_array( $nonCloneFields ) && 0 < count( $nonCloneFields ) ) {
+			foreach ( $nonCloneFields as $field ) {
+				unset ( $myFields[ $field ] );
+			}
+		}
 		$this->resultToEntity( $myFields );
 	}
 

@@ -22,13 +22,12 @@ use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
  */
 class Bootstrap {
 
-	public function __construct()
-	{
-		ignore_user_abort(true);
-		set_time_limit(0);
+	public function __construct () {
+		ignore_user_abort( true );
+		set_time_limit( 0 );
 
 		$scheduleHelper = new SchedulerHelper();
-		add_filter( 'cron_schedules', array ( $scheduleHelper, 'extendWpCron' ) );
+		add_filter( 'cron_schedules', [ $scheduleHelper, 'extendWpCron' ] );
 	}
 
 	/**
@@ -143,7 +142,7 @@ class Bootstrap {
 	}
 
 	public function load () {
-		register_shutdown_function( array ( $this, 'shutdownHandler' ) );
+		register_shutdown_function( [ $this, 'shutdownHandler' ] );
 
 		$this->detectMultilangPlugins();
 
@@ -195,7 +194,7 @@ class Bootstrap {
 	}
 
 	public function activate () {
-		self::getContainer()->set( 'multilang_plugins', array () );
+		self::getContainer()->set( 'multilang_plugins', [ ] );
 		$this->fromContainer( 'site.db' )->install();
 		$this->fromContainer( 'wp.cron' )->install();
 	}
@@ -220,11 +219,11 @@ class Bootstrap {
 		$logger = self::getContainer()->get( 'logger' );
 
 		$mlPluginsStatuses =
-			array (
+			[
 				'multilingual-press-pro' => false,
 				'polylang'               => false,
 				'wpml'                   => false,
-			);
+			];
 
 		$logger->debug( 'Searching for Wordpress multilingual plugins' );
 
@@ -265,10 +264,10 @@ class Bootstrap {
 	protected function test () {
 		$this->testThirdPartyPluginsRequirements();
 
-		$php_extensions = array (
+		$php_extensions = [
 			'curl',
-			'mbstring'
-		);
+			'mbstring',
+		];
 
 		foreach ( $php_extensions as $ext ) {
 			$this->testPhpExtension( $ext );
@@ -277,7 +276,7 @@ class Bootstrap {
 		$this->testPluginSetup();
 
 		// display adminpanel-wide diagnostic error messgaes.
-		add_action( 'all_admin_notices', array ( 'Smartling\Helpers\UiMessageHelper', 'displayMessages' ) );
+		add_action( 'all_admin_notices', [ 'Smartling\Helpers\UiMessageHelper', 'displayMessages' ] );
 	}
 
 	protected function testThirdPartyPluginsRequirements () {
@@ -322,7 +321,7 @@ class Bootstrap {
 		$sm = self::getContainer()->get( 'manager.settings' );
 
 		$total    = 0;
-		$profiles = $sm->getEntities( array (), null, $total, true );
+		$profiles = $sm->getEntities( [ ], null, $total, true );
 
 		if ( 0 === count( $profiles ) ) {
 			$mainMessage = 'No active smartling configuration profiles found. Please create at least one on <a href="/wp-admin/admin.php?page=smartling_configuration_profile_list">settings page</a>';

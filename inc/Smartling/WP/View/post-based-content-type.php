@@ -52,31 +52,31 @@ $data = $this->getViewData();
 				}
 			}
 			?>
-		<div class="smtPostWidget-rowWrapper">
-			<div class="smtPostWidget-row">
-				<?= WPAbstract::localeSelectionCheckboxBlock(
-					$nameKey,
-					$locale->getBlogId(),
-					$locale->getLabel(),
-					$value
-				); ?>
-				</div>
-				<div class="smtPostWidget-progress">
-				<?php if ( $value ) { ?>
-					<?= WPAbstract::localeSelectionTranslationStatusBlock(
+			<div class = "smtPostWidget-rowWrapper" >
+				<div class = "smtPostWidget-row" >
+					<?= WPAbstract::localeSelectionCheckboxBlock(
+						$nameKey,
+						$locale->getBlogId(),
+						$locale->getLabel(),
+						$value
+					); ?>
+				</div >
+				<div class = "smtPostWidget-progress" >
+					<?php if ( $value ) { ?>
+						<?= WPAbstract::localeSelectionTranslationStatusBlock(
 							__( $statusValue ),
 							$status,
 							$percent
-					); ?>
-					<?= WPAbstract::inputHidden(
+						); ?>
+						<?= WPAbstract::inputHidden(
 							$id
-					); ?>
-				<?php } ?>
-				</div>
-			</div>
-			<?php } ?>
-		</div >
-		<div class="smtPostWidget-submitBlock">
-			<?= WPAbstract::submitBlock(); ?>
-		</div>
+						); ?>
+					<?php } ?>
+				</div >
+			</div >
+		<?php } ?>
+	</div >
+	<div class = "smtPostWidget-submitBlock" >
+		<?= WPAbstract::submitBlock(); ?>
+	</div >
 </div >

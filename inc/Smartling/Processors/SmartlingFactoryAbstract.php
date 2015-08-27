@@ -17,7 +17,7 @@ abstract class SmartlingFactoryAbstract {
 	 *
 	 * @var array
 	 */
-	private $collection = array ();
+	private $collection = [ ];
 
 	/**
 	 * @return array
@@ -116,7 +116,7 @@ abstract class SmartlingFactoryAbstract {
 			if ( true === $this->getAllowDefault() && null !== $this->getDefaultHandler() ) {
 				return $this->getDefaultHandler();
 			} else {
-				$message = vsprintf( $this->message, array ( $contentType, get_called_class() ) );
+				$message = vsprintf( $this->message, [ $contentType, get_called_class() ] );
 				$this->getLogger()->error( $message );
 				throw new SmartlingInvalidFactoryArgumentException( $message );
 			}

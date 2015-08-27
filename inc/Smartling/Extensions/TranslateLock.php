@@ -26,8 +26,8 @@ class TranslateLock implements ExtensionInterface {
 	 * @inheritdoc
 	 */
 	public function register () {
-		add_action( 'post_submitbox_misc_actions', array ( $this, 'extendSubmitBox' ) );
-		add_action( 'save_post', array ( $this, 'postSaveHandler' ) );
+		add_action( 'post_submitbox_misc_actions', [ $this, 'extendSubmitBox' ] );
+		add_action( 'save_post', [ $this, 'postSaveHandler' ] );
 	}
 
 	/**
@@ -57,10 +57,10 @@ class TranslateLock implements ExtensionInterface {
 	 */
 	private function getSubmission ( $postId ) {
 		$submissionManager = $this->getSubmissionManager();
-		$submissions       = $submissionManager->find( array (
+		$submissions       = $submissionManager->find( [
 			'target_blog_id' => $this->getCurrentBlogId(),
-			'target_id'      => $postId
-		) );
+			'target_id'      => $postId,
+		] );
 
 		if ( 0 < count( $submissions ) ) {
 			$submission = reset( $submissions );
@@ -105,7 +105,7 @@ class TranslateLock implements ExtensionInterface {
 				<input id = "locked_page" type = "checkbox" value = "yes" name = "lock_page" <?php checked( 'yes',
 					$locked ); ?> />
 			</div >
-		<?php
+			<?php
 		} catch ( SmartlingDbException $e ) {
 			return;
 		}
@@ -117,7 +117,7 @@ class TranslateLock implements ExtensionInterface {
 			return;
 		}
 
-		remove_action( 'save_post', array ( $this, 'postSaveHandler' ) );
+		remove_action( 'save_post', [ $this, 'postSaveHandler' ] );
 
 		$curValue = array_key_exists( 'lock_page', $_POST ) && 'yes' === $_POST['lock_page'] ? 1 : 0;
 

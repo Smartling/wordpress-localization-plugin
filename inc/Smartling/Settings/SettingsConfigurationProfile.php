@@ -159,13 +159,13 @@ class SettingsConfigurationProfile {
 	 * @return array
 	 */
 	public function toArray () {
-		return array (
+		return [
 			'apiUrl'        => trim( $this->getApiUrl() ),
 			'projectId'     => trim( $this->getProjectId() ),
 			'key'           => trim( $this->getKey() ),
 			'retrievalType' => trim( $this->getRetrievalType() ),
 			'callBackUrl'   => trim( $this->getCallBackUrl() ),
-			'autoAuthorize' => trim( $this->getAutoAuthorize() )
-		);
+			'autoAuthorize' => trim( $this->getAutoAuthorize() ),
+		];
 	}
 }

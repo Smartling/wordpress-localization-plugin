@@ -12,6 +12,6 @@ namespace Smartling;
  */
 class TestClass {
 	public function __construct ( $logger ) {
-		$logger->info( vsprintf( 'Autoloader successfully found and loaded \'%s\' class', array ( __CLASS__ ) ) );
+		$logger->info( vsprintf( 'Autoloader successfully found and loaded \'%s\' class', [ __CLASS__ ] ) );
 	}
 }

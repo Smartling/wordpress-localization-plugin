@@ -41,7 +41,7 @@ class FileUploadParameterBuilder {
 	 *
 	 * @var array
 	 */
-	protected $_localesToApprove = array ();
+	protected $_localesToApprove = [ ];
 
 	/**
 	 * api overwrite approved locales
@@ -55,16 +55,16 @@ class FileUploadParameterBuilder {
 	 *
 	 * @var array
 	 */
-	public $_parametersArray = array ();
+	public $_parametersArray = [ ];
 
 	public function __construct () {
-		$this->_parametersArray = array (
+		$this->_parametersArray = [
 			'fileType'                 => $this->_fileType,
 			'fileUri'                  => $this->_fileUri,
 			'callbackUrl'              => $this->_callbackUrl,
 			'approved'                 => $this->_approved,
 			'overwriteApprovedLocales' => $this->_overwriteApprovedLocales,
-		);
+		];
 	}
 
 	/**
@@ -151,7 +151,7 @@ class FileUploadParameterBuilder {
 	 * @return array
 	 */
 	public function buildParameters () {
-		$params = array ();
+		$params = [ ];
 		foreach ( $this->_parametersArray as $key => $value ) {
 			$params[ $key ] = $value;
 		}

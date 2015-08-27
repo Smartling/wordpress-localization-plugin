@@ -20,7 +20,7 @@ class TextHelper {
 	 * @return string
 	 */
 	public static function mb_wordwrap ( $string, $width = 75, $break = "\n", $cut = false ) {
-		$breakChars = array (
+		$breakChars = [
 			"\n",
 			"\r",
 			"\t",
@@ -30,7 +30,7 @@ class TextHelper {
 			'.',
 			';',
 			' ',
-		);
+		];
 
 		$cutPosition = 0;
 

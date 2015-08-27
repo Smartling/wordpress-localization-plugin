@@ -126,11 +126,11 @@ class EntityHelper {
 		}
 
 		$message = vsprintf( 'For given content-type: \'%s\' id:%s in blog %s link to original content id not found',
-			array (
+			[
 				$type,
 				$id,
-				$curBlog
-			) );
+				$curBlog,
+			] );
 
 		$this->getLogger()->error( $message );
 

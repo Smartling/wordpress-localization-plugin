@@ -30,7 +30,7 @@ class CheckStatusController extends WPAbstract implements WPHookInterface {
 		wp_enqueue_script(
 			$this->getPluginInfo()->getName() . "submission",
 			$this->getPluginInfo()->getUrl() . 'js/smartling-submissions-check.js',
-			array ( 'jquery' ),
+			[ 'jquery' ],
 			$this->getPluginInfo()->getVersion(),
 			false
 		);
@@ -41,8 +41,8 @@ class CheckStatusController extends WPAbstract implements WPHookInterface {
 	 */
 	public function register () {
 		if ( ! DiagnosticsHelper::isBlocked() ) {
-			add_action( 'wp_ajax_ajax_submissions_update_status', array ( $this, 'ajaxHandler' ) );
-			add_action( 'admin_enqueue_scripts', array ( $this, 'wp_enqueue' ) );
+			add_action( 'wp_ajax_ajax_submissions_update_status', [ $this, 'ajaxHandler' ] );
+			add_action( 'admin_enqueue_scripts', [ $this, 'wp_enqueue' ] );
 		}
 	}
 
@@ -61,15 +61,15 @@ class CheckStatusController extends WPAbstract implements WPHookInterface {
 				$ep      = Bootstrap::getContainer()->get( 'entrypoint' );
 				$results = $ep->bulkCheckByIds( $items );
 
-				$response = array ();
+				$response = [ ];
 				foreach ( $results as $result ) {
 					/** @var SubmissionEntity $result */
-					$response[] = array (
+					$response[] = [
 						"id"         => $result->getId(),
 						"status"     => $result->getStatus(),
 						"color"      => $result->getStatusColor(),
-						"percentage" => $result->getCompletionPercentage()
-					);
+						"percentage" => $result->getCompletionPercentage(),
+					];
 				}
 				die( json_encode( $response ) );
 			}
@@ -84,7 +84,7 @@ class CheckStatusController extends WPAbstract implements WPHookInterface {
 	 * @return array
 	 */
 	public function checkItems ( array $items ) {
-		$result = array ();
+		$result = [ ];
 		$cache  = $this->getCache();
 
 		$cachedItems = $cache->get( self::SUBMISSION_CHECKED_KEY );
@@ -108,10 +108,10 @@ class CheckStatusController extends WPAbstract implements WPHookInterface {
 			}
 
 			if ( ! $isCached ) {
-				$cachedItems[] = array (
+				$cachedItems[] = [
 					"item"       => $item,
-					"expiration" => $slide
-				);
+					"expiration" => $slide,
+				];
 				$result[]      = $item;
 			}
 		}

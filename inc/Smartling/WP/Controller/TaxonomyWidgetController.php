@@ -28,7 +28,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 	 */
 	public function register () {
 		if ( ! DiagnosticsHelper::isBlocked() ) {
-			add_action( 'admin_init', array ( $this, 'init' ) );
+			add_action( 'admin_init', [ $this, 'init' ] );
 		}
 
 	}
@@ -37,15 +37,15 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 	 * block initialization
 	 */
 	public function init () {
-		$taxonomies = get_taxonomies( array (
+		$taxonomies = get_taxonomies( [
 			'public'   => true,
-			'_builtin' => true
-		), 'names', 'and' );
+			'_builtin' => true,
+		], 'names', 'and' );
 
 		if ( $taxonomies ) {
 			foreach ( $taxonomies as $taxonomy ) {
-				add_action( "{$taxonomy}_edit_form", array ( $this, 'preView' ), 100, 1 );
-				add_action( "edited_{$taxonomy}", array ( $this, 'save' ), 10, 1 );
+				add_action( "{$taxonomy}_edit_form", [ $this, 'preView' ], 100, 1 );
+				add_action( "edited_{$taxonomy}", [ $this, 'save' ], 10, 1 );
 			}
 		}
 	}
@@ -62,7 +62,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 		if ( array_key_exists( $wordpressType, $reverseMap ) ) {
 			return $reverseMap[ $wordpressType ];
 		} else {
-			$message = vsprintf( 'Tried to translate non supported taxonomy:%s', array ( $wordpressType ) );
+			$message = vsprintf( 'Tried to translate non supported taxonomy:%s', [ $wordpressType ] );
 
 			$this->getLogger()->warning( $message );
 
@@ -84,17 +84,17 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 				$applicableProfiles = $this->getEntityHelper()->getSettingsManager()->findEntityByMainLocale( $curBlogId );
 
 				if ( 0 < count( $applicableProfiles ) ) {
-					$submissions = $this->getManager()->find( array (
+					$submissions = $this->getManager()->find( [
 						'source_blog_id' => $curBlogId,
 						'source_id'      => $term->term_id,
 						'content_type'   => $taxonomyType,
-					) );
+					] );
 
-					$this->view( array (
+					$this->view( [
 							'submissions' => $submissions,
 							'term'        => $term,
 							'profile'     => reset( $applicableProfiles ),
-						)
+						]
 					);
 				} else {
 					echo HtmlTagGeneratorHelper::tag( 'p', __( 'No suitable configuration profile found.' ) );
@@ -106,10 +106,10 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 		} catch ( SmartlingDbException $e ) {
 			$message = 'Failed to search for the original taxonomy. No source taxonomy found for blog %s, taxonomy_id %s. Hiding widget';
 			$this->getLogger()->warning(
-				vsprintf( $message, array (
+				vsprintf( $message, [
 					$this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
-					$term->term_id
-				) )
+					$term->term_id,
+				] )
 			);
 			/*
 			 * echo '<p>' . __( vsprintf( $this->noOriginalFound, array ( $taxonomyType ) ) ) . '</p>';
@@ -127,16 +127,15 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 			return;
 		}
 
-		remove_action( "edited_{$termType}", array ( $this, 'save' ) );
+		remove_action( "edited_{$termType}", [ $this, 'save' ] );
 
-		if (!isset($_POST[ self::WIDGET_DATA_NAME ]))
-		{
+		if ( ! isset( $_POST[ self::WIDGET_DATA_NAME ] ) ) {
 			return;
 		}
 
 		$data = $_POST[ self::WIDGET_DATA_NAME ];
 
-		$locales = array ();
+		$locales = [ ];
 
 		if ( null !== $data && array_key_exists( 'locales', $data ) ) {
 
@@ -171,11 +170,11 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 					case __( 'Download' ):
 
 						$submissions = $this->getManager()->find(
-							array (
+							[
 								'source_blog_id' => $curBlogId,
 								'source_id'      => $term_id,
 								'content_type'   => $termType,
-							)
+							]
 						);
 
 						foreach ( $submissions as $submission ) {
@@ -186,6 +185,6 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface {
 				}
 			}
 		}
-		add_action( "edited_{$termType}", array ( $this, 'save' ) );
+		add_action( "edited_{$termType}", [ $this, 'save' ] );
 	}
 }

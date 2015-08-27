@@ -15,14 +15,14 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 		wp_enqueue_script(
 			$this->getPluginInfo()->getName() . "settings",
 			$this->getPluginInfo()->getUrl() . 'js/smartling-connector-admin.js',
-			array ( 'jquery' ),
+			[ 'jquery' ],
 			$this->getPluginInfo()->getVersion(),
 			false
 		);
 		wp_register_style(
 			$this->getPluginInfo()->getName(),
 			$this->getPluginInfo()->getUrl() . 'css/smartling-connector-admin.css',
-			array (),
+			[ ],
 			$this->getPluginInfo()->getVersion(),
 			'all'
 		);
@@ -30,12 +30,12 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 	}
 
 	public function register () {
-		add_action( 'admin_enqueue_scripts', array ( $this, 'wp_enqueue' ) );
-		add_action( 'admin_menu', array ( $this, 'menu' ) );
-		add_action( 'network_admin_menu', array ( $this, 'menu' ) );
-		add_action( 'admin_post_smartling_configuration_profile_save', array ( $this, 'save' ) );
-		add_action( 'admin_post_smartling_run_cron', array ( $this, 'run_cron' ) );
-		add_action( 'admin_post_smartling_download_log_file', array ( $this, 'download_log' ) );
+		add_action( 'admin_enqueue_scripts', [ $this, 'wp_enqueue' ] );
+		add_action( 'admin_menu', [ $this, 'menu' ] );
+		add_action( 'network_admin_menu', [ $this, 'menu' ] );
+		add_action( 'admin_post_smartling_configuration_profile_save', [ $this, 'save' ] );
+		add_action( 'admin_post_smartling_run_cron', [ $this, 'run_cron' ] );
+		add_action( 'admin_post_smartling_download_log_file', [ $this, 'download_log' ] );
 	}
 
 	public function menu () {
@@ -45,10 +45,10 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 			'Configuration Profile Setup',
 			'Administrator',
 			'smartling_configuration_profile_setup',
-			array (
+			[
 				$this,
-				'edit'
-			)
+				'edit',
+			]
 		);
 	}
 
@@ -67,7 +67,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 		$settingsManager = $this->getEntityHelper()->getSettingsManager();
 
 		if ( 0 === $profileId ) {
-			$profile = $settingsManager->createProfile( array () );
+			$profile = $settingsManager->createProfile( [ ] );
 		} else {
 			$profiles = $settingsManager->getEntityById( $profileId );
 
@@ -133,7 +133,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 		}
 
 		if ( array_key_exists( 'targetLocales', $settings ) ) {
-			$locales = array ();
+			$locales = [ ];
 
 			foreach ( $settings['targetLocales'] as $blogId => $settings ) {
 				$tLocale = new TargetLocale();

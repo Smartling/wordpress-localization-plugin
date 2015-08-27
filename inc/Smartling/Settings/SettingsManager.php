@@ -14,9 +14,9 @@ use Smartling\Helpers\QueryBuilder\QueryBuilder;
  * @package Smartling\Settings
  */
 class SettingsManager extends EntityManagerAbstract {
-	public function getEntities ( $sortOptions = array (), $pageOptions = null, & $totalCount, $onlyActive = false ) {
+	public function getEntities ( $sortOptions = [ ], $pageOptions = null, & $totalCount, $onlyActive = false ) {
 		$validRequest = $this->validateRequest( $sortOptions, $pageOptions );
-		$result       = array ();
+		$result       = [ ];
 		if ( $validRequest ) {
 
 			$cb = null;
@@ -28,9 +28,9 @@ class SettingsManager extends EntityManagerAbstract {
 					Condition::getCondition(
 						ConditionBuilder::CONDITION_SIGN_EQ,
 						'is_active',
-						array (
-							1
-						)
+						[
+							1,
+						]
 					)
 				);
 			}
@@ -50,8 +50,8 @@ class SettingsManager extends EntityManagerAbstract {
 
 	public function getEntityById ( $id ) {
 		$cond = ConditionBlock::getConditionBlock();
-		$cond->addCondition( Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'id', array ( $id ) ) );
-		$dataQuery = $this->buildQuery( array (), null, $cond );
+		$cond->addCondition( Condition::getCondition( ConditionBuilder::CONDITION_SIGN_EQ, 'id', [ $id ] ) );
+		$dataQuery = $this->buildQuery( [ ], null, $cond );
 		$result    = $this->fetchData( $dataQuery );
 
 		return $result;
@@ -77,9 +77,9 @@ class SettingsManager extends EntityManagerAbstract {
 	public function buildCountQuery () {
 		$query = QueryBuilder::buildSelectQuery(
 			$this->getDbal()->completeTableName( ConfigurationProfileEntity::getTableName() ),
-			array ( array ( 'COUNT(*)', 'cnt' ) ),
+			[ [ 'COUNT(*)', 'cnt' ] ],
 			null,
-			array (),
+			[ ],
 			null
 		);
 		$this->getLogger()->debug( $query );
@@ -106,7 +106,7 @@ class SettingsManager extends EntityManagerAbstract {
 			Condition::getCondition(
 				ConditionBuilder::CONDITION_SIGN_EQ,
 				'original_blog_id',
-				array ( $sourceBlogId )
+				[ $sourceBlogId ]
 			)
 		);
 
@@ -114,11 +114,11 @@ class SettingsManager extends EntityManagerAbstract {
 			Condition::getCondition(
 				ConditionBuilder::CONDITION_SIGN_EQ,
 				'is_active',
-				array ( 1 )
+				[ 1 ]
 			)
 		);
 
-		$result = $this->fetchData( $this->buildQuery( array (), null, $conditionBlock ) );
+		$result = $this->fetchData( $this->buildQuery( [ ], null, $conditionBlock ) );
 
 		return $result;
 	}
@@ -137,7 +137,7 @@ class SettingsManager extends EntityManagerAbstract {
 	public function storeEntity ( ConfigurationProfileEntity $entity ) {
 		$entityId = $entity->getId();
 
-		$is_insert = in_array( $entityId, array ( 0, null ), true );
+		$is_insert = in_array( $entityId, [ 0, null ], true );
 
 		$fields = $entity->toArray( false );
 
@@ -158,7 +158,7 @@ class SettingsManager extends EntityManagerAbstract {
 				Condition::getCondition(
 					ConditionBuilder::CONDITION_SIGN_EQ,
 					'id',
-					array ( $entityId )
+					[ $entityId ]
 				)
 			);
 			$storeQuery = QueryBuilder::buildUpdateQuery(
@@ -167,7 +167,7 @@ class SettingsManager extends EntityManagerAbstract {
 				),
 				$fields,
 				$conditionBlock,
-				array ( 'limit' => 1 )
+				[ 'limit' => 1 ]
 			);
 		}
 
@@ -178,7 +178,7 @@ class SettingsManager extends EntityManagerAbstract {
 
 		if ( false === $result ) {
 			$message = vsprintf( 'Failed saving submission entity to database with following error message: %s',
-				array ( $this->getDbal()->getLastErrorMessage() ) );
+				[ $this->getDbal()->getLastErrorMessage() ] );
 
 			$this->getLogger()->error( $message );
 		}
