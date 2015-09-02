@@ -21,6 +21,7 @@ parameters:
     - 'wp.ext.partner'
     - 'wp.ext.testimonial'
 
+
   # Property mapper general definitions
   # all not listed here should be sent for translation
   field.processor:
@@ -142,10 +143,15 @@ services:
       - [ "setContentIoFactory", [ "@factory.contentIO" ]]
       - [ "setCache", [ "@site.cache" ]]
 
-  #wrapper.entity.menu:
-  #  class: Smartling\DbAl\WordpressContentEntities\MenuEntity
-  #  arguments:
-  #    - "@logger"
+  wrapper.entity.menu:
+    class: Smartling\DbAl\WordpressContentEntities\MenuEntity
+    arguments:
+      - "@logger"
+
+  wrapper.entity.menuitem:
+      class: Smartling\DbAl\WordpressContentEntities\MenuItemEntity
+      arguments:
+        - "@logger"
 
   wrapper.entity.post:
     class: Smartling\DbAl\WordpressContentEntities\PostEntity
@@ -187,7 +193,8 @@ services:
       - "@logger"
     calls:
       - [ "registerHandler", ["post", "@wrapper.entity.post"]]
-      #- [ "registerHandler", ["nav_menu", "@wrapper.entity.menu"]]
+      - [ "registerHandler", ["nav_menu", "@wrapper.entity.menu"]]
+      - [ "registerHandler", ["nav_menu_item", "@wrapper.entity.menuitem"]]
       - [ "registerHandler", ["page", "@wrapper.entity.page"]]
       - [ "registerHandler", ["category", "@wrapper.entity.category"]]
       - [ "registerHandler", ["post_tag", "@wrapper.entity.tag"]]

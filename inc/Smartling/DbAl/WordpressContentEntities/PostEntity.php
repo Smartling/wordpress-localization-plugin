@@ -91,6 +91,11 @@ class PostEntity extends EntityAbstract {
 
 
 		$this->setEntityFields( $this->fields );
+
+		$this->setRelatedTypes( [
+			WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY,
+			WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG,
+		] );
 	}
 
 	/**

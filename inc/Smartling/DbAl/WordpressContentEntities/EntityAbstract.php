@@ -35,6 +35,37 @@ abstract class EntityAbstract {
 	 */
 	private $logger;
 
+	/**
+	 * @var array List of related content-types to search
+	 */
+	private $relatedTypes = [ ];
+
+	/**
+	 * @return array
+	 */
+	public function getRelatedTypes () {
+		return $this->relatedTypes;
+	}
+
+	/**
+	 * @param array $relatedTypes
+	 */
+	public function setRelatedTypes ( $relatedTypes ) {
+		$this->relatedTypes = $relatedTypes;
+	}
+
+	public function resetRelatedTypes ( ) {
+		$this->relatedTypes = [];
+	}
+
+	/**
+	 * @param string $relatedType
+	 */
+	public function addRelatedType ( $relatedType ) {
+		$this->relatedTypes[] = $relatedType;
+	}
+
+
 	private $entityArrayState = [ ];
 
 	private function initEntityArrayState () {

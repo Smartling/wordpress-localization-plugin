@@ -34,7 +34,12 @@ class WordpressContentTypeHelper {
 	/**
 	 * Wordpress theme menu
 	 */
-	//const CONTENT_TYPE_NAV_MENU = 'nav_menu';
+	const CONTENT_TYPE_NAV_MENU = 'nav_menu';
+
+	/**
+	 * Wordpress Navigation menu item
+	 */
+	const CONTENT_TYPE_NAV_MENU_ITEM = 'nav_menu_item';
 
 	/**
 	 * 'term' based content type
@@ -74,14 +79,15 @@ class WordpressContentTypeHelper {
 	 * @var array
 	 */
 	private static $_reverse_map = [
-		'post'        => self::CONTENT_TYPE_POST,
-		'page'        => self::CONTENT_TYPE_PAGE,
-		'category'    => self::CONTENT_TYPE_CATEGORY,
-		'post_tag'    => self::CONTENT_TYPE_POST_TAG,
-		'policy'      => self::CONTENT_TYPE_POST_POLICY,
-		'partner'     => self::CONTENT_TYPE_POST_PARTNER,
-		'testimonial' => self::CONTENT_TYPE_POST_TESTIMONIAL,
-		//'nav_menu'    => self::CONTENT_TYPE_NAV_MENU,
+		'post'          => self::CONTENT_TYPE_POST,
+		'page'          => self::CONTENT_TYPE_PAGE,
+		'category'      => self::CONTENT_TYPE_CATEGORY,
+		'post_tag'      => self::CONTENT_TYPE_POST_TAG,
+		'policy'        => self::CONTENT_TYPE_POST_POLICY,
+		'partner'       => self::CONTENT_TYPE_POST_PARTNER,
+		'testimonial'   => self::CONTENT_TYPE_POST_TESTIMONIAL,
+		'nav_menu'      => self::CONTENT_TYPE_NAV_MENU,
+		'nav_menu_item' => self::CONTENT_TYPE_NAV_MENU_ITEM,
 	];
 
 	/**
@@ -110,7 +116,8 @@ class WordpressContentTypeHelper {
 			self::CONTENT_TYPE_PAGE             => __( 'Page' ),
 			self::CONTENT_TYPE_CATEGORY         => __( 'Category' ),
 			self::CONTENT_TYPE_POST_TAG         => __( 'Tag' ),
-			//self::CONTENT_TYPE_NAV_MENU         => __( 'Navigation Menu' ),
+			self::CONTENT_TYPE_NAV_MENU         => __( 'Navigation Menu' ),
+			self::CONTENT_TYPE_NAV_MENU_ITEM    => __( 'Navigation Menu Item' ),
 		];
 	}
 
@@ -121,7 +128,7 @@ class WordpressContentTypeHelper {
 		return [
 			self::CONTENT_TYPE_CATEGORY,
 			self::CONTENT_TYPE_POST_TAG,
-			//self::CONTENT_TYPE_NAV_MENU,
+			self::CONTENT_TYPE_NAV_MENU,
 		];
 	}
 

@@ -463,7 +463,7 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 				];
 			case WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG:
 			case WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY:
-				//ase WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU:
+			case WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU:
 				return [
 					'id'      => $item->term_id,
 					'title'   => $item->name,

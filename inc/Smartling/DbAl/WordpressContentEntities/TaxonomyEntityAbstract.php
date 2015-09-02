@@ -222,6 +222,8 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 
 		$args = [ ];
 
+
+
 		foreach ( $argFields as $field ) {
 			$args[ $field ] = $data[ $field ];
 		}
@@ -231,18 +233,25 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract {
 			: wp_insert_term( $entity->name, $entity->taxonomy, $args );
 
 		if ( $result instanceof \WP_Error ) {
-			$message = vsprintf(
-				'An error occurred while saving taxonomy id=%s, type=%s: %s',
-				[
-					( $entity->term_id ? $entity->term_id : '<none>' ),
-					$this->getType(),
-					$result->get_error_message(),
-				]
-			);
+			if ( isset( $result->error_data ) && array_key_exists( 'term_exists', $result->error_data ) ) {
+				$entity->term_id = (int) $result->error_data['term_exists'];
 
-			$this->getLogger()->error( $message );
+				return $this->set( $entity );
 
-			throw new SmartlingDbException( $message );
+			} else {
+				$message = vsprintf (
+					'An error occurred while saving taxonomy id=%s, type=%s: %s',
+					[
+						( $entity->term_id ? $entity->term_id : '<none>' ),
+						$this->getType(),
+						$result->get_error_message(),
+					]
+				);
+
+				$this->getLogger()->error( $message );
+
+				throw new SmartlingDbException( $message );
+			}
 		}
 
 		foreach ( $result as $field => $value ) {
