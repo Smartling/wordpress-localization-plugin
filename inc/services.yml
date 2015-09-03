@@ -35,7 +35,6 @@ parameters:
       - 'post_modified'
       - 'post_modified_gmt'
       - 'guid'
-      - 'menu_order'
       - 'comment_count'
       - 'post_name'
       - 'post_parent'
@@ -75,6 +74,7 @@ parameters:
         - 'background'
         - 'effective_date'
         - 'icon'
+        - 'menu_order'
         - 'sm_body_class'
         - '_wp_page_template'
         - 'ccb_curated_page' #

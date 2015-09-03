@@ -654,7 +654,11 @@ class SmartlingCore {
 
 		try {
 
-			$entity = $this->prepareTargetEntity( $entity );
+			// detect old (ver < 24) submissions and fix them
+			if (0 === (int) $entity->getTargetId())
+			{
+				$entity = $this->prepareTargetEntity( $entity );
+			}
 
 			$data = $this->getApiWrapper()->downloadFile( $entity );
 
@@ -691,9 +695,9 @@ class SmartlingCore {
 
 			$this->getLogger()->error( $message );
 			$messages[] = $message;
-		} /*catch ( Exception $e ) {
+		} catch ( Exception $e ) {
 			$messages[] = $e->getMessage();
-		}*/
+		}
 
 		return $messages;
 	}
