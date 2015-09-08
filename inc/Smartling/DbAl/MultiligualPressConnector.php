@@ -144,12 +144,34 @@ class MultiligualPressConnector extends LocalizationPluginAbstract {
 		return new Mlp_Site_Relations( $this->getWpdb(), self::ML_SITE_LINK_TABLE );
 	}
 
+	private function getContentLinkTable () {
+
+		$tableName = $this->getWpdb()->base_prefix . self::ML_CONTENT_LINK_TABLE;
+
+		if ( class_exists( '\Mlp_Db_Table_Name' ) ) {
+			/**
+			 * New version of MLP (WP 4.3+)
+			 */
+			return new \Mlp_Db_Table_Name(
+				$tableName,
+				new \Mlp_Db_Table_List(
+					$this->getWpdb()
+				)
+			);
+		} else {
+			return $tableName;
+		}
+	}
+
 	/**
 	 * @return Mlp_Content_Relations_Interface
 	 */
 	private function initContentRelationSubsystem () {
-		return new Mlp_Content_Relations( $this->getWpdb(), $this->initiSiteRelationsSubsystem(),
-			$this->getWpdb()->base_prefix . self::ML_CONTENT_LINK_TABLE );
+		return new Mlp_Content_Relations(
+			$this->getWpdb(),
+			$this->initiSiteRelationsSubsystem(),
+			$this->getContentLinkTable()
+		);
 	}
 
 	/**
