@@ -486,6 +486,19 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 
 		$types = $this->getActiveContentTypes( $this->entityHelper->getSiteHelper() );
 
+		$restrictedTypes = WordpressContentTypeHelper::getTypesRestrictedToBulkSubmit();
+
+		$typesFiltered = [];
+
+		foreach ($types as $value => $title)
+		{
+			if (in_array($value,$restrictedTypes))
+			{
+				continue;
+			}
+			$typesFiltered[$value] = $title;
+		}
+
 		$value = $this->getFormElementValue(
 			$controlName,
 			$this->defaultValues[ $controlName ]
@@ -501,7 +514,7 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 				'select',
 				HtmlTagGeneratorHelper::renderSelectOptions(
 					$value,
-					$types
+					$typesFiltered
 				),
 				[
 					'id'   => $this->buildHtmlTagName( $controlName ),

@@ -121,6 +121,13 @@ class WordpressContentTypeHelper {
 		];
 	}
 
+	public static function getTypesRestrictedToBulkSubmit()
+	{
+		return [
+			self::CONTENT_TYPE_NAV_MENU_ITEM,
+		];
+	}
+
 	/**
 	 * @return array
 	 */
