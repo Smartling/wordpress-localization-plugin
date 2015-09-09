@@ -46,6 +46,7 @@ parameters:
       - 'term_taxonomy_id'
       - 'parent'
       - 'count'
+      - '_menu_item_object_id'
     key: # add jey to XML
       seo: # key="seo"
         - '_yoast_wpseo_title'
@@ -106,6 +107,9 @@ parameters:
         - '_post_restored_from'
         - 'sm_dh_button_cta_link'
         - 'sm_dh_sidebar_cta_au_link_yellow'
+        - '_menu_item_object'
+        - '_menu_item_classes'
+        - '_menu_item_type'
       regexp: # by value match
        - '^\d+([,\.]\d+)?$'
        - '^(y|yes|n|no|on|off|default|in|out|html|cta\d+|cta|any|null|text|surveys|choose|button)$'

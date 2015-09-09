@@ -350,6 +350,9 @@ class SmartlingCore {
 							)
 						);
 
+						$data['meta']['_menu_item_object_id'] =
+							reset($menuItem->getMetadata()['_menu_item_object_id']);
+
 						if ( $needBlogSwitch ) {
 							$this->getSiteHelper()->restoreBlogId();
 						}
