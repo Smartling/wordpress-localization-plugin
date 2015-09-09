@@ -589,6 +589,12 @@ class SmartlingCore {
 	protected function prepareTargetEntity ( SubmissionEntity $submission ) {
 		$update = 0 !== (int) $submission->getTargetId();
 
+		if (true === $update)
+		{
+			// do not overwrite existent target content
+			return $submission;
+		}
+
 		$originalContent = $this->readContentEntity( $submission );
 
 		$original = XmlEncoder::xmlDecode(
