@@ -399,4 +399,15 @@ class XmlEncoder {
 
 		return self::structurizeArray( $flatSource );;
 	}
+
+	public static function hasStringsForTranslation($xml)
+	{
+		$xpath = self::prepareXPath( $xml );
+
+		$stringPath = '/data/string';
+
+		$nodeList = $xpath->query( $stringPath );
+
+		return $nodeList->length > 0;
+	}
 }

@@ -170,13 +170,9 @@ class Bootstrap {
 	public function shutdownHandler () {
 		$logger = Bootstrap::getLogger();
 
-		$loggingPattern = E_ALL
-		                  ^ E_NOTICE
-		                  ^ E_WARNING
-		                  ^ E_USER_NOTICE
-		                  ^ E_USER_WARNING
-		                  ^ E_STRICT
-		                  ^ E_DEPRECATED;
+		$skipLogging = E_NOTICE | E_WARNING | E_USER_NOTICE | E_USER_WARNING | E_STRICT | E_DEPRECATED;
+
+		$loggingPattern = E_ALL ^ $skipLogging;
 
 		$data = error_get_last();
 
@@ -185,7 +181,7 @@ class Bootstrap {
 		 */
 		$errorType = &$data['type'];
 
-		if ( $errorType && $loggingPattern ) {
+		if ( $errorType & $loggingPattern ) {
 			$message = "An Error (0x{$data['type']}) occurred and Wordpress is down.\n";
 			$message .= "Message: '{$data['message']}'\n";
 			$message .= "Location: '{$data['file']}:{$data['line']}'\n";

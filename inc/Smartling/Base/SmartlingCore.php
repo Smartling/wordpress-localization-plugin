@@ -466,7 +466,6 @@ class SmartlingCore {
 
 		$source['meta'] = $source['meta'] ? : [ ];
 
-
 		$xml = XmlEncoder::xmlEncode( $source );
 
 		$submission = $this->prepareTargetEntity( $submission );
@@ -475,7 +474,7 @@ class SmartlingCore {
 
 		$result = false;
 
-		if ( empty( $source['entity'] ) && empty( $source['meta'] ) ) {
+		if ( false === XmlEncoder::hasStringsForTranslation($xml) ) {
 			$this->getLogger()->error( vsprintf( 'Nothing to translate for submission #%s',
 				[ $submission->getId() ] ) );
 			$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_FAILED );
