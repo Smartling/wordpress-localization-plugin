@@ -129,6 +129,13 @@ parameters:
   submission.pagesize: 10
 
 services:
+
+  helper.customMenu:
+    class: Smartling\Helpers\CustomMenuContentTypeHelper
+    calls:
+      - [ "setSiteHelper", [ "@site.helper" ] ]
+      - [ "setContentIoFactory", [ "@factory.contentIO" ] ]
+
   wrapper.sdk.api.smartling:
     class: Smartling\ApiWrapper
     arguments:
@@ -146,6 +153,8 @@ services:
       - [ "setMultilangProxy", [ "@multilang.proxy" ]]
       - [ "setContentIoFactory", [ "@factory.contentIO" ]]
       - [ "setCache", [ "@site.cache" ]]
+      - [ "setCustomMenuHelper", [ "@helper.customMenu" ]]
+
 
   wrapper.entity.menu:
     class: Smartling\DbAl\WordpressContentEntities\MenuEntity
