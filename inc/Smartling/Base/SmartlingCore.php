@@ -3,7 +3,9 @@ namespace Smartling\Base;
 
 use Exception;
 
+use Smartling\Bootstrap;
 use Smartling\DbAl\WordpressContentEntities\MenuItemEntity;
+use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\WordpressContentTypeHelper;
@@ -37,10 +39,13 @@ class SmartlingCore extends SmartlingCoreAbstract {
 			WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG => [ ],
 		];
 
+
 		if ( ! empty( $relatedContentTypes ) ) {
 
 			foreach ( $relatedContentTypes as $contentType ) {
-				if ( in_array( $contentType, $termList ) ) {
+				if ( in_array( $contentType,
+						$termList ) && WordpressContentTypeHelper::CONTENT_TYPE_WIDGET !== $submission->getContentType()
+				) {
 					$terms = $this->getCustomMenuHelper()->getTerms( $submission, $contentType );
 
 					if ( 0 < count( $terms ) ) {
@@ -129,6 +134,52 @@ class SmartlingCore extends SmartlingCoreAbstract {
 						$accumulator[ WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU ][] = $targetContent->getPK();
 						unset ( $targetContent, $relatedSubmission );
 					}
+				} elseif (
+					WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU === $contentType
+					&& WordpressContentTypeHelper::CONTENT_TYPE_WIDGET === $submission->getContentType()
+				) {
+					/**
+					 * @var WidgetEntity $originalEntity
+					 */
+					$menuId = (int) $originalEntity->getSettings()['nav_menu'];
+
+					if ( 0 !== $menuId ) {
+						$newMenuId = $this->translateAndGetTargetId(
+							WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU,
+							$submission->getSourceBlogId(),
+							$menuId,
+							$submission->getTargetBlogId()
+						);
+
+						/**
+						 * @var WidgetEntity $targetContent
+						 */
+						$targetContent = $this->readTargetContentEntity( $submission );
+
+						$settings             = $targetContent->getSettings();
+						$settings['nav_menu'] = $newMenuId;
+						$targetContent->setSettings( $settings );
+
+						$needBlogSwitch = $submission->getTargetBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
+
+						if ( $needBlogSwitch ) {
+							$this
+								->getSiteHelper()
+								->switchBlogId( $submission->getTargetBlogId() );
+						}
+
+						$ioWrapper = $this
+							->getContentIoFactory()
+							->getMapper( $submission->getContentType() );
+
+						$ioWrapper->set( $targetContent );
+
+						if ( $needBlogSwitch ) {
+							$this->getSiteHelper()->restoreBlogId();
+						}
+
+					}
+
 				}
 			}
 		}

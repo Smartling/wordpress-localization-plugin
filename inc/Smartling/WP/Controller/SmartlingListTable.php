@@ -21,10 +21,14 @@ class SmartlingListTable extends WP_List_Table {
 	protected function getActiveContentTypes ( SiteHelper $siteHelper ) {
 		$supportedTypes = WordpressContentTypeHelper::getLabelMap();
 
+		$specialTypes = [WordpressContentTypeHelper::CONTENT_TYPE_WIDGET,];
+
 		$postTypes = $siteHelper->getPostTypes();
 		$termTypes = $siteHelper->getTermTypes();
 
-		$activeTypes = array_merge( $postTypes, $termTypes );
+		$activeTypes = $specialTypes;
+
+		$activeTypes = array_merge($activeTypes, $postTypes, $termTypes );
 
 		$types = [ ];
 

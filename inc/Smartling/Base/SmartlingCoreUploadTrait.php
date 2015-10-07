@@ -2,6 +2,8 @@
 namespace Smartling\Base;
 
 use Exception;
+use Smartling\Bootstrap;
+use Smartling\Exception\EntityNotFoundException;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -12,60 +14,75 @@ use Smartling\Submissions\SubmissionEntity;
  */
 trait SmartlingCoreUploadTrait {
 
+	/**
+	 * @param $id
+	 *
+	 * @return bool
+	 */
 	public function sendForTranslationBySubmissionId ( $id ) {
 		return $this->sendForTranslationBySubmission( $this->loadSubmissionEntityById( $id ) );
 	}
 
-
+	/**
+	 * @param SubmissionEntity $submission
+	 *
+	 * @return bool
+	 */
 	public function sendForTranslationBySubmission ( SubmissionEntity $submission ) {
+		try {
+			$contentEntity = $this->readContentEntity( $submission );
 
-		$contentEntity = $this->readContentEntity( $submission );
+			$submission->setSourceContentHash( $contentEntity->calculateHash() );
+			$submission->setSourceTitle( $contentEntity->getTitle() );
 
-		$submission->setSourceContentHash( $contentEntity->calculateHash() );
-		$submission->setSourceTitle( $contentEntity->getTitle() );
-
-		if ( null === $submission->getId() ) {
-			// generate URI
-			$submission->getFileUri();
-			$submission = $this->getSubmissionManager()->storeEntity( $submission );
-		}
-
-		$source = [
-			'entity' => $contentEntity->toArray(),
-			'meta'   => $contentEntity->getMetadata(),
-		];
-
-		$source['meta'] = $source['meta'] ? : [ ];
-
-		$xml = XmlEncoder::xmlEncode( $source );
-
-		$submission = $this->prepareTargetEntity( $submission );
-
-		$this->prepareRelatedSubmissions( $submission );
-
-		$result = false;
-
-		if ( false === XmlEncoder::hasStringsForTranslation( $xml ) ) {
-			$this->getLogger()->error( vsprintf( 'Nothing to translate for submission #%s',
-				[ $submission->getId() ] ) );
-			$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_FAILED );
-		} else {
-			try {
-				$result = self::SEND_MODE === self::SEND_MODE_FILE
-					? $this->sendFile( $submission, $xml )
-					: $this->sendStream( $submission, $xml );
-
-				$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS );
-
-			} catch ( Exception $e ) {
-				$this->getLogger()->error( $e->getMessage() );
-				$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_FAILED );
+			if ( null === $submission->getId() ) {
+				// generate URI
+				$submission->getFileUri();
+				$submission = $this->getSubmissionManager()->storeEntity( $submission );
 			}
+
+			$source = [
+				'entity' => $contentEntity->toArray(),
+				'meta'   => $contentEntity->getMetadata(),
+			];
+
+			$source['meta'] = $source['meta'] ? : [ ];
+
+			$xml = XmlEncoder::xmlEncode( $source );
+
+			$submission = $this->prepareTargetEntity( $submission );
+
+			$this->prepareRelatedSubmissions( $submission );
+
+			$result = false;
+
+			if ( false === XmlEncoder::hasStringsForTranslation( $xml ) ) {
+				$this->getLogger()->error( vsprintf( 'Nothing to translate for submission #%s',
+					[ $submission->getId() ] ) );
+				$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_FAILED );
+			} else {
+				try {
+					$result = self::SEND_MODE === self::SEND_MODE_FILE
+						? $this->sendFile( $submission, $xml )
+						: $this->sendStream( $submission, $xml );
+
+					$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS );
+
+				} catch ( Exception $e ) {
+					$this->getLogger()->error( $e->getMessage() );
+					$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_FAILED );
+				}
+			}
+
+			$submission = $this->getSubmissionManager()->storeEntity( $submission );
+
+			return $result;
+		} catch ( EntityNotFoundException $e ) {
+			$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_FAILED );
+			$this->getLogger()->error( $e->getMessage() );
+			$this->getSubmissionManager()->storeEntity( $submission );
 		}
 
-		$submission = $this->getSubmissionManager()->storeEntity( $submission );
-
-		return $result;
 	}
 
 	/**

@@ -71,8 +71,16 @@ trait SmartlingCoreTrait {
 		$targetBlog,
 		$targetEntity = null
 	) {
-		return $this->getSubmissionManager()->getSubmissionEntity( $contentType, $sourceBlog, $sourceEntity,
-			$targetBlog, $this->getMultilangProxy(), $targetEntity );
+		return $this
+			->getSubmissionManager()
+			->getSubmissionEntity(
+				$contentType,
+				$sourceBlog,
+				$sourceEntity,
+				$targetBlog,
+				$this->getMultilangProxy(),
+				$targetEntity
+			);
 	}
 
 	/**
@@ -94,6 +102,11 @@ trait SmartlingCoreTrait {
 		return $contentEntity;
 	}
 
+	/**
+	 * @param SubmissionEntity $entity
+	 *
+	 * @return SubmissionEntity
+	 */
 	private function readTargetContentEntity ( SubmissionEntity $entity ) {
 		$needBlogSwitch = $this->getSiteHelper()->getCurrentBlogId() !== $entity->getTargetBlogId();
 
@@ -146,7 +159,7 @@ trait SmartlingCoreTrait {
 			$targetContent = $this->readTargetContentEntity( $submission );
 		}
 
-		unset ( $original['entity']['ID'], $original['entity']['term_id'] );
+		unset ( $original['entity']['ID'], $original['entity']['term_id'], $original['entity']['id'] );
 
 		foreach ( $original['entity'] as $k => $v ) {
 			$targetContent->{$k} = $v;

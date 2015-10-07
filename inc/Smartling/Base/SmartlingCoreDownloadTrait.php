@@ -3,6 +3,8 @@
 namespace Smartling\Base;
 
 use Exception;
+use Smartling\Bootstrap;
+use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\InvalidXMLException;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\XmlEncoder;
@@ -25,13 +27,20 @@ trait SmartlingCoreDownloadTrait {
 
 			$this->getLogger()->warning( $msg );
 
-			return [ 'Translation is locked for downloading' ];
+			return [
+				vsprintf(
+					'Translation of file %s for %s locale is locked for downloading',
+					[
+						$entity->getFileUri(),
+						$entity->getTargetLocale(),
+					]
+				),
+			];
 		}
 
 		$messages = [ ];
 
 		try {
-
 			// detect old (ver < 24) submissions and fix them
 			if ( 0 === (int) $entity->getTargetId() ) {
 				$entity = $this->prepareTargetEntity( $entity );
@@ -72,7 +81,11 @@ trait SmartlingCoreDownloadTrait {
 
 			$this->getLogger()->error( $message );
 			$messages[] = $message;
-		} catch ( Exception $e ) {
+		} /*catch (EntityNotFoundException $e) {
+			$entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+			$this->getLogger()->error($e->getMessage());
+			$this->getSubmissionManager()->storeEntity( $entity );
+		} */ catch ( Exception $e ) {
 			$messages[] = $e->getMessage();
 		}
 

@@ -60,6 +60,12 @@ class WordpressContentTypeHelper {
 	 */
 	const CONTENT_TYPE_POST_TESTIMONIAL = 'testimonial';
 
+
+	/**
+	 * Wordpress Theme Widgets
+	 */
+	const CONTENT_TYPE_WIDGET = 'theme_widget';
+
 	/**
 	 * Checks if Wordpress i10n function __ is registered
 	 * if not - throws an SmartlingDirectRunRuntimeException exception
@@ -88,6 +94,7 @@ class WordpressContentTypeHelper {
 		'testimonial'   => self::CONTENT_TYPE_POST_TESTIMONIAL,
 		'nav_menu'      => self::CONTENT_TYPE_NAV_MENU,
 		'nav_menu_item' => self::CONTENT_TYPE_NAV_MENU_ITEM,
+		'theme_widget'  => self::CONTENT_TYPE_WIDGET,
 	];
 
 	/**
@@ -118,11 +125,11 @@ class WordpressContentTypeHelper {
 			self::CONTENT_TYPE_POST_TAG         => __( 'Tag' ),
 			self::CONTENT_TYPE_NAV_MENU         => __( 'Navigation Menu' ),
 			self::CONTENT_TYPE_NAV_MENU_ITEM    => __( 'Navigation Menu Item' ),
+			self::CONTENT_TYPE_WIDGET           => __( 'Theme Widget' ),
 		];
 	}
 
-	public static function getTypesRestrictedToBulkSubmit()
-	{
+	public static function getTypesRestrictedToBulkSubmit () {
 		return [
 			self::CONTENT_TYPE_NAV_MENU_ITEM,
 		];

@@ -11,6 +11,7 @@ use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\StringHelper;
+use Smartling\Helpers\ThemeSidebarHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressUserHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -461,6 +462,7 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 					'locales' => null,
 					'updated' => $item->post_date,
 				];
+				break;
 			case WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG:
 			case WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY:
 			case WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU:
@@ -473,6 +475,18 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 					'locales' => null,
 					'updated' => null,
 				];
+				break;
+			case WordpressContentTypeHelper::CONTENT_TYPE_WIDGET:
+				return [
+					'id'      => $item->getId(),
+					'title'   => '"' . $item->getTitle() . '" on ' . ThemeSidebarHelper::getSideBarLabel($item->getBar()) . '(position ' . $item->getBarPosition() . ')',
+					'type'    => $item->getType(),
+					'author'  => $item->getIndex(),
+					'status'  => null,
+					'locales' => null,
+					'updated' => null,
+				];
+				break;
 		}
 
 		return [ ];
@@ -488,15 +502,13 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 
 		$restrictedTypes = WordpressContentTypeHelper::getTypesRestrictedToBulkSubmit();
 
-		$typesFiltered = [];
+		$typesFiltered = [ ];
 
-		foreach ($types as $value => $title)
-		{
-			if (in_array($value,$restrictedTypes))
-			{
+		foreach ( $types as $value => $title ) {
+			if ( in_array( $value, $restrictedTypes ) ) {
 				continue;
 			}
-			$typesFiltered[$value] = $title;
+			$typesFiltered[ $value ] = $title;
 		}
 
 		$value = $this->getFormElementValue(

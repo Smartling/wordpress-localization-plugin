@@ -22,6 +22,13 @@ use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
  */
 class Bootstrap {
 
+	public static function DebugPrint ( $data, $die = false ) {
+		echo '<pre>' . htmlentities( var_export( $data, true ) ) . '</pre>';
+		if ( true === $die ) {
+			die;
+		}
+	}
+
 	public function __construct () {
 		ignore_user_abort( true );
 		set_time_limit( 0 );

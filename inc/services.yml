@@ -4,7 +4,7 @@ parameters:
     "polylang": false
 
   plugin.name: smartling-connector
-  plugin.version: 1.0.24@2015-09-09
+  plugin.version: 1.0.25@2015-10-08
   plugin.domain: smartling-connector
   wp.hooks:
     - 'wp.cron'
@@ -40,13 +40,14 @@ parameters:
       - 'post_parent'
       - 'hash'
       - 'ID'
+      - 'id'
       - 'term_id'
       - 'slug'
       - 'term_group'
       - 'term_taxonomy_id'
       - 'parent'
-      - 'count'
       - '_menu_item_object_id'
+      - 'smartlingId'
     key: # add jey to XML
       seo: # key="seo"
         - '_yoast_wpseo_title'
@@ -110,6 +111,23 @@ parameters:
         - '_menu_item_object'
         - '_menu_item_classes'
         - '_menu_item_type'
+        ### Widget fields
+        - 'bar'
+        - 'widgetType'
+        - 'count'
+        - 'dropdown'
+        - 'hierarchical'
+        - 'sortby'
+        - 'exclude'
+        - 'number'
+        - 'filter'
+        - 'taxonomy'
+        - 'show_date'
+        - 'url'
+        - 'items'
+        - 'show_summary'
+        - 'show_author'
+        - 'show_date'
       regexp: # by value match
        - '^\d+([,\.]\d+)?$'
        - '^(y|yes|n|no|on|off|default|in|out|html|cta\d+|cta|any|null|text|surveys|choose|button)$'
@@ -155,6 +173,10 @@ services:
       - [ "setCache", [ "@site.cache" ]]
       - [ "setCustomMenuHelper", [ "@helper.customMenu" ]]
 
+  wrapper.widget:
+    class: Smartling\DbAl\WordpressContentEntities\WidgetEntity
+    arguments:
+      - "@logger"
 
   wrapper.entity.menu:
     class: Smartling\DbAl\WordpressContentEntities\MenuEntity
@@ -175,6 +197,7 @@ services:
     class: Smartling\DbAl\WordpressContentEntities\PartnerEntity
     arguments:
       - "@logger"
+
   wrapper.entity.ext.testimonial:
     class: Smartling\DbAl\WordpressContentEntities\TestimonialEntity
     arguments:
@@ -214,6 +237,7 @@ services:
       - [ "registerHandler", ["policy", "@wrapper.entity.ext.policy"]]
       - [ "registerHandler", ["partner", "@wrapper.entity.ext.partner"]]
       - [ "registerHandler", ["testimonial", "@wrapper.entity.ext.testimonial"]]
+      - [ "registerHandler", ["theme_widget", "@wrapper.widget"]]
 
   fileLoggerLineFormatter:
     class: Monolog\Formatter\LineFormatter
