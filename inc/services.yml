@@ -134,6 +134,7 @@ parameters:
        - '^(http:|https:|field_)'
        - '^(callout|card-list|card-icon-list|cta|cta-hero|cta-sidebar|image-text-list|list-icon|list|nav|template-list|embeds|html|basic|select|gold|platinum)$' # SM CuratedPage markers
        - '^(taxonomy|category|\s*)$'
+       - '^(true|false|enabled|disabled|background-image)$'
 
   logger.channel: default
   logger.filehandler.standard.filename: %plugin.dir%/logs/logfile
