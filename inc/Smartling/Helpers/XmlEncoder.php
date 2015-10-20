@@ -401,8 +401,7 @@ class XmlEncoder {
 		return self::structurizeArray( $flatSource );;
 	}
 
-	public static function hasStringsForTranslation($xml)
-	{
+	public static function hasStringsForTranslation ( $xml ) {
 		$xpath = self::prepareXPath( $xml );
 
 		$stringPath = '/data/string';
