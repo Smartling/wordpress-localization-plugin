@@ -144,14 +144,15 @@ class XmlEncoder {
 	private static function removeFields ( $array, $list ) {
 
 		$rebuild = [ ];
-		foreach ( $array as $key => $value ) {
-			foreach ( $list as $item ) {
 
-				if ( false !== strpos( $key, urlencode( $item ) ) ) {
-					continue 2;
-				}
+		$pattern = '#(' . implode( '|', $list ) . ')$#us';
+
+		foreach ( $array as $key => $value ) {
+			if ( 1 === preg_match( $pattern, $key ) ) {
+				continue;
+			} else {
+				$rebuild[ $key ] = $value;
 			}
-			$rebuild[ $key ] = $value;
 		}
 
 		return $rebuild;
