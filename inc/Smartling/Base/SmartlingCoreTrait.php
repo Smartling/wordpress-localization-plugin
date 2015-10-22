@@ -245,4 +245,78 @@ trait SmartlingCoreTrait {
 		}
 	}
 
+	/**
+	 * @param int $siteId
+	 *
+	 * @return array
+	 */
+	private function getUploadDirForSite ( $siteId ) {
+		$needSiteChange = (int) $siteId !== $this->getSiteHelper()->getCurrentBlogId();
+
+		if ( $needSiteChange ) {
+			$this->getSiteHelper()->switchBlogId( (int) $siteId );
+		}
+
+		$data = wp_upload_dir();
+
+		if ( $needSiteChange ) {
+			$this->getSiteHelper()->restoreBlogId();
+		}
+
+		return $data;
+	}
+
+	/**
+	 * @param SubmissionEntity $submission
+	 *
+	 * @return array
+	 */
+	private function getContentEntityMetaBySubmission ( SubmissionEntity $submission ) {
+
+		$contentEntity = $this->readContentEntity( $submission );
+
+		$needSiteChange = $submission->getSourceBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
+
+		if ( $needSiteChange ) {
+			$this->getSiteHelper()->switchBlogId( $submission->getSourceBlogId() );
+		}
+
+		$metadata = $contentEntity->getMetadata();
+
+		if ( $needSiteChange ) {
+			$this->getSiteHelper()->restoreBlogId();
+		}
+
+		return $metadata;
+	}
+
+	/**
+	 * Collects and returns info to copy attachment media
+	 * @param SubmissionEntity $submission
+	 *
+	 * @return array
+	 */
+	private function getAttachmentFileInfoBySubmission ( SubmissionEntity $submission ) {
+
+		$info = $this->readContentEntity( $submission );
+
+		$sourceSiteUploadInfo = $this->getUploadDirForSite( $submission->getSourceBlogId() );
+		$targetSiteUploadInfo = $this->getUploadDirForSite( $submission->getTargetBlogId() );
+
+		$sourceMetadata = $this->getContentEntityMetaBySubmission( $submission );
+
+		$result = [
+			'uri'                => $info->guid,
+			'relative_path'      => reset( $sourceMetadata['_wp_attached_file'] ),
+			'source_path_prefix' => $sourceSiteUploadInfo['basedir'],
+			'target_path_prefix' => $targetSiteUploadInfo['basedir'],
+			'base_url_target'    => $targetSiteUploadInfo['baseurl'],
+			'filename'           => pathinfo( reset( $sourceMetadata['_wp_attached_file'] ),
+					PATHINFO_FILENAME ) . '.' . pathinfo( reset( $sourceMetadata['_wp_attached_file'] ),
+					PATHINFO_EXTENSION ),
+		];
+
+		return $result;
+	}
+
 }

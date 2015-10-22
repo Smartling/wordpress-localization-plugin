@@ -111,6 +111,8 @@ parameters:
         - '_menu_item_object'
         - '_menu_item_classes'
         - '_menu_item_type'
+        - '_wp_attached_file'
+        - 'file'
         ### Widget fields
         - 'bar'
         - 'widgetType'
@@ -224,6 +226,11 @@ services:
     arguments:
       - "@logger"
 
+  wrapper.entity.attachment:
+      class: Smartling\DbAl\WordpressContentEntities\AttachmentEntity
+      arguments:
+        - "@logger"
+
   factory.contentIO:
     class: Smartling\Processors\ContentEntitiesIOFactory
     arguments:
@@ -239,6 +246,7 @@ services:
       - [ "registerHandler", ["partner", "@wrapper.entity.ext.partner"]]
       - [ "registerHandler", ["testimonial", "@wrapper.entity.ext.testimonial"]]
       - [ "registerHandler", ["theme_widget", "@wrapper.widget"]]
+      - [ "registerHandler", ["attachment", "@wrapper.entity.attachment"]]
 
   fileLoggerLineFormatter:
     class: Monolog\Formatter\LineFormatter

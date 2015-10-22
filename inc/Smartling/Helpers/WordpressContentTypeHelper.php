@@ -60,6 +60,10 @@ class WordpressContentTypeHelper {
 	 */
 	const CONTENT_TYPE_POST_TESTIMONIAL = 'testimonial';
 
+	/**
+	 * 'post' based content type for files
+	 */
+	const CONTENT_TYPE_MEDIA_ATTACHMENT = 'attachment';
 
 	/**
 	 * Wordpress Theme Widgets
@@ -95,6 +99,7 @@ class WordpressContentTypeHelper {
 		'nav_menu'      => self::CONTENT_TYPE_NAV_MENU,
 		'nav_menu_item' => self::CONTENT_TYPE_NAV_MENU_ITEM,
 		'theme_widget'  => self::CONTENT_TYPE_WIDGET,
+		'attachment'    => self::CONTENT_TYPE_MEDIA_ATTACHMENT,
 	];
 
 	/**
@@ -126,6 +131,7 @@ class WordpressContentTypeHelper {
 			self::CONTENT_TYPE_NAV_MENU         => __( 'Navigation Menu' ),
 			self::CONTENT_TYPE_NAV_MENU_ITEM    => __( 'Navigation Menu Item' ),
 			self::CONTENT_TYPE_WIDGET           => __( 'Theme Widget' ),
+			self::CONTENT_TYPE_MEDIA_ATTACHMENT => __( 'Media Attachment' ),
 		];
 	}
 

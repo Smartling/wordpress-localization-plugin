@@ -450,6 +450,7 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 		switch ( $type ) {
 			case WordpressContentTypeHelper::CONTENT_TYPE_POST:
 			case WordpressContentTypeHelper::CONTENT_TYPE_PAGE:
+			case WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT:
 			case WordpressContentTypeHelper::CONTENT_TYPE_POST_POLICY:
 			case WordpressContentTypeHelper::CONTENT_TYPE_POST_PARTNER:
 			case WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL:

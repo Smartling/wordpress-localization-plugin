@@ -4,6 +4,8 @@ namespace Smartling\Base;
 use Exception;
 use Smartling\Bootstrap;
 use Smartling\Exception\EntityNotFoundException;
+use Smartling\Helpers\AttachmentHelper;
+use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -48,9 +50,21 @@ trait SmartlingCoreUploadTrait {
 
 			$source['meta'] = $source['meta'] ? : [ ];
 
-			$xml = XmlEncoder::xmlEncode( $source );
-
 			$submission = $this->prepareTargetEntity( $submission );
+
+			if ( WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT === $submission->getContentType() ) {
+				$fileData         = $this->getAttachmentFileInfoBySubmission( $submission );
+				$sourceFileFsPath = $fileData['source_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
+				$targetFileFsPath = $fileData['target_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
+				$mediaCloneResult = AttachmentHelper::cloneFile( $sourceFileFsPath, $targetFileFsPath, true );
+				$result           = AttachmentHelper::CODE_SUCCESS === $mediaCloneResult;
+				if ( AttachmentHelper::CODE_SUCCESS !== $mediaCloneResult ) {
+					$message = vsprintf( 'Error %s happened while working with attachment.', [ $mediaCloneResult ] );
+					$this->getLogger()->error( $message );
+				}
+			}
+
+			$xml = XmlEncoder::xmlEncode( $source );
 
 			$this->prepareRelatedSubmissions( $submission );
 
