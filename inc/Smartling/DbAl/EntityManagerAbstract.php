@@ -140,5 +140,18 @@ abstract class EntityManagerAbstract {
 		return $results;
 	}
 
+
+
+	/**
+	 * @param string $query
+	 */
+	public function logQuery($query)
+	{
+		if (true === $this->getDbal()->needRawSqlLog())
+		{
+			$this->getLogger()->debug($query);
+		}
+	}
+
 	abstract protected function dbResultToEntity ( array $dbRow );
 }

@@ -69,7 +69,7 @@ class SettingsManager extends EntityManagerAbstract {
 			$sortOptions,
 			$pageOptions
 		);
-		$this->getLogger()->debug( $query );
+		$this->logQuery($query);
 
 		return $query;
 	}
@@ -82,7 +82,7 @@ class SettingsManager extends EntityManagerAbstract {
 			[ ],
 			null
 		);
-		$this->getLogger()->debug( $query );
+		$this->logQuery($query);
 
 		return $query;
 	}
@@ -172,7 +172,7 @@ class SettingsManager extends EntityManagerAbstract {
 		}
 
 		// log store query before execution
-		$this->getLogger()->debug( $storeQuery );
+		$this->logQuery($storeQuery);
 
 		$result = $this->getDbal()->query( $storeQuery );
 

@@ -35,10 +35,15 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 	 */
 	private $logger;
 
+	private $needSqlLog = false;
+
 	/**
 	 * @param LoggerInterface $logger
+	 * @param bool            $needLogRawSql
 	 */
-	public function __construct ( LoggerInterface $logger ) {
+	public function __construct ( LoggerInterface $logger, $needLogRawSql ) {
+
+		$this->needSqlLog = (bool) $needLogRawSql;
 
 		$this->logger = $logger;
 
@@ -391,5 +396,12 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 	 */
 	function getLastErrorMessage () {
 		return $this->getWpdb()->last_error;
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	function needRawSqlLog () {
+		return $this->needSqlLog;
 	}
 }

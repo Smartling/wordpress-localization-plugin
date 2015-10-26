@@ -6,6 +6,7 @@ use DOMAttr;
 use DOMCdataSection;
 use DOMDocument;
 use DOMXPath;
+use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
 use Smartling\Exception\InvalidXMLException;
 
@@ -17,6 +18,19 @@ use Smartling\Exception\InvalidXMLException;
  * @package Smartling\Processors
  */
 class XmlEncoder {
+
+
+	/**
+	 * Logs XML related message.
+	 * Controlled by logger.smartling_verbose_output_for_xml_coding bool value
+	 *
+	 * @param $message
+	 */
+	public static function logMessage ( $message ) {
+		if ( true === (bool) Bootstrap::getContainer()->getParameter( 'logger.smartling_verbose_output_for_xml_coding' ) ) {
+			Bootstrap::getLogger()->debug( $message );
+		}
+	}
 
 	private static $magicComments = [
 		'smartling.translate_paths = data/string',
@@ -142,13 +156,12 @@ class XmlEncoder {
 	}
 
 	private static function removeFields ( $array, $list ) {
-
 		$rebuild = [ ];
-
 		$pattern = '#(' . implode( '|', $list ) . ')$#us';
-
 		foreach ( $array as $key => $value ) {
 			if ( 1 === preg_match( $pattern, $key ) ) {
+				$debugMessage = vsprintf( 'Field \'%s\' removed', [ $key ] );
+				self::logMessage( $debugMessage );
 				continue;
 			} else {
 				$rebuild[ $key ] = $value;
@@ -167,6 +180,8 @@ class XmlEncoder {
 		$rebuild = [ ];
 		foreach ( $array as $key => $value ) {
 			if ( empty( $value ) ) {
+				$debugMessage = vsprintf( 'Removed empty field \'%s\'', [ $key ] );
+				self::logMessage( $debugMessage );
 				continue;
 			}
 			$rebuild[ $key ] = $value;
@@ -185,7 +200,10 @@ class XmlEncoder {
 		$rebuild = [ ];
 		foreach ( $array as $key => $value ) {
 			foreach ( $list as $item ) {
-				if ( preg_match( "/{$item}/ius", $value ) ) {
+				if ( preg_match( "/{$item}/us", $value ) ) {
+					$debugMessage = vsprintf( 'Removed field by value: filedName:\'%s\' fieldValue:\'%s\' filter:\'%s\'',
+						[ $key, $value, $item ] );
+					self::logMessage( $debugMessage );
 					continue 2;
 				}
 			}
@@ -296,8 +314,8 @@ class XmlEncoder {
 		return true;
 	}
 
-	private static function encodeSource ( $source, $stringLength = 80 ) {
-		return implode( "\n", str_split( base64_encode( serialize( $source ) ), $stringLength ) );
+	private static function encodeSource ( $source, $stringLength = 120 ) {
+		return "\n" . implode( "\n", str_split( base64_encode( serialize( $source ) ), $stringLength ) );
 	}
 
 	private static function decodeSource ( $source ) {
@@ -363,6 +381,7 @@ class XmlEncoder {
 	}
 
 	public static function xmlDecode ( $content ) {
+		self::logMessage(vsprintf('Decoding XML file: %s',[$content]));
 		$xpath = self::prepareXPath( $content );
 
 		$stringPath = '/data/string';

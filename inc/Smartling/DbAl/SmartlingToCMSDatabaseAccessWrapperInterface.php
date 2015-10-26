@@ -20,6 +20,12 @@ interface SmartlingToCMSDatabaseAccessWrapperInterface {
 	const SORT_OPTION_DESC = 'DESC';
 
 	/**
+	 * Returns true if need raw SQL logging
+	 * @return bool
+	 */
+	function needRawSqlLog();
+
+	/**
 	 * Executes SQL query and returns the result
 	 *
 	 * @param $query
