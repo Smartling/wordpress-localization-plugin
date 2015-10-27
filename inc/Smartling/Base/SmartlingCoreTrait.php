@@ -2,6 +2,7 @@
 
 namespace Smartling\Base;
 
+use Smartling\Bootstrap;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Submissions\SubmissionEntity;
@@ -240,8 +241,21 @@ trait SmartlingCoreTrait {
 	 * @param array          $properties
 	 */
 	private function setValues ( EntityAbstract $entity, array $properties ) {
+
 		foreach ( $properties as $propertyName => $propertyValue ) {
-			$entity->{$propertyName} = $propertyValue;
+			if ( $entity->{$propertyName} != $propertyValue ) {
+				$message = vsprintf(
+					'Replacing field %s with value %s to value %s',
+					[
+						$propertyName,
+						json_encode( $entity->{$propertyName}, JSON_UNESCAPED_UNICODE ),
+						json_encode( $propertyValue, JSON_UNESCAPED_UNICODE ),
+					]
+				);
+
+				$this->getLogger()->debug( $message );
+				$entity->{$propertyName} = $propertyValue;
+			}
 		}
 	}
 
@@ -292,6 +306,7 @@ trait SmartlingCoreTrait {
 
 	/**
 	 * Collects and returns info to copy attachment media
+	 *
 	 * @param SubmissionEntity $submission
 	 *
 	 * @return array

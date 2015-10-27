@@ -7,8 +7,10 @@ use Smartling\Bootstrap;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\InvalidXMLException;
 use Smartling\Helpers\DateTimeHelper;
+use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 
 /**
  * Class SmartlingCoreDownloadTrait
@@ -38,6 +40,11 @@ trait SmartlingCoreDownloadTrait {
 			];
 		}
 
+		if ( SubmissionEntity::SUBMISSION_STATUS_NEW === $entity->getStatus() ) {
+			//Fix for trying to download before send.
+			$this->sendForTranslationBySubmission($entity);
+		}
+
 		$messages = [ ];
 
 		try {
@@ -58,6 +65,8 @@ trait SmartlingCoreDownloadTrait {
 
 			$targetContent = $this->saveEntity( $entity->getContentType(), $entity->getTargetBlogId(), $targetContent );
 
+			// $this->fixRelations($entity);
+
 			if ( array_key_exists( 'meta', $translatedFields ) && 0 < count( $translatedFields['meta'] ) ) {
 				$this->saveMetaProperties( $targetContent, $translatedFields, $entity );
 			}
@@ -65,6 +74,8 @@ trait SmartlingCoreDownloadTrait {
 			if ( 100 === $entity->getCompletionPercentage() ) {
 				$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_COMPLETED );
 			}
+
+			$this->prepareRelatedSubmissions($entity);
 
 			$entity->appliedDate = DateTimeHelper::nowAsString();
 
@@ -108,5 +119,34 @@ trait SmartlingCoreDownloadTrait {
 
 		return $this->downloadTranslationBySubmission( $submission );
 
+	}
+
+	private function fixRelations ( SubmissionEntity $submission ) {
+		switch ( $submission->getContentType() ) {
+			case WordpressContentTypeHelper::CONTENT_TYPE_WIDGET: {
+				$originalSettings = $this->readContentEntity( $submission );
+				$targetContent    = $this->readTargetContentEntity( $submission );
+				$originalSettings = $originalSettings->getSettings();
+				$targetSettings   = $targetContent->getSettings();
+
+				$relationFields = [
+					'attachment_id',
+				];
+
+				foreach ( $relationFields as $field ) {
+					$targetSettings[ $field ] = $this->translateAndGetTargetId(
+						WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT,
+						$submission->getSourceBlogId(),
+						(int) $originalSettings[ $field ],
+						$submission->getTargetBlogId() );
+				}
+
+				$targetContent->setSettings( $targetSettings );
+
+				$contentIOWrapper = $this->getContentIOWrapper( $submission );
+				$contentIOWrapper->set( $targetContent );
+				break;
+			}
+		}
 	}
 }

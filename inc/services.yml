@@ -48,6 +48,9 @@ parameters:
       - 'parent'
       - '_menu_item_object_id'
       - 'smartlingId'
+      - 'attachment_id'
+      - 'testimonial_id'
+      - 'testimonials'
     key: # add jey to XML
       seo: # key="seo"
         - '_yoast_wpseo_title'

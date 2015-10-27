@@ -65,7 +65,11 @@ class WidgetEntity extends EntityAbstract {
 		] );
 
 		$this->setEntityFields( $this->fields );
-		$this->setRelatedTypes( [ WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU ] );
+		$this->setRelatedTypes( [
+			WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU,
+			WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT,
+			WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL,
+		] );
 	}
 
 	/**

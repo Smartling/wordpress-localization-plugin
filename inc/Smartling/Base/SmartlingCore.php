@@ -57,6 +57,134 @@ class SmartlingCore extends SmartlingCoreAbstract {
 								$submission->getTargetBlogId() );
 						}
 					}
+				} elseif ( WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT === $contentType ) {
+					if ( WordpressContentTypeHelper::CONTENT_TYPE_WIDGET === $submission->getContentType() ) {
+
+						$widgetSettings = $originalEntity->getSettings();
+
+						if ( array_key_exists( 'attachment_id', $widgetSettings ) ) {
+							$newTestimonialId = $this->translateAndGetTargetId(
+								WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT,
+								$submission->getSourceBlogId(),
+								(int) $widgetSettings['attachment_id'],
+								$submission->getTargetBlogId()
+							);
+
+							/**
+							 * @var WidgetEntity $targetContent
+							 */
+							$targetContent = $this->readTargetContentEntity( $submission );
+
+							$settings = $targetContent->getSettings();
+
+							$settings['attachment_id'] = $newTestimonialId;
+
+							$targetContent->setSettings( $settings );
+
+							$needBlogSwitch = $submission->getTargetBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
+
+							if ( $needBlogSwitch ) {
+								$this
+									->getSiteHelper()
+									->switchBlogId( $submission->getTargetBlogId() );
+							}
+
+							$ioWrapper = $this
+								->getContentIoFactory()
+								->getMapper( $submission->getContentType() );
+
+							$ioWrapper->set( $targetContent );
+
+							if ( $needBlogSwitch ) {
+								$this->getSiteHelper()->restoreBlogId();
+							}
+						}
+					}
+				} elseif ( WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL === $contentType ) {
+
+
+					$widgetSettings = $originalEntity->getSettings();
+
+					if ( array_key_exists( 'testimonial_id', $widgetSettings ) ) {
+						$newTestimonialId = $this->translateAndGetTargetId(
+							WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL,
+							$submission->getSourceBlogId(),
+							(int) $widgetSettings['testimonial_id'],
+							$submission->getTargetBlogId()
+						);
+
+						/**
+						 * @var WidgetEntity $targetContent
+						 */
+						$targetContent = $this->readTargetContentEntity( $submission );
+
+						$settings = $targetContent->getSettings();
+
+						$settings['testimonial_id'] = $newTestimonialId;
+
+						$targetContent->setSettings( $settings );
+
+						$needBlogSwitch = $submission->getTargetBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
+
+						if ( $needBlogSwitch ) {
+							$this
+								->getSiteHelper()
+								->switchBlogId( $submission->getTargetBlogId() );
+						}
+
+						$ioWrapper = $this
+							->getContentIoFactory()
+							->getMapper( $submission->getContentType() );
+
+						$ioWrapper->set( $targetContent );
+
+						if ( $needBlogSwitch ) {
+							$this->getSiteHelper()->restoreBlogId();
+						}
+					}
+
+					if ( array_key_exists( 'testimonials', $widgetSettings ) ) {
+						$newTestimonials = [ ];
+						foreach ( $widgetSettings['testimonials'] as $testimonialId ) {
+							$newTestimonials[] = $this->translateAndGetTargetId(
+								WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL,
+								$submission->getSourceBlogId(),
+								(int) $testimonialId,
+								$submission->getTargetBlogId()
+							);
+						}
+
+						/**
+						 * @var WidgetEntity $targetContent
+						 */
+						$targetContent = $this->readTargetContentEntity( $submission );
+
+						$settings = $targetContent->getSettings();
+
+						$settings['testimonials'] = $newTestimonials;
+
+						$targetContent->setSettings( $settings );
+
+						$needBlogSwitch = $submission->getTargetBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
+
+						if ( $needBlogSwitch ) {
+							$this
+								->getSiteHelper()
+								->switchBlogId( $submission->getTargetBlogId() );
+						}
+
+						$ioWrapper = $this
+							->getContentIoFactory()
+							->getMapper( $submission->getContentType() );
+
+						$ioWrapper->set( $targetContent );
+
+						if ( $needBlogSwitch ) {
+							$this->getSiteHelper()->restoreBlogId();
+						}
+
+					}
+
 				} elseif ( WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM === $contentType ) {
 
 					$ids = $this
