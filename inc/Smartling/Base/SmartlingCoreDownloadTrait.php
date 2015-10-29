@@ -4,9 +4,11 @@ namespace Smartling\Base;
 
 use Exception;
 use Smartling\Bootstrap;
+use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\InvalidXMLException;
 use Smartling\Helpers\DateTimeHelper;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Submissions\SubmissionEntity;
@@ -42,7 +44,7 @@ trait SmartlingCoreDownloadTrait {
 
 		if ( SubmissionEntity::SUBMISSION_STATUS_NEW === $entity->getStatus() ) {
 			//Fix for trying to download before send.
-			$this->sendForTranslationBySubmission($entity);
+			$this->sendForTranslationBySubmission( $entity );
 		}
 
 		$messages = [ ];
@@ -75,7 +77,7 @@ trait SmartlingCoreDownloadTrait {
 				$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_COMPLETED );
 			}
 
-			$this->prepareRelatedSubmissions($entity);
+			$this->prepareRelatedSubmissions( $entity );
 
 			$entity->appliedDate = DateTimeHelper::nowAsString();
 
@@ -92,11 +94,17 @@ trait SmartlingCoreDownloadTrait {
 
 			$this->getLogger()->error( $message );
 			$messages[] = $message;
-		} /*catch (EntityNotFoundException $e) {
-			$entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
-			$this->getLogger()->error($e->getMessage());
+		} catch ( EntityNotFoundException $e ) {
+			$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_FAILED );
+			$this->getLogger()->error( $e->getMessage() );
 			$this->getSubmissionManager()->storeEntity( $entity );
-		} */ catch ( Exception $e ) {
+		} catch ( BlogNotFoundException $e ) {
+			$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_FAILED );
+			$this->getLogger()->error( $e->getMessage() );
+			$this->getSubmissionManager()->storeEntity( $entity );
+			/** @var SiteHelper $sh */
+			$this->handleBadBlogId($entity);
+		} catch ( Exception $e ) {
 			$messages[] = $e->getMessage();
 		}
 
@@ -119,34 +127,5 @@ trait SmartlingCoreDownloadTrait {
 
 		return $this->downloadTranslationBySubmission( $submission );
 
-	}
-
-	private function fixRelations ( SubmissionEntity $submission ) {
-		switch ( $submission->getContentType() ) {
-			case WordpressContentTypeHelper::CONTENT_TYPE_WIDGET: {
-				$originalSettings = $this->readContentEntity( $submission );
-				$targetContent    = $this->readTargetContentEntity( $submission );
-				$originalSettings = $originalSettings->getSettings();
-				$targetSettings   = $targetContent->getSettings();
-
-				$relationFields = [
-					'attachment_id',
-				];
-
-				foreach ( $relationFields as $field ) {
-					$targetSettings[ $field ] = $this->translateAndGetTargetId(
-						WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT,
-						$submission->getSourceBlogId(),
-						(int) $originalSettings[ $field ],
-						$submission->getTargetBlogId() );
-				}
-
-				$targetContent->setSettings( $targetSettings );
-
-				$contentIOWrapper = $this->getContentIOWrapper( $submission );
-				$contentIOWrapper->set( $targetContent );
-				break;
-			}
-		}
 	}
 }

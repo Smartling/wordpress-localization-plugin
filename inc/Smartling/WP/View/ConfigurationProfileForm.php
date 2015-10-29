@@ -3,6 +3,7 @@
  * @var PluginInfo $pluginInfo
  */
 
+use Smartling\Exception\BlogNotFoundException;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -108,12 +109,16 @@ if ( 0 === $profileId ) {
 					<?php
 					$locales = [ ];
 					foreach ( $settingsManager->getSiteHelper()->listBlogs() as $blogId ) {
-						$locales[ $blogId ] = $settingsManager
-							->getSiteHelper()
-							->getBlogLabelById(
-								$settingsManager->getPluginProxy(),
-								$blogId
-							);
+
+						try {
+							$locales[ $blogId ] = $settingsManager
+								->getSiteHelper()
+								->getBlogLabelById(
+									$settingsManager->getPluginProxy(),
+									$blogId
+								);
+						} catch ( BlogNotFoundException $e ) {
+						}
 					}
 					?>
 					<p ><?= __( 'Site default language is: ', $this->getPluginInfo()->getDomain() ) ?>

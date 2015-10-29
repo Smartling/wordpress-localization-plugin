@@ -3,6 +3,7 @@
 namespace Smartling\WP\Controller;
 
 use Smartling\Bootstrap;
+use Smartling\Exception\BlogNotFoundException;
 use Smartling\Settings\Locale;
 use Smartling\Settings\TargetLocale;
 use Smartling\WP\JobEngine;
@@ -136,14 +137,17 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 			$locales = [ ];
 
 			foreach ( $settings['targetLocales'] as $blogId => $settings ) {
-				$tLocale = new TargetLocale();
-				$tLocale->setBlogId( $blogId );
-				$tLocale->setLabel( $this->getEntityHelper()->getSiteHelper()->getBlogLabelById( $this->getEntityHelper()->getConnector(),
-					$blogId ) );
-				$tLocale->setEnabled( array_key_exists( 'enabled', $settings ) && 'on' === $settings['enabled'] );
-				$tLocale->setSmartlingLocale( array_key_exists( 'target', $settings ) ? $settings['target'] : - 1 );
+				try {
+					$tLocale = new TargetLocale();
+					$tLocale->setBlogId( $blogId );
+					$tLocale->setLabel( $this->getEntityHelper()->getSiteHelper()->getBlogLabelById( $this->getEntityHelper()->getConnector(),
+						$blogId ) );
+					$tLocale->setEnabled( array_key_exists( 'enabled', $settings ) && 'on' === $settings['enabled'] );
+					$tLocale->setSmartlingLocale( array_key_exists( 'target', $settings ) ? $settings['target'] : - 1 );
 
-				$locales[] = $tLocale;
+					$locales[] = $tLocale;
+				} catch ( BlogNotFoundException $e ) {
+				}
 			}
 
 			$profile->setTargetLocales( $locales );

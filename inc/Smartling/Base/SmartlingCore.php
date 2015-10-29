@@ -6,6 +6,7 @@ use Exception;
 use Smartling\Bootstrap;
 use Smartling\DbAl\WordpressContentEntities\MenuItemEntity;
 use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
+use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\WordpressContentTypeHelper;
@@ -39,34 +40,77 @@ class SmartlingCore extends SmartlingCoreAbstract {
 			WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG => [ ],
 		];
 
+		try {
+			if ( ! empty( $relatedContentTypes ) ) {
 
-		if ( ! empty( $relatedContentTypes ) ) {
+				foreach ( $relatedContentTypes as $contentType ) {
+					if ( in_array( $contentType,
+							$termList ) && WordpressContentTypeHelper::CONTENT_TYPE_WIDGET !== $submission->getContentType()
+					) {
+						$terms = $this->getCustomMenuHelper()->getTerms( $submission, $contentType );
 
-			foreach ( $relatedContentTypes as $contentType ) {
-				if ( in_array( $contentType,
-						$termList ) && WordpressContentTypeHelper::CONTENT_TYPE_WIDGET !== $submission->getContentType()
-				) {
-					$terms = $this->getCustomMenuHelper()->getTerms( $submission, $contentType );
-
-					if ( 0 < count( $terms ) ) {
-						foreach ( $terms as $element ) {
-							$accumulator[ $contentType ][] = $this->translateAndGetTargetId(
-								$element->taxonomy,
-								$submission->getSourceBlogId(),
-								$element->term_id,
-								$submission->getTargetBlogId() );
+						if ( 0 < count( $terms ) ) {
+							foreach ( $terms as $element ) {
+								$accumulator[ $contentType ][] = $this->translateAndGetTargetId(
+									$element->taxonomy,
+									$submission->getSourceBlogId(),
+									$element->term_id,
+									$submission->getTargetBlogId() );
+							}
 						}
-					}
-				} elseif ( WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT === $contentType ) {
-					if ( WordpressContentTypeHelper::CONTENT_TYPE_WIDGET === $submission->getContentType() ) {
+					} elseif ( WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT === $contentType ) {
+						if ( WordpressContentTypeHelper::CONTENT_TYPE_WIDGET === $submission->getContentType() ) {
+
+							$widgetSettings = $originalEntity->getSettings();
+
+							if ( array_key_exists( 'attachment_id', $widgetSettings ) ) {
+								$newTestimonialId = $this->translateAndGetTargetId(
+									WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT,
+									$submission->getSourceBlogId(),
+									(int) $widgetSettings['attachment_id'],
+									$submission->getTargetBlogId()
+								);
+
+								/**
+								 * @var WidgetEntity $targetContent
+								 */
+								$targetContent = $this->readTargetContentEntity( $submission );
+
+								$settings = $targetContent->getSettings();
+
+								$settings['attachment_id'] = $newTestimonialId;
+
+								$targetContent->setSettings( $settings );
+
+								$needBlogSwitch = $submission->getTargetBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
+
+								if ( $needBlogSwitch ) {
+									$this
+										->getSiteHelper()
+										->switchBlogId( $submission->getTargetBlogId() );
+								}
+
+								$ioWrapper = $this
+									->getContentIoFactory()
+									->getMapper( $submission->getContentType() );
+
+								$ioWrapper->set( $targetContent );
+
+								if ( $needBlogSwitch ) {
+									$this->getSiteHelper()->restoreBlogId();
+								}
+							}
+						}
+					} elseif ( WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL === $contentType ) {
+
 
 						$widgetSettings = $originalEntity->getSettings();
 
-						if ( array_key_exists( 'attachment_id', $widgetSettings ) ) {
+						if ( array_key_exists( 'testimonial_id', $widgetSettings ) ) {
 							$newTestimonialId = $this->translateAndGetTargetId(
-								WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT,
+								WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL,
 								$submission->getSourceBlogId(),
-								(int) $widgetSettings['attachment_id'],
+								(int) $widgetSettings['testimonial_id'],
 								$submission->getTargetBlogId()
 							);
 
@@ -77,7 +121,7 @@ class SmartlingCore extends SmartlingCoreAbstract {
 
 							$settings = $targetContent->getSettings();
 
-							$settings['attachment_id'] = $newTestimonialId;
+							$settings['testimonial_id'] = $newTestimonialId;
 
 							$targetContent->setSettings( $settings );
 
@@ -99,234 +143,194 @@ class SmartlingCore extends SmartlingCoreAbstract {
 								$this->getSiteHelper()->restoreBlogId();
 							}
 						}
-					}
-				} elseif ( WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL === $contentType ) {
 
-
-					$widgetSettings = $originalEntity->getSettings();
-
-					if ( array_key_exists( 'testimonial_id', $widgetSettings ) ) {
-						$newTestimonialId = $this->translateAndGetTargetId(
-							WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL,
-							$submission->getSourceBlogId(),
-							(int) $widgetSettings['testimonial_id'],
-							$submission->getTargetBlogId()
-						);
-
-						/**
-						 * @var WidgetEntity $targetContent
-						 */
-						$targetContent = $this->readTargetContentEntity( $submission );
-
-						$settings = $targetContent->getSettings();
-
-						$settings['testimonial_id'] = $newTestimonialId;
-
-						$targetContent->setSettings( $settings );
-
-						$needBlogSwitch = $submission->getTargetBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
-
-						if ( $needBlogSwitch ) {
-							$this
-								->getSiteHelper()
-								->switchBlogId( $submission->getTargetBlogId() );
-						}
-
-						$ioWrapper = $this
-							->getContentIoFactory()
-							->getMapper( $submission->getContentType() );
-
-						$ioWrapper->set( $targetContent );
-
-						if ( $needBlogSwitch ) {
-							$this->getSiteHelper()->restoreBlogId();
-						}
-					}
-
-					if ( array_key_exists( 'testimonials', $widgetSettings ) ) {
-						$newTestimonials = [ ];
-						foreach ( $widgetSettings['testimonials'] as $testimonialId ) {
-							$newTestimonials[] = $this->translateAndGetTargetId(
-								WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL,
-								$submission->getSourceBlogId(),
-								(int) $testimonialId,
-								$submission->getTargetBlogId()
-							);
-						}
-
-						/**
-						 * @var WidgetEntity $targetContent
-						 */
-						$targetContent = $this->readTargetContentEntity( $submission );
-
-						$settings = $targetContent->getSettings();
-
-						$settings['testimonials'] = $newTestimonials;
-
-						$targetContent->setSettings( $settings );
-
-						$needBlogSwitch = $submission->getTargetBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
-
-						if ( $needBlogSwitch ) {
-							$this
-								->getSiteHelper()
-								->switchBlogId( $submission->getTargetBlogId() );
-						}
-
-						$ioWrapper = $this
-							->getContentIoFactory()
-							->getMapper( $submission->getContentType() );
-
-						$ioWrapper->set( $targetContent );
-
-						if ( $needBlogSwitch ) {
-							$this->getSiteHelper()->restoreBlogId();
-						}
-
-					}
-
-				} elseif ( WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM === $contentType ) {
-
-					$ids = $this
-						->getCustomMenuHelper()
-						->getMenuItems(
-							$submission->getSourceId(),
-							$submission->getSourceBlogId()
-						);
-
-					/** @var MenuItemEntity $menuItem */
-					foreach ( $ids as $menuItem ) {
-
-						$needBlogSwitch = $submission->getSourceBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
-
-						if ( $needBlogSwitch ) {
-							$this->getSiteHelper()->switchBlogId( $submission->getSourceBlogId() );
-						}
-
-						$data = XmlEncoder::xmlDecode(
-							XmlEncoder::xmlEncode(
-								[
-									'entity' => $menuItem->toArray(),
-									'meta'   => $menuItem->getMetadata(),
-								]
-							)
-						);
-
-						$data['meta']['_menu_item_object_id'] =
-							reset( $menuItem->getMetadata()['_menu_item_object_id'] );
-
-						if ( $needBlogSwitch ) {
-							$this->getSiteHelper()->restoreBlogId();
-						}
-
-						$relatedSubmission = null;
-						$objectId          = 0;
-						switch ( $data['meta']['_menu_item_type'] ) {
-							case 'taxonomy':
-							case 'post_type': {
-								$objectId = $this->translateAndGetTargetId(
-									$data['meta']['_menu_item_object'],
+						if ( array_key_exists( 'testimonials', $widgetSettings ) ) {
+							$newTestimonials = [ ];
+							foreach ( $widgetSettings['testimonials'] as $testimonialId ) {
+								$newTestimonials[] = $this->translateAndGetTargetId(
+									WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL,
 									$submission->getSourceBlogId(),
-									$data['meta']['_menu_item_object_id'],
+									(int) $testimonialId,
 									$submission->getTargetBlogId()
 								);
-								break;
 							}
-							case 'custom': {
-								break;
+
+							/**
+							 * @var WidgetEntity $targetContent
+							 */
+							$targetContent = $this->readTargetContentEntity( $submission );
+
+							$settings = $targetContent->getSettings();
+
+							$settings['testimonials'] = $newTestimonials;
+
+							$targetContent->setSettings( $settings );
+
+							$needBlogSwitch = $submission->getTargetBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
+
+							if ( $needBlogSwitch ) {
+								$this
+									->getSiteHelper()
+									->switchBlogId( $submission->getTargetBlogId() );
 							}
+
+							$ioWrapper = $this
+								->getContentIoFactory()
+								->getMapper( $submission->getContentType() );
+
+							$ioWrapper->set( $targetContent );
+
+							if ( $needBlogSwitch ) {
+								$this->getSiteHelper()->restoreBlogId();
+							}
+
 						}
 
-						$relatedSubmission = $this->fastSendForTranslation(
-							WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM,
-							$submission->getSourceBlogId(),
-							$menuItem->getPK(),
-							$submission->getTargetBlogId()
-						);
+					} elseif ( WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM === $contentType ) {
+
+						$ids = $this
+							->getCustomMenuHelper()
+							->getMenuItems(
+								$submission->getSourceId(),
+								$submission->getSourceBlogId()
+							);
+
+						/** @var MenuItemEntity $menuItem */
+						foreach ( $ids as $menuItem ) {
+
+							$needBlogSwitch = $submission->getSourceBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
+
+							if ( $needBlogSwitch ) {
+								$this->getSiteHelper()->switchBlogId( $submission->getSourceBlogId() );
+							}
+
+							$data = XmlEncoder::xmlDecode(
+								XmlEncoder::xmlEncode(
+									[
+										'entity' => $menuItem->toArray(),
+										'meta'   => $menuItem->getMetadata(),
+									]
+								)
+							);
+
+							$data['meta']['_menu_item_object_id'] =
+								reset( $menuItem->getMetadata()['_menu_item_object_id'] );
+
+							if ( $needBlogSwitch ) {
+								$this->getSiteHelper()->restoreBlogId();
+							}
+
+							$relatedSubmission = null;
+							$objectId          = 0;
+							switch ( $data['meta']['_menu_item_type'] ) {
+								case 'taxonomy':
+								case 'post_type': {
+									$objectId = $this->translateAndGetTargetId(
+										$data['meta']['_menu_item_object'],
+										$submission->getSourceBlogId(),
+										$data['meta']['_menu_item_object_id'],
+										$submission->getTargetBlogId()
+									);
+									break;
+								}
+								case 'custom': {
+									break;
+								}
+							}
+
+							$relatedSubmission = $this->fastSendForTranslation(
+								WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM,
+								$submission->getSourceBlogId(),
+								$menuItem->getPK(),
+								$submission->getTargetBlogId()
+							);
 
 
-						$targetContent = $this->readTargetContentEntity( $relatedSubmission );
+							$targetContent = $this->readTargetContentEntity( $relatedSubmission );
 
-						$needBlogSwitch = $submission->getTargetBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
+							$needBlogSwitch = $submission->getTargetBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
 
-						if ( $needBlogSwitch ) {
-							$this->getSiteHelper()->switchBlogId( $submission->getTargetBlogId() );
+							if ( $needBlogSwitch ) {
+								$this->getSiteHelper()->switchBlogId( $submission->getTargetBlogId() );
+							}
+
+							$targetContent->setMetaTag( '_menu_item_object_id', $objectId );
+
+							if ( $needBlogSwitch ) {
+								$this->getSiteHelper()->restoreBlogId();
+							}
+
+							$accumulator[ WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU ][] = $targetContent->getPK();
+							unset ( $targetContent, $relatedSubmission );
 						}
-
-						$targetContent->setMetaTag( '_menu_item_object_id', $objectId );
-
-						if ( $needBlogSwitch ) {
-							$this->getSiteHelper()->restoreBlogId();
-						}
-
-						$accumulator[ WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU ][] = $targetContent->getPK();
-						unset ( $targetContent, $relatedSubmission );
-					}
-				} elseif (
-					WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU === $contentType
-					&& WordpressContentTypeHelper::CONTENT_TYPE_WIDGET === $submission->getContentType()
-				) {
-					/**
-					 * @var WidgetEntity $originalEntity
-					 */
-					$menuId = (int) $originalEntity->getSettings()['nav_menu'];
-
-					if ( 0 !== $menuId ) {
-						$newMenuId = $this->translateAndGetTargetId(
-							WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU,
-							$submission->getSourceBlogId(),
-							$menuId,
-							$submission->getTargetBlogId()
-						);
-
+					} elseif (
+						WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU === $contentType
+						&& WordpressContentTypeHelper::CONTENT_TYPE_WIDGET === $submission->getContentType()
+					) {
 						/**
-						 * @var WidgetEntity $targetContent
+						 * @var WidgetEntity $originalEntity
 						 */
-						$targetContent = $this->readTargetContentEntity( $submission );
+						$menuId = (int) $originalEntity->getSettings()['nav_menu'];
 
-						$settings             = $targetContent->getSettings();
-						$settings['nav_menu'] = $newMenuId;
-						$targetContent->setSettings( $settings );
+						if ( 0 !== $menuId ) {
+							$newMenuId = $this->translateAndGetTargetId(
+								WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU,
+								$submission->getSourceBlogId(),
+								$menuId,
+								$submission->getTargetBlogId()
+							);
 
-						$needBlogSwitch = $submission->getTargetBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
+							/**
+							 * @var WidgetEntity $targetContent
+							 */
+							$targetContent = $this->readTargetContentEntity( $submission );
 
-						if ( $needBlogSwitch ) {
-							$this
-								->getSiteHelper()
-								->switchBlogId( $submission->getTargetBlogId() );
-						}
+							$settings             = $targetContent->getSettings();
+							$settings['nav_menu'] = $newMenuId;
+							$targetContent->setSettings( $settings );
 
-						$ioWrapper = $this
-							->getContentIoFactory()
-							->getMapper( $submission->getContentType() );
+							$needBlogSwitch = $submission->getTargetBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
 
-						$ioWrapper->set( $targetContent );
+							if ( $needBlogSwitch ) {
+								$this
+									->getSiteHelper()
+									->switchBlogId( $submission->getTargetBlogId() );
+							}
 
-						if ( $needBlogSwitch ) {
-							$this->getSiteHelper()->restoreBlogId();
+							$ioWrapper = $this
+								->getContentIoFactory()
+								->getMapper( $submission->getContentType() );
+
+							$ioWrapper->set( $targetContent );
+
+							if ( $needBlogSwitch ) {
+								$this->getSiteHelper()->restoreBlogId();
+							}
+
 						}
 
 					}
-
 				}
 			}
-		}
 
-		if ( $submission->getContentType() !== WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU ) {
-			$this->getSiteHelper()->switchBlogId( $submission->getTargetBlogId() );
 
-			foreach ( $accumulator as $type => $ids ) {
-				wp_set_post_terms( $submission->getTargetId(), $ids, $type );
+			if ( $submission->getContentType() !== WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU ) {
+				$this->getSiteHelper()->switchBlogId( $submission->getTargetBlogId() );
+
+				foreach ( $accumulator as $type => $ids ) {
+					wp_set_post_terms( $submission->getTargetId(), $ids, $type );
+				}
+
+				$this->getSiteHelper()->restoreBlogId();
+			} else {
+
+				$this->getCustomMenuHelper()->assignMenuItemsToMenu(
+					(int) $submission->getTargetId(),
+					(int) $submission->getTargetBlogId(),
+					$accumulator[ WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU ]
+				);
 			}
-
-			$this->getSiteHelper()->restoreBlogId();
-		} else {
-
-			$this->getCustomMenuHelper()->assignMenuItemsToMenu(
-				(int) $submission->getTargetId(),
-				(int) $submission->getTargetBlogId(),
-				$accumulator[ WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU ]
-			);
+		} catch ( BlogNotFoundException$e ) {
 		}
 
 
@@ -507,5 +511,29 @@ class SmartlingCore extends SmartlingCoreAbstract {
 		}
 
 		return $cached;
+	}
+
+	public function handleBadBlogId ( SubmissionEntity $submission ) {
+		$profileMainId = $submission->getSourceBlogId();
+
+		$profiles = $this->getSettingsManager()->findEntityByMainLocale( $profileMainId );
+		if ( 0 < count( $profiles ) ) {
+
+			$this->getLogger()->warning(
+				vsprintf(
+					'Found broken profile. Id:%s. Deactivating.',
+					[
+						$profileMainId,
+					]
+				)
+			);
+
+			/**
+			 * @var ConfigurationProfileEntity $profile
+			 */
+			$profile = reset( $profiles );
+			$profile->setIsActive( 0 );
+			$this->getSettingsManager()->storeEntity( $profile );
+		}
 	}
 }

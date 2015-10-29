@@ -2,9 +2,11 @@
 
 namespace Smartling\Helpers;
 
+use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
+use Smartling\Exception\BlogNotFoundException;
 
 /**
  * Class SiteHelper
@@ -96,6 +98,15 @@ class SiteHelper {
 	}
 
 	/**
+	 * @return array
+	 */
+	public function listBlogIdsFlat()
+	{
+		$this->cacheSites();
+
+		return self::$_flatBlogIdCache;
+	}
+	/**
 	 * @return integer
 	 * @throws SmartlingDirectRunRuntimeException
 	 */
@@ -148,7 +159,7 @@ class SiteHelper {
 			$message = vsprintf( 'Invalid blogId value. Got %s, expected one of [%s]',
 				[ $blogId, implode( ',', self::$_flatBlogIdCache ) ] );
 
-			throw new \InvalidArgumentException( $message );
+			throw new BlogNotFoundException( $message );
 		}
 
 		if ( function_exists( 'switch_to_blog' ) ) {
@@ -172,20 +183,27 @@ class SiteHelper {
 		restore_current_blog();
 	}
 
-	public function getBlogNameById ( $blogId ) {
-		$label = 'Unknown';
-
-		try {
-			$this->switchBlogId( $blogId );
-			$label = get_bloginfo( 'Name' );
-			$this->restoreBlogId();
-		} catch ( InvalidArgumentException $e ) {
-			// unexistant $blogId
-		}
+	/**
+	 * @param $blogId
+	 *
+	 * @return string
+	 * @throws BlogNotFoundException
+	 */
+	private function getBlogNameById ( $blogId ) {
+		$this->switchBlogId( $blogId );
+		$label = get_bloginfo( 'Name' );
+		$this->restoreBlogId();
 
 		return $label;
 	}
 
+	/**
+	 * @param $localizationPluginProxyInterface
+	 * @param $blogId
+	 *
+	 * @return string
+	 * @throws BlogNotFoundException
+	 */
 	public function getBlogLabelById ( $localizationPluginProxyInterface, $blogId ) {
 		return vsprintf(
 			'%s - %s',

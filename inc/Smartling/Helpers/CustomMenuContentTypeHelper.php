@@ -2,6 +2,7 @@
 
 namespace Smartling\Helpers;
 
+use Smartling\Exception\BlogNotFoundException;
 use Smartling\Processors\ContentEntitiesIOFactory;
 
 /**
@@ -56,17 +57,19 @@ class CustomMenuContentTypeHelper {
 	 */
 	public function assignMenuItemsToMenu ( $menuId, $blogId, $items ) {
 		$needBlogChange = $blogId !== $this->getSiteHelper()->getCurrentBlogId();
+		try {
+			if ( $needBlogChange ) {
+				$this->getSiteHelper()->switchBlogId( $blogId );
+			}
 
-		if ( $needBlogChange ) {
-			$this->getSiteHelper()->switchBlogId( $blogId );
-		}
+			foreach ( $items as $item ) {
+				wp_set_object_terms( $item, [ (int) $menuId ], WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU );
+			}
 
-		foreach ( $items as $item ) {
-			wp_set_object_terms( $item, [ (int) $menuId ], WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU );
-		}
-
-		if ( $needBlogChange ) {
-			$this->getSiteHelper()->restoreBlogId();
+			if ( $needBlogChange ) {
+				$this->getSiteHelper()->restoreBlogId();
+			}
+		} catch ( BlogNotFoundException$e ) {
 		}
 	}
 
@@ -90,24 +93,28 @@ class CustomMenuContentTypeHelper {
 
 		$needBlogSwitch = $this->getSiteHelper()->getCurrentBlogId() !== $blogId;
 
-		if ( $needBlogSwitch ) {
-			$this->getSiteHelper()->switchBlogId( $blogId );
-		}
-
-		$items = wp_get_nav_menu_items( $menuId, $options );
-
 		$ids = [ ];
 
-		$mapper = $this
-			->getContentIoFactory()
-			->getMapper( WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM );
-		foreach ( $items as $item ) {
-			$m     = clone $mapper;
-			$ids[] = $m->get( (int) $item->ID );;
-		}
+		try {
+			if ( $needBlogSwitch ) {
+				$this->getSiteHelper()->switchBlogId( $blogId );
+			}
 
-		if ( $needBlogSwitch ) {
-			$this->getSiteHelper()->restoreBlogId();
+			$items = wp_get_nav_menu_items( $menuId, $options );
+
+
+			$mapper = $this
+				->getContentIoFactory()
+				->getMapper( WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM );
+			foreach ( $items as $item ) {
+				$m     = clone $mapper;
+				$ids[] = $m->get( (int) $item->ID );;
+			}
+
+			if ( $needBlogSwitch ) {
+				$this->getSiteHelper()->restoreBlogId();
+			}
+		} catch ( BlogNotFoundException $e ) {
 		}
 
 		return $ids;
@@ -122,17 +129,21 @@ class CustomMenuContentTypeHelper {
 	public function getTerms ( $submission, $taxonomy ) {
 		$needBlogSwitch = $submission->getSourceBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
 
-		if ( $needBlogSwitch ) {
-			$this->getSiteHelper()->switchBlogId( $submission->getSourceBlogId() );
+		try {
+			if ( $needBlogSwitch ) {
+				$this->getSiteHelper()->switchBlogId( $submission->getSourceBlogId() );
+			}
+
+			$terms = wp_get_object_terms( $submission->getSourceId(), $taxonomy );
+
+			if ( $needBlogSwitch ) {
+				$this->getSiteHelper()->restoreBlogId();
+			}
+		} catch ( BlogNotFoundException $e ) {
+
 		}
 
-		$terms = wp_get_object_terms( $submission->getSourceId(), $taxonomy );
-
-		if ( $needBlogSwitch ) {
-			$this->getSiteHelper()->restoreBlogId();
-		}
-
-		return is_array( $terms ) ? $terms : [ ];
+		return isset( $terms ) && is_array( $terms ) ? $terms : [ ];
 	}
 
 

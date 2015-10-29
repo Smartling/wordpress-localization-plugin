@@ -2,7 +2,9 @@
 
 namespace Smartling\WP\Controller;
 
+use Smartling\Bootstrap;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Exception\BlogNotFoundException;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
@@ -180,6 +182,7 @@ class ConfigurationProfilesWidget extends \WP_List_Table {
 		$dataAsArray = [ ];
 		$types       = ConfigurationProfileEntity::getRetrievalTypes();
 		foreach ( $data as $element ) {
+
 			$row = $element->toArray();
 
 			$row['profile_name']   = $this->applyRowActions( $row );
@@ -187,10 +190,20 @@ class ConfigurationProfilesWidget extends \WP_List_Table {
 			$row['is_active']      = 0 < $row['is_active'] ? __( 'Yes' ) : __( 'No' );
 			$row['auto_authorize'] = 0 < $row['auto_authorize'] ? __( 'Yes' ) : __( 'No' );
 
-			$row['retrieval_type']   = $types[ $row['retrieval_type'] ];
-			$row['original_blog_id'] = $this->manager->getSiteHelper()->getBlogLabelById( $this->manager->getPluginProxy(),
-				$row['original_blog_id'] );
-			$dataAsArray[]           = $row;
+			$row['retrieval_type'] = $types[ $row['retrieval_type'] ];
+			try {
+				$row['original_blog_id'] =
+					$this->manager->getSiteHelper()->getBlogLabelById( $this->manager->getPluginProxy(),
+						$row['original_blog_id']
+					);
+			} catch ( BlogNotFoundException $e ) {
+				//Bootstrap::DebugPrint($e,true);
+				$row['original_blog_id'] = 0;
+				$row['profile_name']     = __( vsprintf( '[Broken profile] ', [ ] ) ) . $row['profile_name'];
+			}
+
+			$dataAsArray[] = $row;
+
 		}
 
 		$this->items = $dataAsArray;

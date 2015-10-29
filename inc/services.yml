@@ -182,6 +182,7 @@ services:
       - [ "setContentIoFactory", [ "@factory.contentIO" ]]
       - [ "setCache", [ "@site.cache" ]]
       - [ "setCustomMenuHelper", [ "@helper.customMenu" ]]
+      - [ "setSettingsManager", [ "@manager.settings" ]]
 
   wrapper.widget:
     class: Smartling\DbAl\WordpressContentEntities\WidgetEntity

@@ -74,6 +74,11 @@ abstract class SmartlingCoreAbstract {
 	private $customMenuHelper;
 
 	/**
+	 * @var SettingsManager
+	 */
+	private $settingsManager;
+
+	/**
 	 * @return Cache
 	 */
 	public function getCache () {
@@ -197,5 +202,19 @@ abstract class SmartlingCoreAbstract {
 	 */
 	public function setCustomMenuHelper ( $customMenuHelper ) {
 		$this->customMenuHelper = $customMenuHelper;
+	}
+
+	/**
+	 * @return SettingsManager
+	 */
+	public function getSettingsManager () {
+		return $this->settingsManager;
+	}
+
+	/**
+	 * @param SettingsManager $settingsManager
+	 */
+	public function setSettingsManager ( $settingsManager ) {
+		$this->settingsManager = $settingsManager;
 	}
 }

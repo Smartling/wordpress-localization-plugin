@@ -6,6 +6,7 @@
 </style >
 
 <?php
+use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Settings\TargetLocale;
 use Smartling\Submissions\SubmissionEntity;
@@ -17,9 +18,35 @@ use Smartling\WP\WPAbstract;
  * @var WPAbstract self
  */
 $data = $this->getViewData();
+
+
+/**
+ * @var TargetLocale[] $locales
+ */
+$locales = $data['profile']->getTargetLocales();
+
+$filteredLocales = [ ];
+
+foreach ( $locales as $locale ) {
+	/**
+	 * @var TargetLocale $locale
+	 */
+	if ( ! $locale->isEnabled() || StringHelper::isNullOrEmpty( $locale->getLabel() ) ) {
+		continue;
+	}
+
+	$filteredLocales[] = $locale;
+
+}
+
+$locales = $filteredLocales;
 ?>
 
-<div id = "smartling-post-widget" >
+<?php
+if ( ! empty( $locales ) ) {
+	?>
+
+	<div id = "smartling-post-widget" >
 	<h2 >Smartling connector actions</h2 >
 
 	<h3 ><?= __( vsprintf( 'Translate this %s into',
@@ -28,12 +55,7 @@ $data = $this->getViewData();
 	<div style = "width: 400px;" >
 		<?php
 		$nameKey = TaxonomyWidgetController::WIDGET_DATA_NAME;
-
-		/**
-		 * @var TargetLocale[] $locales
-		 */
-		$locales = $data['profile']->getTargetLocales();
-
+		
 		foreach ( $locales as $locale ) {
 			/**
 			 * @var TargetLocale $locale
@@ -89,4 +111,14 @@ $data = $this->getViewData();
 		<?php } ?>
 	</div >
 	<?= WPAbstract::submitBlock(); ?>
-</div >
+	</div ><?php
+} else {
+	?>
+	<div id = "smartling-post-widget" >
+
+		No suitable target locales found.<br />
+		Please check your <a
+			href = "/wp-admin/network/admin.php?page=smartling_configuration_profile_setup&action=edit&profile=<?= $data['profile']->getId(); ?>" >settings.</a >
+
+	</div >
+<?php } ?>

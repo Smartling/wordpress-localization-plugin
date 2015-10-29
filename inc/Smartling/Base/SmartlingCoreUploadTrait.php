@@ -2,7 +2,9 @@
 namespace Smartling\Base;
 
 use Exception;
+use InvalidArgumentException;
 use Smartling\Bootstrap;
+use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Helpers\AttachmentHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
@@ -95,6 +97,8 @@ trait SmartlingCoreUploadTrait {
 			$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_FAILED );
 			$this->getLogger()->error( $e->getMessage() );
 			$this->getSubmissionManager()->storeEntity( $submission );
+		} catch (BlogNotFoundException $e){
+			$this->handleBadBlogId($submission);
 		}
 
 	}

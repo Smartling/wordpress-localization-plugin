@@ -3,6 +3,7 @@
 namespace Smartling\Settings;
 
 use Smartling\DbAl\EntityManagerAbstract;
+use Smartling\Exception\BlogNotFoundException;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
@@ -69,7 +70,7 @@ class SettingsManager extends EntityManagerAbstract {
 			$sortOptions,
 			$pageOptions
 		);
-		$this->logQuery($query);
+		$this->logQuery( $query );
 
 		return $query;
 	}
@@ -82,7 +83,7 @@ class SettingsManager extends EntityManagerAbstract {
 			[ ],
 			null
 		);
-		$this->logQuery($query);
+		$this->logQuery( $query );
 
 		return $query;
 	}
@@ -90,12 +91,20 @@ class SettingsManager extends EntityManagerAbstract {
 	public function fetchData ( $query ) {
 		$data = parent::fetchData( $query );
 		foreach ( $data as & $result ) {
-			$this->updateLabels( $result );
+			try {
+				$this->updateLabels( $result );
+			} catch ( BlogNotFoundException$e ) {
+			}
 		}
 
 		return $data;
 	}
 
+	/**
+	 * @param int $sourceBlogId
+	 *
+	 * @return ConfigurationProfileEntity[]
+	 */
 	public function findEntityByMainLocale ( $sourceBlogId ) {
 
 		$conditionBlock = ConditionBlock::getConditionBlock(
@@ -172,7 +181,7 @@ class SettingsManager extends EntityManagerAbstract {
 		}
 
 		// log store query before execution
-		$this->logQuery($storeQuery);
+		$this->logQuery( $storeQuery );
 
 		$result = $this->getDbal()->query( $storeQuery );
 
