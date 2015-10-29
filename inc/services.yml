@@ -4,7 +4,7 @@ parameters:
     "polylang": false
 
   plugin.name: smartling-connector
-  plugin.version: 1.0.25@2015-10-08
+  plugin.version: 1.0.26@2015-10-29
   plugin.domain: smartling-connector
   wp.hooks:
     - 'wp.cron'
@@ -142,8 +142,8 @@ parameters:
        - '^(true|false|enabled|disabled|background-image)$'
 
 
-  logger.smartling_log_raw_sql: false
-  logger.smartling_verbose_output_for_xml_coding: false
+  logger.smartling_log_raw_sql: true
+  logger.smartling_verbose_output_for_xml_coding: true
 
   logger.channel: default
   logger.filehandler.standard.filename: %plugin.dir%/logs/logfile
