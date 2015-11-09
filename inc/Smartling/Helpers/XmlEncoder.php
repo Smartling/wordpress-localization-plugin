@@ -19,6 +19,38 @@ use Smartling\Exception\InvalidXMLException;
  */
 class XmlEncoder {
 
+	/**
+	 * Is raised just before encoding to XML
+	 * attributes:
+	 *  & array Fields from entity and its metadata as they are (may be serialized / combined / encoded )
+	 *  SubmissionEntity instance of SubmissionEntity
+	 *  EntityAbstract successor instance (Original Entity)
+	 *  Original Entity Metadata array
+	 *
+	 *
+	 *  Note! The only prepared array which is going to be serialized into XML is to be received by reference.
+	 *  You should not change / add / remove array keys.
+	 *  Only update of values is allowed.
+	 *  Will be changed to ArrayAccess implementation.
+	 */
+	const EVENT_SMARTLING_BEFORE_SERIALIZE_CONNENT = 'EVENT_SMARTLING_BEFORE_SERIALIZE_CONNENT';
+
+	/**
+	 * Is raised just after decoding from XML
+	 * attributes:
+	 *  & array of translated fields
+	 *  SubmissionEntity instance of SubmissionEntity
+	 *  EntityAbstract successor instance (Target Entity)
+	 *  Target Entity Metadata array
+	 *
+	 *
+	 *
+	 *  Note! The only translation fields array is to be received by reference.
+	 *  You should not change / add / remove array keys.
+	 *  Only update of values is allowed.
+	 *  Will be changed to ArrayAccess implementation.
+	 */
+	const EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT = 'EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT';
 
 	/**
 	 * Logs XML related message.
@@ -381,7 +413,7 @@ class XmlEncoder {
 	}
 
 	public static function xmlDecode ( $content ) {
-		self::logMessage(vsprintf('Decoding XML file: %s',[$content]));
+		self::logMessage( vsprintf( 'Decoding XML file: %s', [ $content ] ) );
 		$xpath = self::prepareXPath( $content );
 
 		$stringPath = '/data/string';

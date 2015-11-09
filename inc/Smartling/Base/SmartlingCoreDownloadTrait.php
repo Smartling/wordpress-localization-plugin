@@ -63,6 +63,15 @@ trait SmartlingCoreDownloadTrait {
 
 			$targetContent = $this->readTargetContentEntity( $entity );
 
+			$params = [
+				'fields'         => & $translatedFields,
+				'submission'     => $entity,
+				'targetEntity'   => $targetContent,
+				'targetMetadata' => $translatedFields['meta'],
+			];
+
+			do_action( XmlEncoder::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params );
+
 			$this->setValues( $targetContent, $translatedFields['entity'] );
 
 			$targetContent = $this->saveEntity( $entity->getContentType(), $entity->getTargetBlogId(), $targetContent );
@@ -103,7 +112,7 @@ trait SmartlingCoreDownloadTrait {
 			$this->getLogger()->error( $e->getMessage() );
 			$this->getSubmissionManager()->storeEntity( $entity );
 			/** @var SiteHelper $sh */
-			$this->handleBadBlogId($entity);
+			$this->handleBadBlogId( $entity );
 		} catch ( Exception $e ) {
 			$messages[] = $e->getMessage();
 		}

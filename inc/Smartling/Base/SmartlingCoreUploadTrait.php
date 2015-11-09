@@ -7,6 +7,8 @@ use Smartling\Bootstrap;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Helpers\AttachmentHelper;
+use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
+use Smartling\Helpers\ProtectedArrayHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Submissions\SubmissionEntity;
@@ -66,6 +68,15 @@ trait SmartlingCoreUploadTrait {
 				}
 			}
 
+			$params = [
+				'fields'           => & $source,
+				'submission'       => $submission,
+				'originalEntity'   => $contentEntity,
+				'originalMetadata' => $source['meta'],
+			];
+
+			do_action( XmlEncoder::EVENT_SMARTLING_BEFORE_SERIALIZE_CONNENT, $params );
+
 			$xml = XmlEncoder::xmlEncode( $source );
 
 			$this->prepareRelatedSubmissions( $submission );
@@ -97,8 +108,8 @@ trait SmartlingCoreUploadTrait {
 			$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_FAILED );
 			$this->getLogger()->error( $e->getMessage() );
 			$this->getSubmissionManager()->storeEntity( $submission );
-		} catch (BlogNotFoundException $e){
-			$this->handleBadBlogId($submission);
+		} catch ( BlogNotFoundException $e ) {
+			$this->handleBadBlogId( $submission );
 		}
 
 	}
