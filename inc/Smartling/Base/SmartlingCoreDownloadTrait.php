@@ -8,6 +8,7 @@ use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\InvalidXMLException;
 use Smartling\Helpers\DateTimeHelper;
+use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\XmlEncoder;
@@ -59,16 +60,15 @@ trait SmartlingCoreDownloadTrait {
 
 			$translatedFields = XmlEncoder::xmlDecode( $data );
 
+			if ( ! array_key_exists( 'meta', $translatedFields ) ) {
+				$translatedFields['meta'] = [ ];
+			}
 			$targetId = (int) $entity->getTargetId();
 
 			$targetContent = $this->readTargetContentEntity( $entity );
 
-			$params = [
-				'fields'         => & $translatedFields,
-				'submission'     => $entity,
-				'targetEntity'   => $targetContent,
-				'targetMetadata' => $translatedFields['meta'],
-			];
+			$params = new AfterDeserializeContentEventParameters( $translatedFields, $entity, $targetContent,
+				$translatedFields['meta'] );
 
 			do_action( XmlEncoder::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params );
 

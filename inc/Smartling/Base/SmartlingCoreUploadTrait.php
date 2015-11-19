@@ -68,12 +68,8 @@ trait SmartlingCoreUploadTrait {
 				}
 			}
 
-			$params = [
-				'fields'           => & $source,
-				'submission'       => $submission,
-				'originalEntity'   => $contentEntity,
-				'originalMetadata' => $source['meta'],
-			];
+			$params = new BeforeSerializeContentEventParameters( $source, $submission, $contentEntity,
+				$source['meta'] );
 
 			do_action( XmlEncoder::EVENT_SMARTLING_BEFORE_SERIALIZE_CONNENT, $params );
 

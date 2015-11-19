@@ -29,36 +29,36 @@ if ( ! function_exists( 'get_current_blog_id' ) ) {
 
 if ( ! function_exists( 'get_current_site' ) ) {
 	function get_current_site () {
-		return (object) array ( 'id' => 1 );
+		return (object) [ 'id' => 1 ];
 	}
 }
 
 if ( ! function_exists( 'wp_get_current_user' ) ) {
 	function wp_get_current_user () {
-		return (object) array ( 'user_login' => 1 );
+		return (object) [ 'user_login' => 1 ];
 	}
 }
 
 if ( ! function_exists( 'wp_get_sites' ) ) {
 	function wp_get_sites () {
-		return array (
-			array (
+		return [
+			[
 				'site_id' => 1,
-				'blog_id' => 1
-			),
-			array (
+				'blog_id' => 1,
+			],
+			[
 				'site_id' => 1,
-				'blog_id' => 2
-			),
-			array (
+				'blog_id' => 2,
+			],
+			[
 				'site_id' => 1,
-				'blog_id' => 3
-			),
-			array (
+				'blog_id' => 3,
+			],
+			[
 				'site_id' => 1,
-				'blog_id' => 4
-			),
-		);
+				'blog_id' => 4,
+			],
+		];
 	}
 }
 
@@ -84,24 +84,24 @@ if ( ! function_exists( 'get_site_option' ) ) {
 	function get_site_option ( $key, $default = null, $useCache = true ) {
 		switch ( $key ) {
 			case MultiligualPressConnector::MULTILINGUAL_PRESS_PRO_SITE_OPTION: {
-				return array (
-					1 => array (
+				return [
+					1 => [
 						'text' => '',
-						'lang' => 'en_US'
-					),
-					2 => array (
+						'lang' => 'en_US',
+					],
+					2 => [
 						'text' => '',
-						'lang' => 'es_ES'
-					),
-					3 => array (
+						'lang' => 'es_ES',
+					],
+					3 => [
 						'text' => '',
-						'lang' => 'fr_FR'
-					),
-					4 => array (
+						'lang' => 'fr_FR',
+					],
+					4 => [
 						'text' => '',
-						'lang' => 'ru_RU'
-					),
-				);
+						'lang' => 'ru_RU',
+					],
+				];
 				break;
 			}
 		}
@@ -128,7 +128,7 @@ if ( ! function_exists( 'get_post' ) ) {
 
 		$type = $id < 10 ? 'post' : 'page';
 
-		$post = array (
+		$post = [
 			'ID'                    => $id,
 			'post_author'           => 1,
 			'post_date'             => $date,
@@ -152,7 +152,7 @@ if ( ! function_exists( 'get_post' ) ) {
 			'post_type'             => $type,
 			'post_mime_type'        => 'post',
 			'comment_count'         => 0,
-		);
+		];
 
 		return $post;
 	}
@@ -166,11 +166,11 @@ if ( ! function_exists( 'wp_insert_post' ) ) {
 
 if ( ! function_exists( 'get_post_meta' ) ) {
 	function get_post_meta ( $postId ) {
-		return array (
-			'meta1' => array ( 'value1' ),
-			'meta2' => array ( 'value2' ),
-			'meta3' => array ( 'value3' ),
-		);
+		return [
+			'meta1' => [ 'value1' ],
+			'meta2' => [ 'value2' ],
+			'meta3' => [ 'value3' ],
+		];
 	}
 }
 
@@ -194,17 +194,17 @@ if ( ! function_exists( 'update_post_meta' ) ) {
 
 if ( ! function_exists( 'wp_update_term' ) ) {
 	function wp_update_term ( $id, $type, $args ) {
-		return array_merge( $args, array ( 'term_id' => $id ) );
+		return array_merge( $args, [ 'term_id' => $id ] );
 	}
 }
 if ( ! function_exists( 'wp_insert_term' ) ) {
 	function wp_insert_term ( $name, $type, $args ) {
-		return array_merge( $args, array ( 'term_id' => 2 ) );
+		return array_merge( $args, [ 'term_id' => 2 ] );
 	}
 }
 if ( ! function_exists( 'get_term' ) ) {
 	function get_term ( $id, $taxonomy, $outputFormat ) {
-		$category = array (
+		$category = [
 			'term_id'          => $id,
 			'name'             => 'Fake Name',
 			'slug'             => 'fake-name',
@@ -213,8 +213,8 @@ if ( ! function_exists( 'get_term' ) ) {
 			'taxonomy'         => $taxonomy,
 			'description'      => '',
 			'parent'           => 0,
-			'count'            => 0
-		);
+			'count'            => 0,
+		];
 
 
 		return $category;
@@ -230,3 +230,92 @@ if ( ! function_exists( 'add_filter' ) ) {
 	function add_filter ( $action, $handler ) {
 	}
 }
+
+if ( ! function_exists( 'maybe_unserialize' ) ) {
+	function maybe_unserialize ( $original ) {
+		if ( is_serialized( $original ) ) {
+			return @unserialize( $original );
+		}
+
+		return $original;
+	}
+}
+
+if ( ! function_exists( 'is_serialized' ) ) {
+	function is_serialized ( $data, $strict = true ) {
+		// if it isn't a string, it isn't serialized.
+		if ( ! is_string( $data ) ) {
+			return false;
+		}
+		$data = trim( $data );
+		if ( 'N;' == $data ) {
+			return true;
+		}
+		if ( strlen( $data ) < 4 ) {
+			return false;
+		}
+		if ( ':' !== $data[1] ) {
+			return false;
+		}
+		if ( $strict ) {
+			$lastc = substr( $data, - 1 );
+			if ( ';' !== $lastc && '}' !== $lastc ) {
+				return false;
+			}
+		} else {
+			$semicolon = strpos( $data, ';' );
+			$brace     = strpos( $data, '}' );
+			// Either ; or } must exist.
+			if ( false === $semicolon && false === $brace ) {
+				return false;
+			}
+			// But neither must be in the first X characters.
+			if ( false !== $semicolon && $semicolon < 3 ) {
+				return false;
+			}
+			if ( false !== $brace && $brace < 4 ) {
+				return false;
+			}
+		}
+		$token = $data[0];
+		switch ( $token ) {
+			case 's' :
+				if ( $strict ) {
+					if ( '"' !== substr( $data, - 2, 1 ) ) {
+						return false;
+					}
+				} elseif ( false === strpos( $data, '"' ) ) {
+					return false;
+				}
+			// or else fall through
+			case 'a' :
+			case 'O' :
+				return (bool) preg_match( "/^{$token}:[0-9]+:/s", $data );
+			case 'b' :
+			case 'i' :
+			case 'd' :
+				$end = $strict ? '$' : '';
+
+				return (bool) preg_match( "/^{$token}:[0-9.E-]+;$end/", $data );
+		}
+
+		return false;
+	}
+}
+
+if ( ! function_exists( 'do_action' ) ) {
+	function do_action ( $a, $b ) {
+	}
+}
+
+if ( ! function_exists( 'wp_get_object_terms' ) ) {
+	function wp_get_object_terms ( $a, $b ) {
+	}
+}
+
+if ( ! function_exists( 'wp_set_post_terms' ) ) {
+	function wp_set_post_terms ( $a, $b ) {
+	}
+}
+
+

@@ -28,7 +28,7 @@ class ApiWrapperTest extends PHPUnit_Framework_TestCase {
 	/**
 	 * @inheritdoc
 	 */
-	public function __construct ( $name = null, array $data = array (), $dataName = '' ) {
+	public function __construct ( $name = null, array $data = [ ], $dataName = '' ) {
 		parent::__construct( $name, $data, $dataName );
 
 		$this->container = Bootstrap::getContainer();
@@ -63,19 +63,20 @@ class ApiWrapperTest extends PHPUnit_Framework_TestCase {
 		$dbalMock = $this
 			->getMockBuilder( 'Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapper' )
 			->setMethods(
-				array (
+				[
 					'query',
 					'completeTableName',
 					'getLastInsertedId',
 					'fetch',
 					'escape',
-					'__construct'
-				)
+					'__construct',
+					'needRawSqlLog',
+				]
 			)
 			->setConstructorArgs(
-				array (
-					$this->container->get( 'logger' )
-				)
+				[
+					$this->container->get( 'logger' ),
+				]
 			)
 			->setMockClassName( 'MockDb' )
 			->disableProxyingToOriginalMethods()
@@ -88,15 +89,15 @@ class ApiWrapperTest extends PHPUnit_Framework_TestCase {
 		$translationMock = $this
 			->getMockBuilder( 'Smartling\DbAl\MultiligualPressProConnector' )
 			->setMethods(
-				array (
+				[
 					'getLocales',
 					'getBlogLocaleById',
 					'getLinkedBlogIdsByBlogId',
 					'getLinkedObjects',
 					'linkObjects',
 					'unlinkObjects',
-					'getBlogLanguageById'
-				)
+					'getBlogLanguageById',
+				]
 			)
 			->disableOriginalConstructor()
 			->setMockClassName( 'TranslationProxyMock' )
@@ -115,7 +116,7 @@ class ApiWrapperTest extends PHPUnit_Framework_TestCase {
 		 */
 		$manager = $this->container->get( 'manager.submission' );
 
-		$fields = array (
+		$fields = [
 			'id'                     => null,
 			'source_title'           => 'Automatic generated title',
 			'source_blog_id'         => 1,
@@ -130,8 +131,8 @@ class ApiWrapperTest extends PHPUnit_Framework_TestCase {
 			'submission_date'        => time(),
 			'approved_string_count'  => 37,
 			'completed_string_count' => 14,
-			'status'                 => 'New'
-		);
+			'status'                 => 'New',
+		];
 
 		return $manager->createSubmission( $fields );
 	}
@@ -142,7 +143,7 @@ class ApiWrapperTest extends PHPUnit_Framework_TestCase {
 		$msg = $this->ep->checkSubmissionByEntity( $entity );
 
 		self::assertTrue( 0 === count( $msg ),
-			vsprintf( 'Expected no error messages. Got: ', array ( implode( ',', $msg ) ) ) );
+			vsprintf( 'Expected no error messages. Got: ', [ implode( ',', $msg ) ] ) );
 
 		self::assertTrue( 100 === $entity->getCompletionPercentage() );
 	}
@@ -162,7 +163,7 @@ class ApiWrapperTest extends PHPUnit_Framework_TestCase {
 		$entity = $this->getSubmissionEntity();
 
 		$this->container->get( 'multilang.proxy' )
-		                ->expects( $this->once() )
+		                ->expects( $this->any() )
 		                ->method( 'linkObjects' )
 		                ->willReturn( true );
 
@@ -188,7 +189,7 @@ class ApiWrapperTest extends PHPUnit_Framework_TestCase {
 		$autoAuthorize = 1,
 		$id = null
 	) {
-		return array (
+		return [
 			'id'               => $id ? : rand( 0, PHP_INT_MAX ),
 			'profile_name'     => $profileName,
 			'api_url'          => 'httpq://mock.api.url/v0',
@@ -198,24 +199,24 @@ class ApiWrapperTest extends PHPUnit_Framework_TestCase {
 			'original_blog_id' => (int) $originalBlogId,
 			'auto_authorize'   => (int) $autoAuthorize,
 			'retrieval_type'   => 'pseudo',
-			'target_locales'   => json_encode( array (
-				(object) array (
+			'target_locales'   => json_encode( [
+				(object) [
 					'smartlingLocale' => 'es-ES',
 					'enabled'         => true,
-					'blogId'          => 2
-				),
-				(object) array (
+					'blogId'          => 2,
+				],
+				(object) [
 					'smartlingLocale' => 'fr-FR',
 					'enabled'         => true,
-					'blogId'          => 3
-				),
-				(object) array (
+					'blogId'          => 3,
+				],
+				(object) [
 					'smartlingLocale' => 'fr-FR',
 					'enabled'         => false,
-					'blogId'          => 4
-				),
-			) ),
-		);
+					'blogId'          => 4,
+				],
+			] ),
+		];
 	}
 
 	private function prepareMockProfile () {
@@ -223,7 +224,7 @@ class ApiWrapperTest extends PHPUnit_Framework_TestCase {
 		 * @var PHPUnit_Framework_MockObject_MockObject $mock
 		 */
 		$mock   = $this->container->get( 'site.db' );
-		$struct = array ( (object) $this->getProfileDataStructure() );
+		$struct = [ (object) $this->getProfileDataStructure() ];
 		$mock->expects( self::any() )->method( 'completeTableName' )->willReturn( 'wp_mock_table_name' );
 		$mock->expects( self::any() )->method( 'fetch' )->willReturn( $struct );
 	}
