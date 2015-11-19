@@ -263,11 +263,7 @@ class XmlEncoder {
 					$value = self::prepareSourceArray( $value, $strategy );
 				}
 
-				$tmp = null;
-
-				if ( self::is_serialized( $value, $tmp ) ) {
-					$value = $tmp;
-				}
+				$value = maybe_unserialize( $value );
 			}
 		}
 		$sourceArray = self::flatternArray( $sourceArray );
