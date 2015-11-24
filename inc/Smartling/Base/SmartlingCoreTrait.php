@@ -106,7 +106,7 @@ trait SmartlingCoreTrait {
 	/**
 	 * @param SubmissionEntity $entity
 	 *
-	 * @return SubmissionEntity
+	 * @return EntityAbstract
 	 */
 	private function readTargetContentEntity ( SubmissionEntity $entity ) {
 		$needBlogSwitch = $this->getSiteHelper()->getCurrentBlogId() !== $entity->getTargetBlogId();

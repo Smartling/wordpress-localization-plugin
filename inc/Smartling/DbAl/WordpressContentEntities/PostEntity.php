@@ -254,8 +254,20 @@ class PostEntity extends EntityAbstract {
 	public function setMetaTag ( $tagName, $tagValue, $unique = true ) {
 		$result = null;
 		if ( metadata_exists( WordpressContentTypeHelper::CONTENT_TYPE_POST, $this->ID, $tagName ) ) {
+			$this->logMessage( vsprintf( 'Updating tag %s with value \'%s\' for \'%s\' \'%s\'.', [
+				$tagName,
+				var_export( $tagValue, true ),
+				$this->post_type,
+				$this->ID,
+			] ) );
 			$result = update_post_meta( $this->ID, $tagName, $tagValue );
 		} else {
+			$this->logMessage( vsprintf( 'Adding tag %s with value \'%s\' for \'%s\' \'%s\'.', [
+				$tagName,
+				var_export( $tagValue, true ),
+				$this->post_type,
+				$this->ID,
+			] ) );
 			$this->getLogger()->info( 'adding tag ' . $tagName );
 			$result = add_post_meta( $this->ID, $tagName, $tagValue, $unique );
 		}
@@ -265,12 +277,20 @@ class PostEntity extends EntityAbstract {
 				'Error saving meta tag "%s" with value "%s" for "%s" "%s"',
 				[
 					$tagName,
-					serialize( $tagValue ),
+					var_export( $tagValue, true ),
 					$this->post_type,
 					$this->ID,
 				]
 			);
 			$this->getLogger()->error( $message );
+		} else {
+			$this->logMessage(
+				vsprintf( 'Set tag \'%s\' with value \'%s\' for %s (id=%s)', [
+					$tagName,
+					var_export( $tagValue, true ),
+					$this->post_type,
+					$this->ID,
+				] ) );
 		}
 	}
 }

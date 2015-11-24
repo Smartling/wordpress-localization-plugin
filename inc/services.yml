@@ -4,7 +4,7 @@ parameters:
     "polylang": false
 
   plugin.name: smartling-connector
-  plugin.version: 1.0.26@2015-10-29
+  plugin.version: 1.0.27
   plugin.domain: smartling-connector
   wp.hooks:
     - 'wp.cron'
@@ -82,7 +82,7 @@ parameters:
         - 'menu_order'
         - 'sm_body_class'
         - '_wp_page_template'
-        - 'ccb_curated_page' #
+        - 'ccb_curated_page'
         - 'sm_left_sidebar'
         - 'sm_hide_sidebar'
         - 'header_template_meta_box'
@@ -138,12 +138,13 @@ parameters:
        - '^(y|yes|n|no|on|off|default|in|out|html|cta\d+|cta|any|null|text|surveys|choose|button)$'
        - '^(http:|https:|field_)'
        - '^(callout|card-list|card-icon-list|cta|cta-hero|cta-sidebar|image-text-list|list-icon|list|nav|template-list|embeds|html|basic|select|gold|platinum)$' # SM CuratedPage markers
-       - '^(taxonomy|category|\s*)$'
+       - '^(taxonomy|category|\s+)$'
        - '^(true|false|enabled|disabled|background-image)$'
 
 
-  logger.smartling_log_raw_sql: true
+  logger.smartling_log_raw_sql: false
   logger.smartling_verbose_output_for_xml_coding: true
+  logger.smartling_verbose_metadata_io: true
 
   logger.channel: default
   logger.filehandler.standard.filename: %plugin.dir%/logs/logfile

@@ -3,6 +3,8 @@
 namespace Smartling\DbAl\WordpressContentEntities;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Base\LoggerTrait;
+use Smartling\Bootstrap;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Helpers\WordpressContentTypeHelper;
 
@@ -12,6 +14,8 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  * @package inc\Smartling\DbAl\WordpressContentEntities
  */
 abstract class EntityAbstract {
+
+	use LoggerTrait;
 
 	/**
 	 * @var string
@@ -54,8 +58,8 @@ abstract class EntityAbstract {
 		$this->relatedTypes = $relatedTypes;
 	}
 
-	public function resetRelatedTypes ( ) {
-		$this->relatedTypes = [];
+	public function resetRelatedTypes () {
+		$this->relatedTypes = [ ];
 	}
 
 	/**
@@ -180,6 +184,7 @@ abstract class EntityAbstract {
 	 */
 	public function __construct ( LoggerInterface $logger ) {
 		$this->logger = $logger;
+		$this->setLoggingSettingsKey( 'logger.smartling_verbose_metadata_io' );
 	}
 
 	/**
