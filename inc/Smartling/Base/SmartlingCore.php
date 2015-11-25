@@ -225,6 +225,9 @@ class SmartlingCore extends SmartlingCoreAbstract {
 			WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU === $contentType
 			&& WordpressContentTypeHelper::CONTENT_TYPE_WIDGET === $submission->getContentType()
 		) {
+
+			$originalEntity = $this->readContentEntity($submission);
+
 			/**
 			 * @var WidgetEntity $originalEntity
 			 */

@@ -40,7 +40,7 @@ trait PrepareRelatedSMSpecificTrait {
 				$settings                  = $targetContent->getSettings();
 				$settings['attachment_id'] = $newMediaId;
 				$targetContent->setSettings( $settings );
-				$this->saveTargetEntity( $targetContent );
+				$this->saveTargetEntity( $submission, $targetContent );
 			}
 		}
 	}
@@ -71,7 +71,7 @@ trait PrepareRelatedSMSpecificTrait {
 				$settings                   = $targetContent->getSettings();
 				$settings['testimonial_id'] = $newTestimonialId;
 				$targetContent->setSettings( $settings );
-				$this->saveTargetEntity( $targetContent );
+				$this->saveTargetEntity( $submission, $targetContent );
 			}
 		}
 	}
@@ -104,7 +104,7 @@ trait PrepareRelatedSMSpecificTrait {
 				$settings                 = $targetContent->getSettings();
 				$settings['testimonials'] = $newTestimonials;
 				$targetContent->setSettings( $settings );
-				$this->saveTargetEntity( $targetContent );
+				$this->saveTargetEntity( $submission, $targetContent );
 			}
 		}
 	}
