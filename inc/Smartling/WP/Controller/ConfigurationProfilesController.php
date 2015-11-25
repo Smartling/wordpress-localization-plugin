@@ -96,6 +96,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
 			'* Plugin version:    ' . Bootstrap::getCurrentVersion(),
 			'* PHP version:       ' . phpversion(),
 			'* Wordpress version: ' . $wp_version,
+			'* Wordpress hostname: ' . Bootstrap::getHttpHostName(),
 			'*********************************************************',
 		];
 

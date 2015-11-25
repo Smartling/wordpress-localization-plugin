@@ -37,6 +37,11 @@ class Bootstrap {
 		add_filter( 'cron_schedules', [ $scheduleHelper, 'extendWpCron' ] );
 	}
 
+	public static function getHttpHostName()
+	{
+		return $_SERVER['HTTP_HOST'];
+	}
+
 	/**
 	 * @var ContainerBuilder $container
 	 */

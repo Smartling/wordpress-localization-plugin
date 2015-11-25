@@ -98,16 +98,14 @@ class XmlEncoder {
 			$document->appendChild( $document->createComment( vsprintf( ' %s ', [ $commentString ] ) ) );
 		}
 
-		$document->appendChild(
-			$document->createComment(
-				vsprintf(
-					' %s ',
-					[
-						'Smartling Wordpress Connector v. ' . Bootstrap::getCurrentVersion(),
-					]
-				)
-			)
-		);
+		$additionalComments = [
+			'Smartling Wordpress Connector version: ' . Bootstrap::getCurrentVersion(),
+			'Wordpress installation host: ' . Bootstrap::getHttpHostName(),
+		];
+
+		foreach ( $additionalComments as $extraComment ) {
+			$document->appendChild( $document->createComment( vsprintf( ' %s ', [ $extraComment ] ) ) );
+		}
 
 		return $document;
 	}
