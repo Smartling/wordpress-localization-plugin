@@ -3,7 +3,9 @@
 namespace Smartling\DbAl\WordpressContentEntities;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingDataUpdateException;
+use Smartling\Helpers\RawDbQueryHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 
 /**
@@ -142,7 +144,38 @@ class PostEntity extends EntityAbstract {
 	 * @inheritdoc
 	 */
 	public function getMetadata () {
-		return get_post_meta( $this->ID );;
+		$metadata = get_post_meta( $this->ID );
+
+		if ( is_array( $metadata ) && 0 === count( $metadata ) || ! is_array( $metadata ) ) {
+			$query = vsprintf(
+				'SELECT * FROM %s WHERE post_id=%d',
+				[
+					RawDbQueryHelper::getTableName( 'postmeta' ),
+					$this->ID,
+				]
+			);
+
+			$data = RawDbQueryHelper::query( $query );
+
+			if ( 0 < count( $data ) ) {
+				$this->logMessage(
+					vsprintf(
+						'get_post_meta(%d) returned empty array but real content is:%s',
+						[
+							$this->ID,
+							base64_encode( // safe saving
+								json_encode( // easy reading
+									$data,
+									JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+								)
+							),
+						]
+					)
+				);
+			}
+		}
+
+		return $metadata;
 	}
 
 	/**
