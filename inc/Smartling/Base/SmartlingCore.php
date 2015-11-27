@@ -10,6 +10,7 @@ use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -175,47 +176,37 @@ class SmartlingCore extends SmartlingCoreAbstract {
 				);
 
 			/** @var MenuItemEntity $menuItem */
-			foreach ( $ids as $menuItem ) {
-				$needBlogSwitch = $submission->getSourceBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
-				if ( $needBlogSwitch ) {
-					$this->getSiteHelper()->switchBlogId( $submission->getSourceBlogId() );
-				}
-				$data                                 = XmlEncoder::xmlDecode( XmlEncoder::xmlEncode( [
-					'entity' => $menuItem->toArray(),
-					'meta'   => $menuItem->getMetadata(),
-				] ) );
-				$data['meta']['_menu_item_object_id'] = reset( $menuItem->getMetadata()['_menu_item_object_id'] );
-				if ( $needBlogSwitch ) {
-					$this->getSiteHelper()->restoreBlogId();
-				}
-				$relatedSubmission = null;
-				$objectId          = 0;
-				switch ( $data['meta']['_menu_item_type'] ) {
-					case 'taxonomy':
-					case 'post_type': {
-						$objectId = $this->translateAndGetTargetId(
-							$data['meta']['_menu_item_object'],
-							$submission->getSourceBlogId(),
-							$data['meta']['_menu_item_object_id'],
-							$submission->getTargetBlogId()
-						);
-						break;
-					}
-					case 'custom': {
-						break;
-					}
-				}
-				$relatedSubmission = $this->fastSendForTranslation(
+			foreach ( $ids as $menuItemEntity ) {
+
+				$menuItemSubmission = $this->fastSendForTranslation(
 					WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM,
 					$submission->getSourceBlogId(),
-					$menuItem->getPK(),
+					$menuItemEntity->getPK(),
 					$submission->getTargetBlogId()
 				);
 
+				$originalMenuItemMeta = $this->getMetaForOriginalEntity( $menuItemSubmission );
 
-				$targetContent = $this->readTargetContentEntity( $relatedSubmission );
-				$this->setMetaForTargetEntity( $submission, $targetContent, [ '_menu_item_object_id', $objectId ] );
-				$accumulator[ WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU ][] = $targetContent->getPK();
+				$originalMenuItemMeta = ArrayHelper::simplifyArray( $originalMenuItemMeta );
+
+				if ( in_array( $originalMenuItemMeta['_menu_item_type'], [ 'taxonomy', 'post_type' ] ) ) {
+					$relatedObjectId = $this->translateAndGetTargetId(
+						$originalMenuItemMeta['_menu_item_object'],
+						$submission->getSourceBlogId(),
+						(int) $originalMenuItemMeta['_menu_item_object_id'],
+						$submission->getTargetBlogId()
+					);
+
+					$originalMenuItemMeta['_menu_item_object_id'] = $relatedObjectId;
+				}
+
+				$this->setMetaForTargetEntity(
+					$menuItemSubmission,
+					$this->readTargetContentEntity( $menuItemSubmission ),
+					$originalMenuItemMeta
+				);
+
+				$accumulator[ WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU ][] = $menuItemSubmission->getTargetId();
 			}
 		}
 	}
@@ -226,7 +217,7 @@ class SmartlingCore extends SmartlingCoreAbstract {
 			&& WordpressContentTypeHelper::CONTENT_TYPE_WIDGET === $submission->getContentType()
 		) {
 
-			$originalEntity = $this->readContentEntity($submission);
+			$originalEntity = $this->readContentEntity( $submission );
 
 			/**
 			 * @var WidgetEntity $originalEntity
