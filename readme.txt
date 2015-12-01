@@ -49,6 +49,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 
+= 1.0.28 =
+* Fixed issue with unsupported types while sending to Smartling
+
 = 1.0.27 =
 * Fixed issue with structure deserialization
 * Fixed issue with Navigation Menu translation

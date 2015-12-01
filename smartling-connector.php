@@ -8,7 +8,7 @@
  * Plugin Name:       Smartling Connector
  * Plugin URI:        https://www.smartling.com/translation-software/wordpress-translation-plugin/
  * Description:       Integrate your Wordpress site with Smartling to upload your content and download translations.
- * Version:           1.0.27
+ * Version:           1.0.28
  * Author:            Smartling
  * Author URI:        https://www.smartling.com
  * License:           GPL-2.0+
