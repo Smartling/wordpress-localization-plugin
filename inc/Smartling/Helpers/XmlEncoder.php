@@ -124,12 +124,35 @@ class XmlEncoder {
 
 			$path = '' === $base ? $key : implode( $divider, [ $base, $key ] );
 
-			if ( is_array( $element ) ) {
+			$valueType = gettype( $element );
 
-				$tmp    = self::flatternArray( $element, $path );
-				$output = array_merge( $output, $tmp );
-			} else {
-				$output[ $path ] = (string) $element;
+			switch ( $valueType ) {
+				case 'array': {
+					$tmp    = self::flatternArray( $element, $path );
+					$output = array_merge( $output, $tmp );
+					break;
+				}
+				case 'NULL':
+				case 'boolean':
+				case 'string':
+				case 'integer':
+				case 'double': {
+					$output[ $path ] = (string) $element;
+					break;
+				}
+				case 'unknown type':
+				case 'resource':
+				case 'object': {
+					$message = vsprintf(
+						'Unsupported type \'%s\' found in scope for translation. Skipped. Contents: \'%s\'',
+						[
+							$valueType,
+							var_export( $element, true ),
+						]
+					);
+					self::logMessage( $message );
+				}
+
 			}
 		}
 
