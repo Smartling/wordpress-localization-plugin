@@ -142,6 +142,17 @@ trait SmartlingCoreTrait {
 			return $submission;
 		}
 
+		$this->getLogger()->debug(
+			vsprintf(
+				'Creating target entity for submission = \'%s\' for locale = \'%s\' in blog =\'%s\'.',
+				[
+					$submission->getId(),
+					$submission->getTargetLocale(),
+					$submission->getTargetBlogId(),
+				]
+			)
+		);
+
 		$originalContent = $this->readContentEntity( $submission );
 
 		$original = XmlEncoder::xmlDecode(
@@ -172,12 +183,20 @@ trait SmartlingCoreTrait {
 			$targetContent
 		);
 
+		$this->getLogger()->debug(
+			vsprintf(
+				'Created target entity for submission = \'%s\' for locale = \'%s\' in blog =\'%s\', id = \'%s\'.',
+				[
+					$submission->getId(),
+					$submission->getTargetLocale(),
+					$submission->getTargetBlogId(),
+					$targetContent->getPK(),
+				]
+			)
+		);
+
 		if ( array_key_exists( 'meta', $original ) && 0 < count( $original['meta'] ) ) {
-			$this->saveMetaProperties(
-				$targetContent,
-				$original,
-				$submission
-			);
+			$this->setMetaForTargetEntity( $submission, $targetContent, $original['meta'] );
 		}
 
 		if ( false === $update ) {

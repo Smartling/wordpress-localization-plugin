@@ -35,6 +35,7 @@ trait SmartlingCoreUploadTrait {
 	 * @return bool
 	 */
 	public function sendForTranslationBySubmission ( SubmissionEntity $submission ) {
+		$this->getLogger()->debug( vsprintf( 'Preparing to send submission id = \'%s\'', [ $submission->getId() ] ) );
 		try {
 			$contentEntity = $this->readContentEntity( $submission );
 
@@ -53,6 +54,7 @@ trait SmartlingCoreUploadTrait {
 			];
 
 			$source['meta'] = $source['meta'] ? : [ ];
+
 
 			$submission = $this->prepareTargetEntity( $submission );
 
@@ -73,15 +75,37 @@ trait SmartlingCoreUploadTrait {
 
 			do_action( XmlEncoder::EVENT_SMARTLING_BEFORE_SERIALIZE_CONNENT, $params );
 
+			$this->getLogger()->debug(
+				vsprintf(
+					'Serializing fields to XML: %s',
+					[
+						base64_encode(
+							var_export(
+								$source,
+								true )
+						),
+					]
+				)
+			);
+
 			$xml = XmlEncoder::xmlEncode( $source );
+
+			$this->getLogger()->debug( vsprintf( 'Serialized fields to XML: %s', [ base64_encode( $xml ), ] ) );
 
 			$this->prepareRelatedSubmissions( $submission );
 
 			$result = false;
 
 			if ( false === XmlEncoder::hasStringsForTranslation( $xml ) ) {
-				$this->getLogger()->error( vsprintf( 'Nothing to translate for submission #%s',
-					[ $submission->getId() ] ) );
+				$this->getLogger()->warning(
+					vsprintf(
+						'Prepared XML file for submission = \'%s\' has nothing to translate. Setting status to \'%s\'',
+						[
+							$submission->getId(),
+							SubmissionEntity::SUBMISSION_STATUS_FAILED,
+						]
+					)
+				);
 				$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_FAILED );
 			} else {
 				try {

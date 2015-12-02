@@ -3,11 +3,13 @@
 namespace Smartling\WP\View;
 
 use Exception;
+use Psr\Log\LoggerInterface;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\EntityHelper;
@@ -22,6 +24,31 @@ use Smartling\WP\Controller\SmartlingListTable;
  * @package Smartling\WP\View
  */
 class SubmissionTableWidget extends SmartlingListTable {
+
+	use CommonLogMessagesTrait;
+
+	const ACTION_UPLOAD = 'send';
+	const ACTION_CHECK_STATUS = 'check';
+	const ACTION_DOWNLOAD = 'download';
+
+	/**
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
+	/**
+	 * @return LoggerInterface
+	 */
+	public function getLogger () {
+		return $this->logger;
+	}
+
+	/**
+	 * @param LoggerInterface $logger
+	 */
+	private function setLogger ( $logger ) {
+		$this->logger = $logger;
+	}
 
 	/**
 	 * @var string
@@ -82,6 +109,8 @@ class SubmissionTableWidget extends SmartlingListTable {
 
 		$this->defaultValues[ self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME ] = $manager->getDefaultSubmissionStatus();
 
+		$this->setLogger( $entityHelper->getLogger() );
+
 		parent::__construct( $this->_settings );
 	}
 
@@ -134,17 +163,15 @@ class SubmissionTableWidget extends SmartlingListTable {
 
 		//Build row actions
 		$actions = [
-			'send'     => HtmlTagGeneratorHelper::tag( 'a', __( 'Resend' ), [
+			self::ACTION_UPLOAD   => HtmlTagGeneratorHelper::tag( 'a', __( 'Resend' ), [
 				'href' => vsprintf( $linkTemplate . $hrefFilters,
 					[ $_REQUEST['page'], 'sendSingle', $item['id'] ] ),
 			] ),
-			'download' => HtmlTagGeneratorHelper::tag( 'a', __( 'Download' ), [
+			self::ACTION_DOWNLOAD => HtmlTagGeneratorHelper::tag( 'a', __( 'Download' ), [
 				'href' => vsprintf( $linkTemplate . $hrefFilters,
 					[ $_REQUEST['page'], 'downloadSingle', $item['id'] ] ),
 			] ),
-			/*'check'    => HtmlTagGeneratorHelper::tag( 'a', __( 'Check Status' ), array (
-				'href' => vsprintf( $linkTemplate, array ( $_REQUEST['page'], 'checkSingle', $item['id'] ) )
-			) )*/
+
 		];
 
 		//Return the title contents
@@ -200,9 +227,9 @@ class SubmissionTableWidget extends SmartlingListTable {
 	 */
 	public function get_bulk_actions () {
 		$actions = [
-			'send'     => __( 'Resend' ),
-			'download' => __( 'Download' ),
-			'check'    => __( 'Check Status' ),
+			self::ACTION_UPLOAD       => __( 'Resend' ),
+			self::ACTION_DOWNLOAD     => __( 'Download' ),
+			self::ACTION_CHECK_STATUS => __( 'Check Status' ),
 		];
 
 		return $actions;
@@ -217,6 +244,73 @@ class SubmissionTableWidget extends SmartlingListTable {
 	}
 
 	/**
+	 * @return SmartlingCore
+	 */
+	private function getEntryPoint () {
+		return Bootstrap::getContainer()->get( 'entrypoint' );
+	}
+
+	/**
+	 * @param string $action
+	 * @param int    $submissionId
+	 *
+	 * @return array
+	 */
+	private function processSubmissionAction ( $action, $submissionId ) {
+
+		$messages = null;
+
+		switch ( $action ) {
+			case self::ACTION_CHECK_STATUS: {
+				$this->getLogger()->info( vsprintf(
+					self::$MSG_STATUS_CHECK_TRIGGERED,
+					[
+						$submissionId,
+					]
+				) );
+				$messages = $this->getEntryPoint()->checkSubmissionById( $submissionId );
+				break;
+			}
+			case self::ACTION_UPLOAD: {
+				$this->getLogger()->info( vsprintf(
+					self::$MSG_UPLOAD_TRIGGERED,
+					[
+						$submissionId,
+					]
+				) );
+				$messages = $this->getEntryPoint()->sendForTranslationBySubmissionId( $submissionId );
+				break;
+			}
+			case self::ACTION_DOWNLOAD: {
+				$this->getLogger()->info( vsprintf(
+					self::$MSG_DOWNLOAD_TRIGGERED,
+					[
+						$submissionId,
+					]
+				) );
+
+				$messages = $this->getEntryPoint()->downloadTranslationBySubmissionId( $submissionId );
+				break;
+			}
+			default: {
+				$msg = vsprintf(
+					self::$MSG_WARN_UNKNOWN_ACTION_TRIGGERED,
+					[
+						$action,
+						$submissionId,
+					]
+				);
+
+				$this->getLogger()->warning( $msg );
+
+				$messages = [ $msg ];
+			}
+		}
+
+		return $messages;
+	}
+
+	/**
 	 * Handles actions for multiply objects
 	 */
 	private function processBulkAction () {
@@ -225,28 +319,10 @@ class SubmissionTableWidget extends SmartlingListTable {
 		 */
 		$submissions = $this->getFormElementValue( 'submission', [ ] );
 
-		/**
-		 * @var SmartlingCore $ep
-		 */
-		$ep = Bootstrap::getContainer()->get( 'entrypoint' );
-
 		if ( is_array( $submissions ) ) {
-			foreach ( $submissions as $submission ) {
-
-
-				switch ( $this->current_action() ) {
-					case 'download':
-						$messages = $ep->downloadTranslationBySubmissionId( $submission );
-						break;
-					case 'send':
-						$messages = $ep->sendForTranslationBySubmissionId( $submission );
-						break;
-					case 'check':
-						$messages = $ep->checkSubmissionById( $submission );
-						break;
-				}
-
-
+			foreach ( $submissions as $submissionId ) {
+				$messages = $this->processSubmissionAction( $this->current_action(), $submissionId );
+				$this->addScreenMessages( $messages );
 			}
 		}
 	}
@@ -257,22 +333,8 @@ class SubmissionTableWidget extends SmartlingListTable {
 	private function processSingleAction () {
 		$submissionId = (int) $this->getFormElementValue( 'submission', 0 );
 		if ( $submissionId > 0 ) {
-			/**
-			 * @var SmartlingCore $ep
-			 */
-			$ep       = Bootstrap::getContainer()->get( 'entrypoint' );
-			$messages = [ ];
-			switch ( $this->current_action() ) {
-				case 'downloadSingle':
-					$messages = $ep->downloadTranslationBySubmissionId( $submissionId );
-					break;
-				case 'sendSingle':
-					$messages = $ep->sendForTranslationBySubmissionId( $submissionId );
-					break;
-				case 'checkSingle':
-					$messages = $ep->checkSubmissionById( $submissionId );
-					break;
-			}
+			$messages = $this->processSubmissionAction( str_replace( 'Single', '', $this->current_action() ),
+				$submissionId );
 			$this->addScreenMessages( $messages );
 		}
 	}

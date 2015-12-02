@@ -11,6 +11,7 @@ use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -28,6 +29,7 @@ class SmartlingCore extends SmartlingCoreAbstract {
 
 	use PrepareRelatedSMSpecificTrait;
 
+	use CommonLogMessagesTrait;
 	/**
 	 * current mode to send data to Smartling
 	 */
@@ -139,6 +141,14 @@ class SmartlingCore extends SmartlingCoreAbstract {
 	 * @param array            $accumulator
 	 */
 	private function processRelatedTerm ( SubmissionEntity $submission, $contentType, & $accumulator ) {
+		$this->getLogger()->debug(
+			vsprintf(
+				'Searching for terms related to submission = \'%s\'',
+				[
+					$submission->getId(),
+				]
+			)
+		);
 		if (
 			in_array( $contentType, WordpressContentTypeHelper::getSupportedTaxonomyTypes() )
 			&& WordpressContentTypeHelper::CONTENT_TYPE_WIDGET !== $submission->getContentType()
@@ -147,6 +157,16 @@ class SmartlingCore extends SmartlingCoreAbstract {
 
 			if ( 0 < count( $terms ) ) {
 				foreach ( $terms as $element ) {
+					$this->getLogger()->debug(
+						vsprintf(
+							'Sending for translation term = \'%s\' id = \'%s\' related to submission = \'%s\'',
+							[
+								$element->taxonomy,
+								$element->term_id,
+								$submission->getId(),
+							]
+						)
+					);
 					$accumulator[ $contentType ][] = $this->translateAndGetTargetId(
 						$element->taxonomy,
 						$submission->getSourceBlogId(),
@@ -167,6 +187,14 @@ class SmartlingCore extends SmartlingCoreAbstract {
 	 */
 	private function processRelatedMenu ( SubmissionEntity $submission, $contentType, &$accumulator ) {
 		if ( WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM === $contentType ) {
+			$this->getLogger()->debug(
+				vsprintf(
+					'Searching for menuItems related to submission = \'%s\'',
+					[
+						$submission->getId(),
+					]
+				)
+			);
 
 			$ids = $this
 				->getCustomMenuHelper()
@@ -177,6 +205,17 @@ class SmartlingCore extends SmartlingCoreAbstract {
 
 			/** @var MenuItemEntity $menuItem */
 			foreach ( $ids as $menuItemEntity ) {
+
+				$this->getLogger()->debug(
+					vsprintf(
+						'Sending for translation entity = \'%s\' id = \'%s\' related to submission = \'%s\'',
+						[
+							WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM,
+							$menuItemEntity->getPK(),
+							$submission->getId(),
+						]
+					)
+				);
 
 				$menuItemSubmission = $this->fastSendForTranslation(
 					WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM,
@@ -190,6 +229,16 @@ class SmartlingCore extends SmartlingCoreAbstract {
 				$originalMenuItemMeta = ArrayHelper::simplifyArray( $originalMenuItemMeta );
 
 				if ( in_array( $originalMenuItemMeta['_menu_item_type'], [ 'taxonomy', 'post_type' ] ) ) {
+					$this->getLogger()->debug(
+						vsprintf(
+							'Sending for translation object = \'%s\' related to \'%s\' related to submission = \'%s\'',
+							[
+								$originalMenuItemMeta['_menu_item_object'],
+								WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM,
+								$menuItemEntity->getPK(),
+							]
+						)
+					);
 					$relatedObjectId = $this->translateAndGetTargetId(
 						$originalMenuItemMeta['_menu_item_object'],
 						$submission->getSourceBlogId(),
@@ -216,7 +265,14 @@ class SmartlingCore extends SmartlingCoreAbstract {
 			WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU === $contentType
 			&& WordpressContentTypeHelper::CONTENT_TYPE_WIDGET === $submission->getContentType()
 		) {
-
+			$this->getLogger()->debug(
+				vsprintf(
+					'Searching for menu related to widget for submission = \'%s\'',
+					[
+						$submission->getId(),
+					]
+				)
+			);
 			$originalEntity = $this->readContentEntity( $submission );
 
 			/**
@@ -225,6 +281,17 @@ class SmartlingCore extends SmartlingCoreAbstract {
 			$menuId = (int) $originalEntity->getSettings()['nav_menu'];
 
 			if ( 0 !== $menuId ) {
+
+				$this->getLogger()->debug(
+					vsprintf(
+						'Sending for translation menu related to widget id = \'%s\' related to submission = \'%s\'',
+						[
+							$originalEntity->getPK(),
+							$submission->getId(),
+						]
+					)
+				);
+
 				$newMenuId = $this->translateAndGetTargetId(
 					WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU,
 					$submission->getSourceBlogId(),
@@ -249,14 +316,31 @@ class SmartlingCore extends SmartlingCoreAbstract {
 
 	private function processFeaturedImage ( SubmissionEntity $submission ) {
 		$originalMetadata = $this->getMetaForOriginalEntity( $submission );
-
+		$this->getLogger()->debug(
+			vsprintf(
+				'Searching for Featured Images related to submission = \'%s\'',
+				[
+					$submission->getId(),
+				]
+			)
+		);
 		if ( array_key_exists( '_thumbnail_id', $originalMetadata ) ) {
 
 			if ( is_array( $originalMetadata['_thumbnail_id'] ) ) {
 				$originalMetadata['_thumbnail_id'] = (int) reset( $originalMetadata['_thumbnail_id'] );
 			}
 
-			$targetEntity  = $this->readTargetContentEntity( $submission );
+			$targetEntity = $this->readTargetContentEntity( $submission );
+			$this->getLogger()->debug(
+				vsprintf(
+					'Sending for translation Featured Image id = \'%s\' related to submission = \'%s\'',
+					[
+						$originalMetadata['_thumbnail_id'],
+						$submission->getId(),
+					]
+				)
+			);
+
 			$attSubmission = $this->fastSendForTranslation(
 				WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT,
 				$submission->getSourceBlogId(),
@@ -277,6 +361,16 @@ class SmartlingCore extends SmartlingCoreAbstract {
 	 * @throws BlogNotFoundException
 	 */
 	public function prepareRelatedSubmissions ( SubmissionEntity $submission ) {
+
+		$this->getLogger()->info(
+			vsprintf(
+				'Searching for related content for submission = \'%s\' for translation',
+				[
+					$submission->getId(),
+				]
+			)
+		);
+
 		$originalEntity      = $this->readContentEntity( $submission );
 		$relatedContentTypes = $originalEntity->getRelatedTypes();
 		$accumulator         = [
@@ -391,7 +485,27 @@ class SmartlingCore extends SmartlingCoreAbstract {
 		$messages = [ ];
 
 		try {
+			$this->getLogger()->info( vsprintf( self::$MSG_CRON_CHECK, [
+				$submission->getId(),
+				$submission->getStatus(),
+				$submission->getContentType(),
+				$submission->getSourceBlogId(),
+				$submission->getSourceId(),
+				$submission->getTargetBlogId(),
+				$submission->getTargetLocale(),
+			] ) );
+
 			$submission = $this->getApiWrapper()->getStatus( $submission );
+
+			$this->getLogger()->info( vsprintf( self::$MSG_CRON_CHECK_RESULT, [
+				$submission->getContentType(),
+				$submission->getSourceBlogId(),
+				$submission->getSourceId(),
+				$submission->getTargetLocale(),
+				$submission->getApprovedStringCount(),
+				$submission->getCompletedStringCount(),
+			] ) );
+
 
 			$submission = $this->getSubmissionManager()->storeEntity( $submission );
 		} catch ( SmartlingExceptionAbstract $e ) {
@@ -431,6 +545,15 @@ class SmartlingCore extends SmartlingCoreAbstract {
 	 */
 	public function checkEntityForDownload ( SubmissionEntity $entity ) {
 		if ( 100 === $entity->getCompletionPercentage() ) {
+			$this->getLogger()->info( vsprintf( self::$MSG_CRON_DOWNLOAD, [
+				$entity->getId(),
+				$entity->getStatus(),
+				$entity->getContentType(),
+				$entity->getSourceBlogId(),
+				$entity->getSourceId(),
+				$entity->getTargetBlogId(),
+				$entity->getTargetLocale(),
+			] ) );
 			$this->downloadTranslationBySubmission( $entity );
 		}
 	}
@@ -443,9 +566,18 @@ class SmartlingCore extends SmartlingCoreAbstract {
 				],
 			]
 		);
-
+		$this->getLogger()->info( vsprintf( self::$MSG_CRON_INITIAL_SUMMARY, [ count( $entities ) ] ) );
 		foreach ( $entities as $entity ) {
 			if ( $entity->getStatus() === SubmissionEntity::SUBMISSION_STATUS_NEW ) {
+				$this->getLogger()->info( vsprintf( self::$MSG_CRON_SEND, [
+					$entity->getId(),
+					$entity->getStatus(),
+					$entity->getContentType(),
+					$entity->getSourceBlogId(),
+					$entity->getSourceId(),
+					$entity->getTargetBlogId(),
+					$entity->getTargetLocale(),
+				] ) );
 				$this->sendForTranslationBySubmission( $entity );
 			}
 			if ( $entity->getStatus() === SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS ) {

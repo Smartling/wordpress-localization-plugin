@@ -6,6 +6,7 @@ use Exception;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\WP\WPAbstract;
@@ -29,6 +30,8 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 	protected $needSave = 'Need to have title';
 
 	protected $noOriginalFound = 'No original post found';
+
+	use CommonLogMessagesTrait;
 
 	/**
 	 * @inheritdoc
@@ -200,6 +203,18 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 									(int) $blogId,
 									$this->getEntityHelper()->getTarget( $post_id, $blogId )
 								);
+
+							$this->getLogger()->info( vsprintf(
+									self::$MSG_ENQUEUE_ENTITY,
+									[
+											$this->servedContentType,
+											$sourceBlog,
+											$originalId,
+											(int) $blogId,
+											$result->getTargetLocale(),
+									]
+							) );
+
 						}
 						break;
 					case __( 'Download' ):
@@ -217,6 +232,13 @@ class PostWidgetController extends WPAbstract implements WPHookInterface {
 						);
 
 						foreach ( $submissions as $submission ) {
+							$this->getLogger()->info( vsprintf(
+									self::$MSG_DOWNLOAD_TRIGGERED,
+									[
+											$submission->getId(),
+									]
+							) );
+
 							$core->downloadTranslationBySubmission( $submission );
 						}
 

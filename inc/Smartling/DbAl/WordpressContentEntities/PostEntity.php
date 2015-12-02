@@ -282,6 +282,24 @@ class PostEntity extends EntityAbstract {
 	}
 
 	/**
+	 * returns true if value is same as stored.
+	 *
+	 * @param string $key
+	 * @param mixed  $value
+	 *
+	 * @return bool
+	 */
+	private function ensureMetaValue ( $key, $value ) {
+		$meta = $this->getMetadata();
+
+		if ( array_key_exists( $key, $meta ) ) {
+			return $value == reset( $meta[ $key ] );
+		} else {
+			return false;
+		}
+	}
+
+	/**
 	 * @inheritdoc
 	 */
 	public function setMetaTag ( $tagName, $tagValue, $unique = true ) {
@@ -306,16 +324,18 @@ class PostEntity extends EntityAbstract {
 		}
 
 		if ( false === $result ) {
-			$message = vsprintf(
-				'Error saving meta tag "%s" with value "%s" for "%s" "%s"',
-				[
-					$tagName,
-					var_export( $tagValue, true ),
-					$this->post_type,
-					$this->ID,
-				]
-			);
-			$this->getLogger()->error( $message );
+			if ( false === $this->ensureMetaValue( $tagName, $tagValue ) ) {
+				$message = vsprintf(
+					'Error saving meta tag "%s" with value "%s" for "%s" "%s"',
+					[
+						$tagName,
+						var_export( $tagValue, true ),
+						$this->post_type,
+						$this->ID,
+					]
+				);
+				$this->getLogger()->error( $message );
+			}
 		} else {
 			$this->logMessage(
 				vsprintf( 'Set tag \'%s\' with value \'%s\' for %s (id=%s)', [

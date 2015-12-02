@@ -24,6 +24,8 @@ trait SmartlingCoreDownloadTrait {
 
 	public function downloadTranslationBySubmission ( SubmissionEntity $entity ) {
 
+		$this->getLogger()->debug( vsprintf( 'Preparing to download submission id = \'%s\'', [ $entity->getId() ] ) );
+
 		if ( 1 === $entity->getIsLocked() ) {
 			$msg = vsprintf( 'Triggered download of locked entity. Target Blog: %s; Target Id: %s', [
 				$entity->getTargetBlogId(),
@@ -56,14 +58,17 @@ trait SmartlingCoreDownloadTrait {
 				$entity = $this->prepareTargetEntity( $entity );
 			}
 
+
 			$data = $this->getApiWrapper()->downloadFile( $entity );
+			$this->getLogger()->debug( vsprintf( 'Downloaded file for submission id = \'%s\'. Dump: %s',
+				[ $entity->getId(), base64_encode( $data ) ] ) );
+
 
 			$translatedFields = XmlEncoder::xmlDecode( $data );
-
+			$this->getLogger()->debug( vsprintf( 'Deserialized translated fields for submission id = \'%s\'. Dump: %s\'', [ $entity->getId(), base64_encode(json_encode($translatedFields)) ] ) );
 			if ( ! array_key_exists( 'meta', $translatedFields ) ) {
 				$translatedFields['meta'] = [ ];
 			}
-			$targetId = (int) $entity->getTargetId();
 
 			$targetContent = $this->readTargetContentEntity( $entity );
 
@@ -86,7 +91,7 @@ trait SmartlingCoreDownloadTrait {
 				$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_COMPLETED );
 			}
 
-			$this->prepareRelatedSubmissions( $entity );
+			//$this->prepareRelatedSubmissions( $entity ); // Should be refactored. Not a nice spike.
 
 			$entity->appliedDate = DateTimeHelper::nowAsString();
 

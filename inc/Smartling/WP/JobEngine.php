@@ -80,12 +80,12 @@ class JobEngine implements WPHookInterface {
 	public function doWork () {
 		$curLockStatus = SimpleStorageHelper::get( self::LOCK_NAME, 0 );
 		$now           = time();
-		$this->getLogger()->info( 'Cron init' );
+		$this->getLogger()->info( 'Cron Job initiated' );
 		if ( $now > $curLockStatus + self::CRON_INTERVAL + self::CRON_TTL ) {
 			SimpleStorageHelper::set( self::LOCK_NAME, $now );
 			$this->job();
 		}
-		$this->getLogger()->info( 'Cron stop' );
+		$this->getLogger()->info( 'Cron Job Finished' );
 	}
 
 
@@ -93,8 +93,6 @@ class JobEngine implements WPHookInterface {
 	 * Checks & Downloads completed translations
 	 */
 	public function job () {
-		$this->getLogger()->info( 'Cron start' );
-
 		/**
 		 * @var SmartlingCore $ep
 		 */

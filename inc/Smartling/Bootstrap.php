@@ -230,25 +230,18 @@ class Bootstrap {
 			[
 				'multilingual-press-pro' => false,
 				'polylang'               => false,
-				'wpml'                   => false,
 			];
-
-		$logger->debug( 'Searching for Wordpress multilingual plugins' );
 
 		$_found = false;
 
 		if ( class_exists( 'Mlp_Load_Controller', false ) ) {
 			$mlPluginsStatuses['multilingual-press-pro'] = true;
-			$logger->debug( 'found "multilingual-press" plugin' );
-
 			$_found = true;
 		}
 
 		if ( false === $_found ) {
 			$message = 'No active multilingual plugins found.';
-
 			$logger->warning( $message );
-
 			if ( ! $scielent ) {
 				throw new MultilingualPluginNotFoundException( $message );
 			}

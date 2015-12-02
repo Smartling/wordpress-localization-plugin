@@ -3,9 +3,11 @@
 namespace Smartling\WP\View;
 
 use DateTime;
+use Psr\Log\LoggerInterface;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
@@ -15,6 +17,7 @@ use Smartling\Helpers\ThemeSidebarHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressUserHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\Controller\SmartlingListTable;
 
@@ -25,6 +28,8 @@ use Smartling\WP\Controller\SmartlingListTable;
  * @package Smartling\WP\View
  */
 class BulkSubmitTableWidget extends SmartlingListTable {
+
+	use CommonLogMessagesTrait;
 
 	/**
 	 * @var string
@@ -86,6 +91,25 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 	}
 
 	/**
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
+	/**
+	 * @return LoggerInterface
+	 */
+	public function getLogger () {
+		return $this->logger;
+	}
+
+	/**
+	 * @param LoggerInterface $logger
+	 */
+	private function setLogger ( $logger ) {
+		$this->logger = $logger;
+	}
+
+	/**
 	 * @param SubmissionManager          $manager
 	 * @param PluginInfo                 $pluginInfo
 	 * @param EntityHelper               $entityHelper
@@ -102,6 +126,8 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 		$this->pluginInfo   = $pluginInfo;
 		$this->entityHelper = $entityHelper;
 		$this->profile      = $profile;
+
+		$this->setLogger( $entityHelper->getLogger() );
 
 		parent::__construct( $this->_settings );
 	}
@@ -153,26 +179,6 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 			default:
 				return $item[ $column_name ];
 		}
-	}
-
-	/**
-	 * @param $item
-	 *
-	 * @return string
-	 */
-	public function applyRowActions ( $item ) {
-		$linkTemplate = '?page=%s&action=%s&' . $this->buildHtmlTagName( $this->_args['singular'] ) . '=%s';
-
-		//Build row actions
-		$actions = [
-			'send' => HtmlTagGeneratorHelper::tag( 'a', __( 'Send' ), [
-				'href' => vsprintf( $linkTemplate,
-					[ $_REQUEST['page'], 'sendSingle', $item['id'] . '-' . $item['type'] ] ),
-			] ),
-		];
-
-		//Return the title contents
-		return vsprintf( '%s %s', [ $item['title'], $this->row_actions( $actions ) ] );
 	}
 
 	/**
@@ -272,51 +278,24 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 				foreach ( $submissions as $submission ) {
 					list( $id, $type ) = explode( '-', $submission );
 					$curBlogId = $this->getProfile()->getOriginalBlogId()->getBlogId();
-
 					foreach ( $locales as $blogId => $blogName ) {
-						$result = $ep->createForTranslation( $type, $curBlogId, $id, (int) $blogId );
+
+						/**
+						 * @var SubmissionEntity $submissionEntity
+						 */
+						$submissionEntity = $ep->createForTranslation( $type, $curBlogId, $id, (int) $blogId );
+
+						$this->getLogger()->info( vsprintf(
+							self::$MSG_ENQUEUE_ENTITY,
+							[
+								$type,
+								$curBlogId,
+								$id,
+								$blogId,
+								$submissionEntity->getTargetLocale(),
+							]
+						) );
 					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * Handles actions for single object
-	 */
-	private function processSingleAction () {
-		$submissionId = (int) $this->getFormElementValue( 'submission', 0 );
-		$locales      = [ ];
-		$data         = $this->getFromSource( 'bulk-submit-locales', [ ] );
-		if ( null !== $data && array_key_exists( 'locales', $data ) ) {
-			foreach ( $data['locales'] as $blogId => $blogName ) {
-				if ( array_key_exists( 'enabled', $blogName ) && 'on' === $blogName['enabled'] ) {
-					$locales[ $blogId ] = $blogName['locale'];
-				}
-			}
-
-			$type = $this->getFormElementValue( $this->buildHtmlTagName( 'content-type' ), null );
-
-			if ( null === $type ) {
-				return;
-			}
-
-			if ( $submissionId > 0 && count( $locales ) > 0 ) {
-				/**
-				 * @var SmartlingCore $ep
-				 */
-				$ep = Bootstrap::getContainer()->get( 'entrypoint' );
-
-				$curBlogId = $this->getProfile()->getOriginalBlogId()->getBlogId();
-
-				foreach ( $locales as $blogId => $blogName ) {
-					$result = $ep->createForTranslation(
-						$type,
-						$curBlogId,
-						$submissionId,
-						(int) $blogId,
-						$this->getEntityHelper()->getTarget( $submissionId, $blogId )
-					);
 				}
 			}
 		}
@@ -327,7 +306,6 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 	 */
 	private function processAction () {
 		$this->processBulkAction();
-		$this->processSingleAction();
 	}
 
 	/**
@@ -480,7 +458,7 @@ class BulkSubmitTableWidget extends SmartlingListTable {
 			case WordpressContentTypeHelper::CONTENT_TYPE_WIDGET:
 				return [
 					'id'      => $item->getId(),
-					'title'   => '"' . $item->getTitle() . '" on ' . ThemeSidebarHelper::getSideBarLabel($item->getBar()) . '(position ' . $item->getBarPosition() . ')',
+					'title'   => '"' . $item->getTitle() . '" on ' . ThemeSidebarHelper::getSideBarLabel( $item->getBar() ) . '(position ' . $item->getBarPosition() . ')',
 					'type'    => $item->getType(),
 					'author'  => $item->getIndex(),
 					'status'  => null,
