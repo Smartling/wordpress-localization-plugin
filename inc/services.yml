@@ -154,6 +154,8 @@ parameters:
   logger.formatter.date: "Y-m-d H:i:s"
   logger.formatter.output.default: "[%%datetime%%] %%channel%%.%%level_name%%: %%message%% %%context%% %%extra%%\n"
   logger.formatter.output.short: "[%%datetime%%] %%level_name%%: %%message%%\n"
+  logger.formatter.output.short_with_request_id: "[%%datetime%%] %%extra.request_id%% %%level_name%%: %%message%%\n"
+  logger.formatter.allow_multiline: true
 
   submission.pagesize: 10
 
@@ -258,10 +260,12 @@ services:
       - [ "registerHandler", ["attachment", "@wrapper.entity.attachment"]]
 
   fileLoggerLineFormatter:
-    class: Monolog\Formatter\LineFormatter
+    #class: Monolog\Formatter\LineFormatter
+    class: Smartling\Base\CustomLogLineFormatter
     arguments:
-      - "%logger.formatter.output.short%"
+      - "%logger.formatter.output.short_with_request_id%"
       - "%logger.formatter.date%"
+      - "%logger.formatter.allow_multiline%"
 
   fileLoggerHandlerStandard:
     class: Monolog\Handler\StreamHandler
