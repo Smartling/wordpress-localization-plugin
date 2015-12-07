@@ -317,7 +317,7 @@ class XmlEncoder {
 	 * @return string
 	 */
 	public static function xmlEncode ( array $source ) {
-		self::logMessage( vsprintf( 'Starting to create XML for fields: %s',
+		self::logMessage( vsprintf( 'Started creating XML for fields: %s',
 			[ base64_encode( var_export( $source, true ) ) ] ) );
 		$originalSource = $source;
 		$source         = self::prepareSourceArray( $source );
