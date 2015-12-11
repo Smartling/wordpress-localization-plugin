@@ -70,6 +70,8 @@ trait SmartlingCoreUploadTrait {
 				}
 			}
 
+			$this->regenerateTargetThumbnailsBySubmission( $submission );
+
 			$params = new BeforeSerializeContentEventParameters( $source, $submission, $contentEntity,
 				$source['meta'] );
 

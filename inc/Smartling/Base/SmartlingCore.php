@@ -653,4 +653,70 @@ class SmartlingCore extends SmartlingCoreAbstract {
 			$this->getSettingsManager()->storeEntity( $profile );
 		}
 	}
+
+	/**
+	 * Forces image thumbnail re-generation
+	 *
+	 * @param SubmissionEntity $submission
+	 *
+	 * @throws BlogNotFoundException
+	 */
+	private function regenerateTargetThumbnailsBySubmission ( SubmissionEntity $submission ) {
+
+		$this->getLogger()->debug(
+			vsprintf(
+				'Starting thumbnails regeneration for blog=\'%s\' attachment id=\'%s\'.',
+				[
+					$submission->getTargetBlogId(),
+					$submission->getTargetId(),
+				] )
+		);
+
+		if ( WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT !== $submission->getContentType() ) {
+			return;
+		}
+
+		$needBlogSwitch = $submission->getTargetBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
+
+		if ( $needBlogSwitch ) {
+			$this->getSiteHelper()->switchBlogId( $submission->getTargetBlogId() );
+		}
+
+		$originalImage = get_attached_file( $submission->getTargetId() );
+
+		$metadata = wp_generate_attachment_metadata( $submission->getTargetId(), $originalImage );
+
+
+		if ( is_wp_error( $metadata ) ) {
+
+			$this->getLogger()->error(
+				vsprintf(
+					'Error occurred while regenerating thumbnails for blog=\'%s\' attachment id=\'%s\'. Message:\'%s\'',
+					[
+						$submission->getTargetBlogId(),
+						$submission->getTargetId(),
+						$metadata->get_error_message(),
+					] )
+			);
+		}
+
+
+		if ( empty( $metadata ) ) {
+			$this->getLogger()->error(
+				vsprintf(
+					'Couldn\'t regenerate thumbnails for blog=\'%s\' attachment id=\'%s\'. Message:\'%s\'',
+					[
+						$submission->getTargetBlogId(),
+						$submission->getTargetId(),
+						$metadata->get_error_message(),
+					] )
+			);
+		}
+
+		wp_update_attachment_metadata( $submission->getTargetId(), $metadata );
+
+		if ( $needBlogSwitch ) {
+			$this->getSiteHelper()->restoreBlogId();
+		}
+	}
 }
