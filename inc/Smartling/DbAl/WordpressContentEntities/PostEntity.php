@@ -146,7 +146,7 @@ class PostEntity extends EntityAbstract {
 	public function getMetadata () {
 		$metadata = get_post_meta( $this->ID );
 
-		if ( is_array( $metadata ) && 0 === count( $metadata ) || ! is_array( $metadata ) ) {
+		if ( ( is_array( $metadata ) && 0 === count( $metadata ) ) || ! is_array( $metadata ) ) {
 			$query = vsprintf(
 				'SELECT * FROM %s WHERE post_id=%d',
 				[
