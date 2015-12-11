@@ -24,4 +24,23 @@ class StringHelper {
 	public static function isNullOrEmpty ( $string ) {
 		return in_array( $string, [ false, null, self::EMPTY_STRING ] );
 	}
+
+	/**
+	 * @param string $pattern
+	 * @param string $borders
+	 * @param string $modifiers
+	 *
+	 * @return string
+	 */
+	public static function buildPattern ( $pattern, $borders = '/', $modifiers = 'ius' ) {
+		return vsprintf(
+			'%s%s%s%s',
+			[
+				$borders,
+				$pattern,
+				$borders,
+				$modifiers,
+			]
+		);
+	}
 }

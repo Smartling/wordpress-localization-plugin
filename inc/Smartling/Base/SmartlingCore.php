@@ -29,7 +29,11 @@ class SmartlingCore extends SmartlingCoreAbstract {
 
 	use PrepareRelatedSMSpecificTrait;
 
+	use SmartlingCoreExportApi;
+
 	use CommonLogMessagesTrait;
+
+
 	/**
 	 * current mode to send data to Smartling
 	 */

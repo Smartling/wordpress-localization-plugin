@@ -20,6 +20,7 @@ parameters:
     - 'wp.ext.policy'
     - 'wp.ext.partner'
     - 'wp.ext.testimonial'
+    - 'smartling.helper.relative-image-path-support'
 
 
   # Property mapper general definitions
@@ -160,6 +161,12 @@ parameters:
   submission.pagesize: 10
 
 services:
+
+  smartling.helper.relative-image-path-support:
+    class: Smartling\Helpers\RelativeLinkedAttachmentCoreHelper
+    arguments:
+      - "@logger"
+      - "@entrypoint"
 
   helper.customMenu:
     class: Smartling\Helpers\CustomMenuContentTypeHelper

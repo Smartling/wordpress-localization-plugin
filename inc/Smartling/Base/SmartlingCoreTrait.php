@@ -299,6 +299,24 @@ trait SmartlingCoreTrait {
 		return $data;
 	}
 
+	private function getUploadPathForSite ( $siteId ) {
+		$needSiteChange = (int) $siteId !== $this->getSiteHelper()->getCurrentBlogId();
+
+		if ( $needSiteChange ) {
+			$this->getSiteHelper()->switchBlogId( (int) $siteId );
+		}
+
+		$prefix = $this->getUploadDirForSite( $siteId );
+
+		$data = str_replace( $prefix['subdir'], '', parse_url( $prefix['url'], PHP_URL_PATH ) );
+
+		if ( $needSiteChange ) {
+			$this->getSiteHelper()->restoreBlogId();
+		}
+
+		return $data;
+	}
+
 	/**
 	 * @param SubmissionEntity $submission
 	 *
