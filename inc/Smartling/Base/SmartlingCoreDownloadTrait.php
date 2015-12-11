@@ -65,7 +65,10 @@ trait SmartlingCoreDownloadTrait {
 
 
 			$translatedFields = XmlEncoder::xmlDecode( $data );
-			$this->getLogger()->debug( vsprintf( 'Deserialized translated fields for submission id = \'%s\'. Dump: %s\'', [ $entity->getId(), base64_encode(json_encode($translatedFields)) ] ) );
+			$this->getLogger()->debug( vsprintf( 'Deserialized translated fields for submission id = \'%s\'. Dump: %s\'', [
+				$entity->getId(),
+				base64_encode( json_encode( $translatedFields ) ),
+			] ) );
 			if ( ! array_key_exists( 'meta', $translatedFields ) ) {
 				$translatedFields['meta'] = [ ];
 			}
