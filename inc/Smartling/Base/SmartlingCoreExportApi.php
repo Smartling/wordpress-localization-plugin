@@ -48,4 +48,8 @@ trait SmartlingCoreExportApi {
 
 		return $relativePath;
 	}
+
+	public function getUploadFileInfo($siteId){
+		return $this->getUploadDirForSite($siteId);
+	}
 }
