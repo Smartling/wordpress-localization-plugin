@@ -8,7 +8,6 @@ use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
-
 use Smartling\WP\WPAbstract;
 
 /**
@@ -73,7 +72,7 @@ if ( 0 === $profileId ) {
 					?>
 				</td >
 			</tr >
-			<tr >
+			<!-- <tr >
 				<th scope = "row" ><?= __( 'API Url', $domain ) ?></th >
 				<td >
 					<input type = "text" name = "smartling_settings[apiUrl]"
@@ -83,7 +82,7 @@ if ( 0 === $profileId ) {
 						https://capi.smartling.com/v1
 					</small >
 				</td >
-			</tr >
+			</tr > -->
 			<tr >
 				<th scope = "row" ><?= __( 'Project ID', $domain ) ?></th >
 				<td >
@@ -92,10 +91,18 @@ if ( 0 === $profileId ) {
 				</td >
 			</tr >
 			<tr >
-				<th scope = "row" ><?= __( 'Project Key', $domain ) ?></th >
+				<th scope = "row" ><?= __( 'User Identifier', $domain ) ?></th >
 				<td >
-					<?php $key = $profile->getApiKey(); ?>
-					<input type = "text" id = "api_key" name = "apiKey" value = "" >
+
+					<input type = "text" id = "user_identifier" name = "smartling_settings[userIdentifier]"
+					       value = "<?= $profile->getUserIdentifier(); ?>" >
+				</td >
+			</tr >
+			<tr >
+				<th scope = "row" ><?= __( 'Secret Key', $domain ) ?></th >
+				<td >
+					<?php $key = $profile->getSecretKey(); ?>
+					<input type = "text" id = "secret_key" name = "smartling_settings[secretKey]" value = "" >
 					<br >
 					<?php if ( $key ) { ?>
 						<small ><?= __( 'Current Key', $domain ) ?>

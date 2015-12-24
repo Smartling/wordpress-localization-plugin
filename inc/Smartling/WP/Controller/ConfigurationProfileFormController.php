@@ -4,6 +4,7 @@ namespace Smartling\WP\Controller;
 
 use Smartling\Bootstrap;
 use Smartling\Exception\BlogNotFoundException;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\Locale;
 use Smartling\Settings\TargetLocale;
 use Smartling\WP\JobEngine;
@@ -61,7 +62,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 	public function save () {
 		$settings = &$_REQUEST['smartling_settings'];
 
-		$newApiKey = &$_REQUEST['apiKey'];
+		$newSecretKey = &$settings['secretKey'];
 
 		$profileId = (int) ( $settings['id'] ? : 0 );
 
@@ -96,9 +97,18 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 			$profile->setProjectId( $settings['projectId'] );
 		}
 
-		if ( null !== $newApiKey ) {
-			$profile->setApiKey( $newApiKey );
+		if ( array_key_exists( 'userIdentifier', $settings ) ) {
+			$profile->setUserIdentifier( $settings['userIdentifier'] );
 		}
+
+		if (
+			array_key_exists( 'secretKey', $settings )
+			&& '' !== trim($settings['secretKey'])
+			&& !is_null($settings['secretKey'])
+		) {
+			$profile->setSecretKey( $settings['secretKey'] );
+		}
+
 
 		if ( array_key_exists( 'retrievalType', $settings ) ) {
 			$profile->setRetrievalType( $settings['retrievalType'] );

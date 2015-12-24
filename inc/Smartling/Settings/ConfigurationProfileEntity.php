@@ -14,13 +14,11 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 
 	const REGEX_PROJECT_ID = '([0-9a-f]){9}';
 
-	const REGEX_PROJECT_KEY = '[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}';
-
 	protected static function getInstance ( LoggerInterface $logger ) {
 		return new self( $logger );
 	}
 
-	static function getRetrievalTypes () {
+	public static function getRetrievalTypes () {
 		return [
 			'pseudo'    => __( 'Pseudo' ),
 			'published' => __( 'Published' ),
@@ -31,13 +29,15 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	/**
 	 * @return array
 	 */
-	static function getFieldLabels () {
+	public static function getFieldLabels () {
 		return [
 			'id'               => __( 'ID' ),
 			'profile_name'     => __( 'Profile Name' ),
 			//'api_url'        => __( 'API URL' ),
 			'project_id'       => __( 'Project ID' ),
-			'api_key'          => __( 'Api Key' ),
+			'user_identifier'  => __( 'User Identifier' ),
+			//'secret_key'       => __( 'Secret Key' ),
+			//'api_key'          => __( 'Api Key' ),
 			'is_active'        => __( 'Active' ),
 			'original_blog_id' => __( 'Main Locale' ),
 			'auto_authorize'   => __( 'Auto Authorize' ),
@@ -48,13 +48,15 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	/**
 	 * @return array
 	 */
-	static function getFieldDefinitions () {
+	public static function getFieldDefinitions () {
+
 		return [
 			'id'               => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
 			'profile_name'     => self::DB_TYPE_STRING_STANDARD,
 			'api_url'          => self::DB_TYPE_STRING_STANDARD,
 			'project_id'       => 'CHAR(9) NOT NULL',
-			'api_key'          => 'CHAR(36) NOT NULL',
+			'user_identifier'  => self::DB_TYPE_STRING_STANDARD,
+			'secret_key'       => self::DB_TYPE_STRING_STANDARD,
 			'is_active'        => self::DB_TYPE_UINT_SWITCH,
 			'original_blog_id' => self::DB_TYPE_U_BIGINT,
 			'auto_authorize'   => self::DB_TYPE_UINT_SWITCH,
@@ -66,7 +68,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	/**
 	 * @return array
 	 */
-	static function getSortableFields () {
+	public static function getSortableFields () {
 		return [
 			'profile_name',
 			'project_id',
@@ -80,7 +82,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	/**
 	 * @return array
 	 */
-	static function getIndexes () {
+	public static function getIndexes () {
 		return [
 			[
 				'type'    => 'primary',
@@ -96,7 +98,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 	/**
 	 * @return string
 	 */
-	static function getTableName () {
+	public static function getTableName () {
 		return 'smartling_configuration_profiles';
 	}
 
@@ -161,22 +163,20 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract {
 		}
 	}
 
-	/**
-	 * @return mixed
-	 */
-	public function getApiKey () {
-		return $this->stateFields['api_key'];
+	public function getUserIdentifier () {
+		return $this->stateFields['user_identifier'];
 	}
 
-	/**
-	 * @param $projectKey
-	 */
-	public function setApiKey ( $projectKey ) {
-		if ( ! preg_match( vsprintf( '/%s/ius', [ self::REGEX_PROJECT_KEY ] ), trim( $projectKey, '/' ) ) ) {
-			$this->logger->warning( vsprintf( 'Got invalid project KEY: %s', [ $projectKey ] ) );
-		} else {
-			$this->stateFields['api_key'] = $projectKey;
-		}
+	public function setUserIdentifier ( $user_identifier ) {
+		$this->stateFields['user_identifier'] = $user_identifier;
+	}
+
+	public function getSecretKey () {
+		return $this->stateFields['secret_key'];
+	}
+
+	public function setSecretKey ( $secret_key ) {
+		$this->stateFields['secret_key'] = $secret_key;
 	}
 
 	/**

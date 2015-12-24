@@ -22,7 +22,12 @@ class SettingsConfigurationProfile {
 	/**
 	 * @var string
 	 */
-	private $key;
+	private $userIdentifier;
+
+	/**
+	 * @var string
+	 */
+	private $secretKey;
 
 	/**
 	 * @var string
@@ -70,15 +75,29 @@ class SettingsConfigurationProfile {
 	/**
 	 * @return string
 	 */
-	public function getKey () {
-		return $this->key;
+	public function getSecretKey () {
+		return $this->secretKey;
 	}
 
 	/**
-	 * @param string $key
+	 * @param string $secretKey
 	 */
-	public function setKey ( $key ) {
-		$this->key = $key;
+	public function setSecretKey ( $secretKey ) {
+		$this->secretKey = $secretKey;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getUserIdentifier () {
+		return $this->userIdentifier;
+	}
+
+	/**
+	 * @param string $userIdentifier
+	 */
+	public function setUserIdentifier ( $userIdentifier ) {
+		$this->userIdentifier = $userIdentifier;
 	}
 
 	/**
@@ -124,48 +143,17 @@ class SettingsConfigurationProfile {
 	}
 
 	/**
-	 * @param string $key
-	 *
-	 * @return array|false
-	 */
-	public function get ( $key ) {
-		$values = get_site_option( $key );
-		if ( $values ) {
-			$this->setApiUrl( $values['apiUrl'] );
-			$this->setProjectId( $values['projectId'] );
-			$this->setKey( $values['key'] );
-			$this->setRetrievalType( $values['retrievalType'] );
-			$this->setCallBackUrl( $values['callBackUrl'] );
-			$this->setAutoAuthorize( $values['autoAuthorize'] );
-		}
-
-		return $values;
-	}
-
-	/**
-	 * @param string $key
-	 */
-	public function save ( $key ) {
-		$option = get_site_option( $key );
-		$values = $this->toArray();
-		if ( ! $option ) {
-			add_site_option( $key, $values );
-		} else {
-			update_site_option( $key, $values );
-		}
-	}
-
-	/**
 	 * @return array
 	 */
 	public function toArray () {
 		return [
-			'apiUrl'        => trim( $this->getApiUrl() ),
-			'projectId'     => trim( $this->getProjectId() ),
-			'key'           => trim( $this->getKey() ),
-			'retrievalType' => trim( $this->getRetrievalType() ),
-			'callBackUrl'   => trim( $this->getCallBackUrl() ),
-			'autoAuthorize' => trim( $this->getAutoAuthorize() ),
+			'apiUrl'          => trim( $this->getApiUrl() ),
+			'projectId'       => trim( $this->getProjectId() ),
+			'user_identifier' => trim( $this->getUserIdentifier() ),
+			'secret_key'      => trim( $this->getSecretKey() ),
+			'retrievalType'   => trim( $this->getRetrievalType() ),
+			'callBackUrl'     => trim( $this->getCallBackUrl() ),
+			'autoAuthorize'   => trim( $this->getAutoAuthorize() ),
 		];
 	}
 }

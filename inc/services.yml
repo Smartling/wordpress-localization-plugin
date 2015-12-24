@@ -179,6 +179,8 @@ services:
     arguments:
       - "@manager.settings"
       - "@logger"
+      - "%plugin.name%"
+      - "%plugin.version%"
 
   entrypoint:
     class: Smartling\Base\SmartlingCore
@@ -487,13 +489,14 @@ services:
     calls:
       - [ "registerExtension", [ "@extension.translation_lock" ]]
 
-
-
   migration.150512:
-    class: Smartling\DbAl\Migrations\Migration150512
+    class:	Smartling\DbAl\Migrations\Migration150512
 
   migration.150619:
-    class: Smartling\DbAl\Migrations\Migration150619
+    class:	Smartling\DbAl\Migrations\Migration150619
+
+  migration.151222:
+    class: Smartling\DbAl\Migrations\Migration151222
 
   manager.db.migrations:
     class: Smartling\DbAl\Migrations\DbMigrationManager
@@ -502,3 +505,4 @@ services:
     calls:
       - [ "registerMigration", [ "@migration.150512" ]]
       - [ "registerMigration", [ "@migration.150619" ]]
+      - [ "registerMigration", [ "@migration.151222" ]]
