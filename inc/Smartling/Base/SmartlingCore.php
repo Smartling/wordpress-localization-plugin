@@ -704,15 +704,13 @@ class SmartlingCore extends SmartlingCoreAbstract {
 			);
 		}
 
-
 		if ( empty( $metadata ) ) {
 			$this->getLogger()->error(
 				vsprintf(
-					'Couldn\'t regenerate thumbnails for blog=\'%s\' attachment id=\'%s\'. Message:\'%s\'',
+					'Couldn\'t regenerate thumbnails for blog=\'%s\' attachment id=\'%s\'.',
 					[
 						$submission->getTargetBlogId(),
 						$submission->getTargetId(),
-						$metadata->get_error_message(),
 					] )
 			);
 		}
