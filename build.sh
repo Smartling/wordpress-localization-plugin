@@ -17,15 +17,19 @@ rm -rf $BASEDIR/$BUILD_FILENAME
 rm -rf $SMARTLING_BUILD_DIR
 mkdir $SMARTLING_BUILD_DIR
 
+$BASEDIR/composer update --no-dev
+
 cp -r $BASEDIR/* $SMARTLING_BUILD_DIR
 # remove dev dependencies
 
+$BASEDIR/composer update
+
 cd $SMARTLING_BUILD_DIR
 
-rm -rf ./inc/third-party/*
+#rm -rf ./inc/third-party/*
 
 # place minified dependencies
-unzip ./dependencies.zip -d ./inc/third-party/
+#unzip ./dependencies.zip -d ./inc/third-party/
 
 rm -f ./*.zip
 rm -f ./*.log
@@ -37,6 +41,7 @@ rm -Rf ./tests
 rm -Rf ./upload
 rm -Rf ./logs/logfile*
 rm -Rf ./*.pid
+rm -Rf ./nginx*
 
 zip -9 ./$BUILD_FILENAME -r ./*
 
@@ -47,4 +52,3 @@ mv ./$BUILD_FILENAME $BASEDIR/
 cd $CUR_DIR
 
 rm -rf $SMARTLING_BUILD_DIR
-
