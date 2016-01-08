@@ -158,6 +158,9 @@ class Bootstrap {
 
 		$this->detectMultilangPlugins();
 
+		//always try to migrate db
+		$this->fromContainer( 'site.db' )->install();
+
 		try {
 			if ( defined( 'SMARTLING_CLI_EXECUTION' ) && SMARTLING_CLI_EXECUTION === false ) {
 				$this->test();
