@@ -311,7 +311,7 @@ class ApiWrapper implements ApiWrapperInterface {
 
 			$params
 				->setAuthorized( $profile->getAutoAuthorize() )
-				->setLocalesToApprove( [ $locale ] );
+				->setLocalesToApprove(  $locale  );
 
 			$res = $api->uploadFile(
 				$filename,

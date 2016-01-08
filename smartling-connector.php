@@ -31,7 +31,7 @@ class Smartling_Version_Check {
 	/**
 	 * Minimum vaesion to run smartling plugin [major.minor]
 	 */
-	const SMARTLING_MIN_PHP_VERSION = '5.5';
+	const SMARTLING_MIN_PHP_VERSION = '5.4';
 
 	public static function check_php_version () {
 		$phpRequirements = explode( '.', self::SMARTLING_MIN_PHP_VERSION );
