@@ -30,7 +30,7 @@ class BulkSubmitController
 			'smartling-submissions-page',
 			'Bulk Submit',
 			'Bulk Submit',
-			'Administrator',
+			apply_filters( 'smartling_connector_menu_cap', 'Administrator' ),
 			'smartling-bulk-submit',
 			[
 				$this,
