@@ -2,6 +2,7 @@
 
 namespace Smartling\WP\Controller;
 
+use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\WP\View\SubmissionTableWidget;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -29,7 +30,10 @@ class SubmissionsPageController
 		add_menu_page(
 			'Submissions Board',
 			'Smartling',
-			'Administrator',
+			apply_filters(
+				SmartlingUserCapabilities::SMARTLING_CAPABILITY_MENU_CAP,
+				'administrator'
+			),
 			'smartling-submissions-page',
 			[ $this, 'renderPage' ],
 			'data:image/png;base64,' . self::LOGO_IMAGE

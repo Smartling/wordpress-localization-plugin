@@ -3,6 +3,7 @@
 namespace Smartling\WP\Controller;
 
 use Smartling\Bootstrap;
+use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\WP\JobEngine;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -57,7 +58,10 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
 			'smartling-submissions-page',
 			'Configuration profiles',
 			'Settings',
-			apply_filters( 'smartling_connector_menu_cap', 'Administrator' ),
+			apply_filters(
+				SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP,
+				'administrator'
+			),
 			'smartling_configuration_profile_list',
 			[
 				$this,

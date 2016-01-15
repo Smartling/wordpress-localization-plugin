@@ -4,6 +4,7 @@ namespace Smartling\WP\Controller;
 
 use Smartling\Bootstrap;
 use Smartling\Exception\BlogNotFoundException;
+use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\Locale;
 use Smartling\Settings\TargetLocale;
@@ -45,7 +46,10 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 			'smartling_configuration_profile_list',
 			'Profile setup',
 			'Configuration Profile Setup',
-			apply_filters( 'smartling_connector_menu_cap', 'Administrator' ),
+			apply_filters(
+				SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP,
+				'administrator'
+			),
 			'smartling_configuration_profile_setup',
 			[
 				$this,

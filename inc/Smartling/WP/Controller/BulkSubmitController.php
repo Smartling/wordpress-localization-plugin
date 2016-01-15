@@ -3,6 +3,7 @@ namespace Smartling\WP\Controller;
 
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\WP\View\BulkSubmitTableWidget;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -30,7 +31,10 @@ class BulkSubmitController
 			'smartling-submissions-page',
 			'Bulk Submit',
 			'Bulk Submit',
-			apply_filters( 'smartling_connector_menu_cap', 'Administrator' ),
+			apply_filters(
+				SmartlingUserCapabilities::SMARTLING_CAPABILITY_MENU_CAP,
+				'administrator'
+			),
 			'smartling-bulk-submit',
 			[
 				$this,
