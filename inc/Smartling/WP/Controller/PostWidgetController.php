@@ -55,13 +55,8 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
     public function box($post_type)
     {
         $post_types = [$this->servedContentType];
-        if (in_array($post_type, $post_types) &&
-            current_user_can(
-                apply_filters(
-                    SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP,
-                    'administrator'
-                ))
-
+        if (in_array($post_type, $post_types)
+            && current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)
         ) {
             add_meta_box(
                 self::WIDGET_NAME,

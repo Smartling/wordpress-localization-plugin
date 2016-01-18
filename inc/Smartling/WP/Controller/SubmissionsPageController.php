@@ -30,10 +30,7 @@ class SubmissionsPageController
 		add_menu_page(
 			'Submissions Board',
 			'Smartling',
-			apply_filters(
-				SmartlingUserCapabilities::SMARTLING_CAPABILITY_MENU_CAP,
-				'administrator'
-			),
+			SmartlingUserCapabilities::SMARTLING_CAPABILITY_MENU_CAP,
 			'smartling-submissions-page',
 			[ $this, 'renderPage' ],
 			'data:image/png;base64,' . self::LOGO_IMAGE

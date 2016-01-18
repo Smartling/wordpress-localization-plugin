@@ -58,10 +58,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
 			'smartling-submissions-page',
 			'Configuration profiles',
 			'Settings',
-			apply_filters(
-				SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP,
-				'administrator'
-			),
+			SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP,
 			'smartling_configuration_profile_list',
 			[
 				$this,

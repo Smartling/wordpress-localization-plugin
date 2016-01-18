@@ -43,10 +43,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
     {
         if (
         current_user_can(
-            apply_filters(
-                SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP,
-                'administrator'
-            ))
+                SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)
         ) {
             $taxonomies = get_taxonomies([
                 'public' => true,

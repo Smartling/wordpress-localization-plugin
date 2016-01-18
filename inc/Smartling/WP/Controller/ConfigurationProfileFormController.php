@@ -46,10 +46,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 			'smartling_configuration_profile_list',
 			'Profile setup',
 			'Configuration Profile Setup',
-			apply_filters(
-				SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP,
-				'administrator'
-			),
+			SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP,
 			'smartling_configuration_profile_setup',
 			[
 				$this,

@@ -8,6 +8,7 @@ use Smartling\Exception\MultilingualPluginNotFoundException;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\SchedulerHelper;
+use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPHookInterface;
@@ -204,6 +205,19 @@ class Bootstrap {
 		}
 	}
 
+	/**
+	 * Add smartling capabilities to 'administrator' role by default
+	 */
+	private function initRoles()
+	{
+		$role = get_role('administrator');
+
+		foreach (SmartlingUserCapabilities::$CAPABILITY as $capability)
+		{
+			$role->add_cap($capability, true);
+		}
+	}
+
 	public function activate () {
 		self::getContainer()->set( 'multilang_plugins', [ ] );
 		$this->fromContainer( 'site.db' )->install();
@@ -338,5 +352,6 @@ class Bootstrap {
 
 	public function run () {
 		$this->checkUploadFolder();
+		$this->initRoles();
 	}
 }
