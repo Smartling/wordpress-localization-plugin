@@ -26,6 +26,19 @@ $BASEDIR/composer update
 
 cd $SMARTLING_BUILD_DIR
 
+cd ./inc/third-party/
+
+# cleanup from tests
+find . -name "tests" -type d|xargs rm -Rf
+find . -name "Tests" -type d|xargs rm -Rf
+find . -name "docs" -type d|xargs rm -Rf
+find . -name "phpunit.xml*" -type f|xargs rm -Rf
+find . -name "composer.phar" -type f|xargs rm -Rf
+find . -name "*.md" -type f|xargs rm -Rf
+find . -name "*travis*" -type f|xargs rm -Rf
+
+cd ./../../
+
 #rm -rf ./inc/third-party/*
 
 # place minified dependencies
