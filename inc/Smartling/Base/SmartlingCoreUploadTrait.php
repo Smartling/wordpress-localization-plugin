@@ -77,19 +77,6 @@ trait SmartlingCoreUploadTrait {
 
 			do_action( XmlEncoder::EVENT_SMARTLING_BEFORE_SERIALIZE_CONNENT, $params );
 
-			$this->getLogger()->debug(
-				vsprintf(
-					'Serializing fields to XML: %s',
-					[
-						base64_encode(
-							var_export(
-								$source,
-								true )
-						),
-					]
-				)
-			);
-
 			$xml = XmlEncoder::xmlEncode( $source );
 
 			$this->getLogger()->debug( vsprintf( 'Serialized fields to XML: %s', [ base64_encode( $xml ), ] ) );
