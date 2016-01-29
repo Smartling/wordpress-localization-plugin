@@ -158,7 +158,8 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface {
 				}
 			}
 		} else {
-			$this->logger->info( 'Activated. No new migrations found.' );
+			// Commented it because it generates too many noise in logs
+			// $this->logger->info( 'Activated. No new migrations found.' );
 		}
 	}
 
