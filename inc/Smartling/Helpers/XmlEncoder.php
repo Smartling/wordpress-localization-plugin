@@ -213,7 +213,7 @@ class XmlEncoder {
 		$pattern = '#(' . implode( '|', $list ) . ')$#us';
 		foreach ( $array as $key => $value ) {
 			if ( 1 === preg_match( $pattern, $key ) ) {
-				$debugMessage = vsprintf( 'Field \'%s\' removed', [ $key ] );
+				$debugMessage = vsprintf( 'Removed field by name \'%s\'', [ $key ] );
 				self::logMessage( $debugMessage );
 				continue;
 			} else {
