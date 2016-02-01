@@ -208,7 +208,6 @@ class ConfigurationProfilesWidget extends \WP_List_Table
             $row = $element->toArray();
 
             $row['profile_name'] = $this->applyRowActions($row);
-            $row['api_key'] = mb_substr($row['api_key'], 0, 9, 'utf8') . '...';
             $row['is_active'] = 0 < $row['is_active'] ? __('Yes') : __('No');
             $row['auto_authorize'] = 0 < $row['auto_authorize'] ? __('Yes') : __('No');
 
