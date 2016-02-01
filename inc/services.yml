@@ -25,7 +25,7 @@ parameters:
 
   # Property mapper general definitions
   # all not listed here should be sent for translation
-  field.processor:
+  field.processor.default:
     ignore: # do not clone
       - '_edit_lock'
       - '_edit_last'
@@ -498,6 +498,10 @@ services:
   migration.151222:
     class: Smartling\DbAl\Migrations\Migration151222
 
+  migration.160125:
+    class: Smartling\DbAl\Migrations\Migration160125
+
+
   manager.db.migrations:
     class: Smartling\DbAl\Migrations\DbMigrationManager
     arguments:
@@ -506,3 +510,4 @@ services:
       - [ "registerMigration", [ "@migration.150512" ]]
       - [ "registerMigration", [ "@migration.150619" ]]
       - [ "registerMigration", [ "@migration.151222" ]]
+      - [ "registerMigration", [ "@migration.160125" ]]

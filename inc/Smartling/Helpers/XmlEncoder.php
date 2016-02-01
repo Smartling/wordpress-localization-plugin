@@ -269,12 +269,6 @@ class XmlEncoder {
 	private static function prepareSourceArray ( $sourceArray, $strategy = 'send' ) {
 		$sourceArray = self::normalizeSource( $sourceArray );
 
-		/*foreach ( $sourceArray as & $value ) {
-			if ( false !== ( $tmp = @unserialize( $value ) ) ) {
-				$value = $tmp;
-			}
-		}*/
-
 		if ( array_key_exists( 'meta', $sourceArray ) && is_array( $sourceArray['meta'] ) ) {
 			foreach ( $sourceArray['meta'] as & $value ) {
 				if ( is_array( $value ) && array_key_exists( 'entity', $value ) && array_key_exists( 'meta',
@@ -374,7 +368,7 @@ class XmlEncoder {
 	public static function xmlDecode ( $content ) {
 		self::logMessage( vsprintf( 'Starting XML file decoding : %s',
 			[ base64_encode( var_export( $content, true ) ) ] ) );
-		self::logMessage( vsprintf( 'Decoding XML file: %s', [ $content ] ) );
+		//self::logMessage( vsprintf( 'Decoding XML file: %s', [ $content ] ) );
 		$xpath = self::prepareXPath( $content );
 
 		$stringPath = '/data/string';

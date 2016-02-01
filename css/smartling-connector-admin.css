@@ -211,3 +211,14 @@ div.display-errors-set ul li {
         line-height: 2em;
     }
 }
+
+.smartling-list
+{
+    list-style: disc;
+}
+
+textarea.nowrap
+{
+    white-space:nowrap;
+    overflow:scroll;
+}
