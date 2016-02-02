@@ -246,7 +246,7 @@ if (0 === $profileId) {
                             </ul>
                         </small>
                     </p>
-                    <textarea cols="45" rows="5" class="nowrap"
+                    <textarea wrap="off" cols="45" rows="5" class="nowrap"
                               name="smartling_settings[filter_skip]"><?= trim($profile->getFilterSkip()); ?></textarea>
                 </td>
             </tr>
@@ -263,7 +263,7 @@ if (0 === $profileId) {
                             </ul>
                         </small>
                     </p>
-                    <textarea cols="45" rows="5" class="nowrap"
+                    <textarea wrap="off" cols="45" rows="5" class="nowrap"
                               name="smartling_settings[filter_copy_by_field_name]"><?= trim($profile->getFilterCopyByFieldName()); ?></textarea>
 
                 </td>
@@ -279,7 +279,7 @@ if (0 === $profileId) {
                             </ul>
                         </small>
                     </p>
-                   <textarea cols="45" rows="5" class="nowrap"
+                   <textarea wrap="off" cols="45" rows="5" class="nowrap"
                              name="smartling_settings[filter_copy_by_field_value_regex]"><?= trim($profile->getFilterCopyByFieldValueRegex()); ?></textarea>
                 </td>
             </tr>
@@ -294,7 +294,7 @@ if (0 === $profileId) {
                             </ul>
                         </small>
                     </p>
-                   <textarea cols="45" rows="5" class="nowrap"
+                   <textarea wrap="off" cols="45" rows="5" class="nowrap"
                              name="smartling_settings[filter_flag_seo]"><?= trim($profile->getFilterFlagSeo()); ?></textarea>
                 </td>
             </tr>

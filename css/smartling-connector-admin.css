@@ -219,6 +219,5 @@ div.display-errors-set ul li {
 
 textarea.nowrap
 {
-    white-space:nowrap;
     overflow:scroll;
 }
