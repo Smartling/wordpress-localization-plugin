@@ -10,6 +10,9 @@ BUILD_FILENAME="smartling-connector.zip"
 TMP_BUILD_DIR=/tmp
 SMARTLING_BUILD_DIR=$TMP_BUILD_DIR/smartling-builds
 
+#clean composer cache
+rm -rf ~/.composer/cache
+
 # remove old build
 rm -rf $BASEDIR/$BUILD_FILENAME
 
@@ -38,11 +41,6 @@ find . -name "*.md" -type f|xargs rm -Rf
 find . -name "*travis*" -type f|xargs rm -Rf
 
 cd ./../../
-
-#rm -rf ./inc/third-party/*
-
-# place minified dependencies
-#unzip ./dependencies.zip -d ./inc/third-party/
 
 rm -f ./*.zip
 rm -f ./*.log
