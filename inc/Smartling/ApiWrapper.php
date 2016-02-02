@@ -307,11 +307,13 @@ class ApiWrapper implements ApiWrapperInterface {
 
 			$params = new UploadFileParameters( $this->getPluginName(), $this->getPluginVersion() );
 
-			$locale = $this->getSmartlingLocaleBySubmission( $entity );
-
-			$params
-				->setAuthorized( $profile->getAutoAuthorize() )
-				->setLocalesToApprove(  $locale  );
+			// We always explicit say do not authorize for all locales
+			$params->setAuthorized( false );
+			if ( $profile->getAutoAuthorize() ) {
+				// Authorize for locale only if user chooses this in settings
+				$locale = $this->getSmartlingLocaleBySubmission( $entity );
+				$params->setLocalesToApprove( $locale );
+			}
 
 			$res = $api->uploadFile(
 				$filename,
