@@ -3,7 +3,7 @@ Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.3
 Tested up to: 4.4.1
-Stable tag: 1.1.2
+Stable tag: 1.1.3
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform. 
@@ -48,6 +48,10 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.  
 
 == Changelog ==
+
+= 1.1.3 =
+* Fixed UI issue found in Firefox and Safari
+* Minor improvements
 
 = 1.1.2 =
 * Added ability to manage translation filters on Profile Edit Screen.
