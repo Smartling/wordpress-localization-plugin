@@ -138,7 +138,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
         }
 
         if (array_key_exists('filter_copy_by_field_value_regex', $settings)) {
-            $profile->setFilterCopyByFieldValueRegex($settings['filter_copy_by_field_value_regex']);
+            $profile->setFilterCopyByFieldValueRegex(stripslashes($settings['filter_copy_by_field_value_regex']));
         }
 
         if (array_key_exists('filter_flag_seo', $settings)) {
