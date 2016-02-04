@@ -12,6 +12,7 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
+use Smartling\Helpers\TaxonomyHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -147,18 +148,19 @@ class SmartlingCore extends SmartlingCoreAbstract {
 	private function processRelatedTerm ( SubmissionEntity $submission, $contentType, & $accumulator ) {
 		$this->getLogger()->debug(
 			vsprintf(
-				'Searching for terms related to submission = \'%s\'',
+				'Searching for terms (%s) related to submission = \'%s\'',
 				[
+					$contentType,
 					$submission->getId(),
 				]
 			)
 		);
+
 		if (
 			in_array( $contentType, WordpressContentTypeHelper::getSupportedTaxonomyTypes() )
 			&& WordpressContentTypeHelper::CONTENT_TYPE_WIDGET !== $submission->getContentType()
 		) {
 			$terms = $this->getCustomMenuHelper()->getTerms( $submission, $contentType );
-
 			if ( 0 < count( $terms ) ) {
 				foreach ( $terms as $element ) {
 					$this->getLogger()->debug(
@@ -365,7 +367,6 @@ class SmartlingCore extends SmartlingCoreAbstract {
 	 * @throws BlogNotFoundException
 	 */
 	public function prepareRelatedSubmissions ( SubmissionEntity $submission ) {
-
 		$this->getLogger()->info(
 			vsprintf(
 				'Searching for related content for submission = \'%s\' for translation',
@@ -374,6 +375,8 @@ class SmartlingCore extends SmartlingCoreAbstract {
 				]
 			)
 		);
+
+		$tagretContentId = $submission->getTargetId();
 
 		$originalEntity      = $this->readContentEntity( $submission );
 		$relatedContentTypes = $originalEntity->getRelatedTypes();
@@ -384,26 +387,99 @@ class SmartlingCore extends SmartlingCoreAbstract {
 
 		try {
 			if ( ! empty( $relatedContentTypes ) ) {
-
 				foreach ( $relatedContentTypes as $contentType ) {
 					// SM Specific
-					$this->processMediaAttachedToWidgetSM( $submission, $contentType );
-					$this->processTestimonialAttachedToWidgetSM( $submission, $contentType );
-					$this->processTestimonialsAttachedToWidgetSM( $submission, $contentType );
+					try {
+						$this->processMediaAttachedToWidgetSM($submission, $contentType);
+					} catch (\Exception $e) {
+						$this->getLogger()->warning(
+							vsprintf('An unhandled exception occurred while processing related media attachments for SM Widgets submission=%s',[$submission->getId()])
+						);
+					}
+
+                    try {
+                        $this->processTestimonialAttachedToWidgetSM($submission, $contentType);
+                    } catch (\Exception $e) {
+                        $this->getLogger()->warning(
+                            vsprintf('An unhandled exception occurred while processing related testimonial for SM Widgets submission=%s',[$submission->getId()])
+                        );
+                    }
+
+                    try {
+                        $this->processTestimonialsAttachedToWidgetSM($submission, $contentType);
+                    } catch (\Exception $e) {
+                        $this->getLogger()->warning(
+                            vsprintf('An unhandled exception occurred while processing related testimonials for SM Widgets submission=%s',[$submission->getId()])
+                        );
+                    }
+
 					//Standard
-					$this->processRelatedTerm( $submission, $contentType, $accumulator );
-					$this->processRelatedMenu( $submission, $contentType, $accumulator );
-					$this->processMenuRelatedToWidget( $submission, $contentType );
-					$this->processFeaturedImage( $submission );
+
+                    try {
+                        $this->processRelatedTerm($submission, $contentType, $accumulator);
+                    } catch (\Exception $e) {
+                        $this->getLogger()->warning(
+                            vsprintf('An unhandled exception occurred while processing related terms for submission=%s',[$submission->getId()])
+                        );
+                    }
+                    try {
+                        $this->processRelatedMenu($submission, $contentType, $accumulator);
+                    } catch (\Exception $e) {
+                        $this->getLogger()->warning(
+                            vsprintf('An unhandled exception occurred while processing related menu for submission=%s',[$submission->getId()])
+                        );
+                    }
+                    try {
+                        $this->processMenuRelatedToWidget($submission, $contentType);
+                    } catch (\Exception $e) {
+                        $this->getLogger()->warning(
+                            vsprintf('An unhandled exception occurred while processing menu related to widget for submission=%s',[$submission->getId()])
+                        );
+                    }
+                    try {
+                        $this->processFeaturedImage($submission);
+                    } catch (\Exception $e) {
+                        $this->getLogger()->warning(
+                            vsprintf('An unhandled exception occurred while processing featured image for submission=%s',[$submission->getId()])
+                        );
+                    }
 				}
 			}
 
 			if ( $submission->getContentType() !== WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU ) {
-				$this->getSiteHelper()->switchBlogId( $submission->getTargetBlogId() );
+                $needSwitchBlog = $this->getSiteHelper()->getCurrentBlogId() != $submission->getTargetBlogId();
+
+                if ($needSwitchBlog){
+                    $this->getSiteHelper()->switchBlogId( $submission->getTargetBlogId() );
+                }
+
+                $this->getLogger()->debug(vsprintf('Preparing to assign accumulator:%s',[var_export($accumulator, true)]));
+
 				foreach ( $accumulator as $type => $ids ) {
-					wp_set_post_terms( $submission->getTargetId(), $ids, $type );
+                    $this->getLogger()->debug(
+                        vsprintf(
+                            'Assigning term (type=\'%s\', ids=\'%s\') to content (type=\'%s\', id=\'%s\') on blog=\'%s\'',
+                            [
+                                $type,
+                                implode(',', $ids),
+                                $submission->getContentType(),
+								$tagretContentId,
+                                $submission->getTargetBlogId()
+                            ]
+                        )
+                    );
+
+					TaxonomyHelper::setObjectTerms(
+						$submission->getTargetId(),
+						$ids,
+						$type
+					);
 				}
-				$this->getSiteHelper()->restoreBlogId();
+
+                if ($needSwitchBlog)
+                {
+				    $this->getSiteHelper()->restoreBlogId();
+                }
 			} else {
 				$this->getCustomMenuHelper()->assignMenuItemsToMenu(
 					(int) $submission->getTargetId(),

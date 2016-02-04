@@ -2,6 +2,7 @@
 
 namespace Smartling\Helpers;
 
+use Smartling\Bootstrap;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Processors\ContentEntitiesIOFactory;
 
@@ -140,7 +141,9 @@ class CustomMenuContentTypeHelper {
 				$this->getSiteHelper()->restoreBlogId();
 			}
 		} catch ( BlogNotFoundException $e ) {
-
+			Bootstrap::getLogger()->warning(
+				vsprintf('Cannot get terms in missing blog.',[])
+			);
 		}
 
 		return isset( $terms ) && is_array( $terms ) ? $terms : [ ];
