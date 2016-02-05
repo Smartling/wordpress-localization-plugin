@@ -10,7 +10,6 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
-use Smartling\Helpers\TaxonomyHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Specific\SurveyMonkey\PrepareRelatedSMSpecificTrait;
@@ -511,11 +510,8 @@ class SmartlingCore extends SmartlingCoreAbstract
                              )
                          );
 
-                    TaxonomyHelper::setObjectTerms(
-                        $submission->getTargetId(),
-                        $ids,
-                        $type
-                    );
+                    wp_set_post_terms($submission->getTargetId(), $ids, $type);
+
                 }
 
                 if ($needSwitchBlog) {
