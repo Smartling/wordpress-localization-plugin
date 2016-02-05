@@ -2,6 +2,7 @@
 
 namespace Smartling\Exception;
 
-class SmartlingSubmissionsProcessingException extends SmartlingExceptionAbstract {
+class SmartlingSubmissionsProcessingException extends SmartlingExceptionAbstract
+{
 
 }

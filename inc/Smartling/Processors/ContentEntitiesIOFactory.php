@@ -11,32 +11,36 @@ use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
  *
  * @package Smartling\Processors
  */
-class ContentEntitiesIOFactory extends SmartlingFactoryAbstract {
+class ContentEntitiesIOFactory extends SmartlingFactoryAbstract
+{
 
-	/**
-	 * @param LoggerInterface $logger
-	 */
-	public function __construct ( LoggerInterface $logger ) {
-		$this->message = 'Requested entity wrapper for content-type \'%s\' is not registered. Called by: %s';
-		parent::__construct( $logger );
-	}
+    /**
+     * @param LoggerInterface $logger
+     */
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->message = 'Requested entity wrapper for content-type \'%s\' is not registered. Called by: %s';
+        parent::__construct($logger);
+    }
 
-	/**
-	 * @param                $contentType
-	 * @param EntityAbstract $mapper
-	 * @param bool           $force
-	 */
-	public function registerMapper ( $contentType, $mapper, $force = false ) {
-		parent::registerHandler( $contentType, $mapper, $force );
-	}
+    /**
+     * @param                $contentType
+     * @param EntityAbstract $mapper
+     * @param bool           $force
+     */
+    public function registerMapper($contentType, $mapper, $force = false)
+    {
+        parent::registerHandler($contentType, $mapper, $force);
+    }
 
-	/**
-	 * @param $contentType
-	 *
-	 * @return EntityAbstract
-	 * @throws SmartlingInvalidFactoryArgumentException
-	 */
-	function getMapper ( $contentType ) {
-		return parent::getHandler( $contentType );
-	}
+    /**
+     * @param $contentType
+     *
+     * @return EntityAbstract
+     * @throws SmartlingInvalidFactoryArgumentException
+     */
+    function getMapper($contentType)
+    {
+        return parent::getHandler($contentType);
+    }
 }

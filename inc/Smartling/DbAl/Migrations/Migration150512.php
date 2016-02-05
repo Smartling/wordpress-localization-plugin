@@ -13,37 +13,40 @@ use Smartling\Base\SmartlingEntityAbstract;
  *          submission_entity.completed_string_count = 0
  *          submission_entity.word_count             = 0
  */
-class Migration150512 implements SmartlingDbMigrationInterface {
-	public function getVersion () {
-		return 150512;
-	}
+class Migration150512 implements SmartlingDbMigrationInterface
+{
+    public function getVersion()
+    {
+        return 150512;
+    }
 
-	public function getQueries ( $tablePrefix = '' ) {
-		return [
-			vsprintf(
-				'ALTER TABLE `%ssmartling_submissions` CHANGE COLUMN `approved_string_count` `approved_string_count` %s %s',
-				[
-					$tablePrefix,
-					SmartlingEntityAbstract::DB_TYPE_U_BIGINT,
-					SmartlingEntityAbstract::DB_TYPE_DEFAULT_ZERO,
-				]
-			),
-			vsprintf(
-				'ALTER TABLE `%ssmartling_submissions` CHANGE COLUMN `completed_string_count` `completed_string_count` %s %s',
-				[
-					$tablePrefix,
-					SmartlingEntityAbstract::DB_TYPE_U_BIGINT,
-					SmartlingEntityAbstract::DB_TYPE_DEFAULT_ZERO,
-				]
-			),
-			vsprintf(
-				'ALTER TABLE `%ssmartling_submissions` CHANGE COLUMN `word_count` `word_count` %s %s',
-				[
-					$tablePrefix,
-					SmartlingEntityAbstract::DB_TYPE_U_BIGINT,
-					SmartlingEntityAbstract::DB_TYPE_DEFAULT_ZERO,
-				]
-			),
-		];
-	}
+    public function getQueries($tablePrefix = '')
+    {
+        return [
+            vsprintf(
+                'ALTER TABLE `%ssmartling_submissions` CHANGE COLUMN `approved_string_count` `approved_string_count` %s %s',
+                [
+                    $tablePrefix,
+                    SmartlingEntityAbstract::DB_TYPE_U_BIGINT,
+                    SmartlingEntityAbstract::DB_TYPE_DEFAULT_ZERO,
+                ]
+            ),
+            vsprintf(
+                'ALTER TABLE `%ssmartling_submissions` CHANGE COLUMN `completed_string_count` `completed_string_count` %s %s',
+                [
+                    $tablePrefix,
+                    SmartlingEntityAbstract::DB_TYPE_U_BIGINT,
+                    SmartlingEntityAbstract::DB_TYPE_DEFAULT_ZERO,
+                ]
+            ),
+            vsprintf(
+                'ALTER TABLE `%ssmartling_submissions` CHANGE COLUMN `word_count` `word_count` %s %s',
+                [
+                    $tablePrefix,
+                    SmartlingEntityAbstract::DB_TYPE_U_BIGINT,
+                    SmartlingEntityAbstract::DB_TYPE_DEFAULT_ZERO,
+                ]
+            ),
+        ];
+    }
 }

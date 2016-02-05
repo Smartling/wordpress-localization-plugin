@@ -22,315 +22,333 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  * @property int    $parent
  * @property int    $count
  */
-abstract class TaxonomyEntityAbstract extends EntityAbstract {
-	/**
-	 * Standard taxonomy fields
-	 *
-	 * @var array
-	 */
-	protected $fields = [
-		'term_id',
-		'name',
-		'slug',
-		'term_group',
-		'term_taxonomy_id',
-		'taxonomy',
-		'description',
-		'parent',
-		'count',
-	];
+abstract class TaxonomyEntityAbstract extends EntityAbstract
+{
+    /**
+     * Standard taxonomy fields
+     *
+     * @var array
+     */
+    protected $fields = [
+        'term_id',
+        'name',
+        'slug',
+        'term_group',
+        'term_taxonomy_id',
+        'taxonomy',
+        'description',
+        'parent',
+        'count',
+    ];
 
-	private function checkWPSEO () {
-		return class_exists( '\WPSEO_Taxonomy_Meta' );
-	}
+    private function checkWPSEO()
+    {
+        return class_exists('\WPSEO_Taxonomy_Meta');
+    }
 
-	/**
-	 * @inheritdoc
-	 */
-	public function getMetadata () {
-		$result = [ ];
-		if ( $this->checkWPSEO() ) {
-			$result = \WPSEO_Taxonomy_Meta::get_term_meta( $this->term_id, $this->taxonomy );
-		} else {
-			$message = 'Seems like WP-SEO plugin not installed. Cannot get term meta.';
-			$this->getLogger()->notice( $message );
-		}
+    /**
+     * @inheritdoc
+     */
+    public function getMetadata()
+    {
+        $result = [];
+        if ($this->checkWPSEO()) {
+            $result = \WPSEO_Taxonomy_Meta::get_term_meta($this->term_id, $this->taxonomy);
+        } else {
+            $message = 'Seems like WP-SEO plugin not installed. Cannot get term meta.';
+            $this->getLogger()
+                 ->notice($message);
+        }
 
-		return $result;
-	}
+        return $result;
+    }
 
-	public function setMetaTag ( $tagName, $tagValue, $unique = true ) {
-		if ( $this->checkWPSEO() ) {
-			$tax_meta  = get_option( 'wpseo_taxonomy_meta' );
-			$oldValues = $this->getMetadata();
-			$newValues = array_merge( $oldValues, [ $tagName => $tagValue ] );
-			$clean     = \WPSEO_Taxonomy_Meta::validate_term_meta_data( $newValues, $oldValues );
-			if ( $clean !== [ ] ) {
-				$tax_meta[ $this->taxonomy ][ $this->term_id ] = $clean;
-			} else {
-				unset( $tax_meta[ $this->taxonomy ][ $this->term_id ] );
-				if ( isset( $tax_meta[ $this->taxonomy ] ) && $tax_meta[ $this->taxonomy ] === [ ] ) {
-					unset( $tax_meta[ $this->taxonomy ] );
-				}
-			}
-			// Prevent complete array validation
-			$tax_meta['wpseo_already_validated'] = true;
-			update_option( 'wpseo_taxonomy_meta', $tax_meta );
-		} else {
-			$message = 'Seems like WP-SEO plugin not installed. Cannot set term meta.';
-			$this->getLogger()->notice( $message );
-		}
-	}
+    public function setMetaTag($tagName, $tagValue, $unique = true)
+    {
+        if ($this->checkWPSEO()) {
+            $tax_meta = get_option('wpseo_taxonomy_meta');
+            $oldValues = $this->getMetadata();
+            $newValues = array_merge($oldValues, [$tagName => $tagValue]);
+            $clean = \WPSEO_Taxonomy_Meta::validate_term_meta_data($newValues, $oldValues);
+            if ($clean !== []) {
+                $tax_meta[$this->taxonomy][$this->term_id] = $clean;
+            } else {
+                unset($tax_meta[$this->taxonomy][$this->term_id]);
+                if (isset($tax_meta[$this->taxonomy]) && $tax_meta[$this->taxonomy] === []) {
+                    unset($tax_meta[$this->taxonomy]);
+                }
+            }
+            // Prevent complete array validation
+            $tax_meta['wpseo_already_validated'] = true;
+            update_option('wpseo_taxonomy_meta', $tax_meta);
+        } else {
+            $message = 'Seems like WP-SEO plugin not installed. Cannot set term meta.';
+            $this->getLogger()
+                 ->notice($message);
+        }
+    }
 
-	/**
-	 * @inheritdoc
-	 */
-	public function __construct ( LoggerInterface $logger ) {
-		parent::__construct( $logger );
+    /**
+     * @inheritdoc
+     */
+    public function __construct(LoggerInterface $logger)
+    {
+        parent::__construct($logger);
 
-		$this->hashAffectingFields = [
-			'name',
-			'description',
-		];
-
-
-		$this->setEntityFields( $this->fields );
-	}
-
-	/**
-	 * @inheritdoc
-	 */
-	public function getTitle () {
-		return $this->name;
-	}
-
-	/**
-	 * @param $guid
-	 *
-	 * @return array
-	 *
-	 * @throws SmartlingDbException
-	 * @throws EntityNotFoundException
-	 */
-	public function get ( $guid ) {
-		$term = get_term( $guid, $this->getType(), ARRAY_A );
-
-		if ( $term instanceof \WP_Error ) {
-			$message = vsprintf( 'An error occurred while reading taxonomy id=%s, type=%s: %s',
-				[ $guid, $this->getType(), $term->get_error_message() ] );
-
-			$this->getLogger()->error( $message );
-
-			throw new SmartlingDbException( $message );
-		}
-
-		if ( null === $term ) {
-			$this->entityNotFound( $this->getType(), $guid );
-		}
-
-		return $this->resultToEntity( $term, $this );
-	}
-
-	/**
-	 * Loads ALL entities from database
-	 *
-	 * @return TaxonomyEntityAbstract[]
-	 * @throws SmartlingDbException
-	 */
-	public function getAll ( $limit = '', $offset = '', $orderBy = 'term_id', $order = 'ASC' ) {
-
-		$result = [ ];
-
-		$taxonomies = [
-			$this->getType(),
-		];
-
-		$args = [
-			'orderby'           => $orderBy,
-			'order'             => $order,
-			'hide_empty'        => false,
-			'exclude'           => [ ],
-			'exclude_tree'      => [ ],
-			'include'           => [ ],
-			'number'            => $limit,
-			'fields'            => 'all',
-			'slug'              => '',
-			'parent'            => '',
-			'hierarchical'      => true,
-			'child_of'          => 0,
-			'get'               => '',
-			'name__like'        => '',
-			'description__like' => '',
-			'pad_counts'        => false,
-			'offset'            => $offset,
-			'search'            => '',
-			'cache_domain'      => 'core',
-		];
-
-		$terms = get_terms( $taxonomies, $args );
-
-		if ( $terms instanceof \WP_Error ) {
-			$message = vsprintf( 'An error occurred while reading all taxonomies of type %s: %s',
-				[ $this->getType(), $terms->get_error_message() ] );
-
-			$this->getLogger()->error( $message );
-
-			throw new SmartlingDbException( $message );
-		} else {
-			/**
-			 * @var array $terms
-			 */
-			foreach ( $terms as $term ) {
-				$result[] = $this->resultToEntity( (array) $term );
-			}
-		}
-
-		return $result;
-	}
-
-	/**
-	 * @return int
-	 */
-	public function getTotal () {
-		return wp_count_terms( $this->getType() );
-	}
-
-	/**
-	 * @param EntityAbstract $entity
-	 *
-	 * @return array
-	 * @throws SmartlingDbException
-	 */
-	public function set ( EntityAbstract $entity = null ) {
-
-		$me = get_class( $this );
-
-		if ( ! ( $entity instanceof $me ) ) {
-			$entity = $this;
-		}
-
-		$update = ! ( null === $entity->term_id );
-
-		$data = $entity->toArray();
-
-		$argFields = [
-			'name',
-			//'slug',
-			'parent',
-			'description',
-		];
-
-		$args = [ ];
+        $this->hashAffectingFields = [
+            'name',
+            'description',
+        ];
 
 
+        $this->setEntityFields($this->fields);
+    }
 
-		foreach ( $argFields as $field ) {
-			$args[ $field ] = $data[ $field ];
-		}
+    /**
+     * @inheritdoc
+     */
+    public function getTitle()
+    {
+        return $this->name;
+    }
 
-		$result = $update
-			? wp_update_term( $entity->term_id, $entity->taxonomy, $args )
-			: wp_insert_term( $entity->name, $entity->taxonomy, $args );
+    /**
+     * @param $guid
+     *
+     * @return array
+     *
+     * @throws SmartlingDbException
+     * @throws EntityNotFoundException
+     */
+    public function get($guid)
+    {
+        $term = get_term($guid, $this->getType(), ARRAY_A);
 
-		if ( $result instanceof \WP_Error ) {
-			if ( isset( $result->error_data ) && array_key_exists( 'term_exists', $result->error_data ) ) {
-				$entity->term_id = (int) $result->error_data['term_exists'];
+        if ($term instanceof \WP_Error) {
+            $message = vsprintf('An error occurred while reading taxonomy id=%s, type=%s: %s',
+                [$guid, $this->getType(), $term->get_error_message()]);
 
-				return $this->set( $entity );
+            $this->getLogger()
+                 ->error($message);
 
-			} else {
-				$message = vsprintf (
-					'An error occurred while saving taxonomy id=%s, type=%s: %s',
-					[
-						( $entity->term_id ? $entity->term_id : '<none>' ),
-						$this->getType(),
-						$result->get_error_message(),
-					]
-				);
+            throw new SmartlingDbException($message);
+        }
 
-				$this->getLogger()->error( $message );
+        if (null === $term) {
+            $this->entityNotFound($this->getType(), $guid);
+        }
 
-				throw new SmartlingDbException( $message );
-			}
-		}
+        return $this->resultToEntity($term, $this);
+    }
 
-		foreach ( $result as $field => $value ) {
-			$entity->$field = $value;
-		}
+    /**
+     * Loads ALL entities from database
+     *
+     * @return TaxonomyEntityAbstract[]
+     * @throws SmartlingDbException
+     */
+    public function getAll($limit = '', $offset = '', $orderBy = 'term_id', $order = 'ASC')
+    {
 
-		return $entity->{$this->getPrimaryFieldName()};
+        $result = [];
 
-	}
+        $taxonomies = [
+            $this->getType(),
+        ];
 
-	/**
-	 * @inheritdoc
-	 */
-	protected function getNonClonableFields () {
-		return [
-			'term_id',
-			'parent',
-			'count',
-			'slug',
-		];
-	}
+        $args = [
+            'orderby'           => $orderBy,
+            'order'             => $order,
+            'hide_empty'        => false,
+            'exclude'           => [],
+            'exclude_tree'      => [],
+            'include'           => [],
+            'number'            => $limit,
+            'fields'            => 'all',
+            'slug'              => '',
+            'parent'            => '',
+            'hierarchical'      => true,
+            'child_of'          => 0,
+            'get'               => '',
+            'name__like'        => '',
+            'description__like' => '',
+            'pad_counts'        => false,
+            'offset'            => $offset,
+            'search'            => '',
+            'cache_domain'      => 'core',
+        ];
 
-	public static function detectTermTaxonomyByTermId ( $termId ) {
-		$taxonomies = WordpressContentTypeHelper::getSupportedTaxonomyTypes();
+        $terms = get_terms($taxonomies, $args);
 
-		$args = [
-			'orderby'           => 'term_id',
-			'order'             => 'ASC',
-			'hide_empty'        => false,
-			'exclude'           => [ ],
-			'exclude_tree'      => [ ],
-			'include'           => [ ],
-			'number'            => '',
-			'fields'            => 'all',
-			'slug'              => '',
-			'parent'            => '',
-			'hierarchical'      => true,
-			'child_of'          => 0,
-			'get'               => '',
-			'name__like'        => '',
-			'description__like' => '',
-			'pad_counts'        => false,
-			'offset'            => '',
-			'search'            => '',
-			'cache_domain'      => 'core',
-		];
+        if ($terms instanceof \WP_Error) {
+            $message = vsprintf('An error occurred while reading all taxonomies of type %s: %s',
+                [$this->getType(), $terms->get_error_message()]);
 
-		$terms = get_terms( $taxonomies, $args );
+            $this->getLogger()
+                 ->error($message);
+
+            throw new SmartlingDbException($message);
+        } else {
+            /**
+             * @var array $terms
+             */
+            foreach ($terms as $term) {
+                $result[] = $this->resultToEntity((array)$term);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return int
+     */
+    public function getTotal()
+    {
+        return wp_count_terms($this->getType());
+    }
+
+    /**
+     * @param EntityAbstract $entity
+     *
+     * @return array
+     * @throws SmartlingDbException
+     */
+    public function set(EntityAbstract $entity = null)
+    {
+
+        $me = get_class($this);
+
+        if (!($entity instanceof $me)) {
+            $entity = $this;
+        }
+
+        $update = !(null === $entity->term_id);
+
+        $data = $entity->toArray();
+
+        $argFields = [
+            'name',
+            //'slug',
+            'parent',
+            'description',
+        ];
+
+        $args = [];
 
 
-		$result = [ ];
+        foreach ($argFields as $field) {
+            $args[$field] = $data[$field];
+        }
 
-		if ( $terms instanceof \WP_Error ) {
-			$message = vsprintf( 'An error occurred while readin all taxonomies of type: %s',
-				[ $terms->get_error_message() ] );
+        $result = $update
+            ? wp_update_term($entity->term_id, $entity->taxonomy, $args)
+            : wp_insert_term($entity->name, $entity->taxonomy, $args);
 
-			throw new SmartlingDbException( $message );
-		} else {
-			foreach ( $terms as $term ) {
-				if ( (int) $term->term_id === (int) $termId ) {
-					$result[] = $term->taxonomy;
-					break;
-				}
-			}
-		}
+        if ($result instanceof \WP_Error) {
+            if (isset($result->error_data) && array_key_exists('term_exists', $result->error_data)) {
+                $entity->term_id = (int)$result->error_data['term_exists'];
 
-		return $result;
-	}
+                return $this->set($entity);
 
-	public function cleanFields ( $value = null ) {
-		parent::cleanFields( $value );
-		$this->name = '';
-	}
+            } else {
+                $message = vsprintf(
+                    'An error occurred while saving taxonomy id=%s, type=%s: %s',
+                    [
+                        ($entity->term_id ? $entity->term_id : '<none>'),
+                        $this->getType(),
+                        $result->get_error_message(),
+                    ]
+                );
 
-	/**
-	 * @inheritdoc
-	 */
-	public function getPrimaryFieldName () {
-		return 'term_id';
-	}
+                $this->getLogger()
+                     ->error($message);
+
+                throw new SmartlingDbException($message);
+            }
+        }
+
+        foreach ($result as $field => $value) {
+            $entity->$field = $value;
+        }
+
+        return $entity->{$this->getPrimaryFieldName()};
+
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function getNonClonableFields()
+    {
+        return [
+            'term_id',
+            'parent',
+            'count',
+            'slug',
+        ];
+    }
+
+    public static function detectTermTaxonomyByTermId($termId)
+    {
+        $taxonomies = WordpressContentTypeHelper::getSupportedTaxonomyTypes();
+
+        $args = [
+            'orderby'           => 'term_id',
+            'order'             => 'ASC',
+            'hide_empty'        => false,
+            'exclude'           => [],
+            'exclude_tree'      => [],
+            'include'           => [],
+            'number'            => '',
+            'fields'            => 'all',
+            'slug'              => '',
+            'parent'            => '',
+            'hierarchical'      => true,
+            'child_of'          => 0,
+            'get'               => '',
+            'name__like'        => '',
+            'description__like' => '',
+            'pad_counts'        => false,
+            'offset'            => '',
+            'search'            => '',
+            'cache_domain'      => 'core',
+        ];
+
+        $terms = get_terms($taxonomies, $args);
+
+
+        $result = [];
+
+        if ($terms instanceof \WP_Error) {
+            $message = vsprintf('An error occurred while readin all taxonomies of type: %s',
+                [$terms->get_error_message()]);
+
+            throw new SmartlingDbException($message);
+        } else {
+            foreach ($terms as $term) {
+                if ((int)$term->term_id === (int)$termId) {
+                    $result[] = $term->taxonomy;
+                    break;
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    public function cleanFields($value = null)
+    {
+        parent::cleanFields($value);
+        $this->name = '';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getPrimaryFieldName()
+    {
+        return 'term_id';
+    }
 
 }

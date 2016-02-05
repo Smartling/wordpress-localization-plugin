@@ -11,12 +11,14 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  *
  * @package Smartling\DbAl\WordpressContentEntities
  */
-class PartnerEntity extends PostEntity {
-	/**
-	 * @inheritdoc
-	 */
-	public function __construct ( LoggerInterface $logger ) {
-		parent::__construct( $logger );
-		$this->setType( WordpressContentTypeHelper::CONTENT_TYPE_POST_PARTNER );
-	}
+class PartnerEntity extends PostEntity
+{
+    /**
+     * @inheritdoc
+     */
+    public function __construct(LoggerInterface $logger)
+    {
+        parent::__construct($logger);
+        $this->setType(WordpressContentTypeHelper::CONTENT_TYPE_POST_PARTNER);
+    }
 }

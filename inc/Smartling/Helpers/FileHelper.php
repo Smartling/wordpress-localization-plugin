@@ -7,19 +7,22 @@ namespace Smartling\Helpers;
  *
  * @package Smartling\Helpers
  */
-class FileHelper {
+class FileHelper
+{
 
-	/**
-	 * Provides simple checks for the file.
-	 * @param $filePath
-	 *
-	 * @return bool
-	 */
-	public static function testFile ( $filePath ) {
-		return (
-			file_exists( $filePath )
-			&& is_file( $filePath )
-			&& is_readable( $filePath )
-		);
-	}
+    /**
+     * Provides simple checks for the file.
+     *
+     * @param $filePath
+     *
+     * @return bool
+     */
+    public static function testFile($filePath)
+    {
+        return (
+            file_exists($filePath)
+            && is_file($filePath)
+            && is_readable($filePath)
+        );
+    }
 }

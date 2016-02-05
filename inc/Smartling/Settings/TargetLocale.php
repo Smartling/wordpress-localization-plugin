@@ -7,77 +7,84 @@ namespace Smartling\Settings;
  *
  * @package Smartling\Settings
  */
-class TargetLocale extends Locale {
+class TargetLocale extends Locale
+{
 
-	/**
-	 * @var string
-	 */
-	private $smartlingLocale;
+    /**
+     * @var string
+     */
+    private $smartlingLocale;
 
-	/**
-	 * @var bool
-	 */
-	private $enabled;
+    /**
+     * @var bool
+     */
+    private $enabled;
 
-	/**
-	 * @return string
-	 */
-	public function getSmartlingLocale () {
-		return $this->smartlingLocale;
-	}
+    /**
+     * @param array $objState
+     *
+     * @return TargetLocale
+     */
+    public static function fromArray(array $objState)
+    {
+        $obj = new self();
+        $properties = [
+            'smartlingLocale',
+            'enabled',
+            'blogId',
+        ];
 
-	/**
-	 * @param string $smartlingLocale
-	 */
-	public function setSmartlingLocale ( $smartlingLocale ) {
-		$this->smartlingLocale = $smartlingLocale;
-	}
+        foreach ($properties as $property) {
+            if (array_key_exists($property, $objState)) {
+                $method = vsprintf('set%s', [ucfirst($property)]);
+                $obj->{$method}($objState[$property]);
+            }
+        }
 
-	/**
-	 * @return boolean
-	 */
-	public function isEnabled () {
-		return $this->enabled;
-	}
+        return $obj;
+    }
 
-	/**
-	 * @param boolean $enabled
-	 */
-	public function setEnabled ( $enabled ) {
-		$this->enabled = $enabled;
-	}
+    /**
+     * @return array
+     */
+    public function toArray()
+    {
+        return [
+            'smartlingLocale' => $this->getSmartlingLocale(),
+            'enabled'         => $this->isEnabled(),
+            'blogId'          => $this->getBlogId(),
+        ];
+    }
 
-	/**
-	 * @return array
-	 */
-	public function toArray () {
-		return [
-			'smartlingLocale' => $this->getSmartlingLocale(),
-			'enabled'         => $this->isEnabled(),
-			'blogId'          => $this->getBlogId(),
-		];
-	}
+    /**
+     * @return string
+     */
+    public function getSmartlingLocale()
+    {
+        return $this->smartlingLocale;
+    }
 
-	/**
-	 * @param array $objState
-	 *
-	 * @return TargetLocale
-	 */
-	public static function fromArray ( array $objState ) {
-		$obj        = new self();
-		$properties = [
-			'smartlingLocale',
-			'enabled',
-			'blogId',
-		];
+    /**
+     * @param string $smartlingLocale
+     */
+    public function setSmartlingLocale($smartlingLocale)
+    {
+        $this->smartlingLocale = $smartlingLocale;
+    }
 
-		foreach ( $properties as $property ) {
-			if ( array_key_exists( $property, $objState ) ) {
-				$method = vsprintf( 'set%s', [ ucfirst( $property ) ] );
-				$obj->{$method}( $objState[ $property ] );
-			}
-		}
+    /**
+     * @return boolean
+     */
+    public function isEnabled()
+    {
+        return $this->enabled;
+    }
 
-		return $obj;
-	}
+    /**
+     * @param boolean $enabled
+     */
+    public function setEnabled($enabled)
+    {
+        $this->enabled = $enabled;
+    }
 }

@@ -3,6 +3,7 @@
 namespace Smartling\Exception;
 
 
-class MultilingualPluginNotFoundException extends SmartlingExceptionAbstract {
+class MultilingualPluginNotFoundException extends SmartlingExceptionAbstract
+{
 
 }

@@ -10,21 +10,24 @@ use Smartling\Base\SmartlingEntityAbstract;
  *
  * Adds is_locked column to submission_entity
  */
-class Migration150619 implements SmartlingDbMigrationInterface {
-	public function getVersion () {
-		return 150619;
-	}
+class Migration150619 implements SmartlingDbMigrationInterface
+{
+    public function getVersion()
+    {
+        return 150619;
+    }
 
-	public function getQueries ( $tablePrefix = '' ) {
-		return [
-			vsprintf(
-				'ALTER TABLE `%ssmartling_submissions` ADD COLUMN `is_locked` %s %s',
-				[
-					$tablePrefix,
-					SmartlingEntityAbstract::DB_TYPE_UINT_SWITCH,
-					SmartlingEntityAbstract::DB_TYPE_DEFAULT_ZERO,
-				]
-			),
-		];
-	}
+    public function getQueries($tablePrefix = '')
+    {
+        return [
+            vsprintf(
+                'ALTER TABLE `%ssmartling_submissions` ADD COLUMN `is_locked` %s %s',
+                [
+                    $tablePrefix,
+                    SmartlingEntityAbstract::DB_TYPE_UINT_SWITCH,
+                    SmartlingEntityAbstract::DB_TYPE_DEFAULT_ZERO,
+                ]
+            ),
+        ];
+    }
 }

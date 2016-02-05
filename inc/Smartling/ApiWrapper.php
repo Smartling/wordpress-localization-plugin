@@ -21,351 +21,373 @@ use Smartling\Submissions\SubmissionEntity;
  *
  * @package Smartling
  */
-class ApiWrapper implements ApiWrapperInterface {
+class ApiWrapper implements ApiWrapperInterface
+{
 
-	/**
-	 * @var SettingsManager
-	 */
-	private $settings;
+    /**
+     * @var SettingsManager
+     */
+    private $settings;
 
-	/**
-	 * @var LoggerInterface
-	 */
-	private $logger;
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
 
-	/**
-	 * @var string
-	 */
-	private $pluginName = '';
+    /**
+     * @var string
+     */
+    private $pluginName = '';
 
-	/**
-	 * @var string
-	 */
-	private $pluginVersion = '';
+    /**
+     * @var string
+     */
+    private $pluginVersion = '';
 
-	/**
-	 * @return string
-	 */
-	public function getPluginName () {
-		return $this->pluginName;
-	}
+    /**
+     * @return string
+     */
+    public function getPluginName()
+    {
+        return $this->pluginName;
+    }
 
-	/**
-	 * @param string $pluginName
-	 */
-	public function setPluginName ( $pluginName ) {
-		$this->pluginName = $pluginName;
-	}
+    /**
+     * @param string $pluginName
+     */
+    public function setPluginName($pluginName)
+    {
+        $this->pluginName = $pluginName;
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getPluginVersion () {
-		return $this->pluginVersion;
-	}
+    /**
+     * @return string
+     */
+    public function getPluginVersion()
+    {
+        return $this->pluginVersion;
+    }
 
-	/**
-	 * @param string $pluginVersion
-	 */
-	public function setPluginVersion ( $pluginVersion ) {
-		$this->pluginVersion = $pluginVersion;
-	}
+    /**
+     * @param string $pluginVersion
+     */
+    public function setPluginVersion($pluginVersion)
+    {
+        $this->pluginVersion = $pluginVersion;
+    }
 
-	/**
-	 * @return SettingsManager
-	 */
-	public function getSettings () {
-		return $this->settings;
-	}
+    /**
+     * @return SettingsManager
+     */
+    public function getSettings()
+    {
+        return $this->settings;
+    }
 
-	/**
-	 * @param SettingsManager $settings
-	 */
-	public function setSettings ( $settings ) {
-		$this->settings = $settings;
-	}
+    /**
+     * @param SettingsManager $settings
+     */
+    public function setSettings($settings)
+    {
+        $this->settings = $settings;
+    }
 
-	/**
-	 * @return LoggerInterface
-	 */
-	public function getLogger () {
-		return $this->logger;
-	}
+    /**
+     * @return LoggerInterface
+     */
+    public function getLogger()
+    {
+        return $this->logger;
+    }
 
-	/**
-	 * @param LoggerInterface $logger
-	 */
-	public function setLogger ( $logger ) {
-		$this->logger = $logger;
-	}
+    /**
+     * @param LoggerInterface $logger
+     */
+    public function setLogger($logger)
+    {
+        $this->logger = $logger;
+    }
 
-	/**
-	 * ApiWrapper constructor.
-	 *
-	 * @param SettingsManager $manager
-	 * @param LoggerInterface $logger
-	 * @param string          $pluginName
-	 * @param string          $pluginVersion
-	 */
-	public function __construct ( SettingsManager $manager, LoggerInterface $logger, $pluginName, $pluginVersion ) {
-		$this->setSettings( $manager );
-		$this->setLogger( $logger );
-		$this->setPluginName( $pluginName );
-		$this->setPluginVersion( $pluginVersion );
-	}
+    /**
+     * ApiWrapper constructor.
+     *
+     * @param SettingsManager $manager
+     * @param LoggerInterface $logger
+     * @param string          $pluginName
+     * @param string          $pluginVersion
+     */
+    public function __construct(SettingsManager $manager, LoggerInterface $logger, $pluginName, $pluginVersion)
+    {
+        $this->setSettings($manager);
+        $this->setLogger($logger);
+        $this->setPluginName($pluginName);
+        $this->setPluginVersion($pluginVersion);
+    }
 
-	/**
-	 * @param SubmissionEntity $submission
-	 *
-	 * @return ConfigurationProfileEntity
-	 * @throws SmartlingDbException
-	 */
-	private function getConfigurationProfile ( SubmissionEntity $submission ) {
-		$mainBlogId = $submission->getSourceBlogId();
+    /**
+     * @param SubmissionEntity $submission
+     *
+     * @return ConfigurationProfileEntity
+     * @throws SmartlingDbException
+     */
+    private function getConfigurationProfile(SubmissionEntity $submission)
+    {
+        $mainBlogId = $submission->getSourceBlogId();
 
-		$possibleProfiles = $this->getSettings()->findEntityByMainLocale( $mainBlogId );
+        $possibleProfiles = $this->getSettings()
+                                 ->findEntityByMainLocale($mainBlogId);
 
-		if ( 0 < count( $possibleProfiles ) ) {
-			return reset( $possibleProfiles );
-		}
-		$message = vsprintf( 'No active profile found for main blog %s', [ $mainBlogId ] );
-		$this->getLogger()->warning( $message );
-		throw new SmartlingDbException( $message );
-	}
+        if (0 < count($possibleProfiles)) {
+            return reset($possibleProfiles);
+        }
+        $message = vsprintf('No active profile found for main blog %s', [$mainBlogId]);
+        $this->getLogger()
+             ->warning($message);
+        throw new SmartlingDbException($message);
+    }
 
-	/**
-	 * @param ConfigurationProfileEntity $profile
-	 *
-	 * @return AuthTokenProvider
-	 */
-	private function getAuthProvider ( ConfigurationProfileEntity $profile ) {
-		$authProvider = AuthTokenProvider::create(
-			$profile->getUserIdentifier(),
-			$profile->getSecretKey(),
-			$this->getLogger()
-		);
+    /**
+     * @param ConfigurationProfileEntity $profile
+     *
+     * @return AuthTokenProvider
+     */
+    private function getAuthProvider(ConfigurationProfileEntity $profile)
+    {
+        $authProvider = AuthTokenProvider::create(
+            $profile->getUserIdentifier(),
+            $profile->getSecretKey(),
+            $this->getLogger()
+        );
 
-		return $authProvider;
-	}
+        return $authProvider;
+    }
 
-	/**
-	 * @param SubmissionEntity $entity
-	 *
-	 * @return string
-	 * @throws SmartligFileDownloadException
-	 */
-	public function downloadFile ( SubmissionEntity $entity ) {
-		try {
-			$profile = $this->getConfigurationProfile( $entity );
+    /**
+     * @param SubmissionEntity $entity
+     *
+     * @return string
+     * @throws SmartligFileDownloadException
+     */
+    public function downloadFile(SubmissionEntity $entity)
+    {
+        try {
+            $profile = $this->getConfigurationProfile($entity);
 
-			$api = FileApi::create(
-				$this->getAuthProvider( $profile ),
-				$profile->getProjectId(),
-				$this->getLogger()
-			);
+            $api = FileApi::create(
+                $this->getAuthProvider($profile),
+                $profile->getProjectId(),
+                $this->getLogger()
+            );
 
-			$this->getLogger()->info( vsprintf(
-				'Starting file \'%s\' download for entity = \'%s\', blog = \'%s\', id = \'%s\', locale = \'%s\'',
-				[
-					$entity->getFileUri(),
-					$entity->getContentType(),
-					$entity->getSourceBlogId(),
-					$entity->getSourceId(),
-					$entity->getTargetLocale(),
-				]
-			) );
+            $this->getLogger()
+                 ->info(vsprintf(
+                     'Starting file \'%s\' download for entity = \'%s\', blog = \'%s\', id = \'%s\', locale = \'%s\'',
+                     [
+                         $entity->getFileUri(),
+                         $entity->getContentType(),
+                         $entity->getSourceBlogId(),
+                         $entity->getSourceId(),
+                         $entity->getTargetLocale(),
+                     ]
+                 ));
 
-			$params = new DownloadFileParameters();
+            $params = new DownloadFileParameters();
 
-			$params->setRetrievalType( $profile->getRetrievalType() );
+            $params->setRetrievalType($profile->getRetrievalType());
 
-			$result = $api->downloadFile(
-				$entity->getFileUri(),
-				$this->getSmartlingLocaleBySubmission( $entity ),
-				$params
-			);
+            $result = $api->downloadFile(
+                $entity->getFileUri(),
+                $this->getSmartlingLocaleBySubmission($entity),
+                $params
+            );
 
-			return $result;
+            return $result;
 
-		} catch ( \Exception $e ) {
-			$this->getLogger()->error( $e->getMessage() );
-			throw new SmartligFileDownloadException( $e->getMessage() );
+        } catch (\Exception $e) {
+            $this->getLogger()
+                 ->error($e->getMessage());
+            throw new SmartligFileDownloadException($e->getMessage());
 
-		}
-	}
+        }
+    }
 
-	/**
-	 * @param SubmissionEntity $entity
-	 *
-	 * @return SubmissionEntity
-	 * @throws SmartlingNetworkException
-	 */
-	public function getStatus ( SubmissionEntity $entity ) {
-		try {
-			$locale = $this->getSmartlingLocaleBySubmission( $entity );
+    /**
+     * @param SubmissionEntity $entity
+     *
+     * @return SubmissionEntity
+     * @throws SmartlingNetworkException
+     */
+    public function getStatus(SubmissionEntity $entity)
+    {
+        try {
+            $locale = $this->getSmartlingLocaleBySubmission($entity);
 
-			$profile = $this->getConfigurationProfile( $entity );
+            $profile = $this->getConfigurationProfile($entity);
 
-			$api = FileApi::create(
-				$this->getAuthProvider( $profile ),
-				$profile->getProjectId(),
-				$this->getLogger()
-			);
+            $api = FileApi::create(
+                $this->getAuthProvider($profile),
+                $profile->getProjectId(),
+                $this->getLogger()
+            );
 
-			$data = $api->getStatus( $entity->getFileUri(), $locale );
+            $data = $api->getStatus($entity->getFileUri(), $locale);
 
-			$entity->setApprovedStringCount( $data['completedStringCount'] + $data['authorizedStringCount'] );
-			$entity->setCompletedStringCount( $data['completedStringCount'] );
-			$entity->setWordCount( $data['totalWordCount'] );
+            $entity->setApprovedStringCount($data['completedStringCount'] + $data['authorizedStringCount']);
+            $entity->setCompletedStringCount($data['completedStringCount']);
+            $entity->setWordCount($data['totalWordCount']);
 
-			return $entity;
+            return $entity;
 
-		} catch ( \Exception $e ) {
-			$this->logger->error( $e->getMessage() );
-			throw new SmartlingNetworkException( $e->getMessage() );
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
+            throw new SmartlingNetworkException($e->getMessage());
 
-		}
-	}
+        }
+    }
 
-	/**
-	 * @param ConfigurationProfileEntity $profile
-	 *
-	 * @return bool
-	 * @throws SmartlingNetworkException
-	 */
-	public function testConnection ( ConfigurationProfileEntity $profile ) {
-		try {
-			$api = FileApi::create(
-				$this->getAuthProvider( $profile ),
-				$profile->getProjectId(),
-				$this->getLogger()
-			);
+    /**
+     * @param ConfigurationProfileEntity $profile
+     *
+     * @return bool
+     * @throws SmartlingNetworkException
+     */
+    public function testConnection(ConfigurationProfileEntity $profile)
+    {
+        try {
+            $api = FileApi::create(
+                $this->getAuthProvider($profile),
+                $profile->getProjectId(),
+                $this->getLogger()
+            );
 
-			$api->getList();
+            $api->getList();
 
-			return true;
-		} catch ( \Exception $e ) {
-			$this->logger->error( $e->getMessage() );
-			throw new SmartlingNetworkException( $e->getMessage() );
-		}
-	}
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
+            throw new SmartlingNetworkException($e->getMessage());
+        }
+    }
 
-	/**
-	 * @param ConfigurationProfileEntity $profile
-	 * @param                            $targetBlog
-	 *
-	 * @return string
-	 */
-	private function getSmartLingLocale ( ConfigurationProfileEntity $profile, $targetBlog ) {
-		$locale = '';
+    /**
+     * @param ConfigurationProfileEntity $profile
+     * @param                            $targetBlog
+     *
+     * @return string
+     */
+    private function getSmartLingLocale(ConfigurationProfileEntity $profile, $targetBlog)
+    {
+        $locale = '';
 
-		$locales = $profile->getTargetLocales();
-		foreach ( $locales as $item ) {
-			if ( $targetBlog === $item->getBlogId() ) {
-				$locale = $item->getSmartlingLocale();
-				break;
-			}
-		}
+        $locales = $profile->getTargetLocales();
+        foreach ($locales as $item) {
+            if ($targetBlog === $item->getBlogId()) {
+                $locale = $item->getSmartlingLocale();
+                break;
+            }
+        }
 
-		return $locale;
-	}
+        return $locale;
+    }
 
-	private function getSmartlingLocaleBySubmission ( SubmissionEntity $entity ) {
-		$profile = $this->getConfigurationProfile( $entity );
+    private function getSmartlingLocaleBySubmission(SubmissionEntity $entity)
+    {
+        $profile = $this->getConfigurationProfile($entity);
 
-		return $this->getSmartLingLocale( $profile, $entity->getTargetBlogId() );
-	}
+        return $this->getSmartLingLocale($profile, $entity->getTargetBlogId());
+    }
 
-	/**
-	 * @param SubmissionEntity $entity
-	 * @param string           $xmlString
-	 *
-	 * @param string           $filename
-	 *
-	 * @return bool
-	 * @throws SmartlingFileUploadException
-	 */
-	public function uploadContent ( SubmissionEntity $entity, $xmlString = '', $filename = '' ) {
-		$this->getLogger()->info( vsprintf(
-			'Starting file \'%s\' upload for entity = \'%s\', blog = \'%s\', id = \'%s\', locale = \'%s\'',
-			[
-				$entity->getFileUri(),
-				$entity->getContentType(),
-				$entity->getSourceBlogId(),
-				$entity->getSourceId(),
-				$entity->getTargetLocale(),
-			]
-		) );
-		try {
-			$profile = $this->getConfigurationProfile( $entity );
+    /**
+     * @param SubmissionEntity $entity
+     * @param string           $xmlString
+     *
+     * @param string           $filename
+     *
+     * @return bool
+     * @throws SmartlingFileUploadException
+     */
+    public function uploadContent(SubmissionEntity $entity, $xmlString = '', $filename = '')
+    {
+        $this->getLogger()
+             ->info(vsprintf(
+                 'Starting file \'%s\' upload for entity = \'%s\', blog = \'%s\', id = \'%s\', locale = \'%s\'',
+                 [
+                     $entity->getFileUri(),
+                     $entity->getContentType(),
+                     $entity->getSourceBlogId(),
+                     $entity->getSourceId(),
+                     $entity->getTargetLocale(),
+                 ]
+             ));
+        try {
+            $profile = $this->getConfigurationProfile($entity);
 
-			$api = FileApi::create(
-				$this->getAuthProvider( $profile ),
-				$profile->getProjectId(),
-				$this->getLogger()
-			);
+            $api = FileApi::create(
+                $this->getAuthProvider($profile),
+                $profile->getProjectId(),
+                $this->getLogger()
+            );
 
-			$params = new UploadFileParameters( 'wordpress-connector', $this->getPluginVersion() );
+            $params = new UploadFileParameters('wordpress-connector', $this->getPluginVersion());
 
-			// We always explicit say do not authorize for all locales
-			$params->setAuthorized( false );
-			if ( $profile->getAutoAuthorize() ) {
-				// Authorize for locale only if user chooses this in settings
-				$locale = $this->getSmartlingLocaleBySubmission( $entity );
-				$params->setLocalesToApprove( $locale );
-			}
+            // We always explicit say do not authorize for all locales
+            $params->setAuthorized(false);
+            if ($profile->getAutoAuthorize()) {
+                // Authorize for locale only if user chooses this in settings
+                $locale = $this->getSmartlingLocaleBySubmission($entity);
+                $params->setLocalesToApprove($locale);
+            }
 
-			$res = $api->uploadFile(
-				$filename,
-				$entity->getFileUri(),
-				'xml',
-				$params );
+            $res = $api->uploadFile(
+                $filename,
+                $entity->getFileUri(),
+                'xml',
+                $params);
 
-			$message = vsprintf(
-				'Smartling uploaded %s for locale: %s',
-				[
-					$entity->getFileUri(),
-					$entity->getTargetLocale(),
-				]
-			);
+            $message = vsprintf(
+                'Smartling uploaded %s for locale: %s',
+                [
+                    $entity->getFileUri(),
+                    $entity->getTargetLocale(),
+                ]
+            );
 
-			$this->logger->info( $message );
+            $this->logger->info($message);
 
-			return true;
+            return true;
 
-		} catch ( \Exception $e ) {
-			throw new SmartlingFileUploadException( $e->getMessage() );
-		}
-	}
+        } catch (\Exception $e) {
+            throw new SmartlingFileUploadException($e->getMessage());
+        }
+    }
 
-	/**
-	 * @inheritdoc
-	 */
-	public function getSupportedLocales ( ConfigurationProfileEntity $profile ) {
+    /**
+     * @inheritdoc
+     */
+    public function getSupportedLocales(ConfigurationProfileEntity $profile)
+    {
 
-		$supportedLocales = [ ];
+        $supportedLocales = [];
 
-		try {
-
-
+        try {
 
 
-			$api = ProjectApi::create(
-				$this->getAuthProvider( $profile ),
-				$profile->getProjectId(),
-				$this->getLogger()
-			);
+            $api = ProjectApi::create(
+                $this->getAuthProvider($profile),
+                $profile->getProjectId(),
+                $this->getLogger()
+            );
 
-			$locales = $api->getProjectDetails();
+            $locales = $api->getProjectDetails();
 
-			foreach ( $locales['targetLocales'] as $locale ) {
-				$supportedLocales[ $locale['localeId'] ] = $locale['description'];
-			}
-		} catch ( \Exception $e ) {
-			$message = vsprintf( 'Response has error messages. Message:\'%s\'', [ $e->getMessage() ] );
-			$this->logger->error( $message );
-		}
+            foreach ($locales['targetLocales'] as $locale) {
+                $supportedLocales[$locale['localeId']] = $locale['description'];
+            }
+        } catch (\Exception $e) {
+            $message = vsprintf('Response has error messages. Message:\'%s\'', [$e->getMessage()]);
+            $this->logger->error($message);
+        }
 
-		return $supportedLocales;
-	}
+        return $supportedLocales;
+    }
 }

@@ -2,355 +2,382 @@
 
 namespace Smartling\Helpers;
 
-use Smartling\Bootstrap;
-
 /**
  * Class WidgetHelper
  *
  * @package Smartling\Helpers
  */
-class WidgetHelper {
-	/**
-	 * key for generated IDs
-	 */
-	const SMARTLING_IDENTITY_FIELD_NAME = 'smartlingId';
+class WidgetHelper
+{
+    /**
+     * key for generated IDs
+     */
+    const SMARTLING_IDENTITY_FIELD_NAME = 'smartlingId';
 
-	/**
-	 * @var integer
-	 */
-	private $index = 0;
+    /**
+     * @var integer
+     */
+    private $index = 0;
 
-	/**
-	 * @var string
-	 */
-	private $type;
+    /**
+     * @var string
+     */
+    private $type;
 
-	/**
-	 * @var string
-	 */
-	private $sideBar = '';
+    /**
+     * @var string
+     */
+    private $sideBar = '';
 
-	/**
-	 * @var int
-	 */
-	private $sideBarPosition = 0;
+    /**
+     * @var int
+     */
+    private $sideBarPosition = 0;
 
-	/**
-	 * @var array
-	 */
-	private $settings = [ ];
+    /**
+     * @var array
+     */
+    private $settings = [];
 
-	/**
-	 * @return string
-	 */
-	public function getSideBar () {
-		return $this->sideBar;
-	}
+    /**
+     * @param $widgetId
+     */
+    public function __construct($widgetId)
+    {
+        $this->parseWidgetId($widgetId);
+        $this->read();
+    }
 
-	/**
-	 * @param string $sideBar
-	 */
-	public function setSideBar ( $sideBar ) {
-		$this->sideBar = $sideBar;
-	}
+    /**
+     * @param string $widgetId
+     */
+    private function parseWidgetId($widgetId)
+    {
+        $parts = explode('-', $widgetId);
+        $this->setIndex((int)end($parts));
+        unset($parts[count($parts) - 1]);
+        $this->setType(implode('-', $parts));
+    }
 
-	/**
-	 * @return int
-	 */
-	public function getSideBarPosition () {
-		return $this->sideBarPosition;
-	}
+    /**
+     * @return void
+     */
+    public function read()
+    {
+        $optionValue = OptionHelper::get($this->getOptionName(), false);
 
-	/**
-	 * @param int $sideBarPosition
-	 */
-	public function setSideBarPosition ( $sideBarPosition ) {
-		$this->sideBarPosition = $sideBarPosition;
-	}
+        if (!is_array($optionValue)) {
+            $optionValue = [$optionValue];
+        }
 
-	/**
-	 * @return array
-	 */
-	public function getSettings () {
-		return $this->settings ? : [ ];
-	}
+        $settings = ((false === $optionValue) || !array_key_exists($this->getIndex(), $optionValue))
+            ? []
+            : $optionValue[$this->getIndex()];
 
-	/**
-	 * @param array $settings
-	 */
-	public function setSettings ( $settings ) {
-		$this->settings = $settings;
-	}
+        $this->setSettings($settings);
+    }
 
-	/**
-	 * @return int
-	 */
-	public function getIndex () {
-		return $this->index;
-	}
+    /**
+     * @return string
+     */
+    protected function getOptionName()
+    {
+        return vsprintf('widget_%s', [$this->getType()]);
+    }
 
-	/**
-	 * @param int $index
-	 */
-	public function setIndex ( $index ) {
-		$this->index = $index;
-	}
+    /**
+     * @return string
+     */
+    public function getType()
+    {
+        return $this->type;
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getType () {
-		return $this->type;
-	}
+    /**
+     * @param string $type
+     */
+    public function setType($type)
+    {
+        $this->type = $type;
+    }
 
-	/**
-	 * @param string $type
-	 */
-	public function setType ( $type ) {
-		$this->type = $type;
-	}
+    /**
+     * @return int
+     */
+    public function getIndex()
+    {
+        return $this->index;
+    }
 
-	/**
-	 * @return int|null
-	 */
-	public function getPk () {
-		return array_key_exists( self::SMARTLING_IDENTITY_FIELD_NAME, $this->getSettings() )
-			? $this->getSettings()[ self::SMARTLING_IDENTITY_FIELD_NAME ]
-			: null;
-	}
+    /**
+     * @param int $index
+     */
+    public function setIndex($index)
+    {
+        $this->index = $index;
+    }
 
-	/**
-	 * @param string $widgetId
-	 */
-	private function parseWidgetId ( $widgetId ) {
-		$parts = explode( '-', $widgetId );
-		$this->setIndex( (int) end( $parts ) );
-		unset( $parts[ count( $parts ) - 1 ] );
-		$this->setType( implode( '-', $parts ) );
-	}
+    public static function getWidget($widgetId)
+    {
+        $widgetInstance = new self($widgetId);
+        if (is_null($widgetInstance->getPk())) {
+            $widgetInstance->write(); // will assign ID
+            $widgetInstance = new self($widgetId);
+        }
 
-	/**
-	 * @param $widgetId
-	 */
-	public function __construct ( $widgetId ) {
-		$this->parseWidgetId( $widgetId );
-		$this->read();
-	}
+        return $widgetInstance;
+    }
 
-	/**
-	 * @return string
-	 */
-	protected function getOptionName () {
-		return vsprintf( 'widget_%s', [ $this->getType() ] );
-	}
+    /**
+     * @return int|null
+     */
+    public function getPk()
+    {
+        return array_key_exists(self::SMARTLING_IDENTITY_FIELD_NAME, $this->getSettings())
+            ? $this->getSettings()[self::SMARTLING_IDENTITY_FIELD_NAME]
+            : null;
+    }
 
-	/**
-	 * @return void
-	 */
-	public function read () {
-		$optionValue = OptionHelper::get( $this->getOptionName(), false );
+    /**
+     * @return array
+     */
+    public function getSettings()
+    {
+        return $this->settings ? : [];
+    }
 
-		if ( ! is_array( $optionValue ) ) {
-			$optionValue = [ $optionValue ];
-		}
+    /**
+     * @param array $settings
+     */
+    public function setSettings($settings)
+    {
+        $this->settings = $settings;
+    }
 
-		$settings = ( ( false === $optionValue ) || ! array_key_exists( $this->getIndex(), $optionValue ) )
-			? [ ]
-			: $optionValue[ $this->getIndex() ];
+    /**
+     * @return void
+     */
+    public function write()
+    {
+        $widgetCollection = OptionHelper::get($this->getOptionName());
+        $this->setSettings(self::tryFixSmartlingId($this->getSettings()));
+        if (false === $widgetCollection) {
+            $widgetCollection = [];
+        }
+        $widgetCollection[$this->getIndex()] = $this->getSettings();
 
-		$this->setSettings( $settings );
-	}
+        if (!StringHelper::isNullOrEmpty($this->getType()) || 0 === $this->getIndex()) {
+            OptionHelper::set($this->getOptionName(), $widgetCollection);
 
-	/**
-	 * @return void
-	 */
-	public function write () {
-		$widgetCollection = OptionHelper::get( $this->getOptionName() );
-		$this->setSettings( self::tryFixSmartlingId( $this->getSettings() ) );
-		if ( false === $widgetCollection ) {
-			$widgetCollection = [ ];
-		}
-		$widgetCollection[ $this->getIndex() ] = $this->getSettings();
-
-		if ( ! StringHelper::isNullOrEmpty( $this->getType() ) || 0 === $this->getIndex() ) {
-			OptionHelper::set( $this->getOptionName(), $widgetCollection );
-
-			if ( ! StringHelper::isNullOrEmpty( $this->getSideBar() ) ) {
-				$this->placeWidgetToBar();
-			}
-		}
+            if (!StringHelper::isNullOrEmpty($this->getSideBar())) {
+                $this->placeWidgetToBar();
+            }
+        }
 
 
-	}
+    }
 
-	/**
-	 * @return string
-	 */
-	private function getWidgetId () {
-		return vsprintf( '%s-%s', [ $this->getType(), $this->getIndex() ] );
-	}
+    private static function tryFixSmartlingId($settings)
+    {
+        if (!is_array($settings)) {
+            $settings = [$settings];
+        }
 
-	/**
-	 * @return array
-	 */
-	private static function readSidebarsWidgetsTotal () {
-		return wp_get_sidebars_widgets();
-	}
+        if (!array_key_exists(self::SMARTLING_IDENTITY_FIELD_NAME, $settings)) {
+            $settings[self::SMARTLING_IDENTITY_FIELD_NAME] = self::generateSmartlingId();
+        }
 
-	/**
-	 * @param $sidebars
-	 */
-	private static function writeSidebarsWidgetsTotal ( $sidebars ) {
-		wp_set_sidebars_widgets( $sidebars );
-	}
+        return $settings;
+    }
 
-	private static function writeSidebarsWidgets ( $barId, array $widgets = [ ] ) {
-		$config = self::readSidebarsWidgetsTotal();
+    /**
+     * @return int
+     */
+    private static function generateSmartlingId()
+    {
+        $key = 'SmartlingWidgetLastAutoincrementValue';
 
-		unset ( $config[ $barId ] );
+        $rawResult = OptionHelper::get($key, 1);
+        $result = (int)$rawResult;
+        $rawResult++;
+        OptionHelper::set($key, $rawResult);
 
-		foreach ( $widgets as $pos => $widgetId ) {
-			foreach ( $config as $bar => $widgetSet ) {
-				$config[ $bar ] = self::cleanBarFromWidget( $bar, $widgetId );
-			}
-		}
+        return $result;
+    }
 
-		$config[ $barId ] = $widgets;
+    /**
+     * @return string
+     */
+    public function getSideBar()
+    {
+        return $this->sideBar;
+    }
 
-		self::writeSidebarsWidgetsTotal( $config );
-	}
+    /**
+     * @param string $sideBar
+     */
+    public function setSideBar($sideBar)
+    {
+        $this->sideBar = $sideBar;
+    }
 
+    private function placeWidgetToBar()
+    {
+        $bar = in_array($this->getSideBar(), ThemeSidebarHelper::getSideBarsIds())
+            ? $this->getSideBar()
+            : ThemeSidebarHelper::INACTIVE_BAR_ID;
 
-	/**
-	 * @param $barId
-	 * @param $widgetId
-	 *
-	 * @return array
-	 */
-	private static function cleanBarFromWidget ( $barId, $widgetId ) {
-		$content = array_flip( self::getSideBarWidgets( $barId ) );
+        $barPosition = ThemeSidebarHelper::INACTIVE_BAR_ID === $bar
+            ? null
+            : $this->getSideBarPosition();
 
-		if ( array_key_exists( $widgetId, $content ) ) {
-			unset( $content[ $widgetId ] );
-		}
+        $widgetId = $this->getWidgetId();
 
-		return array_flip( $content );
-	}
+        $barConfig = self::cleanBarFromWidget($bar, $widgetId);
 
-	private function placeWidgetToBar () {
-		$bar = in_array( $this->getSideBar(), ThemeSidebarHelper::getSideBarsIds() )
-			? $this->getSideBar()
-			: ThemeSidebarHelper::INACTIVE_BAR_ID;
+        if (is_null($barPosition)) {
+            $barConfig[] = $widgetId;
+        } else {
+            $barConfig[$barPosition] = $widgetId;
+        }
 
-		$barPosition = ThemeSidebarHelper::INACTIVE_BAR_ID === $bar
-			? null
-			: $this->getSideBarPosition();
+        self::writeSidebarsWidgets($bar, $barConfig);
+    }
 
-		$widgetId = $this->getWidgetId();
+    /**
+     * @return int
+     */
+    public function getSideBarPosition()
+    {
+        return $this->sideBarPosition;
+    }
 
-		$barConfig = self::cleanBarFromWidget( $bar, $widgetId );
+    /**
+     * @param int $sideBarPosition
+     */
+    public function setSideBarPosition($sideBarPosition)
+    {
+        $this->sideBarPosition = $sideBarPosition;
+    }
 
-		if ( is_null( $barPosition ) ) {
-			$barConfig[] = $widgetId;
-		} else {
-			$barConfig[ $barPosition ] = $widgetId;
-		}
+    /**
+     * @return string
+     */
+    private function getWidgetId()
+    {
+        return vsprintf('%s-%s', [$this->getType(), $this->getIndex()]);
+    }
 
-		self::writeSidebarsWidgets( $bar, $barConfig );
-	}
+    private static function writeSidebarsWidgets($barId, array $widgets = [])
+    {
+        $config = self::readSidebarsWidgetsTotal();
 
-	private static function tryFixSmartlingId ( $settings ) {
-		if ( ! is_array( $settings ) ) {
-			$settings = [ $settings ];
-		}
+        unset ($config[$barId]);
 
-		if ( ! array_key_exists( self::SMARTLING_IDENTITY_FIELD_NAME, $settings ) ) {
-			$settings[ self::SMARTLING_IDENTITY_FIELD_NAME ] = self::generateSmartlingId();
-		}
+        foreach ($widgets as $pos => $widgetId) {
+            foreach ($config as $bar => $widgetSet) {
+                $config[$bar] = self::cleanBarFromWidget($bar, $widgetId);
+            }
+        }
 
-		return $settings;
-	}
+        $config[$barId] = $widgets;
 
-	/**
-	 * @return int
-	 */
-	private static function generateSmartlingId () {
-		$key = 'SmartlingWidgetLastAutoincrementValue';
+        self::writeSidebarsWidgetsTotal($config);
+    }
 
-		$rawResult = OptionHelper::get( $key, 1 );
-		$result    = (int) $rawResult;
-		$rawResult ++;
-		OptionHelper::set( $key, $rawResult );
+    /**
+     * @return array
+     */
+    private static function readSidebarsWidgetsTotal()
+    {
+        return wp_get_sidebars_widgets();
+    }
 
-		return $result;
-	}
+    /**
+     * @param $barId
+     * @param $widgetId
+     *
+     * @return array
+     */
+    private static function cleanBarFromWidget($barId, $widgetId)
+    {
+        $content = array_flip(self::getSideBarWidgets($barId));
 
-	public static function getWidget ( $widgetId ) {
-		$widgetInstance = new self( $widgetId );
-		if ( is_null( $widgetInstance->getPk() ) ) {
-			$widgetInstance->write(); // will assign ID
-			$widgetInstance = new self( $widgetId );
-		}
+        if (array_key_exists($widgetId, $content)) {
+            unset($content[$widgetId]);
+        }
 
-		return $widgetInstance;
-	}
+        return array_flip($content);
+    }
 
-	/**
-	 * @param $sideBadId
-	 *
-	 * @return array
-	 */
-	public static function getSideBarWidgets ( $sideBadId ) {
-		$totalWidgetData = wp_get_sidebars_widgets();
+    /**
+     * @param $sideBadId
+     *
+     * @return array
+     */
+    public static function getSideBarWidgets($sideBadId)
+    {
+        $totalWidgetData = wp_get_sidebars_widgets();
 
-		return array_key_exists( $sideBadId, $totalWidgetData ) ? $totalWidgetData[ $sideBadId ] : [ ];
-	}
+        return array_key_exists($sideBadId, $totalWidgetData) ? $totalWidgetData[$sideBadId] : [];
+    }
 
-	/**
-	 * @return array
-	 */
-	public function toArray () {
-		return [
-			'id'          => $this->getSettings()[ self::SMARTLING_IDENTITY_FIELD_NAME ],
-			'widgetType'  => $this->getType(),
-			'index'       => $this->getIndex(),
-			'bar'         => $this->getSideBar(),
-			'barPosition' => $this->getSideBarPosition(),
-			'settings'    => $this->getSettings(),
-		];
-	}
+    /**
+     * @param $sidebars
+     */
+    private static function writeSidebarsWidgetsTotal($sidebars)
+    {
+        wp_set_sidebars_widgets($sidebars);
+    }
 
-	/**
-	 * @param array $state
-	 *
-	 * @return WidgetHelper
-	 */
-	public static function fromArray ( array $state ) {
-		$instance = new self( $state['widgetType'] . '-' . $state['index'] );
-		$instance->setSettings( $state['settings'] );
-		$instance->setSideBar( $state['bar'] );
-		$instance->setSideBarPosition( $state['barPosition'] );
+    /**
+     * @param array $state
+     *
+     * @return WidgetHelper
+     */
+    public static function fromArray(array $state)
+    {
+        $instance = new self($state['widgetType'] . '-' . $state['index']);
+        $instance->setSettings($state['settings']);
+        $instance->setSideBar($state['bar']);
+        $instance->setSideBarPosition($state['barPosition']);
 
-		return $instance;
-	}
+        return $instance;
+    }
 
-	/**
-	 * @param $widgetType
-	 *
-	 * @return string | null
-	 */
-	public static function getWidgetName ( $widgetType ) {
-		global $wp_widget_factory;
+    /**
+     * @param $widgetType
+     *
+     * @return string | null
+     */
+    public static function getWidgetName($widgetType)
+    {
+        global $wp_widget_factory;
 
-		$id_base_to_widget_class_map = array_combine(
-			wp_list_pluck( $wp_widget_factory->widgets, 'id_base' ),
-			array_keys( $wp_widget_factory->widgets )
-		);
+        $id_base_to_widget_class_map = array_combine(
+            wp_list_pluck($wp_widget_factory->widgets, 'id_base'),
+            array_keys($wp_widget_factory->widgets)
+        );
 
-		if ( ! isset( $id_base_to_widget_class_map[ $widgetType ] ) ) {
-			return null;
-		}
+        if (!isset($id_base_to_widget_class_map[$widgetType])) {
+            return null;
+        }
 
-		return $wp_widget_factory->widgets[ $id_base_to_widget_class_map[ $widgetType ] ];
-	}
+        return $wp_widget_factory->widgets[$id_base_to_widget_class_map[$widgetType]];
+    }
+
+    /**
+     * @return array
+     */
+    public function toArray()
+    {
+        return [
+            'id'          => $this->getSettings()[self::SMARTLING_IDENTITY_FIELD_NAME],
+            'widgetType'  => $this->getType(),
+            'index'       => $this->getIndex(),
+            'bar'         => $this->getSideBar(),
+            'barPosition' => $this->getSideBarPosition(),
+            'settings'    => $this->getSettings(),
+        ];
+    }
 }

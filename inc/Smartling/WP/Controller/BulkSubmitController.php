@@ -14,48 +14,56 @@ use Smartling\WP\WPHookInterface;
  * @package Smartling\WP\Controller
  */
 class BulkSubmitController
-	extends WPAbstract
-	implements WPHookInterface {
+    extends WPAbstract
+    implements WPHookInterface
+{
 
-	/**
-	 * @inheritdoc
-	 */
-	public function register () {
-		if ( ! DiagnosticsHelper::isBlocked() ) {
-			add_action( 'admin_menu', [ $this, 'menu' ] );
-		}
-	}
+    /**
+     * @inheritdoc
+     */
+    public function register()
+    {
+        if (!DiagnosticsHelper::isBlocked()) {
+            add_action('admin_menu', [$this, 'menu']);
+        }
+    }
 
-	public function menu () {
-		add_submenu_page(
-			'smartling-submissions-page',
-			'Bulk Submit',
-			'Bulk Submit',
-			SmartlingUserCapabilities::SMARTLING_CAPABILITY_MENU_CAP,
-			'smartling-bulk-submit',
-			[
-				$this,
-				'renderPage',
-			]
-		);
-	}
+    public function menu()
+    {
+        add_submenu_page(
+            'smartling-submissions-page',
+            'Bulk Submit',
+            'Bulk Submit',
+            SmartlingUserCapabilities::SMARTLING_CAPABILITY_MENU_CAP,
+            'smartling-bulk-submit',
+            [
+                $this,
+                'renderPage',
+            ]
+        );
+    }
 
-	public function renderPage () {
-		$currentBlogId = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
+    public function renderPage()
+    {
+        $currentBlogId = $this->getEntityHelper()
+                              ->getSiteHelper()
+                              ->getCurrentBlogId();
 
-		$applicableProfiles = $this->getEntityHelper()->getSettingsManager()->findEntityByMainLocale( $currentBlogId );
+        $applicableProfiles = $this->getEntityHelper()
+                                   ->getSettingsManager()
+                                   ->findEntityByMainLocale($currentBlogId);
 
-		if ( 0 === count( $applicableProfiles ) ) {
-			echo HtmlTagGeneratorHelper::tag( 'p', __( 'No suitable profile found for this site.' ) );
-		} else {
-			$profile = reset( $applicableProfiles );
-			$table   = new BulkSubmitTableWidget(
-				$this->getManager(),
-				$this->getPluginInfo(),
-				$this->getEntityHelper(),
-				$profile
-			);
-			$this->view( $table );
-		}
-	}
+        if (0 === count($applicableProfiles)) {
+            echo HtmlTagGeneratorHelper::tag('p', __('No suitable profile found for this site.'));
+        } else {
+            $profile = reset($applicableProfiles);
+            $table = new BulkSubmitTableWidget(
+                $this->getManager(),
+                $this->getPluginInfo(),
+                $this->getEntityHelper(),
+                $profile
+            );
+            $this->view($table);
+        }
+    }
 }

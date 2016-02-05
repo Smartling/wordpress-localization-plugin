@@ -10,14 +10,16 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  *
  * @package Smartling\DbAl\WordpressContentEntities
  */
-class PolicyEntity extends PostEntity {
+class PolicyEntity extends PostEntity
+{
 
-	/**
-	 * @inheritdoc
-	 */
-	public function __construct ( LoggerInterface $logger ) {
-		parent::__construct( $logger );
-		$this->setType( WordpressContentTypeHelper::CONTENT_TYPE_POST_POLICY );
-	}
+    /**
+     * @inheritdoc
+     */
+    public function __construct(LoggerInterface $logger)
+    {
+        parent::__construct($logger);
+        $this->setType(WordpressContentTypeHelper::CONTENT_TYPE_POST_POLICY);
+    }
 
 }

@@ -3,6 +3,7 @@
 namespace Smartling\Exception;
 
 
-class SmartlingNetworkException extends SmartlingExceptionAbstract {
+class SmartlingNetworkException extends SmartlingExceptionAbstract
+{
 
 }

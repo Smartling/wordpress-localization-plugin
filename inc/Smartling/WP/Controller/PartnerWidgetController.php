@@ -9,15 +9,16 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  *
  * @package Smartling\WP\Controller
  */
-class PartnerWidgetController extends PostWidgetController {
+class PartnerWidgetController extends PostWidgetController
+{
 
-	/**
-	 * @var string
-	 */
-	protected $servedContentType = WordpressContentTypeHelper::CONTENT_TYPE_POST_PARTNER;
+    /**
+     * @var string
+     */
+    protected $servedContentType = WordpressContentTypeHelper::CONTENT_TYPE_POST_PARTNER;
 
-	/**
-	 * @var string
-	 */
-	protected $noOriginalFound = 'No original partner found';
+    /**
+     * @var string
+     */
+    protected $noOriginalFound = 'No original partner found';
 }

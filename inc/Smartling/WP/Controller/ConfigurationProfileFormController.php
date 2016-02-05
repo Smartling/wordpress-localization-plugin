@@ -16,20 +16,27 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
     public function wp_enqueue()
     {
         wp_enqueue_script(
-            $this->getPluginInfo()->getName() . "settings",
-            $this->getPluginInfo()->getUrl() . 'js/smartling-connector-admin.js',
+            $this->getPluginInfo()
+                 ->getName() . "settings",
+            $this->getPluginInfo()
+                 ->getUrl() . 'js/smartling-connector-admin.js',
             ['jquery'],
-            $this->getPluginInfo()->getVersion(),
+            $this->getPluginInfo()
+                 ->getVersion(),
             false
         );
         wp_register_style(
-            $this->getPluginInfo()->getName(),
-            $this->getPluginInfo()->getUrl() . 'css/smartling-connector-admin.css',
+            $this->getPluginInfo()
+                 ->getName(),
+            $this->getPluginInfo()
+                 ->getUrl() . 'css/smartling-connector-admin.css',
             [],
-            $this->getPluginInfo()->getVersion(),
+            $this->getPluginInfo()
+                 ->getVersion(),
             'all'
         );
-        wp_enqueue_style($this->getPluginInfo()->getName());
+        wp_enqueue_style($this->getPluginInfo()
+                              ->getName());
     }
 
     public function register()
@@ -60,7 +67,8 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 
     public function edit()
     {
-        $this->view($this->getEntityHelper()->getSettingsManager());
+        $this->view($this->getEntityHelper()
+                         ->getSettingsManager());
     }
 
     public function save()
@@ -71,7 +79,8 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 
         $profileId = (int)($settings['id'] ? : 0);
 
-        $settingsManager = $this->getEntityHelper()->getSettingsManager();
+        $settingsManager = $this->getEntityHelper()
+                                ->getSettingsManager();
 
         if (0 === $profileId) {
             $profile = $settingsManager->createProfile([]);
@@ -151,10 +160,13 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
             $locale = new Locale();
             $locale->setBlogId($defaultBlogId);
             $locale->setLabel(
-                $this->getEntityHelper()->getSiteHelper()->getBlogLabelById(
-                    $this->getEntityHelper()->getConnector(),
-                    $defaultBlogId
-                )
+                $this->getEntityHelper()
+                     ->getSiteHelper()
+                     ->getBlogLabelById(
+                         $this->getEntityHelper()
+                              ->getConnector(),
+                         $defaultBlogId
+                     )
             );
 
             $profile->setOriginalBlogId($locale);
@@ -171,8 +183,11 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
                 try {
                     $tLocale = new TargetLocale();
                     $tLocale->setBlogId($blogId);
-                    $tLocale->setLabel($this->getEntityHelper()->getSiteHelper()->getBlogLabelById($this->getEntityHelper()->getConnector(),
-                        $blogId));
+                    $tLocale->setLabel($this->getEntityHelper()
+                                            ->getSiteHelper()
+                                            ->getBlogLabelById($this->getEntityHelper()
+                                                                    ->getConnector(),
+                                                $blogId));
                     $tLocale->setEnabled(array_key_exists('enabled', $settings) && 'on' === $settings['enabled']);
                     $tLocale->setSmartlingLocale(array_key_exists('target', $settings) ? $settings['target'] : -1);
 

@@ -7,6 +7,7 @@ namespace Smartling\Exception;
  *
  * @package Smartling\Exception
  */
-class SmartlingNotImplementedException extends SmartlingExceptionAbstract {
+class SmartlingNotImplementedException extends SmartlingExceptionAbstract
+{
 
 }

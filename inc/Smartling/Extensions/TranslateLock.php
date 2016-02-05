@@ -13,120 +13,131 @@ use Smartling\Submissions\SubmissionManager;
  *
  * @package Smartling\Extensions
  */
-class TranslateLock implements ExtensionInterface {
+class TranslateLock implements ExtensionInterface
+{
 
-	/**
-	 * @inheritdoc
-	 */
-	public function getName () {
-		return __CLASS__;
-	}
+    /**
+     * @inheritdoc
+     */
+    public function getName()
+    {
+        return __CLASS__;
+    }
 
-	/**
-	 * @inheritdoc
-	 */
-	public function register () {
-		add_action( 'post_submitbox_misc_actions', [ $this, 'extendSubmitBox' ] );
-		add_action( 'save_post', [ $this, 'postSaveHandler' ] );
-	}
+    /**
+     * @inheritdoc
+     */
+    public function register()
+    {
+        add_action('post_submitbox_misc_actions', [$this, 'extendSubmitBox']);
+        add_action('save_post', [$this, 'postSaveHandler']);
+    }
 
-	/**
-	 * @return SubmissionManager
-	 */
-	private function getSubmissionManager () {
-		return Bootstrap::getContainer()->get( 'manager.submission' );
-	}
+    /**
+     * @return SubmissionManager
+     */
+    private function getSubmissionManager()
+    {
+        return Bootstrap::getContainer()
+                        ->get('manager.submission');
+    }
 
-	/**
-	 * @return int
-	 */
-	private function getCurrentBlogId () {
-		/**
-		 * @var SiteHelper $siteHelper
-		 */
-		$siteHelper = Bootstrap::getContainer()->get( 'site.helper' );
+    /**
+     * @return int
+     */
+    private function getCurrentBlogId()
+    {
+        /**
+         * @var SiteHelper $siteHelper
+         */
+        $siteHelper = Bootstrap::getContainer()
+                               ->get('site.helper');
 
-		return $siteHelper->getCurrentBlogId();
-	}
+        return $siteHelper->getCurrentBlogId();
+    }
 
-	/**
-	 * @param $postId
-	 *
-	 * @return mixed|SubmissionEntity
-	 * @throws SmartlingDbException
-	 */
-	private function getSubmission ( $postId ) {
-		$submissionManager = $this->getSubmissionManager();
-		$submissions       = $submissionManager->find( [
-			'target_blog_id' => $this->getCurrentBlogId(),
-			'target_id'      => $postId,
-		] );
+    /**
+     * @param $postId
+     *
+     * @return mixed|SubmissionEntity
+     * @throws SmartlingDbException
+     */
+    private function getSubmission($postId)
+    {
+        $submissionManager = $this->getSubmissionManager();
+        $submissions = $submissionManager->find([
+            'target_blog_id' => $this->getCurrentBlogId(),
+            'target_id'      => $postId,
+        ]);
 
-		if ( 0 < count( $submissions ) ) {
-			$submission = reset( $submissions );
+        if (0 < count($submissions)) {
+            $submission = reset($submissions);
 
-			/**
-			 * @var SubmissionEntity $submission
-			 */
+            /**
+             * @var SubmissionEntity $submission
+             */
 
-			return $submission;
-		} else {
-			throw new SmartlingDbException ( 'No submission found' );
-		}
-	}
+            return $submission;
+        } else {
+            throw new SmartlingDbException ('No submission found');
+        }
+    }
 
-	/**
-	 * Adds checkbox to Submit Widget of translation that locks translation for re-downloading
-	 */
-	public function extendSubmitBox () {
-		global $post;
-		try {
-			$submission = $this->getSubmission( $post->ID );
-			$locked     = 1 === $submission->getIsLocked() ? 'yes' : '';
+    /**
+     * Adds checkbox to Submit Widget of translation that locks translation for re-downloading
+     */
+    public function extendSubmitBox()
+    {
+        global $post;
+        try {
+            $submission = $this->getSubmission($post->ID);
+            $locked = 1 === $submission->getIsLocked() ? 'yes' : '';
 
-			?>
-			<style >
-				#misc-publishing-actions label[for=locked_page]:before {
-					content                 : '\f173';
-					display                 : inline-block;
-					font                    : 400 20px/1 dashicons;
-					speak                   : none;
-					left                    : -1px;
-					padding                 : 0 5px 0 0;
-					position                : relative;
-					top                     : 0;
-					text-decoration         : none !important;
-					vertical-align          : top;
-					-webkit-font-smoothing  : antialiased;
-					-moz-osx-font-smoothing : grayscale;
-			</style >
-			<div id = "locked_page" class = "misc-pub-section misc-pub-post-status" >
-				<label for = "locked_page" ><?= __( 'Translation Locked' ); ?></label >
-				<input id = "locked_page" type = "checkbox" value = "yes" name = "lock_page" <?php checked( 'yes',
-					$locked ); ?> />
-			</div >
-			<?php
-		} catch ( SmartlingDbException $e ) {
-			return;
-		}
-	}
+            ?>
+            <style>
+                #misc-publishing-actions label[for=locked_page]:before {
+                    content: '\f173';
+                    display: inline-block;
+                    font: 400 20px/1 dashicons;
+                    speak: none;
+                    left: -1px;
+                    padding: 0 5px 0 0;
+                    position: relative;
+                    top: 0;
+                    text-decoration: none !important;
+                    vertical-align: top;
+                    -webkit-font-smoothing: antialiased;
+                    -moz-osx-font-smoothing: grayscale;
+            </style>
+            <div id="locked_page" class="misc-pub-section misc-pub-post-status">
+                <label for="locked_page"><?= __('Translation Locked'); ?></label>
+                <input id="locked_page" type="checkbox" value="yes" name="lock_page" <?php checked('yes',
+                    $locked); ?> />
+            </div>
+            <?php
+        } catch (SmartlingDbException $e) {
+            return;
+        }
+    }
 
-	public function postSaveHandler ( $postId ) {
+    public function postSaveHandler($postId)
+    {
 
-		if ( wp_is_post_revision( $postId ) ) {
-			return;
-		}
+        if (wp_is_post_revision($postId)) {
+            return;
+        }
 
-		remove_action( 'save_post', [ $this, 'postSaveHandler' ] );
+        remove_action('save_post', [$this, 'postSaveHandler']);
 
-		$curValue = array_key_exists( 'lock_page', $_POST ) && 'yes' === $_POST['lock_page'] ? 1 : 0;
+        $curValue = array_key_exists('lock_page', $_POST) && 'yes' === $_POST['lock_page'] ? 1 : 0;
 
-		try {
-			$submission = $this->getSubmission( $postId );
-			$submission->setIsLocked( $curValue );
-			$this->getSubmissionManager()->storeEntity( $submission );
-		} catch ( \Exception $e ) {
+        try {
+            $submission = $this->getSubmission($postId);
+            $submission->setIsLocked($curValue);
+            $this->getSubmissionManager()
+                 ->storeEntity($submission);
+        } catch (\Exception $e) {
 
-		}
-	}
+        }
+    }
 }

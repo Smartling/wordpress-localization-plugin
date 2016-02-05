@@ -10,13 +10,15 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  *
  * @package Smartling\DbAl\WordpressContentEntities
  */
-class TestimonialEntity extends PostEntity {
+class TestimonialEntity extends PostEntity
+{
 
-	/**
-	 * @inheritdoc
-	 */
-	public function __construct ( LoggerInterface $logger ) {
-		parent::__construct( $logger );
-		$this->setType( WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL );
-	}
+    /**
+     * @inheritdoc
+     */
+    public function __construct(LoggerInterface $logger)
+    {
+        parent::__construct($logger);
+        $this->setType(WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL);
+    }
 }

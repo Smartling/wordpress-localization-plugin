@@ -240,7 +240,8 @@ class PostEntity extends EntityAbstract
             $message = vsprintf('An error had happened while saving post to database: %s. Params: %s',
                 [implode(' | ', $res->get_error_messages()), implode(' || ', $msgFields)]);
 
-            $this->getLogger()->error($message);
+            $this->getLogger()
+                 ->error($message);
 
             throw new SmartlingDataUpdateException($message);
 
@@ -366,7 +367,8 @@ class PostEntity extends EntityAbstract
                 $this->post_type,
                 $this->ID,
             ]));
-            $this->getLogger()->info('adding tag ' . $tagName);
+            $this->getLogger()
+                 ->info('adding tag ' . $tagName);
             $result = add_post_meta($this->ID, $tagName, $tagValue, $unique);
         }
 
@@ -381,7 +383,8 @@ class PostEntity extends EntityAbstract
                         $this->ID,
                     ]
                 );
-                $this->getLogger()->error($message);
+                $this->getLogger()
+                     ->error($message);
             }
         } else {
             $this->logMessage(

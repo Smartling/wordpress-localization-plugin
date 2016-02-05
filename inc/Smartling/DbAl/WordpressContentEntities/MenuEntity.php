@@ -10,23 +10,26 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  *
  * @package Smartling\DbAl\WordpressContentEntities
  */
-class MenuEntity extends TaxonomyEntityAbstract {
-	/**
-	 * @inheritdoc
-	 */
-	public function __construct ( LoggerInterface $logger ) {
-		parent::__construct( $logger );
+class MenuEntity extends TaxonomyEntityAbstract
+{
+    /**
+     * @inheritdoc
+     */
+    public function __construct(LoggerInterface $logger)
+    {
+        parent::__construct($logger);
 
-		$this->setType( WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU );
-		$this->setEntityFields( $this->fields );
+        $this->setType(WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU);
+        $this->setEntityFields($this->fields);
 
-		$this->setRelatedTypes( [ WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM ] );
-	}
+        $this->setRelatedTypes([WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM]);
+    }
 
-	/**
-	 * @inheritdoc
-	 */
-	public function getTitle () {
-		return $this->name;
-	}
+    /**
+     * @inheritdoc
+     */
+    public function getTitle()
+    {
+        return $this->name;
+    }
 }

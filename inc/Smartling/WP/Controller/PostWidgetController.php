@@ -10,7 +10,6 @@ use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressContentTypeHelper;
-use Smartling\Helpers\WordpressUserHelper;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
@@ -79,7 +78,8 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
             try {
                 $eh = $this->getEntityHelper();
 
-                $currentBlogId = $eh->getSiteHelper()->getCurrentBlogId();
+                $currentBlogId = $eh->getSiteHelper()
+                                    ->getCurrentBlogId();
 
                 $profile = $eh
                     ->getSettingsManager()
@@ -88,15 +88,16 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
                     );
 
                 if (0 < count($profile)) {
-                    $submissions = $this->getManager()->find([
-                        'source_id' => $post->ID,
-                        'content_type' => $this->servedContentType,
-                    ]);
+                    $submissions = $this->getManager()
+                                        ->find([
+                                            'source_id'    => $post->ID,
+                                            'content_type' => $this->servedContentType,
+                                        ]);
 
                     $this->view([
                             'submissions' => $submissions,
-                            'post' => $post,
-                            'profile' => reset($profile),
+                            'post'        => $post,
+                            'profile'     => reset($profile),
                         ]
                     );
                 } else {
@@ -106,15 +107,19 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
 
             } catch (SmartlingDbException $e) {
                 $message = 'Failed to search for the original post. No source post found for blog %s, post %s. Hiding widget';
-                $this->getLogger()->warning(
-                    vsprintf($message, [
-                        $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
-                        $post->ID,
-                    ])
-                );
+                $this->getLogger()
+                     ->warning(
+                         vsprintf($message, [
+                             $this->getEntityHelper()
+                                  ->getSiteHelper()
+                                  ->getCurrentBlogId(),
+                             $post->ID,
+                         ])
+                     );
                 echo '<p>' . __($this->noOriginalFound) . '</p>';
             } catch (\Exception $e) {
-                $this->getLogger()->error($e->getMessage() . '[' . $e->getFile() . ':' . $e->getLine() . ']');
+                $this->getLogger()
+                     ->error($e->getMessage() . '[' . $e->getFile() . ':' . $e->getLine() . ']');
             }
         } else {
             echo '<p>' . __($this->needSave) . '</p>';
@@ -196,13 +201,16 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
             /**
              * @var SmartlingCore $core
              */
-            $core = Bootstrap::getContainer()->get('entrypoint');
+            $core = Bootstrap::getContainer()
+                             ->get('entrypoint');
 
             if (count($locales) > 0) {
                 switch ($_POST['sub']) {
                     case __('Send to Smartling'):
 
-                        $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
+                        $sourceBlog = $this->getEntityHelper()
+                                           ->getSiteHelper()
+                                           ->getCurrentBlogId();
                         $originalId = (int)$post_id;
 
                         foreach ($locales as $blogId => $blogName) {
@@ -212,43 +220,49 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
                                     $sourceBlog,
                                     $originalId,
                                     (int)$blogId,
-                                    $this->getEntityHelper()->getTarget($post_id, $blogId)
+                                    $this->getEntityHelper()
+                                         ->getTarget($post_id, $blogId)
                                 );
 
-                            $this->getLogger()->info(vsprintf(
-                                self::$MSG_ENQUEUE_ENTITY,
-                                [
-                                    $this->servedContentType,
-                                    $sourceBlog,
-                                    $originalId,
-                                    (int)$blogId,
-                                    $result->getTargetLocale(),
-                                ]
-                            ));
+                            $this->getLogger()
+                                 ->info(vsprintf(
+                                     self::$MSG_ENQUEUE_ENTITY,
+                                     [
+                                         $this->servedContentType,
+                                         $sourceBlog,
+                                         $originalId,
+                                         (int)$blogId,
+                                         $result->getTargetLocale(),
+                                     ]
+                                 ));
 
                         }
                         break;
                     case __('Download'):
 
-                        $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
+                        $sourceBlog = $this->getEntityHelper()
+                                           ->getSiteHelper()
+                                           ->getCurrentBlogId();
                         $originalId = (int)$post_id;
 
 
-                        $submissions = $this->getManager()->find(
-                            [
-                                'source_id' => $originalId,
-                                'source_blog_id' => $sourceBlog,
-                                'content_type' => $this->servedContentType,
-                            ]
-                        );
+                        $submissions = $this->getManager()
+                                            ->find(
+                                                [
+                                                    'source_id'      => $originalId,
+                                                    'source_blog_id' => $sourceBlog,
+                                                    'content_type'   => $this->servedContentType,
+                                                ]
+                                            );
 
                         foreach ($submissions as $submission) {
-                            $this->getLogger()->info(vsprintf(
-                                self::$MSG_DOWNLOAD_TRIGGERED,
-                                [
-                                    $submission->getId(),
-                                ]
-                            ));
+                            $this->getLogger()
+                                 ->info(vsprintf(
+                                     self::$MSG_DOWNLOAD_TRIGGERED,
+                                     [
+                                         $submission->getId(),
+                                     ]
+                                 ));
 
                             $core->downloadTranslationBySubmission($submission);
                         }

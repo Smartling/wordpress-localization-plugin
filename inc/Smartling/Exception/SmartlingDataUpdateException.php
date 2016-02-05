@@ -2,6 +2,7 @@
 
 namespace Smartling\Exception;
 
-class SmartlingDataUpdateException extends SmartlingExceptionAbstract {
+class SmartlingDataUpdateException extends SmartlingExceptionAbstract
+{
 
 }

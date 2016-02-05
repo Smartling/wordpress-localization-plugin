@@ -28,13 +28,15 @@ $profileId = (int)($_GET['profile'] ? : 0);
 
 if (0 === $profileId) {
     $profile = $settingsManager->createProfile([]);
-    $defaultFilter = Smartling\Bootstrap::getContainer()->getParameter('field.processor.default');
+    $defaultFilter = Smartling\Bootstrap::getContainer()
+                                        ->getParameter('field.processor.default');
     $profile->setFilterSkip(implode(PHP_EOL, $defaultFilter['ignore']));
     $profile->setFilterFlagSeo(implode(PHP_EOL, $defaultFilter['key']['seo']));
     $profile->setFilterCopyByFieldName(implode(PHP_EOL, $defaultFilter['copy']['name']));
     $profile->setFilterCopyByFieldValueRegex(implode(PHP_EOL, $defaultFilter['copy']['regexp']));
 } else {
-    $profiles = $pluginInfo->getSettingsManager()->getEntityById($profileId);
+    $profiles = $pluginInfo->getSettingsManager()
+                           ->getEntityById($profileId);
 
     /**
      * @var ConfigurationProfileEntity $profile
@@ -120,7 +122,8 @@ if (0 === $profileId) {
                 <td>
                     <?php
                     $locales = [];
-                    foreach ($settingsManager->getSiteHelper()->listBlogs() as $blogId) {
+                    foreach ($settingsManager->getSiteHelper()
+                                             ->listBlogs() as $blogId) {
 
                         try {
                             $locales[$blogId] = $settingsManager
@@ -133,9 +136,11 @@ if (0 === $profileId) {
                         }
                     }
                     ?>
-                    <p><?= __('Site default language is: ', $this->getPluginInfo()->getDomain()) ?>
+                    <p><?= __('Site default language is: ', $this->getPluginInfo()
+                                                                 ->getDomain()) ?>
                         <?= HtmlTagGeneratorHelper::tag('strong',
-                            $profile->getOriginalBlogId()->getLabel()); ?></p>
+                            $profile->getOriginalBlogId()
+                                    ->getLabel()); ?></p>
 
                     <p>
                         <a href="#" id="change-default-locale"><?= __('Change default locale',
@@ -144,7 +149,8 @@ if (0 === $profileId) {
                     <br>
                     <?= HtmlTagGeneratorHelper::tag(
                         'select',
-                        HtmlTagGeneratorHelper::renderSelectOptions($profile->getOriginalBlogId()->getBlogId(),
+                        HtmlTagGeneratorHelper::renderSelectOptions($profile->getOriginalBlogId()
+                                                                            ->getBlogId(),
                             $locales),
                         ['name' => 'smartling_settings[defaultLocale]', 'id' => 'default-locales']);
                     ?>
@@ -159,7 +165,9 @@ if (0 === $profileId) {
                         <?php
                         $targetLocales = $profile->getTargetLocales();
                         foreach ($locales as $blogId => $label) {
-                            if ($blogId === $profile->getOriginalBlogId()->getBlogId()) {
+                            if ($blogId === $profile->getOriginalBlogId()
+                                                    ->getBlogId()
+                            ) {
                                 continue;
                             }
 
@@ -199,7 +207,8 @@ if (0 === $profileId) {
 
                     ?>
                     <br/>
-                    <small><?php echo __('Param for download translate', $this->getPluginInfo()->getDomain()) ?>.
+                    <small><?php echo __('Param for download translate', $this->getPluginInfo()
+                                                                              ->getDomain()) ?>.
                     </small>
                 </td>
             </tr>
@@ -259,7 +268,9 @@ if (0 === $profileId) {
                             <ul class="smartling-list">
                                 <li>Each row is unique field.</li>
                                 <li>Fields are case sensitive.</li>
-                                <li>Field can be a content object property, meta key name, or a key of a serialized array.</li>
+                                <li>Field can be a content object property, meta key name, or a key of a serialized
+                                    array.
+                                </li>
                             </ul>
                         </small>
                     </p>
@@ -271,7 +282,8 @@ if (0 === $profileId) {
             <tr>
                 <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_copy_by_field_value_regex'); ?></th>
                 <td>
-                    <p>Regular expressions listed here will identify field names to exclude from translation and be copied over from the source content. <br>
+                    <p>Regular expressions listed here will identify field names to exclude from translation and be
+                        copied over from the source content. <br>
                         <small>Hints:<br>
                             <ul class="smartling-list">
                                 <li>Each row is a unique regular expression</li>

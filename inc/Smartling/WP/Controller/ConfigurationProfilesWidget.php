@@ -214,9 +214,10 @@ class ConfigurationProfilesWidget extends \WP_List_Table
             $row['retrieval_type'] = $types[$row['retrieval_type']];
             try {
                 $row['original_blog_id'] =
-                    $this->manager->getSiteHelper()->getBlogLabelById($this->manager->getPluginProxy(),
-                        $row['original_blog_id']
-                    );
+                    $this->manager->getSiteHelper()
+                                  ->getBlogLabelById($this->manager->getPluginProxy(),
+                                      $row['original_blog_id']
+                                  );
             } catch (BlogNotFoundException $e) {
                 $row['original_blog_id'] = 0;
                 $row['profile_name'] = __(vsprintf('[Broken profile] ', [])) . $row['profile_name'];

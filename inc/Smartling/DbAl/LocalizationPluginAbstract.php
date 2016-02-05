@@ -10,41 +10,45 @@ use Smartling\Helpers\SiteHelper;
  *
  * @package Smartling\DbAl
  */
-abstract class LocalizationPluginAbstract implements LocalizationPluginProxyInterface {
-	/**
-	 * @var SiteHelper
-	 */
-	protected $helper;
+abstract class LocalizationPluginAbstract implements LocalizationPluginProxyInterface
+{
+    /**
+     * @var SiteHelper
+     */
+    protected $helper;
 
-	/**
-	 * @var LoggerInterface
-	 */
-	private $logger;
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
 
-	/**
-	 * @return LoggerInterface
-	 */
-	public function getLogger () {
-		return $this->logger;
-	}
+    /**
+     * @return LoggerInterface
+     */
+    public function getLogger()
+    {
+        return $this->logger;
+    }
 
-	/**
-	 * @inheritdoc
-	 */
-	public function __construct ( LoggerInterface $logger, SiteHelper $helper, array $ml_plugin_statuses ) {
-		$this->logger = $logger;
-		$this->helper = $helper;
-	}
+    /**
+     * @inheritdoc
+     */
+    public function __construct(LoggerInterface $logger, SiteHelper $helper, array $ml_plugin_statuses)
+    {
+        $this->logger = $logger;
+        $this->helper = $helper;
+    }
 
-	/**
-	 * Fallback for direct run if Wordpress functionality is not reachable
-	 *
-	 * @throws SmartlingDirectRunRuntimeException
-	 */
-	protected function directRunFallback ( $message ) {
-		$this->logger->error( $message );
+    /**
+     * Fallback for direct run if Wordpress functionality is not reachable
+     *
+     * @throws SmartlingDirectRunRuntimeException
+     */
+    protected function directRunFallback($message)
+    {
+        $this->logger->error($message);
 
-		throw new SmartlingDirectRunRuntimeException( $message );
-	}
+        throw new SmartlingDirectRunRuntimeException($message);
+    }
 
 }

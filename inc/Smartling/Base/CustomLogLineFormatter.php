@@ -9,32 +9,35 @@ use Monolog\Formatter\LineFormatter;
  *
  * @package Smartling\Base
  */
-class CustomLogLineFormatter extends LineFormatter {
+class CustomLogLineFormatter extends LineFormatter
+{
 
-	/**
-	 * Per-request unique key to identify all log records related to the request.
-	 *
-	 * @var string
-	 */
-	private static $_requestId = null;
+    /**
+     * Per-request unique key to identify all log records related to the request.
+     *
+     * @var string
+     */
+    private static $_requestId = null;
 
-	/**
-	 * @return string
-	 */
-	private static function getRequestId () {
-		if ( is_null( self::$_requestId ) ) {
-			self::$_requestId = uniqid();
-		}
+    /**
+     * @inheritdoc
+     */
+    public function format(array $record)
+    {
+        $record['extra']['request_id'] = self::getRequestId();
 
-		return self::$_requestId;
-	}
+        return parent::format($record);
+    }
 
-	/**
-	 * @inheritdoc
-	 */
-	public function format ( array $record ) {
-		$record['extra']['request_id'] = self::getRequestId();
+    /**
+     * @return string
+     */
+    private static function getRequestId()
+    {
+        if (is_null(self::$_requestId)) {
+            self::$_requestId = uniqid();
+        }
 
-		return parent::format( $record );
-	}
+        return self::$_requestId;
+    }
 }

@@ -1,5 +1,6 @@
 <?php
 use Smartling\Helpers\UiMessageHelper;
+use Smartling\WP\View\SubmissionTableWidget;
 
 /**
  * @var WPAbstract $this
@@ -8,47 +9,45 @@ use Smartling\Helpers\UiMessageHelper;
 $data = $this->getViewData();
 ?>
 
-<div class = "wrap" >
+<div class="wrap">
 
-	<?php UiMessageHelper::displayMessages(); ?>
+    <?php UiMessageHelper::displayMessages(); ?>
 
-	<h2 ><?= get_admin_page_title(); ?></h2 >
+    <h2><?= get_admin_page_title(); ?></h2>
 
-	<?php
+    <?php
 
-	use Smartling\WP\View\SubmissionTableWidget;
+    /**
+     * @var SubmissionTableWidget $submissionsTable
+     */
+    $submissionsTable = $data;
 
-	/**
-	 * @var SubmissionTableWidget $submissionsTable
-	 */
-	$submissionsTable = $data;
+    ?>
+    <div id="icon-users" class="icon32"><br/></div>
 
-	?>
-	<div id = "icon-users" class = "icon32" ><br /></div >
+    <style>
+        td.bulkActionCb {
+            padding-left: 18px;
+        }
+    </style>
 
-	<style >
-		td.bulkActionCb {
-			padding-left : 18px;
-		}
-	</style >
-
-	<!-- Forms are NOT created automatically, so you need to wrap the table in one to use features like bulk actions -->
-	<form id = "submissions-filter" method = "get" >
-		<table width = "100%" >
-			<tr >
-				<td style = "text-align: left;" ><p >
-						<?= $submissionsTable->contentTypeSelectRender(); ?>
-						<?= $submissionsTable->statusSelectRender(); ?>
-						<?= $submissionsTable->renderSubmitButton( __( 'Apply Filter' ) ); ?>
-					</p ></td >
-				<td style = "text-align: right;" ><?php $submissionsTable->search_box( __( 'Search' ), 's' ); ?></td >
-			</tr >
-		</table >
+    <!-- Forms are NOT created automatically, so you need to wrap the table in one to use features like bulk actions -->
+    <form id="submissions-filter" method="get">
+        <table width="100%">
+            <tr>
+                <td style="text-align: left;"><p>
+                        <?= $submissionsTable->contentTypeSelectRender(); ?>
+                        <?= $submissionsTable->statusSelectRender(); ?>
+                        <?= $submissionsTable->renderSubmitButton(__('Apply Filter')); ?>
+                    </p></td>
+                <td style="text-align: right;"><?php $submissionsTable->search_box(__('Search'), 's'); ?></td>
+            </tr>
+        </table>
 
 
-		<!-- For plugins, we also need to ensure that the form posts back to our current page -->
-		<input type = "hidden" name = "page" value = "<?= $_REQUEST['page']; ?>" />
-		<!-- Now we can render the completed list table -->
-		<?php $submissionsTable->display() ?>
-	</form >
-</div >
+        <!-- For plugins, we also need to ensure that the form posts back to our current page -->
+        <input type="hidden" name="page" value="<?= $_REQUEST['page']; ?>"/>
+        <!-- Now we can render the completed list table -->
+        <?php $submissionsTable->display() ?>
+    </form>
+</div>

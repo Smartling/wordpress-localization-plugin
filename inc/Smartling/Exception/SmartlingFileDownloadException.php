@@ -7,6 +7,7 @@ namespace Smartling\Exception;
  *
  * @package Smartling\Exception
  */
-class SmartlingFileDownloadException extends SmartlingNetworkException {
+class SmartlingFileDownloadException extends SmartlingNetworkException
+{
 
 }

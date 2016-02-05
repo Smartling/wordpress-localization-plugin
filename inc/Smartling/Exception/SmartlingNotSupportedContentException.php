@@ -9,6 +9,7 @@
 namespace Smartling\Exception;
 
 
-class SmartlingNotSupportedContentException extends SmartlingExceptionAbstract {
+class SmartlingNotSupportedContentException extends SmartlingExceptionAbstract
+{
 
 }

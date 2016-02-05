@@ -5,8 +5,8 @@ namespace Smartling\Helpers;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
-use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\BlogNotFoundException;
+use Smartling\Exception\SmartlingDirectRunRuntimeException;
 
 /**
  * Class SiteHelper
@@ -15,224 +15,241 @@ use Smartling\Exception\BlogNotFoundException;
  *
  * @package Smartling\Helpers
  */
-class SiteHelper {
+class SiteHelper
+{
 
-	/**
-	 * @var LoggerInterface
-	 */
-	private $_logger;
+    /**
+     * @var LoggerInterface
+     */
+    private $_logger;
 
-	/**
-	 * @param LoggerInterface $logger
-	 */
-	public function __construct ( LoggerInterface $logger ) {
-		$this->_logger = $logger;
-	}
+    /**
+     * @param LoggerInterface $logger
+     */
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->_logger = $logger;
+    }
 
-	/**
-	 * @var array
-	 */
-	protected static $_siteCache = [ ];
+    /**
+     * @var array
+     */
+    protected static $_siteCache = [];
 
-	/**
-	 * @var array
-	 */
-	protected static $_flatBlogIdCache = [ ];
+    /**
+     * @var array
+     */
+    protected static $_flatBlogIdCache = [];
 
-	/**
-	 * Fallback for direct run if Wordpress functionality is not reachable
-	 *
-	 * @throws SmartlingDirectRunRuntimeException
-	 */
-	private function directRunDetectedFallback () {
-		$message = 'Direct run detected. Required run as Wordpress plugin.';
+    /**
+     * Fallback for direct run if Wordpress functionality is not reachable
+     *
+     * @throws SmartlingDirectRunRuntimeException
+     */
+    private function directRunDetectedFallback()
+    {
+        $message = 'Direct run detected. Required run as Wordpress plugin.';
 
-		$this->_logger->error( $message );
+        $this->_logger->error($message);
 
-		throw new SmartlingDirectRunRuntimeException( $message );
-	}
+        throw new SmartlingDirectRunRuntimeException($message);
+    }
 
-	private function cacheSites () {
-		if ( empty( self::$_siteCache ) ) {
-			$sites = wp_get_sites();
+    private function cacheSites()
+    {
+        if (empty(self::$_siteCache)) {
+            $sites = wp_get_sites();
 
-			foreach ( $sites as $site ) {
-				self::$_siteCache[ $site['site_id'] ][] = $site['blog_id'];
-				self::$_flatBlogIdCache[]               = (int) $site['blog_id'];
-			}
-		}
-	}
+            foreach ($sites as $site) {
+                self::$_siteCache[$site['site_id']][] = $site['blog_id'];
+                self::$_flatBlogIdCache[] = (int)$site['blog_id'];
+            }
+        }
+    }
 
-	/**
-	 * @return array
-	 * @throws SmartlingDirectRunRuntimeException
-	 */
-	public function listSites () {
-		! function_exists( 'wp_get_sites' )
-		&& $this->directRunDetectedFallback();
+    /**
+     * @return array
+     * @throws SmartlingDirectRunRuntimeException
+     */
+    public function listSites()
+    {
+        !function_exists('wp_get_sites')
+        && $this->directRunDetectedFallback();
 
-		$this->cacheSites();
+        $this->cacheSites();
 
-		return array_keys( self::$_siteCache );
-	}
+        return array_keys(self::$_siteCache);
+    }
 
-	/**
-	 * @param int $siteId
-	 *
-	 * @return array
-	 * @throws SmartlingDirectRunRuntimeException
-	 * @throws InvalidArgumentException
-	 */
-	public function listBlogs ( $siteId = 1 ) {
-		! function_exists( 'wp_get_sites' )
-		&& $this->directRunDetectedFallback();
+    /**
+     * @param int $siteId
+     *
+     * @return array
+     * @throws SmartlingDirectRunRuntimeException
+     * @throws InvalidArgumentException
+     */
+    public function listBlogs($siteId = 1)
+    {
+        !function_exists('wp_get_sites')
+        && $this->directRunDetectedFallback();
 
-		$this->cacheSites();
+        $this->cacheSites();
 
-		if ( isset( self::$_siteCache[ $siteId ] ) ) {
-			return self::$_siteCache[ $siteId ];
-		} else {
-			$message = 'Invalid site_id value set.';
-			throw new \InvalidArgumentException( $message );
-		}
-	}
+        if (isset(self::$_siteCache[$siteId])) {
+            return self::$_siteCache[$siteId];
+        } else {
+            $message = 'Invalid site_id value set.';
+            throw new \InvalidArgumentException($message);
+        }
+    }
 
-	/**
-	 * @return array
-	 */
-	public function listBlogIdsFlat()
-	{
-		$this->cacheSites();
+    /**
+     * @return array
+     */
+    public function listBlogIdsFlat()
+    {
+        $this->cacheSites();
 
-		return self::$_flatBlogIdCache;
-	}
-	/**
-	 * @return integer
-	 * @throws SmartlingDirectRunRuntimeException
-	 */
-	public function getCurrentSiteId () {
-		if ( function_exists( 'get_current_site' ) ) {
-			return get_current_site()->id;
-		} else {
-			$this->directRunDetectedFallback();
-		}
-	}
+        return self::$_flatBlogIdCache;
+    }
 
-	/**
-	 * @return int
-	 * @throws SmartlingDirectRunRuntimeException
-	 */
-	public function getCurrentBlogId () {
-		if ( function_exists( 'get_current_blog_id' ) ) {
-			return (int) get_current_blog_id();
-		} else {
-			$this->directRunDetectedFallback();
-		}
-	}
+    /**
+     * @return integer
+     * @throws SmartlingDirectRunRuntimeException
+     */
+    public function getCurrentSiteId()
+    {
+        if (function_exists('get_current_site')) {
+            return get_current_site()->id;
+        } else {
+            $this->directRunDetectedFallback();
+        }
+    }
 
-	/**
-	 * @return string
-	 * @throws SmartlingDirectRunRuntimeException
-	 */
-	public function getCurrentUserLogin () {
-		if ( function_exists( 'wp_get_current_user' ) ) {
-			$user = wp_get_current_user();
-			if ( $user ) {
-				return $user->user_login;
-			}
+    /**
+     * @return int
+     * @throws SmartlingDirectRunRuntimeException
+     */
+    public function getCurrentBlogId()
+    {
+        if (function_exists('get_current_blog_id')) {
+            return (int)get_current_blog_id();
+        } else {
+            $this->directRunDetectedFallback();
+        }
+    }
 
-			return null;
-		} else {
-			$this->directRunDetectedFallback();
-		}
-	}
+    /**
+     * @return string
+     * @throws SmartlingDirectRunRuntimeException
+     */
+    public function getCurrentUserLogin()
+    {
+        if (function_exists('wp_get_current_user')) {
+            $user = wp_get_current_user();
+            if ($user) {
+                return $user->user_login;
+            }
 
-	/**
-	 * @param $blogId
-	 *
-	 * @throws SmartlingDirectRunRuntimeException
-	 */
-	public function switchBlogId ( $blogId ) {
-		$this->cacheSites();
+            return null;
+        } else {
+            $this->directRunDetectedFallback();
+        }
+    }
 
-		if ( ! in_array( $blogId, self::$_flatBlogIdCache ) ) {
-			$message = vsprintf( 'Invalid blogId value. Got %s, expected one of [%s]',
-				[ $blogId, implode( ',', self::$_flatBlogIdCache ) ] );
+    /**
+     * @param $blogId
+     *
+     * @throws SmartlingDirectRunRuntimeException
+     */
+    public function switchBlogId($blogId)
+    {
+        $this->cacheSites();
 
-			throw new BlogNotFoundException( $message );
-		}
+        if (!in_array($blogId, self::$_flatBlogIdCache)) {
+            $message = vsprintf('Invalid blogId value. Got %s, expected one of [%s]',
+                [$blogId, implode(',', self::$_flatBlogIdCache)]);
 
-		if ( function_exists( 'switch_to_blog' ) ) {
-			switch_to_blog( $blogId );
-		} else {
-			$this->directRunDetectedFallback();
-		}
+            throw new BlogNotFoundException($message);
+        }
 
-	}
+        if (function_exists('switch_to_blog')) {
+            switch_to_blog($blogId);
+        } else {
+            $this->directRunDetectedFallback();
+        }
 
-	public function restoreBlogId () {
-		if ( ! function_exists( 'restore_current_blog' ) || ! function_exists( 'ms_is_switched' ) ) {
-			$this->directRunDetectedFallback();
-		}
+    }
 
-		if ( false === ms_is_switched() ) {
-			$message = 'Blog was not switched previously';
-			throw new \LogicException( $message );
-		}
+    public function restoreBlogId()
+    {
+        if (!function_exists('restore_current_blog') || !function_exists('ms_is_switched')) {
+            $this->directRunDetectedFallback();
+        }
 
-		restore_current_blog();
-	}
+        if (false === ms_is_switched()) {
+            $message = 'Blog was not switched previously';
+            throw new \LogicException($message);
+        }
 
-	/**
-	 * @param $blogId
-	 *
-	 * @return string
-	 * @throws BlogNotFoundException
-	 */
-	private function getBlogNameById ( $blogId ) {
-		$this->switchBlogId( $blogId );
-		$label = get_bloginfo( 'Name' );
-		$this->restoreBlogId();
+        restore_current_blog();
+    }
 
-		return $label;
-	}
+    /**
+     * @param $blogId
+     *
+     * @return string
+     * @throws BlogNotFoundException
+     */
+    private function getBlogNameById($blogId)
+    {
+        $this->switchBlogId($blogId);
+        $label = get_bloginfo('Name');
+        $this->restoreBlogId();
 
-	/**
-	 * @param $localizationPluginProxyInterface
-	 * @param $blogId
-	 *
-	 * @return string
-	 * @throws BlogNotFoundException
-	 */
-	public function getBlogLabelById ( $localizationPluginProxyInterface, $blogId ) {
-		return vsprintf(
-			'%s - %s',
-			[
-				$this->getBlogNameById( $blogId ),
-				$localizationPluginProxyInterface->getBlogLocaleById( $blogId ),
-			]
-		);
-	}
+        return $label;
+    }
 
-	/**
-	 * Returns locale of current blog
-	 *
-	 * @param LocalizationPluginProxyInterface $localizationPlugin
-	 *
-	 * @return string
-	 */
-	public function getCurrentBlogLocale ( LocalizationPluginProxyInterface $localizationPlugin ) {
-		return $localizationPlugin->getBlogLocaleById( $this->getCurrentBlogId() );
-	}
+    /**
+     * @param $localizationPluginProxyInterface
+     * @param $blogId
+     *
+     * @return string
+     * @throws BlogNotFoundException
+     */
+    public function getBlogLabelById($localizationPluginProxyInterface, $blogId)
+    {
+        return vsprintf(
+            '%s - %s',
+            [
+                $this->getBlogNameById($blogId),
+                $localizationPluginProxyInterface->getBlogLocaleById($blogId),
+            ]
+        );
+    }
 
-	public function getPostTypes () {
-		return array_values( get_post_types( '', 'names' ) );
+    /**
+     * Returns locale of current blog
+     *
+     * @param LocalizationPluginProxyInterface $localizationPlugin
+     *
+     * @return string
+     */
+    public function getCurrentBlogLocale(LocalizationPluginProxyInterface $localizationPlugin)
+    {
+        return $localizationPlugin->getBlogLocaleById($this->getCurrentBlogId());
+    }
 
-	}
+    public function getPostTypes()
+    {
+        return array_values(get_post_types('', 'names'));
 
-	public function getTermTypes () {
-		global $wp_taxonomies;
+    }
 
-		return array_keys( $wp_taxonomies );
-	}
+    public function getTermTypes()
+    {
+        global $wp_taxonomies;
+
+        return array_keys($wp_taxonomies);
+    }
 }

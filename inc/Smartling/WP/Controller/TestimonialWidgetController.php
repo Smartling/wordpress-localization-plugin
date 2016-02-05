@@ -9,20 +9,21 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  *
  * @package Smartling\WP\Controller
  */
-class TestimonialWidgetController extends PostWidgetController {
+class TestimonialWidgetController extends PostWidgetController
+{
 
-	/**
-	 * @var string
-	 */
-	protected $servedContentType = WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL;
+    /**
+     * @var string
+     */
+    protected $servedContentType = WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL;
 
-	/**
-	 * @var string
-	 */
-	protected $needSave = 'Need to save the testimonial';
+    /**
+     * @var string
+     */
+    protected $needSave = 'Need to save the testimonial';
 
-	/**
-	 * @var string
-	 */
-	protected $noOriginalFound = 'No original testimonial found';
+    /**
+     * @var string
+     */
+    protected $noOriginalFound = 'No original testimonial found';
 }

@@ -7,36 +7,37 @@ namespace Smartling;
  *
  * @package Smartling
  */
-interface SmartlingTableDefinitionInterface {
-	/**
-	 * @return array
-	 */
-	static function getFieldLabels ();
+interface SmartlingTableDefinitionInterface
+{
+    /**
+     * @return array
+     */
+    static function getFieldLabels();
 
-	/**
-	 * @return array
-	 */
-	static function getFieldDefinitions ();
+    /**
+     * @return array
+     */
+    static function getFieldDefinitions();
 
-	/**
-	 * @return array
-	 */
-	static function getSortableFields ();
+    /**
+     * @return array
+     */
+    static function getSortableFields();
 
-	/**
-	 * @return array
-	 */
-	static function getIndexes ();
+    /**
+     * @return array
+     */
+    static function getIndexes();
 
-	/**
-	 * @return string
-	 */
-	static function getTableName ();
+    /**
+     * @return string
+     */
+    static function getTableName();
 
-	/**
-	 * @param $fieldName
-	 *
-	 * @return string
-	 */
-	static function getFieldLabel ( $fieldName );
+    /**
+     * @param $fieldName
+     *
+     * @return string
+     */
+    static function getFieldLabel($fieldName);
 }

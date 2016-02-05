@@ -10,22 +10,25 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  *
  * @package Smartling\DbAl\WordpressContentEntities
  */
-class CategoryEntity extends TaxonomyEntityAbstract {
-	/**
-	 * @inheritdoc
-	 */
-	public function __construct ( LoggerInterface $logger ) {
-		parent::__construct( $logger );
-		$this->setType( WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY );
-		$this->setEntityFields( $this->fields );
-	}
+class CategoryEntity extends TaxonomyEntityAbstract
+{
+    /**
+     * @inheritdoc
+     */
+    public function __construct(LoggerInterface $logger)
+    {
+        parent::__construct($logger);
+        $this->setType(WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY);
+        $this->setEntityFields($this->fields);
+    }
 
-	/**
-	 * @inheritdoc
-	 */
-	public function getTitle () {
-		return $this->name;
-	}
+    /**
+     * @inheritdoc
+     */
+    public function getTitle()
+    {
+        return $this->name;
+    }
 
 
 }

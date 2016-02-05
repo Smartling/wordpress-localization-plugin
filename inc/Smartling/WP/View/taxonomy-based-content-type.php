@@ -1,9 +1,9 @@
-<style >
-	tr.form-field td.sm_sh {
-		padding-top    : 3px;
-		padding-bottom : 4px;
-	}
-</style >
+<style>
+    tr.form-field td.sm_sh {
+        padding-top: 3px;
+        padding-bottom: 4px;
+    }
+</style>
 
 <?php
 use Smartling\Helpers\StringHelper;
@@ -25,17 +25,17 @@ $data = $this->getViewData();
  */
 $locales = $data['profile']->getTargetLocales();
 
-$filteredLocales = [ ];
+$filteredLocales = [];
 
-foreach ( $locales as $locale ) {
-	/**
-	 * @var TargetLocale $locale
-	 */
-	if ( ! $locale->isEnabled() || StringHelper::isNullOrEmpty( $locale->getLabel() ) ) {
-		continue;
-	}
+foreach ($locales as $locale) {
+    /**
+     * @var TargetLocale $locale
+     */
+    if (!$locale->isEnabled() || StringHelper::isNullOrEmpty($locale->getLabel())) {
+        continue;
+    }
 
-	$filteredLocales[] = $locale;
+    $filteredLocales[] = $locale;
 
 }
 
@@ -43,82 +43,82 @@ $locales = $filteredLocales;
 ?>
 
 <?php
-if ( ! empty( $locales ) ) {
-	?>
+if (!empty($locales)) {
+    ?>
 
-	<div id = "smartling-post-widget" >
-	<h2 >Smartling connector actions</h2 >
+    <div id="smartling-post-widget">
+    <h2>Smartling connector actions</h2>
 
-	<h3 ><?= __( vsprintf( 'Translate this %s into',
-			[ WordpressContentTypeHelper::getLocalizedContentType( $data['term']->taxonomy ) ] ) ); ?></h3 >
-	<?= WPAbstract::checkUncheckBlock(); ?>
-	<div style = "width: 400px;" >
-		<?php
-		$nameKey = TaxonomyWidgetController::WIDGET_DATA_NAME;
-		
-		foreach ( $locales as $locale ) {
-			/**
-			 * @var TargetLocale $locale
-			 */
-			if ( ! $locale->isEnabled() ) {
-				continue;
-			}
+    <h3><?= __(vsprintf('Translate this %s into',
+            [WordpressContentTypeHelper::getLocalizedContentType($data['term']->taxonomy)])); ?></h3>
+    <?= WPAbstract::checkUncheckBlock(); ?>
+    <div style="width: 400px;">
+        <?php
+        $nameKey = TaxonomyWidgetController::WIDGET_DATA_NAME;
 
-			$value = false;
+        foreach ($locales as $locale) {
+            /**
+             * @var TargetLocale $locale
+             */
+            if (!$locale->isEnabled()) {
+                continue;
+            }
 
-			$status      = '';
-			$submission  = null;
-			$statusValue = null;
-			$id          = null;
-			if ( null !== $data['submissions'] ) {
-				foreach ( $data['submissions'] as $item ) {
-					/**
-					 * @var SubmissionEntity $item
-					 */
-					if ( $item->getTargetBlogId() === $locale->getBlogId() ) {
-						$value       = true;
-						$statusValue = $item->getStatus();
-						$id          = $item->getId();
-						$percent     = $item->getCompletionPercentage();
-						$status      = $item->getStatusColor();
-						break;
-					}
-				}
-			}
-			?>
-			<div class = "smtPostWidget-rowWrapper" style = "display: inline-block; width: 100%;" >
-				<div class = "smtPostWidget-row" >
-					<?= WPAbstract::localeSelectionCheckboxBlock(
-						$nameKey,
-						$locale->getBlogId(),
-						$locale->getLabel(),
-						$value
-					); ?>
-				</div >
-				<div class = "smtPostWidget-progress" style = "left: 15px;" >
-					<?php if ( $value ) { ?>
-						<?= WPAbstract::localeSelectionTranslationStatusBlock(
-							__( $statusValue ),
-							$status,
-							$percent
-						); ?>
-						<?= WPAbstract::inputHidden(
-							$id
-						); ?>
-					<?php } ?>
-				</div >
-			</div >
-		<?php } ?>
-	</div >
-	<?= WPAbstract::submitBlock(); ?>
-	</div ><?php
+            $value = false;
+
+            $status = '';
+            $submission = null;
+            $statusValue = null;
+            $id = null;
+            if (null !== $data['submissions']) {
+                foreach ($data['submissions'] as $item) {
+                    /**
+                     * @var SubmissionEntity $item
+                     */
+                    if ($item->getTargetBlogId() === $locale->getBlogId()) {
+                        $value = true;
+                        $statusValue = $item->getStatus();
+                        $id = $item->getId();
+                        $percent = $item->getCompletionPercentage();
+                        $status = $item->getStatusColor();
+                        break;
+                    }
+                }
+            }
+            ?>
+            <div class="smtPostWidget-rowWrapper" style="display: inline-block; width: 100%;">
+                <div class="smtPostWidget-row">
+                    <?= WPAbstract::localeSelectionCheckboxBlock(
+                        $nameKey,
+                        $locale->getBlogId(),
+                        $locale->getLabel(),
+                        $value
+                    ); ?>
+                </div>
+                <div class="smtPostWidget-progress" style="left: 15px;">
+                    <?php if ($value) { ?>
+                        <?= WPAbstract::localeSelectionTranslationStatusBlock(
+                            __($statusValue),
+                            $status,
+                            $percent
+                        ); ?>
+                        <?= WPAbstract::inputHidden(
+                            $id
+                        ); ?>
+                    <?php } ?>
+                </div>
+            </div>
+        <?php } ?>
+    </div>
+    <?= WPAbstract::submitBlock(); ?>
+    </div><?php
 } else {
-	?>
-	<div id = "smartling-post-widget" >
+    ?>
+    <div id="smartling-post-widget">
 
-		No suitable target locales found.<br />
-		Please check your <a
-			href = "/wp-admin/network/admin.php?page=smartling_configuration_profile_setup&action=edit&profile=<?= $data['profile']->getId(); ?>" >settings.</a >
+        No suitable target locales found.<br/>
+        Please check your <a
+            href="/wp-admin/network/admin.php?page=smartling_configuration_profile_setup&action=edit&profile=<?= $data['profile']->getId(); ?>">settings.</a>
 
-	</div >
+    </div>
 <?php } ?>

@@ -30,14 +30,16 @@ trait SmartlingCoreTrait
         );
 
         if (0 === (int)$relatedSubmission->getId()) {
-            $relatedSubmission = $this->getSubmissionManager()->storeEntity($relatedSubmission);
+            $relatedSubmission = $this->getSubmissionManager()
+                                      ->storeEntity($relatedSubmission);
         }
 
         $submission_id = $relatedSubmission->getId();
 
         $this->sendForTranslationBySubmission($relatedSubmission);
 
-        $lst = $this->getSubmissionManager()->getEntityById($submission_id);
+        $lst = $this->getSubmissionManager()
+                    ->getEntityById($submission_id);
 
         $relatedSubmission = reset($lst);
 
@@ -99,12 +101,16 @@ trait SmartlingCoreTrait
     {
         $contentIOWrapper = $this->getContentIOWrapper($entity);
 
-        if ($this->getSiteHelper()->getCurrentBlogId() === $entity->getSourceBlogId()) {
+        if ($this->getSiteHelper()
+                 ->getCurrentBlogId() === $entity->getSourceBlogId()
+        ) {
             $contentEntity = $contentIOWrapper->get($entity->getSourceId());
         } else {
-            $this->getSiteHelper()->switchBlogId($entity->getSourceBlogId());
+            $this->getSiteHelper()
+                 ->switchBlogId($entity->getSourceBlogId());
             $contentEntity = $contentIOWrapper->get($entity->getSourceId());
-            $this->getSiteHelper()->restoreBlogId();
+            $this->getSiteHelper()
+                 ->restoreBlogId();
         }
 
         return $contentEntity;
@@ -117,18 +123,22 @@ trait SmartlingCoreTrait
      */
     private function readTargetContentEntity(SubmissionEntity $entity)
     {
-        $needBlogSwitch = $this->getSiteHelper()->getCurrentBlogId() !== $entity->getTargetBlogId();
+        $needBlogSwitch = $this->getSiteHelper()
+                               ->getCurrentBlogId() !== $entity->getTargetBlogId();
 
         if ($needBlogSwitch) {
-            $this->getSiteHelper()->switchBlogId($entity->getTargetBlogId());
+            $this->getSiteHelper()
+                 ->switchBlogId($entity->getTargetBlogId());
         }
 
-        $wrapper = $this->getContentIoFactory()->getMapper($entity->getContentType());
+        $wrapper = $this->getContentIoFactory()
+                        ->getMapper($entity->getContentType());
 
         $entity = $wrapper->get($entity->getTargetId());
 
         if ($needBlogSwitch) {
-            $this->getSiteHelper()->restoreBlogId();
+            $this->getSiteHelper()
+                 ->restoreBlogId();
         }
 
         return $entity;
@@ -169,7 +179,8 @@ trait SmartlingCoreTrait
             $filter['copy']['regexp'] = array_map('trim', explode(PHP_EOL, $profile->getFilterCopyByFieldValueRegex()));
 
         }
-        Bootstrap::getContainer()->setParameter('field.processor', $filter);
+        Bootstrap::getContainer()
+                 ->setParameter('field.processor', $filter);
     }
 
     /**
@@ -189,16 +200,17 @@ trait SmartlingCoreTrait
             return $submission;
         }
 
-        $this->getLogger()->debug(
-            vsprintf(
-                'Creating target entity for submission = \'%s\' for locale = \'%s\' in blog =\'%s\'.',
-                [
-                    $submission->getId(),
-                    $submission->getTargetLocale(),
-                    $submission->getTargetBlogId(),
-                ]
-            )
-        );
+        $this->getLogger()
+             ->debug(
+                 vsprintf(
+                     'Creating target entity for submission = \'%s\' for locale = \'%s\' in blog =\'%s\'.',
+                     [
+                         $submission->getId(),
+                         $submission->getTargetLocale(),
+                         $submission->getTargetBlogId(),
+                     ]
+                 )
+             );
 
         $originalContent = $this->readContentEntity($submission);
 
@@ -231,17 +243,18 @@ trait SmartlingCoreTrait
             $targetContent
         );
 
-        $this->getLogger()->debug(
-            vsprintf(
-                'Created target entity for submission = \'%s\' for locale = \'%s\' in blog =\'%s\', id = \'%s\'.',
-                [
-                    $submission->getId(),
-                    $submission->getTargetLocale(),
-                    $submission->getTargetBlogId(),
-                    $targetContent->getPK(),
-                ]
-            )
-        );
+        $this->getLogger()
+             ->debug(
+                 vsprintf(
+                     'Created target entity for submission = \'%s\' for locale = \'%s\' in blog =\'%s\', id = \'%s\'.',
+                     [
+                         $submission->getId(),
+                         $submission->getTargetLocale(),
+                         $submission->getTargetBlogId(),
+                         $targetContent->getPK(),
+                     ]
+                 )
+             );
 
         if (array_key_exists('meta', $original) && 0 < count($original['meta'])) {
             $this->setMetaForTargetEntity($submission, $targetContent, $original['meta']);
@@ -249,10 +262,12 @@ trait SmartlingCoreTrait
 
         if (false === $update) {
             $submission->setTargetId($targetContent->getPK());
-            $submission = $this->getSubmissionManager()->storeEntity($submission);
+            $submission = $this->getSubmissionManager()
+                               ->storeEntity($submission);
         }
 
-        $result = $this->getMultilangProxy()->linkObjects($submission);
+        $result = $this->getMultilangProxy()
+                       ->linkObjects($submission);
 
         return $submission;
     }
@@ -260,13 +275,16 @@ trait SmartlingCoreTrait
 
     private function saveEntity($type, $blog, EntityAbstract $entity)
     {
-        $curBlogId = $this->getSiteHelper()->getCurrentBlogId();
+        $curBlogId = $this->getSiteHelper()
+                          ->getCurrentBlogId();
 
         if ($blog !== $curBlogId) {
-            $this->getSiteHelper()->switchBlogId($blog);
+            $this->getSiteHelper()
+                 ->switchBlogId($blog);
         }
 
-        $ioWrapper = $this->getContentIoFactory()->getMapper($type);
+        $ioWrapper = $this->getContentIoFactory()
+                          ->getMapper($type);
 
         $id = $ioWrapper->set($entity);
 
@@ -275,7 +293,8 @@ trait SmartlingCoreTrait
         $entity->$PkField = $id;
 
         if ($blog !== $curBlogId) {
-            $this->getSiteHelper()->restoreBlogId();
+            $this->getSiteHelper()
+                 ->restoreBlogId();
         }
 
         return $entity;
@@ -283,10 +302,12 @@ trait SmartlingCoreTrait
 
     private function saveMetaProperties(EntityAbstract $entity, array $properties, SubmissionEntity $submission)
     {
-        $curBlogId = $this->getSiteHelper()->getCurrentBlogId();
+        $curBlogId = $this->getSiteHelper()
+                          ->getCurrentBlogId();
 
         if ($submission->getTargetBlogId() !== $curBlogId) {
-            $this->getSiteHelper()->switchBlogId($submission->getTargetBlogId());
+            $this->getSiteHelper()
+                 ->switchBlogId($submission->getTargetBlogId());
         }
 
         if (array_key_exists('meta', $properties) && $properties['meta'] !== '') {
@@ -301,7 +322,8 @@ trait SmartlingCoreTrait
         }
 
         if ($submission->getTargetBlogId() !== $curBlogId) {
-            $this->getSiteHelper()->restoreBlogId();
+            $this->getSiteHelper()
+                 ->restoreBlogId();
         }
     }
 
@@ -323,7 +345,8 @@ trait SmartlingCoreTrait
                     ]
                 );
 
-                $this->getLogger()->debug($message);
+                $this->getLogger()
+                     ->debug($message);
                 $entity->{$propertyName} = $propertyValue;
             }
         }
@@ -336,16 +359,19 @@ trait SmartlingCoreTrait
      */
     private function getUploadDirForSite($siteId)
     {
-        $needSiteChange = (int)$siteId !== $this->getSiteHelper()->getCurrentBlogId();
+        $needSiteChange = (int)$siteId !== $this->getSiteHelper()
+                                                ->getCurrentBlogId();
 
         if ($needSiteChange) {
-            $this->getSiteHelper()->switchBlogId((int)$siteId);
+            $this->getSiteHelper()
+                 ->switchBlogId((int)$siteId);
         }
 
         $data = wp_upload_dir();
 
         if ($needSiteChange) {
-            $this->getSiteHelper()->restoreBlogId();
+            $this->getSiteHelper()
+                 ->restoreBlogId();
         }
 
         return $data;
@@ -353,10 +379,12 @@ trait SmartlingCoreTrait
 
     private function getUploadPathForSite($siteId)
     {
-        $needSiteChange = (int)$siteId !== $this->getSiteHelper()->getCurrentBlogId();
+        $needSiteChange = (int)$siteId !== $this->getSiteHelper()
+                                                ->getCurrentBlogId();
 
         if ($needSiteChange) {
-            $this->getSiteHelper()->switchBlogId((int)$siteId);
+            $this->getSiteHelper()
+                 ->switchBlogId((int)$siteId);
         }
 
         $prefix = $this->getUploadDirForSite($siteId);
@@ -364,7 +392,8 @@ trait SmartlingCoreTrait
         $data = str_replace($prefix['subdir'], '', parse_url($prefix['url'], PHP_URL_PATH));
 
         if ($needSiteChange) {
-            $this->getSiteHelper()->restoreBlogId();
+            $this->getSiteHelper()
+                 ->restoreBlogId();
         }
 
         return $data;

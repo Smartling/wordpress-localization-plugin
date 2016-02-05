@@ -7,6 +7,7 @@ namespace Smartling\Exception;
  *
  * @package Smartling\Exception
  */
-class BlogNotFoundException extends SmartlingExceptionAbstract{
+class BlogNotFoundException extends SmartlingExceptionAbstract
+{
 
 }

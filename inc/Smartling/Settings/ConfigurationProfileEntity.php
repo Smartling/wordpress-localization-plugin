@@ -87,7 +87,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
             'original_blog_id',
             'auto_authorize',
             'retrieval_type',
-            'user_identifier'
+            'user_identifier',
         ];
     }
 
@@ -321,7 +321,8 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
     {
         $state = parent::toArray(false);
 
-        $state['original_blog_id'] = $this->getOriginalBlogId()->getBlogId();
+        $state['original_blog_id'] = $this->getOriginalBlogId()
+                                          ->getBlogId();
 
         $state['auto_authorize'] = !$state['auto_authorize'] ? 0 : 1;
         $state['is_active'] = !$state['is_active'] ? 0 : 1;

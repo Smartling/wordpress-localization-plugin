@@ -3,146 +3,159 @@
 namespace Smartling\Base;
 
 use Exception;
-use Smartling\Bootstrap;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\InvalidXMLException;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\SiteHelper;
-use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\Submissions\SubmissionManager;
 
 /**
  * Class SmartlingCoreDownloadTrait
  *
  * @package Smartling\Base
  */
-trait SmartlingCoreDownloadTrait {
+trait SmartlingCoreDownloadTrait
+{
 
-	public function downloadTranslationBySubmission ( SubmissionEntity $entity ) {
+    public function downloadTranslationBySubmission(SubmissionEntity $entity)
+    {
 
-		$this->getLogger()->debug( vsprintf( 'Preparing to download submission id = \'%s\'', [ $entity->getId() ] ) );
+        $this->getLogger()
+             ->debug(vsprintf('Preparing to download submission id = \'%s\'', [$entity->getId()]));
 
-		if ( 1 === $entity->getIsLocked() ) {
-			$msg = vsprintf( 'Triggered download of locked entity. Target Blog: %s; Target Id: %s', [
-				$entity->getTargetBlogId(),
-				$entity->getTargetId(),
-			] );
+        if (1 === $entity->getIsLocked()) {
+            $msg = vsprintf('Triggered download of locked entity. Target Blog: %s; Target Id: %s', [
+                $entity->getTargetBlogId(),
+                $entity->getTargetId(),
+            ]);
 
-			$this->getLogger()->warning( $msg );
+            $this->getLogger()
+                 ->warning($msg);
 
-			return [
-				vsprintf(
-					'Translation of file %s for %s locale is locked for downloading',
-					[
-						$entity->getFileUri(),
-						$entity->getTargetLocale(),
-					]
-				),
-			];
-		}
+            return [
+                vsprintf(
+                    'Translation of file %s for %s locale is locked for downloading',
+                    [
+                        $entity->getFileUri(),
+                        $entity->getTargetLocale(),
+                    ]
+                ),
+            ];
+        }
 
-		if ( SubmissionEntity::SUBMISSION_STATUS_NEW === $entity->getStatus() ) {
-			//Fix for trying to download before send.
-			$this->sendForTranslationBySubmission( $entity );
-		}
+        if (SubmissionEntity::SUBMISSION_STATUS_NEW === $entity->getStatus()) {
+            //Fix for trying to download before send.
+            $this->sendForTranslationBySubmission($entity);
+        }
 
-		$messages = [ ];
+        $messages = [];
 
-		try {
-			// detect old (ver < 24) submissions and fix them
-			if ( 0 === (int) $entity->getTargetId() ) {
-				$entity = $this->prepareTargetEntity( $entity );
-			}
+        try {
+            // detect old (ver < 24) submissions and fix them
+            if (0 === (int)$entity->getTargetId()) {
+                $entity = $this->prepareTargetEntity($entity);
+            }
 
 
-			$data = $this->getApiWrapper()->downloadFile( $entity );
-			$this->getLogger()->debug( vsprintf( 'Downloaded file for submission id = \'%s\'. Dump: %s',
-				[ $entity->getId(), base64_encode( $data ) ] ) );
+            $data = $this->getApiWrapper()
+                         ->downloadFile($entity);
+            $this->getLogger()
+                 ->debug(vsprintf('Downloaded file for submission id = \'%s\'. Dump: %s',
+                     [$entity->getId(), base64_encode($data)]));
 
-			$this->prepareFieldProcessorValues($entity);
-			$translatedFields = XmlEncoder::xmlDecode( $data );
-			$this->getLogger()->debug( vsprintf( 'Deserialized translated fields for submission id = \'%s\'. Dump: %s\'', [
-				$entity->getId(),
-				base64_encode( json_encode( $translatedFields ) ),
-			] ) );
-			if ( ! array_key_exists( 'meta', $translatedFields ) ) {
-				$translatedFields['meta'] = [ ];
-			}
+            $this->prepareFieldProcessorValues($entity);
+            $translatedFields = XmlEncoder::xmlDecode($data);
+            $this->getLogger()
+                 ->debug(vsprintf('Deserialized translated fields for submission id = \'%s\'. Dump: %s\'', [
+                     $entity->getId(),
+                     base64_encode(json_encode($translatedFields)),
+                 ]));
+            if (!array_key_exists('meta', $translatedFields)) {
+                $translatedFields['meta'] = [];
+            }
 
-			$targetContent = $this->readTargetContentEntity( $entity );
+            $targetContent = $this->readTargetContentEntity($entity);
 
-			$params = new AfterDeserializeContentEventParameters( $translatedFields, $entity, $targetContent,
-				$translatedFields['meta'] );
+            $params = new AfterDeserializeContentEventParameters($translatedFields, $entity, $targetContent,
+                $translatedFields['meta']);
 
-			do_action( XmlEncoder::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params );
+            do_action(XmlEncoder::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
 
-			$this->setValues( $targetContent, $translatedFields['entity'] );
+            $this->setValues($targetContent, $translatedFields['entity']);
 
-			$targetContent = $this->saveEntity( $entity->getContentType(), $entity->getTargetBlogId(), $targetContent );
+            $targetContent = $this->saveEntity($entity->getContentType(), $entity->getTargetBlogId(), $targetContent);
 
-			// $this->fixRelations($entity);
+            // $this->fixRelations($entity);
 
-			if ( array_key_exists( 'meta', $translatedFields ) && 0 < count( $translatedFields['meta'] ) ) {
-				$this->saveMetaProperties( $targetContent, $translatedFields, $entity );
-			}
+            if (array_key_exists('meta', $translatedFields) && 0 < count($translatedFields['meta'])) {
+                $this->saveMetaProperties($targetContent, $translatedFields, $entity);
+            }
 
-			if ( 100 === $entity->getCompletionPercentage() ) {
-				$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_COMPLETED );
-			}
+            if (100 === $entity->getCompletionPercentage()) {
+                $entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
+            }
 
-			//$this->prepareRelatedSubmissions( $entity ); // Should be refactored. Not a nice spike.
+            //$this->prepareRelatedSubmissions( $entity ); // Should be refactored. Not a nice spike.
 
-			$entity->appliedDate = DateTimeHelper::nowAsString();
+            $entity->appliedDate = DateTimeHelper::nowAsString();
 
-			$entity = $this->getSubmissionManager()->storeEntity( $entity );
-		} catch ( InvalidXMLException $e ) {
-			$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_FAILED );
-			$this->getSubmissionManager()->storeEntity( $entity );
+            $entity = $this->getSubmissionManager()
+                           ->storeEntity($entity);
+        } catch (InvalidXMLException $e) {
+            $entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+            $this->getSubmissionManager()
+                 ->storeEntity($entity);
 
-			$message = vsprintf( "Invalid XML file [%s] received. Submission moved to %s status.",
-				[
-					$entity->getFileUri(),
-					$entity->getStatus(),
-				] );
+            $message = vsprintf("Invalid XML file [%s] received. Submission moved to %s status.",
+                [
+                    $entity->getFileUri(),
+                    $entity->getStatus(),
+                ]);
 
-			$this->getLogger()->error( $message );
-			$messages[] = $message;
-		} catch ( EntityNotFoundException $e ) {
-			$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_FAILED );
-			$this->getLogger()->error( $e->getMessage() );
-			$this->getSubmissionManager()->storeEntity( $entity );
-		} catch ( BlogNotFoundException $e ) {
-			$entity->setStatus( SubmissionEntity::SUBMISSION_STATUS_FAILED );
-			$this->getLogger()->error( $e->getMessage() );
-			$this->getSubmissionManager()->storeEntity( $entity );
-			/** @var SiteHelper $sh */
-			$this->handleBadBlogId( $entity );
-		} catch ( Exception $e ) {
-			$messages[] = $e->getMessage();
-		}
+            $this->getLogger()
+                 ->error($message);
+            $messages[] = $message;
+        } catch (EntityNotFoundException $e) {
+            $entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+            $this->getLogger()
+                 ->error($e->getMessage());
+            $this->getSubmissionManager()
+                 ->storeEntity($entity);
+        } catch (BlogNotFoundException $e) {
+            $entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+            $this->getLogger()
+                 ->error($e->getMessage());
+            $this->getSubmissionManager()
+                 ->storeEntity($entity);
+            /** @var SiteHelper $sh */
+            $this->handleBadBlogId($entity);
+        } catch (Exception $e) {
+            $messages[] = $e->getMessage();
+        }
 
-		return $messages;
-	}
+        return $messages;
+    }
 
-	public function downloadTranslationBySubmissionId ( $id ) {
-		return $this->downloadTranslationBySubmission( $this->loadSubmissionEntityById( $id ) );
-	}
+    public function downloadTranslationBySubmissionId($id)
+    {
+        return $this->downloadTranslationBySubmission($this->loadSubmissionEntityById($id));
+    }
 
-	public function downloadTranslation (
-		$contentType,
-		$sourceBlog,
-		$sourceEntity,
-		$targetBlog,
-		$targetEntity = null
-	) {
-		$submission = $this->prepareSubmissionEntity( $contentType, $sourceBlog, $sourceEntity, $targetBlog,
-			$targetEntity );
+    public function downloadTranslation(
+        $contentType,
+        $sourceBlog,
+        $sourceEntity,
+        $targetBlog,
+        $targetEntity = null
+    )
+    {
+        $submission = $this->prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog,
+            $targetEntity);
 
-		return $this->downloadTranslationBySubmission( $submission );
+        return $this->downloadTranslationBySubmission($submission);
 
-	}
+    }
 }

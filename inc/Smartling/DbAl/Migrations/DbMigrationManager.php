@@ -9,31 +9,35 @@ use Smartling\Processors\SmartlingFactoryAbstract;
  *
  * @package Smartling\DbAl\Migrations
  */
-class DbMigrationManager extends SmartlingFactoryAbstract {
+class DbMigrationManager extends SmartlingFactoryAbstract
+{
 
-	public function registerMigration ( SmartlingDbMigrationInterface $migration ) {
-		$this->registerHandler( $migration->getVersion(), $migration );
-	}
+    public function registerMigration(SmartlingDbMigrationInterface $migration)
+    {
+        $this->registerHandler($migration->getVersion(), $migration);
+    }
 
-	public function getMigrations ( $fromVersion ) {
-		$pool = [ ];
-		foreach ( $this->getCollection() as $version => $migration ) {
-			if ( $version > $fromVersion ) {
-				$pool[] = $migration;
-			}
-		}
-		ksort( $pool );
+    public function getMigrations($fromVersion)
+    {
+        $pool = [];
+        foreach ($this->getCollection() as $version => $migration) {
+            if ($version > $fromVersion) {
+                $pool[] = $migration;
+            }
+        }
+        ksort($pool);
 
-		return $pool;
-	}
+        return $pool;
+    }
 
-	public function getLastMigration () {
-		$ver = 0;
+    public function getLastMigration()
+    {
+        $ver = 0;
 
-		foreach ( $this->getCollection() as $version => $migration ) {
-			$ver = max( $ver, $version );
-		}
+        foreach ($this->getCollection() as $version => $migration) {
+            $ver = max($ver, $version);
+        }
 
-		return $ver;
-	}
+        return $ver;
+    }
 }

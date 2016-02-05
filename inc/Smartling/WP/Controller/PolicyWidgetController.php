@@ -9,15 +9,16 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  *
  * @package Smartling\WP\Controller
  */
-class PolicyWidgetController extends PostWidgetController {
+class PolicyWidgetController extends PostWidgetController
+{
 
-	/**
-	 * @var string
-	 */
-	protected $servedContentType = WordpressContentTypeHelper::CONTENT_TYPE_POST_POLICY;
+    /**
+     * @var string
+     */
+    protected $servedContentType = WordpressContentTypeHelper::CONTENT_TYPE_POST_POLICY;
 
-	/**
-	 * @var string
-	 */
-	protected $noOriginalFound = 'No original policy found';
+    /**
+     * @var string
+     */
+    protected $noOriginalFound = 'No original policy found';
 }

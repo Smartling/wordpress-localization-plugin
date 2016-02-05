@@ -9,22 +9,24 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  *
  * @package Smartling\WP\Controller
  */
-class PageWidgetController extends PostWidgetController {
+class PageWidgetController extends PostWidgetController
+{
 
-	/**
-	 * @var string
-	 */
-	protected $servedContentType = WordpressContentTypeHelper::CONTENT_TYPE_PAGE;
+    /**
+     * @var string
+     */
+    protected $servedContentType = WordpressContentTypeHelper::CONTENT_TYPE_PAGE;
 
-	/**
-	 * @var string
-	 */
-	protected $noOriginalFound = 'No original page found';
+    /**
+     * @var string
+     */
+    protected $noOriginalFound = 'No original page found';
 
-	/**
-	 * @inheritdoc
-	 */
-	protected function isAllowedToSave ( $post_id ) {
-		return current_user_can( 'edit_page', $post_id );
-	}
+    /**
+     * @inheritdoc
+     */
+    protected function isAllowedToSave($post_id)
+    {
+        return current_user_can('edit_page', $post_id);
+    }
 }

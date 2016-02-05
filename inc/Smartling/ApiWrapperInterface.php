@@ -13,49 +13,50 @@ use Smartling\Submissions\SubmissionEntity;
  *
  * @package Smartling
  */
-interface ApiWrapperInterface {
+interface ApiWrapperInterface
+{
 
-	/**
-	 * @param SubmissionEntity $entity
-	 *
-	 * @return string
-	 * @throws SmartlingFileDownloadException
-	 */
-	public function downloadFile ( SubmissionEntity $entity );
+    /**
+     * @param SubmissionEntity $entity
+     *
+     * @return string
+     * @throws SmartlingFileDownloadException
+     */
+    public function downloadFile(SubmissionEntity $entity);
 
-	/**
-	 * @param SubmissionEntity $entity
-	 *
-	 * @return SubmissionEntity
-	 * @throws SmartlingFileDownloadException
-	 * @throws SmartlingNetworkException
-	 */
-	public function getStatus ( SubmissionEntity $entity );
+    /**
+     * @param SubmissionEntity $entity
+     *
+     * @return SubmissionEntity
+     * @throws SmartlingFileDownloadException
+     * @throws SmartlingNetworkException
+     */
+    public function getStatus(SubmissionEntity $entity);
 
-	/**
-	 * @param ConfigurationProfileEntity $profile
-	 *
-	 * @return bool
-	 * @internal param string $locale
-	 *
-	 */
-	public function testConnection ( ConfigurationProfileEntity $profile );
+    /**
+     * @param ConfigurationProfileEntity $profile
+     *
+     * @return bool
+     * @internal param string $locale
+     *
+     */
+    public function testConnection(ConfigurationProfileEntity $profile);
 
-	/**
-	 * @param SubmissionEntity $entity
-	 * @param string           $xmlString
-	 *
-	 * @param string           $filename
-	 *
-	 * @return bool
-	 * @throws SmartlingFileUploadException
-	 */
-	public function uploadContent ( SubmissionEntity $entity, $xmlString = '', $filename = '' );
+    /**
+     * @param SubmissionEntity $entity
+     * @param string           $xmlString
+     *
+     * @param string           $filename
+     *
+     * @return bool
+     * @throws SmartlingFileUploadException
+     */
+    public function uploadContent(SubmissionEntity $entity, $xmlString = '', $filename = '');
 
-	/**
-	 * @param ConfigurationProfileEntity $profile
-	 *
-	 * @return array
-	 */
-	public function getSupportedLocales ( ConfigurationProfileEntity $profile );
+    /**
+     * @param ConfigurationProfileEntity $profile
+     *
+     * @return array
+     */
+    public function getSupportedLocales(ConfigurationProfileEntity $profile);
 }

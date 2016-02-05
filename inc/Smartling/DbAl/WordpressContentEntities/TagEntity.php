@@ -10,23 +10,26 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  *
  * @package Smartling\DbAl\WordpressContentEntities
  */
-class TagEntity extends TaxonomyEntityAbstract {
-	/**
-	 * @inheritdoc
-	 */
-	public function __construct ( LoggerInterface $logger ) {
-		parent::__construct( $logger );
+class TagEntity extends TaxonomyEntityAbstract
+{
+    /**
+     * @inheritdoc
+     */
+    public function __construct(LoggerInterface $logger)
+    {
+        parent::__construct($logger);
 
-		$this->setType( WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG );
-		$this->setEntityFields( $this->fields );
-	}
+        $this->setType(WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG);
+        $this->setEntityFields($this->fields);
+    }
 
-	/**
-	 * @inheritdoc
-	 */
-	public function getTitle () {
-		return $this->name;
-	}
+    /**
+     * @inheritdoc
+     */
+    public function getTitle()
+    {
+        return $this->name;
+    }
 
 
 }

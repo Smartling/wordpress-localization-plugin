@@ -11,82 +11,83 @@ use Smartling\Submissions\SubmissionEntity;
  *
  * @package Smartling\DbAl
  */
-interface LocalizationPluginProxyInterface {
+interface LocalizationPluginProxyInterface
+{
 
-	/**
-	 * Constructor
-	 *
-	 * @param LoggerInterface $logger
-	 * @param SiteHelper      $helper
-	 * @param array           $ml_plugin_statuses
-	 */
-	function __construct ( LoggerInterface $logger, SiteHelper $helper, array $ml_plugin_statuses );
+    /**
+     * Constructor
+     *
+     * @param LoggerInterface $logger
+     * @param SiteHelper      $helper
+     * @param array           $ml_plugin_statuses
+     */
+    function __construct(LoggerInterface $logger, SiteHelper $helper, array $ml_plugin_statuses);
 
-	/**
-	 * @return LoggerInterface
-	 */
-	function getLogger ();
+    /**
+     * @return LoggerInterface
+     */
+    function getLogger();
 
-	/**
-	 * Retrieves locale from site option
-	 *
-	 * @return array
-	 */
-	function getLocales ();
+    /**
+     * Retrieves locale from site option
+     *
+     * @return array
+     */
+    function getLocales();
 
-	/**
-	 * Retrieves locale from site option
-	 *
-	 * @param integer $blogId
-	 *
-	 * @return string
-	 */
-	function getBlogLocaleById ( $blogId );
+    /**
+     * Retrieves locale from site option
+     *
+     * @param integer $blogId
+     *
+     * @return string
+     */
+    function getBlogLocaleById($blogId);
 
-	/**
-	 * Retrieves blog ids linked to given blog
-	 *
-	 * @param integer $blogId
-	 *
-	 * @return array
-	 */
-	function getLinkedBlogIdsByBlogId ( $blogId );
+    /**
+     * Retrieves blog ids linked to given blog
+     *
+     * @param integer $blogId
+     *
+     * @return array
+     */
+    function getLinkedBlogIdsByBlogId($blogId);
 
-	/**
-	 * Returns linked content
-	 *
-	 * @param int    $sourceBlogId
-	 * @param int    $sourceContentId
-	 * @param string $contentType
-	 *
-	 * @return array
-	 * ( <blog_id> => <content_id> )
-	 */
-	function getLinkedObjects ( $sourceBlogId, $sourceContentId, $contentType );
+    /**
+     * Returns linked content
+     *
+     * @param int    $sourceBlogId
+     * @param int    $sourceContentId
+     * @param string $contentType
+     *
+     * @return array
+     * ( <blog_id> => <content_id> )
+     */
+    function getLinkedObjects($sourceBlogId, $sourceContentId, $contentType);
 
-	/**
-	 * @param SubmissionEntity $submission
-	 *
-	 * @return bool
-	 */
-	function linkObjects ( SubmissionEntity $submission );
+    /**
+     * @param SubmissionEntity $submission
+     *
+     * @return bool
+     */
+    function linkObjects(SubmissionEntity $submission);
 
-	/**
-	 * @param SubmissionEntity $submission
-	 *
-	 * @return bool
-	 */
-	function  unlinkObjects ( SubmissionEntity $submission );
+    /**
+     * @param SubmissionEntity $submission
+     *
+     * @return bool
+     */
+    function unlinkObjects(SubmissionEntity $submission);
 
-	/**
-	 * @return string
-	 */
-	function getBlogLanguageById ( $blogId );
+    /**
+     * @return string
+     */
+    function getBlogLanguageById($blogId);
 
-	/**
-	 * @param string $locale
-	 *
-	 * @return string mixed
-	 */
-	public function getBlogNameByLocale ( $locale );
+    /**
+     * @param string $locale
+     *
+     * @return string mixed
+     */
+    public function getBlogNameByLocale($locale);
 }

@@ -8,6 +8,7 @@ namespace Smartling\Exception;
  *
  * @package Smartling\Exception
  */
-class EntityNotFoundException extends SmartlingExceptionAbstract {
+class EntityNotFoundException extends SmartlingExceptionAbstract
+{
 
 }

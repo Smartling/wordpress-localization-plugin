@@ -18,7 +18,8 @@ class Migration160125 implements SmartlingDbMigrationInterface
 
     public function getQueries($tablePrefix = '')
     {
-        $defaultFilter = Bootstrap::getContainer()->getParameter('field.processor.default');
+        $defaultFilter = Bootstrap::getContainer()
+                                  ->getParameter('field.processor.default');
 
         return [
             vsprintf(

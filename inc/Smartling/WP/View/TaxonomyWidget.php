@@ -7,4 +7,4 @@ use Smartling\WP\WPAbstract;
  * @var WPAbstract self
  */
 
-$this->renderViewScript( 'taxonomy-based-content-type.php' );
+$this->renderViewScript('taxonomy-based-content-type.php');

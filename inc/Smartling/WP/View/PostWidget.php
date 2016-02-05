@@ -7,5 +7,5 @@ use Smartling\WP\WPAbstract;
  * @var WPAbstract self
  */
 
-$this->setWidgetHeader( __( 'Translate this post into:' ) );
-$this->renderViewScript( 'post-based-content-type.php' );
+$this->setWidgetHeader(__('Translate this post into:'));
+$this->renderViewScript('post-based-content-type.php');

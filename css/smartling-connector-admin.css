@@ -4,107 +4,107 @@
  */
 
 #smartling-form input[type="text"] {
-    width     : 80%;
-    max-width : 500px;
+    width: 80%;
+    max-width: 500px;
 }
 
 #smartling-form .radio-label {
-    display       : inline-block;
-    margin-bottom : 10px;
+    display: inline-block;
+    margin-bottom: 10px;
 }
 
 #smartling-form .plugin-locales span {
-    display   : inline-block;
-    min-width : 125px;
+    display: inline-block;
+    min-width: 125px;
 }
 
 #smartling-form .plugin-locales span + input {
-    width : 60px;
+    width: 60px;
 }
 
 #smartling-form .form-table td {
-    margin-bottom : 25px;
+    margin-bottom: 25px;
 }
 
 #smartling-form .form-table th {
-    margin-bottom : 5px;
+    margin-bottom: 5px;
 }
 
 #smartling-form .form-table th,
 #smartling-form .form-table td {
-    display : inline-table;
-    padding : 3px;
+    display: inline-table;
+    padding: 3px;
 }
 
 #default-locales {
-    display : none;
+    display: none;
 }
 
 #smartling_connector_post_widget .inside {
-    padding : 0;
+    padding: 0;
 }
 
 #smartling_connector_post_widget .fields {
-    padding-left : 20px;
+    padding-left: 20px;
 }
 
 #smartling_connector_post_widget .fields p label {
-    padding-left : 20px;
+    padding-left: 20px;
 }
 
 #smartling_connector_post_widget .bottom {
-    padding    : 10px;
-    clear      : both;
-    border-top : 1px solid #dddddd;
-    background : #f5f5f5;
+    padding: 10px;
+    clear: both;
+    border-top: 1px solid #dddddd;
+    background: #f5f5f5;
 }
 
 #smartling_connector_post_widget .submit {
-    margin     : 0;
-    padding    : 5px;
-    text-align : right;
+    margin: 0;
+    padding: 5px;
+    text-align: right;
 }
 
 #smartling_connector_post_widget .submit input {
-    display : inline-block;
+    display: inline-block;
 }
 
 .widget-btn {
-    position      : relative;
-    top           : 3px;
-    right         : 70px;
-    height        : 14px;
-    width         : 14px;
-    text-indent   : 25px;
-    display       : inline-block;
-    float         : right;
-    border        : 1px solid #ffffff;
-    border-radius : 100%;
+    position: relative;
+    top: 3px;
+    right: 70px;
+    height: 14px;
+    width: 14px;
+    text-indent: 25px;
+    display: inline-block;
+    float: right;
+    border: 1px solid #ffffff;
+    border-radius: 100%;
 }
 
 .widget-btn > span {
-    position : inherit;
-    bottom   : 2px;
+    position: inherit;
+    bottom: 2px;
 }
 
 .widget-btn.blue {
-    background : #108fe8;
-    box-shadow : 0 -2px 0 3px #0d72b8 inset, 0 5px 5px rgba(3, 25, 41, 0.17), 0 15px rgba(255, 255, 255, 0.25) inset;
+    background: #108fe8;
+    box-shadow: 0 -2px 0 3px #0d72b8 inset, 0 5px 5px rgba(3, 25, 41, 0.17), 0 15px rgba(255, 255, 255, 0.25) inset;
 }
 
 .widget-btn.green {
-    background : #0ec518;
-    box-shadow : 0 -2px 0 3px #0b9512 inset, 0 5px 5px rgba(0, 7, 1, 0.17), 0 15px rgba(255, 255, 255, 0.25) inset;
+    background: #0ec518;
+    box-shadow: 0 -2px 0 3px #0b9512 inset, 0 5px 5px rgba(0, 7, 1, 0.17), 0 15px rgba(255, 255, 255, 0.25) inset;
 }
 
 .widget-btn.red {
-    background : #e53030;
-    box-shadow : 0 -2px 0 3px #c91919 inset, 0 5px 5px rgba(65, 8, 8, 0.17), 0 15px rgba(255, 255, 255, 0.25) inset;
+    background: #e53030;
+    box-shadow: 0 -2px 0 3px #c91919 inset, 0 5px 5px rgba(65, 8, 8, 0.17), 0 15px rgba(255, 255, 255, 0.25) inset;
 }
 
 .widget-btn.yellow {
-    background : #ffc334;
-    box-shadow : 0 -2px 0 3px #ffb401 inset, 0 5px 5px rgba(103, 73, 0, 0.17), 0 15px rgba(255, 255, 255, 0.25) inset;
+    background: #ffc334;
+    box-shadow: 0 -2px 0 3px #ffb401 inset, 0 5px 5px rgba(103, 73, 0, 0.17), 0 15px rgba(255, 255, 255, 0.25) inset;
 }
 
 /*.btn-yellow:hover {
@@ -113,73 +113,73 @@
 }*/
 
 #smartling-form .plugin-locales input[type=text] {
-    width : 50px;
+    width: 50px;
 }
 
 #bulkActionCb {
-    width : 31px;
+    width: 31px;
 }
 
 #contentType {
-    width : 100px;
+    width: 100px;
 }
 
 #targetLocale {
-    width : 85px;
+    width: 85px;
 }
 
 #submissionDate {
-    width : 150px;
+    width: 150px;
 }
 
 #appliedDate {
-    width : 150px;
+    width: 150px;
 }
 
 #wordCount {
-    width : 85px;
+    width: 85px;
 }
 
 #progress {
-    width : 100px;
+    width: 100px;
 }
 
 #status {
-    width : 100px;
+    width: 100px;
 }
 
 #submitter {
-    width     : 100px;
-    max-width : 150px;
+    width: 100px;
+    max-width: 150px;
 }
 
 table.form-table th {
-    display : inline-table;
+    display: inline-table;
 }
 
 div.display-errors-set {
-    margin-top    : 30px;
-    margin-bottom : 30px;
-    border        : solid 1px #ff0000;
-    border-radius : 5px;
-    padding       : 15px;
-    font-size     : 12pt;
-    color         : #ff5555;
-    font-weight   : bold;
-    box-shadow    : 0px 0px 29px 10px rgba(0, 0, 0, 0.75);
+    margin-top: 30px;
+    margin-bottom: 30px;
+    border: solid 1px #ff0000;
+    border-radius: 5px;
+    padding: 15px;
+    font-size: 12pt;
+    color: #ff5555;
+    font-weight: bold;
+    box-shadow: 0px 0px 29px 10px rgba(0, 0, 0, 0.75);
 }
 
 .hide {
-    display : none;
+    display: none;
 }
 
 div.display-errors-set ul {
-    list-style : circle;
+    list-style: circle;
 }
 
 div.display-errors-set ul li {
-    padding-left : 20px;
-    margin-left  : 20px;
+    padding-left: 20px;
+    margin-left: 20px;
 }
 
 .smtPostWidget-rowWrapper {
@@ -202,6 +202,7 @@ div.display-errors-set ul li {
     left: 42px;
     top: 3px;
 }
+
 .smtPostWidget-submitBlock {
     margin-top: 10px;
 }
@@ -212,12 +213,10 @@ div.display-errors-set ul li {
     }
 }
 
-.smartling-list
-{
+.smartling-list {
     list-style: disc;
 }
 
-textarea.nowrap
-{
-    overflow:scroll;
+textarea.nowrap {
+    overflow: scroll;
 }
