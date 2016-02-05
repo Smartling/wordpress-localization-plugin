@@ -305,7 +305,7 @@ class ApiWrapper implements ApiWrapperInterface {
 				$this->getLogger()
 			);
 
-			$params = new UploadFileParameters( $this->getPluginName(), $this->getPluginVersion() );
+			$params = new UploadFileParameters( 'wordpress-connector', $this->getPluginVersion() );
 
 			// We always explicit say do not authorize for all locales
 			$params->setAuthorized( false );
