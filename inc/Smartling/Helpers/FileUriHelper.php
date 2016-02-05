@@ -19,17 +19,21 @@ class FileUriHelper
      *
      * @return string
      */
-    private static function fixTrailingSlash($string)
+    private static function preparePermalink($string)
     {
-        return rtrim($string, '/');
+        $pathinfo = parse_url($string);
+
+        return rtrim($pathinfo['path'], '/');;
     }
+
 
     /**
      * @return SiteHelper
      */
     private static function getSiteHelper()
     {
-        return Bootstrap::getContainer()->get('site.helper');
+        return Bootstrap::getContainer()
+                        ->get('site.helper');
     }
 
     /**
@@ -66,17 +70,12 @@ class FileUriHelper
         if ($ioWrapper instanceof TaxonomyEntityAbstract) {
             /* term-based content */
 
-            /**
-             * @var TaxonomyEntityAbstract $content
-             */
-            $content = $ioWrapper->get($submission->getSourceId());
-
-            $slug = $content->slug;
+            $permalink = self::preparePermalink(get_term_link($submission->getSourceId()));
 
             $fileUri = vsprintf(
                 '%s_%s_%s_%s.xml',
                 [
-                    trim(TextHelper::mb_wordwrap($slug, 210), "\n\r\t,. -_\0\x0B"),
+                    trim(TextHelper::mb_wordwrap($permalink, 210), "\n\r\t,. -_\0\x0B"),
                     $submission->getContentType(),
                     $submission->getSourceBlogId(),
                     $submission->getSourceId(),
@@ -85,7 +84,7 @@ class FileUriHelper
         } elseif ($ioWrapper instanceof PostEntity) {
             /* post-based content */
 
-            $permalink = self::fixTrailingSlash(get_permalink($submission->getSourceId()));
+            $permalink = self::preparePermalink(get_permalink($submission->getSourceId()));
 
             $fileUri = vsprintf(
                 '%s_%s_%s_%s.xml',
@@ -100,7 +99,7 @@ class FileUriHelper
             $message = vsprintf(
                 'Original entity should be post-based or taxonomy and should be an appropriate ancestor of Smartling DBAL classes. Got:%s',
                 [
-                    get_class($ioWrapper)
+                    get_class($ioWrapper),
                 ]
             );
             throw new \Exception($message);
