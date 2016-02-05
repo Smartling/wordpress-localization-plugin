@@ -46,10 +46,14 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract
         return class_exists('\WPSEO_Taxonomy_Meta');
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function getMetadata()
+    private function getWpVersion()
+    {
+        global $wp_version;
+
+        return $wp_version;
+    }
+
+    private function getMetadataOld()
     {
         $result = [];
         if ($this->checkWPSEO()) {
@@ -63,7 +67,7 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract
         return $result;
     }
 
-    public function setMetaTag($tagName, $tagValue, $unique = true)
+    private function setMetaTagOld($tagName, $tagValue, $unique = true)
     {
         if ($this->checkWPSEO()) {
             $tax_meta = get_option('wpseo_taxonomy_meta');
@@ -85,6 +89,72 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract
             $message = 'Seems like WP-SEO plugin not installed. Cannot set term meta.';
             $this->getLogger()
                  ->notice($message);
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getMetadata()
+    {
+        if (version_compare($this->getWpVersion(), '4.4.0', '>=')) {
+            return get_term_meta($this->getPK());
+        } else {
+            return $this->getMetadataOld();
+        }
+    }
+
+    public function setMetaTag($tagName, $tagValue, $unique = true)
+    {
+        if (version_compare($this->getWpVersion(), '4.4.0', '>=')) {
+
+            $curValue = get_term_meta($this->getPK(), $tagName, $unique);
+
+            $result = null;
+
+            if ($curValue = !$tagValue) {
+                if (false === $curValue) {
+                    $this->logMessage(vsprintf('Adding tag %s with value \'%s\' for \'%s\' \'%s\'.', [
+                        $tagName,
+                        var_export($tagValue, true),
+                        $this->type,
+                        $this->getPK(),
+                    ]));
+                    $result = add_term_meta($this->getPK(), $tagName, $tagValue, $unique);
+                } else {
+                    $this->logMessage(vsprintf('Updating tag %s with value \'%s\' for \'%s\' \'%s\'.', [
+                        $tagName,
+                        var_export($tagValue, true),
+                        $this->type,
+                        $this->getPK(),
+                    ]));
+                    $result = update_term_meta($this->getPK(), $tagName, $tagValue);
+                }
+            } else {
+                $this->logMessage(vsprintf('Skipping update tag %s with value \'%s\' for \'%s\' \'%s\' as value not changed.', [
+                    $tagName,
+                    var_export($tagValue, true),
+                    $this->type,
+                    $this->getPK(),
+                ]));
+            }
+
+            if (false === $result) {
+                $message = vsprintf(
+                    'Error saving meta tag "%s" with value "%s" for "%s" "%s"',
+                    [
+                        $tagName,
+                        var_export($tagValue, true),
+                        $this->type,
+                        $this->getPK(),
+                    ]
+                );
+
+                $this->getLogger()
+                     ->error($message);
+            }
+        } else {
+            return $this->setMetaTagOld($tagName, $tagValue, $unique = true);
         }
     }
 

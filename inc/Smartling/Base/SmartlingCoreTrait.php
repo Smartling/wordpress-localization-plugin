@@ -256,7 +256,7 @@ trait SmartlingCoreTrait
                  )
              );
 
-        if (array_key_exists('meta', $original) && 0 < count($original['meta'])) {
+        if (array_key_exists('meta', $original) && is_array($original['meta']) && 0 < count($original['meta'])) {
             $this->setMetaForTargetEntity($submission, $targetContent, $original['meta']);
         }
 
