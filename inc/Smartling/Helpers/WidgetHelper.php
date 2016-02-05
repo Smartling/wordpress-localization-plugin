@@ -268,31 +268,6 @@ class WidgetHelper
         return vsprintf('%s-%s', [$this->getType(), $this->getIndex()]);
     }
 
-    private static function writeSidebarsWidgets($barId, array $widgets = [])
-    {
-        $config = self::readSidebarsWidgetsTotal();
-
-        unset ($config[$barId]);
-
-        foreach ($widgets as $pos => $widgetId) {
-            foreach ($config as $bar => $widgetSet) {
-                $config[$bar] = self::cleanBarFromWidget($bar, $widgetId);
-            }
-        }
-
-        $config[$barId] = $widgets;
-
-        self::writeSidebarsWidgetsTotal($config);
-    }
-
-    /**
-     * @return array
-     */
-    private static function readSidebarsWidgetsTotal()
-    {
-        return wp_get_sidebars_widgets();
-    }
-
     /**
      * @param $barId
      * @param $widgetId
@@ -320,6 +295,31 @@ class WidgetHelper
         $totalWidgetData = wp_get_sidebars_widgets();
 
         return array_key_exists($sideBadId, $totalWidgetData) ? $totalWidgetData[$sideBadId] : [];
+    }
+
+    private static function writeSidebarsWidgets($barId, array $widgets = [])
+    {
+        $config = self::readSidebarsWidgetsTotal();
+
+        unset ($config[$barId]);
+
+        foreach ($widgets as $pos => $widgetId) {
+            foreach ($config as $bar => $widgetSet) {
+                $config[$bar] = self::cleanBarFromWidget($bar, $widgetId);
+            }
+        }
+
+        $config[$barId] = $widgets;
+
+        self::writeSidebarsWidgetsTotal($config);
+    }
+
+    /**
+     * @return array
+     */
+    private static function readSidebarsWidgetsTotal()
+    {
+        return wp_get_sidebars_widgets();
     }
 
     /**
