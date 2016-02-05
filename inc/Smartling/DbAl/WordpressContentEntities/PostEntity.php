@@ -225,7 +225,12 @@ class PostEntity extends EntityAbstract
     public function set(EntityAbstract $entity = null)
     {
         $instance = null === $entity ? $this : $entity;
-        $res = wp_insert_post($instance->toArray(), true);
+
+        $array = $instance->toArray();
+
+        $array['post_category'] = wp_get_post_categories($instance->ID);
+
+        $res = wp_insert_post($array, true);
 
         if (is_wp_error($res)) {
 
