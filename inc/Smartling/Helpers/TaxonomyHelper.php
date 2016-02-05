@@ -3,7 +3,7 @@
 namespace Smartling\Helpers;
 
 use InvalidArgumentException;
-use Smartling\Bootstrap;
+use Smartling\Exception\SmartlingDbException;
 
 /**
  * Class TaxonomyHelper
@@ -38,6 +38,14 @@ class TaxonomyHelper
         }
     }
 
+    /**
+     * @param int|string $term // Smartling-connector sends only int values
+     * @param string     $taxonomy
+     *
+     * @return array
+     * @throws SmartlingDbException
+     * @throws \InvalidArgumentException
+     */
     private static function getTermInfo($term, $taxonomy)
     {
         $termInfo = term_exists($term, $taxonomy);
@@ -53,12 +61,19 @@ class TaxonomyHelper
 
         if (is_wp_error($termInfo)) {
             $message = vsprintf('Error while inserting new term: ', [implode('|', $termInfo->get_error_messages())]);
-            throw new \Exception($message);
+            throw new SmartlingDbException($message);
         }
 
         return $termInfo;
     }
 
+    /**
+     * @param int $objectId
+     * @param int $termTaxonomyId
+     *
+     * @return bool
+     * @throws SmartlingDbException
+     */
     private static function checkTermTaxonomyRelation($objectId, $termTaxonomyId)
     {
         $query = vsprintf(
@@ -82,7 +97,7 @@ class TaxonomyHelper
                 ]
             );
 
-            throw new \Exception($message);
+            throw new SmartlingDbException($message);
         }
 
         return count($result) > 0;
@@ -100,6 +115,14 @@ class TaxonomyHelper
                    );
     }
 
+    /**
+     * @param array  $originalTerms
+     * @param array  $newTermIds
+     * @param int    $objectId
+     * @param string $taxonomy
+     *
+     * @throws SmartlingDbException
+     */
     private static function deleteOldRelations($originalTerms, $newTermIds, $objectId, $taxonomy)
     {
         $deleteList = array_diff($originalTerms, $newTermIds);
@@ -118,13 +141,34 @@ class TaxonomyHelper
 
             $ids = array_map('intval', $col);
 
-            $remove = wp_remove_object_terms($objectId, $ids, $taxonomy);
-            if (is_wp_error($remove)) {
-                return $remove;
+            $result = wp_remove_object_terms($objectId, $ids, $taxonomy);
+
+            if (is_wp_error($result)) {
+                $message = vsprintf(
+                    'DB Error occurred while removing object terms (objectId=\'%s\', termIds={\'%s\'}, taxonomy=\'%s\'). Message: %s.',
+                    [
+                        $objectId,
+                        implode(',', $ids),
+                        $taxonomy,
+                        implode('|', $result->get_error_messages()),
+
+                    ]
+                );
+
+                throw new SmartlingDbException($message);
             }
+
+
         }
     }
 
+    /**
+     * @param string $taxonomyType
+     * @param int    $objectId
+     * @param array  $newTermIds
+     *
+     * @throws SmartlingDbException
+     */
     private static function sortObjectTerms($taxonomyType, $objectId, $newTermIds)
     {
         $t = get_taxonomy($taxonomyType);
@@ -162,12 +206,20 @@ class TaxonomyHelper
                         ]
                     );
 
-                    throw new \Exception($message);
+                    throw new SmartlingDbException($message);
                 }
             }
         }
     }
 
+    /**
+     * @param int    $objectId
+     * @param array  $terms
+     * @param string $taxonomyType
+     *
+     * @return array
+     * @throws \Exception
+     */
     public static function setObjectTerms($objectId, array $terms, $taxonomyType)
     {
         try {
@@ -198,7 +250,7 @@ class TaxonomyHelper
 
             return $newTaxonomyTerms;
         } catch (\Exception $e) {
-            Bootstrap::DebugPrint($e, true);
+            throw $e;
         }
     }
 }
