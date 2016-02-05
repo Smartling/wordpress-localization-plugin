@@ -39,7 +39,7 @@ class ContentEntitiesIOFactory extends SmartlingFactoryAbstract
      * @return EntityAbstract
      * @throws SmartlingInvalidFactoryArgumentException
      */
-    function getMapper($contentType)
+    public function getMapper($contentType)
     {
         return parent::getHandler($contentType);
     }
