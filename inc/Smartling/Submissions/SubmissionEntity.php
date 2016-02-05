@@ -5,6 +5,7 @@ namespace Smartling\Submissions;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\SmartlingEntityAbstract;
+use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\TextHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 
@@ -408,12 +409,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
     {
         if (empty($this->stateFields['file_uri'])) {
 
-            $fileUri = vsprintf('%s_%s_%s_%s.xml', [
-                trim(TextHelper::mb_wordwrap($this->getSourceTitle(false), 210), "\n\r\t,. -_\0\x0B"),
-                $this->getContentType(),
-                $this->getSourceBlogId(),
-                $this->getSourceId(),
-            ]);
+            $fileUri = FileUriHelper::generateFileUri($this);
 
             $this->setFileUri($fileUri);
         }
