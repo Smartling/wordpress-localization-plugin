@@ -2,7 +2,7 @@
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.3
-Tested up to: 4.4.1
+Tested up to: 4.4.2
 Stable tag: 1.1.3
 License: GPLv2 or later
 
@@ -50,8 +50,11 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 
 = 1.1.3 =
+* Added support of term metadata Wordpress API
 * Fixed UI issue found in Firefox and Safari
-* Minor improvements
+* Fixed issue that prevents target content linking (post with categories)
+* Minor UI improvements
+* Minor internal improvements
 
 = 1.1.2 =
 * Added ability to manage translation filters on Profile Edit Screen.
