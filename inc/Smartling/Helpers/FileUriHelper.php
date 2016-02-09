@@ -1,11 +1,15 @@
 <?php
 namespace Smartling\Helpers;
 
+use InvalidArgumentException;
 use Smartling\Bootstrap;
 use Smartling\DbAl\WordpressContentEntities\PostEntity;
 use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityAbstract;
+use Smartling\Exception\SmartlingDirectRunRuntimeException;
+use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
+use Symfony\Component\DependencyInjection\Exception\LogicException;
 
 /**
  * Class FileUriHelper
@@ -15,15 +19,49 @@ class FileUriHelper
 {
 
     /**
-     * @param $string
+     * @param $submission
+     *
+     * @throws InvalidArgumentException
+     */
+    private static function checkSubmission($submission)
+    {
+        if (!($submission instanceof SubmissionEntity)) {
+            throw new InvalidArgumentException('Expected SubmissionEntity');
+        }
+
+        if (StringHelper::isNullOrEmpty($submission->getSourceTitle(false))) {
+            throw new InvalidArgumentException('sourceTitle cannot be empty.');
+        }
+    }
+
+    /**
+     * @param string           $string
+     *
+     * @param SubmissionEntity $entity
      *
      * @return string
+     *
+     * @throws InvalidArgumentException
      */
-    private static function preparePermalink($string)
+    private static function preparePermalink($string, $entity)
     {
-        $pathinfo = parse_url($string);
-
-        return rtrim($pathinfo['path'], '/');;
+        self::checkSubmission($entity);
+        $fallBack = rtrim($entity->getSourceTitle(false), '/');
+        if (is_string($string)) {
+            $pathinfo = parse_url($string);
+            if (false !== $pathinfo) {
+                $path = rtrim($pathinfo['path'], '/');
+                if (StringHelper::isNullOrEmpty($path)) {
+                    return $fallBack;
+                } else {
+                    return $path;
+                }
+            } else {
+                return $fallBack;
+            }
+        } else {
+            return $fallBack;
+        }
     }
 
 
@@ -32,6 +70,7 @@ class FileUriHelper
      */
     private static function getSiteHelper()
     {
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         return Bootstrap::getContainer()
                         ->get('site.helper');
     }
@@ -41,6 +80,7 @@ class FileUriHelper
      */
     private static function getIoFactory()
     {
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         return Bootstrap::getContainer()
                         ->get('factory.contentIO');
     }
@@ -50,7 +90,11 @@ class FileUriHelper
      *
      * @return string
      * @throws \Exception
-     * @throws \Smartling\Exception\BlogNotFoundException
+     * @throws BlogNotFoundException
+     * @throws SmartlingInvalidFactoryArgumentException
+     * @throws SmartlingDirectRunRuntimeException
+     * @throws InvalidArgumentException
+     * @throws LogicException
      */
     public static function generateFileUri(SubmissionEntity $submission)
     {
@@ -59,9 +103,7 @@ class FileUriHelper
 
         $ioWrapper = $ioFactory->getMapper($submission->getContentType());
 
-        $fileUri = '';
-
-        $needBlogSwitch = $siteHelper->getCurrentBlogId() != $submission->getSourceBlogId();
+        $needBlogSwitch = $siteHelper->getCurrentBlogId() !== $submission->getSourceBlogId();
 
         if ($needBlogSwitch) {
             $siteHelper->switchBlogId($submission->getSourceBlogId());
@@ -69,32 +111,10 @@ class FileUriHelper
 
         if ($ioWrapper instanceof TaxonomyEntityAbstract) {
             /* term-based content */
-
-            $permalink = self::preparePermalink(get_term_link($submission->getSourceId()));
-
-            $fileUri = vsprintf(
-                '%s_%s_%s_%s.xml',
-                [
-                    trim(TextHelper::mb_wordwrap($permalink, 210), "\n\r\t,. -_\0\x0B"),
-                    $submission->getContentType(),
-                    $submission->getSourceBlogId(),
-                    $submission->getSourceId(),
-                ]
-            );
+            $permalink = self::preparePermalink(get_term_link($submission->getSourceId()), $submission);
         } elseif ($ioWrapper instanceof PostEntity) {
             /* post-based content */
-
-            $permalink = self::preparePermalink(get_permalink($submission->getSourceId()));
-
-            $fileUri = vsprintf(
-                '%s_%s_%s_%s.xml',
-                [
-                    trim(TextHelper::mb_wordwrap($permalink, 210), "\n\r\t,. -_\0\x0B"),
-                    $submission->getContentType(),
-                    $submission->getSourceBlogId(),
-                    $submission->getSourceId(),
-                ]
-            );
+            $permalink = self::preparePermalink(get_permalink($submission->getSourceId()), $submission);
         } else {
             $message = vsprintf(
                 'Original entity should be post-based or taxonomy and should be an appropriate ancestor of Smartling DBAL classes. Got:%s',
@@ -102,8 +122,18 @@ class FileUriHelper
                     get_class($ioWrapper),
                 ]
             );
-            throw new \Exception($message);
+            throw new LogicException($message);
         }
+
+        $fileUri = vsprintf(
+            '%s_%s_%s_%s.xml',
+            [
+                trim(TextHelper::mb_wordwrap($permalink, 210), "\n\r\t,. -_\0\x0B"),
+                $submission->getContentType(),
+                $submission->getSourceBlogId(),
+                $submission->getSourceId(),
+            ]
+        );
 
         if ($needBlogSwitch) {
             $siteHelper->restoreBlogId();

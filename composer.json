@@ -23,6 +23,11 @@
 	"config": {
 		"vendor-dir": "inc/third-party"
 	},
+	"autoload-dev": {
+		"psr-4": {
+			"Smartling\\Tests\\": "tests/"
+		}
+	},
 	"autoload": {
 		"psr-0": {
 			"Smartling": "inc/"

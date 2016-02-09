@@ -2,29 +2,19 @@
 
 <phpunit backupGlobals="false"
          backupStaticAttributes="false"
-         bootstrap="./phpunit_bootstrap.php"
+         bootstrap="./../inc/autoload.php"
          colors="true"
          convertErrorsToExceptions="true"
          convertNoticesToExceptions="true"
          convertWarningsToExceptions="true"
-         processIsolation="true"
+         processIsolation="false"
          stopOnFailure="false"
          syntaxCheck="true"
          verbose="true"
         >
     <testsuites>
-        <testsuite name="Smartling connector Wordpress plugin suite">
-            <directory suffix="Test.php" phpVersion="5.3.0" phpVersionOperator=">=">./</directory>
+        <testsuite name="smartling-connector WordPress plugin test">
+            <directory suffix="Test.php" phpVersion="5.4.0" phpVersionOperator=">=">./</directory>
         </testsuite>
     </testsuites>
-
-    <logging>
-
-        <log type="json" target="./../phpunit.log.json"/>
-
-        <log type="junit" target="./../phpunit.log.xml"/>
-
-        <log type="testdox-text" target="./../phpunit.log.txt"/>
-
-    </logging>
 </phpunit>
