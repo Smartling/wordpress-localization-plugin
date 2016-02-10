@@ -3,6 +3,7 @@
 namespace Smartling\DbAl\WordpressContentEntities;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Bootstrap;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\ThemeSidebarHelper;
 use Smartling\Helpers\WidgetHelper;
@@ -146,6 +147,10 @@ class WidgetEntity extends EntityAbstract
 
         foreach ($sideBars as $sideBarId) {
             $sideBarWidgets = WidgetHelper::getSideBarWidgets($sideBarId);
+            if (!is_array($sideBarWidgets))
+            {
+                continue;
+            }
             foreach ($sideBarWidgets as $position => $widgetId) {
                 $widget = WidgetHelper::getWidget($widgetId);
 

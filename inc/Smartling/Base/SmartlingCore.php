@@ -305,10 +305,17 @@ class SmartlingCore extends SmartlingCoreAbstract
                  );
             $originalEntity = $this->readContentEntity($submission);
 
+            $_settings = $originalEntity->getSettings();
+
+            if (array_key_exists('nav_menu', $_settings)) {
+                $menuId = (int)$_settings['nav_menu'];
+            } else {
+                $menuId = 0;
+            }
             /**
              * @var WidgetEntity $originalEntity
              */
-            $menuId = (int)$originalEntity->getSettings()['nav_menu'];
+
 
             if (0 !== $menuId) {
 
