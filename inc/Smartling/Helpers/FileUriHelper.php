@@ -5,6 +5,7 @@ use InvalidArgumentException;
 use Smartling\Bootstrap;
 use Smartling\DbAl\WordpressContentEntities\PostEntity;
 use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityAbstract;
+use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Processors\ContentEntitiesIOFactory;
@@ -115,6 +116,9 @@ class FileUriHelper
         } elseif ($ioWrapper instanceof PostEntity) {
             /* post-based content */
             $permalink = self::preparePermalink(get_permalink($submission->getSourceId()), $submission);
+        } elseif ($ioWrapper instanceof WidgetEntity) {
+            /* widget content */
+            $permalink = self::preparePermalink('', $submission);
         } else {
             $message = vsprintf(
                 'Original entity should be post-based or taxonomy and should be an appropriate ancestor of Smartling DBAL classes. Got:%s',

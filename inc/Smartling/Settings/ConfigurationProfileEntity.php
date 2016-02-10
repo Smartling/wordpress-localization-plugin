@@ -70,8 +70,8 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
             'target_locales'                   => 'TEXT NULL',
             'filter_skip'                      => 'TEXT NULL',
             'filter_copy_by_field_name'        => 'TEXT NULL',
-            'filter_copy_by_field_value_regex' => 'TEXT_NULL',
-            'filter_flag_seo'                  => 'TEXT_NULL',
+            'filter_copy_by_field_value_regex' => 'TEXT NULL',
+            'filter_flag_seo'                  => 'TEXT NULL',
         ];
     }
 
