@@ -19,7 +19,7 @@ class FileUriHelperTest extends \PHPUnit_Framework_TestCase
     const FileUriClassFullName = 'Smartling\Helpers\FileUriHelper';
 
     /**
-     * @covers       FileUriHelper::preparePermalink
+     * @covers       Smartling\Helpers\FileUriHelper::preparePermalink
      * @dataProvider preparePermalinkDataProvider
      *
      * @param string           $string
@@ -42,7 +42,7 @@ class FileUriHelperTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @covers       FileUriHelper::preparePermalink
+     * @covers       Smartling\Helpers\FileUriHelper::preparePermalink
      * @dataProvider preparePermalinkDataProviderInvalidParams
      *
      * @param string           $string
