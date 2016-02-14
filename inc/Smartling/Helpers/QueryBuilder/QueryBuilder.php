@@ -66,13 +66,12 @@ class QueryBuilder
         switch (true) {
 
             // no sorting enabled
-            case is_null($pageOptions) : {
+            case is_null($pageOptions) :
                 $valid = true;
                 break;
-            }
 
             // some sorting enabled
-            case is_array($pageOptions) : {
+            case is_array($pageOptions) :
 
                 //array('limit' => 20, 'page' => 1)
 
@@ -83,13 +82,11 @@ class QueryBuilder
                 $valid = $validLimit && $validPage;
 
                 break;
-            }
 
             // not null or array
-            default : {
+            default :
                 $valid = false;
                 break;
-            }
         }
 
         return $valid;

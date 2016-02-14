@@ -151,23 +151,20 @@ abstract class EntityAbstract
     public function __call($method, array $params)
     {
         switch (substr($method, 0, 3)) {
-            case 'set' : {
+            case 'set' :
                 $field = $this->getFieldNameByMethodName($method);
                 $this->$field = reset($params); // get the very first arg
                 break;
-            }
-            case 'get' : {
+            case 'get' :
                 $field = $this->getFieldNameByMethodName($method);
 
                 return $this->$field; // get the very first arg
                 break;
-            }
-            default : {
+            default :
                 $template = 'Method \'%s\' does not exists in class \'%s\'';
                 $message = vsprintf($template, [$method, get_class($this)]);
                 throw new \BadMethodCallException($message);
                 break;
-            }
         }
     }
 
