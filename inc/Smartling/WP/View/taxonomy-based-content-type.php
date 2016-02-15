@@ -115,10 +115,8 @@ if (!empty($locales)) {
 } else {
     ?>
     <div id="smartling-post-widget">
-
         No suitable target locales found.<br/>
-        Please check your <a
-            href="/wp-admin/network/admin.php?page=smartling_configuration_profile_setup&action=edit&profile=<?= $data['profile']->getId(); ?>">settings.</a>
-
+        Please check your
+        <a href="/wp-admin/network/admin.php?page=smartling_configuration_profile_setup&action=edit&profile=<?= $data['profile']->getId(); ?>">settings.</a>
     </div>
 <?php } ?>

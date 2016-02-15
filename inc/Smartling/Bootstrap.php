@@ -5,6 +5,7 @@ namespace Smartling;
 use Exception;
 use Psr\Log\LoggerInterface;
 use Smartling\Exception\MultilingualPluginNotFoundException;
+use Smartling\Exception\SmartlingBootException;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\SchedulerHelper;
@@ -13,7 +14,6 @@ use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPHookInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
 /**
  * Class Bootstrap
@@ -23,13 +23,8 @@ use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 class Bootstrap
 {
 
-    public static function DebugPrint($data, $die = false)
-    {
-        echo '<pre>' . htmlentities(var_export($data, true)) . '</pre>';
-        if (true === $die) {
-            die;
-        }
-    }
+    use DebugTrait;
+    use DITrait;
 
     public function __construct()
     {
@@ -42,22 +37,20 @@ class Bootstrap
 
     public static function getHttpHostName()
     {
-        return $_SERVER['HTTP_HOST'];
-    }
+        $url = network_site_url();
+        $parts = parse_url($url);
 
-    /**
-     * @var ContainerBuilder $container
-     */
-    private static $_container = null;
+        return $parts['host'];
+    }
 
     /**
      * @var LoggerInterface
      */
-    private static $_logger = null;
+    private static $loggerInstance = null;
 
     /**
      * @return LoggerInterface
-     * @throws Exception
+     * @throws SmartlingBootException
      */
     public static function getLogger()
     {
@@ -68,7 +61,7 @@ class Bootstrap
             return $object;
         } else {
             $message = 'Something went wrong with initialization of DI Container and logger cannot be retrieved.';
-            throw new Exception($message);
+            throw new SmartlingBootException($message);
         }
     }
 
@@ -78,67 +71,6 @@ class Bootstrap
                    ->getParameter('plugin.version');
     }
 
-    /**
-     * Initializes DI Container from YAML config file
-     *
-     * @throws SmartlingConfigException
-     */
-    protected static function _initContainer()
-    {
-        $container = new ContainerBuilder();
-
-        self::setCoreParameters($container);
-
-        $configDir = SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . 'inc';
-
-        $fileLocator = new FileLocator($configDir);
-
-        $loader = new YamlFileLoader($container, $fileLocator);
-
-        try {
-            $loader->load('services.yml');
-        } catch (\Exception $e) {
-            throw new SmartlingConfigException('Error in YAML configuration file', 0, $e);
-        }
-
-        self::$_container = $container;
-        self::$_logger = $container->get('logger');
-    }
-
-    /**
-     * Extracts mixed from container
-     *
-     * @param string $id
-     * @param bool   $is_param
-     *
-     * @return mixed
-     */
-    protected function fromContainer($id, $is_param = false)
-    {
-        $container = self::getContainer();
-        $content = null;
-
-        if ($is_param) {
-            $content = $container->getParameter($id);
-        } else {
-            $content = $container->get($id);
-        }
-
-        return $content;
-    }
-
-    /**
-     * @return ContainerBuilder
-     * @throws SmartlingConfigException
-     */
-    public static function getContainer()
-    {
-        if (is_null(self::$_container)) {
-            self::_initContainer();
-        }
-
-        return self::$_container;
-    }
 
     private static function setCoreParameters(ContainerBuilder $container)
     {
@@ -186,7 +118,8 @@ class Bootstrap
             $message .= "Message: '" . $e->getMessage() . "'\n";
             $message .= "Location: '" . $e->getFile() . ':' . $e->getLine() . "'\n";
             $message .= "Trace: " . $e->getTraceAsString() . "\n";
-            self::$_logger->emergency($message);
+            self::getLogger()
+                ->emergency($message);
             DiagnosticsHelper::addDiagnosticsMessage($message, true);
         }
 
@@ -195,31 +128,6 @@ class Bootstrap
             ->runExtensions();
     }
 
-    /**
-     * Last chance to know what had happened if Wordpress is down.
-     */
-    public function shutdownHandler()
-    {
-        $logger = Bootstrap::getLogger();
-
-        $skipLogging = E_NOTICE | E_WARNING | E_USER_NOTICE | E_USER_WARNING | E_STRICT | E_DEPRECATED;
-
-        $loggingPattern = E_ALL ^ $skipLogging;
-
-        $data = error_get_last();
-
-        /**
-         * @var int $errorType
-         */
-        $errorType = &$data['type'];
-
-        if ($errorType & $loggingPattern) {
-            $message = "An Error (0x{$data['type']}) occurred and Wordpress is down.\n";
-            $message .= "Message: '{$data['message']}'\n";
-            $message .= "Location: '{$data['file']}:{$data['line']}'\n";
-            $logger->emergency($message);
-        }
-    }
 
     /**
      * Add smartling capabilities to 'administrator' role by default
@@ -274,14 +182,14 @@ class Bootstrap
                 'polylang'               => false,
             ];
 
-        $_found = false;
+        $found = false;
 
         if (class_exists('Mlp_Load_Controller', false)) {
             $mlPluginsStatuses['multilingual-press-pro'] = true;
-            $_found = true;
+            $found = true;
         }
 
-        if (false === $_found) {
+        if (false === $found) {
             $message = 'No active multilingual plugins found.';
             $logger->warning($message);
             if (!$scielent) {
@@ -311,18 +219,17 @@ class Bootstrap
     {
         $this->testThirdPartyPluginsRequirements();
 
-        $php_extensions = [
+        $phpExtensions = [
             'curl',
             'mbstring',
         ];
 
-        foreach ($php_extensions as $ext) {
+        foreach ($phpExtensions as $ext) {
             $this->testPhpExtension($ext);
         }
 
         $this->testPluginSetup();
 
-        // display adminpanel-wide diagnostic error messgaes.
         add_action('all_admin_notices', ['Smartling\Helpers\UiMessageHelper', 'displayMessages']);
     }
 
@@ -345,9 +252,11 @@ class Bootstrap
         }
 
         if (true === $blockWork) {
-            $mainMessage = 'No active suitable localization plugin found. Please install and activate one, e.g.: <a href="/wp-admin/network/plugin-install.php?tab=search&s=multilingual+press">Multilingual Press.</a>';
+            $mainMessage = 'No active suitable localization plugin found. Please install and activate one, e.g.: '
+                . '<a href="/wp-admin/network/plugin-install.php?tab=search&s=multilingual+press">Multilingual Press.</a>';
 
-            self::$_logger->critical('Boot :: ' . $mainMessage);
+            self::getLogger()
+                ->critical('Boot :: ' . $mainMessage);
 
             DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
         }
@@ -358,7 +267,7 @@ class Bootstrap
         if (!extension_loaded($extension)) {
             $mainMessage = $extension . ' php extension is required to run the plugin is not installed or enabled.';
 
-            self::$_logger->critical('Boot :: ' . $mainMessage);
+            self::$loggerInstance->critical('Boot :: ' . $mainMessage);
 
             DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
         }
@@ -376,9 +285,11 @@ class Bootstrap
         $profiles = $sm->getEntities([], null, $total, true);
 
         if (0 === count($profiles)) {
-            $mainMessage = 'No active smartling configuration profiles found. Please create at least one on <a href="/wp-admin/admin.php?page=smartling_configuration_profile_list">settings page</a>';
+            $mainMessage = 'No active smartling configuration profiles found. Please create at least one on '
+                . '<a href="/wp-admin/admin.php?page=smartling_configuration_profile_list">settings page</a>';
 
-            self::$_logger->critical('Boot :: ' . $mainMessage);
+            self::getLogger()
+                ->critical('Boot :: ' . $mainMessage);
 
             DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
         }
