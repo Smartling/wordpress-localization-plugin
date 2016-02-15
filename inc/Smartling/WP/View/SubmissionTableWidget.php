@@ -27,9 +27,9 @@ class SubmissionTableWidget extends SmartlingListTable
 
     use CommonLogMessagesTrait;
 
-    const ACTION_UPLOAD = 'send';
+    const ACTION_UPLOAD       = 'send';
     const ACTION_CHECK_STATUS = 'check';
-    const ACTION_DOWNLOAD = 'download';
+    const ACTION_DOWNLOAD     = 'download';
 
     /**
      * @var LoggerInterface
@@ -240,27 +240,22 @@ class SubmissionTableWidget extends SmartlingListTable
         $messages = null;
 
         switch ($action) {
-            case self::ACTION_CHECK_STATUS: {
+            case self::ACTION_CHECK_STATUS:
                 $this->getLogger()->info(vsprintf(self::$MSG_STATUS_CHECK_TRIGGERED, [$submissionId,]));
                 $messages = $this->getEntryPoint()->checkSubmissionById($submissionId);
                 break;
-            }
-            case self::ACTION_UPLOAD: {
+            case self::ACTION_UPLOAD:
                 $this->getLogger()->info(vsprintf(self::$MSG_UPLOAD_TRIGGERED, [$submissionId,]));
                 $messages = $this->getEntryPoint()->sendForTranslationBySubmissionId($submissionId);
                 break;
-            }
-            case self::ACTION_DOWNLOAD: {
+            case self::ACTION_DOWNLOAD:
                 $this->getLogger()->info(vsprintf(self::$MSG_DOWNLOAD_TRIGGERED, [$submissionId,]));
-
                 $messages = $this->getEntryPoint()->downloadTranslationBySubmissionId($submissionId);
                 break;
-            }
-            default: {
+            default:
                 $msg = vsprintf(self::$MSG_WARN_UNKNOWN_ACTION_TRIGGERED, [$action, $submissionId,]);
                 $this->getLogger()->warning($msg);
                 $messages = [$msg];
-            }
         }
 
         return $messages;

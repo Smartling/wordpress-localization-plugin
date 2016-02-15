@@ -1,11 +1,8 @@
-<style>
-    tr.form-field td.sm_sh {
-        padding-top: 3px;
-        padding-bottom: 4px;
-    }
-</style>
-
 <?php
+/**
+ * Widget markup for taxonomy based content types
+ */
+
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Settings\TargetLocale;
@@ -13,6 +10,14 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\Controller\TaxonomyWidgetController;
 use Smartling\WP\WPAbstract;
 
+?>
+<style>
+    tr.form-field td.sm_sh {
+        padding-top: 3px;
+        padding-bottom: 4px;
+    }
+</style>
+<?php
 /**
  * @var WPAbstract $this
  * @var WPAbstract self
@@ -44,13 +49,13 @@ $locales = $filteredLocales;
 
 <?php
 if (!empty($locales)) {
+    $widgetTitle = vsprintf('Translate this %s into', [WordpressContentTypeHelper::getLocalizedContentType($data['term']->taxonomy)]);
     ?>
 
     <div id="smartling-post-widget">
     <h2>Smartling connector actions</h2>
 
-    <h3><?= __(vsprintf('Translate this %s into',
-            [WordpressContentTypeHelper::getLocalizedContentType($data['term']->taxonomy)])); ?></h3>
+    <h3><?= __($widgetTitle); ?></h3>
     <?= WPAbstract::checkUncheckBlock(); ?>
     <div style="width: 400px;">
         <?php
@@ -88,23 +93,12 @@ if (!empty($locales)) {
             ?>
             <div class="smtPostWidget-rowWrapper" style="display: inline-block; width: 100%;">
                 <div class="smtPostWidget-row">
-                    <?= WPAbstract::localeSelectionCheckboxBlock(
-                        $nameKey,
-                        $locale->getBlogId(),
-                        $locale->getLabel(),
-                        $value
-                    ); ?>
+                    <?= WPAbstract::localeSelectionCheckboxBlock($nameKey, $locale->getBlogId(), $locale->getLabel(), $value); ?>
                 </div>
                 <div class="smtPostWidget-progress" style="left: 15px;">
                     <?php if ($value) { ?>
-                        <?= WPAbstract::localeSelectionTranslationStatusBlock(
-                            __($statusValue),
-                            $status,
-                            $percent
-                        ); ?>
-                        <?= WPAbstract::inputHidden(
-                            $id
-                        ); ?>
+                        <?= WPAbstract::localeSelectionTranslationStatusBlock(__($statusValue), $status, $percent); ?>
+                        <?= WPAbstract::inputHidden($id); ?>
                     <?php } ?>
                 </div>
             </div>

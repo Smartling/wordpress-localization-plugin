@@ -145,7 +145,6 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
             header('Content-Length: ' . filesize($fullFilename)); //Remove
             readfile($fullFilename);
         }
-        die;
     }
 
 }

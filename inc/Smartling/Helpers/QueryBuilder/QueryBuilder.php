@@ -109,8 +109,8 @@ class QueryBuilder
         $tableName,
         $fieldsList,
         ConditionBlock $conditions = null,
-        $sortOptions,
-        $pageOptions
+        $sortOptions = [],
+        $pageOptions = null
     )
     {
 

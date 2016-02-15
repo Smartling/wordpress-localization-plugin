@@ -60,20 +60,15 @@ class XmlEncoder
      */
     public static function logMessage($message)
     {
-        if (true === (bool)Bootstrap::getContainer()
-                                    ->getParameter('logger.smartling_verbose_output_for_xml_coding')
-        ) {
-            Bootstrap::getLogger()
-                     ->debug($message);
+        if (true === (bool)Bootstrap::getContainer()->getParameter('logger.smartling_verbose_output_for_xml_coding')) {
+            Bootstrap::getLogger()->debug($message);
         }
     }
 
-    private static $magicComments = [
-        'smartling.translate_paths = data/string',
-        'smartling.string_format_paths = html : data/string',
-        'smartling.source_key_paths = data/{string.key}',
-        'smartling.variants_enabled = true',
-    ];
+    private static $magicComments = ['smartling.translate_paths = data/string',
+                                     'smartling.string_format_paths = html : data/string',
+                                     'smartling.source_key_paths = data/{string.key}',
+                                     'smartling.variants_enabled = true',];
 
     const XML_ROOT_NODE_NAME = 'data';
 
@@ -104,10 +99,8 @@ class XmlEncoder
             $document->appendChild($document->createComment(vsprintf(' %s ', [$commentString])));
         }
 
-        $additionalComments = [
-            'Smartling Wordpress Connector version: ' . Bootstrap::getCurrentVersion(),
-            'Wordpress installation host: ' . Bootstrap::getHttpHostName(),
-        ];
+        $additionalComments = ['Smartling Wordpress Connector version: ' . Bootstrap::getCurrentVersion(),
+                               'Wordpress installation host: ' . Bootstrap::getHttpHostName(),];
 
         foreach ($additionalComments as $extraComment) {
             $document->appendChild($document->createComment(vsprintf(' %s ', [$extraComment])));
@@ -134,32 +127,24 @@ class XmlEncoder
             $valueType = gettype($element);
 
             switch ($valueType) {
-                case 'array': {
+                case 'array':
                     $tmp = self::flatternArray($element, $path);
                     $output = array_merge($output, $tmp);
                     break;
-                }
                 case 'NULL':
                 case 'boolean':
                 case 'string':
                 case 'integer':
-                case 'double': {
+                case 'double':
                     $output[$path] = (string)$element;
                     break;
-                }
                 case 'unknown type':
                 case 'resource':
-                case 'object': {
-                    $message = vsprintf(
-                        'Unsupported type \'%s\' found in scope for translation. Skipped. Contents: \'%s\'',
-                        [
-                            $valueType,
-                            var_export($element, true),
-                        ]
-                    );
+                case 'object':
+                default:
+                    $message = vsprintf('Unsupported type \'%s\' found in scope for translation. Skipped. Contents: \'%s\'',
+                                        [$valueType, var_export($element, true),]);
                     self::logMessage($message);
-                }
-
             }
         }
 
@@ -215,8 +200,7 @@ class XmlEncoder
      */
     private static function getFieldProcessingParams()
     {
-        return Bootstrap::getContainer()
-                        ->getParameter('field.processor');
+        return Bootstrap::getContainer()->getParameter('field.processor');
     }
 
     private static function removeFields($array, $list)
@@ -269,7 +253,7 @@ class XmlEncoder
             foreach ($list as $item) {
                 if (preg_match("/{$item}/us", $value)) {
                     $debugMessage = vsprintf('Removed field by value: filedName:\'%s\' fieldValue:\'%s\' filter:\'%s\'',
-                        [$key, $value, $item]);
+                                             [$key, $value, $item]);
                     self::logMessage($debugMessage);
                     continue 2;
                 }
@@ -286,9 +270,7 @@ class XmlEncoder
 
         if (array_key_exists('meta', $sourceArray) && is_array($sourceArray['meta'])) {
             foreach ($sourceArray['meta'] as & $value) {
-                if (is_array($value) && array_key_exists('entity', $value) && array_key_exists('meta',
-                        $value)
-                ) {
+                if (is_array($value) && array_key_exists('entity', $value) && array_key_exists('meta', $value)) {
                     // nested object detected
                     $value = self::prepareSourceArray($value, $strategy);
                 }
@@ -329,8 +311,7 @@ class XmlEncoder
      */
     public static function xmlEncode(array $source)
     {
-        self::logMessage(vsprintf('Started creating XML for fields: %s',
-            [base64_encode(var_export($source, true))]));
+        self::logMessage(vsprintf('Started creating XML for fields: %s', [base64_encode(var_export($source, true))]));
         $originalSource = $source;
         $source = self::prepareSourceArray($source);
         $xml = self::setTranslationComments(self::initXml());
@@ -387,9 +368,7 @@ class XmlEncoder
 
     public static function xmlDecode($content)
     {
-        self::logMessage(vsprintf('Starting XML file decoding : %s',
-            [base64_encode(var_export($content, true))]));
-        //self::logMessage( vsprintf( 'Decoding XML file: %s', [ $content ] ) );
+        self::logMessage(vsprintf('Starting XML file decoding : %s', [base64_encode(var_export($content, true))]));
         $xpath = self::prepareXPath($content);
 
         $stringPath = '/data/string';
@@ -402,9 +381,10 @@ class XmlEncoder
         for ($i = 0; $i < $nodeList->length; $i++) {
             $item = $nodeList->item($i);
             $name = $item->getAttribute('name');
-            $value = $item->nodeValue;
-            $fields[$name] = $value;
+            $nodeValue = $item->nodeValue;
+            $fields[$name] = $nodeValue;
         }
+
 
         $nodeList = $xpath->query($sourcePath);
 

@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: sergey@slepokurov.com
- * Date: 02.03.2015
- * Time: 10:17
- */
 
 namespace Smartling\WP\Controller;
 
@@ -14,7 +8,6 @@ use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
-
 
 /**
  * Class CheckStatusController
@@ -29,16 +22,9 @@ class CheckStatusController extends WPAbstract implements WPHookInterface
 
     public function wp_enqueue()
     {
-        wp_enqueue_script(
-            $this->getPluginInfo()
-                 ->getName() . "submission",
-            $this->getPluginInfo()
-                 ->getUrl() . 'js/smartling-submissions-check.js',
-            ['jquery'],
-            $this->getPluginInfo()
-                 ->getVersion(),
-            false
-        );
+        wp_enqueue_script($this->getPluginInfo()->getName() . "submission", $this->getPluginInfo()
+                ->getUrl() . 'js/smartling-submissions-check.js', ['jquery'], $this->getPluginInfo()
+            ->getVersion(), false);
     }
 
     /**
@@ -65,21 +51,17 @@ class CheckStatusController extends WPAbstract implements WPHookInterface
                 /**
                  * @var SmartlingCore $ep
                  */
-                $ep = Bootstrap::getContainer()
-                               ->get('entrypoint');
+                $ep = Bootstrap::getContainer()->get('entrypoint');
                 $results = $ep->bulkCheckByIds($items);
 
                 $response = [];
                 foreach ($results as $result) {
                     /** @var SubmissionEntity $result */
-                    $response[] = [
-                        "id"         => $result->getId(),
-                        "status"     => $result->getStatus(),
-                        "color"      => $result->getStatusColor(),
-                        "percentage" => $result->getCompletionPercentage(),
-                    ];
+                    $response[] = ["id"         => $result->getId(), "status" => $result->getStatus(),
+                                   "color"      => $result->getStatusColor(),
+                                   "percentage" => $result->getCompletionPercentage(),];
                 }
-                die(json_encode($response));
+                wp_send_json($response);
             }
         }
 
@@ -117,10 +99,8 @@ class CheckStatusController extends WPAbstract implements WPHookInterface
             }
 
             if (!$isCached) {
-                $cachedItems[] = [
-                    "item"       => $item,
-                    "expiration" => $slide,
-                ];
+                /** @noinspection OffsetOperationsInspection */
+                $cachedItems[] = ["item" => $item, "expiration" => $slide,];
                 $result[] = $item;
             }
         }
