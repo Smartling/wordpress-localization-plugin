@@ -1,15 +1,16 @@
 <?php
-
+namespace Smartling\Tests\Entities;
 use Smartling\Bootstrap;
-use Smartling\DbAl\WordpressContentEntities\TagEntity;
+use Smartling\DbAl\WordpressContentEntities\CategoryEntity;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Processors\ContentEntitiesIOFactory;
+use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 
 /**
- * Class TagTest
+ * Class CategoryTest
  */
-class TagTest extends PHPUnit_Framework_TestCase {
+class CategoryTest extends \PHPUnit_Framework_TestCase {
 
 	/**
 	 * @var ContentEntitiesIOFactory
@@ -17,21 +18,24 @@ class TagTest extends PHPUnit_Framework_TestCase {
 	private $ioFactory;
 
 	public function __construct ( $name = null, array $data = array (), $dataName = '' ) {
+		WordpressFunctionsMockHelper::injectFunctionsMocks();
+
 		parent::__construct( $name, $data, $dataName );
 
 		$this->ioFactory = Bootstrap::getContainer()->get( 'factory.contentIO' );
 	}
 
-	public function testGetTagWrapper () {
-		$type = WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG;
+	public function testGetCategoryWrapper () {
+		$type = WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY;
 
 		$wrapper = $this->ioFactory->getMapper( $type );
 
-		self::assertTrue( $wrapper instanceof TagEntity );
+		self::assertTrue( $wrapper instanceof CategoryEntity );
 	}
 
-	public function testGetTagWrapperException () {
-		$type = WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG;
+
+	public function testGetCategoryWrapperException () {
+		$type = WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY;
 
 		$type = strrev( $type );
 		try {
@@ -41,15 +45,15 @@ class TagTest extends PHPUnit_Framework_TestCase {
 		}
 	}
 
-	public function testReadTag () {
-		$type = WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG;
+	public function testReadCategory () {
+		$type = WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY;
 
 		$wrapper = $this->ioFactory->getMapper( $type );
 
 		$result = $wrapper->get( 1 );
 
 
-		self::assertTrue( $result instanceof TagEntity );
+		self::assertTrue( $result instanceof CategoryEntity );
 
 		self::assertTrue( $result->term_id === 1 );
 
@@ -60,8 +64,8 @@ class TagTest extends PHPUnit_Framework_TestCase {
 		self::assertTrue( $result->taxonomy === $type );
 	}
 
-	public function testCloneTag () {
-		$type = WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG;
+	public function testCloneCategory () {
+		$type = WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY;
 
 		$wrapper = $this->ioFactory->getMapper( $type );
 
@@ -77,8 +81,8 @@ class TagTest extends PHPUnit_Framework_TestCase {
 
 	}
 
-	public function testCleanTagFields () {
-		$type = WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG;
+	public function testCleanCategoryFields () {
+		$type = WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY;
 
 		$wrapper = $this->ioFactory->getMapper( $type );
 
@@ -92,23 +96,30 @@ class TagTest extends PHPUnit_Framework_TestCase {
 	}
 
 
-	public function testCreateTag () {
-		$type = WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG;
+	public function testCreateCategory () {
+
+
+		$type = WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY;
 
 		$wrapper = $this->ioFactory->getMapper( $type );
+
 		$result = $wrapper->get( 1 );
+
 		$clone = clone $result;
+
 		$clone->cleanFields();
+
 		$clone->name = 'test';
 		$clone->slug = 'test';
+
 		$id = $wrapper->set( $clone );
 
 		self::assertTrue( 2 === $id );
 	}
 
 
-	public function testUpdateTag () {
-		$type = WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG;
+	public function testUpdateCategory () {
+		$type = WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY;
 
 		$wrapper = $this->ioFactory->getMapper( $type );
 		$result = $wrapper->get( 1 );

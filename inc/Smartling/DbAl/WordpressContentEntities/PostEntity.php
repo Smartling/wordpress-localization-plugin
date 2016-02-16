@@ -228,7 +228,7 @@ class PostEntity extends EntityAbstract
 
         $array = $instance->toArray();
 
-        $array['post_category'] = wp_get_post_categories($instance->ID);
+        $array['post_category'] = \wp_get_post_categories($instance->ID);
 
         $res = wp_insert_post($array, true);
 

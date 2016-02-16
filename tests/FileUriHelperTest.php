@@ -28,17 +28,8 @@ class FileUriHelperTest extends \PHPUnit_Framework_TestCase
      */
     public function testPreparePermalink($string, $entity, $expectedValue)
     {
-        self::assertEquals(
-            $this->invokeStaticMethod(
-                self::FileUriClassFullName,
-                'preparePermalink',
-                [
-                    $string,
-                    $entity,
-                ]
-            ),
-            $expectedValue
-        );
+        self::assertEquals($this->invokeStaticMethod(self::FileUriClassFullName, 'preparePermalink',
+                                                     [$string, $entity,]), $expectedValue);
     }
 
     /**
@@ -52,34 +43,16 @@ class FileUriHelperTest extends \PHPUnit_Framework_TestCase
      */
     public function testPreparePermalinkInvalidParams($string, $entity)
     {
-        $this->invokeStaticMethod(
-            self::FileUriClassFullName,
-            'preparePermalink',
-            [
-                $string,
-                $entity,
-            ]
-        );
+        $this->invokeStaticMethod(self::FileUriClassFullName, 'preparePermalink', [$string, $entity,]);
     }
 
     protected function getSubmissionEntityMock($title, $type, $blogId, $contentId)
     {
-        $submissionMock = SubmissionEntityMockHelper::getRawMock(
-            $this->getMockBuilder(SubmissionEntityMockHelper::CLASS_NAME)
-        );
-        $submissionMock->expects(self::any())
-                       ->method('getSourceTitle')
-                       ->with(false)
-                       ->willReturn($title);
-        $submissionMock->expects(self::any())
-                       ->method('getContentType')
-                       ->willReturn($type);
-        $submissionMock->expects(self::any())
-                       ->method('getSourceId')
-                       ->willReturn($blogId);
-        $submissionMock->expects(self::any())
-                       ->method('getSourceBlogId')
-                       ->willReturn($contentId);
+        $submissionMock = SubmissionEntityMockHelper::getRawMock($this->getMockBuilder(SubmissionEntityMockHelper::CLASS_NAME));
+        $submissionMock->expects(self::any())->method('getSourceTitle')->with(false)->willReturn($title);
+        $submissionMock->expects(self::any())->method('getContentType')->willReturn($type);
+        $submissionMock->expects(self::any())->method('getSourceId')->willReturn($blogId);
+        $submissionMock->expects(self::any())->method('getSourceBlogId')->willReturn($contentId);
 
         return $submissionMock;
     }
@@ -91,33 +64,17 @@ class FileUriHelperTest extends \PHPUnit_Framework_TestCase
      */
     public function preparePermalinkDataProvider()
     {
-        return [
-            [
-                'http://nothing.com/blog/my-source-title/',
-                $this->getSubmissionEntityMock('My Source Title', 'post', 1, 1),
-                '/blog/my-source-title',
-            ],
-            [
-                (object)['foo'], // simple emulation of the object
-                $this->getSubmissionEntityMock('My Source Title', 'post', 1, 1),
-                'My Source Title',
-            ],
-            [
-                'http://nothing.com/?p=123',
-                $this->getSubmissionEntityMock('My Source Title', 'post', 1, 1),
-                'My Source Title',
-            ],
-            [
-                ['foo'], // simple emulation of the array
-                $this->getSubmissionEntityMock('My Source Title', 'post', 1, 1),
-                'My Source Title',
-            ],
-            [
-                false, // simple emulation of the array
-                $this->getSubmissionEntityMock('My Source Title', 'post', 1, 1),
-                'My Source Title',
-            ],
-        ];
+        return [['http://nothing.com/blog/my-source-title/',
+                 $this->getSubmissionEntityMock('My Source Title', 'post', 1, 1), '/blog/my-source-title',],
+                [(object)['foo'], // simple emulation of the object
+                 $this->getSubmissionEntityMock('My Source Title', 'post', 1, 1), 'My Source Title',],
+                ['http://nothing.com/?p=123', $this->getSubmissionEntityMock('My Source Title', 'post', 1, 1),
+                 'My Source Title',], [['foo'], // simple emulation of the array
+                                       $this->getSubmissionEntityMock('My Source Title', 'post', 1, 1),
+                                       'My Source Title',], [false, // simple emulation of the array
+                                                             $this->getSubmissionEntityMock('My Source Title', 'post',
+                                                                                            1, 1),
+                                                             'My Source Title',],];
     }
 
     /**
@@ -127,15 +84,7 @@ class FileUriHelperTest extends \PHPUnit_Framework_TestCase
      */
     public function preparePermalinkDataProviderInvalidParams()
     {
-        return [
-            [
-                'http://nothing.com/blog/my-source-title/',
-                null,
-            ],
-            [
-                'http://nothing.com/blog/my-source-title/',
-                $this->getSubmissionEntityMock('', 'post', 1, 1),
-            ],
-        ];
+        return [['http://nothing.com/blog/my-source-title/', null,],
+                ['http://nothing.com/blog/my-source-title/', $this->getSubmissionEntityMock('', 'post', 1, 1),],];
     }
 }
