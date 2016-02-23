@@ -9,6 +9,7 @@ use Smartling\Helpers\Cache;
 use Smartling\Helpers\CustomMenuContentTypeHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Processors\ContentEntitiesIOFactory;
+use Smartling\Queue\QueueInterface;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
 
@@ -78,6 +79,11 @@ abstract class SmartlingCoreAbstract
      * @var SettingsManager
      */
     private $settingsManager;
+
+    /**
+     * @var QueueInterface
+     */
+    private $queue;
 
     /**
      * @return Cache
@@ -237,5 +243,21 @@ abstract class SmartlingCoreAbstract
     public function setSettingsManager($settingsManager)
     {
         $this->settingsManager = $settingsManager;
+    }
+
+    /**
+     * @return QueueInterface
+     */
+    public function getQueue()
+    {
+        return $this->queue;
+    }
+
+    /**
+     * @param QueueInterface $queue
+     */
+    public function setQueue(QueueInterface $queue)
+    {
+        $this->queue = $queue;
     }
 }

@@ -181,6 +181,13 @@ services:
       - "@logger"
       - "%plugin.name%"
       - "%plugin.version%"
+  queue.db:
+    class: Smartling\Queue\Queue
+    arguments:
+      - "@logger"
+    calls:
+      - ["setDbal", ["@site.db"]]
+
 
   entrypoint:
     class: Smartling\Base\SmartlingCore
@@ -195,6 +202,7 @@ services:
       - [ "setCache", [ "@site.cache" ]]
       - [ "setCustomMenuHelper", [ "@helper.customMenu" ]]
       - [ "setSettingsManager", [ "@manager.settings" ]]
+      - [ "setQueue", ["@queue.db"]]
 
   wrapper.widget:
     class: Smartling\DbAl\WordpressContentEntities\WidgetEntity
