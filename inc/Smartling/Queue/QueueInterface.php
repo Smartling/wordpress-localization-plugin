@@ -1,15 +1,26 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: para
- * Date: 22.02.16
- * Time: 12:23
- */
 
 namespace Smartling\Queue;
 
-
-class QueueInterface
+/**
+ * Interface QueueInterface
+ *
+ * @package Smartling\Queue
+ */
+interface QueueInterface
 {
+    /**
+     * Adds an array to the queue
+     *
+     * @param array       $value
+     * @param string|null $queue
+     */
+    public function enqueue(array $value, $queue = null);
 
+    /**
+     * @param null $queue
+     *
+     * @return array
+     */
+    public function dequeue($queue = null);
 }
