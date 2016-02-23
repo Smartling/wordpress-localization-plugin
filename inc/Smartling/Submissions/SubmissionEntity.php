@@ -29,11 +29,14 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  * @property int         $completed_string_count
  * @property string      $status
  * @property int         $is_locked
+ * @property \DateTime   $last_modified
  *
  * @package Smartling\Submissions
  */
 class SubmissionEntity extends SmartlingEntityAbstract
 {
+
+    const DATETIME_FORMAT = 'Y-m-d H:i:s';
 
     /**
      * Submission Status  'Not Translated'
@@ -92,6 +95,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
             'word_count'             => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_DEFAULT_ZERO,
             'status'                 => self::DB_TYPE_STRING_SMALL,
             'is_locked'              => self::DB_TYPE_UINT_SWITCH . ' ' . self::DB_TYPE_DEFAULT_ZERO,
+            'last_modified'          => self::DB_TYPE_DATETIME,
         ];
     }
 
@@ -176,6 +180,22 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return [
             'progress' => $this->getCompletionPercentage() . '%',
         ];
+    }
+
+    /**
+     * @return \DateTime
+     */
+    public function getLastModified()
+    {
+        return \DateTime::createFromFormat(self::DATETIME_FORMAT, $this->stateFields['last_modified']);
+    }
+
+    /**
+     * @param \DateTime $dateTime
+     */
+    public function setLastModified(\DateTime $dateTime)
+    {
+        $this->stateFields['last_modified'] = $dateTime->format(self::DATETIME_FORMAT);
     }
 
     /**
