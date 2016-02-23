@@ -23,6 +23,7 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
     const DB_TYPE_STRING_SMALL    = 'VARCHAR(16) NOT NULL';
     const DB_TYPE_UINT_SWITCH     = 'INT(1) UNSIGNED NOT NULL DEFAULT \'0\'';
 
+    const DB_TYPE_STRING_TEXT = 'TEXT NOT NULL DEFAULT \'\'';
     /**
      * @var array
      */
@@ -181,7 +182,7 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
      *
      * @return string
      */
-    static function getFieldLabel($fieldName)
+    static public function getFieldLabel($fieldName)
     {
         $labels = static::getFieldLabels();
 
