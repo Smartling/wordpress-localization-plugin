@@ -132,18 +132,7 @@ class ApiWrapper implements ApiWrapperInterface
      */
     private function getConfigurationProfile(SubmissionEntity $submission)
     {
-        $mainBlogId = $submission->getSourceBlogId();
-
-        $possibleProfiles = $this->getSettings()
-                                 ->findEntityByMainLocale($mainBlogId);
-
-        if (0 < count($possibleProfiles)) {
-            return reset($possibleProfiles);
-        }
-        $message = vsprintf('No active profile found for main blog %s', [$mainBlogId]);
-        $this->getLogger()
-             ->warning($message);
-        throw new SmartlingDbException($message);
+        return $this->getSettings()->getSingleSettingsProfile($submission->getSourceBlogId());
     }
 
     /**
@@ -180,16 +169,16 @@ class ApiWrapper implements ApiWrapperInterface
             );
 
             $this->getLogger()
-                 ->info(vsprintf(
-                     'Starting file \'%s\' download for entity = \'%s\', blog = \'%s\', id = \'%s\', locale = \'%s\'',
-                     [
-                         $entity->getFileUri(),
-                         $entity->getContentType(),
-                         $entity->getSourceBlogId(),
-                         $entity->getSourceId(),
-                         $entity->getTargetLocale(),
-                     ]
-                 ));
+                ->info(vsprintf(
+                           'Starting file \'%s\' download for entity = \'%s\', blog = \'%s\', id = \'%s\', locale = \'%s\'',
+                           [
+                               $entity->getFileUri(),
+                               $entity->getContentType(),
+                               $entity->getSourceBlogId(),
+                               $entity->getSourceId(),
+                               $entity->getTargetLocale(),
+                           ]
+                       ));
 
             $params = new DownloadFileParameters();
 
@@ -205,10 +194,25 @@ class ApiWrapper implements ApiWrapperInterface
 
         } catch (\Exception $e) {
             $this->getLogger()
-                 ->error($e->getMessage());
+                ->error($e->getMessage());
             throw new SmartligFileDownloadException($e->getMessage());
 
         }
+    }
+
+    /**
+     * @param SubmissionEntity $entity
+     * @param int              $completedStrings
+     * @param int              $authorizedStrings
+     *
+     * @return SubmissionEntity
+     */
+    private function setTranslationStatusToEntity(SubmissionEntity $entity, $completedStrings, $authorizedStrings)
+    {
+        $entity->setApprovedStringCount($completedStrings + $authorizedStrings);
+        $entity->setCompletedStringCount($completedStrings);
+
+        return $entity;
     }
 
     /**
@@ -232,8 +236,10 @@ class ApiWrapper implements ApiWrapperInterface
 
             $data = $api->getStatus($entity->getFileUri(), $locale);
 
-            $entity->setApprovedStringCount($data['completedStringCount'] + $data['authorizedStringCount']);
-            $entity->setCompletedStringCount($data['completedStringCount']);
+            $entity = $this->setTranslationStatusToEntity($entity,
+                                                          $data['completedStringCount'],
+                                                          $data['authorizedStringCount']);
+
             $entity->setWordCount($data['totalWordCount']);
 
             return $entity;
@@ -269,32 +275,11 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
-    /**
-     * @param ConfigurationProfileEntity $profile
-     * @param                            $targetBlog
-     *
-     * @return string
-     */
-    private function getSmartLingLocale(ConfigurationProfileEntity $profile, $targetBlog)
-    {
-        $locale = '';
-
-        $locales = $profile->getTargetLocales();
-        foreach ($locales as $item) {
-            if ($targetBlog === $item->getBlogId()) {
-                $locale = $item->getSmartlingLocale();
-                break;
-            }
-        }
-
-        return $locale;
-    }
-
     private function getSmartlingLocaleBySubmission(SubmissionEntity $entity)
     {
-        $profile = $this->getConfigurationProfile($entity);
+        $profile = $this->getSettings()->getSingleSettingsProfile($entity->getSourceBlogId());
 
-        return $this->getSmartLingLocale($profile, $entity->getTargetBlogId());
+        return $this->getSettings()->getSmartlingLocaleIdBySettingsProfile($profile, $entity->getTargetBlogId());
     }
 
     /**
@@ -309,16 +294,16 @@ class ApiWrapper implements ApiWrapperInterface
     public function uploadContent(SubmissionEntity $entity, $xmlString = '', $filename = '')
     {
         $this->getLogger()
-             ->info(vsprintf(
-                 'Starting file \'%s\' upload for entity = \'%s\', blog = \'%s\', id = \'%s\', locale = \'%s\'',
-                 [
-                     $entity->getFileUri(),
-                     $entity->getContentType(),
-                     $entity->getSourceBlogId(),
-                     $entity->getSourceId(),
-                     $entity->getTargetLocale(),
-                 ]
-             ));
+            ->info(vsprintf(
+                       'Starting file \'%s\' upload for entity = \'%s\', blog = \'%s\', id = \'%s\', locale = \'%s\'',
+                       [
+                           $entity->getFileUri(),
+                           $entity->getContentType(),
+                           $entity->getSourceBlogId(),
+                           $entity->getSourceId(),
+                           $entity->getTargetLocale(),
+                       ]
+                   ));
         try {
             $profile = $this->getConfigurationProfile($entity);
 
@@ -366,12 +351,8 @@ class ApiWrapper implements ApiWrapperInterface
      */
     public function getSupportedLocales(ConfigurationProfileEntity $profile)
     {
-
         $supportedLocales = [];
-
         try {
-
-
             $api = ProjectApi::create(
                 $this->getAuthProvider($profile),
                 $profile->getProjectId(),
@@ -389,5 +370,93 @@ class ApiWrapper implements ApiWrapperInterface
         }
 
         return $supportedLocales;
+    }
+
+    /**
+     * @param SubmissionEntity $submission
+     *
+     * @return array mixed
+     * @throws SmartlingNetworkException
+     */
+    public function lastModified(SubmissionEntity $submission)
+    {
+        try {
+            $profile = $this->getConfigurationProfile($submission);
+
+            $api = FileApi::create(
+                $this->getAuthProvider($profile),
+                $profile->getProjectId(),
+                $this->getLogger()
+            );
+
+            $data = $api->lastModified($submission->getFileUri());
+
+
+            $output = [];
+
+            foreach ($data['items'] as $descriptor) {
+                $output[$descriptor['localeId']] = $descriptor['lastModified'];
+            }
+
+            return $output;
+
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
+            throw new SmartlingNetworkException($e->getMessage());
+        }
+    }
+
+    /**
+     * @param SubmissionEntity[] $submissions
+     *
+     * @return Submissions\SubmissionEntity[]
+     * @throws SmartlingNetworkException
+     */
+    public function getStatusForAllLocales(array $submissions)
+    {
+        try {
+            /**
+             * @var SubmissionEntity $submission
+             */
+            $submission = reset($submissions);
+            $profile = $this->getConfigurationProfile($submission);
+
+            $api = FileApi::create(
+                $this->getAuthProvider($profile),
+                $profile->getProjectId(),
+                $this->getLogger()
+            );
+
+            $data = $api->getStatusForAllLocales($submission->getFileUri());
+
+            $totalWordCount = $data['totalWordCount'];
+
+            unset($submission);
+
+            foreach ($data['items'] as $descriptor) {
+                $localeId = $descriptor['localeId'];
+
+                if (array_key_exists($localeId,$submissions))
+                {
+                    $completedStrings = $descriptor['completedStringCount'];
+                    $authorizedStrings = $descriptor['authorizedStringCount'];
+
+                    /**
+                     * @var SubmissionEntity $submission
+                     */
+                    $submission = $this->setTranslationStatusToEntity(
+                        $submissions[$localeId],
+                        $completedStrings,
+                        $authorizedStrings);
+                    $submission->setWordCount($totalWordCount);
+                }
+            }
+
+            return $submissions;
+
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
+            throw new SmartlingNetworkException($e->getMessage());
+        }
     }
 }

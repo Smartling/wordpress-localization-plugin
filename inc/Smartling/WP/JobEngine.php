@@ -111,6 +111,6 @@ class JobEngine implements WPHookInterface
          */
         $ep = Bootstrap::getContainer()
                        ->get('entrypoint');
-        $ep->bulkCheckNewAndInProgress();
+        $ep->bulkCheck();
     }
 }

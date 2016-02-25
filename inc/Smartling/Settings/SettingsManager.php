@@ -47,6 +47,46 @@ class SettingsManager extends EntityManagerAbstract
         return $result;
     }
 
+    /**
+     * @param int $mainBlogId
+     *
+     * @return ConfigurationProfileEntity
+     * @throws SmartlingDbException
+     */
+    public function getSingleSettingsProfile($mainBlogId)
+    {
+        $possibleProfiles = $this->findEntityByMainLocale($mainBlogId);
+
+        if (0 < count($possibleProfiles)) {
+            return reset($possibleProfiles);
+        }
+
+        $message = vsprintf('No active profile found for main blog %s', [$mainBlogId]);
+        $this->getLogger()->warning($message);
+        throw new SmartlingDbException($message);
+    }
+
+    /**
+     * @param ConfigurationProfileEntity $profile
+     *
+     * @param int                        $targetBlog
+     *
+     * @return string
+     */
+    public function getSmartlingLocaleIdBySettingsProfile(ConfigurationProfileEntity $profile, $targetBlog) {
+        $locale = '';
+
+        $locales = $profile->getTargetLocales();
+        foreach ($locales as $item) {
+            if ($targetBlog === $item->getBlogId()) {
+                $locale = $item->getSmartlingLocale();
+                break;
+            }
+        }
+
+        return $locale;
+    }
+
     public function getEntityById($id)
     {
         $cond = ConditionBlock::getConditionBlock();

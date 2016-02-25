@@ -59,4 +59,18 @@ interface ApiWrapperInterface
      * @return array
      */
     public function getSupportedLocales(ConfigurationProfileEntity $profile);
+
+    /**
+     * @param SubmissionEntity $submission
+     *
+     * @return array mixed
+     */
+    public function lastModified(SubmissionEntity $submission);
+
+    /**
+     * @param SubmissionEntity[] $submissions
+     *
+     * @return SubmissionEntity[]
+     */
+    public function getStatusForAllLocales(array $submissions);
 }
