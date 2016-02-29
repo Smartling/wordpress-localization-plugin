@@ -17,8 +17,9 @@ use Smartling\Helpers\SimpleStorageHelper;
 class JobEngine implements WPHookInterface
 {
 
-    const CRON_HOOK = 'smartling_cron_task';
-    const LOCK_NAME = 'smartling-cron.pid';
+    const CRON_HOOK        = 'smartling_cron_task';
+    const CRON_HOOK_HOURLY = 'smartling_hourly_cron_task';
+    const LOCK_NAME        = 'smartling-cron.pid';
 
     const CRON_INTERVAL = 300;
     const CRON_TTL      = 5;
@@ -33,18 +34,27 @@ class JobEngine implements WPHookInterface
     {
         if (!wp_next_scheduled(self::CRON_HOOK)) {
             wp_schedule_event(time(), ((self::CRON_INTERVAL / 60) . 'm'), self::CRON_HOOK);
+            wp_schedule_event(time(), 'hourly', self::CRON_HOOK_HOURLY);
         }
     }
 
     public function uninstall()
     {
         wp_clear_scheduled_hook(self::CRON_HOOK);
+        wp_clear_scheduled_hook(self::CRON_HOOK_HOURLY);
     }
 
     public function register()
     {
         if (!DiagnosticsHelper::isBlocked()) {
-            add_action(self::CRON_HOOK, [$this, 'doWork']);
+            add_action(self::CRON_HOOK, [
+                $this,
+                'doWork',
+            ]);
+            add_action(self::CRON_HOOK_HOURLY, [
+                $this,
+                'cronJobCheckLastModified',
+            ]);
         }
     }
 
@@ -80,7 +90,24 @@ class JobEngine implements WPHookInterface
     public function getLockFileName()
     {
         return $this->getPluginInfo()
-                    ->getDir() . DIRECTORY_SEPARATOR . self::LOCK_NAME;
+                   ->getDir() . DIRECTORY_SEPARATOR . self::LOCK_NAME;
+    }
+
+    /**
+     * Executes hourly, fills 'check-status-queue' queue
+     */
+    public function cronJobCheckLastModified()
+    {
+        /**
+         * @var SmartlingCore $ep
+         */
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        $ep = Bootstrap::getContainer()->get('entrypoint');
+
+        /**
+         * Check last-modified for all "In Progress" ans "Completed"
+         */
+        $ep->lastModifiedCheck();
     }
 
     /**
@@ -90,14 +117,12 @@ class JobEngine implements WPHookInterface
     {
         $curLockStatus = SimpleStorageHelper::get(self::LOCK_NAME, 0);
         $now = time();
-        $this->getLogger()
-             ->info('Cron Job initiated');
+        $this->getLogger()->info('Cron Job initiated');
         if ($now > $curLockStatus + self::CRON_INTERVAL + self::CRON_TTL) {
             SimpleStorageHelper::set(self::LOCK_NAME, $now);
             $this->job();
         }
-        $this->getLogger()
-             ->info('Cron Job Finished');
+        $this->getLogger()->info('Cron Job Finished');
     }
 
 
@@ -109,8 +134,7 @@ class JobEngine implements WPHookInterface
         /**
          * @var SmartlingCore $ep
          */
-        $ep = Bootstrap::getContainer()
-                       ->get('entrypoint');
+        $ep = Bootstrap::getContainer()->get('entrypoint');
         $ep->bulkCheck();
     }
 }

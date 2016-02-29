@@ -35,7 +35,7 @@ trait CommonLogMessagesTrait
         'Cron Job triggers submission status check for submission id = \'%s\' with status = \'%s\' for entity = \'%s\', blog = \'%s\', id = \'%s\', targetBlog = \'%s\', locale = \'%s\'';
 
     private static $MSG_CRON_DOWNLOAD =
-        'Cron Job triggers content download for submission id = \'%s\' with status = \'%s\' for entity = \'%s\', blog = \'%s\', id = \'%s\', targetBlog = \'%s\', locale = \'%s\'';
+        'Cron Job enqueues content to download queue for submission id = \'%s\' with status = \'%s\' for entity = \'%s\', blog = \'%s\', id = \'%s\', targetBlog = \'%s\', locale = \'%s\'';
 
     private static $MSG_CRON_CHECK_RESULT =
         'Checked status for entity = \'%s\', blog = \'%s\', id = \'%s\', locale = \'%s\', approvedString = \'%s\', completedString = \'%s\'';

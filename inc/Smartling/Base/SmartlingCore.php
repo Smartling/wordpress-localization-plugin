@@ -558,14 +558,6 @@ class SmartlingCore extends SmartlingCoreAbstract
 
             // entity is ready
             $this->getQueue()->enqueue($entity->toArray(false), 'download-queue');
-
-            //$serializedEntity = $this->getQueue()->dequeue('download-queue');
-
-            //unset($entity);
-
-            //$entity = SubmissionEntity::fromArray($serializedEntity, $this->getLogger());
-
-            //$this->downloadTranslationBySubmission($entity);
         }
     }
 
@@ -658,7 +650,7 @@ class SmartlingCore extends SmartlingCoreAbstract
      * Checks last-modified for all submissions in statuses "In Progress", "Completed"
      * if date-time differs from value in submission a whole set of submissions goes to check-status-queue
      */
-    public function lastModifierCheck()
+    public function lastModifiedCheck()
     {
         $entities = $this->getSubmissionManager()
             ->find([
@@ -725,6 +717,7 @@ class SmartlingCore extends SmartlingCoreAbstract
      */
     public function statusCheck()
     {
+        $this->getLogger()->debug('Processing status check queue started.');
         while (false !== ($element = $this->getQueue()->dequeue('check-status-queue'))) {
 
             $submissions = $this->unserializeSubmissions($element);
@@ -740,8 +733,8 @@ class SmartlingCore extends SmartlingCoreAbstract
                 $this->checkEntityForDownload($submission);
             }
         }
+        $this->getLogger()->debug('Processing status check queue finished.');
     }
-
 
     /**
      * Sends submissions with status 'New'
@@ -765,6 +758,17 @@ class SmartlingCore extends SmartlingCoreAbstract
         }
     }
 
+    public function processDownloadQueue()
+    {
+        $this->getLogger()->debug('Processing download queue started.');
+        while (false !== ($serializedEntity = $this->getQueue()->dequeue('download-queue'))) {
+
+            $entity = SubmissionEntity::fromArray($serializedEntity, $this->getLogger());
+
+            $this->downloadTranslationBySubmission($entity);
+        }
+        $this->getLogger()->debug('Processing download queue finished.');
+    }
 
     public function bulkCheck()
     {
@@ -773,44 +777,9 @@ class SmartlingCore extends SmartlingCoreAbstract
          */
         $this->sendNewSubmissions();
 
-        /**
-         * Check last-modified for all "In Progress" ans "Completed"
-         */
-        $this->lastModifierCheck();
-
-
         $this->statusCheck();
 
-        /*
-
-        $entities = $this->getSubmissionManager()->find([
-                                                            'status' => [
-                                                                SubmissionEntity::SUBMISSION_STATUS_NEW,
-                                                                SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
-                                                            ],
-                                                        ]);
-        $this->getLogger()->info(vsprintf(self::$MSG_CRON_INITIAL_SUMMARY, [count($entities)]));
-        foreach ($entities as $entity) {
-            if ($entity->getStatus() === SubmissionEntity::SUBMISSION_STATUS_NEW) {
-                $this->getLogger()
-                    ->info(vsprintf(self::$MSG_CRON_SEND, [
-                        $entity->getId(),
-                        $entity->getStatus(),
-                        $entity->getContentType(),
-                        $entity->getSourceBlogId(),
-                        $entity->getSourceId(),
-                        $entity->getTargetBlogId(),
-                        $entity->getTargetLocale(),
-                    ]));
-                $this->sendForTranslationBySubmission($entity);
-            }
-            if ($entity->getStatus() === SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS) {
-                $this->checkSubmissionByEntity($entity);
-                $this->checkEntityForDownload($entity);
-            }
-        }
-        */
-
+        $this->processDownloadQueue();
     }
 
     /**
