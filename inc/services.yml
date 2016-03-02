@@ -171,8 +171,10 @@ services:
   helper.customMenu:
     class: Smartling\Helpers\CustomMenuContentTypeHelper
     calls:
+      - [ "setLogger", [ "@logger" ] ]
       - [ "setSiteHelper", [ "@site.helper" ] ]
       - [ "setContentIoFactory", [ "@factory.contentIO" ] ]
+      - [ "setSubmissionManager", [ "@manager.submission" ] ]
 
   wrapper.sdk.api.smartling:
     class: Smartling\ApiWrapper

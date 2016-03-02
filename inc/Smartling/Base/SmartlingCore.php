@@ -229,8 +229,12 @@ class SmartlingCore extends SmartlingCoreAbstract
                     $submission->getSourceBlogId()
                 );
 
+            $menuItemIds = [];
+
             /** @var MenuItemEntity $menuItem */
             foreach ($ids as $menuItemEntity) {
+
+                $menuItemIds[]=$menuItemEntity->getPK();
 
                 $this->getLogger()
                      ->debug(
@@ -285,6 +289,12 @@ class SmartlingCore extends SmartlingCoreAbstract
 
                 $accumulator[WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU][] = $menuItemSubmission->getTargetId();
             }
+
+            $this->getCustomMenuHelper()->rebuildMenuHierarchy(
+                $submission->getSourceBlogId(),
+                $submission->getTargetBlogId(),
+                $menuItemIds
+            );
         }
     }
 
