@@ -187,8 +187,12 @@ class SmartlingCore extends SmartlingCoreAbstract
             $ids = $this->getCustomMenuHelper()
                 ->getMenuItems($submission->getSourceId(), $submission->getSourceBlogId());
 
+            $menuItemIds = [];
+
             /** @var MenuItemEntity $menuItem */
             foreach ($ids as $menuItemEntity) {
+
+                $menuItemIds[]=$menuItemEntity->getPK();
 
                 $this->getLogger()
                     ->debug(vsprintf('Sending for translation entity = \'%s\' id = \'%s\' related to submission = \'%s\'', [
@@ -222,6 +226,12 @@ class SmartlingCore extends SmartlingCoreAbstract
 
                 $accumulator[WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU][] = $menuItemSubmission->getTargetId();
             }
+
+            $this->getCustomMenuHelper()->rebuildMenuHierarchy(
+                $submission->getSourceBlogId(),
+                $submission->getTargetBlogId(),
+                $menuItemIds
+            );
         }
     }
 

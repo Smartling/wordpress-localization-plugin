@@ -31,7 +31,8 @@ class FileUriHelper
         }
 
         if (StringHelper::isNullOrEmpty($submission->getSourceTitle(false))) {
-            throw new InvalidArgumentException('sourceTitle cannot be empty.');
+            $submission->setSourceTitle('UNTITLED');
+            //throw new InvalidArgumentException('sourceTitle cannot be empty.');
         }
     }
 
