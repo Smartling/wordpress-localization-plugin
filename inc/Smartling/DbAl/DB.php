@@ -316,19 +316,21 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface
      */
     private function getCharsetCollate()
     {
-        if (!empty($this->getWpdb()->charset)
-            && false !== stripos($this->getWpdb()->charset, 'utf')
-        ) {
-            $collate = 'DEFAULT CHARACTER SET ' . $this->getWpdb()->charset;
-        } else {
-            $collate = 'DEFAULT CHARACTER SET utf8';
+        $parts = [];
+
+        if (!empty($this->getWpdb()->charset)) {
+            $parts['charset'] = vsprintf('DEFAULT CHARACTER SET %s', [$this->getWpdb()->charset]);
         }
 
         if (!empty($this->getWpdb()->collate)) {
-            $collate .= ' COLLATE ' . $this->getWpdb()->collate;
+            $parts['collate'] = vsprintf('COLLATE %s', [$this->getWpdb()->collate]);
         }
 
-        return $collate;
+        if ( 0 < count($parts)) {
+            return vsprintf(' %s ', [implode(' ', $parts)]);
+        } else {
+            return '';
+        }
     }
 
     /**
