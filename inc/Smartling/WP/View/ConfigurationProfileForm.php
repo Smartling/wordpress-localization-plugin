@@ -106,7 +106,7 @@ if (0 === $profileId) {
                 </td>
             </tr>
             <tr>
-                <th scope="row"><?= __('Secret Key', $domain) ?></th>
+                <th scope="row"><?= __('Token Secret', $domain) ?></th>
                 <td>
                     <?php $key = $profile->getSecretKey(); ?>
                     <input type="text" id="secret_key" name="smartling_settings[secretKey]" value="">
