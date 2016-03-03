@@ -96,8 +96,31 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
         ];
     }
 
+    /**
+     * Is executed on plugin activation
+     */
+    public function install()
+    {
+        $currentDbVersion = $this->getSchemaVersion();
+        if (0 === $currentDbVersion) {
+            $curVer = $currentDbVersion;
 
+            $currentDbVersion = $this->installDb();
 
+            // check if there was 1.0.12 version
+            $this->getWpdb()
+                 ->query('SHOW TABLES LIKE \'%smartling%\'');
+            $res = $this->getWpdb()->num_rows;
+
+            if (0 < $res && 0 === $curVer) {
+                // 1.0.12 detected
+                $this->schemaUpdate($currentDbVersion);
+            }
+        } else {
+            $this->schemaUpdate($currentDbVersion);
+        }
+
+    }
 
     private function installDb()
     {
@@ -311,19 +334,21 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
      */
     private function getCharsetCollate()
     {
-        /** @noinspection IsEmptyFunctionUsageInspection */
-        if (!empty($this->getWpdb()->charset) && false !== stripos($this->getWpdb()->charset, 'utf')) {
-            $collate = 'DEFAULT CHARACTER SET ' . $this->getWpdb()->charset;
-        } else {
-            $collate = 'DEFAULT CHARACTER SET utf8';
+        $parts = [];
+
+        if (!empty($this->getWpdb()->charset)) {
+            $parts['charset'] = vsprintf('DEFAULT CHARACTER SET %s', [$this->getWpdb()->charset]);
         }
 
-        /** @noinspection IsEmptyFunctionUsageInspection */
         if (!empty($this->getWpdb()->collate)) {
-            $collate .= ' COLLATE ' . $this->getWpdb()->collate;
+            $parts['collate'] = vsprintf('COLLATE %s', [$this->getWpdb()->collate]);
         }
 
-        return $collate;
+        if ( 0 < count($parts)) {
+            return vsprintf(' %s ', [implode(' ', $parts)]);
+        } else {
+            return '';
+        }
     }
 
     /**
