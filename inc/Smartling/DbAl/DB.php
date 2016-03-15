@@ -6,15 +6,18 @@ use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
 use Smartling\DbAl\Migrations\DbMigrationManager;
 use Smartling\DbAl\Migrations\SmartlingDbMigrationInterface;
+use Smartling\Helpers\SimpleStorageHelper;
+use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\WP\WPInstallableInterface;
 
 /**
  * Class DB
  *
  * @package Smartling\DbAl
  */
-class DB implements SmartlingToCMSDatabaseAccessWrapperInterface
+class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableInterface
 {
 
     const SMARTLING_DB_SCHEMA_VERSION = 'smartling_db_ver';
@@ -44,13 +47,9 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface
      */
     public function __construct(LoggerInterface $logger, $needLogRawSql)
     {
-
         $this->needSqlLog = (bool)$needLogRawSql;
-
         $this->logger = $logger;
-
         $this->buildTableDefinitions();
-
         global $wpdb;
         $this->wpdb = $wpdb;
     }
@@ -63,8 +62,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface
         /**
          * @var DbMigrationManager $mgr
          */
-        return Bootstrap::getContainer()
-                        ->get('manager.db.migrations');
+        return Bootstrap::getContainer()->get('manager.db.migrations');
     }
 
     /**
@@ -89,44 +87,25 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface
             'columns' => ConfigurationProfileEntity::getFieldDefinitions(),
             'indexes' => ConfigurationProfileEntity::getIndexes(),
         ];
+        // Queue
+        $this->tables[] = [
+            'name'    => Queue::getTableName(),
+            'columns' => Queue::getFieldDefinitions(),
+            'indexes' => Queue::getIndexes(),
+        ];
     }
 
-    /**
-     * Is executed on plugin activation
-     */
-    public function install()
-    {
-        $currentDbVersion = $this->getSchemaVersion();
-        if (0 === $currentDbVersion) {
-            $curVer = $currentDbVersion;
 
-            $currentDbVersion = $this->installDb();
 
-            // check if there was 1.0.12 version
-            $this->getWpdb()
-                 ->query('SHOW TABLES LIKE \'%smartling%\'');
-            $res = $this->getWpdb()->num_rows;
-
-            if (0 < $res && 0 === $curVer) {
-                // 1.0.12 detected
-                $this->schemaUpdate($currentDbVersion);
-            }
-        } else {
-            $this->schemaUpdate($currentDbVersion);
-        }
-
-    }
 
     private function installDb()
     {
         foreach ($this->tables as $tableDefinition) {
             $query = $this->prepareSql($tableDefinition);
             $this->logger->info(vsprintf('Installing tables: %s', [$query]));
-            $this->getWpdb()
-                 ->query($query);
+            $this->getWpdb()->query($query);
         }
-        $currentDbVersion = $this->getMigrationManager()
-                                 ->getLastMigration();
+        $currentDbVersion = $this->getMigrationManager()->getLastMigration();
         $this->setSchemaVersion($currentDbVersion);
 
         return $currentDbVersion;
@@ -140,8 +119,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface
         /**
          * @var DbMigrationManager $mgr
          */
-        $mgr = Bootstrap::getContainer()
-                        ->get('manager.db.migrations');
+        $mgr = Bootstrap::getContainer()->get('manager.db.migrations');
         $pool = $mgr->getMigrations($fromVersion);
         if (0 < count($pool)) {
             $prefix = $this->getWpdb()->base_prefix;
@@ -154,8 +132,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface
                 $stopMigrate = false;
                 foreach ($queries as $query) {
                     $this->logger->debug('Executing query: ' . $query);
-                    $result = $this->getWpdb()
-                                   ->query($query);
+                    $result = $this->getWpdb()->query($query);
                     if (false === $result) {
                         $this->logger->error('Error executing query: ' . $this->getWpdb()->last_error);
                         $stopMigrate = true;
@@ -166,8 +143,8 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface
                     $this->logger->info('Finished applying migration ' . $migration->getVersion());
                     $this->setSchemaVersion($migration->getVersion());
                 } else {
-                    $this->logger->error('Error occurred while applying migration ' . $migration->getVersion() . '. Error: ' . $this->getWpdb()->last_error);
-                    $this->fallbackDatabaseReCreation();
+                    $this->logger->error('Error occurred while applying migration ' . $migration->getVersion() .
+                                         '. Error: ' . $this->getWpdb()->last_error);
                     break;
                 }
             }
@@ -177,20 +154,9 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface
         }
     }
 
-    private function fallbackDatabaseReCreation()
-    {
-        $this->logger->error(vsprintf('Seems like database is corrupted. Falling back to database re-creation',
-            []));
-
-        if (-1 !== (int)get_site_option(self::SMARTLING_DB_SCHEMA_VERSION, -1, false)) {
-            $this->setSchemaVersion(0);
-            $this->install();
-        }
-    }
-
     public function getSchemaVersion()
     {
-        return (int)get_site_option(self::SMARTLING_DB_SCHEMA_VERSION, 0, false);
+        return (int)SimpleStorageHelper::get(self::SMARTLING_DB_SCHEMA_VERSION, 0);
     }
 
     /**
@@ -200,22 +166,24 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface
      */
     public function setSchemaVersion($version)
     {
-        $currentVersion = $this->getSchemaVersion();
+        $currentVersion = (int)$this->getSchemaVersion();
         $version = (int)$version;
-        $result = null;
+
+        $result = SimpleStorageHelper::set(self::SMARTLING_DB_SCHEMA_VERSION, $version);
+
         $message = 'Smartling db schema update ';
-        if (false === get_site_option(self::SMARTLING_DB_SCHEMA_VERSION, false, false)) {
-            $result = add_site_option(self::SMARTLING_DB_SCHEMA_VERSION, $version);
-        } else {
-            $result = update_site_option(self::SMARTLING_DB_SCHEMA_VERSION, $version);
-        }
 
         if (true === $result) {
-            $message .= vsprintf('successfully completed from version %d to version %d.',
-                [$currentVersion, $version]);
+            $message .= vsprintf('successfully completed from version %d to version %d.', [
+                $currentVersion,
+                $version,
+            ]);
 
         } else {
-            $message .= vsprintf('failed from version %d to version %d.', [$currentVersion, $version]);
+            $message .= vsprintf('failed from version %d to version %d.', [
+                $currentVersion,
+                $version,
+            ]);
         }
         $this->logger->info($message);
 
@@ -227,15 +195,32 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface
      */
     public function uninstall()
     {
+        if (!defined('SMARTLING_COMPLETE_REMOVE'))
+        {
+            return;
+        }
+
         foreach ($this->tables as $tableDefinition) {
             $table = $this->getTableName($tableDefinition);
 
             $this->logger->info('uninstalling tables', [$table]);
             $this->getWpdb()
-                 ->query('DROP TABLE IF EXISTS ' . $table);
+                ->query('DROP TABLE IF EXISTS ' . $table);
         }
         delete_site_option(self::SMARTLING_DB_SCHEMA_VERSION);
     }
+
+    public function activate()
+    {
+        $currentDbVersion = $this->getSchemaVersion();
+        if (0 === $currentDbVersion) {
+            $this->installDb();
+        } else {
+            $this->schemaUpdate($currentDbVersion);
+        }
+    }
+
+    public function deactivate(){}
 
     /**
      * Extracts table name from tableDefinition
@@ -316,14 +301,14 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface
      */
     private function getCharsetCollate()
     {
-        if (!empty($this->getWpdb()->charset)
-            && false !== stripos($this->getWpdb()->charset, 'utf')
-        ) {
+        /** @noinspection IsEmptyFunctionUsageInspection */
+        if (!empty($this->getWpdb()->charset) && false !== stripos($this->getWpdb()->charset, 'utf')) {
             $collate = 'DEFAULT CHARACTER SET ' . $this->getWpdb()->charset;
         } else {
             $collate = 'DEFAULT CHARACTER SET utf8';
         }
 
+        /** @noinspection IsEmptyFunctionUsageInspection */
         if (!empty($this->getWpdb()->collate)) {
             $collate .= ' COLLATE ' . $this->getWpdb()->collate;
         }
@@ -340,7 +325,10 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface
     {
         $out = '';
         foreach ($columns as $name => $type) {
-            $out .= vsprintf('`%s` %s, ', [$name, $type]);
+            $out .= vsprintf('`%s` %s, ', [
+                $name,
+                $type,
+            ]);
         }
 
         return $out;
@@ -355,7 +343,6 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface
      */
     private function prepareSql(array $tableDefinition)
     {
-
         $table = $this->getTableName($tableDefinition);
         $pk = $this->getPrimaryKey($tableDefinition);
         $columns = $this->getSchema($tableDefinition);
@@ -372,7 +359,14 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface
             $add .= vsprintf(', %s', [$index]);
         }
 
-        $sql = 'CREATE TABLE IF NOT EXISTS ' . $table . ' ( ' . $schema . ' ' . $add . ' ) ' . $charset_collate . ';';
+        $sql = vsprintf(
+            'CREATE TABLE IF NOT EXISTS %s ( %s %s ) %s;',
+            [
+                $table,
+                $schema,
+                $add,
+                $charset_collate,
+            ]);
 
         return $sql;
     }
@@ -384,10 +378,9 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface
      *
      * @return mixed
      */
-    function escape($string)
+    public function escape($string)
     {
-        return $this->getWpdb()
-                    ->_escape($string);
+        return $this->getWpdb()->_escape($string);
     }
 
     /**
@@ -395,7 +388,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface
      *
      * @return mixed
      */
-    function completeTableName($tableName)
+    public function completeTableName($tableName)
     {
         return $this->getWpdb()->base_prefix . $tableName;
     }
@@ -413,14 +406,13 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface
      */
     public function fetch($query, $output = OBJECT)
     {
-        return $this->getWpdb()
-                    ->get_results($query, $output);
+        return $this->getWpdb()->get_results($query, $output);
     }
 
     /**
      * @return integer
      */
-    function getLastInsertedId()
+    public function getLastInsertedId()
     {
         return $this->wpdb->insert_id;
     }
@@ -428,7 +420,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface
     /**
      * @return string
      */
-    function getLastErrorMessage()
+    public function getLastErrorMessage()
     {
         return $this->getWpdb()->last_error;
     }
@@ -436,7 +428,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface
     /**
      * @inheritdoc
      */
-    function needRawSqlLog()
+    public function needRawSqlLog()
     {
         return $this->needSqlLog;
     }

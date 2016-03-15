@@ -72,6 +72,10 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
                 'type'    => 'index',
                 'columns' => ['queue'],
             ],
+            [
+                'type'    => 'unique',
+                'columns' => ['queue', 'payload'],
+            ]
         ];
     }
 
@@ -235,5 +239,67 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
         }
 
         return false;
+    }
+
+    /**
+     * @param string|null $queue
+     *
+     * @throws SmartlingDbException
+     */
+    public function purge($queue = null)
+    {
+        $pageOptions = null;
+
+        $condition = null;
+
+        if (null !== $queue && is_string($queue)) {
+            $condition = ConditionBlock::getConditionBlock();
+            $condition->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'queue', [$queue]));
+        }
+
+        $query = QueryBuilder::buildDeleteQuery($this->getRealTableName(), $condition, $pageOptions);
+
+        $result = $this->getDbal()->query($query);
+
+        if (0 >= $result) {
+            if (null !== $queue) {
+                $template = 'Error while purging all elements from all queue=%s. Message: %s';
+                $message = vsprintf($template, [
+                    $queue,
+                    $this->getDbal()->getLastErrorMessage(),
+                ]);
+            } else {
+                $template = 'Error while purging all elements from all queues. Message: %s';
+                $message = vsprintf($template, [$this->getDbal()->getLastErrorMessage()]);
+            }
+
+            $this->logger->error($message);
+            throw new SmartlingDbException($message);
+        }
+    }
+
+    /**
+     * @return array['queue' => elements_count]
+     */
+    public function stats()
+    {
+        $query = QueryBuilder::buildSelectQuery(
+            $this->getRealTableName(),
+            [
+                'queue',
+                [
+                    'count(`id`)' => 'num'
+                ],
+            ],
+            null,
+            null,
+            null,
+            [
+                'queue'
+            ]
+        );
+
+        die(var_dump($query));
+        // TODO: Implement stats() method.
     }
 }

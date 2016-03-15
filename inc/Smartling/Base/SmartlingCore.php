@@ -2,7 +2,6 @@
 namespace Smartling\Base;
 
 use Exception;
-use Smartling\Bootstrap;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\MenuItemEntity;
 use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
@@ -32,6 +31,18 @@ class SmartlingCore extends SmartlingCoreAbstract
 
     use CommonLogMessagesTrait;
 
+    /**
+     * Action that sends given SubmissionEntity to smartling for translation
+     */
+    const ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION = 'smartling-event.send-for-translation';
+
+    public function __construct()
+    {
+        add_action(self::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, [
+            $this,
+            'sendForTranslationBySubmission',
+        ]);
+    }
 
     /**
      * current mode to send data to Smartling
@@ -222,6 +233,10 @@ class SmartlingCore extends SmartlingCoreAbstract
         }
     }
 
+    /**
+     * @param SubmissionEntity $submission
+     * @param string           $contentType
+     */
     private function processMenuRelatedToWidget(SubmissionEntity $submission, $contentType)
     {
         if (WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU === $contentType &&
@@ -269,6 +284,9 @@ class SmartlingCore extends SmartlingCoreAbstract
         }
     }
 
+    /**
+     * @param SubmissionEntity $submission
+     */
     private function processFeaturedImage(SubmissionEntity $submission)
     {
         $originalMetadata = $this->getMetaForOriginalEntity($submission);
@@ -443,6 +461,11 @@ class SmartlingCore extends SmartlingCoreAbstract
         return $result;
     }
 
+    /**
+     * @param SubmissionEntity $entity
+     *
+     * @return EntityAbstract
+     */
     private function getContentIOWrapper(SubmissionEntity $entity)
     {
         return $this->getContentIoFactory()->getMapper($entity->getContentType());
@@ -561,6 +584,7 @@ class SmartlingCore extends SmartlingCoreAbstract
         }
     }
 
+
     /**
      * Groups a set of SubmissionEntity by fileUri for batch requests.
      *
@@ -674,21 +698,23 @@ class SmartlingCore extends SmartlingCoreAbstract
                      * @var SubmissionEntity $submission
                      */
                     $submission = $submissions[$smartlingLocaleId];
-
                     $submissionLastModifiedTimestamp = $submission->getLastModified()->getTimestamp();
-
                     $actualLastModifiedTimestamp = $lastModifiedDateTime->getTimestamp();
-
                     if ($actualLastModifiedTimestamp !== $submissionLastModifiedTimestamp) {
                         $submission->setLastModified($lastModifiedDateTime);
                         $needStatusCheck = true;
+                    } else {
+                        /**
+                         * pass next only changed that definitely need check status
+                         */
+                        unset($submissions[$smartlingLocaleId]);
                     }
                 }
             }
 
             if (true === $needStatusCheck) {
-                $submissionList = $this->storeSubmissions($submissionList);
-                $serializedSubmissions = $this->serializeSubmissions($submissionList);
+                $submissions = $this->storeSubmissions($submissions);
+                $serializedSubmissions = $this->serializeSubmissions($submissions);
                 $this->getQueue()->enqueue($serializedSubmissions, 'check-status-queue');
                 continue;
             }
@@ -728,35 +754,14 @@ class SmartlingCore extends SmartlingCoreAbstract
 
             $submissions = $this->storeSubmissions($statusCheckResult);
 
-            foreach ($submissions as $submission)
-            {
+            foreach ($submissions as $submission) {
                 $this->checkEntityForDownload($submission);
             }
         }
         $this->getLogger()->debug('Processing status check queue finished.');
     }
 
-    /**
-     * Sends submissions with status 'New'
-     */
-    private function sendNewSubmissions()
-    {
-        $entities = $this->getSubmissionManager()->find(['status' => [SubmissionEntity::SUBMISSION_STATUS_NEW]]);
 
-        $this->getLogger()->info(vsprintf(self::$MSG_CRON_INITIAL_SUMMARY, [count($entities)]));
-        foreach ($entities as $entity) {
-            $this->getLogger()->info(vsprintf(self::$MSG_CRON_SEND, [
-                $entity->getId(),
-                $entity->getStatus(),
-                $entity->getContentType(),
-                $entity->getSourceBlogId(),
-                $entity->getSourceId(),
-                $entity->getTargetBlogId(),
-                $entity->getTargetLocale(),
-            ]));
-            $this->sendForTranslationBySubmission($entity);
-        }
-    }
 
     public function processDownloadQueue()
     {
@@ -768,18 +773,6 @@ class SmartlingCore extends SmartlingCoreAbstract
             $this->downloadTranslationBySubmission($entity);
         }
         $this->getLogger()->debug('Processing download queue finished.');
-    }
-
-    public function bulkCheck()
-    {
-        /**
-         * First send new submissions
-         */
-        $this->sendNewSubmissions();
-
-        $this->statusCheck();
-
-        $this->processDownloadQueue();
     }
 
     /**

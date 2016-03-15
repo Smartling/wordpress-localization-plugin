@@ -4,6 +4,7 @@ namespace Smartling\WP\Controller;
 
 use Smartling\Bootstrap;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\Jobs\UploadJob;
 use Smartling\WP\JobEngine;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -89,11 +90,11 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
         set_time_limit(0);
 
         /**
-         * @var JobEngine $jobEngine
+         * @var UploadJob $uploadJob
          */
-        $jobEngine = Bootstrap::getContainer()
-                              ->get('wp.cron');
-        $jobEngine->doWork();
+        $uploadJob = Bootstrap::getContainer()->get('cron.worker.upload');
+        do_action($uploadJob->getJobHookName());
+
 
         wp_die('Cron job triggered. Now you can safely close this window / browser tab.');
     }

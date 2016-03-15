@@ -30,20 +30,11 @@ class JobEngine implements WPHookInterface
         $this->pluginInfo = $pluginInfo;
     }
 
-    public function install()
-    {
-        if (!wp_next_scheduled(self::CRON_HOOK)) {
-            wp_schedule_event(time(), ((self::CRON_INTERVAL / 60) . 'm'), self::CRON_HOOK);
-            wp_schedule_event(time(), 'hourly', self::CRON_HOOK_HOURLY);
-        }
-    }
 
-    public function uninstall()
-    {
-        wp_clear_scheduled_hook(self::CRON_HOOK);
-        wp_clear_scheduled_hook(self::CRON_HOOK_HOURLY);
-    }
 
+    /**
+     * @inheritdoc
+     */
     public function register()
     {
         if (!DiagnosticsHelper::isBlocked()) {
@@ -89,8 +80,7 @@ class JobEngine implements WPHookInterface
      */
     public function getLockFileName()
     {
-        return $this->getPluginInfo()
-                   ->getDir() . DIRECTORY_SEPARATOR . self::LOCK_NAME;
+        return $this->getPluginInfo()->getDir() . DIRECTORY_SEPARATOR . self::LOCK_NAME;
     }
 
     /**
@@ -109,6 +99,9 @@ class JobEngine implements WPHookInterface
          */
         $ep->lastModifiedCheck();
     }
+
+
+
 
     /**
      * Cron job trigger handler

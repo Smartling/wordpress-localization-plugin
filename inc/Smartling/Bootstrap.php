@@ -6,18 +6,15 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use Smartling\Exception\MultilingualPluginNotFoundException;
 use Smartling\Exception\SmartlingBootException;
-use Smartling\Exception\SmartlingConfigException;
 use Smartling\Helpers\DiagnosticsHelper;
-use Smartling\Helpers\SchedulerHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPHookInterface;
-use Symfony\Component\Config\FileLocator;
+use Smartling\WP\WPInstallableInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
  * Class Bootstrap
- *
  * @package Smartling
  */
 class Bootstrap
@@ -31,8 +28,8 @@ class Bootstrap
         ignore_user_abort(true);
         set_time_limit(0);
 
-        $scheduleHelper = new SchedulerHelper();
-        add_filter('cron_schedules', [$scheduleHelper, 'extendWpCron']);
+        //$scheduleHelper = new SchedulerHelper();
+        //add_filter('cron_schedules', [$scheduleHelper, 'extendWpCron']);
     }
 
     public static function getHttpHostName()
@@ -54,8 +51,8 @@ class Bootstrap
      */
     public static function getLogger()
     {
-        $object = self::getContainer()
-                      ->get('logger');
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        $object = self::getContainer()->get('logger');
 
         if ($object instanceof LoggerInterface) {
             return $object;
@@ -67,8 +64,7 @@ class Bootstrap
 
     public static function getCurrentVersion()
     {
-        return self::getContainer()
-                   ->getParameter('plugin.version');
+        return self::getContainer()->getParameter('plugin.version');
     }
 
 
@@ -84,6 +80,39 @@ class Bootstrap
         }
 
         $container->setParameter('plugin.url', $pluginUrl);
+    }
+
+    public function activate()
+    {
+        $hooks = $this->fromContainer('hooks.installable', true);
+        foreach ($hooks as $hook) {
+            $object = $this->fromContainer($hook);
+            if ($object instanceof WPInstallableInterface) {
+                $object->activate();
+            }
+        }
+    }
+
+    public function deactivate()
+    {
+        $hooks = $this->fromContainer('hooks.installable', true);
+        foreach ($hooks as $hook) {
+            $object = $this->fromContainer($hook);
+            if ($object instanceof WPInstallableInterface) {
+                $object->deactivate();
+            }
+        }
+    }
+
+    public static function uninstall()
+    {
+        $hooks = self::getContainer()->getParameter('hooks.installable');
+        foreach ($hooks as $hook) {
+            $object = self::getContainer()->get($hook);
+            if ($object instanceof WPInstallableInterface) {
+                $object->uninstall();
+            }
+        }
     }
 
     public function registerHooks()
@@ -104,8 +133,11 @@ class Bootstrap
         $this->detectMultilangPlugins();
 
         //always try to migrate db
-        $this->fromContainer('site.db')
-             ->install();
+        try {
+            $this->fromContainer('site.db')->activate();
+        } catch (\Exception $e) {
+            self::getLogger()->error(vsprintf('Migration attempt finished with error: %s', [$e->getMessage()]));
+        }
 
         try {
             if (defined('SMARTLING_CLI_EXECUTION') && SMARTLING_CLI_EXECUTION === false) {
@@ -118,14 +150,11 @@ class Bootstrap
             $message .= "Message: '" . $e->getMessage() . "'\n";
             $message .= "Location: '" . $e->getFile() . ':' . $e->getLine() . "'\n";
             $message .= "Trace: " . $e->getTraceAsString() . "\n";
-            self::getLogger()
-                ->emergency($message);
+            self::getLogger()->emergency($message);
             DiagnosticsHelper::addDiagnosticsMessage($message, true);
         }
 
-        self::getContainer()
-            ->get('extension.loader')
-            ->runExtensions();
+        self::getContainer()->get('extension.loader')->runExtensions();
     }
 
 
@@ -141,30 +170,6 @@ class Bootstrap
         }
     }
 
-    public function activate()
-    {
-        self::getContainer()
-            ->set('multilang_plugins', []);
-        $this->fromContainer('site.db')
-             ->install();
-        $this->fromContainer('wp.cron')
-             ->install();
-    }
-
-    public function deactivate()
-    {
-        $this->fromContainer('wp.cron')
-             ->uninstall();
-    }
-
-    public function uninstall()
-    {
-        if (defined('SMARTLING_COMPLETE_REMOVE')) {
-            $this->fromContainer('site.db')
-                 ->uninstall();
-        }
-    }
-
     /**
      * @throws MultilingualPluginNotFoundException
      */
@@ -173,13 +178,12 @@ class Bootstrap
         /**
          * @var LoggerInterface $logger
          */
-        $logger = self::getContainer()
-                      ->get('logger');
+        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
+        $logger = self::getLogger();
 
         $mlPluginsStatuses =
             [
                 'multilingual-press-pro' => false,
-                'polylang'               => false,
             ];
 
         $found = false;
@@ -197,22 +201,20 @@ class Bootstrap
             }
         }
 
-        self::getContainer()
-            ->setParameter('multilang_plugins', $mlPluginsStatuses);
+        self::getContainer()->setParameter('multilang_plugins', $mlPluginsStatuses);
     }
 
     public function checkUploadFolder()
     {
-        $path = self::getContainer()
-                    ->getParameter('plugin.upload');
+        $path = self::getContainer()->getParameter('plugin.upload');
         if (!file_exists($path)) {
+            /** @noinspection MkdirRaceConditionInspection */
             mkdir($path, 0777);
         }
     }
 
     /**
      * Tests if current Wordpress Configuration can work with Smartling Plugin
-     *
      * @return mixed
      */
     protected function test()
@@ -238,8 +240,7 @@ class Bootstrap
         /**
          * @var array $data
          */
-        $data = self::getContainer()
-                    ->getParameter('multilang_plugins');
+        $data = self::getContainer()->getParameter('multilang_plugins');
 
         $blockWork = true;
 
@@ -253,11 +254,10 @@ class Bootstrap
 
         if (true === $blockWork) {
             $mainMessage = 'No active suitable localization plugin found. Please install and activate one, e.g.: '
-                . '<a href="/wp-admin/network/plugin-install.php?tab=search&s=multilingual+press">Multilingual Press.</a>';
+                           .
+                           '<a href="/wp-admin/network/plugin-install.php?tab=search&s=multilingual+press">Multilingual Press.</a>';
 
-            self::getLogger()
-                ->critical('Boot :: ' . $mainMessage);
-
+            self::getLogger()->critical('Boot :: ' . $mainMessage);
             DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
         }
     }
@@ -279,17 +279,17 @@ class Bootstrap
          * @var SettingsManager $sm
          */
         $sm = self::getContainer()
-                  ->get('manager.settings');
+            ->get('manager.settings');
 
         $total = 0;
         $profiles = $sm->getEntities([], null, $total, true);
 
         if (0 === count($profiles)) {
             $mainMessage = 'No active smartling configuration profiles found. Please create at least one on '
-                . '<a href="/wp-admin/admin.php?page=smartling_configuration_profile_list">settings page</a>';
+                           .
+                           '<a href="/wp-admin/admin.php?page=smartling_configuration_profile_list">settings page</a>';
 
-            self::getLogger()
-                ->critical('Boot :: ' . $mainMessage);
+            self::getLogger()->critical('Boot :: ' . $mainMessage);
 
             DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
         }

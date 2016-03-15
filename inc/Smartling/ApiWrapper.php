@@ -441,6 +441,8 @@ class ApiWrapper implements ApiWrapperInterface
                     $completedStrings = $descriptor['completedStringCount'];
                     $authorizedStrings = $descriptor['authorizedStringCount'];
 
+                    $currentProgress = $submissions[$localeId]->getCompletionPercentage(); // current progress value 0..100
+
                     /**
                      * @var SubmissionEntity $submission
                      */
@@ -449,6 +451,28 @@ class ApiWrapper implements ApiWrapperInterface
                         $completedStrings,
                         $authorizedStrings);
                     $submission->setWordCount($totalWordCount);
+
+                    $newProgress = $submissions[$localeId]->getCompletionPercentage(); // current progress value 0..100
+
+                    if (100 === $newProgress && 100 === $currentProgress) {
+                        /* nothing to do, removing from array to skip useless download */
+                        unset($submissions[$localeId]);
+                    }
+
+                    if (100 > $newProgress && 100 === $currentProgress) {
+                        /* just move from Completed to In Progress */
+                        $submissions[$localeId]->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
+                    }
+
+                    if (100 === $newProgress && 100 > $currentProgress) {
+                        /* just move from Completed to In Progress */
+                        $submissions[$localeId]->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
+                    }
+
+                    if (100 > $newProgress && 100 > $currentProgress) {
+                        /* just move from Completed to In Progress */
+                        $submissions[$localeId]->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
+                    }
                 }
             }
 

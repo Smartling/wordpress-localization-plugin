@@ -13,14 +13,18 @@ class SimpleStorageHelper
     /**
      * @param string $storageKey
      * @param mixed  $value
+     *
+     * @return bool
      */
     public static function set($storageKey, $value)
     {
         if (false === self::get($storageKey, false)) {
-            add_site_option($storageKey, $value);
+            $result = add_site_option($storageKey, $value);
         } else {
-            update_site_option($storageKey, $value);
+            $result = update_site_option($storageKey, $value);
         }
+
+        return $result;
     }
 
     /**

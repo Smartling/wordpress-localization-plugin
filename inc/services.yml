@@ -4,10 +4,10 @@ parameters:
     "polylang": false
 
   plugin.name: smartling-connector
-  plugin.version: 1.1.4
+  plugin.version: 1.1.6
   plugin.domain: smartling-connector
   wp.hooks:
-    - 'wp.cron'
+    # - 'wp.cron'
     - 'wp.i18n'
     - 'wp.checkStatus'
     - 'wp.submissions'
@@ -21,7 +21,11 @@ parameters:
     - 'wp.ext.partner'
     - 'wp.ext.testimonial'
     - 'smartling.helper.relative-image-path-support'
+    - 'cron.worker.upload'
 
+  hooks.installable:
+    - 'site.db'
+    - 'cron.worker.upload'
 
   # Property mapper general definitions
   # all not listed here should be sent for translation
@@ -161,6 +165,14 @@ parameters:
   submission.pagesize: 10
 
 services:
+  cron.worker.upload:
+    class: Smartling\Jobs\UploadJob
+    arguments:
+      - "@logger"
+      - "@manager.submission"
+    calls:
+      - [ "setJobRunInterval", [ "5m" ] ]
+
 
   smartling.helper.relative-image-path-support:
     class: Smartling\Helpers\RelativeLinkedAttachmentCoreHelper

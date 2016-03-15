@@ -18,9 +18,21 @@ interface QueueInterface
     public function enqueue(array $value, $queue = null);
 
     /**
-     * @param null $queue
+     * @param string|null $queue
      *
      * @return array
      */
     public function dequeue($queue = null);
+
+    /**
+     * @param string|null $queue
+     *
+     * @return void
+     */
+    public function purge($queue = null);
+
+    /**
+     * @return array['queue' => elements_count]
+     */
+    public function stats();
 }
