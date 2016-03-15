@@ -38,9 +38,10 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
     public static function getFieldDefinitions()
     {
         return [
-            'id'      => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
-            'queue'   => self::DB_TYPE_STRING_STANDARD,
-            'payload' => self::DB_TYPE_STRING_TEXT,
+            'id'           => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
+            'queue'        => self::DB_TYPE_STRING_STANDARD,
+            'payload'      => self::DB_TYPE_STRING_TEXT,
+            'payload_hash' => self::DB_TYPE_HASH_MD5,
         ];
     }
 
@@ -74,8 +75,8 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
             ],
             [
                 'type'    => 'unique',
-                'columns' => ['queue', 'payload'],
-            ]
+                'columns' => ['queue', 'payload_hash'],
+            ],
         ];
     }
 
@@ -102,8 +103,9 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
     private function set($value, $queue = self::DEFAULT_QUEUE_NAME)
     {
         $query = QueryBuilder::buildInsertQuery($this->getRealTableName(), [
-            'queue'   => $queue,
-            'payload' => $value,
+            'queue'        => $queue,
+            'payload'      => $value,
+            'payload_hash' => md5($value),
         ]);
 
         $result = $this->getDbal()->query($query);
@@ -155,14 +157,19 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
             $queue,
         ]));
 
-        $query = QueryBuilder::buildSelectQuery($this->getRealTableName(), [
-            'id',
-            'queue',
-            'payload',
-        ], $conditionBlock, [], [
-                                                    'limit' => 1,
-                                                    'page'  => 1,
-                                                ]);
+        $query = QueryBuilder::buildSelectQuery(
+            $this->getRealTableName(),
+            [
+                'id',
+                'queue',
+                'payload',
+            ],
+            $conditionBlock,
+            [],
+            [
+                'limit' => 1,
+                'page'  => 1,
+            ]);
 
         $result = $this->getDbal()->fetch($query, \ARRAY_A);
 
@@ -288,14 +295,14 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
             [
                 'queue',
                 [
-                    'count(`id`)' => 'num'
+                    'count(`id`)' => 'num',
                 ],
             ],
             null,
             null,
             null,
             [
-                'queue'
+                'queue',
             ]
         );
 

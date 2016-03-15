@@ -1,0 +1,9 @@
+parameters:
+  config.files:
+    - "services.yml"
+    - "plugin-info.yml"
+    - "logger.yml"
+    - "field-processor.yml"
+    - "migrations.yml"
+    - "installable.yml"
+    - "register-on-startup.yml"

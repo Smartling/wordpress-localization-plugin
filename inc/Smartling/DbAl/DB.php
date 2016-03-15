@@ -6,6 +6,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
 use Smartling\DbAl\Migrations\DbMigrationManager;
 use Smartling\DbAl\Migrations\SmartlingDbMigrationInterface;
+use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -102,13 +103,23 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
     {
         foreach ($this->tables as $tableDefinition) {
             $query = $this->prepareSql($tableDefinition);
-            $this->logger->info(vsprintf('Installing tables: %s', [$query]));
-            $this->getWpdb()->query($query);
+            $this->logger->info(vsprintf('Installing table: %s', [$query]));
+            $result = $this->getWpdb()->query($query);
+
+            if (false === $result)
+            {
+                $message = vsprintf('Executing query |%s| has finished with error: %s', [$query, $this->getWpdb()->last_error]);
+                $this->logger->critical($message);
+                throw new SmartlingDbException($message);
+
+            }
         }
+
         $currentDbVersion = $this->getMigrationManager()->getLastMigration();
         $this->setSchemaVersion($currentDbVersion);
 
         return $currentDbVersion;
+
     }
 
     /**
@@ -204,8 +215,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
             $table = $this->getTableName($tableDefinition);
 
             $this->logger->info('uninstalling tables', [$table]);
-            $this->getWpdb()
-                ->query('DROP TABLE IF EXISTS ' . $table);
+            $this->getWpdb()->query('DROP TABLE IF EXISTS ' . $table);
         }
         delete_site_option(self::SMARTLING_DB_SCHEMA_VERSION);
     }

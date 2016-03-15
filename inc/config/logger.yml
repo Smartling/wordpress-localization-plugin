@@ -1,0 +1,47 @@
+parameters:
+  logger.smartling_log_raw_sql: false
+  logger.smartling_verbose_output_for_xml_coding: true
+  logger.smartling_verbose_metadata_io: true
+
+  logger.channel: default
+  logger.filehandler.standard.filename: %plugin.dir%/logs/logfile
+  logger.filehandler.standard.loglevel: DEBUG
+  logger.filehandler.standard.maxfiles: 5
+
+  logger.formatter.date: "Y-m-d H:i:s"
+  logger.formatter.output.default: "[%%datetime%%] %%channel%%.%%level_name%%: %%message%% %%context%% %%extra%%\n"
+  logger.formatter.output.short: "[%%datetime%%] %%level_name%%: %%message%%\n"
+  logger.formatter.output.short_with_request_id: "[%%datetime%%] %%extra.request_id%% %%level_name%%: %%message%%\n"
+  logger.formatter.allow_multiline: true
+
+services:
+  fileLoggerLineFormatter:
+    class: Smartling\Base\CustomLogLineFormatter
+    arguments:
+      - "%logger.formatter.output.short_with_request_id%"
+      - "%logger.formatter.date%"
+      - "%logger.formatter.allow_multiline%"
+
+  fileLoggerHandlerStandard:
+    class: Monolog\Handler\StreamHandler
+    arguments:
+      - "%logger.filehandler.standard.filename%"
+      - "%logger.filehandler.standard.loglevel%"
+    calls:
+      - [ "setFormatter", [ "@fileLoggerLineFormatter" ]]
+
+  fileLoggerHandlerRotatable:
+     class: Monolog\Handler\RotatingFileHandler
+     arguments:
+       - "%logger.filehandler.standard.filename%"
+       - "%logger.filehandler.standard.maxfiles%"
+       - "%logger.filehandler.standard.loglevel%"
+     calls:
+       - [ "setFormatter", [ "@fileLoggerLineFormatter" ]]
+
+  logger:
+    class: Monolog\Logger
+    arguments:
+      - "%logger.channel%"
+    calls:
+      - [pushHandler, ["@fileLoggerHandlerRotatable"]]

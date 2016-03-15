@@ -7,6 +7,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\Exception\MultilingualPluginNotFoundException;
 use Smartling\Exception\SmartlingBootException;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\SchedulerHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPHookInterface;
@@ -28,8 +29,8 @@ class Bootstrap
         ignore_user_abort(true);
         set_time_limit(0);
 
-        //$scheduleHelper = new SchedulerHelper();
-        //add_filter('cron_schedules', [$scheduleHelper, 'extendWpCron']);
+        $scheduleHelper = new SchedulerHelper();
+        add_filter('cron_schedules', [$scheduleHelper, 'extendWpCron']);
     }
 
     public static function getHttpHostName()
@@ -117,13 +118,12 @@ class Bootstrap
 
     public function registerHooks()
     {
-        $hooks = $this->fromContainer('wp.hooks', true);
-        foreach ($hooks as $hook) {
-            $object = $this->fromContainer($hook);
-            if ($object instanceof WPHookInterface) {
-                $object->register();
-            }
-        }
+        /**
+         * @var StartupRegisterManager $manager
+         */
+        $manager = $this->fromContainer('manager.register');
+
+        $manager->registerServices();
     }
 
     public function load()

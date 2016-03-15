@@ -1,0 +1,4 @@
+parameters:
+  hooks.installable:
+    - 'site.db'
+    - 'cron.worker.upload'

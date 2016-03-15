@@ -2,6 +2,7 @@
 
 namespace Smartling;
 
+use Smartling\Exception\SmartlingConfigException;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\Config\FileLocator;
@@ -24,14 +25,22 @@ trait DITrait
 
         self::setCoreParameters($container);
 
-        $configDir = SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . 'inc';
+        $configDir = [SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . 'inc' . DIRECTORY_SEPARATOR . 'config'];
 
         $fileLocator = new FileLocator($configDir);
 
         $loader = new YamlFileLoader($container, $fileLocator);
 
         try {
-            $loader->load('services.yml');
+            $loader->load('boot.yml');
+
+            $configFiles = $container->getParameter('config.files');
+
+            foreach ($configFiles as $configFile) {
+                $loader->load($configFile);
+            }
+
+            //$loader->load('services.yml');
         } catch (\Exception $e) {
             throw new SmartlingConfigException('Error in YAML configuration file', 0, $e);
         }
