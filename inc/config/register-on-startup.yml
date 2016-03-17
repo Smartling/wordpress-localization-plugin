@@ -1,29 +1,23 @@
 parameters:
-  cron.interval.fiveminutes: 5m
-
 services:
-  cron.worker.upload:
-    class: Smartling\Jobs\UploadJob
-    arguments:
-      - "@logger"
-      - "@manager.submission"
-    calls:
-      - [ "setJobRunInterval", [ %cron.interval.fiveminutes% ] ]
-
   manager.register:
     class: Smartling\StartupRegisterManager
     calls:
-      - [ "addService", [ @cron.worker.upload ]]
-      - [ "addService", [ @wp.i18n]]
-      - [ "addService", [ @wp.checkStatus]]
-      - [ "addService", [ @wp.submissions]]
-      - [ "addService", [ @wp.bulkSubmit]]
-      - [ "addService", [ @wp.settings]]
-      - [ "addService", [ @wp.settings.edit]]
-      - [ "addService", [ @wp.post]]
-      - [ "addService", [ @wp.page]]
-      - [ "addService", [ @wp.taxonomy]]
-      - [ "addService", [ @wp.ext.policy]]
-      - [ "addService", [ @wp.ext.partner]]
-      - [ "addService", [ @wp.ext.testimonial]]
-      - [ "addService", [ @smartling.helper.relative-image-path-support]]
+      #- [ "addService", [ @custom.scheduler.interval.helper ]]
+      - [ "addService", [ "@cron.worker.upload" ]]
+      - [ "addService", [ "@cron.worker.submission-collector" ]]
+      - [ "addService", [ "@cron.worker.last-modified-check" ]]
+      - [ "addService", [ "@cron.worker.download" ]]
+      - [ "addService", [ "@wp.i18n" ]]
+      - [ "addService", [ "@wp.checkStatus" ]]
+      - [ "addService", [ "@wp.submissions" ]]
+      - [ "addService", [ "@wp.bulkSubmit" ]]
+      - [ "addService", [ "@wp.settings" ]]
+      - [ "addService", [ "@wp.settings.edit" ]]
+      - [ "addService", [ "@wp.post" ]]
+      - [ "addService", [ "@wp.page" ]]
+      - [ "addService", [ "@wp.taxonomy" ]]
+      - [ "addService", [ "@wp.ext.policy" ]]
+      - [ "addService", [ "@wp.ext.partner" ]]
+      - [ "addService", [ "@wp.ext.testimonial" ]]
+      - [ "addService", [ "@smartling.helper.relative-image-path-support" ]]

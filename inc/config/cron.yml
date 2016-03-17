@@ -1,0 +1,66 @@
+parameters:
+  cron.interval.upload: "5m"
+  cron.interval.group.submission: "5m"
+  cron.interval.last-modified-check: "5m"
+  cron.interval.download: "5m"
+services:
+  custom.scheduler.interval.helper:
+    class: Smartling\Helpers\CustomScheduleIntervalHelper
+    calls:
+      - [ "registerInterval", [ "2m", 120, "Every 2 minutes" ] ]
+      - [ "registerInterval", [ "5m", 300, "Every 5 minutes" ] ]
+      - [ "registerInterval", [ "10m", 600, "Every 10 minutes" ] ]
+      - [ "registerInterval", [ "15m", 900, "Every 15 minutes" ] ]
+
+  #
+  # Cron worker that sends submissions with status New to Smartling
+  #
+  cron.worker.upload:
+    class: Smartling\Jobs\UploadJob
+    arguments:
+      - "@logger"
+      - "@manager.submission"
+    calls:
+      - [ "setJobRunInterval", [ %cron.interval.upload% ] ]
+
+  #
+  # Cron collects info about submissions in statuses 'In Progress' and 'Completed'
+  # and places grouped submissions to lash-modified-check queue
+  #
+  cron.worker.submission-collector:
+    class: Smartling\Jobs\SubmissionCollectorJob
+    arguments:
+      - "@logger"
+      - "@manager.submission"
+    calls:
+      - [ "setJobRunInterval", [ %cron.interval.group.submission% ] ]
+      - [ "setQueue", [ "@queue.db" ]]
+
+
+  #
+  # Cron that checks submissions in statuses 'In Progress' and 'Completed'
+  # and updates status (progress) if needed
+  # and adds submission to download queue if needed
+  cron.worker.last-modified-check:
+    class: Smartling\Jobs\LastModifiedCheckJob
+    arguments:
+      - "@logger"
+      - "@manager.submission"
+    calls:
+      - [ "setJobRunInterval", [ %cron.interval.last-modified-check% ] ]
+      - [ "setApiWrapper", [ "@wrapper.sdk.api.smartling" ]]
+      - [ "setSettingsManager", [ "@manager.settings" ]]
+      - [ "setQueue", [ "@queue.db" ]]
+
+  #
+  # Cron that checks submissions in statuses 'In Progress' and 'Completed'
+  # and updates status (progress) if needed
+  # and adds submission to download queue if needed
+  cron.worker.download:
+    class: Smartling\Jobs\DownloadTranslationJob
+    arguments:
+      - "@logger"
+      - "@manager.submission"
+    calls:
+      - [ "setJobRunInterval", [ %cron.interval.download% ] ]
+      - [ "setQueue", [ "@queue.db" ]]

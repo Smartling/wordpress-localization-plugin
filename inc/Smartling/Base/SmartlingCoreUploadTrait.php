@@ -78,7 +78,7 @@ trait SmartlingCoreUploadTrait
             $params = new BeforeSerializeContentEventParameters($source, $submission, $contentEntity,
                 $source['meta']);
 
-            do_action(XmlEncoder::EVENT_SMARTLING_BEFORE_SERIALIZE_CONNENT, $params);
+            do_action(ExportedAPI::EVENT_SMARTLING_BEFORE_SERIALIZE_CONNENT, $params);
 
             $this->prepareFieldProcessorValues($submission);
 

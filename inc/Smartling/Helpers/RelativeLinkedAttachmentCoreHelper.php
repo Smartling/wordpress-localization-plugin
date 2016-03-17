@@ -4,13 +4,13 @@ namespace Smartling\Helpers;
 
 use DOMDocument;
 use Psr\Log\LoggerInterface;
+use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\WP\WPHookInterface;
 
 /**
  * Class RelativeLinkedAttachmentCoreHelper
- *
  * @package inc\Smartling\Helpers
  */
 class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
@@ -99,7 +99,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
      */
     public function register()
     {
-        add_action(XmlEncoder::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, [$this, 'processor']);
+        add_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, [$this, 'processor']);
     }
 
     /**
@@ -141,19 +141,19 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                         $attachmentId = $this->getAttachmentId($path);
                         if (false !== $attachmentId) {
                             $attachmentSubmission = $this->getCore()
-                                                         ->sendAttachmentForTranslation(
-                                                             $this->getParams()
-                                                                  ->getSubmission()
-                                                                  ->getSourceBlogId(),
-                                                             $this->getParams()
-                                                                  ->getSubmission()
-                                                                  ->getTargetBlogId(),
-                                                             $attachmentId
-                                                         );
+                                ->sendAttachmentForTranslation(
+                                    $this->getParams()
+                                        ->getSubmission()
+                                        ->getSourceBlogId(),
+                                    $this->getParams()
+                                        ->getSubmission()
+                                        ->getTargetBlogId(),
+                                    $attachmentId
+                                );
                             $replacer->addReplacementPair(
                                 $path,
                                 $this->getCore()
-                                     ->getAttachmentRelativePathBySubmission($attachmentSubmission)
+                                    ->getAttachmentRelativePathBySubmission($attachmentSubmission)
                             );
                         } else {
                             $result = $this->tryProcessThumbnail($path);
@@ -208,13 +208,13 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     private function tryProcessThumbnail($path)
     {
         $sourceUploadInfo = $this->getCore()
-                                 ->getUploadFileInfo($this->getParams()
-                                                          ->getSubmission()
-                                                          ->getSourceBlogId());
+            ->getUploadFileInfo($this->getParams()
+                                    ->getSubmission()
+                                    ->getSourceBlogId());
 
         $a = $this->getCore()
-                  ->getFullyRelateAttachmentPath($this->getParams()
-                                                      ->getSubmission(), $path);
+            ->getFullyRelateAttachmentPath($this->getParams()
+                                               ->getSubmission(), $path);
 
         $fullFileName = $sourceUploadInfo['basedir'] . DIRECTORY_SEPARATOR . $a;
 
@@ -242,95 +242,97 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 
                     if (false !== $attachmentId) {
                         $attachmentSubmission = $this->getCore()
-                                                     ->sendAttachmentForTranslation(
-                                                         $this->getParams()
-                                                              ->getSubmission()
-                                                              ->getSourceBlogId(),
-                                                         $this->getParams()
-                                                              ->getSubmission()
-                                                              ->getTargetBlogId(),
-                                                         $attachmentId
-                                                     );
+                            ->sendAttachmentForTranslation(
+                                $this->getParams()
+                                    ->getSubmission()
+                                    ->getSourceBlogId(),
+                                $this->getParams()
+                                    ->getSubmission()
+                                    ->getTargetBlogId(),
+                                $attachmentId
+                            );
 
                         $targetUploadInfo = $this->getCore()
-                                                 ->getUploadFileInfo($this->getParams()
-                                                                          ->getSubmission()
-                                                                          ->getTargetBlogId());
+                            ->getUploadFileInfo($this->getParams()
+                                                    ->getSubmission()
+                                                    ->getTargetBlogId());
 
-                        $fullTargetFileName = $targetUploadInfo['basedir'] . DIRECTORY_SEPARATOR . $sourceFilePathInfo['filename'] . '.' . $sourceFilePathInfo['extension'];
+                        $fullTargetFileName = $targetUploadInfo['basedir'] . DIRECTORY_SEPARATOR .
+                                              $sourceFilePathInfo['filename'] . '.' . $sourceFilePathInfo['extension'];
 
                         $copyResult = copy($fullFileName, $fullTargetFileName);
 
                         if (false === $copyResult) {
                             $this->getLogger()
-                                 ->warning(
-                                     vsprintf(
-                                         'Unknown error occurred while copying thumbnail from %s to %s.',
-                                         [
-                                             $fullFileName,
-                                             $fullTargetFileName,
-                                         ]
-                                     )
-                                 );
+                                ->warning(
+                                    vsprintf(
+                                        'Unknown error occurred while copying thumbnail from %s to %s.',
+                                        [
+                                            $fullFileName,
+                                            $fullTargetFileName,
+                                        ]
+                                    )
+                                );
                         }
 
                         $targetFileRelativePath = $this->getCore()
-                                                       ->getAttachmentRelativePathBySubmission($attachmentSubmission);
+                            ->getAttachmentRelativePathBySubmission($attachmentSubmission);
 
                         $targetThumbnailPathInfo = pathinfo($targetFileRelativePath);
 
-                        $targetThumbnailRelativePath = $targetThumbnailPathInfo['dirname'] . '/' . $sourceFilePathInfo['basename'];
+                        $targetThumbnailRelativePath = $targetThumbnailPathInfo['dirname'] . '/' .
+                                                       $sourceFilePathInfo['basename'];
 
                         $result = ['from' => $path, 'to' => $targetThumbnailRelativePath];
 
                         return $result;
                     } else {
                         $this->getLogger()
-                             ->warning(
-                                 vsprintf(
-                                     'Referenced original file (absolute path): %s found by thumbnail (absolute path) : %s is not found in the media library. Skipping.',
-                                     [
-                                         $possibleOriginalFilePath,
-                                         $fullFileName,
-                                     ]
-                                 )
-                             );
+                            ->warning(
+                                vsprintf(
+                                    'Referenced original file (absolute path): %s found by thumbnail (absolute path) : %s is not found in the media library. Skipping.',
+                                    [
+                                        $possibleOriginalFilePath,
+                                        $fullFileName,
+                                    ]
+                                )
+                            );
                     }
                 } else {
                     $this->getLogger()
-                         ->warning(
-                             vsprintf(
-                                 'Original file: %s for the referenced thumbnail: %s not found. Skipping.',
-                                 [
-                                     $possibleOriginalFilePath,
-                                     $fullFileName,
-                                 ]
-                             )
-                         );
+                        ->warning(
+                            vsprintf(
+                                'Original file: %s for the referenced thumbnail: %s not found. Skipping.',
+                                [
+                                    $possibleOriginalFilePath,
+                                    $fullFileName,
+                                ]
+                            )
+                        );
                 }
             } else {
                 $this->getLogger()
-                     ->warning(
-                         vsprintf(
-                             'Referenced file: %s  does not seems to be a thumbnail. Skipping.',
-                             [
-                                 $fullFileName,
-                             ]
-                         )
-                     );
+                    ->warning(
+                        vsprintf(
+                            'Referenced file: %s  does not seems to be a thumbnail. Skipping.',
+                            [
+                                $fullFileName,
+                            ]
+                        )
+                    );
             }
 
 
         } else {
             $this->getLogger()
-                 ->warning(
-                     vsprintf(
-                         'Referenced file (absolute path) not found. Skipping.',
-                         [
-                             $fullFileName,
-                         ]
-                     )
-                 );
+                ->warning(
+                    vsprintf(
+                        'Referenced file (absolute path) not found. Skipping.',
+                        [
+                            $fullFileName,
+                        ]
+                    )
+                );
         }
 
         return false;
@@ -370,9 +372,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     private function getAttachmentId($relativePath)
     {
 
-        $a = $this->getCore()
-                  ->getFullyRelateAttachmentPath($this->getParams()
-                                                      ->getSubmission(), $relativePath);
+        $a = $this->getCore()->getFullyRelateAttachmentPath($this->getParams()->getSubmission(), $relativePath);
 
         $query = vsprintf(
             'SELECT `post_id` as `id` FROM `%s` WHERE `meta_key` = \'_wp_attached_file\' AND `meta_value`=\'%s\' LIMIT 1;',

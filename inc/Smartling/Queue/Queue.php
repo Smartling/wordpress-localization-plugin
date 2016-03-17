@@ -102,11 +102,15 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
 
     private function set($value, $queue = self::DEFAULT_QUEUE_NAME)
     {
-        $query = QueryBuilder::buildInsertQuery($this->getRealTableName(), [
-            'queue'        => $queue,
-            'payload'      => $value,
-            'payload_hash' => md5($value),
-        ]);
+        $query = QueryBuilder::buildInsertQuery(
+            $this->getRealTableName(),
+            [
+                'queue'        => $queue,
+                'payload'      => $value,
+                'payload_hash' => md5($value),
+            ],
+            true
+        );
 
         $result = $this->getDbal()->query($query);
 

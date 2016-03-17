@@ -82,7 +82,7 @@ trait SmartlingCoreDownloadTrait
             $params = new AfterDeserializeContentEventParameters($translatedFields, $entity, $targetContent,
                 $translatedFields['meta']);
 
-            do_action(XmlEncoder::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
+            do_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
 
             $this->setValues($targetContent, $translatedFields['entity']);
 

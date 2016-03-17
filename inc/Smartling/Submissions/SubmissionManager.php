@@ -578,4 +578,52 @@ class SubmissionManager extends EntityManagerAbstract
 
         return $entity;
     }
+
+    /**
+     * @param SubmissionEntity[] $submissionList
+     *
+     * @return array
+     */
+    public function serializeSubmissions(array $submissionList)
+    {
+        $output = [];
+
+        foreach ($submissionList as $submission) {
+            $output[] = $submission->toArray(false);
+        }
+
+        return $output;
+    }
+
+    /**
+     * @param array $serializedSubmissions
+     *
+     * @return SubmissionEntity[]
+     */
+    public function unserializeSubmissions(array $serializedSubmissions)
+    {
+        $output = [];
+
+        foreach ($serializedSubmissions as $serializedSubmission) {
+            $output[] = SubmissionEntity::fromArray($serializedSubmission, $this->getLogger());
+        }
+
+        return $output;
+    }
+
+    /**
+     * @param SubmissionEntity[] $submissions
+     *
+     * @return SubmissionEntity[]
+     */
+    public function storeSubmissions(array $submissions)
+    {
+        $newList = [];
+
+        foreach ($submissions as $submission) {
+            $newList[] = $this->storeEntity($submission);
+        }
+
+        return $newList;
+    }
 }

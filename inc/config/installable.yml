@@ -1,4 +1,7 @@
 parameters:
   hooks.installable:
-    - 'site.db'
-    - 'cron.worker.upload'
+    - site.db
+    - cron.worker.upload
+    - cron.worker.last-modified-check
+    - cron.worker.submission-collector
+    - cron.worker.download

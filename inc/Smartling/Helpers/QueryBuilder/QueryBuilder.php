@@ -182,14 +182,18 @@ class QueryBuilder
     /**
      * @param string $tableName
      * @param array  $fieldValueList
+     * @param bool   $ignoreKeyDublicate
      *
      * @return string
      */
-    public static function buildInsertQuery($tableName, array $fieldValueList)
+    public static function buildInsertQuery($tableName, array $fieldValueList, $ignoreKeyDublicate = false)
     {
-        $template = 'INSERT INTO %s (%s) VALUES (%s)';
+        $template = 'INSERT %s INTO %s (%s) VALUES (%s)';
+
+        $ignore = true === $ignoreKeyDublicate ? 'IGNORE' : '';
 
         $query = vsprintf($template, [
+            $ignore,
             self::escapeName($tableName),
             self::buildFieldListString(array_keys($fieldValueList)),
             implode(',', array_map(function ($item) {

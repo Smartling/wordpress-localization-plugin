@@ -64,6 +64,6 @@ if (!Smartling_Version_Check::check_php_version()) {
         add_action('plugins_loaded', array($bootstrap, 'load',), 99);
         register_activation_hook(__FILE__, array($bootstrap, 'activate',));
         register_deactivation_hook(__FILE__, array($bootstrap, 'deactivate',));
-        register_uninstall_hook(__FILE__, 'Smartling\Bootstrap::uninstall');
+        register_uninstall_hook(__FILE__, array('Smartling\Bootstrap', 'uninstall'));
     }
 }

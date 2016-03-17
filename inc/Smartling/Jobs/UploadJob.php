@@ -2,10 +2,8 @@
 
 namespace Smartling\Jobs;
 
-use Psr\Log\LoggerInterface;
-use Smartling\Base\SmartlingCore;
+use Smartling\Base\ExportedAPI;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\Submissions\SubmissionManager;
 
 /**
  * Class UploadJob
@@ -13,17 +11,12 @@ use Smartling\Submissions\SubmissionManager;
  */
 class UploadJob extends JobAbstract
 {
-
     /**
-     * UploadJob constructor.
-     *
-     * @param LoggerInterface   $logger
-     * @param SubmissionManager $submissionManager
+     * @return string
      */
-    public function __construct(LoggerInterface $logger, SubmissionManager $submissionManager)
+    public function getJobHookName()
     {
-        parent::__construct($logger, $submissionManager);
-        $this->setJobHookName('smartling-upload-task');
+        return 'smartling-upload-task';
     }
 
     /**
@@ -52,8 +45,10 @@ class UploadJob extends JobAbstract
                 )
             );
 
-            do_action(SmartlingCore::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $entity);
+            do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $entity);
         }
         $this->getLogger()->info('Finished UploadJob.');
     }
+
+
 }

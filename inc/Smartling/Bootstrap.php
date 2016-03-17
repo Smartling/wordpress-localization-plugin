@@ -10,7 +10,6 @@ use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\SchedulerHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Settings\SettingsManager;
-use Smartling\WP\WPHookInterface;
 use Smartling\WP\WPInstallableInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -90,6 +89,8 @@ class Bootstrap
             $object = $this->fromContainer($hook);
             if ($object instanceof WPInstallableInterface) {
                 $object->activate();
+            } else {
+                var_dump($object);die;
             }
         }
     }

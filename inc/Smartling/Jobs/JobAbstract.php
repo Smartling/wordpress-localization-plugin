@@ -3,7 +3,6 @@
 namespace Smartling\Jobs;
 
 use Psr\Log\LoggerInterface;
-use Smartling\Bootstrap;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\WPHookInterface;
@@ -15,11 +14,6 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
      * @var string
      */
     private $jobRunInterval = '';
-
-    /**
-     * @var string
-     */
-    private $jobHookName = '';
 
     /**
      * @var LoggerInterface
@@ -48,25 +42,9 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
     }
 
     /**
-     * @return string
-     */
-    public function getJobHookName()
-    {
-        return $this->jobHookName;
-    }
-
-    /**
-     * @param string $jobHookName
-     */
-    public function setJobHookName($jobHookName)
-    {
-        $this->jobHookName = $jobHookName;
-    }
-
-    /**
      * @return LoggerInterface
      */
-    public function getLogger()
+    protected function getLogger()
     {
         return $this->logger;
     }
@@ -74,7 +52,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
     /**
      * @param LoggerInterface $logger
      */
-    public function setLogger($logger)
+    protected function setLogger($logger)
     {
         $this->logger = $logger;
     }
@@ -82,7 +60,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
     /**
      * @return SubmissionManager
      */
-    public function getSubmissionManager()
+    protected function getSubmissionManager()
     {
         return $this->submissionManager;
     }
@@ -90,7 +68,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
     /**
      * @param SubmissionManager $submissionManager
      */
-    public function setSubmissionManager($submissionManager)
+    protected function setSubmissionManager($submissionManager)
     {
         $this->submissionManager = $submissionManager;
     }
@@ -130,22 +108,13 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         $this->uninstall();
     }
 
-
-    /**
-     *
-     */
-    public function cronProxyMethod()
-    {
-        die('rrr');
-    }
-
     /**
      * @inheritdoc
      */
     public function register()
     {
         if (!DiagnosticsHelper::isBlocked()) {
-            add_action($this->getJobHookName(), [ $this, 'cronProxyMethod' ]);
+            add_action($this->getJobHookName(), [$this, 'run']);
         }
     }
 

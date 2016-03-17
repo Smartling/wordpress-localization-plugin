@@ -2,6 +2,7 @@
 
 namespace Smartling;
 
+use Smartling\Base\ExportedAPI;
 use Smartling\Exception\SmartlingConfigException;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
@@ -33,19 +34,21 @@ trait DITrait
 
         try {
             $loader->load('boot.yml');
-
             $configFiles = $container->getParameter('config.files');
-
             foreach ($configFiles as $configFile) {
                 $loader->load($configFile);
             }
-
-            //$loader->load('services.yml');
         } catch (\Exception $e) {
             throw new SmartlingConfigException('Error in YAML configuration file', 0, $e);
         }
 
         self::$containerInstance = $container;
+
+        /**
+         * Exposing reference to DI interface
+         */
+        do_action(ExportedAPI::ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT, self::$containerInstance);
+
         self::$loggerInstance = $container->get('logger');
     }
 
@@ -77,7 +80,7 @@ trait DITrait
      */
     public static function getContainer()
     {
-        if (is_null(self::$containerInstance)) {
+        if (null === self::$containerInstance) {
             self::initContainer();
         }
 

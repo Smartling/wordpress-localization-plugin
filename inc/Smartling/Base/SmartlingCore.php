@@ -17,7 +17,6 @@ use Smartling\Submissions\SubmissionEntity;
 
 /**
  * Class SmartlingCore
- *
  * @package Smartling\Base
  */
 class SmartlingCore extends SmartlingCoreAbstract
@@ -31,17 +30,10 @@ class SmartlingCore extends SmartlingCoreAbstract
 
     use CommonLogMessagesTrait;
 
-    /**
-     * Action that sends given SubmissionEntity to smartling for translation
-     */
-    const ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION = 'smartling-event.send-for-translation';
-
     public function __construct()
     {
-        add_action(self::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, [
-            $this,
-            'sendForTranslationBySubmission',
-        ]);
+        add_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, [$this, 'sendForTranslationBySubmission']);
+        add_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, [$this, 'downloadTranslationBySubmission',]);
     }
 
     /**
@@ -563,217 +555,6 @@ class SmartlingCore extends SmartlingCoreAbstract
         }
     }
 
-    /**
-     * @param SubmissionEntity $entity
-     */
-    public function checkEntityForDownload(SubmissionEntity $entity)
-    {
-        if (100 === $entity->getCompletionPercentage()) {
-            $this->getLogger()->info(vsprintf(self::$MSG_CRON_DOWNLOAD, [
-                $entity->getId(),
-                $entity->getStatus(),
-                $entity->getContentType(),
-                $entity->getSourceBlogId(),
-                $entity->getSourceId(),
-                $entity->getTargetBlogId(),
-                $entity->getTargetLocale(),
-            ]));
-
-            // entity is ready
-            $this->getQueue()->enqueue($entity->toArray(false), 'download-queue');
-        }
-    }
-
-
-    /**
-     * Groups a set of SubmissionEntity by fileUri for batch requests.
-     *
-     * @param SubmissionEntity[] $submissions
-     *
-     * @return array
-     */
-    private function groupSubmissionsByFileUri(array $submissions)
-    {
-        $grouped = [];
-
-        foreach ($submissions as $submission) {
-            $grouped[$submission->getFileUri()][] = $submission;
-        }
-
-        return $grouped;
-    }
-
-    /**
-     * @param SubmissionEntity $submission
-     *
-     * @return string
-     */
-    private function getSmartlingLocaleIdBySubmission(SubmissionEntity $submission)
-    {
-        $settingsManager = $this->getSettingsManager();
-
-        $locale = $settingsManager
-            ->getSmartlingLocaleIdBySettingsProfile(
-                $settingsManager->getSingleSettingsProfile($submission->getSourceBlogId()),
-                $submission->getTargetBlogId()
-            );
-
-        return $locale;
-    }
-
-    /**
-     * @param SubmissionEntity[] $submissionList
-     *
-     * @return array
-     */
-    private function prepareSubmissionList(array $submissionList)
-    {
-        $output = [];
-
-        foreach ($submissionList as $submissionEntity) {
-            $smartlingLocaleId = $this->getSmartlingLocaleIdBySubmission($submissionEntity);
-            $output[$smartlingLocaleId] = $submissionEntity;
-        }
-
-        return $output;
-    }
-
-    /**
-     * @param SubmissionEntity[] $submissionList
-     *
-     * @return array
-     */
-    private function serializeSubmissions(array $submissionList)
-    {
-        $output = [];
-
-        foreach ($submissionList as $submission) {
-            $output[] = $submission->toArray(false);
-        }
-
-        return $output;
-    }
-
-    /**
-     * @param array $serializedSubmissions
-     *
-     * @return SubmissionEntity[]
-     */
-    private function unserializeSubmissions(array $serializedSubmissions)
-    {
-        $output = [];
-
-        foreach ($serializedSubmissions as $serializedSubmission) {
-            $output[] = SubmissionEntity::fromArray($serializedSubmission, $this->getLogger());
-        }
-
-        return $output;
-    }
-
-    /**
-     * Checks last-modified for all submissions in statuses "In Progress", "Completed"
-     * if date-time differs from value in submission a whole set of submissions goes to check-status-queue
-     */
-    public function lastModifiedCheck()
-    {
-        $entities = $this->getSubmissionManager()
-            ->find([
-                       'status' => [
-                           SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
-                           SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
-                       ],
-                   ]);
-
-        $grouped = $this->groupSubmissionsByFileUri($entities);
-
-        foreach ($grouped as $fileUri => $submissionList) {
-            $lastModified = $this->getApiWrapper()->lastModified(reset($submissionList));
-            $submissions = $this->prepareSubmissionList($submissionList);
-            $needStatusCheck = false;
-
-            foreach ($lastModified as $smartlingLocaleId => $lastModifiedDateTime) {
-                if (array_key_exists($smartlingLocaleId, $submissions)) {
-
-                    /**
-                     * @var SubmissionEntity $submission
-                     */
-                    $submission = $submissions[$smartlingLocaleId];
-                    $submissionLastModifiedTimestamp = $submission->getLastModified()->getTimestamp();
-                    $actualLastModifiedTimestamp = $lastModifiedDateTime->getTimestamp();
-                    if ($actualLastModifiedTimestamp !== $submissionLastModifiedTimestamp) {
-                        $submission->setLastModified($lastModifiedDateTime);
-                        $needStatusCheck = true;
-                    } else {
-                        /**
-                         * pass next only changed that definitely need check status
-                         */
-                        unset($submissions[$smartlingLocaleId]);
-                    }
-                }
-            }
-
-            if (true === $needStatusCheck) {
-                $submissions = $this->storeSubmissions($submissions);
-                $serializedSubmissions = $this->serializeSubmissions($submissions);
-                $this->getQueue()->enqueue($serializedSubmissions, 'check-status-queue');
-                continue;
-            }
-        }
-    }
-
-    /**
-     * @param SubmissionEntity[] $submissions
-     *
-     * @return SubmissionEntity[]
-     */
-    private function storeSubmissions(array $submissions)
-    {
-        $newList = [];
-
-        foreach ($submissions as $submission) {
-            $newList[] = $this->getSubmissionManager()->storeEntity($submission);
-        }
-
-        return $newList;
-    }
-
-    /**
-     * Walks through the check-status-queue and checks all submissions status (translation %).
-     * If needed sends submission to download-queue
-     */
-    public function statusCheck()
-    {
-        $this->getLogger()->debug('Processing status check queue started.');
-        while (false !== ($element = $this->getQueue()->dequeue('check-status-queue'))) {
-
-            $submissions = $this->unserializeSubmissions($element);
-
-            $submissions = $this->prepareSubmissionList($submissions);
-
-            $statusCheckResult = $this->getApiWrapper()->getStatusForAllLocales($submissions);
-
-            $submissions = $this->storeSubmissions($statusCheckResult);
-
-            foreach ($submissions as $submission) {
-                $this->checkEntityForDownload($submission);
-            }
-        }
-        $this->getLogger()->debug('Processing status check queue finished.');
-    }
-
-
-
-    public function processDownloadQueue()
-    {
-        $this->getLogger()->debug('Processing download queue started.');
-        while (false !== ($serializedEntity = $this->getQueue()->dequeue('download-queue'))) {
-
-            $entity = SubmissionEntity::fromArray($serializedEntity, $this->getLogger());
-
-            $this->downloadTranslationBySubmission($entity);
-        }
-        $this->getLogger()->debug('Processing download queue finished.');
-    }
 
     /**
      * @param array $items
@@ -867,6 +648,9 @@ class SmartlingCore extends SmartlingCoreAbstract
 
         $originalImage = get_attached_file($submission->getTargetId());
 
+        if (!function_exists('wp_generate_attachment_metadata')) {
+            include_once(ABSPATH . 'wp-admin/includes/image.php'); //including the attachment function
+        }
         $metadata = wp_generate_attachment_metadata($submission->getTargetId(), $originalImage);
 
 
