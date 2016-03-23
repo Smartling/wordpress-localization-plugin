@@ -114,9 +114,8 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
 
     public function prepare_items()
     {
-
-        //$nonce = wp_create_nonce();
         $curStats = $this->getQueue()->stats();
+
         $newSubmissionsCount = count(
             $this->getSubmissionManager()->find(['status' => SubmissionEntity::SUBMISSION_STATUS_NEW])
         );
@@ -128,52 +127,70 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
                         SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
                         SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
                     ],
-                ])
+                ]
+            )
         );
 
         $checkStatusPoolSize = array_key_exists(Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE, $curStats)
-            ? $curStats[Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE] : 0;
+            ? $curStats[Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE]
+            : 0;
+
         $downloadPoolSize = array_key_exists(Queue::QUEUE_NAME_DOWNLOAD_QUEUE, $curStats)
-            ? $curStats[Queue::QUEUE_NAME_DOWNLOAD_QUEUE] : 0;
+            ? $curStats[Queue::QUEUE_NAME_DOWNLOAD_QUEUE]
+            : 0;
 
         $data = [
             [
                 'cron_name'   => __('Upload'),
                 'run_cron'    => 0 === $newSubmissionsCount
                     ? __('Nothing to do')
-                    : HtmlTagGeneratorHelper::tag(
-                        'a',
-                        __(vsprintf('Process (%s submissions waiting)', [$newSubmissionsCount])),
+                    : vsprintf(
+                        '%s (%s submissions waiting)',
                         [
-                            'href'  => vsprintf(
-                                admin_url('admin-post.php') . '?action=cnq&_c_action=%s&argument=%s',
+                            HtmlTagGeneratorHelper::tag(
+                                'a',
+                                __('Process'),
                                 [
-                                    ConfigurationProfilesController::ACTION_QUEUE_FORCE,
-                                    UploadJob::JOB_HOOK_NAME,
+                                    'href'  => vsprintf(
+                                        '%s?action=cnq&_c_action=%s&argument=%s',
+                                        [
+                                            admin_url('admin-post.php'),
+                                            ConfigurationProfilesController::ACTION_QUEUE_FORCE,
+                                            UploadJob::JOB_HOOK_NAME,
+                                        ]
+                                    ),
+                                    'class' => 'ajaxcall',
                                 ]
                             ),
-                            'class' => 'ajaxcall',
+                            $newSubmissionsCount,
                         ]
                     ),
                 'queue_name'  => __('&nbsp;'),
                 'queue_purge' => __('&nbsp;'),
             ],
             [
-                'cron_name'   => __('Submission Collector'),
+                'cron_name'   => __('Check Status Helper'),
                 'run_cron'    => 0 === $collectorQueueSize
                     ? __('Nothing to do')
-                    : HtmlTagGeneratorHelper::tag(
-                        'a',
-                        __(vsprintf('Process (%s submissions waiting)', [$collectorQueueSize])),
+                    : vsprintf(
+                        '%s (%s submissions waiting)',
                         [
-                            'href'  => vsprintf(
-                                admin_url('admin-post.php') . '?action=cnq&_c_action=%s&argument=%s',
+                            HtmlTagGeneratorHelper::tag(
+                                'a',
+                                __('Process'),
                                 [
-                                    ConfigurationProfilesController::ACTION_QUEUE_FORCE,
-                                    SubmissionCollectorJob::JOB_HOOK_NAME,
+                                    'href'  => vsprintf(
+                                        '%s?action=cnq&_c_action=%s&argument=%s',
+                                        [
+                                            admin_url('admin-post.php'),
+                                            ConfigurationProfilesController::ACTION_QUEUE_FORCE,
+                                            SubmissionCollectorJob::JOB_HOOK_NAME,
+                                        ]
+                                    ),
+                                    'class' => 'ajaxcall',
                                 ]
                             ),
-                            'class' => 'ajaxcall',
+                            $collectorQueueSize,
                         ]
                     ),
                 'queue_name'  => __('&nbsp;'),
@@ -183,18 +200,25 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
                 'cron_name'   => __('Check Status'),
                 'run_cron'    => 0 === $checkStatusPoolSize
                     ? __('Nothing to do')
-                    : HtmlTagGeneratorHelper::tag(
-                        'a',
-                        __(vsprintf('Process (%s submissions waiting)', [$checkStatusPoolSize])),
+                    : vsprintf(
+                        '%s (%s submissions waiting)',
                         [
-                            'href'  => vsprintf(
-                                admin_url('admin-post.php') . '?action=cnq&_c_action=%s&argument=%s',
+                            HtmlTagGeneratorHelper::tag(
+                                'a',
+                                __('Process'),
                                 [
-                                    ConfigurationProfilesController::ACTION_QUEUE_FORCE,
-                                    LastModifiedCheckJob::JOB_HOOK_NAME,
+                                    'href'  => vsprintf(
+                                        '%s?action=cnq&_c_action=%s&argument=%s',
+                                        [
+                                            admin_url('admin-post.php'),
+                                            ConfigurationProfilesController::ACTION_QUEUE_FORCE,
+                                            LastModifiedCheckJob::JOB_HOOK_NAME,
+                                        ]
+                                    ),
+                                    'class' => 'ajaxcall',
                                 ]
                             ),
-                            'class' => 'ajaxcall',
+                            $checkStatusPoolSize,
                         ]
                     ),
                 'queue_name'  => Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE,
@@ -219,17 +243,25 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
                 'cron_name'   => __('Download'),
                 'run_cron'    => 0 === $downloadPoolSize
                     ? __('Nothing to do')
-                    : HtmlTagGeneratorHelper::tag(
-                        'a',
-                        __(vsprintf('Process (%s submissions waiting)', [$downloadPoolSize])),
+                    : vsprintf(
+                        '%s (%s submissions waiting)',
                         [
-                            'href'  => vsprintf(
-                                admin_url('admin-post.php') . '?action=cnq&_c_action=%s&argument=%s',
+                            HtmlTagGeneratorHelper::tag(
+                                'a',
+                                __('Process'),
                                 [
-                                    ConfigurationProfilesController::ACTION_QUEUE_FORCE,
-                                    DownloadTranslationJob::JOB_HOOK_NAME]
+                                    'href'  => vsprintf(
+                                        '%s?action=cnq&_c_action=%s&argument=%s',
+                                        [
+                                            admin_url('admin-post.php'),
+                                            ConfigurationProfilesController::ACTION_QUEUE_FORCE,
+                                            DownloadTranslationJob::JOB_HOOK_NAME,
+                                        ]
+                                    ),
+                                    'class' => 'ajaxcall',
+                                ]
                             ),
-                            'class' => 'ajaxcall',
+                            $downloadPoolSize,
                         ]
                     ),
                 'queue_name'  => Queue::QUEUE_NAME_DOWNLOAD_QUEUE,
