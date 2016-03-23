@@ -4,6 +4,7 @@ namespace Smartling\Settings;
 
 use Smartling\DbAl\EntityManagerAbstract;
 use Smartling\Exception\BlogNotFoundException;
+use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
