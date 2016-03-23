@@ -33,12 +33,14 @@ class SubmissionCollectorJob extends JobAbstract
         $this->queue = $queue;
     }
 
+    const JOB_HOOK_NAME = 'smartling-submission-collector-task';
+
     /**
      * @return string
      */
     public function getJobHookName()
     {
-        return 'smartling-submission-collector-task';
+        return self::JOB_HOOK_NAME;
     }
 
     /**
@@ -54,7 +56,8 @@ class SubmissionCollectorJob extends JobAbstract
             foreach ($preparedArray as $fileUri => $submissionList) {
                 $serializedSubmissions = $this->getSubmissionManager()->serializeSubmissions($submissionList);
 
-                $this->getQueue()->enqueue([$fileUri => $serializedSubmissions], 'last-modified-check-queue');
+                $this->getQueue()
+                    ->enqueue([$fileUri => $serializedSubmissions], Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE);
             }
         }
 

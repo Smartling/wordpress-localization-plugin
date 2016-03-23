@@ -14,6 +14,24 @@ use WP_List_Table;
 class SmartlingListTable extends WP_List_Table
 {
 
+    private $source;
+
+    /**
+     * @return mixed
+     */
+    public function getSource()
+    {
+        return $this->source;
+    }
+
+    /**
+     * @param mixed $source
+     */
+    public function setSource($source)
+    {
+        $this->source = $source;
+    }
+
     /**
      * @param SiteHelper $siteHelper
      *
@@ -41,5 +59,16 @@ class SmartlingListTable extends WP_List_Table
         }
 
         return $types;
+    }
+
+    /**
+     * @param string $keyName
+     * @param mixed  $defaultValue
+     *
+     * @return mixed
+     */
+    public function getFromSource($keyName, $defaultValue)
+    {
+        return array_key_exists($keyName, $this->getSource()) ? $this->getSource()[$keyName] : $defaultValue;
     }
 }

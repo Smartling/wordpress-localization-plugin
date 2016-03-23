@@ -90,7 +90,7 @@ class Bootstrap
             if ($object instanceof WPInstallableInterface) {
                 $object->activate();
             } else {
-                var_dump($object);die;
+
             }
         }
     }

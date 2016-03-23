@@ -344,7 +344,7 @@ class SubmissionManager extends EntityManagerAbstract
         $query = QueryBuilder::buildSelectQuery(
             $this->getDbal()
                  ->completeTableName(SubmissionEntity::getTableName()),
-            [['COUNT(*)', 'cnt']],
+            [['COUNT(*)' => 'cnt']],
             $whereOptions,
             [],
             null
@@ -376,6 +376,21 @@ class SubmissionManager extends EntityManagerAbstract
             $block->addCondition($condition);
         }
 
+        $query = $this->buildQuery(null, null, [], null, $block);
+
+        return $this->fetchData($query);
+    }
+
+    /**
+     * @param int[] $ids
+     *
+     * @return SubmissionEntity[]
+     */
+    public function findByIds(array $ids)
+    {
+        $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
+        $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_IN, 'id', $ids);
+        $block->addCondition($condition);
         $query = $this->buildQuery(null, null, [], null, $block);
 
         return $this->fetchData($query);

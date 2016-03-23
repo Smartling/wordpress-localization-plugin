@@ -48,7 +48,7 @@ trait SmartlingCoreDownloadTrait
 
         if (SubmissionEntity::SUBMISSION_STATUS_NEW === $entity->getStatus()) {
             //Fix for trying to download before send.
-            $this->sendForTranslationBySubmission($entity);
+            do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $entity);
         }
 
         $messages = [];
@@ -144,18 +144,10 @@ trait SmartlingCoreDownloadTrait
         return $this->downloadTranslationBySubmission($this->loadSubmissionEntityById($id));
     }
 
-    public function downloadTranslation(
-        $contentType,
-        $sourceBlog,
-        $sourceEntity,
-        $targetBlog,
-        $targetEntity = null
-    )
+    public function downloadTranslation($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null)
     {
-        $submission = $this->prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog,
-            $targetEntity);
+        $submission = $this->prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity);
 
         return $this->downloadTranslationBySubmission($submission);
-
     }
 }

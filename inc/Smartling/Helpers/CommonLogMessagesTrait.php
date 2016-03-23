@@ -23,7 +23,7 @@ trait CommonLogMessagesTrait
         'File upload for submission id = \'%s\' triggered.';
 
     private static $MSG_DOWNLOAD_TRIGGERED =
-        'File download for submission id = \'%s\' triggered.';
+        'File download for submission id = \'%s\' triggered. Placed to Download Queue.';
 
     private static $MSG_CRON_INITIAL_SUMMARY =
         'Found %s submissions.';

@@ -11,12 +11,15 @@ use Smartling\Submissions\SubmissionEntity;
  */
 class UploadJob extends JobAbstract
 {
+
+    const JOB_HOOK_NAME = 'smartling-upload-task';
+
     /**
      * @return string
      */
     public function getJobHookName()
     {
-        return 'smartling-upload-task';
+        return self::JOB_HOOK_NAME;
     }
 
     /**

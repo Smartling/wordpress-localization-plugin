@@ -83,7 +83,7 @@ $data = $this->getViewData();
         <input type="hidden" name="page" value="<?= $_REQUEST['page']; ?>"/>
         <input type="hidden" name="action" value="send"/>
         <?php $bulkSubmitTable->display() ?>
-        <?= WPAbstract::sendButton('sent-to-smartling-bulk'); ?>
+        <?= WPAbstract::bulkSubmitSendButton('sent-to-smartling-bulk'); ?>
     </form>
 
 </div>

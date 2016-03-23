@@ -199,7 +199,7 @@ div.display-errors-set ul li {
 
 .smtPostWidget-progress {
     position: relative;
-    left: 42px;
+    left: 36px;
     top: 3px;
 }
 
@@ -219,4 +219,14 @@ div.display-errors-set ul li {
 
 textarea.nowrap {
     overflow: scroll;
+}
+
+span.add-to-queue {
+    background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAQAAAD8x0bcAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAACYktHRAD/h4/MvwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAHdJREFUKM+tktENgCAMBWEzJiGySUdgpI7EBucHilVQorHvp5ALr7R1uLmO1JOQTglvocQ4FgtJuy4opZ2kQgE5QYpDr5DAG6igKBlHRjfTDtLL5/XzS/8V/tCnCt11PFrIswxmF/fZVWiyBXdGYqGxkRD6fXrQCoEl3XFXJ6U+AAAAAElFTkSuQmCC') no-repeat;
+    padding-left: 24px;
+}
+
+.ajaxcall
+{
+    font-weight: bold;
 }

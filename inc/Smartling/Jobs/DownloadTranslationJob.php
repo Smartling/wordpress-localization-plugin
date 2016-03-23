@@ -12,6 +12,7 @@ use Smartling\Submissions\SubmissionEntity;
  */
 class DownloadTranslationJob extends JobAbstract
 {
+    const JOB_HOOK_NAME = 'smartling-download-task';
 
     /**
      * @var Queue
@@ -39,7 +40,7 @@ class DownloadTranslationJob extends JobAbstract
      */
     public function getJobHookName()
     {
-        return 'smartling-download-task';
+        return self::JOB_HOOK_NAME;
     }
 
     /**
@@ -56,7 +57,7 @@ class DownloadTranslationJob extends JobAbstract
 
     private function processDownloadQueue()
     {
-        while (false !== ($serializedEntity = $this->getQueue()->dequeue('download-queue'))) {
+        while (false !== ($serializedEntity = $this->getQueue()->dequeue(Queue::QUEUE_NAME_DOWNLOAD_QUEUE))) {
 
             $entity = SubmissionEntity::fromArray($serializedEntity, $this->getLogger());
 

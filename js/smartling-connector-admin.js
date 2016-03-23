@@ -235,5 +235,22 @@ jQuery(document).ready(function () {
         jQuery('#ct').val(jQuery('#smartling-bulk-submit-page-content-type').val());
         return;
     });
+
+    jQuery('.ajaxcall').click(function (e) {
+        e.stopPropagation();
+        e.preventDefault();
+        var $url = jQuery(this).attr('href');
+
+        jQuery(this).parent().html('<strong>Running, please wait...</strong>');
+
+        /**
+         * reload page in 60 seconds if timeout
+         */
+        var timeout = setTimeout('location.reload();', 60 * 1000);
+        jQuery.getJSON($url, function (data) {
+            location.reload();
+        });
+    })
+
 });
 

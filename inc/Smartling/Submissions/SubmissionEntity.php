@@ -259,6 +259,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
      * @param string $status
      *
      * @return SubmissionEntity
+     * @throws \InvalidArgumentException
      */
     public function setStatus($status)
     {

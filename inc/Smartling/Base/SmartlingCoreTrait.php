@@ -178,9 +178,10 @@ trait SmartlingCoreTrait
             $filter['copy']['name'] = array_map('trim', explode(PHP_EOL, $profile->getFilterCopyByFieldName()));
             $filter['copy']['regexp'] = array_map('trim', explode(PHP_EOL, $profile->getFilterCopyByFieldValueRegex()));
 
+        } else {
+
         }
-        Bootstrap::getContainer()
-                 ->setParameter('field.processor', $filter);
+        Bootstrap::getContainer()->setParameter('field.processor', $filter);
     }
 
     /**
@@ -196,33 +197,31 @@ trait SmartlingCoreTrait
         $update = 0 !== (int)$submission->getTargetId();
 
         if (true === $update) {
-            // do not overwrite existent target content
             return $submission;
         }
 
-        $this->getLogger()
-             ->debug(
-                 vsprintf(
-                     'Creating target entity for submission = \'%s\' for locale = \'%s\' in blog =\'%s\'.',
-                     [
-                         $submission->getId(),
-                         $submission->getTargetLocale(),
-                         $submission->getTargetBlogId(),
-                     ]
-                 )
-             );
+        $this->getLogger()->debug(
+            vsprintf(
+                'Creating target entity for submission = \'%s\' for locale = \'%s\' in blog =\'%s\'.',
+                [
+                    $submission->getId(),
+                    $submission->getTargetLocale(),
+                    $submission->getTargetBlogId(),
+                ]
+            )
+        );
 
         $originalContent = $this->readContentEntity($submission);
 
         $this->prepareFieldProcessorValues($submission);
-        $original = XmlEncoder::xmlDecode(
-            XmlEncoder::xmlEncode(
-                [
-                    'entity' => $originalContent->toArray(),
-                    'meta'   => $this->getMetaForOriginalEntity($submission),
-                ]
-            )
-        );
+
+        $sourceData =
+            [
+                'entity' => $originalContent->toArray(false),
+                'meta'   => $this->getMetaForOriginalEntity($submission),
+            ];
+
+        $original = XmlEncoder::xmlDecode(XmlEncoder::xmlEncode($sourceData));
 
         if (false === $update) {
             $targetContent = clone $originalContent;

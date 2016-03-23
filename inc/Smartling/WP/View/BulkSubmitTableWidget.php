@@ -38,13 +38,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
     private $_custom_controls_namespace = 'smartling-bulk-submit-page';
 
     /**
-     * the source array with request data
-     *
-     * @var array
-     */
-    private $source;
-
-    /**
      * base name of Content-type filtering select
      */
     const CONTENT_TYPE_SELECT_ELEMENT_NAME = 'content-type';
@@ -127,7 +120,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
     )
     {
         $this->manager = $manager;
-        $this->source = $_REQUEST;
+        $this->setSource($_REQUEST);
         $this->pluginInfo = $pluginInfo;
         $this->entityHelper = $entityHelper;
         $this->profile = $profile;
@@ -389,14 +382,12 @@ class BulkSubmitTableWidget extends SmartlingListTable
 
                 if (isset($row['id'], $row['type'])) {
                     $entities = $this->getManager()
-                                     ->find([
-                                             'source_blog_id' => $this->getEntityHelper()
-                                                                      ->getSiteHelper()
-                                                                      ->getCurrentBlogId(),
-                                             'source_id'      => $row['id'],
-                                             'content_type'   => $row['type'],
-                                         ]
-                                     );
+                        ->find([
+                                   'source_blog_id' => $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
+                                   'source_id'      => $row['id'],
+                                   'content_type'   => $row['type'],
+                               ]
+                        );
                 } else {
                     continue;
                 }
@@ -580,17 +571,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
     private function getFormElementValue($name, $defaultValue)
     {
         return $this->getFromSource($this->buildHtmlTagName($name), $defaultValue);
-    }
-
-    /**
-     * @param string $keyName
-     * @param mixed  $defaultValue
-     *
-     * @return mixed
-     */
-    private function getFromSource($keyName, $defaultValue)
-    {
-        return array_key_exists($keyName, $this->source) ? $this->source[$keyName] : $defaultValue;
     }
 
     /**

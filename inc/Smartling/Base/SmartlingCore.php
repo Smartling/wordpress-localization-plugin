@@ -300,7 +300,7 @@ class SmartlingCore extends SmartlingCoreAbstract
 
             $attSubmission = $this->fastSendForTranslation(WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT, $submission->getSourceBlogId(), $originalMetadata['_thumbnail_id'], $submission->getTargetBlogId());
 
-            $this->downloadTranslationBySubmission($attSubmission);
+            do_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, $attSubmission);
 
             $this->setMetaForTargetEntity($submission, $targetEntity, ['_thumbnail_id' => $attSubmission->getTargetId()]);
         }
@@ -581,6 +581,31 @@ class SmartlingCore extends SmartlingCoreAbstract
         }
 
         return $results;
+    }
+
+    /**
+     * @param SubmissionEntity $entity
+     */
+    public function checkEntityForDownload(SubmissionEntity $entity)
+    {
+        if (100 === $entity->getCompletionPercentage()) {
+
+            $template = 'Cron Job enqueues content to download queue for submission id = \'%s\' with status = \'%s\' for entity = \'%s\', blog = \'%s\', id = \'%s\', targetBlog = \'%s\', locale = \'%s\'';
+
+            $message = vsprintf($template, [
+                $entity->getId(),
+                $entity->getStatus(),
+                $entity->getContentType(),
+                $entity->getSourceBlogId(),
+                $entity->getSourceId(),
+                $entity->getTargetBlogId(),
+                $entity->getTargetLocale(),
+            ]);
+
+            $this->getLogger()->info($message);
+
+            $this->getQueue()->enqueue($entity->toArray(false), 'download-queue');
+        }
     }
 
     /**

@@ -35,11 +35,19 @@ trait SmartlingCoreUploadTrait
      */
     public function sendForTranslationBySubmission(SubmissionEntity $submission)
     {
-        $this->getLogger()
-             ->debug(vsprintf('Preparing to send submission id = \'%s\'', [$submission->getId()]));
+        $this->getLogger()->debug(vsprintf(
+                                      'Preparing to send submission id = \'%s\' (blog=%s,content=%s,type=%s)',
+                                      [
+                                          $submission->getId(),
+                                          $submission->getSourceBlogId(),
+                                          $submission->getSourceId(),
+                                          $submission->getContentType(),
+                                      ]
+                                  )
+        );
+
         try {
             $contentEntity = $this->readContentEntity($submission);
-
             $submission->setSourceContentHash($contentEntity->calculateHash());
             $submission->setSourceTitle($contentEntity->getTitle());
 

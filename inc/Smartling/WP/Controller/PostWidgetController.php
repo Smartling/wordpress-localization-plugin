@@ -10,6 +10,9 @@ use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressContentTypeHelper;
+use Smartling\Jobs\DownloadTranslationJob;
+use Smartling\Jobs\UploadJob;
+use Smartling\Queue\Queue;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
@@ -176,8 +179,6 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
             return;
         }
 
-        remove_action('save_post', [$this, 'save']);
-
         if (false === $this->runValidation($post_id)) {
             return $post_id;
         }
@@ -201,71 +202,63 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
             /**
              * @var SmartlingCore $core
              */
-            $core = Bootstrap::getContainer()
-                             ->get('entrypoint');
+            $core = Bootstrap::getContainer()->get('entrypoint');
 
             if (count($locales) > 0) {
                 switch ($_POST['sub']) {
-                    case __('Send to Smartling'):
-
-                        $sourceBlog = $this->getEntityHelper()
-                                           ->getSiteHelper()
-                                           ->getCurrentBlogId();
+                    case 'upload':
+                        $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
                         $originalId = (int)$post_id;
-
-                        foreach ($locales as $blogId => $blogName) {
-                            $result =
-                                $core->createForTranslation(
+                        if (0 < count($locales)) {
+                            foreach ($locales as $blogId => $blogName) {
+                                $result = $core->createForTranslation(
                                     $this->servedContentType,
                                     $sourceBlog,
                                     $originalId,
                                     (int)$blogId,
-                                    $this->getEntityHelper()
-                                         ->getTarget($post_id, $blogId)
+                                    $this->getEntityHelper()->getTarget($post_id, $blogId)
                                 );
 
-                            $this->getLogger()
-                                 ->info(vsprintf(
-                                     self::$MSG_ENQUEUE_ENTITY,
-                                     [
-                                         $this->servedContentType,
-                                         $sourceBlog,
-                                         $originalId,
-                                         (int)$blogId,
-                                         $result->getTargetLocale(),
-                                     ]
-                                 ));
+                                $this->getLogger()->info(vsprintf(
+                                                             self::$MSG_ENQUEUE_ENTITY,
+                                                             [
+                                                                 $this->servedContentType,
+                                                                 $sourceBlog,
+                                                                 $originalId,
+                                                                 (int)$blogId,
+                                                                 $result->getTargetLocale(),
+                                                             ]
+                                                         ));
 
+
+                            }
+                            do_action(UploadJob::JOB_HOOK_NAME);
                         }
-                        break;
-                    case __('Download'):
 
-                        $sourceBlog = $this->getEntityHelper()
-                                           ->getSiteHelper()
-                                           ->getCurrentBlogId();
+                        break;
+                    case 'download':
+                        $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
                         $originalId = (int)$post_id;
 
-
                         $submissions = $this->getManager()
-                                            ->find(
-                                                [
-                                                    'source_id'      => $originalId,
-                                                    'source_blog_id' => $sourceBlog,
-                                                    'content_type'   => $this->servedContentType,
-                                                ]
-                                            );
+                            ->find(
+                                [
+                                    'source_id'      => $originalId,
+                                    'source_blog_id' => $sourceBlog,
+                                    'content_type'   => $this->servedContentType,
+                                ]
+                            );
 
-                        foreach ($submissions as $submission) {
-                            $this->getLogger()
-                                 ->info(vsprintf(
-                                     self::$MSG_DOWNLOAD_TRIGGERED,
-                                     [
-                                         $submission->getId(),
-                                     ]
-                                 ));
-
-                            $core->downloadTranslationBySubmission($submission);
+                        if (0 < count($submissions)) {
+                            foreach ($submissions as $submission) {
+                                $this->getLogger()
+                                    ->info(vsprintf(self::$MSG_DOWNLOAD_TRIGGERED, [$submission->getId()]));
+                                $core->getQueue()
+                                    ->enqueue($submission->toArray(false), Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
+                            }
+                            do_action(DownloadTranslationJob::JOB_HOOK_NAME);
                         }
+
 
                         break;
                 }

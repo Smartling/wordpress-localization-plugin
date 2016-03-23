@@ -7,6 +7,7 @@ trait DebugTrait
 {
     /**
      * Displays the given data
+     *
      * @param mixed $data
      * @param bool  $die if true further script execution is stopped
      */
@@ -16,6 +17,31 @@ trait DebugTrait
         if (true === $die) {
             wp_die('Execution terminated due to debug purposes.');
         }
+    }
+
+    public static function BacktracePrint()
+    {
+        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+        unset ($backtrace[0]);
+        $backtrace = array_reverse($backtrace);
+
+        $template = '<table border="1" width="100%%"><tr><th>call #</th><th>Caller</th><th>Target</th></tr>%s</table>';
+
+        $rows = '';
+        foreach ($backtrace as $index => $item) {
+            if (array_key_exists('file', $item)) {
+                $who = $item['file'] . ':' . $item['line'];
+            } else {
+                $who = 'callback';
+            }
+            if (array_key_exists('class', $item)) {
+                $what = $item['class'] . $item['type'] . $item['function'] . '()';
+            } else {
+                $what = $item['function'];
+            }
+            $rows .= vsprintf('<tr><td>%s</td><td>%s</td><td>%s</td></tr>', [$index, $who, $what]);
+        }
+        echo vsprintf($template, [$rows]);
     }
 
     /**

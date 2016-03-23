@@ -177,34 +177,64 @@ abstract class WPAbstract
 
     public function renderViewScript($script)
     {
-        require_once plugin_dir_path(__FILE__) . 'View/' . $script;
+        $filename = plugin_dir_path(__FILE__) . 'View/' . $script;
+
+        if (!file_exists($filename) || !is_file($filename) || !is_readable($filename)) {
+            throw new \Exception(vsprintf('Requested view file (%s) not found.', [$filename]));
+        } else {
+            /** @noinspection PhpIncludeInspection */
+            require_once $filename;
+        }
+    }
+
+    public static function bulkSubmitSendButton($id = 'submit', $name = 'submit')
+    {
+        return HtmlTagGeneratorHelper::tag(
+            'button',
+            HtmlTagGeneratorHelper::tag('span', __('Add to Upload Queue'), []),
+            [
+                'type'  => 'submit',
+                'value' => 'upload',
+                'title' => __('Add selected submissions to Upload queue'),
+                'class' => 'button button-primary',
+                'id'    => $id,
+                'name'  => $name,
+            ]);
     }
 
     public static function sendButton($id = 'submit', $name = 'submit')
     {
-        return HtmlTagGeneratorHelper::tag('input', '', [
-            'type'  => 'submit',
-            'value' => __('Send to Smartling'),
-            'class' => 'button button-primary',
-            'id'    => $id,
-            'name'  => $name,
-        ]);
+        return HtmlTagGeneratorHelper::tag(
+            'button',
+            HtmlTagGeneratorHelper::tag('span', __('Upload'), []),
+            [
+                'type'  => 'submit',
+                'value' => 'upload',
+                'title' => __('Add selected submissions to Upload queue'),
+                'class' => 'button button-primary',
+                'id'    => $id,
+                'name'  => $name,
+            ]);
     }
 
     public static function submitBlock()
     {
         $sendButton = self::sendButton('', 'sub');
 
-        $downloadButton = HtmlTagGeneratorHelper::tag('input', '', [
-            'type'  => 'submit',
-            'value' => __('Download'),
-            'class' => 'button button-primary',
-            'id'    => '',
-            'name'  => 'sub',
-        ]);
+        $downloadButton = HtmlTagGeneratorHelper::tag(
+            'button',
+            HtmlTagGeneratorHelper::tag('span', __('Download'), []),
+            [
+                'type'  => 'submit',
+                'value' => 'download',
+                'title' => __('Add selected submissions to Download queue'),
+                'class' => 'button button-primary',
+                'id'    => '',
+                'name'  => 'sub',
+            ]);
 
         $container = HtmlTagGeneratorHelper::tag('div', $sendButton . '&nbsp;' . $downloadButton,
-            ['class' => 'bottom']);
+                                                 ['class' => 'bottom']);
 
         return $container;
     }
@@ -265,13 +295,14 @@ abstract class WPAbstract
 
     public static function localeSelectionTranslationStatusBlock($statusText, $statusColor, $percentage)
     {
+        $percentageSpanBlock = 100 === $percentage
+            ? HtmlTagGeneratorHelper::tag('span', '', [])
+            : HtmlTagGeneratorHelper::tag('span', vsprintf('%s%%', [$percentage]), []);
+
+
         return HtmlTagGeneratorHelper::tag(
             'span',
-            HtmlTagGeneratorHelper::tag(
-                'span',
-                vsprintf('%s%%', [$percentage]),
-                []
-            ),
+            $percentageSpanBlock,
             [
                 'title' => $statusText,
                 'class' => vsprintf('widget-btn %s', [$statusColor]),

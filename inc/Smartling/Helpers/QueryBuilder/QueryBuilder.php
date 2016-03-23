@@ -215,7 +215,8 @@ class QueryBuilder
 
         foreach ($fieldList as $field) {
             if (is_array($field)) {
-                $fld = reset($field);
+                $keys = array_keys($field);
+                $fld = reset($keys);
                 $alias = end($field);
                 $prebuild[] = self::escapeName($fld) . ' AS ' . self::escapeName($alias);
             } else {
@@ -272,7 +273,7 @@ class QueryBuilder
 
         $part = implode(', ', $parts);
 
-        return $part;
+        return ' GROUP BY ' . $part;
     }
 
     /**

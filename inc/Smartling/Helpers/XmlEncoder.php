@@ -170,13 +170,23 @@ class XmlEncoder
         return Bootstrap::getContainer()->getParameter('field.processor');
     }
 
-    private static function removeFields($array, $list)
+    /**
+     * @param array $array
+     * @param array $list
+     *
+     * @return array
+     */
+    private static function removeFields($array, array $list)
     {
         $rebuild = [];
+        if ([] === $list) {
+            return $array;
+        }
         $pattern = '#(' . implode('|', $list) . ')$#us';
         foreach ($array as $key => $value) {
             if (1 === preg_match($pattern, $key)) {
-                $debugMessage = vsprintf('Removed field by name \'%s\'', [$key]);
+                $debugMessage = vsprintf('Removed field by name \'%s\', list of fields to remove:%s.', [$key,
+                                                                                                        implode(',', $list)]);
                 self::logMessage($debugMessage);
                 continue;
             } else {

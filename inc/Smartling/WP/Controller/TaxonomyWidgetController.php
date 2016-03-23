@@ -6,16 +6,19 @@ use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingNotSupportedContentException;
+use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressContentTypeHelper;
+use Smartling\Jobs\DownloadTranslationJob;
+use Smartling\Jobs\UploadJob;
+use Smartling\Queue\Queue;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
 /**
  * Class TaxonomyWidgetController
- *
  * @package Smartling\WP\Controller
  */
 class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
@@ -24,6 +27,8 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
     const WIDGET_DATA_NAME = 'smartling_taxonomy_widget';
 
     protected $noOriginalFound = 'No original %s found';
+
+    use CommonLogMessagesTrait;
 
     /**
      * @inheritdoc
@@ -41,14 +46,15 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
      */
     public function init()
     {
-        if (
-        current_user_can(
-            SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)
-        ) {
-            $taxonomies = get_taxonomies([
-                'public'   => true,
-                '_builtin' => true,
-            ], 'names', 'and');
+        if (current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+            $taxonomies = get_taxonomies(
+                [
+                    'public'   => true,
+                    '_builtin' => true,
+                ],
+                'names',
+                'and'
+            );
 
             if ($taxonomies) {
                 foreach ($taxonomies as $taxonomy) {
@@ -63,6 +69,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
      * @param string $wordpressType
      *
      * @return string
+     * @throws \Smartling\Exception\SmartlingDirectRunRuntimeException
      * @throws SmartlingNotSupportedContentException
      */
     private function getInternalType($wordpressType)
@@ -86,32 +93,26 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
      */
     public function preView($term)
     {
-
         $taxonomyType = $term->taxonomy;
-
         try {
             if (current_user_can('publish_posts') && $this->getInternalType($taxonomyType)) {
-
-                $curBlogId = $this->getEntityHelper()
-                                  ->getSiteHelper()
-                                  ->getCurrentBlogId();
-                $applicableProfiles = $this->getEntityHelper()
-                                           ->getSettingsManager()
-                                           ->findEntityByMainLocale($curBlogId);
+                $curBlogId = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
+                $applicableProfiles = $this->getEntityHelper()->getSettingsManager()
+                    ->findEntityByMainLocale($curBlogId);
 
                 if (0 < count($applicableProfiles)) {
                     $submissions = $this->getManager()
-                                        ->find([
-                                            'source_blog_id' => $curBlogId,
-                                            'source_id'      => $term->term_id,
-                                            'content_type'   => $taxonomyType,
-                                        ]);
+                        ->find([
+                                   'source_blog_id' => $curBlogId,
+                                   'source_id'      => $term->term_id,
+                                   'content_type'   => $taxonomyType,
+                               ]);
 
                     $this->view([
-                            'submissions' => $submissions,
-                            'term'        => $term,
-                            'profile'     => reset($applicableProfiles),
-                        ]
+                                    'submissions' => $submissions,
+                                    'term'        => $term,
+                                    'profile'     => reset($applicableProfiles),
+                                ]
                     );
                 } else {
                     echo HtmlTagGeneratorHelper::tag('p', __('No suitable configuration profile found.'));
@@ -123,21 +124,12 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
         } catch (SmartlingDbException $e) {
             $message = 'Failed to search for the original taxonomy. No source taxonomy found for blog %s, taxonomy_id %s. Hiding widget';
             $this->getLogger()
-                 ->warning(
-                     vsprintf($message, [
-                         $this->getEntityHelper()
-                              ->getSiteHelper()
-                              ->getCurrentBlogId(),
-                         $term->term_id,
-                     ])
-                 );
-            /*
-             * echo '<p>' . __( vsprintf( $this->noOriginalFound, array ( $taxonomyType ) ) ) . '</p>';
-             */
+                ->warning(vsprintf($message, [$this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
+                                              $term->term_id,]));
         }
     }
 
-    function save($term_id)
+    public function save($term_id)
     {
         if (!array_key_exists('taxonomy', $_POST)) {
             return;
@@ -170,43 +162,47 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
              * @var SmartlingCore $core
              */
             $core = Bootstrap::getContainer()
-                             ->get('entrypoint');
+                ->get('entrypoint');
 
             if (count($locales) > 0) {
                 $curBlogId = $this->getEntityHelper()
-                                  ->getSiteHelper()
-                                  ->getCurrentBlogId();
+                    ->getSiteHelper()
+                    ->getCurrentBlogId();
 
                 switch ($_POST['sub']) {
-                    case __('Send to Smartling'):
-                        foreach ($locales as $blogId => $blogName) {
-                            $result =
-                                $core->createForTranslation(
-                                    $termType,
-                                    $curBlogId,
-                                    $term_id,
-                                    (int)$blogId,
-                                    $this->getEntityHelper()
-                                         ->getTarget($term_id, $blogId, $termType)
-                                );
+                    case 'upload':
+                        if (0 < count($locales)) {
+                            foreach ($locales as $blogId => $blogName) {
+                                $result =
+                                    $core->createForTranslation(
+                                        $termType,
+                                        $curBlogId,
+                                        $term_id,
+                                        (int)$blogId,
+                                        $this->getEntityHelper()->getTarget($term_id, $blogId, $termType)
+                                    );
 
+                            }
+                            do_action(UploadJob::JOB_HOOK_NAME);
                         }
                         break;
-                    case __('Download'):
-
-                        $submissions = $this->getManager()
-                                            ->find(
-                                                [
-                                                    'source_blog_id' => $curBlogId,
-                                                    'source_id'      => $term_id,
-                                                    'content_type'   => $termType,
-                                                ]
-                                            );
-
-                        foreach ($submissions as $submission) {
-                            $core->downloadTranslationBySubmission($submission);
+                    case 'download':
+                        $submissions = $this->getManager()->find(
+                            [
+                                'source_blog_id' => $curBlogId,
+                                'source_id'      => $term_id,
+                                'content_type'   => $termType,
+                            ]
+                        );
+                        if (0 < count($submissions)) {
+                            foreach ($submissions as $submission) {
+                                $this->getLogger()
+                                    ->info(vsprintf(self::$MSG_DOWNLOAD_TRIGGERED, [$submission->getId()]));
+                                $core->getQueue()
+                                    ->enqueue($submission->toArray(false), Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
+                            }
+                            do_action(DownloadTranslationJob::JOB_HOOK_NAME);
                         }
-
                         break;
                 }
             }

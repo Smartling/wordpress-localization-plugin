@@ -1,5 +1,6 @@
 <?php
 use Smartling\WP\Controller\ConfigurationProfilesWidget;
+use Smartling\WP\Table\QueueManagerTableWidget;
 
 /**
  * @var WPAbstract $this
@@ -10,11 +11,17 @@ $data = $this->getViewData();
 <div class="wrap">
     <h2><?= get_admin_page_title(); ?></h2>
     <?php
-    $configurationProfilesTable = $data;
+    $configurationProfilesTable = $data['profilesTable'];
     /**
      * @var ConfigurationProfilesWidget $configurationProfilesTable
      */
     $configurationProfilesTable->prepare_items();
+
+    /**
+     * @var QueueManagerTableWidget $cnqTable
+     */
+    $cnqTable = $data['cnqTable'];
+    $cnqTable->prepare_items();
     ?>
     <div id="icon-users" class="icon32"><br/></div>
 
@@ -29,6 +36,9 @@ $data = $this->getViewData();
         <!-- Now we can render the completed list table -->
         <?php $configurationProfilesTable->display(); ?>
     </form>
+    <p></p>
+    <h2><?= __('Crons and Queues'); ?></h2>
+    <?php $cnqTable->display(); ?>
     <p>
     <ul>
         <li>

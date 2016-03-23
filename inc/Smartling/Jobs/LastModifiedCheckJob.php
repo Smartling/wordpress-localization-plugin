@@ -77,12 +77,14 @@ class LastModifiedCheckJob extends JobAbstract
         $this->queue = $queue;
     }
 
+    const JOB_HOOK_NAME = 'smartling-last-modified-check-task';
+
     /**
      * @return string
      */
     public function getJobHookName()
     {
-        return 'smartling-last-modified-check-task';
+        return self::JOB_HOOK_NAME;
     }
 
     /**
@@ -102,7 +104,7 @@ class LastModifiedCheckJob extends JobAbstract
      */
     private function lastModifiedCheck()
     {
-        while (false !== ($serializedPair = $this->getQueue()->dequeue('last-modified-check-queue'))) {
+        while (false !== ($serializedPair = $this->getQueue()->dequeue(Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE))) {
             foreach ($serializedPair as $fileUri => $serializedSubmissions) {
                 $submissionList = $this->getSubmissionManager()->unserializeSubmissions($serializedSubmissions);
 
@@ -209,7 +211,7 @@ class LastModifiedCheckJob extends JobAbstract
 
             $this->getLogger()->info($message);
 
-            $this->getQueue()->enqueue($entity->toArray(false), 'download-queue');
+            $this->getQueue()->enqueue($entity->toArray(false), Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
         }
     }
 

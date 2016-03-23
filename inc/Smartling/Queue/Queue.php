@@ -272,9 +272,9 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
 
         $result = $this->getDbal()->query($query);
 
-        if (0 >= $result) {
+        if (false === $result) {
             if (null !== $queue) {
-                $template = 'Error while purging all elements from all queue=%s. Message: %s';
+                $template = 'Error while purging all elements from queue=%s. Message: %s';
                 $message = vsprintf($template, [
                     $queue,
                     $this->getDbal()->getLastErrorMessage(),
@@ -294,23 +294,14 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
      */
     public function stats()
     {
-        $query = QueryBuilder::buildSelectQuery(
-            $this->getRealTableName(),
-            [
-                'queue',
-                [
-                    'count(`id`)' => 'num',
-                ],
-            ],
-            null,
-            null,
-            null,
-            [
-                'queue',
-            ]
-        );
+        $query = QueryBuilder::buildSelectQuery($this->getRealTableName(), ['queue',
+                                                                            ['count(`id`)' => 'num']], null, [], null, ['queue']);
+        $result = $this->getDbal()->fetch($query, \ARRAY_A);
+        $output = [];
+        foreach ($result as $row) {
+            $output[$row['queue']] = (int)$row['num'];
+        }
 
-        die(var_dump($query));
-        // TODO: Implement stats() method.
+        return $output;
     }
 }

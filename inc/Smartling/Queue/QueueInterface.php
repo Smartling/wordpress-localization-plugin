@@ -4,11 +4,14 @@ namespace Smartling\Queue;
 
 /**
  * Interface QueueInterface
- *
  * @package Smartling\Queue
  */
 interface QueueInterface
 {
+    const QUEUE_NAME_DOWNLOAD_QUEUE = 'download-queue';
+
+    const QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE = 'last-modified-check-queue';
+
     /**
      * Adds an array to the queue
      *

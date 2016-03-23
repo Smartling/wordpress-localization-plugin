@@ -193,6 +193,8 @@ services:
       - "@entity.helper"
       - "@manager.submission"
       - "@site.cache"
+    calls:
+      - [ "setQueue", [ "@queue.db" ]]
 
   wp.settings.edit:
     class: Smartling\WP\Controller\ConfigurationProfileFormController
@@ -213,6 +215,8 @@ services:
       - "@entity.helper"
       - "@manager.submission"
       - "@site.cache"
+    calls:
+      - [ "setQueue", [ "@queue.db" ] ]
 
   wp.post:
     class: Smartling\WP\Controller\PostWidgetController
