@@ -1,6 +1,6 @@
 parameters:
   cron.interval.upload: "5m"
-  cron.interval.group.submission: "5m"
+  cron.interval.group.submission: "3h"
   cron.interval.last-modified-check: "5m"
   cron.interval.download: "5m"
 services:

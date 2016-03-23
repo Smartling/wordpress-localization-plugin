@@ -28,6 +28,10 @@ class SchedulerHelper
                 'interval' => 900,
                 'display'  => __('Every 15 minutes'),
             ],
+            '3h'  => [
+                'interval' => 3600 * 3,
+                'display'  => __('Every 3 hours'),
+            ],
         ];
 
         return array_merge($schedules, $intervals);
