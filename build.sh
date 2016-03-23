@@ -48,7 +48,7 @@ rm -f ./composer*
 rm -Rf ./*.sh
 rm -Rf ./*.sql
 rm -Rf ./phpunit*
-rm -Rf ./tests
+rm -Rf ./tests*
 rm -Rf ./upload
 rm -Rf ./logs/logfile*
 rm -Rf ./*.pid
