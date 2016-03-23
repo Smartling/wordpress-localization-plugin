@@ -11,7 +11,7 @@ trait InvokeMethodTrait
     /**
      * Invokes protected or private method of given object.
      *
-     * @param Object $object
+     * @param mixed  $object
      *   Object with protected or private method to invoke.
      * @param string $methodName
      *   Name of the property to invoke.

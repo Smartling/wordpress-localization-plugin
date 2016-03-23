@@ -59,7 +59,6 @@ class FileUriHelperTest extends \PHPUnit_Framework_TestCase
 
     /**
      * Data provider for testPreparePermalink method.
-     *
      * @return array
      */
     public function preparePermalinkDataProvider()
@@ -79,12 +78,12 @@ class FileUriHelperTest extends \PHPUnit_Framework_TestCase
 
     /**
      * Data provider for testPreparePermalinkInvalidParams method.
-     *
      * @return array
      */
     public function preparePermalinkDataProviderInvalidParams()
     {
-        return [['http://nothing.com/blog/my-source-title/', null,],
-                ['http://nothing.com/blog/my-source-title/', $this->getSubmissionEntityMock('', 'post', 1, 1),],];
+        return [
+            ['http://nothing.com/blog/my-source-title/', null,],
+        ];
     }
 }

@@ -327,6 +327,15 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
         return implode(', ', $_indexes);
     }
 
+    private function getCharset()
+    {
+        return $this->getWpdb()->charset;
+    }
+
+    private function getCollate()
+    {
+        return $this->getWpdb()->collate;
+    }
     /**
      * Gets Character set and collation for table
      *
@@ -336,12 +345,16 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
     {
         $parts = [];
 
-        if (!empty($this->getWpdb()->charset)) {
-            $parts['charset'] = vsprintf('DEFAULT CHARACTER SET %s', [$this->getWpdb()->charset]);
+        $charset = $this->getCharset();
+
+        if (!empty($charset)) {
+            $parts['charset'] = vsprintf('DEFAULT CHARACTER SET %s', [$charset]);
         }
 
-        if (!empty($this->getWpdb()->collate)) {
-            $parts['collate'] = vsprintf('COLLATE %s', [$this->getWpdb()->collate]);
+        $collate = $this->getCollate();
+
+        if (!empty($collate)) {
+            $parts['collate'] = vsprintf('COLLATE %s', [$collate]);
         }
 
         if ( 0 < count($parts)) {
