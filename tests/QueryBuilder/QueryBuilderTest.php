@@ -59,7 +59,7 @@ class QueryBuilderTest extends \PHPUnit_Framework_TestCase
 
 	public function testFieldListBuilderWithAlias()
 	{
-		$fields = [['foo', 'bar']];
+		$fields = [['foo' => 'bar']];
 
 		$expectedResult = '`foo` AS `bar`';
 
@@ -70,7 +70,7 @@ class QueryBuilderTest extends \PHPUnit_Framework_TestCase
 
 	public function testFieldListBuilderComplex()
 	{
-		$fields = ['id', ['foo', 'bar'], ['bar', 'foo'], 'status'];
+		$fields = ['id', ['foo' => 'bar'], ['bar' => 'foo'], 'status'];
 
 		$expectedResult = '`id`, `foo` AS `bar`, `bar` AS `foo`, `status`';
 
@@ -88,6 +88,19 @@ class QueryBuilderTest extends \PHPUnit_Framework_TestCase
 		$expectedResult = 'SELECT ' . QueryBuilder::buildFieldListString($fields) . " FROM `{$table}`";
 
 		$actualResult = QueryBuilder::buildSelectQuery($table, $fields, null, [], null);
+
+		self::assertTrue($actualResult === $expectedResult);
+	}
+
+	public function testSelectSimpleWithGroupBy()
+	{
+		$table = 'fooTable';
+
+		$fields = ['id', ['foo', 'bar'], ['bar', 'foo'], 'status'];
+
+		$expectedResult = 'SELECT ' . QueryBuilder::buildFieldListString($fields) . " FROM `{$table}` GROUP BY `status`";
+
+		$actualResult = QueryBuilder::buildSelectQuery($table, $fields, null, [], null, ['status']);
 
 		self::assertTrue($actualResult === $expectedResult);
 	}
@@ -199,9 +212,22 @@ class QueryBuilderTest extends \PHPUnit_Framework_TestCase
 
 		$fields = ['id' => 5];
 
-		$expectedResult = "INSERT INTO `{$table}` (" . QueryBuilder::buildFieldListString(array_keys($fields)) . ") VALUES ('5')";
+		$expectedResult = "INSERT  INTO `{$table}` (" . QueryBuilder::buildFieldListString(array_keys($fields)) . ") VALUES ('5')";
 
 		$actualResult = QueryBuilder::buildInsertQuery($table, $fields);
+
+		self::assertTrue($actualResult === $expectedResult);
+	}
+
+	public function testInsertIgnoreSimple()
+	{
+		$table = 'fooTable';
+
+		$fields = ['id' => 5];
+
+		$expectedResult = "INSERT IGNORE INTO `{$table}` (" . QueryBuilder::buildFieldListString(array_keys($fields)) . ") VALUES ('5')";
+
+		$actualResult = QueryBuilder::buildInsertQuery($table, $fields, true);
 
 		self::assertTrue($actualResult === $expectedResult);
 	}
