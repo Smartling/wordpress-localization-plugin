@@ -42,11 +42,6 @@ $data = $this->getViewData();
     <p>
     <ul>
         <li>
-            <a href="/wp-admin/admin-post.php?action=smartling_run_cron" target="_blank">
-                <?= __('Trigger cron tasks (only for smartling connector, opens in a new window)'); ?>
-            </a>
-        </li>
-        <li>
             <a href="/wp-admin/admin-post.php?action=smartling_download_log_file">
                 <?= __('Download current log file'); ?>
             </a>
