@@ -2,7 +2,7 @@ parameters:
   multilang_plugins:
     "multilingual-press-pro": false
 
-  submission.pagesize: 10
+  submission.pagesize: 20
 services:
   smartling.helper.relative-image-path-support:
     class: Smartling\Helpers\RelativeLinkedAttachmentCoreHelper
@@ -310,4 +310,3 @@ services:
       - "@logger"
     calls:
       - [ "registerExtension", [ "@extension.translation_lock" ]]
-
