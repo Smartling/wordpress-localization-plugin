@@ -36,7 +36,7 @@ trait SmartlingCoreUploadTrait
     public function sendForTranslationBySubmission(SubmissionEntity $submission)
     {
         $this->getLogger()->debug(vsprintf(
-                                      'Preparing to send submission id = \'%s\' (blog=%s,content=%s,type=%s)',
+                                      'Preparing to send submission id = \'%s\' (blog = \'%s\', content = \'%s\', type = \'%s\').',
                                       [
                                           $submission->getId(),
                                           $submission->getSourceBlogId(),
@@ -103,7 +103,7 @@ trait SmartlingCoreUploadTrait
                 $this->getLogger()
                      ->warning(
                          vsprintf(
-                             'Prepared XML file for submission = \'%s\' has nothing to translate. Setting status to \'%s\'',
+                             'Prepared XML file for submission = \'%s\' has nothing to translate. Setting status to \'%s\'.',
                              [
                                  $submission->getId(),
                                  SubmissionEntity::SUBMISSION_STATUS_FAILED,

@@ -170,7 +170,7 @@ class ApiWrapper implements ApiWrapperInterface
 
             $this->getLogger()
                 ->info(vsprintf(
-                           'Starting file \'%s\' download for entity = \'%s\', blog = \'%s\', id = \'%s\', locale = \'%s\'',
+                           'Starting file \'%s\' download for entity = \'%s\', blog = \'%s\', id = \'%s\', locale = \'%s\'.',
                            [
                                $entity->getFileUri(),
                                $entity->getContentType(),
@@ -295,7 +295,7 @@ class ApiWrapper implements ApiWrapperInterface
     {
         $this->getLogger()
             ->info(vsprintf(
-                       'Starting file \'%s\' upload for entity = \'%s\', blog = \'%s\', id = \'%s\', locale = \'%s\'',
+                       'Starting file \'%s\' upload for entity = \'%s\', blog = \'%s\', id = \'%s\', locale = \'%s\'.',
                        [
                            $entity->getFileUri(),
                            $entity->getContentType(),
@@ -330,7 +330,7 @@ class ApiWrapper implements ApiWrapperInterface
                 $params);
 
             $message = vsprintf(
-                'Smartling uploaded %s for locale: %s',
+                'Smartling uploaded \'%s\' for locale = \'%s\'.',
                 [
                     $entity->getFileUri(),
                     $entity->getTargetLocale(),
@@ -365,7 +365,7 @@ class ApiWrapper implements ApiWrapperInterface
                 $supportedLocales[$locale['localeId']] = $locale['description'];
             }
         } catch (\Exception $e) {
-            $message = vsprintf('Response has error messages. Message:\'%s\'', [$e->getMessage()]);
+            $message = vsprintf('Response has error messages. Message:\'%s\'.', [$e->getMessage()]);
             $this->logger->error($message);
         }
 

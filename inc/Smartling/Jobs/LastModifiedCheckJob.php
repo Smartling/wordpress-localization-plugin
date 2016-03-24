@@ -197,7 +197,7 @@ class LastModifiedCheckJob extends JobAbstract
     {
         if (100 === $entity->getCompletionPercentage()) {
 
-            $template = 'Cron Job enqueues content to download queue for submission id = \'%s\' with status = \'%s\' for entity = \'%s\', blog = \'%s\', id = \'%s\', targetBlog = \'%s\', locale = \'%s\'';
+            $template = 'Cron Job enqueues content to download queue for submission id = \'%s\' with status = \'%s\' for entity = \'%s\', blog = \'%s\', id = \'%s\', targetBlog = \'%s\', locale = \'%s\'.';
 
             $message = vsprintf($template, [
                 $entity->getId(),

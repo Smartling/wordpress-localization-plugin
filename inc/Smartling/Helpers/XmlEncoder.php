@@ -109,7 +109,7 @@ class XmlEncoder
                 case 'resource':
                 case 'object':
                 default:
-                    $message = vsprintf('Unsupported type \'%s\' found in scope for translation. Skipped. Contents: \'%s\'',
+                    $message = vsprintf('Unsupported type \'%s\' found in scope for translation. Skipped. Contents: \'%s\'.',
                                         [$valueType, var_export($element, true),]);
                     self::logMessage($message);
             }
@@ -207,7 +207,7 @@ class XmlEncoder
         $rebuild = [];
         foreach ($array as $key => $value) {
             if (empty($value)) {
-                $debugMessage = vsprintf('Removed empty field \'%s\'', [$key]);
+                $debugMessage = vsprintf('Removed empty field \'%s\'.', [$key]);
                 self::logMessage($debugMessage);
                 continue;
             }
@@ -229,7 +229,7 @@ class XmlEncoder
         foreach ($array as $key => $value) {
             foreach ($list as $item) {
                 if (preg_match("/{$item}/us", $value)) {
-                    $debugMessage = vsprintf('Removed field by value: filedName:\'%s\' fieldValue:\'%s\' filter:\'%s\'',
+                    $debugMessage = vsprintf('Removed field by value: filedName:\'%s\' fieldValue:\'%s\' filter:\'%s\'.',
                                              [$key, $value, $item]);
                     self::logMessage($debugMessage);
                     continue 2;

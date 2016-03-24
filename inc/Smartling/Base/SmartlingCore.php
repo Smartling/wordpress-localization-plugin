@@ -147,7 +147,7 @@ class SmartlingCore extends SmartlingCoreAbstract
      */
     private function processRelatedTerm(SubmissionEntity $submission, $contentType, & $accumulator)
     {
-        $this->getLogger()->debug(vsprintf('Searching for terms (%s) related to submission = \'%s\'', [
+        $this->getLogger()->debug(vsprintf('Searching for terms (%s) related to submission = \'%s\'.', [
             $contentType,
             $submission->getId(),
         ]));
@@ -159,7 +159,7 @@ class SmartlingCore extends SmartlingCoreAbstract
             if (0 < count($terms)) {
                 foreach ($terms as $element) {
                     $this->getLogger()
-                        ->debug(vsprintf('Sending for translation term = \'%s\' id = \'%s\' related to submission = \'%s\'', [
+                        ->debug(vsprintf('Sending for translation term = \'%s\' id = \'%s\' related to submission = \'%s\'.', [
                             $element->taxonomy,
                             $element->term_id,
                             $submission->getId(),
@@ -180,7 +180,7 @@ class SmartlingCore extends SmartlingCoreAbstract
     private function processRelatedMenu(SubmissionEntity $submission, $contentType, &$accumulator)
     {
         if (WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM === $contentType) {
-            $this->getLogger()->debug(vsprintf('Searching for menuItems related to submission = \'%s\'', [
+            $this->getLogger()->debug(vsprintf('Searching for menuItems related to submission = \'%s\'.', [
                 $submission->getId(),
             ]));
 
@@ -195,7 +195,7 @@ class SmartlingCore extends SmartlingCoreAbstract
                 $menuItemIds[]=$menuItemEntity->getPK();
 
                 $this->getLogger()
-                    ->debug(vsprintf('Sending for translation entity = \'%s\' id = \'%s\' related to submission = \'%s\'', [
+                    ->debug(vsprintf('Sending for translation entity = \'%s\' id = \'%s\' related to submission = \'%s\'.', [
                         WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM,
                         $menuItemEntity->getPK(),
                         $submission->getId(),
@@ -212,7 +212,7 @@ class SmartlingCore extends SmartlingCoreAbstract
                     'post_type',
                 ])) {
                     $this->getLogger()
-                        ->debug(vsprintf('Sending for translation object = \'%s\' related to \'%s\' related to submission = \'%s\'', [
+                        ->debug(vsprintf('Sending for translation object = \'%s\' related to \'%s\' related to submission = \'%s\'.', [
                             $originalMenuItemMeta['_menu_item_object'],
                             WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM,
                             $menuItemEntity->getPK(),
@@ -244,7 +244,7 @@ class SmartlingCore extends SmartlingCoreAbstract
         if (WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU === $contentType &&
             WordpressContentTypeHelper::CONTENT_TYPE_WIDGET === $submission->getContentType()
         ) {
-            $this->getLogger()->debug(vsprintf('Searching for menu related to widget for submission = \'%s\'', [
+            $this->getLogger()->debug(vsprintf('Searching for menu related to widget for submission = \'%s\'.', [
                 $submission->getId(),
             ]));
             $originalEntity = $this->readContentEntity($submission);
@@ -264,7 +264,7 @@ class SmartlingCore extends SmartlingCoreAbstract
             if (0 !== $menuId) {
 
                 $this->getLogger()
-                    ->debug(vsprintf('Sending for translation menu related to widget id = \'%s\' related to submission = \'%s\'', [
+                    ->debug(vsprintf('Sending for translation menu related to widget id = \'%s\' related to submission = \'%s\'.', [
                         $originalEntity->getPK(),
                         $submission->getId(),
                     ]));
@@ -292,7 +292,7 @@ class SmartlingCore extends SmartlingCoreAbstract
     private function processFeaturedImage(SubmissionEntity $submission)
     {
         $originalMetadata = $this->getMetaForOriginalEntity($submission);
-        $this->getLogger()->debug(vsprintf('Searching for Featured Images related to submission = \'%s\'', [
+        $this->getLogger()->debug(vsprintf('Searching for Featured Images related to submission = \'%s\'.', [
             $submission->getId(),
         ]));
         if (array_key_exists('_thumbnail_id', $originalMetadata)) {
@@ -303,7 +303,7 @@ class SmartlingCore extends SmartlingCoreAbstract
 
             $targetEntity = $this->readTargetContentEntity($submission);
             $this->getLogger()
-                ->debug(vsprintf('Sending for translation Featured Image id = \'%s\' related to submission = \'%s\'', [
+                ->debug(vsprintf('Sending for translation Featured Image id = \'%s\' related to submission = \'%s\'.', [
                     $originalMetadata['_thumbnail_id'],
                     $submission->getId(),
                 ]));
@@ -398,11 +398,11 @@ class SmartlingCore extends SmartlingCoreAbstract
                 }
 
                 $this->getLogger()
-                    ->debug(vsprintf('Preparing to assign accumulator:%s', [var_export($accumulator, true)]));
+                    ->debug(vsprintf('Preparing to assign accumulator: %s', [var_export($accumulator, true)]));
 
                 foreach ($accumulator as $type => $ids) {
                     $this->getLogger()
-                        ->debug(vsprintf('Assigning term (type=\'%s\', ids=\'%s\') to content (type=\'%s\', id=\'%s\') on blog=\'%s\'', [
+                        ->debug(vsprintf('Assigning term (type = \'%s\', ids = \'%s\') to content (type = \'%s\', id = \'%s\') on blog= \'%s\'.', [
                             $type,
                             implode(',', $ids),
                             $submission->getContentType(),
@@ -600,7 +600,7 @@ class SmartlingCore extends SmartlingCoreAbstract
     {
         if (100 === $entity->getCompletionPercentage()) {
 
-            $template = 'Cron Job enqueues content to download queue for submission id = \'%s\' with status = \'%s\' for entity = \'%s\', blog = \'%s\', id = \'%s\', targetBlog = \'%s\', locale = \'%s\'';
+            $template = 'Cron Job enqueues content to download queue for submission id = \'%s\' with status = \'%s\' for entity = \'%s\', blog = \'%s\', id = \'%s\', targetBlog = \'%s\', locale = \'%s\'.';
 
             $message = vsprintf($template, [
                 $entity->getId(),
@@ -666,7 +666,7 @@ class SmartlingCore extends SmartlingCoreAbstract
     private function regenerateTargetThumbnailsBySubmission(SubmissionEntity $submission)
     {
 
-        $this->getLogger()->debug(vsprintf('Starting thumbnails regeneration for blog=\'%s\' attachment id=\'%s\'.', [
+        $this->getLogger()->debug(vsprintf('Starting thumbnails regeneration for blog = \'%s\' attachment id = \'%s\'.', [
             $submission->getTargetBlogId(),
             $submission->getTargetId(),
         ]));
@@ -692,7 +692,7 @@ class SmartlingCore extends SmartlingCoreAbstract
         if (is_wp_error($metadata)) {
 
             $this->getLogger()
-                ->error(vsprintf('Error occurred while regenerating thumbnails for blog=\'%s\' attachment id=\'%s\'. Message:\'%s\'', [
+                ->error(vsprintf('Error occurred while regenerating thumbnails for blog=\'%s\' attachment id=\'%s\'. Message:\'%s\'.', [
                     $submission->getTargetBlogId(),
                     $submission->getTargetId(),
                     $metadata->get_error_message(),

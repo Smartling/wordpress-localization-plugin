@@ -24,7 +24,7 @@ trait SmartlingCoreDownloadTrait
     {
 
         $this->getLogger()
-             ->debug(vsprintf('Preparing to download submission id = \'%s\'', [$entity->getId()]));
+             ->debug(vsprintf('Preparing to download submission id = \'%s\'.', [$entity->getId()]));
 
         if (1 === $entity->getIsLocked()) {
             $msg = vsprintf('Triggered download of locked entity. Target Blog: %s; Target Id: %s', [
@@ -69,7 +69,7 @@ trait SmartlingCoreDownloadTrait
             $this->prepareFieldProcessorValues($entity);
             $translatedFields = XmlEncoder::xmlDecode($data);
             $this->getLogger()
-                 ->debug(vsprintf('Deserialized translated fields for submission id = \'%s\'. Dump: %s\'', [
+                 ->debug(vsprintf('Deserialized translated fields for submission id = \'%s\'. Dump: %s\'.', [
                      $entity->getId(),
                      base64_encode(json_encode($translatedFields)),
                  ]));
