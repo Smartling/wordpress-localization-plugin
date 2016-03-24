@@ -4,15 +4,16 @@ namespace Smartling\Submissions;
 
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
+use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingEntityAbstract;
-use Smartling\Bootstrap;
+use Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater;
 use Smartling\Helpers\FileUriHelper;
+use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\TextHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 
 /**
  * Class SubmissionEntity
- *
  * @property int         $id
  * @property string      $source_title
  * @property int         $source_blog_id
@@ -31,7 +32,6 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  * @property string      $status
  * @property int         $is_locked
  * @property \DateTime   $last_modified
- *
  * @package Smartling\Submissions
  */
 class SubmissionEntity extends SmartlingEntityAbstract
@@ -441,6 +441,20 @@ class SubmissionEntity extends SmartlingEntityAbstract
         if (empty($this->stateFields['file_uri'])) {
 
             $fileUri = FileUriHelper::generateFileUri($this);
+
+            $filterParams = (new SmartlingFileUriFilterParamater())
+                ->setContentType($this->getContentType())
+                ->setFileUri($fileUri)
+                ->setSourceBlogId($this->getSourceBlogId())
+                ->setSourceContentId($this->getSourceId());
+
+            $filterParams = apply_filters(ExportedAPI::FILTER_SMARTLING_FILE_URI, $filterParams);
+
+            if (($filterParams instanceof SmartlingFileUriFilterParamater)
+                && !StringHelper::isNullOrEmpty($filterParams->getFileUri())
+            ) {
+                $fileUri = $filterParams->getFileUri();
+            }
 
             $this->setFileUri($fileUri);
         }

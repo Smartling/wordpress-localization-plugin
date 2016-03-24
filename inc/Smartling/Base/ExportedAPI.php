@@ -57,4 +57,14 @@ interface ExportedAPI
      * Action that downloads translation for given SubmissionEntity
      */
     const ACTION_SMARTLING_DOWNLOAD_TRANSLATION = 'smartling-event.download-translation';
+
+    /**
+     * Filter to modify FileURI.
+     * Receives 1 parameter  Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater
+     * Filter should return instance of Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater
+     * otherwise generated fileURI is taken
+     * Filter should return fileUri with length > 0
+     * otherwise generated fileURI is taken
+     */
+    const FILTER_SMARTLING_FILE_URI = 'smartling_file_uri';
 }
