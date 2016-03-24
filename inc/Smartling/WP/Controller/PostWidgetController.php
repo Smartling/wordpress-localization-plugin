@@ -230,8 +230,6 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
                                                                  $result->getTargetLocale(),
                                                              ]
                                                          ));
-
-
                             }
                             do_action(UploadJob::JOB_HOOK_NAME);
                         }

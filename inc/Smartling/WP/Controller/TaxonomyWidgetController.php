@@ -182,6 +182,16 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                                         $this->getEntityHelper()->getTarget($term_id, $blogId, $termType)
                                     );
 
+                                    $this->getLogger()->info(vsprintf(
+                                                                 self::$MSG_ENQUEUE_ENTITY,
+                                                                 [
+                                                                     $termType,
+                                                                     $curBlogId,
+                                                                     $term_id,
+                                                                     (int)$blogId,
+                                                                     $result->getTargetLocale(),
+                                                                 ]
+                                                             ));
                             }
                             do_action(UploadJob::JOB_HOOK_NAME);
                         }
