@@ -298,7 +298,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
 
                         $this->getLogger()
                              ->info(vsprintf(
-                                 self::$MSG_ENQUEUE_ENTITY,
+                                 self::$MSG_UPLOAD_ENQUEUE_ENTITY,
                                  [
                                      $type,
                                      $curBlogId,

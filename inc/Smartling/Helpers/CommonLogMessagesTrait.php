@@ -10,7 +10,7 @@ namespace Smartling\Helpers;
 trait CommonLogMessagesTrait
 {
 
-    private static $MSG_ENQUEUE_ENTITY =
+    private static $MSG_UPLOAD_ENQUEUE_ENTITY =
         'Added to Upload queue entity = \'%s\', blog = \'%s\', id = \'%s\', targetBlog = \'%s\', locale = \'%s\'.';
 
     private static $MSG_DOWNLOAD_ENQUEUE_ENTITY =
