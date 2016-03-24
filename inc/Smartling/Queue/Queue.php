@@ -294,8 +294,17 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
      */
     public function stats()
     {
-        $query = QueryBuilder::buildSelectQuery($this->getRealTableName(), ['queue',
-                                                                            ['count(`id`)' => 'num']], null, [], null, ['queue']);
+        $query = QueryBuilder::buildSelectQuery(
+            $this->getRealTableName(),
+            [
+                'queue',
+                ['count(`id`)' => 'num']],
+                null,
+                [],
+                null,
+                ['queue']
+        );
+
         $result = $this->getDbal()->fetch($query, \ARRAY_A);
         $output = [];
         foreach ($result as $row) {

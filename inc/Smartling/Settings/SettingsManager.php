@@ -116,9 +116,13 @@ class SettingsManager extends EntityManagerAbstract
 
     public function buildCountQuery()
     {
-        $query = QueryBuilder::buildSelectQuery($this->getDbal()
-                                                    ->completeTableName(ConfigurationProfileEntity::getTableName()),
-                                                [['COUNT(*)', 'cnt']], null, [], null);
+        $query = QueryBuilder::buildSelectQuery(
+            $this->getDbal()->completeTableName(ConfigurationProfileEntity::getTableName()),
+            [['COUNT(*)' => 'cnt']],
+            null,
+            [],
+            null
+        );
         $this->logQuery($query);
 
         return $query;

@@ -123,28 +123,21 @@ abstract class EntityManagerAbstract
      * @param SmartlingToCMSDatabaseAccessWrapperInterface $dbal
      * @param int                                          $pageSize
      * @param SiteHelper                                   $siteHelper
-     * @param LocalizationPluginProxyInterface             $localizationPluginProxyInterface
+     * @param LocalizationPluginProxyInterface             $localizationProxy
      */
-    public function __construct(
-        LoggerInterface $logger,
-        $dbal,
-        $pageSize,
-        SiteHelper $siteHelper,
-        $localizationPluginProxyInterface
-    )
+    public function __construct(LoggerInterface $logger, $dbal, $pageSize, SiteHelper $siteHelper, $localizationProxy)
     {
         $this->setLogger($logger);
         $this->setDbal($dbal);
         $this->setPageSize($pageSize);
         $this->setSiteHelper($siteHelper);
-        $this->setPluginProxy($localizationPluginProxyInterface);
+        $this->setPluginProxy($localizationProxy);
     }
 
     protected function fetchData($query)
     {
         $results = [];
-        $res = $this->getDbal()
-                    ->fetch($query);
+        $res = $this->getDbal()->fetch($query);
         if (is_array($res)) {
             foreach ($res as $row) {
                 $results[] = $this->dbResultToEntity((array)$row);
@@ -160,11 +153,8 @@ abstract class EntityManagerAbstract
      */
     public function logQuery($query)
     {
-        if (true === $this->getDbal()
-                          ->needRawSqlLog()
-        ) {
-            $this->getLogger()
-                 ->debug($query);
+        if (true === $this->getDbal()->needRawSqlLog()) {
+            $this->getLogger()->debug($query);
         }
     }
 
