@@ -13,8 +13,8 @@ trait CommonLogMessagesTrait
     private static $MSG_ENQUEUE_ENTITY =
         'Added to Upload queue entity = \'%s\', blog = \'%s\', id = \'%s\', targetBlog = \'%s\', locale = \'%s\'.';
 
-    private static $MSG_DOWNLOAD_TRIGGERED =
-        'File download for submission id = \'%s\' was added to Download Queue.';
+    private static $MSG_DOWNLOAD_ENQUEUE_ENTITY =
+        'Added to Download queue submission id = \'%s\' with status = \'%s\' for entity = \'%s\', blog = \'%s\', id = \'%s\', targetBlog = \'%s\', locale = \'%s\'.';
 
     private static $MSG_CRON_CHECK =
         'Cron Job triggers submission status check for submission id = \'%s\' with status = \'%s\' for entity = \'%s\', blog = \'%s\', id = \'%s\', targetBlog = \'%s\', locale = \'%s\'.';

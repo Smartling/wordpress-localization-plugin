@@ -183,7 +183,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                                     );
 
                                     $this->getLogger()->info(vsprintf(
-                                                                 self::$MSG_ENQUEUE_ENTITY,
+                                                                 self::$MSG_UPLOAD_ENQUEUE_ENTITY,
                                                                  [
                                                                      $termType,
                                                                      $curBlogId,
@@ -206,8 +206,17 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                         );
                         if (0 < count($submissions)) {
                             foreach ($submissions as $submission) {
-                                $this->getLogger()
-                                    ->info(vsprintf(self::$MSG_DOWNLOAD_TRIGGERED, [$submission->getId()]));
+                                $this->getLogger()->info(vsprintf(
+                                    self::$MSG_DOWNLOAD_ENQUEUE_ENTITY,
+                                    [
+                                        $submission->getId(),
+                                        $submission->getStatus(),
+                                        $termType,
+                                        $curBlogId,
+                                        $term_id,
+                                        $submission->getTargetBlogId(),
+                                        $submission->getTargetLocale()
+                                    ]));
                                 $core->getQueue()
                                     ->enqueue($submission->toArray(false), Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
                             }
