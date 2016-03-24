@@ -3,6 +3,7 @@
 namespace Smartling\Submissions;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Bootstrap;
 use Smartling\DbAl\EntityManagerAbstract;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
@@ -550,21 +551,30 @@ class SubmissionManager extends EntityManagerAbstract
      * @param int                              $sourceBlog
      * @param int                              $sourceEntity
      * @param int                              $targetBlog
-     * @param LocalizationPluginProxyInterface $localizationPluginProxy
+     * @param LocalizationPluginProxyInterface $localizationProxy
      * @param null|int                         $targetEntity
      *
      * @return SubmissionEntity
      */
-    public function getSubmissionEntity(
-        $contentType,
-        $sourceBlog,
-        $sourceEntity,
-        $targetBlog,
-        LocalizationPluginProxyInterface $localizationPluginProxy,
-        $targetEntity = null
-    )
+    public function getSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, LocalizationPluginProxyInterface $localizationProxy, $targetEntity = null)
     {
+        if ($sourceBlog===$targetBlog)
+        {
+            $message = vsprintf(
+                'Cancelled preparing submission for contentType=%s sourceId=%s sourceBlog=%s targetBlog=%s. Source and Target blogs must differ.',
+                [
+                    $contentType,
+                    $sourceBlog,
+                    $sourceEntity,
+                    $targetBlog
+                ]
+            );
+            
+            $this->getLogger()->error($message);
+            $this->getLogger()->error(implode(PHP_EOL,Bootstrap::Backtrace()));
 
+            throw new \InvalidArgumentException($message);
+        }
         $entity = null;
 
         $params = [
@@ -584,7 +594,7 @@ class SubmissionManager extends EntityManagerAbstract
             $entity = reset($entities);
         } else {
             $entity = $this->createSubmission($params);
-            $entity->setTargetLocale($localizationPluginProxy->getBlogLocaleById($targetBlog));
+            $entity->setTargetLocale($localizationProxy->getBlogLocaleById($targetBlog));
             $entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
             $entity->setSubmitter(WordpressUserHelper::getUserLogin());
             $entity->setSourceTitle('no title');

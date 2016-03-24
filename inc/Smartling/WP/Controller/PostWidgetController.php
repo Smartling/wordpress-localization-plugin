@@ -180,6 +180,8 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
             return;
         }
 
+        remove_action('save_post', [$this, 'save']);
+
         if (false === $this->runValidation($post_id)) {
             return $post_id;
         }
@@ -217,7 +219,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
                                     $sourceBlog,
                                     $originalId,
                                     (int)$blogId,
-                                    $this->getEntityHelper()->getTarget($post_id, $blogId)
+                                    $this->getEntityHelper()->getTarget($originalId, $blogId)
                                 );
 
                                 $this->getLogger()->info(vsprintf(

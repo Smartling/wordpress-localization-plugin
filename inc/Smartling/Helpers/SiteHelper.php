@@ -4,6 +4,7 @@ namespace Smartling\Helpers;
 
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
+use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
@@ -251,5 +252,21 @@ class SiteHelper
         global $wp_taxonomies;
 
         return array_keys($wp_taxonomies);
+    }
+
+    /**
+     * If current Blog Id differs from $blogId -> changes blog to ensure that blog id is set to $blogId
+     * @param $blogId
+     */
+    public function resetBlog($blogId)
+    {
+        $currentStack = $GLOBALS['_wp_switched_stack'];
+
+         if ((int)reset($currentStack)===$blogId)
+         {
+             $this->switchBlogId($blogId);
+             $GLOBALS['_wp_switched_stack']=[];
+         }
+        Bootstrap::DebugPrint($GLOBALS['_wp_switched_stack']);
     }
 }

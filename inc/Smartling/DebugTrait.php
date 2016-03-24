@@ -19,6 +19,13 @@ trait DebugTrait
         }
     }
 
+    public static function Backtrace()
+    {
+        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+        unset ($backtrace[0]);
+        return array_reverse($backtrace);
+    }
+
     public static function BacktracePrint()
     {
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
