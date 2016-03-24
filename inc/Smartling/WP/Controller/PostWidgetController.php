@@ -93,6 +93,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
                 if (0 < count($profile)) {
                     $submissions = $this->getManager()
                                         ->find([
+                                            'source_blog_id'=>$this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
                                             'source_id'    => $post->ID,
                                             'content_type' => $this->servedContentType,
                                         ]);
