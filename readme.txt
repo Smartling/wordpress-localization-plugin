@@ -57,6 +57,7 @@ Additional information on the Smartling Connector for WordPress can be found [th
 
 = 1.1.6 =
 * Added ability to track changes in translations (on Smartling side). In other words, Smartling Connector now can detect retranslation in already translated post; categories; etc and redownload updated translations automatically
+* Added filter that allows fileUri modification
 * Added the new table on Smartling Settings which allows to manage Smartling cron jobs and related queues. It can be useful during site integration and troubleshooting
 
 **Upgrade steps**
