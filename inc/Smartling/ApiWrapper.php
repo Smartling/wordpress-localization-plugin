@@ -456,7 +456,7 @@ class ApiWrapper implements ApiWrapperInterface
 
                     if (100 === $newProgress && 100 === $currentProgress) {
                         /* nothing to do, removing from array to skip useless download */
-                        unset($submissions[$localeId]);
+                        $submissions[$localeId]->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
                     }
 
                     if (100 > $newProgress && 100 === $currentProgress) {
