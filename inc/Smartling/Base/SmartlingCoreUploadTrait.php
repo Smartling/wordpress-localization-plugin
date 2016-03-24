@@ -86,7 +86,7 @@ trait SmartlingCoreUploadTrait
             $params = new BeforeSerializeContentEventParameters($source, $submission, $contentEntity,
                 $source['meta']);
 
-            do_action(ExportedAPI::EVENT_SMARTLING_BEFORE_SERIALIZE_CONNENT, $params);
+            do_action(ExportedAPI::EVENT_SMARTLING_BEFORE_SERIALIZE_CONTENT, $params);
 
             $this->prepareFieldProcessorValues($submission);
 
@@ -168,16 +168,9 @@ trait SmartlingCoreUploadTrait
      *
      * @return bool
      */
-    public function createForTranslation(
-        $contentType,
-        $sourceBlog,
-        $sourceEntity,
-        $targetBlog,
-        $targetEntity = null
-    )
+    public function createForTranslation($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null)
     {
-        $submission = $this->prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog,
-            $targetEntity);
+        $submission = $this->prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity);
 
         $contentEntity = $this->readContentEntity($submission);
 
@@ -187,13 +180,11 @@ trait SmartlingCoreUploadTrait
 
             // generate URI
             $submission->getFileUri();
-            $submission = $this->getSubmissionManager()
-                               ->storeEntity($submission);
+            $submission = $this->getSubmissionManager()->storeEntity($submission);
         } else {
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
         }
 
-        return $this->getSubmissionManager()
-                    ->storeEntity($submission);
+        return $this->getSubmissionManager()->storeEntity($submission);
     }
 }

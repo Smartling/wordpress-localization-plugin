@@ -22,14 +22,12 @@ interface ExportedAPI
      *  SubmissionEntity instance of SubmissionEntity
      *  EntityAbstract successor instance (Original Entity)
      *  Original Entity Metadata array
-     *
-     *
      *  Note! The only prepared array which is going to be serialized into XML is to be received by reference.
      *  You should not change / add / remove array keys.
      *  Only update of values is allowed.
      *  Will be changed to ArrayAccess implementation.
      */
-    const EVENT_SMARTLING_BEFORE_SERIALIZE_CONNENT = 'EVENT_SMARTLING_BEFORE_SERIALIZE_CONNENT';
+    const EVENT_SMARTLING_BEFORE_SERIALIZE_CONTENT = 'smartling_event_before_serialize_content';
 
     /**
      * Is raised just after decoding from XML
@@ -38,25 +36,22 @@ interface ExportedAPI
      *  SubmissionEntity instance of SubmissionEntity
      *  EntityAbstract successor instance (Target Entity)
      *  Target Entity Metadata array
-     *
-     *
-     *
      *  Note! The only translation fields array is to be received by reference.
      *  You should not change / add / remove array keys.
      *  Only update of values is allowed.
      *  Will be changed to ArrayAccess implementation.
      */
-    const EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT = 'EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT';
+    const EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT = 'smartling_event_after_deserialize_content';
 
     /**
      * Action that sends given SubmissionEntity to smartling for translation
      */
-    const ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION = 'smartling-event.send-for-translation';
+    const ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION = 'smartling_event_send_for_translation';
 
     /**
      * Action that downloads translation for given SubmissionEntity
      */
-    const ACTION_SMARTLING_DOWNLOAD_TRANSLATION = 'smartling-event.download-translation';
+    const ACTION_SMARTLING_DOWNLOAD_TRANSLATION = 'smartling_event_download_translation';
 
     /**
      * Filter to modify FileURI.

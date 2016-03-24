@@ -72,24 +72,9 @@ trait SmartlingCoreTrait
      *
      * @return SubmissionEntity
      */
-    private function prepareSubmissionEntity(
-        $contentType,
-        $sourceBlog,
-        $sourceEntity,
-        $targetBlog,
-        $targetEntity = null
-    )
+    private function prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null)
     {
-        return $this
-            ->getSubmissionManager()
-            ->getSubmissionEntity(
-                $contentType,
-                $sourceBlog,
-                $sourceEntity,
-                $targetBlog,
-                $this->getMultilangProxy(),
-                $targetEntity
-            );
+        return $this->getSubmissionManager()->getSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, $this->getMultilangProxy(), $targetEntity);
     }
 
     /**
