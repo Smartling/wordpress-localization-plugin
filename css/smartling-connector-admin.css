@@ -75,7 +75,7 @@
     right: 70px;
     height: 14px;
     width: 14px;
-    text-indent: 25px;
+    text-indent: 20px;
     display: inline-block;
     float: right;
     border: 1px solid #ffffff;
@@ -199,7 +199,7 @@ div.display-errors-set ul li {
 
 .smtPostWidget-progress {
     position: relative;
-    left: 36px;
+    left: 40px;
     top: 3px;
 }
 
