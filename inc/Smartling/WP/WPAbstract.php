@@ -210,7 +210,7 @@ abstract class WPAbstract
             [
                 'type'  => 'submit',
                 'value' => 'upload',
-                'title' => __('Add selected submissions to Upload queue'),
+                'title' => __('Add to Upload queue and trigger upload process'),
                 'class' => 'button button-primary',
                 'id'    => $id,
                 'name'  => $name,
@@ -227,7 +227,7 @@ abstract class WPAbstract
             [
                 'type'  => 'submit',
                 'value' => 'download',
-                'title' => __('Add selected submissions to Download queue'),
+                'title' => __('Add to Download queue and trigger download process'),
                 'class' => 'button button-primary',
                 'id'    => '',
                 'name'  => 'sub',
