@@ -6,11 +6,11 @@ Tested up to: 4.4.2
 Stable tag: 1.1.6
 License: GPLv2 or later
 
-Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform. 
+Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
 
 == Description ==
 
-The Smartling Connector extends the WordPress interface for seamless management of the translation process, all while leveraging the tools contained in Smartling’s Global Fluency Platform. Easily installed with minimal developer support, the combination of WordPress and Smartling provides users with a powerful technology solution to manage the translation and localization process with full visibility and control across the entire organization. 
+The Smartling Connector extends the WordPress interface for seamless management of the translation process, all while leveraging the tools contained in Smartling’s Global Fluency Platform. Easily installed with minimal developer support, the combination of WordPress and Smartling provides users with a powerful technology solution to manage the translation and localization process with full visibility and control across the entire organization.
 
 Integration Features
 
@@ -19,41 +19,56 @@ Integration Features
 * Automatic download of completed translations to WordPress
 * Translation Memory integration
 * No tie-ins to translation agencies or vendors
-* Reporting for translation velocity, efficiency 
+* Reporting for translation velocity, efficiency
 
 == Installation ==
 
 = Minimum Requirements =
 * WordPress 4.3 or higher
 * Multisite mode enabled
-* Multilingual Press free plugin 
+* Multilingual Press free plugin
 * PHP Version 5.4 or higher
-* PHP extensions `mb_string` and `curl`
+* PHP extensions:
+ * `mb_string`
+ * `curl`
+ * `libxml`
+ * `xml`
+ * `xmlreader`
+ * `xmlwriter`
 
-1. Configure [Multilingual Press](https://wordpress.org/plugins/multilingual-press) using instructions found [here](http://support.smartling.com/hc/en-us/articles/205418457).
+1. Configure [Multilingual Press](https://wordpress.org/plugins/multilingual-press) using instructions found [there](http://support.smartling.com/hc/en-us/articles/205418457).
 1. Upload the unzipped Smartling Connector plugin to the `/wp-content/plugins/` directory.
-1. Go to the Plugins screen and **Activate** the Smartling Connector plugin.
-1. Navigate to the Smartling - Settings page (/network/admin.php?page=smartling-settings) and click **Add Profile**.
-1. Set the Project ID and API Key credentials found in the Smartling Dashboard for the project created for WordPress.
+1. Go to the Plugins screen and **Network Activate** the Smartling Connector plugin.
+1. Navigate to the Smartling - Settings page (`/wp-admin/network/admin.php?page=smartling_configuration_profile_list`) and click **Add Profile**.
+1. Set the `Project ID`, `User Identifier` and `Token Secret` credentials found in the Smartling Dashboard for the project created for WordPress.
 1. Select the Default Locale and the target locales for the translated sites you are creating.
 
 == Frequently Asked Questions ==
 
-Additional information on the Smartling Connector for WordPress can be found [here](http://support.smartling.com/hc/en-us/sections/200967468-Wordpress-Connector).
+Additional information on the Smartling Connector for WordPress can be found [there](http://support.smartling.com/hc/en-us/sections/200967468-Wordpress-Connector).
 
 == Screenshots ==
 
-1. Submit posts for translation using the Smartling Post Widget directly from the Edit page. View translation status for languages that have already been requested. 
+1. Submit posts for translation using the Smartling Post Widget directly from the Edit page. View translation status for languages that have already been requested.
 2. The Bulk Submit page allows submission of Post, Page, Category, Tag, Navigation Menu and Theme Widget text for all configured locales from a single interface.
-3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.  
+3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
 
 = 1.1.6 =
-* Added ability to track changes in translated submissions and re-download if changed.
+* Added ability to track changes in translations (on Smartling side). In other words, Smartling Connector now can detect retranslation in already translated post; categories; etc and redownload updated translations automatically
+* Added the new table on Smartling Settings which allows to manage Smartling cron jobs and related queues. It can be useful during site integration and troubleshooting
+
+**Upgrade steps**
+
+Smartling Connector registers cron jobs on `Plugin Activate` hook. But this event doesn't happen when you update plugin from marketplace. To solve this issue you should perform 2 simple steps right after updating Smartling Connector plugin. If you miss steps below then basic operations (upload an original content; download translated content) will not work.
+
+1. Open `Plugins` page and find Smartling connector (`/wp-admin/network/plugins.php?s=smartling`)
+1. Click `Network Deactivate`
+1. Click `Network Activate`
 
 = 1.1.5 =
-* Added support for menu hierarchy.
+* Added support for menu hierarchy. Now translated menu will be always insync with the original menu even if you add\delete\reorder menu item in an original one
 * Fixed bug with database tables creation for some MySQL versions
 * Small fixes and updates
 
@@ -106,7 +121,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 = 1.0.21 =
 * Database cron marker allows configuration of cron for high-load websites.
-* Cron tasks triggered every 5 minutes instead of every hour. 
+* Cron tasks triggered every 5 minutes instead of every hour.
 
 = 1.0.19 =
 * Pages can be locked to prevent changes to translated post/page from being overwritten.
@@ -128,6 +143,8 @@ Additional information on the Smartling Connector for WordPress can be found [he
 = 1.0.12 =
 * Support for multiple translation profiles.
 
+== Upgrade Notice ==
 
-
-
+= 1.1.6 =
+* Improved detection of translated content changes. Now Smartling widgets display translation status more accurate
+* Important! Manual steps are required in case migration from previous version
