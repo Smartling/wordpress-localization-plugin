@@ -185,8 +185,8 @@ class XmlEncoder
         $pattern = '#(' . implode('|', $list) . ')$#us';
         foreach ($array as $key => $value) {
             if (1 === preg_match($pattern, $key)) {
-                $debugMessage = vsprintf('Removed field by name \'%s\', list of patterns: %s.', [$key,
-                                                                                                        implode(', ', $list)]);
+                $debugMessage = vsprintf('Removed field by name \'%s\', list of fields to remove:%s.', [$key,
+                                                                                                        implode(',', $list)]);
                 self::logMessage($debugMessage);
                 continue;
             } else {
