@@ -4,7 +4,6 @@ namespace Jobs;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\SiteHelper;
@@ -43,11 +42,6 @@ class SubmissionCollectorJobTest extends \PHPUnit_Framework_TestCase
      * @var SubmissionCollectorJob
      */
     private $submissionCollector;
-
-    /**
-     * @var ApiWrapperInterface
-     */
-    private $apiWrapper;
 
     /**
      * @var Queue
@@ -105,23 +99,7 @@ class SubmissionCollectorJobTest extends \PHPUnit_Framework_TestCase
     {
         $this->submissionEntity = $submissionEntity;
     }
-
-    /**
-     * @return ApiWrapperInterface
-     */
-    public function getApiWrapper()
-    {
-        return $this->apiWrapper;
-    }
-
-    /**
-     * @param ApiWrapperInterface $apiWrapper
-     */
-    public function setApiWrapper($apiWrapper)
-    {
-        $this->apiWrapper = $apiWrapper;
-    }
-
+    
     /**
      * @return Queue|\PHPUnit_Framework_MockObject_MockObject
      */
