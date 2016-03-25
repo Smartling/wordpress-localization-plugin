@@ -9,6 +9,7 @@ use Smartling\Tests\Traits\InvokeMethodTrait;
  * Class DbAlTest
  * Test class for \Smartling\DbAl\DB.
  * @package Smartling\Tests
+ * @covers \Smartling\DbAl\DB
  */
 class DbAlTest extends \PHPUnit_Framework_TestCase
 {
