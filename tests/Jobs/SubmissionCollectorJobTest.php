@@ -1,17 +1,20 @@
 <?php
 
-namespace Jobs;
+namespace Smartling\Tests\Jobs;
 
 use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
-use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
-use Smartling\Helpers\EntityHelper;
-use Smartling\Helpers\SiteHelper;
 use Smartling\Jobs\SubmissionCollectorJob;
 use Smartling\Queue\Queue;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\Tests\Traits\DbAlMock;
+use Smartling\Tests\Traits\DummyLoggerMock;
+use Smartling\Tests\Traits\EntityHelperMock;
 use Smartling\Tests\Traits\InvokeMethodTrait;
+use Smartling\Tests\Traits\QueueMock;
+use Smartling\Tests\Traits\SiteHelperMock;
+use Smartling\Tests\Traits\SubmissionEntityMock;
+use Smartling\Tests\Traits\SubmissionManagerMock;
 
 /**
  * Class SubmissionCollectorJobTest
@@ -22,12 +25,15 @@ class SubmissionCollectorJobTest extends \PHPUnit_Framework_TestCase
 {
     use InvokeMethodTrait;
 
-    //region Fields Definitions
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    use DummyLoggerMock;
+    use DbAlMock;
+    use SiteHelperMock;
+    use EntityHelperMock;
+    use SubmissionEntityMock;
+    use SubmissionManagerMock;
+    use QueueMock;
 
+    //region Fields Definitions
     /**
      * @var SubmissionManager
      */
@@ -47,27 +53,7 @@ class SubmissionCollectorJobTest extends \PHPUnit_Framework_TestCase
      * @var Queue
      */
     private $queue;
-
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
-    {
-        if (!($this->logger instanceof LoggerInterface)) {
-            $this->setLogger(new NullLogger());
-        }
-
-        return $this->logger;
-    }
-
-    /**
-     * @param LoggerInterface $logger
-     */
-    public function setLogger($logger)
-    {
-        $this->logger = $logger;
-    }
-
+    
     /**
      * @return SubmissionManager|\PHPUnit_Framework_MockObject_MockObject
      */
@@ -99,7 +85,7 @@ class SubmissionCollectorJobTest extends \PHPUnit_Framework_TestCase
     {
         $this->submissionEntity = $submissionEntity;
     }
-    
+
     /**
      * @return Queue|\PHPUnit_Framework_MockObject_MockObject
      */
@@ -133,85 +119,7 @@ class SubmissionCollectorJobTest extends \PHPUnit_Framework_TestCase
     }
 
     //endregion
-
-    /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|\Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface
-     */
-    private function mockDbAl()
-    {
-        return $this->getMockBuilder('Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface')
-            ->setMethods(
-                [
-                    'needRawSqlLog',
-                    'query',
-                    'fetch',
-                    'escape',
-                    'completeTableName',
-                    'getLastInsertedId',
-                    'getLastErrorMessage',
-                ]
-            )
-            ->getMock();
-    }
-
-    /**
-     * @param LoggerInterface $logger
-     *
-     * @return \PHPUnit_Framework_MockObject_MockObject|\Smartling\Helpers\SiteHelper
-     */
-    private function mockSiteHelper(LoggerInterface $logger)
-    {
-        return $this->getMockBuilder('Smartling\Helpers\SiteHelper')
-            ->setConstructorArgs([$logger])
-            ->getMock();
-    }
-
-    /**
-     * @param LoggerInterface $logger
-     * @param SiteHelper      $siteHelper
-     *
-     * @return \PHPUnit_Framework_MockObject_MockObject|\Smartling\Helpers\EntityHelper
-     */
-    private function mockEntityHelper(LoggerInterface $logger, SiteHelper $siteHelper)
-    {
-        $entityHelper = $this->getMockBuilder('Smartling\Helpers\EntityHelper')
-            ->setMethods(['getSiteHelper'])
-            ->getMock();
-        $entityHelper->setLogger($logger);
-
-        $entityHelper->expects(self::any())
-            ->method('getSiteHelper')
-            ->willReturn($siteHelper);
-
-        return $entityHelper;
-    }
-
-    /**
-     * @param LoggerInterface                              $logger
-     * @param SmartlingToCMSDatabaseAccessWrapperInterface $dbal
-     * @param EntityHelper                                 $entityHelper
-     *
-     * @return \PHPUnit_Framework_MockObject_MockObject|SubmissionManager
-     */
-    private function mockSubmissionManager(LoggerInterface $logger, SmartlingToCMSDatabaseAccessWrapperInterface $dbal, EntityHelper $entityHelper)
-    {
-        return $this->getMockBuilder('Smartling\Submissions\SubmissionManager')
-            ->setMethods(['find'])
-            ->setConstructorArgs([$logger, $dbal, 10, $entityHelper])
-            ->getMock();
-    }
-
-    /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|Queue
-     */
-    private function mockQueue()
-    {
-        return $this->getMockBuilder('Smartling\Queue\Queue')
-            ->setMethods(['enqueue'])
-            ->disableOriginalConstructor()
-            ->getMock();
-    }
-
+    
     /**
      * @param LoggerInterface   $logger
      * @param SubmissionManager $submissionManager
@@ -331,36 +239,6 @@ class SubmissionCollectorJobTest extends \PHPUnit_Framework_TestCase
         }
 
         $this->getSubmissionCollector()->run();
-    }
-
-    /**
-     * @param string $fileUri
-     * @param string $locale
-     *
-     * @return array
-     */
-    private function getSerializedSubmission($fileUri, $locale)
-    {
-        return [
-            'id'                     => 1,
-            'source_title'           => 'A',
-            'source_blog_id'         => 1,
-            'source_content_hash'    => '',
-            'content_type'           => 'post',
-            'source_id'              => 7,
-            'file_uri'               => $fileUri,
-            'target_locale'          => $locale,
-            'target_blog_id'         => 2,
-            'target_id'              => null,
-            'submitter'              => '',
-            'submission_date'        => null,
-            'applied_date'           => null,
-            'approved_string_count'  => 0,
-            'completed_string_count' => 0,
-            'status'                 => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
-            'is_locked'              => 0,
-            'last_modified'          => null,
-        ];
     }
 
     /**

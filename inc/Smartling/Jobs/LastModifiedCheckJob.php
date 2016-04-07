@@ -2,7 +2,7 @@
 
 namespace Smartling\Jobs;
 
-use Smartling\ApiWrapper;
+use Smartling\ApiWrapperInterface;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\Queue\Queue;
 use Smartling\Settings\SettingsManager;
@@ -15,7 +15,7 @@ use Smartling\Submissions\SubmissionEntity;
 class LastModifiedCheckJob extends JobAbstract
 {
     /**
-     * @var ApiWrapper
+     * @var ApiWrapperInterface
      */
     private $apiWrapper;
 
@@ -30,7 +30,7 @@ class LastModifiedCheckJob extends JobAbstract
     private $queue;
 
     /**
-     * @return ApiWrapper
+     * @return ApiWrapperInterface
      */
     public function getApiWrapper()
     {
@@ -38,7 +38,7 @@ class LastModifiedCheckJob extends JobAbstract
     }
 
     /**
-     * @param ApiWrapper $apiWrapper
+     * @param ApiWrapperInterface $apiWrapper
      */
     public function setApiWrapper($apiWrapper)
     {
@@ -238,7 +238,7 @@ class LastModifiedCheckJob extends JobAbstract
      *
      * @return array
      */
-    private function prepareSubmissionList(array $submissionList)
+    public function prepareSubmissionList(array $submissionList)
     {
         $output = [];
 
