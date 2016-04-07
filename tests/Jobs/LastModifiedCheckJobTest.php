@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests\Jobs;
 
+use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
 use Smartling\Jobs\LastModifiedCheckJob;
 use Smartling\Queue\Queue;
@@ -13,6 +14,7 @@ use Smartling\Tests\Traits\DateTimeBuilder;
 use Smartling\Tests\Traits\DbAlMock;
 use Smartling\Tests\Traits\DummyLoggerMock;
 use Smartling\Tests\Traits\EntityHelperMock;
+use Smartling\Tests\Traits\InvokeMethodTrait;
 use Smartling\Tests\Traits\QueueMock;
 use Smartling\Tests\Traits\SettingsManagerMock;
 use Smartling\Tests\Traits\SiteHelperMock;
@@ -37,6 +39,7 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
     use QueueMock;
     use ApiWrapperMock;
 
+    use InvokeMethodTrait;
     /**
      * @var SettingsManager||\PHPUnit_Framework_MockObject_MockObject
      */
@@ -163,8 +166,37 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
         $this->setQueue($this->mockQueue());
 
         $this->setApiWrapper($this->getApiWrapperMock());
+
+        $this->setLastModifiedWorker(
+            $this->getWorkerMock(
+                $this->getLogger(),
+                $this->getSubmissionManager(),
+                $this->getApiWrapper(),
+                $this->getQueue()
+            )
+        );
     }
 
+    /**
+     * @param LoggerInterface     $logger
+     * @param SubmissionManager   $submissionManager
+     * @param ApiWrapperInterface $apiWrapper
+     * @param Queue               $queue
+     *
+     * @return \PHPUnit_Framework_MockObject_MockObject|LastModifiedCheckJob
+     */
+    private function getWorkerMock(LoggerInterface $logger, SubmissionManager $submissionManager, ApiWrapperInterface $apiWrapper, Queue $queue)
+    {
+        $worker = $this->getMockBuilder('Smartling\Jobs\LastModifiedCheckJob')
+            ->setMethods(['prepareSubmissionList'])
+            ->setConstructorArgs([$logger, $submissionManager])
+            ->getMock();
+
+        $worker->setApiWrapper($apiWrapper);
+        $worker->setQueue($queue);
+
+        return $worker;
+    }
 
     /**
      * @covers       Smartling\Jobs\LastModifiedCheckJob::run()
@@ -177,14 +209,7 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
      */
     public function testRun(array $groupedSubmissions, SubmissionEntity $submission, array $lastModifiedResponse, $expectedStatusCheckRequests)
     {
-
-        $worker = $this->getMockBuilder('Smartling\Jobs\LastModifiedCheckJob')
-            ->setMethods(['prepareSubmissionList'])
-            ->setConstructorArgs([$this->getLogger(), $this->getSubmissionManager()])
-            ->getMock();
-
-        $worker->setApiWrapper($this->getApiWrapper());
-        $worker->setQueue($this->getQueue());
+        $worker = $this->getLastModifiedWorker();
 
         foreach ($groupedSubmissions as $index => $mockedResult) {
             $this->getQueue()
@@ -290,5 +315,86 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
         ];
     }
 
-    
+    /**
+     * @covers       Smartling\Jobs\LastModifiedCheckJob::filterSubmissions()
+     * @dataProvider filterSubmissionsDataProvider
+     *
+     * @param array $lastModifiedResponse
+     * @param array $submissions
+     * @param array $expectedFilteredResult
+     */
+    public function testFilterSubmissions($lastModifiedResponse, $submissions, $expectedFilteredResult)
+    {
+        $actualResult = $this->invokeMethod(
+            $this->getLastModifiedWorker(),
+            'filterSubmissions',
+            [
+                $lastModifiedResponse,
+                $submissions,
+            ]
+        );
+
+        self::assertEquals(
+            $this->serializeSubmissions($expectedFilteredResult),
+            $this->serializeSubmissions($actualResult)
+        );
+    }
+
+    protected function serializeSubmissions(array $submissions)
+    {
+        $rebuild = [];
+        foreach ($submissions as $key => $submission) {
+            $rebuild[$key] = $submission->toArray();
+        }
+
+        return $rebuild;
+    }
+
+    /**
+     * @return array
+     */
+    public function filterSubmissionsDataProvider()
+    {
+        return [
+            [
+                [
+                    'LangA' => $this->mkDateTime('2016-01-01 10:00:01'),
+                    'LangB' => $this->mkDateTime('2016-01-01 10:00:02'),
+                    'LangC' => $this->mkDateTime('2016-01-01 10:00:03'),
+                ],
+                [
+                    'LangA' => SubmissionEntity::fromArray($this->getSerializedSubmission('FileA', 'LangA'), $this->getLogger()),
+                    'LangB' => SubmissionEntity::fromArray($this->getSerializedSubmission('FileA', 'LangB'), $this->getLogger()),
+                ],
+                [
+                    'LangA' => SubmissionEntity::fromArray($this->getSerializedSubmission('FileA', 'LangA', $this->mkDateTime('2016-01-01 10:00:01')), $this->getLogger()),
+                    'LangB' => SubmissionEntity::fromArray($this->getSerializedSubmission('FileA', 'LangB', $this->mkDateTime('2016-01-01 10:00:02')), $this->getLogger()),
+                ],
+            ],
+            [
+                [
+                    'LangB' => $this->mkDateTime('2016-01-01 10:00:02'),
+                    'LangC' => $this->mkDateTime('2016-01-01 10:00:03'),
+                ],
+                [
+                    'LangA' => SubmissionEntity::fromArray($this->getSerializedSubmission('FileA', 'LangA'), $this->getLogger()),
+                    'LangB' => SubmissionEntity::fromArray($this->getSerializedSubmission('FileA', 'LangB'), $this->getLogger()),
+                ],
+                [
+                    'LangB' => SubmissionEntity::fromArray($this->getSerializedSubmission('FileA', 'LangB', $this->mkDateTime('2016-01-01 10:00:02')), $this->getLogger()),
+                ],
+            ],
+            [
+                [
+                    'LangC' => $this->mkDateTime('2016-01-01 10:00:03'),
+                ],
+                [
+                    'LangA' => SubmissionEntity::fromArray($this->getSerializedSubmission('FileA', 'LangA'), $this->getLogger()),
+                    'LangB' => SubmissionEntity::fromArray($this->getSerializedSubmission('FileA', 'LangB'), $this->getLogger()),
+                ],
+                [
+                ],
+            ],
+        ];
+    }
 }

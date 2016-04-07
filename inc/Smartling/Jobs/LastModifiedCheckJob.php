@@ -100,16 +100,91 @@ class LastModifiedCheckJob extends JobAbstract
     }
 
     /**
+     * Gets serialized pair from queue
+     * @return array|false
+     */
+    protected function getSerializedPair()
+    {
+        return $this->getQueue()->dequeue(Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE);
+    }
+
+    /**
+     * @param array $serializedSubmissions
+     *
+     * @return \Smartling\Submissions\SubmissionEntity[]
+     */
+    protected function unserializeSubmissions(array $serializedSubmissions)
+    {
+        return $this->getSubmissionManager()->unserializeSubmissions($serializedSubmissions);
+    }
+
+    /**
+     * @param array              $lastModifiedResponse
+     * @param SubmissionEntity[] $submissions
+     *
+     * @return SubmissionEntity[]
+     */
+    protected function filterSubmissions(array $lastModifiedResponse, array $submissions)
+    {
+        $filteredSubmissions = [];
+        foreach ($lastModifiedResponse as $smartlingLocaleId => $lastModifiedDateTime) {
+            if (array_key_exists($smartlingLocaleId, $submissions)) {
+                /**
+                 * @var \DateTime        $lastModifiedDateTime
+                 * @var SubmissionEntity $submission
+                 */
+                $submission = $submissions[$smartlingLocaleId];
+                $submissionLastModifiedTimestamp = $submission->getLastModified()->getTimestamp();
+                $actualLastModifiedTimestamp = $lastModifiedDateTime->getTimestamp();
+                if ($actualLastModifiedTimestamp !== $submissionLastModifiedTimestamp) {
+                    $filteredSubmissions[$smartlingLocaleId]=$submission;
+                    $submission->setLastModified($lastModifiedDateTime);
+                }
+            }
+        }
+
+        return $filteredSubmissions;
+    }
+
+    /**
+     * @param \Smartling\Submissions\SubmissionEntity[] $submissions
+     *
+     * @return \Smartling\Submissions\SubmissionEntity[]
+     */
+    protected function processFileUriSet(array $submissions)
+    {
+        $lastModified = $this->getApiWrapper()->lastModified(reset($submissions));
+        
+        $submissions = $this->prepareSubmissionList($submissions);
+        $submissions = $this->filterSubmissions($lastModified, $submissions);
+        
+        return $submissions;
+    }
+
+    /**
+     * @param \Smartling\Submissions\SubmissionEntity[] $submissions
+     *
+     * @return \Smartling\Submissions\SubmissionEntity[]
+     */
+    protected function storeSubmissions(array $submissions)
+    {
+        if (0 < count($submissions)) {
+            $submissions = $this->getSubmissionManager()->storeSubmissions($submissions);
+        }
+        return $submissions;
+    }
+    
+    /**
      * Checks changes in last-modified field and triggers statusCheck by fileUri if lastModified has changed.
      */
     private function lastModifiedCheck()
     {
-        while (false !== ($serializedPair = $this->getQueue()->dequeue(Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE))) {
+        while (false !== ($serializedPair = $this->getSerializedPair())) {
             foreach ($serializedPair as $fileUri => $serializedSubmissions) {
-                $submissionList = $this->getSubmissionManager()->unserializeSubmissions($serializedSubmissions);
+                $submissionList = $this->unserializeSubmissions($serializedSubmissions);
 
                 try {
-                    $lastModified = $this->getApiWrapper()->lastModified(reset($submissionList));
+                    $submissions = $this->processFileUriSet($submissionList);
                 } catch (SmartlingNetworkException $e) {
                     $this->getLogger()
                         ->error(
@@ -121,36 +196,10 @@ class LastModifiedCheckJob extends JobAbstract
                     continue;
                 }
 
-                $submissions = $this->prepareSubmissionList($submissionList);
-                $needStatusCheck = false;
-
-                foreach ($lastModified as $smartlingLocaleId => $lastModifiedDateTime) {
-                    if (array_key_exists($smartlingLocaleId, $submissions)) {
-
-                        /**
-                         * @var \DateTime $lastModifiedDateTime
-                         */
-
-                        /**
-                         * @var SubmissionEntity $submission
-                         */
-                        $submission = $submissions[$smartlingLocaleId];
-                        $submissionLastModifiedTimestamp = $submission->getLastModified()->getTimestamp();
-                        $actualLastModifiedTimestamp = $lastModifiedDateTime->getTimestamp();
-                        if ($actualLastModifiedTimestamp !== $submissionLastModifiedTimestamp) {
-                            $submission->setLastModified($lastModifiedDateTime);
-                            $needStatusCheck = true;
-                        } else {
-                            /**
-                             * pass next only changed that definitely need check status
-                             */
-                            unset($submissions[$smartlingLocaleId]);
-                        }
-                    }
-                }
-
-                if (true === $needStatusCheck && 0 < count($submissions)) {
-                    $submissions = $this->getSubmissionManager()->storeSubmissions($submissions);
+                $submissions = $this->storeSubmissions($submissions);
+                
+                if (0 < count($submissions)) {
+                    
                     try {
                         $this->statusCheck($submissions);
                     } catch (SmartlingNetworkException $e) {
