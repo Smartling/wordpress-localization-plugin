@@ -35,10 +35,11 @@ trait SubmissionEntityMock
      * @param string         $fileUri
      * @param string         $locale
      * @param null|\DateTime $lastModified
+     * @param int            $completion
      *
      * @return array
      */
-    private function getSerializedSubmission($fileUri, $locale, $lastModified = null)
+    private function getSerializedSubmission($fileUri, $locale, $lastModified = null, $completion = 0)
     {
         return [
             'id'                     => 1,
@@ -55,7 +56,7 @@ trait SubmissionEntityMock
             'submission_date'        => null,
             'applied_date'           => null,
             'approved_string_count'  => 0,
-            'completed_string_count' => 0,
+            'completed_string_count' => $completion,
             'status'                 => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
             'is_locked'              => 0,
             'last_modified'          => $lastModified,
