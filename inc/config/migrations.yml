@@ -1,9 +1,9 @@
 services:
   migration.150512:
-    class:	Smartling\DbAl\Migrations\Migration150512
+    class: Smartling\DbAl\Migrations\Migration150512
 
   migration.150619:
-    class:	Smartling\DbAl\Migrations\Migration150619
+    class: Smartling\DbAl\Migrations\Migration150619
 
   migration.151222:
     class: Smartling\DbAl\Migrations\Migration151222
