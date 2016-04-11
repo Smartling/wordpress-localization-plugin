@@ -212,29 +212,47 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
         $worker = $this->getLastModifiedWorker();
 
         foreach ($groupedSubmissions as $index => $mockedResult) {
+
+            $dequeueResult = $this->mockedResultToDequeueResult($groupedSubmissions);
+
             $this->getQueue()
                 ->expects(self::at($index))
                 ->method('dequeue')
                 ->with(Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE)
-                ->willReturn($mockedResult);
+                ->willReturn($dequeueResult[$index]);
 
             if (false !== $mockedResult) {
                 foreach ($mockedResult as $fileUri => $submissionList) {
-                    $unserializedSubmissions = $this->getSubmissionManager()->unserializeSubmissions($submissionList);
+
+                    $dequeued = &$dequeueResult[$index][$fileUri];
+
+                    foreach ($submissionList as & $submissionArray) {
+                        $submissionArray = SubmissionEntity::fromArray($submissionArray, $this->getLogger());
+                    }
+
+                    $this->getSubmissionManager()
+                        ->expects(self::any())
+                        ->method('findByIds')
+                        ->with($dequeued)
+                        ->willReturn($submissionList);
+
+                    $unserializedSubmissions = $this->getSubmissionManager()->unserializeSubmissions($dequeued);
 
                     $worker->expects(self::any())
                         ->method('prepareSubmissionList')
                         ->with($unserializedSubmissions)
                         ->willReturn($this->emulatePrepareSubmissionList($unserializedSubmissions));
+
+                    $this->getApiWrapper()
+                        ->expects(self::exactly(1))
+                        ->method('lastModified')
+                        ->with(reset($unserializedSubmissions))//$submission)
+                        ->willReturn($lastModifiedResponse);
                 }
             }
         }
 
-        $this->getApiWrapper()
-            ->expects(self::exactly(1))
-            ->method('lastModified')
-            ->with($submission)
-            ->willReturn($lastModifiedResponse);
+
 
         $this->getApiWrapper()
             ->expects(self::exactly($expectedStatusCheckRequests))
@@ -249,6 +267,29 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
             ->will(self::returnArgument(0));
 
         $worker->run();
+    }
+
+    private function mockedResultToDequeueResult($mocked)
+    {
+        if (false === $mocked) {
+            return $mocked;
+        }
+
+        $rebuiltArray = [];
+
+        foreach ($mocked as $index => $mockedSet) {
+            if (false === $mockedSet) {
+                $rebuiltArray[$index] = $mockedSet;
+                continue;
+            }
+            foreach ($mockedSet as $fileUri => $serializedSubmissions) {
+                foreach ($serializedSubmissions as $serializedSubmission) {
+                    $rebuiltArray[$index][$fileUri][] = $serializedSubmission['id'];
+                }
+            }
+        }
+
+        return $rebuiltArray;
     }
 
     /**
@@ -305,7 +346,14 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
                     ],
                     false,
                 ],
-                SubmissionEntity::fromArray($this->getSerializedSubmission('FileA', 'LangA', $this->mkDateTime('2016-01-10 00:00:00')), $this->getLogger()),
+                SubmissionEntity::fromArray(
+                    $this->getSerializedSubmission(
+                        'FileA',
+                        'LangA',
+                        $this->mkDateTime('2016-01-10 00:00:00')
+                    ),
+                    $this->getLogger()
+                ),
                 [
                     'LangA' => $this->mkDateTime('2016-01-10 00:00:00'),
                     'LangB' => $this->mkDateTime('2016-01-10 00:00:00'),

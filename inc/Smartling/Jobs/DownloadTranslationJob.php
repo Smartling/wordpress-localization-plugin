@@ -4,7 +4,6 @@ namespace Smartling\Jobs;
 
 use Smartling\Base\ExportedAPI;
 use Smartling\Queue\Queue;
-use Smartling\Submissions\SubmissionEntity;
 
 /**
  * Class DownloadTranslationJob
@@ -57,9 +56,17 @@ class DownloadTranslationJob extends JobAbstract
 
     private function processDownloadQueue()
     {
-        while (false !== ($serializedEntity = $this->getQueue()->dequeue(Queue::QUEUE_NAME_DOWNLOAD_QUEUE))) {
+        while (false !== ($submissionId = $this->getQueue()->dequeue(Queue::QUEUE_NAME_DOWNLOAD_QUEUE))) {
+            $submissionId = reset($submissionId);
+            $result = $this->getSubmissionManager()->find(['id' => $submissionId]);
 
-            $entity = SubmissionEntity::fromArray($serializedEntity, $this->getLogger());
+            if (0 < count($result)) {
+                $entity = reset($result);
+            } else {
+                $this->getLogger()
+                    ->warning(vsprintf('Got submission id=%s that does not exists in database. Skipping.', [$submissionId]));
+                continue;
+            }
 
             do_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, $entity);
         }

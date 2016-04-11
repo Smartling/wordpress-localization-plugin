@@ -260,7 +260,7 @@ class LastModifiedCheckJob extends JobAbstract
 
             $this->getLogger()->info($message);
 
-            $this->getQueue()->enqueue($entity->toArray(false), Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
+            $this->getQueue()->enqueue([$entity->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
         }
     }
 

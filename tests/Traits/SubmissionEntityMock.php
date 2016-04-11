@@ -36,13 +36,14 @@ trait SubmissionEntityMock
      * @param string         $locale
      * @param null|\DateTime $lastModified
      * @param int            $completion
+     * @param int            $id
      *
      * @return array
      */
-    private function getSerializedSubmission($fileUri, $locale, $lastModified = null, $completion = 0)
+    private function getSerializedSubmission($fileUri, $locale, $lastModified = null, $completion = 0, $id = 1)
     {
         return [
-            'id'                     => 1,
+            'id'                     => $id,
             'source_title'           => 'A',
             'source_blog_id'         => 1,
             'source_content_hash'    => '',

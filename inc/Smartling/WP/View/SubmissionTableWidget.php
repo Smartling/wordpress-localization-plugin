@@ -236,7 +236,7 @@ class SubmissionTableWidget extends SmartlingListTable
                         break;
                     case self::ACTION_DOWNLOAD:
                         foreach ($submissions as $submission) {
-                            $this->getQueue()->enqueue($submission->toArray(false), Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
+                            $this->getQueue()->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
                         }
                         break;
                     default:

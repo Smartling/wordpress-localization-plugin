@@ -614,7 +614,7 @@ class SubmissionManager extends EntityManagerAbstract
         $output = [];
 
         foreach ($submissionList as $submission) {
-            $output[] = $submission->toArray(false);
+            $output[] = $submission->getId();
         }
 
         return $output;
@@ -627,13 +627,7 @@ class SubmissionManager extends EntityManagerAbstract
      */
     public function unserializeSubmissions(array $serializedSubmissions)
     {
-        $output = [];
-
-        foreach ($serializedSubmissions as $serializedSubmission) {
-            $output[] = SubmissionEntity::fromArray($serializedSubmission, $this->getLogger());
-        }
-
-        return $output;
+        return $this->findByIds($serializedSubmissions);
     }
 
     /**

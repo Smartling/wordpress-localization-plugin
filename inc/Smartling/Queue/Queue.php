@@ -83,7 +83,7 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
 
     private function testValueToBeEnqueued(array $value)
     {
-        return $value === unserialize(serialize($value));
+        return $value === json_decode(json_encode($value));
     }
 
     private function testQueue($queue)
@@ -197,7 +197,7 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
         }
 
         if ($this->testValueToBeEnqueued($value) && $this->testQueue($queue)) {
-            $encodedValue = base64_encode(serialize($value));
+            $encodedValue = json_encode($value);
             $this->set($encodedValue, $queue);
         }
 
@@ -237,7 +237,7 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
                 $id = $this->extractValue($row, 'id');
                 $payload = $this->extractValue($row, 'payload');
 
-                $value = unserialize(base64_decode($payload));
+                $value = json_decode($payload);
 
                 $this->delete($id, $queue);
 

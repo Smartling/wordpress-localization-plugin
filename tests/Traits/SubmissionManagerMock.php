@@ -22,7 +22,7 @@ trait SubmissionManagerMock
     private function mockSubmissionManager(LoggerInterface $logger, SmartlingToCMSDatabaseAccessWrapperInterface $dbal, EntityHelper $entityHelper)
     {
         return $this->getMockBuilder('Smartling\Submissions\SubmissionManager')
-            ->setMethods(['find'])
+            ->setMethods(['find', 'findByIds'])
             ->setConstructorArgs([$logger, $dbal, 10, $entityHelper])
             ->getMock();
     }

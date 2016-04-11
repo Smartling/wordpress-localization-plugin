@@ -217,8 +217,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                                         $submission->getTargetBlogId(),
                                         $submission->getTargetLocale()
                                     ]));
-                                $core->getQueue()
-                                    ->enqueue($submission->toArray(false), Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
+                                $core->getQueue()->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
                             }
                             do_action(DownloadTranslationJob::JOB_HOOK_NAME);
                         }
