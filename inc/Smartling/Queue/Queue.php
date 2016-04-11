@@ -39,7 +39,7 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
     {
         return [
             'id'           => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
-            'queue'        => self::DB_TYPE_STRING_STANDARD,
+            'queue'        => self::DB_TYPE_STRING_64,
             'payload'      => self::DB_TYPE_STRING_TEXT,
             'payload_hash' => self::DB_TYPE_HASH_MD5,
         ];
@@ -68,10 +68,6 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
             [
                 'type'    => 'primary',
                 'columns' => ['id'],
-            ],
-            [
-                'type'    => 'index',
-                'columns' => ['queue'],
             ],
             [
                 'type'    => 'unique',
