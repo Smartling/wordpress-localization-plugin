@@ -18,7 +18,6 @@ use Smartling\WP\WPHookInterface;
 
 /**
  * Class PostWidgetController
- *
  * @package Smartling\WP\Controller
  */
 class PostWidgetController extends WPAbstract implements WPHookInterface
@@ -82,7 +81,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
                 $eh = $this->getEntityHelper();
 
                 $currentBlogId = $eh->getSiteHelper()
-                                    ->getCurrentBlogId();
+                    ->getCurrentBlogId();
 
                 $profile = $eh
                     ->getSettingsManager()
@@ -92,17 +91,17 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
 
                 if (0 < count($profile)) {
                     $submissions = $this->getManager()
-                                        ->find([
-                                            'source_blog_id'=>$this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
-                                            'source_id'    => $post->ID,
-                                            'content_type' => $this->servedContentType,
-                                        ]);
+                        ->find([
+                                   'source_blog_id' => $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
+                                   'source_id'      => $post->ID,
+                                   'content_type'   => $this->servedContentType,
+                               ]);
 
                     $this->view([
-                            'submissions' => $submissions,
-                            'post'        => $post,
-                            'profile'     => reset($profile),
-                        ]
+                                    'submissions' => $submissions,
+                                    'post'        => $post,
+                                    'profile'     => reset($profile),
+                                ]
                     );
                 } else {
                     echo '<p>' . __('No suitable configuration profile found.') . '</p>';
@@ -112,18 +111,18 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
             } catch (SmartlingDbException $e) {
                 $message = 'Failed to search for the original post. No source post found for blog %s, post %s. Hiding widget';
                 $this->getLogger()
-                     ->warning(
-                         vsprintf($message, [
-                             $this->getEntityHelper()
-                                  ->getSiteHelper()
-                                  ->getCurrentBlogId(),
-                             $post->ID,
-                         ])
-                     );
+                    ->warning(
+                        vsprintf($message, [
+                            $this->getEntityHelper()
+                                ->getSiteHelper()
+                                ->getCurrentBlogId(),
+                            $post->ID,
+                        ])
+                    );
                 echo '<p>' . __($this->noOriginalFound) . '</p>';
             } catch (\Exception $e) {
                 $this->getLogger()
-                     ->error($e->getMessage() . '[' . $e->getFile() . ':' . $e->getLine() . ']');
+                    ->error($e->getMessage() . '[' . $e->getFile() . ':' . $e->getLine() . ']');
             }
         } else {
             echo '<p>' . __($this->needSave) . '</p>';
@@ -241,34 +240,43 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
                         $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
                         $originalId = (int)$post_id;
 
-                        $submissions = $this->getManager()
-                            ->find(
-                                [
-                                    'source_id'      => $originalId,
-                                    'source_blog_id' => $sourceBlog,
-                                    'content_type'   => $this->servedContentType,
-                                ]
-                            );
+                        $targetLocaleIds = array_keys($locales);
 
-                        if (0 < count($submissions)) {
-                            foreach ($submissions as $submission) {
-                                $this->getLogger()->info(vsprintf(
-                                    self::$MSG_DOWNLOAD_ENQUEUE_ENTITY,
+                        foreach ($targetLocaleIds as $targetBlogId) {
+                            $submissions = $this->getManager()
+                                ->find(
                                     [
-                                        $submission->getId(),
-                                        $submission->getStatus(),
-                                        $this->servedContentType,
-                                        $sourceBlog,
-                                        $originalId,
-                                        $submission->getTargetBlogId(),
-                                        $submission->getTargetLocale()
-                                    ]));
+                                        'source_id'      => $originalId,
+                                        'source_blog_id' => $sourceBlog,
+                                        'content_type'   => $this->servedContentType,
+                                        'target_blog_id' => $targetBlogId,
+                                    ]
+                                );
+
+                            if (0 < count($submissions)) {
+                                $submission = reset($submissions);
+
+                                $this->getLogger()
+                                    ->info(
+                                        vsprintf(
+                                            self::$MSG_DOWNLOAD_ENQUEUE_ENTITY,
+                                            [
+                                                $submission->getId(),
+                                                $submission->getStatus(),
+                                                $this->servedContentType,
+                                                $sourceBlog,
+                                                $originalId,
+                                                $submission->getTargetBlogId(),
+                                                $submission->getTargetLocale(),
+                                            ]
+                                        )
+                                    );
+
                                 $core->getQueue()->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
                             }
-                            do_action(DownloadTranslationJob::JOB_HOOK_NAME);
                         }
 
-
+                        do_action(DownloadTranslationJob::JOB_HOOK_NAME);   
                         break;
                 }
             }

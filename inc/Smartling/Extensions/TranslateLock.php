@@ -113,6 +113,7 @@ class TranslateLock implements ExtensionInterface
                 <label for="locked_page"><?= __('Translation Locked'); ?></label>
                 <input id="locked_page" type="checkbox" value="yes" name="lock_page" <?php checked('yes',
                     $locked); ?> />
+                <input type="hidden" name="locked_page_form_flag" value="1"/>
             </div>
             <?php
         } catch (SmartlingDbException $e) {
@@ -129,15 +130,22 @@ class TranslateLock implements ExtensionInterface
 
         remove_action('save_post', [$this, 'postSaveHandler']);
 
-        $curValue = array_key_exists('lock_page', $_POST) && 'yes' === $_POST['lock_page'] ? 1 : 0;
 
-        try {
-            $submission = $this->getSubmission($postId);
-            $submission->setIsLocked($curValue);
-            $this->getSubmissionManager()
-                 ->storeEntity($submission);
-        } catch (\Exception $e) {
+        $flagName='locked_page_form_flag';
 
+
+        if(array_key_exists($flagName, $_POST) && '1'===$_POST[$flagName])
+        {
+            $curValue = array_key_exists('lock_page', $_POST) && 'yes' === $_POST['lock_page'] ? 1 : 0;
+
+            try {
+                $submission = $this->getSubmission($postId);
+                $submission->setIsLocked($curValue);
+                $this->getSubmissionManager()
+                    ->storeEntity($submission);
+            } catch (\Exception $e) {
+
+            }
         }
     }
 }

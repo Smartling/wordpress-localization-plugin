@@ -3,6 +3,7 @@
 namespace Smartling\Base;
 
 use Exception;
+use Smartling\Bootstrap;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\InvalidXMLException;
@@ -46,7 +47,7 @@ trait SmartlingCoreDownloadTrait
             ];
         }
 
-        if (SubmissionEntity::SUBMISSION_STATUS_NEW === $entity->getStatus()) {
+        if (0===$entity->getTargetId()) {
             //Fix for trying to download before send.
             do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $entity);
         }
@@ -54,22 +55,14 @@ trait SmartlingCoreDownloadTrait
         $messages = [];
 
         try {
-            // detect old (ver < 24) submissions and fix them
-            if (0 === (int)$entity->getTargetId()) {
-                $entity = $this->prepareTargetEntity($entity);
-            }
-
-
-            $data = $this->getApiWrapper()
-                         ->downloadFile($entity);
-            $this->getLogger()
-                 ->debug(vsprintf('Downloaded file for submission id = \'%s\'. Dump: %s',
+            
+            $data = $this->getApiWrapper()->downloadFile($entity);
+            $this->getLogger()->debug(vsprintf('Downloaded file for submission id = \'%s\'. Dump: %s',
                      [$entity->getId(), base64_encode($data)]));
 
             $this->prepareFieldProcessorValues($entity);
             $translatedFields = XmlEncoder::xmlDecode($data);
-            $this->getLogger()
-                 ->debug(vsprintf('Deserialized translated fields for submission id = \'%s\'. Dump: %s\'.', [
+            $this->getLogger()->debug(vsprintf('Deserialized translated fields for submission id = \'%s\'. Dump: %s\'.', [
                      $entity->getId(),
                      base64_encode(json_encode($translatedFields)),
                  ]));

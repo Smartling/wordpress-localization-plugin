@@ -194,7 +194,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
     {
         $value = $this->stateFields['last_modified'];
 
-        $dt = \DateTime::createFromFormat(self::DATETIME_FORMAT, $this->stateFields['last_modified']);
+        $dt = \DateTime::createFromFormat(self::DATETIME_FORMAT, $value);
 
         if (false === $dt) {
             $dt = \DateTime::createFromFormat('U', 0);
@@ -244,7 +244,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
 
     public function setIsLocked($is_locked)
     {
-        $this->stateFields['is_locked'] = $is_locked ? 1 : 0;
+        $this->stateFields['is_locked'] = (int)$is_locked;
     }
 
     /**
