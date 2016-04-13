@@ -79,17 +79,6 @@ if (0 === $profileId) {
                     ?>
                 </td>
             </tr>
-            <!-- <tr >
-				<th scope = "row" ><?= __('API Url', $domain) ?></th >
-				<td >
-					<input type = "text" name = "smartling_settings[apiUrl]"
-					       value = "<?= $profile->getApiUrl(); ?>" >
-					<br >
-					<small ><?= __('Set api url. Default', $domain) ?>:
-						https://capi.smartling.com/v1
-					</small >
-				</td >
-			</tr > -->
             <tr>
                 <th scope="row"><?= __('Project ID', $domain) ?></th>
                 <td>

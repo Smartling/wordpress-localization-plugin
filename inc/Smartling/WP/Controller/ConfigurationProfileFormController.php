@@ -102,11 +102,6 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
             $profile->setIsActive($settings['active']);
         }
 
-
-        if (array_key_exists('apiUrl', $settings)) {
-            $profile->setApiUrl($settings['apiUrl']);
-        }
-
         if (array_key_exists('projectId', $settings)) {
             $profile->setProjectId($settings['projectId']);
         }

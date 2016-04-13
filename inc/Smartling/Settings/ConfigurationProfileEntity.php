@@ -59,7 +59,6 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         return [
             'id'                               => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
             'profile_name'                     => self::DB_TYPE_STRING_STANDARD,
-            'api_url'                          => self::DB_TYPE_STRING_STANDARD,
             'project_id'                       => 'CHAR(9) NOT NULL',
             'user_identifier'                  => self::DB_TYPE_STRING_STANDARD,
             'secret_key'                       => self::DB_TYPE_STRING_STANDARD,
@@ -147,22 +146,6 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
     public function setProfileName($profileName)
     {
         $this->stateFields['profile_name'] = $profileName;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getApiUrl()
-    {
-        return $this->stateFields['api_url'] ? : 'https://capi.smartling.com/v1';
-    }
-
-    /**
-     * @param $apiUrl
-     */
-    public function setApiUrl($apiUrl)
-    {
-        $this->stateFields['api_url'] = $apiUrl;
     }
 
     /**
