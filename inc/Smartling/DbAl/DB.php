@@ -7,6 +7,7 @@ use Smartling\Bootstrap;
 use Smartling\DbAl\Migrations\DbMigrationManager;
 use Smartling\DbAl\Migrations\SmartlingDbMigrationInterface;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -173,6 +174,26 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
                         break;
                     }
                 }
+
+                if (true === $stopMigrate) {
+                    $message = vsprintf(
+                        'Error applying migration <strong>#%s</strong>. <br/>
+Got error: <strong>%s</strong>.<br/>
+While executing query: <strong>%s</strong>. <br/>
+Please download the log file (click <strong><a href="/wp-admin/admin-post.php?action=smartling_download_log_file">here</a></strong>) and contact <a href="mailto:support@smartling.com?subject=%s">support@smartling.com</a>.',
+                        [
+                            $migration->getVersion(),
+                            $this->getWpdb()->last_error,
+                            $query,
+                            str_replace(' ', '%20', vsprintf('Wordpress Connector. Error applying migration %s', [$migration->getVersion()])),
+                        ]
+                    );
+
+                    DiagnosticsHelper::addDiagnosticsMessage($message, true);
+
+                    return;
+                }
+
                 if (false === $stopMigrate) {
                     $this->logger->info('Finished applying migration ' . $migration->getVersion());
                     $this->setSchemaVersion($migration->getVersion());
