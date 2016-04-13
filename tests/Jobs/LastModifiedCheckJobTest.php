@@ -236,7 +236,7 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
                         ->with($dequeued)
                         ->willReturn($submissionList);
 
-                    $unserializedSubmissions = $this->getSubmissionManager()->unserializeSubmissions($dequeued);
+                    $unserializedSubmissions = $this->getSubmissionManager()->findByIds($dequeued);
 
                     $worker->expects(self::any())
                         ->method('prepareSubmissionList')

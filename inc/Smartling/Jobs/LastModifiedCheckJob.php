@@ -109,16 +109,6 @@ class LastModifiedCheckJob extends JobAbstract
     }
 
     /**
-     * @param array $serializedSubmissions
-     *
-     * @return \Smartling\Submissions\SubmissionEntity[]
-     */
-    protected function unserializeSubmissions(array $serializedSubmissions)
-    {
-        return $this->getSubmissionManager()->unserializeSubmissions($serializedSubmissions);
-    }
-
-    /**
      * @param array              $lastModifiedResponse
      * @param SubmissionEntity[] $submissions
      *
@@ -181,7 +171,7 @@ class LastModifiedCheckJob extends JobAbstract
     {
         while (false !== ($serializedPair = $this->getSerializedPair())) {
             foreach ($serializedPair as $fileUri => $serializedSubmissions) {
-                $submissionList = $this->unserializeSubmissions($serializedSubmissions);
+                $submissionList = $this->getSubmissionManager()->findByIds($serializedSubmissions);
 
                 try {
                     $submissions = $this->processFileUriSet($submissionList);

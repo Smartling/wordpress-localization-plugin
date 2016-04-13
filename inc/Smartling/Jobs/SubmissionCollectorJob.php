@@ -54,10 +54,15 @@ class SubmissionCollectorJob extends JobAbstract
 
         if (0 < count($preparedArray)) {
             foreach ($preparedArray as $fileUri => $submissionList) {
-                $serializedSubmissions = $this->getSubmissionManager()->serializeSubmissions($submissionList);
 
+                $submissionIds = [];
+
+                foreach ($submissionList as $submission) {
+                    $submissionIds = $submission->getId();
+                }
+                
                 $this->getQueue()
-                    ->enqueue([$fileUri => $serializedSubmissions], Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE);
+                    ->enqueue([$fileUri => $submissionIds], Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE);
             }
         }
 

@@ -605,32 +605,6 @@ class SubmissionManager extends EntityManagerAbstract
     }
 
     /**
-     * @param SubmissionEntity[] $submissionList
-     *
-     * @return array
-     */
-    public function serializeSubmissions(array $submissionList)
-    {
-        $output = [];
-
-        foreach ($submissionList as $submission) {
-            $output[] = $submission->getId();
-        }
-
-        return $output;
-    }
-
-    /**
-     * @param array $serializedSubmissions
-     *
-     * @return SubmissionEntity[]
-     */
-    public function unserializeSubmissions(array $serializedSubmissions)
-    {
-        return $this->findByIds($serializedSubmissions);
-    }
-
-    /**
      * @param SubmissionEntity[] $submissions
      *
      * @return SubmissionEntity[]

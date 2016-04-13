@@ -232,9 +232,17 @@ class SubmissionCollectorJobTest extends \PHPUnit_Framework_TestCase
         $counter = 0;
 
         foreach ($groupedSubmissions as $fileUri => $submissions) {
-            $serializedSubmissions = $this->getSubmissionManager()->serializeSubmissions($submissions);
-            $this->getQueue()->expects($this->at($counter))->method('enqueue')
-                ->with([$fileUri => $serializedSubmissions]);
+
+            $submissionIds = [];
+
+            foreach ($submissions as $submissionEntity) {
+                $submissionIds = $submissionEntity->getId();
+            }
+
+            $this->getQueue()
+                ->expects($this->at($counter))
+                ->method('enqueue')
+                ->with([$fileUri => $submissionIds]);
             $counter++;
         }
 
