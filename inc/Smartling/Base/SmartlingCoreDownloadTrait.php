@@ -47,7 +47,7 @@ trait SmartlingCoreDownloadTrait
             ];
         }
 
-        if (0===$entity->getTargetId()) {
+        if (0 === $entity->getTargetId()) {
             //Fix for trying to download before send.
             do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $entity);
         }
