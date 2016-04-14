@@ -342,7 +342,7 @@ class SubmissionTableWidget extends SmartlingListTable
             $row['applied_date'] = '0000-00-00 00:00:00' === $row['applied_date'] ? __('Never')
                 : DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row['applied_date']));
             $row['target_locale'] = $this->entityHelper->getConnector()->getBlogNameByLocale($row['target_locale']);
-            $row['outdated'] = 0 === $row['outdated'] ? '&nbsp;' : '⚠';
+            $row['outdated'] = 0 === $row['outdated'] ? '&nbsp;' : '&#10003;';
 
             if (mb_strlen($row['file_uri'], 'utf8') > $file_uri_max_chars) {
                 $orig = $row['file_uri'];
