@@ -25,11 +25,26 @@ class SiteHelper
     private $_logger;
 
     /**
+     * @var int;
+     */
+    private $initialBlogId = 0;
+
+    /**
+     * @return int
+     */
+    public function getInitialBlogId()
+    {
+        return $this->initialBlogId;
+    }
+
+    /**
      * @param LoggerInterface $logger
      */
     public function __construct(LoggerInterface $logger)
     {
         $this->_logger = $logger;
+
+        $this->initialBlogId = $this->getCurrentBlogId();
     }
 
     /**
@@ -161,6 +176,7 @@ class SiteHelper
     /**
      * @param $blogId
      *
+     * @throws BlogNotFoundException
      * @throws SmartlingDirectRunRuntimeException
      */
     public function switchBlogId($blogId)
@@ -256,17 +272,20 @@ class SiteHelper
 
     /**
      * If current Blog Id differs from $blogId -> changes blog to ensure that blog id is set to $blogId
+     *
      * @param $blogId
      */
-    public function resetBlog($blogId)
+    public function resetBlog($blogId = null)
     {
+        if (null === $blogId) {
+            $blogId = $this->getInitialBlogId();
+        }
+
         $currentStack = $GLOBALS['_wp_switched_stack'];
 
-         if ((int)reset($currentStack)===$blogId)
-         {
-             $this->switchBlogId($blogId);
-             $GLOBALS['_wp_switched_stack']=[];
-         }
-        Bootstrap::DebugPrint($GLOBALS['_wp_switched_stack']);
+        if ((int)reset($currentStack) === $blogId) {
+            $this->switchBlogId($blogId);
+            $GLOBALS['_wp_switched_stack'] = [];
+        }
     }
 }

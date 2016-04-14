@@ -21,7 +21,10 @@ services:
     class: Smartling\DbAl\Migrations\Migration160411
 
   migration.160413:
-      class: Smartling\DbAl\Migrations\Migration160413
+    class: Smartling\DbAl\Migrations\Migration160413
+
+  migration.160414:
+    class: Smartling\DbAl\Migrations\Migration160414
 
   manager.db.migrations:
     class: Smartling\DbAl\Migrations\DbMigrationManager
@@ -36,3 +39,4 @@ services:
       - [ "registerMigration", [ "@migration.160223" ]]
       - [ "registerMigration", [ "@migration.160411" ]]
       - [ "registerMigration", [ "@migration.160413" ]]
+      - [ "registerMigration", [ "@migration.160414" ]]

@@ -238,22 +238,6 @@ abstract class EntityAbstract
     abstract public function set(EntityAbstract $entity = null);
 
     /**
-     * Calculates the hash of entity
-     *
-     * @return string
-     */
-    public function calculateHash()
-    {
-        $sourceSting = '';
-
-        foreach ($this->hashAffectingFields as $fieldName) {
-            $sourceSting .= $this->$fieldName;
-        }
-
-        return md5($sourceSting);
-    }
-
-    /**
      * Converts object into EntityAbstract child
      *
      * @param array          $arr
@@ -273,7 +257,7 @@ abstract class EntityAbstract
                 $entity->$fieldName = $arr[$fieldName];
             }
         }
-        $entity->hash = $this->calculateHash();
+        $entity->hash = '';
 
         return $entity;
     }

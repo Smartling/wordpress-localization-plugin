@@ -15,6 +15,10 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     const REGEX_PROJECT_ID = '([0-9a-f]){9}';
 
+    const UPLOAD_ON_CHANGE_MANUAL = 0;
+    
+    const UPLOAD_ON_CHANGE_AUTO = 1;
+    
     protected static function getInstance(LoggerInterface $logger)
     {
         return new self($logger);
@@ -66,6 +70,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
             'original_blog_id'                 => self::DB_TYPE_U_BIGINT,
             'auto_authorize'                   => self::DB_TYPE_UINT_SWITCH,
             'retrieval_type'                   => self::DB_TYPE_STRING_SMALL,
+            'upload_on_update'                 => self::DB_TYPE_UINT_SWITCH,
             'target_locales'                   => 'TEXT NULL',
             'filter_skip'                      => 'TEXT NULL',
             'filter_copy_by_field_name'        => 'TEXT NULL',
@@ -298,6 +303,16 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
     public function setFilterFlagSeo($value)
     {
         $this->stateFields['filter_flag_seo'] = $value;
+    }
+
+    public function getUploadOnUpdate()
+    {
+        return (int)$this->stateFields['upload_on_update'];
+    }
+
+    public function setUploadOnUpdate($uploadOnUpdate)
+    {
+        $this->stateFields['upload_on_update'] = (int)$uploadOnUpdate;
     }
 
     public function toArray($addVirtualColumns = true)

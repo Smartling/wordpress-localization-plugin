@@ -41,11 +41,6 @@ abstract class SmartlingCoreAbstract
     private $submissionManager;
 
     /**
-     * @var SettingsManager
-     */
-    private $settings;
-
-    /**
      * @var SiteHelper
      */
     private $siteHelper;
@@ -179,22 +174,6 @@ abstract class SmartlingCoreAbstract
     public function setSubmissionManager(SubmissionManager $submissionManager)
     {
         $this->submissionManager = $submissionManager;
-    }
-
-    /**
-     * @return SettingsManager
-     */
-    public function getSettings()
-    {
-        return $this->settings;
-    }
-
-    /**
-     * @param SettingsManager $settings
-     */
-    public function setSettings(SettingsManager $settings)
-    {
-        $this->settings = $settings;
     }
 
     /**

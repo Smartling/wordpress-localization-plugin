@@ -202,6 +202,25 @@ if (0 === $profileId) {
                 </td>
             </tr>
             <tr>
+                <th scope="row"><?= __('Resubmit changed content', $domain) ?></th>
+                <td>
+                    <?=
+                    HtmlTagGeneratorHelper::tag(
+                        'select',
+                        HtmlTagGeneratorHelper::renderSelectOptions(
+                            $profile->getUploadOnUpdate(),
+                            [
+                                0 => __('Manually'),
+                                1 => __('Automatically'),
+                            ]
+
+                        ),
+                        ['name' => 'smartling_settings[uploadOnUpdate]']);
+
+                    ?>
+                </td>
+            </tr>
+            <tr>
                 <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('auto_authorize'); ?></th>
                 <td>
                     <label class="radio-label">

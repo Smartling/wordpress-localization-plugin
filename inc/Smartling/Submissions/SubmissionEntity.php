@@ -32,17 +32,13 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  * @property string      $status
  * @property int         $is_locked
  * @property \DateTime   $last_modified
+ * @property int         $outdated
  * @package Smartling\Submissions
  */
 class SubmissionEntity extends SmartlingEntityAbstract
 {
 
     const DATETIME_FORMAT = 'Y-m-d H:i:s';
-
-    /**
-     * Submission Status  'Not Translated'
-     */
-    const SUBMISSION_STATUS_NOT_TRANSLATED = 'Not Translated';
 
     /**
      * Submission Status  'New'
@@ -68,7 +64,6 @@ class SubmissionEntity extends SmartlingEntityAbstract
      * @var array Submission Statuses
      */
     public static $submissionStatuses = [
-        self::SUBMISSION_STATUS_NOT_TRANSLATED,
         self::SUBMISSION_STATUS_NEW,
         self::SUBMISSION_STATUS_IN_PROGRESS,
         self::SUBMISSION_STATUS_COMPLETED,
@@ -97,6 +92,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
             'status'                 => self::DB_TYPE_STRING_SMALL,
             'is_locked'              => self::DB_TYPE_UINT_SWITCH . ' ' . self::DB_TYPE_DEFAULT_ZERO,
             'last_modified'          => self::DB_TYPE_DATETIME,
+            'outdated'               => self::DB_TYPE_UINT_SWITCH,
         ];
     }
 
@@ -106,11 +102,10 @@ class SubmissionEntity extends SmartlingEntityAbstract
     public static function getSubmissionStatusLabels()
     {
         return [
-            self::SUBMISSION_STATUS_NOT_TRANSLATED => __(self::SUBMISSION_STATUS_NOT_TRANSLATED),
-            self::SUBMISSION_STATUS_NEW            => __(self::SUBMISSION_STATUS_NEW),
-            self::SUBMISSION_STATUS_IN_PROGRESS    => __(self::SUBMISSION_STATUS_IN_PROGRESS),
-            self::SUBMISSION_STATUS_COMPLETED      => __(self::SUBMISSION_STATUS_COMPLETED),
-            self::SUBMISSION_STATUS_FAILED         => __(self::SUBMISSION_STATUS_FAILED),
+            self::SUBMISSION_STATUS_NEW         => __(self::SUBMISSION_STATUS_NEW),
+            self::SUBMISSION_STATUS_IN_PROGRESS => __(self::SUBMISSION_STATUS_IN_PROGRESS),
+            self::SUBMISSION_STATUS_COMPLETED   => __(self::SUBMISSION_STATUS_COMPLETED),
+            self::SUBMISSION_STATUS_FAILED      => __(self::SUBMISSION_STATUS_FAILED),
         ];
     }
 
@@ -131,6 +126,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
             'word_count'      => __('Words'),
             'progress'        => __('Progress'),
             'status'          => __('Status'),
+            'outdated'        => __('Outdated'),
         ];
     }
 
@@ -221,6 +217,16 @@ class SubmissionEntity extends SmartlingEntityAbstract
         }
     }
 
+    public function getOutdated()
+    {
+        return (int)$this->stateFields['outdated'];
+    }
+
+    public function setOutdated($outdated)
+    {
+        $this->stateFields['outdated'] = (int)$outdated;
+    }
+
     /**
      * @return int
      */
@@ -285,14 +291,21 @@ class SubmissionEntity extends SmartlingEntityAbstract
     public function getStatusColor()
     {
         $statusColors = [
-            self::SUBMISSION_STATUS_NOT_TRANSLATED => 'yellow',
-            self::SUBMISSION_STATUS_NEW            => 'yellow',
-            self::SUBMISSION_STATUS_IN_PROGRESS    => 'blue',
-            self::SUBMISSION_STATUS_COMPLETED      => 'green',
-            self::SUBMISSION_STATUS_FAILED         => 'red',
+            self::SUBMISSION_STATUS_NEW         => 'yellow',
+            self::SUBMISSION_STATUS_IN_PROGRESS => 'blue',
+            self::SUBMISSION_STATUS_COMPLETED   => 'green',
+            self::SUBMISSION_STATUS_FAILED      => 'red',
         ];
 
-        return $statusColors[$this->getStatus()] ? : '';
+        $classes = [
+            $statusColors[$this->getStatus()],
+        ];
+
+        if (1 === $this->getOutdated()) {
+            $classes[] = 'outdated';
+        }
+
+        return implode(' ', $classes);
     }
 
     /**

@@ -306,6 +306,16 @@ class XmlEncoder
     }
 
     /**
+     * @param array $source
+     *
+     * @return array
+     */
+    public static function filterRawSource(array $source)
+    {
+        return self::prepareSourceArray($source);
+    }
+    
+    /**
      * @inheritdoc
      */
     private static function rowToXMLNode(DOMDocument $document, $name, $value, & $keySettings)

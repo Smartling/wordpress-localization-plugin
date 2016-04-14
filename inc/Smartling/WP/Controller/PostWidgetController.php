@@ -23,6 +23,8 @@ use Smartling\WP\WPHookInterface;
 class PostWidgetController extends WPAbstract implements WPHookInterface
 {
 
+    use DetectContentChangeTrait;
+    
     const WIDGET_NAME = 'smartling_connector_widget';
 
     const WIDGET_DATA_NAME = 'smartling_post_based_widget';
@@ -48,6 +50,23 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
         }
     }
 
+    /**
+     * @var SmartlingCore
+     */
+    private $core;
+
+    /**
+     * @return SmartlingCore
+     */
+    private function getCore()
+    {
+        if (!($this->core instanceof SmartlingCore)) {
+            $this->core = Bootstrap::getContainer()->get('entrypoint');
+        }
+
+        return $this->core;
+    }
+    
     /**
      * add_meta_boxes hook
      *
@@ -181,6 +200,11 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
 
         remove_action('save_post', [$this, 'save']);
 
+        $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
+        $originalId = (int)$post_id;
+
+        $this->detectChange($sourceBlog, $originalId, $this->servedContentType);
+
         if (false === $this->runValidation($post_id)) {
             return $post_id;
         }
@@ -209,8 +233,6 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
             if (count($locales) > 0) {
                 switch ($_POST['sub']) {
                     case 'upload':
-                        $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
-                        $originalId = (int)$post_id;
                         if (0 < count($locales)) {
                             foreach ($locales as $blogId => $blogName) {
                                 $result = $core->createForTranslation(
@@ -237,9 +259,6 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
 
                         break;
                     case 'download':
-                        $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
-                        $originalId = (int)$post_id;
-
                         $targetLocaleIds = array_keys($locales);
 
                         foreach ($targetLocaleIds as $targetBlogId) {

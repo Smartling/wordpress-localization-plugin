@@ -123,6 +123,10 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
             $profile->setRetrievalType($settings['retrievalType']);
         }
 
+        if (array_key_exists('uploadOnUpdate', $settings)) {
+            $profile->setUploadOnUpdate($settings['uploadOnUpdate']);
+        }
+
         if (array_key_exists('callbackUrl', $settings)) {
             $profile->setCallBackUrl($settings['callbackUrl'] === 'on');
         }
@@ -166,9 +170,6 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 
             $profile->setOriginalBlogId($locale);
 
-
-            //$targetLocales->setDefaultBlog( $defaultBlogId );
-            //$targetLocales->setDefaultLocale( $targetLocales->getTargetLocaleLabel( $defaultBlogId ) );
         }
 
         if (array_key_exists('targetLocales', $settings)) {

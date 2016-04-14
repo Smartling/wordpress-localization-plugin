@@ -29,6 +29,24 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
     protected $noOriginalFound = 'No original %s found';
 
     use CommonLogMessagesTrait;
+    use DetectContentChangeTrait;
+
+    /**
+     * @var SmartlingCore
+     */
+    private $core;
+
+    /**
+     * @return SmartlingCore
+     */
+    private function getCore()
+    {
+        if (!($this->core instanceof SmartlingCore)) {
+            $this->core = Bootstrap::getContainer()->get('entrypoint');
+        }
+
+        return $this->core;
+    }
 
     /**
      * @inheritdoc
@@ -140,6 +158,11 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
             return;
         }
 
+        $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
+        $originalId = (int)$term_id;
+
+        $this->detectChange($sourceBlog, $originalId, $termType);
+
         remove_action("edited_{$termType}", [$this, 'save']);
 
         if (!isset($_POST[self::WIDGET_DATA_NAME])) {
@@ -158,12 +181,6 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                 }
             }
 
-            /**
-             * @var SmartlingCore $core
-             */
-            $core = Bootstrap::getContainer()
-                ->get('entrypoint');
-
             if (count($locales) > 0) {
                 $curBlogId = $this->getEntityHelper()
                     ->getSiteHelper()
@@ -174,7 +191,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                         if (0 < count($locales)) {
                             foreach ($locales as $blogId => $blogName) {
                                 $result =
-                                    $core->createForTranslation(
+                                    $this->getCore()->createForTranslation(
                                         $termType,
                                         $curBlogId,
                                         $term_id,
@@ -217,7 +234,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                                         $submission->getTargetBlogId(),
                                         $submission->getTargetLocale()
                                     ]));
-                                $core->getQueue()->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
+                                $this->getCore()->getQueue()->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
                             }
                             do_action(DownloadTranslationJob::JOB_HOOK_NAME);
                         }

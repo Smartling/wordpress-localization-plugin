@@ -4,6 +4,7 @@ namespace Smartling\Base;
 
 use Smartling\Bootstrap;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
+use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
@@ -134,39 +135,7 @@ trait SmartlingCoreTrait
      */
     private function prepareFieldProcessorValues(SubmissionEntity $submission)
     {
-        /**
-         * @var SettingsManager $settingsManager
-         */
-        $settingsManager = $this->getSettings();
-
-        $profiles = $settingsManager->findEntityByMainLocale($submission->getSourceBlogId());
-
-        $filter = [
-            'ignore' => [],
-            'key'    => [
-                'seo' => [],
-            ],
-            'copy'   => [
-                'name'   => [],
-                'regexp' => [],
-            ],
-        ];
-
-        if (0 < count($profiles)) {
-            /**
-             * @var ConfigurationProfileEntity $profile
-             */
-            $profile = reset($profiles);
-
-            $filter['ignore'] = array_map('trim', explode(PHP_EOL, $profile->getFilterSkip()));
-            $filter['key']['seo'] = array_map('trim', explode(PHP_EOL, $profile->getFilterFlagSeo()));
-            $filter['copy']['name'] = array_map('trim', explode(PHP_EOL, $profile->getFilterCopyByFieldName()));
-            $filter['copy']['regexp'] = array_map('trim', explode(PHP_EOL, $profile->getFilterCopyByFieldValueRegex()));
-
-        } else {
-
-        }
-        Bootstrap::getContainer()->setParameter('field.processor', $filter);
+        ContentSerializationHelper::prepareFieldProcessorValues($this->getSettingsManager(), $submission);
     }
 
     /**

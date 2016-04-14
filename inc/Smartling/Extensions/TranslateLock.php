@@ -108,6 +108,7 @@ class TranslateLock implements ExtensionInterface
                     vertical-align: top;
                     -webkit-font-smoothing: antialiased;
                     -moz-osx-font-smoothing: grayscale;
+                }
             </style>
             <div id="locked_page" class="misc-pub-section misc-pub-post-status">
                 <label for="locked_page"><?= __('Translation Locked'); ?></label>

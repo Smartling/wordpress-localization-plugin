@@ -143,40 +143,28 @@ class SubmissionManager extends EntityManagerAbstract
      * @param null       $status
      * @param array      $sortOptions
      * @param null|array $pageOptions
-     *
      * @param int        $totalCount (reference)
      *
      * @return array of SubmissionEntity or empty array
-     *
      * $sortOptions is an array that keys are SubmissionEntity fields and values are 'ASC' or 'DESC'
      * or null if no sorting needed
-     *
      * e.g.: array('submission_date' => 'ASC', 'target_locale' => 'DESC')
-     *
      * $pageOptions is an array that has keys('page' and 'limit') for pagination output purposes purposes
      * or null if no pagination needed
-     *
      * e.g.: array('limit' => 20, 'page' => 1)
      */
-    public function getEntities(
-        $contentType = null,
-        $status = null,
-        array $sortOptions = [],
-        $pageOptions = null,
-        & $totalCount = 0
-    )
+    public function getEntities($contentType = null, $status = null, $outdatedFlag = null, array $sortOptions = [], $pageOptions = null, & $totalCount = 0)
     {
         $validRequest = $this->validateRequest($contentType, $sortOptions, $pageOptions);
 
         $result = [];
 
         if ($validRequest) {
-            $dataQuery = $this->buildQuery($contentType, $status, $sortOptions, $pageOptions);
+            $dataQuery = $this->buildQuery($contentType, $status, $outdatedFlag, $sortOptions, $pageOptions);
 
-            $countQuery = $this->buildCountQuery($contentType, $status);
+            $countQuery = $this->buildCountQuery($contentType, $status, $outdatedFlag);
 
-            $totalCount = $this->getDbal()
-                               ->fetch($countQuery);
+            $totalCount = $this->getDbal()->fetch($countQuery);
 
             // extracting from result
             $totalCount = (int)$totalCount[0]->cnt;
@@ -293,7 +281,6 @@ class SubmissionManager extends EntityManagerAbstract
     }
 
     /**
-     *
      * @return null|string
      */
     public function buildSelectQuery($where)
@@ -318,12 +305,12 @@ class SubmissionManager extends EntityManagerAbstract
         return $query;
     }
 
-    public function buildCountQuery($contentType, $status, ConditionBlock $baseCondition = null)
+    public function buildCountQuery($contentType, $status, $outdatedFlag, ConditionBlock $baseCondition = null)
     {
 
         $whereOptions = null;
 
-        if (!is_null($contentType) || !is_null($status)) {
+        if (!is_null($contentType) || !is_null($status) || !is_null($outdatedFlag)) {
             $whereOptions = ConditionBlock::getConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
             if ($baseCondition instanceof ConditionBlock) {
                 $whereOptions->addConditionBlock($baseCondition);
@@ -338,6 +325,12 @@ class SubmissionManager extends EntityManagerAbstract
             if (!is_null($status)) {
                 $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'status',
                     [$status]);
+                $whereOptions->addCondition($condition);
+            }
+
+            if (!is_null($outdatedFlag)) {
+                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'outdated',
+                                                     [$outdatedFlag]);
                 $whereOptions->addCondition($condition);
             }
         }
@@ -377,7 +370,7 @@ class SubmissionManager extends EntityManagerAbstract
             $block->addCondition($condition);
         }
 
-        $query = $this->buildQuery(null, null, [], null, $block);
+        $query = $this->buildQuery(null, null, null, [], null, $block);
 
         return $this->fetchData($query);
     }
@@ -404,7 +397,6 @@ class SubmissionManager extends EntityManagerAbstract
      * @param string         $status
      * @param array|null     $sortOptions
      * @param array|null     $pageOptions
-     *
      * @param ConditionBlock $baseCondition
      *
      * @return string
@@ -412,6 +404,7 @@ class SubmissionManager extends EntityManagerAbstract
     private function buildQuery(
         $contentType,
         $status,
+        $outdatedFlag,
         $sortOptions,
         $pageOptions,
         ConditionBlock $baseCondition = null
@@ -420,7 +413,7 @@ class SubmissionManager extends EntityManagerAbstract
 
         $whereOptions = null;
 
-        if (!is_null($contentType) || !is_null($status)) {
+        if (!is_null($contentType) || !is_null($status) || !is_null($outdatedFlag)) {
             $whereOptions = ConditionBlock::getConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
             if ($baseCondition instanceof ConditionBlock) {
                 $whereOptions->addConditionBlock($baseCondition);
@@ -435,6 +428,12 @@ class SubmissionManager extends EntityManagerAbstract
             if (!is_null($status)) {
                 $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'status',
                     [$status]);
+                $whereOptions->addCondition($condition);
+            }
+
+            if (!is_null($outdatedFlag)) {
+                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'outdated',
+                                                     [$outdatedFlag]);
                 $whereOptions->addCondition($condition);
             }
         } else {
@@ -496,16 +495,16 @@ class SubmissionManager extends EntityManagerAbstract
 
         if ($is_insert) {
             $storeQuery = QueryBuilder::buildInsertQuery($this->getDbal()
-                                                              ->completeTableName(SubmissionEntity::getTableName()),
-                $fields);
+                                                             ->completeTableName(SubmissionEntity::getTableName()),
+                                                         $fields);
         } else {
             // update
             $conditionBlock = ConditionBlock::getConditionBlock();
             $conditionBlock->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'id',
-                [$entityId]));
+                                                                  [$entityId]));
             $storeQuery = QueryBuilder::buildUpdateQuery($this->getDbal()
-                                                              ->completeTableName(SubmissionEntity::getTableName()),
-                $fields, $conditionBlock, ['limit' => 1]);
+                                                             ->completeTableName(SubmissionEntity::getTableName()),
+                                                         $fields, $conditionBlock, ['limit' => 1]);
         }
 
         // log store query before execution

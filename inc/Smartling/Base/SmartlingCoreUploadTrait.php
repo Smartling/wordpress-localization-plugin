@@ -5,6 +5,7 @@ use Exception;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Helpers\AttachmentHelper;
+use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\XmlEncoder;
@@ -12,7 +13,6 @@ use Smartling\Submissions\SubmissionEntity;
 
 /**
  * Class SmartlingCoreUploadTrait
- *
  * @package Smartling\Base
  */
 trait SmartlingCoreUploadTrait
@@ -35,21 +35,34 @@ trait SmartlingCoreUploadTrait
      */
     public function sendForTranslationBySubmission(SubmissionEntity $submission)
     {
-        $this->getLogger()->debug(vsprintf(
-                                      'Preparing to send submission id = \'%s\' (blog = \'%s\', content = \'%s\', type = \'%s\').',
-                                      [
-                                          $submission->getId(),
-                                          $submission->getSourceBlogId(),
-                                          $submission->getSourceId(),
-                                          $submission->getContentType(),
-                                      ]
-                                  )
+        $this->getLogger()->debug(
+            vsprintf(
+                'Preparing to send submission id = \'%s\' (blog = \'%s\', content = \'%s\', type = \'%s\').',
+                [
+                    $submission->getId(),
+                    $submission->getSourceBlogId(),
+                    $submission->getSourceId(),
+                    $submission->getContentType(),
+                ]
+            )
         );
 
         try {
             $contentEntity = $this->readContentEntity($submission);
-            $submission->setSourceContentHash($contentEntity->calculateHash());
+
+            $currentSubmissionHash = ContentSerializationHelper::calculateHash(
+                $this->getContentIoFactory(),
+                $this->getSiteHelper(),
+                $this->getSettingsManager(),
+                $submission
+            );
+
+            $submission->setSourceContentHash($currentSubmissionHash);
+            $submission->setOutdated(0);
             $submission->setSourceTitle($contentEntity->getTitle());
+
+            $submission = $this->getSubmissionManager()->storeEntity($submission);
+
 
             if (null === $submission->getId()) {
                 // generate URI
@@ -138,6 +151,12 @@ trait SmartlingCoreUploadTrait
                  ->storeEntity($submission);
         } catch (BlogNotFoundException $e) {
             $this->handleBadBlogId($submission);
+        } catch (Exception $e) {
+            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+            $this->getLogger()
+                ->error($e->getMessage());
+            $this->getSubmissionManager()
+                ->storeEntity($submission);
         }
 
     }
@@ -175,7 +194,7 @@ trait SmartlingCoreUploadTrait
         $contentEntity = $this->readContentEntity($submission);
 
         if (null === $submission->getId()) {
-            $submission->setSourceContentHash($contentEntity->calculateHash());
+            $submission->setSourceContentHash('');
             $submission->setSourceTitle($contentEntity->getTitle());
 
             // generate URI

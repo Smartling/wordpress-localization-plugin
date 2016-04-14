@@ -38,6 +38,7 @@ $data = $this->getViewData();
                 <td style="text-align: left;"><p>
                         <?= $submissionsTable->contentTypeSelectRender(); ?>
                         <?= $submissionsTable->statusSelectRender(); ?>
+                        <?= $submissionsTable->stateSelectRender(); ?>
                         <?= $submissionsTable->renderSubmitButton(__('Apply Filter')); ?>
                     </p></td>
                 <td style="text-align: right;"><?php $submissionsTable->search_box(__('Search'), 's'); ?></td>

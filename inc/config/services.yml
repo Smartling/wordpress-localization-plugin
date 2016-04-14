@@ -38,7 +38,6 @@ services:
     calls:
       - [ "setLogger", [ "@logger" ]]
       - [ "setSubmissionManager", [ "@manager.submission" ]]
-      - [ "setSettings", [ "@manager.settings" ]]
       - [ "setSiteHelper", [ "@site.helper" ]]
       - [ "setApiWrapper", [ "@wrapper.sdk.api.smartling" ]]
       - [ "setMultilangProxy", [ "@multilang.proxy" ]]

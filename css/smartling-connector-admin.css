@@ -75,7 +75,7 @@
     right: 70px;
     height: 14px;
     width: 14px;
-    text-indent: 20px;
+    text-indent: 16px;
     display: inline-block;
     float: right;
     border: 1px solid #ffffff;
@@ -107,10 +107,28 @@
     box-shadow: 0 -2px 0 3px #ffb401 inset, 0 5px 5px rgba(103, 73, 0, 0.17), 0 15px rgba(255, 255, 255, 0.25) inset;
 }
 
-/*.btn-yellow:hover {
- 	background: #333333;
- 	box-shadow: 0 -2px 0 3px #1a1a1a inset, 0 5px 5px rgba(0, 0, 0, 0.17), 0 15px rgba(255, 255, 255, 0.32) inset;
-}*/
+.widget-btn.orange {
+    background: #ff9700;
+    box-shadow: 0 -2px 0 3px #ff7201 inset, 0 5px 5px rgba(103, 73, 0, 0.17), 0 15px rgba(255, 255, 255, 0.25) inset;
+}
+
+.widget-btn.outdated {
+    text-indent: 0px;
+}
+
+.widget-btn.outdated:before {
+    content: '\26A0';
+    font: 400 16px/1 dashicons;
+    speak: none;
+    left: -15px;
+    position: relative;
+    top: 0;
+    text-decoration: none !important;
+    color: red;
+    vertical-align: top;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
 
 #smartling-form .plugin-locales input[type=text] {
     width: 50px;
@@ -121,7 +139,8 @@
 }
 
 #contentType {
-    width: 100px;
+    width: 80px;
+    max-width: 90px;
 }
 
 #targetLocale {
@@ -152,34 +171,28 @@
     width: 100px;
     max-width: 150px;
 }
+#applied_date, #submission_date
+{
+    width: 140px;
+    max-width: 140px;
+}
+
+#outdated {
+    width: 70px;
+    max-width: 80px;
+}
+
+#word_count {
+    width: 80px;
+    max-width: 90px;
+}
 
 table.form-table th {
     display: inline-table;
 }
 
-div.display-errors-set {
-    margin-top: 30px;
-    margin-bottom: 30px;
-    border: solid 1px #ff0000;
-    border-radius: 5px;
-    padding: 15px;
-    font-size: 12pt;
-    color: #ff5555;
-    font-weight: bold;
-    box-shadow: 0px 0px 29px 10px rgba(0, 0, 0, 0.75);
-}
-
 .hide {
     display: none;
-}
-
-div.display-errors-set ul {
-    list-style: circle;
-}
-
-div.display-errors-set ul li {
-    padding-left: 20px;
-    margin-left: 20px;
 }
 
 .smtPostWidget-rowWrapper {
@@ -226,7 +239,11 @@ span.add-to-queue {
     padding-left: 24px;
 }
 
-.ajaxcall
-{
+.ajaxcall {
     font-weight: bold;
+}
+
+td.outdated
+{
+    text-align: center;
 }

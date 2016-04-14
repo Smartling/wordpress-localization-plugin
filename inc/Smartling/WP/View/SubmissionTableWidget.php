@@ -36,6 +36,10 @@ class SubmissionTableWidget extends SmartlingListTable
      * base name of status filtering select
      */
     const SUBMISSION_STATUS_SELECT_ELEMENT_NAME = 'status';
+
+
+    const SUBMISSION_OUTDATE_STATE = 'state';
+
     /**
      * @var LoggerInterface
      */
@@ -98,7 +102,11 @@ class SubmissionTableWidget extends SmartlingListTable
      *
      * @var array
      */
-    private $defaultValues = [self::CONTENT_TYPE_SELECT_ELEMENT_NAME => 'any', self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME => null,];
+    private $defaultValues = [
+        self::CONTENT_TYPE_SELECT_ELEMENT_NAME      => 'any',
+        self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME => null,
+        self::SUBMISSION_OUTDATE_STATE              => 'any',
+    ];
 
     private $_settings = ['singular' => 'submission', 'plural' => 'submissions', 'ajax' => false,];
 
@@ -282,6 +290,17 @@ class SubmissionTableWidget extends SmartlingListTable
     }
 
     /**
+     * @return int|null
+     */
+    private function getOutdatedFlagFilterValue()
+    {
+        $value = $this->getFormElementValue(self::SUBMISSION_OUTDATE_STATE, $this->defaultValues[self::SUBMISSION_OUTDATE_STATE]);
+
+        return 'any' === $value ? null : (int)$value;
+    }
+
+
+    /**
      * @inheritdoc
      */
     public function prepare_items()
@@ -298,10 +317,12 @@ class SubmissionTableWidget extends SmartlingListTable
 
         $statusFilterValue = $this->getStatusFilterValue();
 
+        $outdatedFlag = $this->getOutdatedFlagFilterValue();
+
         $searchText = $this->getFromSource('s', '');
 
         if (empty($searchText)) {
-            $data = $this->manager->getEntities($contentTypeFilterValue, $statusFilterValue, $this->getSortingOptions(), $pageOptions, $total);
+            $data = $this->manager->getEntities($contentTypeFilterValue, $statusFilterValue, $outdatedFlag, $this->getSortingOptions(), $pageOptions, $total);
         } else {
             $data = $this->manager->search($searchText, ['source_title', 'source_id',
                                                          'file_uri'], $contentTypeFilterValue, $statusFilterValue, $this->getSortingOptions(), $pageOptions, $total);
@@ -321,6 +342,7 @@ class SubmissionTableWidget extends SmartlingListTable
             $row['applied_date'] = '0000-00-00 00:00:00' === $row['applied_date'] ? __('Never')
                 : DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row['applied_date']));
             $row['target_locale'] = $this->entityHelper->getConnector()->getBlogNameByLocale($row['target_locale']);
+            $row['outdated'] = 0 === $row['outdated'] ? '&nbsp;' : '⚠';
 
             if (mb_strlen($row['file_uri'], 'utf8') > $file_uri_max_chars) {
                 $orig = $row['file_uri'];
@@ -363,6 +385,31 @@ class SubmissionTableWidget extends SmartlingListTable
 
         return $html;
     }
+
+    /**
+     * @return string
+     */
+    public function stateSelectRender()
+    {
+        $controlName = self::SUBMISSION_OUTDATE_STATE;
+
+        $states = [
+            0 => __('Up to Date'),
+            1 => __('Outdated'),
+        ];
+
+        // add 'Any' to turn off filter
+        $states = array_merge(['any' => __('Any')], $states);
+
+        $value = $this->getFormElementValue($controlName, $this->defaultValues[$controlName]);
+
+        $html = HtmlTagGeneratorHelper::tag('label', __('Outdated Flag'), ['for' => $this->buildHtmlTagName($controlName),]) .
+                HtmlTagGeneratorHelper::tag('select', HtmlTagGeneratorHelper::renderSelectOptions($value, $states), ['id'   => $this->buildHtmlTagName($controlName),
+                                                                                                                     'name' => $this->buildHtmlTagName($controlName),]);
+
+        return $html;
+    }
+
 
     /**
      * @return string
