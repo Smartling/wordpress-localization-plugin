@@ -403,7 +403,7 @@ class SubmissionTableWidget extends SmartlingListTable
 
         $value = $this->getFormElementValue($controlName, $this->defaultValues[$controlName]);
 
-        $html = HtmlTagGeneratorHelper::tag('label', __('Outdated Flag'), ['for' => $this->buildHtmlTagName($controlName),]) .
+        $html = HtmlTagGeneratorHelper::tag('label', __('Content Status'), ['for' => $this->buildHtmlTagName($controlName),]) .
                 HtmlTagGeneratorHelper::tag('select', HtmlTagGeneratorHelper::renderSelectOptions($value, $states), ['id'   => $this->buildHtmlTagName($controlName),
                                                                                                                      'name' => $this->buildHtmlTagName($controlName),]);
 
