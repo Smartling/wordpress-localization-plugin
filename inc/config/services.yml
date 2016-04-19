@@ -134,6 +134,15 @@ services:
     arguments:
       - "@logger"
 
+  detect-changes.helper:
+    class: Smartling\Helpers\DetectChangesHelper
+    calls:
+      - [ "setLogger" , [ "@logger" ] ]
+      - [ "setSettingsManager" , [ "@manager.settings" ] ]
+      - [ "setSubmissionManager" , [ "@manager.submission" ] ]
+      - [ "setSiteHelper" , [ "@site.helper" ] ]
+      - [ "setIoFactory" , [ "@factory.contentIO" ] ]
+
   site.db:
     class: Smartling\DbAl\DB
     arguments:
@@ -228,6 +237,8 @@ services:
       - "@entity.helper"
       - "@manager.submission"
       - "@site.cache"
+    calls:
+      - [ "setDetectChangesHelper" , [ "@detect-changes.helper" ] ]
 
   wp.ext.partner:
     class: Smartling\WP\Controller\PartnerWidgetController
@@ -238,6 +249,8 @@ services:
       - "@entity.helper"
       - "@manager.submission"
       - "@site.cache"
+    calls:
+      - [ "setDetectChangesHelper" , [ "@detect-changes.helper" ] ]
 
   wp.ext.testimonial:
     class: Smartling\WP\Controller\TestimonialWidgetController
@@ -248,6 +261,8 @@ services:
       - "@entity.helper"
       - "@manager.submission"
       - "@site.cache"
+    calls:
+      - [ "setDetectChangesHelper" , [ "@detect-changes.helper" ] ]
 
   wp.ext.policy:
     class: Smartling\WP\Controller\PolicyWidgetController
@@ -258,6 +273,8 @@ services:
       - "@entity.helper"
       - "@manager.submission"
       - "@site.cache"
+    calls:
+      - [ "setDetectChangesHelper" , [ "@detect-changes.helper" ] ]
 
   wp.page:
     class: Smartling\WP\Controller\PageWidgetController
@@ -268,6 +285,8 @@ services:
       - "@entity.helper"
       - "@manager.submission"
       - "@site.cache"
+    calls:
+      - [ "setDetectChangesHelper" , [ "@detect-changes.helper" ] ]
 
   wp.taxonomy:
       class: Smartling\WP\Controller\TaxonomyWidgetController
@@ -278,6 +297,8 @@ services:
         - "@entity.helper"
         - "@manager.submission"
         - "@site.cache"
+      calls:
+        - [ "setDetectChangesHelper" , [ "@detect-changes.helper" ] ]
 
   wp.checkStatus:
       class: Smartling\WP\Controller\CheckStatusController

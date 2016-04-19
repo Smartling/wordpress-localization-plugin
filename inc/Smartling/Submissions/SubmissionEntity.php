@@ -38,6 +38,10 @@ use Smartling\Helpers\WordpressContentTypeHelper;
 class SubmissionEntity extends SmartlingEntityAbstract
 {
 
+    const FLAG_CONTENT_IS_OUT_OF_DATE = 1;
+
+    const FLAG_CONTENT_IS_UP_TO_DATE = 0;
+
     const DATETIME_FORMAT = 'Y-m-d H:i:s';
 
     /**
