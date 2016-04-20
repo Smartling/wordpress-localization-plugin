@@ -385,7 +385,7 @@ class SubmissionManager extends EntityManagerAbstract
         $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
         $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_IN, 'id', $ids);
         $block->addCondition($condition);
-        $query = $this->buildQuery(null, null, [], null, $block);
+        $query = $this->buildQuery(null, null, null, [], null, $block);
 
         return $this->fetchData($query);
     }
