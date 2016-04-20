@@ -226,8 +226,7 @@ class SubmissionManager extends EntityManagerAbstract
 
             $countQuery = $this->buildCountQuery($contentType, $status, $block);
 
-            $totalCount = $this->getDbal()
-                               ->fetch($countQuery);
+            $totalCount = $this->getDbal()->fetch($countQuery);
 
             // extracting from result
             $totalCount = (int)$totalCount[0]->cnt;
@@ -287,14 +286,12 @@ class SubmissionManager extends EntityManagerAbstract
     {
         $whereOptions = ConditionBlock::getConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
         foreach ($where as $key => $item) {
-            $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, $key,
-                [$item]);
+            $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, $key, [$item]);
             $whereOptions->addCondition($condition);
         }
 
         $query = QueryBuilder::buildSelectQuery(
-            $this->getDbal()
-                 ->completeTableName(SubmissionEntity::getTableName()),
+            $this->getDbal()->completeTableName(SubmissionEntity::getTableName()),
             array_keys(SubmissionEntity::getFieldDefinitions()),
             $whereOptions,
             [],
@@ -317,27 +314,38 @@ class SubmissionManager extends EntityManagerAbstract
             }
 
             if (!is_null($contentType)) {
-                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'content_type',
-                    [$contentType]);
-                $whereOptions->addCondition($condition);
+                $whereOptions->addCondition(
+                    Condition::getCondition(
+                        ConditionBuilder::CONDITION_SIGN_EQ,
+                        'content_type',
+                        [$contentType]
+                    )
+                );
             }
 
             if (!is_null($status)) {
-                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'status',
-                    [$status]);
-                $whereOptions->addCondition($condition);
+                $whereOptions->addCondition(
+                    Condition::getCondition(
+                        ConditionBuilder::CONDITION_SIGN_EQ,
+                        'status',
+                        [$status]
+                    )
+                );
             }
 
             if (!is_null($outdatedFlag)) {
-                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'outdated',
-                                                     [$outdatedFlag]);
-                $whereOptions->addCondition($condition);
+                $whereOptions->addCondition(
+                    Condition::getCondition(
+                        ConditionBuilder::CONDITION_SIGN_EQ,
+                        'outdated',
+                        [$outdatedFlag]
+                    )
+                );
             }
         }
 
         $query = QueryBuilder::buildSelectQuery(
-            $this->getDbal()
-                 ->completeTableName(SubmissionEntity::getTableName()),
+            $this->getDbal()->completeTableName(SubmissionEntity::getTableName()),
             [['COUNT(*)' => 'cnt']],
             $whereOptions,
             [],
@@ -420,20 +428,17 @@ class SubmissionManager extends EntityManagerAbstract
             }
 
             if (!is_null($contentType)) {
-                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'content_type',
-                    [$contentType]);
+                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'content_type', [$contentType]);
                 $whereOptions->addCondition($condition);
             }
 
             if (!is_null($status)) {
-                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'status',
-                    [$status]);
+                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'status', [$status]);
                 $whereOptions->addCondition($condition);
             }
 
             if (!is_null($outdatedFlag)) {
-                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'outdated',
-                                                     [$outdatedFlag]);
+                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'outdated', [$outdatedFlag]);
                 $whereOptions->addCondition($condition);
             }
         } else {
@@ -441,8 +446,7 @@ class SubmissionManager extends EntityManagerAbstract
         }
 
         $query = QueryBuilder::buildSelectQuery(
-            $this->getDbal()
-                 ->completeTableName(SubmissionEntity::getTableName()),
+            $this->getDbal()->completeTableName(SubmissionEntity::getTableName()),
             array_keys(SubmissionEntity::getFieldDefinitions()),
             $whereOptions,
             $sortOptions,
@@ -479,11 +483,13 @@ class SubmissionManager extends EntityManagerAbstract
      */
     public function storeEntity(SubmissionEntity $entity)
     {
+        $originalSubmission = json_encode($entity->toArray(false));
+        $this->getLogger()->debug(vsprintf('Starting saving submission: %s', [$originalSubmission]));
         $entityId = $entity->id;
 
         $is_insert = in_array($entityId, [0, null], true);
 
-        $fields = $entity->toArray(false);
+        $fields = $entity->getChangedFields();
 
         foreach ($fields as $field => $value) {
             if (null === $value) {
@@ -491,44 +497,54 @@ class SubmissionManager extends EntityManagerAbstract
             }
         }
 
-        unset ($fields['id']);
+        if (0 === count($fields)) {
+            $this->getLogger()->debug(vsprintf('No data has been modified since load. Skipping save', []));
+
+            return $entity;
+        }
+
+        if (array_key_exists('id', $fields)) {
+            unset ($fields['id']);
+        }
+
+        $tableName = $this->getDbal()->completeTableName(SubmissionEntity::getTableName());
 
         if ($is_insert) {
-            $storeQuery = QueryBuilder::buildInsertQuery($this->getDbal()
-                                                             ->completeTableName(SubmissionEntity::getTableName()),
-                                                         $fields);
+            $storeQuery = QueryBuilder::buildInsertQuery($tableName, $fields);
         } else {
             // update
             $conditionBlock = ConditionBlock::getConditionBlock();
-            $conditionBlock->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'id',
-                                                                  [$entityId]));
-            $storeQuery = QueryBuilder::buildUpdateQuery($this->getDbal()
-                                                             ->completeTableName(SubmissionEntity::getTableName()),
-                                                         $fields, $conditionBlock, ['limit' => 1]);
+            $conditionBlock->addCondition(
+                Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'id', [$entityId])
+            );
+            $storeQuery = QueryBuilder::buildUpdateQuery($tableName, $fields, $conditionBlock, ['limit' => 1]);
         }
 
         // log store query before execution
         $this->logQuery($storeQuery);
 
-        $result = $this->getDbal()
-                       ->query($storeQuery);
+        $result = $this->getDbal()->query($storeQuery);
 
         if (false === $result) {
-            $message = vsprintf('Failed saving submission entity to database with following error message: %s',
-                [$this->getDbal()
-                      ->getLastErrorMessage()]);
+            $message = vsprintf(
+                'Failed saving submission entity to database with following error message: %s',
+                [
+                    $this->getDbal()->getLastErrorMessage(),
+                ]
+            );
 
-            $this->getLogger()
-                 ->error($message);
+            $this->getLogger()->error($message);
         }
 
         if (true === $is_insert && false !== $result) {
             $entityFields = $entity->toArray(false);
-            $entityFields['id'] = $this->getDbal()
-                                       ->getLastInsertedId();
+            $entityFields['id'] = $this->getDbal()->getLastInsertedId();
             // update reference to entity
             $entity = SubmissionEntity::fromArray($entityFields, $this->getLogger());
         }
+        $this->getLogger()->debug(
+            vsprintf('Finished saving submission: %s. id=%s', [$originalSubmission, $entity->getId()])
+        );
 
         return $entity;
     }
@@ -557,20 +573,19 @@ class SubmissionManager extends EntityManagerAbstract
      */
     public function getSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, LocalizationPluginProxyInterface $localizationProxy, $targetEntity = null)
     {
-        if ($sourceBlog===$targetBlog)
-        {
+        if ($sourceBlog === $targetBlog) {
             $message = vsprintf(
                 'Cancelled preparing submission for contentType=%s sourceId=%s sourceBlog=%s targetBlog=%s. Source and Target blogs must differ.',
                 [
                     $contentType,
                     $sourceBlog,
                     $sourceEntity,
-                    $targetBlog
+                    $targetBlog,
                 ]
             );
-            
+
             $this->getLogger()->error($message);
-            $this->getLogger()->error(implode(PHP_EOL,Bootstrap::Backtrace()));
+            $this->getLogger()->error(implode(PHP_EOL, Bootstrap::Backtrace()));
 
             throw new \InvalidArgumentException($message);
         }

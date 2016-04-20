@@ -119,6 +119,30 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
         return $arr;
     }
 
+    
+
+    /**
+     * @return array
+     */
+    public function getChangedFields()
+    {
+        $curFields = $this->stateFields;
+        $initialFields = $this->initialFields;
+        $output = [];
+
+        $fieldNames = array_keys($curFields);
+        foreach ($fieldNames as $fieldName) {
+            if (
+                !array_key_exists($fieldName, $initialFields) ||
+                (((string)$initialFields[$fieldName]) !== ((string)$curFields[$fieldName]))
+            ) {
+                $output[$fieldName] = (string)$curFields[$fieldName];
+            }
+        }
+
+        return $output;
+    }
+
     /**
      * Converts associative array to entity
      * array keys must match field names;
@@ -142,22 +166,7 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
         return $obj;
     }
 
-    /**
-     * @return array
-     */
-    public function getChangedFields()
-    {
-        $changedFields = [];
-        foreach ($this->stateFields as $field => $value) {
-            $initiallValue = array_key_exists($field, $this->initialFields) ? $this->initialFields[$field] : null;
-            $currentValue = $value;
-            if ($initiallValue !== $currentValue) {
-                $changedFields[$field] = $currentValue;
-            }
-        }
 
-        return $changedFields;
-    }
 
     /**
      * Constructor
