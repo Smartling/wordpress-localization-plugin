@@ -324,8 +324,20 @@ class SubmissionTableWidget extends SmartlingListTable
         if (empty($searchText)) {
             $data = $this->manager->getEntities($contentTypeFilterValue, $statusFilterValue, $outdatedFlag, $this->getSortingOptions(), $pageOptions, $total);
         } else {
-            $data = $this->manager->search($searchText, ['source_title', 'source_id',
-                                                         'file_uri'], $contentTypeFilterValue, $statusFilterValue, $this->getSortingOptions(), $pageOptions, $total);
+            $data = $this->manager->search(
+                $searchText,
+                [
+                    'source_title',
+                    'source_id',
+                    'file_uri'
+                ],
+                $contentTypeFilterValue,
+                $statusFilterValue,
+                $outdatedFlag,
+                $this->getSortingOptions(),
+                $pageOptions,
+                $total
+            );
         }
 
         $dataAsArray = [];

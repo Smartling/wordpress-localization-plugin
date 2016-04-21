@@ -181,6 +181,7 @@ class SubmissionManager extends EntityManagerAbstract
      * @param array       $searchFields
      * @param null|string $contentType
      * @param null|string $status
+     * @param null|bool   $outdatedFlag
      * @param array       $sortOptions
      * @param null|array  $pageOptions
      * @param int         $totalCount
@@ -192,6 +193,7 @@ class SubmissionManager extends EntityManagerAbstract
         array $searchFields = [],
         $contentType = null,
         $status = null,
+        $outdatedFlag = null,
         array $sortOptions = [],
         $pageOptions = null,
         & $totalCount = 0
@@ -222,9 +224,9 @@ class SubmissionManager extends EntityManagerAbstract
                 );
             }
 
-            $dataQuery = $this->buildQuery($contentType, $status, $sortOptions, $pageOptions, $block);
+            $dataQuery = $this->buildQuery($contentType, $status, $outdatedFlag, $sortOptions, $pageOptions, $block);
 
-            $countQuery = $this->buildCountQuery($contentType, $status, $block);
+            $countQuery = $this->buildCountQuery($contentType, $status, $outdatedFlag, $block);
 
             $totalCount = $this->getDbal()->fetch($countQuery);
 
