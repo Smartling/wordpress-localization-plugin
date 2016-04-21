@@ -138,7 +138,7 @@ abstract class EntityManagerAbstract
     {
         $results = [];
         $res = $this->getDbal()->fetch($query);
-        if (is_array($res)) {
+        if (is_array($res) && 0 < count($res)) {
             foreach ($res as $row) {
                 $results[] = $this->dbResultToEntity((array)$row);
             }

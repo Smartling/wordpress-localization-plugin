@@ -224,11 +224,8 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
                     $locales[$blogId] = $blogName['locale'];
                 }
             }
-
-            /**
-             * @var SmartlingCore $core
-             */
-            $core = Bootstrap::getContainer()->get('entrypoint');
+            
+            $core = $this->getCore();
 
             if (count($locales) > 0) {
                 switch ($_POST['sub']) {

@@ -489,7 +489,9 @@ class SubmissionManager extends EntityManagerAbstract
 
         $is_insert = in_array($entityId, [0, null], true);
 
-        $fields = $entity->getChangedFields();
+        $fields = true === $is_insert
+            ? $entity->toArray(false)
+            : $entity->getChangedFields();
 
         foreach ($fields as $field => $value) {
             if (null === $value) {
