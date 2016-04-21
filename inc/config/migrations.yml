@@ -11,9 +11,6 @@ services:
   migration.160125:
     class: Smartling\DbAl\Migrations\Migration160125
 
-  migration.160222:
-    class: Smartling\DbAl\Migrations\Migration160222
-
   migration.160223:
     class: Smartling\DbAl\Migrations\Migration160223
 
@@ -35,7 +32,6 @@ services:
       - [ "registerMigration", [ "@migration.150619" ]]
       - [ "registerMigration", [ "@migration.151222" ]]
       - [ "registerMigration", [ "@migration.160125" ]]
-      - [ "registerMigration", [ "@migration.160222" ]]
       - [ "registerMigration", [ "@migration.160223" ]]
       - [ "registerMigration", [ "@migration.160411" ]]
       - [ "registerMigration", [ "@migration.160413" ]]
