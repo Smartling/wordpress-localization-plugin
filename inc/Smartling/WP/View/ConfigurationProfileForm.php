@@ -196,8 +196,7 @@ if (0 === $profileId) {
 
                     ?>
                     <br/>
-                    <small><?php echo __('Param for download translate', $this->getPluginInfo()
-                                                                              ->getDomain()) ?>.
+                    <small><?= __('Param for download translate', $this->getPluginInfo()->getDomain()) ?>.
                     </small>
                 </td>
             </tr>
@@ -218,6 +217,10 @@ if (0 === $profileId) {
                         ['name' => 'smartling_settings[uploadOnUpdate]']);
 
                     ?>
+                    <br/>
+                    <small>
+                        <?= __('Detect and resubmit to Smartling changes in original content', $this->getPluginInfo()->getDomain()) ?>.
+                    </small>
                 </td>
             </tr>
             <tr>
