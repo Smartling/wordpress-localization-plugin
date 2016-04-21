@@ -107,9 +107,12 @@ class WidgetEntity extends EntityAbstract
      */
     public function getTitle()
     {
-        return StringHelper::isNullOrEmpty($this->getSettings()['title'])
+        $title = array_key_exists('title', $this->getSettings())
+            ? $this->getSettings()['title'] : null;
+
+        return StringHelper::isNullOrEmpty($title)
             ? WidgetHelper::getWidgetName($this->getWidgetType())->name
-            : $this->getSettings()['title'];
+            : $title;
     }
 
     /**
