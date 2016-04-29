@@ -19,6 +19,12 @@ class CategoryEntity extends TaxonomyEntityAbstract
     {
         parent::__construct($logger);
         $this->setType(WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY);
+        $this->setRelatedTypes(
+            [
+                WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY,
+            ]
+        );
+
         $this->setEntityFields($this->fields);
     }
 

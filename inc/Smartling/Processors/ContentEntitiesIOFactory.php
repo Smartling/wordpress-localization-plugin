@@ -41,6 +41,6 @@ class ContentEntitiesIOFactory extends SmartlingFactoryAbstract
      */
     public function getMapper($contentType)
     {
-        return parent::getHandler($contentType);
+        return clone parent::getHandler($contentType);
     }
 }

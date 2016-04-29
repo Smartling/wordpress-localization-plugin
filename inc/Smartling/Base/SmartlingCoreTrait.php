@@ -2,12 +2,9 @@
 
 namespace Smartling\Base;
 
-use Smartling\Bootstrap;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\XmlEncoder;
-use Smartling\Settings\ConfigurationProfileEntity;
-use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -90,7 +87,8 @@ trait SmartlingCoreTrait
         if ($this->getSiteHelper()
                  ->getCurrentBlogId() === $entity->getSourceBlogId()
         ) {
-            $contentEntity = $contentIOWrapper->get($entity->getSourceId());
+            $wr = clone $contentIOWrapper;
+            $contentEntity = $wr->get($entity->getSourceId());
         } else {
             $this->getSiteHelper()
                  ->switchBlogId($entity->getSourceBlogId());

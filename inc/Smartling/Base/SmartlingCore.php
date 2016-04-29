@@ -57,9 +57,11 @@ class SmartlingCore extends SmartlingCoreAbstract
             $this->getSiteHelper()->switchBlogId($submission->getTargetBlogId());
         }
 
-        $ioWrapper = $this->getContentIoFactory()->getMapper($submission->getContentType());
+        //$ioWrapper = $this->getContentIoFactory()->getMapper($submission->getContentType());
 
-        $ioWrapper->set($entity);
+        $entity->set();
+
+        //$ioWrapper->set($entity);
 
         if ($needBlogSwitch) {
             $this->getSiteHelper()->restoreBlogId();
@@ -142,6 +144,64 @@ class SmartlingCore extends SmartlingCoreAbstract
 
     /**
      * @param SubmissionEntity $submission
+     */
+    private function fixCategoryHierarchy(SubmissionEntity $submission)
+    {
+        if (WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY !== $submission->getContentType()) {
+            return;
+        }
+
+        $originalEntity = $this->readContentEntity($submission);
+        $parent = $originalEntity->getParent();
+
+        $newParentId = 0;
+        if (0 < (int)$parent) {
+            $this->getLogger()->debug(
+                vsprintf(
+                    'Found parent for %s blog=%s, id=%s, parentId=%s',
+                    [
+                        $submission->getContentType(),
+                        $submission->getSourceBlogId(),
+                        $submission->getSourceId(),
+                        $parent,
+                    ]
+                )
+            );
+
+            //search for parent submission
+            $params = [
+                'source_blog_id' => $submission->getSourceBlogId(),
+                'source_id'      => (int)$parent,
+                'target_blog_id' => $submission->getTargetBlogId(),
+                'content_type'   => $submission->getContentType(),
+            ];
+
+            $parentSubmissions = $this->getSubmissionManager()->find($params);
+
+            if (0 < count($parentSubmissions)) {
+                $parentSubmission = reset($parentSubmissions);
+                $newParentId = (int)$parentSubmission->getTargetId();
+            } else {
+                $newParentId = (int)$this->translateAndGetTargetId(
+                    WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY,
+                    $submission->getSourceBlogId(),
+                    $parent,
+                    $submission->getTargetBlogId()
+                );
+            }
+        }
+        
+        $translation = $this->readTargetContentEntity($submission);
+
+        if ((int)$translation->getParent() !== (int)$newParentId) {
+            $translation->setParent($newParentId);
+            $this->saveTargetEntity($submission, $translation);
+        }
+
+    }
+
+    /**
+     * @param SubmissionEntity $submission
      * @param string           $contentType
      * @param array            $accumulator
      */
@@ -152,8 +212,12 @@ class SmartlingCore extends SmartlingCoreAbstract
             $submission->getId(),
         ]));
 
-        if (in_array($contentType, WordpressContentTypeHelper::getSupportedTaxonomyTypes()) &&
-            WordpressContentTypeHelper::CONTENT_TYPE_WIDGET !== $submission->getContentType()
+        if (WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY === $submission->getContentType()) {
+            $this->fixCategoryHierarchy($submission);
+        }
+
+        if (WordpressContentTypeHelper::CONTENT_TYPE_WIDGET !== $submission->getContentType()
+            && in_array($contentType, WordpressContentTypeHelper::getSupportedTaxonomyTypes())
         ) {
             $terms = $this->getCustomMenuHelper()->getTerms($submission, $contentType);
             if (0 < count($terms)) {
@@ -164,7 +228,16 @@ class SmartlingCore extends SmartlingCoreAbstract
                             $element->term_id,
                             $submission->getId(),
                         ]));
-                    $accumulator[$contentType][] = $this->translateAndGetTargetId($element->taxonomy, $submission->getSourceBlogId(), $element->term_id, $submission->getTargetBlogId());
+
+                    $contentTranslationId = $this->translateAndGetTargetId(
+                        $element->taxonomy,
+                        $submission->getSourceBlogId(),
+                        $element->term_id,
+                        $submission->getTargetBlogId()
+                    );
+
+                    $accumulator[$contentType][] = $contentTranslationId;
+
                 }
             }
         }
