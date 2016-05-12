@@ -202,6 +202,64 @@ class SmartlingCore extends SmartlingCoreAbstract
 
     /**
      * @param SubmissionEntity $submission
+     */
+    private function fixPageHierarchy(SubmissionEntity $submission)
+    {
+        if (WordpressContentTypeHelper::CONTENT_TYPE_PAGE !== $submission->getContentType()) {
+            return;
+        }
+
+        $originalEntity = $this->readContentEntity($submission);
+        $parent = $originalEntity->getPostParent();
+
+        $newParentId = 0;
+        if (0 < (int)$parent) {
+            $this->getLogger()->debug(
+                vsprintf(
+                    'Found parent for %s blog=%s, id=%s, parentId=%s',
+                    [
+                        $submission->getContentType(),
+                        $submission->getSourceBlogId(),
+                        $submission->getSourceId(),
+                        $parent,
+                    ]
+                )
+            );
+
+            //search for parent submission
+            $params = [
+                'source_blog_id' => $submission->getSourceBlogId(),
+                'source_id'      => (int)$parent,
+                'target_blog_id' => $submission->getTargetBlogId(),
+                'content_type'   => $submission->getContentType(),
+            ];
+
+            $parentSubmissions = $this->getSubmissionManager()->find($params);
+
+            if (0 < count($parentSubmissions)) {
+                $parentSubmission = reset($parentSubmissions);
+                $newParentId = (int)$parentSubmission->getTargetId();
+            } else {
+                $newParentId = (int)$this->translateAndGetTargetId(
+                    $submission->getContentType(),
+                    $submission->getSourceBlogId(),
+                    $parent,
+                    $submission->getTargetBlogId()
+                );
+            }
+        }
+
+        $translation = $this->readTargetContentEntity($submission);
+
+        if ((int)$translation->getPostParent() !== (int)$newParentId) {
+            $translation->setPostParent($newParentId);
+            $this->saveTargetEntity($submission, $translation);
+        }
+
+    }
+
+    /**
+     * @param SubmissionEntity $submission
      * @param string           $contentType
      * @param array            $accumulator
      */
@@ -240,6 +298,20 @@ class SmartlingCore extends SmartlingCoreAbstract
 
                 }
             }
+        }
+    }
+
+    /**
+     * @param SubmissionEntity $submission
+     */
+    private function processRelatedPage(SubmissionEntity $submission)
+    {
+        $this->getLogger()->debug(vsprintf('Searching for pages, related to submission = \'%s\'.', [
+            $submission->getId(),
+        ]));
+
+        if (WordpressContentTypeHelper::CONTENT_TYPE_PAGE === $submission->getContentType()) {
+            $this->fixPageHierarchy($submission);
         }
     }
 
@@ -435,7 +507,12 @@ class SmartlingCore extends SmartlingCoreAbstract
                     }
 
                     //Standard
-
+                    try {
+                        $this->processRelatedPage($submission);
+                    } catch (\Exception $e) {
+                        $this->getLogger()
+                            ->warning(vsprintf('An unhandled exception occurred while processing related page for submission=%s', [$submission->getId()]));
+                    }
                     try {
                         $this->processRelatedTerm($submission, $contentType, $accumulator);
                     } catch (\Exception $e) {

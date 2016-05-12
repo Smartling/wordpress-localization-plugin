@@ -30,6 +30,12 @@ class PageEntity extends PostEntity
         $this->hashAffectingFields = array_merge([], $ownFields);
 
         $this->setType(WordpressContentTypeHelper::CONTENT_TYPE_PAGE);
+
+        $this->setRelatedTypes(
+            [
+                WordpressContentTypeHelper::CONTENT_TYPE_PAGE
+            ]
+        );
     }
 
 }
