@@ -276,6 +276,7 @@ class SmartlingCore extends SmartlingCoreAbstract
 
         if (WordpressContentTypeHelper::CONTENT_TYPE_WIDGET !== $submission->getContentType()
             && in_array($contentType, WordpressContentTypeHelper::getSupportedTaxonomyTypes())
+            && WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY !== $submission->getContentType()
         ) {
             $terms = $this->getCustomMenuHelper()->getTerms($submission, $contentType);
             if (0 < count($terms)) {
