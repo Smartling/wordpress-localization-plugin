@@ -188,6 +188,8 @@ trait SmartlingCoreTrait
             $targetContent->{$k} = $v;
         }
 
+        $targetContent->translationDrafted();
+        
         $targetContent = $this->saveEntity(
             $submission->getContentType(),
             $submission->getTargetBlogId(),

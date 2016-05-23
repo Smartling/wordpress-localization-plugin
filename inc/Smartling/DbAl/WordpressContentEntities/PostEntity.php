@@ -401,4 +401,14 @@ class PostEntity extends EntityAbstract
                 ]));
         }
     }
+
+    public function translationDrafted()
+    {
+        $this->setPostStatus('draft');
+    }
+
+    public function translationCompleted()
+    {
+        $this->setPostStatus('publish');
+    }
 }

@@ -307,6 +307,16 @@ abstract class EntityAbstract
     }
 
     /**
+     * Is called when downloaded with 100% translation
+     */
+    public function translationCompleted(){}
+
+    /**
+     * Is called when cloned source content
+     */
+    public function translationDrafted(){}
+    
+    /**
      * @return string
      */
     public abstract function getPrimaryFieldName();

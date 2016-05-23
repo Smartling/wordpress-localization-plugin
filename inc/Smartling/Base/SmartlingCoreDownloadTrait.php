@@ -79,24 +79,19 @@ trait SmartlingCoreDownloadTrait
 
             $this->setValues($targetContent, $translatedFields['entity']);
 
-            $targetContent = $this->saveEntity($entity->getContentType(), $entity->getTargetBlogId(), $targetContent);
+            if (100 === $entity->getCompletionPercentage()) {
+                $entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
+                $targetContent->translationCompleted();
+                $entity->setAppliedDate(DateTimeHelper::nowAsString());
+            }
 
-            // $this->fixRelations($entity);
+            $targetContent = $this->saveEntity($entity->getContentType(), $entity->getTargetBlogId(), $targetContent);
 
             if (array_key_exists('meta', $translatedFields) && 0 < count($translatedFields['meta'])) {
                 $this->saveMetaProperties($targetContent, $translatedFields, $entity);
             }
 
-            if (100 === $entity->getCompletionPercentage()) {
-                $entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
-            }
-
-            //$this->prepareRelatedSubmissions( $entity ); // Should be refactored. Not a nice spike.
-
-            $entity->appliedDate = DateTimeHelper::nowAsString();
-
-            $entity = $this->getSubmissionManager()
-                           ->storeEntity($entity);
+            $entity = $this->getSubmissionManager()->storeEntity($entity);
         } catch (InvalidXMLException $e) {
             $entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
             $this->getSubmissionManager()
