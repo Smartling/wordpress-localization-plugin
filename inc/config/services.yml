@@ -10,6 +10,12 @@ services:
       - "@logger"
       - "@entrypoint"
 
+  smartling.helper.absolute-image-path-support:
+      class: Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper
+      arguments:
+        - "@logger"
+        - "@entrypoint"
+
   helper.customMenu:
     class: Smartling\Helpers\CustomMenuContentTypeHelper
     calls:

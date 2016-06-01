@@ -123,7 +123,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
      *
      * @param $stringValue
      */
-    private function processString(& $stringValue)
+    protected function processString(& $stringValue)
     {
         $replacer = new PairReplacerHelper();
 
@@ -181,23 +181,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
      */
     private function getSourcePathFromImgTag($imgTagString)
     {
-        $dom = new DOMDocument();
-        $dom->loadHTML($imgTagString);
-        $images = $dom->getElementsByTagName('img');
-
-        if (1 === $images->length) {
-            /** @var \DOMNode $node */
-            $node = $images->item(0);
-            if ($node->hasAttribute('src')) {
-                $src = $node->getAttribute('src');
-
-                return $src;
-            } else {
-                return false;
-            }
-        }
-
-        return false;
+        return $this->getAttributeFromTag($imgTagString, 'img', 'src');
     }
 
     /**
@@ -343,7 +327,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
      *
      * @return bool
      */
-    private function fileLooksLikeThumbnail($path)
+    protected function fileLooksLikeThumbnail($path)
     {
         $pattern = StringHelper::buildPattern('.+' . self::PATTERN_THUMBNAIL_IDENTITY);
 
@@ -396,4 +380,35 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 
         return $result;
     }
+
+    /**
+     * Extracts attribute from html tag string
+     *
+     * @param string $tagString
+     * @param string $tagName
+     * @param string $attribute
+     *
+     * @return false|string
+     */
+    protected function getAttributeFromTag($tagString, $tagName, $attribute)
+    {
+        $dom = new DOMDocument();
+        $dom->loadHTML($tagString);
+        $images = $dom->getElementsByTagName($tagName);
+
+        if (1 === $images->length) {
+            /** @var \DOMNode $node */
+            $node = $images->item(0);
+            if ($node->hasAttribute($attribute)) {
+                $value = $node->getAttribute($attribute);
+
+                return $value;
+            } else {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
 }

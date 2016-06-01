@@ -52,6 +52,15 @@ trait SmartlingCoreExportApi
         return $relativePath;
     }
 
+    public function getAttachmentAbsolutePathBySubmission(SubmissionEntity $submission)
+    {
+        $info = $this->getAttachmentFileInfoBySubmission($submission);
+
+        $absoluteUrl = $info['base_url_target'] . '/' . $info['relative_path'];
+
+        return $absoluteUrl;
+    }
+
     public function getUploadFileInfo($siteId)
     {
         return $this->getUploadDirForSite($siteId);
