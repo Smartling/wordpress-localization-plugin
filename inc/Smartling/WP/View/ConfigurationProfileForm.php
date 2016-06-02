@@ -28,15 +28,13 @@ $profileId = (int)($_GET['profile'] ? : 0);
 
 if (0 === $profileId) {
     $profile = $settingsManager->createProfile([]);
-    $defaultFilter = Smartling\Bootstrap::getContainer()
-                                        ->getParameter('field.processor.default');
+    $defaultFilter = Smartling\Bootstrap::getContainer()->getParameter('field.processor.default');
     $profile->setFilterSkip(implode(PHP_EOL, $defaultFilter['ignore']));
     $profile->setFilterFlagSeo(implode(PHP_EOL, $defaultFilter['key']['seo']));
     $profile->setFilterCopyByFieldName(implode(PHP_EOL, $defaultFilter['copy']['name']));
     $profile->setFilterCopyByFieldValueRegex(implode(PHP_EOL, $defaultFilter['copy']['regexp']));
 } else {
-    $profiles = $pluginInfo->getSettingsManager()
-                           ->getEntityById($profileId);
+    $profiles = $pluginInfo->getSettingsManager()->getEntityById($profileId);
 
     /**
      * @var ConfigurationProfileEntity $profile
@@ -44,23 +42,23 @@ if (0 === $profileId) {
     $profile = reset($profiles);
 }
 ?>
-<div class="wrap">
-    <h2><?= get_admin_page_title() ?></h2>
 
+<div class="wrap">
+    <h2><?= __(get_admin_page_title(), $domain) ?></h2>
 
     <form id="smartling-form" action="/wp-admin/admin-post.php" method="POST">
         <input type="hidden" name="action" value="smartling_configuration_profile_save">
         <?php wp_nonce_field('smartling_connector_settings', 'smartling_connector_nonce'); ?>
         <?php wp_referer_field(); ?>
         <input type="hidden" name="smartling_settings[id]" value="<?= (int)$profile->getId() ?>">
-
         <h3><?= __('Account Info', $domain) ?></h3>
         <table class="form-table">
             <tbody>
             <tr>
-                <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('profile_name'); ?></th>
+                <th scope="row"><?= __(ConfigurationProfileEntity::getFieldLabel('profile_name'), $domain); ?></th>
                 <td>
-                    <input type="text" name="smartling_settings[profileName]"
+                    <input type="text" name="smartling_settings[profileName]" required="required"
+                           placeholder="<?= __('Set profile name', $domain); ?>"
                            value="<?= htmlentities($profile->getProfileName()); ?>">
                     <br>
                 </td>
@@ -73,7 +71,7 @@ if (0 === $profileId) {
                         'select',
                         HtmlTagGeneratorHelper::renderSelectOptions(
                             $profile->getIsActive(),
-                            ['1' => __('Active'), '0' => __('Inactive')]
+                            ['1' => __('Active', $domain), '0' => __('Inactive', $domain)]
                         ),
                         ['name' => 'smartling_settings[active]']);
                     ?>
@@ -82,7 +80,8 @@ if (0 === $profileId) {
             <tr>
                 <th scope="row"><?= __('Project ID', $domain) ?></th>
                 <td>
-                    <input type="text" name="smartling_settings[projectId]"
+                    <input type="text" name="smartling_settings[projectId]" required="required"
+                           placeholder="<?= __('Set project ID', $domain); ?>"
                            value="<?= $profile->getProjectId(); ?>">
                 </td>
             </tr>
@@ -91,7 +90,8 @@ if (0 === $profileId) {
                 <td>
 
                     <input type="text" id="user_identifier" name="smartling_settings[userIdentifier]"
-                           value="<?= $profile->getUserIdentifier(); ?>">
+                           value="<?= $profile->getUserIdentifier(); ?>" required="required"
+                           placeholder="<?= __('Set User Identifier', $domain); ?>">
                 </td>
             </tr>
             <tr>
@@ -111,38 +111,54 @@ if (0 === $profileId) {
                 <td>
                     <?php
                     $locales = [];
-                    foreach ($settingsManager->getSiteHelper()
-                                             ->listBlogs() as $blogId) {
-
+                    foreach ($settingsManager->getSiteHelper()->listBlogs() as $blogId) {
                         try {
-                            $locales[$blogId] = $settingsManager
-                                ->getSiteHelper()
-                                ->getBlogLabelById(
-                                    $settingsManager->getPluginProxy(),
-                                    $blogId
-                                );
+                            $locales[$blogId] =
+                                $settingsManager->getSiteHelper()
+                                    ->getBlogLabelById($settingsManager->getPluginProxy(), $blogId);
                         } catch (BlogNotFoundException $e) {
                         }
                     }
                     ?>
-                    <p><?= __('Site default language is: ', $this->getPluginInfo()
-                                                                 ->getDomain()) ?>
-                        <?= HtmlTagGeneratorHelper::tag('strong',
-                            $profile->getOriginalBlogId()
-                                    ->getLabel()); ?></p>
-
-                    <p>
-                        <a href="#" id="change-default-locale"><?= __('Change default locale',
-                                $domain) ?></a>
-                    </p>
-                    <br>
-                    <?= HtmlTagGeneratorHelper::tag(
-                        'select',
-                        HtmlTagGeneratorHelper::renderSelectOptions($profile->getOriginalBlogId()
-                                                                            ->getBlogId(),
-                            $locales),
-                        ['name' => 'smartling_settings[defaultLocale]', 'id' => 'default-locales']);
-                    ?>
+                    <?php if (0 === $profileId): ?>
+                        <?php
+                        $tagOptions = ['prompt' => __('Please select main locale', $domain)];
+                        $options = HtmlTagGeneratorHelper::renderSelectOptions(
+                            $profile->getOriginalBlogId()->getBlogId(),
+                            $locales,
+                            $tagOptions
+                        );
+                        ?>
+                        <?= HtmlTagGeneratorHelper::tag(
+                            'select',
+                            $options,
+                            [
+                                'name'     => 'smartling_settings[defaultLocale]',
+                                'required' => 'required',
+                                'id'       => 'default-locales-new',
+                            ]
+                        ); ?>
+                    <?php else: ?>
+                        <p>
+                            <?= __('Site default language is: ', $domain) ?>
+                            <strong><?= $profile->getOriginalBlogId()->getLabel() ?></strong>
+                        </p>
+                        <p>
+                            <a href="#" id="change-default-locale"><?= __('Change default locale', $domain) ?></a>
+                        </p>
+                        <br/>
+                        <?= HtmlTagGeneratorHelper::tag(
+                            'select',
+                            HtmlTagGeneratorHelper::renderSelectOptions(
+                                $profile->getOriginalBlogId()->getBlogId(),
+                                $locales
+                            ),
+                            [
+                                'name' => 'smartling_settings[defaultLocale]',
+                                'id'   => 'default-locales',
+                            ]
+                        ); ?>
+                    <?php endif; ?>
                 </td>
             </tr>
 
@@ -155,7 +171,7 @@ if (0 === $profileId) {
                         $targetLocales = $profile->getTargetLocales();
                         foreach ($locales as $blogId => $label) {
                             if ($blogId === $profile->getOriginalBlogId()
-                                                    ->getBlogId()
+                                    ->getBlogId()
                             ) {
                                 continue;
                             }
@@ -174,7 +190,7 @@ if (0 === $profileId) {
 
                             <tr>
                                 <?= WPAbstract::settingsPageTsargetLocaleCheckbox($profile, $label, $blogId,
-                                    $smartlingLocale, $enabled); ?>
+                                                                                  $smartlingLocale, $enabled); ?>
                             </tr>
                             <?php
                         }
@@ -196,7 +212,7 @@ if (0 === $profileId) {
 
                     ?>
                     <br/>
-                    <small><?= __('Param for download translate', $this->getPluginInfo()->getDomain()) ?>.
+                    <small><?= __('Param for download translate', $domain) ?>.
                     </small>
                 </td>
             </tr>
@@ -209,8 +225,8 @@ if (0 === $profileId) {
                         HtmlTagGeneratorHelper::renderSelectOptions(
                             $profile->getUploadOnUpdate(),
                             [
-                                0 => __('Manually'),
-                                1 => __('Automatically'),
+                                0 => __('Manually',$domain),
+                                1 => __('Automatically',$domain),
                             ]
 
                         ),
@@ -219,7 +235,7 @@ if (0 === $profileId) {
                     ?>
                     <br/>
                     <small>
-                        <?= __('Detect and resubmit to Smartling changes in original content', $this->getPluginInfo()->getDomain()) ?>.
+                        <?= __('Detect and resubmit to Smartling changes in original content', $domain) ?>.
                     </small>
                 </td>
             </tr>
@@ -245,9 +261,7 @@ if (0 === $profileId) {
                 <td colspan="2">
                     <div class="update-nag">
                         <p>
-                            <strong>Warning!</strong> Updates to these settings will change how content is handled
-                            during the translation process.<br>
-                            Please consult before making any changes.<br>
+                            <?= __("<strong>Warning!</strong> Updates to these settings will change how content is handled during the translation process.<br> Please consult before making any changes.<br>", $domain);?>
                         </p>
                     </div>
                 </td>
