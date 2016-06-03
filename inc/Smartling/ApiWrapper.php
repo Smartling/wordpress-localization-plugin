@@ -11,6 +11,7 @@ use Smartling\Exception\SmartlingNetworkException;
 use Smartling\File\FileApi;
 use Smartling\File\Params\DownloadFileParameters;
 use Smartling\File\Params\UploadFileParameters;
+use Smartling\Helpers\RuntimeCacheHelper;
 use Smartling\Project\ProjectApi;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
@@ -109,6 +110,14 @@ class ApiWrapper implements ApiWrapperInterface
     }
 
     /**
+     * @return RuntimeCacheHelper
+     */
+    public function getCache()
+    {
+        return RuntimeCacheHelper::getInstance();
+    }
+
+    /**
      * ApiWrapper constructor.
      *
      * @param SettingsManager $manager
@@ -142,11 +151,17 @@ class ApiWrapper implements ApiWrapperInterface
      */
     private function getAuthProvider(ConfigurationProfileEntity $profile)
     {
-        $authProvider = AuthTokenProvider::create(
-            $profile->getUserIdentifier(),
-            $profile->getSecretKey(),
-            $this->getLogger()
-        );
+        $cacheKey = 'profile.auth-provider.' . $profile->getId();
+        $authProvider = $this->getCache()->get($cacheKey);
+
+        if (false === $authProvider) {
+            $authProvider = AuthTokenProvider::create(
+                $profile->getUserIdentifier(),
+                $profile->getSecretKey(),
+                $this->getLogger()
+            );
+            $this->getCache()->set($cacheKey, $authProvider);
+        }
 
         return $authProvider;
     }
