@@ -614,6 +614,7 @@ class SubmissionManager extends EntityManagerAbstract
             $entity = $this->createSubmission($params);
             $entity->setTargetLocale($localizationProxy->getBlogLocaleById($targetBlog));
             $entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+            $entity->setLastError('');
             $entity->setSubmitter(WordpressUserHelper::getUserLogin());
             $entity->setSourceTitle('no title');
             $entity->setSubmissionDate(DateTimeHelper::nowAsString());

@@ -94,6 +94,7 @@ trait SmartlingCoreDownloadTrait
             $entity = $this->getSubmissionManager()->storeEntity($entity);
         } catch (InvalidXMLException $e) {
             $entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+            $entity->setLastError('Received invalid XML file.');
             $this->getSubmissionManager()
                  ->storeEntity($entity);
 
@@ -108,12 +109,14 @@ trait SmartlingCoreDownloadTrait
             $messages[] = $message;
         } catch (EntityNotFoundException $e) {
             $entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+            $entity->setLastError('Submission references non existent content.');
             $this->getLogger()
                  ->error($e->getMessage());
             $this->getSubmissionManager()
                  ->storeEntity($entity);
         } catch (BlogNotFoundException $e) {
             $entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+            $entity->setLastError('Submission references non existent blog.');
             $this->getLogger()
                  ->error($e->getMessage());
             $this->getSubmissionManager()

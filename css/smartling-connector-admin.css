@@ -247,3 +247,10 @@ td.outdated
 {
     text-align: center;
 }
+
+span.submission-failed {
+    color: #ba2000;
+    border-bottom: dashed 1px #ba2000;
+    cursor: pointer;
+    font-weight: bold;
+}

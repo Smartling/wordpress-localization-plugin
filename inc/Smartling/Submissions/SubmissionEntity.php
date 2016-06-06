@@ -97,6 +97,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
             'is_locked'              => self::DB_TYPE_UINT_SWITCH . ' ' . self::DB_TYPE_DEFAULT_ZERO,
             'last_modified'          => self::DB_TYPE_DATETIME,
             'outdated'               => self::DB_TYPE_UINT_SWITCH,
+            'last_error'             => self::DB_TYPE_STRING_TEXT,
         ];
     }
 
@@ -661,6 +662,16 @@ class SubmissionEntity extends SmartlingEntityAbstract
         }
 
         return (int)($percentage * 100);
+    }
+
+    public function getLastError()
+    {
+        return $this->stateFields['last_error'];
+    }
+
+    public function setLastError($message)
+    {
+        $this->stateFields['last_error'] = trim($message);
     }
 
     /**

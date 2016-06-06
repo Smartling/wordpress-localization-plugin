@@ -188,6 +188,7 @@ class DetectChangesHelper
                     )
                 );
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+                $submission->setLastError('');
             }
         } else {
             $this->getLogger()->debug(

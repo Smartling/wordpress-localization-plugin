@@ -124,6 +124,7 @@ trait SmartlingCoreUploadTrait
                          )
                      );
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+                $submission->setLastError('Nothing is found for translation.');
             } else {
                 try {
                     $result = self::SEND_MODE === self::SEND_MODE_FILE
@@ -136,6 +137,7 @@ trait SmartlingCoreUploadTrait
                     $this->getLogger()
                          ->error($e->getMessage());
                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+                    $submission->setLastError(vsprintf('Error occurred: %s',[$e->getMessage()]));
                 }
             }
 
@@ -145,14 +147,18 @@ trait SmartlingCoreUploadTrait
             return $result;
         } catch (EntityNotFoundException $e) {
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+            $submission->setLastError('Submission references non existent content.');
             $this->getLogger()
                  ->error($e->getMessage());
             $this->getSubmissionManager()
                  ->storeEntity($submission);
         } catch (BlogNotFoundException $e) {
+            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+            $submission->setLastError('Submission references non existent blog.');
             $this->handleBadBlogId($submission);
         } catch (Exception $e) {
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+            $submission->setLastError(vsprintf('Error occurred: %s',[$e->getMessage()]));
             $this->getLogger()
                 ->error($e->getMessage());
             $this->getSubmissionManager()
@@ -189,6 +195,9 @@ trait SmartlingCoreUploadTrait
      */
     public function createForTranslation($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null)
     {
+        /**
+         * @var SubmissionEntity $submission
+         */
         $submission = $this->prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity);
 
         $contentEntity = $this->readContentEntity($submission);
@@ -202,6 +211,7 @@ trait SmartlingCoreUploadTrait
             $submission = $this->getSubmissionManager()->storeEntity($submission);
         } else {
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+            $submission->setLastError('');
         }
 
         return $this->getSubmissionManager()->storeEntity($submission);
