@@ -254,3 +254,16 @@ span.submission-failed {
     cursor: pointer;
     font-weight: bold;
 }
+
+label.error {
+    color: #ba2000;
+    display: inline-block;
+    cursor: pointer;
+    font-weight: bold;
+    font-style: italic;
+    padding-left: 10px;
+}
+
+.hidden {
+    display: none;
+}

@@ -3,7 +3,6 @@
  * @var PluginInfo $pluginInfo
  */
 
-use Smartling\Exception\BlogNotFoundException;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -45,65 +44,158 @@ if (0 === $profileId) {
 
 <div class="wrap">
     <h2><?= __(get_admin_page_title(), $domain) ?></h2>
+    <form id="smartling-configuration-profile-form" action="/wp-admin/admin-post.php" method="POST">
+        <?= HtmlTagGeneratorHelper::tag('input', '', [
+            'type'  => 'hidden',
+            'name'  => 'action',
+            'value' => 'smartling_configuration_profile_save',
+        ]); ?>
 
-    <form id="smartling-form" action="/wp-admin/admin-post.php" method="POST">
-        <input type="hidden" name="action" value="smartling_configuration_profile_save">
+        <?= HtmlTagGeneratorHelper::tag('input', '', [
+            'type'  => 'hidden',
+            'name'  => 'smartling_settings[id]',
+            'value' => $profile->getId(),
+        ]); ?>
+
         <?php wp_nonce_field('smartling_connector_settings', 'smartling_connector_nonce'); ?>
         <?php wp_referer_field(); ?>
-        <input type="hidden" name="smartling_settings[id]" value="<?= (int)$profile->getId() ?>">
+
         <h3><?= __('Account Info', $domain) ?></h3>
         <table class="form-table">
             <tbody>
+
             <tr>
-                <th scope="row"><?= __(ConfigurationProfileEntity::getFieldLabel('profile_name'), $domain); ?></th>
+                <th scope="row">
+                    <label for="profileName">
+                        <?= __(ConfigurationProfileEntity::getFieldLabel('profile_name'), $domain); ?>
+                    </label>
+                </th>
                 <td>
-                    <input type="text" name="smartling_settings[profileName]" required="required"
-                           placeholder="<?= __('Set profile name', $domain); ?>"
-                           value="<?= htmlentities($profile->getProfileName()); ?>">
+                    <?=
+                    HtmlTagGeneratorHelper::tag('input', '', [
+                        'type'                => 'text',
+                        'id'                  => 'profileName',
+                        'name'                => 'smartling_settings[profileName]',
+                        'placeholder'         => __('Set profile name', $domain),
+                        'data-msg'            => __('Please set name for profile', $domain),
+                        'required'            => 'required',
+                        'value'               => htmlentities($profile->getProfileName()),
+                    ])
+                    ?>
                     <br>
                 </td>
             </tr>
+
             <tr>
-                <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('is_active'); ?></th>
+                <th scope="row">
+                    <label for="is_active">
+                        <?= ConfigurationProfileEntity::getFieldLabel('is_active'); ?>
+                    </label>
+                </th>
                 <td>
                     <?=
                     HtmlTagGeneratorHelper::tag(
                         'select',
                         HtmlTagGeneratorHelper::renderSelectOptions(
                             $profile->getIsActive(),
-                            ['1' => __('Active', $domain), '0' => __('Inactive', $domain)]
+                            [
+                                '1' => __('Active', $domain),
+                                '0' => __('Inactive', $domain),
+                            ]
                         ),
-                        ['name' => 'smartling_settings[active]']);
+                        [
+                            'id'   => 'is_active',
+                            'name' => 'smartling_settings[active]',
+                        ]
+                    );
+                    ?>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row">
+                    <label for="project-id">
+                        <?= __('Project ID', $domain) ?>
+                    </label>
+                </th>
+                <td>
+                    <?=
+                    HtmlTagGeneratorHelper::tag(
+                        'input',
+                        '',
+                        [
+                            'type'                => 'text',
+                            'name'                => 'smartling_settings[projectId]',
+                            'id'                  => 'project-id',
+                            'required'            => 'required',
+                            'placeholder'         => __('Set project ID', $domain),
+                            'data-msg'            => __('Please set project ID', $domain),
+                            'data-rule-minlength' => 9,
+                            'data-rule-maxlength' => 9,
+                            'data-msg-minlength'  => __('Project ID is 9 chars length.', $domain),
+                            'data-msg-minlength'  => __('Project ID is 9 chars length.', $domain),
+
+                            'value'               => $profile->getProjectId(),
+                        ]
+                    );
                     ?>
                 </td>
             </tr>
             <tr>
-                <th scope="row"><?= __('Project ID', $domain) ?></th>
+                <th scope="row">
+                    <label for="userIdentifier">
+                        <?= __('User Identifier', $domain) ?>
+                    </label>
+                </th>
                 <td>
-                    <input type="text" name="smartling_settings[projectId]" required="required"
-                           placeholder="<?= __('Set project ID', $domain); ?>"
-                           value="<?= $profile->getProjectId(); ?>">
+                    <?=
+                    HtmlTagGeneratorHelper::tag(
+                        'input',
+                        '',
+                        [
+                            'type'        => 'text',
+                            'name'        => 'smartling_settings[userIdentifier]',
+                            'id'          => 'userIdentifier',
+                            'required'    => 'required',
+                            'placeholder' => __('Set the User Identifier', $domain),
+                            'data-msg'    => __('User Identifier should be set', $domain),
+                            'value'       => $profile->getUserIdentifier(),
+                        ]
+                    );
+                    ?>
                 </td>
             </tr>
             <tr>
-                <th scope="row"><?= __('User Identifier', $domain) ?></th>
+                <th scope="row">
+                    <label for="secretKey">
+                        <?= __('Token Secret', $domain) ?>
+                    </label>
+                </th>
                 <td>
+                    <?php
+                    $key = $profile->getSecretKey();
 
-                    <input type="text" id="user_identifier" name="smartling_settings[userIdentifier]"
-                           value="<?= $profile->getUserIdentifier(); ?>" required="required"
-                           placeholder="<?= __('Set User Identifier', $domain); ?>">
-                </td>
-            </tr>
-            <tr>
-                <th scope="row"><?= __('Token Secret', $domain) ?></th>
-                <td>
-                    <?php $key = $profile->getSecretKey(); ?>
-                    <input type="text" id="secret_key" name="smartling_settings[secretKey]" value="">
+                    $tokenOptions = [
+                        'type' => 'text',
+                        'name' => 'smartling_settings[secretKey]',
+                        'id'   => 'secretKey',
+
+                    ];
+
+                    if (\Smartling\Helpers\StringHelper::isNullOrEmpty($key)) {
+                        $tokenOptions['required'] = 'required';
+                        $tokenOptions['placeholder'] = __('Set the Token Secret', $domain);
+                        $tokenOptions['data-msg'] = __('Token Secret should be set', $domain);
+                    } else {
+                        $tokenOptions['placeholder'] = __('Enter new Token to update', $domain);
+                    }
+
+                    ?>
+                    <?= HtmlTagGeneratorHelper::tag('input', '', $tokenOptions); ?>
                     <br>
-                    <?php if ($key) { ?>
-                        <small><?= __('Current Key', $domain) ?>
-                            : <?= substr($key, 0, -10) . '**********' ?></small>
-                    <?php } ?>
+                    <?php if ($key): ?>
+                        <small><?= __('Current Key', $domain) ?>: <?= substr($key, 0, -10) . '**********' ?></small>
+                    <?php endif; ?>
                 </td>
             </tr>
             <tr>
@@ -132,11 +224,9 @@ if (0 === $profileId) {
                         <?= HtmlTagGeneratorHelper::tag(
                             'select',
                             $options,
-                            [
-                                'name'     => 'smartling_settings[defaultLocale]',
-                                'required' => 'required',
-                                'id'       => 'default-locales-new',
-                            ]
+                            ['name'     => 'smartling_settings[defaultLocale]',
+                             'required' => 'required',
+                             'id'       => 'default-locales-new',]
                         ); ?>
                     <?php else: ?>
                         <p>
@@ -153,15 +243,12 @@ if (0 === $profileId) {
                                 $profile->getOriginalBlogId()->getBlogId(),
                                 $locales
                             ),
-                            [
-                                'name' => 'smartling_settings[defaultLocale]',
-                                'id'   => 'default-locales',
-                            ]
+                            ['name' => 'smartling_settings[defaultLocale]',
+                             'id'   => 'default-locales',]
                         ); ?>
                     <?php endif; ?>
                 </td>
             </tr>
-
             <tr>
                 <th scope="row"><?= __('Target Locales', $domain) ?></th>
                 <td>
@@ -224,10 +311,8 @@ if (0 === $profileId) {
                         'select',
                         HtmlTagGeneratorHelper::renderSelectOptions(
                             $profile->getUploadOnUpdate(),
-                            [
-                                0 => __('Manually',$domain),
-                                1 => __('Automatically',$domain),
-                            ]
+                            [0 => __('Manually', $domain),
+                             1 => __('Automatically', $domain),]
 
                         ),
                         ['name' => 'smartling_settings[uploadOnUpdate]']);
@@ -255,18 +340,21 @@ if (0 === $profileId) {
                     </label>
                 </td>
             </tr>
-
-
             <tr>
                 <td colspan="2">
                     <div class="update-nag">
                         <p>
-                            <?= __("<strong>Warning!</strong> Updates to these settings will change how content is handled during the translation process.<br> Please consult before making any changes.<br>", $domain);?>
+                            <?= __("<strong>Warning!</strong> 
+Updates to these settings will change how content is handled during the translation process.<br>
+Please consult before making any changes.<br>", $domain); ?>
+                        </p>
+                        <p>
+                            <a href="javascript:void(0)" class="toggleExpert"><strong><?= __('Show Expert Settings',$domain); ?></strong></a>
                         </p>
                     </div>
                 </td>
             </tr>
-            <tr>
+            <tr class="toggleExpert hidden">
                 <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_skip'); ?></th>
                 <td>
                     <p>Fields listed here will be excluded and not carried over during translation. <br>
@@ -284,8 +372,7 @@ if (0 === $profileId) {
                               name="smartling_settings[filter_skip]"><?= trim($profile->getFilterSkip()); ?></textarea>
                 </td>
             </tr>
-
-            <tr>
+            <tr class="toggleExpert hidden">
                 <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_copy_by_field_name'); ?></th>
                 <td>
                     <p>Fields listed here will be excluded from translation and copied over from the source content.<br>
@@ -304,7 +391,7 @@ if (0 === $profileId) {
 
                 </td>
             </tr>
-            <tr>
+            <tr class="toggleExpert hidden">
                 <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_copy_by_field_value_regex'); ?></th>
                 <td>
                     <p>Regular expressions listed here will identify field names to exclude from translation and be
@@ -320,7 +407,7 @@ if (0 === $profileId) {
                              name="smartling_settings[filter_copy_by_field_value_regex]"><?= trim($profile->getFilterCopyByFieldValueRegex()); ?></textarea>
                 </td>
             </tr>
-            <tr>
+            <tr class="toggleExpert hidden">
                 <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_flag_seo'); ?></th>
                 <td>
                     <p>Fields listed here will be identified with a special ‘SEO’ key during translation.<br>
@@ -331,12 +418,25 @@ if (0 === $profileId) {
                             </ul>
                         </small>
                     </p>
-                   <textarea wrap="off" cols="45" rows="5" class="nowrap"
-                             name="smartling_settings[filter_flag_seo]"><?= trim($profile->getFilterFlagSeo()); ?></textarea>
+                    <textarea wrap="off" cols="45" rows="5" class="nowrap"
+                              name="smartling_settings[filter_flag_seo]"><?= trim($profile->getFilterFlagSeo()); ?></textarea>
                 </td>
             </tr>
             </tbody>
         </table>
         <?php submit_button(); ?>
+
     </form>
 </div>
+<script>
+    var validator;
+    jQuery(document).ready(function () {
+        validator = jQuery('#smartling-configuration-profile-form').validate();
+        
+        
+        jQuery('a.toggleExpert').on('click', function (e) {
+            jQuery('.toggleExpert').removeClass('hidden');
+            jQuery('a.toggleExpert').addClass('hidden');
+        })
+    });
+</script>

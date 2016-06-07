@@ -15,28 +15,18 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 
     public function wp_enqueue()
     {
-        wp_enqueue_script(
-            $this->getPluginInfo()
-                 ->getName() . "settings",
-            $this->getPluginInfo()
-                 ->getUrl() . 'js/smartling-connector-admin.js',
-            ['jquery'],
-            $this->getPluginInfo()
-                 ->getVersion(),
-            false
-        );
-        wp_register_style(
-            $this->getPluginInfo()
-                 ->getName(),
-            $this->getPluginInfo()
-                 ->getUrl() . 'css/smartling-connector-admin.css',
-            [],
-            $this->getPluginInfo()
-                 ->getVersion(),
-            'all'
-        );
-        wp_enqueue_style($this->getPluginInfo()
-                              ->getName());
+        $resPath = $this->getPluginInfo()->getUrl();
+        $jsPath = $resPath . 'js/';
+        $cssPath = $resPath . 'css/';
+        $pluginName = $this->getPluginInfo()->getName();
+        $scriptHandler = $pluginName . 'settings';
+        $ver = $this->getPluginInfo()->getVersion();
+        wp_enqueue_script('jquery');
+        wp_enqueue_script($scriptHandler . 'validate', $jsPath . 'jquery-validate-min.js', ['jquery'], $ver, false);
+        wp_enqueue_script($scriptHandler, $jsPath . 'smartling-connector-admin.js', ['jquery'], $ver, false);
+
+        wp_register_style($pluginName, $cssPath . 'smartling-connector-admin.css', [], $ver, 'all');
+        wp_enqueue_style($pluginName);
     }
 
     public function register()
