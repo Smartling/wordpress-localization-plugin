@@ -17,16 +17,18 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
     {
         $resPath = $this->getPluginInfo()->getUrl();
         $jsPath = $resPath . 'js/';
-        $cssPath = $resPath . 'css/';
-        $pluginName = $this->getPluginInfo()->getName();
-        $scriptHandler = $pluginName . 'settings';
+        $cssFile = $resPath . 'css/smartling-connector-admin.css';
         $ver = $this->getPluginInfo()->getVersion();
         wp_enqueue_script('jquery');
-        wp_enqueue_script($scriptHandler . 'validate', $jsPath . 'jquery-validate-min.js', ['jquery'], $ver, false);
-        wp_enqueue_script($scriptHandler, $jsPath . 'smartling-connector-admin.js', ['jquery'], $ver, false);
-
-        wp_register_style($pluginName, $cssPath . 'smartling-connector-admin.css', [], $ver, 'all');
-        wp_enqueue_style($pluginName);
+        $jsFiles = [
+            $jsPath . 'jquery-validate-min.js',
+            $jsPath . 'configuration-profile-form.js',
+        ];
+        foreach ($jsFiles as $jFile) {
+            wp_enqueue_script($jFile, $jFile, ['jquery'], $ver, false);
+        }
+        wp_register_style($cssFile, $cssFile, [], $ver, 'all');
+        wp_enqueue_style($cssFile);
     }
 
     public function register()

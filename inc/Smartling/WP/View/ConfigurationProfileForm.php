@@ -199,7 +199,7 @@ if (0 === $profileId) {
                 </td>
             </tr>
             <tr>
-                <th scope="row"><?= __('Default Locale', $domain) ?></th>
+                <th scope="row"><?= __('Source Locale', $domain) ?></th>
                 <td>
                     <?php
                     $locales = [];
@@ -214,7 +214,7 @@ if (0 === $profileId) {
                     ?>
                     <?php if (0 === $profileId): ?>
                         <?php
-                        $tagOptions = ['prompt' => __('Please select main locale', $domain)];
+                        $tagOptions = ['prompt' => __('Please select source locale', $domain)];
                         $options = HtmlTagGeneratorHelper::renderSelectOptions(
                             $profile->getOriginalBlogId()->getBlogId(),
                             $locales,
@@ -230,11 +230,11 @@ if (0 === $profileId) {
                         ); ?>
                     <?php else: ?>
                         <p>
-                            <?= __('Site default language is: ', $domain) ?>
+                            <?= __('Site source language is: ', $domain) ?>
                             <strong><?= $profile->getOriginalBlogId()->getLabel() ?></strong>
                         </p>
                         <p>
-                            <a href="#" id="change-default-locale"><?= __('Change default locale', $domain) ?></a>
+                            <a href="#" id="change-default-locale"><?= __('Change source locale', $domain) ?></a>
                         </p>
                         <br/>
                         <?= HtmlTagGeneratorHelper::tag(
@@ -286,6 +286,20 @@ if (0 === $profileId) {
                 </td>
             </tr>
             <tr>
+                <td colspan="2">
+                    <div class="update-nag">
+                        <p>
+                            <?= __("<strong>Warning!</strong> 
+Updates to these settings will change how content is handled during the translation process.<br>
+Please consult before making any changes.<br>", $domain); ?>
+                        </p>
+                        <p>
+                            <a href="javascript:void(0)" class="toggleExpert"><strong><?= __('Show Expert Settings',$domain); ?></strong></a>
+                        </p>
+                    </div>
+                </td>
+            </tr>
+            <tr class="toggleExpert hidden">
                 <th scope="row"><?= __('Retrieval Type', $domain) ?></th>
                 <td>
                     <?=
@@ -303,7 +317,7 @@ if (0 === $profileId) {
                     </small>
                 </td>
             </tr>
-            <tr>
+            <tr class="toggleExpert hidden">
                 <th scope="row"><?= __('Resubmit changed content', $domain) ?></th>
                 <td>
                     <?=
@@ -324,7 +338,7 @@ if (0 === $profileId) {
                     </small>
                 </td>
             </tr>
-            <tr>
+            <tr class="toggleExpert hidden">
                 <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('auto_authorize'); ?></th>
                 <td>
                     <label class="radio-label">
@@ -338,20 +352,6 @@ if (0 === $profileId) {
                             <?= __('Auto authorize content', $domain) ?>
                         </p>
                     </label>
-                </td>
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <div class="update-nag">
-                        <p>
-                            <?= __("<strong>Warning!</strong> 
-Updates to these settings will change how content is handled during the translation process.<br>
-Please consult before making any changes.<br>", $domain); ?>
-                        </p>
-                        <p>
-                            <a href="javascript:void(0)" class="toggleExpert"><strong><?= __('Show Expert Settings',$domain); ?></strong></a>
-                        </p>
-                    </div>
                 </td>
             </tr>
             <tr class="toggleExpert hidden">
@@ -428,15 +428,3 @@ Please consult before making any changes.<br>", $domain); ?>
 
     </form>
 </div>
-<script>
-    var validator;
-    jQuery(document).ready(function () {
-        validator = jQuery('#smartling-configuration-profile-form').validate();
-        
-        
-        jQuery('a.toggleExpert').on('click', function (e) {
-            jQuery('.toggleExpert').removeClass('hidden');
-            jQuery('a.toggleExpert').addClass('hidden');
-        })
-    });
-</script>
