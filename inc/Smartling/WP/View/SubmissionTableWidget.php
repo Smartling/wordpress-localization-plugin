@@ -496,6 +496,6 @@ class SubmissionTableWidget extends SmartlingListTable
      */
     private function buildHtmlTagName($name)
     {
-        return $this->_custom_controls_namespace . '-' . $name;
+        return $name;
     }
 }
