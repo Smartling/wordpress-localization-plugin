@@ -10,12 +10,9 @@ use Smartling\WP\WPHookInterface;
 
 /**
  * Class BulkSubmitController
- *
  * @package Smartling\WP\Controller
  */
-class BulkSubmitController
-    extends WPAbstract
-    implements WPHookInterface
+class BulkSubmitController extends WPAbstract implements WPHookInterface
 {
 
     /**
@@ -25,6 +22,21 @@ class BulkSubmitController
     {
         if (!DiagnosticsHelper::isBlocked()) {
             add_action('admin_menu', [$this, 'menu']);
+            add_action('admin_enqueue_scripts', [$this, 'wp_enqueue']);
+        }
+    }
+
+    public function wp_enqueue()
+    {
+        $resPath = $this->getPluginInfo()->getUrl();
+        $jsPath = $resPath . 'js/';
+        $ver = $this->getPluginInfo()->getVersion();
+        wp_enqueue_script('jquery');
+        $jsFiles = [
+            $jsPath . 'bulk-submit.js',
+        ];
+        foreach ($jsFiles as $jFile) {
+            wp_enqueue_script($jFile, $jFile, ['jquery'], $ver, false);
         }
     }
 
@@ -45,14 +57,8 @@ class BulkSubmitController
 
     public function renderPage()
     {
-        $currentBlogId = $this->getEntityHelper()
-                              ->getSiteHelper()
-                              ->getCurrentBlogId();
-
-        $applicableProfiles = $this->getEntityHelper()
-                                   ->getSettingsManager()
-                                   ->findEntityByMainLocale($currentBlogId);
-
+        $currentBlogId = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
+        $applicableProfiles = $this->getEntityHelper()->getSettingsManager()->findEntityByMainLocale($currentBlogId);
         if (0 === count($applicableProfiles)) {
             echo HtmlTagGeneratorHelper::tag('p', __('No suitable profile found for this site.'));
         } else {

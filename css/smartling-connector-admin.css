@@ -171,8 +171,8 @@
     width: 100px;
     max-width: 150px;
 }
-#applied_date, #submission_date
-{
+
+#applied_date, #submission_date {
     width: 140px;
     max-width: 140px;
 }
@@ -243,8 +243,7 @@ span.add-to-queue {
     font-weight: bold;
 }
 
-td.outdated
-{
+td.outdated {
     text-align: center;
 }
 
@@ -266,4 +265,13 @@ label.error {
 
 .hidden {
     display: none;
+}
+
+#error-messages span {
+    color: #ba2000;
+    display: block;
+    cursor: pointer;
+    font-weight: bold;
+    font-style: italic;
+    padding-left: 10px;
 }
