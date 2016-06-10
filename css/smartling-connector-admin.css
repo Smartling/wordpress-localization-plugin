@@ -130,8 +130,26 @@
     -moz-osx-font-smoothing: grayscale;
 }
 
-#smartling-form .plugin-locales input[type=text] {
+#smartling-configuration-profile-form .plugin-locales input[type=text] {
     width: 50px;
+}
+
+#smartling-configuration-profile-form th[scope=row] {
+    min-width: 190px;
+    max-width: 190px;
+}
+
+#smartling-configuration-profile-form td {
+    min-width: 560px;
+    max-width: 560px;
+}
+
+#target-locale-block td
+{
+    min-width: auto;
+    max-width: inherit;
+    padding-bottom: 5px;
+    padding-top: 5px;
 }
 
 #bulkActionCb {

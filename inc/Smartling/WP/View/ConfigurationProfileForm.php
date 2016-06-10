@@ -253,7 +253,7 @@ if (0 === $profileId) {
                 <th scope="row"><?= __('Target Locales', $domain) ?></th>
                 <td>
                     <?= WPAbstract::checkUncheckBlock(); ?>
-                    <table>
+                    <table id="target-locale-block">
                         <?php
                         $targetLocales = $profile->getTargetLocales();
                         foreach ($locales as $blogId => $label) {
