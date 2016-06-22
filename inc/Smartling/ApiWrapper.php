@@ -19,7 +19,6 @@ use Smartling\Submissions\SubmissionEntity;
 
 /**
  * Class ApiWrapper
- *
  * @package Smartling
  */
 class ApiWrapper implements ApiWrapperInterface
@@ -300,7 +299,6 @@ class ApiWrapper implements ApiWrapperInterface
     /**
      * @param SubmissionEntity $entity
      * @param string           $xmlString
-     *
      * @param string           $filename
      *
      * @return bool
@@ -451,8 +449,7 @@ class ApiWrapper implements ApiWrapperInterface
             foreach ($data['items'] as $descriptor) {
                 $localeId = $descriptor['localeId'];
 
-                if (array_key_exists($localeId,$submissions))
-                {
+                if (array_key_exists($localeId, $submissions)) {
                     $completedStrings = $descriptor['completedStringCount'];
                     $authorizedStrings = $descriptor['authorizedStringCount'];
 
@@ -496,6 +493,24 @@ class ApiWrapper implements ApiWrapperInterface
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
             throw new SmartlingNetworkException($e->getMessage());
+        }
+    }
+
+    /**
+     * @param SubmissionEntity $submission
+     */
+    public function deleteFile(SubmissionEntity $submission)
+    {
+        try {
+            $profile = $this->getConfigurationProfile($submission);
+            $api = FileApi::create(
+                $this->getAuthProvider($profile),
+                $profile->getProjectId(),
+                $this->getLogger()
+            );
+            $api->deleteFile($submission->getFileUri());
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
         }
     }
 }

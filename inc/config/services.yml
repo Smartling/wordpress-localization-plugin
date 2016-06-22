@@ -316,6 +316,16 @@ services:
         - "@manager.submission"
         - "@site.cache"
 
+  service.submission-cleanup:
+    class: Smartling\Helpers\SubmissionCleanupHelper
+    calls:
+      - [ "setApiWrapper", [ "@wrapper.sdk.api.smartling" ] ]
+      - [ "setLogger", [ "@logger" ] ]
+      - [ "setSiteHelper" , [ "@site.helper" ] ]
+      - [ "setSubmissionManager", [ "@manager.submission" ] ]
+      - [ "setIoWrapper", [ "@factory.contentIO" ] ]
+      - [ "setMultilangProxy", [ "@multilang.proxy" ]]
+
   wp.bulkSubmit:
     class: Smartling\WP\Controller\BulkSubmitController
     arguments:

@@ -19,7 +19,6 @@ use wpdb;
 
 /**
  * Class MultiligualPressConnector
- *
  * @package Smartling\DbAl
  */
 class MultiligualPressConnector extends LocalizationPluginAbstract
@@ -70,7 +69,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
                 $message = vsprintf('Locales and/or Links are not set with multilingual press plugin.', []);
 
                 $this->getLogger()
-                     ->critical('SettingsPage:Render ' . $message);
+                    ->critical('SettingsPage:Render ' . $message);
 
                 DiagnosticsHelper::addDiagnosticsMessage($message, true);
 
@@ -120,7 +119,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
         } else {
             $message = vsprintf('The blog %s is not configured in multilingual press plugin', [$blogId]);
             $this->getLogger()
-                 ->warning($message);
+                ->warning($message);
             $locale = ['lang' => 'unknown'];
         }
 
@@ -139,7 +138,9 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
 
         parent::__construct($logger, $helper, $ml_plugin_statuses);
 
-        if (false === $ml_plugin_statuses['multilingual-press-pro'] && defined('SMARTLING_CLI_EXECUTION') && SMARTLING_CLI_EXECUTION === false) {
+        if (false === $ml_plugin_statuses['multilingual-press-pro'] && defined('SMARTLING_CLI_EXECUTION') &&
+            SMARTLING_CLI_EXECUTION === false
+        ) {
             //throw new \Exception( 'Active plugin not found Exception' );
         }
     }
@@ -187,7 +188,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
     /**
      * @inheritdoc
      */
-    function getLinkedBlogIdsByBlogId($blogId)
+    public function getLinkedBlogIdsByBlogId($blogId)
     {
 
         $relations = $this->initiSiteRelationsSubsystem();
@@ -217,7 +218,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
             : $contentType;
 
         $contentType = in_array($contentType,
-            WordpressContentTypeHelper::getSupportedTaxonomyTypes())
+                                WordpressContentTypeHelper::getSupportedTaxonomyTypes())
             ? 'term'
             : $contentType;
 
@@ -227,7 +228,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
     /**
      * @inheritdoc
      */
-    function getLinkedObjects($sourceBlogId, $sourceContentId, $contentType)
+    public function getLinkedObjects($sourceBlogId, $sourceContentId, $contentType)
     {
         $relations = $this->initContentRelationSubsystem();
 
@@ -237,7 +238,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
     /**
      * @inheritdoc
      */
-    function linkObjects(SubmissionEntity $submission)
+    public function linkObjects(SubmissionEntity $submission)
     {
         $relations = $this->initContentRelationSubsystem();
 
@@ -254,12 +255,17 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
     /**
      * @inheritdoc
      */
-    function unlinkObjects(SubmissionEntity $submission)
+    public function unlinkObjects(SubmissionEntity $submission)
     {
         $relations = $this->initContentRelationSubsystem();
 
-        return $relations->delete_relation($submission->sourceBlog, $submission->targetBlog, $submission->sourceGUID,
-            $submission->targetGUID, $submission->contentType);
+        return $relations->delete_relation(
+            $submission->getSourceBlogId(),
+            $submission->getTargetBlogId(),
+            $submission->getSourceId(),
+            $submission->getTargetId(),
+            $this->convertType($submission->getContentType())
+        );
     }
 
     private function isMultilingualPluginActive()
@@ -280,7 +286,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
         } else {
             $message = 'Seems like Multilingual Press plugin is not installed and/or activated. Cannot read blog locale.';
             $this->getLogger()
-                 ->warning($message);
+                ->warning($message);
         }
 
         return $result;

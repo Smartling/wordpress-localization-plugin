@@ -22,3 +22,4 @@ services:
       - [ "addService", [ "@wp.ext.testimonial" ]]
       - [ "addService", [ "@smartling.helper.relative-image-path-support" ]]
       - [ "addService", [ "@smartling.helper.absolute-image-path-support" ]]
+      - [ "addService", [ "@service.submission-cleanup" ]]

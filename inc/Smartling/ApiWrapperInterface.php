@@ -73,4 +73,9 @@ interface ApiWrapperInterface
      * @return SubmissionEntity[]
      */
     public function getStatusForAllLocales(array $submissions);
+
+    /**
+     * @param SubmissionEntity $submission
+     */
+    public function deleteFile(SubmissionEntity $submission);
 }

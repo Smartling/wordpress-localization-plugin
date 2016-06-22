@@ -8,7 +8,6 @@ use Smartling\Submissions\SubmissionEntity;
 
 /**
  * Interface LocalizationPluginProxyInterface
- *
  * @package Smartling\DbAl
  */
 interface LocalizationPluginProxyInterface
@@ -21,19 +20,18 @@ interface LocalizationPluginProxyInterface
      * @param SiteHelper      $helper
      * @param array           $ml_plugin_statuses
      */
-    function __construct(LoggerInterface $logger, SiteHelper $helper, array $ml_plugin_statuses);
+    public function __construct(LoggerInterface $logger, SiteHelper $helper, array $ml_plugin_statuses);
 
     /**
      * @return LoggerInterface
      */
-    function getLogger();
+    public function getLogger();
 
     /**
      * Retrieves locale from site option
-     *
      * @return array
      */
-    function getLocales();
+    public function getLocales();
 
     /**
      * Retrieves locale from site option
@@ -42,7 +40,7 @@ interface LocalizationPluginProxyInterface
      *
      * @return string
      */
-    function getBlogLocaleById($blogId);
+    public function getBlogLocaleById($blogId);
 
     /**
      * Retrieves blog ids linked to given blog
@@ -51,7 +49,7 @@ interface LocalizationPluginProxyInterface
      *
      * @return array
      */
-    function getLinkedBlogIdsByBlogId($blogId);
+    public function getLinkedBlogIdsByBlogId($blogId);
 
     /**
      * Returns linked content
@@ -63,26 +61,26 @@ interface LocalizationPluginProxyInterface
      * @return array
      * ( <blog_id> => <content_id> )
      */
-    function getLinkedObjects($sourceBlogId, $sourceContentId, $contentType);
+    public function getLinkedObjects($sourceBlogId, $sourceContentId, $contentType);
 
     /**
      * @param SubmissionEntity $submission
      *
      * @return bool
      */
-    function linkObjects(SubmissionEntity $submission);
+    public function linkObjects(SubmissionEntity $submission);
 
     /**
      * @param SubmissionEntity $submission
      *
      * @return bool
      */
-    function unlinkObjects(SubmissionEntity $submission);
+    public function unlinkObjects(SubmissionEntity $submission);
 
     /**
      * @return string
      */
-    function getBlogLanguageById($blogId);
+    public function getBlogLanguageById($blogId);
 
     /**
      * @param string $locale

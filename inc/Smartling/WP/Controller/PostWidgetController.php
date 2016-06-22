@@ -236,20 +236,20 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
                                     $this->servedContentType,
                                     $sourceBlog,
                                     $originalId,
-                                    (int)$blogId,
-                                    $this->getEntityHelper()->getTarget($originalId, $blogId)
+                                    (int)$blogId
                                 );
 
-                                $this->getLogger()->info(vsprintf(
-                                                             self::$MSG_UPLOAD_ENQUEUE_ENTITY,
-                                                             [
-                                                                 $this->servedContentType,
-                                                                 $sourceBlog,
-                                                                 $originalId,
-                                                                 (int)$blogId,
-                                                                 $result->getTargetLocale(),
-                                                             ]
-                                                         ));
+                                $this->getLogger()->info(
+                                    vsprintf(
+                                        self::$MSG_UPLOAD_ENQUEUE_ENTITY,
+                                        [
+                                            $this->servedContentType,
+                                            $sourceBlog,
+                                            $originalId,
+                                            (int)$blogId,
+                                            $result->getTargetLocale(),
+                                        ]
+                                    ));
                             }
                             do_action(UploadJob::JOB_HOOK_NAME);
                         }

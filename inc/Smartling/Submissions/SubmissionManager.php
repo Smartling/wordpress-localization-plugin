@@ -19,7 +19,6 @@ use Smartling\Processors\EntityProcessor;
 
 /**
  * Class SubmissionManager
- *
  * @package Smartling\Submissions
  */
 class SubmissionManager extends EntityManagerAbstract
@@ -102,8 +101,8 @@ class SubmissionManager extends EntityManagerAbstract
     private function validateContentType($contentType)
     {
         return
-            is_null($contentType)
-            || in_array($contentType, array_keys(WordpressContentTypeHelper::getReverseMap()));
+            null === $contentType
+            || in_array($contentType, array_keys(WordpressContentTypeHelper::getReverseMap()), true);
     }
 
     protected function dbResultToEntity(array $dbRow)
@@ -637,5 +636,92 @@ class SubmissionManager extends EntityManagerAbstract
         }
 
         return $newList;
+    }
+
+    /**
+     * @param SubmissionEntity $submission
+     *
+     * @return mixed
+     */
+    public function delete(SubmissionEntity $submission)
+    {
+        $result = false;
+
+        $this->getLogger()->debug(
+            vsprintf(
+                'Preparing to delete submission %s',
+                [
+                    var_export($submission->toArray(false), true),
+                ]
+            )
+        );
+
+        $submissionId = (int)$submission->getId();
+
+        if (0 < $submissionId) {
+            $this->getLogger()->debug(
+                vsprintf(
+                    'Looking for requested submission id=%s in the database.',
+                    [
+                        $submissionId,
+                    ]
+                )
+            );
+
+            $storedSubmissions = $this->findByIds([$submissionId]);
+
+            if (0 < count($storedSubmissions)) {
+                $this->getLogger()->debug(
+                    vsprintf(
+                        'Found submission in database: %s.',
+                        [
+                            var_export(reset($storedSubmissions)->toArray(false), true),
+                        ]
+                    )
+                );
+
+                $block = ConditionBlock::getConditionBlock();
+                $block->addCondition(
+                    Condition::getCondition(
+                        ConditionBuilder::CONDITION_SIGN_EQ,
+                        'id',
+                        [
+                            $submission->getId(),
+                        ]
+                    )
+                );
+
+                $query = QueryBuilder::buildDeleteQuery(
+                    $this->getDbal()->completeTableName(
+                        SubmissionEntity::getTableName()
+                    ),
+                    $block
+                );
+
+                $this->getLogger()->debug(
+                    vsprintf(
+                        'Executing delete query for submission id=%s',
+                        [
+                            $submissionId,
+                        ]
+                    )
+                );
+                $result = $this->getDbal()->query($query);
+            } else {
+                $this->getLogger()->debug(
+                    vsprintf(
+                        'No submissions found with id=%s.',
+                        [
+                            $submissionId,
+                        ]
+                    )
+                );
+
+            }
+        } else {
+            $this->getLogger()->debug('Submission id must be > 0. Skipping.');
+        }
+
+        return $result;
     }
 }
