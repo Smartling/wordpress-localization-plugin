@@ -9,7 +9,6 @@ use Smartling\Helpers\WordpressContentTypeHelper;
 
 /**
  * Class EntityAbstract
- *
  * @package inc\Smartling\DbAl\WordpressContentEntities
  */
 abstract class EntityAbstract
@@ -24,7 +23,6 @@ abstract class EntityAbstract
 
     /**
      * List of fields that affect the hash of the entity
-     *
      * @var array
      */
     protected $hashAffectingFields = [];
@@ -78,7 +76,7 @@ abstract class EntityAbstract
 
     private function initEntityArrayState()
     {
-        if (empty($this->entityArrayState)) {
+        if (0 === count($this->entityArrayState)) {
             foreach ($this->entityFields as $field) {
                 $this->entityArrayState[$field] = null;
             }
@@ -91,13 +89,11 @@ abstract class EntityAbstract
     public function setEntityFields(array $entityFields)
     {
         $this->entityFields = array_merge(['hash'], $entityFields);
-
         $this->initEntityArrayState();
     }
 
     /**
      * Transforms entity instance into array
-     *
      * @return array
      */
     public function toArray()
@@ -110,11 +106,11 @@ abstract class EntityAbstract
      *
      * @param $fieldName
      *
-     * @return
+     * @return mixed
      */
     public function __get($fieldName)
     {
-        if (array_key_exists($fieldName, $this->entityArrayState)) {
+        if (isset($this->{$fieldName})) {
             return $this->entityArrayState[$fieldName];
         }
     }
@@ -127,13 +123,23 @@ abstract class EntityAbstract
      */
     public function __set($fieldName, $fieldValue)
     {
-        if (array_key_exists($fieldName, $this->entityArrayState)) {
+        if (isset($this->{$fieldName})) {
             $this->entityArrayState[$fieldName] = $fieldValue;
         }
     }
 
     /**
-     * @param $method
+     * @param string $name
+     *
+     * @return bool
+     */
+    public function __isset($name)
+    {
+        return array_key_exists($name, $this->entityArrayState);
+    }
+
+    /**
+     * @param string $method
      *
      * @return string
      */
@@ -264,13 +270,8 @@ abstract class EntityAbstract
 
     protected function entityNotFound($type, $guid)
     {
-
         $template = 'The \'%s\' with ID %s not found in the database.';
-
         $message = vsprintf($template, [WordpressContentTypeHelper::getLocalizedContentType($type), $guid]);
-        $this->getLogger()
-             ->info($message);
-
         throw new EntityNotFoundException($message);
     }
 
@@ -309,13 +310,17 @@ abstract class EntityAbstract
     /**
      * Is called when downloaded with 100% translation
      */
-    public function translationCompleted(){}
+    public function translationCompleted()
+    {
+    }
 
     /**
      * Is called when cloned source content
      */
-    public function translationDrafted(){}
-    
+    public function translationDrafted()
+    {
+    }
+
     /**
      * @return string
      */
