@@ -13,7 +13,7 @@ interface ExportedAPI
      * An action that is executed just after DI initialization
      * @argument reference to instance of Symfony\Component\DependencyInjection\ContainerInterface
      */
-    const ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT = 'smartling-event.before-initialize';
+    const ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT = 'smartling_before_init';
 
     /**
      * Is raised just before encoding to XML
@@ -27,7 +27,7 @@ interface ExportedAPI
      *  Only update of values is allowed.
      *  Will be changed to ArrayAccess implementation.
      */
-    const EVENT_SMARTLING_BEFORE_SERIALIZE_CONTENT = 'smartling_event_before_serialize_content';
+    const EVENT_SMARTLING_BEFORE_SERIALIZE_CONTENT = 'smartling_before_serialize_content';
 
     /**
      * Is raised just after decoding from XML
@@ -41,17 +41,17 @@ interface ExportedAPI
      *  Only update of values is allowed.
      *  Will be changed to ArrayAccess implementation.
      */
-    const EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT = 'smartling_event_after_deserialize_content';
+    const EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT = 'smartling_after_deserialize_content';
 
     /**
      * Action that sends given SubmissionEntity to smartling for translation
      */
-    const ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION = 'smartling_event_send_for_translation';
+    const ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION = 'smartling_send_for_translation';
 
     /**
      * Action that downloads translation for given SubmissionEntity
      */
-    const ACTION_SMARTLING_DOWNLOAD_TRANSLATION = 'smartling_event_download_translation';
+    const ACTION_SMARTLING_DOWNLOAD_TRANSLATION = 'smartling_download_translation';
 
     /**
      * Filter to modify FileURI.
