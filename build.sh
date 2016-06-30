@@ -36,7 +36,7 @@ find . -name "tests" -type d|xargs rm -Rf
 find . -name "Tests" -type d|xargs rm -Rf
 find . -name "docs" -type d|xargs rm -Rf
 find . -name "phpunit.xml*" -type f|xargs rm -Rf
-find . -name "composer.phar" -type f|xargs rm -Rf
+find . -name "composer" -type f|xargs rm -Rf
 find . -name "*.md" -type f|xargs rm -Rf
 find . -name "*travis*" -type f|xargs rm -Rf
 
