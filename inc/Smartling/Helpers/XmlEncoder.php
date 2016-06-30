@@ -32,11 +32,13 @@ class XmlEncoder
         }
     }
 
-    private static $magicComments = ['smartling.translate_paths = data/string',
-                                     'smartling.string_format_paths = html : data/string',
-                                     'smartling.source_key_paths = data/{string.key}',
-                                     'smartling.variants_enabled = true',
-                                     'smartling.placeholder_format_custom = \[[^\]]+?\]',];
+    private static $magicComments = [
+        'smartling.translate_paths = data/string',
+        'smartling.string_format_paths = html : data/string',
+        'smartling.source_key_paths = data/{string.key}',
+        'smartling.variants_enabled = true',
+        /* 'smartling.placeholder_format_custom = \[[^\]]+?\]', */
+    ];
 
     const XML_ROOT_NODE_NAME = 'data';
 
