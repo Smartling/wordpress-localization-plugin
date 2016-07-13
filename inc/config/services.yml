@@ -336,6 +336,10 @@ services:
       - "@manager.submission"
       - "@site.cache"
 
+  helper.shortcode:
+    class: Smartling\Helpers\ShortcodeHelper
+    arguments:
+      - "@logger"
 
   extension.translation_lock:
     class: Smartling\Extensions\TranslateLock

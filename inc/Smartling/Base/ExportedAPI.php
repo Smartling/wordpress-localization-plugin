@@ -62,4 +62,18 @@ interface ExportedAPI
      * otherwise generated fileURI is taken
      */
     const FILTER_SMARTLING_FILE_URI = 'smartling_file_uri';
+
+    /**
+     * Filter to modify the XML node that is going to be sent to smartling.
+     * Receives 1 parameter TranslationStringFilterParameters
+     * Should return TranslationStringFilterParameters
+     */
+    const FILTER_SMARTLING_TRANSLATION_STRING = 'smartling_translation_string_before_send';
+
+    /**
+     * Filter to modify the translated XML node that is received from smartling.
+     * Receives 1 parameter TranslationStringFilterParameters
+     * Should return TranslationStringFilterParameters
+     */
+    const FILTER_SMARTLING_TRANSLATION_STRING_RECEIVED = 'smartling_translation_string_received';
 }

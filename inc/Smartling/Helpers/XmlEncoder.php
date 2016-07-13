@@ -6,8 +6,10 @@ use DOMAttr;
 use DOMCdataSection;
 use DOMDocument;
 use DOMXPath;
+use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
 use Smartling\Exception\InvalidXMLException;
+use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 
 /**
  * Class XmlEncoder
@@ -69,8 +71,16 @@ class XmlEncoder
             $document->appendChild($document->createComment(vsprintf(' %s ', [$commentString])));
         }
 
-        $additionalComments = ['Smartling Wordpress Connector version: ' . Bootstrap::getCurrentVersion(),
-                               'Wordpress installation host: ' . Bootstrap::getHttpHostName(),];
+        $additionalComments = [
+            'Smartling Wordpress Connector version: ' . Bootstrap::getCurrentVersion(),
+            'Wordpress installation host: ' . Bootstrap::getHttpHostName(),
+            vsprintf(
+                ' smartling.placeholder_format_custom = %s ',
+                [
+                    ShortcodeHelper::getShortcodeMaskRegexp()
+                ]
+            )
+        ];
 
         foreach ($additionalComments as $extraComment) {
             $document->appendChild($document->createComment(vsprintf(' %s ', [$extraComment])));
@@ -271,8 +281,7 @@ class XmlEncoder
         return $sourceArray;
 
     }
-
-
+    
     private static function encodeSource($source, $stringLength = 120)
     {
         return "\n" . implode("\n", str_split(base64_encode(serialize($source)), $stringLength)) . "\n";
@@ -332,9 +341,19 @@ class XmlEncoder
                 }
             }
         }
+
+
+
         $node->appendChild(new DOMCdataSection($value));
 
-        return $node;
+        $params = new TranslationStringFilterParameters();
+        $params->setDom($document);
+        $params->setNode($node);
+        $params->setFilterSettings(self::getFieldProcessingParams());
+
+        $params = apply_filters(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING, $params);
+
+        return $params->getNode();
     }
 
     /**
@@ -369,8 +388,19 @@ class XmlEncoder
 
         for ($i = 0; $i < $nodeList->length; $i++) {
             $item = $nodeList->item($i);
+            /**
+             * @var \DOMNode $item
+             */
             $name = $item->getAttribute('name');
-            $nodeValue = $item->nodeValue;
+
+            $params = new TranslationStringFilterParameters();
+            $params->setDom($item->ownerDocument);
+            $params->setNode($item);
+            $params->setFilterSettings(self::getFieldProcessingParams());
+
+            $params = apply_filters(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING_RECEIVED, $params);
+
+            $nodeValue = $params->getNode()->nodeValue;
             $fields[$name] = $nodeValue;
         }
 
