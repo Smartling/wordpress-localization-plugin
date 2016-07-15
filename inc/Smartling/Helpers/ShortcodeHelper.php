@@ -31,6 +31,11 @@ class ShortcodeHelper implements WPHookInterface
     private $initialShortcodeHandlers;
 
     /**
+     * @var array
+     */
+    private $shortcodeAttributes = [];
+
+    /**
      * @var TranslationStringFilterParameters
      */
     private $params;
@@ -67,6 +72,31 @@ class ShortcodeHelper implements WPHookInterface
         $this->params = $params;
     }
 
+    /**
+     * @return array
+     */
+    public function getShortcodeAttributes($shortcodeName)
+    {
+        return array_key_exists($shortcodeName, $this->shortcodeAttributes) ? $this->shortcodeAttributes[$shortcodeName]
+            : false;
+    }
+
+    /**
+     * @param string $shortcodeName
+     * @param string $attributeName
+     * @param string $translatedString
+     * @param string $originalHash
+     */
+    public function addShortcodeAttribute($shortcodeName, $attributeName, $translatedString, $originalHash)
+    {
+        $this->shortcodeAttributes[$shortcodeName][$attributeName] = [$originalHash => $translatedString];
+    }
+
+    public function getTranslatedShortcodes()
+    {
+        return array_keys($this->shortcodeAttributes);
+    }
+
     public function __destruct()
     {
         if (null !== $this->getInitialShortcodeHandlers()) {
@@ -98,25 +128,85 @@ class ShortcodeHelper implements WPHookInterface
     public function register()
     {
         add_filter(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING, [$this, 'processString']);
-        add_filter(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING_RECEIVED,[$this, 'processTranslation']);
+        add_filter(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING_RECEIVED, [$this, 'processTranslation']);
     }
 
     public function processTranslation(TranslationStringFilterParameters $params)
     {
         $this->setParams($params);
+        $node = $this->getParams()->getNode();
+
+        $string = '';
+$cDataNode=null;
+        foreach ($node->childNodes as $childNode) {
+            if ($childNode->nodeType===XML_CDATA_SECTION_NODE)
+            {
+                $cDataNode=$childNode;
+                $string = $childNode->nodeValue;
+                break;
+            }
+        }
+
+
+        foreach ($node->childNodes as $cNode) {
+            /**
+             * @var \DOMNode $cNode
+             */
+            if ($cNode->nodeName === 'shortcodeattribute' && $cNode->hasAttributes()) {
+                $translation = [];
+                foreach ($cNode->attributes as $attribute => $value) {
+                    /**
+                     * @var \DOMAttr $value
+                     */
+                    $translation[$attribute] = $value->value;
+                }
+                $translation['value'] = $cNode->nodeValue;
+                $this->addShortcodeAttribute($translation['shortcode'], $translation['name'], $translation['value'], $translation['hash']);
+                //$node->removeChild($cNode);
+            }
+        }
+
+
+        while ($node->childNodes->length > 0) {
+            $node->removeChild($node->childNodes->item(0));
+        }
+
+
+        //$node->removeChild($cDataNode);
+        $node->appendChild(new \DOMCdataSection($string));
+
         $this->unmaskShortcodes();
+
+        //Bootstrap::DebugPrint($string, true);
+
+        $detectedShortcodes = $this->getTranslatedShortcodes();
+        $this->replaceHandlerForApplying($detectedShortcodes);
+        do_shortcode($string);
+        $this->restoreShortcodeHandler();
+        //Bootstrap::DebugPrint($this->getParams()->getNode()->nodeValue, true);
+
         return $this->getParams();
     }
-    
+
+    private function applyTranslation($shortcode, $translation)
+    {
+
+    }
+
     public function processString(TranslationStringFilterParameters $params)
     {
         $this->setParams($params);
         $string = $params->getNode()->nodeValue;
         if ($this->stringHasShortcode($string)) {
             $detectedShortcodes = $this->getShortcodes($string);
-            $this->replaceShortcodeHandler($detectedShortcodes);
+            $this->replaceHandlerForMining($detectedShortcodes);
             do_shortcode($string);
+            foreach ($this->getShortcodeAttributes() as $node) {
+                $this->getParams()->getNode()->appendChild($node);
+            }
+            $this->shortcodeAttributes = [];
             $this->restoreShortcodeHandler();
+
             return $params;
         } else {
             return $params;
@@ -129,13 +219,67 @@ class ShortcodeHelper implements WPHookInterface
      * @param array       $attributes
      * @param string|null $content
      * @param string      $name
+     *
+     * @return string
      */
     public function shortcodeHandler($attributes, $content = null, $name)
     {
+        // <string> <shortcodeattribute shortcodename="" originalhash="" attributename=""><![CDATA[sdcsd]]></shortcodeattribute> </string>
+
+
+        $preparedAttributes = XmlEncoder::prepareSourceArray($attributes);
+
+
+        foreach ($preparedAttributes as $attribute => $value) {
+            $node = $this->getParams()->getDom()->createElement('shortcodeattribute');
+            $node->setAttribute('shortcode', $name);
+            $node->setAttribute('hash', md5($value));
+            $node->setAttribute('name', $attribute);
+            $node->appendChild(new \DOMCdataSection($value));
+            $this->addShortcodeAttribute($node);
+        }
+
+
+        //Bootstrap::DebugPrint($preparedAttributes, true);
+
         $this->maskShortcode($name);
+
+
         if (null !== $content) {
             return do_shortcode($content);
         }
+    }
+
+    public function shortcodeApplyerHandler($attributes, $content = null, $name)
+    {
+        $translations = $this->getShortcodeAttributes($name);
+
+        if (false !== $translations) {
+            $translationPairs = [];
+
+            foreach ($translations as $attribute => $value) {
+                if (array_key_exists($attribute, $attributes) &&
+                    reset(array_keys($value)) === md5($attributes[$attribute])
+                ) {
+                    $translationPairs[$attributes[$attribute]] = reset($value);
+
+
+                    //$attributes[$attribute]=reset($value);
+                }
+
+
+            }
+
+            $this->replaceShortcodeAttributeValue($name, $translationPairs);
+
+            if (null !== $content) {
+                return do_action($content);
+            }
+
+
+        }
+
+
     }
 
     /**
@@ -157,16 +301,25 @@ class ShortcodeHelper implements WPHookInterface
         return array_key_exists(1, $matches) ? $matches[1] : [];
     }
 
-    private function replaceShortcodeHandler($shortcodes)
+    private function replaceShortcodeHandler($shortcodes, $callback)
     {
         $activeShortcodeAssignments = $this->getShortcodeAssignments();
         $this->setInitialShortcodeHandlers($activeShortcodeAssignments);
 
         foreach ($shortcodes as $shortcodeName) {
-            $activeShortcodeAssignments[$shortcodeName] = [$this, 'shortcodeHandler'];
+            $activeShortcodeAssignments[$shortcodeName] = [$this, $callback];
         }
         $this->setShortcodeAssignments($activeShortcodeAssignments);
+    }
 
+    private function replaceHandlerForMining(array $shortcodeList)
+    {
+        $this->replaceShortcodeHandler($shortcodeList, 'shortcodeHandler');
+    }
+
+    private function replaceHandlerForApplying(array $shortcodeList)
+    {
+        $this->replaceShortcodeHandler($shortcodeList, 'shortcodeApplyerHandler');
     }
 
     private function restoreShortcodeHandler()
@@ -177,9 +330,43 @@ class ShortcodeHelper implements WPHookInterface
         }
     }
 
+    private function replaceShortcodeAttributeValue($shortcodeName, $values)
+    {
+        $node = $this->getParams()->getNode();
+
+        $initialString = $node->nodeValue;
+
+        $matches = [];
+        preg_match_all(vsprintf('/%s/', [get_shortcode_regex([$shortcodeName])]), $initialString, $matches);
+        $shortcode = $matches[0][0];
+
+        $initialShortcode = $shortcode;
+
+        foreach ($values as $originalText => $translation) {
+            $shortcode = str_replace($originalText, $translation, $shortcode);
+        }
+
+        $result = str_replace($initialShortcode, $shortcode, $initialString);
+
+        $updatedCdata = new \DOMCdataSection($result);
+
+        foreach ($node->childNodes as $cNode) {
+            /**
+             * @var \DOMNode $cNode
+             */
+            if (XML_CDATA_SECTION_NODE === $cNode->nodeType) {
+                $node->removeChild($cNode);
+            }
+        }
+        $node->appendChild($updatedCdata);
+    }
+
+
     private function maskShortcode($name)
     {
-        $initialString = $this->getParams()->getNode()->nodeValue;
+        $node = $this->getParams()->getNode();
+
+        $initialString = $node->nodeValue;
 
         $matches = [];
         preg_match_all(vsprintf('/%s/', [get_shortcode_regex([$name])]), $initialString, $matches);
@@ -190,26 +377,23 @@ class ShortcodeHelper implements WPHookInterface
 
         $updatedCdata = new \DOMCdataSection($result);
 
-        $c = $this->getParams()->getNode()->childNodes;
-
-        foreach ($c as $node) {
+        foreach ($node->childNodes as $cNode) {
             /**
-             * @var \DOMNode $node
+             * @var \DOMNode $cNode
              */
-            if (XML_CDATA_SECTION_NODE === $node->nodeType) {
-                $this->getParams()->getNode()->removeChild($node);
+            if (XML_CDATA_SECTION_NODE === $cNode->nodeType) {
+                $node->removeChild($cNode);
             }
-
         }
-        $this->getParams()->getNode()->appendChild($updatedCdata);
+        $node->appendChild($updatedCdata);
     }
 
     private function unmaskShortcodes()
     {
         $string = $this->getParams()->getNode()->nodeValue;
 
-        $string = preg_replace('/##\[/','[',$string);
-        $string = preg_replace('/\]##/',']',$string);
+        $string = preg_replace('/##\[/', '[', $string);
+        $string = preg_replace('/\]##/', ']', $string);
 
         $updatedCdata = new \DOMCdataSection($string);
 
