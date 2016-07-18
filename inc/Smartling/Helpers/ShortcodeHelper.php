@@ -2,8 +2,8 @@
 
 namespace Smartling\Helpers;
 
+use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
-use Smartling\Bootstrap;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\WP\WPHookInterface;
 
@@ -20,10 +20,19 @@ class ShortcodeHelper implements WPHookInterface
 
     const SMARTLING_SHORTCODE_MASK = '##';
 
+    /**
+     * Returns a regexp for masked shortcodes
+     * @return string
+     */
     public static function getShortcodeMaskRegexp()
     {
         return str_replace('%s', self::SMARTLING_SHORTCODE_MASK, '(%s\[[^\]]+\]%s|%s\[[^\]]+\]|\[[^\]]+\]%s)');
     }
+
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
 
     /**
      * @var array
@@ -34,6 +43,8 @@ class ShortcodeHelper implements WPHookInterface
      * @var array
      */
     private $shortcodeAttributes = [];
+
+    private $subNodes = [];
 
     /**
      * @var TranslationStringFilterParameters
@@ -73,6 +84,22 @@ class ShortcodeHelper implements WPHookInterface
     }
 
     /**
+     * @return LoggerInterface
+     */
+    public function getLogger()
+    {
+        return $this->logger;
+    }
+
+    /**
+     * @param LoggerInterface $logger
+     */
+    public function setLogger($logger)
+    {
+        $this->logger = $logger;
+    }
+
+    /**
      * @return array
      */
     public function getShortcodeAttributes($shortcodeName)
@@ -92,9 +119,24 @@ class ShortcodeHelper implements WPHookInterface
         $this->shortcodeAttributes[$shortcodeName][$attributeName] = [$originalHash => $translatedString];
     }
 
+    public function addSubNode(\DOMNode $node)
+    {
+        $this->subNodes[] = $node;
+    }
+
+    public function getSubNodes()
+    {
+        return $this->subNodes;
+    }
+
     public function getTranslatedShortcodes()
     {
         return array_keys($this->shortcodeAttributes);
+    }
+
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->setLogger($logger);
     }
 
     public function __destruct()
@@ -105,6 +147,15 @@ class ShortcodeHelper implements WPHookInterface
     }
 
     /**
+     * @return \DOMNode
+     */
+    private function getNode()
+    {
+        return $this->getParams()->getNode();
+    }
+
+    /**
+     * Getter for global $shortcode_tags
      * @return array
      */
     private function getShortcodeAssignments()
@@ -114,6 +165,11 @@ class ShortcodeHelper implements WPHookInterface
         return $shortcode_tags;
     }
 
+    /**
+     * Setter for global $shortcode_tags
+     *
+     * @param array $assignments
+     */
     private function setShortcodeAssignments(array $assignments)
     {
         global $shortcode_tags;
@@ -131,77 +187,88 @@ class ShortcodeHelper implements WPHookInterface
         add_filter(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING_RECEIVED, [$this, 'processTranslation']);
     }
 
+    /**
+     * Filter handler
+     *
+     * @param TranslationStringFilterParameters $params
+     *
+     * @return TranslationStringFilterParameters
+     */
     public function processTranslation(TranslationStringFilterParameters $params)
     {
         $this->setParams($params);
-        $node = $this->getParams()->getNode();
+        $node = $this->getNode();
 
         $string = '';
-$cDataNode=null;
+
         foreach ($node->childNodes as $childNode) {
-            if ($childNode->nodeType===XML_CDATA_SECTION_NODE)
-            {
-                $cDataNode=$childNode;
+            if ($childNode->nodeType === XML_CDATA_SECTION_NODE) {
                 $string = $childNode->nodeValue;
                 break;
             }
         }
 
-
         foreach ($node->childNodes as $cNode) {
+            $this->getLogger()->debug(vsprintf('Looking for translations (subnodes)', []));
             /**
              * @var \DOMNode $cNode
              */
             if ($cNode->nodeName === 'shortcodeattribute' && $cNode->hasAttributes()) {
-                $translation = [];
+                $tStruct = [];
                 foreach ($cNode->attributes as $attribute => $value) {
                     /**
                      * @var \DOMAttr $value
                      */
-                    $translation[$attribute] = $value->value;
+                    $tStruct[$attribute] = $value->value;
                 }
-                $translation['value'] = $cNode->nodeValue;
-                $this->addShortcodeAttribute($translation['shortcode'], $translation['name'], $translation['value'], $translation['hash']);
-                //$node->removeChild($cNode);
+                $tStruct['value'] = $cNode->nodeValue;
+                $this->addShortcodeAttribute($tStruct['shortcode'], $tStruct['name'], $tStruct['value'], $tStruct['hash']);
+                $this->getLogger()
+                    ->debug(vsprintf('Found translation for shortcode = \'%s\' for attribute = \'%s\'.', [$tStruct['shortcode'],
+                                                                                                          $tStruct['name']]));
             }
         }
 
-
+        $this->getLogger()->debug(vsprintf('Rebuilding child nodes...', []));
         while ($node->childNodes->length > 0) {
             $node->removeChild($node->childNodes->item(0));
         }
-
-
-        //$node->removeChild($cDataNode);
         $node->appendChild(new \DOMCdataSection($string));
 
+
         $this->unmaskShortcodes();
-
-        //Bootstrap::DebugPrint($string, true);
-
         $detectedShortcodes = $this->getTranslatedShortcodes();
         $this->replaceHandlerForApplying($detectedShortcodes);
         do_shortcode($string);
         $this->restoreShortcodeHandler();
-        //Bootstrap::DebugPrint($this->getParams()->getNode()->nodeValue, true);
 
         return $this->getParams();
     }
 
-    private function applyTranslation($shortcode, $translation)
-    {
-
-    }
-
+    /**
+     * Filter handler
+     *
+     * @param TranslationStringFilterParameters $params
+     *
+     * @return TranslationStringFilterParameters
+     */
     public function processString(TranslationStringFilterParameters $params)
     {
         $this->setParams($params);
         $string = $params->getNode()->nodeValue;
         if ($this->stringHasShortcode($string)) {
             $detectedShortcodes = $this->getShortcodes($string);
+            $this->getLogger()->debug(
+                vsprintf(
+                    'Got string for translation with shortcodes: %s', [implode(';', $detectedShortcodes)]
+                )
+            );
             $this->replaceHandlerForMining($detectedShortcodes);
+            $this->getLogger()->debug(vsprintf('Starting processing shortcodes...', []));
             do_shortcode($string);
-            foreach ($this->getShortcodeAttributes() as $node) {
+            $this->getLogger()->debug(vsprintf('Finished processing shortcodes.', []));
+            foreach ($this->getSubNodes() as $node) {
+                $this->getLogger()->debug(vsprintf('Adding subNode', []));
                 $this->getParams()->getNode()->appendChild($node);
             }
             $this->shortcodeAttributes = [];
@@ -214,7 +281,7 @@ $cDataNode=null;
     }
 
     /**
-     * replaces all shortcode handlers to extract data
+     * Handler for shortcodes to prepare strings for translation
      *
      * @param array       $attributes
      * @param string|null $content
@@ -224,65 +291,88 @@ $cDataNode=null;
      */
     public function shortcodeHandler($attributes, $content = null, $name)
     {
-        // <string> <shortcodeattribute shortcodename="" originalhash="" attributename=""><![CDATA[sdcsd]]></shortcodeattribute> </string>
-
-
-        $preparedAttributes = XmlEncoder::prepareSourceArray($attributes);
-
-
-        foreach ($preparedAttributes as $attribute => $value) {
-            $node = $this->getParams()->getDom()->createElement('shortcodeattribute');
-            $node->setAttribute('shortcode', $name);
-            $node->setAttribute('hash', md5($value));
-            $node->setAttribute('name', $attribute);
-            $node->appendChild(new \DOMCdataSection($value));
-            $this->addShortcodeAttribute($node);
+        if (is_array($attributes)) {
+            $this->getLogger()->debug(
+                vsprintf(
+                    'Got shortcode \'%s\' sending for translation %s',
+                    [
+                        $name,
+                        var_export($attributes, true),
+                    ]
+                )
+            );
+            $preparedAttributes = XmlEncoder::prepareSourceArray($attributes);
+            $this->getLogger()->debug(
+                vsprintf(
+                    'Got filtered shortcodes %s',
+                    [
+                        var_export($preparedAttributes, true),
+                    ]
+                )
+            );
+            foreach ($preparedAttributes as $attribute => $value) {
+                $node = $this->getParams()->getDom()->createElement('shortcodeattribute');
+                $node->setAttribute('shortcode', $name);
+                $node->setAttribute('hash', md5($value));
+                $node->setAttribute('name', $attribute);
+                $node->appendChild(new \DOMCdataSection($value));
+                $this->addSubNode($node);
+            }
+        } else {
+            $this->getLogger()->debug(vsprintf('No attributes found in shortcode %s.', [$name]));
         }
-
-
-        //Bootstrap::DebugPrint($preparedAttributes, true);
-
         $this->maskShortcode($name);
-
-
         if (null !== $content) {
+            $this->getLogger()->debug(vsprintf('Shortcode %s has content, digging deeper...', [$name]));
+
             return do_shortcode($content);
         }
     }
 
-    public function shortcodeApplyerHandler($attributes, $content = null, $name)
+    /**
+     * Applies translation to shortcodes
+     *
+     * @param string      $attr
+     * @param string|null $content
+     * @param string      $name
+     */
+    public function shortcodeApplyerHandler($attr, $content = null, $name)
     {
         $translations = $this->getShortcodeAttributes($name);
 
         if (false !== $translations) {
             $translationPairs = [];
-
             foreach ($translations as $attribute => $value) {
-                if (array_key_exists($attribute, $attributes) &&
-                    reset(array_keys($value)) === md5($attributes[$attribute])
-                ) {
-                    $translationPairs[$attributes[$attribute]] = reset($value);
-
-
-                    //$attributes[$attribute]=reset($value);
+                if (array_key_exists($attribute, $attr) && reset(array_keys($value)) === md5($attr[$attribute])) {
+                    $this->getLogger()->debug(
+                        vsprintf(
+                            'Validated translation of \'%s\' as \'%s\' with hash=%s for shortcode %s',
+                            [
+                                $attr[$attribute],
+                                reset($value),
+                                md5($attr[$attribute]),
+                            ]
+                        )
+                    );
+                    $translationPairs[$attr[$attribute]] = reset($value);
                 }
-
-
             }
-
-            $this->replaceShortcodeAttributeValue($name, $translationPairs);
+            if (0 < count($translationPairs)) {
+                $this->getLogger()->debug(vsprintf('Applying translations...', []));
+                $this->replaceShortcodeAttributeValue($name, $translationPairs);
+            }
 
             if (null !== $content) {
                 return do_action($content);
             }
-
-
+        } else {
+            $this->getLogger()->debug(vsprintf('No translation found for shortcode %s', [$name]));
         }
-
-
     }
 
     /**
+     * Checks if given string has shortcodes
+     *
      * @param string $string
      *
      * @return bool
@@ -292,7 +382,13 @@ $cDataNode=null;
         return preg_match(self::WP_SHORTCODE_REGEXP, $string) > 0;
     }
 
-
+    /**
+     * Returns all detected shortcodes
+     *
+     * @param string $string
+     *
+     * @return array
+     */
     private function getShortcodes($string)
     {
         $matches = [];
@@ -301,11 +397,16 @@ $cDataNode=null;
         return array_key_exists(1, $matches) ? $matches[1] : [];
     }
 
+    /**
+     * Sets the new handler for a set of shortcodes to process them in a native way
+     *
+     * @param array  $shortcodes
+     * @param string $callback
+     */
     private function replaceShortcodeHandler($shortcodes, $callback)
     {
         $activeShortcodeAssignments = $this->getShortcodeAssignments();
         $this->setInitialShortcodeHandlers($activeShortcodeAssignments);
-
         foreach ($shortcodes as $shortcodeName) {
             $activeShortcodeAssignments[$shortcodeName] = [$this, $callback];
         }
@@ -314,102 +415,140 @@ $cDataNode=null;
 
     private function replaceHandlerForMining(array $shortcodeList)
     {
+        $this->getLogger()->debug(
+            vsprintf(
+                'Replacing handler for shortcode mining to %s::%s for shortcodes %s',
+                [
+                    __CLASS__,
+                    'shortcodeHandler',
+                    implode(';', $shortcodeList),
+                ]
+            )
+        );
         $this->replaceShortcodeHandler($shortcodeList, 'shortcodeHandler');
     }
 
     private function replaceHandlerForApplying(array $shortcodeList)
     {
+        $this->getLogger()->debug(
+            vsprintf(
+                'Replacing handler for shortcode applying translation to %s::%s for shortcodes %s',
+                [
+                    __CLASS__,
+                    'shortcodeHandler',
+                    implode(';', $shortcodeList),
+                ]
+            )
+        );
         $this->replaceShortcodeHandler($shortcodeList, 'shortcodeApplyerHandler');
     }
 
+    /**
+     * Restores original shortcode handlers
+     */
     private function restoreShortcodeHandler()
     {
+        $this->getLogger()->debug(vsprintf('Restoring original shortcode handlers', []));
         if (null !== $this->getInitialShortcodeHandlers()) {
             $this->setShortcodeAssignments($this->getInitialShortcodeHandlers());
             $this->setInitialShortcodeHandlers(null);
         }
     }
 
+    /**
+     * Replaces attributes values for given $shortcodeName in the translation
+     *
+     * @param string $shortcodeName
+     * @param string $values
+     */
     private function replaceShortcodeAttributeValue($shortcodeName, $values)
     {
-        $node = $this->getParams()->getNode();
-
+        $node = $this->getNode();
         $initialString = $node->nodeValue;
+        $matches = [];
+        preg_match_all(
+            vsprintf('/%s/', [get_shortcode_regex([$shortcodeName])]),
+            $initialString,
+            $matches
+        );
+        $shortcode = $matches[0][0];
+        $initialShortcode = $shortcode;
+        foreach ($values as $originalText => $translation) {
+            $this->getLogger()->debug(
+                vsprintf(
+                    'Applying shortcode = \'%s\' attribute translation \'%s\' ==> \'%s\'',
+                    [
+                        $shortcodeName,
+                        $originalText,
+                        $translation,
+                    ]
+                )
+            );
+            $shortcode = str_replace($originalText, $translation, $shortcode);
+        }
+        $result = str_replace($initialShortcode, $shortcode, $initialString);
+        self::replaceCData($node, $result);
+    }
 
+    /**
+     * Masks the shortcode by name
+     *
+     * @param string $shortcodeName
+     */
+    private function maskShortcode($shortcodeName)
+    {
+        $this->getLogger()->debug(vsprintf('Preparing to mask shortcode %s.', [$shortcodeName]));
+        $node = $this->getNode();
+        $initialString = $node->nodeValue;
         $matches = [];
         preg_match_all(vsprintf('/%s/', [get_shortcode_regex([$shortcodeName])]), $initialString, $matches);
         $shortcode = $matches[0][0];
-
-        $initialShortcode = $shortcode;
-
-        foreach ($values as $originalText => $translation) {
-            $shortcode = str_replace($originalText, $translation, $shortcode);
-        }
-
-        $result = str_replace($initialShortcode, $shortcode, $initialString);
-
-        $updatedCdata = new \DOMCdataSection($result);
-
-        foreach ($node->childNodes as $cNode) {
-            /**
-             * @var \DOMNode $cNode
-             */
-            if (XML_CDATA_SECTION_NODE === $cNode->nodeType) {
-                $node->removeChild($cNode);
-            }
-        }
-        $node->appendChild($updatedCdata);
-    }
-
-
-    private function maskShortcode($name)
-    {
-        $node = $this->getParams()->getNode();
-
-        $initialString = $node->nodeValue;
-
-        $matches = [];
-        preg_match_all(vsprintf('/%s/', [get_shortcode_regex([$name])]), $initialString, $matches);
-        $shortcode = $matches[0][0];
         $masked = vsprintf('%s%s%s', [self::SMARTLING_SHORTCODE_MASK, $matches[0][0], self::SMARTLING_SHORTCODE_MASK]);
-
         $result = str_replace($shortcode, $masked, $initialString);
-
-        $updatedCdata = new \DOMCdataSection($result);
-
-        foreach ($node->childNodes as $cNode) {
-            /**
-             * @var \DOMNode $cNode
-             */
-            if (XML_CDATA_SECTION_NODE === $cNode->nodeType) {
-                $node->removeChild($cNode);
-            }
-        }
-        $node->appendChild($updatedCdata);
+        self::replaceCData($node, $result);
     }
 
+    /**
+     * Removes smartling masks from the string
+     */
     private function unmaskShortcodes()
     {
-        $string = $this->getParams()->getNode()->nodeValue;
-
-        $string = preg_replace('/##\[/', '[', $string);
-        $string = preg_replace('/\]##/', ']', $string);
-
-        $updatedCdata = new \DOMCdataSection($string);
-
-        $c = $this->getParams()->getNode()->childNodes;
-
-        foreach ($c as $node) {
-            /**
-             * @var \DOMNode $node
-             */
-            if (XML_CDATA_SECTION_NODE === $node->nodeType) {
-                $this->getParams()->getNode()->removeChild($node);
-            }
-
-        }
-        $this->getParams()->getNode()->appendChild($updatedCdata);
+        $this->getLogger()->debug(vsprintf('Removing masking...', []));
+        $node = $this->getNode();
+        $string = $node->nodeValue;
+        $string = preg_replace(vsprintf('/%s\[/', [self::SMARTLING_SHORTCODE_MASK]), ' [', $string);
+        $string = preg_replace(vsprintf('/\]%s/', [self::SMARTLING_SHORTCODE_MASK]), '] ', $string);
+        self::replaceCData($node, $string);
     }
 
+    /**
+     * Searches and replaces CData section with new one
+     *
+     * @param \DOMNode $node
+     * @param string   $string
+     */
+    private static function replaceCData(\DOMNode $node, $string)
+    {
+        $newCdataSection = new \DOMCdataSection($string);
+        self::removeChildrenByType($node, XML_CDATA_SECTION_NODE);
+        $node->appendChild($newCdataSection);
+    }
 
+    /**
+     * Removes all child nodes of given type
+     *
+     * @param \DOMNode $node
+     * @param int      $nodeType
+     */
+    private static function removeChildrenByType(\DOMNode $node, $nodeType)
+    {
+        foreach ($node->childNodes as $childNode) {
+            /**
+             * @var \DOMNode $childNode
+             */
+            if ($nodeType === $childNode->nodeType) {
+                $node->removeChild($childNode);
+            }
+        }
+    }
 }
