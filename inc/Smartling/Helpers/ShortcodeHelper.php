@@ -269,7 +269,8 @@ class ShortcodeHelper implements WPHookInterface
             $this->getLogger()->debug(vsprintf('Finished processing shortcodes.', []));
             foreach ($this->getSubNodes() as $node) {
                 $this->getLogger()->debug(vsprintf('Adding subNode', []));
-                $this->getParams()->getNode()->appendChild($node);
+                $this->getParams()->getDom()->importNode($node, true);
+                $this->getNode()->appendChild($node);
             }
             $this->shortcodeAttributes = [];
             $this->restoreShortcodeHandler();
