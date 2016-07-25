@@ -23,7 +23,6 @@ use Smartling\Processors\EntityProcessor;
  */
 class SubmissionManager extends EntityManagerAbstract
 {
-
     /**
      * The table name
      */
@@ -723,5 +722,19 @@ class SubmissionManager extends EntityManagerAbstract
         }
 
         return $result;
+    }
+
+    /**
+     * @param SubmissionEntity $submission
+     * @param string           $message
+     *
+     * @return SubmissionEntity
+     */
+    public function setErrorMessage(SubmissionEntity $submission, $message)
+    {
+        $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+        $submission->setLastError($message);
+
+        return $this->storeEntity($submission);
     }
 }

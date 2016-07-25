@@ -92,7 +92,7 @@ if (!empty($locales)) {
         <?php } ?>
     </div>
     <div class="smtPostWidget-submitBlock">
-        <?= WPAbstract::submitBlock(); ?>
+        <?= WPAbstract::submitBlock(true); ?>
     </div>
     </div><?php
 } else {

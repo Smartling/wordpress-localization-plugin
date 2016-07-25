@@ -2,7 +2,7 @@
 
 namespace Smartling\WP\Controller;
 
-use Exception;
+use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingDbException;
@@ -254,6 +254,32 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
                             do_action(UploadJob::JOB_HOOK_NAME);
                         }
 
+                        break;
+                    case 'clone':
+                        if (0 < count($locales)) {
+                            foreach ($locales as $blogId => $blogName) {
+
+                                $submission = $core->createForTranslation(
+                                    $this->servedContentType,
+                                    $sourceBlog,
+                                    $originalId,
+                                    (int)$blogId
+                                );
+
+                                $this->getLogger()->info(
+                                    vsprintf(
+                                        self::$MSG_CLONING_CONTENT,
+                                        [
+                                            $this->servedContentType,
+                                            $sourceBlog,
+                                            $originalId,
+                                            (int)$blogId,
+                                            $submission->getTargetLocale(),
+                                        ]
+                                    ));
+                                do_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $submission);
+                            }
+                        }
                         break;
                     case 'download':
                         $targetLocaleIds = array_keys($locales);

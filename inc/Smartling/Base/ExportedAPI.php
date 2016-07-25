@@ -49,6 +49,11 @@ interface ExportedAPI
     const ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION = 'smartling_send_for_translation';
 
     /**
+     * Action that clones content of given SubmissionEntity without translation
+     */
+    const ACTION_SMARTLING_CLONE_CONTENT = 'smartling_clone_content';
+
+    /**
      * Action that downloads translation for given SubmissionEntity
      */
     const ACTION_SMARTLING_DOWNLOAD_TRANSLATION = 'smartling_download_translation';

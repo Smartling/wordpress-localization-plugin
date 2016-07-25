@@ -127,7 +127,7 @@ class LastModifiedCheckJob extends JobAbstract
                 $submissionLastModifiedTimestamp = $submission->getLastModified()->getTimestamp();
                 $actualLastModifiedTimestamp = $lastModifiedDateTime->getTimestamp();
                 if ($actualLastModifiedTimestamp !== $submissionLastModifiedTimestamp) {
-                    $filteredSubmissions[$smartlingLocaleId]=$submission;
+                    $filteredSubmissions[$smartlingLocaleId] = $submission;
                     $submission->setLastModified($lastModifiedDateTime);
                 }
             }
@@ -234,7 +234,9 @@ class LastModifiedCheckJob extends JobAbstract
      */
     public function checkEntityForDownload(SubmissionEntity $entity)
     {
-        if (100 === $entity->getCompletionPercentage()) {
+        if (100 === $entity->getCompletionPercentage()
+            && SubmissionEntity::SUBMISSION_STATUS_CLONED !== $entity->getStatus()
+        ) {
 
             $template = 'Cron Job enqueues content to download queue for submission id = \'%s\' with status = \'%s\' for entity = \'%s\', blog = \'%s\', id = \'%s\', targetBlog = \'%s\', locale = \'%s\'.';
 

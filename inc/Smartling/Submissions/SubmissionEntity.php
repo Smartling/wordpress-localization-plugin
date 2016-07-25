@@ -65,6 +65,11 @@ class SubmissionEntity extends SmartlingEntityAbstract
     const SUBMISSION_STATUS_FAILED = 'Failed';
 
     /**
+     * Submission Status  'Cloned'
+     */
+    const SUBMISSION_STATUS_CLONED = 'Cloned';
+
+    /**
      * @var array Submission Statuses
      */
     public static $submissionStatuses = [
@@ -72,6 +77,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
         self::SUBMISSION_STATUS_IN_PROGRESS,
         self::SUBMISSION_STATUS_COMPLETED,
         self::SUBMISSION_STATUS_FAILED,
+        self::SUBMISSION_STATUS_CLONED,
     ];
 
     public static function getFieldDefinitions()
@@ -111,6 +117,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
             self::SUBMISSION_STATUS_IN_PROGRESS => __(self::SUBMISSION_STATUS_IN_PROGRESS),
             self::SUBMISSION_STATUS_COMPLETED   => __(self::SUBMISSION_STATUS_COMPLETED),
             self::SUBMISSION_STATUS_FAILED      => __(self::SUBMISSION_STATUS_FAILED),
+            self::SUBMISSION_STATUS_CLONED      => __(self::SUBMISSION_STATUS_CLONED),
         ];
     }
 
@@ -300,6 +307,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
             self::SUBMISSION_STATUS_IN_PROGRESS => 'blue',
             self::SUBMISSION_STATUS_COMPLETED   => 'green',
             self::SUBMISSION_STATUS_FAILED      => 'red',
+            self::SUBMISSION_STATUS_CLONED      => 'violet',
         ];
 
         $classes = [
@@ -658,6 +666,10 @@ class SubmissionEntity extends SmartlingEntityAbstract
             $percentage = $this->getCompletedStringCount() / $this->getApprovedStringCount();
         }
         if ($percentage > 1) {
+            $percentage = 1;
+        }
+
+        if (self::SUBMISSION_STATUS_CLONED === $this->getStatus()) {
             $percentage = 1;
         }
 

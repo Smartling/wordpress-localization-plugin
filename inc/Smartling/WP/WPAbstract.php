@@ -217,7 +217,7 @@ abstract class WPAbstract
             ]);
     }
 
-    public static function submitBlock()
+    public static function submitBlock($withCloneButton = false)
     {
         $sendButton = self::sendButton('', 'sub');
 
@@ -233,8 +233,25 @@ abstract class WPAbstract
                 'name'  => 'sub',
             ]);
 
-        $container = HtmlTagGeneratorHelper::tag('div', $sendButton . '&nbsp;' . $downloadButton,
-                                                 ['class' => 'bottom']);
+        $contents = $sendButton . '&nbsp;' . $downloadButton;
+
+        if (true === $withCloneButton) {
+            $cloneButton = HtmlTagGeneratorHelper::tag(
+                'button',
+                HtmlTagGeneratorHelper::tag('span', __('Clone'), []),
+                [
+                    'type'  => 'submit',
+                    'value' => 'clone',
+                    'title' => __('Create a linked clone without sending for translation'),
+                    'class' => 'button button-primary',
+                    'id'    => '',
+                    'name'  => 'sub',
+                ]);
+
+            $contents .= '&nbsp;' . $cloneButton;
+        }
+
+        $container = HtmlTagGeneratorHelper::tag('div', $contents, ['class' => 'bottom']);
 
         return $container;
     }

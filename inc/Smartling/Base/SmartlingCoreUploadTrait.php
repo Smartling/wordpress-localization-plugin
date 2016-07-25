@@ -4,10 +4,8 @@ namespace Smartling\Base;
 use Exception;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
-use Smartling\Helpers\AttachmentHelper;
 use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
-use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -31,6 +29,81 @@ trait SmartlingCoreUploadTrait
     /**
      * @param SubmissionEntity $submission
      *
+     * @return SubmissionEntity
+     */
+    private function renewContentHash(SubmissionEntity $submission)
+    {
+        $content = $this->readContentEntity($submission);
+        $newHash = ContentSerializationHelper::calculateHash($this->getContentIoFactory(), $this->getSiteHelper(), $this->getSettingsManager(), $submission);
+        $submission->setSourceContentHash($newHash);
+        $submission->setOutdated(0);
+        $submission->setSourceTitle($content->getTitle());
+        $submission = $this->getSubmissionManager()->storeEntity($submission);
+
+        return $submission;
+    }
+
+    /**
+     * @param SubmissionEntity $submission
+     *
+     * @return array
+     */
+    private function readSourceContentWithMetadata(SubmissionEntity $submission)
+    {
+        $contentEntity = $this->readContentEntity($submission);
+
+        $source = [
+            'entity' => $contentEntity->toArray(),
+            'meta'   => $this->getMetaForOriginalEntity($submission),
+        ];
+
+        $source['meta'] = $source['meta'] ? : [];
+
+        return $source;
+    }
+
+    /**
+     * @param SubmissionEntity $submission
+     */
+    public function cloneWithoutTranslation(SubmissionEntity $submission)
+    {
+        $this->getLogger()->debug(
+            vsprintf(
+                'Preparing to clone submission id = \'%s\' (blog = \'%s\', content = \'%s\', type = \'%s\').',
+                [
+                    $submission->getId(),
+                    $submission->getSourceBlogId(),
+                    $submission->getSourceId(),
+                    $submission->getContentType(),
+                ]
+            )
+        );
+
+        try {
+            if (null === $submission->getId()) {
+                $submission->getFileUri();
+            }
+
+            $submission = $this->renewContentHash($submission);
+            $submission = $this->prepareTargetEntity($submission, true);
+            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_CLONED);
+            $this->getSubmissionManager()->storeEntity($submission);
+        } catch (EntityNotFoundException $e) {
+            $this->getLogger()->error($e->getMessage());
+            $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent content.');
+        } catch (BlogNotFoundException $e) {
+            $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent blog.');
+            $this->handleBadBlogId($submission);
+        } catch (Exception $e) {
+            $this->getSubmissionManager()
+                ->setErrorMessage($submission, vsprintf('Error occurred: %s', [$e->getMessage()]));
+            $this->getLogger()->error($e->getMessage());
+        }
+    }
+
+    /**
+     * @param SubmissionEntity $submission
+     *
      * @return bool
      */
     public function sendForTranslationBySubmission(SubmissionEntity $submission)
@@ -48,123 +121,64 @@ trait SmartlingCoreUploadTrait
         );
 
         try {
-            $contentEntity = $this->readContentEntity($submission);
-
-            $currentSubmissionHash = ContentSerializationHelper::calculateHash(
-                $this->getContentIoFactory(),
-                $this->getSiteHelper(),
-                $this->getSettingsManager(),
-                $submission
-            );
-
-            $submission->setSourceContentHash($currentSubmissionHash);
-            $submission->setOutdated(0);
-            $submission->setSourceTitle($contentEntity->getTitle());
-
-            $submission = $this->getSubmissionManager()->storeEntity($submission);
-
-
+            $submission = $this->renewContentHash($submission);
             if (null === $submission->getId()) {
                 // generate URI
                 $submission->getFileUri();
-                $submission = $this->getSubmissionManager()
-                                   ->storeEntity($submission);
+                $submission = $this->getSubmissionManager()->storeEntity($submission);
             }
-
-            $source = [
-                'entity' => $contentEntity->toArray(),
-                'meta'   => $contentEntity->getMetadata(),
-            ];
-
-            $source['meta'] = $source['meta'] ? : [];
-
-
+            $source = $this->readSourceContentWithMetadata($submission);
+            $contentEntity = $this->readContentEntity($submission);
             $submission = $this->prepareTargetEntity($submission);
 
-            if (WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT === $submission->getContentType()) {
-                $fileData = $this->getAttachmentFileInfoBySubmission($submission);
-                $sourceFileFsPath = $fileData['source_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
-                $targetFileFsPath = $fileData['target_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
-                $mediaCloneResult = AttachmentHelper::cloneFile($sourceFileFsPath, $targetFileFsPath, true);
-                $result = AttachmentHelper::CODE_SUCCESS === $mediaCloneResult;
-                if (AttachmentHelper::CODE_SUCCESS !== $mediaCloneResult) {
-                    $message = vsprintf('Error %s happened while working with attachment.', [$mediaCloneResult]);
-                    $this->getLogger()
-                         ->error($message);
-                }
-            }
-
-            $this->regenerateTargetThumbnailsBySubmission($submission);
-
-            $params = new BeforeSerializeContentEventParameters($source, $submission, $contentEntity,
-                $source['meta']);
-
+            $params = new BeforeSerializeContentEventParameters($source, $submission, $contentEntity, $source['meta']);
             do_action(ExportedAPI::EVENT_SMARTLING_BEFORE_SERIALIZE_CONTENT, $params);
 
             $this->prepareFieldProcessorValues($submission);
-
             $xml = XmlEncoder::xmlEncode($source);
 
-            $this->getLogger()
-                 ->debug(vsprintf('Serialized fields to XML: %s', [base64_encode($xml),]));
-
+            $this->getLogger()->debug(vsprintf('Serialized fields to XML: %s', [base64_encode($xml),]));
             $this->prepareRelatedSubmissions($submission);
-
             $result = false;
 
             if (false === XmlEncoder::hasStringsForTranslation($xml)) {
                 $this->getLogger()
-                     ->warning(
-                         vsprintf(
-                             'Prepared XML file for submission = \'%s\' has nothing to translate. Setting status to \'%s\'.',
-                             [
-                                 $submission->getId(),
-                                 SubmissionEntity::SUBMISSION_STATUS_FAILED,
-                             ]
-                         )
-                     );
-                $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
-                $submission->setLastError('Nothing is found for translation.');
+                    ->warning(
+                        vsprintf(
+                            'Prepared XML file for submission = \'%s\' has nothing to translate. Setting status to \'%s\'.',
+                            [
+                                $submission->getId(),
+                                SubmissionEntity::SUBMISSION_STATUS_FAILED,
+                            ]
+                        )
+                    );
+                $submission = $this->getSubmissionManager()
+                    ->setErrorMessage($submission, 'Nothing is found for translation.');
             } else {
                 try {
-                    $result = self::SEND_MODE === self::SEND_MODE_FILE
-                        ? $this->sendFile($submission, $xml)
-                        : $this->sendStream($submission, $xml);
-
+                    $result = $this->sendFile($submission, $xml);
                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
-
                 } catch (Exception $e) {
-                    $this->getLogger()
-                         ->error($e->getMessage());
-                    $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
-                    $submission->setLastError(vsprintf('Error occurred: %s',[$e->getMessage()]));
+                    $this->getLogger()->error($e->getMessage());
+                    $this->getSubmissionManager()
+                        ->setErrorMessage($submission, 'Error occurred: %s', [$e->getMessage()]);
                 }
             }
 
-            $submission = $this->getSubmissionManager()
-                               ->storeEntity($submission);
+            $submission = $this->getSubmissionManager()->storeEntity($submission);
 
             return $result;
         } catch (EntityNotFoundException $e) {
-            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
-            $submission->setLastError('Submission references non existent content.');
-            $this->getLogger()
-                 ->error($e->getMessage());
-            $this->getSubmissionManager()
-                 ->storeEntity($submission);
+            $this->getLogger()->error($e->getMessage());
+            $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent content.');
         } catch (BlogNotFoundException $e) {
-            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
-            $submission->setLastError('Submission references non existent blog.');
+            $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent blog.');
             $this->handleBadBlogId($submission);
         } catch (Exception $e) {
-            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
-            $submission->setLastError(vsprintf('Error occurred: %s',[$e->getMessage()]));
-            $this->getLogger()
-                ->error($e->getMessage());
             $this->getSubmissionManager()
-                ->storeEntity($submission);
+                ->setErrorMessage($submission, vsprintf('Error occurred: %s', [$e->getMessage()]));
+            $this->getLogger()->error($e->getMessage());
         }
-
     }
 
     /**
@@ -179,7 +193,7 @@ trait SmartlingCoreUploadTrait
     public function sendForTranslation($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null)
     {
         $submission = $this->prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog,
-            $targetEntity);
+                                                     $targetEntity);
 
         return $this->sendForTranslationBySubmission($submission);
     }

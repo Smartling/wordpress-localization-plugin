@@ -47,6 +47,16 @@ trait SmartlingCoreDownloadTrait
             ];
         }
 
+        if (SubmissionEntity::SUBMISSION_STATUS_CLONED === $entity->getStatus()) {
+            $msg = vsprintf('Triggered download of cloned entity. Target Blog: %s; Target Id: %s', [
+                $entity->getTargetBlogId(),
+                $entity->getTargetId(),
+            ]);
+            $this->getLogger()->warning($msg);
+            return [vsprintf('There is no translation since entity is Cloned, not Translated', []),];
+        }
+
+
         if (0 === $entity->getTargetId()) {
             //Fix for trying to download before send.
             do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $entity);
