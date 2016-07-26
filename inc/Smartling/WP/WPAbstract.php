@@ -329,7 +329,7 @@ abstract class WPAbstract
 
     public static function checkUncheckBlock()
     {
-        $output = "";
+        $output = '';
 
         $check = HtmlTagGeneratorHelper::tag('a', __('Check All'), [
             'href'    => '#',
@@ -375,8 +375,7 @@ abstract class WPAbstract
         /**
          * @var SmartlingCore $ep
          */
-        $ep = Bootstrap::getContainer()
-                       ->get('entrypoint');
+        $ep = Bootstrap::getContainer()->get('entrypoint');
 
         $locales = $ep->getProjectLocales($profile);
 

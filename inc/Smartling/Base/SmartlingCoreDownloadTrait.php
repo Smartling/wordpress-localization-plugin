@@ -33,8 +33,7 @@ trait SmartlingCoreDownloadTrait
                 $entity->getTargetId(),
             ]);
 
-            $this->getLogger()
-                 ->warning($msg);
+            $this->getLogger()->warning($msg);
 
             return [
                 vsprintf(

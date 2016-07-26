@@ -24,7 +24,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
 {
 
     use DetectContentChangeTrait;
-    
+
     const WIDGET_NAME = 'smartling_connector_widget';
 
     const WIDGET_DATA_NAME = 'smartling_post_based_widget';
@@ -66,7 +66,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
 
         return $this->core;
     }
-    
+
     /**
      * add_meta_boxes hook
      *
@@ -224,7 +224,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
                     $locales[$blogId] = $blogName['locale'];
                 }
             }
-            
+
             $core = $this->getCore();
 
             if (count($locales) > 0) {
@@ -318,7 +318,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
                             }
                         }
 
-                        do_action(DownloadTranslationJob::JOB_HOOK_NAME);   
+                        do_action(DownloadTranslationJob::JOB_HOOK_NAME);
                         break;
                 }
             }

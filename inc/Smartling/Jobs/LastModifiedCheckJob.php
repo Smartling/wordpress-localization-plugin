@@ -144,10 +144,10 @@ class LastModifiedCheckJob extends JobAbstract
     protected function processFileUriSet(array $submissions)
     {
         $lastModified = $this->getApiWrapper()->lastModified(reset($submissions));
-        
+
         $submissions = $this->prepareSubmissionList($submissions);
         $submissions = $this->filterSubmissions($lastModified, $submissions);
-        
+
         return $submissions;
     }
 
@@ -161,9 +161,10 @@ class LastModifiedCheckJob extends JobAbstract
         if (0 < count($submissions)) {
             $submissions = $this->getSubmissionManager()->storeSubmissions($submissions);
         }
+
         return $submissions;
     }
-    
+
     /**
      * Checks changes in last-modified field and triggers statusCheck by fileUri if lastModified has changed.
      */
@@ -187,9 +188,9 @@ class LastModifiedCheckJob extends JobAbstract
                 }
 
                 $submissions = $this->storeSubmissions($submissions);
-                
+
                 if (0 < count($submissions)) {
-                    
+
                     try {
                         $this->statusCheck($submissions);
                     } catch (SmartlingNetworkException $e) {
