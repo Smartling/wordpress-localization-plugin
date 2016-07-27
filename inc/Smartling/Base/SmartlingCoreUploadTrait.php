@@ -198,6 +198,33 @@ trait SmartlingCoreUploadTrait
         return $this->sendForTranslationBySubmission($submission);
     }
 
+
+    public function getOrPrepareSubmission($contentType, $sourceBlogId, $sourceEntityId, $targetBlogId, $status = null)
+    {
+        $status = $status ? : SubmissionEntity::SUBMISSION_STATUS_NEW;
+
+        /**
+         * @var SubmissionEntity $submission
+         */
+        $submission = $this->prepareSubmissionEntity($contentType, $sourceBlogId, $sourceEntityId, $targetBlogId);
+
+        $contentEntity = $this->readContentEntity($submission);
+
+        if (null === $submission->getId()) {
+            $submission->setSourceContentHash('');
+            $submission->setSourceTitle($contentEntity->getTitle());
+
+            // generate URI
+            $submission->getFileUri();
+            $submission = $this->getSubmissionManager()->storeEntity($submission);
+        } else {
+            $submission->setStatus($status);
+            $submission->setLastError('');
+        }
+
+        return $this->getSubmissionManager()->storeEntity($submission);
+    }
+
     /**
      * @param string   $contentType
      * @param int      $sourceBlog

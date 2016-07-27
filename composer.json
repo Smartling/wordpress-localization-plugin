@@ -1,42 +1,42 @@
 {
-	"name": "Smartling Wordpress connector",
-	"description": "",
-	"type": "wordpress-plugin",
-	"require": {
-		"php": ">=5.4",
-		"monolog/monolog": "1.17.2",
-		"symfony/dependency-injection": "~2.8",
-		"symfony/config": "~2.8",
-		"symfony/yaml": "~2.8",
-		"smartling/api-sdk-php": "~1.9"
-	},
-	"repositories": [
-		{
-			"type": "vcs",
-			"url": "git@github.com:Smartling/api-sdk-php.git"
-		}
-	],
-	"require-dev": {
-		"phpunit/phpunit": "~4",
-		"fzaninotto/faker": "master-dev"
-	},
-	"config": {
-		"vendor-dir": "inc/third-party"
-	},
-	"autoload-dev": {
-		"psr-4": {
-			"Smartling\\Tests\\": "tests/"
-		}
-	},
-	"autoload": {
-		"psr-0": {
-			"Smartling": "inc/"
-		}
-	},
-	"scripts": {
-		"post-install-cmd": [
-		],
-		"post-update-cmd": [
-		]
-	}
+  "name" :         "Smartling Wordpress connector",
+  "description" :  "",
+  "type" :         "wordpress-plugin",
+  "require" :      {
+    "php" :                          ">=5.4",
+    "monolog/monolog" :              "~1",
+    "symfony/dependency-injection" : "~2.8",
+    "symfony/config" :               "~2.8",
+    "symfony/yaml" :                 "~2.8",
+    "smartling/api-sdk-php" :        "~1.9"
+  },
+  "repositories" : [
+    {
+      "type" : "vcs",
+      "url" :  "git@github.com:Smartling/api-sdk-php.git"
+    }
+  ],
+  "require-dev" :  {
+    "phpunit/phpunit" :  "~4",
+    "fzaninotto/faker" : "master-dev"
+  },
+  "config" :       {
+    "vendor-dir" : "inc/third-party"
+  },
+  "autoload-dev" : {
+    "psr-4" : {
+      "Smartling\\Tests\\" : "tests/"
+    }
+  },
+  "autoload" :     {
+    "psr-0" : {
+      "Smartling" : "inc/"
+    }
+  },
+  "scripts" :      {
+    "post-install-cmd" : [
+    ],
+    "post-update-cmd" :  [
+    ]
+  }
 }

@@ -13,6 +13,7 @@ use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Jobs\UploadJob;
 use Smartling\Queue\Queue;
+use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
@@ -259,11 +260,12 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
                         if (0 < count($locales)) {
                             foreach ($locales as $blogId => $blogName) {
 
-                                $submission = $core->createForTranslation(
+                                $submission = $core->getOrPrepareSubmission(
                                     $this->servedContentType,
                                     $sourceBlog,
                                     $originalId,
-                                    (int)$blogId
+                                    (int)$blogId,
+                                    SubmissionEntity::SUBMISSION_STATUS_CLONED
                                 );
 
                                 $this->getLogger()->info(
