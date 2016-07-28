@@ -50,8 +50,7 @@ trait DetectContentChangeTrait
             )
         );
 
-        $this->getDetectChangesHelper()
-            ->detectChanges($sourceBlogId, $sourceId, $contentType);
+        $this->getDetectChangesHelper()->detectChanges($sourceBlogId, $sourceId, $contentType);
 
         $this->getLogger()->debug(
             vsprintf(

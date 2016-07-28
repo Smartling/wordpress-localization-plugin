@@ -224,7 +224,9 @@ class DetectChangesHelper
         $submissions = $this->getSubmissions($blogId, $contentId, $contentType);
 
         if (0 === count($submissions)) {
-            $this->getLogger()->debug(vsprintf('No submissions found for %s blog=%s, id=%s', [$contentType, $blogId, $contentId]));
+            $this->getLogger()->debug(
+                vsprintf('No submissions found for %s blog=%s, id=%s', [$contentType, $blogId, $contentId])
+            );
 
             return;
         } else {
