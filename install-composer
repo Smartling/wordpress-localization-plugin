@@ -1,0 +1,4 @@
+#!/bin/bash
+php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+php composer-setup.php --install-dir=./inc/third-party/bin --filename=composer --version=1.0.0
+php -r "unlink('composer-setup.php');"
