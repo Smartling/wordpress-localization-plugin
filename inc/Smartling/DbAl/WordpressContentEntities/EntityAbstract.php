@@ -9,7 +9,7 @@ use Smartling\Helpers\WordpressContentTypeHelper;
 
 /**
  * Class EntityAbstract
- * @package inc\Smartling\DbAl\WordpressContentEntities
+ * @package Smartling\DbAl\WordpressContentEntities
  */
 abstract class EntityAbstract
 {
