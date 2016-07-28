@@ -3,6 +3,7 @@
 namespace Smartling\Helpers;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Base\ExportedAPI;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -181,14 +182,27 @@ class DetectChangesHelper
             );
             $submission->setOutdated(SubmissionEntity::FLAG_CONTENT_IS_OUT_OF_DATE);
             if ($needUpdateStatus) {
+
+                switch ($submission->getStatus()) {
+                    case SubmissionEntity::SUBMISSION_STATUS_CLONED:
+                        $newStatus = SubmissionEntity::SUBMISSION_STATUS_CLONED;
+                        do_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $submission);
+                        break;
+                    default:
+                        $newStatus = SubmissionEntity::SUBMISSION_STATUS_NEW;
+                        break;
+                }
+
                 $this->getLogger()->debug(
                     vsprintf(
                         'Submission id=%s is Outdated and its status is changed to %s',
-                        [$submission->getId(), SubmissionEntity::SUBMISSION_STATUS_NEW]
+                        [$submission->getId(), $newStatus]
                     )
                 );
-                $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+                $submission->setStatus($newStatus);
                 $submission->setLastError('');
+
+
             }
         } else {
             $this->getLogger()->debug(
