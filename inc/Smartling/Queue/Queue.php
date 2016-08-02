@@ -83,7 +83,7 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
 
     private function testValueToBeEnqueued(array $value)
     {
-        return $value === json_decode(json_encode($value));
+        return $value === json_decode(json_encode($value), true);
     }
 
     private function testQueue($queue)
