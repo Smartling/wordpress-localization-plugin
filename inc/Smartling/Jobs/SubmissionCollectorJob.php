@@ -58,9 +58,9 @@ class SubmissionCollectorJob extends JobAbstract
                 $submissionIds = [];
 
                 foreach ($submissionList as $submission) {
-                    $submissionIds = $submission->getId();
+                    $submissionIds[] = $submission->getId();
                 }
-                
+
                 $this->getQueue()
                     ->enqueue([$fileUri => $submissionIds], Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE);
             }
