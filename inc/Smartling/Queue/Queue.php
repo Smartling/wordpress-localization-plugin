@@ -237,7 +237,7 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
                 $id = $this->extractValue($row, 'id');
                 $payload = $this->extractValue($row, 'payload');
 
-                $value = json_decode($payload);
+                $value = json_decode($payload, true);
 
                 $this->delete($id, $queue);
 
