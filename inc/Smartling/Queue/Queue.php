@@ -83,7 +83,15 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
 
     private function testValueToBeEnqueued(array $value)
     {
-        return $value === json_decode(json_encode($value), true);
+        $res = $value === json_decode(json_encode($value), true);
+        if (!$res) {
+            $message = vsprintf('Error: $value !== json_decode(json_encode($value)). Encoded string: %s', [
+              json_encode($value),
+            ]);
+            $this->logger->error($message);
+        }
+
+        return $res;
     }
 
     private function testQueue($queue)
