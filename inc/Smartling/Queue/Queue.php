@@ -195,21 +195,15 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
     /**
      * Adds an array to the queue
      *
-     * @param array       $value
-     * @param string|null $queue
+     * @param array  $value
+     * @param string $queue
      */
-    public function enqueue(array $value, $queue = null)
+    public function enqueue(array $value, $queue)
     {
-        if (is_null($queue)) {
-            $queue = self::DEFAULT_QUEUE_NAME;
-        }
-
         if ($this->testValueToBeEnqueued($value) && $this->testQueue($queue)) {
             $encodedValue = json_encode($value);
             $this->set($encodedValue, $queue);
         }
-
-
     }
 
     private function extractValue(array $array, $key)
@@ -226,16 +220,12 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
     }
 
     /**
-     * @param string|null $queue
+     * @param string $queue
      *
      * @return array|false if queue is empty
      */
-    public function dequeue($queue = null)
+    public function dequeue($queue)
     {
-        if (is_null($queue)) {
-            $queue = self::DEFAULT_QUEUE_NAME;
-        }
-
         if ($this->testQueue($queue)) {
             $result = $this->get($queue);
 

@@ -15,17 +15,17 @@ interface QueueInterface
     /**
      * Adds an array to the queue
      *
-     * @param array       $value
-     * @param string|null $queue
+     * @param array  $value
+     * @param string $queue
      */
-    public function enqueue(array $value, $queue = null);
+    public function enqueue(array $value, $queue);
 
     /**
-     * @param string|null $queue
+     * @param string $queue
      *
      * @return array
      */
-    public function dequeue($queue = null);
+    public function dequeue($queue);
 
     /**
      * @param string|null $queue
