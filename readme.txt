@@ -57,7 +57,7 @@ Additional information on the Smartling Connector for WordPress can be found [th
 
 = 1.2.3 =
 * Minor refactoring and added more logging.
-* Fixed case when translation is not downloaded in case it's status is broken in DB (progress = 100% but status = "In Progress").
+* Fixed case when translation is not downloaded in case its status is broken in DB (progress = 100% but status = "In Progress").
 
 = 1.2.2 =
 * Fixed issue with checking translation progress by cron job.
