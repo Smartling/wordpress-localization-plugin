@@ -129,6 +129,13 @@ class LastModifiedCheckJob extends JobAbstract
                 if ($actualLastModifiedTimestamp !== $submissionLastModifiedTimestamp) {
                     $filteredSubmissions[$smartlingLocaleId] = $submission;
                     $submission->setLastModified($lastModifiedDateTime);
+                } elseif ($submission->getStatus() === SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS
+                  && $submission->getCompletionPercentage() === 100) {
+                    // We need this statement for the case, when something went wrong, and
+                    // submission appeared in a situation with Progress == 100% and Status == "In progress"
+                    // We need to download such submission at some point. But it won'd happen
+                    // without this fix
+                    $filteredSubmissions[$smartlingLocaleId] = $submission;
                 }
             }
         }
