@@ -12,8 +12,6 @@ use Smartling\Helpers\QueryBuilder\QueryBuilder;
 
 class Queue extends SmartlingEntityAbstract implements QueueInterface
 {
-    const DEFAULT_QUEUE_NAME = 'default_queue';
-
     /**
      * @var SmartlingToCMSDatabaseAccessWrapperInterface
      */
@@ -104,7 +102,7 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
         return $this->getDbal()->completeTableName(self::getTableName());
     }
 
-    private function set($value, $queue = self::DEFAULT_QUEUE_NAME)
+    private function set($value, $queue)
     {
         $query = QueryBuilder::buildInsertQuery(
             $this->getRealTableName(),
@@ -127,7 +125,7 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
         }
     }
 
-    private function delete($id, $queue = self::DEFAULT_QUEUE_NAME)
+    private function delete($id, $queue)
     {
         $id = (int)$id;
 
@@ -157,7 +155,7 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
 
     }
 
-    private function get($queue = self::DEFAULT_QUEUE_NAME)
+    private function get($queue)
     {
         $conditionBlock = ConditionBlock::getConditionBlock();
 
