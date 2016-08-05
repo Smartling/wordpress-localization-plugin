@@ -3,7 +3,7 @@ Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.3
 Tested up to: 4.5.3
-Stable tag: 1.2.2
+Stable tag: 1.2.3
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -54,6 +54,10 @@ Additional information on the Smartling Connector for WordPress can be found [th
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+
+= 1.2.3 =
+* Minor refactoring and added more logging.
+* Fixed case when translation is not downloaded in case it's status is broken in DB (progress = 100% but status = "In Progress").
 
 = 1.2.2 =
 * Fixed issue with checking translation progress by cron job.
