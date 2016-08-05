@@ -52,7 +52,7 @@ trait SmartlingCoreDownloadTrait
                 $entity->getTargetId(),
             ]);
             $this->getLogger()->warning($msg);
-            return [vsprintf('There is no translation since entity is Cloned, not Translated', []),];
+            return ['There is no translation since entity is Cloned, not Translated'];
         }
 
 
@@ -64,7 +64,7 @@ trait SmartlingCoreDownloadTrait
         $messages = [];
 
         try {
-            
+
             $data = $this->getApiWrapper()->downloadFile($entity);
             $this->getLogger()->debug(vsprintf('Downloaded file for submission id = \'%s\'. Dump: %s',
                      [$entity->getId(), base64_encode($data)]));
