@@ -2,6 +2,7 @@
 namespace Smartling\Base;
 
 use Exception;
+use Smartling\Queue\Queue;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\MenuItemEntity;
 use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
@@ -766,7 +767,7 @@ class SmartlingCore extends SmartlingCoreAbstract
 
             $this->getLogger()->info($message);
 
-            $this->getQueue()->enqueue($entity->toArray(false), 'download-queue');
+            $this->getQueue()->enqueue([$entity->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
         }
     }
 
