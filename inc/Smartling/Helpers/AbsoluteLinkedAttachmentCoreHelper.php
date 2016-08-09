@@ -95,7 +95,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
         $translatedUrl = $this->getCore()->getAttachmentAbsolutePathBySubmission($submission);
 
         $result = $translatedUrl;
-        
+
         if ($this->urlIsThumbnail($originalUrl)) {
 
             $originalPathInfo = pathinfo($this->urlToFile($originalUrl));
@@ -144,7 +144,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
                     $newPath,
                 ]));
             } else {
-                $this->getLogger()->error(vsprintf('No \'attachment\' found for url=%s', [$path]));
+                $this->getLogger()->info(vsprintf('No \'attachment\' found for url=%s', [$path]));
             }
         }
     }
