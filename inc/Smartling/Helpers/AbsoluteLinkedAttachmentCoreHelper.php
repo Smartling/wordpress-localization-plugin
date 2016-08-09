@@ -188,12 +188,12 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
      */
     private function urlToFile($url)
     {
-        $parsedUrl = parse_url($url);
+        $parsedUrlPath = parse_url($url, PHP_URL_PATH);
 
         $sourceUploadInfo = $this->getCore()->getUploadFileInfo($this->getParams()->getSubmission()->getSourceBlogId());
 
         $relativePath = $this->getCore()->getFullyRelateAttachmentPath($this->getParams()
-                                                                           ->getSubmission(), $parsedUrl['path']);
+                                                                           ->getSubmission(), $parsedUrlPath);
 
         $localOriginalPath = $sourceUploadInfo['basedir'] . DIRECTORY_SEPARATOR . $relativePath;
 
