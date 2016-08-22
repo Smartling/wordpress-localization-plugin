@@ -37,8 +37,6 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
         add_action('admin_menu', [$this, 'menu']);
         add_action('network_admin_menu', [$this, 'menu']);
         add_action('admin_post_smartling_configuration_profile_save', [$this, 'save']);
-        add_action('admin_post_smartling_run_cron', [$this, 'run_cron']);
-        add_action('admin_post_smartling_download_log_file', [$this, 'download_log']);
     }
 
     public function menu()
