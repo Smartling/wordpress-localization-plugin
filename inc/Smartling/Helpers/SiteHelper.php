@@ -4,16 +4,13 @@ namespace Smartling\Helpers;
 
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
-use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 
 /**
  * Class SiteHelper
- *
  * Helps to manipulate with Sites and Blogs
- *
  * @package Smartling\Helpers
  */
 class SiteHelper
@@ -74,11 +71,11 @@ class SiteHelper
     private function cacheSites()
     {
         if (empty(self::$_siteCache)) {
-            $sites = wp_get_sites();
-
+            $sites = get_sites();
             foreach ($sites as $site) {
-                self::$_siteCache[$site['site_id']][] = $site['blog_id'];
-                self::$_flatBlogIdCache[] = (int)$site['blog_id'];
+
+                self::$_siteCache[$site->site_id][] = $site->blog_id;
+                self::$_flatBlogIdCache[] = (int)$site->blog_id;
             }
         }
     }
@@ -89,7 +86,7 @@ class SiteHelper
      */
     public function listSites()
     {
-        !function_exists('wp_get_sites')
+        !function_exists('get_sites')
         && $this->directRunDetectedFallback();
 
         $this->cacheSites();
@@ -106,7 +103,7 @@ class SiteHelper
      */
     public function listBlogs($siteId = 1)
     {
-        !function_exists('wp_get_sites')
+        !function_exists('get_sites')
         && $this->directRunDetectedFallback();
 
         $this->cacheSites();
