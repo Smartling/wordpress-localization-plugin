@@ -459,11 +459,12 @@ class ShortcodeHelper implements WPHookInterface
                 if (array_key_exists($attribute, $attr) && reset(array_keys($value)) === md5($attr[$attribute])) {
                     $this->getLogger()->debug(
                         vsprintf(
-                            'Validated translation of \'%s\' as \'%s\' with hash=%s for shortcode %s',
+                            'Validated translation of \'%s\' as \'%s\' with hash=%s for shortcode \'%s\'',
                             [
                                 $attr[$attribute],
                                 reset($value),
                                 md5($attr[$attribute]),
+                                $name,
                             ]
                         )
                     );
