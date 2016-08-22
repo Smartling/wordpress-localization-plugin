@@ -3,6 +3,7 @@
 namespace Smartling\Base;
 
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
+use Smartling\Exception\SmartlingWpDataIntegrityException;
 use Smartling\Helpers\AttachmentHelper;
 use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
@@ -323,6 +324,7 @@ trait SmartlingCoreTrait
      * @param SubmissionEntity $submission
      *
      * @return array
+     * @throws SmartlingWpDataIntegrityException
      */
     private function getAttachmentFileInfoBySubmission(SubmissionEntity $submission)
     {
@@ -330,20 +332,34 @@ trait SmartlingCoreTrait
         $sourceSiteUploadInfo = $this->getUploadDirForSite($submission->getSourceBlogId());
         $targetSiteUploadInfo = $this->getUploadDirForSite($submission->getTargetBlogId());
         $sourceMetadata = $this->getMetaForOriginalEntity($submission);
-        $relativePath = reset($sourceMetadata['_wp_attached_file']);
-        $result = [
-            'uri'                => $info->guid,
-            'relative_path'      => $relativePath,
-            'source_path_prefix' => $sourceSiteUploadInfo['basedir'],
-            'target_path_prefix' => $targetSiteUploadInfo['basedir'],
-            'base_url_target'    => $targetSiteUploadInfo['baseurl'],
-            'filename'           => vsprintf('%s.%s', [
-                pathinfo($relativePath, PATHINFO_FILENAME),
-                pathinfo($relativePath, PATHINFO_EXTENSION),
-            ]),
-        ];
+        if (array_key_exists('_wp_attached_file', $sourceMetadata) && is_array($sourceMetadata['_wp_attached_file'])) {
+            $relativePath = reset($sourceMetadata['_wp_attached_file']);
+            $result = [
+                'uri'                => $info->guid,
+                'relative_path'      => $relativePath,
+                'source_path_prefix' => $sourceSiteUploadInfo['basedir'],
+                'target_path_prefix' => $targetSiteUploadInfo['basedir'],
+                'base_url_target'    => $targetSiteUploadInfo['baseurl'],
+                'filename'           => vsprintf('%s.%s', [
+                    pathinfo($relativePath, PATHINFO_FILENAME),
+                    pathinfo($relativePath, PATHINFO_EXTENSION),
+                ]),
+            ];
 
-        return $result;
+            return $result;
+        }
+        throw new SmartlingWpDataIntegrityException(
+            vsprintf(
+                'Seems like Wordpress has mess in the database, metadata (key=\'%s\') is missing for submission=\'%s\' (content-type=\'%s\', source blog=\'%s\', id=\'%s\')',
+                [
+                    '_wp_attached_file',
+                    $submission->getId(),
+                    $submission->getContentType(),
+                    $submission->getSourceBlogId(),
+                    $submission->getSourceId(),
+                ]
+            )
+        );
     }
 
 }

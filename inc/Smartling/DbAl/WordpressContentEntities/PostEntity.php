@@ -344,7 +344,7 @@ class PostEntity extends EntityAbstract
     {
         $meta = $this->getMetadata();
 
-        if (array_key_exists($key, $meta)) {
+        if (is_array($meta) && array_key_exists($key, $meta)) {
             return $value == reset($meta[$key]);
         } else {
             return false;
