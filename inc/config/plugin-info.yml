@@ -1,4 +1,4 @@
 parameters:
   plugin.name: smartling-connector
-  plugin.version: 1.2.4
+  plugin.version: 1.2.5
   plugin.domain: %plugin.name%
