@@ -286,6 +286,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
             if (is_array($submissions) && count($locales) > 0) {
                 foreach ($submissions as $submission) {
                     list($id, $type) = explode('-', $submission);
+                    $type = $this->getContentTypeFilterValue();
                     $curBlogId = $this->getProfile()
                                       ->getOriginalBlogId()
                                       ->getBlogId();
@@ -385,7 +386,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
                         ->find([
                                    'source_blog_id' => $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
                                    'source_id'      => $row['id'],
-                                   'content_type'   => $row['type'],
+                                   'content_type'   => $this->getContentTypeFilterValue(),
                                ]
                         );
                 } else {

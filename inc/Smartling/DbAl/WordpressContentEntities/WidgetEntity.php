@@ -28,7 +28,7 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  *
  * @package Smartling\DbAl\WordpressContentEntities
  */
-class WidgetEntity extends EntityAbstract
+class WidgetEntity extends VirtualEntityAbstract
 {
 
     /**
