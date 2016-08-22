@@ -49,7 +49,7 @@ class AttachmentHelper
     public static function cloneFile($originalFile, $targetPath, $overwrite = false)
     {
         $result = self::CODE_SUCCESS;
-        if (!is_readable($originalFile)) {
+        if (!file_exists($originalFile) || !is_file($originalFile) || !is_readable($originalFile)) {
             $result |= self::CODE_CANNOT_ACCESS_SOURCE_FILE;
         }
         if (!self::buildPath($targetPath)) {
@@ -63,7 +63,7 @@ class AttachmentHelper
             }
         }
         if (self::CODE_SUCCESS === $result) {
-            if (false === copy($originalFile, $targetFile)) {
+            if (is_dir($originalFile) || false === copy($originalFile, $targetFile)) {
                 $result |= self::CODE_FILE_NOT_COPIED;
             }
         }
