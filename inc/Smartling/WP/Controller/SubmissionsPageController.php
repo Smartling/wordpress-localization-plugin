@@ -4,7 +4,7 @@ namespace Smartling\WP\Controller;
 
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Queue\Queue;
-use Smartling\WP\View\SubmissionTableWidget;
+use Smartling\WP\Table\SubmissionTableWidget;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 

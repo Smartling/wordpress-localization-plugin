@@ -1,6 +1,6 @@
 <?php
 use Smartling\Helpers\UiMessageHelper;
-use Smartling\WP\View\SubmissionTableWidget;
+use Smartling\WP\Table\SubmissionTableWidget;
 
 /**
  * @var WPAbstract $this
@@ -42,6 +42,7 @@ $data = $this->getViewData();
                     <?= $submissionsTable->contentTypeSelectRender(); ?>
                     <?= $submissionsTable->statusSelectRender(); ?>
                     <?= $submissionsTable->stateSelectRender(); ?>
+                    <?= $submissionsTable->targetLocaleSelectRender(); ?>
                     <?= $submissionsTable->renderSubmitButton(__('Apply Filter')); ?>
                 </form>
                 </p>

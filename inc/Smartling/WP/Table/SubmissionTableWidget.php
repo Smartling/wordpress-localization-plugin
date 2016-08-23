@@ -1,6 +1,6 @@
 <?php
 
-namespace Smartling\WP\View;
+namespace Smartling\WP\Table;
 
 use Psr\Log\LoggerInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
@@ -18,7 +18,7 @@ use Smartling\WP\Controller\SmartlingListTable;
 
 /**
  * Class SubmissionTableWidget
- * @package Smartling\WP\View
+ * @package Smartling\WP\Table
  */
 class SubmissionTableWidget extends SmartlingListTable
 {
@@ -40,6 +40,9 @@ class SubmissionTableWidget extends SmartlingListTable
 
 
     const SUBMISSION_OUTDATE_STATE = 'state';
+
+
+    const SUBMISSION_TARGET_LOCALE = 'target-locale';
 
     /**
      * @var LoggerInterface
@@ -107,6 +110,7 @@ class SubmissionTableWidget extends SmartlingListTable
         self::CONTENT_TYPE_SELECT_ELEMENT_NAME      => 'any',
         self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME => null,
         self::SUBMISSION_OUTDATE_STATE              => 'any',
+        self::SUBMISSION_TARGET_LOCALE              => 'any',
     ];
 
     private $_settings = ['singular' => 'submission', 'plural' => 'submissions', 'ajax' => false,];
@@ -301,6 +305,15 @@ class SubmissionTableWidget extends SmartlingListTable
         return 'any' === $value ? null : (int)$value;
     }
 
+    /**
+     * @return int|null
+     */
+    private function getTargetLocaleFilterValue()
+    {
+        $value = $this->getFormElementValue(self::SUBMISSION_TARGET_LOCALE, $this->defaultValues[self::SUBMISSION_TARGET_LOCALE]);
+
+        return 'any' === $value ? null : (int)$value;
+    }
 
     /**
      * @inheritdoc
@@ -321,17 +334,19 @@ class SubmissionTableWidget extends SmartlingListTable
 
         $outdatedFlag = $this->getOutdatedFlagFilterValue();
 
+        $targetLocale = $this->getTargetLocaleFilterValue();
+
         $searchText = $this->getFromSource('s', '');
 
         if (empty($searchText)) {
-            $data = $this->manager->getEntities($contentTypeFilterValue, $statusFilterValue, $outdatedFlag, $this->getSortingOptions(), $pageOptions, $total);
+            $data = $this->manager->getEntities($contentTypeFilterValue, $statusFilterValue, $outdatedFlag, $this->getSortingOptions(), $pageOptions, $targetLocale, $total);
         } else {
             $data = $this->manager->search(
                 $searchText,
                 [
                     'source_title',
                     'source_id',
-                    'file_uri'
+                    'file_uri',
                 ],
                 $contentTypeFilterValue,
                 $statusFilterValue,
@@ -429,6 +444,36 @@ class SubmissionTableWidget extends SmartlingListTable
         $html = HtmlTagGeneratorHelper::tag('label', __('Content Status'), ['for' => $this->buildHtmlTagName($controlName),]) .
                 HtmlTagGeneratorHelper::tag('select', HtmlTagGeneratorHelper::renderSelectOptions($value, $states), ['id'   => $this->buildHtmlTagName($controlName),
                                                                                                                      'name' => $this->buildHtmlTagName($controlName),]);
+
+        return $html;
+    }
+
+    /**
+     * @return string
+     */
+    public function targetLocaleSelectRender()
+    {
+        $controlName = self::SUBMISSION_TARGET_LOCALE;
+
+        $siteHelper = $this->entityHelper->getSiteHelper();
+        $locales = [];
+        foreach ($siteHelper->listBlogs() as $blogId) {
+            try {
+                $locales[$blogId] = $siteHelper->getBlogLabelById($this->entityHelper->getConnector(), $blogId);
+            } catch (BlogNotFoundException $e) {
+            }
+        }
+        $locales['any'] = __('Any');
+        $value = $this->getFormElementValue($controlName, $this->defaultValues[$controlName]);
+        $html = HtmlTagGeneratorHelper::tag(
+                'label',
+                __('Target Site'),
+                ['for' => $this->buildHtmlTagName($controlName)]
+            ) . HtmlTagGeneratorHelper::tag(
+                'select',
+                HtmlTagGeneratorHelper::renderSelectOptions($value, $locales),
+                ['id' => $this->buildHtmlTagName($controlName), 'name' => $this->buildHtmlTagName($controlName)]
+            );
 
         return $html;
     }

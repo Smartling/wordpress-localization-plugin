@@ -139,8 +139,10 @@ class SubmissionManager extends EntityManagerAbstract
     /**
      * @param null       $contentType
      * @param null       $status
+     * @param null       $outdatedFlag
      * @param array      $sortOptions
      * @param null|array $pageOptions
+     * @param null|int   $targetBlogId
      * @param int        $totalCount (reference)
      *
      * @return array of SubmissionEntity or empty array
@@ -151,16 +153,25 @@ class SubmissionManager extends EntityManagerAbstract
      * or null if no pagination needed
      * e.g.: array('limit' => 20, 'page' => 1)
      */
-    public function getEntities($contentType = null, $status = null, $outdatedFlag = null, array $sortOptions = [], $pageOptions = null, & $totalCount = 0)
+    public function getEntities($contentType = null, $status = null, $outdatedFlag = null, array $sortOptions = [], $pageOptions = null, $targetBlogId = null, & $totalCount = 0)
     {
         $validRequest = $this->validateRequest($contentType, $sortOptions, $pageOptions);
 
         $result = [];
 
         if ($validRequest) {
-            $dataQuery = $this->buildQuery($contentType, $status, $outdatedFlag, $sortOptions, $pageOptions);
 
-            $countQuery = $this->buildCountQuery($contentType, $status, $outdatedFlag);
+            if (null !== $targetBlogId) {
+                $block = ConditionBlock::getConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
+                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'target_blog_id', [$targetBlogId]);
+                $block->addCondition($condition);
+            } else {
+                $block = null;
+            }
+
+            $dataQuery = $this->buildQuery($contentType, $status, $outdatedFlag, $sortOptions, $pageOptions, $block);
+
+            $countQuery = $this->buildCountQuery($contentType, $status, $outdatedFlag, $block);
 
             $totalCount = $this->getDbal()->fetch($countQuery);
 
@@ -307,7 +318,7 @@ class SubmissionManager extends EntityManagerAbstract
 
         $whereOptions = null;
 
-        if (!is_null($contentType) || !is_null($status) || !is_null($outdatedFlag)) {
+        if (null !== $contentType || null !== $status || null !== $outdatedFlag || null !== $baseCondition) {
             $whereOptions = ConditionBlock::getConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
             if ($baseCondition instanceof ConditionBlock) {
                 $whereOptions->addConditionBlock($baseCondition);
@@ -421,7 +432,7 @@ class SubmissionManager extends EntityManagerAbstract
 
         $whereOptions = null;
 
-        if (!is_null($contentType) || !is_null($status) || !is_null($outdatedFlag)) {
+        if (null !== $contentType || null !== $status || null !== $outdatedFlag || null !== $baseCondition) {
             $whereOptions = ConditionBlock::getConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
             if ($baseCondition instanceof ConditionBlock) {
                 $whereOptions->addConditionBlock($baseCondition);
