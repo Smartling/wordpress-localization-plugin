@@ -8,6 +8,7 @@ use Smartling\Exception\MultilingualPluginNotFoundException;
 use Smartling\Exception\SmartlingBootException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\SchedulerHelper;
+use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPInstallableInterface;
@@ -260,6 +261,15 @@ class Bootstrap
 
             self::getLogger()->critical('Boot :: ' . $mainMessage);
             DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
+        } else {
+            $data = SimpleStorageHelper::get('state_modules', false);
+            $advTranslatorKey = 'class-Mlp_Advanced_Translator';
+            if (is_array($data) && array_key_exists($advTranslatorKey, $data) && 'off' !== $data[$advTranslatorKey]) {
+                $msg = '<strong>Advanced Translator</strong> feature of Multilingual Press plugin is currently turned on.<br/>
+ Please turn it off to use Smartling-connector plugin. <br/> Use <a href="/wp-admin/network/settings.php?page=mlp"><strong>this link</strong></a> to visit Multilingual Press network settings page.';
+                self::getLogger()->critical('Boot :: ' . $msg);
+                DiagnosticsHelper::addDiagnosticsMessage($msg, true);
+            }
         }
     }
 
