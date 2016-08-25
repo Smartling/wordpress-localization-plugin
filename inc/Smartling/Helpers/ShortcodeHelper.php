@@ -340,8 +340,8 @@ class ShortcodeHelper implements WPHookInterface
         $this->getLogger()->debug(vsprintf('Finished processing shortcodes.', []));
         foreach ($this->getSubNodes() as $node) {
             $this->getLogger()->debug(vsprintf('Adding subNode', []));
-            $this->getParams()->getDom()->importNode($node, true);
-            $this->getNode()->appendChild($node);
+            $nodeCopy = $this->getParams()->getDom()->importNode($node, true);
+            $this->getNode()->appendChild($nodeCopy);
         }
         $this->shortcodeAttributes = [];
         $this->restoreShortcodeHandler();
@@ -456,7 +456,8 @@ class ShortcodeHelper implements WPHookInterface
         if (false !== $translations) {
             $translationPairs = [];
             foreach ($translations as $attribute => $value) {
-                if (array_key_exists($attribute, $attr) && reset(array_keys($value)) === md5($attr[$attribute])) {
+                $_vals = array_keys($value);
+                if (array_key_exists($attribute, $attr) && reset($_vals) === md5($attr[$attribute])) {
                     $this->getLogger()->debug(
                         vsprintf(
                             'Validated translation of \'%s\' as \'%s\' with hash=%s for shortcode \'%s\'',

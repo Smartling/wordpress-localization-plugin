@@ -228,7 +228,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
 
             $core = $this->getCore();
 
-            if (count($locales) > 0) {
+            if (array_key_exists('sub', $_POST) && count($locales) > 0) {
                 switch ($_POST['sub']) {
                     case 'upload':
                         if (0 < count($locales)) {

@@ -332,11 +332,11 @@ class XmlEncoder
     private static function rowToXMLNode(DOMDocument $document, $name, $value, & $keySettings)
     {
         $node = $document->createElement(self::XML_STRING_NODE_NAME);
-        $node->appendChild(new DOMAttr('name', $name));
+        $node->setAttributeNode(new DOMAttr('name', $name));
         foreach ($keySettings as $key => $fields) {
             foreach ($fields as $field) {
                 if (false !== strpos($name, $field)) {
-                    $node->appendChild(new DOMAttr('key', $key));
+                    $node->setAttributeNode(new DOMAttr('key', $key));
                 }
             }
         }
