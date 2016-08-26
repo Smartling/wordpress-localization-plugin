@@ -236,7 +236,7 @@ class SubmissionCollectorJobTest extends \PHPUnit_Framework_TestCase
             $submissionIds = [];
 
             foreach ($submissions as $submissionEntity) {
-                $submissionIds = $submissionEntity->getId();
+                $submissionIds[] = $submissionEntity->getId();
             }
 
             $this->getQueue()
