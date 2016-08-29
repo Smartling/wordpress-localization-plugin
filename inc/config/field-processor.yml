@@ -93,6 +93,8 @@ parameters:
         - '_menu_item_type'
         - '_wp_attached_file'
         - 'file'
+        - 'align'
+        - 'class'
         ### Widget fields
         - 'bar'
         - 'widgetType'
