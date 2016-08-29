@@ -402,9 +402,9 @@ class ShortcodeHelper implements WPHookInterface
             );
             foreach ($preparedAttributes as $attribute => $value) {
                 $node = $this->getParams()->getDom()->createElement('shortcodeattribute');
-                $node->setAttribute('shortcode', $name);
-                $node->setAttribute('hash', md5($value));
-                $node->setAttribute('name', $attribute);
+                $node->setAttributeNode(new \DOMAttr('shortcode', $name));
+                $node->setAttributeNode(new \DOMAttr('hash', md5($value)));
+                $node->setAttributeNode(new \DOMAttr('name', $attribute));
                 $node->appendChild(new \DOMCdataSection($value));
                 $this->addSubNode($node);
             }
@@ -435,7 +435,8 @@ class ShortcodeHelper implements WPHookInterface
         $node = $this->getNode();
         $initialString = $node->nodeValue;
         $matches = [];
-        preg_match_all(vsprintf('/(?<!%s)%s/', [self::SMARTLING_SHORTCODE_MASK, get_shortcode_regex([$shortcodeName])]), $initialString, $matches);
+        preg_match_all(vsprintf('/(?<!%s)%s/', [self::SMARTLING_SHORTCODE_MASK,
+                                                get_shortcode_regex([$shortcodeName])]), $initialString, $matches);
         $shortcode = $matches[0][0];
         $masked = vsprintf('%s%s%s', [self::SMARTLING_SHORTCODE_MASK, $matches[0][0], self::SMARTLING_SHORTCODE_MASK]);
         $result = str_replace($shortcode, $masked, $initialString);
@@ -498,35 +499,41 @@ class ShortcodeHelper implements WPHookInterface
      * Replaces attributes values for given $shortcodeName in the translation
      *
      * @param string $shortcodeName
-     * @param string $values
+     * @param array  $values
      */
     private function replaceShortcodeAttributeValue($shortcodeName, $values)
     {
         $node = $this->getNode();
         $initialString = $node->nodeValue;
         $matches = [];
-        preg_match_all(
-            vsprintf('/%s/', [get_shortcode_regex([$shortcodeName])]),
-            $initialString,
-            $matches
-        );
-        $shortcode = $matches[0][0];
-        $initialShortcode = $shortcode;
-        foreach ($values as $originalText => $translation) {
-            $this->getLogger()->debug(
-                vsprintf(
-                    'Applying shortcode = \'%s\' attribute translation \'%s\' ==> \'%s\'',
-                    [
-                        $shortcodeName,
-                        $originalText,
-                        $translation,
-                    ]
-                )
-            );
-            $shortcode = str_replace($originalText, $translation, $shortcode);
+        preg_match_all(vsprintf('/%s/', [get_shortcode_regex([$shortcodeName])]), $initialString, $matches);
+        if (array_key_exists(0, $matches) && is_array($matches[0])) {
+            $shortcodes = &$matches[0];
+            /**
+             * @var array $shortcodes
+             */
+            foreach ($shortcodes as $shortcodeString) {
+                $initialShortcodeString = $shortcodeString;
+                foreach ($values as $originalText => $translation) {
+                    $this->getLogger()->debug(
+                        vsprintf(
+                            'Applying shortcode = \'%s\' attribute translation \'%s\' ==> \'%s\'',
+                            [
+                                $shortcodeName,
+                                $originalText,
+                                $translation,
+                            ]
+                        )
+                    );
+                    $translatedShortcodeString = str_replace($originalText, $translation, $shortcodeString);
+                    $result = str_replace($initialShortcodeString, $translatedShortcodeString, $initialString);
+                    if ($result !== $initialString) {
+                        self::replaceCData($node, $result);
+                        $initialString = $result;
+                    }
+                }
+            }
         }
-        $result = str_replace($initialShortcode, $shortcode, $initialString);
-        self::replaceCData($node, $result);
     }
 
     /**
