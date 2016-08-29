@@ -24,7 +24,7 @@ Integration Features
 == Installation ==
 
 = Minimum Requirements =
-* WordPress 4.3 or higher
+* WordPress 4.6 or higher
 * Multisite mode enabled
 * Multilingual Press free plugin
 * PHP Version 5.4 or higher
