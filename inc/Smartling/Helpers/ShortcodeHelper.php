@@ -120,6 +120,7 @@ class ShortcodeHelper implements WPHookInterface
     {
         global $shortcode_tags;
 
+        /** @noinspection OnlyWritesOnParameterInspection */
         $shortcode_tags = $assignments;
     }
 
@@ -162,6 +163,7 @@ class ShortcodeHelper implements WPHookInterface
              */
             if ($cNode->nodeName === 'shortcodeattribute' && $cNode->hasAttributes()) {
                 $tStruct = [];
+                /** @noinspection ForeachSourceInspection */
                 foreach ($cNode->attributes as $attribute => $value) {
                     /**
                      * @var \DOMAttr $value
@@ -241,8 +243,8 @@ class ShortcodeHelper implements WPHookInterface
         $this->getLogger()->debug(vsprintf('Removing masking...', []));
         $node = $this->getNode();
         $string = $node->nodeValue;
-        $string = preg_replace(vsprintf('/%s\[/', [self::SMARTLING_SHORTCODE_MASK]), ' [', $string);
-        $string = preg_replace(vsprintf('/\]%s/', [self::SMARTLING_SHORTCODE_MASK]), '] ', $string);
+        $string = preg_replace(vsprintf('/%s\[/', [self::SMARTLING_SHORTCODE_MASK]), '[', $string);
+        $string = preg_replace(vsprintf('/\]%s/', [self::SMARTLING_SHORTCODE_MASK]), ']', $string);
         self::replaceCData($node, $string);
     }
 
@@ -437,10 +439,13 @@ class ShortcodeHelper implements WPHookInterface
         $matches = [];
         preg_match_all(vsprintf('/(?<!%s)%s/', [self::SMARTLING_SHORTCODE_MASK,
                                                 get_shortcode_regex([$shortcodeName])]), $initialString, $matches);
-        $shortcode = $matches[0][0];
-        $masked = vsprintf('%s%s%s', [self::SMARTLING_SHORTCODE_MASK, $matches[0][0], self::SMARTLING_SHORTCODE_MASK]);
-        $result = str_replace($shortcode, $masked, $initialString);
-        self::replaceCData($node, $result);
+        if (array_key_exists(0, $matches) && is_array($matches[0]) && 0 < count($matches[0])) {
+            $shortcode = reset($matches[0]);
+            $masked = vsprintf('%s%s%s', [self::SMARTLING_SHORTCODE_MASK, $shortcode, self::SMARTLING_SHORTCODE_MASK]);
+            $result = str_replace($shortcode, $masked, $initialString);
+            self::replaceCData($node, $result);
+        }
+
     }
 
     /**
@@ -483,11 +488,14 @@ class ShortcodeHelper implements WPHookInterface
             }
         } else {
             $this->getLogger()->debug(vsprintf('No translation found for shortcode %s', [$name]));
+            return;
         }
     }
 
     /**
-     * @return array
+     * @param string $shortcodeName
+     *
+     * @return array|false
      */
     public function getShortcodeAttributes($shortcodeName)
     {
