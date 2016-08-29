@@ -435,7 +435,7 @@ class ShortcodeHelper implements WPHookInterface
         $node = $this->getNode();
         $initialString = $node->nodeValue;
         $matches = [];
-        preg_match_all(vsprintf('/%s/', [get_shortcode_regex([$shortcodeName])]), $initialString, $matches);
+        preg_match_all(vsprintf('/(?<!%s)%s/', [self::SMARTLING_SHORTCODE_MASK, get_shortcode_regex([$shortcodeName])]), $initialString, $matches);
         $shortcode = $matches[0][0];
         $masked = vsprintf('%s%s%s', [self::SMARTLING_SHORTCODE_MASK, $matches[0][0], self::SMARTLING_SHORTCODE_MASK]);
         $result = str_replace($shortcode, $masked, $initialString);
