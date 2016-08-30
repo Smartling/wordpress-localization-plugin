@@ -341,6 +341,18 @@ services:
     arguments:
       - "@logger"
 
+  default.meta-field-processor:
+    class: Smartling\Helpers\MetaFieldProcessor\DefaultMetaFieldProcessor
+    arguments:
+      - @logger
+
+  meta-field.processor.manager:
+    class: Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager
+    arguments:
+      - @logger
+    calls:
+      - [ "setDefaultHandler", [ "@default.meta-field-processor" ] ]
+
   extension.translation_lock:
     class: Smartling\Extensions\TranslateLock
 
