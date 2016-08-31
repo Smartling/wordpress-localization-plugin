@@ -44,107 +44,6 @@ class SmartlingCore extends SmartlingCoreAbstract
     const SEND_MODE = self::SEND_MODE_FILE;
 
     /**
-     * Updates target entity
-     *
-     * @param SubmissionEntity $submission
-     * @param EntityAbstract   $entity
-     *
-     * @throws BlogNotFoundException
-     */
-    private function saveTargetEntity(SubmissionEntity $submission, EntityAbstract $entity)
-    {
-        $needBlogSwitch = $submission->getTargetBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
-
-        if ($needBlogSwitch) {
-            $this->getSiteHelper()->switchBlogId($submission->getTargetBlogId());
-        }
-
-        //$ioWrapper = $this->getContentIoFactory()->getMapper($submission->getContentType());
-
-        $entity->set();
-
-        //$ioWrapper->set($entity);
-
-        if ($needBlogSwitch) {
-            $this->getSiteHelper()->restoreBlogId();
-        }
-    }
-
-    /**
-     * @param SubmissionEntity $submission
-     * @param EntityAbstract   $entity
-     * @param array            $meta
-     *
-     * @throws BlogNotFoundException
-     */
-    private function setMetaForTargetEntity(SubmissionEntity $submission, EntityAbstract $entity, array $meta = [])
-    {
-        $needBlogSwitch = $submission->getTargetBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
-
-        if ($needBlogSwitch) {
-            $this->getSiteHelper()->switchBlogId($submission->getTargetBlogId());
-        }
-
-        foreach ($meta as $key => $value) {
-            $entity->setMetaTag($key, $value);
-        }
-
-        if ($needBlogSwitch) {
-            $this->getSiteHelper()->restoreBlogId();
-        }
-    }
-
-    /**
-     * @param SubmissionEntity $submission
-     *
-     * @return array
-     * @throws BlogNotFoundException
-     */
-    private function getMetaForOriginalEntity(SubmissionEntity $submission)
-    {
-        $contentEntity = $this->readContentEntity($submission);
-
-        $needBlogSwitch = $submission->getSourceBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
-
-        if ($needBlogSwitch) {
-            $this->getSiteHelper()->switchBlogId($submission->getSourceBlogId());
-        }
-
-        $originalMetadata = $contentEntity->getMetadata();
-
-        if ($needBlogSwitch) {
-            $this->getSiteHelper()->restoreBlogId();
-        }
-
-        return $originalMetadata;
-    }
-
-    /**
-     * @param SubmissionEntity $submission
-     *
-     * @return array
-     * @throws BlogNotFoundException
-     */
-    private function getMetaForTargetEntity(SubmissionEntity $submission)
-    {
-        $contentEntity = $this->readTargetContentEntity($submission);
-
-        $needBlogSwitch = $submission->getTargetBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
-
-        if ($needBlogSwitch) {
-            $this->getSiteHelper()->switchBlogId($submission->getTargetBlogId());
-        }
-
-        $meta = $contentEntity->getMetadata();
-
-        if ($needBlogSwitch) {
-            $this->getSiteHelper()->restoreBlogId();
-        }
-
-        return $meta;
-    }
-
-    /**
      * @param SubmissionEntity $submission
      */
     private function fixCategoryHierarchy(SubmissionEntity $submission)
@@ -153,7 +52,7 @@ class SmartlingCore extends SmartlingCoreAbstract
             return;
         }
 
-        $originalEntity = $this->readContentEntity($submission);
+        $originalEntity = $this->getContentHelper()->readSourceContent($submission);
         $parent = $originalEntity->getParent();
 
         $newParentId = 0;
@@ -193,11 +92,11 @@ class SmartlingCore extends SmartlingCoreAbstract
             }
         }
         
-        $translation = $this->readTargetContentEntity($submission);
+        $translation = $this->getContentHelper()->readTargetContent($submission);
 
         if ((int)$translation->getParent() !== (int)$newParentId) {
             $translation->setParent($newParentId);
-            $this->saveTargetEntity($submission, $translation);
+            $this->getContentHelper()->writeTargetContent($submission, $translation);
         }
 
     }
@@ -211,7 +110,7 @@ class SmartlingCore extends SmartlingCoreAbstract
             return;
         }
 
-        $originalEntity = $this->readContentEntity($submission);
+        $originalEntity = $this->getContentHelper()->readSourceContent($submission);
         $parent = $originalEntity->getPostParent();
 
         $newParentId = 0;
@@ -251,11 +150,11 @@ class SmartlingCore extends SmartlingCoreAbstract
             }
         }
 
-        $translation = $this->readTargetContentEntity($submission);
+        $translation = $this->getContentHelper()->readTargetContent($submission);
 
         if ((int)$translation->getPostParent() !== (int)$newParentId) {
             $translation->setPostParent($newParentId);
-            $this->saveTargetEntity($submission, $translation);
+            $this->getContentHelper()->writeTargetContent($submission, $translation);
         }
 
     }
@@ -351,7 +250,7 @@ class SmartlingCore extends SmartlingCoreAbstract
 
                 $menuItemSubmission = $this->fastSendForTranslation(WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM, $submission->getSourceBlogId(), $menuItemEntity->getPK(), $submission->getTargetBlogId());
 
-                $originalMenuItemMeta = $this->getMetaForOriginalEntity($menuItemSubmission);
+                $originalMenuItemMeta = $this->getContentHelper()->readSourceMetadata($menuItemSubmission);
 
                 $originalMenuItemMeta = ArrayHelper::simplifyArray($originalMenuItemMeta);
 
@@ -370,7 +269,7 @@ class SmartlingCore extends SmartlingCoreAbstract
                     $originalMenuItemMeta['_menu_item_object_id'] = $relatedObjectId;
                 }
 
-                $this->setMetaForTargetEntity($menuItemSubmission, $this->readTargetContentEntity($menuItemSubmission), $originalMenuItemMeta);
+                $this->getContentHelper()->writeTargetMetadata($menuItemSubmission, $originalMenuItemMeta);
 
                 $accumulator[WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU][] = $menuItemSubmission->getTargetId();
             }
@@ -395,7 +294,7 @@ class SmartlingCore extends SmartlingCoreAbstract
             $this->getLogger()->debug(vsprintf('Searching for menu related to widget for submission = \'%s\'.', [
                 $submission->getId(),
             ]));
-            $originalEntity = $this->readContentEntity($submission);
+            $originalEntity = $this->getContentHelper()->readSourceContent($submission);
 
             $_settings = $originalEntity->getSettings();
 
@@ -422,13 +321,13 @@ class SmartlingCore extends SmartlingCoreAbstract
                 /**
                  * @var WidgetEntity $targetContent
                  */
-                $targetContent = $this->readTargetContentEntity($submission);
+                $targetContent = $this->getContentHelper()->readTargetContent($submission);
 
                 $settings = $targetContent->getSettings();
                 $settings['nav_menu'] = $newMenuId;
                 $targetContent->setSettings($settings);
 
-                $this->saveTargetEntity($submission, $targetContent);
+                $this->getContentHelper()->writeTargetContent($submission, $targetContent);
             }
 
         }
@@ -439,7 +338,7 @@ class SmartlingCore extends SmartlingCoreAbstract
      */
     private function processFeaturedImage(SubmissionEntity $submission)
     {
-        $originalMetadata = $this->getMetaForOriginalEntity($submission);
+        $originalMetadata = $this->getContentHelper()->readSourceMetadata($submission);
         $this->getLogger()->debug(vsprintf('Searching for Featured Images related to submission = \'%s\'.', [
             $submission->getId(),
         ]));
@@ -449,7 +348,7 @@ class SmartlingCore extends SmartlingCoreAbstract
                 $originalMetadata['_thumbnail_id'] = (int)reset($originalMetadata['_thumbnail_id']);
             }
 
-            $targetEntity = $this->readTargetContentEntity($submission);
+            $targetEntity = $this->getContentHelper()->readTargetContent($submission);
             $this->getLogger()
                 ->debug(vsprintf('Sending for translation Featured Image id = \'%s\' related to submission = \'%s\'.', [
                     $originalMetadata['_thumbnail_id'],
@@ -460,7 +359,7 @@ class SmartlingCore extends SmartlingCoreAbstract
 
             do_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, $attSubmission);
 
-            $this->setMetaForTargetEntity($submission, $targetEntity, ['_thumbnail_id' => $attSubmission->getTargetId()]);
+            $this->getContentHelper()->writeTargetMetadata($submission, ['_thumbnail_id' => $attSubmission->getTargetId()]);
         }
     }
 
@@ -477,7 +376,7 @@ class SmartlingCore extends SmartlingCoreAbstract
 
         $tagretContentId = $submission->getTargetId();
 
-        $originalEntity = $this->readContentEntity($submission);
+        $originalEntity = $this->getContentHelper()->readSourceContent($submission);
         $relatedContentTypes = $originalEntity->getRelatedTypes();
         $accumulator = [
             WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY => [],
@@ -717,7 +616,6 @@ class SmartlingCore extends SmartlingCoreAbstract
             throw new SmartlingDbException($message);
         }
     }
-
 
     /**
      * @param array $items

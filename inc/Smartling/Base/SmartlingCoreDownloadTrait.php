@@ -79,14 +79,17 @@ trait SmartlingCoreDownloadTrait
                 $translatedFields['meta'] = [];
             }
 
-            $targetContent = $this->readTargetContentEntity($entity);
+            $targetContent = $this->getContentHelper()->readTargetContent($entity);
 
             $params = new AfterDeserializeContentEventParameters($translatedFields, $entity, $targetContent,
                 $translatedFields['meta']);
 
             do_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
 
-            $this->setValues($targetContent, $translatedFields['entity']);
+            if (array_key_exists('entity', $translatedFields) && is_array($translatedFields['entity']) && 0 < count($translatedFields['entity']))
+            {
+                $this->setValues($targetContent, $translatedFields['entity']);
+            }
 
             if (100 === $entity->getCompletionPercentage()) {
                 $entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
@@ -94,10 +97,10 @@ trait SmartlingCoreDownloadTrait
                 $entity->setAppliedDate(DateTimeHelper::nowAsString());
             }
 
-            $targetContent = $this->saveEntity($entity->getContentType(), $entity->getTargetBlogId(), $targetContent);
+            $targetContent = $this->getContentHelper()->writeTargetContent($entity, $targetContent);
 
             if (array_key_exists('meta', $translatedFields) && 0 < count($translatedFields['meta'])) {
-                $this->saveMetaProperties($targetContent, $translatedFields, $entity);
+                $this->getContentHelper()->writeTargetMetadata($entity, $translatedFields['meta']);
             }
 
             $entity = $this->getSubmissionManager()->storeEntity($entity);

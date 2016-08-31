@@ -6,6 +6,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\Cache;
+use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\CustomMenuContentTypeHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Processors\ContentEntitiesIOFactory;
@@ -79,6 +80,11 @@ abstract class SmartlingCoreAbstract
      * @var QueueInterface
      */
     private $queue;
+
+    /**
+     * @var ContentHelper
+     */
+    private $contentHelper;
 
     /**
      * @return Cache
@@ -238,5 +244,21 @@ abstract class SmartlingCoreAbstract
     public function setQueue(QueueInterface $queue)
     {
         $this->queue = $queue;
+    }
+
+    /**
+     * @return ContentHelper
+     */
+    public function getContentHelper()
+    {
+        return $this->contentHelper;
+    }
+
+    /**
+     * @param ContentHelper $contentHelper
+     */
+    public function setContentHelper($contentHelper)
+    {
+        $this->contentHelper = $contentHelper;
     }
 }

@@ -77,46 +77,6 @@ trait SmartlingCoreTrait
     }
 
     /**
-     * @param SubmissionEntity $entity
-     *
-     * @return EntityAbstract
-     */
-    private function readContentEntity(SubmissionEntity $entity)
-    {
-        $contentIOWrapper = $this->getContentIOWrapper($entity);
-        if ($this->getSiteHelper()->getCurrentBlogId() === $entity->getSourceBlogId()) {
-            $wr = clone $contentIOWrapper;
-            $contentEntity = $wr->get($entity->getSourceId());
-        } else {
-            $this->getSiteHelper()->switchBlogId($entity->getSourceBlogId());
-            $contentEntity = $contentIOWrapper->get($entity->getSourceId());
-            $this->getSiteHelper()->restoreBlogId();
-        }
-
-        return $contentEntity;
-    }
-
-    /**
-     * @param SubmissionEntity $entity
-     *
-     * @return EntityAbstract
-     */
-    private function readTargetContentEntity(SubmissionEntity $entity)
-    {
-        $needBlogSwitch = $this->getSiteHelper()->getCurrentBlogId() !== $entity->getTargetBlogId();
-        if ($needBlogSwitch) {
-            $this->getSiteHelper()->switchBlogId($entity->getTargetBlogId());
-        }
-        $wrapper = $this->getContentIoFactory()->getMapper($entity->getContentType());
-        $entity = $wrapper->get($entity->getTargetId());
-        if ($needBlogSwitch) {
-            $this->getSiteHelper()->restoreBlogId();
-        }
-
-        return $entity;
-    }
-
-    /**
      * @param SubmissionEntity $submission
      */
     private function prepareFieldProcessorValues(SubmissionEntity $submission)
@@ -166,7 +126,7 @@ trait SmartlingCoreTrait
             )
         );
 
-        $originalContent = $this->readContentEntity($submission);
+        $originalContent = $this->getContentHelper()->readSourceContent($submission);
 
         $this->prepareFieldProcessorValues($submission);
         $sourceData = $this->readSourceContentWithMetadata($submission);
@@ -176,7 +136,7 @@ trait SmartlingCoreTrait
             $targetContent = clone $originalContent;
             $targetContent->cleanFields();
         } else {
-            $targetContent = $this->readTargetContentEntity($submission);
+            $targetContent = $this->getContentHelper()->readTargetContent($submission);
         }
 
         unset ($original['entity']['ID'], $original['entity']['term_id'], $original['entity']['id']);
@@ -189,11 +149,7 @@ trait SmartlingCoreTrait
             $targetContent->translationDrafted();
         }
 
-        $targetContent = $this->saveEntity(
-            $submission->getContentType(),
-            $submission->getTargetBlogId(),
-            $targetContent
-        );
+        $targetContent = $this->getContentHelper()->writeTargetContent($submission, $targetContent);
 
         $this->getLogger()
             ->debug(
@@ -209,7 +165,7 @@ trait SmartlingCoreTrait
             );
 
         if (array_key_exists('meta', $original) && is_array($original['meta']) && 0 < count($original['meta'])) {
-            $this->setMetaForTargetEntity($submission, $targetContent, $original['meta']);
+            $this->getContentHelper()->writeTargetMetadata($submission, $original['meta']);
         }
 
         if (false === $update) {
@@ -219,47 +175,6 @@ trait SmartlingCoreTrait
         $result = $this->getMultilangProxy()->linkObjects($submission);
 
         return $submission;
-    }
-
-
-    private function saveEntity($type, $blog, EntityAbstract $entity)
-    {
-        $curBlogId = $this->getSiteHelper()->getCurrentBlogId();
-
-        if ($blog !== $curBlogId) {
-            $this->getSiteHelper()->switchBlogId($blog);
-        }
-
-        $ioWrapper = $this->getContentIoFactory()->getMapper($type);
-        $id = $ioWrapper->set($entity);
-        $PkField = $entity->getPrimaryFieldName();
-        $entity->$PkField = $id;
-
-        if ($blog !== $curBlogId) {
-            $this->getSiteHelper()->restoreBlogId();
-        }
-
-        return $entity;
-    }
-
-    private function saveMetaProperties(EntityAbstract $entity, array $properties, SubmissionEntity $submission)
-    {
-        $curBlogId = $this->getSiteHelper()->getCurrentBlogId();
-        if ($submission->getTargetBlogId() !== $curBlogId) {
-            $this->getSiteHelper()->switchBlogId($submission->getTargetBlogId());
-        }
-        if (array_key_exists('meta', $properties) && $properties['meta'] !== '') {
-            $metaFields = &$properties['meta'];
-            foreach ($metaFields as $metaName => $metaValue) {
-                if ('' === $metaValue) {
-                    continue;
-                }
-                $entity->setMetaTag($metaName, $metaValue);
-            }
-        }
-        if ($submission->getTargetBlogId() !== $curBlogId) {
-            $this->getSiteHelper()->restoreBlogId();
-        }
     }
 
     /**
@@ -328,10 +243,10 @@ trait SmartlingCoreTrait
      */
     private function getAttachmentFileInfoBySubmission(SubmissionEntity $submission)
     {
-        $info = $this->readContentEntity($submission);
+        $info = $this->getContentHelper()->readSourceContent($submission);
         $sourceSiteUploadInfo = $this->getUploadDirForSite($submission->getSourceBlogId());
         $targetSiteUploadInfo = $this->getUploadDirForSite($submission->getTargetBlogId());
-        $sourceMetadata = $this->getMetaForOriginalEntity($submission);
+        $sourceMetadata = $this->getContentHelper()->readSourceMetadata($submission);
         if (array_key_exists('_wp_attached_file', $sourceMetadata) && is_array($sourceMetadata['_wp_attached_file'])) {
             $relativePath = reset($sourceMetadata['_wp_attached_file']);
             $result = [

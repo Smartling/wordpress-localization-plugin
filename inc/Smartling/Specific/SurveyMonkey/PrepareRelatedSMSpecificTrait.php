@@ -25,7 +25,7 @@ trait PrepareRelatedSMSpecificTrait
             WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT === $relatedContentType
             && WordpressContentTypeHelper::CONTENT_TYPE_WIDGET === $submission->getContentType()
         ) {
-            $widgetSettings = $this->readContentEntity($submission)
+            $widgetSettings = $this->getContentHelper()->readSourceContent($submission)
                                    ->getSettings();
 
             if (array_key_exists('attachment_id', $widgetSettings)) {
@@ -39,11 +39,11 @@ trait PrepareRelatedSMSpecificTrait
                 /**
                  * @var WidgetEntity $targetContent
                  */
-                $targetContent = $this->readTargetContentEntity($submission);
+                $targetContent = $this->getContentHelper()->readTargetContent($submission);
                 $settings = $targetContent->getSettings();
                 $settings['attachment_id'] = $newMediaId;
                 $targetContent->setSettings($settings);
-                $this->saveTargetEntity($submission, $targetContent);
+                $this->getContentHelper()->writeTargetContent($submission, $targetContent);
             }
         }
     }
@@ -58,7 +58,7 @@ trait PrepareRelatedSMSpecificTrait
             WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL === $relatedContentType
             && WordpressContentTypeHelper::CONTENT_TYPE_WIDGET === $submission->getContentType()
         ) {
-            $widgetSettings = $this->readContentEntity($submission)
+            $widgetSettings = $this->getContentHelper()->readSourceContent($submission)
                                    ->getSettings();
 
             if (array_key_exists('testimonial_id', $widgetSettings)) {
@@ -72,11 +72,11 @@ trait PrepareRelatedSMSpecificTrait
                 /**
                  * @var WidgetEntity $targetContent
                  */
-                $targetContent = $this->readTargetContentEntity($submission);
+                $targetContent = $this->getContentHelper()->readTargetContent($submission);
                 $settings = $targetContent->getSettings();
                 $settings['testimonial_id'] = $newTestimonialId;
                 $targetContent->setSettings($settings);
-                $this->saveTargetEntity($submission, $targetContent);
+                $this->getContentHelper()->writeTargetContent($submission, $targetContent);
             }
         }
     }
@@ -91,7 +91,7 @@ trait PrepareRelatedSMSpecificTrait
             WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL === $relatedContentType
             && WordpressContentTypeHelper::CONTENT_TYPE_WIDGET === $submission->getContentType()
         ) {
-            $widgetSettings = $this->readContentEntity($submission)
+            $widgetSettings = $this->getContentHelper()->readSourceContent($submission)
                                    ->getSettings();
 
             if (array_key_exists('testimonials', $widgetSettings)) {
@@ -107,11 +107,11 @@ trait PrepareRelatedSMSpecificTrait
                 /**
                  * @var WidgetEntity $targetContent
                  */
-                $targetContent = $this->readTargetContentEntity($submission);
+                $targetContent = $this->getContentHelper()->readTargetContent($submission);
                 $settings = $targetContent->getSettings();
                 $settings['testimonials'] = $newTestimonials;
                 $targetContent->setSettings($settings);
-                $this->saveTargetEntity($submission, $targetContent);
+                $this->getContentHelper()->writeTargetContent($submission, $targetContent);
             }
         }
     }

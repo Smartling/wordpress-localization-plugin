@@ -33,7 +33,7 @@ trait SmartlingCoreUploadTrait
      */
     private function renewContentHash(SubmissionEntity $submission)
     {
-        $content = $this->readContentEntity($submission);
+        $content = $this->getContentHelper()->readSourceContent($submission);
         $newHash = ContentSerializationHelper::calculateHash($this->getContentIoFactory(), $this->getSiteHelper(), $this->getSettingsManager(), $submission);
         $submission->setSourceContentHash($newHash);
         $submission->setOutdated(0);
@@ -50,11 +50,9 @@ trait SmartlingCoreUploadTrait
      */
     private function readSourceContentWithMetadata(SubmissionEntity $submission)
     {
-        $contentEntity = $this->readContentEntity($submission);
-
         $source = [
-            'entity' => $contentEntity->toArray(),
-            'meta'   => $this->getMetaForOriginalEntity($submission),
+            'entity' =>  $this->getContentHelper()->readSourceContent($submission),
+            'meta'   => $this->getContentHelper()->readSourceMetadata($submission),
         ];
 
         $source['meta'] = $source['meta'] ? : [];
@@ -128,7 +126,7 @@ trait SmartlingCoreUploadTrait
                 $submission = $this->getSubmissionManager()->storeEntity($submission);
             }
             $source = $this->readSourceContentWithMetadata($submission);
-            $contentEntity = $this->readContentEntity($submission);
+            $contentEntity = $this->getContentHelper()->readSourceContent($submission);
             $submission = $this->prepareTargetEntity($submission);
 
             $params = new BeforeSerializeContentEventParameters($source, $submission, $contentEntity, $source['meta']);
@@ -208,7 +206,7 @@ trait SmartlingCoreUploadTrait
          */
         $submission = $this->prepareSubmissionEntity($contentType, $sourceBlogId, $sourceEntityId, $targetBlogId);
 
-        $contentEntity = $this->readContentEntity($submission);
+        $contentEntity = $this->getContentHelper()->readSourceContent($submission);
 
         if (null === $submission->getId()) {
             $submission->setSourceContentHash('');
@@ -241,7 +239,7 @@ trait SmartlingCoreUploadTrait
          */
         $submission = $this->prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity);
 
-        $contentEntity = $this->readContentEntity($submission);
+        $contentEntity = $this->getContentHelper()->readSourceContent($submission);
 
         if (null === $submission->getId()) {
             $submission->setSourceContentHash('');
