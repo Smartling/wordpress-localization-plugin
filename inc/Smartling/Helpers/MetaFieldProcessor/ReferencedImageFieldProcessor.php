@@ -4,46 +4,15 @@ namespace Smartling\Helpers\MetaFieldProcessor;
 
 use Smartling\Base\ExportedAPI;
 use Smartling\Exception\SmartlingDataReadException;
-use Smartling\Helpers\TranslationHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
- * Class FeaturedImageFieldProcessor
+ * Class ReferencedImageFieldProcessor
  * @package Smartling\Helpers\MetaFieldProcessor
  */
-class FeaturedImageFieldProcessor extends MetaFieldProcessorAbstract
+class ReferencedImageFieldProcessor extends MetaFieldProcessorAbstract
 {
-
-    /**
-     * @var TranslationHelper
-     */
-    private $translationHelper;
-
-    /**
-     * @return TranslationHelper
-     */
-    public function getTranslationHelper()
-    {
-        return $this->translationHelper;
-    }
-
-    /**
-     * @param TranslationHelper $translationHelper
-     */
-    public function setTranslationHelper($translationHelper)
-    {
-        $this->translationHelper = $translationHelper;
-    }
-
-    /**
-     * @return string
-     */
-    public function getFieldName()
-    {
-        return '_thumbnail_id';
-    }
-
     /**
      * @param SubmissionEntity $submission
      * @param mixed            $value
@@ -79,7 +48,7 @@ class FeaturedImageFieldProcessor extends MetaFieldProcessorAbstract
 
             $this->getLogger()->debug(
                 vsprintf(
-                    'Sending for translation Featured Image id = \'%s\' related to submission = \'%s\'.',
+                    'Sending for translation referenced image id = \'%s\' related to submission = \'%s\'.',
                     [
                         $value,
                         $submission->getId(),
@@ -98,7 +67,7 @@ class FeaturedImageFieldProcessor extends MetaFieldProcessorAbstract
             return $attSubmission->getTargetId();
         } catch (SmartlingDataReadException $e) {
             $message = vsprintf(
-                'An error happened while processing featured image with original value=%s. Keeping original value.',
+                'An error happened while processing referenced image with original value=%s. Keeping original value.',
                 [
                     var_export($originalValue, true),
                 ]

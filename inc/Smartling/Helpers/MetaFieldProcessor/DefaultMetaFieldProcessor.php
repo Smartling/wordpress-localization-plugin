@@ -11,14 +11,6 @@ use Smartling\Submissions\SubmissionEntity;
 class DefaultMetaFieldProcessor extends MetaFieldProcessorAbstract
 {
     /**
-     * @return string
-     */
-    public function getFieldName()
-    {
-        return '';
-    }
-
-    /**
      * @param SubmissionEntity $submission
      * @param mixed            $value
      *

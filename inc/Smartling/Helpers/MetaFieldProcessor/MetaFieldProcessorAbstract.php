@@ -1,7 +1,9 @@
 <?php
 
 namespace Smartling\Helpers\MetaFieldProcessor;
+
 use Psr\Log\LoggerInterface;
+use Smartling\Helpers\TranslationHelper;
 
 /**
  * Class MetaFieldProcessorAbstract
@@ -14,6 +16,16 @@ abstract class MetaFieldProcessorAbstract implements MetaFieldProcessorInterface
      * @var LoggerInterface
      */
     private $logger;
+
+    /**
+     * @var string
+     */
+    private $fieldName;
+
+    /**
+     * @var TranslationHelper
+     */
+    private $translationHelper;
 
     /**
      * @return LoggerInterface
@@ -32,12 +44,48 @@ abstract class MetaFieldProcessorAbstract implements MetaFieldProcessorInterface
     }
 
     /**
-     * MetaFieldProcessorAbstract constructor.
-     *
-     * @param LoggerInterface $logger
+     * @return string
      */
-    public function __construct(LoggerInterface $logger)
+    public function getFieldName()
+    {
+        return $this->fieldName;
+    }
+
+    /**
+     * @param string $fieldName
+     */
+    public function setFieldName($fieldName)
+    {
+        $this->fieldName = $fieldName;
+    }
+
+    /**
+     * @return TranslationHelper
+     */
+    public function getTranslationHelper()
+    {
+        return $this->translationHelper;
+    }
+
+    /**
+     * @param TranslationHelper $translationHelper
+     */
+    public function setTranslationHelper($translationHelper)
+    {
+        $this->translationHelper = $translationHelper;
+    }
+
+    /**
+     * MetaFieldProcessorInterface constructor.
+     *
+     * @param LoggerInterface   $logger
+     * @param TranslationHelper $translationHelper
+     * @param string            $fieldName
+     */
+    public function __construct(LoggerInterface $logger, TranslationHelper $translationHelper, $fieldName)
     {
         $this->setLogger($logger);
+        $this->setTranslationHelper($translationHelper);
+        $this->setFieldName($fieldName);
     }
 }
