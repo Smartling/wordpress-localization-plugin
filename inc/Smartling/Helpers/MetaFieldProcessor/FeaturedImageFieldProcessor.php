@@ -2,6 +2,7 @@
 
 namespace Smartling\Helpers\MetaFieldProcessor;
 
+use Smartling\Base\ExportedAPI;
 use Smartling\Exception\SmartlingDataReadException;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;

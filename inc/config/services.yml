@@ -52,6 +52,8 @@ services:
       - [ "setCustomMenuHelper", [ "@helper.customMenu" ]]
       - [ "setSettingsManager", [ "@manager.settings" ]]
       - [ "setQueue", ["@queue.db"]]
+      - [ "setContentHelper", [ "@content.helper" ]]
+      - [ "setTranslationHelper", [ "@translation.helper" ]]
 
   wrapper.widget:
     class: Smartling\DbAl\WordpressContentEntities\WidgetEntity
@@ -344,14 +346,23 @@ services:
   default.meta-field-processor:
     class: Smartling\Helpers\MetaFieldProcessor\DefaultMetaFieldProcessor
     arguments:
-      - @logger
+      - "@logger"
+
+  featured-image.meta-field-processor:
+    class: Smartling\Helpers\MetaFieldProcessor\FeaturedImageFieldProcessor
+    arguments:
+      - "@logger"
+    calls:
+      - [ "setTranslationHelper", [ "@translation.helper" ]]
+
 
   meta-field.processor.manager:
     class: Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager
     arguments:
-      - @logger
+      - "@logger"
     calls:
       - [ "setDefaultHandler", [ "@default.meta-field-processor" ] ]
+      - [ "registerProcessor", [ "@featured-image.meta-field-processor" ] ]
 
   extension.translation_lock:
     class: Smartling\Extensions\TranslateLock
@@ -362,3 +373,19 @@ services:
       - "@logger"
     calls:
       - [ "registerExtension", [ "@extension.translation_lock" ]]
+
+  translation.helper:
+    class: Smartling\Helpers\TranslationHelper
+    calls:
+      - [ "setMutilangProxy", [ "@multilang.proxy" ]]
+      - [ "setSubmissionManager", [ "@manager.submission" ]]
+      - [ "setLogger", [ "@logger" ]]
+
+
+  content.helper:
+    class: Smartling\Helpers\ContentHelper
+    arguments:
+      - "@logger"
+    calls:
+      - [ "setIoFactory", [ "@factory.contentIO" ]]
+      - [ "setSiteHelper", [ "@site.helper" ]]

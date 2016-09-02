@@ -24,3 +24,4 @@ services:
       - [ "addService", [ "@smartling.helper.absolute-image-path-support" ]]
       - [ "addService", [ "@service.submission-cleanup" ]]
       - [ "addService", [ "@helper.shortcode" ]]
+      - [ "addService", [ "@meta-field.processor.manager" ]]
