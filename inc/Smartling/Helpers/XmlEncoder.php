@@ -194,7 +194,7 @@ class XmlEncoder
         if ([] === $list) {
             return $array;
         }
-        $pattern = '#(' . implode('|', $list) . ')$#us';
+        $pattern = '#\/(' . implode('|', $list) . ')$#us';
         foreach ($array as $key => $value) {
             if (1 === preg_match($pattern, $key)) {
                 $debugMessage = vsprintf('Removed field by name \'%s\' because of configuration.', [$key]);
