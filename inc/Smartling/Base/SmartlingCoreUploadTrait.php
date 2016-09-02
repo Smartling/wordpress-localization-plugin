@@ -48,10 +48,10 @@ trait SmartlingCoreUploadTrait
      *
      * @return array
      */
-    private function readSourceContentWithMetadata(SubmissionEntity $submission)
+    private function readSourceContentWithMetadataAsArray(SubmissionEntity $submission)
     {
         $source = [
-            'entity' =>  $this->getContentHelper()->readSourceContent($submission),
+            'entity' =>  $this->getContentHelper()->readSourceContent($submission)->toArray(),
             'meta'   => $this->getContentHelper()->readSourceMetadata($submission),
         ];
 
@@ -125,7 +125,7 @@ trait SmartlingCoreUploadTrait
                 $submission->getFileUri();
                 $submission = $this->getSubmissionManager()->storeEntity($submission);
             }
-            $source = $this->readSourceContentWithMetadata($submission);
+            $source = $this->readSourceContentWithMetadataAsArray($submission);
             $contentEntity = $this->getContentHelper()->readSourceContent($submission);
             $submission = $this->prepareTargetEntity($submission);
 
@@ -179,24 +179,6 @@ trait SmartlingCoreUploadTrait
         }
     }
 
-    /**
-     * @param string   $contentType
-     * @param int      $sourceBlog
-     * @param int      $sourceEntity
-     * @param int      $targetBlog
-     * @param int|null $targetEntity
-     *
-     * @return bool
-     */
-    public function sendForTranslation($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null)
-    {
-        $submission = $this->prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog,
-                                                     $targetEntity);
-
-        return $this->sendForTranslationBySubmission($submission);
-    }
-
-
     public function getOrPrepareSubmission($contentType, $sourceBlogId, $sourceEntityId, $targetBlogId, $status = null)
     {
         $status = $status ? : SubmissionEntity::SUBMISSION_STATUS_NEW;
@@ -204,7 +186,7 @@ trait SmartlingCoreUploadTrait
         /**
          * @var SubmissionEntity $submission
          */
-        $submission = $this->prepareSubmissionEntity($contentType, $sourceBlogId, $sourceEntityId, $targetBlogId);
+        $submission = $this->getTranslationHelper()->prepareSubmissionEntity($contentType, $sourceBlogId, $sourceEntityId, $targetBlogId);
 
         $contentEntity = $this->getContentHelper()->readSourceContent($submission);
 
@@ -237,7 +219,7 @@ trait SmartlingCoreUploadTrait
         /**
          * @var SubmissionEntity $submission
          */
-        $submission = $this->prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity);
+        $submission = $this->getTranslationHelper()->prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity);
 
         $contentEntity = $this->getContentHelper()->readSourceContent($submission);
 

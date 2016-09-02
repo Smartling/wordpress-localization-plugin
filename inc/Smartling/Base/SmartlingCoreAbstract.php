@@ -9,6 +9,7 @@ use Smartling\Helpers\Cache;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\CustomMenuContentTypeHelper;
 use Smartling\Helpers\SiteHelper;
+use Smartling\Helpers\TranslationHelper;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Queue\QueueInterface;
 use Smartling\Settings\SettingsManager;
@@ -85,6 +86,11 @@ abstract class SmartlingCoreAbstract
      * @var ContentHelper
      */
     private $contentHelper;
+
+    /**
+     * @var TranslationHelper;
+     */
+    private $translationHelper;
 
     /**
      * @return Cache
@@ -260,5 +266,21 @@ abstract class SmartlingCoreAbstract
     public function setContentHelper($contentHelper)
     {
         $this->contentHelper = $contentHelper;
+    }
+
+    /**
+     * @return TranslationHelper
+     */
+    public function getTranslationHelper()
+    {
+        return $this->translationHelper;
+    }
+
+    /**
+     * @param TranslationHelper $translationHelper
+     */
+    public function setTranslationHelper($translationHelper)
+    {
+        $this->translationHelper = $translationHelper;
     }
 }

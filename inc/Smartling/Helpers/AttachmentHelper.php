@@ -98,9 +98,4 @@ class AttachmentHelper
 
         return is_dir($pathDir);
     }
-
-    public static function fixAttachment(SubmissionEntity $submission)
-    {
-
-    }
 }

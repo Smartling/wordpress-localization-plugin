@@ -1,6 +1,7 @@
 <?php
 
 namespace Smartling\Helpers\MetaFieldProcessor;
+use Smartling\Submissions\SubmissionEntity;
 
 /**
  * Interface MetaFieldProcessorInterface
@@ -14,9 +15,10 @@ interface MetaFieldProcessorInterface
     public function getFieldName();
 
     /**
-     * @param mixed $value
+     * @param SubmissionEntity $submission
+     * @param mixed            $value
      *
      * @return mixed
      */
-    public function processFieldValue($value);
+    public function processFieldValue(SubmissionEntity $submission, $value);
 }

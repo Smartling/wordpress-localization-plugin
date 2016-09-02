@@ -31,7 +31,7 @@ trait SmartlingCoreExportApi
      */
     public function sendAttachmentForTranslation($sourceBlogId, $targetBlogId, $sourceId)
     {
-        $submission = $this->fastSendForTranslation(
+        $submission = $this->getTranslationHelper()->sendForTranslationSync(
             WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT,
             $sourceBlogId,
             $sourceId,

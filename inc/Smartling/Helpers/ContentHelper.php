@@ -108,7 +108,7 @@ class ContentHelper
         $this->needBlogSwitch = $needBlogSwitch;
     }
 
-    private function ensureBlog($blogId)
+    public function ensureBlog($blogId)
     {
         $this->setNeedBlogSwitch($this->getSiteHelper()->getCurrentBlogId() !== $blogId);
 
@@ -117,22 +117,32 @@ class ContentHelper
         }
     }
 
-    private function ensureSource(SubmissionEntity $submission)
+    public function ensureSource(SubmissionEntity $submission)
     {
         $this->ensureBlog($submission->getSourceBlogId());
     }
 
-    private function ensureTarget(SubmissionEntity $submission)
+    public function ensureTarget(SubmissionEntity $submission)
     {
         $this->ensureBlog($submission->getTargetBlogId());
     }
 
-    private function ensureRestoredBlogId()
+    public function ensureRestoredBlogId()
     {
         if ($this->isNeedBlogSwitch()) {
             $this->getSiteHelper()->restoreBlogId();
             $this->setNeedBlogSwitch(false);
         }
+    }
+
+    /**
+     * @param $contentType
+     *
+     * @return EntityAbstract
+     */
+    private function getWrapper($contentType)
+    {
+        return clone $this->getIoFactory()->getHandler($contentType);
     }
 
     /**
@@ -145,7 +155,7 @@ class ContentHelper
         /**
          * @var EntityAbstract $wrapper
          */
-        $wrapper = $this->getIoFactory()->getHandler($submission->getContentType());
+        $wrapper = $this->getWrapper($submission->getContentType());
         $this->ensureSource($submission);
         $sourceContent = $wrapper->get($submission->getSourceId());
         $this->ensureRestoredBlogId();
@@ -158,7 +168,7 @@ class ContentHelper
         /**
          * @var EntityAbstract $wrapper
          */
-        $wrapper = $this->getIoFactory()->getHandler($submission->getContentType());
+        $wrapper = $this->getWrapper($submission->getContentType());
         $this->ensureTarget($submission);
         $targetContent = $wrapper->get($submission->getTargetId());
         $this->ensureRestoredBlogId();
@@ -172,7 +182,7 @@ class ContentHelper
         /**
          * @var EntityAbstract $wrapper
          */
-        $wrapper = $this->getIoFactory()->getHandler($submission->getContentType());
+        $wrapper = $this->getWrapper($submission->getContentType());
         $this->ensureSource($submission);
         $sourceContent = $wrapper->get($submission->getSourceId());
         if ($sourceContent instanceof EntityAbstract) {
@@ -189,7 +199,7 @@ class ContentHelper
         /**
          * @var EntityAbstract $wrapper
          */
-        $wrapper = $this->getIoFactory()->getHandler($submission->getContentType());
+        $wrapper = $this->getWrapper($submission->getContentType());
         $this->ensureTarget($submission);
         $targetContent = $wrapper->get($submission->getTargetId());
         if ($targetContent instanceof EntityAbstract) {
@@ -205,9 +215,17 @@ class ContentHelper
         /**
          * @var EntityAbstract $wrapper
          */
-        $wrapper = $this->getIoFactory()->getHandler($submission->getContentType());
+        $wrapper = $this->getWrapper($submission->getContentType());
+
         $this->ensureTarget($submission);
+
         $result = $wrapper->set($entity);
+
+        if (is_int($result) && 0 < $result) {
+
+            $result = $wrapper->get($result);
+        }
+
         $this->ensureRestoredBlogId();
 
         return $result;

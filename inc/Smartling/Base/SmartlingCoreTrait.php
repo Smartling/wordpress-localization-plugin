@@ -19,25 +19,6 @@ trait SmartlingCoreTrait
     use SmartlingCoreUploadTrait;
     use SmartlingCoreDownloadTrait;
 
-    protected function fastSendForTranslation($contentType, $sourceBlog, $sourceId, $targetBlog)
-    {
-        $relatedSubmission = $this->prepareSubmissionEntity(
-            $contentType,
-            $sourceBlog,
-            $sourceId,
-            $targetBlog
-        );
-        if (0 === (int)$relatedSubmission->getId()) {
-            $relatedSubmission = $this->getSubmissionManager()->storeEntity($relatedSubmission);
-        }
-        $submission_id = $relatedSubmission->getId();
-        $this->sendForTranslationBySubmission($relatedSubmission);
-        $lst = $this->getSubmissionManager()->getEntityById($submission_id);
-        $relatedSubmission = reset($lst);
-
-        return $relatedSubmission;
-    }
-
     /**
      * Sends Entity for translation and returns ID of linked entity in target blog
      *
@@ -50,30 +31,10 @@ trait SmartlingCoreTrait
      */
     private function translateAndGetTargetId($contentType, $sourceBlog, $sourceId, $targetBlog)
     {
-        $submission = $this->fastSendForTranslation($contentType, $sourceBlog, $sourceId, $targetBlog);
+        $submission = $this->getTranslationHelper()
+            ->sendForTranslationSync($contentType, $sourceBlog, $sourceId, $targetBlog);
 
         return (int)$submission->getTargetId();
-    }
-
-    /**
-     * @param string   $contentType
-     * @param int      $sourceBlog
-     * @param mixed    $sourceEntity
-     * @param int      $targetBlog
-     * @param int|null $targetEntity
-     *
-     * @return SubmissionEntity
-     */
-    private function prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null)
-    {
-        return $this->getSubmissionManager()->getSubmissionEntity(
-            $contentType,
-            $sourceBlog,
-            $sourceEntity,
-            $targetBlog,
-            $this->getMultilangProxy(),
-            $targetEntity
-        );
     }
 
     /**
@@ -109,8 +70,6 @@ trait SmartlingCoreTrait
             }
         }
 
-        $this->regenerateTargetThumbnailsBySubmission($submission);
-
         if (true === $update && false === $forceClone) {
             return $submission;
         }
@@ -129,20 +88,25 @@ trait SmartlingCoreTrait
         $originalContent = $this->getContentHelper()->readSourceContent($submission);
 
         $this->prepareFieldProcessorValues($submission);
-        $sourceData = $this->readSourceContentWithMetadata($submission);
-        $original = XmlEncoder::xmlDecode(XmlEncoder::xmlEncode($sourceData));
+        $unfilteredSourceData = $this->readSourceContentWithMetadataAsArray($submission);
+
+        $filteredSourceData = XmlEncoder::xmlDecode(XmlEncoder::xmlEncode($unfilteredSourceData));
 
         if (false === $update) {
+            /** @var EntityAbstract $originalContent */
             $targetContent = clone $originalContent;
             $targetContent->cleanFields();
         } else {
             $targetContent = $this->getContentHelper()->readTargetContent($submission);
         }
 
-        unset ($original['entity']['ID'], $original['entity']['term_id'], $original['entity']['id']);
+        unset ($filteredSourceData['entity']['ID'], $filteredSourceData['entity']['term_id'], $filteredSourceData['entity']['id']);
 
-        foreach ($original['entity'] as $k => $v) {
-            $targetContent->{$k} = $v;
+        if (array_key_exists('entity', $filteredSourceData) && is_array($filteredSourceData['entity']) && 0 < count ($filteredSourceData['entity']))
+        {
+            foreach ($filteredSourceData['entity'] as $k => $v) {
+                $targetContent->{$k} = $v;
+            }
         }
 
         if (false === $forceClone) {
@@ -164,15 +128,29 @@ trait SmartlingCoreTrait
                 )
             );
 
-        if (array_key_exists('meta', $original) && is_array($original['meta']) && 0 < count($original['meta'])) {
-            $this->getContentHelper()->writeTargetMetadata($submission, $original['meta']);
+        if (array_key_exists('meta', $filteredSourceData) && is_array($filteredSourceData['meta']) && 0 < count($filteredSourceData['meta'])) {
+
+            $metaFields = & $filteredSourceData['meta'];
+
+            foreach ($metaFields as $metaName => & $metaValue) {
+                $metaValue = apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $metaName, $metaValue, $submission);
+            }
+
+            unset ($metaValue);
+
+            $this->getContentHelper()->writeTargetMetadata($submission, $metaFields);
         }
 
         if (false === $update) {
             $submission->setTargetId($targetContent->getPK());
             $submission = $this->getSubmissionManager()->storeEntity($submission);
         }
-        $result = $this->getMultilangProxy()->linkObjects($submission);
+
+        $this->getMultilangProxy()->linkObjects($submission);
+
+        if (WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT === $submission->getContentType()) {
+            do_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, $submission);
+        }
 
         return $submission;
     }
@@ -206,29 +184,19 @@ trait SmartlingCoreTrait
      */
     private function getUploadDirForSite($siteId)
     {
-        $needSiteChange = (int)$siteId !== $this->getSiteHelper()->getCurrentBlogId();
-        if ($needSiteChange) {
-            $this->getSiteHelper()->switchBlogId((int)$siteId);
-        }
+        $this->getContentHelper()->ensureBlog((int)$siteId);
         $data = wp_upload_dir();
-        if ($needSiteChange) {
-            $this->getSiteHelper()->restoreBlogId();
-        }
+        $this->getContentHelper()->ensureRestoredBlogId();
 
         return $data;
     }
 
     private function getUploadPathForSite($siteId)
     {
-        $needSiteChange = (int)$siteId !== $this->getSiteHelper()->getCurrentBlogId();
-        if ($needSiteChange) {
-            $this->getSiteHelper()->switchBlogId((int)$siteId);
-        }
+        $this->getContentHelper()->ensureBlog((int)$siteId);
         $prefix = $this->getUploadDirForSite($siteId);
         $data = str_replace($prefix['subdir'], '', parse_url($prefix['url'], PHP_URL_PATH));
-        if ($needSiteChange) {
-            $this->getSiteHelper()->restoreBlogId();
-        }
+        $this->getContentHelper()->ensureRestoredBlogId();
 
         return $data;
     }

@@ -2,6 +2,7 @@
 namespace Smartling\Base;
 
 use Exception;
+use Smartling\Bootstrap;
 use Smartling\Queue\Queue;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\MenuItemEntity;
@@ -36,6 +37,7 @@ class SmartlingCore extends SmartlingCoreAbstract
         add_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, [$this, 'sendForTranslationBySubmission']);
         add_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, [$this, 'downloadTranslationBySubmission',]);
         add_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, [$this, 'cloneWithoutTranslation']);
+        add_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, [$this, 'regenerateTargetThumbnailsBySubmission']);
     }
 
     /**
@@ -248,7 +250,7 @@ class SmartlingCore extends SmartlingCoreAbstract
                         $submission->getId(),
                     ]));
 
-                $menuItemSubmission = $this->fastSendForTranslation(WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM, $submission->getSourceBlogId(), $menuItemEntity->getPK(), $submission->getTargetBlogId());
+                $menuItemSubmission = $this->getTranslationHelper()->sendForTranslationSync(WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM, $submission->getSourceBlogId(), $menuItemEntity->getPK(), $submission->getTargetBlogId());
 
                 $originalMenuItemMeta = $this->getContentHelper()->readSourceMetadata($menuItemSubmission);
 
@@ -335,36 +337,6 @@ class SmartlingCore extends SmartlingCoreAbstract
 
     /**
      * @param SubmissionEntity $submission
-     */
-    private function processFeaturedImage(SubmissionEntity $submission)
-    {
-        $originalMetadata = $this->getContentHelper()->readSourceMetadata($submission);
-        $this->getLogger()->debug(vsprintf('Searching for Featured Images related to submission = \'%s\'.', [
-            $submission->getId(),
-        ]));
-        if (array_key_exists('_thumbnail_id', $originalMetadata)) {
-
-            if (is_array($originalMetadata['_thumbnail_id'])) {
-                $originalMetadata['_thumbnail_id'] = (int)reset($originalMetadata['_thumbnail_id']);
-            }
-
-            $targetEntity = $this->getContentHelper()->readTargetContent($submission);
-            $this->getLogger()
-                ->debug(vsprintf('Sending for translation Featured Image id = \'%s\' related to submission = \'%s\'.', [
-                    $originalMetadata['_thumbnail_id'],
-                    $submission->getId(),
-                ]));
-
-            $attSubmission = $this->fastSendForTranslation(WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT, $submission->getSourceBlogId(), $originalMetadata['_thumbnail_id'], $submission->getTargetBlogId());
-
-            do_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, $attSubmission);
-
-            $this->getContentHelper()->writeTargetMetadata($submission, ['_thumbnail_id' => $attSubmission->getTargetId()]);
-        }
-    }
-
-    /**
-     * @param SubmissionEntity $submission
      *
      * @throws BlogNotFoundException
      */
@@ -433,21 +405,12 @@ class SmartlingCore extends SmartlingCoreAbstract
                         $this->getLogger()
                             ->warning(vsprintf('An unhandled exception occurred while processing menu related to widget for submission=%s', [$submission->getId()]));
                     }
-                    try {
-                        $this->processFeaturedImage($submission);
-                    } catch (\Exception $e) {
-                        $this->getLogger()
-                            ->warning(vsprintf('An unhandled exception occurred while processing featured image for submission=%s', [$submission->getId()]));
-                    }
                 }
             }
 
             if ($submission->getContentType() !== WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU) {
-                $needSwitchBlog = $this->getSiteHelper()->getCurrentBlogId() != $submission->getTargetBlogId();
 
-                if ($needSwitchBlog) {
-                    $this->getSiteHelper()->switchBlogId($submission->getTargetBlogId());
-                }
+                $this->getContentHelper()->ensureTarget($submission);
 
                 $this->getLogger()
                     ->debug(vsprintf('Preparing to assign accumulator: %s', [var_export($accumulator, true)]));
@@ -466,9 +429,7 @@ class SmartlingCore extends SmartlingCoreAbstract
 
                 }
 
-                if ($needSwitchBlog) {
-                    $this->getSiteHelper()->restoreBlogId();
-                }
+                $this->getContentHelper()->ensureRestoredBlogId();
             } else {
                 $this->getCustomMenuHelper()
                     ->assignMenuItemsToMenu((int)$submission->getTargetId(), (int)$submission->getTargetBlogId(), $accumulator[WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU]);
@@ -714,7 +675,7 @@ class SmartlingCore extends SmartlingCoreAbstract
      *
      * @throws BlogNotFoundException
      */
-    private function regenerateTargetThumbnailsBySubmission(SubmissionEntity $submission)
+    public function regenerateTargetThumbnailsBySubmission(SubmissionEntity $submission)
     {
 
         $this->getLogger()->debug(vsprintf('Starting thumbnails regeneration for blog = \'%s\' attachment id = \'%s\'.', [

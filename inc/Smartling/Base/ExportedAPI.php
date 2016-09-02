@@ -59,6 +59,11 @@ interface ExportedAPI
     const ACTION_SMARTLING_DOWNLOAD_TRANSLATION = 'smartling_download_translation';
 
     /**
+     * Action regenerates thumbnails for translation by submission
+     */
+    const ACTION_SMARTLING_REGENERATE_THUMBNAILS = 'smartling_regenerate_thumbnails';
+
+    /**
      * Filter to modify FileURI.
      * Receives 1 parameter  Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater
      * Filter should return instance of Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater
@@ -81,4 +86,13 @@ interface ExportedAPI
      * Should return TranslationStringFilterParameters
      */
     const FILTER_SMARTLING_TRANSLATION_STRING_RECEIVED = 'smartling_translation_string_received';
+
+    /**
+     * Filter to modify meta value on translation
+     * receives 3 params:
+     *  metadata Field Name
+     *  metadata Field Value
+     *  SubmissionEntity instance
+     */
+    const FILTER_SMARTLING_METADATA_FIELD_PROCESS = 'smartling_metadata_string_process';
 }

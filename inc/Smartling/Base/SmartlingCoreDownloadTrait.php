@@ -100,7 +100,27 @@ trait SmartlingCoreDownloadTrait
             $targetContent = $this->getContentHelper()->writeTargetContent($entity, $targetContent);
 
             if (array_key_exists('meta', $translatedFields) && 0 < count($translatedFields['meta'])) {
-                $this->getContentHelper()->writeTargetMetadata($entity, $translatedFields['meta']);
+
+
+
+
+
+                    $metaFields = & $translatedFields['meta'];
+
+                    foreach ($metaFields as $metaName => & $metaValue) {
+                        $metaValue = apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $metaName, $metaValue, $entity);
+                    }
+                    unset ($metaValue);
+//Bootstrap::DebugPrint([$entity->toArray(false), $metaFields],true);
+                    $this->getContentHelper()->writeTargetMetadata($entity, $metaFields);
+                //Bootstrap::DebugPrint([$entity->toArray(false), $metaFields],true);
+
+
+do_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, $entity);
+
+
+
+                //$this->getContentHelper()->writeTargetMetadata($entity, $translatedFields['meta']);
             }
 
             $entity = $this->getSubmissionManager()->storeEntity($entity);
@@ -149,7 +169,7 @@ trait SmartlingCoreDownloadTrait
 
     public function downloadTranslation($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null)
     {
-        $submission = $this->prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity);
+        $submission = $this->getTranslationHelper()->prepareSubmission($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity);
 
         return $this->downloadTranslationBySubmission($submission);
     }
