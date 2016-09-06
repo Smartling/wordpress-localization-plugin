@@ -30,7 +30,23 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
      */
     public function registerProcessor(MetaFieldProcessorInterface $handler)
     {
-        parent::registerHandler($handler->getFieldName(), $handler);
+        parent::registerHandler($handler->getFieldRegexp(), $handler);
+    }
+
+    public function handlePostTranslationFields($fieldName, $fieldValue, SubmissionEntity $submission)
+    {
+        $this->getLogger()->debug(
+            vsprintf(
+                'Received field=\'%s\' with value=%s for submission id=\'%s\'.',
+                [
+                    $fieldName,
+                    var_export($fieldValue, true),
+                    $submission->getId(),
+                ]
+            ));
+        $processor = $this->getProcessor($fieldName);
+
+        return $processor->processFieldPostTranslation($submission, $fieldName, $fieldValue);
     }
 
     /**
@@ -41,34 +57,93 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
     public function getProcessor($fieldName)
     {
         $this->getLogger()->debug(vsprintf('Got \'%s\' field name. Looking for processor.', [$fieldName]));
-
-        $processor = clone parent::getHandler($fieldName);
-
+        $processor = $this->getHandler($fieldName);
         if ($processor instanceof MetaFieldProcessorInterface) {
-            $this->getLogger()->debug(vsprintf('Found processor \'%s\' for field name \'%s\'.', [get_class($processor),
-                                                                                                 $fieldName]));
+            if ($processor instanceof DefaultMetaFieldProcessor && false !== strpos($fieldName, '/')) {
+                $parts = explode('/', $fieldName);
+                foreach ($parts as $fieldNamePart) {
+                    $partProcessor = $this->getProcessor($fieldNamePart);
+                    if (!($partProcessor instanceof DefaultMetaFieldProcessor)) {
+                        $this->getLogger()->debug(
+                            vsprintf(
+                                'Found processor \'%s\' for part \'%s\' of field name \'%s\'.',
+                                [
+                                    get_class($partProcessor),
+                                    $fieldNamePart,
+                                    $fieldName,
+                                ]
+                            )
+                        );
+                        $processor = $partProcessor;
+                        break;
+                    }
+                }
+            } else {
+                $this->getLogger()->debug(
+                    vsprintf(
+                        'Found processor \'%s\' for field name \'%s\'.',
+                        [
+                            get_class($processor),
+                            $fieldName,
+                        ]
+                    )
+                );
+            }
         } else {
-            $this->getLogger()
-                ->warning(vsprintf('Found strange processor \'%s\' for field name \'%s\'.', [get_class($processor),
-                                                                                             $fieldName]));
+            $this->getLogger()->warning(
+                vsprintf(
+                    'Found strange processor \'%s\' for field name \'%s\'.',
+                    [
+                        get_class($processor),
+                        $fieldName,
+                    ]
+                )
+            );
         }
 
         return $processor;
     }
 
-    public function processorFilterHandler($fieldName, $fieldValue, SubmissionEntity $submission)
+    /**
+     * @param MetaFieldProcessorInterface
+     *
+     * @return object
+     */
+    public function getHandler($contentType)
+    {
+        $registeredProcessors = $this->getCollection();
+
+        $patterns = array_keys($registeredProcessors);
+
+        foreach ($patterns as $pattern) {
+            if (preg_match(vsprintf('/%s/iu', [$pattern]), $contentType)) {
+                return $registeredProcessors[$pattern];
+            }
+        }
+
+        if (true === $this->getAllowDefault() && null !== $this->getDefaultHandler()) {
+            return $this->getDefaultHandler();
+        } else {
+            $message = vsprintf($this->message, [$contentType, get_called_class()]);
+            $this->getLogger()->error($message);
+            throw new SmartlingInvalidFactoryArgumentException($message);
+        }
+    }
+
+    public function handlePreTranslationFields($fieldName, $fieldValue, array $collectedValues = [])
     {
         $this->getLogger()->debug(
-            'Received field=\'%s\' with value=%s for submission id=\'%s\'.',
-            [
-                $fieldName,
-                var_export($fieldValue, true),
-                $submission->getId(),
-            ]
-        );
+            vsprintf(
+                'Received field=\'%s\' with value=%s in scope of fields=%s.',
+                [
+                    $fieldName,
+                    var_export($fieldValue, true),
+                    var_export($collectedValues, true),
+                ]
+            ));
         $processor = $this->getProcessor($fieldName);
 
-        return $processor->processFieldValue($submission, $fieldValue);
+        return $processor->processFieldPreTranslation($fieldName, $fieldValue, $collectedValues);
     }
 
     /**
@@ -77,6 +152,13 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
      */
     public function register()
     {
-        add_filter(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, [$this, 'processorFilterHandler'], 10, 3);
+        $filters = [
+            ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS              => 'handlePostTranslationFields',
+            ExportedAPI::FILTER_SMARTLING_METADATA_PROCESS_BEFORE_TRANSLATION => 'handlePreTranslationFields',
+        ];
+
+        foreach ($filters as $filterName => $handlerMethod) {
+            add_filter($filterName, [$this, $handlerMethod], 10, 3);
+        }
     }
 }

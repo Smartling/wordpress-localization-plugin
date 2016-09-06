@@ -95,4 +95,13 @@ interface ExportedAPI
      *  SubmissionEntity instance
      */
     const FILTER_SMARTLING_METADATA_FIELD_PROCESS = 'smartling_metadata_string_process';
+
+    /**
+     * Filter to modify meta value on translation
+     * receives 3 params:
+     *  metadata Field Name
+     *  metadata Field Value
+     *  SubmissionEntity instance
+     */
+    const FILTER_SMARTLING_METADATA_PROCESS_BEFORE_TRANSLATION = 'smartling_metadata_process_before_translation';
 }

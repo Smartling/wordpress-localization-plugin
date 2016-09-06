@@ -345,13 +345,9 @@ services:
 
   default.meta-field-processor:
     class: Smartling\Helpers\MetaFieldProcessor\DefaultMetaFieldProcessor
-    arguments:
-      - "@logger"
-      - "@translation.helper"
-      - ""
 
-  referenced-image.meta-field-processor:
-    class: Smartling\Helpers\MetaFieldProcessor\ReferencedImageFieldProcessor
+  referenced-file.meta-field-processor:
+    class: Smartling\Helpers\MetaFieldProcessor\ReferencedFileFieldProcessor
     arguments:
       - "@logger"
       - "@translation.helper"
@@ -363,7 +359,7 @@ services:
       - "@logger"
     calls:
       - [ "setDefaultHandler", [ "@default.meta-field-processor" ] ]
-      - [ "registerProcessor", [ "@referenced-image.meta-field-processor" ] ]
+      - [ "registerProcessor", [ "@referenced-file.meta-field-processor" ] ]
 
   extension.translation_lock:
     class: Smartling\Extensions\TranslateLock

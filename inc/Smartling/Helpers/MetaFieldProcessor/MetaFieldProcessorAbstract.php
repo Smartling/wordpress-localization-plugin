@@ -20,7 +20,7 @@ abstract class MetaFieldProcessorAbstract implements MetaFieldProcessorInterface
     /**
      * @var string
      */
-    private $fieldName;
+    private $fieldRegexp;
 
     /**
      * @var TranslationHelper
@@ -46,17 +46,17 @@ abstract class MetaFieldProcessorAbstract implements MetaFieldProcessorInterface
     /**
      * @return string
      */
-    public function getFieldName()
+    public function getFieldRegexp()
     {
-        return $this->fieldName;
+        return $this->fieldRegexp;
     }
 
     /**
-     * @param string $fieldName
+     * @param string $fieldRegexp
      */
-    public function setFieldName($fieldName)
+    public function setFieldRegexp($fieldRegexp)
     {
-        $this->fieldName = $fieldName;
+        $this->fieldRegexp = $fieldRegexp;
     }
 
     /**
@@ -73,19 +73,5 @@ abstract class MetaFieldProcessorAbstract implements MetaFieldProcessorInterface
     public function setTranslationHelper($translationHelper)
     {
         $this->translationHelper = $translationHelper;
-    }
-
-    /**
-     * MetaFieldProcessorInterface constructor.
-     *
-     * @param LoggerInterface   $logger
-     * @param TranslationHelper $translationHelper
-     * @param string            $fieldName
-     */
-    public function __construct(LoggerInterface $logger, TranslationHelper $translationHelper, $fieldName)
-    {
-        $this->setLogger($logger);
-        $this->setTranslationHelper($translationHelper);
-        $this->setFieldName($fieldName);
     }
 }

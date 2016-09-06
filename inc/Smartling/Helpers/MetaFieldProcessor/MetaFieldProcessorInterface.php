@@ -2,8 +2,6 @@
 
 namespace Smartling\Helpers\MetaFieldProcessor;
 
-use Psr\Log\LoggerInterface;
-use Smartling\Helpers\TranslationHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -15,22 +13,23 @@ interface MetaFieldProcessorInterface
     /**
      * @return string
      */
-    public function getFieldName();
+    public function getFieldRegexp();
 
     /**
      * @param SubmissionEntity $submission
+     * @param string           $fieldName
      * @param mixed            $value
      *
      * @return mixed
      */
-    public function processFieldValue(SubmissionEntity $submission, $value);
+    public function processFieldPostTranslation(SubmissionEntity $submission, $fieldName, $value);
 
     /**
-     * MetaFieldProcessorInterface constructor.
+     * @param string $fieldName
+     * @param mixed  $value
+     * @param array  $collectedFields
      *
-     * @param LoggerInterface   $logger
-     * @param TranslationHelper $translationHelper
-     * @param string            $fieldName
+     * @return mixed or empty string (to skip translation)
      */
-    public function __construct(LoggerInterface $logger, TranslationHelper $translationHelper, $fieldName);
+    public function processFieldPreTranslation($fieldName, $value, array $collectedFields);
 }

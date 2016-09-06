@@ -2,26 +2,64 @@
 
 namespace Smartling\Helpers\MetaFieldProcessor;
 
+use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Exception\SmartlingDataReadException;
+use Smartling\Helpers\ContentHelper;
+use Smartling\Helpers\TranslationHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
- * Class ReferencedImageFieldProcessor
+ * Class ReferencedFileFieldProcessor
  * @package Smartling\Helpers\MetaFieldProcessor
  */
-class ReferencedImageFieldProcessor extends MetaFieldProcessorAbstract
+class ReferencedFileFieldProcessor extends MetaFieldProcessorAbstract
 {
     /**
-     * @param SubmissionEntity $submission
-     * @param mixed            $value
+     * @var ContentHelper
+     */
+    private $contentHelper;
+
+    /**
+     * MetaFieldProcessorInterface constructor.
      *
+     * @param LoggerInterface   $logger
+     * @param TranslationHelper $translationHelper
+     * @param string            $fieldRegexp
+     */
+    public function __construct(LoggerInterface $logger, TranslationHelper $translationHelper, $fieldRegexp)
+    {
+        $this->setLogger($logger);
+        $this->setTranslationHelper($translationHelper);
+        $this->setFieldRegexp($fieldRegexp);
+    }
+
+    /**
      * @return mixed
      */
-    public function processFieldValue(SubmissionEntity $submission, $value)
+    public function getContentHelper()
     {
+        return $this->contentHelper;
+    }
 
+    /**
+     * @param mixed $contentHelper
+     */
+    public function setContentHelper($contentHelper)
+    {
+        $this->contentHelper = $contentHelper;
+    }
+
+    /**
+     * @param SubmissionEntity $submission
+     * @param string           $fieldName
+     * @param mixed            $value
+     *
+     * @return mixed|string
+     */
+    public function processFieldPostTranslation(SubmissionEntity $submission, $fieldName, $value)
+    {
         $originalValue = $value;
 
         if (is_array($value)) {
@@ -33,11 +71,7 @@ class ReferencedImageFieldProcessor extends MetaFieldProcessorAbstract
         if (0 >= $value) {
             $message = vsprintf(
                 'Got bad reference number for submission id=%s metadata field=\'%s\' with value=\'%s\', expected integer > 0. Skipping.',
-                [
-                    $submission->getId(),
-                    $this->getFieldName(),
-                    var_export($originalValue, true),
-                ]
+                [$submission->getId(), $fieldName, var_export($originalValue, true),]
             );
             $this->getLogger()->warning($message);
 
@@ -45,15 +79,12 @@ class ReferencedImageFieldProcessor extends MetaFieldProcessorAbstract
         }
 
         try {
-
             $this->getLogger()->debug(
                 vsprintf(
                     'Sending for translation referenced image id = \'%s\' related to submission = \'%s\'.',
-                    [
-                        $value,
-                        $submission->getId(),
-                    ]
-                ));
+                    [$value, $submission->getId(),]
+                )
+            );
 
             $attSubmission = $this->getTranslationHelper()->sendForTranslationSync(
                 WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT,
@@ -76,5 +107,17 @@ class ReferencedImageFieldProcessor extends MetaFieldProcessorAbstract
 
             return $originalValue;
         }
+    }
+
+    /**
+     * @param string $fieldName
+     * @param mixed  $value
+     * @param array  $collectedFields
+     *
+     * @return mixed
+     */
+    public function processFieldPreTranslation($fieldName, $value, array $collectedFields)
+    {
+        return $value;
     }
 }

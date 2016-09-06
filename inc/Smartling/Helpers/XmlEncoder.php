@@ -268,6 +268,16 @@ class XmlEncoder
         }
         $sourceArray = self::flatternArray($sourceArray);
 
+        foreach ($sourceArray as $stringName => & $stringValue) {
+            $stringValue = apply_filters(
+                ExportedAPI::FILTER_SMARTLING_METADATA_PROCESS_BEFORE_TRANSLATION,
+                $stringName,
+                $stringValue,
+                $sourceArray
+            );
+        }
+        unset($stringValue);
+
         $settings = self::getFieldProcessingParams();
 
         if ('send' === $strategy) {

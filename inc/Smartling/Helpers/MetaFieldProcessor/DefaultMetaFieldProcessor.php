@@ -12,11 +12,24 @@ class DefaultMetaFieldProcessor extends MetaFieldProcessorAbstract
 {
     /**
      * @param SubmissionEntity $submission
+     * @param string           $fieldName
      * @param mixed            $value
      *
      * @return mixed
      */
-    public function processFieldValue(SubmissionEntity $submission, $value)
+    public function processFieldPostTranslation(SubmissionEntity $submission, $fieldName, $value)
+    {
+        return $value;
+    }
+
+    /**
+     * @param string $fieldName
+     * @param mixed  $value
+     * @param array  $collectedFields
+     *
+     * @return mixed
+     */
+    public function processFieldPreTranslation($fieldName, $value, array $collectedFields)
     {
         return $value;
     }
