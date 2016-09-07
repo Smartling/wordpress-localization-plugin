@@ -37,7 +37,7 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
     {
         $this->getLogger()->debug(
             vsprintf(
-                'Received field=\'%s\' with value=%s for submission id=\'%s\'.',
+                'Post Translation filter received field=\'%s\' with value=%s for submission id=\'%s\'.',
                 [
                     $fieldName,
                     var_export($fieldValue, true),
@@ -132,15 +132,8 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
 
     public function handlePreTranslationFields($fieldName, $fieldValue, array $collectedValues = [])
     {
-        $this->getLogger()->debug(
-            vsprintf(
-                'Received field=\'%s\' with value=%s in scope of fields=%s.',
-                [
-                    $fieldName,
-                    var_export($fieldValue, true),
-                    var_export($collectedValues, true),
-                ]
-            ));
+        $this->getLogger()->debug(vsprintf('Pre translation filter received field=\'%s\' with value=%s.',
+                                           [$fieldName, var_export($fieldValue, true)]));
         $processor = $this->getProcessor($fieldName);
 
         return $processor->processFieldPreTranslation($fieldName, $fieldValue, $collectedValues);
