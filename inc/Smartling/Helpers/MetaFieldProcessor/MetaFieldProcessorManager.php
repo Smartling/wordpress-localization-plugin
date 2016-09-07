@@ -35,18 +35,24 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
 
     public function handlePostTranslationFields($fieldName, $fieldValue, SubmissionEntity $submission)
     {
+
+        $processor = $this->getProcessor($fieldName);
+
+        $result = $processor->processFieldPostTranslation($submission, $fieldName, $fieldValue);
+
         $this->getLogger()->debug(
             vsprintf(
-                'Post Translation filter received field=\'%s\' with value=%s for submission id=\'%s\'.',
+                'Post Translation filter received field=\'%s\' with value=%s for submission id=\'%s\' that was processed by %s processor and received %s on output.',
                 [
                     $fieldName,
                     var_export($fieldValue, true),
                     $submission->getId(),
+                    get_class($processor),
+                    var_export($result, true)
                 ]
             ));
-        $processor = $this->getProcessor($fieldName);
 
-        return $processor->processFieldPostTranslation($submission, $fieldName, $fieldValue);
+        return $result;
     }
 
     /**
@@ -56,7 +62,6 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
      */
     public function getProcessor($fieldName)
     {
-        $this->getLogger()->debug(vsprintf('Got \'%s\' field name. Looking for processor.', [$fieldName]));
         $processor = $this->getHandler($fieldName);
         if ($processor instanceof MetaFieldProcessorInterface) {
             if ($processor instanceof DefaultMetaFieldProcessor && false !== strpos($fieldName, '/')) {
@@ -67,30 +72,10 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
                     }
                     $partProcessor = $this->getProcessor($fieldNamePart);
                     if (!($partProcessor instanceof DefaultMetaFieldProcessor)) {
-                        $this->getLogger()->debug(
-                            vsprintf(
-                                'Found processor \'%s\' for part \'%s\' of field name \'%s\'.',
-                                [
-                                    get_class($partProcessor),
-                                    $fieldNamePart,
-                                    $fieldName,
-                                ]
-                            )
-                        );
                         $processor = $partProcessor;
                         break;
                     }
                 }
-            } else {
-                $this->getLogger()->debug(
-                    vsprintf(
-                        'Found processor \'%s\' for field name \'%s\'.',
-                        [
-                            get_class($processor),
-                            $fieldName,
-                        ]
-                    )
-                );
             }
         } else {
             $this->getLogger()->warning(
@@ -135,11 +120,22 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
 
     public function handlePreTranslationFields($fieldName, $fieldValue, array $collectedValues = [])
     {
-        $this->getLogger()->debug(vsprintf('Pre translation filter received field=\'%s\' with value=%s.',
-                                           [$fieldName, var_export($fieldValue, true)]));
         $processor = $this->getProcessor($fieldName);
 
-        return $processor->processFieldPreTranslation($fieldName, $fieldValue, $collectedValues);
+        $result = $processor->processFieldPreTranslation($fieldName, $fieldValue, $collectedValues);
+
+        $this->getLogger()->debug(
+            vsprintf(
+                'Pre translation filter received field=\'%s\' with value=%s. that was processed by %s processor and received %s on output.',
+                [
+                    $fieldName,
+                    var_export($fieldValue, true),
+                    get_class($processor),
+                    var_export($result, true)
+                ]
+            ));
+
+        return $result;
     }
 
     /**
