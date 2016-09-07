@@ -163,6 +163,11 @@ class ContentHelper
         return $sourceContent;
     }
 
+    /**
+     * @param SubmissionEntity $submission
+     *
+     * @return EntityAbstract
+     */
     public function readTargetContent(SubmissionEntity $submission)
     {
         /**
@@ -176,6 +181,11 @@ class ContentHelper
         return $targetContent;
     }
 
+    /**
+     * @param SubmissionEntity $submission
+     *
+     * @return array
+     */
     public function readSourceMetadata(SubmissionEntity $submission)
     {
         $metadata = [];
@@ -193,6 +203,11 @@ class ContentHelper
         return $metadata;
     }
 
+    /**
+     * @param SubmissionEntity $submission
+     *
+     * @return array
+     */
     public function readTargetMetadata(SubmissionEntity $submission)
     {
         $metadata = [];
@@ -210,6 +225,12 @@ class ContentHelper
         return $metadata;
     }
 
+    /**
+     * @param SubmissionEntity $submission
+     * @param EntityAbstract   $entity
+     *
+     * @return EntityAbstract
+     */
     public function writeTargetContent(SubmissionEntity $submission, EntityAbstract $entity)
     {
         /**
@@ -231,6 +252,10 @@ class ContentHelper
         return $result;
     }
 
+    /**
+     * @param SubmissionEntity $submission
+     * @param array            $metadata
+     */
     public function writeTargetMetadata(SubmissionEntity $submission, array $metadata)
     {
         /**

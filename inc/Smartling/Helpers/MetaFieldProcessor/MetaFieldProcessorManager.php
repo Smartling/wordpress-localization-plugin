@@ -62,6 +62,9 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
             if ($processor instanceof DefaultMetaFieldProcessor && false !== strpos($fieldName, '/')) {
                 $parts = explode('/', $fieldName);
                 foreach ($parts as $fieldNamePart) {
+                    if (in_array($fieldNamePart, ['entity', 'meta'], true)) {
+                        continue;
+                    }
                     $partProcessor = $this->getProcessor($fieldNamePart);
                     if (!($partProcessor instanceof DefaultMetaFieldProcessor)) {
                         $this->getLogger()->debug(
