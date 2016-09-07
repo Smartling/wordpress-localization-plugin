@@ -154,6 +154,8 @@ class ApiWrapper implements ApiWrapperInterface
         $authProvider = $this->getCache()->get($cacheKey);
 
         if (false === $authProvider) {
+            AuthTokenProvider::setCurrentClientId('wordpress-connector');
+            AuthTokenProvider::setCurrentClientVersion($this->getPluginVersion());
             $authProvider = AuthTokenProvider::create(
                 $profile->getUserIdentifier(),
                 $profile->getSecretKey(),
