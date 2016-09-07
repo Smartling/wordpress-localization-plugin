@@ -2,8 +2,6 @@
 namespace Smartling\Base;
 
 use Exception;
-use Smartling\Bootstrap;
-use Smartling\Queue\Queue;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\MenuItemEntity;
 use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
@@ -13,6 +11,7 @@ use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\WordpressContentTypeHelper;
+use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Specific\SurveyMonkey\PrepareRelatedSMSpecificTrait;
 use Smartling\Submissions\SubmissionEntity;
@@ -241,7 +240,7 @@ class SmartlingCore extends SmartlingCoreAbstract
             /** @var MenuItemEntity $menuItem */
             foreach ($ids as $menuItemEntity) {
 
-                $menuItemIds[]=$menuItemEntity->getPK();
+                $menuItemIds[] = $menuItemEntity->getPK();
 
                 $this->getLogger()
                     ->debug(vsprintf('Sending for translation entity = \'%s\' id = \'%s\' related to submission = \'%s\'.', [
@@ -250,28 +249,39 @@ class SmartlingCore extends SmartlingCoreAbstract
                         $submission->getId(),
                     ]));
 
-                $menuItemSubmission = $this->getTranslationHelper()->sendForTranslationSync(WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM, $submission->getSourceBlogId(), $menuItemEntity->getPK(), $submission->getTargetBlogId());
+                $menuItemSubmission = $this->getTranslationHelper()->sendForTranslationSync(
+                    WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM,
+                    $submission->getSourceBlogId(),
+                    $menuItemEntity->getPK(),
+                    $submission->getTargetBlogId());
 
                 $originalMenuItemMeta = $this->getContentHelper()->readSourceMetadata($menuItemSubmission);
 
                 $originalMenuItemMeta = ArrayHelper::simplifyArray($originalMenuItemMeta);
 
-                if (in_array($originalMenuItemMeta['_menu_item_type'], [
-                    'taxonomy',
-                    'post_type',
-                ])) {
-                    $this->getLogger()
-                        ->debug(vsprintf('Sending for translation object = \'%s\' related to \'%s\' related to submission = \'%s\'.', [
-                            $originalMenuItemMeta['_menu_item_object'],
-                            WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM,
-                            $menuItemEntity->getPK(),
-                        ]));
-                    $relatedObjectId = $this->translateAndGetTargetId($originalMenuItemMeta['_menu_item_object'], $submission->getSourceBlogId(), (int)$originalMenuItemMeta['_menu_item_object_id'], $submission->getTargetBlogId());
+                if (in_array($originalMenuItemMeta['_menu_item_type'], ['taxonomy', 'post_type'])) {
+                    $this->getLogger()->debug(
+                        vsprintf(
+                            'Sending for translation object = \'%s\' related to \'%s\' related to submission = \'%s\'.',
+                            [
+                                $originalMenuItemMeta['_menu_item_object'],
+                                WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM,
+                                $menuItemEntity->getPK(),
+                            ]
+                        )
+                    );
+
+                    $relatedObjectId = $this->translateAndGetTargetId(
+                        $originalMenuItemMeta['_menu_item_object'],
+                        $submission->getSourceBlogId(),
+                        (int)$originalMenuItemMeta['_menu_item_object_id'],
+                        $submission->getTargetBlogId()
+                    );
 
                     $originalMenuItemMeta['_menu_item_object_id'] = $relatedObjectId;
-                }
 
-                $this->getContentHelper()->writeTargetMetadata($menuItemSubmission, $originalMenuItemMeta);
+                    $this->getContentHelper()->writeTargetMetadata($menuItemSubmission, $originalMenuItemMeta);
+                }
 
                 $accumulator[WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU][] = $menuItemSubmission->getTargetId();
             }

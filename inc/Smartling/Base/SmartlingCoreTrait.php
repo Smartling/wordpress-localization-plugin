@@ -96,6 +96,13 @@ trait SmartlingCoreTrait
             /** @var EntityAbstract $originalContent */
             $targetContent = clone $originalContent;
             $targetContent->cleanFields();
+
+            /**
+             * @var EntityAbstract $targetContent
+             */
+            $targetContent = $this->getContentHelper()->writeTargetContent($submission, $targetContent);
+            $submission->setTargetId($targetContent->getPK());
+            $submission = $this->getSubmissionManager()->storeEntity($submission);
         } else {
             $targetContent = $this->getContentHelper()->readTargetContent($submission);
         }
