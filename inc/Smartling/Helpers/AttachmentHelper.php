@@ -2,40 +2,16 @@
 
 namespace Smartling\Helpers;
 
-use Smartling\Submissions\SubmissionEntity;
-
 /**
  * Class AttachmentHelper
- *
  * @package Smartling\Helpers
  */
 class AttachmentHelper
 {
-
-    /**
-     * Is returned on success
-     */
-    const CODE_SUCCESS = 0;
-
-    /**
-     * Is returned if error occurred while copying
-     */
-    const CODE_FILE_NOT_COPIED = 1;
-
-    /**
-     * Is returned if cannot read source file
-     */
-    const CODE_CANNOT_ACCESS_SOURCE_FILE = 2;
-
-    /**
-     * Is returned if cannot prepare target path
-     */
-    const CODE_CANNOT_PREPARE_TARGET_PATH = 4;
-
-    /**
-     * Is returned if cannot remove existing file before copying
-     */
-    const CODE_CANNOT_OVERWRITE_EXISTING_FILE = 8;
+    const FILE_NOT_COPIED                = 'Cannot copy source file.';
+    const CANNOT_ACCESS_SOURCE_FILE      = 'Cannot access source file.';
+    const CANNOT_PREPARE_TARGET_PATH     = 'Cannot prepare target path.';
+    const CANNOT_OVERWRITE_EXISTING_FILE = 'Cannot overwrite existing file.';
 
     /**
      * Creates file clone on filesystem
@@ -44,27 +20,27 @@ class AttachmentHelper
      * @param string $targetPath
      * @param bool   $overwrite
      *
-     * @return int
+     * @return array
      */
     public static function cloneFile($originalFile, $targetPath, $overwrite = false)
     {
-        $result = self::CODE_SUCCESS;
+        $result = [];
         if (!file_exists($originalFile) || !is_file($originalFile) || !is_readable($originalFile)) {
-            $result |= self::CODE_CANNOT_ACCESS_SOURCE_FILE;
+            $result [] = self::CANNOT_ACCESS_SOURCE_FILE;
         }
         if (!self::buildPath($targetPath)) {
-            $result |= self::CODE_CANNOT_PREPARE_TARGET_PATH;
+            $result [] = self::CANNOT_PREPARE_TARGET_PATH;
         }
         $targetFileName = pathinfo($originalFile, PATHINFO_BASENAME);
         $targetFile = pathinfo($targetPath, PATHINFO_DIRNAME) . DIRECTORY_SEPARATOR . $targetFileName;
-        if (is_file($targetFile) && true === $overwrite) {
+        if (true === $overwrite && is_file($targetFile)) {
             if (false === unlink($targetFile)) {
-                $result |= self::CODE_CANNOT_OVERWRITE_EXISTING_FILE;
+                $result [] = self::CANNOT_OVERWRITE_EXISTING_FILE;
             }
         }
-        if (self::CODE_SUCCESS === $result) {
+        if ([] === $result) {
             if (is_dir($originalFile) || false === copy($originalFile, $targetFile)) {
-                $result |= self::CODE_FILE_NOT_COPIED;
+                $result [] = self::FILE_NOT_COPIED;
             }
         }
 

@@ -63,9 +63,16 @@ trait SmartlingCoreTrait
             $sourceFileFsPath = $fileData['source_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
             $targetFileFsPath = $fileData['target_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
             $mediaCloneResult = AttachmentHelper::cloneFile($sourceFileFsPath, $targetFileFsPath, true);
-            $result = AttachmentHelper::CODE_SUCCESS === $mediaCloneResult;
-            if (AttachmentHelper::CODE_SUCCESS !== $mediaCloneResult) {
-                $message = vsprintf('Error %s happened while working with attachment.', [$mediaCloneResult]);
+            if (is_array($mediaCloneResult) && 0 < count($mediaCloneResult)) {
+                $message = vsprintf(
+                    'Error(s) %s happened while working with attachment id=%s, blog=%s, submission=%s.',
+                    [
+                        implode(',', $mediaCloneResult),
+                        $submission->getSourceId(),
+                        $submission->getSourceBlogId(),
+                        $submission->getId(),
+                    ]
+                );
                 $this->getLogger()->error($message);
             }
         }

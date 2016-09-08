@@ -37,7 +37,7 @@ parameters:
         - '_yoast_wpseo_focuskw'
         - '_yoast_wpseo_opengraph-description'
         - '_yoast_wpseo_google-plus-description'
-    copy: # do not trandlate, but clone
+    copy: # do not translate, but clone
       name: # by full name
         - '_yoast_wpseo_meta-robots-noindex'
         - '_yoast_wpseo_meta-robots-nofollow'
@@ -95,6 +95,7 @@ parameters:
         - 'file'
         - 'align'
         - 'class'
+        - 'mime-type'
         ### Widget fields
         - 'bar'
         - 'widgetType'
