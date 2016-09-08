@@ -12,3 +12,7 @@ inc/third-party/*
 phpunit.log.*
 smartling-cron.pid
 logs/logfile*
+
+# Atom files
+.tags
+.tags1
