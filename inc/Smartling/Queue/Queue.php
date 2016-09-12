@@ -143,9 +143,10 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
 
         $result = $this->getDbal()->query($query);
 
-        if (1 !== $result) {
-            $message = vsprintf('Error while deleting element from queue: %s', [
+        if (false === $result) {
+            $message = vsprintf('Error while deleting element from queue: %s; Query: %s', [
                 $this->getDbal()->getLastErrorMessage(),
+                $query
             ]);
             $this->logger->error($message);
             throw new SmartlingDbException($message);
