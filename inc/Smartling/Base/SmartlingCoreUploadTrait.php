@@ -4,7 +4,6 @@ namespace Smartling\Base;
 use Exception;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
-use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Submissions\SubmissionEntity;
@@ -34,7 +33,7 @@ trait SmartlingCoreUploadTrait
     private function renewContentHash(SubmissionEntity $submission)
     {
         $content = $this->getContentHelper()->readSourceContent($submission);
-        $newHash = ContentSerializationHelper::calculateHash($this->getContentIoFactory(), $this->getSiteHelper(), $this->getSettingsManager(), $submission);
+        $newHash = $this->getContentSerializationHelper()->calculateHash($submission);
         $submission->setSourceContentHash($newHash);
         $submission->setOutdated(0);
         $submission->setSourceTitle($content->getTitle());
@@ -51,7 +50,7 @@ trait SmartlingCoreUploadTrait
     private function readSourceContentWithMetadataAsArray(SubmissionEntity $submission)
     {
         $source = [
-            'entity' =>  $this->getContentHelper()->readSourceContent($submission)->toArray(),
+            'entity' => $this->getContentHelper()->readSourceContent($submission)->toArray(),
             'meta'   => $this->getContentHelper()->readSourceMetadata($submission),
         ];
 
@@ -125,41 +124,43 @@ trait SmartlingCoreUploadTrait
                 $submission->getFileUri();
                 $submission = $this->getSubmissionManager()->storeEntity($submission);
             }
-            $source = $this->readSourceContentWithMetadataAsArray($submission);
-            $contentEntity = $this->getContentHelper()->readSourceContent($submission);
             $submission = $this->prepareTargetEntity($submission);
 
+            $source = $this->readSourceContentWithMetadataAsArray($submission);
+
+            $contentEntity = $this->getContentHelper()->readSourceContent($submission);
             $params = new BeforeSerializeContentEventParameters($source, $submission, $contentEntity, $source['meta']);
             do_action(ExportedAPI::EVENT_SMARTLING_BEFORE_SERIALIZE_CONTENT, $params);
 
             $this->prepareFieldProcessorValues($submission);
-            $xml = XmlEncoder::xmlEncode($source);
+            $filteredValues = $this->getFieldsFilter()->processStringsBeforeEncoding($submission, $source);
 
-            $this->getLogger()->debug(vsprintf('Serialized fields to XML: %s', [base64_encode($xml),]));
-            $this->prepareRelatedSubmissions($submission);
             $result = false;
 
-            if (false === XmlEncoder::hasStringsForTranslation($xml)) {
+            if (is_array($filteredValues) && 0 === count($filteredValues)) {
                 $this->getLogger()
                     ->warning(
                         vsprintf(
-                            'Prepared XML file for submission = \'%s\' has nothing to translate. Setting status to \'%s\'.',
+                            'Prepared Submission = \'%s\' has nothing to translate. Setting status to \'%s\'.',
                             [
                                 $submission->getId(),
                                 SubmissionEntity::SUBMISSION_STATUS_FAILED,
                             ]
                         )
                     );
-                $submission = $this->getSubmissionManager()
-                    ->setErrorMessage($submission, 'Nothing is found for translation.');
+                $submission = $this->getSubmissionManager()->setErrorMessage($submission, 'Nothing is found for translation.');
+
             } else {
+                $this->prepareFieldProcessorValues($submission);
+                $xml = XmlEncoder::xmlEncode($filteredValues, $source);
+                $this->getLogger()->debug(vsprintf('Serialized fields to XML: %s', [base64_encode($xml),]));
+                $this->prepareRelatedSubmissions($submission);
                 try {
                     $result = $this->sendFile($submission, $xml);
                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                 } catch (Exception $e) {
                     $this->getLogger()->error($e->getMessage());
-                    $this->getSubmissionManager()
-                        ->setErrorMessage($submission, 'Error occurred: %s', [$e->getMessage()]);
+                    $this->getSubmissionManager()->setErrorMessage($submission, 'Error occurred: %s', [$e->getMessage()]);
                 }
             }
 
@@ -186,7 +187,8 @@ trait SmartlingCoreUploadTrait
         /**
          * @var SubmissionEntity $submission
          */
-        $submission = $this->getTranslationHelper()->prepareSubmissionEntity($contentType, $sourceBlogId, $sourceEntityId, $targetBlogId);
+        $submission = $this->getTranslationHelper()
+            ->prepareSubmissionEntity($contentType, $sourceBlogId, $sourceEntityId, $targetBlogId);
 
         $contentEntity = $this->getContentHelper()->readSourceContent($submission);
 
@@ -219,7 +221,8 @@ trait SmartlingCoreUploadTrait
         /**
          * @var SubmissionEntity $submission
          */
-        $submission = $this->getTranslationHelper()->prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity);
+        $submission = $this->getTranslationHelper()
+            ->prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity);
 
         $contentEntity = $this->getContentHelper()->readSourceContent($submission);
 

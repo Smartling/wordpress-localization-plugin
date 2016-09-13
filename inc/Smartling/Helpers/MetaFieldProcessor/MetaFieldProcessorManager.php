@@ -48,7 +48,7 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
                     var_export($fieldValue, true),
                     $submission->getId(),
                     get_class($processor),
-                    var_export($result, true)
+                    var_export($result, true),
                 ]
             ));
 
@@ -118,11 +118,19 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
         }
     }
 
-    public function handlePreTranslationFields($fieldName, $fieldValue, array $collectedValues = [])
+    /**
+     * @param SubmissionEntity $submission
+     * @param string           $fieldName
+     * @param mixed            $fieldValue
+     * @param array            $collectedValues
+     *
+     * @return mixed
+     */
+    public function handlePreTranslationFields(SubmissionEntity $submission, $fieldName, $fieldValue, array $collectedValues = [])
     {
         $processor = $this->getProcessor($fieldName);
 
-        $result = $processor->processFieldPreTranslation($fieldName, $fieldValue, $collectedValues);
+        $result = $processor->processFieldPreTranslation($submission, $fieldName, $fieldValue, $collectedValues);
 
         $this->getLogger()->debug(
             vsprintf(
@@ -131,7 +139,7 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
                     $fieldName,
                     var_export($fieldValue, true),
                     get_class($processor),
-                    var_export($result, true)
+                    var_export($result, true),
                 ]
             ));
 
@@ -144,13 +152,8 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
      */
     public function register()
     {
-        $filters = [
-            ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS              => 'handlePostTranslationFields',
-            ExportedAPI::FILTER_SMARTLING_METADATA_PROCESS_BEFORE_TRANSLATION => 'handlePreTranslationFields',
-        ];
-
-        foreach ($filters as $filterName => $handlerMethod) {
-            add_filter($filterName, [$this, $handlerMethod], 10, 3);
-        }
+        add_filter(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, [$this, 'handlePostTranslationFields'], 10, 3);
+        add_filter(ExportedAPI::FILTER_SMARTLING_METADATA_PROCESS_BEFORE_TRANSLATION, [$this,
+                                                                                       'handlePreTranslationFields'], 10, 4);
     }
 }

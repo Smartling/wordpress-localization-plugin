@@ -7,7 +7,9 @@ use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\ContentHelper;
+use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\CustomMenuContentTypeHelper;
+use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Processors\ContentEntitiesIOFactory;
@@ -91,6 +93,16 @@ abstract class SmartlingCoreAbstract
      * @var TranslationHelper;
      */
     private $translationHelper;
+
+    /**
+     * @var FieldsFilterHelper
+     */
+    private $fieldsFilter;
+
+    /**
+     * @var ContentSerializationHelper
+     */
+    private $contentSerializationHelper;
 
     /**
      * @return Cache
@@ -282,5 +294,37 @@ abstract class SmartlingCoreAbstract
     public function setTranslationHelper($translationHelper)
     {
         $this->translationHelper = $translationHelper;
+    }
+
+    /**
+     * @return FieldsFilterHelper
+     */
+    public function getFieldsFilter()
+    {
+        return $this->fieldsFilter;
+    }
+
+    /**
+     * @param FieldsFilterHelper $fieldsFilter
+     */
+    public function setFieldsFilter($fieldsFilter)
+    {
+        $this->fieldsFilter = $fieldsFilter;
+    }
+
+    /**
+     * @return ContentSerializationHelper
+     */
+    public function getContentSerializationHelper()
+    {
+        return $this->contentSerializationHelper;
+    }
+
+    /**
+     * @param ContentSerializationHelper $contentSerializationHelper
+     */
+    public function setContentSerializationHelper($contentSerializationHelper)
+    {
+        $this->contentSerializationHelper = $contentSerializationHelper;
     }
 }

@@ -5,7 +5,6 @@ namespace Smartling\Helpers;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Exception\SmartlingExceptionAbstract;
-use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
@@ -23,6 +22,11 @@ class DetectChangesHelper
     private $logger;
 
     /**
+     * @var ContentSerializationHelper
+     */
+    private $contentSerializationHelper;
+
+    /**
      * @var SettingsManager
      */
     private $settingsManager;
@@ -31,16 +35,6 @@ class DetectChangesHelper
      * @var SubmissionManager
      */
     private $submissionManager;
-
-    /**
-     * @var SiteHelper
-     */
-    private $siteHelper;
-
-    /**
-     * @var ContentEntitiesIOFactory
-     */
-    private $ioFactory;
 
     /**
      * @return LoggerInterface
@@ -91,35 +85,19 @@ class DetectChangesHelper
     }
 
     /**
-     * @return SiteHelper
+     * @return ContentSerializationHelper
      */
-    public function getSiteHelper()
+    public function getContentSerializationHelper()
     {
-        return $this->siteHelper;
+        return $this->contentSerializationHelper;
     }
 
     /**
-     * @param SiteHelper $siteHelper
+     * @param ContentSerializationHelper $contentSerializationHelper
      */
-    public function setSiteHelper($siteHelper)
+    public function setContentSerializationHelper($contentSerializationHelper)
     {
-        $this->siteHelper = $siteHelper;
-    }
-
-    /**
-     * @return ContentEntitiesIOFactory
-     */
-    public function getIoFactory()
-    {
-        return $this->ioFactory;
-    }
-
-    /**
-     * @param ContentEntitiesIOFactory $ioFactory
-     */
-    public function setIoFactory($ioFactory)
-    {
-        $this->ioFactory = $ioFactory;
+        $this->contentSerializationHelper = $contentSerializationHelper;
     }
 
     /**
@@ -148,20 +126,6 @@ class DetectChangesHelper
     private function getProfiles($blogId)
     {
         return $this->getSettingsManager()->findEntityByMainLocale($blogId);
-    }
-
-    /**
-     * @param SubmissionEntity $submission
-     *
-     * @return string
-     * @throws \Smartling\Exception\SmartlingInvalidFactoryArgumentException
-     * @throws \Smartling\Exception\SmartlingDirectRunRuntimeException
-     * @throws \Smartling\Exception\SmartlingConfigException
-     * @throws \Smartling\Exception\BlogNotFoundException
-     */
-    private function getCurrentHash(SubmissionEntity $submission)
-    {
-        return ContentSerializationHelper::calculateHash($this->getIoFactory(), $this->getSiteHelper(), $this->getSettingsManager(), $submission);
     }
 
     /**
@@ -237,9 +201,9 @@ class DetectChangesHelper
             $profiles = $this->getProfiles($blogId);
 
             if (0 < count($profiles)) {
-                $profile = reset($profiles);
+                $profile = $profiles[0];
 
-                $currentHash = $this->getCurrentHash(reset($submissions));
+                $currentHash = $this->getContentSerializationHelper()->calculateHash($submissions[0]);
 
                 /**
                  * @var ConfigurationProfileEntity $profile

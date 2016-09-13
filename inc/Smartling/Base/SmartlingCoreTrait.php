@@ -4,10 +4,10 @@ namespace Smartling\Base;
 
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\SmartlingWpDataIntegrityException;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\AttachmentHelper;
 use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
-use Smartling\Helpers\XmlEncoder;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -39,6 +39,8 @@ trait SmartlingCoreTrait
 
     /**
      * @param SubmissionEntity $submission
+     *
+     * @throws \Smartling\Exception\SmartlingConfigException
      */
     private function prepareFieldProcessorValues(SubmissionEntity $submission)
     {
@@ -53,6 +55,8 @@ trait SmartlingCoreTrait
      * @param bool             $forceClone
      *
      * @return SubmissionEntity
+     * @throws \Smartling\Exception\SmartlingConfigException
+     * @throws \Smartling\Exception\SmartlingWpDataIntegrityException
      */
     protected function prepareTargetEntity(SubmissionEntity $submission, $forceClone = false)
     {
@@ -97,7 +101,14 @@ trait SmartlingCoreTrait
         $this->prepareFieldProcessorValues($submission);
         $unfilteredSourceData = $this->readSourceContentWithMetadataAsArray($submission);
 
-        $filteredSourceData = XmlEncoder::xmlDecode(XmlEncoder::xmlEncode($unfilteredSourceData));
+        // filter as on download but clone;
+
+        $hardFilteredOriginalData = $this->getFieldsFilter()->processStringsAfterDecoding(
+            $this->getFieldsFilter()->processStringsBeforeEncoding($submission, $unfilteredSourceData)
+        );
+
+        $filteredSourceData = $this->getFieldsFilter()
+            ->applyTranslatedValues($submission, $unfilteredSourceData, $hardFilteredOriginalData);
 
         if (false === $update) {
             /** @var EntityAbstract $originalContent */
@@ -109,9 +120,12 @@ trait SmartlingCoreTrait
 
         unset ($filteredSourceData['entity']['ID'], $filteredSourceData['entity']['term_id'], $filteredSourceData['entity']['id']);
 
-        if (array_key_exists('entity', $filteredSourceData) && is_array($filteredSourceData['entity']) && 0 < count ($filteredSourceData['entity']))
-        {
-            foreach ($filteredSourceData['entity'] as $k => $v) {
+        if (array_key_exists('entity', $filteredSourceData) && ArrayHelper::notEmpty($filteredSourceData['entity'])) {
+            $_entity = &$filteredSourceData['entity'];
+            /**
+             * @var array $_entity
+             */
+            foreach ($_entity as $k => $v) {
                 $targetContent->{$k} = $v;
             }
         }
@@ -140,16 +154,15 @@ trait SmartlingCoreTrait
                 )
             );
 
-        if (array_key_exists('meta', $filteredSourceData) && is_array($filteredSourceData['meta']) && 0 < count($filteredSourceData['meta'])) {
-
-            $metaFields = & $filteredSourceData['meta'];
-
+        if (array_key_exists('meta', $filteredSourceData) && ArrayHelper::notEmpty($filteredSourceData['meta'])) {
+            $metaFields = &$filteredSourceData['meta'];
+            /**
+             * @var array $metaFields
+             */
             foreach ($metaFields as $metaName => & $metaValue) {
                 $metaValue = apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $metaName, $metaValue, $submission);
             }
-
             unset ($metaValue);
-
             $this->getContentHelper()->writeTargetMetadata($submission, $metaFields);
         }
 

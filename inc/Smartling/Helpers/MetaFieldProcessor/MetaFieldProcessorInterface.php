@@ -25,11 +25,12 @@ interface MetaFieldProcessorInterface
     public function processFieldPostTranslation(SubmissionEntity $submission, $fieldName, $value);
 
     /**
-     * @param string $fieldName
-     * @param mixed  $value
-     * @param array  $collectedFields
+     * @param SubmissionEntity $submission
+     * @param string           $fieldName
+     * @param mixed            $value
+     * @param array            $collectedFields
      *
      * @return mixed or empty string (to skip translation)
      */
-    public function processFieldPreTranslation($fieldName, $value, array $collectedFields);
+    public function processFieldPreTranslation(SubmissionEntity $submission, $fieldName, $value, array $collectedFields);
 }

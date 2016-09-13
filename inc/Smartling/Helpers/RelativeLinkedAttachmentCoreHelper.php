@@ -395,20 +395,18 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         $dom = new DOMDocument();
         $dom->loadHTML($tagString);
         $images = $dom->getElementsByTagName($tagName);
-
+        $value = false;
         if (1 === $images->length) {
             /** @var \DOMNode $node */
             $node = $images->item(0);
-            if ($node->hasAttribute($attribute)) {
-                $value = $node->getAttribute($attribute);
-
-                return $value;
-            } else {
-                return false;
+            if ($node->hasAttributes() &&
+                $value = $node->attributes->getNamedItem($attribute) && $value instanceof \DOMNode
+            ) {
+                $value = $value->nodeValue;
             }
         }
 
-        return false;
+        return $value;
     }
 
 }

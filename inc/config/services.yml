@@ -54,6 +54,9 @@ services:
       - [ "setQueue", ["@queue.db"]]
       - [ "setContentHelper", [ "@content.helper" ]]
       - [ "setTranslationHelper", [ "@translation.helper" ]]
+      - [ "setFieldsFilter", [ "@fields-filter.helper" ] ]
+      - [ "setContentSerializationHelper", [ "@content-serialization.helper" ] ]
+
 
   wrapper.widget:
     class: Smartling\DbAl\WordpressContentEntities\WidgetEntity
@@ -148,8 +151,7 @@ services:
       - [ "setLogger" , [ "@logger" ] ]
       - [ "setSettingsManager" , [ "@manager.settings" ] ]
       - [ "setSubmissionManager" , [ "@manager.submission" ] ]
-      - [ "setSiteHelper" , [ "@site.helper" ] ]
-      - [ "setIoFactory" , [ "@factory.contentIO" ] ]
+      - [ "setContentSerializationHelper" , [ "@content-serialization.helper" ] ]
 
   site.db:
     class: Smartling\DbAl\DB
@@ -342,9 +344,31 @@ services:
     class: Smartling\Helpers\ShortcodeHelper
     arguments:
       - "@logger"
+    calls:
+      - [ "setFieldsFilter", [ "@fields-filter.helper" ]]
 
   default.meta-field-processor:
     class: Smartling\Helpers\MetaFieldProcessor\DefaultMetaFieldProcessor
+
+  referenced-content.page-parent.meta-field-processor:
+    class: Smartling\Helpers\MetaFieldProcessor\ReferencedContentProcessor
+    arguments:
+      - "@logger"
+      - "@translation.helper"
+      - "post_parent"
+      - "page"
+    calls:
+      - [ "setContentHelper", [ "@content.helper" ]]
+
+  referenced-content.category-parent.meta-field-processor:
+    class: Smartling\Helpers\MetaFieldProcessor\ReferencedCategoryProcessor
+    arguments:
+      - "@logger"
+      - "@translation.helper"
+      - "parent"
+      - "category"
+    calls:
+      - [ "setContentHelper", [ "@content.helper" ]]
 
   referenced-file.meta-field-processor:
     class: Smartling\Helpers\MetaFieldProcessor\ReferencedFileFieldProcessor
@@ -360,6 +384,8 @@ services:
     calls:
       - [ "setDefaultHandler", [ "@default.meta-field-processor" ] ]
       - [ "registerProcessor", [ "@referenced-file.meta-field-processor" ] ]
+      - [ "registerProcessor", [ "@referenced-content.page-parent.meta-field-processor" ] ]
+      - [ "registerProcessor", [ "@referenced-content.category-parent.meta-field-processor" ] ]
 
   extension.translation_lock:
     class: Smartling\Extensions\TranslateLock
@@ -378,7 +404,6 @@ services:
       - [ "setSubmissionManager", [ "@manager.submission" ]]
       - [ "setLogger", [ "@logger" ]]
 
-
   content.helper:
     class: Smartling\Helpers\ContentHelper
     arguments:
@@ -386,3 +411,16 @@ services:
     calls:
       - [ "setIoFactory", [ "@factory.contentIO" ]]
       - [ "setSiteHelper", [ "@site.helper" ]]
+
+  fields-filter.helper:
+    class: Smartling\Helpers\FieldsFilterHelper
+    arguments:
+      - "@logger"
+      - "@manager.settings"
+
+  content-serialization.helper:
+    class: Smartling\Helpers\ContentSerializationHelper
+    arguments:
+    - "@logger"
+    - "@content.helper"
+    - "@fields-filter.helper"

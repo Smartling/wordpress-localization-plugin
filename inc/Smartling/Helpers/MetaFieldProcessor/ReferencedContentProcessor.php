@@ -4,17 +4,15 @@ namespace Smartling\Helpers\MetaFieldProcessor;
 
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
-use Smartling\Exception\SmartlingDataReadException;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\TranslationHelper;
-use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
- * Class ReferencedFileFieldProcessor
+ * Class ReferencedContentProcessor
  * @package Smartling\Helpers\MetaFieldProcessor
  */
-class ReferencedFileFieldProcessor extends MetaFieldProcessorAbstract
+class ReferencedContentProcessor extends MetaFieldProcessorAbstract
 {
     /**
      * @var ContentHelper
@@ -22,21 +20,28 @@ class ReferencedFileFieldProcessor extends MetaFieldProcessorAbstract
     private $contentHelper;
 
     /**
-     * MetaFieldProcessorInterface constructor.
-     *
-     * @param LoggerInterface   $logger
-     * @param TranslationHelper $translationHelper
-     * @param string            $fieldRegexp
+     * @var string
      */
-    public function __construct(LoggerInterface $logger, TranslationHelper $translationHelper, $fieldRegexp)
+    private $contentType;
+
+    /**
+     * @return string
+     */
+    public function getContentType()
     {
-        $this->setLogger($logger);
-        $this->setTranslationHelper($translationHelper);
-        $this->setFieldRegexp($fieldRegexp);
+        return $this->contentType;
     }
 
     /**
-     * @return mixed
+     * @param string $contentType
+     */
+    public function setContentType($contentType)
+    {
+        $this->contentType = $contentType;
+    }
+
+    /**
+     * @return ContentHelper
      */
     public function getContentHelper()
     {
@@ -44,7 +49,7 @@ class ReferencedFileFieldProcessor extends MetaFieldProcessorAbstract
     }
 
     /**
-     * @param mixed $contentHelper
+     * @param ContentHelper $contentHelper
      */
     public function setContentHelper($contentHelper)
     {
@@ -52,14 +57,34 @@ class ReferencedFileFieldProcessor extends MetaFieldProcessorAbstract
     }
 
     /**
+     * MetaFieldProcessorInterface constructor.
+     *
+     * @param LoggerInterface   $logger
+     * @param TranslationHelper $translationHelper
+     * @param string            $fieldRegexp
+     * @param string            $contentType
+     */
+    public function __construct(LoggerInterface $logger, TranslationHelper $translationHelper, $fieldRegexp, $contentType)
+    {
+        $this->setLogger($logger);
+        $this->setTranslationHelper($translationHelper);
+        $this->setFieldRegexp($fieldRegexp);
+        $this->setContentType($contentType);
+    }
+
+    /**
      * @param SubmissionEntity $submission
      * @param string           $fieldName
      * @param mixed            $value
      *
-     * @return mixed|string
+     * @return mixed
      */
     public function processFieldPostTranslation(SubmissionEntity $submission, $fieldName, $value)
     {
+        if ($this->getContentType() !== $submission->getContentType()) {
+            return $value;
+        }
+
         $originalValue = $value;
 
         if (is_array($value)) {
@@ -79,16 +104,18 @@ class ReferencedFileFieldProcessor extends MetaFieldProcessorAbstract
             return $originalValue;
         }
 
+
         try {
             $this->getLogger()->debug(
                 vsprintf(
-                    'Sending for translation referenced image id = \'%s\' related to submission = \'%s\'.',
-                    [$value, $submission->getId(),]
+                    'Sending for translation referenced content id = \'%s\' related to submission = \'%s\'.',
+                    [$value, $submission->getId()]
                 )
             );
 
+            // trying to detect
             $attSubmission = $this->getTranslationHelper()->sendForTranslationSync(
-                WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT,
+                $this->getContentType(),
                 $submission->getSourceBlogId(),
                 $value,
                 $submission->getTargetBlogId()
@@ -101,7 +128,7 @@ class ReferencedFileFieldProcessor extends MetaFieldProcessorAbstract
             return $attSubmission->getTargetId();
         } catch (SmartlingDataReadException $e) {
             $message = vsprintf(
-                'An error happened while processing referenced image with original value=%s. Keeping original value.',
+                'An error happened while processing referenced content with original value=%s. Keeping original value.',
                 [
                     var_export($originalValue, true),
                 ]

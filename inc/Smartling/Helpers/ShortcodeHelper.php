@@ -49,6 +49,11 @@ class ShortcodeHelper implements WPHookInterface
      */
     private $params;
 
+    /**
+     * @var FieldsFilterHelper
+     */
+    private $fieldsFilter;
+
     public function __construct(LoggerInterface $logger)
     {
         $this->setLogger($logger);
@@ -123,6 +128,24 @@ class ShortcodeHelper implements WPHookInterface
         /** @noinspection OnlyWritesOnParameterInspection */
         $shortcode_tags = $assignments;
     }
+
+    /**
+     * @return FieldsFilterHelper
+     */
+    public function getFieldsFilter()
+    {
+        return $this->fieldsFilter;
+    }
+
+    /**
+     * @param FieldsFilterHelper $fieldsFilter
+     */
+    public function setFieldsFilter($fieldsFilter)
+    {
+        $this->fieldsFilter = $fieldsFilter;
+    }
+
+
 
     /**
      * Registers wp hook handlers. Invoked by wordpress.
@@ -393,7 +416,7 @@ class ShortcodeHelper implements WPHookInterface
                     ]
                 )
             );
-            $preparedAttributes = XmlEncoder::prepareSourceArray($attributes);
+            $preparedAttributes = $this->getFieldsFilter()->prepareSourceData($attributes);
             $this->getLogger()->debug(
                 vsprintf(
                     'Got filtered shortcodes %s',

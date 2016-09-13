@@ -13,13 +13,19 @@ use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 
 /**
  * Class XmlEncoder
- *
  * Encodes given array into XML string and backward
- *
  * @package Smartling\Processors
  */
 class XmlEncoder
 {
+
+    /**
+     * @return mixed
+     */
+    private static function getFieldProcessingParams()
+    {
+        return Bootstrap::getContainer()->getParameter('field.processor');
+    }
 
     /**
      * Logs XML related message.
@@ -35,7 +41,7 @@ class XmlEncoder
     }
 
     private static $magicComments = [
-        'smartling.translate_paths = data/string/'  ,
+        'smartling.translate_paths = data/string/',
         'smartling.string_format_paths = html : data/string/',
         'smartling.source_key_paths = data/{string.key}',
         'smartling.variants_enabled = true',
@@ -52,9 +58,7 @@ class XmlEncoder
      */
     private static function initXml()
     {
-        $xml = new DOMDocument('1.0', 'UTF-8');
-
-        return $xml;
+        return new DOMDocument('1.0', 'UTF-8');
     }
 
     /**
@@ -76,9 +80,9 @@ class XmlEncoder
             vsprintf(
                 ' smartling.placeholder_format_custom = %s ',
                 [
-                    ShortcodeHelper::getShortcodeMaskRegexp()
+                    ShortcodeHelper::getShortcodeMaskRegexp(),
                 ]
-            )
+            ),
         ];
 
         foreach ($additionalComments as $extraComment) {
@@ -88,209 +92,7 @@ class XmlEncoder
         return $document;
     }
 
-    /**
-     * @param array  $array
-     * @param string $base
-     * @param string $divider
-     *
-     * @return array
-     */
-    protected static function flatternArray(array $array, $base = '', $divider = '/')
-    {
-        $output = [];
 
-        foreach ($array as $key => $element) {
-
-            $path = '' === $base ? $key : implode($divider, [$base, $key]);
-
-            $valueType = gettype($element);
-
-            switch ($valueType) {
-                case 'array':
-                    $tmp = self::flatternArray($element, $path);
-                    $output = array_merge($output, $tmp);
-                    break;
-                case 'NULL':
-                case 'boolean':
-                case 'string':
-                case 'integer':
-                case 'double':
-                    $output[$path] = (string)$element;
-                    break;
-                case 'unknown type':
-                case 'resource':
-                case 'object':
-                default:
-                    $message = vsprintf('Unsupported type \'%s\' found in scope for translation. Skipped. Contents: \'%s\'.',
-                                        [$valueType, var_export($element, true),]);
-                    self::logMessage($message);
-            }
-        }
-
-        return $output;
-    }
-
-    /**
-     * @param array  $flatArray
-     * @param string $divider
-     *
-     * @return array
-     */
-    protected static function structurizeArray(array $flatArray, $divider = '/')
-    {
-        $output = [];
-
-        foreach ($flatArray as $key => $element) {
-            $pathElements = explode($divider, $key);
-            $pointer = &$output;
-            for ($i = 0; $i < (count($pathElements) - 1); $i++) {
-                if (!isset($pointer[$pathElements[$i]])) {
-                    $pointer[$pathElements[$i]] = [];
-                }
-                $pointer = &$pointer[$pathElements[$i]];
-            }
-            $pointer[end($pathElements)] = $element;
-        }
-
-        return $output;
-    }
-
-    /**
-     * @param array $source
-     *
-     * @return array
-     */
-    private static function normalizeSource(array $source)
-    {
-        if (array_key_exists('meta', $source) && is_array($source['meta'])) {
-            $pointer = &$source['meta'];
-            foreach ($pointer as & $value) {
-                if (is_array($value) && 1 === count($value)) {
-                    $value = reset($value);
-                }
-            }
-        }
-
-        return $source;
-    }
-
-    /**
-     * @return mixed
-     */
-    private static function getFieldProcessingParams()
-    {
-        return Bootstrap::getContainer()->getParameter('field.processor');
-    }
-
-    /**
-     * @param array $array
-     * @param array $list
-     *
-     * @return array
-     */
-    private static function removeFields($array, array $list)
-    {
-        $rebuild = [];
-        if ([] === $list) {
-            return $array;
-        }
-        $pattern = '#\/(' . implode('|', $list) . ')$#us';
-        foreach ($array as $key => $value) {
-            if (1 === preg_match($pattern, $key)) {
-                $debugMessage = vsprintf('Removed field by name \'%s\' because of configuration.', [$key]);
-                self::logMessage($debugMessage);
-                continue;
-            } else {
-                $rebuild[$key] = $value;
-            }
-        }
-
-        return $rebuild;
-    }
-
-    /**
-     * @param $array
-     *
-     * @return array
-     */
-    private static function removeEmptyFields($array)
-    {
-        $rebuild = [];
-        foreach ($array as $key => $value) {
-            if (empty($value)) {
-                $debugMessage = vsprintf('Removed empty field \'%s\'.', [$key]);
-                self::logMessage($debugMessage);
-                continue;
-            }
-            $rebuild[$key] = $value;
-        }
-
-        return $rebuild;
-    }
-
-    /**
-     * @param $array
-     * @param $list
-     *
-     * @return array
-     */
-    private static function removeValuesByRegExp($array, $list)
-    {
-        $rebuild = [];
-        foreach ($array as $key => $value) {
-            foreach ($list as $item) {
-                if (preg_match("/{$item}/us", $value)) {
-                    $debugMessage = vsprintf('Removed field by value: filedName:\'%s\' fieldValue:\'%s\' filter:\'%s\'.',
-                                             [$key, $value, $item]);
-                    self::logMessage($debugMessage);
-                    continue 2;
-                }
-            }
-            $rebuild[$key] = $value;
-        }
-
-        return $rebuild;
-    }
-
-    public static function prepareSourceArray($sourceArray, $strategy = 'send')
-    {
-        $sourceArray = self::normalizeSource($sourceArray);
-
-        if (array_key_exists('meta', $sourceArray) && is_array($sourceArray['meta'])) {
-            foreach ($sourceArray['meta'] as & $value) {
-                if (is_array($value) && array_key_exists('entity', $value) && array_key_exists('meta', $value)) {
-                    // nested object detected
-                    $value = self::prepareSourceArray($value, $strategy);
-                }
-
-                $value = maybe_unserialize($value);
-            }
-        }
-        $sourceArray = self::flatternArray($sourceArray);
-
-        foreach ($sourceArray as $stringName => & $stringValue) {
-            $stringValue = apply_filters(
-                ExportedAPI::FILTER_SMARTLING_METADATA_PROCESS_BEFORE_TRANSLATION,
-                $stringName,
-                $stringValue,
-                $sourceArray
-            );
-        }
-        unset($stringValue);
-
-        $settings = self::getFieldProcessingParams();
-
-        if ('send' === $strategy) {
-            $sourceArray = self::removeFields($sourceArray, $settings['ignore']);
-            $sourceArray = self::removeFields($sourceArray, $settings['copy']['name']);
-            $sourceArray = self::removeValuesByRegExp($sourceArray, $settings['copy']['regexp']);
-            $sourceArray = self::removeEmptyFields($sourceArray);
-        }
-
-        return $sourceArray;
-
-    }
-    
     private static function encodeSource($source, $stringLength = 120)
     {
         return "\n" . implode("\n", str_split(base64_encode(serialize($source)), $stringLength)) . "\n";
@@ -303,14 +105,13 @@ class XmlEncoder
 
     /**
      * @param array $source
+     * @param array $originalContent
      *
      * @return string
      */
-    public static function xmlEncode(array $source)
+    public static function xmlEncode(array $source, array $originalContent = [])
     {
         self::logMessage(vsprintf('Started creating XML for fields: %s', [base64_encode(var_export($source, true))]));
-        $originalSource = $source;
-        $source = self::prepareSourceArray($source);
         $xml = self::setTranslationComments(self::initXml());
         $settings = self::getFieldProcessingParams();
         $keySettings = &$settings['key'];
@@ -320,22 +121,12 @@ class XmlEncoder
         }
         $xml->appendChild($rootNode);
         $sourceNode = $xml->createElement(self::XML_SOURCE_NODE_NAME);
-        $sourceNode->appendChild(new DOMCdataSection(self::encodeSource($originalSource)));
+        $sourceNode->appendChild(new DOMCdataSection(self::encodeSource($originalContent)));
         $rootNode->appendChild($sourceNode);
 
         return $xml->saveXML();
     }
 
-    /**
-     * @param array $source
-     *
-     * @return array
-     */
-    public static function filterRawSource(array $source)
-    {
-        return self::prepareSourceArray($source);
-    }
-    
     /**
      * @inheritdoc
      */
@@ -350,16 +141,11 @@ class XmlEncoder
                 }
             }
         }
-
-
-
         $node->appendChild(new DOMCdataSection($value));
-
         $params = new TranslationStringFilterParameters();
         $params->setDom($document);
         $params->setNode($node);
         $params->setFilterSettings(self::getFieldProcessingParams());
-
         $params = apply_filters(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING, $params);
 
         return $params->getNode();
@@ -378,30 +164,24 @@ class XmlEncoder
         if (false === $result) {
             throw new InvalidXMLException('Invalid XML Contents');
         }
-        $xpath = new DOMXPath($xml);
 
-        return $xpath;
+        return new DOMXPath($xml);
     }
 
     public static function xmlDecode($content)
     {
         self::logMessage(vsprintf('Starting XML file decoding : %s', [base64_encode(var_export($content, true))]));
         $xpath = self::prepareXPath($content);
-
         $stringPath = '/data/string';
-        $sourcePath = '/data/source';
-
         $nodeList = $xpath->query($stringPath);
-
         $fields = [];
-
         for ($i = 0; $i < $nodeList->length; $i++) {
             $item = $nodeList->item($i);
             /**
              * @var \DOMNode $item
              */
-            $name = $item->getAttribute('name');
 
+            $name = $item->attributes->getNamedItem('name')->nodeValue;
             $params = new TranslationStringFilterParameters();
             $params->setDom($item->ownerDocument);
             $params->setNode($item);
@@ -412,36 +192,24 @@ class XmlEncoder
             $nodeValue = $params->getNode()->nodeValue;
             $fields[$name] = $nodeValue;
         }
-
-
-        $nodeList = $xpath->query($sourcePath);
-
-        $source = self::decodeSource($nodeList->item(0)->nodeValue);
-
-        $flatSource = self::prepareSourceArray($source, 'download');
-
         foreach ($fields as $key => $value) {
-            $flatSource[$key] = $value;
-        }
-
-        foreach ($flatSource as & $value) {
             if (is_numeric($value) && is_string($value)) {
-                $value += 0;
+                $fields[$key] += 0;
             }
         }
 
-        $settings = self::getFieldProcessingParams();
-        $flatSource = self::removeFields($flatSource, $settings['ignore']);
-
-        return self::structurizeArray($flatSource);;
+        return $fields;
     }
 
+    /**
+     * @param string $xml
+     *
+     * @return bool
+     */
     public static function hasStringsForTranslation($xml)
     {
         $xpath = self::prepareXPath($xml);
-
         $stringPath = '/data/string';
-
         $nodeList = $xpath->query($stringPath);
 
         return $nodeList->length > 0;

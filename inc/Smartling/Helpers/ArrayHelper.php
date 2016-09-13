@@ -596,4 +596,14 @@ class ArrayHelper
 
         return $array;
     }
+
+    /**
+     * @param $value
+     *
+     * @return bool true if given value is an array and it is not empty
+     */
+    public static function notEmpty($value)
+    {
+        return is_array($value) && 0 < count($value);
+    }
 }

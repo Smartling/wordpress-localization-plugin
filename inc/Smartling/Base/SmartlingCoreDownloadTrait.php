@@ -3,9 +3,11 @@
 namespace Smartling\Base;
 
 use Exception;
+use Smartling\Bootstrap;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\InvalidXMLException;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\SiteHelper;
@@ -56,6 +58,12 @@ trait SmartlingCoreDownloadTrait
                                  [$entity->getId(), base64_encode($data)]));
             $this->prepareFieldProcessorValues($entity);
             $translatedFields = XmlEncoder::xmlDecode($data);
+
+            $originalData = $this->readSourceContentWithMetadataAsArray($entity);
+            $translatedFields = $this->getFieldsFilter()->processStringsAfterDecoding($translatedFields);
+
+            $translatedFields = $this->getFieldsFilter()->applyTranslatedValues($entity, $originalData, $translatedFields);
+
             $this->getLogger()
                 ->debug(vsprintf('Deserialized translated fields for submission id = \'%s\'. Dump: %s\'.',
                                  [$entity->getId(), base64_encode(json_encode($translatedFields))]));
@@ -65,9 +73,7 @@ trait SmartlingCoreDownloadTrait
             $targetContent = $this->getContentHelper()->readTargetContent($entity);
             $params = new AfterDeserializeContentEventParameters($translatedFields, $entity, $targetContent, $translatedFields['meta']);
             do_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
-            if (array_key_exists('entity', $translatedFields) && is_array($translatedFields['entity']) &&
-                0 < count($translatedFields['entity'])
-            ) {
+            if (array_key_exists('entity', $translatedFields) && ArrayHelper::notEmpty($translatedFields['entity'])) {
                 $this->setValues($targetContent, $translatedFields['entity']);
             }
             if (100 === $entity->getCompletionPercentage()) {
@@ -76,12 +82,8 @@ trait SmartlingCoreDownloadTrait
                 $entity->setAppliedDate(DateTimeHelper::nowAsString());
             }
             $this->getContentHelper()->writeTargetContent($entity, $targetContent);
-            if (array_key_exists('meta', $translatedFields) && 0 < count($translatedFields['meta'])) {
+            if (array_key_exists('meta', $translatedFields) && ArrayHelper::notEmpty($translatedFields['meta'])) {
                 $metaFields = &$translatedFields['meta'];
-                foreach ($metaFields as $metaName => & $metaValue) {
-                    $metaValue = apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $metaName, $metaValue, $entity);
-                }
-                unset ($metaValue);
                 $this->getContentHelper()->writeTargetMetadata($entity, $metaFields);
                 do_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, $entity);
             }

@@ -2,8 +2,8 @@
 
 namespace Smartling\Helpers;
 
+use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
-use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
@@ -14,69 +14,111 @@ use Smartling\Submissions\SubmissionEntity;
  */
 class ContentSerializationHelper
 {
+
     /**
-     * @param ContentEntitiesIOFactory $ioFactory
-     * @param SiteHelper               $siteHelper
-     * @param SettingsManager          $settingsManager
-     * @param SubmissionEntity         $submission
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
+     * @var ContentHelper
+     */
+    private $contentHelper;
+
+    /**
+     * @var FieldsFilterHelper
+     */
+    private $fieldsFilter;
+
+    /**
+     * @return LoggerInterface
+     */
+    public function getLogger()
+    {
+        return $this->logger;
+    }
+
+    /**
+     * @param LoggerInterface $logger
+     */
+    public function setLogger($logger)
+    {
+        $this->logger = $logger;
+    }
+
+    /**
+     * @return ContentHelper
+     */
+    public function getContentHelper()
+    {
+        return $this->contentHelper;
+    }
+
+    /**
+     * @param ContentHelper $contentHelper
+     */
+    public function setContentHelper($contentHelper)
+    {
+        $this->contentHelper = $contentHelper;
+    }
+
+    /**
+     * @return FieldsFilterHelper
+     */
+    public function getFieldsFilter()
+    {
+        return $this->fieldsFilter;
+    }
+
+    /**
+     * @param FieldsFilterHelper $fieldsFilter
+     */
+    public function setFieldsFilter($fieldsFilter)
+    {
+        $this->fieldsFilter = $fieldsFilter;
+    }
+
+    /**
+     * ContentSerializationHelper constructor.
+     *
+     * @param LoggerInterface    $logger
+     * @param ContentHelper      $contentHelper
+     * @param FieldsFilterHelper $fieldsFilter
+     */
+    public function __construct(LoggerInterface $logger, ContentHelper $contentHelper, FieldsFilterHelper $fieldsFilter)
+    {
+        $this->setLogger($logger);
+        $this->setContentHelper($contentHelper);
+        $this->setFieldsFilter($fieldsFilter);
+    }
+
+    /**
+     * @param SubmissionEntity $submission
      *
      * @return string
-     * @throws \Smartling\Exception\SmartlingConfigException
-     * @throws \Smartling\Exception\SmartlingInvalidFactoryArgumentException
-     * @throws \Smartling\Exception\SmartlingDirectRunRuntimeException
-     * @throws \Smartling\Exception\BlogNotFoundException
      */
-    public static function calculateHash(ContentEntitiesIOFactory $ioFactory, SiteHelper $siteHelper, SettingsManager $settingsManager, SubmissionEntity $submission)
+    public function calculateHash(SubmissionEntity $submission)
     {
-        $collectedContent = self::collectSubmissionSourceContent($ioFactory, $siteHelper, $submission);
+        $collectedContent = $this->collectSubmissionSourceContent($submission);
 
-        $filteredData = self::filterCollectedContent($collectedContent, $settingsManager, $submission);
+        $filteredData = $this->getFieldsFilter()->filterValues($submission, $collectedContent);
 
         return md5(serialize($filteredData));
     }
 
+
     /**
-     * @param array            $collectedContent
-     * @param SettingsManager  $settingsManager
      * @param SubmissionEntity $submission
      *
      * @return array
-     * @throws \Smartling\Exception\SmartlingConfigException
      */
-    public static function filterCollectedContent(array $collectedContent, SettingsManager $settingsManager, SubmissionEntity $submission)
+    private function collectSubmissionSourceContent(SubmissionEntity $submission)
     {
-        self::prepareFieldProcessorValues($settingsManager, $submission);
-
-        return XmlEncoder::filterRawSource($collectedContent);
-    }
-
-
-    /**
-     * @param ContentEntitiesIOFactory $ioFactory
-     * @param SiteHelper               $siteHelper
-     * @param SubmissionEntity         $submission
-     *
-     * @return array
-     * @throws \Smartling\Exception\SmartlingDirectRunRuntimeException
-     * @throws \Smartling\Exception\SmartlingInvalidFactoryArgumentException
-     * @throws \Smartling\Exception\BlogNotFoundException
-     */
-    public static function collectSubmissionSourceContent(ContentEntitiesIOFactory $ioFactory, SiteHelper $siteHelper, SubmissionEntity $submission)
-    {
-        $ioWrapper = $ioFactory->getMapper($submission->getContentType());
-        $needBlogSwitch = $siteHelper->getCurrentBlogId() !== $submission->getSourceBlogId();
-        if ($needBlogSwitch) {
-            $siteHelper->switchBlogId($submission->getSourceBlogId());
-        }
-        $contentEntity = $ioWrapper->get($submission->getSourceId());
         $source = [
-            'entity' => $contentEntity->toArray(),
-            'meta'   => $contentEntity->getMetadata(),
+            'entity' => $this->getContentHelper()->readSourceContent($submission)->toArray(false),
+            'meta'   => $this->getContentHelper()->readSourceMetadata($submission),
         ];
         $source['meta'] = $source['meta'] ? : [];
-        if ($needBlogSwitch) {
-            $siteHelper->restoreBlogId();
-        }
 
         return $source;
     }
