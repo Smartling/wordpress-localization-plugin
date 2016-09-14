@@ -4,6 +4,7 @@ namespace Smartling\Jobs;
 
 use Smartling\ApiWrapperInterface;
 use Smartling\Exception\SmartlingNetworkException;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
@@ -150,10 +151,13 @@ class LastModifiedCheckJob extends JobAbstract
      */
     protected function processFileUriSet(array $submissions)
     {
-        $lastModified = $this->getApiWrapper()->lastModified(reset($submissions));
-
-        $submissions = $this->prepareSubmissionList($submissions);
-        $submissions = $this->filterSubmissions($lastModified, $submissions);
+        if (ArrayHelper::notEmpty($submissions))
+        {
+            $submission = ArrayHelper::first($submissions);
+            $lastModified = $this->getApiWrapper()->lastModified($submission);
+            $submissions = $this->prepareSubmissionList($submissions);
+            $submissions = $this->filterSubmissions($lastModified, $submissions);
+        }
 
         return $submissions;
     }

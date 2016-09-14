@@ -606,4 +606,24 @@ class ArrayHelper
     {
         return is_array($value) && 0 < count($value);
     }
+
+    /**
+     * Returns first element of a given array
+     *
+     * @param array $array
+     *
+     * @return mixed
+     * @throws \InvalidArgumentException
+     */
+    public static function first(array $array)
+    {
+        if (!self::notEmpty($array))
+        {
+            throw new \InvalidArgumentException('Expected not empty array');
+        }
+
+        $keys = array_keys($array);
+
+        return $array[$keys[0]];
+    }
 }
