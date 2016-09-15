@@ -118,13 +118,14 @@ trait SmartlingCoreUploadTrait
         );
 
         try {
-            $submission = $this->renewContentHash($submission);
+
             if (null === $submission->getId()) {
                 // generate URI
                 $submission->getFileUri();
                 $submission = $this->getSubmissionManager()->storeEntity($submission);
             }
             $submission = $this->prepareTargetEntity($submission);
+            $submission = $this->renewContentHash($submission);
 
             $source = $this->readSourceContentWithMetadataAsArray($submission);
 
