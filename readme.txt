@@ -3,7 +3,7 @@ Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
 Tested up to: 4.6.1
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -54,6 +54,28 @@ Additional information on the Smartling Connector for WordPress can be found [th
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+
+= 1.3.1 =
+* Improved metadata filtering. Developers can use API to setup build-in filters for their custom metadata fields (useful in case of ACF usage) and even create own customized processors and embed them into their plugin or theme.
+* Improved stability (minor possible issues fixed)
+
+**Upgrade steps**
+Smartling connector improves metadata field processing to extend customization abilities.
+Added filter that allows to handle any type of referenced content (if supported by smartling connector).
+Because of this architecture update a small reconfiguration needed after update.
+
+0. Go to Smartling Settings page (`/wp-admin/admin.php?page=smartling_configuration_profile_list`) and follow next instructions for each configuration profile:
+1. Go to edit profile screen
+2. Click `Show Expert Settings`
+3. Remove next lines from `Exclude fields by field name` edit box:
+    * `post_parent`
+    * `parent`
+4. Add next line to `Exclude fields by field name` edit box:
+    * `_wp_attachment_metadata.*`
+5. Add next lines to `Copy fields by field name` edit box:
+    * `post_parent`
+    * `parent`
+6. Click `Save Changes`
 
 = 1.3.0 =
 * Refactored architecture to support custom metadata handlers for properties
