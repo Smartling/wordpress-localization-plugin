@@ -7,6 +7,7 @@ use Smartling\Bootstrap;
 use Smartling\DbAl\EntityManagerAbstract;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
@@ -618,7 +619,7 @@ class SubmissionManager extends EntityManagerAbstract
         $entities = $this->find($params);
 
         if (count($entities) > 0) {
-            $entity = reset($entities);
+            $entity = ArrayHelper::first($entities);
         } else {
             $entity = $this->createSubmission($params);
             $entity->setTargetLocale($localizationProxy->getBlogLocaleById($targetBlog));
@@ -685,7 +686,7 @@ class SubmissionManager extends EntityManagerAbstract
                     vsprintf(
                         'Found submission in database: %s.',
                         [
-                            var_export(reset($storedSubmissions)->toArray(false), true),
+                            var_export(ArrayHelper::first($storedSubmissions)->toArray(false), true),
                         ]
                     )
                 );

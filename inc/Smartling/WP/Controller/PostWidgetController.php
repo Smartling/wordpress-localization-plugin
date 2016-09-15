@@ -6,6 +6,7 @@ use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
@@ -120,7 +121,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
                     $this->view([
                                     'submissions' => $submissions,
                                     'post'        => $post,
-                                    'profile'     => reset($profile),
+                                    'profile'     => ArrayHelper::first($profile),
                                 ]
                     );
                 } else {
@@ -298,7 +299,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
                                 );
 
                             if (0 < count($submissions)) {
-                                $submission = reset($submissions);
+                                $submission = ArrayHelper::first($submissions);
 
                                 $this->getLogger()
                                     ->info(

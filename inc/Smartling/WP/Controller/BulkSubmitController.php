@@ -1,6 +1,7 @@
 <?php
 namespace Smartling\WP\Controller;
 
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
@@ -62,7 +63,7 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
         if (0 === count($applicableProfiles)) {
             echo HtmlTagGeneratorHelper::tag('p', __('No suitable profile found for this site.'));
         } else {
-            $profile = reset($applicableProfiles);
+            $profile = ArrayHelper::first($applicableProfiles);
             $table = new BulkSubmitTableWidget(
                 $this->getManager(),
                 $this->getPluginInfo(),

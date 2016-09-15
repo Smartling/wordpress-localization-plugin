@@ -74,7 +74,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
         $result = false;
 
         if (is_array($data) && 1 === count($data)) {
-            $resultRow = reset($data);
+            $resultRow = ArrayHelper::first($data);
 
             if (is_array($resultRow) && array_key_exists('id', $resultRow)) {
                 $result = (int)$resultRow['id'];

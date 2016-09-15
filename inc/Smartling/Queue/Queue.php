@@ -5,6 +5,7 @@ namespace Smartling\Queue;
 use Smartling\Base\SmartlingEntityAbstract;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
@@ -229,7 +230,7 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
             $result = $this->get($queue);
 
             if (is_array($result) && 1 === count($result)) {
-                $row = reset($result);
+                $row = ArrayHelper::first($result);
 
                 $id = $this->extractValue($row, 'id');
                 $payload = $this->extractValue($row, 'payload');

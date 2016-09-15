@@ -619,7 +619,7 @@ class ArrayHelper
     {
         if (!self::notEmpty($array))
         {
-            throw new \InvalidArgumentException('Expected not empty array');
+            return false; // as reset() does
         }
 
         $keys = array_keys($array);

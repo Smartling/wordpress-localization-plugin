@@ -2,6 +2,7 @@
 
 namespace Smartling\Helpers\MetaFieldProcessor;
 
+use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -40,7 +41,7 @@ class ReferencedPageProcessor extends ReferencedContentProcessor
         $originalEntity = $this->getContentHelper()->readSourceContent($submission);
         $parent = $originalEntity->getPostParent();
 
-        if (0 < (int)$parent) {
+        if (IntegerParser::tryParseString($parent, $parent)) {
 
             $parentSubmission = $this->getTranslationHelper()->sendForTranslationSync(
                 WordpressContentTypeHelper::CONTENT_TYPE_PAGE,
@@ -51,7 +52,9 @@ class ReferencedPageProcessor extends ReferencedContentProcessor
 
             $parentContent = $this->getContentHelper()->readSourceContent($parentSubmission);
 
-            if (0 < (int)$parentContent->getPostParent() || 0 === (int)$parentSubmission->getTargetId()) {
+            if (0 < IntegerParser::integerOrDefault($parentContent->getPostParent(), 0) ||
+                0 === IntegerParser::integerOrDefault($parentSubmission->getTargetId(), 0)
+            ) {
                 do_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, $parentSubmission);
             }
         }

@@ -132,7 +132,7 @@ class TranslationHelper
     {
         $submissionsList = $this->getSubmissionManager()->getEntityById($submission->getId());
         if (is_array($submissionsList)) {
-            return reset($submissionsList);
+            return ArrayHelper::first($submissionsList);
         }
         $message = vsprintf(
             'Error while reloading submission. Nothing returned from database. Original Submission: %s',

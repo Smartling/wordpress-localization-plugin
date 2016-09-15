@@ -150,7 +150,7 @@ class ContentSerializationHelper
             /**
              * @var ConfigurationProfileEntity $profile
              */
-            $profile = reset($profiles);
+            $profile = ArrayHelper::first($profiles);
 
             $filter['ignore'] = array_map('trim', explode(PHP_EOL, $profile->getFilterSkip()));
             $filter['key']['seo'] = array_map('trim', explode(PHP_EOL, $profile->getFilterFlagSeo()));

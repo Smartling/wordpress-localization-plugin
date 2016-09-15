@@ -3,6 +3,7 @@
 namespace Smartling\WP\Controller;
 
 use Smartling\Exception\BlogNotFoundException;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\Locale;
@@ -80,7 +81,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
             /**
              * @var ConfigurationProfileEntity $profile
              */
-            $profile = reset($profiles);
+            $profile = ArrayHelper::first($profiles);
         }
 
         if (array_key_exists('profileName', $settings)) {

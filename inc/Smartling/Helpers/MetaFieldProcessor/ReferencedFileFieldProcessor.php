@@ -5,7 +5,9 @@ namespace Smartling\Helpers\MetaFieldProcessor;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Exception\SmartlingDataReadException;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
+use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
@@ -63,13 +65,10 @@ class ReferencedFileFieldProcessor extends MetaFieldProcessorAbstract
         $originalValue = $value;
 
         if (is_array($value)) {
-            $keys = array_keys($value);
-            $value = $value[$keys[0]];
+            $value = ArrayHelper::first($value);
         }
 
-        $value = (int)$value;
-
-        if (0 >= $value) {
+        if (!IntegerParser::tryParseString($value, $value)) {
             $message = vsprintf(
                 'Got bad reference number for submission id=%s metadata field=\'%s\' with value=\'%s\', expected integer > 0. Skipping.',
                 [$submission->getId(), $fieldName, var_export($originalValue, true),]
@@ -94,7 +93,7 @@ class ReferencedFileFieldProcessor extends MetaFieldProcessorAbstract
                 $submission->getTargetBlogId()
             );
 
-            if (0 === (int)$attSubmission->getTargetId()) {
+            if (0 === IntegerParser::integerOrDefault($attSubmission->getTargetId(), 0)) {
                 do_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, $attSubmission);
             }
 

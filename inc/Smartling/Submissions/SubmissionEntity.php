@@ -545,7 +545,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
      */
     public function getTargetId()
     {
-        return $this->stateFields['target_id'];
+        return (int) $this->stateFields['target_id'];
     }
 
     /**

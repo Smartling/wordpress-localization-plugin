@@ -5,6 +5,7 @@ namespace Smartling\Settings;
 use Smartling\DbAl\EntityManagerAbstract;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
@@ -59,7 +60,7 @@ class SettingsManager extends EntityManagerAbstract
         $possibleProfiles = $this->findEntityByMainLocale($mainBlogId);
 
         if (0 < count($possibleProfiles)) {
-            return reset($possibleProfiles);
+            return ArrayHelper::first($possibleProfiles);
         }
 
         $message = vsprintf('No active profile found for main blog %s', [$mainBlogId]);

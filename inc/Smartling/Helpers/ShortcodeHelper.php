@@ -463,7 +463,7 @@ class ShortcodeHelper implements WPHookInterface
         preg_match_all(vsprintf('/(?<!%s)%s/', [self::SMARTLING_SHORTCODE_MASK,
                                                 get_shortcode_regex([$shortcodeName])]), $initialString, $matches);
         if (array_key_exists(0, $matches) && is_array($matches[0]) && 0 < count($matches[0])) {
-            $shortcode = reset($matches[0]);
+            $shortcode = ArrayHelper::first($matches[0]);
             $masked = vsprintf('%s%s%s', [self::SMARTLING_SHORTCODE_MASK, $shortcode, self::SMARTLING_SHORTCODE_MASK]);
             $result = str_replace($shortcode, $masked, $initialString);
             self::replaceCData($node, $result);
@@ -485,8 +485,7 @@ class ShortcodeHelper implements WPHookInterface
         if (false !== $translations) {
             $translationPairs = [];
             foreach ($translations as $attribute => $value) {
-                $_vals = array_keys($value);
-                if (array_key_exists($attribute, $attr) && reset($_vals) === md5($attr[$attribute])) {
+                if (array_key_exists($attribute, $attr) && ArrayHelper::first(array_keys($value)) === md5($attr[$attribute])) {
                     $this->getLogger()->debug(
                         vsprintf(
                             'Validated translation of \'%s\' as \'%s\' with hash=%s for shortcode \'%s\'',

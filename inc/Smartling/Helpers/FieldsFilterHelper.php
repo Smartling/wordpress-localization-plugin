@@ -354,7 +354,7 @@ class FieldsFilterHelper
             $pointer = &$source['meta'];
             foreach ($pointer as & $value) {
                 if (is_array($value) && 1 === count($value)) {
-                    $value = reset($value);
+                    $value = ArrayHelper::first($value);
                 }
             }
         }

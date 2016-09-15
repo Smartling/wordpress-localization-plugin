@@ -23,7 +23,11 @@ $domain = $pluginInfo->getDomain();
  */
 $settingsManager = $data;
 
-$profileId = (int)($_GET['profile'] ? : 0);
+$profileId = 0;
+
+if (array_key_exists('profile', $_GET)) {
+    \Smartling\Helpers\Parsers\IntegerParser::tryParseString($_GET['profile'], $profileId);
+}
 
 if (0 === $profileId) {
     $profile = $settingsManager->createProfile([]);
@@ -38,7 +42,7 @@ if (0 === $profileId) {
     /**
      * @var ConfigurationProfileEntity $profile
      */
-    $profile = reset($profiles);
+    $profile = \Smartling\Helpers\ArrayHelper::first($profiles);
 }
 ?>
 

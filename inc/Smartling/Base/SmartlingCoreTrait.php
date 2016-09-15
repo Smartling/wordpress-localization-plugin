@@ -34,7 +34,7 @@ trait SmartlingCoreTrait
         $submission = $this->getTranslationHelper()
             ->sendForTranslationSync($contentType, $sourceBlog, $sourceId, $targetBlog);
 
-        return (int)$submission->getTargetId();
+        return $submission->getTargetId();
     }
 
     /**
@@ -60,7 +60,7 @@ trait SmartlingCoreTrait
      */
     protected function prepareTargetEntity(SubmissionEntity $submission, $forceClone = false)
     {
-        $update = 0 !== (int)$submission->getTargetId();
+        $update = 0 !== $submission->getTargetId();
 
         if (WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT === $submission->getContentType()) {
             $fileData = $this->getAttachmentFileInfoBySubmission($submission);
@@ -209,7 +209,7 @@ trait SmartlingCoreTrait
      */
     private function getUploadDirForSite($siteId)
     {
-        $this->getContentHelper()->ensureBlog((int)$siteId);
+        $this->getContentHelper()->ensureBlog($siteId);
         $data = wp_upload_dir();
         $this->getContentHelper()->ensureRestoredBlogId();
 
@@ -218,7 +218,7 @@ trait SmartlingCoreTrait
 
     private function getUploadPathForSite($siteId)
     {
-        $this->getContentHelper()->ensureBlog((int)$siteId);
+        $this->getContentHelper()->ensureBlog($siteId);
         $prefix = $this->getUploadDirForSite($siteId);
         $data = str_replace($prefix['subdir'], '', parse_url($prefix['url'], PHP_URL_PATH));
         $this->getContentHelper()->ensureRestoredBlogId();
@@ -240,8 +240,8 @@ trait SmartlingCoreTrait
         $sourceSiteUploadInfo = $this->getUploadDirForSite($submission->getSourceBlogId());
         $targetSiteUploadInfo = $this->getUploadDirForSite($submission->getTargetBlogId());
         $sourceMetadata = $this->getContentHelper()->readSourceMetadata($submission);
-        if (array_key_exists('_wp_attached_file', $sourceMetadata) && is_array($sourceMetadata['_wp_attached_file'])) {
-            $relativePath = reset($sourceMetadata['_wp_attached_file']);
+        if (array_key_exists('_wp_attached_file', $sourceMetadata) && ArrayHelper::notEmpty($sourceMetadata['_wp_attached_file'])) {
+            $relativePath = ArrayHelper::first($sourceMetadata['_wp_attached_file']);
             $result = [
                 'uri'                => $info->guid,
                 'relative_path'      => $relativePath,

@@ -8,6 +8,7 @@ use Smartling\DbAl\Migrations\DbMigrationManager;
 use Smartling\DbAl\Migrations\SmartlingDbMigrationInterface;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -16,7 +17,6 @@ use Smartling\WP\WPInstallableInterface;
 
 /**
  * Class DB
- *
  * @package Smartling\DbAl
  */
 class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableInterface
@@ -26,7 +26,6 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
 
     /**
      * Plugin tables definition based on array
-     *
      * @var array
      */
     private $tables = [];
@@ -110,7 +109,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
 
             // check if there was 1.0.12 version
             $this->getWpdb()
-                 ->query('SHOW TABLES LIKE \'%smartling%\'');
+                ->query('SHOW TABLES LIKE \'%smartling%\'');
             $res = $this->getWpdb()->num_rows;
 
             if (0 < $res && 0 === $curVer) {
@@ -130,9 +129,9 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
             $this->logger->info(vsprintf('Installing table: %s', [$query]));
             $result = $this->getWpdb()->query($query);
 
-            if (false === $result)
-            {
-                $message = vsprintf('Executing query |%s| has finished with error: %s', [$query, $this->getWpdb()->last_error]);
+            if (false === $result) {
+                $message = vsprintf('Executing query |%s| has finished with error: %s', [$query,
+                                                                                         $this->getWpdb()->last_error]);
                 $this->logger->critical($message);
                 throw new SmartlingDbException($message);
 
@@ -211,7 +210,7 @@ Please download the log file (click <strong><a href="/wp-admin/admin-post.php?ac
 
     public function getSchemaVersion()
     {
-        return (int)SimpleStorageHelper::get(self::SMARTLING_DB_SCHEMA_VERSION, 0);
+        return IntegerParser::integerOrDefault(SimpleStorageHelper::get(self::SMARTLING_DB_SCHEMA_VERSION, 0), 0);
     }
 
     /**
@@ -221,8 +220,8 @@ Please download the log file (click <strong><a href="/wp-admin/admin-post.php?ac
      */
     public function setSchemaVersion($version)
     {
-        $currentVersion = (int)$this->getSchemaVersion();
-        $version = (int)$version;
+        $currentVersion = $this->getSchemaVersion();
+        $version = IntegerParser::integerOrDefault($version, 0);
 
         $result = SimpleStorageHelper::set(self::SMARTLING_DB_SCHEMA_VERSION, $version);
 
@@ -250,8 +249,7 @@ Please download the log file (click <strong><a href="/wp-admin/admin-post.php?ac
      */
     public function uninstall()
     {
-        if (!defined('SMARTLING_COMPLETE_REMOVE'))
-        {
+        if (!defined('SMARTLING_COMPLETE_REMOVE')) {
             return;
         }
 
@@ -274,7 +272,9 @@ Please download the log file (click <strong><a href="/wp-admin/admin-post.php?ac
         }
     }
 
-    public function deactivate(){}
+    public function deactivate()
+    {
+    }
 
     /**
      * Extracts table name from tableDefinition
@@ -357,9 +357,9 @@ Please download the log file (click <strong><a href="/wp-admin/admin-post.php?ac
     {
         return $this->getWpdb()->collate;
     }
+
     /**
      * Gets Character set and collation for table
-     *
      * @return string
      */
     private function getCharsetCollate()
@@ -378,7 +378,7 @@ Please download the log file (click <strong><a href="/wp-admin/admin-post.php?ac
             $parts['collate'] = vsprintf('COLLATE %s', [$collate]);
         }
 
-        if ( 0 < count($parts)) {
+        if (0 < count($parts)) {
             return vsprintf(' %s ', [implode(' ', $parts)]);
         } else {
             return '';

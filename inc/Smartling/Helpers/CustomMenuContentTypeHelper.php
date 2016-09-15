@@ -277,7 +277,7 @@ class CustomMenuContentTypeHelper
         $result = $this->getSubmissionManager()->find($params);
 
         if (0 < count($result)) {
-            return reset($result);
+            return ArrayHelper::first($result);
         } else {
             $message = vsprintf('No submissions found by request: %s', [var_export($params, true)]);
             throw new SmartlingDbException($message);
@@ -314,7 +314,7 @@ class CustomMenuContentTypeHelper
         if (array_key_exists($propertyName, $metadata)) {
             $value = $metadata[$propertyName];
             if (is_array($value)) {
-                $value = reset($value);
+                $value = ArrayHelper::first($value);
             }
 
             return $value;

@@ -3,6 +3,7 @@
 namespace Smartling\Jobs;
 
 use Smartling\Base\ExportedAPI;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Queue\Queue;
 
 /**
@@ -57,11 +58,11 @@ class DownloadTranslationJob extends JobAbstract
     private function processDownloadQueue()
     {
         while (false !== ($submissionId = $this->getQueue()->dequeue(Queue::QUEUE_NAME_DOWNLOAD_QUEUE))) {
-            $submissionId = reset($submissionId);
+            $submissionId = ArrayHelper::first($submissionId);
             $result = $this->getSubmissionManager()->find(['id' => $submissionId]);
 
             if (0 < count($result)) {
-                $entity = reset($result);
+                $entity = ArrayHelper::first($result);
             } else {
                 $this->getLogger()
                     ->warning(vsprintf('Got submission id=%s that does not exists in database. Skipping.', [$submissionId]));

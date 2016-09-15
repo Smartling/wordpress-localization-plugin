@@ -10,6 +10,7 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
+use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -137,16 +138,20 @@ class SmartlingCore extends SmartlingCoreAbstract
                         )
                     );
 
-                    $relatedObjectId = $this->translateAndGetTargetId(
-                        $originalMenuItemMeta['_menu_item_object'],
-                        $submission->getSourceBlogId(),
-                        (int)$originalMenuItemMeta['_menu_item_object_id'],
-                        $submission->getTargetBlogId()
-                    );
+                    $relatedObjId = 0;
 
-                    $originalMenuItemMeta['_menu_item_object_id'] = $relatedObjectId;
+                    if (IntegerParser::tryParseString($originalMenuItemMeta['_menu_item_object_id'], $relatedObjectId)) {
+                        $relatedObjectId = $this->translateAndGetTargetId(
+                            $originalMenuItemMeta['_menu_item_object'],
+                            $submission->getSourceBlogId(),
+                            $relatedObjId,
+                            $submission->getTargetBlogId()
+                        );
 
-                    $this->getContentHelper()->writeTargetMetadata($menuItemSubmission, $originalMenuItemMeta);
+                        $originalMenuItemMeta['_menu_item_object_id'] = $relatedObjectId;
+
+                        $this->getContentHelper()->writeTargetMetadata($menuItemSubmission, $originalMenuItemMeta);
+                    }
                 }
 
                 $accumulator[WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU][] = $menuItemSubmission->getTargetId();
@@ -176,10 +181,9 @@ class SmartlingCore extends SmartlingCoreAbstract
 
             $_settings = $originalEntity->getSettings();
 
+            $menuId = 0;
             if (array_key_exists('nav_menu', $_settings)) {
-                $menuId = (int)$_settings['nav_menu'];
-            } else {
-                $menuId = 0;
+                IntegerParser::tryParseString($_settings['nav_menu'], $menuId);
             }
             /**
              * @var WidgetEntity $originalEntity
@@ -302,7 +306,7 @@ class SmartlingCore extends SmartlingCoreAbstract
                 $this->getContentHelper()->ensureRestoredBlogId();
             } else {
                 $this->getCustomMenuHelper()
-                    ->assignMenuItemsToMenu((int)$submission->getTargetId(), (int)$submission->getTargetBlogId(), $accumulator[WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU]);
+                    ->assignMenuItemsToMenu($submission->getTargetId(), $submission->getTargetBlogId(), $accumulator[WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU]);
             }
         } catch (BlogNotFoundException $e) {
             $message = vsprintf('Inconsistent multisite installation. %s', [$e->getMessage()]);
@@ -439,7 +443,7 @@ class SmartlingCore extends SmartlingCoreAbstract
         $entities = $this->getSubmissionManager()->find($params);
 
         if (count($entities) > 0) {
-            return reset($entities);
+            return ArrayHelper::first($entities);
         } else {
             $message = vsprintf('Requested SubmissionEntity with id=%s does not exist.', [$id]);
 
@@ -532,7 +536,7 @@ class SmartlingCore extends SmartlingCoreAbstract
             /**
              * @var ConfigurationProfileEntity $profile
              */
-            $profile = reset($profiles);
+            $profile = ArrayHelper::first($profiles);
             $profile->setIsActive(0);
             $this->getSettingsManager()->storeEntity($profile);
         }

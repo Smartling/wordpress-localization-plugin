@@ -5,6 +5,7 @@ namespace Smartling\DbAl\WordpressContentEntities;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\LoggerTrait;
 use Smartling\Exception\EntityNotFoundException;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 
 /**
@@ -159,7 +160,7 @@ abstract class EntityAbstract
         switch (substr($method, 0, 3)) {
             case 'set' :
                 $field = $this->getFieldNameByMethodName($method);
-                $this->$field = reset($params); // get the very first arg
+                $this->$field = ArrayHelper::first($params); // get the very first arg
                 break;
             case 'get' :
                 $field = $this->getFieldNameByMethodName($method);

@@ -6,6 +6,7 @@ use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingNotSupportedContentException;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
@@ -129,7 +130,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                     $this->view([
                                     'submissions' => $submissions,
                                     'term'        => $term,
-                                    'profile'     => reset($applicableProfiles),
+                                    'profile'     => ArrayHelper::first($applicableProfiles),
                                 ]
                     );
                 } else {

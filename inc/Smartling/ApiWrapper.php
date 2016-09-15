@@ -11,6 +11,7 @@ use Smartling\Exception\SmartlingNetworkException;
 use Smartling\File\FileApi;
 use Smartling\File\Params\DownloadFileParameters;
 use Smartling\File\Params\UploadFileParameters;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\RuntimeCacheHelper;
 use Smartling\Project\ProjectApi;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -433,7 +434,7 @@ class ApiWrapper implements ApiWrapperInterface
             /**
              * @var SubmissionEntity $submission
              */
-            $submission = reset($submissions);
+            $submission = ArrayHelper::first($submissions);
             $profile = $this->getConfigurationProfile($submission);
 
             $api = FileApi::create(

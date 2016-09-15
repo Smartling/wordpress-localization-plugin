@@ -3,6 +3,7 @@
 namespace Smartling\Helpers\MetaFieldProcessor;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -47,7 +48,7 @@ class CloneValueFieldProcessor extends MetaFieldProcessorAbstract
             $originalValue = $originalMetadata[$fieldName];
 
             if (is_array($originalValue) && 1 === count($originalValue)) {
-                $originalValue = reset($originalValue);
+                $originalValue = ArrayHelper::first($originalValue);
                 if (is_array($value)) {
                     // we should deserialize source
                     $originalValue = maybe_unserialize($originalValue);

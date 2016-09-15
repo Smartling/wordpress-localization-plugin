@@ -4,6 +4,7 @@ namespace Smartling\Extensions;
 
 use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -71,7 +72,7 @@ class TranslateLock implements ExtensionInterface
         ]);
 
         if (0 < count($submissions)) {
-            $submission = reset($submissions);
+            $submission =  ArrayHelper::first($submissions);
 
             /**
              * @var SubmissionEntity $submission
