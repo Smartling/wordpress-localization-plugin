@@ -26,7 +26,8 @@ parameters:
       - 'attachment_id'
       - 'testimonial_id'
       - 'testimonials'
-    key: # add jey to XML
+      - '_wp_attachment_metadata.*'
+    key: # add key to XML
       seo: # key="seo"
         - '_yoast_wpseo_title'
         - '_yoast_wpseo_bctitle'

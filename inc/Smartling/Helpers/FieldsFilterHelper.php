@@ -199,6 +199,10 @@ class FieldsFilterHelper
         ContentSerializationHelper::prepareFieldProcessorValues($this->getSettingsManager(), $submission);
         $data = $this->prepareSourceData($data);
         $data = $this->flatternArray($data);
+
+        $settings = self::getFieldProcessingParams();
+        $data = $this->removeFields($data, $settings['ignore']);
+
         $data = $this->passFieldProcessorsBeforeSendFilters($submission, $data);
         $data = $this->passConnectionProfileFilters($data, $strategy);
 
@@ -263,6 +267,9 @@ class FieldsFilterHelper
      */
     private function filterArray(array $array, SubmissionEntity $submission, $strategy)
     {
+        $settings = self::getFieldProcessingParams();
+        $array = $this->removeFields($array, $settings['ignore']);
+
         $array = $this->passFieldProcessorsFilters($submission, $array);
         $array = $this->passConnectionProfileFilters($array, $strategy);
         return $array;
@@ -326,7 +333,7 @@ class FieldsFilterHelper
     {
         $settings = self::getFieldProcessingParams();
 
-        $data = $this->removeFields($data, $settings['ignore']);
+
         if (self::FILTER_STRATEGY_UPLOAD === $strategy) {
             $data = $this->removeFields($data, $settings['copy']['name']);
             $data = $this->removeValuesByRegExp($data, $settings['copy']['regexp']);
