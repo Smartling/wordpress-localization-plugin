@@ -60,6 +60,7 @@ Additional information on the Smartling Connector for WordPress can be found [th
 * Improved stability (minor possible issues fixed)
 
 **Upgrade steps**
+
 Smartling connector improves metadata field processing to extend customization abilities.
 Added filter that allows to handle any type of referenced content (if supported by smartling connector).
 Because of this architecture update a small reconfiguration needed after update.
