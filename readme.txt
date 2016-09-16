@@ -55,6 +55,9 @@ Additional information on the Smartling Connector for WordPress can be found [th
 
 == Changelog ==
 
+= 1.3.2 =
+* Fixed possible issue with `ReferencedContentProcessor` that may cause referenced content will not be translated.
+
 = 1.3.1 =
 * Improved metadata filtering. Developers can use API to setup build-in filters for their custom metadata fields (useful in case of ACF usage) and even create own customized processors and embed them into their plugin or theme.
 * Improved stability (minor possible issues fixed)

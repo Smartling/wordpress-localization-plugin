@@ -64,7 +64,7 @@ class ReferencedContentProcessor extends MetaFieldProcessorAbstract
      * @param LoggerInterface   $logger
      * @param TranslationHelper $translationHelper
      * @param string            $fieldRegexp
-     * @param string            $contentType
+     * @param string            $contentType Expected content type in the field
      */
     public function __construct(LoggerInterface $logger, TranslationHelper $translationHelper, $fieldRegexp, $contentType)
     {
@@ -83,10 +83,6 @@ class ReferencedContentProcessor extends MetaFieldProcessorAbstract
      */
     public function processFieldPostTranslation(SubmissionEntity $submission, $fieldName, $value)
     {
-        if ($this->getContentType() !== $submission->getContentType()) {
-            return $value;
-        }
-
         $originalValue = $value;
 
         if (is_array($value)) {
