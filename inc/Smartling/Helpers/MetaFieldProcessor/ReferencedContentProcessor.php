@@ -116,7 +116,7 @@ class ReferencedContentProcessor extends MetaFieldProcessorAbstract
                 $submission->getTargetBlogId()
             );
 
-            if (0 === IntegerParser::integerOrDefault($attSubmission->getTargetId(), 0)) {
+            if (0 === $attSubmission->getTargetId()) {
                 do_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, $attSubmission);
             }
 

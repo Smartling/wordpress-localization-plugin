@@ -2,6 +2,7 @@
 
 namespace Smartling\Base;
 
+use Smartling\Bootstrap;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\SmartlingWpDataIntegrityException;
 use Smartling\Helpers\ArrayHelper;
@@ -98,17 +99,7 @@ trait SmartlingCoreTrait
 
         $originalContent = $this->getContentHelper()->readSourceContent($submission);
 
-        $this->prepareFieldProcessorValues($submission);
-        $unfilteredSourceData = $this->readSourceContentWithMetadataAsArray($submission);
 
-        // filter as on download but clone;
-
-        $hardFilteredOriginalData = $this->getFieldsFilter()->processStringsAfterDecoding(
-            $this->getFieldsFilter()->processStringsBeforeEncoding($submission, $unfilteredSourceData)
-        );
-
-        $filteredSourceData = $this->getFieldsFilter()
-            ->applyTranslatedValues($submission, $unfilteredSourceData, $hardFilteredOriginalData);
 
         if (false === $update) {
             /** @var EntityAbstract $originalContent */
@@ -118,14 +109,21 @@ trait SmartlingCoreTrait
             $targetContent = $this->getContentHelper()->readTargetContent($submission);
         }
 
-        unset ($filteredSourceData['entity']['ID'], $filteredSourceData['entity']['term_id'], $filteredSourceData['entity']['id']);
+        $this->prepareFieldProcessorValues($submission);
+        $unfilteredSourceData = $this->readSourceContentWithMetadataAsArray($submission);
 
-        if (array_key_exists('entity', $filteredSourceData) && ArrayHelper::notEmpty($filteredSourceData['entity'])) {
-            $_entity = &$filteredSourceData['entity'];
+        // filter as on download but clone;
+
+        $hardFilteredOriginalData = $this->getFieldsFilter()->removeIgnoringFields($submission, $unfilteredSourceData);
+
+        unset ($hardFilteredOriginalData['entity']['ID'], $hardFilteredOriginalData['entity']['term_id'], $hardFilteredOriginalData['entity']['id']);
+
+        if (array_key_exists('entity', $hardFilteredOriginalData) && ArrayHelper::notEmpty($hardFilteredOriginalData['entity'])) {
+            $_entity = &$hardFilteredOriginalData['entity'];
             /**
              * @var array $_entity
              */
-            foreach ($_entity as $k => $v) {
+            foreach ($hardFilteredOriginalData['entity'] as $k => $v) {
                 $targetContent->{$k} = $v;
             }
         }

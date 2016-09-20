@@ -22,7 +22,7 @@ class ReferencedPageProcessor extends ReferencedContentProcessor
     public function processFieldPostTranslation(SubmissionEntity $submission, $fieldName, $value)
     {
         $newId = parent::processFieldPostTranslation($submission, $fieldName, $value);
-        $this->fixHierarchy($submission);
+        //$this->fixHierarchy($submission);
 
         return $newId;
     }

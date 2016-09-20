@@ -132,17 +132,34 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
 
         $result = $processor->processFieldPreTranslation($submission, $fieldName, $fieldValue, $collectedValues);
 
-        $this->getLogger()->debug(
-            vsprintf(
-                'Pre translation filter received field=\'%s\' with value=%s. that was processed by %s processor and received %s on output.',
-                [
-                    $fieldName,
-                    var_export($fieldValue, true),
-                    get_class($processor),
-                    var_export($result, true),
-                ]
-            ));
-
+        if ($processor instanceof DefaultMetaFieldProcessor) {
+            /**
+             * Skip logging for Default Processor
+             */
+            /*
+             * $this->getLogger()->debug(
+                vsprintf(
+                    'Pre translation filter received field=\'%s\' with value=%s. that was processed by %s processor.',
+                    [
+                        $fieldName,
+                        var_export($fieldValue, true),
+                        get_class($processor),
+                    ]
+                ));
+            */
+        } else {
+            $this->getLogger()->debug(
+                vsprintf(
+                    'Pre translation filter received field=\'%s\' with value=%s. that was processed by %s processor and received %s on output.',
+                    [
+                        $fieldName,
+                        var_export($fieldValue, true),
+                        get_class($processor),
+                        var_export($result, true),
+                    ]
+                )
+            );
+        }
         return $result;
     }
 

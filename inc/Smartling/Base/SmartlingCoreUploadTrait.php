@@ -161,7 +161,7 @@ trait SmartlingCoreUploadTrait
                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                 } catch (Exception $e) {
                     $this->getLogger()->error($e->getMessage());
-                    $this->getSubmissionManager()->setErrorMessage($submission, 'Error occurred: %s', [$e->getMessage()]);
+                    $this->getSubmissionManager()->setErrorMessage($submission, vsprintf('Error occurred: %s', [$e->getMessage()]));
                 }
             }
 

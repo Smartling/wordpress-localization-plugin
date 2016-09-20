@@ -192,6 +192,24 @@ class FieldsFilterHelper
      * @param SubmissionEntity $submission
      * @param array            $data
      *
+     * @return array
+     */
+    public function removeIgnoringFields(SubmissionEntity $submission, array $data)
+    {
+        ContentSerializationHelper::prepareFieldProcessorValues($this->getSettingsManager(), $submission);
+        $data = $this->prepareSourceData($data);
+        $data = $this->flatternArray($data);
+
+        $settings = self::getFieldProcessingParams();
+        $data = $this->removeFields($data, $settings['ignore']);
+        $data = $this->structurizeArray($data);
+        return $data;
+    }
+
+    /**
+     * @param SubmissionEntity $submission
+     * @param array            $data
+     *
      * @return mixed
      */
     public function processStringsBeforeEncoding(SubmissionEntity $submission, array $data, $strategy = self::FILTER_STRATEGY_UPLOAD)
