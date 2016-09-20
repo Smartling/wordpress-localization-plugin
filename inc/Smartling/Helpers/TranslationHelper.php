@@ -154,7 +154,33 @@ class TranslationHelper
     {
         $relatedSubmission = $this->prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog);
 
-        do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $relatedSubmission);
+        /**
+         * @var SubmissionEntity $relatedSubmission
+         */
+        if (0 === $relatedSubmission->getTargetId()) {
+            $message = vsprintf(
+                'Uploading synchronously file %s for submission=%s for contentType=%s sourceBlog=%s sourceId=%s, targetBlog=%s',
+                [
+                    $relatedSubmission->getFileUri(),
+                    $relatedSubmission->getId(),
+                    $contentType,
+                    $sourceBlog,
+                    $sourceId,
+                    $targetBlog
+                ]
+            );
+            do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $relatedSubmission);
+        } else {
+            $message = vsprintf(
+                'Uploading synchronously for submission=%s, file=%s. Target content already exists.',
+                [
+                    $relatedSubmission->getId(),
+                    $relatedSubmission->getFileUri(),
+                ]
+            );
+        }
+
+        $this->getLogger()->debug($message);
 
         return $this->reloadSubmission($relatedSubmission);
     }
