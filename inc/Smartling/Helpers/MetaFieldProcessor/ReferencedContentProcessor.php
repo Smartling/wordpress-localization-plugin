@@ -116,10 +116,6 @@ class ReferencedContentProcessor extends MetaFieldProcessorAbstract
                 $submission->getTargetBlogId()
             );
 
-            if (0 === $attSubmission->getTargetId()) {
-                do_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, $attSubmission);
-            }
-
             return $attSubmission->getTargetId();
         } catch (SmartlingDataReadException $e) {
             $message = vsprintf(
@@ -157,6 +153,6 @@ class ReferencedContentProcessor extends MetaFieldProcessorAbstract
      */
     public function processFieldPreTranslation(SubmissionEntity $submission, $fieldName, $value, array $collectedFields)
     {
-        return $value;
+        return $this->processFieldPostTranslation($submission, $fieldName, $value);
     }
 }

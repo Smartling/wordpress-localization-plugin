@@ -63,25 +63,6 @@ trait SmartlingCoreTrait
     {
         $update = 0 !== $submission->getTargetId();
 
-        if (WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT === $submission->getContentType()) {
-            $fileData = $this->getAttachmentFileInfoBySubmission($submission);
-            $sourceFileFsPath = $fileData['source_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
-            $targetFileFsPath = $fileData['target_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
-            $mediaCloneResult = AttachmentHelper::cloneFile($sourceFileFsPath, $targetFileFsPath, true);
-            if (is_array($mediaCloneResult) && 0 < count($mediaCloneResult)) {
-                $message = vsprintf(
-                    'Error(s) %s happened while working with attachment id=%s, blog=%s, submission=%s.',
-                    [
-                        implode(',', $mediaCloneResult),
-                        $submission->getSourceId(),
-                        $submission->getSourceBlogId(),
-                        $submission->getId(),
-                    ]
-                );
-                $this->getLogger()->error($message);
-            }
-        }
-
         if (true === $update && false === $forceClone) {
             return $submission;
         }
@@ -98,8 +79,6 @@ trait SmartlingCoreTrait
         );
 
         $originalContent = $this->getContentHelper()->readSourceContent($submission);
-
-
 
         if (false === $update) {
             /** @var EntityAbstract $originalContent */
@@ -152,8 +131,27 @@ trait SmartlingCoreTrait
                 )
             );
 
-        if (array_key_exists('meta', $filteredSourceData) && ArrayHelper::notEmpty($filteredSourceData['meta'])) {
-            $metaFields = &$filteredSourceData['meta'];
+        if (WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT === $submission->getContentType()) {
+            $fileData = $this->getAttachmentFileInfoBySubmission($submission);
+            $sourceFileFsPath = $fileData['source_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
+            $targetFileFsPath = $fileData['target_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
+            $mediaCloneResult = AttachmentHelper::cloneFile($sourceFileFsPath, $targetFileFsPath, true);
+            if (is_array($mediaCloneResult) && 0 < count($mediaCloneResult)) {
+                $message = vsprintf(
+                    'Error(s) %s happened while working with attachment id=%s, blog=%s, submission=%s.',
+                    [
+                        implode(',', $mediaCloneResult),
+                        $submission->getSourceId(),
+                        $submission->getSourceBlogId(),
+                        $submission->getId(),
+                    ]
+                );
+                $this->getLogger()->error($message);
+            }
+        }
+
+        if (array_key_exists('meta', $hardFilteredOriginalData) && ArrayHelper::notEmpty($hardFilteredOriginalData['meta'])) {
+            $metaFields = &$hardFilteredOriginalData['meta'];
             /**
              * @var array $metaFields
              */

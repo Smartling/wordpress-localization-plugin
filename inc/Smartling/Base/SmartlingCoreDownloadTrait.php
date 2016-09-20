@@ -117,7 +117,7 @@ trait SmartlingCoreDownloadTrait
 
     public function downloadTranslationBySubmissionId($id)
     {
-        return $this->downloadTranslationBySubmission($this->loadSubmissionEntityById($id));
+        do_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, $this->loadSubmissionEntityById($id));
     }
 
     public function downloadTranslation($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null)
@@ -125,6 +125,6 @@ trait SmartlingCoreDownloadTrait
         $submission = $this->getTranslationHelper()
             ->prepareSubmission($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity);
 
-        return $this->downloadTranslationBySubmission($submission);
+        do_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, $submission);
     }
 }

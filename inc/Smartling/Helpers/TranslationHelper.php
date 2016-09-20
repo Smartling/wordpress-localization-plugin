@@ -157,7 +157,9 @@ class TranslationHelper
         /**
          * @var SubmissionEntity $relatedSubmission
          */
-        if (0 === $relatedSubmission->getTargetId()) {
+        if (0 === $relatedSubmission->getTargetId() &&
+            SubmissionEntity::SUBMISSION_STATUS_FAILED !== $relatedSubmission->getStatus()
+        ) {
             $message = vsprintf(
                 'Uploading synchronously file %s for submission=%s for contentType=%s sourceBlog=%s sourceId=%s, targetBlog=%s',
                 [
@@ -166,13 +168,13 @@ class TranslationHelper
                     $contentType,
                     $sourceBlog,
                     $sourceId,
-                    $targetBlog
+                    $targetBlog,
                 ]
             );
             do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $relatedSubmission);
         } else {
             $message = vsprintf(
-                'Uploading synchronously for submission=%s, file=%s. Target content already exists.',
+                'Uploading synchronously cancelled for submission=%s, file=%s. Target content already exists.',
                 [
                     $relatedSubmission->getId(),
                     $relatedSubmission->getFileUri(),
