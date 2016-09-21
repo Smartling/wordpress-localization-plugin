@@ -10,6 +10,7 @@ use Smartling\Helpers\AttachmentHelper;
 use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 
 /**
  * Class SmartlingCoreTrait
@@ -33,7 +34,7 @@ trait SmartlingCoreTrait
     private function translateAndGetTargetId($contentType, $sourceBlog, $sourceId, $targetBlog)
     {
         $submission = $this->getTranslationHelper()
-            ->sendForTranslationSync($contentType, $sourceBlog, $sourceId, $targetBlog);
+            ->tryPrepareRelatedContent($contentType, $sourceBlog, $sourceId, $targetBlog);
 
         return $submission->getTargetId();
     }
@@ -46,6 +47,27 @@ trait SmartlingCoreTrait
     private function prepareFieldProcessorValues(SubmissionEntity $submission)
     {
         ContentSerializationHelper::prepareFieldProcessorValues($this->getSettingsManager(), $submission);
+    }
+
+    /**
+     * @param SubmissionEntity $submission
+     *
+     * @return SubmissionEntity
+     */
+    public function prepareTargetContent(SubmissionEntity $submission)
+    {
+        try {
+            $resultSubmission = $this->prepareTargetEntity($submission);
+
+            if (0 < count(SubmissionManager::getChangedFields($resultSubmission))) {
+                $resultSubmission = $this->getSubmissionManager()->storeEntity($resultSubmission);
+            }
+        } catch (\Exception $e) {
+            $submission->setLastError($e->getMessage());
+            $resultSubmission = $this->getSubmissionManager()->storeEntity($submission);
+        }
+
+        return $this->getTranslationHelper()->reloadSubmission($resultSubmission);
     }
 
     /**
@@ -102,8 +124,8 @@ trait SmartlingCoreTrait
             /**
              * @var array $_entity
              */
-            foreach ($hardFilteredOriginalData['entity'] as $k => $v) {
-                $targetContent->{$k} = $v;
+            foreach ($_entity as $k => $v) {
+                $targetContent->{$k} = apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $k, $v, $submission);
             }
         }
 

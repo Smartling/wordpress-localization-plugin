@@ -28,8 +28,15 @@ trait DebugTrait
 
     public static function BacktracePrint()
     {
-        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+        $backtrace = debug_backtrace();
         unset ($backtrace[0]);
+
+        if (class_exists('\Kint'))
+        {
+            \Kint::trace($backtrace);
+            return;
+        }
+        
         $backtrace = array_reverse($backtrace);
 
         $template = '<table border="1" width="100%%"><tr><th>call #</th><th>Caller</th><th>Target</th></tr>%s</table>';

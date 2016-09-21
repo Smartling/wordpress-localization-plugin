@@ -86,7 +86,7 @@ class ReferencedFileFieldProcessor extends MetaFieldProcessorAbstract
                 )
             );
 
-            $attSubmission = $this->getTranslationHelper()->sendForTranslationSync(
+            $attSubmission = $this->getTranslationHelper()->tryPrepareRelatedContent(
                 WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT,
                 $submission->getSourceBlogId(),
                 $value,

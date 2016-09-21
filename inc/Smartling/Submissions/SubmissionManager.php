@@ -486,6 +486,19 @@ class SubmissionManager extends EntityManagerAbstract
         return SubmissionEntity::getSortableFields();
     }
 
+    public static function getChangedFields(SubmissionEntity $submission)
+    {
+        $id = $submission->getId();
+
+        $is_insert = in_array($id, [0, null], true);
+
+        $fields = true === $is_insert
+            ? $submission->toArray(false)
+            : $submission->getChangedFields();
+
+        return $fields;
+    }
+
     /**
      * Stores SubmissionEntity to database. (fills id in needed)
      *
@@ -497,13 +510,11 @@ class SubmissionManager extends EntityManagerAbstract
     {
         $originalSubmission = json_encode($entity->toArray(false));
         $this->getLogger()->debug(vsprintf('Starting saving submission: %s', [$originalSubmission]));
-        $entityId = $entity->id;
+        $submissionId = $entity->id;
 
-        $is_insert = in_array($entityId, [0, null], true);
+        $is_insert = in_array($submissionId, [0, null], true);
 
-        $fields = true === $is_insert
-            ? $entity->toArray(false)
-            : $entity->getChangedFields();
+        $fields = self::getChangedFields($entity);
 
         foreach ($fields as $field => $value) {
             if (null === $value) {
@@ -529,7 +540,7 @@ class SubmissionManager extends EntityManagerAbstract
             // update
             $conditionBlock = ConditionBlock::getConditionBlock();
             $conditionBlock->addCondition(
-                Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'id', [$entityId])
+                Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'id', [$submissionId])
             );
             $storeQuery = QueryBuilder::buildUpdateQuery($tableName, $fields, $conditionBlock, ['limit' => 1]);
         }

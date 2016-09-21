@@ -105,4 +105,13 @@ interface ExportedAPI
      *  collected values
      */
     const FILTER_SMARTLING_METADATA_PROCESS_BEFORE_TRANSLATION = 'smartling_metadata_process_before_translation';
+
+    /**
+     * Filter processes given SubmissionEntity and creates corresponding target entity if it does not exists.
+     * Filter doesn't work for cloning
+     * receives 1 param:
+     *  SubmissionEntity $submission
+     * returns SubmissionEntity
+     */
+    const FILTER_SMARTLING_PREPARE_TARGET_CONTENT = 'smartling_prepare_target_content';
 }

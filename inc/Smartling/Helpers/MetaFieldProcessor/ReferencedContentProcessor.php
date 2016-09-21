@@ -3,7 +3,6 @@
 namespace Smartling\Helpers\MetaFieldProcessor;
 
 use Psr\Log\LoggerInterface;
-use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
@@ -99,6 +98,9 @@ class ReferencedContentProcessor extends MetaFieldProcessorAbstract
             return $originalValue;
         }
 
+        if (0 === $value) {
+            return $value;
+        }
 
         try {
             $this->getLogger()->debug(
@@ -109,7 +111,7 @@ class ReferencedContentProcessor extends MetaFieldProcessorAbstract
             );
 
             // trying to detect
-            $attSubmission = $this->getTranslationHelper()->sendForTranslationSync(
+            $attSubmission = $this->getTranslationHelper()->tryPrepareRelatedContent(
                 $this->getContentType(),
                 $submission->getSourceBlogId(),
                 $value,
@@ -129,7 +131,7 @@ class ReferencedContentProcessor extends MetaFieldProcessorAbstract
 
         } catch (\Exception $e) {
             $message = vsprintf(
-                'An exception occurred while sending related item=%s, submission=%s for translation. Message:',
+                'An exception occurred while sending related item=%s, submission=%s for translation. Message: %s',
                 [
                     var_export($originalValue, true),
                     $submission->getId(),

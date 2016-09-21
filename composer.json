@@ -18,7 +18,8 @@
   ],
   "require-dev" :  {
     "phpunit/phpunit" :  "~4",
-    "fzaninotto/faker" : "master-dev"
+    "fzaninotto/faker" : "master-dev",
+    "raveren/kint" :     "master-dev"
   },
   "config" :       {
     "vendor-dir" : "inc/third-party"

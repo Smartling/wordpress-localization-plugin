@@ -410,7 +410,7 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract
     public function cleanFields($value = null)
     {
         parent::cleanFields($value);
-        $this->name = '';
+        $this->term_taxonomy_id = $value;
     }
 
     /**

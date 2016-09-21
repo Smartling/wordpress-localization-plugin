@@ -108,6 +108,9 @@ class TranslationHelper
      */
     public function prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog)
     {
+        if (0 == $sourceId) {
+            throw new \InvalidArgumentException('Source id cannot be 0.');
+        }
         $submission = $this->prepareSubmissionEntity(
             $contentType,
             $sourceBlog,
@@ -128,7 +131,7 @@ class TranslationHelper
      * @return mixed
      * @throws \Smartling\Exception\SmartlingDataReadException
      */
-    private function reloadSubmission(SubmissionEntity $submission)
+    public function reloadSubmission(SubmissionEntity $submission)
     {
         $submissionsList = $this->getSubmissionManager()->getEntityById($submission->getId());
         if (is_array($submissionsList)) {
@@ -150,20 +153,19 @@ class TranslationHelper
      * @return SubmissionEntity
      * @throws \Smartling\Exception\SmartlingDataReadException
      */
-    public function sendForTranslationSync($contentType, $sourceBlog, $sourceId, $targetBlog)
+    public function tryPrepareRelatedContent($contentType, $sourceBlog, $sourceId, $targetBlog)
     {
         $relatedSubmission = $this->prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog);
 
         /**
          * @var SubmissionEntity $relatedSubmission
          */
-        if (0 === $relatedSubmission->getTargetId() &&
+        if (0 !== $sourceId && 0 === $relatedSubmission->getTargetId() &&
             SubmissionEntity::SUBMISSION_STATUS_FAILED !== $relatedSubmission->getStatus()
         ) {
             $message = vsprintf(
-                'Uploading synchronously file %s for submission=%s for contentType=%s sourceBlog=%s sourceId=%s, targetBlog=%s',
+                'Trying to create corresponding translation placeholder for submission=%s for contentType=%s sourceBlog=%s sourceId=%s, targetBlog=%s',
                 [
-                    $relatedSubmission->getFileUri(),
                     $relatedSubmission->getId(),
                     $contentType,
                     $sourceBlog,
@@ -171,13 +173,19 @@ class TranslationHelper
                     $targetBlog,
                 ]
             );
-            do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $relatedSubmission);
+
+            // try to create target entity
+            $relatedSubmission = apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $relatedSubmission);
+
+            // add to upload queue
+            $relatedSubmission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+            $relatedSubmission = $this->getSubmissionManager()->storeEntity($relatedSubmission);
         } else {
             $message = vsprintf(
-                'Uploading synchronously cancelled for submission=%s, file=%s. Target content already exists.',
+                'Skipping creation of translation placeholder for submission=%s, locale=%s.',
                 [
                     $relatedSubmission->getId(),
-                    $relatedSubmission->getFileUri(),
+                    $relatedSubmission->getTargetLocale(),
                 ]
             );
         }

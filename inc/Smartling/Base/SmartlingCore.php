@@ -37,6 +37,8 @@ class SmartlingCore extends SmartlingCoreAbstract
         add_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, [$this, 'downloadTranslationBySubmission',]);
         add_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, [$this, 'cloneWithoutTranslation']);
         add_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, [$this, 'regenerateTargetThumbnailsBySubmission']);
+
+        add_filter(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, [$this, 'prepareTargetContent']);
     }
 
     /**
@@ -115,7 +117,7 @@ class SmartlingCore extends SmartlingCoreAbstract
                         $submission->getId(),
                     ]));
 
-                $menuItemSubmission = $this->getTranslationHelper()->sendForTranslationSync(
+                $menuItemSubmission = $this->getTranslationHelper()->tryPrepareRelatedContent(
                     WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM,
                     $submission->getSourceBlogId(),
                     $menuItemEntity->getPK(),

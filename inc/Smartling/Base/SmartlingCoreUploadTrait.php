@@ -124,7 +124,7 @@ trait SmartlingCoreUploadTrait
                 $submission->getFileUri();
                 $submission = $this->getSubmissionManager()->storeEntity($submission);
             }
-            $submission = $this->prepareTargetEntity($submission);
+            $submission = apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $submission);
             $submission = $this->renewContentHash($submission);
 
             $source = $this->readSourceContentWithMetadataAsArray($submission);
