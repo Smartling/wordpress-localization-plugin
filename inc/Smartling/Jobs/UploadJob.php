@@ -3,6 +3,7 @@
 namespace Smartling\Jobs;
 
 use Smartling\Base\ExportedAPI;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -29,10 +30,15 @@ class UploadJob extends JobAbstract
     {
         $this->getLogger()->info('Started UploadJob.');
 
-        $entities = $this->getSubmissionManager()->find(['status' => [SubmissionEntity::SUBMISSION_STATUS_NEW]]);
+        do {
+            $entities = $this->getSubmissionManager()->find(['status' => [SubmissionEntity::SUBMISSION_STATUS_NEW]], 1);
 
-        $this->getLogger()->info(vsprintf('Found %s submissions.', [count($entities)]));
-        foreach ($entities as $entity) {
+            if (0 === count($entities)) {
+                break;
+            }
+
+            $entity = ArrayHelper::first($entities);
+
             $this->getLogger()->info(
                 vsprintf(
                     'Cron Job triggers content upload for submission id = \'%s\' with status = \'%s\' for entity = \'%s\', blog = \'%s\', id = \'%s\', targetBlog = \'%s\', locale = \'%s\'.',
@@ -49,7 +55,9 @@ class UploadJob extends JobAbstract
             );
 
             do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $entity);
-        }
+
+        } while (0 < count($entities));
+
         $this->getLogger()->info('Finished UploadJob.');
     }
 

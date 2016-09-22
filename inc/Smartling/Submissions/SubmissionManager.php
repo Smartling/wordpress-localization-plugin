@@ -373,10 +373,11 @@ class SubmissionManager extends EntityManagerAbstract
      * Search submission by params
      *
      * @param array $params
+     * @param int   $limit (if 0 - unlimited)
      *
      * @return SubmissionEntity[]
      */
-    public function find(array $params = [])
+    public function find(array $params = [], $limit = 0)
     {
         $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
 
@@ -390,7 +391,9 @@ class SubmissionManager extends EntityManagerAbstract
             $block->addCondition($condition);
         }
 
-        $query = $this->buildQuery(null, null, null, [], null, $block);
+        $pageOptions = 0 === $limit ? null : ['limit' => $limit, 'page' => 1];
+
+        $query = $this->buildQuery(null, null, null, [], $pageOptions, $block);
 
         return $this->fetchData($query);
     }
