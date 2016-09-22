@@ -23,6 +23,7 @@ trait DebugTrait
     {
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
         unset ($backtrace[0]);
+
         return array_reverse($backtrace);
     }
 
@@ -31,12 +32,12 @@ trait DebugTrait
         $backtrace = debug_backtrace();
         unset ($backtrace[0]);
 
-        if (class_exists('\Kint'))
-        {
+        if (class_exists('\Kint')) {
             \Kint::trace($backtrace);
+
             return;
         }
-        
+
         $backtrace = array_reverse($backtrace);
 
         $template = '<table border="1" width="100%%"><tr><th>call #</th><th>Caller</th><th>Target</th></tr>%s</table>';
@@ -82,5 +83,73 @@ trait DebugTrait
             $message .= "Location: '{$data['file']}:{$data['line']}'\n";
             $logger->emergency($message);
         }
+    }
+
+    /**
+     * @return string
+     */
+    public static function getLogFileName()
+    {
+        $container = self::getContainer();
+        $pluginDir = $container->getParameter('plugin.dir');
+        $filename = $container->getParameter('logger.filehandler.standard.filename');
+        $fullFilename = vsprintf('%s-%s', [str_replace('%plugin.dir%', $pluginDir, $filename), date('Y-m-d')]);
+
+        return $fullFilename;
+    }
+
+    /**
+     * @param string $scale can be B,K,M,G
+     *                      if scaled size > 750 scale changes to larger
+     *
+     * @return int
+     */
+    public static function getCurrentLogFileSize($scale = 'B')
+    {
+        $logFile = self::getLogFileName();
+
+        if (!file_exists($logFile) || !is_readable($logFile)) {
+            return '0';
+        }
+
+        $size = filesize($logFile);
+
+        if (!in_array($scale, ['B', 'K', 'M', 'G'])) {
+            $scale = 'B';
+        }
+
+        switch (strtoupper($scale)) {
+            case 'G':
+                $size /= 1024;
+            case 'M':
+                $size /= 1024;
+            case 'K':
+                $size /= 1024;
+            default:
+        }
+
+        if ($size > 750) {
+            $size /= 1024;
+            switch (strtoupper($scale)) {
+                case 'G':
+                    $scale = 'T';
+                    break;
+                case 'M':
+                    $scale = 'G';
+                    break;
+                case 'K':
+                    $scale = 'M';
+                    break;
+                default:
+                    $scale = 'K';
+                    break;
+            }
+        }
+
+        return vsprintf('%s%s', [round($size, 2), $scale]);
+    }
+
+    public static function deleteCurrentLogFileSize()
+    {
     }
 }

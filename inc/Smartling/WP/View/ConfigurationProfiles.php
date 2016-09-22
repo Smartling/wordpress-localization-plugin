@@ -40,10 +40,19 @@ $data = $this->getViewData();
     <h2><?= __('Crons and Queues'); ?></h2>
     <?php $cnqTable->display(); ?>
     <p>
+    <h2><?= __('Log file'); ?></h2>
     <ul>
         <li>
-            <a href="/wp-admin/admin-post.php?action=smartling_download_log_file">
-                <?= __('Download current log file'); ?>
+            <a href="/wp-admin/admin-post.php?action=smartling_download_log_file"><?= __('Download current log file'); ?></a>
+        </li>
+        <li>
+            <a href="/wp-admin/admin-post.php?action=smartling_zerolength_log_file"><?=
+                vsprintf(
+                    __('Cleanup current log file (current size: <strong>%s</strong>.)'),
+                    [
+                        \Smartling\Bootstrap::getCurrentLogFileSize()
+                    ]
+                ); ?>
             </a>
         </li>
     </ul>

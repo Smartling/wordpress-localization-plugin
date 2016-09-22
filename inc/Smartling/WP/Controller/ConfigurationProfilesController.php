@@ -68,6 +68,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
         add_action('network_admin_menu', [$this, 'menu']);
         add_action('admin_post_smartling_configuration_profile_list', [$this, 'listProfiles']);
         add_action('admin_post_smartling_download_log_file', [$this, 'downloadLog']);
+        add_action('admin_post_smartling_zerolength_log_file', [$this, 'cleanLog']);
         add_action('admin_post_cnq', [$this, 'processCnqAction']);
     }
 
@@ -200,15 +201,23 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
 
     }
 
+
+
+    public function cleanLog()
+    {
+        $fullFilename = Bootstrap::getLogFileName();
+
+        if (file_exists($fullFilename) && is_writable($fullFilename)) {
+            unlink($fullFilename);
+        }
+
+        wp_redirect('/wp-admin/admin.php?page=smartling_configuration_profile_list');
+    }
+
     public function downloadLog()
     {
-        $container = Bootstrap::getContainer();
         $this->signLogFile();
-
-        $pluginDir = $container->getParameter('plugin.dir');
-        $filename = $container->getParameter('logger.filehandler.standard.filename');
-
-        $fullFilename = vsprintf('%s-%s', [str_replace('%plugin.dir%', $pluginDir, $filename), date('Y-m-d')]);
+        $fullFilename = Bootstrap::getLogFileName();
 
         if (file_exists($fullFilename) && is_readable($fullFilename)) {
             header('Content-Type: application/octet-stream');

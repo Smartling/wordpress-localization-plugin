@@ -7,6 +7,7 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\TranslationHelper;
+use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -86,6 +87,10 @@ class ReferencedContentProcessor extends MetaFieldProcessorAbstract
 
         if (is_array($value)) {
             $value = ArrayHelper::first($value);
+        }
+
+        if (WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM === $submission->getContentType()) {
+            return $originalValue;
         }
 
         if (!IntegerParser::tryParseString($value, $value)) {

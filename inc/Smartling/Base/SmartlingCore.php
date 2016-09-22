@@ -2,6 +2,7 @@
 namespace Smartling\Base;
 
 use Exception;
+use Smartling\Bootstrap;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\MenuItemEntity;
 use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
@@ -123,28 +124,39 @@ class SmartlingCore extends SmartlingCoreAbstract
                     $menuItemEntity->getPK(),
                     $submission->getTargetBlogId());
 
+
+
                 $originalMenuItemMeta = $this->getContentHelper()->readSourceMetadata($menuItemSubmission);
 
                 $originalMenuItemMeta = ArrayHelper::simplifyArray($originalMenuItemMeta);
 
                 if (in_array($originalMenuItemMeta['_menu_item_type'], ['taxonomy', 'post_type'])) {
+
+                    $originalRelatedObjectId =  (int)$originalMenuItemMeta['_menu_item_object_id'];
+                    $relatedContentType = $originalMenuItemMeta['_menu_item_object'];
+
+                    //Bootstrap::DebugPrint($menuItemSubmission->toArray(false), true);
+
                     $this->getLogger()->debug(
                         vsprintf(
-                            'Sending for translation object = \'%s\' related to \'%s\' related to submission = \'%s\'.',
+                            'Sending for translation object = \'%s\' id = \'%s\' related to \'%s\' related to submission = \'%s\'.',
                             [
-                                $originalMenuItemMeta['_menu_item_object'],
+                                $relatedContentType,
+                                $originalRelatedObjectId,
                                 WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM,
-                                $menuItemEntity->getPK(),
+                                $menuItemSubmission->getId(),
                             ]
                         )
                     );
 
-                    $relatedObjectId = $this->translateAndGetTargetId(
-                        $originalMenuItemMeta['_menu_item_object'],
+                    $relatedObjectSubmission = $this->getTranslationHelper()->tryPrepareRelatedContent(
+                        $relatedContentType,
                         $submission->getSourceBlogId(),
-                        (int)$originalMenuItemMeta['_menu_item_object_id'],
+                        $originalRelatedObjectId,
                         $submission->getTargetBlogId()
                     );
+
+                    $relatedObjectId = $relatedObjectSubmission->getTargetId();
 
                     $originalMenuItemMeta['_menu_item_object_id'] = $relatedObjectId;
 
