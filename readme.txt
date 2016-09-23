@@ -57,11 +57,11 @@ Additional information on the Smartling Connector for WordPress can be found [th
 
 = 1.3.3 =
 * Added support for cyclic references between content-types
-* Removed all synchronous operations.
 * Changed behaviour of `Clone` button. Now while cloning smartling connector plugin is looking for references to link content
 * Changed the way smartling connector works with Upload queue
  * Upload executes in two phases. First phase is lookup for references and creation of needed submissions. Second phase is just upload
  * Less time and resources needed to process Upload queue
+* Synchronous nested uploads were replaced with asynchronous
 * Download log button now displays the current log file size. Added additional link that allows to remove current log file
 * Added by default for new configuration profiles rules to ignore [Kraken.io](https://wordpress.org/plugins/kraken-image-optimizer/) metadata fields
 * Small fixes and improvements
