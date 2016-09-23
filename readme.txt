@@ -57,27 +57,27 @@ Additional information on the Smartling Connector for WordPress can be found [th
 
 = 1.3.3 =
 * Added support for cyclic references between content-types
-* Changed behaviour of `Clone` button. Now while cloning smartling-connector plugin is looking for references to link content.
-* Changed the way smartling-connector works with Upload queue.
- * Upload executes in two phases. First phase is lookup for references and creation of needed submissions. Second phase is just upload.
- * Less time and resources needed to process Upload queue.
 * Removed all synchronous operations.
-* Download log button now displays the current log file size. Added additional link that allows to remove current log file.
-* Added by default for new configuration profiles rules to ignore [Kraken.io](https://wordpress.org/plugins/kraken-image-optimizer/) metadata fields.
-* Small fixes and improvements.
+* Changed behaviour of `Clone` button. Now while cloning smartling connector plugin is looking for references to link content
+* Changed the way smartling connector works with Upload queue
+ * Upload executes in two phases. First phase is lookup for references and creation of needed submissions. Second phase is just upload
+ * Less time and resources needed to process Upload queue
+* Download log button now displays the current log file size. Added additional link that allows to remove current log file
+* Added by default for new configuration profiles rules to ignore [Kraken.io](https://wordpress.org/plugins/kraken-image-optimizer/) metadata fields
+* Small fixes and improvements
 
 = 1.3.2 =
-* Fixed possible issue with `ReferencedContentProcessor` that may cause referenced content will not be translated.
+* Fixed possible issue with `ReferencedContentProcessor` that may cause referenced content will not be translated
 
 = 1.3.1 =
-* Improved metadata filtering. Developers can use API to setup build-in filters for their custom metadata fields (useful in case of ACF usage) and even create own customized processors and embed them into their plugin or theme.
+* Improved metadata filtering. Developers can use API to setup build-in filters for their custom metadata fields (useful in case of ACF usage) and even create own customized processors and embed them into their plugin or theme
 * Improved stability (minor possible issues fixed)
 
 **Upgrade steps**
 
-Smartling connector improves metadata field processing to extend customization abilities.
-Added filter that allows to handle any type of referenced content (if supported by smartling connector).
-Because of this architecture update a small reconfiguration needed after update.
+Smartling connector improves metadata field processing to extend customization abilities
+Added filter that allows to handle any type of referenced content (if supported by smartling connector)
+Because of this architecture update a small reconfiguration needed after update
 
 0. Go to Smartling Settings page (`/wp-admin/admin.php?page=smartling_configuration_profile_list`) and follow next instructions for each configuration profile:
 1. Go to edit profile screen
@@ -94,13 +94,13 @@ Because of this architecture update a small reconfiguration needed after update.
 
 = 1.3.0 =
 * Refactored architecture to support custom metadata handlers for properties
-* Refactored handling of post `Featured Image`. It was moved from core functionality to the new metadata handler.
+* Refactored handling of post `Featured Image`. It was moved from core functionality to the new metadata handler
  * Now it can be used also for handling image type in [ACF](https://www.advancedcustomfields.com/)
  * Also it can handle properties with reference to any file
 * Added the new metadata handler which can copy value from source to target without translation. It's useful if you need to propagate value from source blog to target blogs without translations (numbers; dates; etc)
 
 = 1.2.7 =
-* Fixed case when shortcode is not properly masked or is double masked.
+* Fixed case when shortcode is not properly masked or is double masked
 
 = 1.2.6 =
 * Improved filters on Submissions Page
@@ -115,44 +115,44 @@ Because of this architecture update a small reconfiguration needed after update.
 * Fixed possible PHP NOTICE in URL converting
 
 = 1.2.3 =
-* Minor refactoring and added more logging.
-* Fixed case when translation is not downloaded in case its status is broken in DB (progress = 100% but status = "In Progress").
+* Minor refactoring and added more logging
+* Fixed case when translation is not downloaded in case its status is broken in DB (progress = 100% but status = "In Progress")
 
 = 1.2.2 =
-* Fixed issue with checking translation progress by cron job.
+* Fixed issue with checking translation progress by cron job
 
 = 1.2.1 =
-* Added ability to clone content without sending it to translation.
+* Added ability to clone content without sending it to translation
 
 = 1.2.0 =
-* Fixed bug with shortcodes translation when the quotes of attributes could be broken. Shortcodes in source strings are masked and any translatable attribute of shortcode is added for translation as a separate string. This fix may change source strings sent to Smartling. Content should be resend to Smartling to apply fix.
+* Fixed bug with shortcodes translation when the quotes of attributes could be broken. Shortcodes in source strings are masked and any translatable attribute of shortcode is added for translation as a separate string. This fix may change source strings sent to Smartling. Content should be resend to Smartling to apply fix
 
 = 1.1.11 =
-* New action 'smartling_before_init' is available to tune smartling-connector in runtime.
+* New action 'smartling_before_init' is available to tune smartling-connector in runtime
 
 = 1.1.10 =
-* Fixed possible issue if translation content is deleted.
+* Fixed possible issue if translation content is deleted
 * Added submission cleanup functionality
 
 = 1.1.9 =
 * Posts and based on posts (e.g., pages) content translations are created as 'drafts' and converter to 'published' once translation is 100% ready
-* Media with absolute URL from media library (e.g. images) are tracked and also translated.
-* Small UI updates on Bulk Submit screen.
-* Small UI updates on profile edit form screen.
-* Small updates on Submission Board screen.
-* Submission 'Failed' status has a tooltip with last error info.
-* Connection to Smartling servers is optimized.
+* Media with absolute URL from media library (e.g. images) are tracked and also translated
+* Small UI updates on Bulk Submit screen
+* Small UI updates on profile edit form screen
+* Small updates on Submission Board screen
+* Submission 'Failed' status has a tooltip with last error info
+* Connection to Smartling servers is optimized
 
 = 1.1.8 =
-* Added hierarchy support for categories.
-* Added hierarchy support for pages.
+* Added hierarchy support for categories
+* Added hierarchy support for pages
 
 = 1.1.7 =
-* Added ability to detect changes in original content for Posts, Pages, Tags, Categories and their derivatives. Changes can be  resend to Smartling automatically.
-* Added notification in admin panel for any errors during database migration.
-* Optimized Database usage and internal queues.
+* Added ability to detect changes in original content for Posts, Pages, Tags, Categories and their derivatives. Changes can be  resend to Smartling automatically
+* Added notification in admin panel for any errors during database migration
+* Optimized Database usage and internal queues
 * Fixed bug with incorrect alter database query for utf8 databases found in version 1.1.6
-* Small UI updates and improvements.
+* Small UI updates and improvements
 
 = 1.1.6 =
 * Added ability to track changes in translations (on Smartling side). In other words, Smartling Connector now can detect retranslation in already translated post; categories; etc and redownload updated translations automatically
@@ -161,7 +161,7 @@ Because of this architecture update a small reconfiguration needed after update.
 
 **Upgrade steps**
 
-Smartling Connector registers cron jobs on `Plugin Activate` hook. But this event doesn't happen when you update plugin from marketplace. To solve this issue you should perform 2 simple steps right after updating Smartling Connector plugin. If you miss steps below then basic operations (upload an original content; download translated content) will not work.
+Smartling Connector registers cron jobs on `Plugin Activate` hook. But this event doesn't happen when you update plugin from marketplace. To solve this issue you should perform 2 simple steps right after updating Smartling Connector plugin. If you miss steps below then basic operations (upload an original content; download translated content) will not work
 
 1. Open `Plugins` page and find Smartling connector (`/wp-admin/network/plugins.php?s=smartling`)
 1. Click `Network Deactivate`
@@ -184,17 +184,17 @@ Smartling Connector registers cron jobs on `Plugin Activate` hook. But this even
 * Minor internal improvements
 
 = 1.1.2 =
-* Added ability to manage translation filters on Profile Edit Screen.
+* Added ability to manage translation filters on Profile Edit Screen
 * Minor UI updates
 
 = 1.1.1 =
-* Added capabilities to split plugin functionality between roles.
+* Added capabilities to split plugin functionality between roles
 
 = 1.1.0 =
 * Upgrade to new Smartling API
 
 = 1.0.29 =
-* Added support of images from media library referenced by relative URL.
+* Added support of images from media library referenced by relative URL
 
 = 1.0.28 =
 * Fixed issue with unsupported types while sending to Smartling
@@ -214,34 +214,34 @@ Smartling Connector registers cron jobs on `Plugin Activate` hook. But this even
 * minor updates and improvements
 
 = 1.0.25 =
-* Added ability to translate standard WordPress widgets from the Bulk Submit Page.
+* Added ability to translate standard WordPress widgets from the Bulk Submit Page
 
 = 1.0.22 =
-* Copy non-translatable custom fields from original to translated posts.
+* Copy non-translatable custom fields from original to translated posts
 
 = 1.0.21 =
-* Database cron marker allows configuration of cron for high-load websites.
-* Cron tasks triggered every 5 minutes instead of every hour.
+* Database cron marker allows configuration of cron for high-load websites
+* Cron tasks triggered every 5 minutes instead of every hour
 
 = 1.0.19 =
-* Pages can be locked to prevent changes to translated post/page from being overwritten.
+* Pages can be locked to prevent changes to translated post/page from being overwritten
 
 = 1.0.18 =
-* Smartling self-diagnostics are displayed on admin panel.
-* Smartling database tables are rebuilt if required on plugin activation.
+* Smartling self-diagnostics are displayed on admin panel
+* Smartling database tables are rebuilt if required on plugin activation
 
 = 1.0.16 =
-* Hide content types that are supported by the connector but not present in WordPress.
+* Hide content types that are supported by the connector but not present in WordPress
 
 = 1.0.15 =
-* Basic support for custom content types.
+* Basic support for custom content types
 
 = 1.0.14 =
 * Compatibility with WordPress 4.2.x.
-* Improvements to Locale display on Submissions Board and Bulk Submit screens.
+* Improvements to Locale display on Submissions Board and Bulk Submit screens
 
 = 1.0.12 =
-* Support for multiple translation profiles.
+* Support for multiple translation profiles
 
 == Upgrade Notice ==
 
