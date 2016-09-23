@@ -23,6 +23,8 @@ class IntegerParser
                 $out = $extractedValue;
                 $result = true;
             }
+        } elseif (is_numeric($value)) {
+            $out = (int) $value;
         }
 
         return $result;
