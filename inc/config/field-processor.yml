@@ -27,6 +27,8 @@ parameters:
       - 'testimonial_id'
       - 'testimonials'
       - '_wp_attachment_metadata.*'
+      - '_kraken.*'
+      - '_kraked.*'
     key: # add key to XML
       seo: # key="seo"
         - '_yoast_wpseo_title'
