@@ -56,7 +56,7 @@ Additional information on the Smartling Connector for WordPress can be found [th
 == Changelog ==
 
 = 1.3.3 =
-* Added support for cyclic references between content-types
+* Added support for cyclic references between content-types (an example: parent page, ACF page_reference, etc)
 * Changed behaviour of `Clone` button. Now while cloning smartling connector plugin is looking for references to link content
 * Changed the way smartling connector works with Upload queue
  * Upload executes in two phases. First phase is lookup for references and creation of needed submissions. Second phase is just upload
