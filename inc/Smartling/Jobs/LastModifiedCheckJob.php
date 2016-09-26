@@ -177,11 +177,43 @@ class LastModifiedCheckJob extends JobAbstract
     }
 
     /**
+     * @param array $serializedPair
+     *
+     * @return bool
+     */
+    private function validateSerializedPair(array $serializedPair)
+    {
+        $result = false;
+        if (1 === count($serializedPair)) {
+            $key = ArrayHelper::first(array_keys($serializedPair));
+            if (is_string($key)) {
+                foreach (array_values($serializedPair) as $item) {
+                    if (!is_numeric($item)) {
+                        return $result;
+                    }
+                }
+                $result = true;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * Checks changes in last-modified field and triggers statusCheck by fileUri if lastModified has changed.
      */
     private function lastModifiedCheck()
     {
         while (false !== ($serializedPair = $this->getSerializedPair())) {
+            if (false === $this->validateSerializedPair($serializedPair)) {
+                $this->getLogger()->warning(vsprintf('Got unexpected data from queue : \'%s\'. Skipping', [
+                    var_export($serializedPair, true),
+                ]));
+                continue;
+            }
+            /**
+             * @var array $serializedPair
+             */
             foreach ($serializedPair as $fileUri => $serializedSubmissions) {
                 $submissionList = $this->getSubmissionManager()->findByIds($serializedSubmissions);
 
