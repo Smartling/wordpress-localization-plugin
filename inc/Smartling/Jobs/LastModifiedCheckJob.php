@@ -186,7 +186,7 @@ class LastModifiedCheckJob extends JobAbstract
         $result = false;
         if (1 === count($serializedPair)) {
             $key = ArrayHelper::first(array_keys($serializedPair));
-            if (is_string($key) && is_array($serializedPair[$key])) {
+            if (is_string($key) && 0 < strlen($key) && is_array($serializedPair[$key]) && 0 < count($serializedPair[$key])) {
                 foreach ($serializedPair[$key] as $item) {
                     if (!is_numeric($item)) {
                         return $result;

@@ -445,4 +445,69 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
             ],
         ];
     }
+
+    /**
+     * @param array $inputData
+     * @param bool  $expectedResult
+     *
+     * @covers       \Smartling\Jobs\LastModifiedCheckJob::validateSerializedPair()
+     * @dataProvider validateSerializedPairDataProvider
+     */
+    public function testValidateSerializedPair(array $inputData, $expectedResult)
+    {
+
+        self::assertEquals(
+            $expectedResult,
+            $this->invokeMethod(
+                $this->getLastModifiedWorker(),
+                'validateSerializedPair',
+                [$inputData]
+            ),
+            vsprintf('Expected %s with input params %s', [var_export($expectedResult, true),
+                                                          var_export($inputData, true)])
+        );
+    }
+
+    public function validateSerializedPairDataProvider()
+    {
+        return [
+            [
+                ['file.xml' => [1, 2, 3]],
+                true,
+            ],
+            [
+                [null => [1, 2, 3]],
+                false,
+            ],
+            [
+                ['file.xml' => [null, 2, 3]],
+                false,
+            ],
+            [
+                ['file.xml' => null],
+                false,
+            ],
+            [
+                ['file.xml' => []],
+                false,
+            ],
+            [
+                ['file.xml' => [1, '2d', 3]],
+                false,
+            ],
+            [
+                ['file.xml' => [1, 'd2', 3]],
+                false,
+            ],
+            [
+                ['file.xml' => [1, (object)['f'], 3]],
+                false,
+            ],
+            [
+                ['file.xml' => 3],
+                false,
+            ],
+        ];
+    }
+
 }
