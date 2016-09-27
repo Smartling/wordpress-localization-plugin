@@ -131,7 +131,8 @@ class LastModifiedCheckJob extends JobAbstract
                     $filteredSubmissions[$smartlingLocaleId] = $submission;
                     $submission->setLastModified($lastModifiedDateTime);
                 } elseif ($submission->getStatus() === SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS
-                  && $submission->getCompletionPercentage() === 100) {
+                          && $submission->getCompletionPercentage() === 100
+                ) {
                     // We need this statement for the case, when something went wrong, and
                     // submission appeared in a situation with Progress == 100% and Status == "In progress"
                     // We need to download such submission at some point. But it won'd happen
@@ -151,8 +152,7 @@ class LastModifiedCheckJob extends JobAbstract
      */
     protected function processFileUriSet(array $submissions)
     {
-        if (ArrayHelper::notEmpty($submissions))
-        {
+        if (ArrayHelper::notEmpty($submissions)) {
             $submission = ArrayHelper::first($submissions);
             $lastModified = $this->getApiWrapper()->lastModified($submission);
             $submissions = $this->prepareSubmissionList($submissions);
@@ -186,8 +186,8 @@ class LastModifiedCheckJob extends JobAbstract
         $result = false;
         if (1 === count($serializedPair)) {
             $key = ArrayHelper::first(array_keys($serializedPair));
-            if (is_string($key)) {
-                foreach (array_values($serializedPair) as $item) {
+            if (is_string($key) && is_array($serializedPair[$key])) {
+                foreach ($serializedPair[$key] as $item) {
                     if (!is_numeric($item)) {
                         return $result;
                     }
