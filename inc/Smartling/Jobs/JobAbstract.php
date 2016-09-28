@@ -4,12 +4,19 @@ namespace Smartling\Jobs;
 
 use Psr\Log\LoggerInterface;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\Parsers\IntegerParser;
+use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\WPHookInterface;
 use Smartling\WP\WPInstallableInterface;
 
 abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallableInterface
 {
+    /**
+     * The default TTL for workers in seconds (20 minutes)
+     */
+    const WORKER_DEFAULT_TTL = 1200;
+
     /**
      * @var string
      */
@@ -109,12 +116,49 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
     }
 
     /**
+     * Returns the TTL for worker in seconds
+     */
+    protected function getWorkerTTL()
+    {
+        return self::WORKER_DEFAULT_TTL;
+    }
+
+    protected function getCronFlagName()
+    {
+        return 'smartling_cron_flag_' . $this->getJobHookName();
+    }
+
+    protected function checkCanRun()
+    {
+        return time() > IntegerParser::integerOrDefault(SimpleStorageHelper::get($this->getCronFlagName(), 0), 0);
+    }
+
+    public function placeLockFlag()
+    {
+        SimpleStorageHelper::set($this->getCronFlagName(), time() + $this->getWorkerTTL());
+    }
+
+    public function dropLockFlag()
+    {
+        SimpleStorageHelper::drop($this->getCronFlagName());
+    }
+
+    public function runCronJob()
+    {
+        if ($this->checkCanRun()) {
+            $this->placeLockFlag();
+            $this->run();
+            $this->dropLockFlag();
+        }
+    }
+
+    /**
      * @inheritdoc
      */
     public function register()
     {
         if (!DiagnosticsHelper::isBlocked()) {
-            add_action($this->getJobHookName(), [$this, 'run']);
+            add_action($this->getJobHookName(), [$this, 'runCronJob']);
         }
     }
 

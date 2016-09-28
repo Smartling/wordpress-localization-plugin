@@ -37,4 +37,14 @@ class SimpleStorageHelper
     {
         return get_site_option($storageKey, $defaultValue);
     }
+
+    /**
+     * @param string $storageKey
+     *
+     * @return bool
+     */
+    public static function drop($storageKey)
+    {
+        return delete_site_option($storageKey);
+    }
 }
