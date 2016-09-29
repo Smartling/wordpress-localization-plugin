@@ -128,27 +128,92 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         return 'smartling_cron_flag_' . $this->getJobHookName();
     }
 
+    protected function getFlagValue()
+    {
+        return IntegerParser::integerOrDefault(SimpleStorageHelper::get($this->getCronFlagName(), 0), 0);
+    }
+
     protected function checkCanRun()
     {
-        return time() > IntegerParser::integerOrDefault(SimpleStorageHelper::get($this->getCronFlagName(), 0), 0);
+        $currentTS = time();
+        $flagTS = $this->getFlagValue();
+
+        $this->getLogger()->debug(
+            vsprintf(
+                'Checking flag \'%s\' for cron job \'%s\'. Stored value=\'%s\'',
+                [
+                    $this->getCronFlagName(),
+                    $this->getJobHookName(),
+                    $flagTS,
+                ]
+            )
+        );
+
+        return $currentTS > $flagTS;
     }
 
     public function placeLockFlag()
     {
-        SimpleStorageHelper::set($this->getCronFlagName(), time() + $this->getWorkerTTL());
+        $flagName = $this->getCronFlagName();
+        $newFlagValue = time() + $this->getWorkerTTL();
+
+        $this->getLogger()->debug(
+            vsprintf(
+                'Placing flag \'%s\' for cron job \'%s\' with value \'%s\' (TTL=%s)',
+                [
+                    $flagName,
+                    $this->getJobHookName(),
+                    $newFlagValue,
+                    $this->getWorkerTTL(),
+                ]
+            )
+        );
+
+        SimpleStorageHelper::set($flagName, $newFlagValue);
     }
 
     public function dropLockFlag()
     {
+        $flagName = $this->getCronFlagName();
+        $this->getLogger()->debug(
+            vsprintf(
+                'Dropping flag \'%s\' for cron job \'%s\'.',
+                [
+                    $flagName,
+                    $this->getJobHookName(),
+                ]
+            )
+        );
         SimpleStorageHelper::drop($this->getCronFlagName());
     }
 
     public function runCronJob()
     {
+        $this->getLogger()->debug(
+            vsprintf(
+                'Checking if allowed to run \'%s\' cron (TTL=%s)',
+                [
+                    $this->getJobHookName(),
+                    $this->getWorkerTTL(),
+                ]
+            )
+        );
+
         if ($this->checkCanRun()) {
             $this->placeLockFlag();
             $this->run();
             $this->dropLockFlag();
+        } else {
+            $this->getLogger()->debug(
+                vsprintf(
+                    'Cron \'%s\' is not allowed to run. TTL=%s has not expired yet. Expecting TTL expiration in %s seconds.',
+                    [
+                        $this->getJobHookName(),
+                        $this->getWorkerTTL(),
+                        $this->getFlagValue() - time(),
+                    ]
+                )
+            );
         }
     }
 
