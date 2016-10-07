@@ -59,7 +59,8 @@ if (!Smartling_Version_Check::check_php_version()) {
         });
     } else {
         require_once plugin_dir_path(__FILE__) . 'inc/autoload.php';
-
+        $pluginData = get_file_data(__FILE__, ['Version' => 'Version']);
+        Smartling\Bootstrap::$pluginVersion = $pluginData['Version'];
         $bootstrap = new Smartling\Bootstrap();
         add_action('plugins_loaded', array($bootstrap, 'load',), 99);
         register_activation_hook(__FILE__, array($bootstrap, 'activate',));

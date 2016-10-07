@@ -24,6 +24,8 @@ class Bootstrap
     use DebugTrait;
     use DITrait;
 
+    public static $pluginVersion = 'undefined';
+
     public function __construct()
     {
         ignore_user_abort(true);
@@ -133,6 +135,8 @@ class Bootstrap
         register_shutdown_function([$this, 'shutdownHandler']);
 
         $this->detectMultilangPlugins();
+
+        self::getContainer()->setParameter('plugin.version', self::$pluginVersion);
 
         //always try to migrate db
         try {
