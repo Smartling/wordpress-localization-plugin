@@ -246,13 +246,13 @@ class Bootstrap
     protected function testMinimalWordpressVersion()
     {
         $minVersion = '4.6';
-        if ( version_compare( get_bloginfo( 'version' ), $minVersion, '<' ) )
-        {
-            $msg = vsprintf('Wordpress has to be at least version %s to run smartlnig connector plugin. Please upgrade Your Wordpress installation.',[$minVersion]);
+        if (version_compare(get_bloginfo('version'), $minVersion, '<')) {
+            $msg = vsprintf('Wordpress has to be at least version %s to run smartlnig connector plugin. Please upgrade Your Wordpress installation.', [$minVersion]);
             self::getLogger()->critical('Boot :: ' . $msg);
             DiagnosticsHelper::addDiagnosticsMessage($msg, true);
         }
     }
+
     protected function testThirdPartyPluginsRequirements()
     {
         /**
