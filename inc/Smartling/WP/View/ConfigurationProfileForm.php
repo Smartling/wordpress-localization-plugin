@@ -29,9 +29,10 @@ if (array_key_exists('profile', $_GET)) {
     \Smartling\Helpers\Parsers\IntegerParser::tryParseString($_GET['profile'], $profileId);
 }
 
+$defaultFilter = Smartling\Bootstrap::getContainer()->getParameter('field.processor.default');
+
 if (0 === $profileId) {
     $profile = $settingsManager->createProfile([]);
-    $defaultFilter = Smartling\Bootstrap::getContainer()->getParameter('field.processor.default');
     $profile->setFilterSkip(implode(PHP_EOL, $defaultFilter['ignore']));
     $profile->setFilterFlagSeo(implode(PHP_EOL, $defaultFilter['key']['seo']));
     $profile->setFilterCopyByFieldName(implode(PHP_EOL, $defaultFilter['copy']['name']));
@@ -43,6 +44,107 @@ if (0 === $profileId) {
      * @var ConfigurationProfileEntity $profile
      */
     $profile = \Smartling\Helpers\ArrayHelper::first($profiles);
+
+    ?>
+    <script>
+        (function ($) {
+
+
+            $(document).ready(function () {
+
+                var getButton = function (selector, action, text) {
+                    return '<button class="filter-' + selector + '" data-action="' + action + '">' + text + '</button>';
+                };
+
+                /* update UI */
+                var ignoreActionBlock = '<br/>' + getButton('ignore', 'reset', '<?= __('Reset value'); ?>') + '&nbsp;' + getButton('ignore', 'undo', '<?= __('Undo changes'); ?>');
+                var copyByNameActionBlock = '<br/>' + getButton('copy-name', 'reset', '<?= __('Reset value'); ?>') + '&nbsp;' + getButton('copy-name', 'undo', '<?= __('Undo changes'); ?>');
+                var copyByValueActionBlock = '<br/>' + getButton('copy-value', 'reset', '<?= __('Reset value'); ?>') + '&nbsp;' + getButton('copy-value', 'undo', '<?= __('Undo changes'); ?>');
+                var seoActionBlock = '<br/>' + getButton('seo', 'reset', '<?= __('Reset value'); ?>') + '&nbsp;' + getButton('seo', 'undo', '<?= __('Undo changes'); ?>');
+
+                $('#filter-skip').after(ignoreActionBlock);
+                $('#filter-copy-by-name').after(copyByNameActionBlock);
+                $('#filter-copy-by-value').after(copyByValueActionBlock);
+                $('#filter-set-flag-seo').after(seoActionBlock);
+
+                /* add handlers */
+                $('.filter-ignore').on('click', function (e) {
+                    e.stopPropagation();
+                    e.preventDefault();
+
+                    switch ($(this).attr('data-action')) {
+                        case 'undo':
+                            $('#filter-skip').val(<?= json_encode($profile->getFilterSkip()); ?>);
+                            break;
+                        case 'reset':
+                            $('#filter-skip').val(<?= json_encode(implode(PHP_EOL, $defaultFilter['ignore'])); ?>);
+                            break;
+                        default:
+                            throw {
+                                "message": 'Unexpected value'
+                            }
+                    }
+                });
+
+                $('.filter-copy-name').on('click', function (e) {
+                    e.stopPropagation();
+                    e.preventDefault();
+
+                    switch ($(this).attr('data-action')) {
+                        case 'undo':
+                            $('#filter-copy-by-name').val(<?= json_encode($profile->getFilterCopyByFieldName()); ?>);
+                            break;
+                        case 'reset':
+                            $('#filter-copy-by-name').val(<?= json_encode(implode(PHP_EOL, $defaultFilter['copy']['name'])); ?>);
+                            break;
+                        default:
+                            throw {
+                                "message": 'Unexpected value'
+                            }
+                    }
+                });
+
+                $('.filter-copy-value').on('click', function (e) {
+                    e.stopPropagation();
+                    e.preventDefault();
+
+                    switch ($(this).attr('data-action')) {
+                        case 'undo':
+                            $('#filter-copy-by-value').val(<?= json_encode($profile->getFilterCopyByFieldValueRegex()); ?>);
+                            break;
+                        case 'reset':
+                            $('#filter-copy-by-value').val(<?= json_encode(implode(PHP_EOL, $defaultFilter['copy']['regexp'])); ?>);
+                            break;
+                        default:
+                            throw {
+                                "message": 'Unexpected value'
+                            }
+                    }
+                });
+
+                $('.filter-seo').on('click', function (e) {
+                    e.stopPropagation();
+                    e.preventDefault();
+
+                    switch ($(this).attr('data-action')) {
+                        case 'undo':
+                            $('#filter-set-flag-seo').val(<?= json_encode($profile->getFilterFlagSeo()); ?>);
+                            break;
+                        case 'reset':
+                            $('#filter-set-flag-seo').val(<?= json_encode(implode(PHP_EOL, $defaultFilter['key']['seo'])); ?>);
+                            break;
+                        default:
+                            throw {
+                                "message": 'Unexpected value'
+                            }
+                    }
+                });
+            });
+        })(jQuery);
+    </script>
+    <?php
+
+
 }
 ?>
 
@@ -77,13 +179,13 @@ if (0 === $profileId) {
                 <td>
                     <?=
                     HtmlTagGeneratorHelper::tag('input', '', [
-                        'type'                => 'text',
-                        'id'                  => 'profileName',
-                        'name'                => 'smartling_settings[profileName]',
-                        'placeholder'         => __('Set profile name', $domain),
-                        'data-msg'            => __('Please set name for profile', $domain),
-                        'required'            => 'required',
-                        'value'               => htmlentities($profile->getProfileName()),
+                        'type'        => 'text',
+                        'id'          => 'profileName',
+                        'name'        => 'smartling_settings[profileName]',
+                        'placeholder' => __('Set profile name', $domain),
+                        'data-msg'    => __('Please set name for profile', $domain),
+                        'required'    => 'required',
+                        'value'       => htmlentities($profile->getProfileName()),
                     ])
                     ?>
                     <br>
@@ -139,7 +241,7 @@ if (0 === $profileId) {
                             'data-msg-minlength'  => __('Project ID is 9 chars length.', $domain),
                             'data-msg-minlength'  => __('Project ID is 9 chars length.', $domain),
 
-                            'value'               => $profile->getProjectId(),
+                            'value' => $profile->getProjectId(),
                         ]
                     );
                     ?>
@@ -298,7 +400,8 @@ Updates to these settings will change how content is handled during the translat
 Please consult before making any changes.<br>", $domain); ?>
                         </p>
                         <p>
-                            <a href="javascript:void(0)" class="toggleExpert"><strong><?= __('Show Expert Settings',$domain); ?></strong></a>
+                            <a href="javascript:void(0)"
+                               class="toggleExpert"><strong><?= __('Show Expert Settings', $domain); ?></strong></a>
                         </p>
                     </div>
                 </td>
@@ -372,7 +475,7 @@ Please consult before making any changes.<br>", $domain); ?>
                             </ul>
                         </small>
                     </p>
-                    <textarea wrap="off" cols="45" rows="5" class="nowrap"
+                    <textarea id="filter-skip" wrap="off" cols="45" rows="5" class="nowrap"
                               name="smartling_settings[filter_skip]"><?= trim($profile->getFilterSkip()); ?></textarea>
                 </td>
             </tr>
@@ -390,7 +493,7 @@ Please consult before making any changes.<br>", $domain); ?>
                             </ul>
                         </small>
                     </p>
-                    <textarea wrap="off" cols="45" rows="5" class="nowrap"
+                    <textarea id="filter-copy-by-name" wrap="off" cols="45" rows="5" class="nowrap"
                               name="smartling_settings[filter_copy_by_field_name]"><?= trim($profile->getFilterCopyByFieldName()); ?></textarea>
 
                 </td>
@@ -407,8 +510,8 @@ Please consult before making any changes.<br>", $domain); ?>
                             </ul>
                         </small>
                     </p>
-                   <textarea wrap="off" cols="45" rows="5" class="nowrap"
-                             name="smartling_settings[filter_copy_by_field_value_regex]"><?= trim($profile->getFilterCopyByFieldValueRegex()); ?></textarea>
+                    <textarea id="filter-copy-by-value" wrap="off" cols="45" rows="5" class="nowrap"
+                              name="smartling_settings[filter_copy_by_field_value_regex]"><?= trim($profile->getFilterCopyByFieldValueRegex()); ?></textarea>
                 </td>
             </tr>
             <tr class="toggleExpert hidden">
@@ -422,7 +525,7 @@ Please consult before making any changes.<br>", $domain); ?>
                             </ul>
                         </small>
                     </p>
-                    <textarea wrap="off" cols="45" rows="5" class="nowrap"
+                    <textarea id="filter-set-flag-seo" wrap="off" cols="45" rows="5" class="nowrap"
                               name="smartling_settings[filter_flag_seo]"><?= trim($profile->getFilterFlagSeo()); ?></textarea>
                 </td>
             </tr>
