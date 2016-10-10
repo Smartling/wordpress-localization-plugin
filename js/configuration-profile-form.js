@@ -7,11 +7,11 @@
                 e.preventDefault();
                 $('#default-locales').slideToggle('fast');
             });
-            $('#smartling-configuration-profile-form').validate();
+            $('#smartling-configuration-profile-form').validate()
+        };
             $('a.toggleExpert').on('click', function (e) {
                 $('.toggleExpert').removeClass('hidden');
                 $('a.toggleExpert').addClass('hidden');
             });
-        }
     });
 })(jQuery);

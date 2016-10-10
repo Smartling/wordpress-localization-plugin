@@ -32,7 +32,14 @@ if (array_key_exists('profile', $_GET)) {
 $defaultFilter = Smartling\Bootstrap::getContainer()->getParameter('field.processor.default');
 
 if (0 === $profileId) {
-    $profile = $settingsManager->createProfile([]);
+    $profile = $settingsManager->createProfile(
+        [
+            'auto_authorize'   => true,
+            'upload_on_update' => true,
+            'retrieval_type'   => 'published',
+        ]
+    );
+
     $profile->setFilterSkip(implode(PHP_EOL, $defaultFilter['ignore']));
     $profile->setFilterFlagSeo(implode(PHP_EOL, $defaultFilter['key']['seo']));
     $profile->setFilterCopyByFieldName(implode(PHP_EOL, $defaultFilter['copy']['name']));

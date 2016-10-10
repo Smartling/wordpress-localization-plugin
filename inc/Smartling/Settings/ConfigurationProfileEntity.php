@@ -29,7 +29,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         return [
             'pseudo'    => __('Pseudo'),
             'published' => __('Published'),
-            'pending'   => __('Pending'),
+            //'pending'   => __('Pending'),
         ];
     }
 
