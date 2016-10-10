@@ -61,7 +61,8 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
     {
 
         return [
-            'id'                               => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
+            'id'                               => self::DB_TYPE_U_BIGINT . ' ' .
+                                                  self::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
             'profile_name'                     => self::DB_TYPE_STRING_STANDARD,
             'project_id'                       => 'CHAR(9) NOT NULL',
             'user_identifier'                  => self::DB_TYPE_STRING_STANDARD,
