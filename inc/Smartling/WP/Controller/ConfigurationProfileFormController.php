@@ -118,6 +118,14 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
             $profile->setUploadOnUpdate($settings['uploadOnUpdate']);
         }
 
+        if (array_key_exists('download_on_change', $settings)) {
+            $profile->setDownloadOnChange($settings['download_on_change']);
+        }
+
+        if (array_key_exists('clean_metadata_on_download', $settings)) {
+            $profile->setCleanMetadataOnDownload($settings['clean_metadata_on_download']);
+        }
+
         if (array_key_exists('callbackUrl', $settings)) {
             $profile->setCallBackUrl($settings['callbackUrl'] === 'on');
         }

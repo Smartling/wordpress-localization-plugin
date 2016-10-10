@@ -235,6 +235,7 @@ class LastModifiedCheckJob extends JobAbstract
                 if (0 < count($submissions)) {
 
                     try {
+                        $this->processDownloadOnChange($submissions);
                         $this->statusCheck($submissions);
                     } catch (SmartlingNetworkException $e) {
                         $this->getLogger()
@@ -247,6 +248,22 @@ class LastModifiedCheckJob extends JobAbstract
                         continue;
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * @param SubmissionEntity[] $submissions
+     */
+    protected function processDownloadOnChange(array $submissions)
+    {
+        foreach ($submissions as $submission) {
+            $profile = $this->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
+
+            if (1 === $profile->getDownloadOnChange()) {
+                $this->getLogger()
+                    ->debug(vsprintf('Adding submission %s to Download queue as it was changed.', [$submission->getId()]));
+                $this->getQueue()->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
             }
         }
     }

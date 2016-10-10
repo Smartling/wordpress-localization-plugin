@@ -271,4 +271,17 @@ class ContentHelper
         }
         $this->ensureRestoredBlogId();
     }
+
+    public function removeTargetMetadata(SubmissionEntity $submission)
+    {
+        $this->ensureTarget($submission);
+        $this->getLogger()
+            ->debug(vsprintf('Removing ALL metadata for target content for submission %s', [$submission->getId()]));
+        $result = delete_metadata($submission->getContentType(), $submission->getTargetId());
+        $msg = 'Removing metadata for %s id=%s (submission = %s ) finished ' .
+               (true === $result ? 'successfully' : 'with error');
+        $this->getLogger()->debug(vsprintf($msg, [$submission->getContentType(), $submission->getTargetId(),
+                                                  $submission->getId()]));
+        $this->ensureRestoredBlogId();
+    }
 }

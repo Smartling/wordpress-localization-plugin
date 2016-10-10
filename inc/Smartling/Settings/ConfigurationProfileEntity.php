@@ -71,6 +71,8 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
             'auto_authorize'                   => self::DB_TYPE_UINT_SWITCH,
             'retrieval_type'                   => self::DB_TYPE_STRING_SMALL,
             'upload_on_update'                 => self::DB_TYPE_UINT_SWITCH,
+            'download_on_change'               => self::DB_TYPE_UINT_SWITCH,
+            'clean_metadata_on_download'       => self::DB_TYPE_UINT_SWITCH,
             'target_locales'                   => 'TEXT NULL',
             'filter_skip'                      => 'TEXT NULL',
             'filter_copy_by_field_name'        => 'TEXT NULL',
@@ -315,12 +317,31 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         $this->stateFields['upload_on_update'] = (int)$uploadOnUpdate;
     }
 
+    public function setDownloadOnChange($downloadOnChange)
+    {
+        $this->stateFields['download_on_change'] = (int)$downloadOnChange;
+    }
+
+    public function getDownloadOnChange()
+    {
+        return (int) $this->stateFields['download_on_change'];
+    }
+
+    public function setCleanMetadataOnDownload($cleanMetadataOnDownload)
+    {
+        $this->stateFields['clean_metadata_on_download'] = (int)$cleanMetadataOnDownload;
+    }
+
+    public function getCleanMetadataOnDownload()
+    {
+        return (int) $this->stateFields['clean_metadata_on_download'];
+    }
+
     public function toArray($addVirtualColumns = true)
     {
         $state = parent::toArray(false);
 
-        $state['original_blog_id'] = $this->getOriginalBlogId()
-                                          ->getBlogId();
+        $state['original_blog_id'] = $this->getOriginalBlogId()->getBlogId();
 
         $state['auto_authorize'] = !$state['auto_authorize'] ? 0 : 1;
         $state['is_active'] = !$state['is_active'] ? 0 : 1;

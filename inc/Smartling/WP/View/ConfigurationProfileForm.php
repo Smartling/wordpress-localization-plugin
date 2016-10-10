@@ -425,6 +425,42 @@ Please consult before making any changes.<br>", $domain); ?>
                 </td>
             </tr>
             <tr class="toggleExpert hidden">
+                <th scope="row"><?= __('Download on any progress change',$domain) ?></th>
+                <td>
+                    <?=
+                    HtmlTagGeneratorHelper::tag(
+                        'select',
+                        HtmlTagGeneratorHelper::renderSelectOptions(
+                            $profile->getDownloadOnChange(),
+                            [
+                                0 => __('Disabled', $domain),
+                                1 => __('Enabled', $domain),
+                            ]
+                        ),
+                        ['name' => 'smartling_settings[download_on_change]']);
+                    ?>
+                </td>
+            </tr>
+            <tr class="toggleExpert hidden">
+                <th scope="row"><?= __('Fully rebuild translation on download', $domain) ?></th>
+                <td>
+                    <?=
+                    HtmlTagGeneratorHelper::tag(
+                        'select',
+                        HtmlTagGeneratorHelper::renderSelectOptions(
+                            $profile->getCleanMetadataOnDownload(),
+                            [
+                                0 => __('Disabled', $domain),
+                                1 => __('Enabled', $domain),
+                            ]
+                        ),
+                        ['name' => 'smartling_settings[clean_metadata_on_download]']);
+                    ?>
+                </td>
+            </tr>
+
+
+            <tr class="toggleExpert hidden">
                 <th scope="row"><?= __('Resubmit changed content', $domain) ?></th>
                 <td>
                     <?=

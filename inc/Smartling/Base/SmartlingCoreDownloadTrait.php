@@ -12,6 +12,7 @@ use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\XmlEncoder;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -84,6 +85,15 @@ trait SmartlingCoreDownloadTrait
             $this->getContentHelper()->writeTargetContent($entity, $targetContent);
             if (array_key_exists('meta', $translatedFields) && ArrayHelper::notEmpty($translatedFields['meta'])) {
                 $metaFields = &$translatedFields['meta'];
+                /**
+                 * @var ConfigurationProfileEntity $configurationProfile
+                 */
+                $configurationProfile = $this->getSettingsManager()->getSingleSettingsProfile($entity->getSourceBlogId());
+
+                if ( 1 === $configurationProfile->getCleanMetadataOnDownload()){
+                    $this->getContentHelper()->removeTargetMetadata($entity);
+                }
+
                 $this->getContentHelper()->writeTargetMetadata($entity, $metaFields);
                 do_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, $entity);
             }
