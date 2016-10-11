@@ -199,7 +199,7 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @covers       Smartling\Jobs\LastModifiedCheckJob::run()
+     * @covers       \Smartling\Jobs\LastModifiedCheckJob::run()
      * @dataProvider runDataProvider
      *
      * @param array            $groupedSubmissions
@@ -253,7 +253,6 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
         }
 
 
-
         $this->getApiWrapper()
             ->expects(self::exactly($expectedStatusCheckRequests))
             ->method('getStatusForAllLocales')
@@ -265,6 +264,11 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
             ->expects(self::any())
             ->method('storeSubmissions')
             ->will(self::returnArgument(0));
+
+        $sm = $this->getSettingsManager();
+        $sm->expects(self::any())->method('getSingleSettingsProfile')->willReturn(false);
+
+        $worker->setSettingsManager($sm);
 
         $worker->run();
     }

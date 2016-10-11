@@ -16,7 +16,7 @@ trait SettingsManagerMock
     private function getSettingsManagerMock()
     {
         return $this->getMockBuilder('Smartling\Settings\SettingsManager')
-            ->setMethods(null)
+            ->setMethods(['getSingleSettingsProfile'])
             ->disableOriginalConstructor()
             ->getMock();
     }

@@ -6,6 +6,7 @@ use Smartling\ApiWrapperInterface;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Queue\Queue;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -260,7 +261,7 @@ class LastModifiedCheckJob extends JobAbstract
         foreach ($submissions as $submission) {
             $profile = $this->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
 
-            if (1 === $profile->getDownloadOnChange()) {
+            if (($profile instanceof ConfigurationProfileEntity) && 1 === $profile->getDownloadOnChange()) {
                 $this->getLogger()
                     ->debug(vsprintf('Adding submission %s to Download queue as it was changed.', [$submission->getId()]));
                 $this->getQueue()->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
