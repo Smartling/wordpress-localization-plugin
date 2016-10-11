@@ -368,7 +368,7 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @covers       Smartling\Jobs\LastModifiedCheckJob::filterSubmissions()
+     * @covers       \Smartling\Jobs\LastModifiedCheckJob::filterSubmissions()
      * @dataProvider filterSubmissionsDataProvider
      *
      * @param array $lastModifiedResponse

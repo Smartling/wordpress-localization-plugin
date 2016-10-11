@@ -55,10 +55,7 @@ if (0 === $profileId) {
     ?>
     <script>
         (function ($) {
-
-
             $(document).ready(function () {
-
                 var getButton = function (selector, action, text) {
                     return '<button class="filter-' + selector + '" data-action="' + action + '">' + text + '</button>';
                 };
@@ -150,8 +147,6 @@ if (0 === $profileId) {
         })(jQuery);
     </script>
     <?php
-
-
 }
 ?>
 
@@ -246,8 +241,7 @@ if (0 === $profileId) {
                             'data-rule-minlength' => 9,
                             'data-rule-maxlength' => 9,
                             'data-msg-minlength'  => __('Project ID is 9 chars length.', $domain),
-                            'data-msg-minlength'  => __('Project ID is 9 chars length.', $domain),
-
+                            'data-msg-maxlength'  => __('Project ID is 9 chars length.', $domain),
                             'value' => $profile->getProjectId(),
                         ]
                     );
@@ -414,6 +408,53 @@ Please consult before making any changes.<br>", $domain); ?>
                 </td>
             </tr>
             <tr class="toggleExpert hidden">
+                <th colspan="2">
+                    <h3><?= __('Upload Options', $domain) ?></h3>
+                </th>
+            </tr>
+            <tr class="toggleExpert hidden">
+                <th scope="row"><?= __('Resubmit changed content', $domain) ?></th>
+                <td>
+                    <?=
+                    HtmlTagGeneratorHelper::tag(
+                        'select',
+                        HtmlTagGeneratorHelper::renderSelectOptions(
+                            $profile->getUploadOnUpdate(),
+                            [0 => __('Manually', $domain),
+                             1 => __('Automatically', $domain),]
+
+                        ),
+                        ['name' => 'smartling_settings[uploadOnUpdate]']);
+
+                    ?>
+                    <br/>
+                    <small>
+                        <?= __('Detect and resubmit to Smartling changes in original content', $domain) ?>.
+                    </small>
+                </td>
+            </tr>
+            <tr class="toggleExpert hidden">
+                <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('auto_authorize'); ?></th>
+                <td>
+                    <label class="radio-label">
+                        <p>
+                            <?php
+                            $option = $profile->getAutoAuthorize();
+                            $checked = $option === true ? 'checked="checked"' : '';
+                            ?>
+                            <input type="checkbox"
+                                   name="smartling_settings[autoAuthorize]" <?= $checked; ?> / >
+                            <?= __('Auto authorize content', $domain) ?>
+                        </p>
+                    </label>
+                </td>
+            </tr>
+            <tr class="toggleExpert hidden">
+                <th colspan="2">
+                    <h3><?= __('Download Options', $domain) ?></h3>
+                </th>
+            </tr>
+            <tr class="toggleExpert hidden">
                 <th scope="row"><?= __('Retrieval Type', $domain) ?></th>
                 <td>
                     <?=
@@ -467,43 +508,7 @@ Please consult before making any changes.<br>", $domain); ?>
             </tr>
 
 
-            <tr class="toggleExpert hidden">
-                <th scope="row"><?= __('Resubmit changed content', $domain) ?></th>
-                <td>
-                    <?=
-                    HtmlTagGeneratorHelper::tag(
-                        'select',
-                        HtmlTagGeneratorHelper::renderSelectOptions(
-                            $profile->getUploadOnUpdate(),
-                            [0 => __('Manually', $domain),
-                             1 => __('Automatically', $domain),]
 
-                        ),
-                        ['name' => 'smartling_settings[uploadOnUpdate]']);
-
-                    ?>
-                    <br/>
-                    <small>
-                        <?= __('Detect and resubmit to Smartling changes in original content', $domain) ?>.
-                    </small>
-                </td>
-            </tr>
-            <tr class="toggleExpert hidden">
-                <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('auto_authorize'); ?></th>
-                <td>
-                    <label class="radio-label">
-                        <p>
-                            <?php
-                            $option = $profile->getAutoAuthorize();
-                            $checked = $option === true ? 'checked="checked"' : '';
-                            ?>
-                            <input type="checkbox"
-                                   name="smartling_settings[autoAuthorize]" <?= $checked; ?> / >
-                            <?= __('Auto authorize content', $domain) ?>
-                        </p>
-                    </label>
-                </td>
-            </tr>
             <tr class="toggleExpert hidden">
                 <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_skip'); ?></th>
                 <td>
