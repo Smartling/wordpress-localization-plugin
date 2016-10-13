@@ -473,7 +473,7 @@ Please consult before making any changes.<br>", $domain); ?>
                 </td>
             </tr>
             <tr class="toggleExpert hidden">
-                <th scope="row"><?= __('Download on any progress change',$domain) ?></th>
+                <th scope="row"><?= __('Download translated files when',$domain) ?></th>
                 <td>
                     <?=
                     HtmlTagGeneratorHelper::tag(
@@ -481,8 +481,8 @@ Please consult before making any changes.<br>", $domain); ?>
                         HtmlTagGeneratorHelper::renderSelectOptions(
                             $profile->getDownloadOnChange(),
                             [
-                                0 => __('Disabled', $domain),
-                                1 => __('Enabled', $domain),
+                                0 => __('Translation Completed', $domain),
+                                1 => __('Progress Changes', $domain),
                             ]
                         ),
                         ['name' => 'smartling_settings[download_on_change]']);
@@ -490,8 +490,9 @@ Please consult before making any changes.<br>", $domain); ?>
                 </td>
             </tr>
             <tr class="toggleExpert hidden">
-                <th scope="row"><?= __('Fully rebuild translation on download', $domain) ?></th>
+                <th scope="row"><?= __('Auto synchronize properties on translated page with source', $domain) ?></th>
                 <td>
+                    <p>If enabled, Smartling will check for changes to the source’s properties, i.e. removing an image, changing placement of a text field, and automatically update translated pages.</p>
                     <?=
                     HtmlTagGeneratorHelper::tag(
                         'select',
