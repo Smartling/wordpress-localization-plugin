@@ -168,6 +168,8 @@ class SubmissionCollectorJobTest extends \PHPUnit_Framework_TestCase
                 ])
             ->willReturn($submissions);
 
+        $submissionManager->expects(self::any())->method('filterBrokenSubmissions')->with($submissions)->willReturnArgument(0);
+
         foreach ($expected as $index => $set) {
             $this->getQueue()->expects(self::at($index))->method('enqueue')->with($set);
         }

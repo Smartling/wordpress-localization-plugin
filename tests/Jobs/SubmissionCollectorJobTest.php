@@ -130,7 +130,7 @@ class SubmissionCollectorJobTest extends \PHPUnit_Framework_TestCase
     private function mockSubmissionCollector(LoggerInterface $logger, SubmissionManager $submissionManager, Queue $queue)
     {
         $submissionCollector = $this->getMockBuilder('Smartling\Jobs\SubmissionCollectorJob')
-            ->setMethods(null)
+            ->setMethods(['filterBrokenSubmissions'])
             ->setConstructorArgs([$logger, $submissionManager])
             ->getMock();
 
@@ -190,6 +190,11 @@ class SubmissionCollectorJobTest extends \PHPUnit_Framework_TestCase
             )
             ->willReturn($returnSubmissions);
 
+        $this->getSubmissionManager()->expects(self::once())
+            ->method('filterBrokenSubmissions')
+            ->with($returnSubmissions)
+            ->willReturnArgument(0);
+
         $actualResult = $this->invokeMethod($this->getSubmissionCollector(), 'gatherSubmissions', []);
         self::assertEquals($expectedResult, $actualResult);
     }
@@ -203,19 +208,13 @@ class SubmissionCollectorJobTest extends \PHPUnit_Framework_TestCase
      */
     public function testRun($returnSubmissions, $expectedResult)
     {
-        $this->getSubmissionManager()->expects($this->at(0))
-            ->method('find')
-            ->with(
-                [
-                    'status' => [
-                        SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
-                        SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
-                    ],
-                ]
-            )
-            ->willReturn($returnSubmissions);
 
-        $this->getSubmissionManager()->expects($this->at(1))
+        $this->getSubmissionManager()->expects(self::any())
+            ->method('filterBrokenSubmissions')
+            ->with($returnSubmissions)
+            ->willReturnArgument(0);
+
+        $this->getSubmissionManager()->expects(self::any())
             ->method('find')
             ->with(
                 [
@@ -240,7 +239,7 @@ class SubmissionCollectorJobTest extends \PHPUnit_Framework_TestCase
             }
 
             $this->getQueue()
-                ->expects($this->at($counter))
+                ->expects(self::at($counter))
                 ->method('enqueue')
                 ->with([$fileUri => $submissionIds]);
             $counter++;

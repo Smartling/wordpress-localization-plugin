@@ -387,6 +387,14 @@ services:
       - [ "registerProcessor", [ "@referenced-content.page-parent.meta-field-processor" ] ]
       - [ "registerProcessor", [ "@referenced-content.category-parent.meta-field-processor" ] ]
 
+  service.side-removal-handler:
+    class: Smartling\Services\BlogRemovalHandler
+    calls:
+      - [ "setApiWrapper", [ "@wrapper.sdk.api.smartling" ] ]
+      - [ "setLogger", [ "@logger" ] ]
+      - [ "setSiteHelper" , [ "@site.helper" ] ]
+      - [ "setSubmissionManager", [ "@manager.submission" ] ]
+
   extension.translation_lock:
     class: Smartling\Extensions\TranslateLock
 

@@ -370,6 +370,59 @@ class SubmissionManager extends EntityManagerAbstract
     }
 
     /**
+     * @param SubmissionEntity[] $submissions
+     *
+     * @return SubmissionEntity[]
+     */
+    public function filterBrokenSubmissions(array $submissions)
+    {
+        $outArray = [];
+
+        foreach ($submissions as $submission) {
+            $submission = $this->validateSubmission($submission);
+
+            if (SubmissionEntity::SUBMISSION_STATUS_FAILED === $submission->getStatus()) {
+                continue;
+            }
+
+            $outArray[] = $submission;
+        }
+
+        return $outArray;
+    }
+
+    /**
+     * @param SubmissionEntity $submission
+     * @param bool             $updateState
+     *
+     * @return SubmissionEntity
+     */
+    public function validateSubmission(SubmissionEntity $submission, $updateState = true)
+    {
+        $blogs = $this->getEntityHelper()->getSiteHelper()->listBlogIdsFlat();
+
+        if (!in_array($submission->getSourceBlogId(), $blogs, true)) {
+            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+            $submission->setLastError(vsprintf(
+                                          'Submission has source blog = %s, expected one of: [%s]',
+                                          [$submission->getSourceBlogId(), implode(',', $blogs)]
+                                      ));
+        } elseif (!in_array($submission->getTargetBlogId(), $blogs, true)) {
+            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+            $submission->setLastError(vsprintf(
+                                          'Submission has target blog = %s, expected one of: [%s]',
+                                          [$submission->getTargetBlogId(), implode(',', $blogs)]
+                                      ));
+        }
+
+        if (true === $updateState) {
+            $submission = $this->storeEntity($submission);
+        }
+
+        return $submission;
+    }
+
+    /**
      * Search submission by params
      *
      * @param array $params

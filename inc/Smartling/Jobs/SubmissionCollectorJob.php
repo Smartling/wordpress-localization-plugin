@@ -83,6 +83,8 @@ class SubmissionCollectorJob extends JobAbstract
                 ],
             ]);
 
+        $entities = $this->getSubmissionManager()->filterBrokenSubmissions($entities);
+
         return $this->groupSubmissionsByFileUri($entities);
     }
 
