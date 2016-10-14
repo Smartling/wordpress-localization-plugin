@@ -54,7 +54,7 @@ Additional information on the Smartling Connector for WordPress can be found [th
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
-= 1.3.4 =
+= 1.3.5 =
 * Added support for blocking of parallel execution of smartling-connector cron jobs
 * Added buttons in Expert settings of configuration profile that allows reset values to default or undo unsaved changes.
 * Added new option that allows download translation as soon as string is published (not the whole file)

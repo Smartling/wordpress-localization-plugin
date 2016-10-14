@@ -53,6 +53,7 @@ rm -Rf ./upload
 rm -Rf ./logs/logfile*
 rm -Rf ./*.pid
 rm -Rf ./nginx*
+rm -Rf ./install-composer
 
 zip -9 ./$BUILD_FILENAME -r ./*
 
