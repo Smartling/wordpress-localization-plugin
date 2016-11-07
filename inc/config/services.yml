@@ -392,7 +392,6 @@ services:
     calls:
       - [ "setApiWrapper", [ "@wrapper.sdk.api.smartling" ] ]
       - [ "setLogger", [ "@logger" ] ]
-      - [ "setSiteHelper" , [ "@site.helper" ] ]
       - [ "setSubmissionManager", [ "@manager.submission" ] ]
 
   extension.translation_lock:
