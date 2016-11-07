@@ -103,6 +103,14 @@ class PostEntity extends EntityAbstract
     }
 
     /**
+     * @return string
+     */
+    public function getContentTypeProperty()
+    {
+        return 'post_type';
+    }
+
+    /**
      * @inheritdoc
      */
     protected function getFieldNameByMethodName($method)
@@ -135,14 +143,19 @@ class PostEntity extends EntityAbstract
     public function get($guid)
     {
         $post = get_post($guid, ARRAY_A);
-
+        $entity = null;
         if (null !== $post) {
-            return $this->resultToEntity($post, $this);
+            /**
+             * Content loaded from database. Checking if used valid wrapper.
+             */
+            $entity = $this->resultToEntity($post, $this);
+            if (false === $entity->validateContentType()) {
+                $this->entityNotFound(WordpressContentTypeHelper::CONTENT_TYPE_POST, $guid);
+            }
+            return $entity;
         } else {
             $this->entityNotFound(WordpressContentTypeHelper::CONTENT_TYPE_POST, $guid);
         }
-
-        return $post === null ? [] : $post;
     }
 
     /**

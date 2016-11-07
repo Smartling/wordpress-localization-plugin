@@ -186,6 +186,31 @@ abstract class EntityAbstract
     abstract public function getTitle();
 
     /**
+     * @return string
+     */
+    abstract public function getContentTypeProperty();
+
+    /**
+     * @return bool
+     */
+    protected function validateContentType()
+    {
+        if ($this instanceof VirtualEntityAbstract){
+            return true;
+        } else if ($this->{$this->getContentTypeProperty()} !== $this->getType()){
+            $message = vsprintf('Requested content with invalid content-type, expected \'%s\', got \'%s\'.',[
+                $this->{$this->getContentTypeProperty()},
+                $this->getType(),
+            ]);
+            $this->getLogger()->debug($message);
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+
+    /**
      * @return LoggerInterface
      */
     protected function getLogger()

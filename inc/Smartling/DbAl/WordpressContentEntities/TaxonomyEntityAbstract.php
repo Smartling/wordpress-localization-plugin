@@ -175,6 +175,14 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract
     }
 
     /**
+     * @return string
+     */
+    public function getContentTypeProperty()
+    {
+        return 'taxonomy';
+    }
+
+    /**
      * @inheritdoc
      */
     public function getTitle()
@@ -193,13 +201,14 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract
     public function get($guid)
     {
         $term = get_term($guid, $this->getType(), ARRAY_A);
+        $entity = null;
 
         if ($term instanceof \WP_Error) {
-            $message = vsprintf('An error occurred while reading taxonomy id=%s, type=%s: %s',
+            $message = vsprintf(
+                'An error occurred while reading taxonomy id=%s, type=%s: %s',
                 [$guid, $this->getType(), $term->get_error_message()]);
 
-            $this->getLogger()
-                 ->error($message);
+            $this->getLogger()->error($message);
 
             throw new SmartlingDbException($message);
         }
@@ -208,7 +217,13 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract
             $this->entityNotFound($this->getType(), $guid);
         }
 
-        return $this->resultToEntity($term, $this);
+        $entity = $this->resultToEntity($term, $this);
+
+        if (false === $entity->validateContentType()) {
+            $this->entityNotFound($this->getType(), $guid);
+        }
+
+        return $entity;
     }
 
     /**
