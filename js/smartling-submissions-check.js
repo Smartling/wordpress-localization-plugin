@@ -61,7 +61,11 @@
             }
         },
         onSuccess: function (response) {
-            var result = $.parseJSON(response);
+            if ('string' === typeof(response)) {
+                var result = $.parseJSON(response);
+            } else {
+                var result = response;
+            }
             switch (this.type) {
                 case this.types.widget:
                     this.renderWidget(result);
