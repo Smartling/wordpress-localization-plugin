@@ -27,7 +27,7 @@ $data = $this->getViewData();
 
 
     <!-- Forms are NOT created automatically, so you need to wrap the table in one to use features like bulk actions -->
-    <form id="submissions-filter" method="get">
+    <form id="configuration-profiles-list" method="get">
 
         <?= $configurationProfilesTable->renderNewProfileButton(); ?>
         <!-- For plugins, we also need to ensure that the form posts back to our current page -->
