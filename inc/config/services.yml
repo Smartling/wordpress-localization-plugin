@@ -394,6 +394,9 @@ services:
       - [ "setLogger", [ "@logger" ] ]
       - [ "setSubmissionManager", [ "@manager.submission" ] ]
 
+  service.invalid-character-cleaner:
+    class: Smartling\Services\InvalidCharacterCleaner
+
   extension.translation_lock:
     class: Smartling\Extensions\TranslateLock
 

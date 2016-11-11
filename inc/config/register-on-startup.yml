@@ -26,3 +26,4 @@ services:
       - [ "addService", [ "@helper.shortcode" ]]
       - [ "addService", [ "@meta-field.processor.manager" ]]
       - [ "addService", [ "@service.side-removal-handler"]]
+      - [ "addService", [ "@service.invalid-character-cleaner" ]]

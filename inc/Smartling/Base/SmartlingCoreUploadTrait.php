@@ -132,7 +132,7 @@ trait SmartlingCoreUploadTrait
             $contentEntity = $this->getContentHelper()->readSourceContent($submission);
             $params = new BeforeSerializeContentEventParameters($source, $submission, $contentEntity, $source['meta']);
             do_action(ExportedAPI::EVENT_SMARTLING_BEFORE_SERIALIZE_CONTENT, $params);
-
+            $source = $params->getPreparedFields();
             $this->prepareFieldProcessorValues($submission);
             $filteredValues = $this->getFieldsFilter()->processStringsBeforeEncoding($submission, $source);
 
