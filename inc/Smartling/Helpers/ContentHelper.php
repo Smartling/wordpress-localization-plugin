@@ -4,6 +4,9 @@ namespace Smartling\Helpers;
 
 use Psr\Log\LoggerInterface;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
+use Smartling\DbAl\WordpressContentEntities\PostEntity;
+use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityAbstract;
+use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -275,13 +278,45 @@ class ContentHelper
     public function removeTargetMetadata(SubmissionEntity $submission)
     {
         $this->ensureTarget($submission);
-        $this->getLogger()
-            ->debug(vsprintf('Removing ALL metadata for target content for submission %s', [$submission->getId()]));
-        $result = delete_metadata($submission->getContentType(), $submission->getTargetId(), null);
-        $msg = 'Removing metadata for %s id=%s (submission = %s ) finished ' .
-               (true === $result ? 'successfully' : 'with error');
-        $this->getLogger()->debug(vsprintf($msg, [$submission->getContentType(), $submission->getTargetId(),
-                                                  $submission->getId()]));
+        $this->getLogger()->debug(
+            vsprintf('Removing ALL metadata for target content for submission %s', [$submission->getId()])
+        );
+
+        $existing_meta = $this->readTargetMetadata($submission);
+        $wrapper = $this->getWrapper($submission->getContentType());
+        $wpMetaFunction = null;
+
+        if ($wrapper instanceof PostEntity) {
+            $wpMetaFunction = 'delete_post_meta';
+        } elseif ($wrapper instanceof TaxonomyEntityAbstract) {
+            $wpMetaFunction = 'delete_term_meta';
+        } elseif ($wrapper instanceof VirtualEntityAbstract) {
+            /* Virtual types cannot have metadata */
+            return;
+        } else {
+            $msgTemplate = 'Unknown content-type. Expected %s to be successor of one of: %s';
+            $this->getLogger()->warning(
+                vsprintf($msgTemplate,
+                         [get_class($wrapper),
+                          implode(',', ['PostEntity', 'TaxonomyEntityAbstract', 'VirtualEntityAbstract']),
+                         ]
+                )
+            );
+
+            return;
+        }
+
+        $object_id = $submission->getTargetId();
+
+        foreach ($existing_meta as $key => $value) {
+            $result = call_user_func_array($wpMetaFunction, [$object_id, $key]);
+            $msg_template = 'Removing metadata key=\'%s\' for \'%s\' id=\'%s\' (submission = \'%s\' ) finished ' .
+                            (true === $result ? 'successfully' : 'with error');
+            $msg = vsprintf($msg_template, [$key, $submission->getContentType(), $submission->getTargetId(),
+                                            $submission->getId()]);
+            $this->getLogger()->debug($msg);
+        }
+
         $this->ensureRestoredBlogId();
     }
 }

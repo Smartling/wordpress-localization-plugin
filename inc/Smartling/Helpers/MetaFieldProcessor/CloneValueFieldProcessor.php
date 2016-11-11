@@ -44,8 +44,10 @@ class CloneValueFieldProcessor extends MetaFieldProcessorAbstract
     {
         $originalMetadata = $this->getContentHelper()->readSourceMetadata($submission);
 
-        if (array_key_exists($fieldName, $originalMetadata)) {
-            $originalValue = $originalMetadata[$fieldName];
+        $metaFieldName = str_replace('meta/','',$fieldName);
+
+        if (array_key_exists($metaFieldName, $originalMetadata)) {
+            $originalValue = $originalMetadata[$metaFieldName];
 
             if (is_array($originalValue) && 1 === count($originalValue)) {
                 $originalValue = ArrayHelper::first($originalValue);
