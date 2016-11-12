@@ -31,7 +31,7 @@ class UploadJob extends JobAbstract
         $this->getLogger()->info('Started UploadJob.');
 
         do {
-            $entities = $this->getSubmissionManager()->find(['status' => [SubmissionEntity::SUBMISSION_STATUS_NEW]], 1);
+            $entities = $this->getSubmissionManager()->find(['status' => [SubmissionEntity::SUBMISSION_STATUS_NEW]]);
 
             if (0 === count($entities)) {
                 break;
@@ -41,7 +41,7 @@ class UploadJob extends JobAbstract
 
             $this->getLogger()->info(
                 vsprintf(
-                    'Cron Job triggers content upload for submission id = \'%s\' with status = \'%s\' for entity = \'%s\', blog = \'%s\', id = \'%s\', targetBlog = \'%s\', locale = \'%s\'.',
+                    'Cron Job triggers content upload for submission id = \'%s\' with status = \'%s\' for entity = \'%s\', blog = \'%s\', id = \'%s\', targetBlog = \'%s\', locale = \'%s\'. Currently in queue %s submissions',
                     [
                         $entity->getId(),
                         $entity->getStatus(),
@@ -50,6 +50,7 @@ class UploadJob extends JobAbstract
                         $entity->getSourceId(),
                         $entity->getTargetBlogId(),
                         $entity->getTargetLocale(),
+                        count ($entities),
                     ]
                 )
             );
