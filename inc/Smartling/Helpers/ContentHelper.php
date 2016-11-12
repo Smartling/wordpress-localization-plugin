@@ -277,14 +277,16 @@ class ContentHelper
 
     public function removeTargetMetadata(SubmissionEntity $submission)
     {
-        $this->ensureTarget($submission);
+        $existing_meta = $this->readTargetMetadata($submission);
         $this->getLogger()->debug(
             vsprintf('Removing ALL metadata for target content for submission %s', [$submission->getId()])
         );
 
-        $existing_meta = $this->readTargetMetadata($submission);
         $wrapper = $this->getWrapper($submission->getContentType());
         $wpMetaFunction = null;
+
+
+        $this->ensureTarget($submission);
 
         if ($wrapper instanceof PostEntity) {
             $wpMetaFunction = 'delete_post_meta';
@@ -292,7 +294,6 @@ class ContentHelper
             $wpMetaFunction = 'delete_term_meta';
         } elseif ($wrapper instanceof VirtualEntityAbstract) {
             /* Virtual types cannot have metadata */
-            return;
         } else {
             $msgTemplate = 'Unknown content-type. Expected %s to be successor of one of: %s';
             $this->getLogger()->warning(
@@ -302,19 +303,27 @@ class ContentHelper
                          ]
                 )
             );
-
-            return;
         }
 
         $object_id = $submission->getTargetId();
-
-        foreach ($existing_meta as $key => $value) {
-            $result = call_user_func_array($wpMetaFunction, [$object_id, $key]);
-            $msg_template = 'Removing metadata key=\'%s\' for \'%s\' id=\'%s\' (submission = \'%s\' ) finished ' .
-                            (true === $result ? 'successfully' : 'with error');
-            $msg = vsprintf($msg_template, [$key, $submission->getContentType(), $submission->getTargetId(),
-                                            $submission->getId()]);
-            $this->getLogger()->debug($msg);
+        if (null !== $wpMetaFunction) {
+            try {
+                foreach ($existing_meta as $key => $value) {
+                    $result = call_user_func_array($wpMetaFunction, [$object_id, $key]);
+                    $msg_template = 'Removing metadata key=\'%s\' for \'%s\' id=\'%s\' (submission = \'%s\' ) finished ' .
+                                    (true === $result ? 'successfully' : 'with error');
+                    $msg = vsprintf($msg_template, [$key, $submission->getContentType(), $submission->getTargetId(),
+                                                    $submission->getId()]);
+                    $this->getLogger()->debug($msg);
+                }
+            } catch (\Exception $e) {
+                $msg = vsprintf('Error while deleting target metadata for submission id=\'%s\'. Message: %s',
+                                [
+                                    $submission->getId(),
+                                    $e->getMessage(),
+                                ]);
+                $this->getLogger()->warning($msg);
+            }
         }
 
         $this->ensureRestoredBlogId();
