@@ -303,21 +303,22 @@ class ApiWrapper implements ApiWrapperInterface
      * @param SubmissionEntity $entity
      * @param string           $xmlString
      * @param string           $filename
+     * @param array            $smartlingLocaleList
      *
      * @return bool
      * @throws SmartlingFileUploadException
      */
-    public function uploadContent(SubmissionEntity $entity, $xmlString = '', $filename = '')
+    public function uploadContent(SubmissionEntity $entity, $xmlString = '', $filename = '', array $smartlingLocaleList = [])
     {
         $this->getLogger()
             ->info(vsprintf(
-                       'Starting file \'%s\' upload for entity = \'%s\', blog = \'%s\', id = \'%s\', locale = \'%s\'.',
+                       'Starting file \'%s\' upload for entity = \'%s\', blog = \'%s\', id = \'%s\', locales:%s.',
                        [
                            $entity->getFileUri(),
                            $entity->getContentType(),
                            $entity->getSourceBlogId(),
                            $entity->getSourceId(),
-                           $entity->getTargetLocale(),
+                           implode(',', $smartlingLocaleList),
                        ]
                    ));
         try {
@@ -336,7 +337,7 @@ class ApiWrapper implements ApiWrapperInterface
             if ($profile->getAutoAuthorize()) {
                 // Authorize for locale only if user chooses this in settings
                 $locale = $this->getSmartlingLocaleBySubmission($entity);
-                $params->setLocalesToApprove($locale);
+                $params->setLocalesToApprove($smartlingLocaleList);
             }
 
             $res = $api->uploadFile(
@@ -346,10 +347,10 @@ class ApiWrapper implements ApiWrapperInterface
                 $params);
 
             $message = vsprintf(
-                'Smartling uploaded \'%s\' for locale = \'%s\'.',
+                'Smartling uploaded \'%s\' for locales:%s.',
                 [
                     $entity->getFileUri(),
-                    $entity->getTargetLocale(),
+                    implode(',', $smartlingLocaleList),
                 ]
             );
 

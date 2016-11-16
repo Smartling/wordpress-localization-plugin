@@ -157,7 +157,29 @@ trait SmartlingCoreUploadTrait
                 $this->getLogger()->debug(vsprintf('Serialized fields to XML: %s', [base64_encode($xml),]));
                 $this->prepareRelatedSubmissions($submission);
                 try {
-                    $result = $this->sendFile($submission, $xml);
+
+                    /**
+                     * Looking for other locales to send all at a time.
+                     */
+
+                    $submissions = $this->getSubmissionManager()->find([
+                                                                           'status'   => [SubmissionEntity::SUBMISSION_STATUS_NEW],
+                                                                           'file_uri' => [$submission->getFileUri()],
+                                                                       ]);
+                    $locales = [];
+
+                    foreach ($submissions as $_submission) {
+                        $locales[]=$this->getSettingsManager()->getSmartlingLocaleBySubmission($_submission);
+                    }
+
+                    $result = $this->sendFile($submission, $xml, $locales);
+
+                    foreach ($submissions as $_submission) {
+                        $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
+                    }
+
+                    $this->getSubmissionManager()->storeSubmissions($submissions);
+
                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                 } catch (Exception $e) {
                     $this->getLogger()->error($e->getMessage());

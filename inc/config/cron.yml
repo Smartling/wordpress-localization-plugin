@@ -3,6 +3,7 @@ parameters:
   cron.interval.group.submission: "3h"
   cron.interval.last-modified-check: "5m"
   cron.interval.download: "5m"
+  cron.job.default_ttl: 1200
 services:
   custom.scheduler.interval.helper:
     class: Smartling\Helpers\CustomScheduleIntervalHelper
@@ -20,6 +21,7 @@ services:
     arguments:
       - "@logger"
       - "@manager.submission"
+      - "%cron.job.default_ttl%"
     calls:
       - [ "setJobRunInterval", [ %cron.interval.upload% ] ]
 
@@ -32,6 +34,7 @@ services:
     arguments:
       - "@logger"
       - "@manager.submission"
+      - "%cron.job.default_ttl%"
     calls:
       - [ "setJobRunInterval", [ %cron.interval.group.submission% ] ]
       - [ "setQueue", [ "@queue.db" ]]
@@ -46,6 +49,7 @@ services:
     arguments:
       - "@logger"
       - "@manager.submission"
+      - "%cron.job.default_ttl%"
     calls:
       - [ "setJobRunInterval", [ %cron.interval.last-modified-check% ] ]
       - [ "setApiWrapper", [ "@wrapper.sdk.api.smartling" ]]
@@ -61,6 +65,7 @@ services:
     arguments:
       - "@logger"
       - "@manager.submission"
+      - "%cron.job.default_ttl%"
     calls:
       - [ "setJobRunInterval", [ %cron.interval.download% ] ]
       - [ "setQueue", [ "@queue.db" ]]

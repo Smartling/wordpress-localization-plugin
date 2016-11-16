@@ -10,6 +10,7 @@ use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
+use Smartling\Submissions\SubmissionEntity;
 
 /**
  * Class SettingsManager
@@ -47,6 +48,15 @@ class SettingsManager extends EntityManagerAbstract
         }
 
         return $result;
+    }
+
+    public function getSmartlingLocaleBySubmission(SubmissionEntity $submission)
+    {
+        $profile = $this->getSingleSettingsProfile($submission->getSourceBlogId());
+
+        $locale = $this->getSmartlingLocaleIdBySettingsProfile($profile, $submission->getTargetBlogId());
+
+        return $locale;
     }
 
     /**

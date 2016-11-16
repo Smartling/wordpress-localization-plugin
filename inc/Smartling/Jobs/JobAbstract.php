@@ -18,6 +18,11 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
     const WORKER_DEFAULT_TTL = 1200;
 
     /**
+     * @var int
+     */
+    private $workerTTL = 0;
+
+    /**
      * @var string
      */
     private $jobRunInterval = '';
@@ -81,15 +86,38 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
     }
 
     /**
+     * @return int
+     */
+    public function getWorkerTTL()
+    {
+        if (0 === $this->workerTTL) {
+            $this->setWorkerTTL(self::WORKER_DEFAULT_TTL);
+        }
+
+        return $this->workerTTL;
+    }
+
+    /**
+     * @param int $value
+     */
+    public function setWorkerTTL($value)
+    {
+        $this->workerTTL = $value;
+    }
+
+
+    /**
      * JobAbstract constructor.
      *
      * @param LoggerInterface   $logger
      * @param SubmissionManager $submissionManager
+     * @param int $workerTTL
      */
-    public function __construct(LoggerInterface $logger, SubmissionManager $submissionManager)
+    public function __construct(LoggerInterface $logger, SubmissionManager $submissionManager, $workerTTL = self::WORKER_DEFAULT_TTL)
     {
         $this->setLogger($logger);
         $this->setSubmissionManager($submissionManager);
+        $this->setWorkerTTL($workerTTL);
     }
 
     public function install()
@@ -113,14 +141,6 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
     public function deactivate()
     {
         $this->uninstall();
-    }
-
-    /**
-     * Returns the TTL for worker in seconds
-     */
-    protected function getWorkerTTL()
-    {
-        return self::WORKER_DEFAULT_TTL;
     }
 
     protected function getCronFlagName()

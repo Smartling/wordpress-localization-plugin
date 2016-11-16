@@ -2,7 +2,6 @@
 namespace Smartling\Base;
 
 use Exception;
-use Smartling\Bootstrap;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\MenuItemEntity;
 use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
@@ -344,16 +343,17 @@ class SmartlingCore extends SmartlingCoreAbstract
      *
      * @param SubmissionEntity $submission
      * @param string           $xmlFileContent
+     * @param array            $smartlingLocaleList
      *
      * @return bool
      */
-    protected function sendFile(SubmissionEntity $submission, $xmlFileContent)
+    protected function sendFile(SubmissionEntity $submission, $xmlFileContent, array $smartlingLocaleList = [])
     {
         $tmp_file = tempnam(sys_get_temp_dir(), '_smartling_temp_');
 
         file_put_contents($tmp_file, $xmlFileContent);
 
-        $result = $this->getApiWrapper()->uploadContent($submission, '', $tmp_file);
+        $result = $this->getApiWrapper()->uploadContent($submission, '', $tmp_file, $smartlingLocaleList);
 
         unlink($tmp_file);
 
