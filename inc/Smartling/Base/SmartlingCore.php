@@ -10,6 +10,7 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
+use Smartling\Helpers\EventParameters\ProcessRelatedTermParams;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -51,6 +52,7 @@ class SmartlingCore extends SmartlingCoreAbstract
      * @param string           $contentType
      * @param array            $accumulator
      */
+    /*|||*/
     private function processRelatedTerm(SubmissionEntity $submission, $contentType, & $accumulator)
     {
         $this->getLogger()->debug(vsprintf('Searching for terms (%s) related to submission = \'%s\'.', [
@@ -58,32 +60,37 @@ class SmartlingCore extends SmartlingCoreAbstract
             $submission->getId(),
         ]));
 
-        if (WordpressContentTypeHelper::CONTENT_TYPE_WIDGET !== $submission->getContentType()
-            && in_array($contentType, WordpressContentTypeHelper::getSupportedTaxonomyTypes())
-            && WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY !== $submission->getContentType()
-        ) {
-            $terms = $this->getCustomMenuHelper()->getTerms($submission, $contentType);
-            if (0 < count($terms)) {
-                foreach ($terms as $element) {
-                    $this->getLogger()
-                        ->debug(vsprintf('Sending for translation term = \'%s\' id = \'%s\' related to submission = \'%s\'.', [
-                            $element->taxonomy,
-                            $element->term_id,
-                            $submission->getId(),
-                        ]));
+        $params = new ProcessRelatedTermParams($submission, $contentType, $accumulator);
 
-                    $contentTranslationId = $this->translateAndGetTargetId(
-                        $element->taxonomy,
-                        $submission->getSourceBlogId(),
-                        $element->term_id,
-                        $submission->getTargetBlogId()
-                    );
+        do_action(ExportedAPI::ACTION_SMARTLING_PROCESSOR_RELATED_TERM, $params);
+        /*
+                if (WordpressContentTypeHelper::CONTENT_TYPE_WIDGET !== $submission->getContentType()
+                    && in_array($contentType, WordpressContentTypeHelper::getSupportedTaxonomyTypes())
+                    && WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY !== $submission->getContentType()
+                ) {
+                    $terms = $this->getCustomMenuHelper()->getTerms($submission, $contentType);
+                    if (0 < count($terms)) {
+                        foreach ($terms as $element) {
+                            $this->getLogger()
+                                ->debug(vsprintf('Sending for translation term = \'%s\' id = \'%s\' related to submission = \'%s\'.', [
+                                    $element->taxonomy,
+                                    $element->term_id,
+                                    $submission->getId(),
+                                ]));
 
-                    $accumulator[$contentType][] = $contentTranslationId;
+                            $contentTranslationId = $this->translateAndGetTargetId(
+                                $element->taxonomy,
+                                $submission->getSourceBlogId(),
+                                $element->term_id,
+                                $submission->getTargetBlogId()
+                            );
 
+                            $accumulator[$contentType][] = $contentTranslationId;
+
+                        }
+                    }
                 }
-            }
-        }
+        */
     }
 
     /**

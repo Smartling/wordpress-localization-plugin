@@ -117,7 +117,7 @@ class EntityHelper
      * @return int
      * @throws SmartlingDbException
      */
-    public function getOriginalContentId($id, $type = WordpressContentTypeHelper::CONTENT_TYPE_POST)
+    public function getOriginalContentId($id, $type = 'post')
     {
 
         $curBlog = $this->getSiteHelper()

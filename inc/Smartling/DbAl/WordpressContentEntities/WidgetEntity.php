@@ -3,7 +3,6 @@
 namespace Smartling\DbAl\WordpressContentEntities;
 
 use Psr\Log\LoggerInterface;
-use Smartling\Bootstrap;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\ThemeSidebarHelper;
 use Smartling\Helpers\WidgetHelper;
@@ -11,21 +10,17 @@ use Smartling\Helpers\WordpressContentTypeHelper;
 
 /**
  * Class WidgetEntity
- *
  * @property int    $id                 Unique id
  * @property string $widgetType         widget type
  * @property int    $index              Widget descriptor index (Wordpress internal)
  * @property string $bar                Sidebar Id
  * @property int    $barPosition        Widget Position in Sidebar
  * @property array  $settings           Widget settings
- *
- *
  * @method array    getSettings()       Returns settings key => value array
  * @method string   getWidgetType()     Returns Wordpress Widget type
  * @method int      getIndex()          Returns Widget index
  * @method string   getBar()            Returns bar related to index
  * @method int      getBarPosition()    Returns Widget position in the bar
- *
  * @package Smartling\DbAl\WordpressContentEntities
  */
 class WidgetEntity extends VirtualEntityAbstract
@@ -38,7 +33,6 @@ class WidgetEntity extends VirtualEntityAbstract
 
     /**
      * Standard 'post' content-type fields
-     *
      * @var array
      */
     protected $fields = [
@@ -68,10 +62,10 @@ class WidgetEntity extends VirtualEntityAbstract
 
         $this->setEntityFields($this->fields);
         $this->setRelatedTypes([
-            WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU,
-            WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT,
-            WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL,
-        ]);
+                                   WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU,
+                                   WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT,
+                                   WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL,
+                               ]);
     }
 
     /**
@@ -89,7 +83,7 @@ class WidgetEntity extends VirtualEntityAbstract
         } else {
             $message = vsprintf('Method %s not found in %s', [$method, __CLASS__]);
             $this->getLogger()
-                 ->error($message);
+                ->error($message);
             throw new \BadMethodCallException($message);
         }
     }
@@ -150,8 +144,7 @@ class WidgetEntity extends VirtualEntityAbstract
 
         foreach ($sideBars as $sideBarId) {
             $sideBarWidgets = WidgetHelper::getSideBarWidgets($sideBarId);
-            if (!is_array($sideBarWidgets))
-            {
+            if (!is_array($sideBarWidgets)) {
                 continue;
             }
             foreach ($sideBarWidgets as $position => $widgetId) {
@@ -298,5 +291,23 @@ class WidgetEntity extends VirtualEntityAbstract
     public function getPrimaryFieldName()
     {
         return 'id';
+    }
+
+    /**
+     * Converts instance of EntityAbstract to array to be used for BulkSubmit screen
+     * @return array
+     */
+    public function toBulkSubmitScreenRow()
+    {
+        return [
+            'id'      => $this->getId(),
+            'title'   => '"' . $this->getTitle() . '" on ' . ThemeSidebarHelper::getSideBarLabel($this->getBar()) .
+                         '(position ' . $this->getBarPosition() . ')',
+            'type'    => $this->getType(),
+            'author'  => $this->getIndex(),
+            'status'  => null,
+            'locales' => null,
+            'updated' => null,
+        ];
     }
 }

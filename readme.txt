@@ -56,7 +56,7 @@ Additional information on the Smartling Connector for WordPress can be found [th
 == Changelog ==
 = 1.3.7 =
 * Added ability to configure cron jobs TTL
-* Improver upload functionality.
+* Improved upload functionality.
 
 = 1.3.6 =
 * Added filter to clean source content from invalid characters before sending for translation

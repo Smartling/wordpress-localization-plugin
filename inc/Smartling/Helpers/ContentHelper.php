@@ -5,6 +5,7 @@ namespace Smartling\Helpers;
 use Psr\Log\LoggerInterface;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\PostEntity;
+use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
 use Smartling\Processors\ContentEntitiesIOFactory;
@@ -288,7 +289,7 @@ class ContentHelper
 
         $this->ensureTarget($submission);
 
-        if ($wrapper instanceof PostEntity) {
+        if ($wrapper instanceof PostEntityStd) {
             $wpMetaFunction = 'delete_post_meta';
         } elseif ($wrapper instanceof TaxonomyEntityAbstract) {
             $wpMetaFunction = 'delete_term_meta';

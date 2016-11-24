@@ -3,10 +3,11 @@ namespace Smartling\Helpers;
 
 use InvalidArgumentException;
 use Smartling\Bootstrap;
-use Smartling\DbAl\WordpressContentEntities\PostEntity;
+
+use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
-use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
+
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Processors\ContentEntitiesIOFactory;
@@ -115,7 +116,7 @@ class FileUriHelper
         if ($ioWrapper instanceof TaxonomyEntityAbstract) {
             /* term-based content */
             $permalink = self::preparePermalink(get_term_link($submission->getSourceId()), $submission);
-        } elseif ($ioWrapper instanceof PostEntity) {
+        } elseif ($ioWrapper instanceof PostEntityStd) {
             /* post-based content */
             $permalink = self::preparePermalink(get_permalink($submission->getSourceId()), $submission);
         } elseif ($ioWrapper instanceof VirtualEntityAbstract) {

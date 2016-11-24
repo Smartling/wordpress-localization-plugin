@@ -2,6 +2,9 @@
 
 namespace Smartling\Helpers;
 
+use Smartling\Bootstrap;
+use Smartling\ContentTypes\ContentTypeInterface;
+use Smartling\ContentTypes\ContentTypeManager;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingNotSupportedContentException;
 
@@ -12,10 +15,7 @@ use Smartling\Exception\SmartlingNotSupportedContentException;
  */
 class WordpressContentTypeHelper
 {
-    /**
-     * Wordpress post type identity
-     */
-    const CONTENT_TYPE_POST = 'post';
+
 
     /**
      * Wordpress page type identity
@@ -91,7 +91,7 @@ class WordpressContentTypeHelper
      * @var array
      */
     private static $_reverse_map = [
-        'post'          => self::CONTENT_TYPE_POST,
+
         'page'          => self::CONTENT_TYPE_PAGE,
         'category'      => self::CONTENT_TYPE_CATEGORY,
         'post_tag'      => self::CONTENT_TYPE_POST_TAG,
@@ -102,6 +102,7 @@ class WordpressContentTypeHelper
         'nav_menu_item' => self::CONTENT_TYPE_NAV_MENU_ITEM,
         'theme_widget'  => self::CONTENT_TYPE_WIDGET,
         'attachment'    => self::CONTENT_TYPE_MEDIA_ATTACHMENT,
+        'post'=>'post',
     ];
 
     /**
@@ -128,7 +129,7 @@ class WordpressContentTypeHelper
             self::CONTENT_TYPE_POST_POLICY      => __('Policy'),
             self::CONTENT_TYPE_POST_PARTNER     => __('Partner'),
             self::CONTENT_TYPE_POST_TESTIMONIAL => __('Testimonial'),
-            self::CONTENT_TYPE_POST             => __('Post'),
+
             self::CONTENT_TYPE_PAGE             => __('Page'),
             self::CONTENT_TYPE_CATEGORY         => __('Category'),
             self::CONTENT_TYPE_POST_TAG         => __('Tag'),
@@ -170,8 +171,22 @@ class WordpressContentTypeHelper
         if (array_key_exists($contentType, $map)) {
             return $map[$contentType];
         } else {
-            throw new SmartlingNotSupportedContentException(vsprintf('Content-type \'%s\' is not supported yet.',
-                [$contentType]));
+            $mgr = Bootstrap::getContainer()->get('content-type-descriptor-manager');
+            /**
+             * @var ContentTypeManager $mgr
+             */
+            $descriptor = $mgr->getDescriptorByType($contentType);
+
+            if ($descriptor instanceof ContentTypeInterface){
+                return $descriptor->getLabel();
+            } else {
+                throw new SmartlingNotSupportedContentException(vsprintf('Content-type \'%s\' is not supported yet.',
+                                                                         [$contentType]));
+            }
+
+
+
+
         }
     }
 }

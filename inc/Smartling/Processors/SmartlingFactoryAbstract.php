@@ -3,6 +3,7 @@
 namespace Smartling\Processors;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 
 /**

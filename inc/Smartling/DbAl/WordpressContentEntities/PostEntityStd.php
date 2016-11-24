@@ -6,11 +6,10 @@ use Psr\Log\LoggerInterface;
 use Smartling\Exception\SmartlingDataUpdateException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\RawDbQueryHelper;
-use Smartling\Helpers\WordpressContentTypeHelper;
+use Smartling\Helpers\WordpressUserHelper;
 
 /**
  * Class PostEntity
- *
  * @property null|integer $ID
  * @property integer      $post_author
  * @property string       $post_date
@@ -35,15 +34,13 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  * @property string       $post_mime_type
  * @property integer      $comment_count
  * @property string       $hash
- *
  * @package Smartling\DbAl\WordpressContentEntities
  */
-class PostEntity extends EntityAbstract
+class PostEntityStd extends EntityAbstract
 {
 
     /**
      * Standard 'post' content-type fields
-     *
      * @var array
      */
     protected $fields = [
@@ -75,11 +72,11 @@ class PostEntity extends EntityAbstract
     /**
      * @inheritdoc
      */
-    public function __construct(LoggerInterface $logger)
+    public function __construct(LoggerInterface $logger, $type = 'post', array $related = [])
     {
         parent::__construct($logger);
+        $this->setType($type);
 
-        $this->setType(WordpressContentTypeHelper::CONTENT_TYPE_POST);
         $this->hashAffectingFields = array_merge($this->hashAffectingFields, [
             'ID',
             'post_author',
@@ -93,13 +90,9 @@ class PostEntity extends EntityAbstract
             'post_type',
         ]);
 
-
         $this->setEntityFields($this->fields);
 
-        $this->setRelatedTypes([
-            WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY,
-            WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG,
-        ]);
+        $this->setRelatedTypes($related);
     }
 
     /**
@@ -150,11 +143,12 @@ class PostEntity extends EntityAbstract
              */
             $entity = $this->resultToEntity($post, $this);
             if (false === $entity->validateContentType()) {
-                $this->entityNotFound(WordpressContentTypeHelper::CONTENT_TYPE_POST, $guid);
+                $this->entityNotFound($this->getType(), $guid);
             }
+
             return $entity;
         } else {
-            $this->entityNotFound(WordpressContentTypeHelper::CONTENT_TYPE_POST, $guid);
+            $this->entityNotFound($this->getType(), $guid);
         }
     }
 
@@ -257,10 +251,10 @@ class PostEntity extends EntityAbstract
             }
 
             $message = vsprintf('An error had happened while saving post to database: %s. Params: %s',
-                [implode(' | ', $res->get_error_messages()), implode(' || ', $msgFields)]);
+                                [implode(' | ', $res->get_error_messages()), implode(' || ', $msgFields)]);
 
             $this->getLogger()
-                 ->error($message);
+                ->error($message);
 
             throw new SmartlingDataUpdateException($message);
 
@@ -280,7 +274,6 @@ class PostEntity extends EntityAbstract
      */
     public function getAll($limit = '', $offset = 0, $orderBy = 'date', $order = 'DESC')
     {
-
         $arguments = [
             'posts_per_page'   => $limit,
             'offset'           => $offset,
@@ -297,8 +290,13 @@ class PostEntity extends EntityAbstract
 
         $posts = get_posts($arguments);
 
-        return $posts;
+        $output = [];
 
+        foreach ($posts as $post) {
+
+            $output[] = $this->get($post->ID);
+        }
+        return $output;
     }
 
     /**
@@ -371,7 +369,7 @@ class PostEntity extends EntityAbstract
     public function setMetaTag($tagName, $tagValue, $unique = true)
     {
         $result = null;
-        if (metadata_exists(WordpressContentTypeHelper::CONTENT_TYPE_POST, $this->ID, $tagName)) {
+        if (metadata_exists($this->getType(), $this->ID, $tagName)) {
             $this->logMessage(vsprintf('Updating tag %s with value \'%s\' for \'%s\' \'%s\'.', [
                 $tagName,
                 var_export($tagValue, true),
@@ -387,7 +385,7 @@ class PostEntity extends EntityAbstract
                 $this->ID,
             ]));
             $this->getLogger()
-                 ->info('adding tag ' . $tagName);
+                ->info('adding tag ' . $tagName);
             $result = add_post_meta($this->ID, $tagName, $tagValue, $unique);
         }
 
@@ -403,7 +401,7 @@ class PostEntity extends EntityAbstract
                     ]
                 );
                 $this->getLogger()
-                     ->error($message);
+                    ->error($message);
             }
         } else {
             $this->logMessage(
@@ -424,5 +422,22 @@ class PostEntity extends EntityAbstract
     public function translationCompleted()
     {
         $this->setPostStatus('publish');
+    }
+
+    /**
+     * Converts instance of EntityAbstract to array to be used for BulkSubmit screen
+     * @return array
+     */
+    public function toBulkSubmitScreenRow()
+    {
+        return [
+            'id'      => $this->getPK(),
+            'title'   => $this->post_title,
+            'type'    => $this->post_type,
+            'author'  => WordpressUserHelper::getUserLoginById((int)$this->post_author),
+            'status'  => $this->post_status,
+            'locales' => null,
+            'updated' => $this->post_date,
+        ];
     }
 }

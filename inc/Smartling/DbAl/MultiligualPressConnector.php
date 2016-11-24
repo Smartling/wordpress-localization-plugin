@@ -213,8 +213,8 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
      */
     private function convertType($contentType)
     {
-        $contentType = $contentType === WordpressContentTypeHelper::CONTENT_TYPE_PAGE
-            ? WordpressContentTypeHelper::CONTENT_TYPE_POST
+        $contentType = $contentType === 'page'
+            ? 'post'
             : $contentType;
 
         $contentType = in_array($contentType,

@@ -9,12 +9,11 @@ use Psr\Log\LoggerInterface;
  *
  * @package Smartling\DbAl\WordpressContentEntities
  */
-class MenuItemEntity extends PostEntity
+class MenuItemEntity extends PostEntityStd
 {
 
     public function __construct(LoggerInterface $logger)
     {
-        parent::__construct($logger);
-        $this->setRelatedTypes([]);
+        parent::__construct($logger,'nav-menu-item',[]);
     }
 }

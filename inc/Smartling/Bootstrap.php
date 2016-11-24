@@ -4,6 +4,8 @@ namespace Smartling;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use Smartling\Base\ExportedAPI;
+use Smartling\ContentTypes\ContentTypePost;
 use Smartling\Exception\MultilingualPluginNotFoundException;
 use Smartling\Exception\SmartlingBootException;
 use Smartling\Helpers\DiagnosticsHelper;
@@ -148,6 +150,7 @@ class Bootstrap
         try {
             if (defined('SMARTLING_CLI_EXECUTION') && SMARTLING_CLI_EXECUTION === false) {
                 $this->test();
+                $this->initializeContentTypes();
                 $this->registerHooks();
                 $this->run();
             }
@@ -320,6 +323,20 @@ class Bootstrap
 
             DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
         }
+    }
+
+    /**
+     * @param ContainerBuilder $di
+     */
+    private function initializeBuildInContentTypes(ContainerBuilder $di)
+    {
+        ContentTypePost::register($di);
+    }
+
+    public function initializeContentTypes()
+    {
+        $this->initializeBuildInContentTypes(self::getContainer());
+        do_action(ExportedAPI::ACTION_SMARTLING_REGISTER_CONTENT_TYPE, self::getContainer());
     }
 
     public function run()

@@ -64,6 +64,19 @@ interface ExportedAPI
     const ACTION_SMARTLING_REGENERATE_THUMBNAILS = 'smartling_regenerate_thumbnails';
 
     /**
+     * Action for registration a content-type. Only one param is given:
+     *
+     * @param   Symfony\Component\DependencyInjection
+     */
+    const ACTION_SMARTLING_REGISTER_CONTENT_TYPE = 'smartling_register_content_type';
+
+    /**
+     * Action for processing terms related to term / post-based content
+     *
+     * @param Smartling\Helpers\EventParameters\ProcessRelatedTermParams
+     */
+    const ACTION_SMARTLING_PROCESSOR_RELATED_TERM = 'smartling_processor_related_term';
+    /**
      * Filter to modify FileURI.
      * Receives 1 parameter  Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater
      * Filter should return instance of Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater

@@ -10,20 +10,20 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  *
  * @package Smartling\DbAl\WordpressContentEntities
  */
-class AttachmentEntity extends PostEntity
+class AttachmentEntity extends PostEntityStd
 {
     /**
      * @inheritdoc
      */
     public function __construct(LoggerInterface $logger)
     {
-        parent::__construct($logger);
+        parent::__construct($logger,WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT,[]);
 
-        $ownFields = [];
+        //$ownFields = [];
 
-        $this->fields = array_merge($this->fields, $ownFields);
-        $this->hashAffectingFields = array_merge([], $ownFields);
+        //$this->fields = array_merge($this->fields, $ownFields);
+        //$this->hashAffectingFields = array_merge([], $ownFields);
 
-        $this->setType(WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT);
+        //$this->setType(WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT);
     }
 }

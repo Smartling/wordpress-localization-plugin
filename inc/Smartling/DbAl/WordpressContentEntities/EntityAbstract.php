@@ -373,4 +373,10 @@ abstract class EntityAbstract
     {
         $this->type = $type;
     }
+
+    /**
+     * Converts instance of EntityAbstract to array to be used for BulkSubmit screen
+     * @return array
+     */
+    abstract public function toBulkSubmitScreenRow();
 }

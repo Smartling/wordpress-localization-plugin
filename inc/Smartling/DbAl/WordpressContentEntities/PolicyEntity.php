@@ -10,7 +10,7 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  *
  * @package Smartling\DbAl\WordpressContentEntities
  */
-class PolicyEntity extends PostEntity
+class PolicyEntity extends PostEntityStd
 {
 
     /**
@@ -18,8 +18,8 @@ class PolicyEntity extends PostEntity
      */
     public function __construct(LoggerInterface $logger)
     {
-        parent::__construct($logger);
-        $this->setType(WordpressContentTypeHelper::CONTENT_TYPE_POST_POLICY);
+        parent::__construct($logger,WordpressContentTypeHelper::CONTENT_TYPE_POST_POLICY,[]);
+        //$this->setType(WordpressContentTypeHelper::CONTENT_TYPE_POST_POLICY);
     }
 
 }

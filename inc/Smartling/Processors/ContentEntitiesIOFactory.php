@@ -3,6 +3,7 @@
 namespace Smartling\Processors;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Bootstrap;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 
@@ -41,6 +42,13 @@ class ContentEntitiesIOFactory extends SmartlingFactoryAbstract
      */
     public function getMapper($contentType)
     {
-        return clone parent::getHandler($contentType);
+        $obj = parent::getHandler($contentType);
+
+        if (is_object($obj)){
+            return clone $obj;
+        } else {
+            Bootstrap::DebugPrint([$contentType,$obj],true);
+        }
+
     }
 }

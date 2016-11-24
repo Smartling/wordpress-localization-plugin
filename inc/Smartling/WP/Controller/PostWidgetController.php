@@ -33,7 +33,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
 
     const CONNECTOR_NONCE = 'smartling_connector_nonce';
 
-    protected $servedContentType = WordpressContentTypeHelper::CONTENT_TYPE_POST;
+    protected $servedContentType = 'post';
 
     protected $needSave = 'Need to have title';
 

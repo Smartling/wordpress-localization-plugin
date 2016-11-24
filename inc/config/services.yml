@@ -4,6 +4,12 @@ parameters:
 
   submission.pagesize: 20
 services:
+  content-type-descriptor-manager:
+    class: Smartling\ContentTypes\ContentTypeManager
+    arguments:
+      - "@logger"
+
+
   smartling.helper.relative-image-path-support:
     class: Smartling\Helpers\RelativeLinkedAttachmentCoreHelper
     arguments:
@@ -73,10 +79,7 @@ services:
       arguments:
         - "@logger"
 
-  wrapper.entity.post:
-    class: Smartling\DbAl\WordpressContentEntities\PostEntity
-    arguments:
-      - "@logger"
+
 
   wrapper.entity.ext.partner:
     class: Smartling\DbAl\WordpressContentEntities\PartnerEntity
@@ -118,7 +121,6 @@ services:
     arguments:
       - "@logger"
     calls:
-      - [ "registerHandler", ["post", "@wrapper.entity.post"]]
       - [ "registerHandler", ["nav_menu", "@wrapper.entity.menu"]]
       - [ "registerHandler", ["nav_menu_item", "@wrapper.entity.menuitem"]]
       - [ "registerHandler", ["page", "@wrapper.entity.page"]]
@@ -238,17 +240,7 @@ services:
     calls:
       - [ "setQueue", [ "@queue.db" ] ]
 
-  wp.post:
-    class: Smartling\WP\Controller\PostWidgetController
-    arguments:
-      - "@logger"
-      - "@multilang.proxy"
-      - "@plugin.info"
-      - "@entity.helper"
-      - "@manager.submission"
-      - "@site.cache"
-    calls:
-      - [ "setDetectChangesHelper" , [ "@detect-changes.helper" ] ]
+
 
   wp.ext.partner:
     class: Smartling\WP\Controller\PartnerWidgetController

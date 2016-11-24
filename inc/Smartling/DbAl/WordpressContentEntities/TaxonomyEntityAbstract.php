@@ -9,9 +9,7 @@ use Smartling\Helpers\WordpressContentTypeHelper;
 
 /**
  * Class TaxonomyEntityAbstract
- *
  * @package Smartling\DbAl\WordpressContentEntities
- *
  * @property int    $term_id
  * @property string $name
  * @property string slug
@@ -26,7 +24,6 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract
 {
     /**
      * Standard taxonomy fields
-     *
      * @var array
      */
     protected $fields = [
@@ -61,7 +58,7 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract
         } else {
             $message = 'Seems like WP-SEO plugin not installed. Cannot get term meta.';
             $this->getLogger()
-                 ->notice($message);
+                ->notice($message);
         }
 
         return $result;
@@ -88,7 +85,7 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract
         } else {
             $message = 'Seems like WP-SEO plugin not installed. Cannot set term meta.';
             $this->getLogger()
-                 ->notice($message);
+                ->notice($message);
         }
     }
 
@@ -151,7 +148,7 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract
                 );
 
                 $this->getLogger()
-                     ->error($message);
+                    ->error($message);
             }
         } else {
             return $this->setMetaTagOld($tagName, $tagValue, $unique = true);
@@ -194,7 +191,6 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract
      * @param $guid
      *
      * @return array
-     *
      * @throws SmartlingDbException
      * @throws EntityNotFoundException
      */
@@ -228,7 +224,6 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract
 
     /**
      * Loads ALL entities from database
-     *
      * @return TaxonomyEntityAbstract[]
      * @throws SmartlingDbException
      */
@@ -267,10 +262,10 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract
 
         if ($terms instanceof \WP_Error) {
             $message = vsprintf('An error occurred while reading all taxonomies of type %s: %s',
-                [$this->getType(), $terms->get_error_message()]);
+                                [$this->getType(), $terms->get_error_message()]);
 
             $this->getLogger()
-                 ->error($message);
+                ->error($message);
 
             throw new SmartlingDbException($message);
         } else {
@@ -347,7 +342,7 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract
                 );
 
                 $this->getLogger()
-                     ->error($message);
+                    ->error($message);
 
                 throw new SmartlingDbException($message);
             }
@@ -407,7 +402,7 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract
 
         if ($terms instanceof \WP_Error) {
             $message = vsprintf('An error occurred while readin all taxonomies of type: %s',
-                [$terms->get_error_message()]);
+                                [$terms->get_error_message()]);
 
             throw new SmartlingDbException($message);
         } else {
@@ -436,4 +431,20 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract
         return 'term_id';
     }
 
+    /**
+     * Converts instance of EntityAbstract to array to be used for BulkSubmit screen
+     * @return array
+     */
+    public function toBulkSubmitScreenRow()
+    {
+        return [
+            'id'      => $this->term_id,
+            'title'   => $this->name,
+            'type'    => $this->taxonomy,
+            'author'  => null,
+            'status'  => null,
+            'locales' => null,
+            'updated' => null,
+        ];
+    }
 }

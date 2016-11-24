@@ -7,6 +7,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EntityHelper;
@@ -15,7 +16,6 @@ use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\ThemeSidebarHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
-use Smartling\Helpers\WordpressUserHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -24,7 +24,6 @@ use Smartling\WP\Controller\SmartlingListTable;
 
 /**
  * Class BulkSubmitTableWidget
- *
  * @package Smartling\WP\View
  */
 class BulkSubmitTableWidget extends SmartlingListTable
@@ -44,11 +43,10 @@ class BulkSubmitTableWidget extends SmartlingListTable
 
     /**
      * default values of custom form elements on page
-     *
      * @var array
      */
     private $defaultValues = [
-        self::CONTENT_TYPE_SELECT_ELEMENT_NAME => WordpressContentTypeHelper::CONTENT_TYPE_POST,
+        self::CONTENT_TYPE_SELECT_ELEMENT_NAME => 'post',
     ];
 
     private $_settings = [
@@ -167,7 +165,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
 
         if (false !== $column) {
             $direction = strtoupper($this->getFromSource($orderDirectionKey,
-                SmartlingToCMSDatabaseAccessWrapperInterface::SORT_OPTION_ASC));
+                                                         SmartlingToCMSDatabaseAccessWrapperInterface::SORT_OPTION_ASC));
         }
 
         return [
@@ -281,15 +279,15 @@ class BulkSubmitTableWidget extends SmartlingListTable
              * @var SmartlingCore $ep
              */
             $ep = Bootstrap::getContainer()
-                           ->get('entrypoint');
+                ->get('entrypoint');
 
             if (is_array($submissions) && count($locales) > 0) {
                 foreach ($submissions as $submission) {
                     list($id, $type) = explode('-', $submission);
                     $type = $this->getContentTypeFilterValue();
                     $curBlogId = $this->getProfile()
-                                      ->getOriginalBlogId()
-                                      ->getBlogId();
+                        ->getOriginalBlogId()
+                        ->getBlogId();
                     foreach ($locales as $blogId => $blogName) {
 
                         /**
@@ -298,16 +296,16 @@ class BulkSubmitTableWidget extends SmartlingListTable
                         $submissionEntity = $ep->createForTranslation($type, $curBlogId, $id, (int)$blogId);
 
                         $this->getLogger()
-                             ->info(vsprintf(
-                                 self::$MSG_UPLOAD_ENQUEUE_ENTITY,
-                                 [
-                                     $type,
-                                     $curBlogId,
-                                     $id,
-                                     $blogId,
-                                     $submissionEntity->getTargetLocale(),
-                                 ]
-                             ));
+                            ->info(vsprintf(
+                                       self::$MSG_UPLOAD_ENQUEUE_ENTITY,
+                                       [
+                                           $type,
+                                           $curBlogId,
+                                           $id,
+                                           $blogId,
+                                           $submissionEntity->getTargetLocale(),
+                                       ]
+                                   ));
                     }
                 }
             }
@@ -358,11 +356,9 @@ class BulkSubmitTableWidget extends SmartlingListTable
         /**
          * @var SmartlingCore $core
          */
-        $core = Bootstrap::getContainer()
-                         ->get('entrypoint');
-        $io = $core->getContentIoFactory()
-                   ->getMapper($contentTypeFilterValue);
+        $core = Bootstrap::getContainer()->get('entrypoint');
 
+        $io = $core->getContentIoFactory()->getMapper($contentTypeFilterValue);
 
         $data = $io->getAll(
             $pageOptions['limit'],
@@ -371,13 +367,14 @@ class BulkSubmitTableWidget extends SmartlingListTable
             $sortOptions['order']
         );
 
+
         $total = $io->getTotal();
 
         $dataAsArray = [];
         if ($data) {
             foreach ($data as $item) {
 
-                $row = $this->extractFields($item, $contentTypeFilterValue);
+                $row = $item->toBulkSubmitScreenRow();
 
                 $entities = [];
 
@@ -398,7 +395,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
                     foreach ($entities as $entity) {
                         $locales[] =
                             $this->entityHelper->getConnector()
-                                               ->getBlogNameByLocale($entity->getTargetLocale());
+                                ->getBlogNameByLocale($entity->getTargetLocale());
                     }
 
                     $row['locales'] = implode(', ', $locales);
@@ -432,64 +429,10 @@ class BulkSubmitTableWidget extends SmartlingListTable
         $this->items = $dataAsArray;
 
         $this->set_pagination_args([
-            'total_items' => $total,
-            'per_page'    => $pageOptions['limit'],
-            'total_pages' => ceil($total / $pageOptions['limit']),
-        ]);
-    }
-
-    /**
-     * @param $item
-     * @param $type
-     *
-     * @return array
-     */
-    private function extractFields($item, $type)
-    {
-        switch ($type) {
-            case WordpressContentTypeHelper::CONTENT_TYPE_POST:
-            case WordpressContentTypeHelper::CONTENT_TYPE_PAGE:
-            case WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT:
-            case WordpressContentTypeHelper::CONTENT_TYPE_POST_POLICY:
-            case WordpressContentTypeHelper::CONTENT_TYPE_POST_PARTNER:
-            case WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL:
-                return [
-                    'id'      => $item->ID,
-                    'title'   => $item->post_title,
-                    'type'    => $item->post_type,
-                    'author'  => WordpressUserHelper::getUserLoginById((int)$item->post_author),
-                    'status'  => $item->post_status,
-                    'locales' => null,
-                    'updated' => $item->post_date,
-                ];
-                break;
-            case WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG:
-            case WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY:
-            case WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU:
-                return [
-                    'id'      => $item->term_id,
-                    'title'   => $item->name,
-                    'type'    => $item->taxonomy,
-                    'author'  => null,
-                    'status'  => null,
-                    'locales' => null,
-                    'updated' => null,
-                ];
-                break;
-            case WordpressContentTypeHelper::CONTENT_TYPE_WIDGET:
-                return [
-                    'id'      => $item->getId(),
-                    'title'   => '"' . $item->getTitle() . '" on ' . ThemeSidebarHelper::getSideBarLabel($item->getBar()) . '(position ' . $item->getBarPosition() . ')',
-                    'type'    => $item->getType(),
-                    'author'  => $item->getIndex(),
-                    'status'  => null,
-                    'locales' => null,
-                    'updated' => null,
-                ];
-                break;
-        }
-
-        return [];
+                                       'total_items' => $total,
+                                       'per_page'    => $pageOptions['limit'],
+                                       'total_pages' => ceil($total / $pageOptions['limit']),
+                                   ]);
     }
 
     /**
