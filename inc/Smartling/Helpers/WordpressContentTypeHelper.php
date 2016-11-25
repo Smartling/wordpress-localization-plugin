@@ -17,10 +17,7 @@ class WordpressContentTypeHelper
 {
 
 
-    /**
-     * Wordpress page type identity
-     */
-    const CONTENT_TYPE_PAGE = 'page';
+
 
     /**
      * Wordpress category type identity
@@ -92,7 +89,7 @@ class WordpressContentTypeHelper
      */
     private static $_reverse_map = [
 
-        'page'          => self::CONTENT_TYPE_PAGE,
+
         'category'      => self::CONTENT_TYPE_CATEGORY,
         'post_tag'      => self::CONTENT_TYPE_POST_TAG,
         'policy'        => self::CONTENT_TYPE_POST_POLICY,
@@ -102,9 +99,23 @@ class WordpressContentTypeHelper
         'nav_menu_item' => self::CONTENT_TYPE_NAV_MENU_ITEM,
         'theme_widget'  => self::CONTENT_TYPE_WIDGET,
         'attachment'    => self::CONTENT_TYPE_MEDIA_ATTACHMENT,
-        'post'=>'post',
+
     ];
 
+    private static function getDynamicReverseMap()
+    {
+        /**
+         * @var ContentTypeManager $contentTypeManager
+         */
+        $contentTypeManager = Bootstrap::getContainer()->get('content-type-descriptor-manager');
+
+        $map=[];
+        foreach ($contentTypeManager->getRegisteredContentTypes() as $type) {
+            $map[$type]=$type;
+        }
+
+        return $map;
+    }
     /**
      * @return array
      * @throws SmartlingDirectRunRuntimeException
@@ -113,7 +124,7 @@ class WordpressContentTypeHelper
     {
         self::checkRuntimeState();
 
-        return self::$_reverse_map;
+        return array_merge(self::$_reverse_map, self::getDynamicReverseMap());
     }
 
     /**
@@ -130,7 +141,7 @@ class WordpressContentTypeHelper
             self::CONTENT_TYPE_POST_PARTNER     => __('Partner'),
             self::CONTENT_TYPE_POST_TESTIMONIAL => __('Testimonial'),
 
-            self::CONTENT_TYPE_PAGE             => __('Page'),
+
             self::CONTENT_TYPE_CATEGORY         => __('Category'),
             self::CONTENT_TYPE_POST_TAG         => __('Tag'),
             self::CONTENT_TYPE_NAV_MENU         => __('Navigation Menu'),

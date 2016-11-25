@@ -5,12 +5,12 @@ namespace Smartling\WP\Controller;
 use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
+use Smartling\ContentTypes\ContentTypePost;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
-use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Jobs\UploadJob;
 use Smartling\Queue\Queue;
@@ -33,7 +33,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
 
     const CONNECTOR_NONCE = 'smartling_connector_nonce';
 
-    protected $servedContentType = 'post';
+    protected $servedContentType = ContentTypePost::WP_CONTENT_TYPE;
 
     protected $needSave = 'Need to have title';
 

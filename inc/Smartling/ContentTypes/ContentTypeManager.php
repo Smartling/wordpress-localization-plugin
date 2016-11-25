@@ -55,4 +55,12 @@ class ContentTypeManager extends SmartlingFactoryAbstract
     {
         return true === call_user_func_array([$descriptor, 'is' . ucfirst($type)], []);
     }
+
+    /**
+     * @return array
+     */
+    public function getRegisteredContentTypes()
+    {
+        return array_keys($this->getCollection());
+    }
 }

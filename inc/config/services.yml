@@ -96,11 +96,6 @@ services:
     arguments:
       - "@logger"
 
-  wrapper.entity.page:
-    class: Smartling\DbAl\WordpressContentEntities\PageEntity
-    arguments:
-      - "@logger"
-
   wrapper.entity.category:
     class: Smartling\DbAl\WordpressContentEntities\CategoryEntity
     arguments:
@@ -123,7 +118,6 @@ services:
     calls:
       - [ "registerHandler", ["nav_menu", "@wrapper.entity.menu"]]
       - [ "registerHandler", ["nav_menu_item", "@wrapper.entity.menuitem"]]
-      - [ "registerHandler", ["page", "@wrapper.entity.page"]]
       - [ "registerHandler", ["category", "@wrapper.entity.category"]]
       - [ "registerHandler", ["post_tag", "@wrapper.entity.tag"]]
       - [ "registerHandler", ["policy", "@wrapper.entity.ext.policy"]]
@@ -278,18 +272,6 @@ services:
     calls:
       - [ "setDetectChangesHelper" , [ "@detect-changes.helper" ] ]
 
-  wp.page:
-    class: Smartling\WP\Controller\PageWidgetController
-    arguments:
-      - "@logger"
-      - "@multilang.proxy"
-      - "@plugin.info"
-      - "@entity.helper"
-      - "@manager.submission"
-      - "@site.cache"
-    calls:
-      - [ "setDetectChangesHelper" , [ "@detect-changes.helper" ] ]
-
   wp.taxonomy:
       class: Smartling\WP\Controller\TaxonomyWidgetController
       arguments:
@@ -342,22 +324,12 @@ services:
   default.meta-field-processor:
     class: Smartling\Helpers\MetaFieldProcessor\DefaultMetaFieldProcessor
 
-  referenced-content.page-parent.meta-field-processor:
+  referenced-content.category-parent.meta-field-processor:
     class: Smartling\Helpers\MetaFieldProcessor\ReferencedContentProcessor
     arguments:
       - "@logger"
       - "@translation.helper"
-      - "post_parent"
-      - "page"
-    calls:
-      - [ "setContentHelper", [ "@content.helper" ]]
-
-  referenced-content.category-parent.meta-field-processor:
-    class: Smartling\Helpers\MetaFieldProcessor\ReferencedCategoryProcessor
-    arguments:
-      - "@logger"
-      - "@translation.helper"
-      - "parent"
+      - "^(parent)$"
       - "category"
     calls:
       - [ "setContentHelper", [ "@content.helper" ]]
@@ -376,7 +348,6 @@ services:
     calls:
       - [ "setDefaultHandler", [ "@default.meta-field-processor" ] ]
       - [ "registerProcessor", [ "@referenced-file.meta-field-processor" ] ]
-      - [ "registerProcessor", [ "@referenced-content.page-parent.meta-field-processor" ] ]
       - [ "registerProcessor", [ "@referenced-content.category-parent.meta-field-processor" ] ]
 
   service.side-removal-handler:

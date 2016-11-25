@@ -104,7 +104,7 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
         $patterns = array_keys($registeredProcessors);
 
         foreach ($patterns as $pattern) {
-            if (preg_match(vsprintf('/%s/iu', [$pattern]), $contentType)) {
+            if (preg_match(vsprintf('#%s#iu', [$pattern]), $contentType)) {
                 return $registeredProcessors[$pattern];
             }
         }

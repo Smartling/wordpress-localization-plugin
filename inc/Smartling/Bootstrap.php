@@ -5,6 +5,7 @@ namespace Smartling;
 use Exception;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
+use Smartling\ContentTypes\ContentTypePage;
 use Smartling\ContentTypes\ContentTypePost;
 use Smartling\Exception\MultilingualPluginNotFoundException;
 use Smartling\Exception\SmartlingBootException;
@@ -331,6 +332,7 @@ class Bootstrap
     private function initializeBuildInContentTypes(ContainerBuilder $di)
     {
         ContentTypePost::register($di);
+        ContentTypePage::register($di);
     }
 
     public function initializeContentTypes()

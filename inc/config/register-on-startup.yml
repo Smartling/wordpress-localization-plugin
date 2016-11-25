@@ -15,8 +15,6 @@ services:
       - [ "addService", [ "@wp.settings" ]]
       - [ "addService", [ "@wp.settings.edit" ]]
 
-      #- [ "addService", [ "@wp.post" ]]
-      - [ "addService", [ "@wp.page" ]]
       - [ "addService", [ "@wp.taxonomy" ]]
       - [ "addService", [ "@wp.ext.policy" ]]
       - [ "addService", [ "@wp.ext.partner" ]]
