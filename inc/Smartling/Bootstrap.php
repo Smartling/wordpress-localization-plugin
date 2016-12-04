@@ -5,8 +5,14 @@ namespace Smartling;
 use Exception;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
+use Smartling\ContentTypes\ContentTypeAttachment;
+use Smartling\ContentTypes\ContentTypeCategory;
+use Smartling\ContentTypes\ContentTypeNavigationMenu;
+use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\ContentTypes\ContentTypePage;
 use Smartling\ContentTypes\ContentTypePost;
+use Smartling\ContentTypes\ContentTypePostTag;
+use Smartling\ContentTypes\ContentTypeWidget;
 use Smartling\Exception\MultilingualPluginNotFoundException;
 use Smartling\Exception\SmartlingBootException;
 use Smartling\Helpers\DiagnosticsHelper;
@@ -333,6 +339,15 @@ class Bootstrap
     {
         ContentTypePost::register($di);
         ContentTypePage::register($di);
+        ContentTypeAttachment::register($di);
+
+        ContentTypePostTag::register($di);
+        ContentTypeCategory::register($di);
+
+        ContentTypeWidget::register($di);
+
+        ContentTypeNavigationMenuItem::register($di);
+        ContentTypeNavigationMenu::register($di);
     }
 
     public function initializeContentTypes()
