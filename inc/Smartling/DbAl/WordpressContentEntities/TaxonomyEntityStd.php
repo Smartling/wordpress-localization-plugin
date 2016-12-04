@@ -20,7 +20,7 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  * @property int    $parent
  * @property int    $count
  */
-abstract class TaxonomyEntityAbstract extends EntityAbstract
+class TaxonomyEntityStd extends EntityAbstract
 {
     /**
      * Standard taxonomy fields
@@ -38,127 +38,68 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract
         'count',
     ];
 
-    private function checkWPSEO()
-    {
-        return class_exists('\WPSEO_Taxonomy_Meta');
-    }
-
-    private function getWpVersion()
-    {
-        global $wp_version;
-
-        return $wp_version;
-    }
-
-    private function getMetadataOld()
-    {
-        $result = [];
-        if ($this->checkWPSEO()) {
-            $result = \WPSEO_Taxonomy_Meta::get_term_meta($this->term_id, $this->taxonomy);
-        } else {
-            $message = 'Seems like WP-SEO plugin not installed. Cannot get term meta.';
-            $this->getLogger()
-                ->notice($message);
-        }
-
-        return $result;
-    }
-
-    private function setMetaTagOld($tagName, $tagValue, $unique = true)
-    {
-        if ($this->checkWPSEO()) {
-            $tax_meta = get_option('wpseo_taxonomy_meta');
-            $oldValues = $this->getMetadata();
-            $newValues = array_merge($oldValues, [$tagName => $tagValue]);
-            $clean = \WPSEO_Taxonomy_Meta::validate_term_meta_data($newValues, $oldValues);
-            if ($clean !== []) {
-                $tax_meta[$this->taxonomy][$this->term_id] = $clean;
-            } else {
-                unset($tax_meta[$this->taxonomy][$this->term_id]);
-                if (isset($tax_meta[$this->taxonomy]) && $tax_meta[$this->taxonomy] === []) {
-                    unset($tax_meta[$this->taxonomy]);
-                }
-            }
-            // Prevent complete array validation
-            $tax_meta['wpseo_already_validated'] = true;
-            update_option('wpseo_taxonomy_meta', $tax_meta);
-        } else {
-            $message = 'Seems like WP-SEO plugin not installed. Cannot set term meta.';
-            $this->getLogger()
-                ->notice($message);
-        }
-    }
-
     /**
      * @inheritdoc
      */
     public function getMetadata()
     {
-        if (version_compare($this->getWpVersion(), '4.4.0', '>=')) {
-            return get_term_meta($this->getPK());
-        } else {
-            return $this->getMetadataOld();
-        }
+        return get_term_meta($this->getPK());
     }
 
     public function setMetaTag($tagName, $tagValue, $unique = true)
     {
-        if (version_compare($this->getWpVersion(), '4.4.0', '>=')) {
+        $curValue = get_term_meta($this->getPK(), $tagName, $unique);
 
-            $curValue = get_term_meta($this->getPK(), $tagName, $unique);
+        $result = null;
 
-            $result = null;
-
-            if ($curValue = !$tagValue) {
-                if (false === $curValue) {
-                    $this->logMessage(vsprintf('Adding tag %s with value \'%s\' for \'%s\' \'%s\'.', [
-                        $tagName,
-                        var_export($tagValue, true),
-                        $this->type,
-                        $this->getPK(),
-                    ]));
-                    $result = add_term_meta($this->getPK(), $tagName, $tagValue, $unique);
-                } else {
-                    $this->logMessage(vsprintf('Updating tag %s with value \'%s\' for \'%s\' \'%s\'.', [
-                        $tagName,
-                        var_export($tagValue, true),
-                        $this->type,
-                        $this->getPK(),
-                    ]));
-                    $result = update_term_meta($this->getPK(), $tagName, $tagValue);
-                }
-            } else {
-                $this->logMessage(vsprintf('Skipping update tag %s with value \'%s\' for \'%s\' \'%s\' as value not changed.', [
+        if ($curValue = !$tagValue) {
+            if (false === $curValue) {
+                $this->logMessage(vsprintf('Adding tag %s with value \'%s\' for \'%s\' \'%s\'.', [
                     $tagName,
                     var_export($tagValue, true),
                     $this->type,
                     $this->getPK(),
                 ]));
-            }
-
-            if (false === $result) {
-                $message = vsprintf(
-                    'Error saving meta tag "%s" with value "%s" for "%s" "%s"',
-                    [
-                        $tagName,
-                        var_export($tagValue, true),
-                        $this->type,
-                        $this->getPK(),
-                    ]
-                );
-
-                $this->getLogger()
-                    ->error($message);
+                $result = add_term_meta($this->getPK(), $tagName, $tagValue, $unique);
+            } else {
+                $this->logMessage(vsprintf('Updating tag %s with value \'%s\' for \'%s\' \'%s\'.', [
+                    $tagName,
+                    var_export($tagValue, true),
+                    $this->type,
+                    $this->getPK(),
+                ]));
+                $result = update_term_meta($this->getPK(), $tagName, $tagValue);
             }
         } else {
-            return $this->setMetaTagOld($tagName, $tagValue, $unique = true);
+            $this->logMessage(vsprintf('Skipping update tag %s with value \'%s\' for \'%s\' \'%s\' as value not changed.', [
+                $tagName,
+                var_export($tagValue, true),
+                $this->type,
+                $this->getPK(),
+            ]));
         }
+
+        if (false === $result) {
+            $message = vsprintf(
+                'Error saving meta tag "%s" with value "%s" for "%s" "%s"',
+                [
+                    $tagName,
+                    var_export($tagValue, true),
+                    $this->type,
+                    $this->getPK(),
+                ]
+            );
+
+            $this->getLogger()
+                ->error($message);
+        }
+
     }
 
     /**
      * @inheritdoc
      */
-    public function __construct(LoggerInterface $logger)
+    public function __construct(LoggerInterface $logger, $type, array $related = [])
     {
         parent::__construct($logger);
 
@@ -167,8 +108,9 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract
             'description',
         ];
 
-
         $this->setEntityFields($this->fields);
+        $this->setType($type);
+        $this->setRelatedTypes($related);
     }
 
     /**
@@ -224,7 +166,7 @@ abstract class TaxonomyEntityAbstract extends EntityAbstract
 
     /**
      * Loads ALL entities from database
-     * @return TaxonomyEntityAbstract[]
+     * @return TaxonomyEntityStd[]
      * @throws SmartlingDbException
      */
     public function getAll($limit = '', $offset = '', $orderBy = 'term_id', $order = 'ASC')

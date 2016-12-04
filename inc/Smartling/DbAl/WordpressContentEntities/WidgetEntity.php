@@ -3,6 +3,7 @@
 namespace Smartling\DbAl\WordpressContentEntities;
 
 use Psr\Log\LoggerInterface;
+use Smartling\ContentTypes\ContentTypeAttachment;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\ThemeSidebarHelper;
 use Smartling\Helpers\WidgetHelper;
@@ -47,11 +48,10 @@ class WidgetEntity extends VirtualEntityAbstract
     /**
      * @inheritdoc
      */
-    public function __construct(LoggerInterface $logger)
+    public function __construct(LoggerInterface $logger, $type, array $related = [])
     {
         parent::__construct($logger);
 
-        $this->setType(WordpressContentTypeHelper::CONTENT_TYPE_WIDGET);
         $this->hashAffectingFields = array_merge($this->hashAffectingFields, [
             'id',
             'widgetType',
@@ -61,11 +61,8 @@ class WidgetEntity extends VirtualEntityAbstract
         ]);
 
         $this->setEntityFields($this->fields);
-        $this->setRelatedTypes([
-                                   WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU,
-                                   WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT,
-                                   WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL,
-                               ]);
+        $this->setType($type);
+        $this->setRelatedTypes($related);
     }
 
     /**

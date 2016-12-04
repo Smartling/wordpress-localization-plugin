@@ -687,6 +687,10 @@ class SubmissionManager extends EntityManagerAbstract
 
         if (count($entities) > 0) {
             $entity = ArrayHelper::first($entities);
+            /**
+             * @var SubmissionEntity $entity
+             */
+            $entity->setLastError('');
         } else {
             $entity = $this->createSubmission($params);
             $entity->setTargetLocale($localizationProxy->getBlogLocaleById($targetBlog));

@@ -6,7 +6,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\PostEntity;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
-use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityAbstract;
+use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
 use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
@@ -291,7 +291,7 @@ class ContentHelper
 
         if ($wrapper instanceof PostEntityStd) {
             $wpMetaFunction = 'delete_post_meta';
-        } elseif ($wrapper instanceof TaxonomyEntityAbstract) {
+        } elseif ($wrapper instanceof TaxonomyEntityStd) {
             $wpMetaFunction = 'delete_term_meta';
         } elseif ($wrapper instanceof VirtualEntityAbstract) {
             /* Virtual types cannot have metadata */

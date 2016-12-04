@@ -4,7 +4,7 @@ namespace Smartling\Helpers\EventParameters;
 
 use Smartling\Submissions\SubmissionEntity;
 
-class ProcessRelatedTermParams
+class ProcessRelatedContentParams
 {
     /**
      * @var SubmissionEntity

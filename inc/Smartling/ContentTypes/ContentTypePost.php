@@ -4,7 +4,7 @@ namespace Smartling\ContentTypes;
 
 use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\CustomMenuContentTypeHelper;
-use Smartling\Helpers\EventParameters\ProcessRelatedTermParams;
+use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
 use Smartling\Helpers\TranslationHelper;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -80,20 +80,19 @@ class ContentTypePost extends PostBasedContentTypeAbstract
         $definition
             ->addArgument($di->getDefinition('logger'))
             ->addArgument($this->getSystemName())
-            ->addArgument(['post_tag', 'category']);
+            ->addArgument([ContentTypePostTag::WP_CONTENT_TYPE, ContentTypeCategory::WP_CONTENT_TYPE]);
 
         $di->get('factory.contentIO')->registerHandler($this->getSystemName(), $di->get($wrapperId));
 
     }
 
-    public function registerTaxonomyRelations(ProcessRelatedTermParams $params)
+    public function registerTaxonomyRelations(ProcessRelatedContentParams $params)
     {
         if ($this->getSystemName() === $params->getSubmission()->getContentType()) {
             /**
              * @var CustomMenuContentTypeHelper $helper
              */
             $helper = $this->getContainerBuilder()->get('helper.customMenu');
-
             $terms = $helper->getTerms($params->getSubmission(), $params->getContentType());
             if (0 < count($terms)) {
                 foreach ($terms as $element) {
@@ -116,10 +115,18 @@ class ContentTypePost extends PostBasedContentTypeAbstract
                             $element->term_id,
                             $params->getSubmission()->getTargetBlogId()
                         );
-
                     $params->getAccumulator()[$params->getContentType()][] = $relatedSubmission->getTargetId();
-                    $this->getContainerBuilder()->get('logger')->debug('!!!!!!' .
-                                                                       var_export($params->getAccumulator(), true));
+                    $this->getContainerBuilder()
+                        ->get('logger')
+                        ->debug(
+                            vsprintf(
+                                'Received id=%s for submission id=%s',
+                                [
+                                    $relatedSubmission->getTargetId(),
+                                    $relatedSubmission->getId(),
+                                ]
+                            )
+                        );
                 }
             }
         }
@@ -130,28 +137,6 @@ class ContentTypePost extends PostBasedContentTypeAbstract
      */
     public function registerFilters()
     {
-        add_action(ExportedAPI::ACTION_SMARTLING_PROCESSOR_RELATED_TERM, [$this, 'registerTaxonomyRelations']);
-
-        //$this->registerTaxonomyRelations();
-        /*
-            $postTypeReferencedFields = [
-                'pagelink',
-            ];
-
-            $logger = $di->get('logger');
-            $translationHelper = $di->get('translation.helper');
-            $contentHelper = $di->get('content.helper');
-
-            $manager = $di->get('meta-field.processor.manager');
-            $handler = new \Smartling\Helpers\MetaFieldProcessor\ReferencedPageProcessor(
-                $logger,
-                $translationHelper,
-                '^(' . implode('|', $postTypeReferencedFields) . ')$',
-                'page');
-            $handler->setContentHelper($contentHelper);
-            $manager->registerProcessor($handler);
-
-        */
-        // TODO: Implement registerFilters() method.
+        add_action(ExportedAPI::ACTION_SMARTLING_PROCESSOR_RELATED_CONTENT, [$this, 'registerTaxonomyRelations']);
     }
 }

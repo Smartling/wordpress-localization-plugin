@@ -4,6 +4,7 @@ namespace Smartling\Helpers\MetaFieldProcessor;
 
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
+use Smartling\ContentTypes\ContentTypeAttachment;
 use Smartling\Exception\SmartlingDataReadException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
@@ -87,7 +88,7 @@ class ReferencedFileFieldProcessor extends MetaFieldProcessorAbstract
             );
 
             $attSubmission = $this->getTranslationHelper()->tryPrepareRelatedContent(
-                WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT,
+                ContentTypeAttachment::WP_CONTENT_TYPE,
                 $submission->getSourceBlogId(),
                 $value,
                 $submission->getTargetBlogId()

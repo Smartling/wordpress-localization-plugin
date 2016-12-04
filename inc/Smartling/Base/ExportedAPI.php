@@ -73,9 +73,10 @@ interface ExportedAPI
     /**
      * Action for processing terms related to term / post-based content
      *
-     * @param Smartling\Helpers\EventParameters\ProcessRelatedTermParams
+     * @param Smartling\Helpers\EventParameters\ProcessRelatedContentParams
      */
-    const ACTION_SMARTLING_PROCESSOR_RELATED_TERM = 'smartling_processor_related_term';
+    const ACTION_SMARTLING_PROCESSOR_RELATED_CONTENT = 'smartling_processor_related_content';
+
     /**
      * Filter to modify FileURI.
      * Receives 1 parameter  Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater

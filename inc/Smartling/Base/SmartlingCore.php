@@ -2,6 +2,10 @@
 namespace Smartling\Base;
 
 use Exception;
+use Smartling\ContentTypes\ContentTypeAttachment;
+use Smartling\ContentTypes\ContentTypeCategory;
+use Smartling\ContentTypes\ContentTypeNavigationMenu;
+use Smartling\ContentTypes\ContentTypePostTag;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\MenuItemEntity;
 use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
@@ -10,7 +14,7 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
-use Smartling\Helpers\EventParameters\ProcessRelatedTermParams;
+use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -52,7 +56,6 @@ class SmartlingCore extends SmartlingCoreAbstract
      * @param string           $contentType
      * @param array            $accumulator
      */
-    /*|||*/
     private function processRelatedTerm(SubmissionEntity $submission, $contentType, & $accumulator)
     {
         $this->getLogger()->debug(vsprintf('Searching for terms (%s) related to submission = \'%s\'.', [
@@ -60,37 +63,10 @@ class SmartlingCore extends SmartlingCoreAbstract
             $submission->getId(),
         ]));
 
-        $params = new ProcessRelatedTermParams($submission, $contentType, $accumulator);
+        $params = new ProcessRelatedContentParams($submission, $contentType, $accumulator);
 
-        do_action(ExportedAPI::ACTION_SMARTLING_PROCESSOR_RELATED_TERM, $params);
-        /*
-                if (WordpressContentTypeHelper::CONTENT_TYPE_WIDGET !== $submission->getContentType()
-                    && in_array($contentType, WordpressContentTypeHelper::getSupportedTaxonomyTypes())
-                    && WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY !== $submission->getContentType()
-                ) {
-                    $terms = $this->getCustomMenuHelper()->getTerms($submission, $contentType);
-                    if (0 < count($terms)) {
-                        foreach ($terms as $element) {
-                            $this->getLogger()
-                                ->debug(vsprintf('Sending for translation term = \'%s\' id = \'%s\' related to submission = \'%s\'.', [
-                                    $element->taxonomy,
-                                    $element->term_id,
-                                    $submission->getId(),
-                                ]));
+        do_action(ExportedAPI::ACTION_SMARTLING_PROCESSOR_RELATED_CONTENT, $params);
 
-                            $contentTranslationId = $this->translateAndGetTargetId(
-                                $element->taxonomy,
-                                $submission->getSourceBlogId(),
-                                $element->term_id,
-                                $submission->getTargetBlogId()
-                            );
-
-                            $accumulator[$contentType][] = $contentTranslationId;
-
-                        }
-                    }
-                }
-        */
     }
 
     /**
@@ -102,133 +78,9 @@ class SmartlingCore extends SmartlingCoreAbstract
      */
     private function processRelatedMenu(SubmissionEntity $submission, $contentType, &$accumulator)
     {
-        if (WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM === $contentType) {
-            $this->getLogger()->debug(vsprintf('Searching for menuItems related to submission = \'%s\'.', [
-                $submission->getId(),
-            ]));
+        $params = new ProcessRelatedContentParams($submission, $contentType, $accumulator);
 
-            $ids = $this->getCustomMenuHelper()
-                ->getMenuItems($submission->getSourceId(), $submission->getSourceBlogId());
-
-            $menuItemIds = [];
-
-            /** @var MenuItemEntity $menuItem */
-            foreach ($ids as $menuItemEntity) {
-
-                $menuItemIds[] = $menuItemEntity->getPK();
-
-                $this->getLogger()
-                    ->debug(vsprintf('Sending for translation entity = \'%s\' id = \'%s\' related to submission = \'%s\'.', [
-                        WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM,
-                        $menuItemEntity->getPK(),
-                        $submission->getId(),
-                    ]));
-
-                $menuItemSubmission = $this->getTranslationHelper()->tryPrepareRelatedContent(
-                    WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM,
-                    $submission->getSourceBlogId(),
-                    $menuItemEntity->getPK(),
-                    $submission->getTargetBlogId());
-
-
-
-                $originalMenuItemMeta = $this->getContentHelper()->readSourceMetadata($menuItemSubmission);
-
-                $originalMenuItemMeta = ArrayHelper::simplifyArray($originalMenuItemMeta);
-
-                if (in_array($originalMenuItemMeta['_menu_item_type'], ['taxonomy', 'post_type'])) {
-
-                    $originalRelatedObjectId =  (int)$originalMenuItemMeta['_menu_item_object_id'];
-                    $relatedContentType = $originalMenuItemMeta['_menu_item_object'];
-
-                    //Bootstrap::DebugPrint($menuItemSubmission->toArray(false), true);
-
-                    $this->getLogger()->debug(
-                        vsprintf(
-                            'Sending for translation object = \'%s\' id = \'%s\' related to \'%s\' related to submission = \'%s\'.',
-                            [
-                                $relatedContentType,
-                                $originalRelatedObjectId,
-                                WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM,
-                                $menuItemSubmission->getId(),
-                            ]
-                        )
-                    );
-
-                    $relatedObjectSubmission = $this->getTranslationHelper()->tryPrepareRelatedContent(
-                        $relatedContentType,
-                        $submission->getSourceBlogId(),
-                        $originalRelatedObjectId,
-                        $submission->getTargetBlogId()
-                    );
-
-                    $relatedObjectId = $relatedObjectSubmission->getTargetId();
-
-                    $originalMenuItemMeta['_menu_item_object_id'] = $relatedObjectId;
-
-                    $this->getContentHelper()->writeTargetMetadata($menuItemSubmission, $originalMenuItemMeta);
-                }
-
-                $accumulator[WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU][] = $menuItemSubmission->getTargetId();
-            }
-
-            $this->getCustomMenuHelper()->rebuildMenuHierarchy(
-                $submission->getSourceBlogId(),
-                $submission->getTargetBlogId(),
-                $menuItemIds
-            );
-        }
-    }
-
-    /**
-     * @param SubmissionEntity $submission
-     * @param string           $contentType
-     */
-    private function processMenuRelatedToWidget(SubmissionEntity $submission, $contentType)
-    {
-        if (WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU === $contentType &&
-            WordpressContentTypeHelper::CONTENT_TYPE_WIDGET === $submission->getContentType()
-        ) {
-            $this->getLogger()->debug(vsprintf('Searching for menu related to widget for submission = \'%s\'.', [
-                $submission->getId(),
-            ]));
-            $originalEntity = $this->getContentHelper()->readSourceContent($submission);
-
-            $_settings = $originalEntity->getSettings();
-
-            if (array_key_exists('nav_menu', $_settings)) {
-                $menuId = (int)$_settings['nav_menu'];
-            } else {
-                $menuId = 0;
-            }
-            /**
-             * @var WidgetEntity $originalEntity
-             */
-
-
-            if (0 !== $menuId) {
-
-                $this->getLogger()
-                    ->debug(vsprintf('Sending for translation menu related to widget id = \'%s\' related to submission = \'%s\'.', [
-                        $originalEntity->getPK(),
-                        $submission->getId(),
-                    ]));
-
-                $newMenuId = $this->translateAndGetTargetId(WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU, $submission->getSourceBlogId(), $menuId, $submission->getTargetBlogId());
-
-                /**
-                 * @var WidgetEntity $targetContent
-                 */
-                $targetContent = $this->getContentHelper()->readTargetContent($submission);
-
-                $settings = $targetContent->getSettings();
-                $settings['nav_menu'] = $newMenuId;
-                $targetContent->setSettings($settings);
-
-                $this->getContentHelper()->writeTargetContent($submission, $targetContent);
-            }
-
-        }
+        do_action(ExportedAPI::ACTION_SMARTLING_PROCESSOR_RELATED_CONTENT, $params);
     }
 
     /**
@@ -247,8 +99,8 @@ class SmartlingCore extends SmartlingCoreAbstract
         $originalEntity = $this->getContentHelper()->readSourceContent($submission);
         $relatedContentTypes = $originalEntity->getRelatedTypes();
         $accumulator = [
-            WordpressContentTypeHelper::CONTENT_TYPE_CATEGORY => [],
-            WordpressContentTypeHelper::CONTENT_TYPE_POST_TAG => [],
+            ContentTypeCategory::WP_CONTENT_TYPE => [],
+            ContentTypePostTag::WP_CONTENT_TYPE => [],
         ];
 
         try {
@@ -289,16 +141,11 @@ class SmartlingCore extends SmartlingCoreAbstract
                         $this->getLogger()
                             ->warning(vsprintf('An unhandled exception occurred while processing related menu for submission=%s', [$submission->getId()]));
                     }
-                    try {
-                        $this->processMenuRelatedToWidget($submission, $contentType);
-                    } catch (\Exception $e) {
-                        $this->getLogger()
-                            ->warning(vsprintf('An unhandled exception occurred while processing menu related to widget for submission=%s', [$submission->getId()]));
-                    }
+
                 }
             }
 
-            if ($submission->getContentType() !== WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU) {
+            if ($submission->getContentType() !== ContentTypeNavigationMenu::WP_CONTENT_TYPE) {
 
                 $this->getContentHelper()->ensureTarget($submission);
 
@@ -321,8 +168,11 @@ class SmartlingCore extends SmartlingCoreAbstract
 
                 $this->getContentHelper()->ensureRestoredBlogId();
             } else {
-                $this->getCustomMenuHelper()
-                    ->assignMenuItemsToMenu((int)$submission->getTargetId(), (int)$submission->getTargetBlogId(), $accumulator[WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU]);
+                $this->getCustomMenuHelper()->assignMenuItemsToMenu(
+                    (int)$submission->getTargetId(),
+                    (int)$submission->getTargetBlogId(),
+                    $accumulator[ContentTypeNavigationMenu::WP_CONTENT_TYPE]
+                );
             }
         } catch (BlogNotFoundException $e) {
             $message = vsprintf('Inconsistent multisite installation. %s', [$e->getMessage()]);
@@ -574,7 +424,7 @@ class SmartlingCore extends SmartlingCoreAbstract
                 $submission->getTargetId(),
             ]));
 
-        if (WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT !== $submission->getContentType()) {
+        if (ContentTypeAttachment::WP_CONTENT_TYPE !== $submission->getContentType()) {
             return;
         }
 

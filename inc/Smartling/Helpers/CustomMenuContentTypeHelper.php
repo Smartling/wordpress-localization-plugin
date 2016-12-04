@@ -3,6 +3,8 @@
 namespace Smartling\Helpers;
 
 use Psr\Log\LoggerInterface;
+use Smartling\ContentTypes\ContentTypeNavigationMenu;
+use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
@@ -124,7 +126,7 @@ class CustomMenuContentTypeHelper
             }
 
             foreach ($items as $item) {
-                wp_set_object_terms($item, [(int)$menuId], WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU);
+                wp_set_object_terms($item, [(int)$menuId], ContentTypeNavigationMenu::WP_CONTENT_TYPE);
             }
 
             if ($needBlogChange) {
@@ -147,7 +149,7 @@ class CustomMenuContentTypeHelper
         $options = [
             'order'                  => 'ASC',
             'orderby'                => 'menu_order',
-            'post_type'              => WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM,
+            'post_type'              => ContentTypeNavigationMenuItem::WP_CONTENT_TYPE,
             'post_status'            => 'publish',
             'output'                 => ARRAY_A,
             'output_key'             => 'menu_order',
@@ -166,7 +168,7 @@ class CustomMenuContentTypeHelper
 
             $items = wp_get_nav_menu_items($menuId, $options);
 
-            $mapper = $this->getContentIoFactory()->getMapper(WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM);
+            $mapper = $this->getContentIoFactory()->getMapper(ContentTypeNavigationMenuItem::WP_CONTENT_TYPE);
             foreach ($items as $item) {
                 $m = clone $mapper;
                 $ids[] = $m->get((int)$item->ID);
@@ -219,7 +221,7 @@ class CustomMenuContentTypeHelper
     public function rebuildMenuHierarchy($originalBlogId, $targetBlogId, array $items)
     {
         $this->getLogger()->debug(vsprintf('Rebuilding menu hierarchy for menuItems=[%s]', [implode(',', $items)]));
-        $contentType = WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM;
+        $contentType = ContentTypeNavigationMenuItem::WP_CONTENT_TYPE;
 
         foreach ($items as $menuItemId) {
             try {
@@ -373,7 +375,7 @@ class CustomMenuContentTypeHelper
         return $this->readMetaProperty(
             $blogId,
             $menuItemId,
-            WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM,
+            ContentTypeNavigationMenuItem::WP_CONTENT_TYPE,
             self::META_KEY_MENU_ITEM_PARENT
         );
     }
@@ -393,7 +395,7 @@ class CustomMenuContentTypeHelper
         $this->writeMetaProperty(
             $blogId,
             $menuItemId,
-            WordpressContentTypeHelper::CONTENT_TYPE_NAV_MENU_ITEM,
+            ContentTypeNavigationMenuItem::WP_CONTENT_TYPE,
             self::META_KEY_MENU_ITEM_PARENT,
             $value
         );

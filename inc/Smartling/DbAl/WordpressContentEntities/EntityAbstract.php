@@ -195,17 +195,20 @@ abstract class EntityAbstract
      */
     protected function validateContentType()
     {
-        if ($this instanceof VirtualEntityAbstract){
+        if ($this instanceof VirtualEntityAbstract) {
             return true;
-        } else if ($this->{$this->getContentTypeProperty()} !== $this->getType()){
-            $message = vsprintf('Requested content with invalid content-type, expected \'%s\', got \'%s\'.',[
-                $this->{$this->getContentTypeProperty()},
-                $this->getType(),
-            ]);
-            $this->getLogger()->debug($message);
-            return false;
         } else {
-            return true;
+            if ($this->{$this->getContentTypeProperty()} !== $this->getType()) {
+                $message = vsprintf('Requested content with invalid content-type, expected \'%s\', got \'%s\'.', [
+                    $this->{$this->getContentTypeProperty()},
+                    $this->getType(),
+                ]);
+                $this->getLogger()->debug($message);
+
+                return false;
+            } else {
+                return true;
+            }
         }
     }
 
@@ -282,7 +285,8 @@ abstract class EntityAbstract
         if (null === $entity) {
             $className = get_class($this);
 
-            $entity = new $className($this->getLogger());
+            $entity = new $className($this->getLogger(), $this->getType(), $this->getRelatedTypes());
+
         }
         foreach ($this->fields as $fieldName) {
             if (array_key_exists($fieldName, $arr)) {

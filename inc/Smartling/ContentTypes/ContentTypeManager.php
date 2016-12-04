@@ -14,22 +14,40 @@ class ContentTypeManager extends SmartlingFactoryAbstract
 
     private static $baseTypes = ['post', 'taxonomy', 'virtual'];
 
+    /**
+     * ContentTypeManager constructor.
+     *
+     * @param LoggerInterface $logger
+     */
     public function __construct(LoggerInterface $logger)
     {
         parent::__construct($logger);
         $this->setAllowDefault(false);
     }
 
+    /**
+     * @param ContentTypeInterface $descriptor
+     */
     public function addDescriptor(ContentTypeInterface $descriptor)
     {
         $this->registerHandler($descriptor->getSystemName(), $descriptor);
     }
 
+    /**
+     * @param string $systemName
+     *
+     * @return ContentTypeInterface
+     */
     public function getDescriptorByType($systemName)
     {
         return $this->getHandler($systemName);
     }
 
+    /**
+     * @param string $baseType
+     *
+     * @return ContentTypeInterface[]
+     */
     public function getDescriptorsByBaseType($baseType)
     {
         $output = [];
@@ -62,5 +80,23 @@ class ContentTypeManager extends SmartlingFactoryAbstract
     public function getRegisteredContentTypes()
     {
         return array_keys($this->getCollection());
+    }
+
+    public function getRestrictedForBulkSubmit()
+    {
+        $output = [];
+
+
+            foreach ($this->getCollection() as $descriptor) {
+                /**
+                 * @var ContentTypeInterface $descriptor
+                 */
+                if (false === $descriptor->getVisibility()['bulkSubmit']) {
+                    $output[] = $descriptor->getSystemName();
+                }
+            }
+
+
+        return $output;
     }
 }

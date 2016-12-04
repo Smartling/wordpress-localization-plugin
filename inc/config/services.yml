@@ -64,20 +64,14 @@ services:
       - [ "setContentSerializationHelper", [ "@content-serialization.helper" ] ]
 
 
-  wrapper.widget:
-    class: Smartling\DbAl\WordpressContentEntities\WidgetEntity
-    arguments:
-      - "@logger"
+
 
   wrapper.entity.menu:
     class: Smartling\DbAl\WordpressContentEntities\MenuEntity
     arguments:
       - "@logger"
 
-  wrapper.entity.menuitem:
-      class: Smartling\DbAl\WordpressContentEntities\MenuItemEntity
-      arguments:
-        - "@logger"
+
 
 
 
@@ -96,20 +90,9 @@ services:
     arguments:
       - "@logger"
 
-  wrapper.entity.category:
-    class: Smartling\DbAl\WordpressContentEntities\CategoryEntity
-    arguments:
-      - "@logger"
 
-  wrapper.entity.tag:
-    class: Smartling\DbAl\WordpressContentEntities\TagEntity
-    arguments:
-      - "@logger"
 
-  wrapper.entity.attachment:
-      class: Smartling\DbAl\WordpressContentEntities\AttachmentEntity
-      arguments:
-        - "@logger"
+
 
   factory.contentIO:
     class: Smartling\Processors\ContentEntitiesIOFactory
@@ -117,15 +100,13 @@ services:
       - "@logger"
     calls:
       - [ "registerHandler", ["nav_menu", "@wrapper.entity.menu"]]
-      - [ "registerHandler", ["nav_menu_item", "@wrapper.entity.menuitem"]]
-      - [ "registerHandler", ["category", "@wrapper.entity.category"]]
-      - [ "registerHandler", ["post_tag", "@wrapper.entity.tag"]]
+      ##- [ "registerHandler", ["nav_menu_item", "@wrapper.entity.menuitem"]]
+
+
       - [ "registerHandler", ["policy", "@wrapper.entity.ext.policy"]]
       - [ "registerHandler", ["partner", "@wrapper.entity.ext.partner"]]
       - [ "registerHandler", ["testimonial", "@wrapper.entity.ext.testimonial"]]
-      - [ "registerHandler", ["theme_widget", "@wrapper.widget"]]
-      - [ "registerHandler", ["attachment", "@wrapper.entity.attachment"]]
-
+     ##ß - [ "registerHandler", ["theme_widget", "@wrapper.widget"]]
 
 
   manager.submission:
@@ -193,8 +174,6 @@ services:
       - [ "setConnector", [ "@multilang.proxy" ]]
       - [ "setSiteHelper", [ "@site.helper" ]]
 
-
-
   wp.i18n:
     class: Smartling\WP\i18n
     arguments:
@@ -234,8 +213,6 @@ services:
     calls:
       - [ "setQueue", [ "@queue.db" ] ]
 
-
-
   wp.ext.partner:
     class: Smartling\WP\Controller\PartnerWidgetController
     arguments:
@@ -271,18 +248,6 @@ services:
       - "@site.cache"
     calls:
       - [ "setDetectChangesHelper" , [ "@detect-changes.helper" ] ]
-
-  wp.taxonomy:
-      class: Smartling\WP\Controller\TaxonomyWidgetController
-      arguments:
-        - "@logger"
-        - "@multilang.proxy"
-        - "@plugin.info"
-        - "@entity.helper"
-        - "@manager.submission"
-        - "@site.cache"
-      calls:
-        - [ "setDetectChangesHelper" , [ "@detect-changes.helper" ] ]
 
   wp.checkStatus:
       class: Smartling\WP\Controller\CheckStatusController
@@ -324,31 +289,12 @@ services:
   default.meta-field-processor:
     class: Smartling\Helpers\MetaFieldProcessor\DefaultMetaFieldProcessor
 
-  referenced-content.category-parent.meta-field-processor:
-    class: Smartling\Helpers\MetaFieldProcessor\ReferencedContentProcessor
-    arguments:
-      - "@logger"
-      - "@translation.helper"
-      - "^(parent)$"
-      - "category"
-    calls:
-      - [ "setContentHelper", [ "@content.helper" ]]
-
-  referenced-file.meta-field-processor:
-    class: Smartling\Helpers\MetaFieldProcessor\ReferencedFileFieldProcessor
-    arguments:
-      - "@logger"
-      - "@translation.helper"
-      - "_thumbnail_id"
-
   meta-field.processor.manager:
     class: Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager
     arguments:
       - "@logger"
     calls:
       - [ "setDefaultHandler", [ "@default.meta-field-processor" ] ]
-      - [ "registerProcessor", [ "@referenced-file.meta-field-processor" ] ]
-      - [ "registerProcessor", [ "@referenced-content.category-parent.meta-field-processor" ] ]
 
   service.side-removal-handler:
     class: Smartling\Services\BlogRemovalHandler

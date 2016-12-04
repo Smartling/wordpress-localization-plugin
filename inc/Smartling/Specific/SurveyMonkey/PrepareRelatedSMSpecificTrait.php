@@ -2,6 +2,7 @@
 
 namespace Smartling\Specific\SurveyMonkey;
 
+use Smartling\ContentTypes\ContentTypeAttachment;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -22,7 +23,7 @@ trait PrepareRelatedSMSpecificTrait
     private function processMediaAttachedToWidgetSM(SubmissionEntity $submission, $relatedContentType)
     {
         if (
-            WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT === $relatedContentType
+            ContentTypeAttachment::WP_CONTENT_TYPE === $relatedContentType
             && WordpressContentTypeHelper::CONTENT_TYPE_WIDGET === $submission->getContentType()
         ) {
             $widgetSettings = $this->getContentHelper()->readSourceContent($submission)
@@ -30,7 +31,7 @@ trait PrepareRelatedSMSpecificTrait
 
             if (array_key_exists('attachment_id', $widgetSettings)) {
                 $newMediaId = $this->translateAndGetTargetId(
-                    WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT,
+                    ContentTypeAttachment::WP_CONTENT_TYPE,
                     $submission->getSourceBlogId(),
                     (int)$widgetSettings['attachment_id'],
                     $submission->getTargetBlogId()

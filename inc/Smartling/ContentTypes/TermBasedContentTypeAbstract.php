@@ -7,7 +7,7 @@ use Smartling\Helpers\WordpressFunctionProxyHelper;
  * Class PostBasedContentTypeAbstract
  * @package Smartling\ContentTypes
  */
-abstract class PostBasedContentTypeAbstract extends ContentTypeAbstract
+abstract class TermBasedContentTypeAbstract extends ContentTypeAbstract
 {
     /**
      * Wordpress name of content-type, e.g.: post, page, post-tag
@@ -15,7 +15,7 @@ abstract class PostBasedContentTypeAbstract extends ContentTypeAbstract
      */
     public function getSystemName()
     {
-        return 'post';
+        return 'term';
     }
 
     /**
@@ -24,7 +24,7 @@ abstract class PostBasedContentTypeAbstract extends ContentTypeAbstract
      */
     public function getBaseType()
     {
-        return 'post';
+        return 'taxonomy';
     }
 
     /**
@@ -33,7 +33,7 @@ abstract class PostBasedContentTypeAbstract extends ContentTypeAbstract
      */
     public function getLabel()
     {
-        $result = WordpressFunctionProxyHelper::getPostTypes(['name' => $this->getSystemName()], 'objects');
+        $result = WordpressFunctionProxyHelper::getTaxonomies(['name' => $this->getSystemName()], 'objects');
 
         if (0 < count($result) && array_key_exists($this->getSystemName(), $result)) {
             return $result[$this->getSystemName()]->label;
@@ -56,11 +56,10 @@ abstract class PostBasedContentTypeAbstract extends ContentTypeAbstract
         ];
     }
 
-
     /**
      * @return bool
      */
-    public function isPost()
+    public function isTaxonomy()
     {
         return true;
     }

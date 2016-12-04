@@ -5,7 +5,7 @@ use InvalidArgumentException;
 use Smartling\Bootstrap;
 
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
-use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityAbstract;
+use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
 use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
 
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
@@ -113,7 +113,7 @@ class FileUriHelper
             $siteHelper->switchBlogId($submission->getSourceBlogId());
         }
 
-        if ($ioWrapper instanceof TaxonomyEntityAbstract) {
+        if ($ioWrapper instanceof TaxonomyEntityStd) {
             /* term-based content */
             $permalink = self::preparePermalink(get_term_link($submission->getSourceId()), $submission);
         } elseif ($ioWrapper instanceof PostEntityStd) {

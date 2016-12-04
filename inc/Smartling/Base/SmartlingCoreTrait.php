@@ -3,6 +3,7 @@
 namespace Smartling\Base;
 
 use Smartling\Bootstrap;
+use Smartling\ContentTypes\ContentTypeAttachment;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\SmartlingWpDataIntegrityException;
 use Smartling\Helpers\ArrayHelper;
@@ -153,7 +154,7 @@ trait SmartlingCoreTrait
                 )
             );
 
-        if (WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT === $submission->getContentType()) {
+        if (ContentTypeAttachment::WP_CONTENT_TYPE === $submission->getContentType()) {
             $fileData = $this->getAttachmentFileInfoBySubmission($submission);
             $sourceFileFsPath = $fileData['source_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
             $targetFileFsPath = $fileData['target_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
@@ -191,7 +192,7 @@ trait SmartlingCoreTrait
 
         $this->getMultilangProxy()->linkObjects($submission);
 
-        if (WordpressContentTypeHelper::CONTENT_TYPE_MEDIA_ATTACHMENT === $submission->getContentType()) {
+        if (ContentTypeAttachment::WP_CONTENT_TYPE === $submission->getContentType()) {
             do_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, $submission);
         }
 
