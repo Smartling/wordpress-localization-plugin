@@ -442,7 +442,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
     {
         $controlName = 'content-type';
 
-        $types = $this->getActiveContentTypes($this->entityHelper->getSiteHelper());
+        $types = $this->getActiveContentTypes($this->entityHelper->getSiteHelper(), 'bulkSubmit');
 
         $restrictedTypes = WordpressContentTypeHelper::getTypesRestrictedToBulkSubmit();
 

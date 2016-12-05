@@ -486,7 +486,7 @@ class SubmissionTableWidget extends SmartlingListTable
     {
         $controlName = 'content-type';
 
-        $types = $this->getActiveContentTypes($this->entityHelper->getSiteHelper());
+        $types = $this->getActiveContentTypes($this->entityHelper->getSiteHelper(), 'submissionBoard');
 
         // add 'Any' to turn off filter
         $types = array_merge(['any' => __('Any')], $types);

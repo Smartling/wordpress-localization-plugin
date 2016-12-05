@@ -2,6 +2,7 @@
 
 namespace Smartling\ContentTypes;
 
+use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;

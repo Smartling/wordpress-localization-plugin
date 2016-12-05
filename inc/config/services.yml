@@ -63,18 +63,6 @@ services:
       - [ "setFieldsFilter", [ "@fields-filter.helper" ] ]
       - [ "setContentSerializationHelper", [ "@content-serialization.helper" ] ]
 
-
-
-
-  wrapper.entity.menu:
-    class: Smartling\DbAl\WordpressContentEntities\MenuEntity
-    arguments:
-      - "@logger"
-
-
-
-
-
   wrapper.entity.ext.partner:
     class: Smartling\DbAl\WordpressContentEntities\PartnerEntity
     arguments:
@@ -90,24 +78,14 @@ services:
     arguments:
       - "@logger"
 
-
-
-
-
   factory.contentIO:
     class: Smartling\Processors\ContentEntitiesIOFactory
     arguments:
       - "@logger"
     calls:
-      - [ "registerHandler", ["nav_menu", "@wrapper.entity.menu"]]
-      ##- [ "registerHandler", ["nav_menu_item", "@wrapper.entity.menuitem"]]
-
-
       - [ "registerHandler", ["policy", "@wrapper.entity.ext.policy"]]
       - [ "registerHandler", ["partner", "@wrapper.entity.ext.partner"]]
       - [ "registerHandler", ["testimonial", "@wrapper.entity.ext.testimonial"]]
-     ##ß - [ "registerHandler", ["theme_widget", "@wrapper.widget"]]
-
 
   manager.submission:
     class: Smartling\Submissions\SubmissionManager
