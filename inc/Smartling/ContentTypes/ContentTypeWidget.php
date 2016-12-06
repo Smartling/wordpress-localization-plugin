@@ -93,7 +93,6 @@ class ContentTypeWidget extends ContentTypeAbstract
             ->addArgument([
                               ContentTypeNavigationMenu::WP_CONTENT_TYPE,
                               ContentTypeAttachment::WP_CONTENT_TYPE,
-                              WordpressContentTypeHelper::CONTENT_TYPE_POST_TESTIMONIAL,
                           ]);
 
         $di->get('factory.contentIO')->registerHandler($this->getSystemName(), $di->get($wrapperId));
