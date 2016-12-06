@@ -15,29 +15,6 @@ use Smartling\Exception\SmartlingNotSupportedContentException;
  */
 class WordpressContentTypeHelper
 {
-
-    /**
-     * 'term' based content type
-     */
-    const CONTENT_TYPE_TERM_POLICY_TYPE = 'policy_types';
-    /**
-     * 'post' based content type
-     */
-    const CONTENT_TYPE_POST_POLICY = 'policy';
-
-    /**
-     * 'post' based content type
-     */
-    const CONTENT_TYPE_POST_PARTNER = 'partner';
-
-    /**
-     * 'post' based content type
-     */
-    const CONTENT_TYPE_POST_TESTIMONIAL = 'testimonial';
-
-
-
-
     /**
      * Checks if Wordpress i10n function __ is registered
      * if not - throws an SmartlingDirectRunRuntimeException exception
@@ -51,23 +28,6 @@ class WordpressContentTypeHelper
             throw new SmartlingDirectRunRuntimeException($message);
         }
     }
-
-    /**
-     * Reverse map of Wordpress types to constants
-     *
-     * @var array
-     */
-    private static $_reverse_map = [
-
-
-        'policy'        => self::CONTENT_TYPE_POST_POLICY,
-        'partner'       => self::CONTENT_TYPE_POST_PARTNER,
-        'testimonial'   => self::CONTENT_TYPE_POST_TESTIMONIAL,
-
-
-
-
-    ];
 
     private static function getDynamicReverseMap()
     {
@@ -91,10 +51,10 @@ class WordpressContentTypeHelper
     {
         self::checkRuntimeState();
 
-        return array_merge(self::$_reverse_map, self::getDynamicReverseMap());
+        return self::getDynamicReverseMap();
     }
 
-    private static function getDymamicLabelMap()
+    private static function getDynamicLabelMap()
     {
         /**
          * @var ContentTypeManager $contentTypeManager
@@ -117,19 +77,7 @@ class WordpressContentTypeHelper
     {
         self::checkRuntimeState();
 
-
-
-        // has to be hardcoded because i10n parser must see direct calls of __(CONSTANT STRING)
-        return array_merge([
-            //self::CONTENT_TYPE_POST_POLICY      => __('Policy'),
-            //self::CONTENT_TYPE_POST_PARTNER     => __('Partner'),
-            //self::CONTENT_TYPE_POST_TESTIMONIAL => __('Testimonial'),
-
-
-
-
-
-        ], self::getDymamicLabelMap());
+        return self::getDynamicLabelMap();
     }
 
     public static function getTypesRestrictedToBulkSubmit()
@@ -160,8 +108,7 @@ class WordpressContentTypeHelper
             $dynamicallyRegisteredTaxonomies[]=$descriptor->getSystemName();
         }
 
-
-        return array_merge([],$dynamicallyRegisteredTaxonomies);
+        return $dynamicallyRegisteredTaxonomies;
     }
 
     /**
@@ -188,10 +135,6 @@ class WordpressContentTypeHelper
                 throw new SmartlingNotSupportedContentException(vsprintf('Content-type \'%s\' is not supported yet.',
                                                                          [$contentType]));
             }
-
-
-
-
         }
     }
 }

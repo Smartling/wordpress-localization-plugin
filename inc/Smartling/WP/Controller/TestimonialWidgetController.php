@@ -9,7 +9,7 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  *
  * @package Smartling\WP\Controller
  */
-class TestimonialWidgetController extends PostWidgetController
+class TestimonialBasedWidgetControllerStd extends PostBasedWidgetControllerStd
 {
 
     /**

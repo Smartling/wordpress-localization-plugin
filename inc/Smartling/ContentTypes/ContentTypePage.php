@@ -57,14 +57,17 @@ class ContentTypePage extends PostBasedContentTypeAbstract
         $di = $this->getContainerBuilder();
 
         $definition = $di
-            ->register('wp.page', 'Smartling\WP\Controller\PageWidgetController')
+            ->register('wp.page', 'Smartling\WP\Controller\PostBasedWidgetControllerStd')
             ->addArgument($di->getDefinition('logger'))
             ->addArgument($di->getDefinition('multilang.proxy'))
             ->addArgument($di->getDefinition('plugin.info'))
             ->addArgument($di->getDefinition('entity.helper'))
             ->addArgument($di->getDefinition('manager.submission'))
             ->addArgument($di->getDefinition('site.cache'))
-            ->addMethodCall('setDetectChangesHelper', [$di->getDefinition('detect-changes.helper')]);
+            ->addMethodCall('setDetectChangesHelper', [$di->getDefinition('detect-changes.helper')])
+            ->addMethodCall('setAbilityNeeded', ['edit_post'])
+            ->addMethodCall('setServedContentType', [$this->getSystemName()])
+            ->addMethodCall('setNoOriginalFound', [__('No original page found')]);
 
         $di->getDefinition('manager.register')->addMethodCall('addService', [$definition]);
     }

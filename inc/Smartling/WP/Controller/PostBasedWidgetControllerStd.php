@@ -22,9 +22,8 @@ use Smartling\WP\WPHookInterface;
  * Class PostWidgetController
  * @package Smartling\WP\Controller
  */
-class PostWidgetController extends WPAbstract implements WPHookInterface
+class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 {
-
     use DetectContentChangeTrait;
 
     const WIDGET_NAME = 'smartling_connector_widget';
@@ -39,7 +38,59 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
 
     protected $noOriginalFound = 'No original post found';
 
+    protected $abilityNeeded = 'edit_post';
+
+    /**
+     * @return string
+     */
+    public function getAbilityNeeded()
+    {
+        return $this->abilityNeeded;
+    }
+
+    /**
+     * @param string $abilityNeeded
+     */
+    public function setAbilityNeeded($abilityNeeded)
+    {
+        $this->abilityNeeded = $abilityNeeded;
+    }
+
+
+    /**
+     * @return string
+     */
+    public function getServedContentType()
+    {
+        return $this->servedContentType;
+    }
+
+    /**
+     * @param string $servedContentType
+     */
+    public function setServedContentType($servedContentType)
+    {
+        $this->servedContentType = $servedContentType;
+    }
+
+    /**
+     * @return string
+     */
+    public function getNoOriginalFound()
+    {
+        return $this->noOriginalFound;
+    }
+
+    /**
+     * @param string $noOriginalFound
+     */
+    public function setNoOriginalFound($noOriginalFound)
+    {
+        $this->noOriginalFound = $noOriginalFound;
+    }
+
     use CommonLogMessagesTrait;
+
 
     /**
      * @inheritdoc
@@ -185,7 +236,7 @@ class PostWidgetController extends WPAbstract implements WPHookInterface
      */
     protected function isAllowedToSave($post_id)
     {
-        return current_user_can('edit_post', $post_id);
+        return current_user_can($this->getAbilityNeeded(), $post_id);
     }
 
     /**

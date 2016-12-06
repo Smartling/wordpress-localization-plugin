@@ -2,7 +2,7 @@
 use Smartling\Helpers\StringHelper;
 use Smartling\Settings\TargetLocale;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\WP\Controller\PostWidgetController;
+use Smartling\WP\Controller\PostBasedWidgetControllerStd;
 use Smartling\WP\WPAbstract;
 
 /**
@@ -42,7 +42,7 @@ if (!empty($locales)) {
         <h3><?= $this->getWidgetHeader(); ?></h3>
         <?= WPAbstract::checkUncheckBlock(); ?>
         <?php
-        $nameKey = PostWidgetController::WIDGET_DATA_NAME;
+        $nameKey = PostBasedWidgetControllerStd::WIDGET_DATA_NAME;
 
         foreach ($locales as $locale) {
             $value = false;

@@ -56,14 +56,17 @@ class ContentTypePost extends PostBasedContentTypeAbstract
         $di = $this->getContainerBuilder();
 
         $definition = $di
-            ->register('wp.post', 'Smartling\WP\Controller\PostWidgetController')
+            ->register('wp.post', 'Smartling\WP\Controller\PostBasedWidgetControllerStd')
             ->addArgument($di->getDefinition('logger'))
             ->addArgument($di->getDefinition('multilang.proxy'))
             ->addArgument($di->getDefinition('plugin.info'))
             ->addArgument($di->getDefinition('entity.helper'))
             ->addArgument($di->getDefinition('manager.submission'))
             ->addArgument($di->getDefinition('site.cache'))
-            ->addMethodCall('setDetectChangesHelper', [$di->getDefinition('detect-changes.helper')]);
+            ->addMethodCall('setDetectChangesHelper', [$di->getDefinition('detect-changes.helper')])
+            ->addMethodCall('setAbilityNeeded', ['edit_post'])
+            ->addMethodCall('setServedContentType', [$this->getSystemName()])
+            ->addMethodCall('setNoOriginalFound', [__('No original post found')]);
 
         $di->getDefinition('manager.register')->addMethodCall('addService', [$definition]);
     }

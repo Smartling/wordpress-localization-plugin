@@ -8,17 +8,13 @@ use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ContentTypePostTag;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\MenuItemEntity;
-use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
-use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
-use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
-use Smartling\Specific\SurveyMonkey\PrepareRelatedSMSpecificTrait;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -30,7 +26,6 @@ class SmartlingCore extends SmartlingCoreAbstract
 
     use SmartlingCoreTrait;
 
-    use PrepareRelatedSMSpecificTrait;
 
     use SmartlingCoreExportApi;
 
@@ -41,7 +36,8 @@ class SmartlingCore extends SmartlingCoreAbstract
         add_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, [$this, 'sendForTranslationBySubmission']);
         add_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, [$this, 'downloadTranslationBySubmission',]);
         add_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, [$this, 'cloneWithoutTranslation']);
-        add_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, [$this, 'regenerateTargetThumbnailsBySubmission']);
+        add_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, [$this,
+                                                                         'regenerateTargetThumbnailsBySubmission']);
 
         add_filter(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, [$this, 'prepareTargetContent']);
     }
@@ -93,55 +89,25 @@ class SmartlingCore extends SmartlingCoreAbstract
         $this->getLogger()->info(vsprintf('Searching for related content for submission = \'%s\' for translation', [
             $submission->getId(),
         ]));
-
         $tagretContentId = $submission->getTargetId();
-
         $originalEntity = $this->getContentHelper()->readSourceContent($submission);
         $relatedContentTypes = $originalEntity->getRelatedTypes();
         $accumulator = [
             ContentTypeCategory::WP_CONTENT_TYPE => [],
-            ContentTypePostTag::WP_CONTENT_TYPE => [],
+            ContentTypePostTag::WP_CONTENT_TYPE  => [],
         ];
-
         try {
             if (!empty($relatedContentTypes)) {
                 foreach ($relatedContentTypes as $contentType) {
                     // SM Specific
                     try {
-                        $this->processMediaAttachedToWidgetSM($submission, $contentType);
+                        $params = new ProcessRelatedContentParams($submission, $contentType, $accumulator);
+                        do_action(ExportedAPI::ACTION_SMARTLING_PROCESSOR_RELATED_CONTENT, $params);
                     } catch (\Exception $e) {
-                        $this->getLogger()
-                            ->warning(vsprintf('An unhandled exception occurred while processing related media attachments for SM Widgets submission=%s', [$submission->getId()]));
+                        $this->getLogger()->warning(
+                            vsprintf('An unhandled exception occurred while processing related content for submission=%s', [$submission->getId()])
+                        );
                     }
-
-                    try {
-                        $this->processTestimonialAttachedToWidgetSM($submission, $contentType);
-                    } catch (\Exception $e) {
-                        $this->getLogger()
-                            ->warning(vsprintf('An unhandled exception occurred while processing related testimonial for SM Widgets submission=%s', [$submission->getId()]));
-                    }
-
-                    try {
-                        $this->processTestimonialsAttachedToWidgetSM($submission, $contentType);
-                    } catch (\Exception $e) {
-                        $this->getLogger()
-                            ->warning(vsprintf('An unhandled exception occurred while processing related testimonials for SM Widgets submission=%s', [$submission->getId()]));
-                    }
-
-                    //Standard
-                    try {
-                        $this->processRelatedTerm($submission, $contentType, $accumulator);
-                    } catch (\Exception $e) {
-                        $this->getLogger()
-                            ->warning(vsprintf('An unhandled exception occurred while processing related terms for submission=%s', [$submission->getId()]));
-                    }
-                    try {
-                        $this->processRelatedMenu($submission, $contentType, $accumulator);
-                    } catch (\Exception $e) {
-                        $this->getLogger()
-                            ->warning(vsprintf('An unhandled exception occurred while processing related menu for submission=%s', [$submission->getId()]));
-                    }
-
                 }
             }
 
@@ -149,8 +115,7 @@ class SmartlingCore extends SmartlingCoreAbstract
 
                 $this->getContentHelper()->ensureTarget($submission);
 
-                $this->getLogger()
-                    ->debug(vsprintf('Preparing to assign accumulator: %s', [var_export($accumulator, true)]));
+                $this->getLogger()->debug(vsprintf('Preparing to assign accumulator: %s', [var_export($accumulator, true)]));
 
                 foreach ($accumulator as $type => $ids) {
                     $this->getLogger()

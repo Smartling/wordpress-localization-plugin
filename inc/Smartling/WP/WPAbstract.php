@@ -51,6 +51,9 @@ abstract class WPAbstract
      */
     private $widgetHeader = '';
 
+    /**
+     * @var array
+     */
     private $viewData;
 
     /**

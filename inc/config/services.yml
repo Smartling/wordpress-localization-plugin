@@ -63,29 +63,11 @@ services:
       - [ "setFieldsFilter", [ "@fields-filter.helper" ] ]
       - [ "setContentSerializationHelper", [ "@content-serialization.helper" ] ]
 
-  wrapper.entity.ext.partner:
-    class: Smartling\DbAl\WordpressContentEntities\PartnerEntity
-    arguments:
-      - "@logger"
-
-  wrapper.entity.ext.testimonial:
-    class: Smartling\DbAl\WordpressContentEntities\TestimonialEntity
-    arguments:
-      - "@logger"
-
-  wrapper.entity.ext.policy:
-    class: Smartling\DbAl\WordpressContentEntities\PolicyEntity
-    arguments:
-      - "@logger"
 
   factory.contentIO:
     class: Smartling\Processors\ContentEntitiesIOFactory
     arguments:
       - "@logger"
-    calls:
-      - [ "registerHandler", ["policy", "@wrapper.entity.ext.policy"]]
-      - [ "registerHandler", ["partner", "@wrapper.entity.ext.partner"]]
-      - [ "registerHandler", ["testimonial", "@wrapper.entity.ext.testimonial"]]
 
   manager.submission:
     class: Smartling\Submissions\SubmissionManager
@@ -190,42 +172,6 @@ services:
       - "@site.cache"
     calls:
       - [ "setQueue", [ "@queue.db" ] ]
-
-  wp.ext.partner:
-    class: Smartling\WP\Controller\PartnerWidgetController
-    arguments:
-      - "@logger"
-      - "@multilang.proxy"
-      - "@plugin.info"
-      - "@entity.helper"
-      - "@manager.submission"
-      - "@site.cache"
-    calls:
-      - [ "setDetectChangesHelper" , [ "@detect-changes.helper" ] ]
-
-  wp.ext.testimonial:
-    class: Smartling\WP\Controller\TestimonialWidgetController
-    arguments:
-      - "@logger"
-      - "@multilang.proxy"
-      - "@plugin.info"
-      - "@entity.helper"
-      - "@manager.submission"
-      - "@site.cache"
-    calls:
-      - [ "setDetectChangesHelper" , [ "@detect-changes.helper" ] ]
-
-  wp.ext.policy:
-    class: Smartling\WP\Controller\PolicyWidgetController
-    arguments:
-      - "@logger"
-      - "@multilang.proxy"
-      - "@plugin.info"
-      - "@entity.helper"
-      - "@manager.submission"
-      - "@site.cache"
-    calls:
-      - [ "setDetectChangesHelper" , [ "@detect-changes.helper" ] ]
 
   wp.checkStatus:
       class: Smartling\WP\Controller\CheckStatusController
