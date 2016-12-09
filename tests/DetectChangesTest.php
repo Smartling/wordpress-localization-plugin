@@ -3,7 +3,9 @@
 namespace Smartling\Tests;
 
 use Smartling\Helpers\DetectChangesHelper;
+use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 use Smartling\Tests\Traits\DummyLoggerMock;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 use Smartling\Tests\Traits\SubmissionEntityMock;
@@ -52,7 +54,7 @@ class DetectChangesTest extends \PHPUnit_Framework_TestCase
             ->getMock();
 
         $mock->setLogger($this->getLogger());
-        
+
         $this->setDetectChangesHelperMock($mock);
     }
 
@@ -66,7 +68,8 @@ class DetectChangesTest extends \PHPUnit_Framework_TestCase
      */
     public function testCheckSubmissionHash(array $submissionFields, $needStatusChange, $newHash)
     {
-
+        WordpressContentTypeHelper::$internalTypes = ['post' => 'Post'];
+        WordpressFunctionsMockHelper::injectFunctionsMocks();
         $initialSubmission = SubmissionEntity::fromArray($submissionFields, $this->getLogger());
         $submission = SubmissionEntity::fromArray($submissionFields, $this->getLogger());
 
@@ -95,7 +98,7 @@ class DetectChangesTest extends \PHPUnit_Framework_TestCase
             self::assertEquals($initialSubmission->getStatus(), $processedSubmission->getStatus());
         }
     }
-    
+
     public function checkSubmissionHashDataProvider()
     {
         return [

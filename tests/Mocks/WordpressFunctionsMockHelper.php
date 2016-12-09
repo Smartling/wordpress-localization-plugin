@@ -295,10 +295,6 @@ namespace {
 }
 namespace Smartling\Tests\Mocks {
 
-    use Smartling\DbAl\MultiligualPressConnector;
-    use Smartling\Helpers\DateTimeHelper;
-    use Smartling\Settings\SettingsManager;
-
 
     class WordpressFunctionsMockHelper
     {

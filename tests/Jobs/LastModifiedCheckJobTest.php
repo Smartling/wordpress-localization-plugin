@@ -9,6 +9,7 @@ use Smartling\Queue\Queue;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 use Smartling\Tests\Traits\ApiWrapperMock;
 use Smartling\Tests\Traits\DateTimeBuilder;
 use Smartling\Tests\Traits\DbAlMock;
@@ -318,6 +319,7 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
      */
     public function runDataProvider()
     {
+        WordpressFunctionsMockHelper::injectFunctionsMocks();
         return [
             [
                 [

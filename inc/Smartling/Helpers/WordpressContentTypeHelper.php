@@ -43,6 +43,9 @@ class WordpressContentTypeHelper
 
         return $map;
     }
+
+    public static $internalTypes = [];
+
     /**
      * @return array
      * @throws SmartlingDirectRunRuntimeException
@@ -51,7 +54,7 @@ class WordpressContentTypeHelper
     {
         self::checkRuntimeState();
 
-        return self::getDynamicReverseMap();
+        return array_merge(self::$internalTypes, self::getDynamicReverseMap());
     }
 
     private static function getDynamicLabelMap()

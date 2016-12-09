@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests\Traits;
 
+use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -42,6 +43,8 @@ trait SubmissionEntityMock
      */
     private function getSerializedSubmission($fileUri, $locale, $lastModified = null, $completion = 0, $id = 1)
     {
+        WordpressContentTypeHelper::$internalTypes = ['post' => 'Post'];
+
         return [
             'id'                     => $id,
             'source_title'           => 'A',
