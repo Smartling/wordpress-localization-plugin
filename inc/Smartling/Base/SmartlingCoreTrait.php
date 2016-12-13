@@ -23,24 +23,6 @@ trait SmartlingCoreTrait
     use SmartlingCoreDownloadTrait;
 
     /**
-     * Sends Entity for translation and returns ID of linked entity in target blog
-     *
-     * @param string $contentType
-     * @param int    $sourceBlog
-     * @param int    $sourceId
-     * @param int    $targetBlog
-     *
-     * @return int
-     */
-    private function translateAndGetTargetId($contentType, $sourceBlog, $sourceId, $targetBlog)
-    {
-        $submission = $this->getTranslationHelper()
-            ->tryPrepareRelatedContent($contentType, $sourceBlog, $sourceId, $targetBlog);
-
-        return $submission->getTargetId();
-    }
-
-    /**
      * @param SubmissionEntity $submission
      *
      * @throws \Smartling\Exception\SmartlingConfigException

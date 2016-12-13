@@ -4,6 +4,7 @@ namespace Smartling\Helpers;
 use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\Exception\EntityNotFoundException;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -165,11 +166,15 @@ class SubmissionCleanupHelper implements WPHookInterface
         }
 
         remove_action('before_delete_post', [$this, 'beforeDeletePostHandler']);
+        try {
+            $currentBlogId = $this->getSiteHelper()->getCurrentBlogId();
+            $this->getLogger()->debug(vsprintf('Post id=%s is going to be deleted in blog=%s', [$postId,
+                                                                                                $currentBlogId]));
+            $contentType = $this->getIoWrapper()->getMapper('post')->get($postId)->getPostType();
+            $this->lookForSubmissions($contentType, $currentBlogId, (int)$postId);
+        } catch (EntityNotFoundException $e) {
 
-        $currentBlogId = $this->getSiteHelper()->getCurrentBlogId();
-        $this->getLogger()->debug(vsprintf('Post id=%s is going to be deleted in blog=%s', [$postId, $currentBlogId]));
-        $contentType = $this->getIoWrapper()->getMapper('post')->get($postId)->getPostType();
-        $this->lookForSubmissions($contentType, $currentBlogId, (int)$postId);
+        }
     }
 
     /**
@@ -237,16 +242,7 @@ class SubmissionCleanupHelper implements WPHookInterface
         if (0 < count($submissions)) {
             $this->getLogger()->debug(vsprintf('Found %d submissions', [count($submissions)]));
             foreach ($submissions as $submission) {
-                /*if ($submission->getSourceBlogId() === $searchParams['source_blog_id']) {
-                    $this->getLogger()
-                        ->debug('Detected deletion of original content. Removing all translation submissions...', []);
-                    $cascadeSearchParams = ['file_uri' => $submission->getFileUri()];
-                    $this->processDeletion($cascadeSearchParams);
-
-                    return;
-                } else {*/
-                    $this->deleteSubmission($submission);
-                /*}*/
+                $this->deleteSubmission($submission);
             }
         } else {
             $this->getLogger()

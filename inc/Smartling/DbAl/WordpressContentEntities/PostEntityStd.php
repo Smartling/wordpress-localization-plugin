@@ -369,30 +369,15 @@ class PostEntityStd extends EntityAbstract
     public function setMetaTag($tagName, $tagValue, $unique = true)
     {
         $result = null;
-        if (metadata_exists($this->getType(), $this->ID, $tagName)) {
-            $this->logMessage(vsprintf('Updating tag %s with value \'%s\' for \'%s\' \'%s\'.', [
-                $tagName,
-                var_export($tagValue, true),
-                $this->post_type,
-                $this->ID,
-            ]));
+
+        if (false === ($result = add_post_meta($this->ID, $tagName, $tagValue, $unique))) {
             $result = update_post_meta($this->ID, $tagName, $tagValue);
-        } else {
-            $this->logMessage(vsprintf('Adding tag %s with value \'%s\' for \'%s\' \'%s\'.', [
-                $tagName,
-                var_export($tagValue, true),
-                $this->post_type,
-                $this->ID,
-            ]));
-            $this->getLogger()
-                ->info('adding tag ' . $tagName);
-            $result = add_post_meta($this->ID, $tagName, $tagValue, $unique);
         }
 
         if (false === $result) {
             if (false === $this->ensureMetaValue($tagName, $tagValue)) {
                 $message = vsprintf(
-                    'Error saving meta tag "%s" with value "%s" for "%s" "%s"',
+                    'Error saving meta tag "%s" with value "%s" for type="%s" id="%s"',
                     [
                         $tagName,
                         var_export($tagValue, true),

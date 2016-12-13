@@ -2,7 +2,6 @@
 
 namespace Smartling\ContentTypes;
 
-use Smartling\Helpers\WordpressContentTypeHelper;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**

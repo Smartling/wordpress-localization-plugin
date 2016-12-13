@@ -2,10 +2,7 @@
 
 namespace Smartling\ContentTypes;
 
-use Smartling\Base\ExportedAPI;
-use Smartling\Helpers\ArrayHelper;
-use Smartling\Helpers\ContentHelper;
-use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
+use Smartling\Helpers\CustomMenuContentTypeHelper;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
@@ -87,147 +84,44 @@ class ContentTypeNavigationMenuItem extends PostBasedContentTypeAbstract
         ];
     }
 
-    public function gatherRelatedContent(ProcessRelatedContentParams $params)
-    {
-        $helper = $this->getContainerBuilder()->get('helper.customMenu');
-        $contentHelper = $this->getContainerBuilder()->get('content.helper');
-
-        /**
-         * @var TranslationHelper $translationHelper
-         * @var ContentHelper $contentHelper
-         */
-
-        $translationHelper = $this->getContainerBuilder()->get('translation.helper');
-
-        if (self::WP_CONTENT_TYPE === $params->getContentType()) {
-            $this->getContainerBuilder()->get('logger')->debug(
-                vsprintf('Searching for menuItems related to submission = \'%s\'.', [
-                    $params->getSubmission()->getId(),
-                ])
-            );
-
-            $ids = $helper->getMenuItems(
-                $params->getSubmission()->getSourceId(),
-                $params->getSubmission()->getSourceBlogId()
-            );
-
-            $menuItemIds = [];
-
-            /** @var MenuItemEntity $menuItem */
-            foreach ($ids as $menuItemEntity) {
-
-                $menuItemIds[] = $menuItemEntity->getPK();
-
-                $this->getContainerBuilder()->get('logger')->debug(
-                    vsprintf('Sending for translation entity = \'%s\' id = \'%s\' related to submission = \'%s\'.', [
-                        self::WP_CONTENT_TYPE,
-                        $menuItemEntity->getPK(),
-                        $params->getSubmission()->getId(),
-                    ]));
-
-                $menuItemSubmission = $translationHelper->tryPrepareRelatedContent(
-                    self::WP_CONTENT_TYPE,
-                    $params->getSubmission()->getSourceBlogId(),
-                    $menuItemEntity->getPK(),
-                    $params->getSubmission()->getTargetBlogId()
-                );
-
-                $originalMenuItemMeta = $contentHelper->readSourceMetadata($menuItemSubmission);
-                $originalMenuItemMeta = ArrayHelper::simplifyArray($originalMenuItemMeta);
-                if (in_array($originalMenuItemMeta['_menu_item_type'], ['taxonomy', 'post_type'])) {
-                    $originalRelatedObjectId = (int)$originalMenuItemMeta['_menu_item_object_id'];
-                    $relatedContentType = $originalMenuItemMeta['_menu_item_object'];
-                    $this->getContainerBuilder()->get('logger')->debug(
-                        vsprintf(
-                            'Sending for translation object = \'%s\' id = \'%s\' related to \'%s\' related to submission = \'%s\'.',
-                            [
-                                $relatedContentType,
-                                $originalRelatedObjectId,
-                                self::WP_CONTENT_TYPE,
-                                $menuItemSubmission->getId(),
-                            ]
-                        )
-                    );
-                    $relatedObjectSubmission = $translationHelper->tryPrepareRelatedContent(
-                        $relatedContentType,
-                        $params->getSubmission()->getSourceBlogId(),
-                        $originalRelatedObjectId,
-                        $params->getSubmission()->getTargetBlogId()
-                    );
-                    $relatedObjectId = $relatedObjectSubmission->getTargetId();
-                    $originalMenuItemMeta['_menu_item_object_id'] = $relatedObjectId;
-                    $contentHelper->writeTargetMetadata($menuItemSubmission, $originalMenuItemMeta);
-                }
-                $accumulator[ContentTypeNavigationMenu::WP_CONTENT_TYPE][] = $menuItemSubmission->getTargetId();
-            }
-            $helper->rebuildMenuHierarchy(
-                $params->getSubmission()->getSourceBlogId(),
-                $params->getSubmission()->getTargetBlogId(),
-                $menuItemIds
-            );
-        }
-
-        if (ContentTypeNavigationMenuItem::WP_CONTENT_TYPE === $params->getContentType() &&
-            ContentTypeWidget::WP_CONTENT_TYPE === $params->getSubmission()->getContentType())
-        {
-            $this->getContainerBuilder()->get('logger')
-                ->debug(vsprintf('Searching for menu related to widget for submission = \'%s\'.', [
-                $params->getSubmission()->getId(),
-            ]));
-
-            $originalEntity = $contentHelper->readSourceContent($params->getSubmission());
-
-            $_settings = $originalEntity->getSettings();
-
-            if (array_key_exists(ContentTypeNavigationMenu::WP_CONTENT_TYPE, $_settings)) {
-                $menuId = (int)$_settings[ContentTypeNavigationMenu::WP_CONTENT_TYPE];
-            } else {
-                $menuId = 0;
-            }
-            /**
-             * @var WidgetEntity $originalEntity
-             */
-
-            if (0 !== $menuId) {
-
-                $this->getContainerBuilder()->get('logger')->debug(
-                    vsprintf('Sending for translation menu related to widget id = \'%s\' related to submission = \'%s\'.', [
-                        $originalEntity->getPK(),
-                        $params->getSubmission()->getId(),
-                    ])
-                );
-
-                $relatedObjectSubmission = $translationHelper->tryPrepareRelatedContent(
-                    ContentTypeNavigationMenu::WP_CONTENT_TYPE,
-                    $params->getSubmission()->getSourceBlogId(),
-                    $menuId,
-                    $params->getSubmission()->getTargetBlogId()
-                );
-
-
-                $newMenuId = $relatedObjectSubmission->getTargetId();
-
-                /**
-                 * @var WidgetEntity $targetContent
-                 */
-                $targetContent = $this->getContentHelper()->readTargetContent($params->getSubmission());
-
-                $settings = $targetContent->getSettings();
-                $settings[ContentTypeNavigationMenu::WP_CONTENT_TYPE] = $newMenuId;
-                $targetContent->setSettings($settings);
-
-                $this->getContentHelper()->writeTargetContent($params->getSubmission(), $targetContent);
-            }
-
-        }
-    }
-
-
     /**
      * @return void
      */
     public function registerFilters()
     {
-        add_action(ExportedAPI::ACTION_SMARTLING_PROCESSOR_RELATED_CONTENT, [$this, 'gatherRelatedContent']);
+        $di = $this->getContainerBuilder();
+        $wrapperId = 'referenced-content.menu_item_parent';
+        $definition = $di->register($wrapperId, 'Smartling\Helpers\MetaFieldProcessor\ReferencedContentProcessor');
+        $definition
+            ->addArgument($di->getDefinition('logger'))
+            ->addArgument($di->getDefinition('translation.helper'))
+            ->addArgument(CustomMenuContentTypeHelper::META_KEY_MENU_ITEM_PARENT)
+            ->addArgument($this->getSystemName())
+            ->addMethodCall('setContentHelper', [$di->getDefinition('content.helper')]);
+
+        $di->get('meta-field.processor.manager')->registerProcessor($di->get($wrapperId));
+
+
+        $referenceWrapperId = 'referenced-content.menu_item_content';
+        $definition = $di->register($referenceWrapperId, 'Smartling\Helpers\MetaFieldProcessor\NavigationMenuItemProcessor');
+        $definition
+            ->addArgument($di->getDefinition('logger'))
+            ->addArgument($di->getDefinition('translation.helper'))
+            ->addArgument('^(_menu_item_object_id)$')
+            ->addArgument($this->getSystemName())
+            ->addMethodCall('setContentHelper', [$di->getDefinition('content.helper')]);
+
+        $di->get('meta-field.processor.manager')->registerProcessor($di->get($referenceWrapperId));
+
+
+        $cloneWrapperId = 'cloned-content.menu_item_meta';
+        $definition = $di->register($cloneWrapperId, 'Smartling\Helpers\MetaFieldProcessor\CloneValueFieldProcessor');
+        $definition
+            ->addArgument('^(_menu_item_object|_menu_item_classes|_menu_item_type)$')
+            ->addArgument($di->getDefinition('content.helper'))
+            ->addArgument($di->getDefinition('logger'));
+
+
+        $di->get('meta-field.processor.manager')->registerProcessor($di->get($cloneWrapperId));
     }
 }

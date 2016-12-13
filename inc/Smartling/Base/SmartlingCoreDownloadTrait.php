@@ -4,10 +4,14 @@ namespace Smartling\Base;
 
 use Exception;
 use Smartling\Bootstrap;
+use Smartling\ContentTypes\ContentTypeAttachment;
+use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\InvalidXMLException;
+use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\SiteHelper;
@@ -63,7 +67,8 @@ trait SmartlingCoreDownloadTrait
             $originalData = $this->readSourceContentWithMetadataAsArray($entity);
             $translatedFields = $this->getFieldsFilter()->processStringsAfterDecoding($translatedFields);
 
-            $translatedFields = $this->getFieldsFilter()->applyTranslatedValues($entity, $originalData, $translatedFields);
+            $translatedFields = $this->getFieldsFilter()
+                ->applyTranslatedValues($entity, $originalData, $translatedFields);
 
             $this->getLogger()
                 ->debug(vsprintf('Deserialized translated fields for submission id = \'%s\'. Dump: %s\'.',
@@ -88,9 +93,10 @@ trait SmartlingCoreDownloadTrait
                 /**
                  * @var ConfigurationProfileEntity $configurationProfile
                  */
-                $configurationProfile = $this->getSettingsManager()->getSingleSettingsProfile($entity->getSourceBlogId());
+                $configurationProfile = $this->getSettingsManager()
+                    ->getSingleSettingsProfile($entity->getSourceBlogId());
 
-                if ( 1 === $configurationProfile->getCleanMetadataOnDownload()){
+                if (1 === $configurationProfile->getCleanMetadataOnDownload()) {
                     $this->getContentHelper()->removeTargetMetadata($entity);
                 }
 
@@ -118,7 +124,66 @@ trait SmartlingCoreDownloadTrait
             $this->getSubmissionManager()->storeEntity($entity);
             /** @var SiteHelper $sh */
             $this->handleBadBlogId($entity);
+        } catch (SmartlingFileDownloadException $e) {
+            /**
+             * Even if there is no XML file we may need rebuild target metadata.
+             * May happen for attachments and menu items
+             */
+            if (0 < $entity->getTargetId() &&
+                in_array($entity->getContentType(), [ContentTypeNavigationMenuItem::WP_CONTENT_TYPE,
+                                                     ContentTypeAttachment::WP_CONTENT_TYPE], true)
+            ) {
+                $contentHelper = $this->getContentHelper();
+                /**
+                 * @var ContentHelper $contentHelper
+                 */
+                $currentSiteId = $contentHelper->getSiteHelper()->getCurrentSiteId();
+                $sourceMetadata = $contentHelper->readSourceMetadata($entity);
+                $sourceMetadata = ArrayHelper::simplifyArray($sourceMetadata);
+
+                $filteredMetadata = [];
+
+                foreach ($sourceMetadata as $key => $value) {
+                    try {
+                        $filteredMetadata[$key] =
+                            apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $key, $value, $entity);
+                    } catch (\Exception $ex) {
+                        $this->getLogger()->gebug(
+                            vsprintf(
+                                'An error occurred while processing field %s=\'%s\' of submission id=%s. Message: %s',
+                                [
+                                    $key,
+                                    $value,
+                                    $entity->getId(),
+                                    $ex->getMessage(),
+                                ]
+                            )
+                        );
+
+                        if ($contentHelper->getSiteHelper()->getCurrentSiteId() !== $currentSiteId) {
+                            $contentHelper->getSiteHelper()->resetBlog($currentSiteId);
+                        }
+                    }
+                }
+                $diff = array_diff_assoc($sourceMetadata, $filteredMetadata);
+                if (0 < count($diff)) {
+
+                    foreach ($diff as $k => & $v) {
+                        $v = [
+                            'old_value' => $v,
+                            'new_value' => $filteredMetadata[$k],
+                        ];
+
+                    }
+
+                    $this->getLogger()->debug(vsprintf('Updating metadata: %s', [var_export($diff, true)]));
+
+                    $contentHelper->writeTargetMetadata($entity, $filteredMetadata);
+                }
+
+            }
         } catch (Exception $e) {
+            Bootstrap::DebugPrint(get_class($e), true);
             $messages[] = $e->getMessage();
         }
 

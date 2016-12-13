@@ -6,7 +6,6 @@ use Smartling\ContentTypes\ContentTypeAttachment;
 use Smartling\ContentTypes\ContentTypeCategory;
 use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ContentTypePostTag;
-use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\MenuItemEntity;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDbException;
@@ -23,12 +22,8 @@ use Smartling\Submissions\SubmissionEntity;
  */
 class SmartlingCore extends SmartlingCoreAbstract
 {
-
     use SmartlingCoreTrait;
-
-
     use SmartlingCoreExportApi;
-
     use CommonLogMessagesTrait;
 
     public function __construct()
@@ -38,7 +33,6 @@ class SmartlingCore extends SmartlingCoreAbstract
         add_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, [$this, 'cloneWithoutTranslation']);
         add_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, [$this,
                                                                          'regenerateTargetThumbnailsBySubmission']);
-
         add_filter(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, [$this, 'prepareTargetContent']);
     }
 
@@ -46,38 +40,6 @@ class SmartlingCore extends SmartlingCoreAbstract
      * current mode to send data to Smartling
      */
     const SEND_MODE = self::SEND_MODE_FILE;
-
-    /**
-     * @param SubmissionEntity $submission
-     * @param string           $contentType
-     * @param array            $accumulator
-     */
-    private function processRelatedTerm(SubmissionEntity $submission, $contentType, & $accumulator)
-    {
-        $this->getLogger()->debug(vsprintf('Searching for terms (%s) related to submission = \'%s\'.', [
-            $contentType,
-            $submission->getId(),
-        ]));
-
-        $params = new ProcessRelatedContentParams($submission, $contentType, $accumulator);
-
-        do_action(ExportedAPI::ACTION_SMARTLING_PROCESSOR_RELATED_CONTENT, $params);
-
-    }
-
-    /**
-     * @param SubmissionEntity $submission
-     * @param string           $contentType
-     * @param array            $accumulator
-     *
-     * @throws BlogNotFoundException
-     */
-    private function processRelatedMenu(SubmissionEntity $submission, $contentType, &$accumulator)
-    {
-        $params = new ProcessRelatedContentParams($submission, $contentType, $accumulator);
-
-        do_action(ExportedAPI::ACTION_SMARTLING_PROCESSOR_RELATED_CONTENT, $params);
-    }
 
     /**
      * @param SubmissionEntity $submission
@@ -99,7 +61,6 @@ class SmartlingCore extends SmartlingCoreAbstract
         try {
             if (!empty($relatedContentTypes)) {
                 foreach ($relatedContentTypes as $contentType) {
-                    // SM Specific
                     try {
                         $params = new ProcessRelatedContentParams($submission, $contentType, $accumulator);
                         do_action(ExportedAPI::ACTION_SMARTLING_PROCESSOR_RELATED_CONTENT, $params);
@@ -112,11 +73,9 @@ class SmartlingCore extends SmartlingCoreAbstract
             }
 
             if ($submission->getContentType() !== ContentTypeNavigationMenu::WP_CONTENT_TYPE) {
-
                 $this->getContentHelper()->ensureTarget($submission);
-
-                $this->getLogger()->debug(vsprintf('Preparing to assign accumulator: %s', [var_export($accumulator, true)]));
-
+                $this->getLogger()
+                    ->debug(vsprintf('Preparing to assign accumulator: %s', [var_export($accumulator, true)]));
                 foreach ($accumulator as $type => $ids) {
                     $this->getLogger()
                         ->debug(vsprintf('Assigning term (type = \'%s\', ids = \'%s\') to content (type = \'%s\', id = \'%s\') on blog= \'%s\'.', [
@@ -128,9 +87,7 @@ class SmartlingCore extends SmartlingCoreAbstract
                         ]));
 
                     wp_set_post_terms($submission->getTargetId(), $ids, $type);
-
                 }
-
                 $this->getContentHelper()->ensureRestoredBlogId();
             } else {
                 $this->getCustomMenuHelper()->assignMenuItemsToMenu(
@@ -180,16 +137,6 @@ class SmartlingCore extends SmartlingCoreAbstract
         unlink($tmp_file);
 
         return $result;
-    }
-
-    /**
-     * @param SubmissionEntity $entity
-     *
-     * @return EntityAbstract
-     */
-    private function getContentIOWrapper(SubmissionEntity $entity)
-    {
-        return $this->getContentIoFactory()->getMapper($entity->getContentType());
     }
 
     /**

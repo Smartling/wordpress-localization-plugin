@@ -59,7 +59,7 @@ class ContentTypeCategory extends TermBasedContentTypeAbstract
         $definition
             ->addArgument($di->getDefinition('logger'))
             ->addArgument($di->getDefinition('translation.helper'))
-            ->addArgument('parent')
+            ->addArgument('^(parent)$')
             ->addArgument($this->getSystemName())
             ->addMethodCall('setContentHelper', [$di->getDefinition('content.helper')]);
 

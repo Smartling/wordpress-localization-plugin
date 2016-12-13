@@ -6,6 +6,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\AuthApi\AuthTokenProvider;
 use Smartling\Exception\SmartligFileDownloadException;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\File\FileApi;
@@ -212,7 +213,7 @@ class ApiWrapper implements ApiWrapperInterface
         } catch (\Exception $e) {
             $this->getLogger()
                 ->error($e->getMessage());
-            throw new SmartligFileDownloadException($e->getMessage());
+            throw new SmartlingFileDownloadException($e->getMessage());
 
         }
     }

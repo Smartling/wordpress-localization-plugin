@@ -5,17 +5,13 @@ namespace Smartling\Helpers;
 use Psr\Log\LoggerInterface;
 use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
+use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Exception\BlogNotFoundException;
-use Smartling\Exception\SmartlingDbException;
-use Smartling\Exception\SmartlingDirectRunRuntimeException;
-use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\Submissions\SubmissionManager;
 
 /**
  * Class CustomMenuContentTypeHelper
- *
  * @package Smartling\Helpers
  */
 class CustomMenuContentTypeHelper
@@ -40,11 +36,6 @@ class CustomMenuContentTypeHelper
      * @var SiteHelper
      */
     private $siteHelper;
-
-    /**
-     * @var SubmissionManager
-     */
-    private $submissionManager;
 
     /**
      * @return LoggerInterface
@@ -95,22 +86,6 @@ class CustomMenuContentTypeHelper
     }
 
     /**
-     * @return SubmissionManager
-     */
-    public function getSubmissionManager()
-    {
-        return $this->submissionManager;
-    }
-
-    /**
-     * @param SubmissionManager $submissionManager
-     */
-    public function setSubmissionManager($submissionManager)
-    {
-        $this->submissionManager = $submissionManager;
-    }
-
-    /**
      * @param int   $menuId
      * @param int   $blogId
      * @param int[] $items
@@ -141,7 +116,7 @@ class CustomMenuContentTypeHelper
      * @param int $menuId
      * @param int $blogId
      *
-     * @return \Smartling\DbAl\WordpressContentEntities\MenuItemEntity[]
+     * @return PostEntityStd[]
      * @throws BlogNotFoundException
      */
     public function getMenuItems($menuId, $blogId)
@@ -211,193 +186,5 @@ class CustomMenuContentTypeHelper
         return null !== $terms && is_array($terms) ? $terms : [];
     }
 
-    /**
-     * @param int   $originalBlogId
-     * @param int   $targetBlogId
-     * @param int[] $items
-     *
-     * @throws \Exception
-     */
-    public function rebuildMenuHierarchy($originalBlogId, $targetBlogId, array $items)
-    {
-        $this->getLogger()->debug(vsprintf('Rebuilding menu hierarchy for menuItems=[%s]', [implode(',', $items)]));
-        $contentType = ContentTypeNavigationMenuItem::WP_CONTENT_TYPE;
 
-        foreach ($items as $menuItemId) {
-            try {
-
-                $submission = $this->getSubmission($originalBlogId, $menuItemId, $targetBlogId, $contentType);
-
-                $originalMenuItemParentId = (int)$this->getMenuItemParentByMenuItemId($originalBlogId, $menuItemId);
-
-                if (0 === $originalMenuItemParentId) {
-                    $this->setMenuItemParentByMenuItemId($submission->getTargetBlogId(), $submission->getTargetId(), 0);
-                } else {
-                    $parentSubmission = $this->getSubmission(
-                        $originalBlogId,
-                        $originalMenuItemParentId,
-                        $targetBlogId,
-                        $contentType);
-
-                    if ($contentType === $parentSubmission->getContentType()) {
-                        $newParentId = $parentSubmission->getTargetId();
-
-                        $this->setMenuItemParentByMenuItemId(
-                            $parentSubmission->getTargetBlogId(),
-                            $submission->getTargetId(),
-                            $newParentId
-                        );
-                    }
-                }
-
-
-            } catch (\Exception $e) {
-                throw $e;
-            }
-        }
-    }
-
-    /**
-     * @param int    $originalBlog
-     * @param int    $originalId
-     * @param int    $targetBlog
-     * @param string $contentType
-     *
-     * @return SubmissionEntity
-     *
-     * @throws SmartlingDbException
-     */
-    private function getSubmission($originalBlog, $originalId, $targetBlog, $contentType)
-    {
-        $params = [
-            'source_blog_id' => $originalBlog,
-            'content_type'   => $contentType,
-            'source_id'      => $originalId,
-            'target_blog_id' => $targetBlog,
-        ];
-
-        $result = $this->getSubmissionManager()->find($params);
-
-        if (0 < count($result)) {
-            return ArrayHelper::first($result);
-        } else {
-            $message = vsprintf('No submissions found by request: %s', [var_export($params, true)]);
-            throw new SmartlingDbException($message);
-        }
-    }
-
-
-    /**
-     * @param int    $blogId
-     * @param int    $entityId
-     * @param string $contentType
-     * @param string $propertyName
-     *
-     * @return mixed
-     *
-     * @throws BlogNotFoundException
-     * @throws \InvalidArgumentException
-     * @throws SmartlingDirectRunRuntimeException
-     * @throws SmartlingInvalidFactoryArgumentException
-     */
-    private function readMetaProperty($blogId, $entityId, $contentType, $propertyName)
-    {
-        $needBlogChange = $blogId !== $this->getSiteHelper()->getCurrentBlogId();
-        if (true === $needBlogChange) {
-            $this->getSiteHelper()->switchBlogId($blogId);
-        }
-        $mapper = $this->getContentIoFactory()->getMapper($contentType);
-        $entity = $mapper->get($entityId);
-        $metadata = $entity->getMetadata();
-        if (true === $needBlogChange) {
-            $this->getSiteHelper()->restoreBlogId();
-        }
-        unset ($entity, $mapper);
-        if (array_key_exists($propertyName, $metadata)) {
-            $value = $metadata[$propertyName];
-            if (is_array($value)) {
-                $value = ArrayHelper::first($value);
-            }
-
-            return $value;
-        } else {
-            $message = vsprintf(
-                'meta_key=%s not found for content_type=%s id=%s in blog=%s',
-                [
-                    $propertyName,
-                    $contentType,
-                    $entityId,
-                    $blogId,
-                ]
-            );
-            throw new \InvalidArgumentException($message);
-        }
-    }
-
-    /**
-     * @param int    $blogId
-     * @param int    $entityId
-     * @param string $contentType
-     * @param string $propertyName
-     * @param mixed  $propertyValue
-     *
-     * @throws BlogNotFoundException
-     * @throws SmartlingInvalidFactoryArgumentException
-     * @throws SmartlingDirectRunRuntimeException
-     */
-    private function writeMetaProperty($blogId, $entityId, $contentType, $propertyName, $propertyValue)
-    {
-        $needBlogChange = $blogId !== $this->getSiteHelper()->getCurrentBlogId();
-        if (true === $needBlogChange) {
-            $this->getSiteHelper()->switchBlogId($blogId);
-        }
-        $mapper = $this->getContentIoFactory()->getMapper($contentType);
-        $entity = $mapper->get($entityId);
-        $entity->setMetaTag($propertyName, $propertyValue);
-        if (true === $needBlogChange) {
-            $this->getSiteHelper()->restoreBlogId();
-        }
-    }
-
-    /**
-     * @param $blogId
-     * @param $menuItemId
-     *
-     * @return int
-     *
-     * @throws BlogNotFoundException
-     * @throws SmartlingInvalidFactoryArgumentException
-     * @throws \InvalidArgumentException
-     * @throws SmartlingDirectRunRuntimeException
-     */
-    private function getMenuItemParentByMenuItemId($blogId, $menuItemId)
-    {
-        return $this->readMetaProperty(
-            $blogId,
-            $menuItemId,
-            ContentTypeNavigationMenuItem::WP_CONTENT_TYPE,
-            self::META_KEY_MENU_ITEM_PARENT
-        );
-    }
-
-    /**
-     * @param int   $blogId
-     * @param int   $menuItemId
-     * @param mixed $value
-     *
-     * @throws BlogNotFoundException
-     * @throws \InvalidArgumentException
-     * @throws SmartlingDirectRunRuntimeException
-     * @throws SmartlingInvalidFactoryArgumentException
-     */
-    private function setMenuItemParentByMenuItemId($blogId, $menuItemId, $value)
-    {
-        $this->writeMetaProperty(
-            $blogId,
-            $menuItemId,
-            ContentTypeNavigationMenuItem::WP_CONTENT_TYPE,
-            self::META_KEY_MENU_ITEM_PARENT,
-            $value
-        );
-    }
 }

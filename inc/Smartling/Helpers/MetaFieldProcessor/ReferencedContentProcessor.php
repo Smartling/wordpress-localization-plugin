@@ -3,12 +3,10 @@
 namespace Smartling\Helpers\MetaFieldProcessor;
 
 use Psr\Log\LoggerInterface;
-use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\TranslationHelper;
-use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -88,10 +86,6 @@ class ReferencedContentProcessor extends MetaFieldProcessorAbstract
 
         if (is_array($value)) {
             $value = ArrayHelper::first($value);
-        }
-
-        if (ContentTypeNavigationMenuItem::WP_CONTENT_TYPE === $submission->getContentType()) {
-            return $originalValue;
         }
 
         if (!IntegerParser::tryParseString($value, $value)) {
