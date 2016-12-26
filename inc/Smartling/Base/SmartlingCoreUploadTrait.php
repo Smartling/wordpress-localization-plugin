@@ -4,6 +4,7 @@ namespace Smartling\Base;
 use Exception;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Submissions\SubmissionEntity;
@@ -99,12 +100,89 @@ trait SmartlingCoreUploadTrait
     }
 
     /**
+     * Passes filters
+     *
+     * @param SubmissionEntity $submission
+     */
+    private function filterEntityFieldsBySubmission(SubmissionEntity $submission)
+    {
+        try {
+
+            $this->prepareRelatedSubmissions($submission);
+
+            $submission = apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $submission);
+            $fields = $this->readSourceContentWithMetadataAsArray($submission);
+            $this->prepareFieldProcessorValues($submission);
+            unset ($fields['entity']['ID'], $fields['entity']['term_id'], $fields['entity']['id']);
+            if (array_key_exists('entity', $fields) && ArrayHelper::notEmpty($fields['entity'])) {
+                $_entity = &$fields['entity'];
+                /**
+                 * @var array $_entity
+                 */
+                foreach ($_entity as $k => $v) {
+                    apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $k, $v, $submission);
+                }
+            }
+            $contentEntity = $this->getContentHelper()->readSourceContent($submission);
+            $params = new BeforeSerializeContentEventParameters($fields, $submission, $contentEntity, $fields['meta']);
+            do_action(ExportedAPI::EVENT_SMARTLING_BEFORE_SERIALIZE_CONTENT, $params);
+            $source = $params->getPreparedFields();
+            $this->prepareFieldProcessorValues($submission);
+            $this->getFieldsFilter()->processStringsBeforeEncoding($submission, $fields);
+
+        } catch (EntityNotFoundException $e) {
+            $this->getLogger()->error($e->getMessage());
+            $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent content.');
+        } catch (BlogNotFoundException $e) {
+            $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent blog.');
+            $this->handleBadBlogId($submission);
+        } catch (Exception $e) {
+            $this->getSubmissionManager()
+                ->setErrorMessage($submission, vsprintf('Error occurred: %s', [$e->getMessage()]));
+            $this->getLogger()->error($e->getMessage());
+        }
+    }
+
+    /**
+     * Processes source content of submissions and creates related submissions with status 'New'
+     *
+     * @param SubmissionEntity $submission
+     */
+    public function prepareRelatedContentBySubmission(SubmissionEntity $submission)
+    {
+        $this->getLogger()->debug(
+            vsprintf(
+                'Looking for related content for submission id = P= \'%s\' (blog = \'%s\', content = \'%s\', type = \'%s\').',
+                [
+                    $submission->getId(),
+                    $submission->getSourceBlogId(),
+                    $submission->getSourceId(),
+                    $submission->getContentType(),
+                ]
+            )
+        );
+
+        $submissions = $this->getSubmissionManager()->find([
+                                                               'status'   => [SubmissionEntity::SUBMISSION_STATUS_NEW],
+                                                               'file_uri' => [$submission->getFileUri()],
+                                                           ]);
+
+        foreach ($submissions as $_submission) {
+            $this->filterEntityFieldsBySubmission($_submission);
+        }
+
+
+    }
+
+    /**
      * @param SubmissionEntity $submission
      *
      * @return bool
      */
     public function sendForTranslationBySubmission(SubmissionEntity $submission)
     {
+        $this->prepareRelatedContentBySubmission($submission);
+
         $this->getLogger()->debug(
             vsprintf(
                 'Preparing to send submission id = \'%s\' (blog = \'%s\', content = \'%s\', type = \'%s\').',
@@ -149,7 +227,8 @@ trait SmartlingCoreUploadTrait
                             ]
                         )
                     );
-                $submission = $this->getSubmissionManager()->setErrorMessage($submission, 'Nothing is found for translation.');
+                $submission = $this->getSubmissionManager()
+                    ->setErrorMessage($submission, 'Nothing is found for translation.');
 
             } else {
                 $this->prepareFieldProcessorValues($submission);
@@ -162,14 +241,24 @@ trait SmartlingCoreUploadTrait
                      * Looking for other locales to send all at a time.
                      */
 
-                    $submissions = $this->getSubmissionManager()->find([
-                                                                           'status'   => [SubmissionEntity::SUBMISSION_STATUS_NEW],
-                                                                           'file_uri' => [$submission->getFileUri()],
-                                                                       ]);
+                    $submissions = $this->getSubmissionManager()->find(
+                        [
+                            'content_type' => $submission->getContentType(),
+                            'source_blog_id'=>$submission->getSourceBlogId(),
+                            'source_id'=>$submission->getSourceId(),
+                            'status'   => SubmissionEntity::SUBMISSION_STATUS_NEW,
+                            //'file_uri' => [$submission->getFileUri()],
+                        ]
+                    );
                     $locales = [];
 
                     foreach ($submissions as $_submission) {
-                        $locales[]=$this->getSettingsManager()->getSmartlingLocaleBySubmission($_submission);
+                        /**
+                         * @var SubmissionEntity $_submission
+                         */
+                        $locales[] = $this->getSettingsManager()->getSmartlingLocaleBySubmission($_submission);
+                        $_submission->getFileUri(); //need file_uri to be generated.
+                        $_submission->setSourceContentHash($submission->getSourceContentHash());
                     }
 
                     $result = $this->sendFile($submission, $xml, $locales);
@@ -183,7 +272,8 @@ trait SmartlingCoreUploadTrait
                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                 } catch (Exception $e) {
                     $this->getLogger()->error($e->getMessage());
-                    $this->getSubmissionManager()->setErrorMessage($submission, vsprintf('Error occurred: %s', [$e->getMessage()]));
+                    $this->getSubmissionManager()
+                        ->setErrorMessage($submission, vsprintf('Error occurred: %s', [$e->getMessage()]));
                 }
             }
 
