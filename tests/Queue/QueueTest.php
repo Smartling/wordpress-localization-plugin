@@ -204,7 +204,7 @@ class QueueTest extends \PHPUnit_Framework_TestCase
     {
         $db = $this->getDbal();
         $db->expects(self::any())->method('completeTableName')->withAnyParameters()->willReturn(Queue::getTableName());
-        $db->expects(self::any())->method('fetch')->with($expectedQuery, \ARRAY_A)->willReturn([]);
+        $db->expects(self::any())->method('fetch')->with($expectedQuery)->willReturn([]);
         $this->getQueue()->dequeue($queue);
     }
 
