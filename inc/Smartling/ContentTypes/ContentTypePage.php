@@ -35,7 +35,7 @@ class ContentTypePage extends PostBasedContentTypeAbstract
      */
     public static function register(ContainerBuilder $di, $manager = 'content-type-descriptor-manager')
     {
-        $descriptor = new self($di);
+        $descriptor = new static($di);
         $mgr = $di->get($manager);
         /**
          * @var \Smartling\ContentTypes\ContentTypeManager $mgr
