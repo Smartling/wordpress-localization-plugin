@@ -10,12 +10,17 @@ use Smartling\Helpers\WordpressFunctionProxyHelper;
 abstract class PostBasedContentTypeAbstract extends ContentTypeAbstract
 {
     /**
+     * The system name of Wordpress content type to make references safe.
+     */
+    const WP_CONTENT_TYPE = 'post';
+
+    /**
      * Wordpress name of content-type, e.g.: post, page, post-tag
      * @return string
      */
     public function getSystemName()
     {
-        return 'post';
+        return static::WP_CONTENT_TYPE;
     }
 
     /**

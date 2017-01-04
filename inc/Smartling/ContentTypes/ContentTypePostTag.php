@@ -15,11 +15,6 @@ class ContentTypePostTag extends TermBasedContentTypeAbstract
      */
     const WP_CONTENT_TYPE = 'post_tag';
 
-    public function getSystemName()
-    {
-        return self::WP_CONTENT_TYPE;
-    }
-
     /**
      * ContentTypePost constructor.
      *

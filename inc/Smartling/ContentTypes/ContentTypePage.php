@@ -15,11 +15,6 @@ class ContentTypePage extends PostBasedContentTypeAbstract
      */
     const WP_CONTENT_TYPE = 'page';
 
-    public function getSystemName()
-    {
-        return self::WP_CONTENT_TYPE;
-    }
-
     /**
      * ContentTypePost constructor.
      *

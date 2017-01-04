@@ -22,11 +22,6 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
      */
     const WP_CONTENT_TYPE = 'nav_menu';
 
-    public function getSystemName()
-    {
-        return self::WP_CONTENT_TYPE;
-    }
-
     /**
      * ContentTypePost constructor.
      *

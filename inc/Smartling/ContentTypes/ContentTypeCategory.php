@@ -15,11 +15,6 @@ class ContentTypeCategory extends TermBasedContentTypeAbstract
      */
     const WP_CONTENT_TYPE = 'category';
 
-    public function getSystemName()
-    {
-        return self::WP_CONTENT_TYPE;
-    }
-
     /**
      * @param ContainerBuilder $di
      * @param string           $manager
