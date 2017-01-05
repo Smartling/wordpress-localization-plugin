@@ -87,13 +87,13 @@ trait SmartlingCoreUploadTrait
             $this->getSubmissionManager()->storeEntity($submission);
         } catch (EntityNotFoundException $e) {
             $this->getLogger()->error($e->getMessage());
-            $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent content.');
+            $this->getSubmissionManager()->setErrorMessage($submission, 'Could not clone content because submission points to non existing content.');
         } catch (BlogNotFoundException $e) {
-            $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent blog.');
+            $this->getSubmissionManager()->setErrorMessage($submission, 'Could not clone content because submission points to non existing blog.');
             $this->handleBadBlogId($submission);
         } catch (Exception $e) {
             $this->getSubmissionManager()
-                ->setErrorMessage($submission, vsprintf('Error occurred: %s', [$e->getMessage()]));
+                ->setErrorMessage($submission, vsprintf('Could not clone because: %s', [$e->getMessage()]));
             $this->getLogger()->error($e->getMessage());
         }
     }
@@ -149,7 +149,7 @@ trait SmartlingCoreUploadTrait
                             ]
                         )
                     );
-                $submission = $this->getSubmissionManager()->setErrorMessage($submission, 'Nothing is found for translation.');
+                $submission = $this->getSubmissionManager()->setErrorMessage($submission, 'There is no original content for translation.');
 
             } else {
                 $this->prepareFieldProcessorValues($submission);
@@ -183,7 +183,7 @@ trait SmartlingCoreUploadTrait
                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                 } catch (Exception $e) {
                     $this->getLogger()->error($e->getMessage());
-                    $this->getSubmissionManager()->setErrorMessage($submission, vsprintf('Error occurred: %s', [$e->getMessage()]));
+                    $this->getSubmissionManager()->setErrorMessage($submission, vsprintf('Could not submit because: %s', [$e->getMessage()]));
                 }
             }
 
@@ -192,13 +192,13 @@ trait SmartlingCoreUploadTrait
             return $result;
         } catch (EntityNotFoundException $e) {
             $this->getLogger()->error($e->getMessage());
-            $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent content.');
+            $this->getSubmissionManager()->setErrorMessage($submission, 'Could not submit for translation because submission points to non existing content.');
         } catch (BlogNotFoundException $e) {
-            $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent blog.');
+            $this->getSubmissionManager()->setErrorMessage($submission, 'Could not submit for translation because submission points to non existing existent blog.');
             $this->handleBadBlogId($submission);
         } catch (Exception $e) {
             $this->getSubmissionManager()
-                ->setErrorMessage($submission, vsprintf('Error occurred: %s', [$e->getMessage()]));
+                ->setErrorMessage($submission, vsprintf('Could not submit because: %s', [$e->getMessage()]));
             $this->getLogger()->error($e->getMessage());
         }
     }
