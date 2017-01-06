@@ -136,7 +136,6 @@ class PostEntityStd extends EntityAbstract
     public function get($guid)
     {
         $post = get_post($guid, ARRAY_A);
-        $entity = null;
         if (null !== $post) {
             /**
              * Content loaded from database. Checking if used valid wrapper.
@@ -293,8 +292,9 @@ class PostEntityStd extends EntityAbstract
         $output = [];
 
         foreach ($posts as $post) {
-
-            $output[] = $this->get($post->ID);
+            // TODO : Remove this dirty workaround
+            $item = clone $this;
+            $output[] = $item->get($post->ID);
         }
         return $output;
     }
