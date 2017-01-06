@@ -60,9 +60,11 @@ Additional information on the Smartling Connector for WordPress can be found [th
 * Fixed custom types registration. Custom type was not registered properly if it derives from builtin ContenTypeXXX classes
 
 = 1.4.0 =
+* Changed standard filters. Reset filters for configuration profiles needed.
 * Added API to register custom content-types. Breaks backward compatibility with 1.3.x branch. Custom content-types registered in old way (plugin code modification) won't work anymore.
 * Minimum required PHP version changed to 5.5
 * Small other architecture improvements that simplify registering custom content-types.
+* Removed ReferencedPageProcessor, ReferencedCategoryProcessor filters
 
 = 1.3.7 =
 * Added ability to configure cron jobs TTL
