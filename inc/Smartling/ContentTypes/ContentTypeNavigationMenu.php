@@ -22,11 +22,6 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
      */
     const WP_CONTENT_TYPE = 'nav_menu';
 
-    public function getSystemName()
-    {
-        return self::WP_CONTENT_TYPE;
-    }
-
     /**
      * ContentTypePost constructor.
      *
@@ -47,7 +42,7 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
      */
     public static function register(ContainerBuilder $di, $manager = 'content-type-descriptor-manager')
     {
-        $descriptor = new self($di);
+        $descriptor = new static($di);
         $mgr = $di->get($manager);
         /**
          * @var \Smartling\ContentTypes\ContentTypeManager $mgr

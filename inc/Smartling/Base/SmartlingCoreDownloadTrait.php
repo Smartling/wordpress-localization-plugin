@@ -114,12 +114,12 @@ trait SmartlingCoreDownloadTrait
             $messages[] = $message;
         } catch (EntityNotFoundException $e) {
             $entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
-            $entity->setLastError('Submission references non existent content.');
+            $entity->setLastError('Could not apply translations because submission points to non existing content.');
             $this->getLogger()->error($e->getMessage());
             $this->getSubmissionManager()->storeEntity($entity);
         } catch (BlogNotFoundException $e) {
             $entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
-            $entity->setLastError('Submission references non existent blog.');
+            $entity->setLastError('Could not apply translations because submission points to non existing blog.');
             $this->getLogger()->error($e->getMessage());
             $this->getSubmissionManager()->storeEntity($entity);
             /** @var SiteHelper $sh */

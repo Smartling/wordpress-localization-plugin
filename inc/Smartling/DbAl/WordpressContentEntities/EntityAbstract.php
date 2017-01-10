@@ -256,11 +256,15 @@ abstract class EntityAbstract
      *
      * @return mixed
      */
+    // FIXME TODO : Method must be static or better moved out from this class
+    // It's not good idea to ask instence of Post\Tag class to return all objects
     abstract public function getAll($limit = '', $offset = 0, $orderBy = false, $order = false);
 
     /**
      * @return int
      */
+     // FIXME TODO : Method must be static or better moved out from this class
+     // It's not good idea to ask instence of Post\Tag class to return all objects
     abstract public function getTotal();
 
     /**
@@ -280,6 +284,12 @@ abstract class EntityAbstract
      *
      * @return EntityAbstract
      */
+    // TODO : current implementation confuses. It can updated current object
+    // or return new instance. It's not clear when read code where it's used.
+    // As result we already have bug because of it. Two ways:
+    // 1. Remove optional $entity. It always updates current object. It's your
+    // headake to clone object before
+    // 2. Make it static. If you need to update object, then pass $this here
     protected function resultToEntity(array $arr, $entity = null)
     {
         if (null === $entity) {

@@ -15,18 +15,13 @@ class ContentTypeCategory extends TermBasedContentTypeAbstract
      */
     const WP_CONTENT_TYPE = 'category';
 
-    public function getSystemName()
-    {
-        return self::WP_CONTENT_TYPE;
-    }
-
     /**
      * @param ContainerBuilder $di
      * @param string           $manager
      */
     public static function register(ContainerBuilder $di, $manager = 'content-type-descriptor-manager')
     {
-        $descriptor = new self($di);
+        $descriptor = new static($di);
         $mgr = $di->get($manager);
         /**
          * @var \Smartling\ContentTypes\ContentTypeManager $mgr
