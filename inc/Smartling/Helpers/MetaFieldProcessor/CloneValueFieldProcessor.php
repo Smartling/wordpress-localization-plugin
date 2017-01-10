@@ -43,7 +43,7 @@ class CloneValueFieldProcessor extends MetaFieldProcessorAbstract
     public function processFieldPostTranslation(SubmissionEntity $submission, $fieldName, $value)
     {
         $originalMetadata = $this->getContentHelper()->readSourceMetadata($submission);
-
+        $originalMetadata = ArrayHelper::simplifyArray($originalMetadata);
         $metaFieldName = str_replace('meta/','',$fieldName);
 
         if (array_key_exists($metaFieldName, $originalMetadata)) {

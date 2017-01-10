@@ -4,6 +4,7 @@ namespace Smartling\Base;
 use Exception;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Submissions\SubmissionEntity;
@@ -51,7 +52,7 @@ trait SmartlingCoreUploadTrait
     {
         $source = [
             'entity' => $this->getContentHelper()->readSourceContent($submission)->toArray(),
-            'meta'   => $this->getContentHelper()->readSourceMetadata($submission),
+            'meta'   => ArrayHelper::simplifyArray($this->getContentHelper()->readSourceMetadata($submission)),
         ];
 
         $source['meta'] = $source['meta'] ? : [];
