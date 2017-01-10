@@ -51,8 +51,6 @@ class NavigationMenuItemProcessor extends ReferencedContentProcessor
 
             $originalMetadata = $this->getContentHelper()->readSourceMetadata($submission);
 
-            $originalMetadata = ArrayHelper::simplifyArray($originalMetadata);
-
             if (array_key_exists('_menu_item_type', $originalMetadata) &&
                 in_array($originalMetadata['_menu_item_type'], ['taxonomy', 'post_type'], true)
             ) {

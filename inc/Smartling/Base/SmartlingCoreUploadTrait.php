@@ -52,7 +52,7 @@ trait SmartlingCoreUploadTrait
     {
         $source = [
             'entity' => $this->getContentHelper()->readSourceContent($submission)->toArray(),
-            'meta'   => ArrayHelper::simplifyArray($this->getContentHelper()->readSourceMetadata($submission)),
+            'meta'   => $this->getContentHelper()->readSourceMetadata($submission),
         ];
 
         $source['meta'] = $source['meta'] ? : [];

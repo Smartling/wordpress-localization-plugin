@@ -241,7 +241,6 @@ trait SmartlingCoreTrait
         $sourceSiteUploadInfo = $this->getUploadDirForSite($submission->getSourceBlogId());
         $targetSiteUploadInfo = $this->getUploadDirForSite($submission->getTargetBlogId());
         $sourceMetadata = $this->getContentHelper()->readSourceMetadata($submission);
-        $sourceMetadata = ArrayHelper::simplifyArray($sourceMetadata);
         if (array_key_exists('_wp_attached_file', $sourceMetadata) && ArrayHelper::notEmpty($sourceMetadata['_wp_attached_file'])) {
             $relativePath = ArrayHelper::first($sourceMetadata['_wp_attached_file']);
             $result = [

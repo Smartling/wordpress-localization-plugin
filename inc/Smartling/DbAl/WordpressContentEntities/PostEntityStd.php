@@ -6,6 +6,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\Exception\SmartlingDataUpdateException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\RawDbQueryHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\WordpressUserHelper;
 
 /**
@@ -156,13 +157,13 @@ class PostEntityStd extends EntityAbstract
      */
     public function getMetadata()
     {
-        $metadata = get_post_meta($this->ID);
+        $metadata = (new WordpressFunctionProxyHelper())->getPostMeta($this->ID);
 
         if ((is_array($metadata) && 0 === count($metadata)) || !is_array($metadata)) {
             $this->rawLogPostMetadata($this->ID);
         }
 
-        return $metadata;
+        return ArrayHelper::simplifyArray($metadata);
     }
 
     private function rawLogPostMetadata($postId)
@@ -296,6 +297,7 @@ class PostEntityStd extends EntityAbstract
             $item = clone $this;
             $output[] = $item->get($post->ID);
         }
+
         return $output;
     }
 
@@ -357,7 +359,7 @@ class PostEntityStd extends EntityAbstract
         $meta = $this->getMetadata();
 
         if (is_array($meta) && array_key_exists($key, $meta)) {
-            return $value == ArrayHelper::first($meta[$key]);
+            return $value == $meta[$key];
         } else {
             return false;
         }

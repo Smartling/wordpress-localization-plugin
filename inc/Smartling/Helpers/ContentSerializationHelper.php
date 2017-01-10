@@ -118,7 +118,7 @@ class ContentSerializationHelper
             'entity' => $this->getContentHelper()->readSourceContent($submission)->toArray(false),
             'meta'   => $this->getContentHelper()->readSourceMetadata($submission),
         ];
-        $source['meta'] = ArrayHelper::simplifyArray($source['meta']) ? : [];
+        $source['meta'] = $source['meta'] ? : [];
 
         return $source;
     }

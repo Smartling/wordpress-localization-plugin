@@ -139,7 +139,6 @@ trait SmartlingCoreDownloadTrait
                  */
                 $currentSiteId = $contentHelper->getSiteHelper()->getCurrentSiteId();
                 $sourceMetadata = $contentHelper->readSourceMetadata($entity);
-                $sourceMetadata = ArrayHelper::simplifyArray($sourceMetadata);
 
                 $filteredMetadata = [];
 
