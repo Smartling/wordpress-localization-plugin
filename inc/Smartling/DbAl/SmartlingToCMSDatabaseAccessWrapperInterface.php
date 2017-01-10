@@ -38,11 +38,12 @@ interface SmartlingToCMSDatabaseAccessWrapperInterface
     /**
      * Fetches data from database
      *
-     * @param $query
+     * @param string $query
+     * @param string $output \OBJECT || \ARRAY_A
      *
      * @return mixed
      */
-    function fetch($query);
+    function fetch($query, $output);
 
     /**
      * Escape string value

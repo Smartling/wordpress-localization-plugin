@@ -179,7 +179,7 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
                 'page'  => 1,
             ]);
 
-        $result = $this->getDbal()->fetch($query);
+        $result = $this->getDbal()->fetch($query, \ARRAY_A);
 
         if (!is_array($result)) {
             $message = vsprintf('Error while getting element from queue: %s', [
