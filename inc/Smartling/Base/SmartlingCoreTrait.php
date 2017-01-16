@@ -9,6 +9,7 @@ use Smartling\Exception\SmartlingWpDataIntegrityException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\AttachmentHelper;
 use Smartling\Helpers\ContentSerializationHelper;
+use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -241,8 +242,9 @@ trait SmartlingCoreTrait
         $sourceSiteUploadInfo = $this->getUploadDirForSite($submission->getSourceBlogId());
         $targetSiteUploadInfo = $this->getUploadDirForSite($submission->getTargetBlogId());
         $sourceMetadata = $this->getContentHelper()->readSourceMetadata($submission);
-        if (array_key_exists('_wp_attached_file', $sourceMetadata) && ArrayHelper::notEmpty($sourceMetadata['_wp_attached_file'])) {
-            $relativePath = ArrayHelper::first($sourceMetadata['_wp_attached_file']);
+
+        if (array_key_exists('_wp_attached_file', $sourceMetadata) && !StringHelper::isNullOrEmpty($sourceMetadata['_wp_attached_file'])) {
+            $relativePath = $sourceMetadata['_wp_attached_file'];
             $result = [
                 'uri'                => $info->guid,
                 'relative_path'      => $relativePath,

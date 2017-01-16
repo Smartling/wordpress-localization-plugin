@@ -182,7 +182,6 @@ trait SmartlingCoreDownloadTrait
 
             }
         } catch (Exception $e) {
-            Bootstrap::DebugPrint(get_class($e), true);
             $messages[] = $e->getMessage();
         }
 

@@ -259,7 +259,6 @@ trait SmartlingCoreUploadTrait
             $submission = $this->getSubmissionManager()->storeEntity($submission);
         } else {
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-            $submission->setLastError('');
         }
 
         return $this->getSubmissionManager()->storeEntity($submission);

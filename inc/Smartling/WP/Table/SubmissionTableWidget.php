@@ -244,7 +244,6 @@ class SubmissionTableWidget extends SmartlingListTable
                     case self::ACTION_UPLOAD:
                         foreach ($submissions as $submission) {
                             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                            $submission->setLastError('');
                             $this->manager->storeEntity($submission);
                         }
                         break;

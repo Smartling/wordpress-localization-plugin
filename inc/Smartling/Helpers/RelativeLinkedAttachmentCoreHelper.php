@@ -399,10 +399,10 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         if (1 === $images->length) {
             /** @var \DOMNode $node */
             $node = $images->item(0);
-            if ($node->hasAttributes() &&
-                $value = $node->attributes->getNamedItem($attribute) && $value instanceof \DOMNode
-            ) {
-                $value = $value->nodeValue;
+            if ($node->hasAttributes() && $value = $node->attributes->getNamedItem($attribute)) {
+                if (($value instanceof \DOMAttr)) {
+                    $value = $value->nodeValue;
+                }
             }
         }
 

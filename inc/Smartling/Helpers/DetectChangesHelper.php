@@ -164,9 +164,6 @@ class DetectChangesHelper
                     )
                 );
                 $submission->setStatus($newStatus);
-                $submission->setLastError('');
-
-
             }
         } else {
             $this->getLogger()->debug(

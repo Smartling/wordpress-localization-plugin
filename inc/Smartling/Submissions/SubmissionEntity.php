@@ -294,6 +294,16 @@ class SubmissionEntity extends SmartlingEntityAbstract
             throw new InvalidArgumentException($message);
         }
 
+        switch ($this->getStatus()) {
+            case self::SUBMISSION_STATUS_NEW:
+                $this->setLastError('');
+                break;
+            case self::SUBMISSION_STATUS_IN_PROGRESS:
+                $this->setOutdated(0);
+                break;
+            default:
+        }
+
         return $this;
     }
 
@@ -545,7 +555,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
      */
     public function getTargetId()
     {
-        return (int) $this->stateFields['target_id'];
+        return (int)$this->stateFields['target_id'];
     }
 
     /**
