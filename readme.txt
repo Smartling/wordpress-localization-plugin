@@ -2,8 +2,8 @@
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
-Tested up to: 4.7
-Stable tag: 1.4.1
+Tested up to: 4.7.1
+Stable tag: 1.4.2
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -29,7 +29,7 @@ Integration Features
 * Multilingual Press free plugin
 * PHP Version 5.5 or higher
 * PHP extensions:
- * `mb_string`
+ * `mbstring`
  * `curl`
  * `libxml`
  * `xml`
@@ -54,6 +54,10 @@ Additional information on the Smartling Connector for WordPress can be found [th
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 1.4.2 =
+* Fixed issue with possible metadata duplication if metadata contains serialized PHP array.
+* Fixed issue with detected attachments translation.
+
 = 1.4.1 =
 * Fixed UI issue on Bulk Submit screen for all post-based types. Duplicate of items were displayed
 * Updated error messages for submission Failed status. Added more details about root cause
