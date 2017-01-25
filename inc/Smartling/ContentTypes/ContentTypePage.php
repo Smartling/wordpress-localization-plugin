@@ -79,6 +79,7 @@ class ContentTypePage extends PostBasedContentTypeAbstract
         $definition
             ->addArgument($di->getDefinition('logger'))
             ->addArgument($this->getSystemName())
+            // Page doesn't have related types like Posts
             ->addArgument([]);
 
         $di->get('factory.contentIO')->registerHandler($this->getSystemName(), $di->get($wrapperId));

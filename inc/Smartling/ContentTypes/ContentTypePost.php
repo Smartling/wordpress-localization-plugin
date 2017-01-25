@@ -83,6 +83,7 @@ class ContentTypePost extends PostBasedContentTypeAbstract
         $definition
             ->addArgument($di->getDefinition('logger'))
             ->addArgument($this->getSystemName())
+            // Post has 2 related types: tags and category
             ->addArgument([ContentTypePostTag::WP_CONTENT_TYPE, ContentTypeCategory::WP_CONTENT_TYPE]);
 
         $di->get('factory.contentIO')->registerHandler($this->getSystemName(), $di->get($wrapperId));
