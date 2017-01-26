@@ -13,7 +13,10 @@ use Smartling\WP\WPHookInterface;
  */
 class ShortcodeHelper implements WPHookInterface
 {
-    const SMARTLING_SHORTCODE_MASK = '##';
+    const SMARTLING_SHORTCODE_MASK_OLD = '##';
+
+    const SMARTLING_SHORTCODE_MASK_S = '#sl-start#';
+    const SMARTLING_SHORTCODE_MASK_E = '#sl-end#';
 
     /**
      * Returns a regexp for masked shortcodes
@@ -21,7 +24,22 @@ class ShortcodeHelper implements WPHookInterface
      */
     public static function getShortcodeMaskRegexp()
     {
-        return str_replace('%s', self::SMARTLING_SHORTCODE_MASK, '(%s\[[^\]]+\]%s|%s\[[^\]]+\]|\[[^\]]+\]%s)');
+
+        $variants = [
+            '%s\[\/?[^\]]+\]%e',
+        ];
+
+        return str_replace(
+            [
+                '%s',
+                '%e',
+            ],
+            [
+                self::SMARTLING_SHORTCODE_MASK_S,
+                self::SMARTLING_SHORTCODE_MASK_E,
+            ],
+            ('(' . implode('|', $variants) . ')')
+        );
     }
 
     /**
@@ -146,7 +164,6 @@ class ShortcodeHelper implements WPHookInterface
     }
 
 
-
     /**
      * Registers wp hook handlers. Invoked by wordpress.
      * @return void
@@ -194,7 +211,8 @@ class ShortcodeHelper implements WPHookInterface
                     $tStruct[$attribute] = $value->value;
                 }
                 $tStruct['value'] = $cNode->nodeValue;
-                $this->addShortcodeAttribute($tStruct['shortcode'], $tStruct['name'], $tStruct['value'], $tStruct['hash']);
+                $this->addShortcodeAttribute($tStruct['shortcode'], $tStruct['name'], $tStruct['value'],
+                                             $tStruct['hash']);
                 $this->getLogger()->debug(
                     vsprintf(
                         'Found translation for shortcode = \'%s\' for attribute = \'%s\'.',
@@ -266,8 +284,10 @@ class ShortcodeHelper implements WPHookInterface
         $this->getLogger()->debug(vsprintf('Removing masking...', []));
         $node = $this->getNode();
         $string = $node->nodeValue;
-        $string = preg_replace(vsprintf('/%s\[/', [self::SMARTLING_SHORTCODE_MASK]), '[', $string);
-        $string = preg_replace(vsprintf('/\]%s/', [self::SMARTLING_SHORTCODE_MASK]), ']', $string);
+        $string = preg_replace(vsprintf('/%s\[/', [self::SMARTLING_SHORTCODE_MASK_S]), '[', $string);
+        $string = preg_replace(vsprintf('/\]%s/', [self::SMARTLING_SHORTCODE_MASK_E]), ']', $string);
+        $string = preg_replace(vsprintf('/\]%s/', [self::SMARTLING_SHORTCODE_MASK_OLD]), ']', $string);
+        $string = preg_replace(vsprintf('/%s\[/', [self::SMARTLING_SHORTCODE_MASK_OLD]), '[', $string);
         self::replaceCData($node, $string);
     }
 
@@ -351,6 +371,7 @@ class ShortcodeHelper implements WPHookInterface
         $this->setParams($params);
         $string = $params->getNode()->nodeValue;
         $detectedShortcodes = $this->getRegisteredShortcodes();
+
         $this->getLogger()->debug(
             vsprintf(
                 'Got string for translation looking for shortcodes: \'%s\'',
@@ -361,7 +382,8 @@ class ShortcodeHelper implements WPHookInterface
         );
         $this->replaceHandlerForMining($detectedShortcodes);
         $this->getLogger()->debug(vsprintf('Starting processing shortcodes...', []));
-        do_shortcode($string);
+        $string_m = do_shortcode($string);
+        self::replaceCData($params->getNode(), $string_m);
         $this->getLogger()->debug(vsprintf('Finished processing shortcodes.', []));
         foreach ($this->getSubNodes() as $node) {
             $this->getLogger()->debug(vsprintf('Adding subNode', []));
@@ -436,12 +458,49 @@ class ShortcodeHelper implements WPHookInterface
         } else {
             $this->getLogger()->debug(vsprintf('No attributes found in shortcode \'%s\'.', [$name]));
         }
-        $this->maskShortcode($name);
+        //$this->maskShortcode($name);
         if (null !== $content) {
             $this->getLogger()->debug(vsprintf('Shortcode \'%s\' has content, digging deeper...', [$name]));
 
-            return do_shortcode($content);
+            $content = do_shortcode($content);
         }
+
+        return self::buildMaskedShortcode($name, $attributes, $content);
+    }
+
+    /**
+     * Generates masked shortcode
+     *
+     * @param       $name
+     * @param array $attributes
+     * @param       $content
+     *
+     * @return string
+     */
+    private static function buildMaskedShortcode($name, array $attributes, $content)
+    {
+        $output = self::SMARTLING_SHORTCODE_MASK_S . '[' . $name;
+        foreach ($attributes as $attributeName => $attributeValue) {
+            $output .= ' ' . (
+                (is_string($attributeName))
+                    ? vsprintf('%s="%s"', [$attributeName, esc_attr($attributeValue)])
+                    : vsprintf('"%s"', [esc_attr($attributeValue)])
+                );
+        }
+        $output .= ']' . self::SMARTLING_SHORTCODE_MASK_E;
+        if (!StringHelper::isNullOrEmpty($content)) {
+            $output .= vsprintf(
+                '%s%s[/%s]%s',
+                [
+                    $content,
+                    self::SMARTLING_SHORTCODE_MASK_S,
+                    $name,
+                    self::SMARTLING_SHORTCODE_MASK_E,
+                ]
+            );
+        }
+
+        return $output;
     }
 
     public function addSubNode(\DOMNode $node)
@@ -460,11 +519,15 @@ class ShortcodeHelper implements WPHookInterface
         $node = $this->getNode();
         $initialString = $node->nodeValue;
         $matches = [];
-        preg_match_all(vsprintf('/(?<!%s)%s/', [self::SMARTLING_SHORTCODE_MASK,
-                                                get_shortcode_regex([$shortcodeName])]), $initialString, $matches);
+
+        $regexp = vsprintf('/(?<!%s)%s/', [self::SMARTLING_SHORTCODE_MASK_S, get_shortcode_regex([$shortcodeName])]);
+
+
+        preg_match_all($regexp, $initialString, $matches);
         if (array_key_exists(0, $matches) && is_array($matches[0]) && 0 < count($matches[0])) {
             $shortcode = ArrayHelper::first($matches[0]);
-            $masked = vsprintf('%s%s%s', [self::SMARTLING_SHORTCODE_MASK, $shortcode, self::SMARTLING_SHORTCODE_MASK]);
+            $masked = vsprintf('%s%s%s',
+                               [self::SMARTLING_SHORTCODE_MASK_S, $shortcode, self::SMARTLING_SHORTCODE_MASK_E]);
             $result = str_replace($shortcode, $masked, $initialString);
             self::replaceCData($node, $result);
         }
@@ -485,7 +548,9 @@ class ShortcodeHelper implements WPHookInterface
         if (false !== $translations) {
             $translationPairs = [];
             foreach ($translations as $attribute => $value) {
-                if (array_key_exists($attribute, $attr) && ArrayHelper::first(array_keys($value)) === md5($attr[$attribute])) {
+                if (array_key_exists($attribute,
+                                     $attr) && ArrayHelper::first(array_keys($value)) === md5($attr[$attribute])
+                ) {
                     $this->getLogger()->debug(
                         vsprintf(
                             'Validated translation of \'%s\' as \'%s\' with hash=%s for shortcode \'%s\'',
@@ -510,6 +575,7 @@ class ShortcodeHelper implements WPHookInterface
             }
         } else {
             $this->getLogger()->debug(vsprintf('No translation found for shortcode %s', [$name]));
+
             return;
         }
     }
