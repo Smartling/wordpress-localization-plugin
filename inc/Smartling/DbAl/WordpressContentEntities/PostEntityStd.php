@@ -141,7 +141,7 @@ class PostEntityStd extends EntityAbstract
             /**
              * Content loaded from database. Checking if used valid wrapper.
              */
-            $entity = $this->resultToEntity($post, $this);
+            $entity = $this->resultToEntity($post);
             if (false === $entity->validateContentType()) {
                 $this->entityNotFound($this->getType(), $guid);
             }

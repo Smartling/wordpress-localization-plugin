@@ -284,20 +284,11 @@ abstract class EntityAbstract
      *
      * @return EntityAbstract
      */
-    // TODO : current implementation confuses. It can updated current object
-    // or return new instance. It's not clear when read code where it's used.
-    // As result we already have bug because of it. Two ways:
-    // 1. Remove optional $entity. It always updates current object. It's your
-    // headake to clone object before
-    // 2. Make it static. If you need to update object, then pass $this here
-    protected function resultToEntity(array $arr, $entity = null)
+    protected function resultToEntity(array $arr)
     {
-        if (null === $entity) {
-            $className = get_class($this);
+        $className = get_class($this);
+        $entity = new $className($this->getLogger(), $this->getType(), $this->getRelatedTypes());
 
-            $entity = new $className($this->getLogger(), $this->getType(), $this->getRelatedTypes());
-
-        }
         foreach ($this->fields as $fieldName) {
             if (array_key_exists($fieldName, $arr)) {
                 $entity->$fieldName = $arr[$fieldName];

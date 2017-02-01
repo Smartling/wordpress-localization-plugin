@@ -155,7 +155,7 @@ class TaxonomyEntityStd extends EntityAbstract
             $this->entityNotFound($this->getType(), $guid);
         }
 
-        $entity = $this->resultToEntity($term, $this);
+        $entity = $this->resultToEntity($term);
 
         if (false === $entity->validateContentType()) {
             $this->entityNotFound($this->getType(), $guid);
