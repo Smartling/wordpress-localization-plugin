@@ -2,8 +2,8 @@
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
-Tested up to: 4.7.1
-Stable tag: 1.4.2
+Tested up to: 4.7.2
+Stable tag: 1.4.3
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -54,6 +54,12 @@ Additional information on the Smartling Connector for WordPress can be found [th
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 1.4.3 =
+* Fixed issue with shortcodes if no space between closing and opening shortcode.
+* Added filter that allows overwrite pre-defined values for each translation, e.g. url
+* Minor updates
+
+
 = 1.4.2 =
 * Fixed issue with possible metadata duplication if metadata contains serialized PHP array.
 * Fixed issue with detected attachments translation.
