@@ -35,6 +35,8 @@ Integration Features
  * `xml`
  * `xmlreader`
  * `xmlwriter`
+* For wpengine hosting maximum execution time should be set to 300 seconds.
+
 
 1. Configure [Multilingual Press](https://wordpress.org/plugins/multilingual-press) using instructions found [there](http://support.smartling.com/hc/en-us/articles/205418457).
 1. Upload the unzipped Smartling Connector plugin to the `/wp-content/plugins/` directory.
