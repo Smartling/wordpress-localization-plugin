@@ -1,6 +1,7 @@
 <?php
 
 namespace Smartling\ContentTypes;
+
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 
 /**
@@ -38,10 +39,11 @@ abstract class PostBasedContentTypeAbstract extends ContentTypeAbstract
      */
     public function getLabel()
     {
-        $result = WordpressFunctionProxyHelper::getPostTypes(['name' => $this->getSystemName()], 'objects');
+        $systemName = static::getSystemName();
+        $result = WordpressFunctionProxyHelper::getPostTypes(['name' => $systemName], 'objects');
 
-        if (0 < count($result) && array_key_exists($this->getSystemName(), $result)) {
-            return $result[$this->getSystemName()]->label;
+        if (0 < count($result) && array_key_exists($systemName, $result)) {
+            return $result[$systemName]->label;
         } else {
             return 'unknown';
         }
@@ -61,12 +63,28 @@ abstract class PostBasedContentTypeAbstract extends ContentTypeAbstract
         ];
     }
 
-
     /**
      * @return bool
      */
     public function isPost()
     {
         return true;
+    }
+
+    protected function getRelatedTaxonomies()
+    {
+        $taxonomies = [];
+        foreach (WordpressFunctionProxyHelper::getTaxonomies([], 'objects') as $taxonomy => $descriptor) {
+            $relatedObjects = $descriptor->object_type;
+            if (0 < count($relatedObjects)) {
+                foreach ($relatedObjects as $relatedObjectSystemName) {
+                    if (static::getSystemName() === $relatedObjectSystemName) {
+                        $taxonomies[] = $taxonomy;
+                    }
+                }
+            }
+        }
+
+        return $taxonomies;
     }
 }

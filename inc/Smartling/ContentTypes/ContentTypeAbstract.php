@@ -42,6 +42,20 @@ abstract class ContentTypeAbstract implements ContentTypeInterface
     }
 
     /**
+     * @param ContainerBuilder $di
+     * @param string           $manager
+     */
+    public static function register(ContainerBuilder $di, $manager = 'content-type-descriptor-manager')
+    {
+        $descriptor = new static($di);
+        $mgr = $di->get($manager);
+        /**
+         * @var \Smartling\ContentTypes\ContentTypeManager $mgr
+         */
+        $mgr->addDescriptor($descriptor);
+    }
+
+    /**
      * @return bool
      */
     public function isTaxonomy()

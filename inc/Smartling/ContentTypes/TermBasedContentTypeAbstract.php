@@ -38,10 +38,11 @@ abstract class TermBasedContentTypeAbstract extends ContentTypeAbstract
      */
     public function getLabel()
     {
-        $result = WordpressFunctionProxyHelper::getTaxonomies(['name' => $this->getSystemName()], 'objects');
+        $systemName = static::getSystemName();
+        $result = WordpressFunctionProxyHelper::getTaxonomies(['name' => $systemName], 'objects');
 
-        if (0 < count($result) && array_key_exists($this->getSystemName(), $result)) {
-            return $result[$this->getSystemName()]->label;
+        if (0 < count($result) && array_key_exists($systemName, $result)) {
+            return $result[$systemName]->label;
         } else {
             return 'unknown';
         }

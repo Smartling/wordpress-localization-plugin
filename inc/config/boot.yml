@@ -1,6 +1,7 @@
 parameters:
   config.files:
     - "services.yml"
+    - "serializers.yml"
     - "cron.yml"
     - "plugin-info.yml"
     - "logger.yml"
