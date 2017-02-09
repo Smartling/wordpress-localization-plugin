@@ -4,6 +4,7 @@ namespace Smartling\Helpers;
 
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
+use Smartling\Bootstrap;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\WP\WPHookInterface;
 
@@ -372,6 +373,7 @@ class ShortcodeHelper implements WPHookInterface
         $string = $params->getNode()->nodeValue;
         $detectedShortcodes = $this->getRegisteredShortcodes();
 
+
         $this->getLogger()->debug(
             vsprintf(
                 'Got string for translation looking for shortcodes: \'%s\'',
@@ -458,11 +460,15 @@ class ShortcodeHelper implements WPHookInterface
         } else {
             $this->getLogger()->debug(vsprintf('No attributes found in shortcode \'%s\'.', [$name]));
         }
-        //$this->maskShortcode($name);
+
         if (null !== $content) {
             $this->getLogger()->debug(vsprintf('Shortcode \'%s\' has content, digging deeper...', [$name]));
 
             $content = do_shortcode($content);
+        }
+
+        if (!is_array($attributes)){
+            $attributes = [];
         }
 
         return self::buildMaskedShortcode($name, $attributes, $content);
@@ -506,32 +512,6 @@ class ShortcodeHelper implements WPHookInterface
     public function addSubNode(\DOMNode $node)
     {
         $this->subNodes[] = $node;
-    }
-
-    /**
-     * Masks the shortcode by name
-     *
-     * @param string $shortcodeName
-     */
-    private function maskShortcode($shortcodeName)
-    {
-        $this->getLogger()->debug(vsprintf('Preparing to mask shortcode %s.', [$shortcodeName]));
-        $node = $this->getNode();
-        $initialString = $node->nodeValue;
-        $matches = [];
-
-        $regexp = vsprintf('/(?<!%s)%s/', [self::SMARTLING_SHORTCODE_MASK_S, get_shortcode_regex([$shortcodeName])]);
-
-
-        preg_match_all($regexp, $initialString, $matches);
-        if (array_key_exists(0, $matches) && is_array($matches[0]) && 0 < count($matches[0])) {
-            $shortcode = ArrayHelper::first($matches[0]);
-            $masked = vsprintf('%s%s%s',
-                               [self::SMARTLING_SHORTCODE_MASK_S, $shortcode, self::SMARTLING_SHORTCODE_MASK_E]);
-            $result = str_replace($shortcode, $masked, $initialString);
-            self::replaceCData($node, $result);
-        }
-
     }
 
     /**
@@ -638,7 +618,28 @@ class ShortcodeHelper implements WPHookInterface
      */
     private function getRegisteredShortcodes()
     {
-        return array_keys($this->getShortcodeAssignments());
+        $output = array_keys($this->getShortcodeAssignments());
+        try {
+            $extraShortcodes = apply_filters(ExportedAPI::FILTER_SMARTLING_INJECT_SHORTCODE, []);
+            if (is_array($extraShortcodes) && 0 < count($extraShortcodes)) {
+                foreach ($extraShortcodes as $shortcode) {
+                    if (is_string($shortcode)) {
+                        $output[] = $shortcode;
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            $this->getLogger()->warning(
+                vsprintf(
+                    'An exception got while applying \'%s\' filter. Ignoring result.',
+                    [
+                        ExportedAPI::FILTER_SMARTLING_INJECT_SHORTCODE,
+                    ]
+                )
+            );
+        }
+
+        return $output;
     }
 
     /**

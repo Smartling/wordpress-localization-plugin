@@ -128,4 +128,14 @@ interface ExportedAPI
      * returns SubmissionEntity
      */
     const FILTER_SMARTLING_PREPARE_TARGET_CONTENT = 'smartling_prepare_target_content';
+
+    /**
+     * Filter allows to let smartling-connector know abot shortcodes that are not registered
+     * when content is going to be sent for translation
+     *
+     * @param array
+     *
+     * @return array
+     */
+    const FILTER_SMARTLING_INJECT_SHORTCODE = 'smartling_inject_shortcode';
 }
