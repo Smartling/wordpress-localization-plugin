@@ -2,6 +2,7 @@
 
 namespace Smartling\ContentTypes;
 
+use Smartling\Bootstrap;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 
 /**

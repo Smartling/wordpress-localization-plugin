@@ -138,4 +138,16 @@ interface ExportedAPI
      * @return array
      */
     const FILTER_SMARTLING_INJECT_SHORTCODE = 'smartling_inject_shortcode';
+
+    /**
+     * Filter has the only param that is an array,
+     * Handler should add an array that defines a post type.
+     */
+    const FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE = 'smartling_register_custom_type';
+
+    /**
+     * Filter has the only param that is an array,
+     * Handler should add an array that defines a taxonomy type.
+     */
+    const FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY = 'smartling_register_custom_taxonomy';
 }

@@ -69,7 +69,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
             $taxonomies = get_taxonomies(
                 [
                     'public'   => true,
-                    '_builtin' => true,
+                    //'_builtin' => true,
                 ],
                 'names',
                 'and'
@@ -113,6 +113,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
     public function preView($term)
     {
         $taxonomyType = $term->taxonomy;
+
         try {
             if (current_user_can('publish_posts') && $this->getInternalType($taxonomyType)) {
                 $curBlogId = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();

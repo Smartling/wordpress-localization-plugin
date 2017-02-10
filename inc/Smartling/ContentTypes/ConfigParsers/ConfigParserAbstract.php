@@ -1,14 +1,14 @@
 <?php
 
-namespace Smartling\ContentTypes;
+namespace Smartling\ContentTypes\ConfigParsers;
 
 use Smartling\Helpers\StringHelper;
 
 /**
- * Class CustomPostTypeConfigParser
- * @package Smartling\ContentTypes
+ * Class ConfigParserAbstract
+ * @package Smartling\ContentTypes\ConfigParsers
  */
-class PostTypeConfigParser
+abstract class ConfigParserAbstract implements ConfigParserInterface
 {
     /**
      * @var array
@@ -137,65 +137,29 @@ class PostTypeConfigParser
     }
 
     /**
-     * PostTypeConfigParser constructor.
+     * ConfigParserAbstract constructor.
      *
      * @param array $config
      */
     public function __construct(array $config)
     {
         $this->setRawConfig($config);
-        $this->validate();
+        $this->parse();
     }
 
-    private function validateType($config)
-    {
-        if (is_string($config)) {
-            $config = ['identifier' => $config];
-        }
-
-        $label = array_key_exists('label', $config) ? $config['label'] : '';
-
-        $typeTemplate = [
-            'identifier' => 'unknown',
-            'label'      => '',
-            'widget'     => [
-                'visible' => false,
-                'message' => vsprintf('No original %s found', [$label]),
-            ],
-            'visibility' => [
-                'submissionBoard' => true,
-                'bulkSubmit'      => true,
-            ],
-        ];
-
-        $config = array_replace_recursive($typeTemplate, $config);
-
-        if ('unknown' !== $config['identifier']) {
-            $this->setIdentifier($config['identifier']);
-        }
-        if (!StringHelper::isNullOrEmpty($config['label'])) {
-            $this->setLabel($config['label']);
-        }
-        $this->setWidgetVisible($config['widget']['visible']);
-        $this->setWidgetMessage($config['widget']['message']);
-        $this->setVisibility($config['visibility']);
-    }
-
-    private function validate()
-    {
-        $rawConfig = $this->getRawConfig();
-        if (array_key_exists('type', $rawConfig)) {
-            $this->validateType($rawConfig['type']);
-        }
-    }
-
-    public function isValidType()
+    /**
+     * @return bool
+     */
+    public function isValid()
     {
         return (!StringHelper::isNullOrEmpty($this->getIdentifier()));
     }
 
+    /**
+     * @return bool
+     */
     public function hasWidget()
     {
-        return $this->isValidType() && true === $this->getWidgetMessage();
+        return $this->isValid() && true === $this->isWidgetVisible();
     }
 }

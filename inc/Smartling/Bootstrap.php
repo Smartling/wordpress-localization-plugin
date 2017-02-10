@@ -13,6 +13,8 @@ use Smartling\ContentTypes\ContentTypePage;
 use Smartling\ContentTypes\ContentTypePost;
 use Smartling\ContentTypes\ContentTypePostTag;
 use Smartling\ContentTypes\ContentTypeWidget;
+use Smartling\ContentTypes\CustomPostType;
+use Smartling\ContentTypes\CustomTaxonomyType;
 use Smartling\Exception\MultilingualPluginNotFoundException;
 use Smartling\Exception\SmartlingBootException;
 use Smartling\Helpers\DiagnosticsHelper;
@@ -348,6 +350,26 @@ class Bootstrap
 
         ContentTypeNavigationMenuItem::register($di);
         ContentTypeNavigationMenu::register($di);
+
+        /**
+         * Post types and taxonomies are registered on 'init' hook, but this code is executed on 'plugins_loaded' hook,
+         * so we need to postpone dynamic handlers execution
+         */
+        add_action('init', function () use ($di) {
+            // registering taxonomies first.
+            $dynTermDefinitions = [];
+            $dynTermDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY, $dynTermDefinitions);
+            foreach ($dynTermDefinitions as $dynTermDefinition) {
+               CustomTaxonomyType::registerCustomType($di, $dynTermDefinition);
+            }
+
+            // then registering posts
+            $externalDefinitions = [];
+            $externalDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE, $externalDefinitions);
+            foreach ($externalDefinitions as $externalDefinition) {
+                CustomPostType::registerCustomType($di, $externalDefinition);
+            }
+        }, 999);
     }
 
     public function initializeContentTypes()
