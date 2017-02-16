@@ -4,7 +4,13 @@ cd ./wp-content/plugins/smartling-connector-dev/
 mkdir ./inc/third-party/
 mkdir ./inc/third-party/bin/
 cd ./inc/third-party/bin/
-curl -sS https://getcomposer.org/installer | php
+
+php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+php composer-setup.php --filename=composer --version=1.0.0
+php -r "unlink('composer-setup.php');"
+
+
+//curl -sS https://getcomposer.org/installer | php
 cd ./../../../
 ./composer self-update
 ./composer update
@@ -30,6 +36,6 @@ echo Creating sites...
 ./wp site create --slug=ru --title="Russian site" --email=ru@no.mail
 ./wp site create --slug=ua --title="Ukrainian site" --email=ua@no.mail
 echo Installing plugins...
-./wp plugin install multilingual-press advanced-custom-fields wordpress-seo debug adminer cmb2 debug-bar debug-bar-extender duplicate-post edit-flow image-widget stream wordpress-importer smartling-connector
+./wp plugin install multilingual-press advanced-custom-fields wordpress-seo debug cmb2 debug-bar debug-bar-extender duplicate-post edit-flow image-widget stream wordpress-importer smartling-connector
 echo Activating plugins...
-./wp plugin activate multilingual-press advanced-custom-fields wordpress-seo debug adminer cmb2 debug-bar debug-bar-extender duplicate-post edit-flow image-widget stream wordpress-importer --network
+./wp plugin activate multilingual-press advanced-custom-fields wordpress-seo debug cmb2 debug-bar debug-bar-extender duplicate-post edit-flow image-widget stream wordpress-importer --network
