@@ -71,7 +71,7 @@ class SiteHelper
     private function cacheSites()
     {
         if (empty(self::$_siteCache)) {
-            $sites = get_sites();
+            $sites = get_sites(['number' => 1000]);
             foreach ($sites as $site) {
 
                 self::$_siteCache[$site->site_id][] = $site->blog_id;
