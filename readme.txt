@@ -47,7 +47,7 @@ Integration Features
 
 == Frequently Asked Questions ==
 
-Additional information on the Smartling Connector for WordPress can be found [there](http://support.smartling.com/hc/en-us/sections/200967468-Wordpress-Connector).
+Additional information on the Smartling Connector for WordPress can be found [there](http://help.smartling.com/knowledge-base/sections/wordpress-connector/).
 
 == Screenshots ==
 
