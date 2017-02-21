@@ -217,16 +217,30 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
         if (!wp_verify_nonce($nonce, self::WIDGET_NAME)) {
             $this->getLogger()->debug(vsprintf('Validation failed: invalid nonce exists', []));
+
             return false;
         }
 
         if (defined('DOING_AUTOSAVE') && true === DOING_AUTOSAVE) {
             $this->getLogger()->debug(vsprintf('Validation failed: that is just autosave.', []));
+
             return false;
         }
 
-        if ($this->servedContentType !== $_POST['post_type']) {
-            $this->getLogger()->debug(vsprintf('Validation failed: not a valid content type: got \'%s\', but expected \'%s\'', [$_POST['post_type'],$this->servedContentType]));
+        /**
+         * @var \Smartling\ContentTypes\ContentTypeManager $ctManager
+         */
+        $ctManager = Bootstrap::getContainer()->get('content-type-descriptor-manager');
+        $supportedPostBasedTypes = $ctManager->getDescriptorsByBaseType('post');
+        $supportedTypes = [];
+        foreach ($supportedPostBasedTypes as $supportedPostBasedType) {
+            $supportedTypes[] = $supportedPostBasedType->getSystemName();
+        }
+
+        if (!in_array($_POST['post_type'], $supportedTypes, true)) {
+            $template = 'Validation failed: not a valid content type: got \'%s\', but expected one of \'%s\'';
+            $this->getLogger()->debug(vsprintf($template, [$_POST['post_type'], implode('\', \'', $supportedTypes)]));
+
             return false;
         }
 

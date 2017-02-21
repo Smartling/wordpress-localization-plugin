@@ -67,19 +67,19 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
 
             if (false === $rawValue) {
                 $message = vsprintf('Locales and/or Links are not set with multilingual press plugin.', []);
-
-                $this->getLogger()
-                    ->critical('SettingsPage:Render ' . $message);
-
+                $this->getLogger()->critical('SettingsPage:Render ' . $message);
                 DiagnosticsHelper::addDiagnosticsMessage($message, true);
-
-                //throw new \Exception( 'Multilingual press PRO is not installed/configured.' );
             } else {
                 foreach ($rawValue as $blogId => $item) {
-                    self::$_blogLocalesCache[$blogId] = [
+                    $temp = [
                         'text' => $item['text'],
-                        'lang' => $item['lang'],
                     ];
+                    if (array_key_exists('lang', $item)) {
+                        $temp['lang'] = $item['lang'];
+                    } else {
+                        $temp['lang'] = 'unknown';
+                    }
+                    self::$_blogLocalesCache[$blogId] = $temp;
                 }
             }
         }
