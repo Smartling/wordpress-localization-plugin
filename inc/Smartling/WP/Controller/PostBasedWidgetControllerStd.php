@@ -128,8 +128,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     public function box($post_type)
     {
         $post_types = [$this->servedContentType];
-        if (in_array($post_type, $post_types)
-            && current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)
+        if (in_array($post_type, $post_types) && current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)
         ) {
             add_meta_box(
                 self::WIDGET_NAME,
@@ -208,21 +207,26 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
      */
     private function runValidation($post_id)
     {
+        $this->getLogger()->debug(vsprintf('Validating post id = \'%s\' saving', [$post_id]));
         if (!array_key_exists(self::CONNECTOR_NONCE, $_POST)) {
+            $this->getLogger()->debug(vsprintf('Validation failed: no nonce exists', []));
             return false;
         }
 
         $nonce = $_POST[self::CONNECTOR_NONCE];
 
         if (!wp_verify_nonce($nonce, self::WIDGET_NAME)) {
+            $this->getLogger()->debug(vsprintf('Validation failed: invalid nonce exists', []));
             return false;
         }
 
         if (defined('DOING_AUTOSAVE') && true === DOING_AUTOSAVE) {
+            $this->getLogger()->debug(vsprintf('Validation failed: that is just autosave.', []));
             return false;
         }
 
         if ($this->servedContentType !== $_POST['post_type']) {
+            $this->getLogger()->debug(vsprintf('Validation failed: not a valid content type: got \'%s\', but expected \'%s\'', [$_POST['post_type'],$this->servedContentType]));
             return false;
         }
 
@@ -236,7 +240,12 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
      */
     protected function isAllowedToSave($post_id)
     {
-        return current_user_can($this->getAbilityNeeded(), $post_id);
+        $result = current_user_can($this->getAbilityNeeded(), $post_id);
+
+        if (false===$result){
+            $this->getLogger()->debug(vsprintf('Validation failed: current user doesn\'t have enough rights save the post', []));
+        }
+        return $result;
     }
 
     /**
@@ -246,8 +255,9 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
      */
     public function save($post_id)
     {
-
+        $this->getLogger()->debug(vsprintf('Entering post save hook. post_id = \'%s\', blog_id = \'%s\'', [$post_id, $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId()]));
         if (wp_is_post_revision($post_id)) {
+            $this->getLogger()->debug(vsprintf('Validation failed: post id = \'%s\' just revision. Ignoring.', [$post_id]));
             return;
         }
 
@@ -263,6 +273,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
         }
 
         if (!array_key_exists(self::WIDGET_DATA_NAME, $_POST)) {
+            $this->getLogger()->debug(vsprintf('Validation failed: no smartling info while saving. Ignoring', [$post_id]));
             return;
         }
 
@@ -371,7 +382,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                 $core->getQueue()->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
                             }
                         }
-
+                        $this->getLogger()->debug(vsprintf('Initiating upload job', []));
                         do_action(DownloadTranslationJob::JOB_HOOK_NAME);
                         break;
                 }
