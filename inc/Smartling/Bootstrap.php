@@ -18,6 +18,7 @@ use Smartling\ContentTypes\CustomTaxonomyType;
 use Smartling\Exception\MultilingualPluginNotFoundException;
 use Smartling\Exception\SmartlingBootException;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\MetaFieldProcessor\CustomFieldFilterHandler;
 use Smartling\Helpers\SchedulerHelper;
 use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
@@ -368,6 +369,13 @@ class Bootstrap
             $externalDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE, $externalDefinitions);
             foreach ($externalDefinitions as $externalDefinition) {
                 CustomPostType::registerCustomType($di, $externalDefinition);
+            }
+
+            // then registering filters
+            $filters = [];
+            $filters = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_FIELD_FILTER, $filters);
+            foreach ($filters as $filter) {
+                CustomFieldFilterHandler::registerFilter($di, $filter);
             }
         }, 999);
     }

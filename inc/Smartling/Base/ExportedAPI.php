@@ -150,4 +150,10 @@ interface ExportedAPI
      * Handler should add an array that defines a taxonomy type.
      */
     const FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY = 'smartling_register_custom_taxonomy';
+
+    /**
+     * Filter has the only param that is an array,
+     * Handler should add an array that defines a filter.
+     */
+    const FILTER_SMARTLING_REGISTER_FIELD_FILTER = 'smartling_register_field_filter';
 }
