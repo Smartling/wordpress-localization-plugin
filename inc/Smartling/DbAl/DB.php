@@ -459,7 +459,7 @@ Please download the log file (click <strong><a href="/wp-admin/admin-post.php?ac
      */
     public function completeTableName($tableName)
     {
-        return $this->getWpdb()->base_prefix . $tableName;
+        return $this->getWpdb()->prefix . $tableName;
     }
 
     /**
