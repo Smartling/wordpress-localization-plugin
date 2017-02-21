@@ -23,48 +23,65 @@ if (!defined('WPINC')) {
 }
 
 /**
- * Old-style code to run under PHP 5.2+
+ * Always generate recover script
  */
-class Smartling_Version_Check
-{
-    /**
-     * Minimum version to run smartling plugin [major.minor]
-     */
-    const SMARTLING_MIN_PHP_VERSION = '5.5';
+add_action('plugins_loaded', function () {
+    $d = __DIR__;
+    file_put_contents($d . DIRECTORY_SEPARATOR . 'recover.php', "<?php rename({$d}, {$d}-new);");
+});
 
-    public static function check_php_version()
-    {
-        $phpRequirements = explode('.', self::SMARTLING_MIN_PHP_VERSION);
-        $phpMinVerId = reset($phpRequirements) * 10000 + end($phpRequirements) * 100;
 
-        return (PHP_VERSION_ID >= $phpMinVerId);
+/**
+ * Execute everything only on admin pages or while running cron tasks
+ */
+if (is_admin() || (defined('DOING_CRON') && true === DOING_CRON)) {
+
+    if (!class_exists('Smartling_Version_Check')) {
+        /**
+         * Old-style code to run under PHP 5.2+
+         */
+        class Smartling_Version_Check
+        {
+            /**
+             * Minimum version to run smartling plugin [major.minor]
+             */
+            const SMARTLING_MIN_PHP_VERSION = '5.5';
+
+            public static function check_php_version()
+            {
+                $phpRequirements = explode('.', self::SMARTLING_MIN_PHP_VERSION);
+                $phpMinVerId = reset($phpRequirements) * 10000 + end($phpRequirements) * 100;
+
+                return (PHP_VERSION_ID >= $phpMinVerId);
+            }
+
+            public static function draw_php_low_version_message()
+            {
+                echo sprintf('<div class="error"><p>Smartling plugin requires at least %s PHP version to start.</p></div>', self::SMARTLING_MIN_PHP_VERSION);
+            }
+        }
     }
 
-    public static function draw_php_low_version_message()
-    {
-        echo sprintf('<div class="error"><p>Smartling plugin requires at least %s PHP version to start.</p></div>', self::SMARTLING_MIN_PHP_VERSION);
-    }
-}
-
-if (!Smartling_Version_Check::check_php_version()) {
-    add_action('all_admin_notices', array('Smartling_Version_Check', 'draw_php_low_version_message'));
-} else {
-    if (class_exists('Smartling\Bootstrap', false)) {
-        add_action('all_admin_notices', function () {
-            $msg = vsprintf(
-                'Smartling plugin (ver. %s) is already loaded. Skipping plugin load from %s.',
-                array(Smartling\Bootstrap::getContainer()->getParameter('plugin.version'), __FILE__)
-            );
-            echo vsprintf('<div class="error"><p>%s</p></div>', array($msg));
-        });
+    if (!Smartling_Version_Check::check_php_version()) {
+        add_action('all_admin_notices', array('Smartling_Version_Check', 'draw_php_low_version_message'));
     } else {
-        require_once plugin_dir_path(__FILE__) . 'inc/autoload.php';
-        $pluginData = get_file_data(__FILE__, ['Version' => 'Version']);
-        Smartling\Bootstrap::$pluginVersion = $pluginData['Version'];
-        $bootstrap = new Smartling\Bootstrap();
-        add_action('plugins_loaded', array($bootstrap, 'load',), 99);
-        register_activation_hook(__FILE__, array($bootstrap, 'activate',));
-        register_deactivation_hook(__FILE__, array($bootstrap, 'deactivate',));
-        register_uninstall_hook(__FILE__, array('Smartling\Bootstrap', 'uninstall'));
+        if (class_exists('Smartling\Bootstrap', false)) {
+            add_action('all_admin_notices', function () {
+                $msg = vsprintf(
+                    'Smartling plugin (ver. %s) is already loaded. Skipping plugin load from %s.',
+                    array(Smartling\Bootstrap::getContainer()->getParameter('plugin.version'), __FILE__)
+                );
+                echo vsprintf('<div class="error"><p>%s</p></div>', array($msg));
+            });
+        } else {
+            require_once plugin_dir_path(__FILE__) . 'inc/autoload.php';
+            $pluginData = get_file_data(__FILE__, ['Version' => 'Version']);
+            Smartling\Bootstrap::$pluginVersion = $pluginData['Version'];
+            $bootstrap = new Smartling\Bootstrap();
+            add_action('plugins_loaded', array($bootstrap, 'load',), 99);
+            register_activation_hook(__FILE__, array($bootstrap, 'activate',));
+            register_deactivation_hook(__FILE__, array($bootstrap, 'deactivate',));
+            register_uninstall_hook(__FILE__, array('Smartling\Bootstrap', 'uninstall'));
+        }
     }
 }

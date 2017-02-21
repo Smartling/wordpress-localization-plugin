@@ -16,3 +16,4 @@ logs/logfile*
 # Atom files
 .tags
 .tags1
+recover.php
