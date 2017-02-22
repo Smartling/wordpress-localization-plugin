@@ -208,6 +208,16 @@ abstract class WPAbstract
     public static function sendButton($id = 'submit', $name = 'submit')
     {
         return HtmlTagGeneratorHelper::tag(
+            'input', '', [
+            'type'  => 'submit',
+            'value' => 'Upload',
+            'title' => __('Add to Upload queue and trigger upload process'),
+            'class' => 'button button-primary',
+            //'id'    => $id,
+            'name'  => $name,
+        ]);
+
+        /**  return HtmlTagGeneratorHelper::tag(
             'button',
             HtmlTagGeneratorHelper::tag('span', __('Upload'), []),
             [
@@ -218,6 +228,8 @@ abstract class WPAbstract
                 'id'    => $id,
                 'name'  => $name,
             ]);
+         *
+         * */
     }
 
     public static function submitBlock($withCloneButton = false)
@@ -236,6 +248,16 @@ abstract class WPAbstract
                 'name'  => 'sub',
             ]);
 
+        $downloadButton = HtmlTagGeneratorHelper::tag(
+            'input', '', [
+            'type'  => 'submit',
+            'value' => 'Download',
+            'title' => __('Add to Upload queue and trigger upload process'),
+            'class' => 'button button-primary',
+            //'id'    => $id,
+            'name'  => 'sub',
+        ]);
+
         $contents = $sendButton . '&nbsp;' . $downloadButton;
 
         if (true === $withCloneButton) {
@@ -250,6 +272,17 @@ abstract class WPAbstract
                     'id'    => '',
                     'name'  => 'sub',
                 ]);
+
+            $cloneButton = HtmlTagGeneratorHelper::tag(
+                'input', '', [
+                'type'  => 'submit',
+                'value' => 'Clone',
+                'title' => __('Add to Upload queue and trigger upload process'),
+                'class' => 'button button-primary',
+                //'id'    => $id,
+                'name'  => 'sub',
+            ]);
+
 
             $contents .= '&nbsp;' . $cloneButton;
         }

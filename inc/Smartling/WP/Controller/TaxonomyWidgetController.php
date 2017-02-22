@@ -189,7 +189,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                     ->getCurrentBlogId();
 
                 switch ($_POST['sub']) {
-                    case 'upload':
+                    case 'Upload':
                         if (0 < count($locales)) {
                             foreach ($locales as $blogId => $blogName) {
                                 $result =
@@ -215,7 +215,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                             do_action(UploadJob::JOB_HOOK_NAME);
                         }
                         break;
-                    case 'download':
+                    case 'Download':
                         $submissions = $this->getManager()->find(
                             [
                                 'source_blog_id' => $curBlogId,

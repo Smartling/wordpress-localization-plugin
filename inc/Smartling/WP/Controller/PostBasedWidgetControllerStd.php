@@ -307,7 +307,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
             if (array_key_exists('sub', $_POST) && count($locales) > 0) {
                 switch ($_POST['sub']) {
-                    case 'upload':
+                    case 'Upload':
                         if (0 < count($locales)) {
                             foreach ($locales as $blogId => $blogName) {
                                 $result = $core->createForTranslation(
@@ -333,7 +333,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                         }
 
                         break;
-                    case 'clone':
+                    case 'Clone':
                         if (0 < count($locales)) {
                             foreach ($locales as $blogId => $blogName) {
 
@@ -360,7 +360,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                             }
                         }
                         break;
-                    case 'download':
+                    case 'Download':
                         $targetLocaleIds = array_keys($locales);
 
                         foreach ($targetLocaleIds as $targetBlogId) {
