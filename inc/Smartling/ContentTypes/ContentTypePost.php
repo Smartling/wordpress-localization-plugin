@@ -141,6 +141,17 @@ class ContentTypePost extends PostBasedContentTypeAbstract
      */
     public function registerFilters()
     {
+
+        $di = $this->getContainerBuilder();
+        $wrapperId = 'referenced-content.featured_image';
+        $definition = $di->register($wrapperId, 'Smartling\Helpers\MetaFieldProcessor\ReferencedFileFieldProcessor');
+        $definition
+            ->addArgument($di->getDefinition('logger'))
+            ->addArgument($di->getDefinition('translation.helper'))
+            ->addArgument('_thumbnail_id');
+
+        $di->get('meta-field.processor.manager')->registerProcessor($di->get($wrapperId));
+
         add_action(ExportedAPI::ACTION_SMARTLING_PROCESSOR_RELATED_CONTENT, [$this, 'registerTaxonomyRelations']);
     }
 }
