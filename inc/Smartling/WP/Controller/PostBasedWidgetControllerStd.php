@@ -227,19 +227,9 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             return false;
         }
 
-        /**
-         * @var \Smartling\ContentTypes\ContentTypeManager $ctManager
-         */
-        $ctManager = Bootstrap::getContainer()->get('content-type-descriptor-manager');
-        $supportedPostBasedTypes = $ctManager->getDescriptorsByBaseType('post');
-        $supportedTypes = [];
-        foreach ($supportedPostBasedTypes as $supportedPostBasedType) {
-            $supportedTypes[] = $supportedPostBasedType->getSystemName();
-        }
-
-        if (!in_array($_POST['post_type'], $supportedTypes, true)) {
+        if ($this->servedContentType !== $_POST['post_type'] ) {
             $template = 'Validation failed: not a valid content type: got \'%s\', but expected one of \'%s\'';
-            $this->getLogger()->debug(vsprintf($template, [$_POST['post_type'], implode('\', \'', $supportedTypes)]));
+            $this->getLogger()->debug(vsprintf($template, [$_POST['post_type'], $this->servedContentType]));
 
             return false;
         }
