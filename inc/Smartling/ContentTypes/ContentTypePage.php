@@ -93,12 +93,11 @@ class ContentTypePage extends PostBasedContentTypeAbstract
     {
         $di = $this->getContainerBuilder();
         $wrapperId = 'referenced-content.page_parent';
-        $definition = $di->register($wrapperId, 'Smartling\Helpers\MetaFieldProcessor\ReferencedContentProcessor');
+        $definition = $di->register($wrapperId, 'Smartling\Helpers\MetaFieldProcessor\ReferencedPostBasedContentProcessor');
         $definition
             ->addArgument($di->getDefinition('logger'))
             ->addArgument($di->getDefinition('translation.helper'))
             ->addArgument('post_parent')
-            ->addArgument($this->getSystemName())
             ->addMethodCall('setContentHelper', [$di->getDefinition('content.helper')]);
 
 
