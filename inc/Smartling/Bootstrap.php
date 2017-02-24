@@ -361,7 +361,7 @@ class Bootstrap
             $dynTermDefinitions = [];
             $dynTermDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY, $dynTermDefinitions);
             foreach ($dynTermDefinitions as $dynTermDefinition) {
-               CustomTaxonomyType::registerCustomType($di, $dynTermDefinition);
+                CustomTaxonomyType::registerCustomType($di, $dynTermDefinition);
             }
 
             // then registering posts
@@ -375,7 +375,19 @@ class Bootstrap
             $filters = [];
             $filters = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_FIELD_FILTER, $filters);
             foreach ($filters as $filter) {
-                CustomFieldFilterHandler::registerFilter($di, $filter);
+                try {
+                    CustomFieldFilterHandler::registerFilter($di, $filter);
+                } catch (\Exception $e) {
+                    $di->get('logger')->warning(
+                        vsprintf(
+                            'Error registering filter with message: \'%s\', params: \'%s\'',
+                            [
+                                $e->getMessage(),
+                                var_export($filter, true)
+                            ]
+                        )
+                    );
+                }
             }
         }, 999);
     }

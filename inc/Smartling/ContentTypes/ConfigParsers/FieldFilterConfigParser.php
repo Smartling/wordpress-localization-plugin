@@ -2,7 +2,14 @@
 
 namespace Smartling\ContentTypes\ConfigParsers;
 
-use Smartling\Bootstrap;
+use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\CustomTypeProcessor;
+use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\MediaBasedProcessor;
+use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\PostBasedProcessor;
+use Smartling\Helpers\MetaFieldProcessor\CloneValueFieldProcessor;
+use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorInterface;
+use Smartling\Helpers\MetaFieldProcessor\SkipFieldProcessor;
+use Smartling\Helpers\Serializers\SerializerInterface;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
  * Class FieldFilterConfigParser
@@ -57,6 +64,73 @@ class FieldFilterConfigParser
      */
     private $rawConfig;
 
+    /**
+     * @var string
+     */
+    private $filterType;
+
+    /**
+     * bool
+     */
+    private $validFiler;
+
+    /**
+     * @var ContainerBuilder
+     */
+    private $di;
+
+    private function getService($serviceName)
+    {
+        return $this->getDi()->get($serviceName);
+    }
+
+    /**
+     * @return ContainerBuilder
+     */
+    public function getDi()
+    {
+        return $this->di;
+    }
+
+    /**
+     * @param ContainerBuilder $di
+     */
+    public function setDi($di)
+    {
+        $this->di = $di;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getValidFiler()
+    {
+        return $this->validFiler;
+    }
+
+    /**
+     * @param mixed $validFiler
+     */
+    public function setValidFiler($validFiler)
+    {
+        $this->validFiler = $validFiler;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFilterType()
+    {
+        return $this->filterType;
+    }
+
+    /**
+     * @param string $filterType
+     */
+    public function setFilterType($filterType)
+    {
+        $this->filterType = $filterType;
+    }
 
     /**
      * @return array
@@ -164,7 +238,7 @@ class FieldFilterConfigParser
         if (null !== ($action = $this->getConfigParam('action')) && in_array($action, $this->actions)) {
             $this->setAction($action);
             if (self::ACTION_LOCALIZE === $this->getAction()) {
-                return $this->validateSerialization() && $this->validateValueType();
+                return $this->validateSerialization() && $this->validateValueType() && $this->validateRelatedType();
             } else {
                 return true;
             }
@@ -197,7 +271,13 @@ class FieldFilterConfigParser
 
     private function validateRelatedType()
     {
+        if (null !== ($value = $this->getConfigParam('type'))) {
+            $this->setFilterType($value);
 
+            return true;
+        } else {
+            return false;
+        }
     }
 
 
@@ -208,7 +288,7 @@ class FieldFilterConfigParser
     {
         $result = $this->validatePattern() && $this->validateAction();
 
-        Bootstrap::DebugPrint($this->getRawConfig(), true);
+        $this->setValidFiler($result);
     }
 
 
@@ -217,11 +297,96 @@ class FieldFilterConfigParser
      *
      * @param array $config
      */
-    public function __construct(array $config)
+    public function __construct(array $config, ContainerBuilder $di)
     {
         $this->setRawConfig($config);
+        $this->setDi($di);
         $this->parse();
     }
 
+    /**
+     * @return SerializerInterface
+     */
+    private function getSerializerInstance()
+    {
+        return $this->getService('manager.serializer')->getSerializer($this->getSerialization());
+    }
 
+    private function getLocalizeFilter()
+    {
+        $serializer = $this->getSerializerInstance();
+
+        // currently supporting only reference value type (id)
+
+        if (self::VALUE_TYPE_REFERENCE !== $this->getValueType()) {
+            throw new \InvalidArgumentException('Currently only \'reference\' is supported.');
+        }
+
+
+        switch ($this->getFilterType()) {
+            case 'post':
+
+                $filter = new PostBasedProcessor(
+                    $this->getService('logger'),
+                    $this->getService('translation.helper'),
+                    $this->getPattern()
+                );
+
+                $filter->setContentHelper($this->getService('content.helper'));
+                $filter->setSerializer($serializer);
+
+                return $filter;
+
+                break;
+            case 'media':
+
+                $filter = new MediaBasedProcessor(
+                    $this->getService('logger'),
+                    $this->getService('translation.helper'),
+                    $this->getPattern()
+                );
+
+                $filter->setContentHelper($this->getService('content.helper'));
+                $filter->setSerializer($serializer);
+
+                return $filter;
+
+                // reference to any attachment
+                break;
+            default:
+                $filter = new CustomTypeProcessor(
+                    $this->getService('logger'),
+                    $this->getService('translation.helper'),
+                    $this->getPattern(),
+                    $this->getFilterType()
+                );
+
+                $filter->setContentHelper($this->getService('content.helper'));
+                $filter->setSerializer($serializer);
+
+                return $filter;
+                break;
+        }
+    }
+
+    /**
+     * @return MetaFieldProcessorInterface
+     */
+    public function getFilter()
+    {
+        switch ($this->getAction()) {
+            case self::ACTION_SKIP:
+                return new SkipFieldProcessor($this->getPattern());
+                break;
+            case self::ACTION_COPY:
+                return new CloneValueFieldProcessor($this->getPattern(), $this->getService('content.helper'), $this->getService('logger'));
+                break;
+            case self::ACTION_LOCALIZE:
+                return $this->getLocalizeFilter();
+                break;
+            default:
+                $this->getService('logger')->error(vsprintf('Invalid filter action: \'%s\'', [$this->getAction()]));
+                die ($this->getAction());
+        }
+    }
 }

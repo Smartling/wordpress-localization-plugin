@@ -1,0 +1,19 @@
+parameters:
+  coma: ','
+services:
+  serializer.none:
+    class: Smartling\Helpers\Serializers\DummySerializer
+
+  serializer.coma-separated:
+    class: Smartling\Helpers\Serializers\DelimiterSerializer
+    calls:
+      - [ "setDelimiter", [ "%coma%" ] ]
+      - [ "setType", [ "coma-separated" ] ]
+
+  manager.serializer:
+    class: Smartling\Helpers\Serializers\SerializationManager
+    arguments:
+      - "@logger"
+    calls:
+      - [ "addSerializer", [ "@serializer.none" ] ]
+      - [ "addSerializer", [ "@serializer.coma-separated" ] ]
