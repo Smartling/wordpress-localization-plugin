@@ -154,7 +154,7 @@ trait SmartlingCoreUploadTrait
 
             } else {
                 $this->prepareFieldProcessorValues($submission);
-                $xml = XmlEncoder::xmlEncode($filteredValues, $source);
+                $xml = XmlEncoder::xmlEncode($filteredValues, $source, $submission);
                 $this->getLogger()->debug(vsprintf('Serialized fields to XML: %s', [base64_encode($xml),]));
                 $this->prepareRelatedSubmissions($submission);
                 try {

@@ -356,7 +356,7 @@ class Bootstrap
          * Post types and taxonomies are registered on 'init' hook, but this code is executed on 'plugins_loaded' hook,
          * so we need to postpone dynamic handlers execution
          */
-        add_action('init', function () use ($di) {
+        add_action('admin_init', function () use ($di) {
             // registering taxonomies first.
             $dynTermDefinitions = [];
             $dynTermDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY, $dynTermDefinitions);

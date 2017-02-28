@@ -2,6 +2,8 @@
 
 namespace Smartling\Helpers\EventParameters;
 
+use Smartling\Submissions\SubmissionEntity;
+
 /**
  * Class TranslationStringFilterParameters
  * @package Smartling\Helpers\EventParameters
@@ -12,6 +14,11 @@ class TranslationStringFilterParameters
      * @var array
      */
     private $filterSettings;
+
+    /**
+     * @var SubmissionEntity
+     */
+    private $submission;
 
     /**
      * @var \DOMDocument
@@ -69,5 +76,21 @@ class TranslationStringFilterParameters
     public function setNode($node)
     {
         $this->node = $node;
+    }
+
+    /**
+     * @return SubmissionEntity
+     */
+    public function getSubmission()
+    {
+        return $this->submission;
+    }
+
+    /**
+     * @param SubmissionEntity $submission
+     */
+    public function setSubmission($submission)
+    {
+        $this->submission = $submission;
     }
 }

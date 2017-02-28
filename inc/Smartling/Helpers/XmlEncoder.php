@@ -10,6 +10,7 @@ use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
 use Smartling\Exception\InvalidXMLException;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
+use Smartling\Submissions\SubmissionEntity;
 
 /**
  * Class XmlEncoder
@@ -104,12 +105,13 @@ class XmlEncoder
     }
 
     /**
-     * @param array $source
-     * @param array $originalContent
+     * @param array            $source
+     * @param array            $originalContent
+     * @param SubmissionEntity $submission
      *
      * @return string
      */
-    public static function xmlEncode(array $source, array $originalContent = [])
+    public static function xmlEncode(array $source, array $originalContent = [], SubmissionEntity $submission)
     {
         self::logMessage(vsprintf('Started creating XML for fields: %s', [base64_encode(var_export($source, true))]));
         $xml = self::setTranslationComments(self::initXml());
@@ -117,7 +119,7 @@ class XmlEncoder
         $keySettings = &$settings['key'];
         $rootNode = $xml->createElement(self::XML_ROOT_NODE_NAME);
         foreach ($source as $name => $value) {
-            $rootNode->appendChild(self::rowToXMLNode($xml, $name, $value, $keySettings));
+            $rootNode->appendChild(self::rowToXMLNode($xml, $name, $value, $keySettings, $submission));
         }
         $xml->appendChild($rootNode);
         $sourceNode = $xml->createElement(self::XML_SOURCE_NODE_NAME);
@@ -130,7 +132,7 @@ class XmlEncoder
     /**
      * @inheritdoc
      */
-    private static function rowToXMLNode(DOMDocument $document, $name, $value, & $keySettings)
+    private static function rowToXMLNode(DOMDocument $document, $name, $value, & $keySettings, SubmissionEntity $submission)
     {
         $node = $document->createElement(self::XML_STRING_NODE_NAME);
         $node->setAttributeNode(new DOMAttr('name', $name));
@@ -146,6 +148,7 @@ class XmlEncoder
         $params->setDom($document);
         $params->setNode($node);
         $params->setFilterSettings(self::getFieldProcessingParams());
+        $params->setSubmission($submission);
         $params = apply_filters(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING, $params);
 
         return $params->getNode();
@@ -168,7 +171,13 @@ class XmlEncoder
         return new DOMXPath($xml);
     }
 
-    public static function xmlDecode($content)
+    /**
+     * @param string           $content
+     * @param SubmissionEntity $submission
+     *
+     * @return array
+     */
+    public static function xmlDecode($content, SubmissionEntity $submission)
     {
         self::logMessage(vsprintf('Starting XML file decoding : %s', [base64_encode(var_export($content, true))]));
         $xpath = self::prepareXPath($content);
@@ -186,6 +195,7 @@ class XmlEncoder
             $params->setDom($item->ownerDocument);
             $params->setNode($item);
             $params->setFilterSettings(self::getFieldProcessingParams());
+            $params->setSubmission($submission);
 
             $params = apply_filters(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING_RECEIVED, $params);
 

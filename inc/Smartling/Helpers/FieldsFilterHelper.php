@@ -347,7 +347,7 @@ class FieldsFilterHelper
         return $data;
     }
 
-    private function passConnectionProfileFilters(array $data, $strategy)
+    public function passConnectionProfileFilters(array $data, $strategy)
     {
         $settings = self::getFieldProcessingParams();
 
@@ -394,7 +394,7 @@ class FieldsFilterHelper
      *
      * @return array
      */
-    private function removeFields($array, array $list)
+    public function removeFields($array, array $list)
     {
         $rebuild = [];
         if ([] === $list) {
@@ -441,7 +441,7 @@ class FieldsFilterHelper
      *
      * @return array
      */
-    private function removeValuesByRegExp($array, $list)
+    public function removeValuesByRegExp($array, $list)
     {
         $rebuild = [];
         foreach ($array as $key => $value) {

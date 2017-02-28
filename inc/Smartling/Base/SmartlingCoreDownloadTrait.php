@@ -62,7 +62,7 @@ trait SmartlingCoreDownloadTrait
                 ->debug(vsprintf('Downloaded file for submission id = \'%s\'. Dump: %s',
                                  [$entity->getId(), base64_encode($data)]));
             $this->prepareFieldProcessorValues($entity);
-            $translatedFields = XmlEncoder::xmlDecode($data);
+            $translatedFields = XmlEncoder::xmlDecode($data, $entity);
 
             $originalData = $this->readSourceContentWithMetadataAsArray($entity);
             $translatedFields = $this->getFieldsFilter()->processStringsAfterDecoding($translatedFields);

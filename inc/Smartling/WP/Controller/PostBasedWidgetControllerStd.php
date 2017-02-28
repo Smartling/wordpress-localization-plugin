@@ -227,12 +227,15 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             return false;
         }
 
-        if ($this->servedContentType !== $_POST['post_type'] ) {
-            $template = 'Validation failed: not a valid content type: got \'%s\', but expected one of \'%s\'';
-            $this->getLogger()->debug(vsprintf($template, [$_POST['post_type'], $this->servedContentType]));
-
-            return false;
-        }
+        //if ($this->servedContentType !== $_POST['post_type'] ) {
+        //    $template = 'Validation failed: not a valid content type: got \'%s\', but expected one of \'%s\'';
+        //    $this->getLogger()->debug(vsprintf($template, [$_POST['post_type'], $this->servedContentType]));
+        //
+        //
+        //
+        //
+        //    return false;
+        //}
 
         return $this->isAllowedToSave($post_id);
     }
@@ -259,13 +262,24 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
      */
     public function save($post_id)
     {
+        remove_action('save_post', [$this, 'save']);
+
+        if ($this->servedContentType !== $_POST['post_type'] ) {
+            //$template = 'Validation failed: not a valid content type: got \'%s\', but expected one of \'%s\'';
+            //$this->getLogger()->debug(vsprintf($template, [$_POST['post_type'], $this->servedContentType]));
+
+            return;
+        }
+
         $this->getLogger()->debug(vsprintf('Entering post save hook. post_id = \'%s\', blog_id = \'%s\'', [$post_id, $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId()]));
         if (wp_is_post_revision($post_id)) {
             $this->getLogger()->debug(vsprintf('Validation failed: post id = \'%s\' just revision. Ignoring.', [$post_id]));
             return;
         }
 
-        remove_action('save_post', [$this, 'save']);
+
+
+
 
         $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
         $originalId = (int)$post_id;

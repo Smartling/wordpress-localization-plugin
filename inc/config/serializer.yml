@@ -4,6 +4,9 @@ services:
   serializer.none:
     class: Smartling\Helpers\Serializers\DummySerializer
 
+  serializer.array-value:
+    class: Smartling\Helpers\Serializers\ArrayValueSerializer
+
   serializer.coma-separated:
     class: Smartling\Helpers\Serializers\DelimiterSerializer
     calls:
@@ -17,3 +20,4 @@ services:
     calls:
       - [ "addSerializer", [ "@serializer.none" ] ]
       - [ "addSerializer", [ "@serializer.coma-separated" ] ]
+      - [ "addSerializer", [ "@serializer.array-value" ] ]
