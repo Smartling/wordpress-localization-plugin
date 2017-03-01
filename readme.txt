@@ -3,7 +3,7 @@ Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
 Tested up to: 4.7.2
-Stable tag: 1.4.3
+Stable tag: 1.4.4
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -35,6 +35,7 @@ Integration Features
  * `xml`
  * `xmlreader`
  * `xmlwriter`
+ * `yaml`
 * For wpengine hosting maximum execution time should be set to 300 seconds.
 
 
@@ -56,11 +57,22 @@ Additional information on the Smartling Connector for WordPress can be found [th
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 1.4.4 =
+* Added filter `smartling_register_custom_taxonomy` to register custom taxonomies handlers, [Usage example](https://github.com/Smartling/wordpress-integration-example/blob/master/src/Declarations/CustomTaxonomies.php).
+* Added filter `smartling_register_custom_type` to register custom post types handlers, [Usage example](https://github.com/Smartling/wordpress-integration-example/blob/master/src/Declarations/CustomPostTypes.php).
+* Added filter `smartling_register_field_filter` to set content field localization rules, [Usage example](https://github.com/Smartling/wordpress-integration-example/blob/master/src/Declarations/FieldFilters.php).
+* Added ability to set localization rules for shortcode attributes
+* Added ability to inform connector plugin about shortcodes that are not registered in admin panel.
+* Improved memory and cpu usage. Plugin is loaded only for cron jobs and admin page.
+* Fixed possible issue that prevents sending post for translation from edit post page
+* Fixed issue related to featured image translation
+* Fixed issue related to multiple post_save hook handlers
+* Released a [integration-example plugin](https://github.com/Smartling/wordpress-integration-example/releases/tag/v.1.2) that demonstrates smartling-connector plugin extension possibilities.
+
 = 1.4.3 =
 * Fixed issue with shortcodes if no space between closing and opening shortcode.
 * Added filter that allows overwrite pre-defined values for each translation, e.g. url
 * Minor updates
-
 
 = 1.4.2 =
 * Fixed issue with possible metadata duplication if metadata contains serialized PHP array.
