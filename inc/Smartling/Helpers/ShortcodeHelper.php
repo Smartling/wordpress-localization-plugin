@@ -283,7 +283,19 @@ class ShortcodeHelper implements WPHookInterface
             $template = 'Got shortcode \'%s\' sending for translation %s';
             $this->getLogger()->debug(vsprintf($template, [$name, var_export($attributes, true)]));
 
-            $attributes = $this->filterAttributes($attributes);
+            $attrsHelper = [];
+            
+            foreach ($attributes as $k => $v) {
+                $attrsHelper[$name.'-'.$k] = $v;
+            }
+    
+            $attrsHelper = $this->filterAttributes($attrsHelper);
+            
+            $attributes = [];
+            
+            foreach ($attrsHelper as $k => $v) {
+                $attributes[str_replace($name.'-', '', $k)] = $v;
+            }
 
             //$preparedAttributes = $fFilter->prepareSourceData($attributes);
 
