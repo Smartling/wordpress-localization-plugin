@@ -43,6 +43,11 @@ if (!empty($locales)) {
         <?= WPAbstract::checkUncheckBlock(); ?>
         <?php
         $nameKey = PostBasedWidgetControllerStd::WIDGET_DATA_NAME;
+        ?>
+        <div class="locale-list">
+        <?php
+
+        \Smartling\Helpers\ArrayHelper::sortLocales($locales);
 
         foreach ($locales as $locale) {
             $value = false;
@@ -90,6 +95,9 @@ if (!empty($locales)) {
                 </div>
             </div>
         <?php } ?>
+
+        </div>
+
     </div>
     <div class="smtPostWidget-submitBlock">
         <?= WPAbstract::submitBlock(true); ?>

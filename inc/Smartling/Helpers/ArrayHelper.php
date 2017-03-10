@@ -3,6 +3,7 @@
 namespace Smartling\Helpers;
 
 use Smartling\Base\ArrayableInterface;
+use Smartling\Settings\Locale;
 
 class ArrayHelper
 {
@@ -625,5 +626,23 @@ class ArrayHelper
         $keys = array_keys($array);
 
         return $array[$keys[0]];
+    }
+
+    /**
+     * @param array $locales
+     *
+     * @return array
+     */
+    public static function sortLocales(array & $locales)
+    {
+        usort($locales, function ($a, $b) {
+            /**
+             * @var Locale $a
+             * @var Locale $b
+             */
+
+            return $a->getLabel() > $b->getLabel();
+
+        });
     }
 }

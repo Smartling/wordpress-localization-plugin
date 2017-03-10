@@ -45,12 +45,14 @@ $data = $this->getViewData();
         </tr>
     </table>
 
-    <form id="bulk-submit-main" method="post">
+    <form class="form-table" id="bulk-submit-main" method="post">
         <table>
             <tr>
                 <td>
                     <h3><?= __('Translate into:'); ?></h3>
-                    <?= WPAbstract::checkUncheckBlock(); ?>
+                    <div>
+                        <?= WPAbstract::checkUncheckBlock(); ?>
+                    </div>
                     <?php
                     /**
                      * @var BulkSubmitTableWidget $data
@@ -58,6 +60,8 @@ $data = $this->getViewData();
 
                     $locales = $data->getProfile()
                                     ->getTargetLocales();
+
+                    \Smartling\Helpers\ArrayHelper::sortLocales($locales);
 
                     foreach ($locales as $locale) {
                         /**

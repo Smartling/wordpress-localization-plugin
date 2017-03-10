@@ -60,6 +60,8 @@ if (!empty($locales)) {
     <div style="width: 400px;">
         <?php
         $nameKey = TaxonomyWidgetController::WIDGET_DATA_NAME;
+        \Smartling\Helpers\ArrayHelper::sortLocales($locales);
+        ?> <div class="locale-list"> <?php
 
         foreach ($locales as $locale) {
             /**
@@ -103,6 +105,7 @@ if (!empty($locales)) {
                 </div>
             </div>
         <?php } ?>
+        </div>
     </div>
     <?= WPAbstract::submitBlock(); ?>
     </div><?php
