@@ -420,7 +420,7 @@ class FieldsFilterHelper
      *
      * @return array
      */
-    private function removeEmptyFields(array $array)
+    public function removeEmptyFields(array $array)
     {
         $rebuild = [];
         foreach ($array as $key => $value) {

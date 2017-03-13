@@ -27,12 +27,6 @@ class MediaBasedProcessor extends ReferencedFileFieldProcessor
 
         try {
             $deserializedValue = $this->getSerializer()->unserialize($value);
-            if (!is_array($deserializedValue)){
-                Bootstrap::DebugPrint([1,$deserializedValue,$fieldName], true);
-            }
-            if (0===count($deserializedValue)){
-                Bootstrap::DebugPrint([1,$deserializedValue,$fieldName], true);
-            }
 
             foreach ($deserializedValue as & $_value) {
                 try {
