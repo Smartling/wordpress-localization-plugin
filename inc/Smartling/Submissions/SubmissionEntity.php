@@ -11,6 +11,7 @@ use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\TextHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
+use Smartling\Helpers\WordpressUserHelper;
 
 /**
  * Class SubmissionEntity
@@ -297,6 +298,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
         switch ($this->getStatus()) {
             case self::SUBMISSION_STATUS_NEW:
                 $this->setLastError('');
+                $this->setSubmitter(WordpressUserHelper::getUserLogin());
                 break;
             case self::SUBMISSION_STATUS_IN_PROGRESS:
                 $this->setOutdated(0);

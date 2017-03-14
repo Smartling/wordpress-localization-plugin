@@ -15,9 +15,16 @@ class WordpressUserHelper
      */
     public static function getUserLogin()
     {
-        $ud = get_userdata(get_current_user_id());
-
-        return $ud->user_login;
+        $userId = get_current_user_id();
+        if (0 === $userId) {
+            return 'cron-job';
+        }
+        $ud = get_userdata($userId);
+        if (false !== $ud) {
+            return $ud->user_login;
+        } else {
+            return 'unknown';
+        }
     }
 
     public static function getUserLoginById($id)
