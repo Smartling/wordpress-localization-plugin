@@ -450,7 +450,6 @@ class ShortcodeHelper implements WPHookInterface
         $submission = $this->getParams()->getSubmission();
         $fFilter = $this->getFieldsFilter();
         $attributes = $fFilter->passFieldProcessorsFilters($submission, $attributes);
-        $attributes = $this->passProfileFilters($attributes);
 
         return $attributes;
     }
