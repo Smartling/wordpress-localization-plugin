@@ -57,6 +57,15 @@ class SubmissionsPageController extends WPAbstract implements WPHookInterface
             [$this, 'renderPage'],
             'data:image/png;base64,' . self::LOGO_IMAGE
         );
+
+        add_submenu_page(
+            'smartling-submissions-page',
+            'Translation Progress',
+            'Translation Progress',
+            SmartlingUserCapabilities::SMARTLING_CAPABILITY_MENU_CAP,
+            'smartling-submissions-page',
+            [$this, 'renderPage']
+        );
     }
 
     public function renderPage()
