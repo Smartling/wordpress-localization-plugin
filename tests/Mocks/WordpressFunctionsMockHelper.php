@@ -11,6 +11,13 @@ namespace {
          * Functions
          */
 
+        if (!function_exists('get_current_user_id')) {
+            function get_current_user_id()
+            {
+                return 0;
+            }
+        }
+
         if (!function_exists('__')) {
             function __($text, $scope = '')
             {
