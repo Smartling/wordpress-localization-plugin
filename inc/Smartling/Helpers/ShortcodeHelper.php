@@ -233,13 +233,12 @@ class ShortcodeHelper implements WPHookInterface
         // unmasking string
         $this->unmaskShortcodes();
         $string = $this->getNode()->nodeValue;
-
-        // here we should apply translation :)
-
-        $detectedShortcodes = $this->getTranslatedShortcodes();
+        $detectedShortcodes = $this->getRegisteredShortcodes();
         $this->replaceHandlerForApplying($detectedShortcodes);
         $string_m = do_shortcode($string);
+
         $this->restoreShortcodeHandler();
+
         self::replaceCData($node, $string_m);
 
         return $this->getParams();
@@ -429,6 +428,10 @@ class ShortcodeHelper implements WPHookInterface
         $settings = Bootstrap::getContainer()->getParameter('field.processor');
         $attributes = $fFilter->removeFields($attributes, $settings['ignore']);
         $attributes = $fFilter->removeFields($attributes, $settings['copy']['name']);
+
+        // adding special pattern to skip:
+        $pattern = '^\d+(,\d+)*$';
+        $settings['copy']['regexp'][] = $pattern;
         $attributes = $fFilter->removeValuesByRegExp($attributes, $settings['copy']['regexp']);
         $attributes = $fFilter->removeEmptyFields($attributes);
 
@@ -450,7 +453,6 @@ class ShortcodeHelper implements WPHookInterface
         $submission = $this->getParams()->getSubmission();
         $fFilter = $this->getFieldsFilter();
         $attributes = $fFilter->passFieldProcessorsFilters($submission, $attributes);
-
         return $attributes;
     }
 
@@ -474,6 +476,7 @@ class ShortcodeHelper implements WPHookInterface
             $preparedAttributes = $this->preSendFiltering($preparedAttributes);
             $this->getLogger()
                 ->debug(vsprintf('Post filtered attributes (while uploading) %s', [var_export($preparedAttributes, true)]));
+            $preparedAttributes = self::unmaskAttributes($name, $preparedAttributes);
             if (0 < count($preparedAttributes)) {
                 foreach ($preparedAttributes as $attribute => $value) {
                     $node = $this->getParams()->getDom()->createElement('shortcodeattribute');
@@ -592,14 +595,7 @@ class ShortcodeHelper implements WPHookInterface
             $attr = [];
         }
 
-        // action 1: pass through post-translation filters
-        if (0 < count($attr)) {
-            $attr = self::maskAttributes($name, $attr);
-            $attr = $this->postReceiveFiltering($attr);
-            $attr = self::unmaskAttributes($name, $attr);
-        }
-
-        // action 2: apply translations
+        // action 0: apply translations
         $translations = $this->getShortcodeAttributes($name);
         if (false !== $translations) {
             foreach ($translations as $attributeName => $translation) {
@@ -614,11 +610,17 @@ class ShortcodeHelper implements WPHookInterface
                     $attr[$attributeName] = reset($translation);
                 }
             }
-            if (!StringHelper::isNullOrEmpty($content)) {
-                $content = do_shortcode($content);
-            }
-        } else {
+        }/* else {
             $this->getLogger()->debug(vsprintf('No translation found for shortcode %s', [$name]));
+        }*/
+        if (!StringHelper::isNullOrEmpty($content)) {
+            $content = do_shortcode($content);
+        }
+        // action 1: pass through post-translation filters
+        if (0 < count($attr)) {
+            $attr = self::maskAttributes($name, $attr);
+            $attr = $this->postReceiveFiltering($attr);
+            $attr = self::unmaskAttributes($name, $attr);
         }
 
         // action 3: return rebuilded shortcode.
@@ -663,7 +665,10 @@ class ShortcodeHelper implements WPHookInterface
             );
         }
 
-        return $output;
+        $output = array_flip(array_flip($output));
+        asort($output);
+
+        return array_values($output);
     }
 
     /**
