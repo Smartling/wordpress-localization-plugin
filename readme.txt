@@ -2,8 +2,8 @@
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
-Tested up to: 4.7.2
-Stable tag: 1.4.4
+Tested up to: 4.7.3
+Stable tag: 1.5.0
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -36,6 +36,7 @@ Integration Features
  * `xmlreader`
  * `xmlwriter`
  * `yaml`
+ * `gd`
 * For wpengine hosting maximum execution time should be set to 300 seconds.
 
 
@@ -57,6 +58,11 @@ Additional information on the Smartling Connector for WordPress can be found [th
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 1.5.0 =
+* Added filtering for shortcode attributes
+* UI improvements for long locale lists
+* Small improvements
+
 = 1.4.4 =
 * Added filter `smartling_register_custom_taxonomy` to register custom taxonomies handlers, [Usage example](https://github.com/Smartling/wordpress-integration-example/blob/master/src/Declarations/CustomTaxonomies.php).
 * Added filter `smartling_register_custom_type` to register custom post types handlers, [Usage example](https://github.com/Smartling/wordpress-integration-example/blob/master/src/Declarations/CustomPostTypes.php).
