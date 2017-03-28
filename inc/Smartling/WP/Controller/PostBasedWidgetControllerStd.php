@@ -264,10 +264,9 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     {
         remove_action('save_post', [$this, 'save']);
 
-        if ($this->servedContentType !== $_POST['post_type'] ) {
-            //$template = 'Validation failed: not a valid content type: got \'%s\', but expected one of \'%s\'';
-            //$this->getLogger()->debug(vsprintf($template, [$_POST['post_type'], $this->servedContentType]));
-
+        if (!array_key_exists('post_type', $_POST)) {
+            return;
+        } elseif ($this->servedContentType !== $_POST['post_type']) {
             return;
         }
 
