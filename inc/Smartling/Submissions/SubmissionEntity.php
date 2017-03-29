@@ -440,15 +440,36 @@ class SubmissionEntity extends SmartlingEntityAbstract
         if (array_key_exists($content_type, $reverseMap)) {
             $this->stateFields['content_type'] = $reverseMap[$content_type];
         } else {
+
+            $this->stateFields['content_type'] = $content_type;
+            $this->setLastError('Invalid Content Type');
+            $this->setStatus(self::SUBMISSION_STATUS_FAILED);
             $message = vsprintf('Invalid content type. Got \'%s\', expected one of: %s', [
                 $content_type,
                 implode(',', $reverseMap),
             ]);
             $this->logger->error($message);
-            throw new \InvalidArgumentException($message);
         }
 
         return $this;
+    }
+
+    /**
+     * Converts associative array to entity
+     * array keys must match field names;
+     *
+     * @param array           $array
+     * @param LoggerInterface $logger
+     *
+     * @return SubmissionEntity
+     */
+    public static function fromArray(array $array, LoggerInterface $logger)
+    {
+        $obj = parent::fromArray($array, $logger);
+
+        $obj->setContentType($obj->getContentType());
+
+        return $obj;
     }
 
     /**

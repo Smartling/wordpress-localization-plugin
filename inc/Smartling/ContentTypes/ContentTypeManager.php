@@ -22,6 +22,7 @@ class ContentTypeManager extends SmartlingFactoryAbstract
     public function __construct(LoggerInterface $logger)
     {
         parent::__construct($logger);
+        $this->message = 'Requested descriptor for \'%s\' that doesn\'t exists.';
         $this->setAllowDefault(false);
     }
 
