@@ -23,15 +23,6 @@ if (!defined('WPINC')) {
 }
 
 /**
- * Always generate recover script
- */
-add_action('plugins_loaded', function () {
-    $d = __DIR__;
-    file_put_contents($d . DIRECTORY_SEPARATOR . 'recover.php', "<?php rename({$d}, {$d}-new);");
-});
-
-
-/**
  * Execute everything only on admin pages or while running cron tasks
  */
 if (is_admin() || (defined('DOING_CRON') && true === DOING_CRON)) {
