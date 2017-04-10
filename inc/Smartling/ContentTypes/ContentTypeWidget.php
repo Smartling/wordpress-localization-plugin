@@ -12,7 +12,7 @@ class ContentTypeWidget extends ContentTypeAbstract
 {
 
     /**
-     * ContentTypePost constructor.
+     * ContentTypeWidget constructor.
      *
      * @param ContainerBuilder $di
      */
@@ -91,7 +91,7 @@ class ContentTypeWidget extends ContentTypeAbstract
             ->addArgument($this->getSystemName())
             ->addArgument([
                               ContentTypeNavigationMenu::WP_CONTENT_TYPE,
-                              ContentTypeAttachment::WP_CONTENT_TYPE,
+                              'attachment',
                           ]);
 
         $di->get('factory.contentIO')->registerHandler($this->getSystemName(), $di->get($wrapperId));

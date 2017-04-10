@@ -63,9 +63,9 @@ class CustomPostType extends PostBasedContentTypeAbstract
     {
         if ($this->getConfigParser()->hasWidget()) {
             $di = $this->getContainerBuilder();
-
+            $tag = 'wp.' . static::getSystemName();
             $definition = $di
-                ->register('wp.' . static::getSystemName(), 'Smartling\WP\Controller\PostBasedWidgetControllerStd')
+                ->register($tag, 'Smartling\WP\Controller\PostBasedWidgetControllerStd')
                 ->addArgument($di->getDefinition('logger'))
                 ->addArgument($di->getDefinition('multilang.proxy'))
                 ->addArgument($di->getDefinition('plugin.info'))
@@ -77,7 +77,7 @@ class CustomPostType extends PostBasedContentTypeAbstract
                 ->addMethodCall('setServedContentType', [static::getSystemName()])
                 ->addMethodCall('setNoOriginalFound', [__($this->getConfigParser()->getWidgetMessage())]);
 
-            $di->get('wp.' . static::getSystemName())->register();
+            $di->get($tag)->register();
         }
     }
 

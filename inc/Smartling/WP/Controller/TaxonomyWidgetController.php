@@ -38,6 +38,27 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
     private $core;
 
     /**
+     * @var string
+     */
+    private $taxonomy;
+
+    /**
+     * @return string
+     */
+    public function getTaxonomy()
+    {
+        return $this->taxonomy;
+    }
+
+    /**
+     * @param string $taxonomy
+     */
+    public function setTaxonomy($taxonomy)
+    {
+        $this->taxonomy = $taxonomy;
+    }
+
+    /**
      * @return SmartlingCore
      */
     private function getCore()
@@ -55,7 +76,8 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
     public function register()
     {
         if (!DiagnosticsHelper::isBlocked()) {
-            add_action('admin_init', [$this, 'init']);
+            // already running in scope of 'admin_init', so calling directly
+            $this->init();
         }
 
     }
@@ -66,21 +88,8 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
     public function init()
     {
         if (current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
-            $taxonomies = get_taxonomies(
-                [
-                    'public'   => true,
-                    //'_builtin' => true,
-                ],
-                'names',
-                'and'
-            );
-
-            if ($taxonomies) {
-                foreach ($taxonomies as $taxonomy) {
-                    add_action("{$taxonomy}_edit_form", [$this, 'preView'], 100, 1);
-                    add_action("edited_{$taxonomy}", [$this, 'save'], 10, 1);
-                }
-            }
+            add_action("{$this->getTaxonomy()}_edit_form", [$this, 'preView'], 100, 1);
+            add_action("edited_{$this->getTaxonomy()}", [$this, 'save'], 10, 1);
         }
     }
 
@@ -101,7 +110,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
             $message = vsprintf('Tried to translate non supported taxonomy:%s', [$wordpressType]);
 
             $this->getLogger()
-                 ->warning($message);
+                ->warning($message);
 
             throw new SmartlingNotSupportedContentException($message);
         }
@@ -201,16 +210,16 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                                         $this->getEntityHelper()->getTarget($term_id, $blogId, $termType)
                                     );
 
-                                    $this->getLogger()->info(vsprintf(
-                                                                 self::$MSG_UPLOAD_ENQUEUE_ENTITY,
-                                                                 [
-                                                                     $termType,
-                                                                     $curBlogId,
-                                                                     $term_id,
-                                                                     (int)$blogId,
-                                                                     $result->getTargetLocale(),
-                                                                 ]
-                                                             ));
+                                $this->getLogger()->info(vsprintf(
+                                                             self::$MSG_UPLOAD_ENQUEUE_ENTITY,
+                                                             [
+                                                                 $termType,
+                                                                 $curBlogId,
+                                                                 $term_id,
+                                                                 (int)$blogId,
+                                                                 $result->getTargetLocale(),
+                                                             ]
+                                                         ));
                             }
                             do_action(UploadJob::JOB_HOOK_NAME);
                         }
@@ -226,17 +235,18 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                         if (0 < count($submissions)) {
                             foreach ($submissions as $submission) {
                                 $this->getLogger()->info(vsprintf(
-                                    self::$MSG_DOWNLOAD_ENQUEUE_ENTITY,
-                                    [
-                                        $submission->getId(),
-                                        $submission->getStatus(),
-                                        $termType,
-                                        $curBlogId,
-                                        $term_id,
-                                        $submission->getTargetBlogId(),
-                                        $submission->getTargetLocale()
-                                    ]));
-                                $this->getCore()->getQueue()->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
+                                                             self::$MSG_DOWNLOAD_ENQUEUE_ENTITY,
+                                                             [
+                                                                 $submission->getId(),
+                                                                 $submission->getStatus(),
+                                                                 $termType,
+                                                                 $curBlogId,
+                                                                 $term_id,
+                                                                 $submission->getTargetBlogId(),
+                                                                 $submission->getTargetLocale(),
+                                                             ]));
+                                $this->getCore()->getQueue()
+                                    ->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
                             }
                             do_action(DownloadTranslationJob::JOB_HOOK_NAME);
                         }

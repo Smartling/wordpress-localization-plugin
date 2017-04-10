@@ -1,11 +1,9 @@
 <?php
+
 namespace Smartling\Base;
 
 use Exception;
-use Smartling\ContentTypes\ContentTypeAttachment;
-use Smartling\ContentTypes\ContentTypeCategory;
 use Smartling\ContentTypes\ContentTypeNavigationMenu;
-use Smartling\ContentTypes\ContentTypePostTag;
 use Smartling\DbAl\WordpressContentEntities\MenuItemEntity;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDbException;
@@ -55,8 +53,8 @@ class SmartlingCore extends SmartlingCoreAbstract
         $originalEntity = $this->getContentHelper()->readSourceContent($submission);
         $relatedContentTypes = $originalEntity->getRelatedTypes();
         $accumulator = [
-            ContentTypeCategory::WP_CONTENT_TYPE => [],
-            ContentTypePostTag::WP_CONTENT_TYPE  => [],
+            'category' => [],
+            'post_tag' => [],
         ];
         try {
             if (!empty($relatedContentTypes)) {
@@ -336,7 +334,7 @@ class SmartlingCore extends SmartlingCoreAbstract
                 $submission->getTargetId(),
             ]));
 
-        if (ContentTypeAttachment::WP_CONTENT_TYPE !== $submission->getContentType()) {
+        if ('attachment' !== $submission->getContentType()) {
             return;
         }
 

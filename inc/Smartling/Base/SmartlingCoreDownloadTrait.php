@@ -3,8 +3,6 @@
 namespace Smartling\Base;
 
 use Exception;
-use Smartling\Bootstrap;
-use Smartling\ContentTypes\ContentTypeAttachment;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
@@ -131,7 +129,7 @@ trait SmartlingCoreDownloadTrait
              */
             if (0 < $entity->getTargetId() &&
                 in_array($entity->getContentType(), [ContentTypeNavigationMenuItem::WP_CONTENT_TYPE,
-                                                     ContentTypeAttachment::WP_CONTENT_TYPE], true)
+                                                     'attachment'], true)
             ) {
                 $contentHelper = $this->getContentHelper();
                 /**

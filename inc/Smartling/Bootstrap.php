@@ -5,13 +5,10 @@ namespace Smartling;
 use Exception;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
-use Smartling\ContentTypes\ContentTypeAttachment;
-use Smartling\ContentTypes\ContentTypeCategory;
+use Smartling\ContentTypes\AutoDiscover\PostTypes;
+use Smartling\ContentTypes\AutoDiscover\Taxonomies;
 use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
-use Smartling\ContentTypes\ContentTypePage;
-use Smartling\ContentTypes\ContentTypePost;
-use Smartling\ContentTypes\ContentTypePostTag;
 use Smartling\ContentTypes\ContentTypeWidget;
 use Smartling\ContentTypes\CustomPostType;
 use Smartling\ContentTypes\CustomTaxonomyType;
@@ -340,23 +337,20 @@ class Bootstrap
      */
     private function initializeBuildInContentTypes(ContainerBuilder $di)
     {
-        ContentTypePost::register($di);
-        ContentTypePage::register($di);
-        ContentTypeAttachment::register($di);
-
-        ContentTypePostTag::register($di);
-        ContentTypeCategory::register($di);
-
         ContentTypeWidget::register($di);
 
         ContentTypeNavigationMenuItem::register($di);
         ContentTypeNavigationMenu::register($di);
+
+        new Taxonomies($di);
+        new PostTypes($di);
 
         /**
          * Post types and taxonomies are registered on 'init' hook, but this code is executed on 'plugins_loaded' hook,
          * so we need to postpone dynamic handlers execution
          */
         add_action('admin_init', function () use ($di) {
+
             // registering taxonomies first.
             $dynTermDefinitions = [];
             $dynTermDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY, $dynTermDefinitions);
@@ -372,7 +366,39 @@ class Bootstrap
             }
 
             // then registering filters
-            $filters = [];
+            $filters = [
+                // categories may have parent
+                [
+                    'pattern'       => '^(parent)$',
+                    'action'        => 'localize',
+                    'serialization' => 'none',
+                    'value'         => 'reference',
+                    'type'          => 'category',
+                ],
+                // post-based content may have parent
+                [
+                    'pattern'       => '^(post_parent)$',
+                    'action'        => 'localize',
+                    'serialization' => 'none',
+                    'value'         => 'reference',
+                    'type'          => 'post',
+                ],
+                // featured images use _thumbnail_id meta key
+                [
+                    'pattern'       => '_thumbnail_id',
+                    'action'        => 'localize',
+                    'serialization' => 'none',
+                    'value'         => 'reference',
+                    'type'          => 'media',
+                ],
+            ];
+
+            // registering linking for posts (based) and taxonomies
+            add_action(ExportedAPI::ACTION_SMARTLING_PROCESSOR_RELATED_CONTENT, function () {
+
+            });
+
+
             $filters = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_FIELD_FILTER, $filters);
             foreach ($filters as $filter) {
                 try {
@@ -383,7 +409,7 @@ class Bootstrap
                             'Error registering filter with message: \'%s\', params: \'%s\'',
                             [
                                 $e->getMessage(),
-                                var_export($filter, true)
+                                var_export($filter, true),
                             ]
                         )
                     );

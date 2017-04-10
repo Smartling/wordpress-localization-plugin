@@ -2,15 +2,12 @@
 
 namespace Smartling\Base;
 
-use Smartling\Bootstrap;
-use Smartling\ContentTypes\ContentTypeAttachment;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\SmartlingWpDataIntegrityException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\AttachmentHelper;
 use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\StringHelper;
-use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
@@ -103,7 +100,9 @@ trait SmartlingCoreTrait
 
         unset ($hardFilteredOriginalData['entity']['ID'], $hardFilteredOriginalData['entity']['term_id'], $hardFilteredOriginalData['entity']['id']);
 
-        if (array_key_exists('entity', $hardFilteredOriginalData) && ArrayHelper::notEmpty($hardFilteredOriginalData['entity'])) {
+        if (array_key_exists('entity', $hardFilteredOriginalData) &&
+            ArrayHelper::notEmpty($hardFilteredOriginalData['entity'])
+        ) {
             $_entity = &$hardFilteredOriginalData['entity'];
             /**
              * @var array $_entity
@@ -137,7 +136,7 @@ trait SmartlingCoreTrait
                 )
             );
 
-        if (ContentTypeAttachment::WP_CONTENT_TYPE === $submission->getContentType()) {
+        if ('attachment' === $submission->getContentType()) {
             $fileData = $this->getAttachmentFileInfoBySubmission($submission);
             $sourceFileFsPath = $fileData['source_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
             $targetFileFsPath = $fileData['target_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
@@ -156,7 +155,9 @@ trait SmartlingCoreTrait
             }
         }
 
-        if (array_key_exists('meta', $hardFilteredOriginalData) && ArrayHelper::notEmpty($hardFilteredOriginalData['meta'])) {
+        if (array_key_exists('meta', $hardFilteredOriginalData) &&
+            ArrayHelper::notEmpty($hardFilteredOriginalData['meta'])
+        ) {
             $metaFields = &$hardFilteredOriginalData['meta'];
             /**
              * @var array $metaFields
@@ -175,7 +176,7 @@ trait SmartlingCoreTrait
 
         $this->getMultilangProxy()->linkObjects($submission);
 
-        if (ContentTypeAttachment::WP_CONTENT_TYPE === $submission->getContentType()) {
+        if ('attachment' === $submission->getContentType()) {
             do_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, $submission);
         }
 
@@ -243,7 +244,9 @@ trait SmartlingCoreTrait
         $targetSiteUploadInfo = $this->getUploadDirForSite($submission->getTargetBlogId());
         $sourceMetadata = $this->getContentHelper()->readSourceMetadata($submission);
 
-        if (array_key_exists('_wp_attached_file', $sourceMetadata) && !StringHelper::isNullOrEmpty($sourceMetadata['_wp_attached_file'])) {
+        if (array_key_exists('_wp_attached_file', $sourceMetadata) &&
+            !StringHelper::isNullOrEmpty($sourceMetadata['_wp_attached_file'])
+        ) {
             $relativePath = $sourceMetadata['_wp_attached_file'];
             $result = [
                 'uri'                => $info->guid,

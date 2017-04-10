@@ -17,7 +17,7 @@ class ContentTypeNavigationMenuItem extends PostBasedContentTypeAbstract
     const WP_CONTENT_TYPE = 'nav_menu_item';
 
     /**
-     * ContentTypePost constructor.
+     * ContentTypeNavigationMenuItem constructor.
      *
      * @param ContainerBuilder $di
      */

@@ -2,8 +2,6 @@
 
 namespace Smartling\Base;
 
-use Smartling\ContentTypes\ContentTypeAttachment;
-use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 trait SmartlingCoreExportApi
@@ -33,7 +31,7 @@ trait SmartlingCoreExportApi
     public function sendAttachmentForTranslation($sourceBlogId, $targetBlogId, $sourceId)
     {
         $submission = $this->getTranslationHelper()->tryPrepareRelatedContent(
-            ContentTypeAttachment::WP_CONTENT_TYPE,
+            'attachment',
             $sourceBlogId,
             $sourceId,
             $targetBlogId

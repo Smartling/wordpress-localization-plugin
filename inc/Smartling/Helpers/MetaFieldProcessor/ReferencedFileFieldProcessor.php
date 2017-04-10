@@ -3,14 +3,11 @@
 namespace Smartling\Helpers\MetaFieldProcessor;
 
 use Psr\Log\LoggerInterface;
-use Smartling\Base\ExportedAPI;
-use Smartling\ContentTypes\ContentTypeAttachment;
 use Smartling\Exception\SmartlingDataReadException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\TranslationHelper;
-use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -88,7 +85,7 @@ class ReferencedFileFieldProcessor extends MetaFieldProcessorAbstract
             );
 
             $attSubmission = $this->getTranslationHelper()->tryPrepareRelatedContent(
-                ContentTypeAttachment::WP_CONTENT_TYPE,
+                'attachment',
                 $submission->getSourceBlogId(),
                 $value,
                 $submission->getTargetBlogId()

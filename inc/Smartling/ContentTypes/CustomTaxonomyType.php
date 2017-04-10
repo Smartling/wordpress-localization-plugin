@@ -2,6 +2,7 @@
 
 namespace Smartling\ContentTypes;
 
+use Smartling\Bootstrap;
 use Smartling\ContentTypes\ConfigParsers\TermTypeConfigParser;
 use Smartling\Helpers\StringHelper;
 
@@ -63,19 +64,18 @@ class CustomTaxonomyType extends TermBasedContentTypeAbstract
     {
         if ($this->getConfigParser()->hasWidget()) {
             $di = $this->getContainerBuilder();
-
+            $tag = 'wp.taxonomy.' . static::getSystemName();
             $di
-                ->register('wp.taxonomy.' . static::getSystemName(), 'Smartling\WP\Controller\TaxonomyWidgetController')
+                ->register($tag, 'Smartling\WP\Controller\TaxonomyWidgetController')
                 ->addArgument($di->getDefinition('logger'))
                 ->addArgument($di->getDefinition('multilang.proxy'))
                 ->addArgument($di->getDefinition('plugin.info'))
                 ->addArgument($di->getDefinition('entity.helper'))
                 ->addArgument($di->getDefinition('manager.submission'))
                 ->addArgument($di->getDefinition('site.cache'))
-                ->addMethodCall('setDetectChangesHelper', [$di->getDefinition('detect-changes.helper')]);
-
-            $di->get('wp.taxonomy.' . static::getSystemName())->register();
-
+                ->addMethodCall('setDetectChangesHelper', [$di->getDefinition('detect-changes.helper')])
+                ->addMethodCall('setTaxonomy', [ static::getSystemName() ]);
+            $di->get($tag)->register();
         }
     }
 

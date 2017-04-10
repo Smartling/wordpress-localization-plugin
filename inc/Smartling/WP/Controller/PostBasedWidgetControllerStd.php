@@ -5,7 +5,6 @@ namespace Smartling\WP\Controller;
 use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
-use Smartling\ContentTypes\ContentTypePost;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
@@ -32,7 +31,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
     const CONNECTOR_NONCE = 'smartling_connector_nonce';
 
-    protected $servedContentType = ContentTypePost::WP_CONTENT_TYPE;
+    protected $servedContentType = 'undefined';
 
     protected $needSave = 'Need to have title';
 
@@ -128,7 +127,8 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     public function box($post_type)
     {
         $post_types = [$this->servedContentType];
-        if (in_array($post_type, $post_types) && current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)
+        if (in_array($post_type, $post_types) &&
+            current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)
         ) {
             add_meta_box(
                 self::WIDGET_NAME,
@@ -210,6 +210,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
         $this->getLogger()->debug(vsprintf('Validating post id = \'%s\' saving', [$post_id]));
         if (!array_key_exists(self::CONNECTOR_NONCE, $_POST)) {
             $this->getLogger()->debug(vsprintf('Validation failed: no nonce exists', []));
+
             return false;
         }
 
@@ -249,9 +250,11 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     {
         $result = current_user_can($this->getAbilityNeeded(), $post_id);
 
-        if (false===$result){
-            $this->getLogger()->debug(vsprintf('Validation failed: current user doesn\'t have enough rights save the post', []));
+        if (false === $result) {
+            $this->getLogger()
+                ->debug(vsprintf('Validation failed: current user doesn\'t have enough rights save the post', []));
         }
+
         return $result;
     }
 
@@ -266,145 +269,152 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
         if (!array_key_exists('post_type', $_POST)) {
             return;
-        } elseif ($this->servedContentType !== $_POST['post_type']) {
-            return;
         }
 
-        $this->getLogger()->debug(vsprintf('Entering post save hook. post_id = \'%s\', blog_id = \'%s\'', [$post_id, $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId()]));
-        if (wp_is_post_revision($post_id)) {
-            $this->getLogger()->debug(vsprintf('Validation failed: post id = \'%s\' just revision. Ignoring.', [$post_id]));
-            return;
-        }
+        if ($this->servedContentType === $_POST['post_type']) {
 
 
+            $this->getLogger()->debug(vsprintf('Entering post save hook. post_id = \'%s\', blog_id = \'%s\'', [$post_id,
+                                                                                                               $this->getEntityHelper()
+                                                                                                                   ->getSiteHelper()
+                                                                                                                   ->getCurrentBlogId()]));
+            if (wp_is_post_revision($post_id)) {
+                $this->getLogger()
+                    ->debug(vsprintf('Validation failed: post id = \'%s\' just revision. Ignoring.', [$post_id]));
 
-
-
-        $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
-        $originalId = (int)$post_id;
-
-        $this->detectChange($sourceBlog, $originalId, $this->servedContentType);
-
-        if (false === $this->runValidation($post_id)) {
-            return $post_id;
-        }
-
-        if (!array_key_exists(self::WIDGET_DATA_NAME, $_POST)) {
-            $this->getLogger()->debug(vsprintf('Validation failed: no smartling info while saving. Ignoring', [$post_id]));
-            return;
-        }
-
-        $data = $_POST[self::WIDGET_DATA_NAME];
-
-        $locales = [];
-
-        if (null !== $data && array_key_exists('locales', $data)) {
-
-            foreach ($data['locales'] as $blogId => $blogName) {
-                if (array_key_exists('enabled', $blogName) && 'on' === $blogName['enabled']) {
-                    $locales[$blogId] = $blogName['locale'];
-                }
+                return;
             }
 
-            $core = $this->getCore();
 
-            if (array_key_exists('sub', $_POST) && count($locales) > 0) {
-                switch ($_POST['sub']) {
-                    case 'Upload':
-                        if (0 < count($locales)) {
-                            foreach ($locales as $blogId => $blogName) {
-                                $result = $core->createForTranslation(
-                                    $this->servedContentType,
-                                    $sourceBlog,
-                                    $originalId,
-                                    (int)$blogId
-                                );
+            $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
+            $originalId = (int)$post_id;
 
-                                $this->getLogger()->info(
-                                    vsprintf(
-                                        self::$MSG_UPLOAD_ENQUEUE_ENTITY,
-                                        [
-                                            $this->servedContentType,
-                                            $sourceBlog,
-                                            $originalId,
-                                            (int)$blogId,
-                                            $result->getTargetLocale(),
-                                        ]
-                                    ));
-                            }
-                            do_action(UploadJob::JOB_HOOK_NAME);
-                        }
+            $this->detectChange($sourceBlog, $originalId, $this->servedContentType);
 
-                        break;
-                    case 'Clone':
-                        if (0 < count($locales)) {
-                            foreach ($locales as $blogId => $blogName) {
+            if (false === $this->runValidation($post_id)) {
+                return $post_id;
+            }
 
-                                $submission = $core->getOrPrepareSubmission(
-                                    $this->servedContentType,
-                                    $sourceBlog,
-                                    $originalId,
-                                    (int)$blogId,
-                                    SubmissionEntity::SUBMISSION_STATUS_CLONED
-                                );
+            if (!array_key_exists(self::WIDGET_DATA_NAME, $_POST)) {
+                $this->getLogger()
+                    ->debug(vsprintf('Validation failed: no smartling info while saving. Ignoring', [$post_id]));
 
-                                $this->getLogger()->info(
-                                    vsprintf(
-                                        self::$MSG_CLONING_CONTENT,
-                                        [
-                                            $this->servedContentType,
-                                            $sourceBlog,
-                                            $originalId,
-                                            (int)$blogId,
-                                            $submission->getTargetLocale(),
-                                        ]
-                                    ));
-                                do_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $submission);
-                            }
-                        }
-                        break;
-                    case 'Download':
-                        $targetLocaleIds = array_keys($locales);
+                return;
+            }
 
-                        foreach ($targetLocaleIds as $targetBlogId) {
-                            $submissions = $this->getManager()
-                                ->find(
-                                    [
-                                        'source_id'      => $originalId,
-                                        'source_blog_id' => $sourceBlog,
-                                        'content_type'   => $this->servedContentType,
-                                        'target_blog_id' => $targetBlogId,
-                                    ]
-                                );
+            $data = $_POST[self::WIDGET_DATA_NAME];
 
-                            if (0 < count($submissions)) {
-                                $submission = ArrayHelper::first($submissions);
+            $locales = [];
 
-                                $this->getLogger()
-                                    ->info(
+            if (null !== $data && array_key_exists('locales', $data)) {
+
+                foreach ($data['locales'] as $blogId => $blogName) {
+                    if (array_key_exists('enabled', $blogName) && 'on' === $blogName['enabled']) {
+                        $locales[$blogId] = $blogName['locale'];
+                    }
+                }
+
+                $core = $this->getCore();
+
+                if (array_key_exists('sub', $_POST) && count($locales) > 0) {
+                    switch ($_POST['sub']) {
+                        case 'Upload':
+                            if (0 < count($locales)) {
+                                foreach ($locales as $blogId => $blogName) {
+                                    $result = $core->createForTranslation(
+                                        $this->servedContentType,
+                                        $sourceBlog,
+                                        $originalId,
+                                        (int)$blogId
+                                    );
+
+                                    $this->getLogger()->info(
                                         vsprintf(
-                                            self::$MSG_DOWNLOAD_ENQUEUE_ENTITY,
+                                            self::$MSG_UPLOAD_ENQUEUE_ENTITY,
                                             [
-                                                $submission->getId(),
-                                                $submission->getStatus(),
                                                 $this->servedContentType,
                                                 $sourceBlog,
                                                 $originalId,
-                                                $submission->getTargetBlogId(),
-                                                $submission->getTargetLocale(),
+                                                (int)$blogId,
+                                                $result->getTargetLocale(),
                                             ]
-                                        )
+                                        ));
+                                }
+                                do_action(UploadJob::JOB_HOOK_NAME);
+                            }
+
+                            break;
+                        case 'Clone':
+                            if (0 < count($locales)) {
+                                foreach ($locales as $blogId => $blogName) {
+
+                                    $submission = $core->getOrPrepareSubmission(
+                                        $this->servedContentType,
+                                        $sourceBlog,
+                                        $originalId,
+                                        (int)$blogId,
+                                        SubmissionEntity::SUBMISSION_STATUS_CLONED
                                     );
 
-                                $core->getQueue()->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
+                                    $this->getLogger()->info(
+                                        vsprintf(
+                                            self::$MSG_CLONING_CONTENT,
+                                            [
+                                                $this->servedContentType,
+                                                $sourceBlog,
+                                                $originalId,
+                                                (int)$blogId,
+                                                $submission->getTargetLocale(),
+                                            ]
+                                        ));
+                                    do_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $submission);
+                                }
                             }
-                        }
-                        $this->getLogger()->debug(vsprintf('Initiating upload job', []));
-                        do_action(DownloadTranslationJob::JOB_HOOK_NAME);
-                        break;
+                            break;
+                        case 'Download':
+                            $targetLocaleIds = array_keys($locales);
+
+                            foreach ($targetLocaleIds as $targetBlogId) {
+                                $submissions = $this->getManager()
+                                    ->find(
+                                        [
+                                            'source_id'      => $originalId,
+                                            'source_blog_id' => $sourceBlog,
+                                            'content_type'   => $this->servedContentType,
+                                            'target_blog_id' => $targetBlogId,
+                                        ]
+                                    );
+
+                                if (0 < count($submissions)) {
+                                    $submission = ArrayHelper::first($submissions);
+
+                                    $this->getLogger()
+                                        ->info(
+                                            vsprintf(
+                                                self::$MSG_DOWNLOAD_ENQUEUE_ENTITY,
+                                                [
+                                                    $submission->getId(),
+                                                    $submission->getStatus(),
+                                                    $this->servedContentType,
+                                                    $sourceBlog,
+                                                    $originalId,
+                                                    $submission->getTargetBlogId(),
+                                                    $submission->getTargetLocale(),
+                                                ]
+                                            )
+                                        );
+
+                                    $core->getQueue()
+                                        ->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
+                                }
+                            }
+                            $this->getLogger()->debug(vsprintf('Initiating upload job', []));
+                            do_action(DownloadTranslationJob::JOB_HOOK_NAME);
+                            break;
+                    }
                 }
             }
+            add_action('save_post', [$this, 'save']);
         }
-        add_action('save_post', [$this, 'save']);
     }
 }
