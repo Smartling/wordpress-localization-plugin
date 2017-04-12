@@ -159,14 +159,12 @@ class FieldsFilterHelper
     }
 
     /**
-     * @param array $data
+     * @param array $sourceArray
      *
      * @return array
      */
-    public function prepareSourceData(array $data)
+    public function prepareSourceData(array $sourceArray)
     {
-        $sourceArray = self::normalizeSource($data);
-
         if (array_key_exists('meta', $sourceArray) && is_array($sourceArray['meta'])) {
             $metadata = &$sourceArray['meta'];
             /**
@@ -359,25 +357,6 @@ class FieldsFilterHelper
         $data = $this->removeEmptyFields($data);
 
         return $data;
-    }
-
-    /**
-     * @param array $source
-     *
-     * @return array
-     */
-    private static function normalizeSource(array $source)
-    {
-        if (array_key_exists('meta', $source) && is_array($source['meta'])) {
-            $pointer = &$source['meta'];
-            foreach ($pointer as & $value) {
-                if (is_array($value) && 1 === count($value)) {
-                    $value = ArrayHelper::first($value);
-                }
-            }
-        }
-
-        return $source;
     }
 
     /**
