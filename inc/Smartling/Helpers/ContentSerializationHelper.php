@@ -92,6 +92,36 @@ class ContentSerializationHelper
         $this->setFieldsFilter($fieldsFilter);
     }
 
+    private function cleanUpFields(array $fields)
+    {
+        $toRemove = [
+            'entity' => [
+                'hash',
+                'post_author',
+                'post_date',
+                'post_date_gmt',
+                'post_password',
+                'post_modified',
+                'post_modified_gmt',
+            ],
+            'meta'   => [
+                '_edit_lock',
+                '_edit_last',
+
+            ],
+        ];
+
+        foreach ($toRemove as $part => $keys) {
+            foreach ($keys as $key) {
+                if (array_key_exists($part, $fields) && array_key_exists($key, $fields[$part])) {
+                    unset($fields[$part][$key]);
+                }
+            }
+        }
+
+        return $fields;
+    }
+
     /**
      * @param SubmissionEntity $submission
      *
@@ -99,11 +129,25 @@ class ContentSerializationHelper
      */
     public function calculateHash(SubmissionEntity $submission)
     {
-        $collectedContent = $this->collectSubmissionSourceContent($submission);
+        $cache = RuntimeCacheHelper::getInstance();
+        $key = implode(
+            ':',
+            [
+                $submission->getSourceBlogId(),
+                $submission->getContentType(),
+                $submission->getSourceId(),
+            ]
+        );
 
-        $filteredData = $this->getFieldsFilter()->filterValues($submission, $collectedContent);
+        if (false === ($cached = $cache->get($key, 'hashCalculator'))) {
+            $collectedContent = $this->collectSubmissionSourceContent($submission);
+            $collectedContent = $this->cleanUpFields($collectedContent);
+            $hash = md5(serialize($collectedContent));
+            $cached = $hash;
+            $cache->set($key, $hash, 'hashCalculator');
+        }
 
-        return md5(serialize($filteredData));
+        return $cached;
     }
 
 
