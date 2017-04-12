@@ -393,11 +393,6 @@ class Bootstrap
                 ],
             ];
 
-            // registering linking for posts (based) and taxonomies
-            add_action(ExportedAPI::ACTION_SMARTLING_PROCESSOR_RELATED_CONTENT, function () {
-
-            });
-
 
             $filters = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_FIELD_FILTER, $filters);
             foreach ($filters as $filter) {
