@@ -57,36 +57,18 @@ class SmartlingListTable extends WP_List_Table
              * @var ContentTypeInterface $descriptor
              */
             $descriptor = $contentTypeManager->getDescriptorByType($contentTypeName);
-try {
-    if (!($descriptor instanceof ContentTypeInterface)) {
-        continue;
-    }
-} catch (\Exception $e){}
+            try {
+                if (!($descriptor instanceof ContentTypeInterface)) {
+                    continue;
+                }
+            } catch (\Exception $e) {
+            }
             if (true === $descriptor->getVisibility()[$page]) {
                 if ($descriptor->isVirtual() || in_array($contentTypeName, $registeredInWordpressTypes, true)) {
-                $output[$contentTypeName]=$contentTypeLabel;
+                    $output[$contentTypeName] = $contentTypeLabel;
                 }
             }
         }
-
-        //Bootstrap::DebugPrint($supportedTypes, true);
-        //$specialTypes = [WordpressContentTypeHelper::CONTENT_TYPE_WIDGET,];
-
-        //$postTypes = $siteHelper->getPostTypes();
-        //$termTypes = $siteHelper->getTermTypes();
-
-        //$activeTypes = $specialTypes;
-
-        //$activeTypes = array_merge($activeTypes, $postTypes, $termTypes);
-
-        //$types = [];
-
-        //foreach ($activeTypes as $activeType) {
-        //    if (array_key_exists($activeType, $supportedTypes)) {
-        //        $types[$activeType] = $supportedTypes[$activeType];
-        //    }
-        // }
-
         return $output;
     }
 
