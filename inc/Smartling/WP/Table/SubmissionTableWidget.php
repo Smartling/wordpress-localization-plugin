@@ -27,6 +27,8 @@ class SubmissionTableWidget extends SmartlingListTable
 
     const ACTION_UPLOAD   = 'send';
     const ACTION_DOWNLOAD = 'download';
+    const ACTION_LOCK     = 'lock';
+    const ACTION_UNLOCK   = 'unlock';
 
     /**
      * base name of Content-type filtering select
@@ -103,7 +105,6 @@ class SubmissionTableWidget extends SmartlingListTable
 
     /**
      * default values of custom form elements on page
-     *
      * @var array
      */
     private $defaultValues = [
@@ -222,6 +223,8 @@ class SubmissionTableWidget extends SmartlingListTable
         $actions = [
             self::ACTION_UPLOAD   => __('Enqueue for Upload'),
             self::ACTION_DOWNLOAD => __('Enqueue for Download'),
+            self::ACTION_LOCK     => __('Lock translation'),
+            self::ACTION_UNLOCK   => __('Unlock translation'),
         ];
 
         return $actions;
@@ -250,6 +253,18 @@ class SubmissionTableWidget extends SmartlingListTable
                     case self::ACTION_DOWNLOAD:
                         foreach ($submissions as $submission) {
                             $this->getQueue()->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
+                        }
+                        break;
+                    case self::ACTION_LOCK:
+                        foreach ($submissions as $submission) {
+                            $submission->setIsLocked(1);
+                            $this->manager->storeEntity($submission);
+                        }
+                        break;
+                    case self::ACTION_UNLOCK:
+                        foreach ($submissions as $submission) {
+                            $submission->setIsLocked(0);
+                            $this->manager->storeEntity($submission);
                         }
                         break;
                     default:
