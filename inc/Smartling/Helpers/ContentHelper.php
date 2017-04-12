@@ -39,6 +39,14 @@ class ContentHelper
     private $needBlogSwitch;
 
     /**
+     * @return RuntimeCacheHelper
+     */
+    private function getRuntimeCache()
+    {
+        return RuntimeCacheHelper::getInstance();
+    }
+
+    /**
      * @return ContentEntitiesIOFactory
      */
     public function getIoFactory()
@@ -156,15 +164,20 @@ class ContentHelper
      */
     public function readSourceContent(SubmissionEntity $submission)
     {
-        /**
-         * @var EntityAbstract $wrapper
-         */
-        $wrapper = $this->getWrapper($submission->getContentType());
-        $this->ensureSource($submission);
-        $sourceContent = $wrapper->get($submission->getSourceId());
-        $this->ensureRestoredBlogId();
-
-        return $sourceContent;
+        if (false === ($cached = $this->getRuntimeCache()->get($submission->getId(), 'sourceContent'))) {
+            /**
+             * @var EntityAbstract $wrapper
+             */
+            $wrapper = $this->getWrapper($submission->getContentType());
+            $this->ensureSource($submission);
+            $sourceContent = $wrapper->get($submission->getSourceId());
+            $this->ensureRestoredBlogId();
+            $clone = clone $sourceContent;
+            $this->getRuntimeCache()->set($submission->getId(), $sourceContent, 'sourceContent');
+        } else {
+            $clone = clone $cached;
+        }
+        return $clone;
     }
 
     /**
@@ -192,19 +205,25 @@ class ContentHelper
      */
     public function readSourceMetadata(SubmissionEntity $submission)
     {
-        $metadata = [];
-        /**
-         * @var EntityAbstract $wrapper
-         */
-        $wrapper = $this->getWrapper($submission->getContentType());
-        $this->ensureSource($submission);
-        $sourceContent = $wrapper->get($submission->getSourceId());
-        if ($sourceContent instanceof EntityAbstract) {
-            $metadata = $sourceContent->getMetadata();
-        }
-        $this->ensureRestoredBlogId();
+        if (false === ($cached = $this->getRuntimeCache()->get($submission->getId(), 'sourceMeta'))) {
+            $metadata = [];
+            /**
+             * @var EntityAbstract $wrapper
+             */
+            $wrapper = $this->getWrapper($submission->getContentType());
+            $this->ensureSource($submission);
+            $sourceContent = $wrapper->get($submission->getSourceId());
+            if ($sourceContent instanceof EntityAbstract) {
+                $metadata = $sourceContent->getMetadata();
+            }
+            $this->ensureRestoredBlogId();
 
-        return $metadata;
+            $clone = $metadata;
+            $this->getRuntimeCache()->set($submission->getId(), $metadata, 'sourceMeta');
+        } else {
+            $clone = $cached;
+        }
+        return $clone;
     }
 
     /**
