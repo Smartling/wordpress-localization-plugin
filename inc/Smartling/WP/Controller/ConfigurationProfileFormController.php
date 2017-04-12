@@ -122,6 +122,10 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
             $profile->setDownloadOnChange($settings['download_on_change']);
         }
 
+        if (array_key_exists('publish_completed', $settings)) {
+            $profile->setPublishCompleted($settings['publish_completed']);
+        }
+
         if (array_key_exists('clean_metadata_on_download', $settings)) {
             $profile->setCleanMetadataOnDownload($settings['clean_metadata_on_download']);
         }

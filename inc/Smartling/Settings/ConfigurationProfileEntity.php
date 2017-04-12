@@ -72,6 +72,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
             'auto_authorize'                   => self::DB_TYPE_UINT_SWITCH,
             'retrieval_type'                   => self::DB_TYPE_STRING_SMALL,
             'upload_on_update'                 => self::DB_TYPE_UINT_SWITCH,
+            'publish_completed'                => self::DB_TYPE_UINT_SWITCH_ON,
             'download_on_change'               => self::DB_TYPE_UINT_SWITCH,
             'clean_metadata_on_download'       => self::DB_TYPE_UINT_SWITCH,
             'target_locales'                   => 'TEXT NULL',
@@ -336,6 +337,16 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
     public function getCleanMetadataOnDownload()
     {
         return (int) $this->stateFields['clean_metadata_on_download'];
+    }
+
+    public function getPublishCompleted()
+    {
+        return (int) $this->stateFields['publish_completed'];
+    }
+
+    public function setPublishCompleted($publishCompleted)
+    {
+        $this->stateFields['publish_completed'] = (int)$publishCompleted;
     }
 
     public function toArray($addVirtualColumns = true)

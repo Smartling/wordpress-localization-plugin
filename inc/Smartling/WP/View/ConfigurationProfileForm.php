@@ -490,6 +490,23 @@ Please consult before making any changes.<br>", $domain); ?>
                 </td>
             </tr>
             <tr class="toggleExpert hidden">
+                <th scope="row"><?= __('Publish completed translation',$domain) ?></th>
+                <td>
+                    <?=
+                    HtmlTagGeneratorHelper::tag(
+                        'select',
+                        HtmlTagGeneratorHelper::renderSelectOptions(
+                            $profile->getPublishCompleted(),
+                            [
+                                0 => __('No', $domain),
+                                1 => __('Yes', $domain),
+                            ]
+                        ),
+                        ['name' => 'smartling_settings[publish_completed]']);
+                    ?>
+                </td>
+            </tr>
+            <tr class="toggleExpert hidden">
                 <th scope="row"><?= __('Auto synchronize properties on translated page with source', $domain) ?></th>
                 <td>
                     <p>If enabled, Smartling will check for changes to the source’s properties, i.e. removing an image, changing placement of a text field, and automatically update translated pages.</p>

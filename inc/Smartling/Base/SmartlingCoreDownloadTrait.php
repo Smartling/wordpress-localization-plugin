@@ -80,19 +80,21 @@ trait SmartlingCoreDownloadTrait
             if (array_key_exists('entity', $translatedFields) && ArrayHelper::notEmpty($translatedFields['entity'])) {
                 $this->setValues($targetContent, $translatedFields['entity']);
             }
+            /**
+             * @var ConfigurationProfileEntity $configurationProfile
+             */
+            $configurationProfile = $this->getSettingsManager()->getSingleSettingsProfile($entity->getSourceBlogId());
+
             if (100 === $entity->getCompletionPercentage()) {
                 $entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
-                $targetContent->translationCompleted();
+                if (1 == $configurationProfile->getPublishCompleted()) {
+                    $targetContent->translationCompleted();
+                }
                 $entity->setAppliedDate(DateTimeHelper::nowAsString());
             }
             $this->getContentHelper()->writeTargetContent($entity, $targetContent);
             if (array_key_exists('meta', $translatedFields) && ArrayHelper::notEmpty($translatedFields['meta'])) {
                 $metaFields = &$translatedFields['meta'];
-                /**
-                 * @var ConfigurationProfileEntity $configurationProfile
-                 */
-                $configurationProfile = $this->getSettingsManager()
-                    ->getSingleSettingsProfile($entity->getSourceBlogId());
 
                 if (1 === $configurationProfile->getCleanMetadataOnDownload()) {
                     $this->getContentHelper()->removeTargetMetadata($entity);
