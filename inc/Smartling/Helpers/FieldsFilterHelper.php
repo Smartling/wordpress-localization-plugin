@@ -267,6 +267,8 @@ class FieldsFilterHelper
 
             $filteredOriginalValues = $this->filterArray($originalValues, $submission, self::FILTER_STRATEGY_DOWNLOAD);
             $result = array_merge($result, $filteredOriginalValues);
+        } else {
+            $result = $originalValues;
         }
 
         $result = array_merge($result, $translatedValues);
