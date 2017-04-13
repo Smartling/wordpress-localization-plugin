@@ -345,11 +345,13 @@ class Bootstrap
         new Taxonomies($di);
         new PostTypes($di);
 
+        $action = defined('DOING_CRON') && true === DOING_CRON ? 'wp_loaded' : 'admin_init';
+
         /**
          * Post types and taxonomies are registered on 'init' hook, but this code is executed on 'plugins_loaded' hook,
          * so we need to postpone dynamic handlers execution
          */
-        add_action('admin_init', function () use ($di) {
+        add_action($action, function () use ($di) {
 
             // registering taxonomies first.
             $dynTermDefinitions = [];
