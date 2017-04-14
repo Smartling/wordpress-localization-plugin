@@ -62,7 +62,7 @@ Additional information on the Smartling Connector for WordPress can be found [th
 * Added automatic support for all registered taxonomies. Previously needed taxonomy descriptors should be removed.
 * Added automatic support for all registered public custom post types (including relations with taxonomies). Previously needed custom post types descriptors should be removed.
 * Added configuration profile option that allows to keep translation in draft even after translation is completed.
-* Added ability to loch / unlock translations on Translation Progress screen via bulk action.
+* Added ability to lock / unlock translations on Translation Progress screen via bulk action.
 * Added caching to read operations.
 * Added caching to hash calculation operations.
 * Fixed issue of metadata duplication if value is an array with one element.
