@@ -393,7 +393,46 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     protected function getAttributeFromTag($tagString, $tagName, $attribute)
     {
         $dom = new DOMDocument();
+        $state = libxml_use_internal_errors(true);
         $dom->loadHTML($tagString);
+        $errors = libxml_get_errors();
+        libxml_use_internal_errors($state);
+        if (0 < count($errors))
+        {
+            foreach ($errors as $error) {
+                if ($error instanceof libXMLError){
+                    /**
+                     * @var  libXMLError $error
+                     */
+                    $level = '';
+                    switch ($error->level) {
+                        case LIBXML_ERR_NONE:
+                            continue;
+                            break;
+                        case LIBXML_ERR_WARNING:
+                            $level = 'WARNING';
+                            break;
+                        case LIBXML_ERR_ERROR:
+                            $level = 'ERROR';
+                            break;
+                        case LIBXML_ERR_FATAL:
+                            $level = 'FATAL ERROR';
+                            break;
+                        default:
+                            $level = 'UNKNOWN:'.$error->level;
+                    }
+
+                    $template = 'An \'%s\' raised with message: \'%s\' by XML (libxml) parser while parsing string \'%s\' line %s.';
+                    $message = vsprintf($template, [
+                        $level,
+                        $error->message,
+                        base64_encode($tagString),
+                        $error->line
+                    ]);
+                    $this->getLogger()->debug($message);
+                }
+            }
+        }
         $images = $dom->getElementsByTagName($tagName);
         $value = false;
         if (1 === $images->length) {
