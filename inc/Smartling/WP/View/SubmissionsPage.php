@@ -43,6 +43,7 @@ $data = $this->getViewData();
                         <?= $submissionsTable->statusSelectRender(); ?>
                         <?= $submissionsTable->stateSelectRender(); ?>
                         <?= $submissionsTable->targetLocaleSelectRender(); ?>
+                        <?= $submissionsTable->renderSearchBox(); ?>
                         <?= $submissionsTable->renderSubmitButton(__('Apply Filter')); ?>
                     </form>
                     </p>
@@ -50,14 +51,6 @@ $data = $this->getViewData();
             </tr>
         </table>
         <form id="submissions-main" method="post">
-            <table width="100%">
-                <tr>
-                    <td style="text-align: right;"><?php $submissionsTable->search_box(__('Search'), 's'); ?></td>
-                </tr>
-                </tr>
-            </table>
-
-
             <!-- For plugins, we also need to ensure that the form posts back to our current page -->
             <input type="hidden" name="page" value="<?= $_REQUEST['page']; ?>"/>
             <!-- Now we can render the completed list table -->

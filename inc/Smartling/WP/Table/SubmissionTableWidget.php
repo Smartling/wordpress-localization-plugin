@@ -462,6 +462,22 @@ class SubmissionTableWidget extends SmartlingListTable
         return $html;
     }
 
+    public function renderSearchBox()
+    {
+        $html = HtmlTagGeneratorHelper::tag('label', __('Search'), ['for' => 's'])
+                . HtmlTagGeneratorHelper::tag(
+                    'input',
+                    '',
+                    [
+                        'name' => 's',
+                        'type' => 'text',
+                        'value' => $this->getFormElementValue('s', ''),
+                        'placeholder'=>__('Search text')
+                    ]
+            );
+        return $html;
+    }
+
     /**
      * @return string
      */
