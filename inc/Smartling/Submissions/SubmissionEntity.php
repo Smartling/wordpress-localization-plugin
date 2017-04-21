@@ -30,6 +30,8 @@ use Smartling\Helpers\WordpressUserHelper;
  * @property string      $applied_date
  * @property int         $approved_string_count
  * @property int         $completed_string_count
+ * @property int         $excluded_string_count
+ * @property int         $total_string_count
  * @property string      $status
  * @property int         $is_locked
  * @property \DateTime   $last_modified
@@ -99,6 +101,8 @@ class SubmissionEntity extends SmartlingEntityAbstract
             'applied_date'           => self::DB_TYPE_DATETIME,
             'approved_string_count'  => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_DEFAULT_ZERO,
             'completed_string_count' => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_DEFAULT_ZERO,
+            'excluded_string_count'  => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_DEFAULT_ZERO,
+            'total_string_count'     => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_DEFAULT_ZERO,
             'word_count'             => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_DEFAULT_ZERO,
             'status'                 => self::DB_TYPE_STRING_SMALL,
             'is_locked'              => self::DB_TYPE_UINT_SWITCH . ' ' . self::DB_TYPE_DEFAULT_ZERO,
@@ -692,18 +696,64 @@ class SubmissionEntity extends SmartlingEntityAbstract
     /**
      * @return int
      */
+    public function getExcludedStringCount()
+    {
+        return (int)$this->stateFields['excluded_string_count'];
+    }
+
+    /**
+     * @param $excludedStringsCount
+     *
+     * @return $this
+     */
+    public function setExcludedStringCount($excludedStringsCount)
+    {
+        $this->stateFields['excluded_string_count'] = (int)$excludedStringsCount;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getTotalStringCount()
+    {
+        return (int)$this->stateFields['total_string_count'];
+    }
+
+    /**
+     * @param $totalStringsCount
+     *
+     * @return $this
+     */
+    public function setTotalStringCount($totalStringsCount)
+    {
+        $this->stateFields['total_string_count'] = (int)$totalStringsCount;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
     public function getCompletionPercentage()
     {
         $percentage = 0;
-        if (0 !== $this->getApprovedStringCount()) {
-            $percentage = $this->getCompletedStringCount() / $this->getApprovedStringCount();
-        }
-        if ($percentage > 1) {
-            $percentage = 1;
-        }
 
-        if (self::SUBMISSION_STATUS_CLONED === $this->getStatus()) {
-            $percentage = 1;
+        if (($this->getApprovedStringCount() + $this->getCompletedStringCount()) > 0) {
+            if (0 !== $this->getApprovedStringCount()) {
+                $percentage = $this->getCompletedStringCount() / $this->getApprovedStringCount();
+            }
+            if ($percentage > 1) {
+                $percentage = 1;
+            }
+
+            if (self::SUBMISSION_STATUS_CLONED === $this->getStatus()) {
+                $percentage = 1;
+            }
+        } else {
+            // if nothing is authorized then check special case when everything was excluded
+            $percentage = 0 === ($this->getTotalStringCount() - $this->getExcludedStringCount()) ? 1 : 0;
         }
 
         return (int)($percentage * 100);

@@ -222,13 +222,17 @@ class ApiWrapper implements ApiWrapperInterface
      * @param SubmissionEntity $entity
      * @param int              $completedStrings
      * @param int              $authorizedStrings
+     * @param int              $totalStringCount
+     * @param int              $excludedStringCount
      *
      * @return SubmissionEntity
      */
-    private function setTranslationStatusToEntity(SubmissionEntity $entity, $completedStrings, $authorizedStrings)
+    private function setTranslationStatusToEntity(SubmissionEntity $entity, $completedStrings, $authorizedStrings, $totalStringCount, $excludedStringCount)
     {
         $entity->setApprovedStringCount($completedStrings + $authorizedStrings);
         $entity->setCompletedStringCount($completedStrings);
+        $entity->setTotalStringsCount($totalStringCount);
+        $entity->setExcludedStringsCount($excludedStringCount);
 
         return $entity;
     }
@@ -254,9 +258,13 @@ class ApiWrapper implements ApiWrapperInterface
 
             $data = $api->getStatus($entity->getFileUri(), $locale);
 
-            $entity = $this->setTranslationStatusToEntity($entity,
-                                                          $data['completedStringCount'],
-                                                          $data['authorizedStringCount']);
+            $entity = $this
+                ->setTranslationStatusToEntity($entity,
+                                               $data['completedStringCount'],
+                                               $data['authorizedStringCount'],
+                                               $data['totalStringCount'],
+                                               $data['excludedStringCount']
+                );
 
             $entity->setWordCount($data['totalWordCount']);
 
@@ -457,6 +465,8 @@ class ApiWrapper implements ApiWrapperInterface
                 if (array_key_exists($localeId, $submissions)) {
                     $completedStrings = $descriptor['completedStringCount'];
                     $authorizedStrings = $descriptor['authorizedStringCount'];
+                    $totalStringCount = $descriptor['totalStringCount'];
+                    $excludedStringCount = $descriptor['excludedStringCount'];
 
                     $currentProgress = $submissions[$localeId]->getCompletionPercentage(); // current progress value 0..100
 
@@ -466,7 +476,9 @@ class ApiWrapper implements ApiWrapperInterface
                     $submission = $this->setTranslationStatusToEntity(
                         $submissions[$localeId],
                         $completedStrings,
-                        $authorizedStrings);
+                        $authorizedStrings,
+                        $totalStringCount,
+                        $excludedStringCount);
                     $submission->setWordCount($totalWordCount);
 
                     $newProgress = $submissions[$localeId]->getCompletionPercentage(); // current progress value 0..100
