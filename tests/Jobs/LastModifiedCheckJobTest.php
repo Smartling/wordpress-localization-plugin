@@ -4,6 +4,7 @@ namespace Smartling\Tests\Jobs;
 
 use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
+use Smartling\Bootstrap;
 use Smartling\Jobs\LastModifiedCheckJob;
 use Smartling\Queue\Queue;
 use Smartling\Settings\SettingsManager;

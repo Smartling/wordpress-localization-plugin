@@ -24,7 +24,9 @@ trait SubmissionEntityMock
                     'getTargetBlogId', 'setTargetBlogId', 'getTargetId', 'setTargetId', 'getSubmitter',
                     'setSubmitter', 'getSubmissionDate', 'setSubmissionDate', 'getAppliedDate',
                     'setAppliedDate', 'getApprovedStringCount', 'setApprovedStringCount',
-                    'getCompletedStringCount', 'setCompletedStringCount', 'getCompletionPercentage',];
+                    'getCompletedStringCount', 'setCompletedStringCount', 'getCompletionPercentage',
+                    'getExcludedStringCount','setExcludedStringCount','getTotalStringCount','setTotalStringCount',];
+
 
         return $this->getMockBuilder('Smartling\Submissions\SubmissionEntity')
             ->setMethods($methods)
@@ -41,7 +43,7 @@ trait SubmissionEntityMock
      *
      * @return array
      */
-    private function getSerializedSubmission($fileUri, $locale, $lastModified = null, $completion = 0, $id = 1)
+    private function getSerializedSubmission($fileUri, $locale, $lastModified = '1900-01-01', $completion = 0, $id = 1)
     {
         WordpressContentTypeHelper::$internalTypes = ['post' => 'Post'];
 
@@ -59,8 +61,10 @@ trait SubmissionEntityMock
             'submitter'              => '',
             'submission_date'        => null,
             'applied_date'           => null,
-            'approved_string_count'  => 0,
+            'approved_string_count'  => $completion,
             'completed_string_count' => $completion,
+            'excluded_string_count'  => 0,
+            'total_string_count'     => $completion,
             'status'                 => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
             'is_locked'              => 0,
             'last_modified'          => $lastModified,
