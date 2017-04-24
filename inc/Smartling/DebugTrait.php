@@ -13,9 +13,30 @@ trait DebugTrait
      */
     public static function DebugPrint($data, $die = false)
     {
-        echo '<pre>' . htmlentities(var_export($data, true)) . '</pre>';
+        $isConsole = !(function_exists('wp_die'));
+
+        $content = var_export($data, true);
+
+        if (!$isConsole) {
+            $content = vsprintf('<pre>%s</pre>', [htmlentities($content)]);
+        }
+
+        if ($isConsole) {
+            echo '######## Debug Print (Start) ########' . PHP_EOL;
+        }
+        echo $content;
+        if ($isConsole) {
+            echo PHP_EOL;
+            echo '######## Debug Print (End)   ########' . PHP_EOL;
+        }
+
         if (true === $die) {
-            wp_die('Execution terminated due to debug purposes.');
+            $message = 'Execution terminated due to debug purposes.';
+            if ($isConsole) {
+                die($message);
+            } else {
+                wp_die($message);
+            }
         }
     }
 
