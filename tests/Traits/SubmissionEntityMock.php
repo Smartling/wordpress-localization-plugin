@@ -24,9 +24,7 @@ trait SubmissionEntityMock
                     'getTargetBlogId', 'setTargetBlogId', 'getTargetId', 'setTargetId', 'getSubmitter',
                     'setSubmitter', 'getSubmissionDate', 'setSubmissionDate', 'getAppliedDate',
                     'setAppliedDate', 'getApprovedStringCount', 'setApprovedStringCount',
-                    'getCompletedStringCount', 'setCompletedStringCount', 'getCompletionPercentage',
-                    'getExcludedStringCount','setExcludedStringCount','getTotalStringCount','setTotalStringCount',];
-
+                    'getCompletedStringCount', 'setCompletedStringCount', 'getCompletionPercentage',];
 
         return $this->getMockBuilder('Smartling\Submissions\SubmissionEntity')
             ->setMethods($methods)
@@ -43,7 +41,7 @@ trait SubmissionEntityMock
      *
      * @return array
      */
-    private function getSerializedSubmission($fileUri, $locale, $lastModified = '1900-01-01', $completion = 0, $id = 1)
+    private function getSerializedSubmission($fileUri, $locale, $lastModified = null, $completion = 0, $id = 1)
     {
         WordpressContentTypeHelper::$internalTypes = ['post' => 'Post'];
 

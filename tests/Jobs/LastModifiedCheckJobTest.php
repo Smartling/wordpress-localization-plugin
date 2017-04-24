@@ -4,7 +4,6 @@ namespace Smartling\Tests\Jobs;
 
 use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
-use Smartling\Bootstrap;
 use Smartling\Jobs\LastModifiedCheckJob;
 use Smartling\Queue\Queue;
 use Smartling\Settings\SettingsManager;
@@ -204,12 +203,11 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
      * @covers       \Smartling\Jobs\LastModifiedCheckJob::run()
      * @dataProvider runDataProvider
      *
-     * @param array            $groupedSubmissions
-     * @param SubmissionEntity $submission
-     * @param array            $lastModifiedResponse
-     * @param int              $expectedStatusCheckRequests
+     * @param array $groupedSubmissions
+     * @param array $lastModifiedResponse
+     * @param int   $expectedStatusCheckRequests
      */
-    public function testRun(array $groupedSubmissions, SubmissionEntity $submission, array $lastModifiedResponse, $expectedStatusCheckRequests)
+    public function testRun(array $groupedSubmissions, array $lastModifiedResponse, $expectedStatusCheckRequests)
     {
         $worker = $this->getLastModifiedWorker();
 
@@ -248,7 +246,7 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
                     $this->getApiWrapper()
                         ->expects(self::exactly(1))
                         ->method('lastModified')
-                        ->with(reset($unserializedSubmissions))//$submission)
+                        ->with(reset($unserializedSubmissions))
                         ->willReturn($lastModifiedResponse);
                 }
             }
@@ -334,7 +332,6 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
                     ],
                     false,
                 ],
-                SubmissionEntity::fromArray($this->getSerializedSubmission('FileA', 'LangA'), $this->getLogger()),
                 [
                     'LangA' => $this->mkDateTime('2016-01-10 00:00:00'),
                     'LangB' => $this->mkDateTime('2016-01-10 00:14:00'),
@@ -353,14 +350,6 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
                     ],
                     false,
                 ],
-                SubmissionEntity::fromArray(
-                    $this->getSerializedSubmission(
-                        'FileA',
-                        'LangA',
-                        $this->mkDateTime('2016-01-10 00:00:00')
-                    ),
-                    $this->getLogger()
-                ),
                 [
                     'LangA' => $this->mkDateTime('2016-01-10 00:00:00'),
                     'LangB' => $this->mkDateTime('2016-01-10 00:00:00'),
