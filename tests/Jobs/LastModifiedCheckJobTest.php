@@ -320,7 +320,7 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
         return [
-            [
+            /*[
                 [
                     [
                         'FileA' =>
@@ -337,7 +337,7 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
                     'LangB' => $this->mkDateTime('2016-01-10 00:14:00'),
                 ],
                 1,
-            ],
+            ],*/
             [
                 [
                     [
