@@ -220,15 +220,6 @@ class Bootstrap
         self::getContainer()->setParameter('multilang_plugins', $mlPluginsStatuses);
     }
 
-    public function checkUploadFolder()
-    {
-        $path = self::getContainer()->getParameter('plugin.upload');
-        if (!file_exists($path)) {
-            /** @noinspection MkdirRaceConditionInspection */
-            mkdir($path, 0777);
-        }
-    }
-
     /**
      * Tests if current Wordpress Configuration can work with Smartling Plugin
      * @return mixed
@@ -423,7 +414,6 @@ class Bootstrap
 
     public function run()
     {
-        $this->checkUploadFolder();
         $this->initRoles();
     }
 }
