@@ -2,8 +2,8 @@
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
-Tested up to: 4.7.3
-Stable tag: 1.5.2
+Tested up to: 4.7.4
+Stable tag: 1.5.3
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -56,6 +56,14 @@ Additional information on the Smartling Connector for WordPress can be found [th
 1. Submit posts for translation using the Smartling Post Widget directly from the Edit page. View translation status for languages that have already been requested.
 2. The Bulk Submit page allows submission of Post, Page, Category, Tag, Navigation Menu and Theme Widget text for all configured locales from a single interface.
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
+
+== Changelog ==
+= 1.5.3 =
+* Improved DOM error handling.
+* Fixed Translation Progress screen search.
+* Fixed possible issue when all strings are excluded from translation.
+* Fixes possible issue when wordpress is installed into subfolder.
+* Small improvements
 
 == Changelog ==
 = 1.5.2 =
