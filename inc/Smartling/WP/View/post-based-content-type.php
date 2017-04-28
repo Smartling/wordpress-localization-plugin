@@ -109,7 +109,7 @@ if (!empty($locales)) {
         <div class="fields">
             No suitable target locales found.<br/>
             Please check your <a
-                href="/wp-admin/network/admin.php?page=smartling_configuration_profile_setup&action=edit&profile=<?= $data['profile']->getId(); ?>">settings.</a>
+                href="<?= get_site_url(); ?>/wp-admin/network/admin.php?page=smartling_configuration_profile_setup&action=edit&profile=<?= $data['profile']->getId(); ?>">settings.</a>
         </div>
     </div>
 <?php } ?>

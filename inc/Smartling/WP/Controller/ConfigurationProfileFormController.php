@@ -200,6 +200,6 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 
         $settingsManager->storeEntity($profile);
 
-        wp_redirect('/wp-admin/admin.php?page=smartling_configuration_profile_list');
+        wp_redirect(get_site_url() . '/wp-admin/admin.php?page=smartling_configuration_profile_list');
     }
 }

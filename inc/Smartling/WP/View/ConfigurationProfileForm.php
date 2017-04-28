@@ -152,7 +152,7 @@ if (0 === $profileId) {
 
 <div class="wrap">
     <h2><?= __(get_admin_page_title(), $domain) ?></h2>
-    <form id="smartling-configuration-profile-form" action="/wp-admin/admin-post.php" method="POST">
+    <form id="smartling-configuration-profile-form" action="<?= get_site_url(); ?>/wp-admin/admin-post.php" method="POST">
         <?= HtmlTagGeneratorHelper::tag('input', '', [
             'type'  => 'hidden',
             'name'  => 'action',

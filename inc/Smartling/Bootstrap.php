@@ -274,7 +274,7 @@ class Bootstrap
         if (true === $blockWork) {
             $mainMessage = 'No active suitable localization plugin found. Please install and activate one, e.g.: '
                            .
-                           '<a href="/wp-admin/network/plugin-install.php?tab=search&s=multilingual+press">Multilingual Press.</a>';
+                           '<a href="' . get_site_url() . '/wp-admin/network/plugin-install.php?tab=search&s=multilingual+press">Multilingual Press.</a>';
 
             self::getLogger()->critical('Boot :: ' . $mainMessage);
             DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
@@ -283,7 +283,7 @@ class Bootstrap
             $advTranslatorKey = 'class-Mlp_Advanced_Translator';
             if (is_array($data) && array_key_exists($advTranslatorKey, $data) && 'off' !== $data[$advTranslatorKey]) {
                 $msg = '<strong>Advanced Translator</strong> feature of Multilingual Press plugin is currently turned on.<br/>
- Please turn it off to use Smartling-connector plugin. <br/> Use <a href="/wp-admin/network/settings.php?page=mlp"><strong>this link</strong></a> to visit Multilingual Press network settings page.';
+ Please turn it off to use Smartling-connector plugin. <br/> Use <a href="' . get_site_url() . '/wp-admin/network/settings.php?page=mlp"><strong>this link</strong></a> to visit Multilingual Press network settings page.';
                 self::getLogger()->critical('Boot :: ' . $msg);
                 DiagnosticsHelper::addDiagnosticsMessage($msg, true);
             }
@@ -315,7 +315,7 @@ class Bootstrap
         if (0 === count($profiles)) {
             $mainMessage = 'No active smartling configuration profiles found. Please create at least one on '
                            .
-                           '<a href="/wp-admin/admin.php?page=smartling_configuration_profile_list">settings page</a>';
+                           '<a href="' . get_site_url() . '/wp-admin/admin.php?page=smartling_configuration_profile_list">settings page</a>';
 
             self::getLogger()->critical('Boot :: ' . $mainMessage);
 

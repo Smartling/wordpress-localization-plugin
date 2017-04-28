@@ -43,12 +43,12 @@ $data = $this->getViewData();
     <h2><?= __('Log file'); ?></h2>
     <ul>
         <li>
-            <a class="button action" href="/wp-admin/admin-post.php?action=smartling_download_log_file">
+            <a class="button action" href="<?= get_site_url(); ?>/wp-admin/admin-post.php?action=smartling_download_log_file">
                 <?= vsprintf(__('Download current log file ( <strong>%s</strong> ).'),[\Smartling\Bootstrap::getCurrentLogFileSize()]); ?>
             </a>
         </li>
         <li>
-            <a href="/wp-admin/admin-post.php?action=smartling_zerolength_log_file"><?= __('DELETE current log file.'); ?></a>
+            <a href="<?= get_site_url(); ?>/wp-admin/admin-post.php?action=smartling_zerolength_log_file"><?= __('DELETE current log file.'); ?></a>
         </li>
     </ul>
     </p>

@@ -179,7 +179,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
                         'Error applying migration <strong>#%s</strong>. <br/>
 Got error: <strong>%s</strong>.<br/>
 While executing query: <strong>%s</strong>. <br/>
-Please download the log file (click <strong><a href="/wp-admin/admin-post.php?action=smartling_download_log_file">here</a></strong>) and contact <a href="mailto:support@smartling.com?subject=%s">support@smartling.com</a>.',
+Please download the log file (click <strong><a href="' . get_site_url() . '/wp-admin/admin-post.php?action=smartling_download_log_file">here</a></strong>) and contact <a href="mailto:support@smartling.com?subject=%s">support@smartling.com</a>.',
                         [
                             $migration->getVersion(),
                             $this->getWpdb()->last_error,
