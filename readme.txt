@@ -59,13 +59,12 @@ Additional information on the Smartling Connector for WordPress can be found [th
 
 == Changelog ==
 = 1.5.3 =
-* Improved DOM error handling.
-* Fixed Translation Progress screen search.
-* Fixed possible issue when all strings are excluded from translation.
-* Fixes possible issue when wordpress is installed into subfolder.
-* Small improvements
+* Fixed warning in DOM parser in case content has not well-formed link\images tags.
+* Improved Search form on Translation Progress screen.
+* Changed behavior in case when user excludes all strings from translation. Now connector treats such files as completed.
+* Fixed issue with links in smarling menu in case wordpress is installed into subfolder.
+* Small improvements.
 
-== Changelog ==
 = 1.5.2 =
 * Added automatic support for all registered taxonomies. Previously needed taxonomy descriptors should be removed.
 * Added automatic support for all registered public custom post types (including relations with taxonomies). Previously needed custom post types descriptors should be removed.
