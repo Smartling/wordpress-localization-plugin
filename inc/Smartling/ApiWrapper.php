@@ -213,7 +213,7 @@ class ApiWrapper implements ApiWrapperInterface
         } catch (\Exception $e) {
             $this->getLogger()
                 ->error($e->getMessage());
-            throw new SmartlingFileDownloadException($e->getMessage());
+            throw new SmartlingFileDownloadException($e->getMessage(), $e->getCode(), $e);
 
         }
     }
@@ -368,7 +368,7 @@ class ApiWrapper implements ApiWrapperInterface
             return true;
 
         } catch (\Exception $e) {
-            throw new SmartlingFileUploadException($e->getMessage());
+            throw new SmartlingFileUploadException($e->getMessage(), $e->getCode(), $e);
         }
     }
 
