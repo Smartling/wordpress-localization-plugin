@@ -183,6 +183,15 @@ trait SmartlingCoreUploadTrait
 
                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                 } catch (Exception $e) {
+                    $proceedAuthException = function($e) use (&$proceedAuthException) {
+                        if ($e->getCode() == 401) {
+                            throw $e;
+                        } elseif ($e->getPrevious() instanceof \Exception)  {
+                            $proceedAuthException($e->getPrevious());
+                        }
+                    };
+                    $proceedAuthException($e);
+
                     $this->getLogger()->error($e->getMessage());
                     $this->getSubmissionManager()->setErrorMessage($submission, vsprintf('Could not submit because: %s', [$e->getMessage()]));
                 }
