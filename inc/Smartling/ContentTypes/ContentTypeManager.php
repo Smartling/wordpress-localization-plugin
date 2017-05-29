@@ -3,6 +3,7 @@
 namespace Smartling\ContentTypes;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Processors\SmartlingFactoryAbstract;
 
 /**
@@ -99,5 +100,19 @@ class ContentTypeManager extends SmartlingFactoryAbstract
 
 
         return $output;
+    }
+
+    public function getHandler($contentType)
+    {
+        if (array_key_exists($contentType, $this->getCollection())) {
+            return $this->getCollection()[$contentType];
+        } else {
+            if (true === $this->getAllowDefault() && null !== $this->getDefaultHandler()) {
+                return $this->getDefaultHandler();
+            } else {
+                $message = vsprintf($this->message, [$contentType, get_called_class()]);
+                throw new SmartlingInvalidFactoryArgumentException($message);
+            }
+        }
     }
 }

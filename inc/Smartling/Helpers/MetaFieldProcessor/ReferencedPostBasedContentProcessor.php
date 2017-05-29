@@ -147,7 +147,8 @@ class ReferencedPostBasedContentProcessor extends MetaFieldProcessorAbstract
                 $contentType,
                 $submission->getSourceBlogId(),
                 $value,
-                $submission->getTargetBlogId()
+                $submission->getTargetBlogId(),
+                (1 === $submission->getIsCloned())
             );
 
             return $attSubmission->getTargetId();

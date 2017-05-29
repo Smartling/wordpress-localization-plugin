@@ -102,11 +102,11 @@ class TranslationHelper
      * @param int    $sourceBlog
      * @param int    $sourceId
      * @param int    $targetBlog
+     * @param bool   $clone
      *
      * @return mixed
-     * @throws \Smartling\Exception\SmartlingDataReadException
      */
-    public function prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog)
+    public function prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone = false)
     {
         if (0 == $sourceId) {
             throw new \InvalidArgumentException('Source id cannot be 0.');
@@ -119,6 +119,9 @@ class TranslationHelper
         );
 
         if (0 === (int)$submission->getId()) {
+            if (true === $clone) {
+                $submission->setIsCloned(1);
+            }
             $submission = $this->getSubmissionManager()->storeEntity($submission);
         }
 
@@ -149,13 +152,13 @@ class TranslationHelper
      * @param int    $sourceBlog
      * @param int    $sourceId
      * @param int    $targetBlog
+     * @param bool   $clone
      *
      * @return SubmissionEntity
-     * @throws \Smartling\Exception\SmartlingDataReadException
      */
-    public function tryPrepareRelatedContent($contentType, $sourceBlog, $sourceId, $targetBlog)
+    public function tryPrepareRelatedContent($contentType, $sourceBlog, $sourceId, $targetBlog, $clone = false)
     {
-        $relatedSubmission = $this->prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog);
+        $relatedSubmission = $this->prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone);
 
         /**
          * @var SubmissionEntity $relatedSubmission

@@ -128,8 +128,7 @@ abstract class SmartlingFactoryAbstract
                 return $this->getDefaultHandler();
             } else {
                 $message = vsprintf($this->message, [$contentType, get_called_class()]);
-                $this->getLogger()
-                     ->error($message);
+                $this->getLogger()->error($message);
                 throw new SmartlingInvalidFactoryArgumentException($message);
             }
         }

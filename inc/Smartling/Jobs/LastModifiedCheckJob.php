@@ -296,9 +296,7 @@ class LastModifiedCheckJob extends JobAbstract
      */
     public function checkEntityForDownload(SubmissionEntity $entity)
     {
-        if (100 === $entity->getCompletionPercentage()
-            && SubmissionEntity::SUBMISSION_STATUS_CLONED !== $entity->getStatus()
-        ) {
+        if (100 === $entity->getCompletionPercentage() && 1 !== $entity->getIsCloned()) {
 
             $template = 'Cron Job enqueues content to download queue for submission id = \'%s\' with status = \'%s\' for entity = \'%s\', blog = \'%s\', id = \'%s\', targetBlog = \'%s\', locale = \'%s\'.';
 

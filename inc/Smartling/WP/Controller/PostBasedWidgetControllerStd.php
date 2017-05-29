@@ -2,7 +2,6 @@
 
 namespace Smartling\WP\Controller;
 
-use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingDbException;
@@ -13,7 +12,6 @@ use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Jobs\UploadJob;
 use Smartling\Queue\Queue;
-use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
@@ -25,19 +23,23 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 {
     use DetectContentChangeTrait;
 
-    const WIDGET_NAME = 'smartling_connector_widget';
-
+    const WIDGET_NAME      = 'smartling_connector_widget';
     const WIDGET_DATA_NAME = 'smartling_post_based_widget';
-
-    const CONNECTOR_NONCE = 'smartling_connector_nonce';
+    const CONNECTOR_NONCE  = 'smartling_connector_nonce';
 
     protected $servedContentType = 'undefined';
+    protected $needSave          = 'Need to have title';
+    protected $noOriginalFound   = 'No original post found';
+    protected $abilityNeeded     = 'edit_post';
 
-    protected $needSave = 'Need to have title';
+    private $mutedTypes = [
+        'attachment',
+    ];
 
-    protected $noOriginalFound = 'No original post found';
-
-    protected $abilityNeeded = 'edit_post';
+    private function isMuted()
+    {
+        return in_array($this->getServedContentType(), $this->mutedTypes, true);
+    }
 
     /**
      * @return string
@@ -96,7 +98,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
      */
     public function register()
     {
-        if (!DiagnosticsHelper::isBlocked()) {
+        if (!DiagnosticsHelper::isBlocked() && !$this->isMuted()) {
             add_action('add_meta_boxes', [$this, 'box']);
             add_action('save_post', [$this, 'save']);
         }
@@ -127,12 +129,13 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     public function box($post_type)
     {
         $post_types = [$this->servedContentType];
+
         if (in_array($post_type, $post_types) &&
             current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)
         ) {
             add_meta_box(
                 self::WIDGET_NAME,
-                __('Smartling Post Widget'),
+                __('Smartling Widget'),
                 [$this, 'preView'],
                 $post_type,
                 'side',
@@ -150,20 +153,13 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
         if ($post && $post->post_title && '' !== $post->post_title) {
             try {
                 $eh = $this->getEntityHelper();
-
-                $currentBlogId = $eh->getSiteHelper()
-                    ->getCurrentBlogId();
-
-                $profile = $eh
-                    ->getSettingsManager()
-                    ->findEntityByMainLocale(
-                        $currentBlogId
-                    );
+                $currentBlogId = $eh->getSiteHelper()->getCurrentBlogId();
+                $profile = $eh->getSettingsManager()->findEntityByMainLocale($currentBlogId);
 
                 if (0 < count($profile)) {
                     $submissions = $this->getManager()
                         ->find([
-                                   'source_blog_id' => $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
+                                   'source_blog_id' => $currentBlogId,
                                    'source_id'      => $post->ID,
                                    'content_type'   => $this->servedContentType,
                                ]);
@@ -228,16 +224,6 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             return false;
         }
 
-        //if ($this->servedContentType !== $_POST['post_type'] ) {
-        //    $template = 'Validation failed: not a valid content type: got \'%s\', but expected one of \'%s\'';
-        //    $this->getLogger()->debug(vsprintf($template, [$_POST['post_type'], $this->servedContentType]));
-        //
-        //
-        //
-        //
-        //    return false;
-        //}
-
         return $this->isAllowedToSave($post_id);
     }
 
@@ -273,11 +259,13 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
         if ($this->servedContentType === $_POST['post_type']) {
 
-
-            $this->getLogger()->debug(vsprintf('Entering post save hook. post_id = \'%s\', blog_id = \'%s\'', [$post_id,
-                                                                                                               $this->getEntityHelper()
-                                                                                                                   ->getSiteHelper()
-                                                                                                                   ->getCurrentBlogId()]));
+            $this->getLogger()->debug(
+                vsprintf('Entering post save hook. post_id = \'%s\', blog_id = \'%s\'',
+                         [
+                             $post_id,
+                             $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
+                         ])
+            );
             if (wp_is_post_revision($post_id)) {
                 $this->getLogger()
                     ->debug(vsprintf('Validation failed: post id = \'%s\' just revision. Ignoring.', [$post_id]));
@@ -315,10 +303,10 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                 }
 
                 $core = $this->getCore();
-
                 if (array_key_exists('sub', $_POST) && count($locales) > 0) {
                     switch ($_POST['sub']) {
                         case 'Upload':
+
                             if (0 < count($locales)) {
                                 foreach ($locales as $blogId => $blogName) {
                                     $result = $core->createForTranslation(
@@ -344,33 +332,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                             }
 
                             break;
-                        case 'Clone':
-                            if (0 < count($locales)) {
-                                foreach ($locales as $blogId => $blogName) {
 
-                                    $submission = $core->getOrPrepareSubmission(
-                                        $this->servedContentType,
-                                        $sourceBlog,
-                                        $originalId,
-                                        (int)$blogId,
-                                        SubmissionEntity::SUBMISSION_STATUS_CLONED
-                                    );
-
-                                    $this->getLogger()->info(
-                                        vsprintf(
-                                            self::$MSG_CLONING_CONTENT,
-                                            [
-                                                $this->servedContentType,
-                                                $sourceBlog,
-                                                $originalId,
-                                                (int)$blogId,
-                                                $submission->getTargetLocale(),
-                                            ]
-                                        ));
-                                    do_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $submission);
-                                }
-                            }
-                            break;
                         case 'Download':
                             $targetLocaleIds = array_keys($locales);
 
@@ -408,7 +370,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                         ->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
                                 }
                             }
-                            $this->getLogger()->debug(vsprintf('Initiating upload job', []));
+                            $this->getLogger()->debug(vsprintf('Initiating Download Job', []));
                             do_action(DownloadTranslationJob::JOB_HOOK_NAME);
                             break;
                     }

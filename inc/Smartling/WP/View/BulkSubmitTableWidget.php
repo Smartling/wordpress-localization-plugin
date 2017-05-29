@@ -7,14 +7,12 @@ use Psr\Log\LoggerInterface;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
-use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\StringHelper;
-use Smartling\Helpers\ThemeSidebarHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
@@ -282,18 +280,17 @@ class BulkSubmitTableWidget extends SmartlingListTable
                 ->get('entrypoint');
 
             if (is_array($submissions) && count($locales) > 0) {
+                $action = $this->getFromSource('action', 'send');
+                $clone = 'clone' === $action ? true : false;
                 foreach ($submissions as $submission) {
                     list($id, $type) = explode('-', $submission);
                     $type = $this->getContentTypeFilterValue();
-                    $curBlogId = $this->getProfile()
-                        ->getOriginalBlogId()
-                        ->getBlogId();
+                    $curBlogId = $this->getProfile()->getOriginalBlogId()->getBlogId();
                     foreach ($locales as $blogId => $blogName) {
-
                         /**
                          * @var SubmissionEntity $submissionEntity
                          */
-                        $submissionEntity = $ep->createForTranslation($type, $curBlogId, $id, (int)$blogId);
+                        $submissionEntity = $ep->createForTranslation($type, $curBlogId, $id, (int)$blogId, null, $clone);
 
                         $this->getLogger()
                             ->info(vsprintf(

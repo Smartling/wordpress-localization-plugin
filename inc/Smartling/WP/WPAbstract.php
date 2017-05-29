@@ -190,15 +190,15 @@ abstract class WPAbstract
         }
     }
 
-    public static function bulkSubmitSendButton($id = 'submit', $name = 'submit')
+    public static function bulkSubmitSendButton($id = 'submit', $name = 'submit', $text = 'Add to Upload Queue', $title = 'Add selected submissions to Upload queue')
     {
         return HtmlTagGeneratorHelper::tag(
             'button',
-            HtmlTagGeneratorHelper::tag('span', __('Add to Upload Queue'), []),
+            HtmlTagGeneratorHelper::tag('span', __($text), []),
             [
                 'type'  => 'submit',
-                'value' => 'upload',
-                'title' => __('Add selected submissions to Upload queue'),
+                'value' => $name,
+                'title' => __($title),
                 'class' => 'button button-primary',
                 'id'    => $id,
                 'name'  => $name,
@@ -216,23 +216,9 @@ abstract class WPAbstract
             //'id'    => $id,
             'name'  => $name,
         ]);
-
-        /**  return HtmlTagGeneratorHelper::tag(
-            'button',
-            HtmlTagGeneratorHelper::tag('span', __('Upload'), []),
-            [
-                'type'  => 'submit',
-                'value' => 'upload',
-                'title' => __('Add to Upload queue and trigger upload process'),
-                'class' => 'button button-primary',
-                'id'    => $id,
-                'name'  => $name,
-            ]);
-         *
-         * */
     }
 
-    public static function submitBlock($withCloneButton = false)
+    public static function submitBlock()
     {
         $sendButton = self::sendButton('', 'sub');
 
@@ -260,33 +246,6 @@ abstract class WPAbstract
 
         $contents = $sendButton . '&nbsp;' . $downloadButton;
 
-        if (true === $withCloneButton) {
-            $cloneButton = HtmlTagGeneratorHelper::tag(
-                'button',
-                HtmlTagGeneratorHelper::tag('span', __('Clone'), []),
-                [
-                    'type'  => 'submit',
-                    'value' => 'clone',
-                    'title' => __('Create a linked clone without sending for translation'),
-                    'class' => 'button button-primary',
-                    'id'    => '',
-                    'name'  => 'sub',
-                ]);
-
-            $cloneButton = HtmlTagGeneratorHelper::tag(
-                'input', '', [
-                'type'  => 'submit',
-                'value' => 'Clone',
-                'title' => __('Add to Upload queue and trigger upload process'),
-                'class' => 'button button-primary',
-                //'id'    => $id,
-                'name'  => 'sub',
-            ]);
-
-
-            $contents .= '&nbsp;' . $cloneButton;
-        }
-
         $container = HtmlTagGeneratorHelper::tag('div', $contents, ['class' => 'bottom']);
 
         return $container;
@@ -309,7 +268,16 @@ abstract class WPAbstract
         return $hiddenId;
     }
 
-    public static function localeSelectionCheckboxBlock($namePrefix, $blog_id, $blog_name, $enabled = false)
+    /**
+     * @param string $namePrefix
+     * @param int    $blog_id
+     * @param string $blog_name
+     * @param bool   $checked
+     * @param bool   $enabled
+     *
+     * @return string
+     */
+    public static function localeSelectionCheckboxBlock($namePrefix, $blog_id, $blog_name, $checked = false, $enabled = true)
     {
         $parts = [];
 
@@ -332,8 +300,16 @@ abstract class WPAbstract
             'type'  => 'checkbox',
         ];
 
-        if (true === $enabled) {
+        if (true === $checked) {
             $checkboxAttributes['checked'] = 'checked';
+        }
+
+        if (false === $enabled) {
+            $checkboxAttributes = array_merge($checkboxAttributes, [
+                'disabled' => 'disabled',
+                'title'    => 'Content is cloned',
+                'class'    => 'nomcheck',
+            ]);
         }
 
         $parts[] = HtmlTagGeneratorHelper::tag('input', '', $checkboxAttributes);

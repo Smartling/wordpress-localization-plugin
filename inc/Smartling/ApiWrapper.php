@@ -231,8 +231,8 @@ class ApiWrapper implements ApiWrapperInterface
     {
         $entity->setApprovedStringCount($completedStrings + $authorizedStrings);
         $entity->setCompletedStringCount($completedStrings);
-        $entity->setTotalStringsCount($totalStringCount);
-        $entity->setExcludedStringsCount($excludedStringCount);
+        $entity->setTotalStringCount($totalStringCount);
+        $entity->setExcludedStringCount($excludedStringCount);
 
         return $entity;
     }

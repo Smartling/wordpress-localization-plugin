@@ -578,14 +578,14 @@ class SubmissionManager extends EntityManagerAbstract
             }
         }
 
+        if (array_key_exists('id', $fields)) {
+            unset ($fields['id']);
+        }
+
         if (0 === count($fields)) {
             $this->getLogger()->debug(vsprintf('No data has been modified since load. Skipping save', []));
 
             return $entity;
-        }
-
-        if (array_key_exists('id', $fields)) {
-            unset ($fields['id']);
         }
 
         $tableName = $this->getDbal()->completeTableName(SubmissionEntity::getTableName());

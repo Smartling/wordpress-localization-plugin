@@ -56,6 +56,7 @@ if (!empty($locales)) {
             $submission = null;
             $statusValue = null;
             $id = null;
+            $enabled = true;
             if (null !== $data['submissions']) {
                 foreach ($data['submissions'] as $item) {
                     /**
@@ -65,8 +66,9 @@ if (!empty($locales)) {
                         $value = true;
                         $statusValue = $item->getStatus();
                         $id = $item->getId();
-                        $percent = $item->getCompletionPercentage();
-                        $status = $item->getStatusColor();
+                        $percent = 1 === $item->getIsCloned() ? 100 : $item->getCompletionPercentage();
+                        $status =  $item->getStatusColor();
+                        $enabled = 1 === $item->getIsCloned() ? false : true;
                         break;
                     }
                 }
@@ -78,19 +80,15 @@ if (!empty($locales)) {
                         $nameKey,
                         $locale->getBlogId(),
                         $locale->getLabel(),
-                        $value
+                        (false === $enabled ? false : $value),
+                        $enabled
                     ); ?>
                 </div>
                 <div class="smtPostWidget-progress">
+
                     <?php if ($value) { ?>
-                        <?= WPAbstract::localeSelectionTranslationStatusBlock(
-                            __($statusValue),
-                            $status,
-                            $percent
-                        ); ?>
-                        <?= WPAbstract::inputHidden(
-                            $id
-                        ); ?>
+                        <?= WPAbstract::localeSelectionTranslationStatusBlock(__($statusValue), $status, $percent); ?>
+                        <?= WPAbstract::inputHidden($id); ?>
                     <?php } ?>
                 </div>
             </div>
@@ -100,7 +98,7 @@ if (!empty($locales)) {
 
     </div>
     <div class="smtPostWidget-submitBlock">
-        <?= WPAbstract::submitBlock(true); ?>
+        <?= WPAbstract::submitBlock(); ?>
     </div>
     </div><?php
 } else {

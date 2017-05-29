@@ -68,11 +68,6 @@ class SubmissionEntity extends SmartlingEntityAbstract
     const SUBMISSION_STATUS_FAILED = 'Failed';
 
     /**
-     * Submission Status  'Cloned'
-     */
-    const SUBMISSION_STATUS_CLONED = 'Cloned';
-
-    /**
      * @var array Submission Statuses
      */
     public static $submissionStatuses = [
@@ -80,7 +75,6 @@ class SubmissionEntity extends SmartlingEntityAbstract
         self::SUBMISSION_STATUS_IN_PROGRESS,
         self::SUBMISSION_STATUS_COMPLETED,
         self::SUBMISSION_STATUS_FAILED,
-        self::SUBMISSION_STATUS_CLONED,
     ];
 
     public static function getFieldDefinitions()
@@ -106,6 +100,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
             'word_count'             => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_DEFAULT_ZERO,
             'status'                 => self::DB_TYPE_STRING_SMALL,
             'is_locked'              => self::DB_TYPE_UINT_SWITCH . ' ' . self::DB_TYPE_DEFAULT_ZERO,
+            'is_cloned'              => self::DB_TYPE_UINT_SWITCH . ' ' . self::DB_TYPE_DEFAULT_ZERO,
             'last_modified'          => self::DB_TYPE_DATETIME,
             'outdated'               => self::DB_TYPE_UINT_SWITCH,
             'last_error'             => self::DB_TYPE_STRING_TEXT,
@@ -122,7 +117,6 @@ class SubmissionEntity extends SmartlingEntityAbstract
             self::SUBMISSION_STATUS_IN_PROGRESS => __(self::SUBMISSION_STATUS_IN_PROGRESS),
             self::SUBMISSION_STATUS_COMPLETED   => __(self::SUBMISSION_STATUS_COMPLETED),
             self::SUBMISSION_STATUS_FAILED      => __(self::SUBMISSION_STATUS_FAILED),
-            self::SUBMISSION_STATUS_CLONED      => __(self::SUBMISSION_STATUS_CLONED),
         ];
     }
 
@@ -244,6 +238,16 @@ class SubmissionEntity extends SmartlingEntityAbstract
         $this->stateFields['outdated'] = (int)$outdated;
     }
 
+    public function getIsCloned()
+    {
+        return (int)$this->stateFields['is_cloned'];
+    }
+
+    public function setIsCloned($isCloned)
+    {
+        $this->stateFields['is_cloned'] = (int)$isCloned;
+    }
+
     /**
      * @return int
      */
@@ -323,7 +327,6 @@ class SubmissionEntity extends SmartlingEntityAbstract
             self::SUBMISSION_STATUS_IN_PROGRESS => 'blue',
             self::SUBMISSION_STATUS_COMPLETED   => 'green',
             self::SUBMISSION_STATUS_FAILED      => 'red',
-            self::SUBMISSION_STATUS_CLONED      => 'violet',
         ];
 
         $classes = [
@@ -332,6 +335,10 @@ class SubmissionEntity extends SmartlingEntityAbstract
 
         if (1 === $this->getOutdated()) {
             $classes[] = 'outdated';
+        }
+
+        if (1 === $this->getIsCloned()) {
+            $classes[] = 'cloned';
         }
 
         return implode(' ', $classes);
@@ -748,7 +755,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
                 $percentage = 1;
             }
 
-            if (self::SUBMISSION_STATUS_CLONED === $this->getStatus()) {
+            if (1 === $this->getIsCloned()) {
                 $percentage = 1;
             }
         } else {

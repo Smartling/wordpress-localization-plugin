@@ -49,20 +49,21 @@ class SubmissionCollectorJob extends JobAbstract
     public function run()
     {
         $this->getLogger()->info('Started Submission Collector Job.');
-
+        $this->getLogger()->info(vsprintf('Submission Collector Job. Looking for submissions.',[]));
         $preparedArray = $this->gatherSubmissions();
-
+        $this->getLogger()->info(vsprintf('Submission Collector Job. Got.',[count($preparedArray)]));
         if (0 < count($preparedArray)) {
+            $this->getLogger()->info(vsprintf('Submission Collector Job. Got %d files to check.', [count($preparedArray)]));
             foreach ($preparedArray as $fileUri => $submissionList) {
-
+                $this->getLogger()->info(vsprintf('Submission Collector Job. Processing file \'%s\' (%d submissions)', [$fileUri, count($submissionList)]));
                 $submissionIds = [];
 
                 foreach ($submissionList as $submission) {
                     $submissionIds[] = $submission->getId();
                 }
 
-                $this->getQueue()
-                    ->enqueue([$fileUri => $submissionIds], Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE);
+                $this->getQueue()->enqueue([$fileUri => $submissionIds], Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE);
+                $this->getLogger()->info(vsprintf('Submission Collector Job. Done file \'%s\'.', [$fileUri]));
             }
         }
 
@@ -75,6 +76,7 @@ class SubmissionCollectorJob extends JobAbstract
      */
     private function gatherSubmissions()
     {
+        $this->getLogger()->info(vsprintf('Loading from database...',[]));
         $entities = $this->getSubmissionManager()->find(
             [
                 'status' => [
@@ -82,6 +84,8 @@ class SubmissionCollectorJob extends JobAbstract
                     SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
                 ],
             ]);
+
+        $this->getLogger()->info(vsprintf('Submission Collector Job. Got %d items from database.',[count($entities)]));
 
         $entities = $this->getSubmissionManager()->filterBrokenSubmissions($entities);
 

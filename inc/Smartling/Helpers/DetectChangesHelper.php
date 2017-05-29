@@ -146,16 +146,7 @@ class DetectChangesHelper
             );
             $submission->setOutdated(SubmissionEntity::FLAG_CONTENT_IS_OUT_OF_DATE);
             if ($needUpdateStatus) {
-
-                switch ($submission->getStatus()) {
-                    case SubmissionEntity::SUBMISSION_STATUS_CLONED:
-                        $newStatus = SubmissionEntity::SUBMISSION_STATUS_CLONED;
-                        do_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $submission);
-                        break;
-                    default:
-                        $newStatus = SubmissionEntity::SUBMISSION_STATUS_NEW;
-                        break;
-                }
+                $newStatus = SubmissionEntity::SUBMISSION_STATUS_NEW;
 
                 $this->getLogger()->debug(
                     vsprintf(
