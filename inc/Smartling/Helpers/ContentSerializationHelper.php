@@ -107,7 +107,7 @@ class ContentSerializationHelper
             'meta'   => [
                 '_edit_lock',
                 '_edit_last',
-
+                '_encloseme',
             ],
         ];
 
