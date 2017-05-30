@@ -59,8 +59,8 @@ class Taxonomies
 
     public function hookHandler($taxonomy)
     {
-        $msg = 'Detected taxonomy \'%s\' registration. Adding it to smartling-connector.';
-        $this->getLogger()->debug(vsprintf($msg, [$taxonomy]));
+        //$msg = 'Detected taxonomy \'%s\' registration. Adding it to smartling-connector.';
+        //$this->getLogger()->debug(vsprintf($msg, [$taxonomy]));
         add_action('smartling_register_custom_taxonomy', function (array $definition) use ($taxonomy) {
             return array_merge(
                 $definition,

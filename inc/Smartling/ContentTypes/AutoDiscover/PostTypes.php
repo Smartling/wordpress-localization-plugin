@@ -59,8 +59,8 @@ class PostTypes
 
     public function hookHandler($postType)
     {
-        $msg = 'Detected post-type \'%s\' registration. Adding it to smartling-connector.';
-        $this->getLogger()->debug(vsprintf($msg, [$postType]));
+        //$msg = 'Detected post-type \'%s\' registration. Adding it to smartling-connector.';
+        //$this->getLogger()->debug(vsprintf($msg, [$postType]));
 
         add_action('smartling_register_custom_type', function (array $definition) use ($postType) {
             global $wp_post_types;

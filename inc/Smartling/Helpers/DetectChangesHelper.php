@@ -137,9 +137,7 @@ class DetectChangesHelper
      */
     private function checkSubmissionHash(SubmissionEntity $submission, $needUpdateStatus, $currentHash)
     {
-        $this->getLogger()->debug(
-            vsprintf('Checking submission id=%s.', [$submission->getId()])
-        );
+        $this->getLogger()->debug(vsprintf('Checking submission id=%s.', [$submission->getId()]));
         if ($currentHash !== $submission->getSourceContentHash()) {
             $this->getLogger()->debug(
                 vsprintf('Submission id=%s has outdated hash. Setting up Outdated flag.', [$submission->getId()])
