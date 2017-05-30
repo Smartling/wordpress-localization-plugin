@@ -3,23 +3,21 @@
 namespace Smartling\Base;
 
 use Exception;
-use Smartling\Bootstrap;
+use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\InvalidXMLException;
 use Smartling\Exception\NothingFoundForTranslationException;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
-use Smartling\Helpers\XmlEncoder;
-use Smartling\Submissions\SubmissionEntity;
-
-use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
-use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\SiteHelper;
+use Smartling\Helpers\XmlEncoder;
 use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Submissions\SubmissionEntity;
 
 
 /**
@@ -462,13 +460,12 @@ trait SmartlingCoreUploadTrait
 
             // generate URI
             $submission->getFileUri();
-
-            if (true === $clone) {
-                $submission->setIsCloned(1);
-            }
         } else {
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
         }
+
+        $isCloned = true === $clone ? 1 : 0;
+        $submission->setIsCloned($isCloned);
 
         return $this->getSubmissionManager()->storeEntity($submission);
     }
