@@ -492,6 +492,7 @@ Please consult before making any changes.<br>", $domain); ?>
             <tr class="toggleExpert hidden">
                 <th scope="row"><?= __('Publish completed translation',$domain) ?></th>
                 <td>
+                    <p>If enabled, status <strong>publish</strong> is set for posts after download if translation is completed.</p>
                     <?=
                     HtmlTagGeneratorHelper::tag(
                         'select',
