@@ -44,72 +44,74 @@ class SubmissionCollectorJob extends JobAbstract
     }
 
     /**
-     * @return executes job
-     */
-    public function run()
-    {
-        $this->getLogger()->info('Started Submission Collector Job.');
-        $this->getLogger()->info(vsprintf('Submission Collector Job. Looking for submissions.',[]));
-        $preparedArray = $this->gatherSubmissions();
-        $this->getLogger()->info(vsprintf('Submission Collector Job. Got.',[count($preparedArray)]));
-        if (0 < count($preparedArray)) {
-            $this->getLogger()->info(vsprintf('Submission Collector Job. Got %d files to check.', [count($preparedArray)]));
-            foreach ($preparedArray as $fileUri => $submissionList) {
-                $this->getLogger()->info(vsprintf('Submission Collector Job. Processing file \'%s\' (%d submissions)', [$fileUri, count($submissionList)]));
-                $submissionIds = [];
-
-                foreach ($submissionList as $submission) {
-                    $submissionIds[] = $submission->getId();
-                }
-
-                $this->getQueue()->enqueue([$fileUri => $submissionIds], Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE);
-                $this->getLogger()->info(vsprintf('Submission Collector Job. Done file \'%s\'.', [$fileUri]));
-            }
-        }
-
-        $this->getLogger()->info('Finished Submission Collector Job.');
-    }
-
-    /**
-     * Gathers submissions in statuses 'In Progress', 'Completed' and groups them by fileUri
      * @return array
      */
-    private function gatherSubmissions()
+    private function getFileList()
     {
-        $this->getLogger()->info(vsprintf('Loading from database...',[]));
+        $this->getLogger()->info(vsprintf('Getting list of files...', []));
         $entities = $this->getSubmissionManager()->find(
             [
                 'status' => [
                     SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
                     SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
                 ],
-            ]);
+            ],
+            0,
+            ['file_uri']
+        );
 
-        $this->getLogger()->info(vsprintf('Submission Collector Job. Got %d items from database.',[count($entities)]));
+        $fileList = [];
+        if (0 < count($entities)) {
+            foreach ($entities as $entity) {
+                $fileList[] = $entity->getFileUri();
+            }
+        }
 
-        $entities = $this->getSubmissionManager()->filterBrokenSubmissions($entities);
-
-        return $this->groupSubmissionsByFileUri($entities);
+        return $fileList;
     }
 
     /**
-     * Groups a set of SubmissionEntity by fileUri for batch requests.
+     * @param $fileUri
      *
-     * @param SubmissionEntity[] $submissions
-     *
-     * @return array
+     * @return int[]
      */
-    private function groupSubmissionsByFileUri(array $submissions)
+    private function getSubmissionIdsByFileUri($fileUri)
     {
-        $grouped = [];
-
-        foreach ($submissions as $submission) {
-            /**
-             * @var SubmissionEntity $submission
-             */
-            $grouped[$submission->getFileUri()][] = $submission;
+        $this->getLogger()->info(vsprintf('Getting list of files...', []));
+        $entities = $this->getSubmissionManager()->find(
+            [
+                'status'   => [
+                    SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
+                    SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
+                ],
+                'file_uri' => $fileUri,
+            ],
+            0
+        );
+        $ids = [];
+        $entities = $this->getSubmissionManager()->filterBrokenSubmissions($entities);
+        foreach ($entities as $entity) {
+            $ids[] = $entity->getId();
         }
+        return $ids;
+    }
 
-        return $grouped;
+    /**
+     * @return executes job
+     */
+    public function run()
+    {
+        $this->getLogger()->info('Started Submission Collector Job.');
+        $fileList = $this->getFileList();
+        $this->getLogger()->info(vsprintf('Submission Collector Job. Got %s files', [count($fileList)]));
+        if (0 < count($fileList)) {
+            foreach ($fileList as $fileUri) {
+                $submissionIds = $this->getSubmissionIdsByFileUri($fileUri);
+                $this->getQueue()->enqueue([$fileUri => $submissionIds], Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE);
+                $this->getLogger()->info(vsprintf('Submission Collector Job. Done file \'%s\'.', [$fileUri]));
+            }
+
+        }
+        $this->getLogger()->info('Finished Submission Collector Job.');
     }
 }

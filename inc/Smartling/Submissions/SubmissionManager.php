@@ -430,7 +430,7 @@ class SubmissionManager extends EntityManagerAbstract
      *
      * @return SubmissionEntity[]
      */
-    public function find(array $params = [], $limit = 0)
+    public function find(array $params = [], $limit = 0, $group = [])
     {
         $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
 
@@ -443,6 +443,8 @@ class SubmissionManager extends EntityManagerAbstract
 
             $block->addCondition($condition);
         }
+
+
 
         $pageOptions = 0 === $limit ? null : ['limit' => $limit, 'page' => 1];
 
@@ -471,9 +473,11 @@ class SubmissionManager extends EntityManagerAbstract
      *
      * @param string         $contentType
      * @param string         $status
+     * @param                $outdatedFlag
      * @param array|null     $sortOptions
      * @param array|null     $pageOptions
      * @param ConditionBlock $baseCondition
+     * @param null           $groupOptions
      *
      * @return string
      */
@@ -483,7 +487,8 @@ class SubmissionManager extends EntityManagerAbstract
         $outdatedFlag,
         $sortOptions,
         $pageOptions,
-        ConditionBlock $baseCondition = null
+        ConditionBlock $baseCondition = null,
+        $groupOptions = null
     )
     {
 
@@ -518,7 +523,8 @@ class SubmissionManager extends EntityManagerAbstract
             array_keys(SubmissionEntity::getFieldDefinitions()),
             $whereOptions,
             $sortOptions,
-            $pageOptions
+            $pageOptions,
+            $groupOptions
         );
 
         $this->logQuery($query);
