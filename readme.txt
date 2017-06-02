@@ -2,8 +2,8 @@
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
-Tested up to: 4.7.4
-Stable tag: 1.5.3
+Tested up to: 4.7.5
+Stable tag: 1.5.7
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -58,13 +58,28 @@ Additional information on the Smartling Connector for WordPress can be found [th
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
-= 1.5.3 =
-* Fixed warning in DOM parser in case content has not well-formed link\images tags.
-* Improved Search form on Translation Progress screen.
-* Changed behavior in case when user excludes all strings from translation. Now connector treats such files as completed.
-* Fixed issue with links in smarling menu in case wordpress is installed into subfolder.
-* Small improvements.
+= 1.5.7 =
+* Improved implementation of `Clone` functionality.
+* Moved `Clone` functionality to Bulk Submit page.
+* Fixed changes detection.
 
+= 1.5.6 =
+* Fixed 'Call to undefined method' potential issue
+
+= 1.5.5 =
+* Fixed 'Call to undefined method' potential issue
+
+= 1.5.4 =
+* Added missing dependencies.
+
+= 1.5.3 =
+* Improved DOM error handling.
+* Fixed Translation Progress screen search.
+* Fixed possible issue when all strings are excluded from translation.
+* Fixes possible issue when wordpress is installed into subfolder.
+* Small improvements
+
+== Changelog ==
 = 1.5.2 =
 * Added automatic support for all registered taxonomies. Previously needed taxonomy descriptors should be removed.
 * Added automatic support for all registered public custom post types (including relations with taxonomies). Previously needed custom post types descriptors should be removed.
