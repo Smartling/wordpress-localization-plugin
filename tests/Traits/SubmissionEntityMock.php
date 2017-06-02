@@ -65,6 +65,7 @@ trait SubmissionEntityMock
             'total_string_count'     => $completion,
             'status'                 => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
             'is_locked'              => 0,
+            'is_cloned'              => 0,
             'last_modified'          => $lastModified,
         ];
     }
