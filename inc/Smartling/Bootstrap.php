@@ -241,7 +241,31 @@ class Bootstrap
 
         $this->testMinimalWordpressVersion();
 
+        $this->testTimeLimit();
+        $this->testCronSetup();
         add_action('all_admin_notices', ['Smartling\Helpers\UiMessageHelper', 'displayMessages']);
+    }
+
+    protected function testTimeLimit($recommended = 300) {
+        $timeLimit = ini_get('max_execution_time');
+
+        if (0 !== (int)$timeLimit && $recommended >= $timeLimit) {
+            $mainMessage = vsprintf('<strong>Smartling-connector</strong> configuration is not optimal.<br /><strong>max_execution_time</strong> is highly recommended to be set at least %s. Current value is %s', [$recommended, $timeLimit]);
+
+            self::$loggerInstance->warning($mainMessage);
+
+            DiagnosticsHelper::addDiagnosticsMessage($mainMessage, false);
+        }
+    }
+
+    protected function testCronSetup() {
+        if ( !defined('DISABLE_WP_CRON') || true !== DISABLE_WP_CRON) {
+            $mainMessage = vsprintf('<strong>Smartling-connector</strong> configuration is not optimal.<br />Warning! Wordpress cron installation is not configured properly. Please follow steps described <a target="_blank" href="https://help.smartling.com/v1.0/docs/wordpress-connector-install-and-configure#section-configure-wp-cron">here</a>.', []);
+
+            self::$loggerInstance->warning($mainMessage);
+
+            DiagnosticsHelper::addDiagnosticsMessage($mainMessage, false);
+        }
     }
 
     protected function testMinimalWordpressVersion()
