@@ -5,6 +5,7 @@ namespace Smartling\ContentTypes\ConfigParsers;
 use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\CustomTypeProcessor;
 use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\MediaBasedProcessor;
 use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\PostBasedProcessor;
+use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\TermBasedProcessor;
 use Smartling\Helpers\MetaFieldProcessor\CloneValueFieldProcessor;
 use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorInterface;
 use Smartling\Helpers\MetaFieldProcessor\SkipFieldProcessor;
@@ -324,6 +325,20 @@ class FieldFilterConfigParser
 
 
         switch ($this->getFilterType()) {
+            case 'term':
+            case 'taxonomy':
+                $filter = new TermBasedProcessor(
+                    $this->getService('logger'),
+                    $this->getService('translation.helper'),
+                    $this->getPattern()
+                );
+
+                $filter->setContentHelper($this->getService('content.helper'));
+                $filter->setSerializer($serializer);
+
+                return $filter;
+
+                break;
             case 'post':
 
                 $filter = new PostBasedProcessor(
