@@ -6,29 +6,30 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingWpDataIntegrityException;
 
 /**
- * Class ReferencedPostBasedContentProcessor
+ * Class ReferencedTermBasedContentProcessor
  * @package Smartling\Helpers\MetaFieldProcessor
  */
-class ReferencedPostBasedContentProcessor extends ReferencedStdBasedContentProcessorAbstract
+class ReferencedTermBasedContentProcessor extends ReferencedStdBasedContentProcessorAbstract
 {
+
     /**
      * @param int $blogId
      * @param int $contentId
      *
-     * @return string
+     * @return mixed
      * @throws SmartlingWpDataIntegrityException
      */
     protected function detectRealContentType($blogId, $contentId)
     {
         try {
             $this->getContentHelper()->ensureBlog($blogId);
-            $post = get_post($contentId);
+            $term = get_term($contentId, '', \ARRAY_A);
             $this->getContentHelper()->ensureRestoredBlogId();
 
-            if ($post instanceof \WP_Post) {
-                return $post->post_type;
+            if (is_array($term)) {
+                return $term['taxonomy'];
             } else {
-                $message = vsprintf('The post-based content with id=\'%s\' not found in blog=\'%s\'', [$contentId,
+                $message = vsprintf('The term-based content with id=\'%s\' not found in blog=\'%s\'', [$contentId,
                                                                                                        $blogId]);
                 throw new SmartlingDbException($message);
             }
@@ -38,5 +39,6 @@ class ReferencedPostBasedContentProcessor extends ReferencedStdBasedContentProce
             throw new SmartlingWpDataIntegrityException($message, 0, $e);
         }
     }
-}
 
+
+}
