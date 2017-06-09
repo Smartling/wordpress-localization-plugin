@@ -243,6 +243,7 @@ class Bootstrap
 
         $this->testTimeLimit();
         $this->testCronSetup();
+        $this->testUpdates();
         add_action('all_admin_notices', ['Smartling\Helpers\UiMessageHelper', 'displayMessages']);
     }
 
@@ -322,6 +323,52 @@ class Bootstrap
             self::$loggerInstance->critical('Boot :: ' . $mainMessage);
 
             DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
+        }
+    }
+
+    protected function testUpdates() {
+        $selfSlug = $this->fromContainer('plugin.name', true);
+        $cur_version = self::$pluginVersion;
+        $new_version = '0.0.0';
+        $url = '';
+
+        $info = get_site_transient( 'update_plugins' );
+        if (is_object($info)) {
+            $response = $info->response;
+            foreach ($response as $definition) {
+                if ($selfSlug !== $definition->slug) {
+                    continue;
+                }
+                $new_version = $definition->new_version;
+                $url = $definition->package;
+                break;
+            }
+        } else {
+            self::getLogger()->warning('No cached information found about updates. Requesting info...');
+            if ( ! function_exists( 'plugins_api' ) ) {
+                require_once( ABSPATH . 'wp-admin/includes/plugin-install.php' );
+            }
+            $args = [ 'slug' => $selfSlug, 'fields' => [ 'version' => true ] ];
+            $response = plugins_api( 'plugin_information', $args );
+
+            if ( is_wp_error( $response ) ) {
+                self::getLogger()->error(vsprintf('Updates information request ended with error: %s', [$response->get_error_message()]));
+            } else {
+                $new_version=$response->version;
+                $url=$response->download_link;
+            }
+        }
+
+        if (version_compare($new_version, $cur_version, '>'))
+        {
+            $mainMessage = vsprintf(
+                'A new version <strong>%s</strong> of Smartling Connector plugin is available for download. Current version is %s. Please update plugin <a href="%s">here</a>.',
+                [
+                    $new_version, $cur_version, site_url('/wp-admin/network/plugins.php?s=smartling+connector&plugin_status=all')
+                ]);
+
+            self::$loggerInstance->warning($mainMessage);
+            DiagnosticsHelper::addDiagnosticsMessage($mainMessage, false);
         }
     }
 
