@@ -16,7 +16,6 @@
         });
 
         $('a.saveExpertSkip').on('click', function (e) {
-            console.log('ooo');
             var data = {
                 'action': 'smartling_self_check_disabled',
                 'selfCheckDisabled': $('#selfCheckDisabled').val()
