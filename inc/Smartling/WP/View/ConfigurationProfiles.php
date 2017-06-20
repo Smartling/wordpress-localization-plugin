@@ -53,7 +53,7 @@ $data = $this->getViewData();
 
         <div class="update-nag">
             <p>
-                <?= __("<strong>Warning!</strong><br/>Updating next settings you assume that you are wordpress developer and understand your actions.<br>", $domain); ?>
+                <?= __("<strong>Warning!</strong><br/>Do not modify the next setting unless you are a Wordpress expert and fully understand the purpose of this setting.<br>", $domain); ?>
             </p>
             <p>
                 <a href="javascript:void(0)"
