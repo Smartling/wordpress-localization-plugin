@@ -227,7 +227,7 @@ trait SmartlingCoreUploadTrait
                 }
 
                 $this->getContentHelper()->writeTargetMetadata($submission, $metaFields);
-                do_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, $submission);
+                do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $submission);
             }
             $submission = $this->getSubmissionManager()->storeEntity($submission);
         } catch (InvalidXMLException $e) {
@@ -335,6 +335,7 @@ trait SmartlingCoreUploadTrait
 
             foreach ($submissions as $_submission) {
                 $xml = $this->getXMLFiltered($_submission);
+                do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $_submission);
                 $this->prepareRelatedSubmissions($submission);
                 $locales[] = $this->getSettingsManager()->getSmartlingLocaleBySubmission($_submission);
             }

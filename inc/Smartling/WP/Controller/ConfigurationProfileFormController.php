@@ -118,6 +118,10 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
             $profile->setUploadOnUpdate($settings['uploadOnUpdate']);
         }
 
+        if (array_key_exists('always_sync_images_on_upload', $settings)) {
+            $profile->setAlwaysSyncImagesOnUpload($settings['always_sync_images_on_upload']);
+        }
+
         if (array_key_exists('download_on_change', $settings)) {
             $profile->setDownloadOnChange($settings['download_on_change']);
         }

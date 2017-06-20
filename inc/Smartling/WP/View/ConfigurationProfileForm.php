@@ -434,6 +434,27 @@ Please consult before making any changes.<br>", $domain); ?>
                 </td>
             </tr>
             <tr class="toggleExpert hidden">
+                <th scope="row"><?= __('Force sync attachment files on upload', $domain) ?></th>
+                <td>
+                    <?=
+                    HtmlTagGeneratorHelper::tag(
+                        'select',
+                        HtmlTagGeneratorHelper::renderSelectOptions(
+                            $profile->getAlwaysSyncImagesOnUpload(),
+                            [0 => __('Disabled', $domain),
+                             1 => __('Enabled', $domain),]
+
+                        ),
+                        ['name' => 'smartling_settings[always_sync_images_on_upload]']);
+
+                    ?>
+                    <br/>
+                    <small>
+                        <?= __('Detect and resubmit to Smartling changes in original content', $domain) ?>.
+                    </small>
+                </td>
+            </tr>
+            <tr class="toggleExpert hidden">
                 <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('auto_authorize'); ?></th>
                 <td>
                     <label class="radio-label">

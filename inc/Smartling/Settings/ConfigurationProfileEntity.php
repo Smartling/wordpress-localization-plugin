@@ -75,6 +75,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
             'publish_completed'                => self::DB_TYPE_UINT_SWITCH_ON,
             'download_on_change'               => self::DB_TYPE_UINT_SWITCH,
             'clean_metadata_on_download'       => self::DB_TYPE_UINT_SWITCH,
+            'always_sync_images_on_upload'     => self::DB_TYPE_UINT_SWITCH,
             'target_locales'                   => 'TEXT NULL',
             'filter_skip'                      => 'TEXT NULL',
             'filter_copy_by_field_name'        => 'TEXT NULL',
@@ -347,6 +348,16 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
     public function setPublishCompleted($publishCompleted)
     {
         $this->stateFields['publish_completed'] = (int)$publishCompleted;
+    }
+
+    public function setAlwaysSyncImagesOnUpload( $alwaysSyncImagesOnUpload )
+    {
+        $this->stateFields['always_sync_images_on_upload'] = (int)$alwaysSyncImagesOnUpload;
+    }
+
+    public function getAlwaysSyncImagesOnUpload( )
+    {
+        return (int) $this->stateFields['always_sync_images_on_upload'];
     }
 
     public function toArray($addVirtualColumns = true)

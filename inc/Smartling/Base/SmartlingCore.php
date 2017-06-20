@@ -29,9 +29,9 @@ class SmartlingCore extends SmartlingCoreAbstract
         add_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, [$this, 'sendForTranslationBySubmission']);
         add_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, [$this, 'downloadTranslationBySubmission',]);
         add_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, [$this, 'cloneWithoutTranslation']);
-        add_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, [$this,
-                                                                         'regenerateTargetThumbnailsBySubmission']);
+        add_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, [$this, 'regenerateTargetThumbnailsBySubmission']);
         add_filter(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, [$this, 'prepareTargetContent']);
+        add_filter(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, [$this, 'syncAttachment']);
     }
 
     /**
@@ -317,57 +317,5 @@ class SmartlingCore extends SmartlingCoreAbstract
             $profile->setIsActive(0);
             $this->getSettingsManager()->storeEntity($profile);
         }
-    }
-
-    /**
-     * Forces image thumbnail re-generation
-     *
-     * @param SubmissionEntity $submission
-     *
-     * @throws BlogNotFoundException
-     */
-    public function regenerateTargetThumbnailsBySubmission(SubmissionEntity $submission)
-    {
-        $this->getLogger()
-            ->debug(vsprintf('Starting thumbnails regeneration for blog = \'%s\' attachment id = \'%s\'.', [
-                $submission->getTargetBlogId(),
-                $submission->getTargetId(),
-            ]));
-
-        if ('attachment' !== $submission->getContentType()) {
-            return;
-        }
-
-        $this->getContentHelper()->ensureTarget($submission);
-
-        $originalImage = get_attached_file($submission->getTargetId());
-
-        if (!function_exists('wp_generate_attachment_metadata')) {
-            include_once(ABSPATH . 'wp-admin/includes/image.php'); //including the attachment function
-        }
-
-        $metadata = wp_generate_attachment_metadata($submission->getTargetId(), $originalImage);
-
-        if (is_wp_error($metadata)) {
-
-            $this->getLogger()
-                ->error(vsprintf('Error occurred while regenerating thumbnails for blog=\'%s\' attachment id=\'%s\'. Message:\'%s\'.', [
-                    $submission->getTargetBlogId(),
-                    $submission->getTargetId(),
-                    $metadata->get_error_message(),
-                ]));
-        }
-
-        if (empty($metadata)) {
-            $this->getLogger()
-                ->error(vsprintf('Couldn\'t regenerate thumbnails for blog=\'%s\' attachment id=\'%s\'.', [
-                    $submission->getTargetBlogId(),
-                    $submission->getTargetId(),
-                ]));
-        }
-
-        wp_update_attachment_metadata($submission->getTargetId(), $metadata);
-
-        $this->getContentHelper()->ensureRestoredBlogId();
     }
 }

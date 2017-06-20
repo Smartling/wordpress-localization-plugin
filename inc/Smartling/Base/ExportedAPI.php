@@ -78,6 +78,11 @@ interface ExportedAPI
     const ACTION_SMARTLING_PROCESSOR_RELATED_CONTENT = 'smartling_processor_related_content';
 
     /**
+     * Action that syncs attachment by submission
+     */
+    const ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT = 'smartling_sync_media_attachment';
+
+    /**
      * Filter to modify FileURI.
      * Receives 1 parameter  Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater
      * Filter should return instance of Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater

@@ -19,6 +19,7 @@ trait SmartlingCoreTrait
 {
     use SmartlingCoreUploadTrait;
     use SmartlingCoreDownloadTrait;
+    use SmartlingCoreAttachments;
 
     /**
      * @param SubmissionEntity $submission
@@ -136,24 +137,7 @@ trait SmartlingCoreTrait
                 )
             );
 
-        if ('attachment' === $submission->getContentType()) {
-            $fileData = $this->getAttachmentFileInfoBySubmission($submission);
-            $sourceFileFsPath = $fileData['source_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
-            $targetFileFsPath = $fileData['target_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
-            $mediaCloneResult = AttachmentHelper::cloneFile($sourceFileFsPath, $targetFileFsPath, true);
-            if (is_array($mediaCloneResult) && 0 < count($mediaCloneResult)) {
-                $message = vsprintf(
-                    'Error(s) %s happened while working with attachment id=%s, blog=%s, submission=%s.',
-                    [
-                        implode(',', $mediaCloneResult),
-                        $submission->getSourceId(),
-                        $submission->getSourceBlogId(),
-                        $submission->getId(),
-                    ]
-                );
-                $this->getLogger()->error($message);
-            }
-        }
+        do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $submission);
 
         if (array_key_exists('meta', $hardFilteredOriginalData) &&
             ArrayHelper::notEmpty($hardFilteredOriginalData['meta'])
@@ -204,76 +188,4 @@ trait SmartlingCoreTrait
             }
         }
     }
-
-    /**
-     * @param int $siteId
-     *
-     * @return array
-     */
-    private function getUploadDirForSite($siteId)
-    {
-        $this->getContentHelper()->ensureBlog($siteId);
-        $data = wp_upload_dir();
-        $this->getContentHelper()->ensureRestoredBlogId();
-
-        return $data;
-    }
-
-    private function getUploadPathForSite($siteId)
-    {
-        $this->getContentHelper()->ensureBlog($siteId);
-        $prefix = $this->getUploadDirForSite($siteId);
-        $data = str_replace($prefix['subdir'], '', parse_url($prefix['url'], PHP_URL_PATH));
-        $this->getContentHelper()->ensureRestoredBlogId();
-
-        return $data;
-    }
-
-    /**
-     * Collects and returns info to copy attachment media
-     *
-     * @param SubmissionEntity $submission
-     *
-     * @return array
-     * @throws SmartlingWpDataIntegrityException
-     */
-    private function getAttachmentFileInfoBySubmission(SubmissionEntity $submission)
-    {
-        $info = $this->getContentHelper()->readSourceContent($submission);
-        $sourceSiteUploadInfo = $this->getUploadDirForSite($submission->getSourceBlogId());
-        $targetSiteUploadInfo = $this->getUploadDirForSite($submission->getTargetBlogId());
-        $sourceMetadata = $this->getContentHelper()->readSourceMetadata($submission);
-
-        if (array_key_exists('_wp_attached_file', $sourceMetadata) &&
-            !StringHelper::isNullOrEmpty($sourceMetadata['_wp_attached_file'])
-        ) {
-            $relativePath = $sourceMetadata['_wp_attached_file'];
-            $result = [
-                'uri'                => $info->guid,
-                'relative_path'      => $relativePath,
-                'source_path_prefix' => $sourceSiteUploadInfo['basedir'],
-                'target_path_prefix' => $targetSiteUploadInfo['basedir'],
-                'base_url_target'    => $targetSiteUploadInfo['baseurl'],
-                'filename'           => vsprintf('%s.%s', [
-                    pathinfo($relativePath, PATHINFO_FILENAME),
-                    pathinfo($relativePath, PATHINFO_EXTENSION),
-                ]),
-            ];
-
-            return $result;
-        }
-        throw new SmartlingWpDataIntegrityException(
-            vsprintf(
-                'Seems like Wordpress has mess in the database, metadata (key=\'%s\') is missing for submission=\'%s\' (content-type=\'%s\', source blog=\'%s\', id=\'%s\')',
-                [
-                    '_wp_attached_file',
-                    $submission->getId(),
-                    $submission->getContentType(),
-                    $submission->getSourceBlogId(),
-                    $submission->getSourceId(),
-                ]
-            )
-        );
-    }
-
 }
