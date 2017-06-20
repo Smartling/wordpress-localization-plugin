@@ -35,6 +35,8 @@ class Bootstrap
 
     public static $pluginVersion = 'undefined';
 
+    const SELF_CHECK_IDENTIFIER = 'smartling_self_check_disabled';
+
     public function __construct()
     {
         ignore_user_abort(true);
@@ -242,8 +244,18 @@ class Bootstrap
         $this->testMinimalWordpressVersion();
 
         $this->testTimeLimit();
-        $this->testCronSetup();
-        $this->testUpdates();
+
+        add_action('wp_ajax_' . self::SELF_CHECK_IDENTIFIER, function () {
+
+            $identifierVal = (int)$_POST['selfCheckDisabled'];
+            SimpleStorageHelper::set(Bootstrap::SELF_CHECK_IDENTIFIER, $identifierVal);
+        });
+
+        if (0 === (int)SimpleStorageHelper::get(self::SELF_CHECK_IDENTIFIER, 0)) {
+            $this->testCronSetup();
+            $this->testUpdates();
+        }
+
         add_action('all_admin_notices', ['Smartling\Helpers\UiMessageHelper', 'displayMessages']);
     }
 
@@ -259,13 +271,15 @@ class Bootstrap
         }
     }
 
-    protected function testCronSetup() {
-        if ( !defined('DISABLE_WP_CRON') || true !== DISABLE_WP_CRON) {
-            $mainMessage = vsprintf('<strong>Smartling-connector</strong> configuration is not optimal.<br />Warning! Wordpress cron installation is not configured properly. Please follow steps described <a target="_blank" href="https://help.smartling.com/v1.0/docs/wordpress-connector-install-and-configure#section-configure-wp-cron">here</a>.', []);
-
-            self::$loggerInstance->warning($mainMessage);
-
-            DiagnosticsHelper::addDiagnosticsMessage($mainMessage, false);
+    protected function testCronSetup()
+    {
+        if (!defined('DISABLE_WP_CRON') || true !== DISABLE_WP_CRON) {
+            $logMessage = 'Cron doesn\'t seem to be configured.';
+            self::getLogger()->warning($logMessage);
+            if (current_user_can('manage_network_plugins')) {
+                $mainMessage = vsprintf('<strong>Smartling-connector</strong> configuration is not optimal.<br />Warning! Wordpress cron installation is not configured properly. Please follow steps described <a target="_blank" href="https://help.smartling.com/v1.0/docs/wordpress-connector-install-and-configure#section-configure-wp-cron">here</a>.', []);
+                DiagnosticsHelper::addDiagnosticsMessage($mainMessage, false);
+            }
         }
     }
 
@@ -326,13 +340,13 @@ class Bootstrap
         }
     }
 
-    protected function testUpdates() {
+    protected function testUpdates()
+    {
         $selfSlug = $this->fromContainer('plugin.name', true);
         $cur_version = self::$pluginVersion;
         $new_version = '0.0.0';
-        $url = '';
 
-        $info = get_site_transient( 'update_plugins' );
+        $info = get_site_transient('update_plugins');
         if (is_object($info)) {
             $response = $info->response;
             foreach ($response as $definition) {
@@ -340,31 +354,29 @@ class Bootstrap
                     continue;
                 }
                 $new_version = $definition->new_version;
-                $url = $definition->package;
                 break;
             }
         } else {
             self::getLogger()->warning('No cached information found about updates. Requesting info...');
-            if ( ! function_exists( 'plugins_api' ) ) {
-                require_once( ABSPATH . 'wp-admin/includes/plugin-install.php' );
+            if (!function_exists('plugins_api')) {
+                require_once(ABSPATH . 'wp-admin/includes/plugin-install.php');
             }
-            $args = [ 'slug' => $selfSlug, 'fields' => [ 'version' => true ] ];
-            $response = plugins_api( 'plugin_information', $args );
+            $args = ['slug' => $selfSlug, 'fields' => ['version' => true]];
+            $response = plugins_api('plugin_information', $args);
 
-            if ( is_wp_error( $response ) ) {
-                self::getLogger()->error(vsprintf('Updates information request ended with error: %s', [$response->get_error_message()]));
+            if (is_wp_error($response)) {
+                self::getLogger()
+                    ->error(vsprintf('Updates information request ended with error: %s', [$response->get_error_message()]));
             } else {
-                $new_version=$response->version;
-                $url=$response->download_link;
+                $new_version = $response->version;
             }
         }
 
-        if (version_compare($new_version, $cur_version, '>'))
-        {
+        if (version_compare($new_version, $cur_version, '>')) {
             $mainMessage = vsprintf(
                 'A new version <strong>%s</strong> of Smartling Connector plugin is available for download. Current version is %s. Please update plugin <a href="%s">here</a>.',
                 [
-                    $new_version, $cur_version, site_url('/wp-admin/network/plugins.php?s=smartling+connector&plugin_status=all')
+                    $new_version, $cur_version, site_url('/wp-admin/network/plugins.php?s=smartling+connector&plugin_status=all'),
                 ]);
 
             self::$loggerInstance->warning($mainMessage);
@@ -377,8 +389,7 @@ class Bootstrap
         /**
          * @var SettingsManager $sm
          */
-        $sm = self::getContainer()
-            ->get('manager.settings');
+        $sm = self::getContainer()->get('manager.settings');
 
         $total = 0;
         $profiles = $sm->getEntities([], null, $total, true);

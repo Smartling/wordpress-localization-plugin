@@ -8,10 +8,21 @@
                 $('#default-locales').slideToggle('fast');
             });
             $('#smartling-configuration-profile-form').validate()
-        };
-            $('a.toggleExpert').on('click', function (e) {
-                $('.toggleExpert').removeClass('hidden');
-                $('a.toggleExpert').addClass('hidden');
-            });
+        }
+        ;
+        $('a.toggleExpert').on('click', function (e) {
+            $('.toggleExpert').removeClass('hidden');
+            $('a.toggleExpert').addClass('hidden');
+        });
+
+        $('a.saveExpertSkip').on('click', function (e) {
+            console.log('ooo');
+            var data = {
+                'action': 'smartling_self_check_disabled',
+                'selfCheckDisabled': $('#selfCheckDisabled').val()
+            };
+
+            $.post($(this).attr('actionUrl'), data, function (response) {});
+        });
     });
 })(jQuery);
