@@ -450,7 +450,7 @@ Please consult before making any changes.<br>", $domain); ?>
                     ?>
                     <br/>
                     <small>
-                        <?= __('Detect and resubmit to Smartling changes in original content', $domain) ?>.
+                        <?= __('Replace target media file on every source media file submit', $domain) ?>.
                     </small>
                 </td>
             </tr>
