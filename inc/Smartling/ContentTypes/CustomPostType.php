@@ -78,7 +78,29 @@ class CustomPostType extends PostBasedContentTypeAbstract
                 ->addMethodCall('setNoOriginalFound', [__($this->getConfigParser()->getWidgetMessage())]);
 
             $di->get($tag)->register();
+            $this->registerJobWidget();
         }
+    }
+
+    protected function registerJobWidget()
+    {
+        $di = $this->getContainerBuilder();
+        $tag = 'wp.job.' . static::getSystemName();
+
+        $definition = $di
+            ->register($tag, 'Smartling\WP\Controller\ContentEditJobController')
+            ->addArgument($di->getDefinition('logger'))
+            ->addArgument($di->getDefinition('multilang.proxy'))
+            ->addArgument($di->getDefinition('plugin.info'))
+            ->addArgument($di->getDefinition('entity.helper'))
+            ->addArgument($di->getDefinition('manager.submission'))
+            ->addArgument($di->getDefinition('site.cache'))
+            //->addMethodCall('setDetectChangesHelper', [$di->getDefinition('detect-changes.helper')])
+            //->addMethodCall('setAbilityNeeded', ['edit_post'])
+            ->addMethodCall('setServedContentType', [static::getSystemName()])
+            //->addMethodCall('setNoOriginalFound', [__($this->getConfigParser()->getWidgetMessage())]);
+        ;
+        $di->get($tag)->register();
     }
 
     public function registerTaxonomyRelations(ProcessRelatedContentParams $params)
