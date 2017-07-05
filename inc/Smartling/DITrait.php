@@ -2,11 +2,14 @@
 
 namespace Smartling;
 
+use Monolog\Handler\NullHandler;
 use Smartling\Base\ExportedAPI;
 use Smartling\Exception\SmartlingConfigException;
+use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\SimpleStorageHelper;
+use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
-use Symfony\Component\Config\FileLocator;
 
 trait DITrait
 {
@@ -44,12 +47,69 @@ trait DITrait
 
         self::$containerInstance = $container;
 
+        self::handleLoggerConfiguration();
+
         /**
          * Exposing reference to DI interface
          */
         do_action(ExportedAPI::ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT, self::$containerInstance);
 
         self::$loggerInstance = $container->get('logger');
+    }
+
+    private static function handleLoggerConfiguration()
+    {
+        add_action(ExportedAPI::ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT, function (ContainerBuilder $di) {
+
+            $defaultLogFileName = Bootstrap::getLogFileName(false, true);
+            $storedFile = SimpleStorageHelper::get(self::SMARTLING_CUSTOM_LOG_FILE, false);
+            $logFileName = false !== $storedFile ? $storedFile : $defaultLogFileName;
+
+            $di->setParameter('logger.filehandler.standard.filename', $logFileName);
+
+
+            $val = (int)SimpleStorageHelper::get(self::DISABLE_LOGGING, 0);
+            if (1 === $val) {
+                Bootstrap::disableLogging($di);
+            }
+        }, 8);
+
+        add_action(ExportedAPI::ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT, function (ContainerBuilder $di) {
+            $file = self::getLogFileName();
+            if (file_exists($file) && !is_writable($file)) {
+                if (1 === (int)SimpleStorageHelper::get(self::DISABLE_LOGGING, 0)) {
+                    return;
+                }
+                add_action('admin_init', function () {
+                    $msg = [
+                        '<strong>Warning!</strong>',
+                        vsprintf('It is not possible to write runtime logs into a file <strong>%s</strong>.', [Bootstrap::getLogFileName()]),
+                        'It\'s highly important to have a log file in case of troubleshooting issues with translations.',
+                        vsprintf('Please review <a href="%s">logger configuration</a> and fix it.', [admin_url('admin.php?page=smartling_configuration_profile_list')]),
+                    ];
+                    DiagnosticsHelper::addDiagnosticsMessage(implode('<br/>', $msg));
+                });
+            }
+        }, 9);
+    }
+
+    private static function nullLog(ContainerBuilder $di)
+    {
+        $logger = $di->get('logger');
+        $logger->setHandlers([new NullHandler()]);
+    }
+
+    public static function disableLogging(ContainerBuilder $di)
+    {
+        self::nullLog($di);
+        add_action('admin_init', function () {
+            $msg = [
+                '<strong>Warning!</strong>',
+                'Logging is completely disabled. Previous log files are untouched.',
+                'It\'s highly important to have a log file in case of troubleshooting issues with translations.',
+            ];
+            DiagnosticsHelper::addDiagnosticsMessage(implode('<br/>', $msg));
+        });
     }
 
     /**

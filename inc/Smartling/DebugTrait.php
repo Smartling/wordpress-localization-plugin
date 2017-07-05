@@ -107,14 +107,27 @@ trait DebugTrait
     }
 
     /**
+     * @param bool $withDate
+     * @param bool $forceDefault
+     *
      * @return string
      */
-    public static function getLogFileName()
+    public static function getLogFileName($withDate = true, $forceDefault = false)
     {
         $container = self::getContainer();
         $pluginDir = $container->getParameter('plugin.dir');
-        $filename = $container->getParameter('logger.filehandler.standard.filename');
-        $fullFilename = vsprintf('%s-%s', [str_replace('%plugin.dir%', $pluginDir, $filename), date('Y-m-d')]);
+
+        $paramName = true === $forceDefault
+            ? 'logger.filehandler.standard.filename.default'
+            : 'logger.filehandler.standard.filename';
+
+        $filename = $container->getParameter($paramName);
+
+        if (false === $withDate) {
+            $fullFilename = vsprintf('%s', [str_replace('%plugin.dir%', $pluginDir, $filename)]);
+        } else {
+            $fullFilename = vsprintf('%s-%s', [str_replace('%plugin.dir%', $pluginDir, $filename), date('Y-m-d')]);
+        }
 
         return $fullFilename;
     }

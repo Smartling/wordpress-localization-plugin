@@ -3,6 +3,7 @@
 namespace Smartling;
 
 use Exception;
+use Monolog\Logger;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\ContentTypes\AutoDiscover\PostTypes;
@@ -12,7 +13,6 @@ use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\ContentTypes\ContentTypeWidget;
 use Smartling\ContentTypes\CustomPostType;
 use Smartling\ContentTypes\CustomTaxonomyType;
-use Smartling\Exception\MultilingualPluginNotFoundException;
 use Smartling\Exception\SmartlingBootException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\MetaFieldProcessor\CustomFieldFilterHandler;
@@ -37,6 +37,10 @@ class Bootstrap
 
     const SELF_CHECK_IDENTIFIER = 'smartling_self_check_disabled';
 
+    const DISABLE_LOGGING = 'smartling_disable_logging';
+
+    const SMARTLING_CUSTOM_LOG_FILE = 'smartling_log_file';
+
     public function __construct()
     {
         ignore_user_abort(true);
@@ -55,7 +59,7 @@ class Bootstrap
     }
 
     /**
-     * @var LoggerInterface
+     * @var LoggerInterface|Logger
      */
     private static $loggerInstance = null;
 
@@ -141,11 +145,12 @@ class Bootstrap
         $manager->registerServices();
     }
 
+    /**
+     * The initial entry point tor plugins_loaded hook
+     */
     public function load()
     {
         register_shutdown_function([$this, 'shutdownHandler']);
-
-        $this->detectMultilangPlugins();
 
         self::getContainer()->setParameter('plugin.version', self::$pluginVersion);
 
@@ -188,21 +193,11 @@ class Bootstrap
         }
     }
 
-    /**
-     * @throws MultilingualPluginNotFoundException
-     */
-    public function detectMultilangPlugins($scielent = true)
+    public function testMultilingualPressPlugin()
     {
-        /**
-         * @var LoggerInterface $logger
-         */
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-        $logger = self::getLogger();
-
-        $mlPluginsStatuses =
-            [
-                'multilingual-press-pro' => false,
-            ];
+        $mlPluginsStatuses = [
+            'multilingual-press-pro' => false,
+        ];
 
         $found = false;
 
@@ -212,11 +207,9 @@ class Bootstrap
         }
 
         if (false === $found) {
-            $message = 'No active multilingual plugins found.';
-            $logger->warning($message);
-            if (!$scielent) {
-                throw new MultilingualPluginNotFoundException($message);
-            }
+            add_action('admin_init', function () {
+                DiagnosticsHelper::addDiagnosticsMessage('Required plugin <strong>Multilingual Press</strong> not found. Please install and activate it.', true);
+            });
         }
 
         self::getContainer()->setParameter('multilang_plugins', $mlPluginsStatuses);
@@ -228,6 +221,7 @@ class Bootstrap
      */
     protected function test()
     {
+        $this->testMultilingualPressPlugin();
         $this->testThirdPartyPluginsRequirements();
 
         $phpExtensions = [
@@ -245,10 +239,25 @@ class Bootstrap
 
         $this->testTimeLimit();
 
-        add_action('wp_ajax_' . self::SELF_CHECK_IDENTIFIER, function () {
+        add_action('wp_ajax_' . 'smartling_expert_global_settings_update', function () {
 
-            $identifierVal = (int)$_POST['selfCheckDisabled'];
-            SimpleStorageHelper::set(Bootstrap::SELF_CHECK_IDENTIFIER, $identifierVal);
+            $data =& $_POST['params'];
+
+            $selfCheckDisabled = (int)$data['selfCheckDisabled'];
+            $disableLogging = (int)$data['disableLogging'];
+            $logPath = $data['loggingPath'];
+
+            SimpleStorageHelper::set(Bootstrap::SELF_CHECK_IDENTIFIER, $selfCheckDisabled);
+            SimpleStorageHelper::set(Bootstrap::DISABLE_LOGGING, $disableLogging);
+
+            if ($logPath === Bootstrap::getLogFileName(false, true)) {
+                SimpleStorageHelper::drop(self::SMARTLING_CUSTOM_LOG_FILE);
+            } else {
+                SimpleStorageHelper::set(self::SMARTLING_CUSTOM_LOG_FILE, $logPath);
+            }
+
+            echo json_encode($data);
+
         });
 
         if (0 === (int)SimpleStorageHelper::get(self::SELF_CHECK_IDENTIFIER, 0)) {
@@ -256,10 +265,11 @@ class Bootstrap
             $this->testUpdates();
         }
 
-        add_action('all_admin_notices', ['Smartling\Helpers\UiMessageHelper', 'displayMessages']);
+        add_action('admin_notices', ['Smartling\Helpers\UiMessageHelper', 'displayMessages']);
     }
 
-    protected function testTimeLimit($recommended = 300) {
+    protected function testTimeLimit($recommended = 300)
+    {
         $timeLimit = ini_get('max_execution_time');
 
         if (0 !== (int)$timeLimit && $recommended >= $timeLimit) {
@@ -313,7 +323,8 @@ class Bootstrap
         if (true === $blockWork) {
             $mainMessage = 'No active suitable localization plugin found. Please install and activate one, e.g.: '
                            .
-                           '<a href="' . get_site_url() . '/wp-admin/network/plugin-install.php?tab=search&s=multilingual+press">Multilingual Press.</a>';
+                           '<a href="' . get_site_url() .
+                           '/wp-admin/network/plugin-install.php?tab=search&s=multilingual+press">Multilingual Press.</a>';
 
             self::getLogger()->critical('Boot :: ' . $mainMessage);
             DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
@@ -322,7 +333,8 @@ class Bootstrap
             $advTranslatorKey = 'class-Mlp_Advanced_Translator';
             if (is_array($data) && array_key_exists($advTranslatorKey, $data) && 'off' !== $data[$advTranslatorKey]) {
                 $msg = '<strong>Advanced Translator</strong> feature of Multilingual Press plugin is currently turned on.<br/>
- Please turn it off to use Smartling-connector plugin. <br/> Use <a href="' . get_site_url() . '/wp-admin/network/settings.php?page=mlp"><strong>this link</strong></a> to visit Multilingual Press network settings page.';
+ Please turn it off to use Smartling-connector plugin. <br/> Use <a href="' . get_site_url() .
+                       '/wp-admin/network/settings.php?page=mlp"><strong>this link</strong></a> to visit Multilingual Press network settings page.';
                 self::getLogger()->critical('Boot :: ' . $msg);
                 DiagnosticsHelper::addDiagnosticsMessage($msg, true);
             }
@@ -376,7 +388,8 @@ class Bootstrap
             $mainMessage = vsprintf(
                 'A new version <strong>%s</strong> of Smartling Connector plugin is available for download. Current version is %s. Please update plugin <a href="%s">here</a>.',
                 [
-                    $new_version, $cur_version, site_url('/wp-admin/network/plugins.php?s=smartling+connector&plugin_status=all'),
+                    $new_version, $cur_version,
+                    site_url('/wp-admin/network/plugins.php?s=smartling+connector&plugin_status=all'),
                 ]);
 
             self::$loggerInstance->warning($mainMessage);
@@ -397,7 +410,8 @@ class Bootstrap
         if (0 === count($profiles)) {
             $mainMessage = 'No active smartling configuration profiles found. Please create at least one on '
                            .
-                           '<a href="' . get_site_url() . '/wp-admin/admin.php?page=smartling_configuration_profile_list">settings page</a>';
+                           '<a href="' . get_site_url() .
+                           '/wp-admin/admin.php?page=smartling_configuration_profile_list">settings page</a>';
 
             self::getLogger()->critical('Boot :: ' . $mainMessage);
 

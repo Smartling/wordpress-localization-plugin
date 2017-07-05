@@ -149,8 +149,7 @@
     max-width: 560px;
 }
 
-#target-locale-block td
-{
+#target-locale-block td {
     min-width: auto;
     max-width: inherit;
     padding-bottom: 5px;
@@ -311,8 +310,41 @@ form.form-table table, form.form-table tr, form.form-table td {
 }
 
 form.form-table td p {
-    min-height:22px;
-    min-width:200px;
+    min-height: 22px;
+    min-width: 200px;
     max-width: 200px;
-    float:left;
+    float: left;
+}
+
+.update-nag {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+.update-nag p {
+    padding-left: 6px;
+}
+
+.toggleExpert table {
+    width: 100%;
+}
+
+th.center {
+    text-align: center;
+    font-weight: normal;
+    font-size: larger;
+}
+
+.update-nag table th {
+    width: 200px;
+    max-width: 200px;
+}
+
+.update-nag table td {
+    text-align: left;
+}
+
+.update-nag table td input[type=text] {
+    width: 100%;
 }
