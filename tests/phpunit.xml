@@ -14,7 +14,7 @@
 >
     <testsuites>
         <testsuite name="smartling-connector WordPress plugin test">
-            <directory suffix="Test.php" phpVersion="5.4.0" phpVersionOperator=">=">./</directory>
+            <directory suffix="Test.php" phpVersion="5.5.0" phpVersionOperator=">=">./</directory>
         </testsuite>
     </testsuites>
 </phpunit>
