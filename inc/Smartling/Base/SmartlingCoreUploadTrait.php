@@ -336,7 +336,7 @@ trait SmartlingCoreUploadTrait
             foreach ($submissions as $_submission) {
                 $xml = $this->getXMLFiltered($_submission);
                 do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $_submission);
-                $this->prepareRelatedSubmissions($submission);
+                $this->prepareRelatedSubmissions($_submission);
                 $locales[] = $this->getSettingsManager()->getSmartlingLocaleBySubmission($_submission);
             }
 
