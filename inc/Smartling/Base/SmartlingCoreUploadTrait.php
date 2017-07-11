@@ -33,7 +33,7 @@ trait SmartlingCoreUploadTrait
      */
     public function sendForTranslationBySubmissionId($id)
     {
-        return $this->sendForTranslationBySubmission($this->loadSubmissionEntityById($id));
+        $this->sendForTranslationBySubmission($this->loadSubmissionEntityById($id));
     }
 
     /**
@@ -340,7 +340,7 @@ trait SmartlingCoreUploadTrait
                 $locales[] = $this->getSettingsManager()->getSmartlingLocaleBySubmission($_submission);
             }
 
-            $result = $this->sendFile($submission, $xml, $locales);
+            $this->sendFile($submission, $xml, $locales);
 
             foreach ($submissions as $_submission) {
                 $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
@@ -361,8 +361,6 @@ trait SmartlingCoreUploadTrait
             $this->getSubmissionManager()
                 ->setErrorMessage($submission, vsprintf('Could not submit because: %s', [$e->getMessage()]));
         }
-
-        return $result;
     }
 
     /**
@@ -394,7 +392,7 @@ trait SmartlingCoreUploadTrait
                 return;
             }
 
-            return $this->bulkSubmit($submission);
+            $this->bulkSubmit($submission);
         } catch (EntityNotFoundException $e) {
             $this->getLogger()->error($e->getMessage());
             $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent content.');
