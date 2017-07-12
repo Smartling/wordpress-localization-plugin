@@ -22,7 +22,7 @@ trait SmartlingCoreAttachments
         }
         $profile = $this->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
         if ($profile instanceof ConfigurationProfileEntity) {
-            if (1 === $profile->getAlwaysSyncImagesOnUpload()) {
+            if (1 === $profile->getAlwaysSyncImagesOnUpload() || $submission->getStatus() == 'New') {
                 $this->syncMediaFile($submission);
             }
 
