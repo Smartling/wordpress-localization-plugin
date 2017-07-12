@@ -3,7 +3,7 @@ Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
 Tested up to: 4.8
-Stable tag: 1.5.10
+Stable tag: 1.5.11
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -58,10 +58,14 @@ Additional information on the Smartling Connector for WordPress can be found [th
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+
+= 1.5.11 =
+* Fixed issue with categories. Category is not populated from original posts to all target posts if you submit an original post for more than one locale.
+* Fixed issue with images synchronization between sites. In some cases, images are not updated on target sites.
+
 = 1.5.10 =
 * Fixed potential issue of plugin crash if `logs` folder is not accessible for writing.
-* Added ability to turn logging off.
-* Added ability to change log file path.
+* Added the new option in the Smartling settings. Now you can turn logging off, or you can change where to store log file.
 
 = 1.5.9 =
 * Added ability to skip some self-checks (Settings screen)
@@ -70,8 +74,8 @@ Additional information on the Smartling Connector for WordPress can be found [th
 
 = 1.5.8 =
 * Improved environment self-test
-* Added notification about new smartling-connector plgin releases.
-* Added ability to describe related taxonomies using general type 'taxonomy' or 'term' instead of using internal wordpress names ('category', 'post_tag')
+* Added notification about new `smartling-connector` plugin releases.
+* Added ability to describe related taxonomies using general type `'taxonomy'` or `'term'` instead of using internal wordpress names (`'category'`, `'post_tag'`)
 
 = 1.5.7 =
 * Improved implementation of `Clone` functionality.
@@ -94,7 +98,6 @@ Additional information on the Smartling Connector for WordPress can be found [th
 * Fixes possible issue when wordpress is installed into subfolder.
 * Small improvements
 
-== Changelog ==
 = 1.5.2 =
 * Added automatic support for all registered taxonomies. Previously needed taxonomy descriptors should be removed.
 * Added automatic support for all registered public custom post types (including relations with taxonomies). Previously needed custom post types descriptors should be removed.
