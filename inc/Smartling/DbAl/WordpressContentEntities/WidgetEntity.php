@@ -172,7 +172,7 @@ class WidgetEntity extends VirtualEntityAbstract
      *
      * @return mixed
      */
-    public function getAll($limit = '', $offset = 0, $orderBy = false, $order = false)
+    public function getAll($limit = '', $offset = 0, $orderBy = false, $order = false, $searchString = '')
     {
         $this->buildMap();
         $collection = [];

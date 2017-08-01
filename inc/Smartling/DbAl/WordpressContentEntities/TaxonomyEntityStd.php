@@ -169,7 +169,7 @@ class TaxonomyEntityStd extends EntityAbstract
      * @return TaxonomyEntityStd[]
      * @throws SmartlingDbException
      */
-    public function getAll($limit = '', $offset = '', $orderBy = 'term_id', $order = 'ASC')
+    public function getAll($limit = '', $offset = '', $orderBy = 'term_id', $order = 'ASC', $searchString = '')
     {
 
         $result = [];
@@ -196,7 +196,7 @@ class TaxonomyEntityStd extends EntityAbstract
             'description__like' => '',
             'pad_counts'        => false,
             'offset'            => $offset,
-            'search'            => '',
+            'search'            => $searchString,
             'cache_domain'      => 'core',
         ];
 

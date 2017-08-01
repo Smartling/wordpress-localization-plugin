@@ -40,11 +40,17 @@ class BulkSubmitTableWidget extends SmartlingListTable
     const CONTENT_TYPE_SELECT_ELEMENT_NAME = 'content-type';
 
     /**
+     * base name of title search textbox
+     */
+    const TITLE_SEARCH_TEXTBOX_ELEMENT_NAME = 'title-search';
+
+    /**
      * default values of custom form elements on page
      * @var array
      */
     private $defaultValues = [
-        self::CONTENT_TYPE_SELECT_ELEMENT_NAME => 'post',
+        self::CONTENT_TYPE_SELECT_ELEMENT_NAME  => 'post',
+        self::TITLE_SEARCH_TEXTBOX_ELEMENT_NAME => '',
     ];
 
     private $_settings = [
@@ -331,6 +337,19 @@ class BulkSubmitTableWidget extends SmartlingListTable
     }
 
     /**
+     * @return string|null
+     */
+    private function getTitleSearchTextFilterValue()
+    {
+        $value = $this->getFormElementValue(
+            self::TITLE_SEARCH_TEXTBOX_ELEMENT_NAME,
+            $this->defaultValues[self::TITLE_SEARCH_TEXTBOX_ELEMENT_NAME]
+        );
+
+        return $value;
+    }
+
+    /**
      * @inheritdoc
      */
     public function prepare_items()
@@ -357,11 +376,14 @@ class BulkSubmitTableWidget extends SmartlingListTable
 
         $io = $core->getContentIoFactory()->getMapper($contentTypeFilterValue);
 
+        $searchString = $this->getTitleSearchTextFilterValue();
+
         $data = $io->getAll(
             $pageOptions['limit'],
             ($pageOptions['page'] - 1) * $pageOptions['limit'],
             $sortOptions['orderby'],
-            $sortOptions['order']
+            $sortOptions['order'],
+            $searchString
         );
 
 
@@ -437,7 +459,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
      */
     public function contentTypeSelectRender()
     {
-        $controlName = 'content-type';
+        $controlName = self::CONTENT_TYPE_SELECT_ELEMENT_NAME;
 
         $types = $this->getActiveContentTypes($this->entityHelper->getSiteHelper(), 'bulkSubmit');
 
@@ -472,6 +494,38 @@ class BulkSubmitTableWidget extends SmartlingListTable
                 [
                     'id'   => $this->buildHtmlTagName($controlName),
                     'name' => $this->buildHtmlTagName($controlName),
+                ]
+            );
+
+        return $html;
+    }
+
+    /**
+     * @return string
+     */
+    public function titleFilterRender()
+    {
+        $controlName = self::TITLE_SEARCH_TEXTBOX_ELEMENT_NAME;
+
+        $value = $this->getFormElementValue(
+            $controlName,
+            $this->defaultValues[$controlName]
+        );
+
+        $html = HtmlTagGeneratorHelper::tag(
+                'label',
+                __('Title Contains'),
+                [
+                    'for' => $this->buildHtmlTagName($controlName),
+                ]
+            ) . HtmlTagGeneratorHelper::tag(
+                'input',
+                '',
+                [
+                    'type'  => 'text',
+                    'id'    => $this->buildHtmlTagName($controlName),
+                    'name'  => $this->buildHtmlTagName($controlName),
+                    'value' => $value,
                 ]
             );
 

@@ -1,4 +1,5 @@
 <?php
+
 use Smartling\Settings\TargetLocale;
 use Smartling\WP\View\BulkSubmitTableWidget;
 use Smartling\WP\WPAbstract;
@@ -48,6 +49,7 @@ $data = $this->getViewData();
                 <form id="bulk-submit-type-filter" method="get">
                     <input type="hidden" name="page" value="<?= $_REQUEST['page']; ?>"/>
                     <?= $bulkSubmitTable->contentTypeSelectRender(); ?>
+                    <?= $bulkSubmitTable->titleFilterRender(); ?>
                     <?= $bulkSubmitTable->renderSubmitButton(__('Apply Filter')); ?>
                 </form>
             </td>
