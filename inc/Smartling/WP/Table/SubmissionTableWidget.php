@@ -9,6 +9,9 @@ use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Helpers\QueryBuilder\Condition\Condition;
+use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
+use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Queue\Queue;
@@ -343,33 +346,53 @@ class SubmissionTableWidget extends SmartlingListTable
         $total = 0;
 
         $contentTypeFilterValue = $this->getContentTypeFilterValue();
-
         $statusFilterValue = $this->getStatusFilterValue();
-
         $outdatedFlag = $this->getOutdatedFlagFilterValue();
-
         $targetLocale = $this->getTargetLocaleFilterValue();
-
         $searchText = $this->getFromSource('s', '');
 
-        if (empty($searchText)) {
-            $data = $this->manager->getEntities($contentTypeFilterValue, $statusFilterValue, $outdatedFlag, $this->getSortingOptions(), $pageOptions, $targetLocale, $total);
-        } else {
-            $data = $this->manager->search(
-                $searchText,
-                [
-                    'source_title',
-                    'source_id',
-                    'file_uri',
-                ],
-                $contentTypeFilterValue,
-                $statusFilterValue,
-                $outdatedFlag,
-                $this->getSortingOptions(),
-                $pageOptions,
-                $total
-            );
+
+        $block = ConditionBlock::getConditionBlock();
+
+        if (!StringHelper::isNullOrEmpty(trim($searchText))) {
+
+            $searchText = vsprintf('%%%s%%', [trim($searchText)]);
+
+            $searchBlock = ConditionBlock::getConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR);
+
+            $searchFields = [
+                'source_title',
+                'source_id',
+                'file_uri',
+            ];
+
+            foreach ($searchFields as $searchField) {
+                $searchBlock->addCondition(
+                    Condition::getCondition(
+                        ConditionBuilder::CONDITION_SIGN_LIKE,
+                        $searchField,
+                        [$searchText]
+                    )
+                );
+            }
+
+            $block->addConditionBlock($searchBlock);
         }
+
+        if (null !== $targetLocale) {
+            $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'target_blog_id', [$targetLocale]));
+        }
+
+
+        $data = $this->manager->searchByCondition(
+            $block,
+            $contentTypeFilterValue,
+            $statusFilterValue,
+            $outdatedFlag,
+            $this->getSortingOptions(),
+            $pageOptions,
+            $total
+        );
 
         $dataAsArray = [];
 
@@ -466,15 +489,16 @@ class SubmissionTableWidget extends SmartlingListTable
     {
         $html = HtmlTagGeneratorHelper::tag('label', __('Search'), ['for' => 's'])
                 . HtmlTagGeneratorHelper::tag(
-                    'input',
-                    '',
-                    [
-                        'name' => 's',
-                        'type' => 'text',
-                        'value' => $this->getFormElementValue('s', ''),
-                        'placeholder'=>__('Search text')
-                    ]
+                'input',
+                '',
+                [
+                    'name'        => 's',
+                    'type'        => 'text',
+                    'value'       => $this->getFormElementValue('s', ''),
+                    'placeholder' => __('Search text'),
+                ]
             );
+
         return $html;
     }
 
