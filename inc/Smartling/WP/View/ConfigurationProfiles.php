@@ -126,6 +126,22 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
+                        <th colspan="2" class="center">User Interface Customizations</th>
+                    </tr>
+                    <tr>
+                        <th><label for="loggingPath">Elements per page</label></th>
+                        <td>
+                            <?=
+                            \Smartling\Helpers\HtmlTagGeneratorHelper::tag('input', '', [
+                                'type'  => 'text',
+                                'value' => \Smartling\Bootstrap::getPageSize(),
+                                'id'    => 'pageSize',
+                            ]);
+                            ?>
+                            <a href="javascript:void(0)" id="resetPageSize" data-default="<?= \Smartling\Bootstrap::getPageSize( true); ?>">reset to defaults</a>
+                        </td>
+                    </tr>
+                    <tr>
                         <td colspan="2" class="center">
                             <a class="button action saveExpertSkip"
                                actionUrl="<?= admin_url('admin-ajax.php') ?>?action=smartling_expert_global_settings_update" href="javascript:void(0)">Apply changes</a>

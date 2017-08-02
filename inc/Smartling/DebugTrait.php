@@ -132,6 +132,17 @@ trait DebugTrait
         return $fullFilename;
     }
 
+    public static function getPageSize($forceDefault = false)
+    {
+        $paramName = 'submission.pagesize';
+        if (true === $forceDefault) {
+            $paramName .= '.default';
+        }
+        $container = self::getContainer();
+        $pageSize = $container->getParameter($paramName);
+        return $pageSize;
+    }
+
     /**
      * @return string
      */

@@ -41,6 +41,8 @@ class Bootstrap
 
     const SMARTLING_CUSTOM_LOG_FILE = 'smartling_log_file';
 
+    const SMARTLING_CUSTOM_PAGE_SIZE = 'smartling_ui_page_size';
+
     public function __construct()
     {
         ignore_user_abort(true);
@@ -246,9 +248,16 @@ class Bootstrap
             $selfCheckDisabled = (int)$data['selfCheckDisabled'];
             $disableLogging = (int)$data['disableLogging'];
             $logPath = $data['loggingPath'];
+            $pageSize = (int)$data['pageSize'];
 
             SimpleStorageHelper::set(Bootstrap::SELF_CHECK_IDENTIFIER, $selfCheckDisabled);
             SimpleStorageHelper::set(Bootstrap::DISABLE_LOGGING, $disableLogging);
+
+            if ($pageSize === Bootstrap::getPageSize(true)) {
+                SimpleStorageHelper::drop(self::SMARTLING_CUSTOM_PAGE_SIZE);
+            } else {
+                SimpleStorageHelper::set(self::SMARTLING_CUSTOM_PAGE_SIZE, $pageSize);
+            }
 
             if ($logPath === Bootstrap::getLogFileName(false, true)) {
                 SimpleStorageHelper::drop(self::SMARTLING_CUSTOM_LOG_FILE);

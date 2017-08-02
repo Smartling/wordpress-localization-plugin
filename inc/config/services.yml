@@ -2,6 +2,7 @@ parameters:
   multilang_plugins:
     "multilingual-press-pro": false
 
+  submission.pagesize.default: 20
   submission.pagesize: 20
 services:
   content-type-descriptor-manager:

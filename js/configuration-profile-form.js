@@ -24,7 +24,8 @@
                 'params': {
                     'selfCheckDisabled': $('#selfCheckDisabled').val(),
                     'disableLogging': $('#disableLogging').val(),
-                    'loggingPath': $('#loggingPath').val()
+                    'loggingPath': $('#loggingPath').val(),
+                    'pageSize': $('#pageSize').val()
                 }
             };
 
@@ -41,5 +42,10 @@
 
         });
 
+        $('#resetPageSize').on('click', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            $('#pageSize').attr('value', ($(this).attr('data-default')));
+        });
     });
 })(jQuery);

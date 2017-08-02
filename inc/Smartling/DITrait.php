@@ -65,7 +65,11 @@ trait DITrait
             $storedFile = SimpleStorageHelper::get(self::SMARTLING_CUSTOM_LOG_FILE, false);
             $logFileName = false !== $storedFile ? $storedFile : $defaultLogFileName;
 
+            $storedPageSize = SimpleStorageHelper::get(self::SMARTLING_CUSTOM_PAGE_SIZE, false);
+            $pageSize = false !== $storedPageSize ? $storedPageSize : self::getPageSize(true);
+
             $di->setParameter('logger.filehandler.standard.filename', $logFileName);
+            $di->setParameter('submission.pagesize', $pageSize);
 
 
             $val = (int)SimpleStorageHelper::get(self::DISABLE_LOGGING, 0);
