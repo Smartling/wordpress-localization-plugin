@@ -370,12 +370,14 @@ class Bootstrap
         $info = get_site_transient('update_plugins');
         if (is_object($info)) {
             $response = $info->response;
-            foreach ($response as $definition) {
-                if ($selfSlug !== $definition->slug) {
-                    continue;
+            if (is_array($response)) {
+                foreach ($response as $definition) {
+                    if ($selfSlug !== $definition->slug) {
+                        continue;
+                    }
+                    $new_version = $definition->new_version;
+                    break;
                 }
-                $new_version = $definition->new_version;
-                break;
             }
         } else {
             self::getLogger()->warning('No cached information found about updates. Requesting info...');
