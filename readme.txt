@@ -60,7 +60,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 
 = 1.6.0 =
-* **Note! If ACF Localization plugin is used it should be updated first.**
+* **Note! If [Smartling ACF localization](https://wordpress.org/plugins/smartling-acf-localization) plugin is used it should be updated first.**
 * **Note! BEFORE updating Disable all extra plugins that add support of custom content. Note that definition of getAll() method was changed and custom code should be updated.**
 * Improved search on Translation Progress Screen.
 * Fixed locale display on Translation Progress Screen.
