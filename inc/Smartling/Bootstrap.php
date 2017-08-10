@@ -248,12 +248,14 @@ class Bootstrap
             $selfCheckDisabled = (int)$data['selfCheckDisabled'];
             $disableLogging = (int)$data['disableLogging'];
             $logPath = $data['loggingPath'];
-            $pageSize = (int)$data['pageSize'];
+            $defaultPageSize = Bootstrap::getPageSize(true);
+            $rawPageSize = (int)$data['pageSize'];
+            $pageSize = $rawPageSize < 1 ? $defaultPageSize : $rawPageSize;
 
             SimpleStorageHelper::set(Bootstrap::SELF_CHECK_IDENTIFIER, $selfCheckDisabled);
             SimpleStorageHelper::set(Bootstrap::DISABLE_LOGGING, $disableLogging);
 
-            if ($pageSize === Bootstrap::getPageSize(true)) {
+            if ($pageSize === $defaultPageSize) {
                 SimpleStorageHelper::drop(self::SMARTLING_CUSTOM_PAGE_SIZE);
             } else {
                 SimpleStorageHelper::set(self::SMARTLING_CUSTOM_PAGE_SIZE, $pageSize);
