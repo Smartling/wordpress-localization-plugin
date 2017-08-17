@@ -266,11 +266,10 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                              $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
                          ])
             );
-            if (wp_is_post_revision($post_id)) {
-                $this->getLogger()
-                    ->debug(vsprintf('Validation failed: post id = \'%s\' just revision. Ignoring.', [$post_id]));
-
-                return;
+            // Handle case when a revision is being saved. Get post_id by
+            // revision id.
+            if ($parent_id = wp_is_post_revision($post_id)) {
+                $post_id = $parent_id;
             }
 
 
