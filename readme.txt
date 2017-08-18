@@ -3,7 +3,7 @@ Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
 Tested up to: 4.8.1
-Stable tag: 1.6.0
+Stable tag: 1.6.1
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -59,7 +59,12 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 
+= 1.6.1 =
+* Improved upload to smartling flow when post doesn't have any revision. Before it required to submit post 2 times (the 1st submit created revision, the 2nd submitted post to smartling). Now it works seamles, you should not work does post have revisions or no
+* Fixed default value of page size configuration for existing configurations
+
 = 1.6.0 =
+
 **This version may require manual migration steps from previous versions. Please read and following steps below:**
 * **If [Smartling ACF localization](https://wordpress.org/plugins/smartling-acf-localization) plugin is used then it must be updated first.**
 * **Disable all custom plugins than extend Smartling Connector before update connector. An example, custom plugins that add support of custom content. Note that signaure of `EntityAbstract.getAll()` method was changed and custom code should be updated.**
