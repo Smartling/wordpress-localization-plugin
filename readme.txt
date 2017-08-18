@@ -60,8 +60,11 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 
 = 1.6.0 =
-* **Note! If [Smartling ACF localization](https://wordpress.org/plugins/smartling-acf-localization) plugin is used it should be updated first.**
-* **Note! BEFORE updating Disable all extra plugins that add support of custom content. Note that definition of getAll() method was changed and custom code should be updated.**
+**This version may require manual migration steps from previous versions. Please read and following steps below:**
+* **If [Smartling ACF localization](https://wordpress.org/plugins/smartling-acf-localization) plugin is used then it must be updated first.**
+* **Disable all custom plugins than extend Smartling Connector before update connector. An example, custom plugins that add support of custom content. Note that signaure of `EntityAbstract.getAll()` method was changed and custom code should be updated.**
+
+**Improvements**:
 * Improved search on Translation Progress Screen.
 * Fixed locale display on Translation Progress Screen.
 * Added ability to search on Bulk Submit Screen.
