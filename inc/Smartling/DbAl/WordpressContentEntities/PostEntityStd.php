@@ -272,7 +272,7 @@ class PostEntityStd extends EntityAbstract
      *
      * @return array
      */
-    public function getAll($limit = '', $offset = 0, $orderBy = 'date', $order = 'DESC')
+    public function getAll($limit = '', $offset = 0, $orderBy = 'date', $order = 'DESC', $searchString = '')
     {
         $arguments = [
             'posts_per_page'   => $limit,
@@ -286,6 +286,7 @@ class PostEntityStd extends EntityAbstract
             'meta_value'       => '',
             'post_type'        => $this->getType(),
             'suppress_filters' => true,
+            's'                => $searchString,
         ];
 
         $posts = get_posts($arguments);

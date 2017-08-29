@@ -15,13 +15,37 @@
             $('a.toggleExpert').addClass('hidden');
         });
 
+
         $('a.saveExpertSkip').on('click', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
             var data = {
-                'action': 'smartling_self_check_disabled',
-                'selfCheckDisabled': $('#selfCheckDisabled').val()
+                'action': 'smartling_expert_global_settings_update',
+                'params': {
+                    'selfCheckDisabled': $('#selfCheckDisabled').val(),
+                    'disableLogging': $('#disableLogging').val(),
+                    'loggingPath': $('#loggingPath').val(),
+                    'pageSize': $('#pageSize').val()
+                }
             };
 
-            $.post($(this).attr('actionUrl'), data, function (response) {});
+            $.post($(this).attr('actionUrl'), data, function (response) {
+                location.reload();
+            });
+        });
+
+        $('#resetLogPath').on('click', function(e){
+            e.stopPropagation();
+            e.preventDefault();
+
+            $('#loggingPath').attr('value',($(this).attr('data-path')));
+
+        });
+
+        $('#resetPageSize').on('click', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            $('#pageSize').attr('value', ($(this).attr('data-default')));
         });
     });
 })(jQuery);

@@ -2,8 +2,8 @@
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
-Tested up to: 4.8
-Stable tag: 1.5.9
+Tested up to: 4.8.1
+Stable tag: 1.6.1
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -40,7 +40,7 @@ Integration Features
 * For wpengine hosting maximum execution time should be set to 300 seconds.
 
 
-1. Configure [Multilingual Press](https://wordpress.org/plugins/multilingual-press) using instructions found [there](http://support.smartling.com/hc/en-us/articles/205418457).
+1. Configure [Multilingual Press](https://wordpress.org/plugins/multilingual-press) using instructions found [here](https://help.smartling.com/docs/wordpress-connector-install-and-configure).
 1. Upload the unzipped Smartling Connector plugin to the `/wp-content/plugins/` directory.
 1. Go to the Plugins screen and **Network Activate** the Smartling Connector plugin.
 1. Navigate to the Smartling - Settings page (`/wp-admin/network/admin.php?page=smartling_configuration_profile_list`) and click **Add Profile**.
@@ -49,7 +49,7 @@ Integration Features
 
 == Frequently Asked Questions ==
 
-Additional information on the Smartling Connector for WordPress can be found [there](http://help.smartling.com/knowledge-base/sections/wordpress-connector/).
+Additional information on the Smartling Connector for WordPress can be found [here](https://help.smartling.com/v1.0/docs/wordpress-connector/).
 
 == Screenshots ==
 
@@ -58,6 +58,33 @@ Additional information on the Smartling Connector for WordPress can be found [th
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+
+= 1.6.1 =
+* Improved upload to smartling flow when post doesn't have any revision. Before it required to submit post 2 times (the 1st submit created revision, the 2nd submitted post to smartling). Now it works seamles, you should not work does post have revisions or no
+* Fixed default value of page size configuration for existing configurations
+
+= 1.6.0 =
+
+**This version may require manual migration steps from previous versions. Please read and following steps below:**
+
+* **If [Smartling ACF localization](https://wordpress.org/plugins/smartling-acf-localization) plugin is used then it must be updated first.**
+* **Disable all custom plugins than extend Smartling Connector before update connector. An example, custom plugins that add support of custom content. Note that signaure of `EntityAbstract.getAll()` method was changed and custom code should be updated.**
+
+**Improvements**:
+
+* Improved search on Translation Progress Screen.
+* Fixed locale display on Translation Progress Screen.
+* Added ability to search on Bulk Submit Screen.
+* Added ability to change amount of displayed rows per page on smartling-connector screens.
+
+= 1.5.11 =
+* Fixed issue with categories. Category is not populated from original posts to all target posts if you submit an original post for more than one locale.
+* Fixed issue with images synchronization between sites. In some cases, images are not updated on target sites.
+
+= 1.5.10 =
+* Fixed potential issue of plugin crash if `logs` folder is not accessible for writing.
+* Added the new option in the Smartling settings. Now you can turn logging off, or you can change where to store log file.
+
 = 1.5.9 =
 * Added ability to skip some self-checks (Settings screen)
 * Added ability to sync media files (Configuration profile expert settings) to fix possible issues when source media is replaced (even without changing file name).
@@ -65,8 +92,8 @@ Additional information on the Smartling Connector for WordPress can be found [th
 
 = 1.5.8 =
 * Improved environment self-test
-* Added notification about new smartling-connector plgin releases.
-* Added ability to describe related taxonomies using general type 'taxonomy' or 'term' instead of using internal wordpress names ('category', 'post_tag')
+* Added notification about new `smartling-connector` plugin releases.
+* Added ability to describe related taxonomies using general type `'taxonomy'` or `'term'` instead of using internal wordpress names (`'category'`, `'post_tag'`)
 
 = 1.5.7 =
 * Improved implementation of `Clone` functionality.
@@ -89,7 +116,6 @@ Additional information on the Smartling Connector for WordPress can be found [th
 * Fixes possible issue when wordpress is installed into subfolder.
 * Small improvements
 
-== Changelog ==
 = 1.5.2 =
 * Added automatic support for all registered taxonomies. Previously needed taxonomy descriptors should be removed.
 * Added automatic support for all registered public custom post types (including relations with taxonomies). Previously needed custom post types descriptors should be removed.

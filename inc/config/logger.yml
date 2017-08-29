@@ -4,9 +4,10 @@ parameters:
   logger.smartling_verbose_metadata_io: true
 
   logger.channel: default
+  logger.filehandler.standard.filename.default: %plugin.dir%/logs/logfile
   logger.filehandler.standard.filename: %plugin.dir%/logs/logfile
   logger.filehandler.standard.loglevel: DEBUG
-  logger.filehandler.standard.maxfiles: 5
+  logger.filehandler.standard.maxfiles: 1
 
   logger.formatter.date: "Y-m-d H:i:s"
   logger.formatter.output.default: "[%%datetime%%] %%channel%%.%%level_name%%: %%message%% %%context%% %%extra%%\n"
@@ -31,7 +32,7 @@ services:
       - [ "setFormatter", [ "@fileLoggerLineFormatter" ]]
 
   fileLoggerHandlerRotatable:
-     class: Monolog\Handler\RotatingFileHandler
+     class: Smartling\Base\CustomRotatingFileHandler
      arguments:
        - "%logger.filehandler.standard.filename%"
        - "%logger.filehandler.standard.maxfiles%"

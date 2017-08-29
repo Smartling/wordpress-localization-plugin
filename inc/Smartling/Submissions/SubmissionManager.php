@@ -249,6 +249,35 @@ class SubmissionManager extends EntityManagerAbstract
         return $result;
     }
 
+    public function searchByCondition(ConditionBlock $block, $contentType = null, $status = null, $outdatedFlag = null, array $sortOptions = [], $pageOptions = null, & $totalCount = 0)
+    {
+
+        $validRequest = $block instanceof ConditionBlock &&
+                        $this->validateRequest($contentType, $sortOptions, $pageOptions);
+
+        $result = [];
+
+        if ($validRequest) {
+
+            if ((string)ConditionBlock::getConditionBlock() === (string)$block) {
+                $block = null;
+            }
+
+            $dataQuery = $this->buildQuery($contentType, $status, $outdatedFlag, $sortOptions, $pageOptions, $block);
+
+            $countQuery = $this->buildCountQuery($contentType, $status, $outdatedFlag, $block);
+
+            $totalCount = $this->getDbal()->fetch($countQuery);
+
+            // extracting from result
+            $totalCount = (int)$totalCount[0]->cnt;
+
+            $result = $this->fetchData($dataQuery);
+        }
+
+        return $result;
+    }
+
     /**
      * Gets SubmissionEntity from database by primary key
      * alias to getEntities
@@ -443,7 +472,6 @@ class SubmissionManager extends EntityManagerAbstract
 
             $block->addCondition($condition);
         }
-
 
 
         $pageOptions = 0 === $limit ? null : ['limit' => $limit, 'page' => 1];

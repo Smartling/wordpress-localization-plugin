@@ -3,6 +3,7 @@
 namespace Smartling\DbAl;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Bootstrap;
 use Smartling\Helpers\SiteHelper;
 
 /**
@@ -75,7 +76,7 @@ abstract class EntityManagerAbstract
      */
     public function getPageSize()
     {
-        return $this->pageSize;
+        return $this->pageSize < 1 ? Bootstrap::getPageSize(true) : $this->pageSize;
     }
 
     /**

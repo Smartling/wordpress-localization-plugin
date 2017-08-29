@@ -137,8 +137,6 @@ trait SmartlingCoreTrait
                 )
             );
 
-        do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $submission);
-
         if (array_key_exists('meta', $hardFilteredOriginalData) &&
             ArrayHelper::notEmpty($hardFilteredOriginalData['meta'])
         ) {
@@ -160,8 +158,9 @@ trait SmartlingCoreTrait
 
         $this->getMultilangProxy()->linkObjects($submission);
 
+
         if ('attachment' === $submission->getContentType()) {
-            do_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, $submission);
+            do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $submission);
         }
 
         return $submission;

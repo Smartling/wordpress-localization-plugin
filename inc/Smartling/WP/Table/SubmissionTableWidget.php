@@ -4,14 +4,19 @@ namespace Smartling\WP\Table;
 
 use Psr\Log\LoggerInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Helpers\QueryBuilder\Condition\Condition;
+use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
+use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Queue\Queue;
+use Smartling\Settings\Locale;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\Controller\SmartlingListTable;
@@ -334,6 +339,7 @@ class SubmissionTableWidget extends SmartlingListTable
      */
     public function prepare_items()
     {
+        $siteHelper = $this->entityHelper->getSiteHelper();
         $pageOptions = ['limit' => $this->manager->getPageSize(), 'page' => $this->get_pagenum(),];
 
         $this->_column_headers = [$this->get_columns(), ['id'], $this->get_sortable_columns(),];
@@ -343,33 +349,53 @@ class SubmissionTableWidget extends SmartlingListTable
         $total = 0;
 
         $contentTypeFilterValue = $this->getContentTypeFilterValue();
-
         $statusFilterValue = $this->getStatusFilterValue();
-
         $outdatedFlag = $this->getOutdatedFlagFilterValue();
-
         $targetLocale = $this->getTargetLocaleFilterValue();
-
         $searchText = $this->getFromSource('s', '');
 
-        if (empty($searchText)) {
-            $data = $this->manager->getEntities($contentTypeFilterValue, $statusFilterValue, $outdatedFlag, $this->getSortingOptions(), $pageOptions, $targetLocale, $total);
-        } else {
-            $data = $this->manager->search(
-                $searchText,
-                [
-                    'source_title',
-                    'source_id',
-                    'file_uri',
-                ],
-                $contentTypeFilterValue,
-                $statusFilterValue,
-                $outdatedFlag,
-                $this->getSortingOptions(),
-                $pageOptions,
-                $total
-            );
+
+        $block = ConditionBlock::getConditionBlock();
+
+        if (!StringHelper::isNullOrEmpty(trim($searchText))) {
+
+            $searchText = vsprintf('%%%s%%', [trim($searchText)]);
+
+            $searchBlock = ConditionBlock::getConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR);
+
+            $searchFields = [
+                'source_title',
+                'source_id',
+                'file_uri',
+            ];
+
+            foreach ($searchFields as $searchField) {
+                $searchBlock->addCondition(
+                    Condition::getCondition(
+                        ConditionBuilder::CONDITION_SIGN_LIKE,
+                        $searchField,
+                        [$searchText]
+                    )
+                );
+            }
+
+            $block->addConditionBlock($searchBlock);
         }
+
+        if (null !== $targetLocale) {
+            $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'target_blog_id', [$targetLocale]));
+        }
+
+
+        $data = $this->manager->searchByCondition(
+            $block,
+            $contentTypeFilterValue,
+            $statusFilterValue,
+            $outdatedFlag,
+            $this->getSortingOptions(),
+            $pageOptions,
+            $total
+        );
 
         $dataAsArray = [];
 
@@ -384,7 +410,7 @@ class SubmissionTableWidget extends SmartlingListTable
             $row['submission_date'] = DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row['submission_date']));
             $row['applied_date'] = '0000-00-00 00:00:00' === $row['applied_date'] ? __('Never')
                 : DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row['applied_date']));
-            $row['target_locale'] = $this->entityHelper->getConnector()->getBlogNameByLocale($row['target_locale']);
+            $row['target_locale'] =  $siteHelper->getBlogLabelById($this->entityHelper->getConnector(), $row['target_blog_id']);
             $row['outdated'] = 0 === $row['outdated'] ? '&nbsp;' : '&#10003;';
 
             if (SubmissionEntity::SUBMISSION_STATUS_FAILED === $row['status'] &&
@@ -466,15 +492,16 @@ class SubmissionTableWidget extends SmartlingListTable
     {
         $html = HtmlTagGeneratorHelper::tag('label', __('Search'), ['for' => 's'])
                 . HtmlTagGeneratorHelper::tag(
-                    'input',
-                    '',
-                    [
-                        'name' => 's',
-                        'type' => 'text',
-                        'value' => $this->getFormElementValue('s', ''),
-                        'placeholder'=>__('Search text')
-                    ]
+                'input',
+                '',
+                [
+                    'name'        => 's',
+                    'type'        => 'text',
+                    'value'       => $this->getFormElementValue('s', ''),
+                    'placeholder' => __('Search text'),
+                ]
             );
+
         return $html;
     }
 
@@ -489,11 +516,27 @@ class SubmissionTableWidget extends SmartlingListTable
         $locales = [];
         foreach ($siteHelper->listBlogs() as $blogId) {
             try {
-                $locales[$blogId] = $siteHelper->getBlogLabelById($this->entityHelper->getConnector(), $blogId);
+                $locale = new Locale();
+                $locale->setBlogId($blogId);
+                $locale->setLabel($siteHelper->getBlogLabelById($this->entityHelper->getConnector(), $blogId));
+                $locales[] = $locale;
             } catch (BlogNotFoundException $e) {
             }
         }
-        $locales['any'] = __('Any');
+
+        /**
+         * @var Locale[] $locales
+         */
+        ArrayHelper::sortLocales($locales);
+
+        $_locales = [
+            'any' => __('Any'),
+        ];
+
+        foreach ($locales as $locale) {
+            $_locales[$locale->getBlogId()] = $locale->getLabel();
+        }
+
         $value = $this->getFormElementValue($controlName, $this->defaultValues[$controlName]);
         $html = HtmlTagGeneratorHelper::tag(
                 'label',
@@ -501,7 +544,7 @@ class SubmissionTableWidget extends SmartlingListTable
                 ['for' => $this->buildHtmlTagName($controlName)]
             ) . HtmlTagGeneratorHelper::tag(
                 'select',
-                HtmlTagGeneratorHelper::renderSelectOptions($value, $locales),
+                HtmlTagGeneratorHelper::renderSelectOptions($value, $_locales),
                 ['id' => $this->buildHtmlTagName($controlName), 'name' => $this->buildHtmlTagName($controlName)]
             );
 

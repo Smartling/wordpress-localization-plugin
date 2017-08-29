@@ -258,13 +258,13 @@ abstract class EntityAbstract
      */
     // FIXME TODO : Method must be static or better moved out from this class
     // It's not good idea to ask instence of Post\Tag class to return all objects
-    abstract public function getAll($limit = '', $offset = 0, $orderBy = false, $order = false);
+    abstract public function getAll($limit = '', $offset = 0, $orderBy = false, $order = false, $searchString = '');
 
     /**
      * @return int
      */
-     // FIXME TODO : Method must be static or better moved out from this class
-     // It's not good idea to ask instence of Post\Tag class to return all objects
+    // FIXME TODO : Method must be static or better moved out from this class
+    // It's not good idea to ask instence of Post\Tag class to return all objects
     abstract public function getTotal();
 
     /**

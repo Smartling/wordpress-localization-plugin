@@ -1,4 +1,5 @@
 <?php
+
 use Smartling\Helpers\UiMessageHelper;
 use Smartling\WP\Table\SubmissionTableWidget;
 
@@ -60,7 +61,5 @@ $data = $this->getViewData();
 <?php else: ?>
     <div class="wrap">
         <h2>Smartling connector plugin is temporarily turned off.</h2>
-
-
     </div>
 <?php endif; ?>
