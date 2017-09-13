@@ -14,6 +14,8 @@ use Smartling\File\Params\DownloadFileParameters;
 use Smartling\File\Params\UploadFileParameters;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\RuntimeCacheHelper;
+use Smartling\Jobs\JobsApi;
+use Smartling\Jobs\Params\ListJobsParameters;
 use Smartling\Project\ProjectApi;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
@@ -529,5 +531,16 @@ class ApiWrapper implements ApiWrapperInterface
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
         }
+    }
+
+    public function listJobs(ConfigurationProfileEntity $profile)
+    {
+        $api = JobsApi::create($this->getAuthProvider($profile),
+                               $profile->getProjectId(),
+                               $this->getLogger());
+
+        $data = $api->listJobs(new ListJobsParameters());
+
+        return $data;
     }
 }

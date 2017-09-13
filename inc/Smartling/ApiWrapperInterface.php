@@ -79,4 +79,6 @@ interface ApiWrapperInterface
      * @param SubmissionEntity $submission
      */
     public function deleteFile(SubmissionEntity $submission);
+
+    public function listJobs(ConfigurationProfileEntity $profile);
 }

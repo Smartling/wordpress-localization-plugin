@@ -18,6 +18,7 @@ use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\MetaFieldProcessor\CustomFieldFilterHandler;
 use Smartling\Helpers\SchedulerHelper;
 use Smartling\Helpers\SimpleStorageHelper;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPInstallableInterface;
@@ -240,7 +241,7 @@ class Bootstrap
         $this->testMinimalWordpressVersion();
 
         $this->testTimeLimit();
-
+        $this->initJobApiProxy();
         add_action('wp_ajax_' . 'smartling_expert_global_settings_update', function () {
 
             $data =& $_POST['params'];
@@ -284,7 +285,8 @@ class Bootstrap
         $timeLimit = ini_get('max_execution_time');
 
         if (0 !== (int)$timeLimit && $recommended >= $timeLimit) {
-            $mainMessage = vsprintf('<strong>Smartling-connector</strong> configuration is not optimal.<br /><strong>max_execution_time</strong> is highly recommended to be set at least %s. Current value is %s', [$recommended, $timeLimit]);
+            $mainMessage = vsprintf('<strong>Smartling-connector</strong> configuration is not optimal.<br /><strong>max_execution_time</strong> is highly recommended to be set at least %s. Current value is %s', [$recommended,
+                                                                                                                                                                                                                     $timeLimit]);
 
             self::$loggerInstance->warning($mainMessage);
 
@@ -521,8 +523,78 @@ class Bootstrap
         do_action(ExportedAPI::ACTION_SMARTLING_REGISTER_CONTENT_TYPE, self::getContainer());
     }
 
+    public function initJobApiProxy()
+    {
+        add_action('wp_ajax_' . 'smartling_job_api_proxy', function () {
+
+            $data =& $_POST;
+
+            $result = [];
+
+            if (array_key_exists('innerAction', $data)) {
+
+                switch ($data['innerAction']) {
+                    case 'list-jobs' :
+
+                        $result['debug'] = [];
+
+                        $debug = &$result['debug'];
+
+                        $siteHelper = self::getContainer()->get('site.helper');
+                        /**
+                         * @var SiteHelper $siteHelper
+                         */
+                        $curSiteId = $debug['curSiteId'] = $siteHelper->getCurrentBlogId();
+                        $settingsManager = self::getContainer()->get('manager.settings');
+                        /**
+                         * @var SettingsManager $settingsManager
+                         */
+                        $profile = $settingsManager->getSingleSettingsProfile($curSiteId);
+
+                        $debug['profile'] = $profile->toArray(false);
+                        $wrapper = self::getContainer()->get('wrapper.sdk.api.smartling');
+
+                        /**
+                         * @var ApiWrapper $wrapper
+                         */
+
+                        $jobs = $wrapper->listJobs($profile);
+
+                        $preparcedJobs = [];
+
+                        if (is_array($jobs) && array_key_exists('items', $jobs) &&
+                            array_key_exists('totalCount', $jobs) && 0 < (int)$jobs['totalCount']) {
+                            foreach ($jobs['items'] as $job) {
+                                if ('CANCELLED' === $job['jobStatus']) {
+                                    continue;
+                                }
+                                $preparcedJobs[] = $job;
+                            }
+                        }
+                        $debug['listJobsResult'] = $jobs;
+                        $result['status'] = 200;
+                        $result['data'] = $preparcedJobs;
+
+                         unset ($result['debug']);
+
+                        break;
+                    default:
+                        $result['status'] = 400;
+                        $result['message']['global'] = 'Invalid inner action.';
+                        break;
+                }
+
+
+            }
+
+            echo json_encode($result);
+            exit;
+        });
+    }
+
     public function run()
     {
+
         $this->initRoles();
     }
 }

@@ -131,7 +131,7 @@ $data = $this->getViewData();
             </tr>
             <tr>
                 <th class="center" colspan="2">
-                    <button class="button button-primary">Create Job</button>
+                    <button class="button button-primary" id="createJob">Create Job</button>
                 </th>
 
             </tr>
@@ -139,7 +139,33 @@ $data = $this->getViewData();
 
     </div>
     <div id="tab-existing" class="tab-content">
-        content here
+        <span id = "placeholder">Please wait...</span>
+        <div class="hidden" id="jobsList">
+
+            <table>
+                <tr>
+                    <th>
+                        <lable for="jobSelect">Existing jobs</lable>
+                    </th>
+                    <td>
+                        <select id="jobSelect">
+                            <option value="none">-- pick up a job from the list --</option>
+                        </select>
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Due Date</th>
+                    <td><span id="existingDueDate"></span></td>
+                </tr>
+
+                <tr>
+                    <th>Target Locales</th>
+                    <td><span id="existingTargetlocaleids"></span></td>
+                </tr>
+
+            </table>
+        </div>
     </div>
 
 </div>
@@ -166,7 +192,67 @@ $data = $this->getViewData();
 
                 $(this).addClass('current');
                 $("#" + tab_id).addClass('current');
-            })
+            });
+
+
+            $('#jobSelect').on('change', function(){
+
+
+                var dueDate = $('option[value=' + $('#jobSelect').val() + ']').attr('dueDate');
+
+                var targetlocaleids = $('option[value=' + $('#jobSelect').val() + ']').attr('targetlocaleids');
+
+                $('#existingDueDate').html(dueDate);
+                $('#existingTargetlocaleids').html(targetlocaleids);
+            });
+
+
+            $('#createJob').click(function(e){
+                e.stopPropagation();
+                e.preventDefault();
+            });
+
+            $('ul.tabs li').click(function () {
+
+
+                var tab_id = $(this).attr('data-tab');
+
+                if ('tab-existing' === tab_id) {
+
+
+                    var data = {
+                        'innerAction': 'list-jobs',
+                        'params': {}
+                    };
+
+                    $.post("<?= admin_url('admin-ajax.php') ?>?action=smartling_job_api_proxy", data, function (response) {
+                        response = JSON.parse(response);
+
+                        $('#jobsList').removeClass('hidden');
+                        $('#placeholder').addClass('hidden');
+                        console.log(response);
+                        if (200 == response.status) {
+
+                            $('#jobSelect').html('');
+                            //$('#jobsList').append('<lable for="jobSelect">Existing jobs</lable><select id="jobSelect"><option value="none">-- pick up a job from the list --</option></select>');
+
+                            response.data.forEach(function (job) {
+                                $option = '<option value="' + job.translationJobUid + '" dueDate="' + job.dueDate + '" targetLocaleIds="' + job.targetLocaleIds.join(',') + '">' + job.jobName + '</option>';
+
+                                $('#jobSelect').append($option);
+                            });
+
+                        }
+
+                        $('#jobSelect').change();
+
+                    });
+
+                }
+
+
+            });
+
 
         })
     })(jQuery)
