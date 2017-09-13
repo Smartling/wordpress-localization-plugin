@@ -18,6 +18,7 @@ use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\MetaFieldProcessor\CustomFieldFilterHandler;
 use Smartling\Helpers\SchedulerHelper;
 use Smartling\Helpers\SimpleStorageHelper;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPInstallableInterface;
@@ -190,8 +191,17 @@ class Bootstrap
     {
         $role = get_role('administrator');
 
-        foreach (SmartlingUserCapabilities::$CAPABILITY as $capability) {
-            $role->add_cap($capability, true);
+        if ($role instanceof \WP_Role) {
+            foreach (SmartlingUserCapabilities::$CAPABILITY as $capability) {
+                $role->add_cap($capability, true);
+            }
+        } else {
+            $siteHelper = self::getContainer()->get('site.helper');
+            /**
+             * @var SiteHelper $siteHelper
+             */
+            $msg = vsprintf('\'administrator\' role doesn\'t exists in site id=%s', [$siteHelper->getCurrentBlogId()]);
+            self::getLogger()->warning($msg);
         }
     }
 
