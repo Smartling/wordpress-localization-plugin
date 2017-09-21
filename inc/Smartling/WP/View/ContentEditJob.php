@@ -7,176 +7,268 @@ $data = $this->getViewData();
 ?>
 
 <style>
-    ul.tabs {
-        margin: 0px;
-        padding: 0px;
-        list-style: none;
-    }
-
-    ul.tabs li {
-        background: none;
-        color: #222;
-        display: inline-block;
-        padding: 10px 15px;
-        margin-top: 0px;
-        margin-bottom: 0px;
-        cursor: pointer;
-    }
-
-    ul.tabs li.current {
-        background: #ededed;
-        font-weight: bold;
-        color: #222;
-    }
-
-    .tab-content {
-        display: none;
-        background: #ededed;
-        padding: 15px;
-    }
-
-    .tab-content.current {
-        display: inherit;
-    }
-
-    #tab-create table {
+    #tab-existing table {
         width: 100%;
-
     }
 
-    #tab-create th {
+    #tab-existing th {
         text-align: right;
         width: 150px;
         max-width: 150px;
     }
 
-    #tab-create table td > * {
+    #tab-existing table td > * {
         min-width: 100%;
         max-width: 100%;
     }
 
-    #tab-create table td > input[type=checkbox] {
+    #tab-existing table td > input[type=checkbox] {
         min-width: inherit;
         max-width: inherit;
     }
 
-    th.center {
-        width: 50%;
-        text-align: center !important;
-        margin-top: 6px;
-    }
-
 
 </style>
-<div class="jobs-container">
-
-    <ul class="tabs">
-        <li class="tab-link current" data-tab="tab-create">Create New Job</li>
-        <li class="tab-link" data-tab="tab-existing">Add to Existing Job</li>
-    </ul>
-
-    <div id="tab-create" class="tab-content current">
-        <table>
-            <tr>
-                <th><label for="name">Name</label></th>
-                <td><input id="name" type="text"/></td>
-            </tr>
-            <tr>
-                <th><label for="description">Description</label</th>
-                <td><textarea id="description" name="description"></textarea></td>
-            </tr>
-            <tr>
-                <th><label for="dueDate">Due Date</label</th>
-                <td><input type="text" id="dueDate" name="dueDate"/></td>
-            </tr>
-            <tr>
-                <th><label for="cbAuthorize">Authorize Job</label</th>
-                <td><input type="checkbox" id="cbAuthorize" name="cbAuthorize"/></td>
-            </tr>
-            <tr>
-                <th>Target Locales</th>
-                <td>
-                    <div>
-                        <?= \Smartling\WP\WPAbstract::checkUncheckBlock(); ?>
-                    </div>
-                    <?php
-                    /**
-                     * @var BulkSubmitTableWidget $data
-                     */
-
-                    $profile = $data['profile'];
-
-                    $locales = $profile->getTargetLocales();
-
-                    \Smartling\Helpers\ArrayHelper::sortLocales($locales);
-
-                    foreach ($locales as $locale) {
-                        /**
-                         * @var TargetLocale $locale
-                         */
-                        if (!$locale->isEnabled()) {
-                            continue;
-                        }
-                        ?>
-                        <p>
-                            <?= \Smartling\WP\WPAbstract::localeSelectionCheckboxBlock(
-                                'bulk-submit-locales',
-                                $locale->getBlogId(),
-                                $locale->getLabel(),
-                                false
-                            ); ?>
-                        </p>
-                    <?php } ?>
-                </td>
-            </tr>
-            <tr>
-                <th class="center" colspan="2">
-                    <button class="button button-primary" id="createJob">Create Job</button>
-                </th>
-
-            </tr>
-        </table>
-
-    </div>
-    <div id="tab-existing" class="tab-content">
-        <span id = "placeholder">Please wait...</span>
-        <div class="hidden" id="jobsList">
-
+<div class="job-wizard">
+    <div id="placeholder">Loading from Smartling. Please wait...</div>
+    <div id="tab-existing" class="tab-content hidden">
+        <form action="javascript:void(0);" id="frmJob" class="jobs-form">
             <table>
                 <tr>
                     <th>
                         <lable for="jobSelect">Existing jobs</lable>
                     </th>
                     <td>
-                        <select id="jobSelect">
-                            <option value="none">-- pick up a job from the list --</option>
-                        </select>
+                        <select id="jobSelect"></select>
                     </td>
+                </tr>
+                <tr>
+                    <th><label for="name">Name</label></th>
+                    <td><input id="name" type="text"/></td>
+                </tr>
+                <tr>
+                    <th><label for="description">Description</label</th>
+                    <td><textarea id="description" name="description"></textarea></td>
+                </tr>
+                <tr>
+                    <th><label for="dueDate">Due Date</label</th>
+                    <td><input type="text" id="dueDate" name="dueDate"/></td>
+
                 </tr>
 
                 <tr>
-                    <th>Due Date</th>
-                    <td><span id="existingDueDate"></span></td>
+                    <th><label for="cbAuthorize">Authorize Job</label</th>
+                    <td><input type="checkbox" class="authorize" id="cbAuthorize" name="cbAuthorize"/></td>
+
                 </tr>
 
                 <tr>
                     <th>Target Locales</th>
-                    <td><span id="existingTargetlocaleids"></span></td>
-                </tr>
+                    <td>
+                        <div>
+                            <?= \Smartling\WP\WPAbstract::checkUncheckBlock(); ?>
+                        </div>
+                        <?php
+                        /**
+                         * @var BulkSubmitTableWidget $data
+                         */
 
+                        $profile = $data['profile'];
+
+                        $locales = $profile->getTargetLocales();
+
+                        \Smartling\Helpers\ArrayHelper::sortLocales($locales);
+
+                        foreach ($locales as $locale) {
+                            /**
+                             * @var \Smartling\Settings\TargetLocale $locale
+                             */
+                            if (!$locale->isEnabled()) {
+                                continue;
+                            }
+                            ?>
+                            <p>
+                                <?= \Smartling\WP\WPAbstract::localeSelectionCheckboxBlock(
+                                    'bulk-submit-locales',
+                                    $locale->getBlogId(),
+                                    $locale->getLabel(),
+                                    false,
+                                    true,
+                                    [
+                                        'data-smartling-locale' => $locale->getSmartlingLocale(),
+                                    ]
+                                ); ?>
+                            </p>
+                        <?php } ?>
+                    </td>
+                </tr>
+                <tr>
+                    <th class="center" colspan="2">
+                        <div id="error-messages"></div>
+                        <button class="button button-primary" id="createJob">Create Job</button>
+                        <button class="button button-primary" id="addToJob">Add to selected Job</button>
+                    </th>
+                </tr>
             </table>
-        </div>
+        </form>
+
     </div>
 
+
 </div>
-
 <?php
-
-
+global $post;
 ?>
 <script>
     (function ($) {
+
+        var currentContent = {
+            'content-type': '<?= $post->post_type ?>',
+            'id': [<?= $post->ID ?>],
+        };
+
+        var Helper = {
+            placeHolder: {
+                cls: 'hidden',
+                placeholderId: 'placeholder',
+                contentId: 'tab-existing',
+                show: function () {
+                    $('#' + this.placeholderId).removeClass(this.cls);
+                    $('#' + this.contentId).addClass(this.cls);
+                },
+                hide: function () {
+                    $('#' + this.placeholderId).addClass(this.cls);
+                    $('#' + this.contentId).removeClass(this.cls);
+                }
+            },
+            queryProxy: {
+                baseEndpoint: '<?= admin_url('admin-ajax.php') ?>?action=smartling_job_api_proxy',
+                query: function (action, params, success) {
+                    console.log(params);
+                    $.post(this.baseEndpoint, {'innerAction': action, 'params': params}, success);
+                },
+                /*
+                *
+                **/
+                cloneContent: function (contentType, locales, contentId, jobId) {
+
+                },
+                uploadFile: function (fileUri, submissionId) {
+                },
+                checkFile: function (fileUri) {
+
+                },
+                addFileToJob: function (fileUri, jobId) {
+
+                },
+                authorizeJob: function (jobId) {
+                    
+                },
+                listJobs: function (cb) {
+                    this.query('list-jobs', {}, function (response) {
+                        response = JSON.parse(response);
+                        if (200 == response.status) {
+                            if (typeof cb === 'function') {
+                                cb(response.data);
+                            }
+                        }
+                    });
+                },
+                createJob: function (name, description, dueDate, locales, authorize, success, fail) {
+                    this.query('create-job', {
+                        name: name,
+                        description: description,
+                        dueDate: dueDate,
+                        locales: locales,
+                        authorize: authorize
+                    }, function (response) {
+                        response = JSON.parse(response);
+                        if (response.status <= 300) {
+                            if (typeof success === 'function') {
+                                success(response.data);
+                            }
+                        }
+                        else if (response.status >= 400) {
+                            if (typeof fail === 'function') {
+                                fail(response.message);
+                            }
+                        }
+                    });
+                }
+            },
+            ui: {
+                displayJobList: function () {
+                    Helper.placeHolder.show();
+                    Helper.queryProxy.listJobs(this.renderJobListInDropDown);
+                },
+                createJobFormShow: function () {
+
+                },
+                renderOption: function (id, name, description, dueDate, locales) {
+                    $option = '<option value="' + id + '" description="' + description + '" dueDate="' + dueDate + '" targetLocaleIds="' + locales + '">' + name + '</option>';
+                    return $option;
+                },
+                renderJobListInDropDown: function (data) {
+                    console.log(data);
+                    $('#jobSelect').html('');
+                    var createnew = '<option value="createnew">Create new job</option>';
+                    $('#jobSelect').append(createnew);
+                    data.forEach(function (job) {
+                        $option = Helper.ui.renderOption(job.translationJobUid, job.jobName, job.description, job.dueDate, job.targetLocaleIds.join(','));
+                        $('#jobSelect').append($option);
+                    });
+                    Helper.placeHolder.hide();
+                },
+                localeCheckboxes: {
+                    clear: function () {
+                        $('.job-wizard .mcheck:checkbox:checked').each(function (i, el) {
+                            $(el).removeAttr('checked');
+                        });
+                    },
+                    set: function (locales) {
+                        this.clear();
+                        var localeList = locales.split(',');
+
+                        for (var ind in localeList) {
+                            var $elements = $('.job-wizard .mcheck:checkbox[data-smartling-locale="' + localeList[ind] + '"]');
+
+                            if (0 < $elements.length) {
+                                $($elements[0]).attr('checked', 'checked');
+                            }
+
+                        }
+
+                    }
+                },
+                jobForm: {
+                    elements: [
+                        'name', 'description', 'dueDate', 'authorize'
+                    ],
+                    clear: function () {
+                        this.elements.forEach(function (el) {
+                            $('#' + el).val('');
+                        });
+                    },
+                    lock: function () {
+                        this.elements.forEach(function (el) {
+                            $('#' + el).attr('disabled', 'disabled');
+                        });
+                    },
+                    unlock: function () {
+                        this.elements.forEach(function (el) {
+                            $('#' + el).removeAttr('disabled');
+                        });
+                    },
+                }
+            },
+
+
+        };
+
+
         $(document).ready(function () {
+
+            Helper.ui.displayJobList();
 
             $('#dueDate').datetimepicker({
                 format: 'Y-m-d H:i:s',
@@ -184,73 +276,71 @@ $data = $this->getViewData();
                 minDate: 0
             });
 
-            $('ul.tabs li').click(function () {
-                var tab_id = $(this).attr('data-tab');
-
-                $('ul.tabs li').removeClass('current');
-                $('.tab-content').removeClass('current');
-
-                $(this).addClass('current');
-                $("#" + tab_id).addClass('current');
-            });
-
-
-            $('#jobSelect').on('change', function(){
-
-
-                var dueDate = $('option[value=' + $('#jobSelect').val() + ']').attr('dueDate');
-
-                var targetlocaleids = $('option[value=' + $('#jobSelect').val() + ']').attr('targetlocaleids');
-
-                $('#existingDueDate').html(dueDate);
-                $('#existingTargetlocaleids').html(targetlocaleids);
-            });
-
-
-            $('#createJob').click(function(e){
+            $('#addToJob').on('click', function (e) {
                 e.stopPropagation();
                 e.preventDefault();
             });
 
-            $('ul.tabs li').click(function () {
+            $('#createJob').on('click', function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+
+                var name = $('#name').val();
+                var description = $('#description').val();
+                var dueDate = $('#dueDate').val();
+                var locales = [];
+                var authorize = $('.authorize:checked').length > 0;
 
 
-                var tab_id = $(this).attr('data-tab');
+                var checkedLocales = $('.job-wizard .mcheck:checkbox:checked');
 
-                if ('tab-existing' === tab_id) {
+                checkedLocales.each(
+                    function (e) {
+                        locales.push($(checkedLocales[e]).attr('data-blog-id'));
+                    }
+                );
 
 
-                    var data = {
-                        'innerAction': 'list-jobs',
-                        'params': {}
-                    };
+                locales = locales.join(',');
+                $('#error-messages').html('');
 
-                    $.post("<?= admin_url('admin-ajax.php') ?>?action=smartling_job_api_proxy", data, function (response) {
-                        response = JSON.parse(response);
-
-                        $('#jobsList').removeClass('hidden');
-                        $('#placeholder').addClass('hidden');
-                        console.log(response);
-                        if (200 == response.status) {
-
-                            $('#jobSelect').html('');
-                            //$('#jobsList').append('<lable for="jobSelect">Existing jobs</lable><select id="jobSelect"><option value="none">-- pick up a job from the list --</option></select>');
-
-                            response.data.forEach(function (job) {
-                                $option = '<option value="' + job.translationJobUid + '" dueDate="' + job.dueDate + '" targetLocaleIds="' + job.targetLocaleIds.join(',') + '">' + job.jobName + '</option>';
-
-                                $('#jobSelect').append($option);
-                            });
-
+                Helper.queryProxy.createJob(name, description, dueDate, locales, authorize, function (data) {
+                    var $option = Helper.ui.renderOption(data.createdByUserUid, data.jobName, data.description, data.dueDate, data.targetLocaleIds.join(','));
+                    $('#jobSelect').append($option);
+                    $('#jobSelect').val(data.createdByUserUid);
+                    $('#jobSelect').change();
+                }, function (data) {
+                    var messages = [];
+                    if (undefined !== data['global']) {
+                        messages.push(data['global']);
+                    }
+                    for (var i in data) {
+                        if ('global' === i) {
+                            continue;
+                        } else {
+                            messages.push(data[i]);
                         }
+                    }
+                    var text = '<span>' + messages.join('</span><span>') + '</span>';
+                    $('#error-messages').html(text);
+                });
 
-                        $('#jobSelect').change();
+            });
 
-                    });
-
+            $('#jobSelect').on('change', function () {
+                Helper.ui.localeCheckboxes.clear();
+                Helper.ui.jobForm.clear();
+                if ('createnew' === $('#jobSelect').val()) {
+                    Helper.ui.jobForm.unlock();
+                    Helper.ui.createJobFormShow();
+                } else {
+                    Helper.ui.jobForm.lock();
+                    $('#dueDate').val($('option[value=' + $('#jobSelect').val() + ']').attr('dueDate'));
+                    $('#name').val($('option[value=' + $('#jobSelect').val() + ']').html());
+                    $('#description').val($('option[value=' + $('#jobSelect').val() + ']').attr('description'));
+                    Helper.ui.localeCheckboxes.clear();
+                    Helper.ui.localeCheckboxes.set($('option[value=' + $('#jobSelect').val() + ']').attr('targetlocaleids'))
                 }
-
-
             });
 
 

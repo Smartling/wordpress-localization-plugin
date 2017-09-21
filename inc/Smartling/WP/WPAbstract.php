@@ -274,10 +274,11 @@ abstract class WPAbstract
      * @param string $blog_name
      * @param bool   $checked
      * @param bool   $enabled
+     * @param array  $extraAttributes
      *
      * @return string
      */
-    public static function localeSelectionCheckboxBlock($namePrefix, $blog_id, $blog_name, $checked = false, $enabled = true)
+    public static function localeSelectionCheckboxBlock($namePrefix, $blog_id, $blog_name, $checked = false, $enabled = true, array $extraAttributes = [])
     {
         $parts = [];
 
@@ -295,9 +296,10 @@ abstract class WPAbstract
         ]);
 
         $checkboxAttributes = [
-            'name'  => vsprintf('%s[locales][%s][enabled]', [$namePrefix, $blog_id]),
-            'class' => 'mcheck',
-            'type'  => 'checkbox',
+            'name'         => vsprintf('%s[locales][%s][enabled]', [$namePrefix, $blog_id]),
+            'class'        => 'mcheck',
+            'type'         => 'checkbox',
+            'data-blog-id' => $blog_id,
         ];
 
         if (true === $checked) {
@@ -311,6 +313,8 @@ abstract class WPAbstract
                 'class'    => 'nomcheck',
             ]);
         }
+
+        $checkboxAttributes = array_merge($checkboxAttributes, $extraAttributes);
 
         $parts[] = HtmlTagGeneratorHelper::tag('input', '', $checkboxAttributes);
 

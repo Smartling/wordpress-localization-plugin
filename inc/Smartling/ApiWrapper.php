@@ -9,12 +9,14 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
+use Smartling\Exceptions\SmartlingApiException;
 use Smartling\File\FileApi;
 use Smartling\File\Params\DownloadFileParameters;
 use Smartling\File\Params\UploadFileParameters;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\RuntimeCacheHelper;
 use Smartling\Jobs\JobsApi;
+use Smartling\Jobs\Params\CreateJobParameters;
 use Smartling\Jobs\Params\ListJobsParameters;
 use Smartling\Project\ProjectApi;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -542,5 +544,32 @@ class ApiWrapper implements ApiWrapperInterface
         $data = $api->listJobs(new ListJobsParameters());
 
         return $data;
+    }
+
+    public function createJob(ConfigurationProfileEntity $profile, array $params)
+    {
+        $param = new CreateJobParameters();
+
+        $param->setDescription($params['description']);
+        $param->setDueDate($params['dueDate']);
+        $param->setTargetLocales($params['locales']);
+        $param->setName($params['name']);
+
+        $api = JobsApi::create($this->getAuthProvider($profile),
+                               $profile->getProjectId(),
+                               $this->getLogger());
+        try {
+            $data = $api->createJob($param);
+        }
+
+        catch (SmartlingApiException $e)
+        {
+            throw $e;
+        }
+
+
+
+        return $data;
+
     }
 }

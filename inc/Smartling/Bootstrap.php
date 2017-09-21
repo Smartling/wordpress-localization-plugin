@@ -14,6 +14,7 @@ use Smartling\ContentTypes\ContentTypeWidget;
 use Smartling\ContentTypes\CustomPostType;
 use Smartling\ContentTypes\CustomTaxonomyType;
 use Smartling\Exception\SmartlingBootException;
+use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\MetaFieldProcessor\CustomFieldFilterHandler;
 use Smartling\Helpers\SchedulerHelper;
@@ -531,6 +532,11 @@ class Bootstrap
 
             $result = [];
 
+            $result['status'] = 200;
+            $result['debug'] = [];
+
+            $debug = &$result['debug'];
+
             if (array_key_exists('innerAction', $data)) {
 
                 switch ($data['innerAction']) {
@@ -568,15 +574,92 @@ class Bootstrap
                                 if ('CANCELLED' === $job['jobStatus']) {
                                     continue;
                                 }
+
+                                $job['dueDate'] = \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $job['dueDate'])
+                                    ->format('Y-m-d H:i:s');
+
                                 $preparcedJobs[] = $job;
                             }
                         }
+
+
                         $debug['listJobsResult'] = $jobs;
-                        $result['status'] = 200;
+
                         $result['data'] = $preparcedJobs;
 
-                         unset ($result['debug']);
+                        //unset ($result['debug']);
 
+                        break;
+                    case 'create-job':
+                        $siteHelper = self::getContainer()->get('site.helper');
+                        /**
+                         * @var SiteHelper $siteHelper
+                         */
+                        $curSiteId = $debug['curSiteId'] = $siteHelper->getCurrentBlogId();
+                        $settingsManager = self::getContainer()->get('manager.settings');
+                        /**
+                         * @var SettingsManager $settingsManager
+                         */
+                        $profile = $settingsManager->getSingleSettingsProfile($curSiteId);
+                        $params = &$data['params'];
+                        $validateRequires = function ($fieldName) use (&$result, $params) {
+                            if (array_key_exists($fieldName, $params) && '' !== ($value = trim($params[$fieldName]))) {
+                                return $value;
+                            } else {
+                                $msg = vsprintf('The field \'%s\' cannot be empty', [$fieldName]);
+                                Bootstrap::getLogger()->warning($msg);
+                                $result['status'] = 400;
+                                $result['message'][$fieldName] = $msg;
+                            }
+                        };
+
+                        $jobName = $validateRequires('name');
+                        $jobDescription = $validateRequires('description');
+                        $jobDueDate = $validateRequires('dueDate');
+                        $jobLocalesRaw = explode(',', $validateRequires('locales'));
+                        //$jobAuthorize = $validateRequires('authorize') === 'true' ? true : false;
+
+
+                        $jobLocales = [];
+                        foreach ($jobLocalesRaw as $blogId) {
+                            $jobLocales[] = $settingsManager->getSmartlingLocaleIdBySettingsProfile($profile, (int)$blogId);
+                        }
+
+                        $wrapper = self::getContainer()->get('wrapper.sdk.api.smartling');
+
+                        /**
+                         * @var ApiWrapper $wrapper
+                         */
+                        $debug['status'] = $result['status'];
+                        if ($result['status'] === 200) {
+                            try {
+                                $res = $wrapper->createJob($profile, [
+                                    'name'        => $jobName,
+                                    'description' => $jobDescription,
+                                    'dueDate'     => \DateTime::createFromFormat('Y-m-d H:i:s', $jobDueDate),
+                                    'locales'     => $jobLocales,
+                                ]);
+
+                                $res['dueDate'] = \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $res['dueDate'])->format('Y-m-d H:i:s');
+
+                                $result['data'] = $res;
+                            } catch (SmartlingApiException $e) {
+
+                                $error_msg = array_map(
+                                    function ($a) {
+                                        return $a['message'];
+                                    },
+                                    $e->getErrors()
+                                );
+
+                                $result['status'] = 400;
+                                //$result['data'] = $result;
+                                $result['message']['global'] = $e->getMessage();
+                                $result['message'] = array_merge($result['message'], $error_msg);
+                            }
+                        } else {
+                            $result['message']['global'] = 'Please fix issues to continue';
+                        }
                         break;
                     default:
                         $result['status'] = 400;
