@@ -238,7 +238,7 @@ abstract class WPAbstract
             'input', '', [
             'type'  => 'submit',
             'value' => 'Download',
-            'title' => __('Add to Upload queue and trigger upload process'),
+            'title' => __('Add to Download queue and trigger upload process'),
             'class' => 'button button-primary',
             //'id'    => $id,
             'name'  => 'sub',
