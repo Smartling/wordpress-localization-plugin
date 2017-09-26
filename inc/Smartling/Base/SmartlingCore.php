@@ -10,6 +10,7 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
+use Smartling\Helpers\StringHelper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
@@ -130,6 +131,9 @@ class SmartlingCore extends SmartlingCoreAbstract
 
         file_put_contents($tmp_file, $xmlFileContent);
 
+        if (!StringHelper::isNullOrEmpty($submission->getJobId())) {
+            $smartlingLocaleList = [];
+        }
         $result = $this->getApiWrapper()->uploadContent($submission, '', $tmp_file, $smartlingLocaleList);
 
         unlink($tmp_file);

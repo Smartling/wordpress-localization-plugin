@@ -54,7 +54,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
         $ver = $this->getPluginInfo()->getVersion();
 
         $jsFiles = [
-            //'smartling-connector-admin.js',
+            'select2.min.js',
             'jquery.datetimepicker.js',
         ];
         foreach ($jsFiles as $jFile) {
@@ -63,7 +63,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
         }
 
         $cssFiles = [
-            //'jquery-ui.css',
+            'selet2.min.css',
             'jquery.datetimepicker.css',
         ];
 

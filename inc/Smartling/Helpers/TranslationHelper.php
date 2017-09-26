@@ -156,7 +156,7 @@ class TranslationHelper
      *
      * @return SubmissionEntity
      */
-    public function tryPrepareRelatedContent($contentType, $sourceBlog, $sourceId, $targetBlog, $clone = false)
+    public function tryPrepareRelatedContent($contentType, $sourceBlog, $sourceId, $targetBlog, $clone = false, $jobId = '')
     {
         $relatedSubmission = $this->prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone);
 
@@ -177,6 +177,8 @@ class TranslationHelper
                 ]
             );
 
+            $relatedSubmission->setJobId($jobId);
+            $relatedSubmission = $this->getSubmissionManager()->storeEntity($relatedSubmission);
             // try to create target entity
             $relatedSubmission = apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $relatedSubmission);
 

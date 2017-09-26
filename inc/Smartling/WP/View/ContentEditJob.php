@@ -7,6 +7,14 @@ $data = $this->getViewData();
 ?>
 
 <style>
+    span.createnew {
+        width: 100%;
+        font-weight: bold;
+        font-style: italic;
+        display: inline-block;
+        padding-left: 10pt;
+    }
+
     #tab-existing table {
         width: 100%;
     }
@@ -53,15 +61,11 @@ $data = $this->getViewData();
                 <tr>
                     <th><label for="dueDate">Due Date</label</th>
                     <td><input type="text" id="dueDate" name="dueDate"/></td>
-
                 </tr>
-
                 <tr>
                     <th><label for="cbAuthorize">Authorize Job</label</th>
                     <td><input type="checkbox" class="authorize" id="cbAuthorize" name="cbAuthorize"/></td>
-
                 </tr>
-
                 <tr>
                     <th>Target Locales</th>
                     <td>
@@ -72,13 +76,9 @@ $data = $this->getViewData();
                         /**
                          * @var BulkSubmitTableWidget $data
                          */
-
                         $profile = $data['profile'];
-
                         $locales = $profile->getTargetLocales();
-
                         \Smartling\Helpers\ArrayHelper::sortLocales($locales);
-
                         foreach ($locales as $locale) {
                             /**
                              * @var \Smartling\Settings\TargetLocale $locale
@@ -105,8 +105,8 @@ $data = $this->getViewData();
                 <tr>
                     <th class="center" colspan="2">
                         <div id="error-messages"></div>
-                        <button class="button button-primary" id="createJob">Create Job</button>
-                        <button class="button button-primary" id="addToJob">Add to selected Job</button>
+                        <button class="button button-primary" id="createJob" title="Create a new job and add content into it">Create Job</button>
+                        <button class="button button-primary hidden" id="addToJob" title="Add content into your chosen job">Add to selected Job</button>
                     </th>
                 </tr>
             </table>
@@ -123,9 +123,12 @@ global $post;
     (function ($) {
 
         var currentContent = {
-            'content-type': '<?= $post->post_type ?>',
+            'contentType': '<?= $post->post_type ?>',
             'id': [<?= $post->ID ?>],
         };
+
+        var TaskState = [];
+
 
         var Helper = {
             placeHolder: {
@@ -147,23 +150,72 @@ global $post;
                     console.log(params);
                     $.post(this.baseEndpoint, {'innerAction': action, 'params': params}, success);
                 },
-                /*
-                *
-                **/
-                cloneContent: function (contentType, locales, contentId, jobId) {
+                buildQueue: function (submissions) {
+                    var queue = {
+                        'upload': [],
+                        'checkStatus': [],
+                        'addToJob': [],
+                        'completed': [],
+                    };
 
+                    for (var i in submissions) {
+                        var submission = submissions[i];
+                        switch (submission.status) {
+                            case 'Failed':
+                                break;
+                            case 'New' :
+                                queue.upload.push(submission.id);
+                                break;
+                            default:
+                                queue.checkStatus.push(submission.id);
+                        }
+                    }
+                    return queue;
                 },
-                uploadFile: function (fileUri, submissionId) {
+
+                processSteps: function (jobId, success, fail) {
+                    var locales = Helper.ui.getSelecterTargetLocales();
+
+                    for (var i in currentContent.id) {
+
+                        this.cloneContent(currentContent.contentType, locales, currentContent.id[i], jobId, function (response) {
+                            response = JSON.parse(response);
+                            if (response.data.submissions) {
+                                var queue = Helper.queryProxy.buildQueue(response.data.submissions);
+                                TaskState = queue;
+                                Helper.worker.process(success);
+                            }
+                        });
+                    }
                 },
+
+                cloneContent: function (contentType, locale, contentId, jobId, cb) {
+                    this.query('clone-content', {
+                        contentType: contentType,
+                        targetBlogId: locale,
+                        sourceId: contentId,
+                        jobId: jobId
+                    }, cb);
+                },
+
+                uploadSubmission: function (submissionId, cb) {
+                    this.query('upload-submission', {
+                        id: submissionId
+                    }, cb);
+                },
+
                 checkFile: function (fileUri) {
 
                 },
+
                 addFileToJob: function (fileUri, jobId) {
 
                 },
+
                 authorizeJob: function (jobId) {
-                    
+
                 },
+
                 listJobs: function (cb) {
                     this.query('list-jobs', {}, function (response) {
                         response = JSON.parse(response);
@@ -201,8 +253,29 @@ global $post;
                     Helper.placeHolder.show();
                     Helper.queryProxy.listJobs(this.renderJobListInDropDown);
                 },
-                createJobFormShow: function () {
-
+                getSelecterTargetLocales: function () {
+                    var locales = [];
+                    var checkedLocales = $('.job-wizard .mcheck:checkbox:checked');
+                    checkedLocales.each(
+                        function (e) {
+                            locales.push($(checkedLocales[e]).attr('data-blog-id'));
+                        }
+                    );
+                    locales = locales.join(',');
+                    return locales;
+                },
+                createJobForm: {
+                    cls: 'hidden',
+                    btnAdd: 'addToJob',
+                    btnCreate: 'createJob',
+                    show: function () {
+                        $('#' + this.btnCreate).removeClass(this.cls);
+                        $('#' + this.btnAdd).addClass(this.cls);
+                    },
+                    hide: function () {
+                        $('#' + this.btnCreate).addClass(this.cls);
+                        $('#' + this.btnAdd).removeClass(this.cls);
+                    }
                 },
                 renderOption: function (id, name, description, dueDate, locales) {
                     $option = '<option value="' + id + '" description="' + description + '" dueDate="' + dueDate + '" targetLocaleIds="' + locales + '">' + name + '</option>';
@@ -211,7 +284,7 @@ global $post;
                 renderJobListInDropDown: function (data) {
                     console.log(data);
                     $('#jobSelect').html('');
-                    var createnew = '<option value="createnew">Create new job</option>';
+                    var createnew = '<option class="new" value="createnew"><span class="new">Create new Job</span></option><option disabled="disabled">&nbsp;</option>';
                     $('#jobSelect').append(createnew);
                     data.forEach(function (job) {
                         $option = Helper.ui.renderOption(job.translationJobUid, job.jobName, job.description, job.dueDate, job.targetLocaleIds.join(','));
@@ -261,12 +334,52 @@ global $post;
                     },
                 }
             },
+            worker: {
+                checked: [],
+                process: function (finished) {
+                    while (TaskState.upload.length > 0) {
+                        Helper.worker.processUpload(Helper.worker.process);
+                    }
+                    //finished();
+                },
+                processUpload: function (finished) {
+                    var submissionId = TaskState.upload.pop();
+                    Helper.queryProxy.uploadSubmission(submissionId, function (response) {
+                        var cb = finished;
+
+                        response = JSON.parse(response);
+                        if (response.data.submissions) {
+                            var queue = Helper.queryProxy.buildQueue(response.data.submissions);
+                            TaskState = queue;
+
+                        }
+
+                        cb();
+                    });
+                },
+                processCheckStatus: function (finished) {
+
+                }
+
+            }
 
 
         };
 
 
         $(document).ready(function () {
+
+            $('select').select2({
+                placeholder: 'Please select a job',
+                allowClear: false,
+                templateResult: function (optionElement) {
+                    if ('createnew' !== optionElement.id) {
+                        return optionElement.text;
+                    }
+                    var $state = $('<span class="createnew">' + optionElement.text + '</span>');
+                    return $state;
+                }
+            });
 
             Helper.ui.displayJobList();
 
@@ -276,9 +389,16 @@ global $post;
                 minDate: 0
             });
 
+
             $('#addToJob').on('click', function (e) {
                 e.stopPropagation();
                 e.preventDefault();
+
+                var jobId = $('#jobSelect').val();
+
+                Helper.queryProxy.processSteps(jobId, function (success) {
+                }, function (fail) {
+                });
             });
 
             $('#createJob').on('click', function (e) {
@@ -305,9 +425,9 @@ global $post;
                 $('#error-messages').html('');
 
                 Helper.queryProxy.createJob(name, description, dueDate, locales, authorize, function (data) {
-                    var $option = Helper.ui.renderOption(data.createdByUserUid, data.jobName, data.description, data.dueDate, data.targetLocaleIds.join(','));
+                    var $option = Helper.ui.renderOption(data.translationJobUid, data.jobName, data.description, data.dueDate, data.targetLocaleIds.join(','));
                     $('#jobSelect').append($option);
-                    $('#jobSelect').val(data.createdByUserUid);
+                    $('#jobSelect').val(data.translationJobUid);
                     $('#jobSelect').change();
                 }, function (data) {
                     var messages = [];
@@ -332,8 +452,9 @@ global $post;
                 Helper.ui.jobForm.clear();
                 if ('createnew' === $('#jobSelect').val()) {
                     Helper.ui.jobForm.unlock();
-                    Helper.ui.createJobFormShow();
+                    Helper.ui.createJobForm.show();
                 } else {
+                    Helper.ui.createJobForm.hide();
                     Helper.ui.jobForm.lock();
                     $('#dueDate').val($('option[value=' + $('#jobSelect').val() + ']').attr('dueDate'));
                     $('#name').val($('option[value=' + $('#jobSelect').val() + ']').html());
@@ -342,8 +463,6 @@ global $post;
                     Helper.ui.localeCheckboxes.set($('option[value=' + $('#jobSelect').val() + ']').attr('targetlocaleids'))
                 }
             });
-
-
         })
     })(jQuery)
 </script>

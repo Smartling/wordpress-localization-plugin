@@ -279,6 +279,19 @@ class SubmissionManager extends EntityManagerAbstract
     }
 
     /**
+     * @param $jobId
+     *
+     * @return array
+     */
+    public function searchByJobId($jobId) {
+        $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'job_id', [$jobId]);
+        $block = ConditionBlock::getConditionBlock();
+        $block->addCondition($condition);
+        $total = 0;
+        return $this->searchByCondition($block, null, null, null,[], null, $total);
+    }
+
+    /**
      * Gets SubmissionEntity from database by primary key
      * alias to getEntities
      *

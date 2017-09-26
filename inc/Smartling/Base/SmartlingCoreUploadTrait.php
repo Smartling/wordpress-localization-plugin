@@ -15,6 +15,7 @@ use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
 use Smartling\Helpers\SiteHelper;
+use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
@@ -320,16 +321,21 @@ trait SmartlingCoreUploadTrait
         try {
             $xml = '';
 
+            $params = [
+                'status'    => [SubmissionEntity::SUBMISSION_STATUS_NEW],
+                'file_uri'  => [$submission->getFileUri()],
+                'is_cloned' => 0,
+            ];
+
+            if (!StringHelper::isNullOrEmpty($submission->getJobId())) {
+                $params['job_id'] = $submission->getJobId();
+            }
+
+
             /**
              * Looking for other locales to send all at a time.
              */
-            $submissions = $this->getSubmissionManager()->find(
-                [
-                    'status'    => [SubmissionEntity::SUBMISSION_STATUS_NEW],
-                    'file_uri'  => [$submission->getFileUri()],
-                    'is_cloned' => 0,
-                ]
-            );
+            $submissions = $this->getSubmissionManager()->find($params);
 
             $locales = [];
 

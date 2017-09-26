@@ -4,8 +4,10 @@ namespace Smartling\ContentTypes;
 
 use Smartling\Base\ExportedAPI;
 use Smartling\ContentTypes\ConfigParsers\PostTypeConfigParser;
+use Smartling\Extensions\TranslateLock;
 use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
 use Smartling\Helpers\StringHelper;
+use Smartling\Helpers\TranslationHelper;
 
 /**
  * Class CustomPostType
@@ -131,7 +133,8 @@ class CustomPostType extends PostBasedContentTypeAbstract
                             $params->getSubmission()->getSourceBlogId(),
                             $element->term_id,
                             $params->getSubmission()->getTargetBlogId(),
-                            (1 === $params->getSubmission()->getIsCloned())
+                            (1 === $params->getSubmission()->getIsCloned()),
+                            $params->getSubmission()->getJobId()
                         );
                     $params->getAccumulator()[$params->getContentType()][] = $relatedSubmission->getTargetId();
                     $this->getContainerBuilder()
