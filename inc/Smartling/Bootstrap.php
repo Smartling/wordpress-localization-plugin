@@ -15,6 +15,7 @@ use Smartling\ContentTypes\CustomPostType;
 use Smartling\ContentTypes\CustomTaxonomyType;
 use Smartling\Exception\SmartlingBootException;
 use Smartling\Exceptions\SmartlingApiException;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\MetaFieldProcessor\CustomFieldFilterHandler;
 use Smartling\Helpers\SchedulerHelper;
@@ -539,70 +540,69 @@ class Bootstrap
 
             $debug = &$result['debug'];
 
+
+            $wrapper = self::getContainer()->get('wrapper.sdk.api.smartling');
+            /**
+             * @var ApiWrapper $wrapper
+             */
+
+            $siteHelper = self::getContainer()->get('site.helper');
+            /**
+             * @var SiteHelper $siteHelper
+             */
+
+            $settingsManager = self::getContainer()->get('manager.settings');
+            /**
+             * @var SettingsManager $settingsManager
+             */
+
+            $ep = Bootstrap::getContainer()->get('entrypoint');
+            /**
+             * @var SubmissionManager $submissionManager
+             */
+            $submissionManager = $ep->getSubmissionManager();
+
+            $curSiteId = $debug['curSiteId'] = $siteHelper->getCurrentBlogId();
+
+            $profile = $settingsManager->getSingleSettingsProfile($curSiteId);
+
+
+            $findRelatedSubmissions = function ($jobId) use ($submissionManager) {
+                $related = $submissionManager->searchByJobId($jobId);
+                $submissions = [];
+                foreach ($related as $_submission) {
+                    /**
+                     * @var SubmissionEntity $_submission
+                     */
+                    $submissions[] = [
+                        'id'     => $_submission->getId(),
+                        'status' => $_submission->getStatus(),
+                    ];
+                }
+
+                return $submissions;
+            };
+
             if (array_key_exists('innerAction', $data)) {
 
                 switch ($data['innerAction']) {
                     case 'list-jobs' :
-
-                        $result['debug'] = [];
-
-                        $debug = &$result['debug'];
-
-                        $siteHelper = self::getContainer()->get('site.helper');
-                        /**
-                         * @var SiteHelper $siteHelper
-                         */
-                        $curSiteId = $debug['curSiteId'] = $siteHelper->getCurrentBlogId();
-                        $settingsManager = self::getContainer()->get('manager.settings');
-                        /**
-                         * @var SettingsManager $settingsManager
-                         */
-                        $profile = $settingsManager->getSingleSettingsProfile($curSiteId);
-
-                        $debug['profile'] = $profile->toArray(false);
-                        $wrapper = self::getContainer()->get('wrapper.sdk.api.smartling');
-
-                        /**
-                         * @var ApiWrapper $wrapper
-                         */
-
                         $jobs = $wrapper->listJobs($profile);
-
                         $preparcedJobs = [];
-
                         if (is_array($jobs) && array_key_exists('items', $jobs) &&
                             array_key_exists('totalCount', $jobs) && 0 < (int)$jobs['totalCount']) {
                             foreach ($jobs['items'] as $job) {
                                 if ('CANCELLED' === $job['jobStatus']) {
                                     continue;
                                 }
-
                                 $job['dueDate'] = \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $job['dueDate'])
                                     ->format('Y-m-d H:i:s');
-
                                 $preparcedJobs[] = $job;
                             }
                         }
-
-
-                        $debug['listJobsResult'] = $jobs;
-
                         $result['data'] = $preparcedJobs;
-
-                        //unset ($result['debug']);
-
                         break;
                     case 'create-job':
-                        $siteHelper = self::getContainer()->get('site.helper');
-                        /**
-                         * @var SiteHelper $siteHelper
-                         */
-                        $curSiteId = $debug['curSiteId'] = $siteHelper->getCurrentBlogId();
-                        $settingsManager = self::getContainer()->get('manager.settings');
-                        /**
-                         * @var SettingsManager $settingsManager
-                         */
-                        $profile = $settingsManager->getSingleSettingsProfile($curSiteId);
                         $params = &$data['params'];
                         $validateRequires = function ($fieldName) use (&$result, $params) {
                             if (array_key_exists($fieldName, $params) && '' !== ($value = trim($params[$fieldName]))) {
@@ -614,24 +614,14 @@ class Bootstrap
                                 $result['message'][$fieldName] = $msg;
                             }
                         };
-
                         $jobName = $validateRequires('name');
                         $jobDescription = $validateRequires('description');
                         $jobDueDate = $validateRequires('dueDate');
                         $jobLocalesRaw = explode(',', $validateRequires('locales'));
-                        //$jobAuthorize = $validateRequires('authorize') === 'true' ? true : false;
-
-
                         $jobLocales = [];
                         foreach ($jobLocalesRaw as $blogId) {
                             $jobLocales[] = $settingsManager->getSmartlingLocaleIdBySettingsProfile($profile, (int)$blogId);
                         }
-
-                        $wrapper = self::getContainer()->get('wrapper.sdk.api.smartling');
-
-                        /**
-                         * @var ApiWrapper $wrapper
-                         */
                         $debug['status'] = $result['status'];
                         if ($result['status'] === 200) {
                             try {
@@ -641,22 +631,14 @@ class Bootstrap
                                     'dueDate'     => \DateTime::createFromFormat('Y-m-d H:i:s', $jobDueDate),
                                     'locales'     => $jobLocales,
                                 ]);
-
                                 $res['dueDate'] = \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $res['dueDate'])
                                     ->format('Y-m-d H:i:s');
-
                                 $result['data'] = $res;
                             } catch (SmartlingApiException $e) {
-
-                                $error_msg = array_map(
-                                    function ($a) {
-                                        return $a['message'];
-                                    },
-                                    $e->getErrors()
-                                );
-
+                                $error_msg = array_map(function ($a) {
+                                    return $a['message'];
+                                }, $e->getErrors());
                                 $result['status'] = 400;
-                                //$result['data'] = $result;
                                 $result['message']['global'] = $e->getMessage();
                                 $result['message'] = array_merge($result['message'], $error_msg);
                             }
@@ -664,17 +646,8 @@ class Bootstrap
                             $result['message']['global'] = 'Please fix issues to continue';
                         }
                         break;
-                    case 'clone-content':
-                        $siteHelper = self::getContainer()->get('site.helper');
-                        /**
-                         * @var SiteHelper $siteHelper
-                         */
+                    case 'create-submissions':
                         $curSiteId = $debug['curSiteId'] = $siteHelper->getCurrentBlogId();
-                        $settingsManager = self::getContainer()->get('manager.settings');
-                        /**
-                         * @var SettingsManager $settingsManager
-                         */
-                        $profile = $settingsManager->getSingleSettingsProfile($curSiteId);
                         $params = &$data['params'];
                         $validateRequires = function ($fieldName) use (&$result, $params) {
                             if (array_key_exists($fieldName, $params) && '' !== ($value = trim($params[$fieldName]))) {
@@ -686,57 +659,25 @@ class Bootstrap
                                 $result['message'][$fieldName] = $msg;
                             }
                         };
-
-
                         $contentType = $validateRequires('contentType');
                         $targetBlogIds = explode(',', $validateRequires('targetBlogId'));
                         $sourceId = $validateRequires('sourceId');
                         $jobId = $validateRequires('jobId');
-
-
                         if ($result['status'] === 200) {
-                            $ep = Bootstrap::getContainer()->get('entrypoint');
-
-                            $res = [];
-
-                            $result['data']['jobs'][$jobId] = [];
-
                             foreach ($targetBlogIds as $targetBlogId) {
                                 try {
                                     $submission = $ep->createForTranslation($contentType, $curSiteId, $sourceId, $targetBlogId);
                                     $submission->setJobId($jobId);
-                                    $submissionManager = $ep->getSubmissionManager();
-                                    /**
-                                     * @var SubmissionManager $submissionManager
-                                     */
                                     $submission = $submissionManager->storeEntity($submission);
-
-                                    do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $submission);
                                 } catch (\Exception $e) {
-
                                 }
                             }
-
-                            $related = $submissionManager->searchByJobId($jobId);
-
-                            foreach ($related as $_submission) {
-                                /**
-                                 * @var SubmissionEntity $_submission
-                                 */
-
-                                $result['data']['submissions'][] = [
-                                    'id'     => $_submission->getId(),
-                                    'status' => $_submission->getStatus(),
-                                ];
-                            }
+                            $result['data']['submissions'] = $findRelatedSubmissions ($jobId);
                         } else {
                             $result['message']['global'] = 'Please fix issues to continue';
                         }
-
-
                         break;
                     case 'upload-submission':
-
                         $params = &$data['params'];
                         $validateRequires = function ($fieldName) use (&$result, $params) {
                             if (array_key_exists($fieldName, $params) && '' !== ($value = trim($params[$fieldName]))) {
@@ -749,34 +690,83 @@ class Bootstrap
                             }
                         };
 
-                        $id = $validateRequires('id');
+                        $id = (int)$validateRequires('id');
 
                         if ($result['status'] === 200) {
-                            $ep = Bootstrap::getContainer()->get('entrypoint');
-                            $submissionManager = $ep->getSubmissionManager();
-                            /**
-                             * @var SubmissionManager $submissionManager
-                             */
 
-                            $submission = $submissionManager->getEntityById((int)$id);
+                            $submission = $submissionManager->getEntityById($id);
 
-                            if ($submission instanceof SubmissionEntity) {
-                                $jobId = $submission->getJobId();
-                                do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $submission);
-                                $related = $submissionManager->searchByJobId($jobId);
-                                foreach ($related as $_submission) {
-                                    /**
-                                     * @var SubmissionEntity $_submission
-                                     */
-                                    $result['data']['submissions'][] = [
-                                        'id'     => $_submission->getId(),
-                                        'status' => $_submission->getStatus(),
-                                    ];
-                                }
+                            $_submission = ArrayHelper::first($submission);
+
+                            if ($_submission instanceof SubmissionEntity) {
+                                $jobId = $_submission->getJobId();
+                                do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $_submission);
+                                $result['data']['submissions'] = $findRelatedSubmissions ($jobId);
                             }
                         } else {
                             $result['message']['global'] = 'Please fix issues to continue';
                         }
+                        break;
+                    case 'check-status-submission' :
+                        $params = &$data['params'];
+                        $validateRequires = function ($fieldName) use (&$result, $params) {
+                            if (array_key_exists($fieldName, $params) && '' !== ($value = trim($params[$fieldName]))) {
+                                return $value;
+                            } else {
+                                $msg = vsprintf('The field \'%s\' cannot be empty', [$fieldName]);
+                                Bootstrap::getLogger()->warning($msg);
+                                $result['status'] = 400;
+                                $result['message'][$fieldName] = $msg;
+                            }
+                        };
+                        $id = (int)$validateRequires('id');
+                        if ($result['status'] === 200) {
+                            try {
+                                $response = $wrapper->getStatus(reset($submissionManager->getEntityById($id)));
+                                $result['data']['submission'] = [
+                                    'id'      => $response->getId(),
+                                    'status'  => $response->getStatus(),
+                                    'fileUri' => $response->getFileUri(),
+                                ];
+                            } catch (Exception $e) {
+                                $msg = vsprintf('Failed checkStatus for file \'%s\'', [$response->getFileUri()]);
+                                Bootstrap::getLogger()->warning($msg);
+                                $result['status'] = 400;
+                                $result['message']['global'] = $msg;
+                            }
+                        } else {
+                            $result['message']['global'] = 'Please fix issues to continue';
+                        }
+                        break;
+                    case 'add-file-to-job' :
+                        $params = &$data['params'];
+                        $validateRequires = function ($fieldName) use (&$result, $params) {
+                            if (array_key_exists($fieldName, $params) && '' !== ($value = trim($params[$fieldName]))) {
+                                return $value;
+                            } else {
+                                $msg = vsprintf('The field \'%s\' cannot be empty', [$fieldName]);
+                                Bootstrap::getLogger()->warning($msg);
+                                $result['status'] = 400;
+                                $result['message'][$fieldName] = $msg;
+                            }
+                        };
+                        $id = (int)$validateRequires('id');
+                        if ($result['status'] === 200) {
+                            try {
+                                $submission = reset($submissionManager->getEntityById($id));
+                                $response = $wrapper->addToJob($profile, $submission);
+
+                            } catch (Exception $e) {
+                                $msg = vsprintf('Error occurred while adding file to job: \'%s\'', [$e->getMessage()]);
+                                Bootstrap::getLogger()->warning($msg);
+                                $result['status'] = 400;
+                                $result['message']['global'] = $msg;
+                            }
+                        } else {
+                            $result['message']['global'] = 'Please fix issues to continue';
+                        }
+                        break;
+                    case 'authorize-job':
                         break;
                     default:
                         $result['status'] = 400;

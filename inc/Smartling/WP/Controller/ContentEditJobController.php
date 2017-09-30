@@ -63,7 +63,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
         }
 
         $cssFiles = [
-            'selet2.min.css',
+            'select2.min.css',
             'jquery.datetimepicker.css',
         ];
 

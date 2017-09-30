@@ -14,13 +14,16 @@ use Smartling\File\FileApi;
 use Smartling\File\Params\DownloadFileParameters;
 use Smartling\File\Params\UploadFileParameters;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\FileHelper;
 use Smartling\Helpers\RuntimeCacheHelper;
 use Smartling\Jobs\JobsApi;
+use Smartling\Jobs\Params\AddFileToJobParameters;
 use Smartling\Jobs\Params\CreateJobParameters;
 use Smartling\Jobs\Params\ListJobsParameters;
 use Smartling\Project\ProjectApi;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
+use Smartling\Settings\TargetLocale;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -353,24 +356,30 @@ class ApiWrapper implements ApiWrapperInterface
                 $params->setLocalesToApprove($smartlingLocaleList);
             }
 
-            $res = $api->uploadFile(
-                $filename,
-                $entity->getFileUri(),
-                'xml',
-                $params);
-
-            $message = vsprintf(
-                'Smartling uploaded \'%s\' for locales:%s.',
-                [
+            if (FileHelper::testFile($filename)) {
+                $res = $api->uploadFile(
+                    $filename,
                     $entity->getFileUri(),
-                    implode(',', $smartlingLocaleList),
-                ]
-            );
+                    'xml',
+                    $params);
 
-            $this->logger->info($message);
+                unlink ($filename);
+
+                $message = vsprintf(
+                    'Smartling uploaded \'%s\' for locales:%s.',
+                    [
+                        $entity->getFileUri(),
+                        implode(',', $smartlingLocaleList),
+                    ]
+                );
+
+                $this->logger->info($message);
+            } else {
+                $msg = vsprintf('File \'%s\' should exist if required for upload.', [$filename]);
+                throw new \InvalidArgumentException($msg);
+            }
 
             return true;
-
         } catch (\Exception $e) {
             throw new SmartlingFileUploadException($e->getMessage(), $e->getCode(), $e);
         }
@@ -560,16 +569,43 @@ class ApiWrapper implements ApiWrapperInterface
                                $this->getLogger());
         try {
             $data = $api->createJob($param);
-        }
-
-        catch (SmartlingApiException $e)
-        {
+        } catch (SmartlingApiException $e) {
             throw $e;
         }
 
 
-
         return $data;
 
+    }
+
+    public function addToJob(ConfigurationProfileEntity $profile, SubmissionEntity $submission)
+    {
+        $api = JobsApi::create($this->getAuthProvider($profile),
+                               $profile->getProjectId(),
+                               $this->getLogger());
+
+        $params = new AddFileToJobParameters();
+        $params->setFileUri($submission->getFileUri());
+
+        $locales = $profile->getTargetLocales();
+
+        $smartlingLocale = '';
+
+        foreach ($locales as $locale) {
+            /**
+             * @var TargetLocale $locale
+             */
+            if ($locale->getBlogId() === $submission->getTargetBlogId()) {
+                $smartlingLocale = $locale->getSmartlingLocale();
+            }
+        }
+
+        $params->setTargetLocales([$smartlingLocale]);
+
+        try {
+            $api->addFileToJobSync($submission->getJobId(), $params);
+        } catch (\Exception $e) {
+            throw $e;
+        }
     }
 }

@@ -105,8 +105,12 @@ $data = $this->getViewData();
                 <tr>
                     <th class="center" colspan="2">
                         <div id="error-messages"></div>
-                        <button class="button button-primary" id="createJob" title="Create a new job and add content into it">Create Job</button>
-                        <button class="button button-primary hidden" id="addToJob" title="Add content into your chosen job">Add to selected Job</button>
+                        <button class="button button-primary" id="createJob"
+                                title="Create a new job and add content into it">Create Job
+                        </button>
+                        <button class="button button-primary hidden" id="addToJob"
+                                title="Add content into your chosen job">Add to selected Job
+                        </button>
                     </th>
                 </tr>
             </table>
@@ -122,13 +126,51 @@ global $post;
 <script>
     (function ($) {
 
+        document.registry = [];
+
         var currentContent = {
             'contentType': '<?= $post->post_type ?>',
             'id': [<?= $post->ID ?>],
         };
 
-        var TaskState = [];
+        document.TaskState = [];
 
+        var JobWorker = function ($submissionId) {
+
+            console.log('Sending file to smartling. Submission id=' + $submissionId);
+            /**
+             * Stage 1: File processing:
+             */
+
+            Helper.queryProxy.uploadSubmission($submissionId, function (response) {
+                console.log('Uploaded submission id=' + $submissionId);
+
+                var ownSubmission = $submissionId;
+                response = JSON.parse(response);
+                console.log(response);
+                if (response.data.submissions) {
+                    Helper.queryProxy.buildQueue(response.data.submissions);
+                }
+
+                /**
+                 * Stage 2: CheckStatus:
+                 */
+
+                Helper.queryProxy.checkStatus(ownSubmission, function (response) {
+                    var ownSubmission = ownSubmission;
+                    console.log(ownSubmission);
+                    console.log('Checked uploaded file for submission id=' + $submissionId);
+                    response = JSON.parse(response);
+                    if (200 === response.status && response.data.submission) {
+                        var submission = response.data.submission;
+
+                        Helper.queryProxy.addFileToJob(submission.id, function(response){
+                            console.log(response);
+                        });
+                    }
+                });
+            });
+        };
 
         var Helper = {
             placeHolder: {
@@ -147,50 +189,52 @@ global $post;
             queryProxy: {
                 baseEndpoint: '<?= admin_url('admin-ajax.php') ?>?action=smartling_job_api_proxy',
                 query: function (action, params, success) {
-                    console.log(params);
-                    $.post(this.baseEndpoint, {'innerAction': action, 'params': params}, success);
+                    console.log('ProxyQuery:');
+                    var data = {'innerAction': action, 'params': params};
+                    console.log(data);
+                    $.post(this.baseEndpoint, data, success);
                 },
                 buildQueue: function (submissions) {
-                    var queue = {
-                        'upload': [],
-                        'checkStatus': [],
-                        'addToJob': [],
-                        'completed': [],
-                    };
-
+                    console.log('Got submissions:');
+                    console.log(submissions);
+                    var submissionId = 0;
                     for (var i in submissions) {
+
                         var submission = submissions[i];
-                        switch (submission.status) {
-                            case 'Failed':
-                                break;
-                            case 'New' :
-                                queue.upload.push(submission.id);
-                                break;
-                            default:
-                                queue.checkStatus.push(submission.id);
+
+                        if (0 > document.registry.indexOf(submission.id)) {
+                            document.registry.push(submission.id);
+                        }
+
+                        if ('New' === submission.status) {
+                            console.log('Working on submission #' + submission.id);
+                            submissionId = submission.id;
+                            break;
                         }
                     }
-                    return queue;
+
+                    if (submissionId > 0) {
+                        JobWorker(submissionId);
+                    }
+
                 },
 
                 processSteps: function (jobId, success, fail) {
                     var locales = Helper.ui.getSelecterTargetLocales();
 
                     for (var i in currentContent.id) {
-
-                        this.cloneContent(currentContent.contentType, locales, currentContent.id[i], jobId, function (response) {
+                        console.log('Precessing content #' + currentContent.id[i]);
+                        this.createSubmissions(currentContent.contentType, locales, currentContent.id[i], jobId, function (response) {
                             response = JSON.parse(response);
                             if (response.data.submissions) {
-                                var queue = Helper.queryProxy.buildQueue(response.data.submissions);
-                                TaskState = queue;
-                                Helper.worker.process(success);
+                                Helper.queryProxy.buildQueue(response.data.submissions);
                             }
                         });
                     }
                 },
 
-                cloneContent: function (contentType, locale, contentId, jobId, cb) {
-                    this.query('clone-content', {
+                createSubmissions: function (contentType, locale, contentId, jobId, cb) {
+                    this.query('create-submissions', {
                         contentType: contentType,
                         targetBlogId: locale,
                         sourceId: contentId,
@@ -204,12 +248,16 @@ global $post;
                     }, cb);
                 },
 
-                checkFile: function (fileUri) {
-
+                checkStatus: function (submissionId, cb) {
+                    this.query('check-status-submission', {
+                        id: submissionId
+                    }, cb);
                 },
 
-                addFileToJob: function (fileUri, jobId) {
-
+                addFileToJob: function (submissionId, cb) {
+                    this.query('add-file-to-job', {
+                        id: submissionId
+                    }, cb);
                 },
 
                 authorizeJob: function (jobId) {
@@ -333,37 +381,7 @@ global $post;
                         });
                     },
                 }
-            },
-            worker: {
-                checked: [],
-                process: function (finished) {
-                    while (TaskState.upload.length > 0) {
-                        Helper.worker.processUpload(Helper.worker.process);
-                    }
-                    //finished();
-                },
-                processUpload: function (finished) {
-                    var submissionId = TaskState.upload.pop();
-                    Helper.queryProxy.uploadSubmission(submissionId, function (response) {
-                        var cb = finished;
-
-                        response = JSON.parse(response);
-                        if (response.data.submissions) {
-                            var queue = Helper.queryProxy.buildQueue(response.data.submissions);
-                            TaskState = queue;
-
-                        }
-
-                        cb();
-                    });
-                },
-                processCheckStatus: function (finished) {
-
-                }
-
             }
-
-
         };
 
 
@@ -396,9 +414,12 @@ global $post;
 
                 var jobId = $('#jobSelect').val();
 
-                Helper.queryProxy.processSteps(jobId, function (success) {
-                }, function (fail) {
-                });
+                Helper.queryProxy.processSteps(jobId,
+                    function (success) {
+
+                    },
+                    function (fail) {
+                    });
             });
 
             $('#createJob').on('click', function (e) {
