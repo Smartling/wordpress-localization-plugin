@@ -142,13 +142,11 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                         if (false !== $attachmentId) {
                             $attachmentSubmission = $this->getCore()
                                 ->sendAttachmentForTranslation(
-                                    $this->getParams()
-                                        ->getSubmission()
-                                        ->getSourceBlogId(),
-                                    $this->getParams()
-                                        ->getSubmission()
-                                        ->getTargetBlogId(),
-                                    $attachmentId
+                                    $this->getParams()->getSubmission()->getSourceBlogId(),
+                                    $this->getParams()->getSubmission()->getTargetBlogId(),
+                                    $attachmentId,
+                                    $this->getParams()->getSubmission()->getIsCloned(),
+                                    $this->getParams()->getSubmission()->getJobId()
                                 );
                             $replacer->addReplacementPair(
                                 $path,
@@ -227,13 +225,11 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                     if (false !== $attachmentId) {
                         $attachmentSubmission = $this->getCore()
                             ->sendAttachmentForTranslation(
-                                $this->getParams()
-                                    ->getSubmission()
-                                    ->getSourceBlogId(),
-                                $this->getParams()
-                                    ->getSubmission()
-                                    ->getTargetBlogId(),
-                                $attachmentId
+                                $this->getParams()->getSubmission()->getSourceBlogId(),
+                                $this->getParams()->getSubmission()->getTargetBlogId(),
+                                $attachmentId,
+                                $this->getParams()->getSubmission()->getIsCloned(),
+                                $this->getParams()->getSubmission()->getJobId()
                             );
 
                         $targetUploadInfo = $this->getCore()
@@ -397,10 +393,9 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         $dom->loadHTML($tagString);
         $errors = libxml_get_errors();
         libxml_use_internal_errors($state);
-        if (0 < count($errors))
-        {
+        if (0 < count($errors)) {
             foreach ($errors as $error) {
-                if ($error instanceof libXMLError){
+                if ($error instanceof libXMLError) {
                     /**
                      * @var  libXMLError $error
                      */
@@ -419,7 +414,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                             $level = 'FATAL ERROR';
                             break;
                         default:
-                            $level = 'UNKNOWN:'.$error->level;
+                            $level = 'UNKNOWN:' . $error->level;
                     }
 
                     $template = 'An \'%s\' raised with message: \'%s\' by XML (libxml) parser while parsing string \'%s\' line %s.';
@@ -427,7 +422,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                         $level,
                         $error->message,
                         base64_encode($tagString),
-                        $error->line
+                        $error->line,
                     ]);
                     $this->getLogger()->debug($message);
                 }

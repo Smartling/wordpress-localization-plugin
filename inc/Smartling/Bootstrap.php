@@ -533,13 +533,9 @@ class Bootstrap
 
             $data =& $_POST;
 
-            $result = [];
-
-            $result['status'] = 200;
-            $result['debug'] = [];
-
-            $debug = &$result['debug'];
-
+            $result = [
+                'status' => 200,
+            ];
 
             $wrapper = self::getContainer()->get('wrapper.sdk.api.smartling');
             /**
@@ -561,11 +557,10 @@ class Bootstrap
              * @var SubmissionManager $submissionManager
              */
             $submissionManager = $ep->getSubmissionManager();
-
-            $curSiteId = $debug['curSiteId'] = $siteHelper->getCurrentBlogId();
-
+            $curSiteId = $siteHelper->getCurrentBlogId();
             $profile = $settingsManager->getSingleSettingsProfile($curSiteId);
-
+            $curSiteId = $siteHelper->getCurrentBlogId();
+            $params = &$data['params'];
 
             $findRelatedSubmissions = function ($jobId) use ($submissionManager) {
                 $related = $submissionManager->searchByJobId($jobId);
@@ -574,13 +569,24 @@ class Bootstrap
                     /**
                      * @var SubmissionEntity $_submission
                      */
-                    $submissions[] = [
+                    $submissions[$_submission->getFileUri()][] = [
                         'id'     => $_submission->getId(),
                         'status' => $_submission->getStatus(),
                     ];
                 }
 
                 return $submissions;
+            };
+
+            $validateRequires = function ($fieldName) use (&$result, $params) {
+                if (array_key_exists($fieldName, $params) && '' !== ($value = trim($params[$fieldName]))) {
+                    return $value;
+                } else {
+                    $msg = vsprintf('The field \'%s\' cannot be empty', [$fieldName]);
+                    Bootstrap::getLogger()->warning($msg);
+                    $result['status'] = 400;
+                    $result['message'][$fieldName] = $msg;
+                }
             };
 
             if (array_key_exists('innerAction', $data)) {
@@ -603,17 +609,6 @@ class Bootstrap
                         $result['data'] = $preparcedJobs;
                         break;
                     case 'create-job':
-                        $params = &$data['params'];
-                        $validateRequires = function ($fieldName) use (&$result, $params) {
-                            if (array_key_exists($fieldName, $params) && '' !== ($value = trim($params[$fieldName]))) {
-                                return $value;
-                            } else {
-                                $msg = vsprintf('The field \'%s\' cannot be empty', [$fieldName]);
-                                Bootstrap::getLogger()->warning($msg);
-                                $result['status'] = 400;
-                                $result['message'][$fieldName] = $msg;
-                            }
-                        };
                         $jobName = $validateRequires('name');
                         $jobDescription = $validateRequires('description');
                         $jobDueDate = $validateRequires('dueDate');
@@ -647,18 +642,6 @@ class Bootstrap
                         }
                         break;
                     case 'create-submissions':
-                        $curSiteId = $debug['curSiteId'] = $siteHelper->getCurrentBlogId();
-                        $params = &$data['params'];
-                        $validateRequires = function ($fieldName) use (&$result, $params) {
-                            if (array_key_exists($fieldName, $params) && '' !== ($value = trim($params[$fieldName]))) {
-                                return $value;
-                            } else {
-                                $msg = vsprintf('The field \'%s\' cannot be empty', [$fieldName]);
-                                Bootstrap::getLogger()->warning($msg);
-                                $result['status'] = 400;
-                                $result['message'][$fieldName] = $msg;
-                            }
-                        };
                         $contentType = $validateRequires('contentType');
                         $targetBlogIds = explode(',', $validateRequires('targetBlogId'));
                         $sourceId = $validateRequires('sourceId');
@@ -678,58 +661,64 @@ class Bootstrap
                         }
                         break;
                     case 'upload-submission':
-                        $params = &$data['params'];
-                        $validateRequires = function ($fieldName) use (&$result, $params) {
-                            if (array_key_exists($fieldName, $params) && '' !== ($value = trim($params[$fieldName]))) {
-                                return $value;
-                            } else {
-                                $msg = vsprintf('The field \'%s\' cannot be empty', [$fieldName]);
-                                Bootstrap::getLogger()->warning($msg);
-                                $result['status'] = 400;
-                                $result['message'][$fieldName] = $msg;
-                            }
-                        };
-
                         $id = (int)$validateRequires('id');
-
                         if ($result['status'] === 200) {
-
-                            $submission = $submissionManager->getEntityById($id);
-
-                            $_submission = ArrayHelper::first($submission);
-
-                            if ($_submission instanceof SubmissionEntity) {
-                                $jobId = $_submission->getJobId();
-                                do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $_submission);
-                                $result['data']['submissions'] = $findRelatedSubmissions ($jobId);
+                            $submission = ArrayHelper::first($submissionManager->getEntityById($id));
+                            if ($submission instanceof SubmissionEntity) {
+                                $submissions = $submissionManager->find(
+                                    [
+                                        'source_blog_id' => $submission->getSourceBlogId(),
+                                        'source_id'      => $submission->getSourceId(),
+                                        'content_type'   => $submission->getContentType(),
+                                        'job_id'         => $submission->getJobId(),
+                                    ]
+                                );
+                                foreach ($submissions as $_submission) {
+                                    $_submission->getFileUri();
+                                }
+                                $submissionManager->storeSubmissions($submissions);
+                                $jobId = $submission->getJobId();
+                                do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $submission);
+                                $submission = ArrayHelper::first($submissionManager->getEntityById($id));
+                                if ('Failed' === $submission->getStatus()) {
+                                    /**
+                                     * Upload failed, mark all submissions as failed.
+                                     */
+                                    $submissions = $submissionManager->find(
+                                        [
+                                            'file_uri' => $submission->getFileUri(),
+                                            'job_id'   => $jobId,
+                                        ]
+                                    );
+                                    foreach ($submissions as $_submission) {
+                                        $_submission->setStatus('Failed');
+                                        $_submission->setJobId('');
+                                    }
+                                    $submissionManager->storeSubmissions($submissions);
+                                    $result['status'] = 400;
+                                } else {
+                                    $result['data']['submissions'] = $findRelatedSubmissions ($jobId);
+                                }
                             }
                         } else {
                             $result['message']['global'] = 'Please fix issues to continue';
                         }
                         break;
                     case 'check-status-submission' :
-                        $params = &$data['params'];
-                        $validateRequires = function ($fieldName) use (&$result, $params) {
-                            if (array_key_exists($fieldName, $params) && '' !== ($value = trim($params[$fieldName]))) {
-                                return $value;
-                            } else {
-                                $msg = vsprintf('The field \'%s\' cannot be empty', [$fieldName]);
-                                Bootstrap::getLogger()->warning($msg);
-                                $result['status'] = 400;
-                                $result['message'][$fieldName] = $msg;
-                            }
-                        };
                         $id = (int)$validateRequires('id');
                         if ($result['status'] === 200) {
                             try {
-                                $response = $wrapper->getStatus(reset($submissionManager->getEntityById($id)));
+                                $res = $submissionManager->getEntityById($id);
+                                $res = ArrayHelper::first($res);
+
+                                $response = $wrapper->getStatus($res);
                                 $result['data']['submission'] = [
                                     'id'      => $response->getId(),
                                     'status'  => $response->getStatus(),
                                     'fileUri' => $response->getFileUri(),
                                 ];
                             } catch (Exception $e) {
-                                $msg = vsprintf('Failed checkStatus for file \'%s\'', [$response->getFileUri()]);
+                                $msg = vsprintf('Failed checkStatus for file \'%s\'', [$res->getFileUri()]);
                                 Bootstrap::getLogger()->warning($msg);
                                 $result['status'] = 400;
                                 $result['message']['global'] = $msg;
@@ -739,23 +728,56 @@ class Bootstrap
                         }
                         break;
                     case 'add-file-to-job' :
-                        $params = &$data['params'];
-                        $validateRequires = function ($fieldName) use (&$result, $params) {
-                            if (array_key_exists($fieldName, $params) && '' !== ($value = trim($params[$fieldName]))) {
-                                return $value;
-                            } else {
-                                $msg = vsprintf('The field \'%s\' cannot be empty', [$fieldName]);
-                                Bootstrap::getLogger()->warning($msg);
-                                $result['status'] = 400;
-                                $result['message'][$fieldName] = $msg;
-                            }
-                        };
                         $id = (int)$validateRequires('id');
                         if ($result['status'] === 200) {
                             try {
-                                $submission = reset($submissionManager->getEntityById($id));
+                                $res = $submissionManager->getEntityById($id);
+                                $submission = ArrayHelper::first($res);
                                 $response = $wrapper->addToJob($profile, $submission);
+                            } catch (Exception $e) {
+                                $msg = vsprintf('Error occurred while adding file to job: \'%s\'', [$e->getMessage()]);
+                                if ($e instanceof SmartlingApiException) {
+                                    die(var_export($e->getErrors()));
+                                    //$msg = vsprintf('Error occurred while adding file to job: \'%s\'', [implode('|', var_export($e->getErrors(), true))]);
+                                }
+                                Bootstrap::getLogger()->warning($msg);
+                                $result['status'] = 400;
+                                $result['message']['global'] = $msg;
+                            }
+                        } else {
+                            $result['message']['global'] = 'Please fix issues to continue';
+                        }
+                        break;
+                    case 'unlink-submissions':
+                        $id = (int)$validateRequires('id');
+                        if ($result['status'] === 200) {
+                            try {
+                                $res = $submissionManager->getEntityById($id);
+                                $submission = reset($res);
+                                $fileUri = $submission->getFileUri();
+                                $jobId = $submission->getJobId();
 
+                                $submissions = $submissionManager->find(
+                                    [
+                                        'file_uri' => $fileUri,
+                                        'job_id'   => $jobId,
+                                    ]
+                                );
+
+                                foreach ($submissions as $_submission) {
+                                    $_submission->setJobId('');
+                                }
+
+                                $submissionManager->storeSubmissions($submissions);
+
+                                $result['data'] = [
+                                    'fileUri' => $fileUri,
+                                    'jobId'   => $jobId,
+                                ];
+
+                                $submissions = $submissionManager->searchByJobId($jobId);
+
+                                $result['data']['left'] = count($submissions);
                             } catch (Exception $e) {
                                 $msg = vsprintf('Error occurred while adding file to job: \'%s\'', [$e->getMessage()]);
                                 Bootstrap::getLogger()->warning($msg);
@@ -767,14 +789,42 @@ class Bootstrap
                         }
                         break;
                     case 'authorize-job':
+                        $params = &$data['params'];
+                        $validateRequires = function ($fieldName) use (&$result, $params) {
+                            if (array_key_exists($fieldName, $params) && '' !== ($value = trim($params[$fieldName]))) {
+                                return $value;
+                            } else {
+                                $msg = vsprintf('The field \'%s\' cannot be empty', [$fieldName]);
+                                Bootstrap::getLogger()->warning($msg);
+                                $result['status'] = 400;
+                                $result['message'][$fieldName] = $msg;
+                            }
+                        };
+                        $id = $validateRequires('id');
+
+                        if ($result['status'] === 200) {
+                            try {
+                                $_result = $wrapper->authorizeJob($profile, $id);
+                                $result['data'] = [
+                                    'fileUri' => $_result,
+                                    'jobId'   => $id,
+                                ];
+                            } catch (Exception $e) {
+                                $msg = vsprintf('Error occurred while authorizing job: \'%s\'', [$e->getMessage()]);
+                                Bootstrap::getLogger()->warning($msg);
+                                $result['status'] = 400;
+                                $result['message']['global'] = $msg;
+                            }
+                        } else {
+                            $result['message']['global'] = 'Please fix issues to continue';
+                        }
+
                         break;
                     default:
                         $result['status'] = 400;
                         $result['message']['global'] = 'Invalid inner action.';
                         break;
                 }
-
-
             }
 
             echo json_encode($result);

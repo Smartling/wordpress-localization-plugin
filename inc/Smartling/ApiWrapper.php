@@ -587,25 +587,25 @@ class ApiWrapper implements ApiWrapperInterface
         $params = new AddFileToJobParameters();
         $params->setFileUri($submission->getFileUri());
 
-        $locales = $profile->getTargetLocales();
-
-        $smartlingLocale = '';
-
-        foreach ($locales as $locale) {
-            /**
-             * @var TargetLocale $locale
-             */
-            if ($locale->getBlogId() === $submission->getTargetBlogId()) {
-                $smartlingLocale = $locale->getSmartlingLocale();
-            }
-        }
-
-        $params->setTargetLocales([$smartlingLocale]);
+        $params->setTargetLocales([]);
 
         try {
             $api->addFileToJobSync($submission->getJobId(), $params);
         } catch (\Exception $e) {
             throw $e;
+        }
+    }
+
+    public function authorizeJob(ConfigurationProfileEntity $profile, $jobId) {
+        $api = JobsApi::create($this->getAuthProvider($profile),
+                               $profile->getProjectId(),
+                               $this->getLogger());
+
+        try {
+            $api->authorizeJob($jobId);
+            return true;
+        } catch (SmartlingApiException $e) {
+            return false;
         }
     }
 }

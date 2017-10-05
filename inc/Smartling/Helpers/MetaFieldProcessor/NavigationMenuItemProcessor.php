@@ -73,7 +73,8 @@ class NavigationMenuItemProcessor extends ReferencedContentProcessor
                     $submission->getSourceBlogId(),
                     $value,
                     $submission->getTargetBlogId(),
-                    (1 === $submission->getIsCloned())
+                    (1 === $submission->getIsCloned()),
+                    $submission->getJobId()
                 );
 
                 return $relatedObjectSubmission->getTargetId();

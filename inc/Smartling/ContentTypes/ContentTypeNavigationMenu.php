@@ -122,7 +122,8 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
                     $params->getSubmission()->getSourceBlogId(),
                     $menuItemEntity->getPK(),
                     $params->getSubmission()->getTargetBlogId(),
-                    (1 === $params->getSubmission()->getIsCloned())
+                    (1 === $params->getSubmission()->getIsCloned()),
+                    $params->getSubmission()->getJobId()
                 );
 
                 //enqueue for download menu item
@@ -171,7 +172,8 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
                     $params->getSubmission()->getSourceBlogId(),
                     $menuId,
                     $params->getSubmission()->getTargetBlogId(),
-                    (1 === $params->getSubmission()->getIsCloned())
+                    (1 === $params->getSubmission()->getIsCloned()),
+                    $params->getSubmission()->getJobId()
                 );
 
                 $newMenuId = $relatedObjectSubmission->getTargetId();

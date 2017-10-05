@@ -120,36 +120,37 @@ $data = $this->getViewData();
 
 
 </div>
-<?php
-global $post;
-?>
+<?php global $post; ?>
 <script>
     (function ($) {
-
-        document.registry = [];
-
         var currentContent = {
             'contentType': '<?= $post->post_type ?>',
             'id': [<?= $post->ID ?>],
         };
 
-        document.TaskState = [];
-
         var JobWorker = function ($submissionId) {
-
             console.log('Sending file to smartling. Submission id=' + $submissionId);
             /**
              * Stage 1: File processing:
              */
+            console.log($submissionId);
+            console.log('-----------');
 
             Helper.queryProxy.uploadSubmission($submissionId, function (response) {
-                console.log('Uploaded submission id=' + $submissionId);
-
-                var ownSubmission = $submissionId;
                 response = JSON.parse(response);
+                if (400 === response.status) {
+                    console.log('Failed uploading file.');
+                    return;
+                }
+                console.log('Uploaded submission id=' + $submissionId);
+                var ownSubmission = $submissionId;
+
                 console.log(response);
                 if (response.data.submissions) {
-                    Helper.queryProxy.buildQueue(response.data.submissions);
+                    for (var fileUri in response.data.submissions) {
+                        console.log('Processing fileUri:' + fileUri);
+                        Helper.queryProxy.buildQueue(response.data.submissions[fileUri]);
+                    }
                 }
 
                 /**
@@ -157,15 +158,32 @@ global $post;
                  */
 
                 Helper.queryProxy.checkStatus(ownSubmission, function (response) {
-                    var ownSubmission = ownSubmission;
+                    response = JSON.parse(response);
+                    var ownSubmission = response.data.submission.id;
                     console.log(ownSubmission);
                     console.log('Checked uploaded file for submission id=' + $submissionId);
-                    response = JSON.parse(response);
                     if (200 === response.status && response.data.submission) {
                         var submission = response.data.submission;
+                        Helper.queryProxy.addFileToJob(ownSubmission, function (response) {
+                            var submissionId = ownSubmission;
+                            response = JSON.parse(response);
+                            if (200 === response.status) {
+                                Helper.queryProxy.unlinkSubmissions(submissionId, function (response) {
+                                    /**
+                                     * Here we try to authorize job if total left submissions for job = 0
+                                     */
+                                    response = JSON.parse(response);
+                                    if (0 === response.data.left && (authorize = $('.authorize:checked').length > 0)) {
+                                        Helper.queryProxy.authorizeJob(response.data.jobId, function (response) {
+                                            console.log(response);
+                                        });
+                                    }
+                                    console.log(response);
+                                });
+                            } else {
+                                console.log(response);
+                            }
 
-                        Helper.queryProxy.addFileToJob(submission.id, function(response){
-                            console.log(response);
                         });
                     }
                 });
@@ -190,33 +208,36 @@ global $post;
                 baseEndpoint: '<?= admin_url('admin-ajax.php') ?>?action=smartling_job_api_proxy',
                 query: function (action, params, success) {
                     console.log('ProxyQuery:');
+                    console.log('--------------------------------------------------');
                     var data = {'innerAction': action, 'params': params};
                     console.log(data);
-                    $.post(this.baseEndpoint, data, success);
+                    console.log('--------------------------------------------------');
+                    $.post(this.baseEndpoint, data, function (response) {
+                        var cb = success;
+                        console.log('ProxyResponse:');
+                        console.log('--------------------------------------------------');
+                        console.log(response);
+                        console.log('--------------------------------------------------');
+                        cb(response);
+                    });
                 },
                 buildQueue: function (submissions) {
                     console.log('Got submissions:');
                     console.log(submissions);
+                    console.log('=============');
+
                     var submissionId = 0;
                     for (var i in submissions) {
-
                         var submission = submissions[i];
-
-                        if (0 > document.registry.indexOf(submission.id)) {
-                            document.registry.push(submission.id);
-                        }
-
                         if ('New' === submission.status) {
                             console.log('Working on submission #' + submission.id);
                             submissionId = submission.id;
                             break;
                         }
                     }
-
                     if (submissionId > 0) {
                         JobWorker(submissionId);
                     }
-
                 },
 
                 processSteps: function (jobId, success, fail) {
@@ -227,7 +248,10 @@ global $post;
                         this.createSubmissions(currentContent.contentType, locales, currentContent.id[i], jobId, function (response) {
                             response = JSON.parse(response);
                             if (response.data.submissions) {
-                                Helper.queryProxy.buildQueue(response.data.submissions);
+                                for (var fileUri in response.data.submissions) {
+                                    console.log('Processing fileUri:' + fileUri);
+                                    Helper.queryProxy.buildQueue(response.data.submissions[fileUri]);
+                                }
                             }
                         });
                     }
@@ -260,8 +284,14 @@ global $post;
                     }, cb);
                 },
 
-                authorizeJob: function (jobId) {
+                unlinkSubmissions: function (submissionId, cb) {
+                    this.query('unlink-submissions', {
+                        id: submissionId
+                    }, cb);
+                },
 
+                authorizeJob: function (jobId, cb) {
+                    this.query('authorize-job', {id: jobId}, cb);
                 },
 
                 listJobs: function (cb) {
@@ -271,6 +301,8 @@ global $post;
                             if (typeof cb === 'function') {
                                 cb(response.data);
                             }
+                        } else {
+                            fail(response.message);
                         }
                     });
                 },
