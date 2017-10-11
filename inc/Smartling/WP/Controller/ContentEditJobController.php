@@ -78,10 +78,8 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
     public function box($contentType)
     {
         if ($this->getServedContentType() === $contentType) {
-            // add ajax handler.
-            add_meta_box('smartling.job.' . $contentType, 'Jobs', function ($meta_id) {
-
-
+            $id = 'smartling.job.' . $contentType;
+            add_meta_box($id, 'Jobs', function ($meta_id) {
                 $currentBlogId = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
                 $applicableProfiles = $this->getEntityHelper()->getSettingsManager()
                     ->findEntityByMainLocale($currentBlogId);
@@ -89,22 +87,13 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                     echo HtmlTagGeneratorHelper::tag('p', __('No suitable profile found for this site.'));
                 } else {
                     $profile = ArrayHelper::first($applicableProfiles);
-
                     $this->view(
                         [
                             'profile' => $profile,
-                            'b'       => 'b',
-                            'c'       => 'c',
                         ]
                     );
                 }
-
-
-            },
-                         'post',
-                         'top',
-                         'high'
-            );
+            }, $contentType, 'top', 'high');
         }
     }
 }

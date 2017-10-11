@@ -38,10 +38,12 @@ class UploadJob extends JobAbstract
             }
 
             $entity = ArrayHelper::first($entities);
-
+            /**
+             * @var SubmissionEntity $entity
+             */
             $this->getLogger()->info(
                 vsprintf(
-                    'Cron Job triggers content upload for submission id = \'%s\' with status = \'%s\' for entity = \'%s\', blog = \'%s\', id = \'%s\', targetBlog = \'%s\', locale = \'%s\'.',
+                    'Cron Job triggers content upload for submission id = \'%s\' with status = \'%s\' for entity = \'%s\', blog = \'%s\', id = \'%s\', targetBlog = \'%s\', locale = \'%s\', job = \'%s\'.',
                     [
                         $entity->getId(),
                         $entity->getStatus(),
@@ -50,6 +52,7 @@ class UploadJob extends JobAbstract
                         $entity->getSourceId(),
                         $entity->getTargetBlogId(),
                         $entity->getTargetLocale(),
+                        $entity->getJobId(),
                     ]
                 )
             );

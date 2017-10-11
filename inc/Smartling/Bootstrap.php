@@ -15,7 +15,6 @@ use Smartling\ContentTypes\CustomPostType;
 use Smartling\ContentTypes\CustomTaxonomyType;
 use Smartling\Exception\SmartlingBootException;
 use Smartling\Exceptions\SmartlingApiException;
-use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\MetaFieldProcessor\CustomFieldFilterHandler;
 use Smartling\Helpers\SchedulerHelper;
@@ -23,8 +22,6 @@ use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Settings\SettingsManager;
-use Smartling\Submissions\SubmissionEntity;
-use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\WPInstallableInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -552,31 +549,10 @@ class Bootstrap
              * @var SettingsManager $settingsManager
              */
 
-            $ep = Bootstrap::getContainer()->get('entrypoint');
-            /**
-             * @var SubmissionManager $submissionManager
-             */
-            $submissionManager = $ep->getSubmissionManager();
+
             $curSiteId = $siteHelper->getCurrentBlogId();
             $profile = $settingsManager->getSingleSettingsProfile($curSiteId);
-            $curSiteId = $siteHelper->getCurrentBlogId();
             $params = &$data['params'];
-
-            $findRelatedSubmissions = function ($jobId) use ($submissionManager) {
-                $related = $submissionManager->searchByJobId($jobId);
-                $submissions = [];
-                foreach ($related as $_submission) {
-                    /**
-                     * @var SubmissionEntity $_submission
-                     */
-                    $submissions[$_submission->getFileUri()][] = [
-                        'id'     => $_submission->getId(),
-                        'status' => $_submission->getStatus(),
-                    ];
-                }
-
-                return $submissions;
-            };
 
             $validateRequires = function ($fieldName) use (&$result, $params) {
                 if (array_key_exists($fieldName, $params) && '' !== ($value = trim($params[$fieldName]))) {
@@ -590,7 +566,6 @@ class Bootstrap
             };
 
             if (array_key_exists('innerAction', $data)) {
-
                 switch ($data['innerAction']) {
                     case 'list-jobs' :
                         $jobs = $wrapper->listJobs($profile);
@@ -640,185 +615,6 @@ class Bootstrap
                         } else {
                             $result['message']['global'] = 'Please fix issues to continue';
                         }
-                        break;
-                    case 'create-submissions':
-                        $contentType = $validateRequires('contentType');
-                        $targetBlogIds = explode(',', $validateRequires('targetBlogId'));
-                        $sourceId = $validateRequires('sourceId');
-                        $jobId = $validateRequires('jobId');
-                        if ($result['status'] === 200) {
-                            foreach ($targetBlogIds as $targetBlogId) {
-                                try {
-                                    $submission = $ep->createForTranslation($contentType, $curSiteId, $sourceId, $targetBlogId);
-                                    $submission->setJobId($jobId);
-                                    $submission = $submissionManager->storeEntity($submission);
-                                } catch (\Exception $e) {
-                                }
-                            }
-                            $result['data']['submissions'] = $findRelatedSubmissions ($jobId);
-                        } else {
-                            $result['message']['global'] = 'Please fix issues to continue';
-                        }
-                        break;
-                    case 'upload-submission':
-                        $id = (int)$validateRequires('id');
-                        if ($result['status'] === 200) {
-                            $submission = ArrayHelper::first($submissionManager->getEntityById($id));
-                            if ($submission instanceof SubmissionEntity) {
-                                $submissions = $submissionManager->find(
-                                    [
-                                        'source_blog_id' => $submission->getSourceBlogId(),
-                                        'source_id'      => $submission->getSourceId(),
-                                        'content_type'   => $submission->getContentType(),
-                                        'job_id'         => $submission->getJobId(),
-                                    ]
-                                );
-                                foreach ($submissions as $_submission) {
-                                    $_submission->getFileUri();
-                                }
-                                $submissionManager->storeSubmissions($submissions);
-                                $jobId = $submission->getJobId();
-                                do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $submission);
-                                $submission = ArrayHelper::first($submissionManager->getEntityById($id));
-                                if ('Failed' === $submission->getStatus()) {
-                                    /**
-                                     * Upload failed, mark all submissions as failed.
-                                     */
-                                    $submissions = $submissionManager->find(
-                                        [
-                                            'file_uri' => $submission->getFileUri(),
-                                            'job_id'   => $jobId,
-                                        ]
-                                    );
-                                    foreach ($submissions as $_submission) {
-                                        $_submission->setStatus('Failed');
-                                        $_submission->setJobId('');
-                                    }
-                                    $submissionManager->storeSubmissions($submissions);
-                                    $result['status'] = 400;
-                                } else {
-                                    $result['data']['submissions'] = $findRelatedSubmissions ($jobId);
-                                }
-                            }
-                        } else {
-                            $result['message']['global'] = 'Please fix issues to continue';
-                        }
-                        break;
-                    case 'check-status-submission' :
-                        $id = (int)$validateRequires('id');
-                        if ($result['status'] === 200) {
-                            try {
-                                $res = $submissionManager->getEntityById($id);
-                                $res = ArrayHelper::first($res);
-
-                                $response = $wrapper->getStatus($res);
-                                $result['data']['submission'] = [
-                                    'id'      => $response->getId(),
-                                    'status'  => $response->getStatus(),
-                                    'fileUri' => $response->getFileUri(),
-                                ];
-                            } catch (Exception $e) {
-                                $msg = vsprintf('Failed checkStatus for file \'%s\'', [$res->getFileUri()]);
-                                Bootstrap::getLogger()->warning($msg);
-                                $result['status'] = 400;
-                                $result['message']['global'] = $msg;
-                            }
-                        } else {
-                            $result['message']['global'] = 'Please fix issues to continue';
-                        }
-                        break;
-                    case 'add-file-to-job' :
-                        $id = (int)$validateRequires('id');
-                        if ($result['status'] === 200) {
-                            try {
-                                $res = $submissionManager->getEntityById($id);
-                                $submission = ArrayHelper::first($res);
-                                $response = $wrapper->addToJob($profile, $submission);
-                            } catch (Exception $e) {
-                                $msg = vsprintf('Error occurred while adding file to job: \'%s\'', [$e->getMessage()]);
-                                if ($e instanceof SmartlingApiException) {
-                                    die(var_export($e->getErrors()));
-                                    //$msg = vsprintf('Error occurred while adding file to job: \'%s\'', [implode('|', var_export($e->getErrors(), true))]);
-                                }
-                                Bootstrap::getLogger()->warning($msg);
-                                $result['status'] = 400;
-                                $result['message']['global'] = $msg;
-                            }
-                        } else {
-                            $result['message']['global'] = 'Please fix issues to continue';
-                        }
-                        break;
-                    case 'unlink-submissions':
-                        $id = (int)$validateRequires('id');
-                        if ($result['status'] === 200) {
-                            try {
-                                $res = $submissionManager->getEntityById($id);
-                                $submission = reset($res);
-                                $fileUri = $submission->getFileUri();
-                                $jobId = $submission->getJobId();
-
-                                $submissions = $submissionManager->find(
-                                    [
-                                        'file_uri' => $fileUri,
-                                        'job_id'   => $jobId,
-                                    ]
-                                );
-
-                                foreach ($submissions as $_submission) {
-                                    $_submission->setJobId('');
-                                }
-
-                                $submissionManager->storeSubmissions($submissions);
-
-                                $result['data'] = [
-                                    'fileUri' => $fileUri,
-                                    'jobId'   => $jobId,
-                                ];
-
-                                $submissions = $submissionManager->searchByJobId($jobId);
-
-                                $result['data']['left'] = count($submissions);
-                            } catch (Exception $e) {
-                                $msg = vsprintf('Error occurred while adding file to job: \'%s\'', [$e->getMessage()]);
-                                Bootstrap::getLogger()->warning($msg);
-                                $result['status'] = 400;
-                                $result['message']['global'] = $msg;
-                            }
-                        } else {
-                            $result['message']['global'] = 'Please fix issues to continue';
-                        }
-                        break;
-                    case 'authorize-job':
-                        $params = &$data['params'];
-                        $validateRequires = function ($fieldName) use (&$result, $params) {
-                            if (array_key_exists($fieldName, $params) && '' !== ($value = trim($params[$fieldName]))) {
-                                return $value;
-                            } else {
-                                $msg = vsprintf('The field \'%s\' cannot be empty', [$fieldName]);
-                                Bootstrap::getLogger()->warning($msg);
-                                $result['status'] = 400;
-                                $result['message'][$fieldName] = $msg;
-                            }
-                        };
-                        $id = $validateRequires('id');
-
-                        if ($result['status'] === 200) {
-                            try {
-                                $_result = $wrapper->authorizeJob($profile, $id);
-                                $result['data'] = [
-                                    'fileUri' => $_result,
-                                    'jobId'   => $id,
-                                ];
-                            } catch (Exception $e) {
-                                $msg = vsprintf('Error occurred while authorizing job: \'%s\'', [$e->getMessage()]);
-                                Bootstrap::getLogger()->warning($msg);
-                                $result['status'] = 400;
-                                $result['message']['global'] = $msg;
-                            }
-                        } else {
-                            $result['message']['global'] = 'Please fix issues to continue';
-                        }
-
                         break;
                     default:
                         $result['status'] = 400;

@@ -35,6 +35,11 @@ $data = $this->getViewData();
         max-width: inherit;
     }
 
+    #placeholder {
+        width: 100%;
+        font-size: larger;
+    }
+
 
 </style>
 <div class="job-wizard">
@@ -128,68 +133,6 @@ $data = $this->getViewData();
             'id': [<?= $post->ID ?>],
         };
 
-        var JobWorker = function ($submissionId) {
-            console.log('Sending file to smartling. Submission id=' + $submissionId);
-            /**
-             * Stage 1: File processing:
-             */
-            console.log($submissionId);
-            console.log('-----------');
-
-            Helper.queryProxy.uploadSubmission($submissionId, function (response) {
-                response = JSON.parse(response);
-                if (400 === response.status) {
-                    console.log('Failed uploading file.');
-                    return;
-                }
-                console.log('Uploaded submission id=' + $submissionId);
-                var ownSubmission = $submissionId;
-
-                console.log(response);
-                if (response.data.submissions) {
-                    for (var fileUri in response.data.submissions) {
-                        console.log('Processing fileUri:' + fileUri);
-                        Helper.queryProxy.buildQueue(response.data.submissions[fileUri]);
-                    }
-                }
-
-                /**
-                 * Stage 2: CheckStatus:
-                 */
-
-                Helper.queryProxy.checkStatus(ownSubmission, function (response) {
-                    response = JSON.parse(response);
-                    var ownSubmission = response.data.submission.id;
-                    console.log(ownSubmission);
-                    console.log('Checked uploaded file for submission id=' + $submissionId);
-                    if (200 === response.status && response.data.submission) {
-                        var submission = response.data.submission;
-                        Helper.queryProxy.addFileToJob(ownSubmission, function (response) {
-                            var submissionId = ownSubmission;
-                            response = JSON.parse(response);
-                            if (200 === response.status) {
-                                Helper.queryProxy.unlinkSubmissions(submissionId, function (response) {
-                                    /**
-                                     * Here we try to authorize job if total left submissions for job = 0
-                                     */
-                                    response = JSON.parse(response);
-                                    if (0 === response.data.left && (authorize = $('.authorize:checked').length > 0)) {
-                                        Helper.queryProxy.authorizeJob(response.data.jobId, function (response) {
-                                            console.log(response);
-                                        });
-                                    }
-                                    console.log(response);
-                                });
-                            } else {
-                                console.log(response);
-                            }
-
-                        });
-                    }
-                });
-            });
-        };
-
         var Helper = {
             placeHolder: {
                 cls: 'hidden',
@@ -207,93 +150,12 @@ $data = $this->getViewData();
             queryProxy: {
                 baseEndpoint: '<?= admin_url('admin-ajax.php') ?>?action=smartling_job_api_proxy',
                 query: function (action, params, success) {
-                    console.log('ProxyQuery:');
-                    console.log('--------------------------------------------------');
                     var data = {'innerAction': action, 'params': params};
-                    console.log(data);
-                    console.log('--------------------------------------------------');
                     $.post(this.baseEndpoint, data, function (response) {
                         var cb = success;
-                        console.log('ProxyResponse:');
-                        console.log('--------------------------------------------------');
-                        console.log(response);
-                        console.log('--------------------------------------------------');
                         cb(response);
                     });
                 },
-                buildQueue: function (submissions) {
-                    console.log('Got submissions:');
-                    console.log(submissions);
-                    console.log('=============');
-
-                    var submissionId = 0;
-                    for (var i in submissions) {
-                        var submission = submissions[i];
-                        if ('New' === submission.status) {
-                            console.log('Working on submission #' + submission.id);
-                            submissionId = submission.id;
-                            break;
-                        }
-                    }
-                    if (submissionId > 0) {
-                        JobWorker(submissionId);
-                    }
-                },
-
-                processSteps: function (jobId, success, fail) {
-                    var locales = Helper.ui.getSelecterTargetLocales();
-
-                    for (var i in currentContent.id) {
-                        console.log('Precessing content #' + currentContent.id[i]);
-                        this.createSubmissions(currentContent.contentType, locales, currentContent.id[i], jobId, function (response) {
-                            response = JSON.parse(response);
-                            if (response.data.submissions) {
-                                for (var fileUri in response.data.submissions) {
-                                    console.log('Processing fileUri:' + fileUri);
-                                    Helper.queryProxy.buildQueue(response.data.submissions[fileUri]);
-                                }
-                            }
-                        });
-                    }
-                },
-
-                createSubmissions: function (contentType, locale, contentId, jobId, cb) {
-                    this.query('create-submissions', {
-                        contentType: contentType,
-                        targetBlogId: locale,
-                        sourceId: contentId,
-                        jobId: jobId
-                    }, cb);
-                },
-
-                uploadSubmission: function (submissionId, cb) {
-                    this.query('upload-submission', {
-                        id: submissionId
-                    }, cb);
-                },
-
-                checkStatus: function (submissionId, cb) {
-                    this.query('check-status-submission', {
-                        id: submissionId
-                    }, cb);
-                },
-
-                addFileToJob: function (submissionId, cb) {
-                    this.query('add-file-to-job', {
-                        id: submissionId
-                    }, cb);
-                },
-
-                unlinkSubmissions: function (submissionId, cb) {
-                    this.query('unlink-submissions', {
-                        id: submissionId
-                    }, cb);
-                },
-
-                authorizeJob: function (jobId, cb) {
-                    this.query('authorize-job', {id: jobId}, cb);
-                },
-
                 listJobs: function (cb) {
                     this.query('list-jobs', {}, function (response) {
                         response = JSON.parse(response);
@@ -306,6 +168,7 @@ $data = $this->getViewData();
                         }
                     });
                 },
+
                 createJob: function (name, description, dueDate, locales, authorize, success, fail) {
                     this.query('create-job', {
                         name: name,
@@ -419,7 +282,7 @@ $data = $this->getViewData();
 
         $(document).ready(function () {
 
-            $('select').select2({
+            $('#jobSelect').select2({
                 placeholder: 'Please select a job',
                 allowClear: false,
                 templateResult: function (optionElement) {
@@ -435,23 +298,31 @@ $data = $this->getViewData();
 
             $('#dueDate').datetimepicker({
                 format: 'Y-m-d H:i:s',
-                //inline: true,
                 minDate: 0
             });
-
 
             $('#addToJob').on('click', function (e) {
                 e.stopPropagation();
                 e.preventDefault();
-
                 var jobId = $('#jobSelect').val();
 
-                Helper.queryProxy.processSteps(jobId,
-                    function (success) {
 
-                    },
-                    function (fail) {
-                    });
+                var locales = Helper.ui.getSelecterTargetLocales();
+
+                var createHiddenInput = function(name, value) {
+                    return createInput('hidden', name, value);
+                };
+
+                var createInput = function(type, name, value) {
+                    return '<input type="' + type + '" name="' + name + '" value="' + value + '" />';
+                };
+
+                $('#post').append(createHiddenInput('smartling[ids]', currentContent.id));
+                $('#post').append(createHiddenInput('smartling[locales]', locales));
+                $('#post').append(createHiddenInput('smartling[jobId]', jobId));
+                $('#post').append(createHiddenInput('smartling[authorize]', $('.authorize:checked').length > 0));
+                $('#post').append(createHiddenInput('sub', 'Upload'));
+                $('#post').submit();
             });
 
             $('#createJob').on('click', function (e) {

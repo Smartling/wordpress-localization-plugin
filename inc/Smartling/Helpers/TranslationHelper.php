@@ -178,6 +178,10 @@ class TranslationHelper
             );
 
             $relatedSubmission->setJobId($jobId);
+            $serialized = $relatedSubmission->toArray(false);
+            if (null === $serialized['file_uri']) {
+                $relatedSubmission->getFileUri();
+            }
             $relatedSubmission = $this->getSubmissionManager()->storeEntity($relatedSubmission);
             // try to create target entity
             $relatedSubmission = apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $relatedSubmission);

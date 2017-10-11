@@ -10,7 +10,6 @@ use Smartling\Submissions\SubmissionEntity;
 
 /**
  * Interface ApiWrapperInterface
- *
  * @package Smartling
  */
 interface ApiWrapperInterface
@@ -38,14 +37,12 @@ interface ApiWrapperInterface
      *
      * @return bool
      * @internal param string $locale
-     *
      */
     public function testConnection(ConfigurationProfileEntity $profile);
 
     /**
      * @param SubmissionEntity $entity
      * @param string           $xmlString
-     *
      * @param string           $filename
      * @param array            $smartlingLocaleList
      *
@@ -80,5 +77,35 @@ interface ApiWrapperInterface
      */
     public function deleteFile(SubmissionEntity $submission);
 
+    /**
+     * @param ConfigurationProfileEntity $profile
+     *
+     * @return array
+     */
     public function listJobs(ConfigurationProfileEntity $profile);
+
+    /**
+     * @param ConfigurationProfileEntity $profile
+     * @param array                      $params
+     *
+     * @return array
+     * @throws \Exception
+     */
+    public function createJob(ConfigurationProfileEntity $profile, array $params);
+
+    /**
+     * @param SubmissionEntity[] $submissions
+     *
+     * @return void
+     * @throws \Exception
+     */
+    public function addToJob(array $submissions);
+
+    /**
+     * @param ConfigurationProfileEntity $profile
+     * @param string                     $jobId
+     *
+     * @return bool
+     */
+    public function authorizeJob(ConfigurationProfileEntity $profile, $jobId);
 }

@@ -97,10 +97,7 @@ class CustomPostType extends PostBasedContentTypeAbstract
             ->addArgument($di->getDefinition('entity.helper'))
             ->addArgument($di->getDefinition('manager.submission'))
             ->addArgument($di->getDefinition('site.cache'))
-            //->addMethodCall('setDetectChangesHelper', [$di->getDefinition('detect-changes.helper')])
-            //->addMethodCall('setAbilityNeeded', ['edit_post'])
             ->addMethodCall('setServedContentType', [static::getSystemName()])
-            //->addMethodCall('setNoOriginalFound', [__($this->getConfigParser()->getWidgetMessage())]);
         ;
         $di->get($tag)->register();
     }

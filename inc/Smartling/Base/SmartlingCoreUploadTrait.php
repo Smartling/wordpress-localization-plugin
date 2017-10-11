@@ -14,6 +14,7 @@ use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
+use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\XmlEncoder;
@@ -160,6 +161,7 @@ trait SmartlingCoreUploadTrait
                     ]
                 );
                 $this->getLogger()->warning($message);
+                $submission->setJobId('');
                 $submission = $this->getSubmissionManager()
                     ->setErrorMessage($submission, 'There is no original content for translation.');
 
@@ -323,37 +325,51 @@ trait SmartlingCoreUploadTrait
 
             $params = [
                 'status'    => [SubmissionEntity::SUBMISSION_STATUS_NEW],
-                'file_uri'  => [$submission->getFileUri()],
-                'is_cloned' => 0,
+                'file_uri'  => $submission->getFileUri(),
+                'is_cloned' => [0],
             ];
 
             if (!StringHelper::isNullOrEmpty($submission->getJobId())) {
-                $params['job_id'] = $submission->getJobId();
+                $params['job_id'] = [$submission->getJobId()];
             }
 
-
             /**
-             * Looking for other locales to send all at a time.
+             * Looking for other locales to pass filters and create placeholders.
              */
             $submissions = $this->getSubmissionManager()->find($params);
 
-            $locales = [];
-
             foreach ($submissions as $_submission) {
-                $xml = $this->getXMLFiltered($_submission);
+                // Passing filters
+                $this->getXMLFiltered($_submission);
+                // Processing attachments
                 do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $_submission);
+                // Preparing placeholders
                 $this->prepareRelatedSubmissions($_submission);
-                $locales[] = $this->getSettingsManager()->getSmartlingLocaleBySubmission($_submission);
             }
 
-            $this->sendFile($submission, $xml, $locales);
+            /**
+             * Looking for other locales to send all at a time.
+             * Here we won't get 'Failed' submissions.
+             */
+            $submissions = $this->getSubmissionManager()->find($params);
 
-            foreach ($submissions as $_submission) {
-                $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
+            if (0 < count($submissions)) {
+                /**
+                 * With jobs we don't use locales on file upload.
+                 */
+                $_submission = ArrayHelper::first($submissions);
+                $xml = $this->getXMLFiltered($_submission);
+                $this->sendFile($submission, $xml, []);
+                if ($this->addFileToJobBySubmission($submissions)) {
+                    foreach ($submissions as $_submission) {
+                        $_submission->setJobId('');
+                        $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
+                    }
+                }
+                $this->getSubmissionManager()->storeSubmissions($submissions);
             }
 
-            $this->getSubmissionManager()->storeSubmissions($submissions);
-
+            $this->authorizeJob($submission->getJobId(), $submission->getSourceBlogId());
         } catch (\Exception $e) {
             $proceedAuthException = function ($e) use (& $proceedAuthException) {
                 if (401 == $e->getCode()) {
@@ -370,6 +386,90 @@ trait SmartlingCoreUploadTrait
     }
 
     /**
+     * @param string $jobId
+     * @param int    $sourceBlogId
+     */
+    private function authorizeJob($jobId, $sourceBlogId)
+    {
+
+        $this->getLogger()->debug(vsprintf('Checking job \'%s\' if it should be authorized.', [$jobId]));
+        $key = 'AuthorizeJobList';
+        $authorizeJobList = SimpleStorageHelper::get($key, []);
+
+        if (in_array($jobId, $authorizeJobList)) {
+            try {
+                $profile = $this->getSettingsManager()->getSingleSettingsProfile($sourceBlogId);
+                if ($this->getApiWrapper()->authorizeJob($profile, $jobId)) {
+                    $msg = vsprintf('Job \'%s\' authorized', [$jobId]);
+                    $this->getLogger()->debug($msg);
+
+                    $submissions = $this->getSubmissionManager()->searchByJobId($jobId);
+
+                    if (0 === count($submissions)) {
+                        $keyed = array_flip($authorizeJobList);
+                        unset($keyed[$jobId]);
+                        $authorizeJobList = array_keys($keyed);
+                        SimpleStorageHelper::set($key, $authorizeJobList);
+                    }
+                } else {
+                    $msg = vsprintf('Error authorizing job \'%s\'.', [$jobId]);
+                    $this->getLogger()->warning($msg);
+                }
+            } catch (Exception $e) {
+                $msg = vsprintf('Error authorizing job \'%s\'. Message: \'%s\'', [$jobId, $e->getMessage()]);
+                $this->getLogger()->warning($msg);
+            }
+        }
+    }
+
+    /**
+     * @param SubmissionEntity[] $submissions
+     *
+     * @return bool
+     */
+    private function addFileToJobBySubmission($submissions)
+    {
+        $submission = ArrayHelper::first($submissions);
+        if ($this->checkFileStatusBySubmission($submission)) {
+            try {
+                $response = $this->getApiWrapper()->addToJob($submissions);
+
+                return true;
+            } catch (Exception $e) {
+                $msg = vsprintf('Error occurred while adding file to job = \'%s\'. Message: \'%s\'', [$submission->getJobId(),
+                                                                                                      $e->getMessage()]);
+                $this->getLogger()->warning($msg);
+
+                return false;
+            }
+        } else {
+            $this->getLogger()->warning(vsprintf('Failed Status Check for file \'%s\'', [$submission->getFileUri()]));
+
+            return false;
+        }
+    }
+
+    /**
+     * @param SubmissionEntity $submission
+     *
+     * @return bool
+     */
+    private function checkFileStatusBySubmission(SubmissionEntity $submission)
+    {
+        try {
+            $this->getApiWrapper()->getStatus($submission);
+        } catch (\Exception $e) {
+            $submission->setLastError($e->getMessage());
+            $this->getSubmissionManager()->storeEntity($submission);
+
+            return false;
+        }
+
+        return true;
+    }
+
+
+    /**
      * @param SubmissionEntity $submission
      *
      * @return bool
@@ -378,12 +478,13 @@ trait SmartlingCoreUploadTrait
     {
         $this->getLogger()->debug(
             vsprintf(
-                'Preparing to send submission id = \'%s\' (blog = \'%s\', content = \'%s\', type = \'%s\').',
+                'Preparing to send submission id = \'%s\' (blog = \'%s\', content = \'%s\', type = \'%s\', job = \'%s\').',
                 [
                     $submission->getId(),
                     $submission->getSourceBlogId(),
                     $submission->getSourceId(),
                     $submission->getContentType(),
+                    $submission->getJobId(),
                 ]
             )
         );

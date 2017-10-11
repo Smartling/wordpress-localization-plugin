@@ -23,7 +23,6 @@ use Smartling\Jobs\Params\ListJobsParameters;
 use Smartling\Project\ProjectApi;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
-use Smartling\Settings\TargetLocale;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -363,8 +362,6 @@ class ApiWrapper implements ApiWrapperInterface
                     'xml',
                     $params);
 
-                unlink ($filename);
-
                 $message = vsprintf(
                     'Smartling uploaded \'%s\' for locales:%s.',
                     [
@@ -478,7 +475,7 @@ class ApiWrapper implements ApiWrapperInterface
                 if (array_key_exists($localeId, $submissions)) {
                     $completedStrings = $descriptor['completedStringCount'];
                     $authorizedStrings = $descriptor['authorizedStringCount'];
-                    $totalStringCount = $descriptor['totalStringCount'];
+                    $totalStringCount = $data['totalStringCount'];
                     $excludedStringCount = $descriptor['excludedStringCount'];
 
                     $currentProgress = $submissions[$localeId]->getCompletionPercentage(); // current progress value 0..100
@@ -544,17 +541,33 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
-    public function listJobs(ConfigurationProfileEntity $profile)
+    /**
+     * @param ConfigurationProfileEntity $profile
+     *
+     * @return JobsApi
+     */
+    private function getJobsApi(ConfigurationProfileEntity $profile)
     {
-        $api = JobsApi::create($this->getAuthProvider($profile),
-                               $profile->getProjectId(),
-                               $this->getLogger());
-
-        $data = $api->listJobs(new ListJobsParameters());
-
-        return $data;
+        return JobsApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger());
     }
 
+    /**
+     * @param ConfigurationProfileEntity $profile
+     *
+     * @return array
+     */
+    public function listJobs(ConfigurationProfileEntity $profile)
+    {
+        return $this->getJobsApi($profile)->listJobs(new ListJobsParameters());
+    }
+
+    /**
+     * @param ConfigurationProfileEntity $profile
+     * @param array                      $params
+     *
+     * @return array
+     * @throws SmartlingApiException
+     */
     public function createJob(ConfigurationProfileEntity $profile, array $params)
     {
         $param = new CreateJobParameters();
@@ -564,45 +577,41 @@ class ApiWrapper implements ApiWrapperInterface
         $param->setTargetLocales($params['locales']);
         $param->setName($params['name']);
 
-        $api = JobsApi::create($this->getAuthProvider($profile),
-                               $profile->getProjectId(),
-                               $this->getLogger());
         try {
-            $data = $api->createJob($param);
+            return $this->getJobsApi($profile)->createJob($param);
         } catch (SmartlingApiException $e) {
             throw $e;
         }
-
-
-        return $data;
-
     }
 
-    public function addToJob(ConfigurationProfileEntity $profile, SubmissionEntity $submission)
+    /**
+     * @param array $submissions
+     *
+     * @throws \Exception
+     */
+    public function addToJob(array $submissions)
     {
-        $api = JobsApi::create($this->getAuthProvider($profile),
-                               $profile->getProjectId(),
-                               $this->getLogger());
-
-        $params = new AddFileToJobParameters();
-        $params->setFileUri($submission->getFileUri());
-
-        $params->setTargetLocales([]);
-
+        $_submission = ArrayHelper::first($submissions);
+        $profile = $this->getConfigurationProfile($_submission);
+        $param = new AddFileToJobParameters();
+        $param->setFileUri($_submission->getFileUri());
+        $locales = [];
+        foreach ($submissions as $submission) {
+            $locales[] = $this->getSettings()->getSmartlingLocaleBySubmission($submission);
+        }
+        $param->setTargetLocales($locales);
         try {
-            $api->addFileToJobSync($submission->getJobId(), $params);
+            $this->getJobsApi($profile)->addFileToJobSync($submission->getJobId(), $param);
         } catch (\Exception $e) {
             throw $e;
         }
     }
 
-    public function authorizeJob(ConfigurationProfileEntity $profile, $jobId) {
-        $api = JobsApi::create($this->getAuthProvider($profile),
-                               $profile->getProjectId(),
-                               $this->getLogger());
-
+    public function authorizeJob(ConfigurationProfileEntity $profile, $jobId)
+    {
         try {
-            $api->authorizeJob($jobId);
+            $this->getJobsApi($profile)->authorizeJob($jobId);
+
             return true;
         } catch (SmartlingApiException $e) {
             return false;

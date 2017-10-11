@@ -244,7 +244,7 @@ abstract class WPAbstract
             'name'  => 'sub',
         ]);
 
-        $contents = $sendButton . '&nbsp;' . $downloadButton;
+        $contents = /* $sendButton . '&nbsp;' .*/ $downloadButton;
 
         $container = HtmlTagGeneratorHelper::tag('div', $contents, ['class' => 'bottom']);
 
