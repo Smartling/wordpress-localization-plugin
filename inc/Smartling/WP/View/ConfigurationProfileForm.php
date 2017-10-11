@@ -396,9 +396,9 @@ if (0 === $profileId) {
                 <td colspan="2">
                     <div class="update-nag">
                         <p>
-                            <?= __("<strong>Warning!</strong> 
+                            <?= __("<strong>Warning!</strong>
 Updates to these settings will change how content is handled during the translation process.<br>
-Please consult before making any changes.<br>", $domain); ?>
+Contact Technical Support or your Customer Success Manager before modifying these settings.<br>", $domain); ?>
                         </p>
                         <p>
                             <a href="javascript:void(0)"

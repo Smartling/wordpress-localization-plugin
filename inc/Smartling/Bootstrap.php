@@ -192,8 +192,17 @@ class Bootstrap
     {
         $role = get_role('administrator');
 
-        foreach (SmartlingUserCapabilities::$CAPABILITY as $capability) {
-            $role->add_cap($capability, true);
+        if ($role instanceof \WP_Role) {
+            foreach (SmartlingUserCapabilities::$CAPABILITY as $capability) {
+                $role->add_cap($capability, true);
+            }
+        } else {
+            $siteHelper = self::getContainer()->get('site.helper');
+            /**
+             * @var SiteHelper $siteHelper
+             */
+            $msg = vsprintf('\'administrator\' role doesn\'t exists in site id=%s', [$siteHelper->getCurrentBlogId()]);
+            self::getLogger()->warning($msg);
         }
     }
 
