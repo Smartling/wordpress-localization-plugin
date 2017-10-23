@@ -42,7 +42,7 @@ trait SmartlingCoreDownloadTrait
         }
         $messages = [];
 
-        $data = $this->getApiWrapper()->downloadFile($entity);
+        $data = (string) $this->getApiWrapper()->downloadFile($entity);
         $this->getLogger()
             ->debug(vsprintf('Downloaded file for submission id = \'%s\'. Dump: %s',
                              [$entity->getId(), base64_encode($data)]));
