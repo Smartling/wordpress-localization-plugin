@@ -4,6 +4,7 @@ namespace Smartling\Jobs;
 
 use Psr\Log\LoggerInterface;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\OptionHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Submissions\SubmissionManager;
@@ -111,7 +112,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
      *
      * @param LoggerInterface   $logger
      * @param SubmissionManager $submissionManager
-     * @param int $workerTTL
+     * @param int               $workerTTL
      */
     public function __construct(LoggerInterface $logger, SubmissionManager $submissionManager, $workerTTL = self::WORKER_DEFAULT_TTL)
     {
@@ -120,9 +121,31 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         $this->setWorkerTTL($workerTTL);
     }
 
+    private function getInstalledCrons()
+    {
+        $val = OptionHelper::get('cron', []);
+        $keys = [];
+        foreach ($val as $eventsList) {
+            if (is_array($eventsList)) {
+                $keys = array_merge($keys, array_keys($eventsList));
+            }
+        }
+
+        return $keys;
+    }
+
+    private function isJobHookInstalled()
+    {
+        return in_array($this->getJobHookName(), $this->getInstalledCrons(), true);
+    }
+
     public function install()
     {
-        wp_schedule_event(time(), $this->getJobRunInterval(), $this->getJobHookName());
+        if (!$this->isJobHookInstalled()) {
+            $this->getLogger()
+                ->warning(vsprintf('The \'%s\' cron hook isn\'t installed. Installing...', [$this->getJobHookName()]));
+            wp_schedule_event(time(), $this->getJobRunInterval(), $this->getJobHookName());
+        }
     }
 
     /**
@@ -242,6 +265,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
      */
     public function register()
     {
+        $this->install();
         if (!DiagnosticsHelper::isBlocked()) {
             add_action($this->getJobHookName(), [$this, 'runCronJob']);
         }
