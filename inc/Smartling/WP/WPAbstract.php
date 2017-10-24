@@ -10,6 +10,7 @@ use Smartling\Helpers\Cache;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
+use Smartling\Helpers\StringHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionManager;
 
@@ -277,7 +278,7 @@ abstract class WPAbstract
      *
      * @return string
      */
-    public static function localeSelectionCheckboxBlock($namePrefix, $blog_id, $blog_name, $checked = false, $enabled = true)
+    public static function localeSelectionCheckboxBlock($namePrefix, $blog_id, $blog_name, $checked = false, $enabled = true, $editLink = '')
     {
         $parts = [];
 
@@ -314,10 +315,13 @@ abstract class WPAbstract
 
         $parts[] = HtmlTagGeneratorHelper::tag('input', '', $checkboxAttributes);
 
-        $parts[] = HtmlTagGeneratorHelper::tag('span', $blog_name, ['title' => $blog_name]);
-
-
-        $container = HtmlTagGeneratorHelper::tag('label', implode('', $parts), []);
+        if (!StringHelper::isNullOrEmpty($editLink)) {
+            $parts[] = HtmlTagGeneratorHelper::tag('a', $blog_name, ['title' => __('Open translation'),'href'=>$editLink, 'target'=>'_blank']);
+            $container = HtmlTagGeneratorHelper::tag('span', implode('', $parts), []);
+        } else {
+            $parts[] = HtmlTagGeneratorHelper::tag('span', $blog_name, ['title' => $blog_name]);
+            $container = HtmlTagGeneratorHelper::tag('label', implode('', $parts), []);
+        }
 
         return $container;
     }

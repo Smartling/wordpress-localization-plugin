@@ -3,9 +3,11 @@
 namespace Smartling\Helpers;
 
 use Smartling\Bootstrap;
+use Smartling\ContentTypes\ContentTypeAbstract;
 use Smartling\ContentTypes\ContentTypeInterface;
 use Smartling\ContentTypes\ContentTypeManager;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
+use Smartling\Submissions\SubmissionEntity;
 
 /**
  * Class WordpressContentTypeHelper
@@ -28,13 +30,8 @@ class WordpressContentTypeHelper
 
     private static function getDynamicReverseMap()
     {
-        /**
-         * @var ContentTypeManager $contentTypeManager
-         */
-        $contentTypeManager = Bootstrap::getContainer()->get('content-type-descriptor-manager');
-
         $map = [];
-        foreach ($contentTypeManager->getRegisteredContentTypes() as $type) {
+        foreach (self::getContentTypeManager()->getRegisteredContentTypes() as $type) {
             $map[$type] = $type;
         }
 
@@ -56,10 +53,7 @@ class WordpressContentTypeHelper
 
     private static function getDynamicLabelMap()
     {
-        /**
-         * @var ContentTypeManager $contentTypeManager
-         */
-        $contentTypeManager = Bootstrap::getContainer()->get('content-type-descriptor-manager');
+        $contentTypeManager = self::getContentTypeManager();
 
         $map = [];
         foreach ($contentTypeManager->getRegisteredContentTypes() as $type) {
@@ -82,13 +76,7 @@ class WordpressContentTypeHelper
 
     public static function getTypesRestrictedToBulkSubmit()
     {
-        $mgr = Bootstrap::getContainer()->get('content-type-descriptor-manager');
-        /**
-         * @var ContentTypeManager $mgr
-         */
-        $descriptors = $mgr->getRestrictedForBulkSubmit();
-
-        return [$descriptors];
+        return [self::getContentTypeManager()->getRestrictedForBulkSubmit()];
     }
 
     /**
@@ -96,19 +84,19 @@ class WordpressContentTypeHelper
      */
     public static function getSupportedTaxonomyTypes()
     {
-        $mgr = Bootstrap::getContainer()->get('content-type-descriptor-manager');
-        /**
-         * @var ContentTypeManager $mgr
-         */
-        $descriptors = $mgr->getDescriptorsByBaseType('taxonomy');
-
+        $descriptors = self::getContentTypeManager()->getDescriptorsByBaseType('taxonomy');
         $dynamicallyRegisteredTaxonomies = [];
-
         foreach ($descriptors as $descriptor) {
             $dynamicallyRegisteredTaxonomies[] = $descriptor->getSystemName();
         }
-
         return $dynamicallyRegisteredTaxonomies;
+    }
+
+    /**
+     * @return ContentTypeManager
+     */
+    private static function getContentTypeManager() {
+        return Bootstrap::getContainer()->get('content-type-descriptor-manager');
     }
 
     /**
@@ -122,7 +110,7 @@ class WordpressContentTypeHelper
         if (array_key_exists($contentType, $map)) {
             return $map[$contentType];
         } else {
-            $mgr = Bootstrap::getContainer()->get('content-type-descriptor-manager');
+            $mgr = self::getContentTypeManager();
             $message = vsprintf('Content-type \'%s\' is not supported.', [$contentType]);
             /**
              * @var ContentTypeManager $mgr
@@ -142,5 +130,39 @@ class WordpressContentTypeHelper
 
             return $contentType;
         }
+    }
+
+    public static function getEditUrl(SubmissionEntity $submission) {
+        /**
+         * @var ContentTypeAbstract $ctHandler
+         */
+        $ctHandler = self::getContentTypeManager()->getHandler($submission->getContentType());
+
+        if ($ctHandler instanceof ContentTypeAbstract) {
+            $tail = '';
+            switch ($ctHandler->getBaseType()) {
+                case 'post':
+                    $tail = vsprintf('/post.php?post=%s&action=edit', [$submission->getTargetId()]);
+                    break;
+                case 'taxonomy':
+                    $tail =  '/term.php?taxonomy=category&tag_ID=2';
+                    break;
+                default:
+                    return '';
+            }
+
+            return get_admin_url($submission->getTargetBlogId(), $tail);
+        } else {
+            Bootstrap::getLogger()->warning(
+                vsprintf(
+                    'Requested edit URI for unknown content-type \'%s\'',
+                    [
+                        $submission->getContentType()
+                    ]
+                )
+            );
+            return '';
+        }
+
     }
 }
