@@ -2,8 +2,8 @@
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
-Tested up to: 4.8.1
-Stable tag: 1.6.1
+Tested up to: 4.8.2
+Stable tag: 1.6.2
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -58,6 +58,13 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+
+= 1.6.2 =
+* Fixed issue if site doesn't have `administrator` role.
+* Fixed title for `Download` button.
+* Fixed issue when download cron crashes on any download error.
+* Added ability to reinstall custom cron jobs automatically.
+* Added links to translation edit page on translation widget (edit page).
 
 = 1.6.1 =
 * Improved upload to smartling flow when post doesn't have any revision. Before it required to submit post 2 times (the 1st submit created revision, the 2nd submitted post to smartling). Now it works seamles, you should not work does post have revisions or no
