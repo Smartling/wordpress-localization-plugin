@@ -2,7 +2,6 @@
 
 namespace Smartling\ContentTypes;
 
-use Smartling\Bootstrap;
 use Smartling\ContentTypes\ConfigParsers\TermTypeConfigParser;
 use Smartling\Helpers\StringHelper;
 
@@ -74,9 +73,28 @@ class CustomTaxonomyType extends TermBasedContentTypeAbstract
                 ->addArgument($di->getDefinition('manager.submission'))
                 ->addArgument($di->getDefinition('site.cache'))
                 ->addMethodCall('setDetectChangesHelper', [$di->getDefinition('detect-changes.helper')])
-                ->addMethodCall('setTaxonomy', [ static::getSystemName() ]);
+                ->addMethodCall('setTaxonomy', [static::getSystemName()]);
             $di->get($tag)->register();
+            $this->registerJobWidget();
         }
+    }
+
+    protected function registerJobWidget()
+    {
+        $di = $this->getContainerBuilder();
+        $tag = 'wp.job.' . static::getSystemName();
+
+        $definition = $di
+            ->register($tag, 'Smartling\WP\Controller\ContentEditJobController')
+            ->addArgument($di->getDefinition('logger'))
+            ->addArgument($di->getDefinition('multilang.proxy'))
+            ->addArgument($di->getDefinition('plugin.info'))
+            ->addArgument($di->getDefinition('entity.helper'))
+            ->addArgument($di->getDefinition('manager.submission'))
+            ->addArgument($di->getDefinition('site.cache'))
+            ->addMethodCall('setServedContentType', [static::getSystemName()])
+            ->addMethodCall('setBaseType', ['taxonomy']);
+        $di->get($tag)->register();
     }
 
     /**

@@ -56,12 +56,12 @@ $data = $this->getViewData();
                     </td>
                 </tr>
                 <tr>
-                    <th><label for="name">Name</label></th>
-                    <td><input id="name" type="text"/></td>
+                    <th><label for="name-sm">Name</label></th>
+                    <td><input id="name-sm" type="text"/></td>
                 </tr>
                 <tr>
-                    <th><label for="description">Description</label</th>
-                    <td><textarea id="description" name="description"></textarea></td>
+                    <th><label for="description-sm">Description</label</th>
+                    <td><textarea id="description-sm" name="description"></textarea></td>
                 </tr>
                 <tr>
                     <th><label for="dueDate">Due Date</label</th>
@@ -82,6 +82,8 @@ $data = $this->getViewData();
                          * @var BulkSubmitTableWidget $data
                          */
                         $profile = $data['profile'];
+                        $contentType = $data['contentType'];
+
                         $locales = $profile->getTargetLocales();
                         \Smartling\Helpers\ArrayHelper::sortLocales($locales);
                         foreach ($locales as $locale) {
@@ -126,12 +128,26 @@ $data = $this->getViewData();
 
 
 </div>
-<?php global $post; ?>
+<?php
+$id = 0;
+$baseType = 'unknown';
+global $post;
+if ($post instanceof WP_Post) {
+    $id = $post->ID;
+    $baseType = 'post';
+} else {
+    global $tag;
+    if ($tag instanceof WP_Term) {
+        $id = $tag->term_id;
+        $baseType = 'taxonomy';
+    }
+}
+?>
 <script>
     (function ($) {
         var currentContent = {
-            'contentType': '<?= $post->post_type ?>',
-            'id': [<?= $post->ID ?>],
+            'contentType': '<?= $contentType ?>',
+            'id': [<?= $id ?>],
         };
 
         var Helper = {
@@ -259,7 +275,7 @@ $data = $this->getViewData();
                 },
                 jobForm: {
                     elements: [
-                        'name', 'description', 'dueDate', 'authorize'
+                        'name-sm', 'description-sm', 'dueDate', 'authorize'
                     ],
                     clear: function () {
                         this.elements.forEach(function (el) {
@@ -307,31 +323,32 @@ $data = $this->getViewData();
                 e.preventDefault();
                 var jobId = $('#jobSelect').val();
 
-
                 var locales = Helper.ui.getSelecterTargetLocales();
 
-                var createHiddenInput = function(name, value) {
+                var createHiddenInput = function (name, value) {
                     return createInput('hidden', name, value);
                 };
 
-                var createInput = function(type, name, value) {
+                var createInput = function (type, name, value) {
                     return '<input type="' + type + '" name="' + name + '" value="' + value + '" />';
                 };
 
-                $('#post').append(createHiddenInput('smartling[ids]', currentContent.id));
-                $('#post').append(createHiddenInput('smartling[locales]', locales));
-                $('#post').append(createHiddenInput('smartling[jobId]', jobId));
-                $('#post').append(createHiddenInput('smartling[authorize]', $('.authorize:checked').length > 0));
-                $('#post').append(createHiddenInput('sub', 'Upload'));
-                $('#post').submit();
+                var formSelector = 0 > $('#post').length ? 'post' : 'edittag';
+
+                $('#' + formSelector).append(createHiddenInput('smartling[ids]', currentContent.id));
+                $('#' + formSelector).append(createHiddenInput('smartling[locales]', locales));
+                $('#' + formSelector).append(createHiddenInput('smartling[jobId]', jobId));
+                $('#' + formSelector).append(createHiddenInput('smartling[authorize]', $('.authorize:checked').length > 0));
+                $('#' + formSelector).append(createHiddenInput('sub', 'Upload'));
+                $('#' + formSelector).submit();
             });
 
             $('#createJob').on('click', function (e) {
                 e.stopPropagation();
                 e.preventDefault();
 
-                var name = $('#name').val();
-                var description = $('#description').val();
+                var name = $('#name-sm').val();
+                var description = $('#description-sm').val();
                 var dueDate = $('#dueDate').val();
                 var locales = [];
                 var authorize = $('.authorize:checked').length > 0;
@@ -382,8 +399,8 @@ $data = $this->getViewData();
                     Helper.ui.createJobForm.hide();
                     Helper.ui.jobForm.lock();
                     $('#dueDate').val($('option[value=' + $('#jobSelect').val() + ']').attr('dueDate'));
-                    $('#name').val($('option[value=' + $('#jobSelect').val() + ']').html());
-                    $('#description').val($('option[value=' + $('#jobSelect').val() + ']').attr('description'));
+                    $('#name-sm').val($('option[value=' + $('#jobSelect').val() + ']').html());
+                    $('#description-sm').val($('option[value=' + $('#jobSelect').val() + ']').attr('description'));
                     Helper.ui.localeCheckboxes.clear();
                     Helper.ui.localeCheckboxes.set($('option[value=' + $('#jobSelect').val() + ']').attr('targetlocaleids'))
                 }

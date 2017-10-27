@@ -15,6 +15,7 @@ use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Jobs\UploadJob;
 use Smartling\Queue\Queue;
+use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
@@ -25,7 +26,7 @@ use Smartling\WP\WPHookInterface;
 class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
 {
 
-    const WIDGET_DATA_NAME = 'smartling_taxonomy_widget';
+    const WIDGET_DATA_NAME = 'smartling';
 
     protected $noOriginalFound = 'No original %s found';
 
@@ -164,16 +165,12 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
             return;
         }
         $termType = $_POST['taxonomy'];
-
         if (!in_array($termType, WordpressContentTypeHelper::getSupportedTaxonomyTypes())) {
             return;
         }
-
         $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
         $originalId = (int)$term_id;
-
         $this->detectChange($sourceBlog, $originalId, $termType);
-
         remove_action("edited_{$termType}", [$this, 'save']);
 
         if (!isset($_POST[self::WIDGET_DATA_NAME])) {
@@ -185,42 +182,63 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
         $locales = [];
 
         if (null !== $data && array_key_exists('locales', $data)) {
-
-            foreach ($data['locales'] as $blogId => $blogName) {
-                if (array_key_exists('enabled', $blogName) && 'on' === $blogName['enabled']) {
-                    $locales[$blogId] = $blogName['locale'];
+            $locales = [];
+            if (array_key_exists('locales', $data)) {
+                if (is_array($data['locales'])) {
+                    foreach ($data['locales'] as $_locale) {
+                        if (array_key_exists('enabled', $_locale) && 'on' === $_locale['enabled']) {
+                            $locales[] = (int)$_locale['blog'];
+                        }
+                    }
+                } elseif (is_string($data['locales'])) {
+                    $locales = explode(',', $data['locales']);
+                } else {
+                    return;
                 }
             }
+            $core = $this->getCore();
+            $translationHelper = $core->getTranslationHelper();
 
-            if (count($locales) > 0) {
-                $curBlogId = $this->getEntityHelper()
-                    ->getSiteHelper()
-                    ->getCurrentBlogId();
-
+            if (array_key_exists('sub', $_POST) && count($locales) > 0) {
+                $curBlogId = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
                 switch ($_POST['sub']) {
                     case 'Upload':
                         if (0 < count($locales)) {
-                            foreach ($locales as $blogId => $blogName) {
-                                $result =
-                                    $this->getCore()->createForTranslation(
-                                        $termType,
-                                        $curBlogId,
-                                        $term_id,
-                                        (int)$blogId,
-                                        $this->getEntityHelper()->getTarget($term_id, $blogId, $termType)
-                                    );
+                            foreach ($locales as $blogId) {
+                                $submission = $translationHelper->tryPrepareRelatedContent($this->getTaxonomy(), $sourceBlog, $originalId, (int)$blogId, false, $data['jobId']);
 
-                                $this->getLogger()->info(vsprintf(
-                                                             self::$MSG_UPLOAD_ENQUEUE_ENTITY,
-                                                             [
-                                                                 $termType,
-                                                                 $curBlogId,
-                                                                 $term_id,
-                                                                 (int)$blogId,
-                                                                 $result->getTargetLocale(),
-                                                             ]
-                                                         ));
+                                if (0 < $submission->getId()) {
+                                    $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+                                    $submission->setJobId($data['jobId']);
+                                    $submission = $core->getSubmissionManager()->storeEntity($submission);
+                                }
+
+                                $this->getLogger()->info(
+                                    vsprintf(
+                                        self::$MSG_UPLOAD_ENQUEUE_ENTITY_JOB,
+                                        [
+                                            $this->getTaxonomy(),
+                                            $sourceBlog,
+                                            $originalId,
+                                            (int)$blogId,
+                                            $submission->getTargetLocale(),
+                                            $submission->getJobId(),
+                                        ]
+                                    ));
                             }
+
+                            if ('true' === $data['authorize']) {
+                                $this->getLogger()
+                                    ->debug(vsprintf('Job \'%s\' should be authorized once upload is finished.', [$data['jobId']]));
+                                $key = 'AuthorizeJobList';
+                                $authorizeJobList = SimpleStorageHelper::get($key, []);
+                                if (!in_array($data['jobId'], $authorizeJobList)) {
+                                    $authorizeJobList[] = $data['jobId'];
+                                    SimpleStorageHelper::set($key, $authorizeJobList);
+                                }
+                            }
+
+                            $this->getLogger()->debug('Triggering Upload Job.');
                             do_action(UploadJob::JOB_HOOK_NAME);
                         }
                         break;

@@ -1,6 +1,7 @@
 <?php
 
 namespace Smartling\ContentTypes;
+
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 
 /**
