@@ -373,7 +373,7 @@ trait SmartlingCoreUploadTrait
         } catch (\Exception $e) {
             $proceedAuthException = function ($e) use (& $proceedAuthException) {
                 if (401 == $e->getCode()) {
-                    throw $e;
+                    $this->getLogger()->error(vsprintf('Invalid credentials. Check profile settings.',[]));
                 } elseif ($e->getPrevious() instanceof \Exception) {
                     $proceedAuthException($e->getPrevious());
                 }
@@ -495,8 +495,6 @@ trait SmartlingCoreUploadTrait
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                 $submission = $this->getSubmissionManager()->storeEntity($submission);
                 $this->applyXML($submission, $xml);
-
-                return;
             }
 
             $this->bulkSubmit($submission);

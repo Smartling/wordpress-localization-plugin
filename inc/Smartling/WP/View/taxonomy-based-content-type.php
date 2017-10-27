@@ -79,6 +79,7 @@ if (!empty($locales)) {
             $id = null;
             if (null !== $data['submissions']) {
                 foreach ($data['submissions'] as $item) {
+                    $editUrl = '';
                     /**
                      * @var SubmissionEntity $item
                      */
@@ -88,6 +89,7 @@ if (!empty($locales)) {
                         $id = $item->getId();
                         $percent = $item->getCompletionPercentage();
                         $status = $item->getStatusColor();
+                        $editUrl = \Smartling\Helpers\WordpressContentTypeHelper::getEditUrl($item);
                         break;
                     }
                 }
@@ -95,7 +97,7 @@ if (!empty($locales)) {
             ?>
             <div class="smtPostWidget-rowWrapper" style="display: inline-block; width: 100%;">
                 <div class="smtPostWidget-row">
-                    <?= WPAbstract::localeSelectionCheckboxBlock($nameKey, $locale->getBlogId(), $locale->getLabel(), $value); ?>
+                    <?= WPAbstract::localeSelectionCheckboxBlock($nameKey, $locale->getBlogId(), $locale->getLabel(), $value, true, $editUrl) ?>
                 </div>
                 <div class="smtPostWidget-progress" style="left: 15px;">
                     <?php if ($value) { ?>

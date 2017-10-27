@@ -99,6 +99,7 @@ $data = $this->getViewData();
                                     $locale->getLabel(),
                                     false,
                                     true,
+                                    '',
                                     [
                                         'data-smartling-locale' => $locale->getSmartlingLocale(),
                                     ]

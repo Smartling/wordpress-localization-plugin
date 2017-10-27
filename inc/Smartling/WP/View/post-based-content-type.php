@@ -59,6 +59,7 @@ if (!empty($locales)) {
             $enabled = true;
             if (null !== $data['submissions']) {
                 foreach ($data['submissions'] as $item) {
+                    $editUrl = '';
                     /**
                      * @var SubmissionEntity $item
                      */
@@ -69,6 +70,7 @@ if (!empty($locales)) {
                         $percent = 1 === $item->getIsCloned() ? 100 : $item->getCompletionPercentage();
                         $status =  $item->getStatusColor();
                         $enabled = 1 === $item->getIsCloned() ? false : true;
+                        $editUrl = \Smartling\Helpers\WordpressContentTypeHelper::getEditUrl($item);
                         break;
                     }
                 }
@@ -81,7 +83,8 @@ if (!empty($locales)) {
                         $locale->getBlogId(),
                         $locale->getLabel(),
                         (false === $enabled ? false : $value),
-                        $enabled
+                        $enabled,
+                        $editUrl
                     ); ?>
                 </div>
                 <div class="smtPostWidget-progress">
