@@ -51,7 +51,7 @@ if (!empty($locales)) {
 
         foreach ($locales as $locale) {
             $value = false;
-
+            $editUrl = '';
             $status = '';
             $submission = null;
             $statusValue = null;
@@ -59,7 +59,7 @@ if (!empty($locales)) {
             $enabled = true;
             if (null !== $data['submissions']) {
                 foreach ($data['submissions'] as $item) {
-                    $editUrl = '';
+
                     /**
                      * @var SubmissionEntity $item
                      */
