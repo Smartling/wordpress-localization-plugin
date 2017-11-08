@@ -2,6 +2,8 @@
 
 namespace Smartling\Helpers;
 
+use Smartling\Bootstrap;
+
 /**
  * Class AttachmentHelper
  * @package Smartling\Helpers
@@ -24,6 +26,7 @@ class AttachmentHelper
      */
     public static function cloneFile($originalFile, $targetPath, $overwrite = false)
     {
+        $logger = Bootstrap::getLogger();
         $result = [];
         if (!file_exists($originalFile) || !is_file($originalFile) || !is_readable($originalFile)) {
             $result [] = self::CANNOT_ACCESS_SOURCE_FILE;
@@ -34,13 +37,21 @@ class AttachmentHelper
         $targetFileName = pathinfo($originalFile, PATHINFO_BASENAME);
         $targetFile = pathinfo($targetPath, PATHINFO_DIRNAME) . DIRECTORY_SEPARATOR . $targetFileName;
         if (true === $overwrite && is_file($targetFile)) {
+            $logger->debug(vsprintf('Trying to remove existing target file :\'%s\'', [$targetFile]));
             if (false === unlink($targetFile)) {
+                $logger->debug(vsprintf('Failed removing target file :\'%s\'', [$targetFile]));
                 $result [] = self::CANNOT_OVERWRITE_EXISTING_FILE;
+            } else {
+                $logger->debug(vsprintf('Removed old target file :\'%s\'', [$targetFile]));
             }
         }
+
         if ([] === $result) {
             if (is_dir($originalFile) || false === copy($originalFile, $targetFile)) {
                 $result [] = self::FILE_NOT_COPIED;
+            } else {
+                $logger->debug(vsprintf('File \'%s\' copied successfully. Size = %d bytes.', [$originalFile,
+                                                                                              filesize($targetFile)]));
             }
         }
 
@@ -64,10 +75,11 @@ class AttachmentHelper
             }
 
             $checkPath .= DIRECTORY_SEPARATOR . $part;
-
             if (!is_dir($checkPath)) {
-
-                mkdir($checkPath);
+                Bootstrap::getLogger()->debug(vsprintf('Directory \'%s\' doesn\'t exists. Creating...', [$checkPath]));
+                $result = mkdir($checkPath, 0755, true);
+                Bootstrap::getLogger()->debug(vsprintf('Directory \'%s\' was%s created', [$checkPath,
+                                                                                          ($result ? '' : 'n\'t')]));
             }
         }
 
