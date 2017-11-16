@@ -104,8 +104,7 @@ class EntityHelper
      */
     public function getSettingsManager()
     {
-        return $this->getPluginInfo()
-                    ->getSettingsManager();
+        return $this->getPluginInfo()->getSettingsManager();
     }
 
     /**
