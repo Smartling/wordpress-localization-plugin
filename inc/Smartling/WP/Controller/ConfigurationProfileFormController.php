@@ -18,7 +18,6 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
     {
         $resPath = $this->getPluginInfo()->getUrl();
         $jsPath = $resPath . 'js/';
-        $cssFile = $resPath . 'css/smartling-connector-admin.css';
         $ver = $this->getPluginInfo()->getVersion();
         wp_enqueue_script('jquery');
         $jsFiles = [
@@ -28,8 +27,6 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
         foreach ($jsFiles as $jFile) {
             wp_enqueue_script($jFile, $jFile, ['jquery'], $ver, false);
         }
-        wp_register_style($cssFile, $cssFile, [], $ver, 'all');
-        wp_enqueue_style($cssFile);
     }
 
     public function register()
