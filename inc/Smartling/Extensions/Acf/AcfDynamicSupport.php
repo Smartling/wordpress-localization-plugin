@@ -7,6 +7,7 @@ use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Extensions\AcfOptionPages\ContentTypeAcfOption;
+use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -437,7 +438,6 @@ class AcfDynamicSupport
             $this->getLogger()->debug('ACF not detected.');
         }
     }
-
 
     public function run()
     {
