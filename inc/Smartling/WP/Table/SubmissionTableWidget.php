@@ -251,8 +251,10 @@ class SubmissionTableWidget extends SmartlingListTable
                 switch ($this->current_action()) {
                     case self::ACTION_UPLOAD:
                         foreach ($submissions as $submission) {
-                            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                            $this->manager->storeEntity($submission);
+                            if (0 === $submission->getIsLocked()) {
+                                $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+                                $this->manager->storeEntity($submission);
+                            }
                         }
                         break;
                     case self::ACTION_DOWNLOAD:

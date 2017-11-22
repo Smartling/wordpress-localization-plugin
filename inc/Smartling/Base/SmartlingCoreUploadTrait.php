@@ -327,7 +327,8 @@ trait SmartlingCoreUploadTrait
                 [
                     'status'    => [SubmissionEntity::SUBMISSION_STATUS_NEW],
                     'file_uri'  => [$submission->getFileUri()],
-                    'is_cloned' => 0,
+                    'is_cloned' => [0],
+                    'is_locked' => [0],
                 ]
             );
 
@@ -351,7 +352,7 @@ trait SmartlingCoreUploadTrait
         } catch (\Exception $e) {
             $proceedAuthException = function ($e) use (& $proceedAuthException) {
                 if (401 == $e->getCode()) {
-                    $this->getLogger()->error(vsprintf('Invalid credentials. Check profile settings.',[]));
+                    $this->getLogger()->error(vsprintf('Invalid credentials. Check profile settings.', []));
                 } elseif ($e->getPrevious() instanceof \Exception) {
                     $proceedAuthException($e->getPrevious());
                 }
@@ -370,6 +371,13 @@ trait SmartlingCoreUploadTrait
      */
     public function sendForTranslationBySubmission(SubmissionEntity $submission)
     {
+        if (1 === $submission->getIsLocked()) {
+            $this->getLogger()
+                ->debug(vsprintf('Requested re-upload of protected submission id=%s. Skipping.', [$submission->getId()]));
+
+            return;
+        }
+
         $this->getLogger()->debug(
             vsprintf(
                 'Preparing to send submission id = \'%s\' (blog = \'%s\', content = \'%s\', type = \'%s\').',
@@ -424,8 +432,10 @@ trait SmartlingCoreUploadTrait
             $submission->getFileUri();
             $submission = $this->getSubmissionManager()->storeEntity($submission);
         } else {
-            $submission->setStatus($status);
-            $submission->setLastError('');
+            if (0 === $submission->getIsLocked()) {
+                $submission->setStatus($status);
+                $submission->setLastError('');
+            }
         }
 
         return $this->getSubmissionManager()->storeEntity($submission);
@@ -458,7 +468,12 @@ trait SmartlingCoreUploadTrait
             // generate URI
             $submission->getFileUri();
         } else {
-            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+            if (0 === $submission->getIsLocked()) {
+                $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+            } else {
+                $this->getLogger()
+                    ->debug(vsprintf('Requested re-upload of protected submission id=%s. Skipping.', [$submission->getId()]));
+            }
         }
 
         $isCloned = true === $clone ? 1 : 0;

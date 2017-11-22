@@ -31,7 +31,11 @@ class UploadJob extends JobAbstract
         $this->getLogger()->info('Started UploadJob.');
 
         do {
-            $entities = $this->getSubmissionManager()->find(['status' => [SubmissionEntity::SUBMISSION_STATUS_NEW]], 1);
+            $entities = $this->getSubmissionManager()->find(
+                [
+                    'status'    => [SubmissionEntity::SUBMISSION_STATUS_NEW],
+                    'is_locked' => [0],
+                ], 1);
 
             if (0 === count($entities)) {
                 break;

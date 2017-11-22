@@ -282,8 +282,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
             /**
              * @var SmartlingCore $ep
              */
-            $ep = Bootstrap::getContainer()
-                ->get('entrypoint');
+            $ep = Bootstrap::getContainer()->get('entrypoint');
 
             if (is_array($submissions) && count($locales) > 0) {
                 $action = $this->getFromSource('action', 'send');

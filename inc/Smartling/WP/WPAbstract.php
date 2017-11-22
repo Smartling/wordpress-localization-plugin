@@ -308,7 +308,7 @@ abstract class WPAbstract
         if (false === $enabled) {
             $checkboxAttributes = array_merge($checkboxAttributes, [
                 'disabled' => 'disabled',
-                'title'    => 'Content is cloned',
+                'title'    => 'Content is cloned or locked',
                 'class'    => 'nomcheck',
             ]);
         }
