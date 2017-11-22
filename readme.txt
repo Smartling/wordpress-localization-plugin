@@ -62,11 +62,15 @@ Additional information on the Smartling Connector for WordPress can be found [he
 = 1.6.4 =
 
 **Note, that [Smartling ACF localization](https://wordpress.org/plugins/smartling-acf-localization) plugin is not supported anymore. Now it is a part of Smartling-connector plugin.**
+
 **This version may require manual migration steps from previous versions. Please read and following steps below:**
+
 * **If [Smartling ACF localization](https://wordpress.org/plugins/smartling-acf-localization) plugin is used then deactivate Smartling-connector plugin *BEFORE* upgrading to avoid Smartling-connector cron jobs execution.**
 * **If [Smartling ACF localization](https://wordpress.org/plugins/smartling-acf-localization) plugin is used then deactivate it.**
 * **Upgrade smartling-connector.**
 * **If [Smartling ACF localization](https://wordpress.org/plugins/smartling-acf-localization) plugin was used - remove it.**
+
+**Improvements**:
 
 * Fixed possible issue when ACF image types become broken.
 * Added ACL Localization plugin as a part of smartling-connector plugin to fix possible issue when translation becomes broken if ACF Localization plugin is disabled or removed.
