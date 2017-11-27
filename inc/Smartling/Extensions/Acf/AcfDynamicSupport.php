@@ -597,7 +597,7 @@ class AcfDynamicSupport
                 case 'tab':
                     break;
                 default:
-                    $this->getDi()->get('logger')->debug(vsprintf('Got unknown type: %s', [$definition['type']]));
+                    $this->getLogger()->debug(vsprintf('Got unknown type: %s', [$definition['type']]));
             }
         }
     }
