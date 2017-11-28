@@ -6,6 +6,7 @@ use Monolog\Handler\NullHandler;
 use Smartling\Base\ExportedAPI;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\SimpleStorageHelper;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -20,7 +21,6 @@ trait DITrait
 
     /**
      * Initializes DI Container from YAML config file
-     *
      * @throws SmartlingConfigException
      */
     protected static function initContainer()
@@ -54,7 +54,17 @@ trait DITrait
          */
         do_action(ExportedAPI::ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT, self::$containerInstance);
 
-        self::$loggerInstance = $container->get('logger');
+        $logger = $container->get('logger');
+        $logger->pushProcessor(function ($record) {
+            $record['context'] =
+                array_merge(
+                    $record['context'],
+                    LogContextMixinHelper::getContextMixin()
+                );
+
+            return $record;
+        });
+        self::$loggerInstance = $logger;
     }
 
     private static function handleLoggerConfiguration()
