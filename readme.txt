@@ -2,8 +2,8 @@
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
-Tested up to: 4.9
-Stable tag: 1.6.7
+Tested up to: 4.9.1
+Stable tag: 1.6.8
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -58,6 +58,12 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+
+= 1.6.8 =
+* Fixed possible issue when Translation Lock functionality is broken.
+* Fixed possible issue when Cloning functionality is broken.
+* Improved functionality that works with temporary files.
+* Added automatic detection of post type if delete_post(, true) is used for proper handling of before_delete_post hook
 
 = 1.6.7 =
 * Fixed possible fatal error when non standard ACF plugin field type is used.
