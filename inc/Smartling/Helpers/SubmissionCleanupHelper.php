@@ -170,6 +170,11 @@ class SubmissionCleanupHelper implements WPHookInterface
             $currentBlogId = $this->getSiteHelper()->getCurrentBlogId();
             $this->getLogger()->debug(vsprintf('Post id=%s is going to be deleted in blog=%s', [$postId, $currentBlogId]));
             global $post_type;
+
+            if (is_null($post_type)) {
+                $post_type = get_post($postId)->post_type;
+            }
+
             $this->lookForSubmissions($post_type, $currentBlogId, (int)$postId);
         } catch (EntityNotFoundException $e) {
 
