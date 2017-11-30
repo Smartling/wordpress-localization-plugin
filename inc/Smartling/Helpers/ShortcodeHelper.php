@@ -112,7 +112,7 @@ class ShortcodeHelper implements WPHookInterface
      */
     private function restoreShortcodeHandler()
     {
-        $this->getLogger()->debug(vsprintf('Restoring original shortcode handlers', []));
+        //$this->getLogger()->debug(vsprintf('Restoring original shortcode handlers', []));
         if (null !== $this->getInitialShortcodeHandlers()) {
             $this->setShortcodeAssignments($this->getInitialShortcodeHandlers());
             $this->setInitialShortcodeHandlers(null);
@@ -332,12 +332,12 @@ class ShortcodeHelper implements WPHookInterface
 
     private function replaceHandlerForApplying(array $shortcodeList)
     {
-        $this->getLogger()->debug(
-            vsprintf(
-                'Replacing handler for shortcode applying translation to %s::%s for shortcodes %s',
-                [__CLASS__, 'shortcodeHandler', implode(';', $shortcodeList)]
-            )
-        );
+        //$this->getLogger()->debug(
+        //    vsprintf(
+        //        'Replacing handler for shortcode applying translation to %s::%s for shortcodes %s',
+        //        [__CLASS__, 'shortcodeHandler', implode(';', $shortcodeList)]
+        //    )
+        //);
         $this->replaceShortcodeHandler($shortcodeList, 'shortcodeApplyerHandler');
     }
 
@@ -372,19 +372,19 @@ class ShortcodeHelper implements WPHookInterface
         $detectedShortcodes = $this->getRegisteredShortcodes();
 
 
-        $this->getLogger()->debug(
-            vsprintf(
-                'Got string for translation looking for shortcodes: \'%s\'',
-                [
-                    implode('\'; \'', $detectedShortcodes),
-                ]
-            )
-        );
+        //$this->getLogger()->debug(
+        //    vsprintf(
+        //        'Got string for translation looking for shortcodes: \'%s\'',
+        //        [
+        //            implode('\'; \'', $detectedShortcodes),
+        //        ]
+        //    )
+        //);
         $this->replaceHandlerForMining($detectedShortcodes);
-        $this->getLogger()->debug(vsprintf('Starting processing shortcodes...', []));
+        //$this->getLogger()->debug(vsprintf('Starting processing shortcodes...', []));
         $string_m = do_shortcode($string);
         self::replaceCData($params->getNode(), $string_m);
-        $this->getLogger()->debug(vsprintf('Finished processing shortcodes.', []));
+        //$this->getLogger()->debug(vsprintf('Finished processing shortcodes.', []));
         foreach ($this->getSubNodes() as $node) {
             $this->getLogger()->debug(vsprintf('Adding subNode', []));
             $nodeCopy = $this->getParams()->getDom()->importNode($node, true);
@@ -400,12 +400,12 @@ class ShortcodeHelper implements WPHookInterface
     private function replaceHandlerForMining(array $shortcodeList)
     {
         $handlerName = 'uploadShortcodeHandler';
-        $this->getLogger()->debug(
-            vsprintf(
-                'Replacing handler for shortcode mining to %s::%s for shortcodes \'%s\'',
-                [__CLASS__, $handlerName, implode('\'; \'', $shortcodeList)]
-            )
-        );
+        //$this->getLogger()->debug(
+        //    vsprintf(
+        //        'Replacing handler for shortcode mining to %s::%s for shortcodes \'%s\'',
+        //        [__CLASS__, $handlerName, implode('\'; \'', $shortcodeList)]
+        //    )
+        //);
         $this->replaceShortcodeHandler($shortcodeList, $handlerName);
     }
 

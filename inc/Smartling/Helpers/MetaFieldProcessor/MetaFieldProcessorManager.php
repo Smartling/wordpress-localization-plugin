@@ -72,7 +72,7 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
     public function registerProcessor(MetaFieldProcessorInterface $handler)
     {
         $pattern = $handler->getFieldRegexp();
-        $this->getLogger()->debug(vsprintf('Adding to collection processor for pattern: \'%s\'', [$pattern]));
+        //$this->getLogger()->debug(vsprintf('Adding to collection processor for pattern: \'%s\'', [$pattern]));
         if ($this->collectionKeyExists($pattern)) {
             $this->removeFromCollection($pattern);
         }
@@ -152,11 +152,11 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
 
         $patterns = array_keys($registeredProcessors);
 
-        $this->getLogger()->debug(vsprintf('Looking for match for \'%s\' in : %s',[$contentType, var_export($patterns, true)]));
+        //$this->getLogger()->debug(vsprintf('Looking for match for \'%s\' in : %s',[$contentType, var_export($patterns, true)]));
 
         foreach ($patterns as $pattern) {
             if (preg_match(vsprintf('#%s#u', [$pattern]), $contentType)) {
-                $this->getLogger()->debug(vsprintf('Probing done successfully with pattern \'%s\' for \'%s\'...',[$pattern, $contentType]));
+                //$this->getLogger()->debug(vsprintf('Probing done successfully with pattern \'%s\' for \'%s\'...',[$pattern, $contentType]));
                 return $registeredProcessors[$pattern];
             } else {
                 //$this->getLogger()->debug(vsprintf('Probing failed with pattern \'%s\' for \'%s\'...',[$pattern, $contentType]));
