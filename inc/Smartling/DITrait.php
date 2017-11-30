@@ -64,6 +64,10 @@ trait DITrait
 
             return $record;
         });
+
+        $host = false === gethostname() ? 'unknown' : gethostname();
+        LogContextMixinHelper::addToContext('host', $host);
+
         self::$loggerInstance = $logger;
     }
 

@@ -200,6 +200,8 @@ class ContentSerializationHelper
             $filter['key']['seo'] = array_map('trim', explode(PHP_EOL, $profile->getFilterFlagSeo()));
             $filter['copy']['name'] = array_map('trim', explode(PHP_EOL, $profile->getFilterCopyByFieldName()));
             $filter['copy']['regexp'] = array_map('trim', explode(PHP_EOL, $profile->getFilterCopyByFieldValueRegex()));
+
+            LogContextMixinHelper::addToContext('projectId', $profile->getProjectId());
         }
 
         Bootstrap::getContainer()->setParameter('field.processor', $filter);

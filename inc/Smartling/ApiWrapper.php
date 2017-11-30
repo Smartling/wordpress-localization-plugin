@@ -13,6 +13,7 @@ use Smartling\File\FileApi;
 use Smartling\File\Params\DownloadFileParameters;
 use Smartling\File\Params\UploadFileParameters;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\RuntimeCacheHelper;
 use Smartling\Project\ProjectApi;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -142,7 +143,10 @@ class ApiWrapper implements ApiWrapperInterface
      */
     private function getConfigurationProfile(SubmissionEntity $submission)
     {
-        return $this->getSettings()->getSingleSettingsProfile($submission->getSourceBlogId());
+        $profile = $this->getSettings()->getSingleSettingsProfile($submission->getSourceBlogId());
+        LogContextMixinHelper::addToContext('projectId', $profile->getProjectId());
+
+        return $profile;
     }
 
     /**
