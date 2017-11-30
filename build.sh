@@ -39,6 +39,7 @@ find . -name "phpunit.xml*" -type f|xargs rm -Rf
 find . -name "composer" -type f|xargs rm -Rf
 find . -name "*.md" -type f|xargs rm -Rf
 find . -name "*travis*" -type f|xargs rm -Rf
+find . -name "*LICENSE*" -type f|xargs rm -Rf
 
 cd ./../../
 
@@ -54,6 +55,7 @@ rm -Rf ./logs/logfile*
 rm -Rf ./*.pid
 rm -Rf ./nginx*
 rm -Rf ./install-composer
+rm -Rf ./inc/third-party/bin
 
 zip -9 ./$BUILD_FILENAME -r ./*
 
