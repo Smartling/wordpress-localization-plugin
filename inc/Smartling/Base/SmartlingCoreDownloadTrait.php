@@ -19,6 +19,7 @@ trait SmartlingCoreDownloadTrait
                 $entity->getTargetId(),
             ]);
             $this->getLogger()->warning($msg);
+            return;
         }
         if (1 === $entity->getIsCloned()) {
             $msg = vsprintf('Triggered download of cloned entity. Target Blog: %s; Target Id: %s', [
@@ -26,6 +27,7 @@ trait SmartlingCoreDownloadTrait
                 $entity->getTargetId(),
             ]);
             $this->getLogger()->warning($msg);
+            return;
         }
         if (0 === $entity->getTargetId()) {
             //Fix for trying to download before send.
