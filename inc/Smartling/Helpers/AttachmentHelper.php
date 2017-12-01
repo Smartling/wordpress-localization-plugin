@@ -15,6 +15,12 @@ class AttachmentHelper
     const CANNOT_PREPARE_TARGET_PATH     = 'Cannot prepare target path.';
     const CANNOT_OVERWRITE_EXISTING_FILE = 'Cannot overwrite existing file.';
 
+    public static function checkIfTargetFileExists($originalFile, $targetPath) {
+        $targetFileName = pathinfo($originalFile, PATHINFO_BASENAME);
+        $targetFile = pathinfo($targetPath, PATHINFO_DIRNAME) . DIRECTORY_SEPARATOR . $targetFileName;
+        return file_exists($targetFile) && is_file($targetFile);
+    }
+
     /**
      * Creates file clone on filesystem
      *
@@ -36,7 +42,7 @@ class AttachmentHelper
         }
         $targetFileName = pathinfo($originalFile, PATHINFO_BASENAME);
         $targetFile = pathinfo($targetPath, PATHINFO_DIRNAME) . DIRECTORY_SEPARATOR . $targetFileName;
-        if (true === $overwrite && is_file($targetFile)) {
+        if (true === $overwrite && self::checkIfTargetFileExists($originalFile, $targetPath)) {
             $logger->debug(vsprintf('Trying to remove existing target file :\'%s\'', [$targetFile]));
             if (false === unlink($targetFile)) {
                 $logger->debug(vsprintf('Failed removing target file :\'%s\'', [$targetFile]));
