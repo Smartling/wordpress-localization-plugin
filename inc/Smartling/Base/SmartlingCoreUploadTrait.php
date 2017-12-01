@@ -15,6 +15,7 @@ use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
 use Smartling\Helpers\SiteHelper;
+use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
@@ -176,6 +177,8 @@ trait SmartlingCoreUploadTrait
         } catch (BlogNotFoundException $e) {
             $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent blog.');
             $this->handleBadBlogId($submission);
+        } catch (NothingFoundForTranslationException $e) {
+            return '';
         } catch (Exception $e) {
             $this->getSubmissionManager()
                 ->setErrorMessage($submission, vsprintf('Error occurred: %s', [$e->getMessage()]));
@@ -188,7 +191,11 @@ trait SmartlingCoreUploadTrait
         $messages = [];
         try {
             $this->prepareFieldProcessorValues($submission);
-            $translation = XmlEncoder::xmlDecode($xml, $submission);
+            if ('' === $xml) {
+                $translation = [];
+            } else {
+                $translation = XmlEncoder::xmlDecode($xml, $submission);
+            }
             $original = $this->readSourceContentWithMetadataAsArray($submission);
             $translation = $this->getFieldsFilter()->processStringsAfterDecoding($translation);
             $translation = $this->getFieldsFilter()->applyTranslatedValues($submission, $original, $translation);
@@ -321,6 +328,18 @@ trait SmartlingCoreUploadTrait
             $xml = '';
 
             /**
+             * Submission may have not saved value for 'file_uri'
+             * So need to check and fix it save the submission BEFORE next step.
+             */
+            $submissionFields = $submission->toArray(false);
+            if (StringHelper::isNullOrEmpty($submissionFields['file_uri'])) {
+                // Generating fileUri
+                $submission->getFileUri();
+                $submission = $this->getSubmissionManager()->storeEntity($submission);
+            }
+            unset ($submissionFields);
+
+            /**
              * Looking for other locales to send all at a time.
              */
             $submissions = $this->getSubmissionManager()->find(
@@ -340,11 +359,18 @@ trait SmartlingCoreUploadTrait
                 $this->prepareRelatedSubmissions($_submission);
                 $locales[] = $this->getSettingsManager()->getSmartlingLocaleBySubmission($_submission);
             }
+            $newStatus = SubmissionEntity::SUBMISSION_STATUS_FAILED;
 
-            $this->sendFile($submission, $xml, $locales);
+            if ('' !== $xml) {
+                $result = $this->sendFile($submission, $xml, $locales);
+
+                if (false !== $result) {
+                    $newStatus = SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS;
+                }
+            }
 
             foreach ($submissions as $_submission) {
-                $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
+                $_submission->setStatus($newStatus);
             }
 
             $this->getSubmissionManager()->storeSubmissions($submissions);
