@@ -3,6 +3,7 @@
 namespace Smartling\Base;
 
 use Monolog\Formatter\LineFormatter;
+use Smartling\Helpers\LogContextMixinHelper;
 
 /**
  * Class CustomLogLineFormatter
@@ -36,6 +37,7 @@ class CustomLogLineFormatter extends LineFormatter
     {
         if (is_null(self::$_requestId)) {
             self::$_requestId = uniqid();
+            LogContextMixinHelper::addToContext('requestId', self::$_requestId);
         }
 
         return self::$_requestId;
