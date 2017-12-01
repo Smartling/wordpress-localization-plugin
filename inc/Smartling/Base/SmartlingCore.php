@@ -126,15 +126,30 @@ class SmartlingCore extends SmartlingCoreAbstract
      */
     protected function sendFile(SubmissionEntity $submission, $xmlFileContent, array $smartlingLocaleList = [])
     {
-        $tmp_file = tempnam(sys_get_temp_dir(), '_smartling_temp_');
+        $workDir = sys_get_temp_dir();
 
-        file_put_contents($tmp_file, $xmlFileContent);
+        if (is_writable($workDir)) {
+            $tmp_file = tempnam($workDir, '_smartling_temp_');
+            $bytesWritten = file_put_contents($tmp_file, $xmlFileContent);
 
-        $result = $this->getApiWrapper()->uploadContent($submission, '', $tmp_file, $smartlingLocaleList);
-
-        unlink($tmp_file);
-
-        return $result;
+            if (0 === $bytesWritten) {
+                $this->getLogger()->warning('Nothing was written to temporary file.');
+                return false;
+            } else {
+                $tmpFileSize = filesize($tmp_file);
+                if ($tmpFileSize !== $bytesWritten || $tmpFileSize !== strlen($xmlFileContent)) {
+                    $this->getLogger()->warning('Expected size of temporary file doesn\'t equals to real.');
+                    return false;
+                } else {
+                    $result = $this->getApiWrapper()->uploadContent($submission, '', $tmp_file, $smartlingLocaleList);
+                    unlink($tmp_file);
+                    return $result;
+                }
+            }
+        } else {
+            $this->getLogger()->warning(vsprintf('Working directory : \'%s\' doesn\'t seen to be writable',[$workDir]));
+            return false;
+        }
     }
 
     /**
