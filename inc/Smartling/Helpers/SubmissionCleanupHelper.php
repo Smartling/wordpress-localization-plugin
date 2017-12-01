@@ -179,6 +179,8 @@ class SubmissionCleanupHelper implements WPHookInterface
         } catch (EntityNotFoundException $e) {
 
         }
+
+        add_action('before_delete_post', [$this, 'beforeDeletePostHandler']);
     }
 
     /**
@@ -202,8 +204,13 @@ class SubmissionCleanupHelper implements WPHookInterface
             )
         );
 
-        $this->lookForSubmissions($taxonomy, $currentBlogId, (int)$term);
+        try {
+            $this->lookForSubmissions($taxonomy, $currentBlogId, (int)$term);
+        } catch (\Exception $e) {
 
+        }
+        
+        add_action('pre_delete_term', [$this, 'preDeleteTermHandler']);
     }
 
     /**
