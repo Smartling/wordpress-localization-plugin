@@ -453,7 +453,7 @@ class AcfDynamicSupport
         if (0 < count($this->rules['copy'])) {
             foreach ($this->rules['copy'] as $key) {
                 $rules[] = [
-                    'pattern' => vsprintf('%s', [$this->buildFullFieldName($key)]),
+                    'pattern' => vsprintf('^meta\/%s$', [$this->buildFullFieldName($key)]),
                     'action'  => 'copy',
                 ];
 
@@ -463,7 +463,7 @@ class AcfDynamicSupport
         if (0 < count($this->rules['skip'])) {
             foreach ($this->rules['skip'] as $key) {
                 $rules[] = [
-                    'pattern' => vsprintf('%s', [$this->buildFullFieldName($key)]),
+                    'pattern' => vsprintf('^meta\/%s$', [$this->buildFullFieldName($key)]),
                     'action'  => 'skip',
                 ];
 
@@ -473,7 +473,7 @@ class AcfDynamicSupport
         if (0 < count($this->rules['localize'])) {
             foreach ($this->rules['localize'] as $key) {
                 $rules[] = [
-                    'pattern'       => vsprintf('%s', [$this->buildFullFieldName($key)]),
+                    'pattern'       => vsprintf('^meta\/%s$', [$this->buildFullFieldName($key)]),
                     'action'        => 'localize',
                     'value'         => 'reference',
                     'serialization' => $this->getSerializationTypeByKey($key),
