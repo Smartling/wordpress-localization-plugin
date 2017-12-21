@@ -233,8 +233,6 @@ class AcfDynamicSupport
         $args = [
             'posts_per_page'   => 100000,
             'post_type'        => 'acf-field-group',
-            'orderby'          => 'menu_order title',
-            'order'            => 'ASC',
             'suppress_filters' => false,
             'post_status'      => ['publish'],
         ];
@@ -255,8 +253,6 @@ class AcfDynamicSupport
         $args = [
             'posts_per_page'   => 100000,
             'post_type'        => 'acf-field',
-            'orderby'          => 'menu_order title',
-            'order'            => 'ASC',
             'suppress_filters' => false,
             'post_status'      => ['publish'],
             'post_parent'      => $parentId,
