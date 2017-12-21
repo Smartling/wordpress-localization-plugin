@@ -381,7 +381,7 @@ class Bootstrap
         $new_version = '0.0.0';
 
         $info = get_site_transient('update_plugins');
-        if (is_object($info)) {
+        if (is_object($info) && isset($info->response)) {
             $response = $info->response;
             if (is_array($response)) {
                 foreach ($response as $definition) {
