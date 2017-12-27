@@ -17,3 +17,4 @@ logs/logfile*
 .tags
 .tags1
 recover.php
+tests/IntegrationTests/src

@@ -1,0 +1,16 @@
+<phpunit
+        bootstrap="./IntegrationTests/includes/bootstrap.php"
+        backupGlobals="false"
+        colors="true"
+        beStrictAboutTestsThatDoNotTestAnything="true"
+>
+    <php>
+        <const name="WP_TESTS_MULTISITE" value="1" />
+    </php>
+    <testsuites>
+        <testsuite name="smartling-connector WordPress integration test">
+            <directory suffix="Integration.php" phpVersion="5.5.0" phpVersionOperator=">=">./IntegrationTests/tests</directory>
+        </testsuite>
+    </testsuites>
+
+</phpunit>
