@@ -126,6 +126,29 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
+                        <th colspan="2" class="center">ACF Runtime settings</th>
+                    </tr>
+                    <tr>
+                        <th><label for="disableDBLookup">Disable ACF configuration database lookup (not recommended)</label></th>
+                        <td>
+                            <?=
+                            \Smartling\Helpers\HtmlTagGeneratorHelper::tag(
+                                'select',
+                                \Smartling\Helpers\HtmlTagGeneratorHelper::renderSelectOptions(
+                                    \Smartling\Helpers\SimpleStorageHelper::get(\Smartling\Bootstrap::DISABLE_ACF_DB_LOOKUP, 0),
+                                    [
+                                        0 => 'No',
+                                        1 => 'Yes',
+                                    ]),
+                                [
+                                    'id'   => 'disableDBLookup',
+                                    'name' => 'disableDBLookup',
+                                ]
+                            );
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
                         <th colspan="2" class="center">User Interface Customizations</th>
                     </tr>
                     <tr>

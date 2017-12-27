@@ -25,7 +25,8 @@
                     'selfCheckDisabled': $('#selfCheckDisabled').val(),
                     'disableLogging': $('#disableLogging').val(),
                     'loggingPath': $('#loggingPath').val(),
-                    'pageSize': $('#pageSize').val()
+                    'pageSize': $('#pageSize').val(),
+                    'disableDBLookup': $('#disableDBLookup').val()
                 }
             };
 

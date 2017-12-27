@@ -68,7 +68,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
             if (false === $rawValue) {
                 $message = vsprintf('Locales and/or Links are not set with multilingual press plugin.', []);
                 $this->getLogger()->critical('SettingsPage:Render ' . $message);
-                DiagnosticsHelper::addDiagnosticsMessage($message, true);
+                DiagnosticsHelper::addDiagnosticsMessage($message, false);
             } else {
                 foreach ($rawValue as $blogId => $item) {
                     $temp = [

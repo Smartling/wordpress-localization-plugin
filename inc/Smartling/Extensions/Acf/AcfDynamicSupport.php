@@ -9,6 +9,7 @@ use Smartling\Exception\SmartlingConfigException;
 use Smartling\Extensions\AcfOptionPages\ContentTypeAcfOption;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\EntityHelper;
+use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
 
@@ -414,18 +415,32 @@ class AcfDynamicSupport
         $this->getLogger()->debug('Checking if ACF presents...');
         if (true === $this->checkAcfTypes()) {
             $this->getLogger()->debug('ACF detected.');
-            $dbDefinitions = $this->collectDefinitions();
             $localDefinitions = $this->getLocalDefinitions();
-            if (false === $this->verifyDefinitions($localDefinitions, $dbDefinitions)) {
-                $url = admin_url('edit.php?post_type=acf-field-group&page=acf-settings-tools');
+
+            if (1 === (int) SimpleStorageHelper::get(Bootstrap::DISABLE_ACF_DB_LOOKUP, 0)) {
+                $definitions = $localDefinitions;
+                $url = admin_url('edit.php?post_type=acf-field-group&page=acf-tools');
                 $msg = [
-                    'ACF Configuration has been changed.',
-                    'Please update groups and fields definitions for all sites (As PHP generated code).',
-                    vsprintf('Use <strong><a href="%s">this</a></strong> page to generate export code and add it to your theme or extra plugin.', [$url]),
+                    'Automatic ACF support is disabled. Please ensure that you use relevant exported ACF configuration.',
+                    vsprintf('To export your ACF configuration click <strong><a href="%s">here</a></strong>',[$url]),
                 ];
                 DiagnosticsHelper::addDiagnosticsMessage(implode('<br/>', $msg));
+                $this->getLogger()->notice('Automatic ACF support is disabled.');
+            } else {
+                $dbDefinitions = $this->collectDefinitions();
+
+                if (false === $this->verifyDefinitions($localDefinitions, $dbDefinitions)) {
+                    $url = admin_url('edit.php?post_type=acf-field-group&page=acf-tools');
+                    $msg = [
+                        'ACF Configuration has been changed.',
+                        'Please update groups and fields definitions for all sites (As PHP generated code).',
+                        vsprintf('Use <strong><a href="%s">this</a></strong> page to generate export code and add it to your theme or extra plugin.', [$url]),
+                    ];
+                    DiagnosticsHelper::addDiagnosticsMessage(implode('<br/>', $msg));
+                }
+                $definitions = array_merge($localDefinitions, $dbDefinitions);
             }
-            $definitions = array_merge($localDefinitions, $dbDefinitions);
+
             $this->definitions = $definitions;
             $this->sortFields();
             $this->prepareFilters();

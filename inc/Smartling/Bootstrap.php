@@ -41,6 +41,8 @@ class Bootstrap
 
     const DISABLE_LOGGING = 'smartling_disable_logging';
 
+    const DISABLE_ACF_DB_LOOKUP = 'smartling_disable_db_lookup';
+
     const SMARTLING_CUSTOM_LOG_FILE = 'smartling_log_file';
 
     const SMARTLING_CUSTOM_PAGE_SIZE = 'smartling_ui_page_size';
@@ -259,12 +261,19 @@ class Bootstrap
             $selfCheckDisabled = (int)$data['selfCheckDisabled'];
             $disableLogging = (int)$data['disableLogging'];
             $logPath = $data['loggingPath'];
+            $disableACFDBLookup = (int) $data['disableDBLookup'];
             $defaultPageSize = Bootstrap::getPageSize(true);
             $rawPageSize = (int)$data['pageSize'];
             $pageSize = $rawPageSize < 1 ? $defaultPageSize : $rawPageSize;
 
             SimpleStorageHelper::set(Bootstrap::SELF_CHECK_IDENTIFIER, $selfCheckDisabled);
             SimpleStorageHelper::set(Bootstrap::DISABLE_LOGGING, $disableLogging);
+
+            if ($disableACFDBLookup === 0) {
+                SimpleStorageHelper::drop(self::DISABLE_ACF_DB_LOOKUP);
+            } else {
+                SimpleStorageHelper::set(self::DISABLE_ACF_DB_LOOKUP, $disableACFDBLookup);
+            }
 
             if ($pageSize === $defaultPageSize) {
                 SimpleStorageHelper::drop(self::SMARTLING_CUSTOM_PAGE_SIZE);
