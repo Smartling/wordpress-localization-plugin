@@ -52,9 +52,9 @@ class ImageTranslationIntegration extends \WP_UnitTestCase
         $profile = new ConfigurationProfileEntity($this->getLogger());
         $profile->setProfileName('testProfile');
         // todo: read from env
-        $profile->setProjectId('');
-        $profile->setUserIdentifier('');
-        $profile->setSecretKey('');
+        $profile->setProjectId(getenv('CRE_PROJECT_ID'));
+        $profile->setUserIdentifier(getenv('CRE_USER_IDENTIFIER'));
+        $profile->setSecretKey(getenv('CRE_TOKEN_SECRET'));
         $profile->setIsActive(1);
 
         $originalBlog = new Locale();
