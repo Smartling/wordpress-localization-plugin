@@ -146,11 +146,13 @@ installWordpress () {
     $WPCLI core install --url=$WP_INSTALLATION_DOMAIN --title=Test --admin_user=wp --admin_password=wp --admin_email=test@wp.org --skip-email
     $WPCLI core multisite-convert
     echo Creating sites...
-    SITES="spanish,french,russian,ukrainian"
+    # List of created sites is separated by ',' char
+    # Definition of each site has 3 fields: Site title, Smartling locale, Site slug all fields are separated by ':' char
+    export SITES="Spanish Site:es:es,French Site:fr-FR:fr,Russian Site:ru-RU:ru,Ukrainian Site:uk-UA:ua"
     IFS=',' read -a array <<< "$SITES"
     for site in "${array[@]}"
     do
-        $WPCLI site create --slug=$site --title="$site" --email=test@wp.org
+        $WPCLI site create --slug="${site##*\:}" --title="${site%%\:*}" --email=test@wp.org
     done
     DEPENDENCIES="multilingual-press;advanced-custom-fields;wordpress-seo"
     IFS=';' read -a array <<< "$DEPENDENCIES"
