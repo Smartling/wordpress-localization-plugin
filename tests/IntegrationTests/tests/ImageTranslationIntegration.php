@@ -17,12 +17,12 @@ use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 class ImageTranslationIntegration extends SmartlingUnitTestCaseAbstract
 {
 
-    protected $backupStaticAttributesBlacklist = array(
+    protected $backupStaticAttributesBlacklist = [
         __CLASS__ => [
             'imageId',
             'submissionId',
         ],
-    );
+    ];
 
     private static $imageId = 0;
 

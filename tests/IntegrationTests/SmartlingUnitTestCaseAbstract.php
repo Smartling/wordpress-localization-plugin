@@ -182,6 +182,18 @@ abstract class SmartlingUnitTestCaseAbstract extends \WP_UnitTestCase
         return $this->factory()->attachment->create_upload_object(DIR_TESTDATA . '/' . $filename);
     }
 
+    protected function createPost($post_type = 'post', $title = 'title', $content = 'content')
+    {
+        return $this->factory()->post->create_object(
+            [
+                'post_status'  => 'publish',
+                'post_title'   => $title,
+                'post_content' => $content,
+                'post_excerpt' => '',
+                'post_type'    => $post_type,
+            ]);
+    }
+
     protected function executeUpload()
     {
         $this->wpcli_exec('cron', 'event', 'run smartling-upload-task');
