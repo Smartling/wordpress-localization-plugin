@@ -66,7 +66,7 @@ class MetadataPartialVsFullIntegration extends SmartlingUnitTestCaseAbstract
          * @var ConfigurationProfileEntity $profile
          */
         $profile->setCleanMetadataOnDownload($newValue);
-        print_r($profile->toArray(false));
+        //print_r($profile->toArray(false));
         $profile = $this->getSettingsManager()->storeEntity($profile);
         self::commit_transaction();
     }
@@ -131,7 +131,7 @@ class MetadataPartialVsFullIntegration extends SmartlingUnitTestCaseAbstract
     /**
      * @depends testTranslatePostWithMetadata
      */
-    public function testMetadata()
+    private function incomplete_testMetadata()
     {
         $this->getLogger()->critical('**********');
         foreach (self::$meta['standard'] as $k => $v) {

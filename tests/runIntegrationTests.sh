@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# defining self path
 export CUR_DIR=$(pwd)
 export SCRIPT_DIR=$(dirname $0)
 cd $SCRIPT_DIR
@@ -57,14 +56,14 @@ while [ $# -gt 0 ];do
 done
 
 validateParams () {
-    [ "x$GITHUB_OAUTH_TOKEN" == "x" ] && { logit err "--oauth should be set"; usage; }
-    [ "x$WP_DB_HOST" == "x" ] && { logit warn "--db-host is not set. Using 'localhost'"; export WP_DB_HOST="localhost"; }
-    [ "x$WP_DB_USER" == "x" ] && { logit err "--db-user should be set"; usage; }
-    [ "x$WP_DB_PASS" == "x" ] && { logit err "--db-pass should be set"; usage; }
-    [ "x$WP_DB_NAME" == "x" ] && { logit err "--db-name should be set"; usage; }
-    [ "x$CRE_PROJECT_ID" == "x" ] && { logit err "--project-id should be set"; usage; }
-    [ "x$CRE_USER_IDENTIFIER" == "x" ] && { logit err "--user-ident should be set"; usage; }
-    [ "x$CRE_TOKEN_SECRET" == "x" ] && { logit err "--token-secret should be set"; usage; }
+    [ -z "$GITHUB_OAUTH_TOKEN" ] && { logit err "--oauth should be set"; usage; }
+    [ -z "$WP_DB_HOST" ] && { logit warn "--db-host is not set. Using 'localhost'"; export WP_DB_HOST="localhost"; }
+    [ -z "$WP_DB_USER" ] && { logit err "--db-user should be set"; usage; }
+    [ -z "$WP_DB_PASS" ] && { logit err "--db-pass should be set"; usage; }
+    [ -z "$WP_DB_NAME" ] && { logit err "--db-name should be set"; usage; }
+    [ -z "$CRE_PROJECT_ID" ] && { logit err "--project-id should be set"; usage; }
+    [ -z "$CRE_USER_IDENTIFIER" ] && { logit err "--user-ident should be set"; usage; }
+    [ -z "$CRE_TOKEN_SECRET" ] && { logit err "--token-secret should be set"; usage; }
 }
 
 validateParams
@@ -171,8 +170,10 @@ runTests () {
     cd $WP_INSTALL_DIR/wp-content/plugins/smartling-connector/inc/third-party/bin
     PHPUNIT_BIN="$(pwd)/phpunit"
     chmod +x $PHPUNIT_BIN
-    PHPUNIT_XML="$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/integration.xml"
-    $PHPUNIT_BIN -c $PHPUNIT_XML
+    PHPUNIT_XML_INTEGRATION="$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/integration.xml"
+    PHPUNIT_XML_UNIT="$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/phpunit.xml"
+    $PHPUNIT_BIN -c $PHPUNIT_XML_INTEGRATION
+    $PHPUNIT_BIN -c $PHPUNIT_XML_UNIT
 }
 
 cleanDatabase () {
@@ -195,5 +196,6 @@ installSmartlingConnector () {
 installWordpress
 installSmartlingConnector
 runTests
-mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/logfile.xml" "$PLUGIN_DEV_DIR/tests"
+mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/log-integration.xml" "$PLUGIN_DEV_DIR/tests"
+mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/log-unit-tests.xml" "$PLUGIN_DEV_DIR/tests"
 cleanDatabase

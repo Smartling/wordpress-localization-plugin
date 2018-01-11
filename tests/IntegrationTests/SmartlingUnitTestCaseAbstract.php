@@ -66,7 +66,7 @@ abstract class SmartlingUnitTestCaseAbstract extends \WP_UnitTestCase
      */
     protected function wpcli_exec($command, $subCommand, $params)
     {
-        echo shell_exec(
+        shell_exec(
             vsprintf(
                 '%s %s %s %s --path=%s',
                 [
@@ -221,8 +221,11 @@ abstract class SmartlingUnitTestCaseAbstract extends \WP_UnitTestCase
         $this->runCronTask(DownloadTranslationJob::JOB_HOOK_NAME);
     }
 
-    protected function createSubmission($contentType, $sourceId, $sourceBlogId = 1, $targetBlogId = 2) {
-        $submission = $this->getTranslationHelper()->prepareSubmission($contentType, $sourceBlogId, $sourceId, $targetBlogId);
+    protected function createSubmission($contentType, $sourceId, $sourceBlogId = 1, $targetBlogId = 2)
+    {
+        $submission = $this->getTranslationHelper()
+            ->prepareSubmission($contentType, $sourceBlogId, $sourceId, $targetBlogId);
+
         return $submission;
     }
 
@@ -245,6 +248,7 @@ abstract class SmartlingUnitTestCaseAbstract extends \WP_UnitTestCase
         if (0 < $this->count($result)) {
             return ArrayHelper::first($result);
         }
+
         return false;
     }
 
@@ -254,6 +258,7 @@ abstract class SmartlingUnitTestCaseAbstract extends \WP_UnitTestCase
         if (0 < $this->count($result)) {
             return ArrayHelper::first($result);
         }
+
         return false;
     }
 
