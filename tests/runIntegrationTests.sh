@@ -170,6 +170,7 @@ installWordpress () {
 runTests () {
     cd $WP_INSTALL_DIR/wp-content/plugins/smartling-connector/inc/third-party/bin
     PHPUNIT_BIN="$(pwd)/phpunit"
+    chmod +x $PHPUNIT_BIN
     PHPUNIT_XML="$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/integration.xml"
     $PHPUNIT_BIN -c $PHPUNIT_XML
 }
