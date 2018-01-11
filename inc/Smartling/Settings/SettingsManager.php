@@ -185,6 +185,8 @@ class SettingsManager extends EntityManagerAbstract
 
     public function storeEntity(ConfigurationProfileEntity $entity)
     {
+        $originalProfile = json_encode($entity->toArray(false));
+        $this->getLogger()->debug(vsprintf('Starting saving profile: %s', [$originalProfile]));
         $entityId = $entity->getId();
         $is_insert = in_array($entityId, [0, null], true);
         $fields = $entity->toArray(false);
@@ -203,11 +205,10 @@ class SettingsManager extends EntityManagerAbstract
                                                          ['limit' => 1]);
         }
 
-        // log store query before execution
-        $this->logQuery($storeQuery);
+        $this->getLogger()->debug(vsprintf('Saving profile: %s',[ $storeQuery ]));
         $result = $this->getDbal()->query($storeQuery);
         if (false === $result) {
-            $message = vsprintf('Failed saving submission entity to database with following error message: %s',
+            $message = vsprintf('Failed saving profile entity to database with following error message: %s',
                                 [$this->getDbal()->getLastErrorMessage()]);
             $this->getLogger()->error($message);
         }

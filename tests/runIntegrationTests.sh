@@ -136,6 +136,10 @@ installWPCLI () {
     curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
     chmod +x ./wp-cli.phar
     export WPCLI="$WP_INSTALL_DIR/wp-cli.phar"
+    if [ "root" == "$USER" ]; then
+        echo WARNING! Execution as root. Adding "--allow-root" to wp-cli requests...
+        export WPCLI="$WPCLI --allow-root"
+    fi
 }
 
 installWordpress () {
@@ -186,7 +190,9 @@ installSmartlingConnector () {
     $WPCLI cron event run wp_version_check --path="$WP_INSTALL_DIR"
 }
 
+
 installWordpress
 installSmartlingConnector
 runTests
+mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/logfile.xml" "$PLUGIN_DEV_DIR/tests"
 cleanDatabase

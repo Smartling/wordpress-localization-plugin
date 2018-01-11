@@ -4,7 +4,10 @@ namespace Smartling\Tests\IntegrationTests;
 
 use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\TranslationHelper;
+use Smartling\Jobs\DownloadTranslationJob;
+use Smartling\Jobs\UploadJob;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\Locale;
 use Smartling\Settings\SettingsManager;
@@ -63,7 +66,7 @@ abstract class SmartlingUnitTestCaseAbstract extends \WP_UnitTestCase
      */
     protected function wpcli_exec($command, $subCommand, $params)
     {
-        shell_exec(
+        echo shell_exec(
             vsprintf(
                 '%s %s %s %s --path=%s',
                 [
@@ -121,6 +124,11 @@ abstract class SmartlingUnitTestCaseAbstract extends \WP_UnitTestCase
         return $this->getContainer()->get($tag);
     }
 
+    protected function param($tag)
+    {
+        return $this->getContainer()->getParameter($tag);
+    }
+
     /**
      * @return LoggerInterface
      */
@@ -169,10 +177,13 @@ abstract class SmartlingUnitTestCaseAbstract extends \WP_UnitTestCase
         }
 
         $profile->setTargetLocales($tLocales);
-        $profile->setFilterSkip('_edit_lock\r\n_edit_last\r\n_yoast_wpseo_canonical\r\n_yoast_wpseo_redirect\r\npost_date\r\npost_date_gmt\r\npost_modified\r\npost_modified_gmt\r\nguid\r\ncomment_count\r\npost_name\r\npost_status\r\nhash\r\nID\r\nid\r\nterm_id\r\nslug\r\nterm_group\r\nterm_taxonomy_id\r\nsmartlingId\r\nattachment_id\r\ntestimonial_id\r\ntestimonials\r\n_wp_attachment_metadata.*\r\n_kraken.*\r\n_kraked.*');
-        $profile->setFilterCopyByFieldName('_yoast_wpseo_meta-robots-noindex\r\n_yoast_wpseo_meta-robots-nofollow\r\n_yoast_wpseo_meta-robots-adv\r\n_yoast_wpseo_opengraph-image\r\npost_parent\r\nparent\r\ncomment_status\r\nping_status\r\npost_password\r\nto_ping\r\npinged\r\npost_content_filtered\r\npost_type\r\npost_mime_type\r\npost_author\r\ntaxonomy\r\nbackground\r\neffective_date\r\nicon\r\nmenu_order\r\n_wp_page_template\r\n_marketo_sidebar\r\n_post_restored_from\r\n_wp_attached_file\r\nfile\r\nalign\r\nclass\r\nmime-type\r\nbar\r\nwidgetType\r\ncount\r\ndropdown\r\nhierarchical\r\nsortby\r\nexclude\r\nnumber\r\nfilter\r\ntaxonomy\r\nshow_date\r\nurl\r\nitems\r\nshow_summary\r\nshow_author\r\nshow_date');
-        $profile->setFilterCopyByFieldValueRegex('^\\d+([,\\.]\\d+)?$\r\n^(y|yes|n|no|on|off|default|in|out|html|cta\\d+|cta|any|null|text|surveys|choose|button)$\r\n^(http:|https:|field_)\r\n^(callout|card-list|card-icon-list|cta|cta-hero|cta-sidebar|image-text-list|list-icon|list|nav|template-list|embeds|html|basic|select|gold|platinum)$\r\n^(taxonomy|category|\\s+)$\r\n^(true|false|enabled|disabled|background-image)$');
-        $profile->setFilterFlagSeo('_yoast_wpseo_title\r\n_yoast_wpseo_bctitle\r\n_yoast_wpseo_metadesc\r\n_yoast_wpseo_metakeywords\r\n_yoast_wpseo_focuskw\r\n_yoast_wpseo_opengraph-description\r\n_yoast_wpseo_google-plus-description');
+
+        $filterParams = $this->param('field.processor.default');
+
+        $profile->setFilterSkip(implode(PHP_EOL, $filterParams['ignore']));
+        $profile->setFilterCopyByFieldName(implode(PHP_EOL, $filterParams['copy']['name']));
+        $profile->setFilterCopyByFieldValueRegex(implode(PHP_EOL, $filterParams['copy']['regexp']));
+        $profile->setFilterFlagSeo(implode(PHP_EOL, $filterParams['key']['seo']));
 
         return $profile;
     }
@@ -194,8 +205,57 @@ abstract class SmartlingUnitTestCaseAbstract extends \WP_UnitTestCase
             ]);
     }
 
+    private function runCronTask($task)
+    {
+        $this->wpcli_exec('cron', 'event', vsprintf('run %s', [$task]));
+    }
+
     protected function executeUpload()
     {
-        $this->wpcli_exec('cron', 'event', 'run smartling-upload-task');
+        $this->runCronTask(UploadJob::JOB_HOOK_NAME);
     }
+
+    protected function executeDownload()
+    {
+
+        $this->runCronTask(DownloadTranslationJob::JOB_HOOK_NAME);
+    }
+
+    protected function createSubmission($contentType, $sourceId, $sourceBlogId = 1, $targetBlogId = 2) {
+        $submission = $this->getTranslationHelper()->prepareSubmission($contentType, $sourceBlogId, $sourceId, $targetBlogId);
+        return $submission;
+    }
+
+    /**
+     * @return ContentHelper
+     */
+    protected function getContentHelper()
+    {
+        /**
+         * @var ContentHelper $contentHelper
+         */
+        $contentHelper = $this->get('content.helper');
+
+        return $contentHelper;
+    }
+
+    public function getProfileById($id)
+    {
+        $result = $this->getSettingsManager()->getEntityById($id);
+        if (0 < $this->count($result)) {
+            return ArrayHelper::first($result);
+        }
+        return false;
+    }
+
+    public function getSubmissionById($id)
+    {
+        $result = $this->getSubmissionManager()->getEntityById($id);
+        if (0 < $this->count($result)) {
+            return ArrayHelper::first($result);
+        }
+        return false;
+    }
+
+
 }

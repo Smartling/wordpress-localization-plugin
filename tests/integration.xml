@@ -12,5 +12,7 @@
             <directory suffix="Integration.php" phpVersion="5.5.0" phpVersionOperator=">=">./IntegrationTests/tests</directory>
         </testsuite>
     </testsuites>
-
+    <logging>
+        <log type="junit" target="logfile.xml" logIncompleteSkipped="false"/>
+    </logging>
 </phpunit>
