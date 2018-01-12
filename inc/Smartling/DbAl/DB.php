@@ -10,6 +10,7 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\SimpleStorageHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
@@ -43,13 +44,12 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
     private $needSqlLog = false;
 
     /**
-     * @param LoggerInterface $logger
      * @param bool            $needLogRawSql
      */
-    public function __construct(LoggerInterface $logger, $needLogRawSql)
+    public function __construct($needLogRawSql)
     {
         $this->needSqlLog = (bool)$needLogRawSql;
-        $this->logger = $logger;
+        $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->buildTableDefinitions();
         global $wpdb;
         $this->wpdb = $wpdb;
