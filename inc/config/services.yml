@@ -28,7 +28,6 @@ services:
     class: Smartling\ApiWrapper
     arguments:
       - "@manager.settings"
-      - "@logger"
       - "%plugin.name%"
       - "%plugin.version%"
   queue.db:

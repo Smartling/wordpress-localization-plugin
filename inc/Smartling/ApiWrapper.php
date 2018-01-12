@@ -15,6 +15,7 @@ use Smartling\File\Params\UploadFileParameters;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\RuntimeCacheHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Project\ProjectApi;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
@@ -123,12 +124,12 @@ class ApiWrapper implements ApiWrapperInterface
      * ApiWrapper constructor.
      *
      * @param SettingsManager $manager
-     * @param LoggerInterface $logger
      * @param string          $pluginName
      * @param string          $pluginVersion
      */
-    public function __construct(SettingsManager $manager, LoggerInterface $logger, $pluginName, $pluginVersion)
+    public function __construct(SettingsManager $manager, $pluginName, $pluginVersion)
     {
+        $logger = MonologWrapper::getLogger(get_called_class());
         $this->setSettings($manager);
         $this->setLogger($logger);
         $this->setPluginName($pluginName);
