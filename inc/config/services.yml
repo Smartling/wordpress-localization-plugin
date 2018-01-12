@@ -122,7 +122,6 @@ services:
   wp.settings:
     class: Smartling\WP\Controller\ConfigurationProfilesController
     arguments:
-      - "@logger"
       - "@multilang.proxy"
       - "@plugin.info"
       - "@entity.helper"
