@@ -32,8 +32,6 @@ services:
       - "%plugin.version%"
   queue.db:
     class: Smartling\Queue\Queue
-    arguments:
-      - "@logger"
     calls:
       - ["setDbal", ["@site.db"]]
 
