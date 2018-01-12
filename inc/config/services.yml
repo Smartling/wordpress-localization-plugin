@@ -104,7 +104,6 @@ services:
   multilang.proxy:
     class: Smartling\DbAl\MultiligualPressConnector
     arguments:
-      - "@logger"
       - "@site.helper"
       - "%multilang_plugins%"
 

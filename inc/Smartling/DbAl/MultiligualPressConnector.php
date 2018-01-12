@@ -14,6 +14,7 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 use wpdb;
 
@@ -129,12 +130,13 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
     /**
      * @inheritdoc
      */
-    public function __construct(LoggerInterface $logger, SiteHelper $helper, array $ml_plugin_statuses)
+    public function __construct(SiteHelper $helper, array $ml_plugin_statuses)
     {
         global $wpdb;
 
         $this->wpdb = $wpdb;
 
+        $logger = MonologWrapper::getLogger(get_called_class());
         parent::__construct($logger, $helper, $ml_plugin_statuses);
 
         if (false === $ml_plugin_statuses['multilingual-press-pro'] && defined('SMARTLING_CLI_EXECUTION') &&
