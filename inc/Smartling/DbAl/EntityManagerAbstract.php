@@ -154,9 +154,7 @@ abstract class EntityManagerAbstract
      */
     public function logQuery($query)
     {
-        if (true === $this->getDbal()->needRawSqlLog()) {
-            $this->getLogger()->debug($query);
-        }
+        $this->getLogger()->debug($query);
     }
 
     abstract protected function dbResultToEntity(array $dbRow);

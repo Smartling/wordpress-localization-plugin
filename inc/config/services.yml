@@ -76,8 +76,6 @@ services:
 
   site.db:
     class: Smartling\DbAl\DB
-    arguments:
-      - "%logger.smartling_log_raw_sql%"
 
   site.cache:
     class: Smartling\Helpers\Cache

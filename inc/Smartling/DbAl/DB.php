@@ -41,14 +41,11 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
      */
     private $logger;
 
-    private $needSqlLog = false;
-
     /**
-     * @param bool            $needLogRawSql
+     * DB constructor.
      */
-    public function __construct($needLogRawSql)
+    public function __construct()
     {
-        $this->needSqlLog = (bool)$needLogRawSql;
         $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->buildTableDefinitions();
         global $wpdb;
@@ -492,13 +489,5 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
     public function getLastErrorMessage()
     {
         return $this->getWpdb()->last_error;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function needRawSqlLog()
-    {
-        return $this->needSqlLog;
     }
 }
