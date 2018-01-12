@@ -56,8 +56,6 @@ services:
 
   factory.contentIO:
     class: Smartling\Processors\ContentEntitiesIOFactory
-    arguments:
-      - "@logger"
 
   manager.submission:
     class: Smartling\Submissions\SubmissionManager

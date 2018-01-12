@@ -6,6 +6,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
+use Smartling\MonologWrapper\MonologWrapper;
 
 /**
  * Class ContentEntitiesIOFactory
@@ -16,11 +17,12 @@ class ContentEntitiesIOFactory extends SmartlingFactoryAbstract
 {
 
     /**
-     * @param LoggerInterface $logger
+     * Instantiates ContentEntitiesIOFactory object.
      */
-    public function __construct(LoggerInterface $logger)
+    public function __construct()
     {
         $this->message = 'Requested entity wrapper for content-type \'%s\' is not registered. Called by: %s';
+        $logger = MonologWrapper::getLogger(get_called_class());
         parent::__construct($logger);
     }
 
