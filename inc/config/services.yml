@@ -142,7 +142,6 @@ services:
   wp.submissions:
     class: Smartling\WP\Controller\SubmissionsPageController
     arguments:
-      - "@logger"
       - "@multilang.proxy"
       - "@plugin.info"
       - "@entity.helper"
