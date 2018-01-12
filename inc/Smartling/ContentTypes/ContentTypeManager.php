@@ -4,6 +4,7 @@ namespace Smartling\ContentTypes;
 
 use Psr\Log\LoggerInterface;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Processors\SmartlingFactoryAbstract;
 
 /**
@@ -17,11 +18,10 @@ class ContentTypeManager extends SmartlingFactoryAbstract
 
     /**
      * ContentTypeManager constructor.
-     *
-     * @param LoggerInterface $logger
      */
-    public function __construct(LoggerInterface $logger)
+    public function __construct()
     {
+        $logger = MonologWrapper::getLogger(__CLASS__);
         parent::__construct($logger);
         $this->message = 'Requested descriptor for \'%s\' that doesn\'t exists.';
         $this->setAllowDefault(false);

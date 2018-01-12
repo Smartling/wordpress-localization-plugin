@@ -7,9 +7,6 @@ parameters:
 services:
   content-type-descriptor-manager:
     class: Smartling\ContentTypes\ContentTypeManager
-    arguments:
-      - "@logger"
-
 
   smartling.helper.relative-image-path-support:
     class: Smartling\Helpers\RelativeLinkedAttachmentCoreHelper
