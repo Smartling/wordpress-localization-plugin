@@ -194,7 +194,6 @@ services:
     class: Smartling\Services\BlogRemovalHandler
     calls:
       - [ "setApiWrapper", [ "@wrapper.sdk.api.smartling" ] ]
-      - [ "setLogger", [ "@logger" ] ]
       - [ "setSubmissionManager", [ "@manager.submission" ] ]
 
   service.invalid-character-cleaner:

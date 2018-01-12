@@ -4,6 +4,7 @@ namespace Smartling\Services;
 
 use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\WPHookInterface;
@@ -33,6 +34,13 @@ class BlogRemovalHandler implements WPHookInterface
      * @var SubmissionManager
      */
     private $submissionManager;
+
+    /**
+     * BlogRemovalHandler constructor.
+     */
+    public function __construct() {
+        $this->setLogger(MonologWrapper::getLogger(get_called_class()));
+    }
 
     /**
      * @return LoggerInterface
