@@ -77,7 +77,7 @@ class Bootstrap
     public static function getLogger()
     {
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-        $object = MonologWrapper::getLogger(__CLASS__);
+        $object = MonologWrapper::getLogger(get_called_class());
 
         if ($object instanceof LoggerInterface) {
             return $object;

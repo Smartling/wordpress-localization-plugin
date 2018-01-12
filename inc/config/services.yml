@@ -11,13 +11,11 @@ services:
   smartling.helper.relative-image-path-support:
     class: Smartling\Helpers\RelativeLinkedAttachmentCoreHelper
     arguments:
-      - "@logger"
       - "@entrypoint"
 
   smartling.helper.absolute-image-path-support:
       class: Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper
       arguments:
-        - "@logger"
         - "@entrypoint"
 
   helper.customMenu:

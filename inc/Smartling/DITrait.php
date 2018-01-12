@@ -56,7 +56,7 @@ trait DITrait
         do_action(ExportedAPI::ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT, self::$containerInstance);
 
         MonologWrapper::init(self::$containerInstance);
-        $logger = MonologWrapper::getLogger(__CLASS__);
+        $logger = MonologWrapper::getLogger(get_called_class());
         $logger->pushProcessor(function ($record) {
             $record['context'] =
                 array_merge(
