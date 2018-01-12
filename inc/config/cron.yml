@@ -31,7 +31,6 @@ services:
   cron.worker.submission-collector:
     class: Smartling\Jobs\SubmissionCollectorJob
     arguments:
-      - "@logger"
       - "@manager.submission"
       - "%cron.job.default_ttl%"
     calls:
