@@ -4,8 +4,14 @@ namespace Smartling\WP\Controller;
 
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
+use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\Helpers\Cache;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\EntityHelper;
+use Smartling\Helpers\PluginInfo;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
@@ -19,6 +25,19 @@ class CheckStatusController extends WPAbstract implements WPHookInterface
     const SUBMISSION_CHECKED_KEY = "smartling-page-checked-items";
     const CACHE_SLIDE_EXPIRATION = "PT1H";
     const CACHE_EXPIRATION       = 7200;
+
+    /**
+     * CheckStatusController constructor.
+     */
+    public function __construct(
+        LocalizationPluginProxyInterface $connector,
+        PluginInfo $pluginInfo,
+        EntityHelper $entityHelper,
+        SubmissionManager $manager,
+        Cache $cache) {
+        $logger = MonologWrapper::getLogger(get_called_class());
+        parent::__construct($logger, $connector, $pluginInfo, $entityHelper, $manager, $cache);
+    }
 
     public function wp_enqueue()
     {

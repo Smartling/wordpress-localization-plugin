@@ -153,7 +153,6 @@ services:
   wp.checkStatus:
       class: Smartling\WP\Controller\CheckStatusController
       arguments:
-        - "@logger"
         - "@multilang.proxy"
         - "@plugin.info"
         - "@entity.helper"
