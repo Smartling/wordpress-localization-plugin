@@ -39,7 +39,6 @@ services:
   entrypoint:
     class: Smartling\Base\SmartlingCore
     calls:
-      - [ "setLogger", [ "@logger" ]]
       - [ "setSubmissionManager", [ "@manager.submission" ]]
       - [ "setSiteHelper", [ "@site.helper" ]]
       - [ "setApiWrapper", [ "@wrapper.sdk.api.smartling" ]]
