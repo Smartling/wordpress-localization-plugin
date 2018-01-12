@@ -21,7 +21,6 @@ services:
   helper.customMenu:
     class: Smartling\Helpers\CustomMenuContentTypeHelper
     calls:
-      - [ "setLogger", [ "@logger" ] ]
       - [ "setSiteHelper", [ "@site.helper" ] ]
       - [ "setContentIoFactory", [ "@factory.contentIO" ] ]
 
