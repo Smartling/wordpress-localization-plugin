@@ -171,7 +171,6 @@ services:
   wp.bulkSubmit:
     class: Smartling\WP\Controller\BulkSubmitController
     arguments:
-      - "@logger"
       - "@multilang.proxy"
       - "@plugin.info"
       - "@entity.helper"

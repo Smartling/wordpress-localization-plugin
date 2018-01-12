@@ -1,10 +1,16 @@
 <?php
 namespace Smartling\WP\Controller;
 
+use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\Cache;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\View\BulkSubmitTableWidget;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -15,6 +21,19 @@ use Smartling\WP\WPHookInterface;
  */
 class BulkSubmitController extends WPAbstract implements WPHookInterface
 {
+
+    /**
+     * BulkSubmitController constructor.
+     */
+    public function __construct(
+        LocalizationPluginProxyInterface $connector,
+        PluginInfo $pluginInfo,
+        EntityHelper $entityHelper,
+        SubmissionManager $manager,
+        Cache $cache) {
+        $logger = MonologWrapper::getLogger(get_called_class());
+        parent::__construct($logger, $connector, $pluginInfo, $entityHelper, $manager, $cache);
+    }
 
     /**
      * @inheritdoc
