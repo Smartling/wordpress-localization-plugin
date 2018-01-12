@@ -222,7 +222,6 @@ services:
   fields-filter.helper:
     class: Smartling\Helpers\FieldsFilterHelper
     arguments:
-      - "@logger"
       - "@manager.settings"
 
   content-serialization.helper:
