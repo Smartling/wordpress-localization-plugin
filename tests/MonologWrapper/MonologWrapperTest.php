@@ -105,9 +105,9 @@ class MonologWrapperTest extends TestCase {
     $this->assertEquals('Smartling\MonologWrapper\Logger\LevelLogger', get_class($result2['logger']));
     $this->assertEquals('Smartling\MonologWrapper\Logger\LevelLogger', get_class($result3['logger']));
 
-    $this->assertEquals('default', $result1['logger']->getName());
-    $this->assertEquals('default', $result2['logger']->getName());
-    $this->assertEquals('default', $result3['logger']->getName());
+    $this->assertEquals('Smartling\Tests\MonologWrapper\Examples\Example1', $result1['logger']->getName());
+    $this->assertEquals('Smartling\Tests\MonologWrapper\Examples\Example2', $result2['logger']->getName());
+    $this->assertEquals('Smartling\Tests\MonologWrapper\Examples\Deep\Example3', $result3['logger']->getName());
   }
 
   /**

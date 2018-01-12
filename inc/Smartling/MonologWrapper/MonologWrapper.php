@@ -77,7 +77,8 @@ class MonologWrapper {
       }
 
       if (isset(self::$loggers['default'])) {
-        return self::$loggers['default'];
+        // Return logger with channel == class name.
+        return self::$loggers['default']->withName($name);
       }
     }
     elseif (isset(self::$loggers['default'])) {
