@@ -227,6 +227,5 @@ services:
   content-serialization.helper:
     class: Smartling\Helpers\ContentSerializationHelper
     arguments:
-    - "@logger"
     - "@content.helper"
     - "@fields-filter.helper"
