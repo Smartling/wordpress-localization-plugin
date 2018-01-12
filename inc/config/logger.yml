@@ -1,6 +1,5 @@
 parameters:
   logger.smartling_log_raw_sql: false
-  logger.smartling_verbose_output_for_xml_coding: true
   logger.smartling_verbose_metadata_io: true
 
   logger.channel: default

@@ -30,15 +30,12 @@ class XmlEncoder
 
     /**
      * Logs XML related message.
-     * Controlled by logger.smartling_verbose_output_for_xml_coding bool value
      *
      * @param $message
      */
     public static function logMessage($message)
     {
-        if (true === (bool)Bootstrap::getContainer()->getParameter('logger.smartling_verbose_output_for_xml_coding')) {
-            Bootstrap::getLogger()->debug($message);
-        }
+        Bootstrap::getLogger()->debug($message);
     }
 
     private static $magicComments = [
