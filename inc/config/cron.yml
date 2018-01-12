@@ -19,7 +19,6 @@ services:
   cron.worker.upload:
     class: Smartling\Jobs\UploadJob
     arguments:
-      - "@logger"
       - "@manager.submission"
       - "%cron.job.default_ttl%"
     calls:

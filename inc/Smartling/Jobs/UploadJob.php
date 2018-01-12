@@ -4,7 +4,9 @@ namespace Smartling\Jobs;
 
 use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 
 /**
  * Class UploadJob
@@ -14,6 +16,13 @@ class UploadJob extends JobAbstract
 {
 
     const JOB_HOOK_NAME = 'smartling-upload-task';
+
+    /**
+     * UploadJob constructor.
+     */
+    public function __construct(SubmissionManager $submissionManager, $workerTTL = self::WORKER_DEFAULT_TTL) {
+        parent::__construct(MonologWrapper::getLogger(get_called_class()), $submissionManager, $workerTTL);
+    }
 
     /**
      * @return string
