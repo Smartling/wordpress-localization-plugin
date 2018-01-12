@@ -15,8 +15,6 @@ services:
 
   manager.serializer:
     class: Smartling\Helpers\Serializers\SerializationManager
-    arguments:
-      - "@logger"
     calls:
       - [ "addSerializer", [ "@serializer.none" ] ]
       - [ "addSerializer", [ "@serializer.coma-separated" ] ]

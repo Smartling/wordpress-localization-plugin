@@ -34,18 +34,17 @@ class MonologWrapper {
    * @throws \Throwable
    */
   public static function init(ContainerBuilder $container) {
-    foreach ($container->getDefinitions() as $serviceId => $serviceDefinition) {
-      $service = $container->get($serviceId);
+      foreach ($container->getDefinitions() as $serviceId => $serviceDefinition) {
+          if ($serviceDefinition->getClass() == 'Smartling\MonologWrapper\Logger\LevelLogger') {
+              $service = $container->get($serviceId);
+              self::$loggers[$service->getName()] = $service;
+          }
+      };
 
-      if ($service instanceof Logger) {
-        self::$loggers[$service->getName()] = $service;
-      }
-    };
-
-    // Sort loggers: more longest names comes first.
-    uasort(self::$loggers, function($a, $b) {
-      return strlen($a->getName()) > strlen($b->getName()) ? -1 : 1;
-    });
+      // Sort loggers: more longest names comes first.
+      uasort(self::$loggers, function ($a, $b) {
+          return strlen($a->getName()) > strlen($b->getName()) ? -1 : 1;
+      });
   }
 
   /**

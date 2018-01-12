@@ -8,6 +8,7 @@ use Smartling\Exception\SmartlingConfigException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\SimpleStorageHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
@@ -54,7 +55,8 @@ trait DITrait
          */
         do_action(ExportedAPI::ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT, self::$containerInstance);
 
-        $logger = $container->get('logger');
+        MonologWrapper::init(self::$containerInstance);
+        $logger = MonologWrapper::getLogger(__CLASS__);
         $logger->pushProcessor(function ($record) {
             $record['context'] =
                 array_merge(

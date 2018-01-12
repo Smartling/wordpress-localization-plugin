@@ -44,8 +44,8 @@ class LevelLogger extends Logger {
   public function __construct($name, $level = LogLevel::DEBUG, $handlers = [], $processors = []) {
     parent::__construct($name, $handlers, $processors);
 
-    if (isset($this->levelMapping[$level])) {
-      $this->level = $this->levelMapping[$level];
+    if (isset($this->levelMapping[strtolower($level)])) {
+      $this->level = $this->levelMapping[strtolower($level)];
     }
   }
 

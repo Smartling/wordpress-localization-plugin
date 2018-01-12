@@ -12,7 +12,7 @@ parameters:
   logger.formatter.date: "Y-m-d H:i:s"
   logger.formatter.output.default: "[%%datetime%%] %%channel%%.%%level_name%%: %%message%% %%context%% %%extra%%\n"
   logger.formatter.output.short: "[%%datetime%%] %%level_name%%: %%message%%\n"
-  logger.formatter.output.short_with_request_id: "[%%datetime%%] %%extra.request_id%% %%level_name%%: %%message%%\n"
+  logger.formatter.output.short_with_request_id: "[%%datetime%%] %%extra.request_id%% %%level_name%% %%channel%%: %%message%%\n"
   logger.formatter.allow_multiline: true
 
 services:
@@ -41,8 +41,5 @@ services:
        - [ "setFormatter", [ "@fileLoggerLineFormatter" ]]
 
   logger:
-    class: Monolog\Logger
-    arguments:
-      - "%logger.channel%"
-    calls:
-      - [pushHandler, ["@fileLoggerHandlerRotatable"]]
+    class: Smartling\MonologWrapper\Logger\LevelLogger
+    arguments: ["%logger.channel%", "%logger.filehandler.standard.loglevel%", ["@fileLoggerHandlerRotatable"]]
