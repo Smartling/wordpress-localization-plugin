@@ -1,6 +1,4 @@
 parameters:
-  logger.smartling_verbose_metadata_io: true
-
   logger.channel: default
   logger.filehandler.standard.filename.default: %plugin.dir%/logs/logfile
   logger.filehandler.standard.filename: %plugin.dir%/logs/logfile

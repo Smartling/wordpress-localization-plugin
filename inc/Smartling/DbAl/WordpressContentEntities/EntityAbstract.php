@@ -229,7 +229,6 @@ abstract class EntityAbstract
     public function __construct(LoggerInterface $logger)
     {
         $this->logger = $logger;
-        $this->setLoggingSettingsKey('logger.smartling_verbose_metadata_io');
     }
 
     /**
