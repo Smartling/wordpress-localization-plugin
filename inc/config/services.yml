@@ -110,7 +110,6 @@ services:
   entity.helper:
     class: Smartling\Helpers\EntityHelper
     calls:
-      - [ "setLogger", [ "@logger" ]]
       - [ "setPluginInfo", [ "@plugin.info" ]]
       - [ "setConnector", [ "@multilang.proxy" ]]
       - [ "setSiteHelper", [ "@site.helper" ]]
