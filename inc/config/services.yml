@@ -204,8 +204,6 @@ services:
 
   extension.loader:
     class: Smartling\Extensions\ExtensionLoader
-    arguments:
-      - "@logger"
     calls:
       - [ "registerExtension", [ "@extension.translation_lock" ]]
 

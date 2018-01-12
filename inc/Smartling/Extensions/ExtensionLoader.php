@@ -2,6 +2,7 @@
 
 namespace Smartling\Extensions;
 
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Processors\SmartlingFactoryAbstract;
 
 /**
@@ -11,6 +12,15 @@ use Smartling\Processors\SmartlingFactoryAbstract;
  */
 class ExtensionLoader extends SmartlingFactoryAbstract
 {
+
+    /**
+     * ExtensionLoader constructor.
+     */
+    public function __construct()
+    {
+        $logger = MonologWrapper::getLogger(get_called_class());
+        parent::__construct($logger);
+    }
 
     public function registerExtension(ExtensionInterface $extension)
     {
