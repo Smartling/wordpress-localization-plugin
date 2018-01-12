@@ -7,6 +7,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
+use Smartling\MonologWrapper\MonologWrapper;
 
 /**
  * Class SiteHelper
@@ -35,11 +36,11 @@ class SiteHelper
     }
 
     /**
-     * @param LoggerInterface $logger
+     * Instantiates SiteHelper object.
      */
-    public function __construct(LoggerInterface $logger)
+    public function __construct()
     {
-        $this->_logger = $logger;
+        $this->_logger = MonologWrapper::getLogger(get_called_class());;
 
         $this->initialBlogId = $this->getCurrentBlogId();
     }
