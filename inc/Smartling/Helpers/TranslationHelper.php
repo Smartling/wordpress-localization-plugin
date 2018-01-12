@@ -7,6 +7,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\SmartlingDataReadException;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
@@ -27,6 +28,13 @@ class TranslationHelper
      * @var SubmissionManager
      */
     private $submissionManager;
+
+    /**
+     * TranslationHelper constructor.
+     */
+    public function __construct() {
+        $this->setLogger(MonologWrapper::getLogger(get_called_class()));
+    }
 
     /**
      * @return LoggerInterface
