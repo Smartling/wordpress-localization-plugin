@@ -133,7 +133,6 @@ services:
   wp.settings.edit:
     class: Smartling\WP\Controller\ConfigurationProfileFormController
     arguments:
-      - "@logger"
       - "@multilang.proxy"
       - "@plugin.info"
       - "@entity.helper"

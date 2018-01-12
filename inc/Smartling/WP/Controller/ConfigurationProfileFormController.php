@@ -2,17 +2,36 @@
 
 namespace Smartling\WP\Controller;
 
+use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\Cache;
+use Smartling\Helpers\EntityHelper;
+use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\Locale;
 use Smartling\Settings\TargetLocale;
+use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
 class ConfigurationProfileFormController extends WPAbstract implements WPHookInterface
 {
+
+    /**
+     * ConfigurationProfileFormController constructor.
+     */
+    public function __construct(
+        LocalizationPluginProxyInterface $connector,
+        PluginInfo $pluginInfo,
+        EntityHelper $entityHelper,
+        SubmissionManager $manager,
+        Cache $cache) {
+        $logger = MonologWrapper::getLogger(get_called_class());
+        parent::__construct($logger, $connector, $pluginInfo, $entityHelper, $manager, $cache);
+    }
 
     public function wp_enqueue()
     {
