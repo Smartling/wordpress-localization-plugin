@@ -60,7 +60,6 @@ services:
   manager.submission:
     class: Smartling\Submissions\SubmissionManager
     arguments:
-     - "@logger"
      - "@site.db"
      - "%submission.pagesize%"
      - "@entity.helper"

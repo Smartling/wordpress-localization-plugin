@@ -16,6 +16,7 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressUserHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Processors\EntityProcessor;
 
 /**
@@ -80,15 +81,15 @@ class SubmissionManager extends EntityManagerAbstract
     }
 
     /**
-     * @param LoggerInterface                              $logger
      * @param SmartlingToCMSDatabaseAccessWrapperInterface $dbal
      * @param int                                          $pageSize
      * @param EntityHelper                                 $entityHelper
      */
-    public function __construct(LoggerInterface $logger, $dbal, $pageSize, $entityHelper)
+    public function __construct($dbal, $pageSize, $entityHelper)
     {
         $siteHelper = $entityHelper->getSiteHelper();
         $proxy = $entityHelper->getConnector();
+        $logger = MonologWrapper::getLogger(get_called_class());
         parent::__construct($logger, $dbal, $pageSize, $siteHelper, $proxy);
         $this->entityHelper = $entityHelper;
     }
