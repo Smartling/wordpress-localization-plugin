@@ -215,8 +215,6 @@ services:
 
   content.helper:
     class: Smartling\Helpers\ContentHelper
-    arguments:
-      - "@logger"
     calls:
       - [ "setIoFactory", [ "@factory.contentIO" ]]
       - [ "setSiteHelper", [ "@site.helper" ]]
