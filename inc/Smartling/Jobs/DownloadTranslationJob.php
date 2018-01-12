@@ -4,7 +4,9 @@ namespace Smartling\Jobs;
 
 use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
+use Smartling\Submissions\SubmissionManager;
 
 /**
  * Class DownloadTranslationJob
@@ -18,6 +20,13 @@ class DownloadTranslationJob extends JobAbstract
      * @var Queue
      */
     private $queue;
+
+    /**
+     * DownloadTranslationJob constructor.
+     */
+    public function __construct(SubmissionManager $submissionManager, $workerTTL = self::WORKER_DEFAULT_TTL) {
+        parent::__construct(MonologWrapper::getLogger(get_called_class()), $submissionManager, $workerTTL);
+    }
 
     /**
      * @return Queue

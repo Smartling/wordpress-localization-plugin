@@ -5,10 +5,12 @@ namespace Smartling\Jobs;
 use Smartling\ApiWrapperInterface;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 
 /**
  * Class LastModifiedCheckJob
@@ -30,6 +32,13 @@ class LastModifiedCheckJob extends JobAbstract
      * @var Queue
      */
     private $queue;
+
+    /**
+     * LastModifiedCheckJob constructor.
+     */
+    public function __construct(SubmissionManager $submissionManager, $workerTTL = self::WORKER_DEFAULT_TTL) {
+        parent::__construct(MonologWrapper::getLogger(get_called_class()), $submissionManager, $workerTTL);
+    }
 
     /**
      * @return ApiWrapperInterface
