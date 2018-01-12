@@ -13,17 +13,16 @@ use Smartling\Helpers\EntityHelper;
 trait SubmissionManagerMock
 {
     /**
-     * @param LoggerInterface                              $logger
      * @param SmartlingToCMSDatabaseAccessWrapperInterface $dbal
      * @param EntityHelper                                 $entityHelper
      *
      * @return \PHPUnit_Framework_MockObject_MockObject|SubmissionManager
      */
-    private function mockSubmissionManager(LoggerInterface $logger, SmartlingToCMSDatabaseAccessWrapperInterface $dbal, EntityHelper $entityHelper)
+    private function mockSubmissionManager(SmartlingToCMSDatabaseAccessWrapperInterface $dbal, EntityHelper $entityHelper)
     {
         return $this->getMockBuilder('Smartling\Submissions\SubmissionManager')
             ->setMethods(['find', 'findByIds','filterBrokenSubmissions'])
-            ->setConstructorArgs([$logger, $dbal, 10, $entityHelper])
+            ->setConstructorArgs([$dbal, 10, $entityHelper])
             ->getMock();
     }
 }

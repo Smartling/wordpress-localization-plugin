@@ -8,6 +8,7 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Jobs\UploadJob;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\Locale;
 use Smartling\Settings\SettingsManager;
@@ -134,12 +135,12 @@ abstract class SmartlingUnitTestCaseAbstract extends \WP_UnitTestCase
      */
     protected function getLogger()
     {
-        return $this->get('logger');
+        return MonologWrapper::getLogger(get_called_class());
     }
 
     protected function createProfile()
     {
-        $profile = new ConfigurationProfileEntity($this->getLogger());
+        $profile = new ConfigurationProfileEntity();
         $profile->setProfileName('testProfile');
         $profile->setProjectId(getenv('CRE_PROJECT_ID'));
         $profile->setUserIdentifier(getenv('CRE_USER_IDENTIFIER'));
