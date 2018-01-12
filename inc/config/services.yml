@@ -179,8 +179,6 @@ services:
 
   helper.shortcode:
     class: Smartling\Helpers\ShortcodeHelper
-    arguments:
-      - "@logger"
     calls:
       - [ "setFieldsFilter", [ "@fields-filter.helper" ]]
 

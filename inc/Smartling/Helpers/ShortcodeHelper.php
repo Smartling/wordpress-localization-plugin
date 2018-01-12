@@ -6,6 +6,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\WP\WPHookInterface;
 
 /**
@@ -73,9 +74,9 @@ class ShortcodeHelper implements WPHookInterface
      */
     private $fieldsFilter;
 
-    public function __construct(LoggerInterface $logger)
+    public function __construct()
     {
-        $this->setLogger($logger);
+        $this->setLogger(MonologWrapper::getLogger(get_called_class()));
     }
 
     private function resetInternalState()
