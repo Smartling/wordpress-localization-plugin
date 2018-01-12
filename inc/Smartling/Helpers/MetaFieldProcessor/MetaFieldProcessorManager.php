@@ -4,6 +4,7 @@ namespace Smartling\Helpers\MetaFieldProcessor;
 
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Processors\SmartlingFactoryAbstract;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPHookInterface;
@@ -57,11 +58,10 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
 
     /**
      * MetaFieldProcessorManager constructor.
-     *
-     * @param LoggerInterface $logger
      */
-    public function __construct(LoggerInterface $logger)
+    public function __construct()
     {
+        $logger = MonologWrapper::getLogger(get_called_class());
         parent::__construct($logger);
         $this->setAllowDefault(true);
     }

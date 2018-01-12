@@ -187,8 +187,6 @@ services:
 
   meta-field.processor.manager:
     class: Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager
-    arguments:
-      - "@logger"
     calls:
       - [ "setDefaultHandler", [ "@default.meta-field-processor" ] ]
 
