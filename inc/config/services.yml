@@ -85,7 +85,6 @@ services:
   manager.settings:
     class: Smartling\Settings\SettingsManager
     arguments:
-      - "@logger"
       - "@site.db"
       - "%submission.pagesize%"
       - "@site.helper"
