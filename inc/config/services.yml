@@ -70,7 +70,6 @@ services:
   detect-changes.helper:
     class: Smartling\Helpers\DetectChangesHelper
     calls:
-      - [ "setLogger" , [ "@logger" ] ]
       - [ "setSettingsManager" , [ "@manager.settings" ] ]
       - [ "setSubmissionManager" , [ "@manager.submission" ] ]
       - [ "setContentSerializationHelper" , [ "@content-serialization.helper" ] ]
