@@ -530,7 +530,7 @@ class Bootstrap
                 try {
                     CustomFieldFilterHandler::registerFilter($di, $filter);
                 } catch (\Exception $e) {
-                    $di->get('logger')->warning(
+                    self::getLogger()->warning(
                         vsprintf(
                             'Error registering filter with message: \'%s\', params: \'%s\'',
                             [

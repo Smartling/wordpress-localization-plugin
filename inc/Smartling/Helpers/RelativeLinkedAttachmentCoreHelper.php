@@ -49,14 +49,6 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     }
 
     /**
-     * @param LoggerInterface $logger
-     */
-    private function setLogger(LoggerInterface $logger)
-    {
-        $this->logger = $logger;
-    }
-
-    /**
      * @return SmartlingCore
      */
     public function getCore()
@@ -91,8 +83,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 
     public function __construct(SmartlingCore $ep)
     {
-        $logger = MonologWrapper::getLogger(get_called_class());
-        $this->setLogger($logger);
+        $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->setCore($ep);
     }
 

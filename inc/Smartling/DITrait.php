@@ -48,6 +48,8 @@ trait DITrait
 
         self::$containerInstance = $container;
 
+        MonologWrapper::init(self::$containerInstance);
+
         self::handleLoggerConfiguration();
 
         /**
@@ -55,7 +57,6 @@ trait DITrait
          */
         do_action(ExportedAPI::ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT, self::$containerInstance);
 
-        MonologWrapper::init(self::$containerInstance);
         $logger = MonologWrapper::getLogger(get_called_class());
         $logger->pushProcessor(function ($record) {
             $record['context'] =
@@ -119,6 +120,8 @@ trait DITrait
     {
         $logger = $di->get('logger');
         $logger->setHandlers([new NullHandler()]);
+
+        MonologWrapper::clear();
     }
 
     public static function disableLogging(ContainerBuilder $di)

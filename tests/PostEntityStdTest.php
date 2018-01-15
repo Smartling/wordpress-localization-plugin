@@ -42,7 +42,7 @@ class PostEntityStdTest extends \PHPUnit_Framework_TestCase
     private function mockPostEntityStd()
     {
         return $this->getMockBuilder('\Smartling\DbAl\WordpressContentEntities\PostEntityStd')
-            ->setConstructorArgs([$this->getLogger(), 'post', []])
+            ->setConstructorArgs(['post', []])
             ->setMethods(
                 [
                     'getMetadata',

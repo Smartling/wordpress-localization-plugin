@@ -20,13 +20,6 @@ class SubmissionCollectorJob extends JobAbstract
     private $queue;
 
     /**
-     * SubmissionCollectorJob constructor.
-     */
-    public function __construct(SubmissionManager $submissionManager, $workerTTL = self::WORKER_DEFAULT_TTL) {
-        parent::__construct(MonologWrapper::getLogger(get_called_class()), $submissionManager, $workerTTL);
-    }
-
-    /**
      * @return Queue
      */
     public function getQueue()

@@ -23,14 +23,6 @@ class SettingsManager extends EntityManagerAbstract
 {
 
     /**
-     * SettingsManager constructor.
-     */
-    public function __construct($dbal, $pageSize, SiteHelper $siteHelper, $localizationProxy) {
-        $logger = MonologWrapper::getLogger(get_called_class());
-        parent::__construct($logger, $dbal, $pageSize, $siteHelper, $localizationProxy);
-    }
-
-    /**
      * @param array $sortOptions
      * @param null  $pageOptions
      * @param int   $totalCount

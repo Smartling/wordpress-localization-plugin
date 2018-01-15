@@ -34,13 +34,6 @@ class LastModifiedCheckJob extends JobAbstract
     private $queue;
 
     /**
-     * LastModifiedCheckJob constructor.
-     */
-    public function __construct(SubmissionManager $submissionManager, $workerTTL = self::WORKER_DEFAULT_TTL) {
-        parent::__construct(MonologWrapper::getLogger(get_called_class()), $submissionManager, $workerTTL);
-    }
-
-    /**
      * @return ApiWrapperInterface
      */
     public function getApiWrapper()

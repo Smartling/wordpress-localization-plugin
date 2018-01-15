@@ -45,14 +45,6 @@ class FieldsFilterHelper
     }
 
     /**
-     * @param LoggerInterface $logger
-     */
-    public function setLogger($logger)
-    {
-        $this->logger = $logger;
-    }
-
-    /**
      * @return SettingsManager
      */
     public function getSettingsManager()
@@ -75,8 +67,7 @@ class FieldsFilterHelper
      */
     public function __construct(SettingsManager $settingsManager)
     {
-        $logger = MonologWrapper::getLogger(get_called_class());
-        $this->setLogger($logger);
+        $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->setSettingsManager($settingsManager);
     }
 

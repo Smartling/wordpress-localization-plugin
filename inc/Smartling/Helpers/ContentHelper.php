@@ -96,20 +96,11 @@ class ContentHelper
     }
 
     /**
-     * @param LoggerInterface $logger
-     */
-    public function setLogger($logger)
-    {
-        $this->logger = $logger;
-    }
-
-    /**
      * ContentHelper constructor.
      */
     public function __construct()
     {
-        $logger = MonologWrapper::getLogger(get_called_class());
-        $this->setLogger($logger);
+        $this->logger = MonologWrapper::getLogger(get_called_class());
     }
 
     /**

@@ -18,13 +18,6 @@ class UploadJob extends JobAbstract
     const JOB_HOOK_NAME = 'smartling-upload-task';
 
     /**
-     * UploadJob constructor.
-     */
-    public function __construct(SubmissionManager $submissionManager, $workerTTL = self::WORKER_DEFAULT_TTL) {
-        parent::__construct(MonologWrapper::getLogger(get_called_class()), $submissionManager, $workerTTL);
-    }
-
-    /**
      * @return string
      */
     public function getJobHookName()

@@ -8,7 +8,6 @@ use Smartling\Helpers\Cache;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SmartlingUserCapabilities;
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\Table\QueueManagerTableWidget;
@@ -30,19 +29,6 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
      * @var Queue
      */
     private $queue;
-
-    /**
-     * ConfigurationProfilesController constructor.
-     */
-    public function __construct(
-        LocalizationPluginProxyInterface $connector,
-        PluginInfo $pluginInfo,
-        EntityHelper $entityHelper,
-        SubmissionManager $manager,
-        Cache $cache) {
-        $logger = MonologWrapper::getLogger(get_called_class());
-        parent::__construct($logger, $connector, $pluginInfo, $entityHelper, $manager, $cache);
-    }
 
     /**
      * @return Queue

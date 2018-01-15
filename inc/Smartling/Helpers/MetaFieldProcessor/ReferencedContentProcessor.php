@@ -60,14 +60,13 @@ class ReferencedContentProcessor extends MetaFieldProcessorAbstract
     /**
      * MetaFieldProcessorInterface constructor.
      *
-     * @param LoggerInterface   $logger
      * @param TranslationHelper $translationHelper
      * @param string            $fieldRegexp
      * @param string            $contentType Expected content type in the field
      */
-    public function __construct(LoggerInterface $logger, TranslationHelper $translationHelper, $fieldRegexp, $contentType)
+    public function __construct(TranslationHelper $translationHelper, $fieldRegexp, $contentType)
     {
-        $this->setLogger($logger);
+        parent::__construct();
         $this->setTranslationHelper($translationHelper);
         $this->setFieldRegexp($fieldRegexp);
         $this->setContentType($contentType);

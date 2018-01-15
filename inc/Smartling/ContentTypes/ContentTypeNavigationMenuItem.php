@@ -63,7 +63,6 @@ class ContentTypeNavigationMenuItem extends PostBasedContentTypeAbstract
         $wrapperId = 'wrapper.entity.' . $this->getSystemName();
         $definition = $di->register($wrapperId, 'Smartling\DbAl\WordpressContentEntities\PostEntityStd');
         $definition
-            ->addArgument($di->getDefinition('logger'))
             ->addArgument($this->getSystemName())
             ->addArgument([]);
 
@@ -88,7 +87,6 @@ class ContentTypeNavigationMenuItem extends PostBasedContentTypeAbstract
         $wrapperId = 'referenced-content.menu_item_parent';
         $definition = $di->register($wrapperId, 'Smartling\Helpers\MetaFieldProcessor\ReferencedContentProcessor');
         $definition
-            ->addArgument($di->getDefinition('logger'))
             ->addArgument($di->getDefinition('translation.helper'))
             ->addArgument(CustomMenuContentTypeHelper::META_KEY_MENU_ITEM_PARENT)
             ->addArgument($this->getSystemName())
@@ -100,7 +98,6 @@ class ContentTypeNavigationMenuItem extends PostBasedContentTypeAbstract
         $referenceWrapperId = 'referenced-content.menu_item_content';
         $definition = $di->register($referenceWrapperId, 'Smartling\Helpers\MetaFieldProcessor\NavigationMenuItemProcessor');
         $definition
-            ->addArgument($di->getDefinition('logger'))
             ->addArgument($di->getDefinition('translation.helper'))
             ->addArgument('^(_menu_item_object_id)$')
             ->addArgument($this->getSystemName())
@@ -113,9 +110,7 @@ class ContentTypeNavigationMenuItem extends PostBasedContentTypeAbstract
         $definition = $di->register($cloneWrapperId, 'Smartling\Helpers\MetaFieldProcessor\CloneValueFieldProcessor');
         $definition
             ->addArgument('^(_menu_item_object|_menu_item_classes|_menu_item_type)$')
-            ->addArgument($di->getDefinition('content.helper'))
-            ->addArgument($di->getDefinition('logger'));
-
+            ->addArgument($di->getDefinition('content.helper'));
 
         $di->get('meta-field.processor.manager')->registerProcessor($di->get($cloneWrapperId));
     }

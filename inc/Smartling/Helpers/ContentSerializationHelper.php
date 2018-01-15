@@ -40,14 +40,6 @@ class ContentSerializationHelper
     }
 
     /**
-     * @param LoggerInterface $logger
-     */
-    public function setLogger($logger)
-    {
-        $this->logger = $logger;
-    }
-
-    /**
      * @return ContentHelper
      */
     public function getContentHelper()
@@ -87,8 +79,7 @@ class ContentSerializationHelper
      */
     public function __construct(ContentHelper $contentHelper, FieldsFilterHelper $fieldsFilter)
     {
-        $logger = MonologWrapper::getLogger(get_called_class());
-        $this->setLogger($logger);
+        $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->setContentHelper($contentHelper);
         $this->setFieldsFilter($fieldsFilter);
     }

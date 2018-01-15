@@ -105,14 +105,6 @@ class ApiWrapper implements ApiWrapperInterface
     }
 
     /**
-     * @param LoggerInterface $logger
-     */
-    public function setLogger($logger)
-    {
-        $this->logger = $logger;
-    }
-
-    /**
      * @return RuntimeCacheHelper
      */
     public function getCache()
@@ -129,9 +121,8 @@ class ApiWrapper implements ApiWrapperInterface
      */
     public function __construct(SettingsManager $manager, $pluginName, $pluginVersion)
     {
-        $logger = MonologWrapper::getLogger(get_called_class());
+        $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->setSettings($manager);
-        $this->setLogger($logger);
         $this->setPluginName($pluginName);
         $this->setPluginVersion($pluginVersion);
     }

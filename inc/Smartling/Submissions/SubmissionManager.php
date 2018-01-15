@@ -89,8 +89,7 @@ class SubmissionManager extends EntityManagerAbstract
     {
         $siteHelper = $entityHelper->getSiteHelper();
         $proxy = $entityHelper->getConnector();
-        $logger = MonologWrapper::getLogger(get_called_class());
-        parent::__construct($logger, $dbal, $pageSize, $siteHelper, $proxy);
+        parent::__construct($dbal, $pageSize, $siteHelper, $proxy);
         $this->entityHelper = $entityHelper;
     }
 

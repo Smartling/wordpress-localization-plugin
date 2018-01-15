@@ -47,9 +47,9 @@ class WidgetEntity extends VirtualEntityAbstract
     /**
      * @inheritdoc
      */
-    public function __construct(LoggerInterface $logger, $type, array $related = [])
+    public function __construct($type, array $related = [])
     {
-        parent::__construct($logger);
+        parent::__construct();
 
         $this->hashAffectingFields = array_merge($this->hashAffectingFields, [
             'id',

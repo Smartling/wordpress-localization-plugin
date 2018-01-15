@@ -52,9 +52,9 @@ class AcfOptionEntity extends VirtualEntityAbstract
     /**
      * @inheritdoc
      */
-    public function __construct(LoggerInterface $logger)
+    public function __construct()
     {
-        parent::__construct($logger);
+        parent::__construct();
         $this->setType(ContentTypeAcfOption::WP_CONTENT_TYPE);
         $this->hashAffectingFields = array_merge($this->hashAffectingFields, ['name', 'value']);
         $this->setEntityFields($this->fields);
