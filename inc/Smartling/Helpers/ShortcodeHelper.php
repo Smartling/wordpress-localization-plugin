@@ -76,7 +76,7 @@ class ShortcodeHelper implements WPHookInterface
 
     public function __construct()
     {
-        $this->setLogger(MonologWrapper::getLogger(get_called_class()));
+        $this->logger = MonologWrapper::getLogger(get_called_class());
     }
 
     private function resetInternalState()
@@ -126,14 +126,6 @@ class ShortcodeHelper implements WPHookInterface
     public function getLogger()
     {
         return $this->logger;
-    }
-
-    /**
-     * @param LoggerInterface $logger
-     */
-    public function setLogger($logger)
-    {
-        $this->logger = $logger;
     }
 
     /**

@@ -27,7 +27,7 @@ class SmartlingCore extends SmartlingCoreAbstract
 
     public function __construct()
     {
-        $this->setLogger(MonologWrapper::getLogger(get_called_class()));
+        parent::__construct();
 
         add_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, [$this, 'sendForTranslationBySubmission']);
         add_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, [$this, 'downloadTranslationBySubmission',]);
