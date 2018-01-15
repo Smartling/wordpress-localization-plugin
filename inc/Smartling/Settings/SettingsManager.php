@@ -11,7 +11,6 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Helpers\SiteHelper;
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -21,7 +20,6 @@ use Smartling\Submissions\SubmissionEntity;
  */
 class SettingsManager extends EntityManagerAbstract
 {
-
     /**
      * @param array $sortOptions
      * @param null  $pageOptions

@@ -1,15 +1,10 @@
 <?php
 namespace Smartling\WP\Controller;
 
-use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\ArrayHelper;
-use Smartling\Helpers\Cache;
 use Smartling\Helpers\DiagnosticsHelper;
-use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
-use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SmartlingUserCapabilities;
-use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\View\BulkSubmitTableWidget;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;

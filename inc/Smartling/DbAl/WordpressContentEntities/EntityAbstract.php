@@ -285,7 +285,7 @@ abstract class EntityAbstract
     protected function resultToEntity(array $arr)
     {
         $className = get_class($this);
-        $entity = new $className($this->getLogger(), $this->getType(), $this->getRelatedTypes());
+        $entity = new $className($this->getType(), $this->getRelatedTypes());
 
         foreach ($this->fields as $fieldName) {
             if (array_key_exists($fieldName, $arr)) {

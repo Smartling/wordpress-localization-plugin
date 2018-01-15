@@ -2,13 +2,8 @@
 
 namespace Smartling\WP\Controller;
 
-use Smartling\DbAl\LocalizationPluginProxyInterface;
-use Smartling\Helpers\Cache;
-use Smartling\Helpers\EntityHelper;
-use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Queue\Queue;
-use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\Table\SubmissionTableWidget;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;

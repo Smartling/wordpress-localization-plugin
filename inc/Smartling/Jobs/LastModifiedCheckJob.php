@@ -5,7 +5,6 @@ namespace Smartling\Jobs;
 use Smartling\ApiWrapperInterface;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\Helpers\ArrayHelper;
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;

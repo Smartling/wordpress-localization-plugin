@@ -2,7 +2,6 @@
 
 namespace Smartling\Extensions;
 
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Processors\SmartlingFactoryAbstract;
 
 /**

@@ -2,17 +2,12 @@
 
 namespace Smartling\WP\Controller;
 
-use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Helpers\ArrayHelper;
-use Smartling\Helpers\Cache;
-use Smartling\Helpers\EntityHelper;
-use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\Locale;
 use Smartling\Settings\TargetLocale;
-use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 

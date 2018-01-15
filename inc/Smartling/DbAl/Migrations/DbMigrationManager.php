@@ -2,7 +2,6 @@
 
 namespace Smartling\DbAl\Migrations;
 
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Processors\SmartlingFactoryAbstract;
 
 /**

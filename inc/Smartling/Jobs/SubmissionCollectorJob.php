@@ -2,7 +2,6 @@
 
 namespace Smartling\Jobs;
 
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;

@@ -4,13 +4,8 @@ namespace Smartling\WP\Controller;
 
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
-use Smartling\DbAl\LocalizationPluginProxyInterface;
-use Smartling\Helpers\Cache;
 use Smartling\Helpers\DiagnosticsHelper;
-use Smartling\Helpers\EntityHelper;
-use Smartling\Helpers\PluginInfo;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 

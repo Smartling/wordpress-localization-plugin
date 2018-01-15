@@ -4,7 +4,6 @@ namespace Smartling\Jobs;
 
 use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\ArrayHelper;
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
