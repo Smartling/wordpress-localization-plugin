@@ -136,8 +136,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
 
         $this->wpdb = $wpdb;
 
-        $logger = MonologWrapper::getLogger(get_called_class());
-        parent::__construct($logger, $helper, $ml_plugin_statuses);
+        parent::__construct($helper, $ml_plugin_statuses);
 
         if (false === $ml_plugin_statuses['multilingual-press-pro'] && defined('SMARTLING_CLI_EXECUTION') &&
             SMARTLING_CLI_EXECUTION === false

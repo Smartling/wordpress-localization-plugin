@@ -61,8 +61,7 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
      */
     public function __construct()
     {
-        $logger = MonologWrapper::getLogger(get_called_class());
-        parent::__construct($logger);
+        parent::__construct();
         $this->setAllowDefault(true);
     }
 

@@ -5,6 +5,7 @@ namespace Smartling\Processors;
 use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
+use Smartling\MonologWrapper\MonologWrapper;
 
 /**
  * Class SmartlingFactoryAbstract
@@ -91,11 +92,11 @@ abstract class SmartlingFactoryAbstract
     }
 
     /**
-     * @param LoggerInterface $logger
+     * SmartlingFactoryAbstract constructor.
      */
-    public function __construct(LoggerInterface $logger)
+    public function __construct()
     {
-        $this->logger = $logger;
+        $this->logger = MonologWrapper::getLogger(get_called_class());
     }
 
     /**

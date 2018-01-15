@@ -20,7 +20,7 @@ class SiteHelper
     /**
      * @var LoggerInterface
      */
-    private $_logger;
+    private $logger;
 
     /**
      * @var int;
@@ -40,7 +40,7 @@ class SiteHelper
      */
     public function __construct()
     {
-        $this->_logger = MonologWrapper::getLogger(get_called_class());;
+        $this->logger = MonologWrapper::getLogger(get_called_class());;
 
         $this->initialBlogId = $this->getCurrentBlogId();
     }
@@ -64,7 +64,7 @@ class SiteHelper
     {
         $message = 'Direct run detected. Required run as Wordpress plugin.';
 
-        $this->_logger->error($message);
+        $this->getLogger()->error($message);
 
         throw new SmartlingDirectRunRuntimeException($message);
     }
@@ -286,4 +286,13 @@ class SiteHelper
             $GLOBALS['_wp_switched_stack'] = [];
         }
     }
+
+    /**
+     * @return LoggerInterface
+     */
+    protected function getLogger()
+    {
+        return $this->logger;
+    }
+
 }

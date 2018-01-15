@@ -13,15 +13,6 @@ use Smartling\Processors\SmartlingFactoryAbstract;
 class DbMigrationManager extends SmartlingFactoryAbstract
 {
 
-    /**
-     * DbMigrationManager constructor.
-     */
-    public function __construct()
-    {
-        $logger = MonologWrapper::getLogger(get_called_class());
-        parent::__construct($logger);
-    }
-
     public function registerMigration(SmartlingDbMigrationInterface $migration)
     {
         $this->registerHandler($migration->getVersion(), $migration);

@@ -2,6 +2,7 @@
 
 namespace Smartling\MonologWrapper\Logger;
 
+use InvalidArgumentException;
 use Monolog\Logger;
 use Psr\Log\LogLevel;
 
@@ -20,20 +21,6 @@ class LevelLogger extends Logger {
   private $level = Logger::DEBUG;
 
   /**
-   * @var array
-   */
-  private $levelMapping = [
-    LogLevel::EMERGENCY => Logger::EMERGENCY,
-    LogLevel::ALERT => Logger::ALERT,
-    LogLevel::CRITICAL => Logger::CRITICAL,
-    LogLevel::ERROR => Logger::ERROR,
-    LogLevel::WARNING => Logger::WARNING,
-    LogLevel::NOTICE => Logger::NOTICE,
-    LogLevel::INFO => Logger::INFO,
-    LogLevel::DEBUG => Logger::DEBUG,
-  ];
-
-  /**
    * LevelLogger constructor.
    *
    * @param string $name
@@ -44,9 +31,13 @@ class LevelLogger extends Logger {
   public function __construct($name, $level = LogLevel::DEBUG, $handlers = [], $processors = []) {
     parent::__construct($name, $handlers, $processors);
 
-    if (isset($this->levelMapping[strtolower($level)])) {
-      $this->level = $this->levelMapping[strtolower($level)];
+    $level = strtoupper($level);
+
+    if (!in_array($level, self::$levels, TRUE)) {
+      throw new InvalidArgumentException('Level "' . $level . '" is not defined, use one of: ' . implode(', ', array_values(self::$levels)));
     }
+
+    $this->level = array_search($level, self::$levels);
   }
 
   /**

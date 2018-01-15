@@ -17,9 +17,7 @@ class SerializationManager extends SmartlingFactoryAbstract
      */
     public function __construct()
     {
-        $logger = MonologWrapper::getLogger(get_called_class());
-
-        parent::__construct($logger);
+        parent::__construct();
         $this->setAllowDefault(false);
     }
 

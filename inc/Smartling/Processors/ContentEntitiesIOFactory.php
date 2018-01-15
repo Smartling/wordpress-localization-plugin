@@ -17,13 +17,12 @@ class ContentEntitiesIOFactory extends SmartlingFactoryAbstract
 {
 
     /**
-     * Instantiates ContentEntitiesIOFactory object.
+     * ContentEntitiesIOFactory constructor.
      */
     public function __construct()
     {
+        parent::__construct();
         $this->message = 'Requested entity wrapper for content-type \'%s\' is not registered. Called by: %s';
-        $logger = MonologWrapper::getLogger(get_called_class());
-        parent::__construct($logger);
     }
 
     /**

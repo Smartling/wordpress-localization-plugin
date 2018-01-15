@@ -7,7 +7,7 @@ use Smartling\MonologWrapper\MonologWrapper;
 class Example1 {
 
   public function doSomething() {
-    $logger = MonologWrapper::getLogger(__CLASS__);
+    $logger = MonologWrapper::getLogger(get_called_class());
 
     return [
       'logger' => $logger,

@@ -13,15 +13,6 @@ use Smartling\Processors\SmartlingFactoryAbstract;
 class ExtensionLoader extends SmartlingFactoryAbstract
 {
 
-    /**
-     * ExtensionLoader constructor.
-     */
-    public function __construct()
-    {
-        $logger = MonologWrapper::getLogger(get_called_class());
-        parent::__construct($logger);
-    }
-
     public function registerExtension(ExtensionInterface $extension)
     {
         $this->registerHandler($extension->getName(), $extension);
