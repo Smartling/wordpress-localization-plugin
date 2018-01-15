@@ -43,8 +43,6 @@ services:
 
   manager.db.migrations:
     class: Smartling\DbAl\Migrations\DbMigrationManager
-    arguments:
-      - "@logger"
     calls:
       - [ "registerMigration", [ "@migration.150512" ]]
       - [ "registerMigration", [ "@migration.150619" ]]

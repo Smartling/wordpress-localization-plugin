@@ -5,6 +5,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\EntityNotFoundException;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -49,6 +50,13 @@ class SubmissionCleanupHelper implements WPHookInterface
      * @var LocalizationPluginProxyInterface
      */
     private $multilangProxy;
+
+    /**
+     * SubmissionCleanupHelper constructor.
+     */
+    public function __construct() {
+        $this->logger = MonologWrapper::getLogger(get_called_class());
+    }
 
     /**
      * @return SiteHelper
@@ -104,14 +112,6 @@ class SubmissionCleanupHelper implements WPHookInterface
     public function getLogger()
     {
         return $this->logger;
-    }
-
-    /**
-     * @param LoggerInterface $logger
-     */
-    public function setLogger($logger)
-    {
-        $this->logger = $logger;
     }
 
     /**

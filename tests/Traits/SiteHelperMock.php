@@ -11,14 +11,11 @@ use Psr\Log\LoggerInterface;
 trait SiteHelperMock
 {
     /**
-     * @param LoggerInterface $logger
-     *
      * @return \PHPUnit_Framework_MockObject_MockObject|\Smartling\Helpers\SiteHelper
      */
-    private function mockSiteHelper(LoggerInterface $logger)
+    private function mockSiteHelper()
     {
         return $this->getMockBuilder('Smartling\Helpers\SiteHelper')
-            ->setConstructorArgs([$logger])
             ->getMock();
     }
 

@@ -8,6 +8,7 @@ use Smartling\Helpers\CustomMenuContentTypeHelper;
 use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Jobs\DownloadTranslationJob;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -69,7 +70,6 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
         $wrapperId = 'wrapper.entity.' . $this->getSystemName();
         $definition = $di->register($wrapperId, 'Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd');
         $definition
-            ->addArgument($di->getDefinition('logger'))
             ->addArgument($this->getSystemName())
             ->addArgument([ContentTypeNavigationMenuItem::WP_CONTENT_TYPE]);
 
@@ -83,6 +83,7 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
         $helper = $this->getContainerBuilder()->get('helper.customMenu');
         $contentHelper = $this->getContainerBuilder()->get('content.helper');
         $translationHelper = $this->getContainerBuilder()->get('translation.helper');
+        $logger = MonologWrapper::getLogger(get_called_class());
 
         /**
          * @var CustomMenuContentTypeHelper $helper
@@ -91,8 +92,7 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
          */
 
         if (ContentTypeNavigationMenuItem::WP_CONTENT_TYPE === $params->getContentType()) {
-
-            $this->getContainerBuilder()->get('logger')->debug(
+            $logger->debug(
                 vsprintf('Searching for menuItems related to submission = \'%s\'.', [
                     $params->getSubmission()->getId(),
                 ])
@@ -110,7 +110,7 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
 
                 $menuItemIds[] = $menuItemEntity->getPK();
 
-                $this->getContainerBuilder()->get('logger')->debug(
+                $logger->debug(
                     vsprintf('Sending for translation entity = \'%s\' id = \'%s\' related to submission = \'%s\'.', [
                         ContentTypeNavigationMenuItem::WP_CONTENT_TYPE,
                         $menuItemEntity->getPK(),
@@ -139,8 +139,7 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
         if (ContentTypeNavigationMenu::WP_CONTENT_TYPE === $params->getContentType() &&
             ContentTypeWidget::WP_CONTENT_TYPE === $params->getSubmission()->getContentType()
         ) {
-            $this->getContainerBuilder()->get('logger')
-                ->debug(vsprintf('Searching for menu related to widget for submission = \'%s\'.', [
+            $logger->debug(vsprintf('Searching for menu related to widget for submission = \'%s\'.', [
                     $params->getSubmission()->getId(),
                 ]));
 
@@ -159,7 +158,7 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
 
             if (0 !== $menuId) {
 
-                $this->getContainerBuilder()->get('logger')->debug(
+                $logger->debug(
                     vsprintf('Sending for translation menu related to widget id = \'%s\' related to submission = \'%s\'.', [
                         $originalEntity->getPK(),
                         $params->getSubmission()->getId(),

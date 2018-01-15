@@ -36,7 +36,7 @@ class MetadataSerializerTest extends \PHPUnit_Framework_TestCase
      */
     public function testPrepareSourceData(array $entityFields, array $expectedResult)
     {
-        $obj = new FieldsFilterHelper($this->getLogger(), $this->getSettingsManagerMock());
+        $obj = new FieldsFilterHelper($this->getSettingsManagerMock());
         $actualResult = $obj->prepareSourceData($entityFields);
         self::assertEquals($expectedResult, $actualResult);
     }
@@ -133,7 +133,7 @@ class MetadataSerializerTest extends \PHPUnit_Framework_TestCase
 
 
             ], $this->getLogger());
-        $obj = new FieldsFilterHelper($this->getLogger(), $this->getSettingsManagerMock());
+        $obj = new FieldsFilterHelper($this->getSettingsManagerMock());
         $actualResult = $obj->applyTranslatedValues($submission, $originalValues, $translatedValues, false);
         self::assertEquals($expectedResult, $actualResult);
     }

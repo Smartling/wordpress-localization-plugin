@@ -24,13 +24,12 @@ class ReferencedFileFieldProcessor extends MetaFieldProcessorAbstract
     /**
      * MetaFieldProcessorInterface constructor.
      *
-     * @param LoggerInterface   $logger
      * @param TranslationHelper $translationHelper
      * @param string            $fieldRegexp
      */
-    public function __construct(LoggerInterface $logger, TranslationHelper $translationHelper, $fieldRegexp)
+    public function __construct(TranslationHelper $translationHelper, $fieldRegexp)
     {
-        $this->setLogger($logger);
+        parent::__construct();
         $this->setTranslationHelper($translationHelper);
         $this->setFieldRegexp($fieldRegexp);
     }

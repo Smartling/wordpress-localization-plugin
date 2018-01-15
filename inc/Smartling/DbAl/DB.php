@@ -10,6 +10,7 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\SimpleStorageHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
@@ -40,16 +41,12 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
      */
     private $logger;
 
-    private $needSqlLog = false;
-
     /**
-     * @param LoggerInterface $logger
-     * @param bool            $needLogRawSql
+     * DB constructor.
      */
-    public function __construct(LoggerInterface $logger, $needLogRawSql)
+    public function __construct()
     {
-        $this->needSqlLog = (bool)$needLogRawSql;
-        $this->logger = $logger;
+        $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->buildTableDefinitions();
         global $wpdb;
         $this->wpdb = $wpdb;
@@ -492,13 +489,5 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
     public function getLastErrorMessage()
     {
         return $this->getWpdb()->last_error;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function needRawSqlLog()
-    {
-        return $this->needSqlLog;
     }
 }

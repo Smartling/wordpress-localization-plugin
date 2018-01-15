@@ -8,6 +8,7 @@ use Smartling\Exception\SmartlingConfigException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\SimpleStorageHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
@@ -54,7 +55,11 @@ trait DITrait
          */
         do_action(ExportedAPI::ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT, self::$containerInstance);
 
-        $logger = $container->get('logger');
+        // Init monolog wrapper when all the modifications to DI container
+        // are done.
+        MonologWrapper::init(self::$containerInstance);
+
+        $logger = MonologWrapper::getLogger(get_called_class());
         $logger->pushProcessor(function ($record) {
             $record['context'] =
                 array_merge(
@@ -76,7 +81,6 @@ trait DITrait
     private static function handleLoggerConfiguration()
     {
         add_action(ExportedAPI::ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT, function (ContainerBuilder $di) {
-
             $defaultLogFileName = Bootstrap::getLogFileName(false, true);
             $storedFile = SimpleStorageHelper::get(self::SMARTLING_CUSTOM_LOG_FILE, false);
             $logFileName = false !== $storedFile ? $storedFile : $defaultLogFileName;
@@ -115,8 +119,12 @@ trait DITrait
 
     private static function nullLog(ContainerBuilder $di)
     {
-        $logger = $di->get('logger');
-        $logger->setHandlers([new NullHandler()]);
+        // Disable all defined loggers.
+        foreach ($di->getDefinitions() as $serviceId => $serviceDefinition) {
+            if ($serviceDefinition->getClass() == 'Smartling\MonologWrapper\Logger\LevelLogger') {
+                $di->get($serviceId)->setHandlers([new NullHandler()]);
+            }
+        };
     }
 
     public static function disableLogging(ContainerBuilder $di)

@@ -7,6 +7,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\WP\WPHookInterface;
 
 /**
@@ -48,14 +49,6 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     }
 
     /**
-     * @param LoggerInterface $logger
-     */
-    private function setLogger(LoggerInterface $logger)
-    {
-        $this->logger = $logger;
-    }
-
-    /**
      * @return SmartlingCore
      */
     public function getCore()
@@ -88,9 +81,9 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     }
 
 
-    public function __construct(LoggerInterface $logger, SmartlingCore $ep)
+    public function __construct(SmartlingCore $ep)
     {
-        $this->setLogger($logger);
+        $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->setCore($ep);
     }
 

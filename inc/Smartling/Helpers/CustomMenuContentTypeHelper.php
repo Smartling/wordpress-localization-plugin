@@ -7,6 +7,7 @@ use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Exception\BlogNotFoundException;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -37,20 +38,16 @@ class CustomMenuContentTypeHelper
      */
     private $siteHelper;
 
+    public function __construct() {
+        $this->logger = MonologWrapper::getLogger(get_called_class());
+    }
+
     /**
      * @return LoggerInterface
      */
     public function getLogger()
     {
         return $this->logger;
-    }
-
-    /**
-     * @param LoggerInterface $logger
-     */
-    public function setLogger($logger)
-    {
-        $this->logger = $logger;
     }
 
     /**

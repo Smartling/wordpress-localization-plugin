@@ -10,6 +10,7 @@ use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 /**

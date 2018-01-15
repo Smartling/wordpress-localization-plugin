@@ -4,6 +4,7 @@ namespace Smartling\Jobs;
 
 use Smartling\Queue\Queue;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 
 /**
  * Class SubmissionCollectorJob

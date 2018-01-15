@@ -21,6 +21,7 @@ use Smartling\Helpers\SchedulerHelper;
 use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPInstallableInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -76,7 +77,7 @@ class Bootstrap
     public static function getLogger()
     {
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-        $object = self::getContainer()->get('logger');
+        $object = MonologWrapper::getLogger(get_called_class());
 
         if ($object instanceof LoggerInterface) {
             return $object;
@@ -529,7 +530,7 @@ class Bootstrap
                 try {
                     CustomFieldFilterHandler::registerFilter($di, $filter);
                 } catch (\Exception $e) {
-                    $di->get('logger')->warning(
+                    self::getLogger()->warning(
                         vsprintf(
                             'Error registering filter with message: \'%s\', params: \'%s\'',
                             [

@@ -7,6 +7,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
+use Smartling\MonologWrapper\MonologWrapper;
 
 /**
  * Class SiteHelper
@@ -19,7 +20,7 @@ class SiteHelper
     /**
      * @var LoggerInterface
      */
-    private $_logger;
+    private $logger;
 
     /**
      * @var int;
@@ -35,11 +36,11 @@ class SiteHelper
     }
 
     /**
-     * @param LoggerInterface $logger
+     * Instantiates SiteHelper object.
      */
-    public function __construct(LoggerInterface $logger)
+    public function __construct()
     {
-        $this->_logger = $logger;
+        $this->logger = MonologWrapper::getLogger(get_called_class());;
 
         $this->initialBlogId = $this->getCurrentBlogId();
     }
@@ -63,7 +64,7 @@ class SiteHelper
     {
         $message = 'Direct run detected. Required run as Wordpress plugin.';
 
-        $this->_logger->error($message);
+        $this->getLogger()->error($message);
 
         throw new SmartlingDirectRunRuntimeException($message);
     }
@@ -285,4 +286,13 @@ class SiteHelper
             $GLOBALS['_wp_switched_stack'] = [];
         }
     }
+
+    /**
+     * @return LoggerInterface
+     */
+    protected function getLogger()
+    {
+        return $this->logger;
+    }
+
 }

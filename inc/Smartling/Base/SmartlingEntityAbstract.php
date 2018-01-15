@@ -3,6 +3,7 @@
 namespace Smartling\Base;
 
 use Psr\Log\LoggerInterface;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\SmartlingTableDefinitionInterface;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -171,12 +172,10 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
 
     /**
      * Constructor
-     *
-     * @param LoggerInterface $logger
      */
-    public function __construct(LoggerInterface $logger)
+    public function __construct()
     {
-        $this->logger = $logger;
+        $this->logger = MonologWrapper::getLogger(get_called_class());
 
         $this->stateFields = array_flip(array_keys(static::getFieldDefinitions()));
 

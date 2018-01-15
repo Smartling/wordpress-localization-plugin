@@ -4,6 +4,7 @@ namespace Smartling\Helpers\MetaFieldProcessor;
 
 use Psr\Log\LoggerInterface;
 use Smartling\Helpers\TranslationHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 
 /**
  * Class MetaFieldProcessorAbstract
@@ -36,11 +37,11 @@ abstract class MetaFieldProcessorAbstract implements MetaFieldProcessorInterface
     }
 
     /**
-     * @param LoggerInterface $logger
+     * MetaFieldProcessorAbstract constructor.
      */
-    public function setLogger($logger)
+    public function __construct()
     {
-        $this->logger = $logger;
+        $this->logger = MonologWrapper::getLogger(get_called_class());
     }
 
     /**

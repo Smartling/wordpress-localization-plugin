@@ -7,6 +7,7 @@ use Smartling\Base\LoggerTrait;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 
 /**
  * Class EntityAbstract
@@ -223,13 +224,10 @@ abstract class EntityAbstract
 
     /**
      * Constructor
-     *
-     * @param LoggerInterface $logger
      */
-    public function __construct(LoggerInterface $logger)
+    public function __construct()
     {
-        $this->logger = $logger;
-        $this->setLoggingSettingsKey('logger.smartling_verbose_metadata_io');
+        $this->logger = MonologWrapper::getLogger(get_called_class());
     }
 
     /**
@@ -287,7 +285,7 @@ abstract class EntityAbstract
     protected function resultToEntity(array $arr)
     {
         $className = get_class($this);
-        $entity = new $className($this->getLogger(), $this->getType(), $this->getRelatedTypes());
+        $entity = new $className($this->getType(), $this->getRelatedTypes());
 
         foreach ($this->fields as $fieldName) {
             if (array_key_exists($fieldName, $arr)) {

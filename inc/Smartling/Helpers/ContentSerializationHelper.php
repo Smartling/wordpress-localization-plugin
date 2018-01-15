@@ -4,6 +4,7 @@ namespace Smartling\Helpers;
 
 use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
@@ -36,14 +37,6 @@ class ContentSerializationHelper
     public function getLogger()
     {
         return $this->logger;
-    }
-
-    /**
-     * @param LoggerInterface $logger
-     */
-    public function setLogger($logger)
-    {
-        $this->logger = $logger;
     }
 
     /**
@@ -81,13 +74,12 @@ class ContentSerializationHelper
     /**
      * ContentSerializationHelper constructor.
      *
-     * @param LoggerInterface    $logger
      * @param ContentHelper      $contentHelper
      * @param FieldsFilterHelper $fieldsFilter
      */
-    public function __construct(LoggerInterface $logger, ContentHelper $contentHelper, FieldsFilterHelper $fieldsFilter)
+    public function __construct(ContentHelper $contentHelper, FieldsFilterHelper $fieldsFilter)
     {
-        $this->setLogger($logger);
+        $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->setContentHelper($contentHelper);
         $this->setFieldsFilter($fieldsFilter);
     }

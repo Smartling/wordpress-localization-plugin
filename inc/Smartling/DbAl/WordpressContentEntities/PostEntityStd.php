@@ -73,9 +73,9 @@ class PostEntityStd extends EntityAbstract
     /**
      * @inheritdoc
      */
-    public function __construct(LoggerInterface $logger, $type = 'post', array $related = [])
+    public function __construct($type = 'post', array $related = [])
     {
-        parent::__construct($logger);
+        parent::__construct();
         $this->setType($type);
 
         $this->hashAffectingFields = array_merge($this->hashAffectingFields, [

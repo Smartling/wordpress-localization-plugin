@@ -10,6 +10,7 @@ use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
 use Smartling\Exception\InvalidXMLException;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -30,15 +31,12 @@ class XmlEncoder
 
     /**
      * Logs XML related message.
-     * Controlled by logger.smartling_verbose_output_for_xml_coding bool value
      *
      * @param $message
      */
     public static function logMessage($message)
     {
-        if (true === (bool)Bootstrap::getContainer()->getParameter('logger.smartling_verbose_output_for_xml_coding')) {
-            Bootstrap::getLogger()->debug($message);
-        }
+        MonologWrapper::getLogger(get_called_class())->debug($message);
     }
 
     private static $magicComments = [

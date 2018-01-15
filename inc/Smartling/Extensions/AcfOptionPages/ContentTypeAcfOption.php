@@ -87,7 +87,6 @@ class ContentTypeAcfOption extends ContentTypeAbstract
         $wrapperId = 'wrapper.entity.' . $this->getSystemName();
         $definition = $di->register($wrapperId, 'Smartling\Extensions\AcfOptionPages\AcfOptionEntity');
         $definition
-            ->addArgument($di->getDefinition('logger'))
             ->addMethodCall('setDbal', [$di->getDefinition('site.db')]);
 
         $di->get('factory.contentIO')->registerHandler($this->getSystemName(), $di->get($wrapperId));

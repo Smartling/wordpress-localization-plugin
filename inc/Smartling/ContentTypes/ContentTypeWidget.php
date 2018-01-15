@@ -87,7 +87,6 @@ class ContentTypeWidget extends ContentTypeAbstract
         $wrapperId = 'wrapper.entity.' . $this->getSystemName();
         $definition = $di->register($wrapperId, 'Smartling\DbAl\WordpressContentEntities\WidgetEntity');
         $definition
-            ->addArgument($di->getDefinition('logger'))
             ->addArgument($this->getSystemName())
             ->addArgument([
                               ContentTypeNavigationMenu::WP_CONTENT_TYPE,

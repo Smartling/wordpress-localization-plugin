@@ -50,10 +50,7 @@ class DetectChangesTest extends \PHPUnit_Framework_TestCase
     {
         $mock = $this->getMockBuilder('Smartling\Helpers\DetectChangesHelper')
             ->setMethods(null)
-            ->disableOriginalConstructor()
             ->getMock();
-
-        $mock->setLogger($this->getLogger());
 
         $this->setDetectChangesHelperMock($mock);
     }

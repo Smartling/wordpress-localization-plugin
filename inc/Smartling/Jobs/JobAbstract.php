@@ -7,6 +7,7 @@ use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\OptionHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\SimpleStorageHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\WPHookInterface;
 use Smartling\WP\WPInstallableInterface;
@@ -63,14 +64,6 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
     }
 
     /**
-     * @param LoggerInterface $logger
-     */
-    protected function setLogger($logger)
-    {
-        $this->logger = $logger;
-    }
-
-    /**
      * @return SubmissionManager
      */
     protected function getSubmissionManager()
@@ -110,13 +103,12 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
     /**
      * JobAbstract constructor.
      *
-     * @param LoggerInterface   $logger
      * @param SubmissionManager $submissionManager
      * @param int               $workerTTL
      */
-    public function __construct(LoggerInterface $logger, SubmissionManager $submissionManager, $workerTTL = self::WORKER_DEFAULT_TTL)
+    public function __construct(SubmissionManager $submissionManager, $workerTTL = self::WORKER_DEFAULT_TTL)
     {
-        $this->setLogger($logger);
+        $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->setSubmissionManager($submissionManager);
         $this->setWorkerTTL($workerTTL);
     }
