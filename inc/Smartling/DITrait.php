@@ -48,14 +48,16 @@ trait DITrait
 
         self::$containerInstance = $container;
 
-        MonologWrapper::init(self::$containerInstance);
-
         self::handleLoggerConfiguration();
 
         /**
          * Exposing reference to DI interface
          */
         do_action(ExportedAPI::ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT, self::$containerInstance);
+
+        // Init monolog wrapper when all the modifications to DI container
+        // are done.
+        MonologWrapper::init(self::$containerInstance);
 
         $logger = MonologWrapper::getLogger(get_called_class());
         $logger->pushProcessor(function ($record) {
@@ -79,7 +81,6 @@ trait DITrait
     private static function handleLoggerConfiguration()
     {
         add_action(ExportedAPI::ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT, function (ContainerBuilder $di) {
-
             $defaultLogFileName = Bootstrap::getLogFileName(false, true);
             $storedFile = SimpleStorageHelper::get(self::SMARTLING_CUSTOM_LOG_FILE, false);
             $logFileName = false !== $storedFile ? $storedFile : $defaultLogFileName;
@@ -118,10 +119,12 @@ trait DITrait
 
     private static function nullLog(ContainerBuilder $di)
     {
-        $logger = $di->get('logger');
-        $logger->setHandlers([new NullHandler()]);
-
-        MonologWrapper::clear();
+        // Disable all defined loggers.
+        foreach ($di->getDefinitions() as $serviceId => $serviceDefinition) {
+            if ($serviceDefinition->getClass() == 'Smartling\MonologWrapper\Logger\LevelLogger') {
+                $di->get($serviceId)->setHandlers([new NullHandler()]);
+            }
+        };
     }
 
     public static function disableLogging(ContainerBuilder $di)
