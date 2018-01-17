@@ -48,6 +48,7 @@ trait DITrait
 
         self::$containerInstance = $container;
 
+        self::injectLoggerCustomizations(self::$containerInstance);
         self::handleLoggerConfiguration();
 
         /**
@@ -76,6 +77,33 @@ trait DITrait
         LogContextMixinHelper::addToContext('version', self::$pluginVersion);
 
         self::$loggerInstance = $logger;
+    }
+
+    private static function injectLoggerCustomizations(ContainerBuilder $di)
+    {
+        $storedConfiguration = SimpleStorageHelper::get(Bootstrap::LOGGING_CUSTOMIZATION, []);
+
+        $handler = $di->getDefinition('fileLoggerHandlerRotatable');
+
+        if (0 < count($storedConfiguration)) {
+            foreach ($storedConfiguration as $level => $items) {
+                $loggerClass = 'Smartling\MonologWrapper\Logger\\'
+                               . ('mute' === $level ? 'DevNullLogger' : 'LevelLogger');
+
+                $level = ('mute' === $level) ? 'debug' : $level;
+
+                if (is_array($items)) {
+                    foreach ($items as $item) {
+                        $defId = vsprintf('logger.%s.%s', [$level, md5($item)]);
+
+                        $di->register($defId, $loggerClass)
+                            ->addArgument($item)
+                            ->addArgument($level)
+                            ->addArgument([$handler]);
+                    }
+                }
+            }
+        }
     }
 
     private static function handleLoggerConfiguration()

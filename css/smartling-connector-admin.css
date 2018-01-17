@@ -345,6 +345,10 @@ th.center {
     text-align: left;
 }
 
-.update-nag table td input[type=text] {
+.update-nag table td input[type=text],.update-nag table td textarea {
     width: 100%;
+}
+
+.update-nag table td textarea {
+    height: 160px;
 }

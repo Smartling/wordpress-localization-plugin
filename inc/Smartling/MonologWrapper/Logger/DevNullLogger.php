@@ -2,14 +2,12 @@
 
 namespace Smartling\MonologWrapper\Logger;
 
-use Monolog\Logger;
-
 /**
  * Class DevNullLogger
  *
  * @package LogConfigExample\Logger
  */
-class DevNullLogger extends Logger {
+class DevNullLogger extends LevelLogger {
 
   /**
    * {@inheritdoc}

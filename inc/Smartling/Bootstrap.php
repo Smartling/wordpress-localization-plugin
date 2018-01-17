@@ -48,6 +48,8 @@ class Bootstrap
 
     const SMARTLING_CUSTOM_PAGE_SIZE = 'smartling_ui_page_size';
 
+    const LOGGING_CUSTOMIZATION = 'smartling_logging_customization';
+
     public function __construct()
     {
         ignore_user_abort(true);
@@ -266,6 +268,11 @@ class Bootstrap
             $defaultPageSize = Bootstrap::getPageSize(true);
             $rawPageSize = (int)$data['pageSize'];
             $pageSize = $rawPageSize < 1 ? $defaultPageSize : $rawPageSize;
+            $loggingCustomization = yaml_parse(stripslashes($data['loggingCustomization']));
+
+            if (is_array($loggingCustomization)) {
+                SimpleStorageHelper::set(Bootstrap::LOGGING_CUSTOMIZATION, $loggingCustomization);
+            }
 
             SimpleStorageHelper::set(Bootstrap::SELF_CHECK_IDENTIFIER, $selfCheckDisabled);
             SimpleStorageHelper::set(Bootstrap::DISABLE_LOGGING, $disableLogging);
