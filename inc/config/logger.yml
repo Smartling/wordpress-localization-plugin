@@ -8,14 +8,23 @@ parameters:
   logger.formatter.date: "Y-m-d H:i:s"
   logger.formatter.output.default: "[%%datetime%%] %%channel%%.%%level_name%%: %%message%% %%context%% %%extra%%\n"
   logger.formatter.output.short: "[%%datetime%%] %%level_name%%: %%message%%\n"
+
+  #
+  # Log String format WITH Source (class / namespace)
+  #
   logger.formatter.output.short_with_request_id: "[%%datetime%%] %%extra.request_id%% %%level_name%% %%channel%%: %%message%%\n"
+
+  #
+  # Log String format WITHOUT Source (class / namespace)
+  #
+  logger.formatter.output.short_with_request_id_reduced: "[%%datetime%%] %%extra.request_id%% %%channel%%: %%message%%\n"
   logger.formatter.allow_multiline: true
 
 services:
   fileLoggerLineFormatter:
     class: Smartling\Base\CustomLogLineFormatter
     arguments:
-      - "%logger.formatter.output.short_with_request_id%"
+      - "%logger.formatter.output.short_with_request_id_reduced%"
       - "%logger.formatter.date%"
       - "%logger.formatter.allow_multiline%"
 
