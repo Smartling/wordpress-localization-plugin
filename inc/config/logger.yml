@@ -17,7 +17,7 @@ parameters:
   #
   # Log String format WITHOUT Source (class / namespace)
   #
-  logger.formatter.output.short_with_request_id_reduced: "[%%datetime%%] %%extra.request_id%% %%channel%%: %%message%%\n"
+  logger.formatter.output.short_with_request_id_reduced: "[%%datetime%%] %%extra.request_id%% %%level_name%%: %%message%%\n"
   logger.formatter.allow_multiline: true
 
 services:
