@@ -11,6 +11,7 @@ use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\StringHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionManager;
 
@@ -93,7 +94,6 @@ abstract class WPAbstract
     /**
      * Constructor
      *
-     * @param LoggerInterface                  $logger
      * @param LocalizationPluginProxyInterface $connector
      * @param PluginInfo                       $pluginInfo
      * @param EntityHelper                     $entityHelper
@@ -101,7 +101,6 @@ abstract class WPAbstract
      * @param Cache                            $cache
      */
     public function __construct(
-        LoggerInterface $logger,
         LocalizationPluginProxyInterface $connector,
         PluginInfo $pluginInfo,
         EntityHelper $entityHelper,
@@ -109,7 +108,7 @@ abstract class WPAbstract
         Cache $cache
     )
     {
-        $this->logger = $logger;
+        $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->connector = $connector;
         $this->pluginInfo = $pluginInfo;
         $this->entityHelper = $entityHelper;
@@ -312,7 +311,7 @@ abstract class WPAbstract
         if (false === $enabled) {
             $checkboxAttributes = array_merge($checkboxAttributes, [
                 'disabled' => 'disabled',
-                'title'    => 'Content is cloned',
+                'title'    => 'Content is cloned or locked',
                 'class'    => 'nomcheck',
             ]);
         }

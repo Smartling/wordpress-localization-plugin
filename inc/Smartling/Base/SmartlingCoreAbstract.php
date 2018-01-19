@@ -12,6 +12,7 @@ use Smartling\Helpers\CustomMenuContentTypeHelper;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\TranslationHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Queue\QueueInterface;
 use Smartling\Settings\SettingsManager;
@@ -105,6 +106,14 @@ abstract class SmartlingCoreAbstract
     private $contentSerializationHelper;
 
     /**
+     * SmartlingCoreAbstract constructor.
+     */
+    public function __construct()
+    {
+        $this->logger = MonologWrapper::getLogger(get_called_class());
+    }
+
+    /**
      * @return Cache
      */
     public function getCache()
@@ -174,14 +183,6 @@ abstract class SmartlingCoreAbstract
     public function getLogger()
     {
         return $this->logger;
-    }
-
-    /**
-     * @param LoggerInterface $logger
-     */
-    public function setLogger(LoggerInterface $logger)
-    {
-        $this->logger = $logger;
     }
 
     /**

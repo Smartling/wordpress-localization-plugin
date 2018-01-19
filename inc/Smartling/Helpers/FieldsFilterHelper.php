@@ -6,6 +6,7 @@ namespace Smartling\Helpers;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -44,14 +45,6 @@ class FieldsFilterHelper
     }
 
     /**
-     * @param LoggerInterface $logger
-     */
-    public function setLogger($logger)
-    {
-        $this->logger = $logger;
-    }
-
-    /**
      * @return SettingsManager
      */
     public function getSettingsManager()
@@ -70,12 +63,11 @@ class FieldsFilterHelper
     /**
      * FieldsFilterHelper constructor.
      *
-     * @param LoggerInterface $logger
      * @param SettingsManager $settingsManager
      */
-    public function __construct(LoggerInterface $logger, SettingsManager $settingsManager)
+    public function __construct(SettingsManager $settingsManager)
     {
-        $this->setLogger($logger);
+        $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->setSettingsManager($settingsManager);
     }
 

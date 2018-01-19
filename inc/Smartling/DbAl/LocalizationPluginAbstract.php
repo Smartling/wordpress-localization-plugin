@@ -4,6 +4,7 @@ namespace Smartling\DbAl;
 use Psr\Log\LoggerInterface;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Helpers\SiteHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 
 /**
  * Class LocalizationPluginAbstract
@@ -33,9 +34,9 @@ abstract class LocalizationPluginAbstract implements LocalizationPluginProxyInte
     /**
      * @inheritdoc
      */
-    public function __construct(LoggerInterface $logger, SiteHelper $helper, array $ml_plugin_statuses)
+    public function __construct(SiteHelper $helper, array $ml_plugin_statuses)
     {
-        $this->logger = $logger;
+        $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->helper = $helper;
     }
 

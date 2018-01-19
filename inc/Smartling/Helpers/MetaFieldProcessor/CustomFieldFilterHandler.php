@@ -3,6 +3,7 @@
 namespace Smartling\Helpers\MetaFieldProcessor;
 
 use Smartling\ContentTypes\ConfigParsers\FieldFilterConfigParser;
+use Smartling\MonologWrapper\MonologWrapper;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class CustomFieldFilterHandler
@@ -13,10 +14,18 @@ class CustomFieldFilterHandler
      */
     public static function registerFilter(ContainerBuilder $di, array $config)
     {
+        // $di->get('logger')->debug(vsprintf('Registering filter for config: %s',[var_export($config, true)]));
         $parser = new FieldFilterConfigParser($config, $di);
-        if (true === $parser->getValidFiler()) {
+        // $di->get('logger')->debug(vsprintf('Validating filter...',[]));
+        $isValid = $parser->getValidFiler();
+        if (true === $isValid) {
             $filter = $parser->getFilter();
+            // $di->get('logger')->debug(vsprintf('Adding filter for config: %s',[var_export($config, true)]));
             $di->get('meta-field.processor.manager')->registerProcessor($filter);
+        } else {
+            $logger = MonologWrapper::getLogger(get_called_class());
+            $logger->warning(vsprintf('Filter isn\'t valid for config: %s',[var_export($config, true)]));
+            $logger->warning(vsprintf('Filter isn\'t added.',[]));
         }
     }
 }

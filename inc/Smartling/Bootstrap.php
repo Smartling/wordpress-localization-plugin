@@ -15,12 +15,14 @@ use Smartling\ContentTypes\CustomPostType;
 use Smartling\ContentTypes\CustomTaxonomyType;
 use Smartling\Exception\SmartlingBootException;
 use Smartling\Exceptions\SmartlingApiException;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\MetaFieldProcessor\CustomFieldFilterHandler;
 use Smartling\Helpers\SchedulerHelper;
 use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPInstallableInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -41,9 +43,13 @@ class Bootstrap
 
     const DISABLE_LOGGING = 'smartling_disable_logging';
 
+    const DISABLE_ACF_DB_LOOKUP = 'smartling_disable_db_lookup';
+
     const SMARTLING_CUSTOM_LOG_FILE = 'smartling_log_file';
 
     const SMARTLING_CUSTOM_PAGE_SIZE = 'smartling_ui_page_size';
+
+    const LOGGING_CUSTOMIZATION = 'smartling_logging_customization';
 
     public function __construct()
     {
@@ -74,7 +80,7 @@ class Bootstrap
     public static function getLogger()
     {
         /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
-        $object = self::getContainer()->get('logger');
+        $object = MonologWrapper::getLogger(get_called_class());
 
         if ($object instanceof LoggerInterface) {
             return $object;
@@ -259,12 +265,24 @@ class Bootstrap
             $selfCheckDisabled = (int)$data['selfCheckDisabled'];
             $disableLogging = (int)$data['disableLogging'];
             $logPath = $data['loggingPath'];
+            $disableACFDBLookup = (int) $data['disableDBLookup'];
             $defaultPageSize = Bootstrap::getPageSize(true);
             $rawPageSize = (int)$data['pageSize'];
             $pageSize = $rawPageSize < 1 ? $defaultPageSize : $rawPageSize;
+            $loggingCustomization = yaml_parse(stripslashes($data['loggingCustomization']));
+
+            if (is_array($loggingCustomization)) {
+                SimpleStorageHelper::set(Bootstrap::LOGGING_CUSTOMIZATION, $loggingCustomization);
+            }
 
             SimpleStorageHelper::set(Bootstrap::SELF_CHECK_IDENTIFIER, $selfCheckDisabled);
             SimpleStorageHelper::set(Bootstrap::DISABLE_LOGGING, $disableLogging);
+
+            if ($disableACFDBLookup === 0) {
+                SimpleStorageHelper::drop(self::DISABLE_ACF_DB_LOOKUP);
+            } else {
+                SimpleStorageHelper::set(self::DISABLE_ACF_DB_LOOKUP, $disableACFDBLookup);
+            }
 
             if ($pageSize === $defaultPageSize) {
                 SimpleStorageHelper::drop(self::SMARTLING_CUSTOM_PAGE_SIZE);
@@ -382,7 +400,7 @@ class Bootstrap
         $new_version = '0.0.0';
 
         $info = get_site_transient('update_plugins');
-        if (is_object($info)) {
+        if (is_object($info) && isset($info->response)) {
             $response = $info->response;
             if (is_array($response)) {
                 foreach ($response as $definition) {
@@ -459,6 +477,14 @@ class Bootstrap
 
         $action = defined('DOING_CRON') && true === DOING_CRON ? 'wp_loaded' : 'admin_init';
 
+        add_action ($action, function(){
+
+            /**
+             * Initializing ACF and ACF Option Pages support.
+             */
+            (new AcfDynamicSupport(self::getLogger(), self::fromContainer('entity.helper')))->run();
+
+        }, 15);
         /**
          * Post types and taxonomies are registered on 'init' hook, but this code is executed on 'plugins_loaded' hook,
          * so we need to postpone dynamic handlers execution
@@ -513,7 +539,7 @@ class Bootstrap
                 try {
                     CustomFieldFilterHandler::registerFilter($di, $filter);
                 } catch (\Exception $e) {
-                    $di->get('logger')->warning(
+                    self::getLogger()->warning(
                         vsprintf(
                             'Error registering filter with message: \'%s\', params: \'%s\'',
                             [
@@ -557,7 +583,6 @@ class Bootstrap
             /**
              * @var SettingsManager $settingsManager
              */
-
 
             $curSiteId = $siteHelper->getCurrentBlogId();
             $profile = $settingsManager->getSingleSettingsProfile($curSiteId);

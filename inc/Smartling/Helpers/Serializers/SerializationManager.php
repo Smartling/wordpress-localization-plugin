@@ -3,6 +3,7 @@
 namespace Smartling\Helpers\Serializers;
 
 use Psr\Log\LoggerInterface;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Processors\SmartlingFactoryAbstract;
 
 /**
@@ -13,12 +14,10 @@ class SerializationManager extends SmartlingFactoryAbstract
 {
     /**
      * ContentTypeManager constructor.
-     *
-     * @param LoggerInterface $logger
      */
-    public function __construct(LoggerInterface $logger)
+    public function __construct()
     {
-        parent::__construct($logger);
+        parent::__construct();
         $this->setAllowDefault(false);
     }
 

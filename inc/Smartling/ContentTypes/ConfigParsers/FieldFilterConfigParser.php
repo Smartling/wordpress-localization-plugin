@@ -10,6 +10,7 @@ use Smartling\Helpers\MetaFieldProcessor\CloneValueFieldProcessor;
 use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorInterface;
 use Smartling\Helpers\MetaFieldProcessor\SkipFieldProcessor;
 use Smartling\Helpers\Serializers\SerializerInterface;
+use Smartling\MonologWrapper\MonologWrapper;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
@@ -328,7 +329,6 @@ class FieldFilterConfigParser
             case 'term':
             case 'taxonomy':
                 $filter = new TermBasedProcessor(
-                    $this->getService('logger'),
                     $this->getService('translation.helper'),
                     $this->getPattern()
                 );
@@ -342,7 +342,6 @@ class FieldFilterConfigParser
             case 'post':
 
                 $filter = new PostBasedProcessor(
-                    $this->getService('logger'),
                     $this->getService('translation.helper'),
                     $this->getPattern()
                 );
@@ -356,7 +355,6 @@ class FieldFilterConfigParser
             case 'media':
 
                 $filter = new MediaBasedProcessor(
-                    $this->getService('logger'),
                     $this->getService('translation.helper'),
                     $this->getPattern()
                 );
@@ -370,7 +368,6 @@ class FieldFilterConfigParser
                 break;
             default:
                 $filter = new CustomTypeProcessor(
-                    $this->getService('logger'),
                     $this->getService('translation.helper'),
                     $this->getPattern(),
                     $this->getFilterType()
@@ -394,13 +391,13 @@ class FieldFilterConfigParser
                 return new SkipFieldProcessor($this->getPattern());
                 break;
             case self::ACTION_COPY:
-                return new CloneValueFieldProcessor($this->getPattern(), $this->getService('content.helper'), $this->getService('logger'));
+                return new CloneValueFieldProcessor($this->getPattern(), $this->getService('content.helper'));
                 break;
             case self::ACTION_LOCALIZE:
                 return $this->getLocalizeFilter();
                 break;
             default:
-                $this->getService('logger')->error(vsprintf('Invalid filter action: \'%s\'', [$this->getAction()]));
+                MonologWrapper::getLogger(get_called_class())->error(vsprintf('Invalid filter action: \'%s\'', [$this->getAction()]));
                 die ($this->getAction());
         }
     }

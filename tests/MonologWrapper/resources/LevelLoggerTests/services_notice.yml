@@ -1,0 +1,10 @@
+services:
+  handler:
+    class: Monolog\Handler\NullHandler
+
+  logger.default:
+    class: Smartling\MonologWrapper\Logger\LevelLogger
+    arguments: ['default', 'notice', ['@handler']]
+
+  service.example.1:
+    class: Smartling\Tests\MonologWrapper\Examples\Example1

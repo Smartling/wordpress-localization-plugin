@@ -5,6 +5,7 @@ namespace Smartling\Jobs;
 use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Queue\Queue;
+use Smartling\Submissions\SubmissionManager;
 
 /**
  * Class DownloadTranslationJob

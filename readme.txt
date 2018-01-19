@@ -2,8 +2,8 @@
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
-Tested up to: 4.8.2
-Stable tag: 1.6.2
+Tested up to: 4.9.1
+Stable tag: 1.6.13
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -58,6 +58,61 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+
+= 1.6.12 =
+* Added ability to disable automatic ACF configuration lookup.
+
+= 1.6.12 =
+* Fixed possible notice
+* Optimized database query.
+
+= 1.6.11 =
+* Fixed possible incorrect filter selection when fields names partially match.
+
+= 1.6.10 =
+* Improved functionality that works with temporary files.
+* Fixed issue when image file could be not copied to translation site.
+* Fixed possible issue when some submissions or XML file may not be removed while translation is removed.
+
+= 1.6.9 =
+* Reverted additional logging and validations for temporary files.
+
+= 1.6.8 =
+* Fixed possible issue when Translation Lock functionality is broken.
+* Fixed possible issue when Cloning functionality is broken.
+* Improved functionality that works with temporary files.
+* Added automatic detection of post type if delete_post(, true) is used for proper handling of before_delete_post hook
+
+= 1.6.7 =
+* Fixed possible fatal error when non standard ACF plugin field type is used.
+
+= 1.6.6 =
+* Fixed possible fatal error related to missing class DiagnosticsHelper fixed.
+
+= 1.6.5 =
+* Improved Translation Lock functionality to protect content from Upload and Download.
+* Fixed issue when deletion of translation may leave smartling-submission.
+
+= 1.6.4 =
+
+**Note, that [Smartling ACF localization](https://wordpress.org/plugins/smartling-acf-localization) plugin is not supported anymore. Now it is a part of Smartling-connector plugin.**
+
+**This version may require manual migration steps from previous versions. Please read and following steps below:**
+
+* **If [Smartling ACF localization](https://wordpress.org/plugins/smartling-acf-localization) plugin is used then deactivate Smartling-connector plugin *BEFORE* upgrading to avoid Smartling-connector cron jobs execution.**
+* **If [Smartling ACF localization](https://wordpress.org/plugins/smartling-acf-localization) plugin is used then deactivate it.**
+* **Upgrade smartling-connector.**
+* **If [Smartling ACF localization](https://wordpress.org/plugins/smartling-acf-localization) plugin was used - remove it.**
+
+**Improvements**:
+
+* Fixed possible issue when ACF image types become broken.
+* Added ACL Localization plugin as a part of smartling-connector plugin to fix possible issue when translation becomes broken if ACF Localization plugin is disabled or removed.
+* Fixed minor CSS issue when css file was loaded twice.
+* Added support for Wordpress 4.9
+
+= 1.6.3 =
+* Fixed possible notice issue on post-edit page smartling widget.
 
 = 1.6.2 =
 * Fixed issue if site doesn't have `administrator` role.

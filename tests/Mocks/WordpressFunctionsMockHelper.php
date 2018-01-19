@@ -7,6 +7,8 @@ namespace {
          */
         defined('ARRAY_A') || define('ARRAY_A', 'ARRAY_A');
 
+        $_SERVER['HTTP_HOST'] = 'test.com';
+
         /**
          * Functions
          */

@@ -126,6 +126,42 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
+                        <th><label for="loggingCustomization">Logging Customization</label></th>
+                        <td>
+                            <textarea id="loggingCustomization"><?= \Symfony\Component\Yaml\Yaml::dump(\Smartling\Helpers\SimpleStorageHelper::get(\Smartling\Bootstrap::LOGGING_CUSTOMIZATION,['mute'=>null,'debug'=>['Smartling']])); ?></textarea>
+
+                            <div id="defaultLoggingCustomizations" style="display: none">mute: ~
+debug:
+- Smartling</div>
+
+                        <a href="javascript:void(0)" id="resetLoggingCustomization">reset to defaults</a>
+                        | note, levels can be debug, info, notice, warning, error, critical, alert, emergency. Mo disable logging use level <em>mute</em><br/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th colspan="2" class="center">ACF Runtime settings</th>
+                    </tr>
+                    <tr>
+                        <th><label for="disableDBLookup">Disable ACF configuration database lookup (not recommended)</label></th>
+                        <td>
+                            <?=
+                            \Smartling\Helpers\HtmlTagGeneratorHelper::tag(
+                                'select',
+                                \Smartling\Helpers\HtmlTagGeneratorHelper::renderSelectOptions(
+                                    \Smartling\Helpers\SimpleStorageHelper::get(\Smartling\Bootstrap::DISABLE_ACF_DB_LOOKUP, 0),
+                                    [
+                                        0 => 'No',
+                                        1 => 'Yes',
+                                    ]),
+                                [
+                                    'id'   => 'disableDBLookup',
+                                    'name' => 'disableDBLookup',
+                                ]
+                            );
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
                         <th colspan="2" class="center">User Interface Customizations</th>
                     </tr>
                     <tr>
@@ -150,7 +186,6 @@ $data = $this->getViewData();
                 </table>
             </div>
         </div>
-
     </ul>
     </p>
 </div>

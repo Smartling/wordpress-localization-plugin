@@ -75,8 +75,7 @@ class QueueTest extends \PHPUnit_Framework_TestCase
     {
         $this->setDbal($this->mockDbAl());
 
-        $logger = $this->getLogger();
-        $queue = new Queue($logger);
+        $queue = new Queue();
 
         $queue->setDbal($this->getDbal());
         $this->setQueue($queue);

@@ -12,17 +12,15 @@ use Smartling\Helpers\SiteHelper;
 trait EntityHelperMock
 {
     /**
-     * @param LoggerInterface $logger
      * @param SiteHelper      $siteHelper
      *
      * @return \PHPUnit_Framework_MockObject_MockObject|\Smartling\Helpers\EntityHelper
      */
-    private function mockEntityHelper(LoggerInterface $logger, SiteHelper $siteHelper)
+    private function mockEntityHelper(SiteHelper $siteHelper)
     {
         $entityHelper = $this->getMockBuilder('Smartling\Helpers\EntityHelper')
             ->setMethods(['getSiteHelper'])
             ->getMock();
-        $entityHelper->setLogger($logger);
 
         $entityHelper->expects(self::any())
             ->method('getSiteHelper')

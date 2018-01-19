@@ -14,15 +14,6 @@ interface LocalizationPluginProxyInterface
 {
 
     /**
-     * Constructor
-     *
-     * @param LoggerInterface $logger
-     * @param SiteHelper      $helper
-     * @param array           $ml_plugin_statuses
-     */
-    public function __construct(LoggerInterface $logger, SiteHelper $helper, array $ml_plugin_statuses);
-
-    /**
      * @return LoggerInterface
      */
     public function getLogger();

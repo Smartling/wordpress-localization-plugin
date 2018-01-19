@@ -17,4 +17,7 @@
             <directory suffix="Test.php" phpVersion="5.5.0" phpVersionOperator=">=">./</directory>
         </testsuite>
     </testsuites>
+    <logging>
+        <log type="junit" target="log-unit-tests.xml" logIncompleteSkipped="false"/>
+    </logging>
 </phpunit>

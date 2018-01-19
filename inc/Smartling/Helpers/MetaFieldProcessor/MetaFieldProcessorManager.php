@@ -4,6 +4,7 @@ namespace Smartling\Helpers\MetaFieldProcessor;
 
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Processors\SmartlingFactoryAbstract;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPHookInterface;
@@ -15,13 +16,52 @@ use Smartling\WP\WPHookInterface;
 class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHookInterface
 {
     /**
-     * MetaFieldProcessorManager constructor.
-     *
-     * @param LoggerInterface $logger
+     * @var array
      */
-    public function __construct(LoggerInterface $logger)
+    private $collection = [];
+
+    protected function setCollection(array $collection = [])
     {
-        parent::__construct($logger);
+        $this->collection = $collection;
+    }
+
+    protected function getCollection()
+    {
+        return $this->collection;
+    }
+
+    protected function getCollectionKeys()
+    {
+        return array_keys($this->getCollection());
+    }
+
+    protected function collectionKeyExists($key)
+    {
+        return in_array($key, $this->getCollectionKeys(), true);
+    }
+
+    protected function insertIntoCollection($key, $value)
+    {
+        $_collection = $this->getCollection();
+        $_collection[$key] = $value;
+        $this->setCollection($_collection);
+    }
+
+    protected function removeFromCollection($key)
+    {
+        if ($this->collectionKeyExists($key)) {
+            $_collection = $this->getCollection();
+            unset($_collection[$key]);
+            $this->setCollection($_collection);
+        }
+    }
+
+    /**
+     * MetaFieldProcessorManager constructor.
+     */
+    public function __construct()
+    {
+        parent::__construct();
         $this->setAllowDefault(true);
     }
 
@@ -30,7 +70,15 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
      */
     public function registerProcessor(MetaFieldProcessorInterface $handler)
     {
-        parent::registerHandler($handler->getFieldRegexp(), $handler);
+        $pattern = $handler->getFieldRegexp();
+        //$this->getLogger()->debug(vsprintf('Adding to collection processor for pattern: \'%s\'', [$pattern]));
+        if ($this->collectionKeyExists($pattern)) {
+            $this->removeFromCollection($pattern);
+        }
+        $this->insertIntoCollection($pattern, $handler);
+        if (!$this->collectionKeyExists($pattern)) {
+            $this->getLogger()->warning(vsprintf('FAILED Adding to collection processor for pattern: \'%s\'', [$pattern]));
+        }
     }
 
     public function handlePostTranslationFields($fieldName, $fieldValue, SubmissionEntity $submission)
@@ -103,9 +151,14 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
 
         $patterns = array_keys($registeredProcessors);
 
+        //$this->getLogger()->debug(vsprintf('Looking for match for \'%s\' in : %s',[$contentType, var_export($patterns, true)]));
+
         foreach ($patterns as $pattern) {
-            if (preg_match(vsprintf('#%s#iu', [$pattern]), $contentType)) {
+            if (preg_match(vsprintf('#%s#u', [$pattern]), $contentType)) {
+                //$this->getLogger()->debug(vsprintf('Probing done successfully with pattern \'%s\' for \'%s\'...',[$pattern, $contentType]));
                 return $registeredProcessors[$pattern];
+            } else {
+                //$this->getLogger()->debug(vsprintf('Probing failed with pattern \'%s\' for \'%s\'...',[$pattern, $contentType]));
             }
         }
 

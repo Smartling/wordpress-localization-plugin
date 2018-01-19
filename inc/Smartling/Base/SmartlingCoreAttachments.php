@@ -2,6 +2,7 @@
 
 namespace Smartling\Base;
 
+use Smartling\Bootstrap;
 use Smartling\Helpers\AttachmentHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -9,20 +10,32 @@ use Smartling\Submissions\SubmissionEntity;
 
 trait SmartlingCoreAttachments
 {
+
     public function syncAttachment(SubmissionEntity $submission)
     {
+        if ('attachment' !== $submission->getContentType()) {
+            return;
+        }
+
+        /*
+         * Checking if target file exists
+         */
+        $fileData = $this->getAttachmentFileInfoBySubmission($submission);
+
+        $sourceFileFsPath = $fileData['source_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
+        $targetFileFsPath = $fileData['target_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
+
+        $targetFileExists = AttachmentHelper::checkIfTargetFileExists($sourceFileFsPath, $targetFileFsPath);
+
         $this->getLogger()->debug(
             vsprintf('Starting syncing media attachment blog = \'%s\' attachment id = \'%s\'.', [
                 $submission->getTargetBlogId(),
                 $submission->getTargetId(),
             ])
         );
-        if ('attachment' !== $submission->getContentType()) {
-            return;
-        }
         $profile = $this->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
         if ($profile instanceof ConfigurationProfileEntity) {
-            if (1 === $profile->getAlwaysSyncImagesOnUpload() || $submission->getStatus() == 'New') {
+            if (1 === $profile->getAlwaysSyncImagesOnUpload() || ($submission->getStatus() == SubmissionEntity::SUBMISSION_STATUS_NEW && !$targetFileExists)) {
                 $this->syncMediaFile($submission);
             }
 
@@ -38,11 +51,17 @@ trait SmartlingCoreAttachments
                 $submission->getTargetId(),
             ])
         );
+
         $fileData = $this->getAttachmentFileInfoBySubmission($submission);
+
+
         $sourceFileFsPath = $fileData['source_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
         $targetFileFsPath = $fileData['target_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
 
+
+
         $mediaCloneResult = AttachmentHelper::cloneFile($sourceFileFsPath, $targetFileFsPath, true);
+
         if (is_array($mediaCloneResult) && 0 < count($mediaCloneResult)) {
             $message = vsprintf(
                 'Error(s) %s happened while working with attachment id=%s, blog=%s, submission=%s.',

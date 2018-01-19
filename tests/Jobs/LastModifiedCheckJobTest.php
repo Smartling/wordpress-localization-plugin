@@ -157,8 +157,8 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
 
         $this->setSubmissionManager(
             $this->mockSubmissionManager(
-                $this->getLogger(), $dbMock,
-                $this->mockEntityHelper($this->getLogger(), $this->mockSiteHelper($this->getLogger()))
+                $dbMock,
+                $this->mockEntityHelper($this->mockSiteHelper())
             )
         );
 
@@ -170,7 +170,6 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
 
         $this->setLastModifiedWorker(
             $this->getWorkerMock(
-                $this->getLogger(),
                 $this->getSubmissionManager(),
                 $this->getApiWrapper(),
                 $this->getQueue()
@@ -179,18 +178,17 @@ class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @param LoggerInterface     $logger
      * @param SubmissionManager   $submissionManager
      * @param ApiWrapperInterface $apiWrapper
      * @param Queue               $queue
      *
      * @return \PHPUnit_Framework_MockObject_MockObject|LastModifiedCheckJob
      */
-    private function getWorkerMock(LoggerInterface $logger, SubmissionManager $submissionManager, ApiWrapperInterface $apiWrapper, Queue $queue)
+    private function getWorkerMock(SubmissionManager $submissionManager, ApiWrapperInterface $apiWrapper, Queue $queue)
     {
         $worker = $this->getMockBuilder('Smartling\Jobs\LastModifiedCheckJob')
             ->setMethods(['prepareSubmissionList'])
-            ->setConstructorArgs([$logger, $submissionManager])
+            ->setConstructorArgs([$submissionManager])
             ->getMock();
 
         $worker->setApiWrapper($apiWrapper);

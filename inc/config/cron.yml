@@ -19,7 +19,6 @@ services:
   cron.worker.upload:
     class: Smartling\Jobs\UploadJob
     arguments:
-      - "@logger"
       - "@manager.submission"
       - "%cron.job.default_ttl%"
     calls:
@@ -32,7 +31,6 @@ services:
   cron.worker.submission-collector:
     class: Smartling\Jobs\SubmissionCollectorJob
     arguments:
-      - "@logger"
       - "@manager.submission"
       - "%cron.job.default_ttl%"
     calls:
@@ -47,7 +45,6 @@ services:
   cron.worker.last-modified-check:
     class: Smartling\Jobs\LastModifiedCheckJob
     arguments:
-      - "@logger"
       - "@manager.submission"
       - "%cron.job.default_ttl%"
     calls:
@@ -63,7 +60,6 @@ services:
   cron.worker.download:
     class: Smartling\Jobs\DownloadTranslationJob
     arguments:
-      - "@logger"
       - "@manager.submission"
       - "%cron.job.default_ttl%"
     calls:

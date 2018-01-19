@@ -68,7 +68,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
             if (false === $rawValue) {
                 $message = vsprintf('Locales and/or Links are not set with multilingual press plugin.', []);
                 $this->getLogger()->critical('SettingsPage:Render ' . $message);
-                DiagnosticsHelper::addDiagnosticsMessage($message, true);
+                DiagnosticsHelper::addDiagnosticsMessage($message, false);
             } else {
                 foreach ($rawValue as $blogId => $item) {
                     $temp = [
@@ -129,13 +129,13 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
     /**
      * @inheritdoc
      */
-    public function __construct(LoggerInterface $logger, SiteHelper $helper, array $ml_plugin_statuses)
+    public function __construct(SiteHelper $helper, array $ml_plugin_statuses)
     {
         global $wpdb;
 
         $this->wpdb = $wpdb;
 
-        parent::__construct($logger, $helper, $ml_plugin_statuses);
+        parent::__construct($helper, $ml_plugin_statuses);
 
         if (false === $ml_plugin_statuses['multilingual-press-pro'] && defined('SMARTLING_CLI_EXECUTION') &&
             SMARTLING_CLI_EXECUTION === false

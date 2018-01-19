@@ -1,0 +1,23 @@
+services:
+  handler:
+    class: Monolog\Handler\NullHandler
+
+  logger.default:
+    class: Smartling\MonologWrapper\Logger\LevelLogger
+    arguments: ['default', 'debug', ['@handler']]
+
+  logger.namespace:
+    class: Smartling\MonologWrapper\Logger\LevelLogger
+    arguments: ['Smartling\Tests', 'debug', ['@handler']]
+
+  service.example.1:
+    class: Smartling\Tests\MonologWrapper\Examples\Example1
+
+  service.example.2:
+    class: Smartling\Tests\MonologWrapper\Examples\Example2
+
+  service.example.3:
+    class: Smartling\Tests\MonologWrapper\Examples\Deep\Example3
+
+  service.example.4:
+    class: Smartling\Tests\MonologWrapper\Examples\Deep\Example4

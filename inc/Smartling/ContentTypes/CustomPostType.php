@@ -7,6 +7,7 @@ use Smartling\ContentTypes\ConfigParsers\PostTypeConfigParser;
 use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\TranslationHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 
 /**
  * Class CustomPostType
@@ -50,7 +51,6 @@ class CustomPostType extends PostBasedContentTypeAbstract
         $wrapperId = 'wrapper.entity.' . $this->getSystemName();
         $definition = $di->register($wrapperId, 'Smartling\DbAl\WordpressContentEntities\PostEntityStd');
         $definition
-            ->addArgument($di->getDefinition('logger'))
             ->addArgument($this->getSystemName())
             ->addArgument($this->getRelatedTaxonomies());
         $di->get('factory.contentIO')->registerHandler($this->getSystemName(), $di->get($wrapperId));
@@ -67,7 +67,6 @@ class CustomPostType extends PostBasedContentTypeAbstract
             $tag = 'wp.' . static::getSystemName();
             $definition = $di
                 ->register($tag, 'Smartling\WP\Controller\PostBasedWidgetControllerStd')
-                ->addArgument($di->getDefinition('logger'))
                 ->addArgument($di->getDefinition('multilang.proxy'))
                 ->addArgument($di->getDefinition('plugin.info'))
                 ->addArgument($di->getDefinition('entity.helper'))
@@ -90,7 +89,6 @@ class CustomPostType extends PostBasedContentTypeAbstract
 
         $definition = $di
             ->register($tag, 'Smartling\WP\Controller\ContentEditJobController')
-            ->addArgument($di->getDefinition('logger'))
             ->addArgument($di->getDefinition('multilang.proxy'))
             ->addArgument($di->getDefinition('plugin.info'))
             ->addArgument($di->getDefinition('entity.helper'))
@@ -109,10 +107,10 @@ class CustomPostType extends PostBasedContentTypeAbstract
              */
             $helper = $this->getContainerBuilder()->get('helper.customMenu');
             $terms = $helper->getTerms($params->getSubmission(), $params->getContentType());
+            $logger = MonologWrapper::getLogger(get_called_class());
             if (0 < count($terms)) {
                 foreach ($terms as $element) {
-                    $this->getContainerBuilder()->get('logger')
-                        ->debug(vsprintf('Sending for translation term = \'%s\' id = \'%s\' related to submission = \'%s\'.', [
+                    $logger->debug(vsprintf('Sending for translation term = \'%s\' id = \'%s\' related to submission = \'%s\'.', [
                             $element->taxonomy,
                             $element->term_id,
                             $params->getSubmission()->getId(),
@@ -133,9 +131,7 @@ class CustomPostType extends PostBasedContentTypeAbstract
                             $params->getSubmission()->getJobId()
                         );
                     $params->getAccumulator()[$params->getContentType()][] = $relatedSubmission->getTargetId();
-                    $this->getContainerBuilder()
-                        ->get('logger')
-                        ->debug(
+                    $logger->debug(
                             vsprintf(
                                 'Received id=%s for submission id=%s',
                                 [

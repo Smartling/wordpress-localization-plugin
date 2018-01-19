@@ -15,11 +15,13 @@ use Smartling\File\Params\DownloadFileParameters;
 use Smartling\File\Params\UploadFileParameters;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\FileHelper;
+use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\RuntimeCacheHelper;
 use Smartling\Jobs\JobsApi;
 use Smartling\Jobs\Params\AddFileToJobParameters;
 use Smartling\Jobs\Params\CreateJobParameters;
 use Smartling\Jobs\Params\ListJobsParameters;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Project\ProjectApi;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
@@ -109,14 +111,6 @@ class ApiWrapper implements ApiWrapperInterface
     }
 
     /**
-     * @param LoggerInterface $logger
-     */
-    public function setLogger($logger)
-    {
-        $this->logger = $logger;
-    }
-
-    /**
      * @return RuntimeCacheHelper
      */
     public function getCache()
@@ -128,14 +122,13 @@ class ApiWrapper implements ApiWrapperInterface
      * ApiWrapper constructor.
      *
      * @param SettingsManager $manager
-     * @param LoggerInterface $logger
      * @param string          $pluginName
      * @param string          $pluginVersion
      */
-    public function __construct(SettingsManager $manager, LoggerInterface $logger, $pluginName, $pluginVersion)
+    public function __construct(SettingsManager $manager, $pluginName, $pluginVersion)
     {
+        $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->setSettings($manager);
-        $this->setLogger($logger);
         $this->setPluginName($pluginName);
         $this->setPluginVersion($pluginVersion);
     }
@@ -148,7 +141,10 @@ class ApiWrapper implements ApiWrapperInterface
      */
     private function getConfigurationProfile(SubmissionEntity $submission)
     {
-        return $this->getSettings()->getSingleSettingsProfile($submission->getSourceBlogId());
+        $profile = $this->getSettings()->getSingleSettingsProfile($submission->getSourceBlogId());
+        LogContextMixinHelper::addToContext('projectId', $profile->getProjectId());
+
+        return $profile;
     }
 
     /**

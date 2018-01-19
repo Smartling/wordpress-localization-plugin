@@ -48,7 +48,6 @@ class CustomTaxonomyType extends TermBasedContentTypeAbstract
         $wrapperId = 'wrapper.entity.' . $this->getSystemName();
         $definition = $di->register($wrapperId, 'Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd');
         $definition
-            ->addArgument($di->getDefinition('logger'))
             ->addArgument($this->getSystemName())
             ->addArgument([]);
 
@@ -66,7 +65,6 @@ class CustomTaxonomyType extends TermBasedContentTypeAbstract
             $tag = 'wp.taxonomy.' . static::getSystemName();
             $di
                 ->register($tag, 'Smartling\WP\Controller\TaxonomyWidgetController')
-                ->addArgument($di->getDefinition('logger'))
                 ->addArgument($di->getDefinition('multilang.proxy'))
                 ->addArgument($di->getDefinition('plugin.info'))
                 ->addArgument($di->getDefinition('entity.helper'))
@@ -86,7 +84,6 @@ class CustomTaxonomyType extends TermBasedContentTypeAbstract
 
         $definition = $di
             ->register($tag, 'Smartling\WP\Controller\ContentEditJobController')
-            ->addArgument($di->getDefinition('logger'))
             ->addArgument($di->getDefinition('multilang.proxy'))
             ->addArgument($di->getDefinition('plugin.info'))
             ->addArgument($di->getDefinition('entity.helper'))

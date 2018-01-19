@@ -5,6 +5,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\EntityNotFoundException;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -49,6 +50,13 @@ class SubmissionCleanupHelper implements WPHookInterface
      * @var LocalizationPluginProxyInterface
      */
     private $multilangProxy;
+
+    /**
+     * SubmissionCleanupHelper constructor.
+     */
+    public function __construct() {
+        $this->logger = MonologWrapper::getLogger(get_called_class());
+    }
 
     /**
      * @return SiteHelper
@@ -107,14 +115,6 @@ class SubmissionCleanupHelper implements WPHookInterface
     }
 
     /**
-     * @param LoggerInterface $logger
-     */
-    public function setLogger($logger)
-    {
-        $this->logger = $logger;
-    }
-
-    /**
      * @return ApiWrapperInterface
      */
     public function getApiWrapper()
@@ -168,13 +168,19 @@ class SubmissionCleanupHelper implements WPHookInterface
         remove_action('before_delete_post', [$this, 'beforeDeletePostHandler']);
         try {
             $currentBlogId = $this->getSiteHelper()->getCurrentBlogId();
-            $this->getLogger()->debug(vsprintf('Post id=%s is going to be deleted in blog=%s', [$postId,
-                                                                                                $currentBlogId]));
-            $contentType = $this->getIoWrapper()->getMapper('post')->get($postId)->getPostType();
-            $this->lookForSubmissions($contentType, $currentBlogId, (int)$postId);
+            $this->getLogger()->debug(vsprintf('Post id=%s is going to be deleted in blog=%s', [$postId, $currentBlogId]));
+            global $post_type;
+
+            if (is_null($post_type)) {
+                $post_type = get_post($postId)->post_type;
+            }
+
+            $this->lookForSubmissions($post_type, $currentBlogId, (int)$postId);
         } catch (EntityNotFoundException $e) {
 
         }
+
+        add_action('before_delete_post', [$this, 'beforeDeletePostHandler']);
     }
 
     /**
@@ -198,8 +204,13 @@ class SubmissionCleanupHelper implements WPHookInterface
             )
         );
 
-        $this->lookForSubmissions($taxonomy, $currentBlogId, (int)$term);
+        try {
+            $this->lookForSubmissions($taxonomy, $currentBlogId, (int)$term);
+        } catch (\Exception $e) {
 
+        }
+        
+        add_action('pre_delete_term', [$this, 'preDeleteTermHandler']);
     }
 
     /**

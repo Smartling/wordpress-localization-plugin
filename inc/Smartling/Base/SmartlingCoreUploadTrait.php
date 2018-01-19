@@ -179,6 +179,8 @@ trait SmartlingCoreUploadTrait
         } catch (BlogNotFoundException $e) {
             $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent blog.');
             $this->handleBadBlogId($submission);
+        } catch (NothingFoundForTranslationException $e) {
+            return '';
         } catch (Exception $e) {
             $this->getSubmissionManager()
                 ->setErrorMessage($submission, vsprintf('Error occurred: %s', [$e->getMessage()]));
@@ -191,7 +193,11 @@ trait SmartlingCoreUploadTrait
         $messages = [];
         try {
             $this->prepareFieldProcessorValues($submission);
-            $translation = XmlEncoder::xmlDecode($xml, $submission);
+            if ('' === $xml) {
+                $translation = [];
+            } else {
+                $translation = XmlEncoder::xmlDecode($xml, $submission);
+            }
             $original = $this->readSourceContentWithMetadataAsArray($submission);
             $translation = $this->getFieldsFilter()->processStringsAfterDecoding($translation);
             $translation = $this->getFieldsFilter()->applyTranslatedValues($submission, $original, $translation);
@@ -327,6 +333,7 @@ trait SmartlingCoreUploadTrait
                 'status'    => [SubmissionEntity::SUBMISSION_STATUS_NEW],
                 'file_uri'  => $submission->getFileUri(),
                 'is_cloned' => [0],
+                'is_locked' => [0],
             ];
 
             if (!StringHelper::isNullOrEmpty($submission->getJobId())) {
@@ -338,32 +345,43 @@ trait SmartlingCoreUploadTrait
              */
             $submissions = $this->getSubmissionManager()->find($params);
 
+            $locales = [];
+
+            $xml = $this->getXMLFiltered($submission);
+
             foreach ($submissions as $_submission) {
+                /**
+                 * If submission still doesn't have file URL - create it
+                 */
+                $submissionFields = $_submission->toArray(false);
+                if (StringHelper::isNullOrEmpty($submissionFields['file_uri'])) {
+                    // Generating fileUri
+                    $_submission->getFileUri();
+                    $_submission = $this->getSubmissionManager()->storeEntity($_submission);
+                }
+                unset ($submissionFields);
                 // Passing filters
-                $this->getXMLFiltered($_submission);
+                $xml = $this->getXMLFiltered($_submission);
                 // Processing attachments
                 do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $_submission);
                 // Preparing placeholders
                 $this->prepareRelatedSubmissions($_submission);
             }
 
-            /**
-             * Looking for other locales to send all at a time.
-             * Here we won't get 'Failed' submissions.
-             */
-            $submissions = $this->getSubmissionManager()->find($params);
-
-            if (0 < count($submissions)) {
+            if (!StringHelper::isNullOrEmpty($xml)) {
                 /**
                  * With jobs we don't use locales on file upload.
                  */
-                $_submission = ArrayHelper::first($submissions);
-                $xml = $this->getXMLFiltered($_submission);
-                $this->sendFile($submission, $xml, []);
-                if ($this->addFileToJobBySubmission($submissions)) {
+                if ($this->sendFile($submission, $xml, [])) {
+                    if ($this->addFileToJobBySubmission($submissions)) {
+                        foreach ($submissions as $_submission) {
+                            $_submission->setJobId('');
+                            $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
+                        }
+                    }
+                } else {
                     foreach ($submissions as $_submission) {
-                        $_submission->setJobId('');
-                        $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
+                        $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
                     }
                 }
                 $this->getSubmissionManager()->storeSubmissions($submissions);
@@ -373,7 +391,7 @@ trait SmartlingCoreUploadTrait
         } catch (\Exception $e) {
             $proceedAuthException = function ($e) use (& $proceedAuthException) {
                 if (401 == $e->getCode()) {
-                    $this->getLogger()->error(vsprintf('Invalid credentials. Check profile settings.',[]));
+                    $this->getLogger()->error(vsprintf('Invalid credentials. Check profile settings.', []));
                 } elseif ($e->getPrevious() instanceof \Exception) {
                     $proceedAuthException($e->getPrevious());
                 }
@@ -476,6 +494,13 @@ trait SmartlingCoreUploadTrait
      */
     public function sendForTranslationBySubmission(SubmissionEntity $submission)
     {
+        if (1 === $submission->getIsLocked()) {
+            $this->getLogger()
+                ->debug(vsprintf('Requested re-upload of protected submission id=%s. Skipping.', [$submission->getId()]));
+
+            return;
+        }
+
         $this->getLogger()->debug(
             vsprintf(
                 'Preparing to send submission id = \'%s\' (blog = \'%s\', content = \'%s\', type = \'%s\', job = \'%s\').',
@@ -531,8 +556,10 @@ trait SmartlingCoreUploadTrait
             $submission->getFileUri();
             $submission = $this->getSubmissionManager()->storeEntity($submission);
         } else {
-            $submission->setStatus($status);
-            $submission->setLastError('');
+            if (0 === $submission->getIsLocked()) {
+                $submission->setStatus($status);
+                $submission->setLastError('');
+            }
         }
 
         return $this->getSubmissionManager()->storeEntity($submission);
@@ -565,7 +592,12 @@ trait SmartlingCoreUploadTrait
             // generate URI
             $submission->getFileUri();
         } else {
-            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+            if (0 === $submission->getIsLocked()) {
+                $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+            } else {
+                $this->getLogger()
+                    ->debug(vsprintf('Requested re-upload of protected submission id=%s. Skipping.', [$submission->getId()]));
+            }
         }
 
         $isCloned = true === $clone ? 1 : 0;

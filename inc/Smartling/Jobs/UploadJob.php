@@ -5,6 +5,7 @@ namespace Smartling\Jobs;
 use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 
 /**
  * Class UploadJob
@@ -31,7 +32,11 @@ class UploadJob extends JobAbstract
         $this->getLogger()->info('Started UploadJob.');
 
         do {
-            $entities = $this->getSubmissionManager()->find(['status' => [SubmissionEntity::SUBMISSION_STATUS_NEW]], 1);
+            $entities = $this->getSubmissionManager()->find(
+                [
+                    'status'    => [SubmissionEntity::SUBMISSION_STATUS_NEW],
+                    'is_locked' => [0],
+                ], 1);
 
             if (0 === count($entities)) {
                 break;

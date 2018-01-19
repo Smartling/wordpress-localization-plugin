@@ -5,6 +5,7 @@ namespace Smartling\DbAl;
 use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
 use Smartling\Helpers\SiteHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 
 /**
  * Class EntityManagerAbstract
@@ -45,14 +46,6 @@ abstract class EntityManagerAbstract
     public function getLogger()
     {
         return $this->logger;
-    }
-
-    /**
-     * @param LoggerInterface $logger
-     */
-    public function setLogger($logger)
-    {
-        $this->logger = $logger;
     }
 
     /**
@@ -120,15 +113,14 @@ abstract class EntityManagerAbstract
     }
 
     /**
-     * @param LoggerInterface                              $logger
      * @param SmartlingToCMSDatabaseAccessWrapperInterface $dbal
      * @param int                                          $pageSize
      * @param SiteHelper                                   $siteHelper
      * @param LocalizationPluginProxyInterface             $localizationProxy
      */
-    public function __construct(LoggerInterface $logger, $dbal, $pageSize, SiteHelper $siteHelper, $localizationProxy)
+    public function __construct($dbal, $pageSize, SiteHelper $siteHelper, $localizationProxy)
     {
-        $this->setLogger($logger);
+        $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->setDbal($dbal);
         $this->setPageSize($pageSize);
         $this->setSiteHelper($siteHelper);
@@ -154,9 +146,7 @@ abstract class EntityManagerAbstract
      */
     public function logQuery($query)
     {
-        if (true === $this->getDbal()->needRawSqlLog()) {
-            $this->getLogger()->debug($query);
-        }
+        $this->getLogger()->debug($query);
     }
 
     abstract protected function dbResultToEntity(array $dbRow);

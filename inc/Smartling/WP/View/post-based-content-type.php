@@ -51,7 +51,7 @@ if (!empty($locales)) {
 
         foreach ($locales as $locale) {
             $value = false;
-
+            $editUrl = '';
             $status = '';
             $submission = null;
             $statusValue = null;
@@ -59,7 +59,7 @@ if (!empty($locales)) {
             $enabled = true;
             if (null !== $data['submissions']) {
                 foreach ($data['submissions'] as $item) {
-                    $editUrl = '';
+
                     /**
                      * @var SubmissionEntity $item
                      */
@@ -69,7 +69,7 @@ if (!empty($locales)) {
                         $id = $item->getId();
                         $percent = 1 === $item->getIsCloned() ? 100 : $item->getCompletionPercentage();
                         $status =  $item->getStatusColor();
-                        $enabled = 1 === $item->getIsCloned() ? false : true;
+                        $enabled = 1 === $item->getIsCloned() || 1 === $item->getIsLocked() ? false : true;
                         $editUrl = \Smartling\Helpers\WordpressContentTypeHelper::getEditUrl($item);
                         break;
                     }

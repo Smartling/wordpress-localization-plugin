@@ -6,7 +6,9 @@ use Monolog\Handler\NullHandler;
 use Smartling\Base\ExportedAPI;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\SimpleStorageHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
@@ -20,7 +22,6 @@ trait DITrait
 
     /**
      * Initializes DI Container from YAML config file
-     *
      * @throws SmartlingConfigException
      */
     protected static function initContainer()
@@ -47,6 +48,7 @@ trait DITrait
 
         self::$containerInstance = $container;
 
+        self::injectLoggerCustomizations(self::$containerInstance);
         self::handleLoggerConfiguration();
 
         /**
@@ -54,13 +56,59 @@ trait DITrait
          */
         do_action(ExportedAPI::ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT, self::$containerInstance);
 
-        self::$loggerInstance = $container->get('logger');
+        // Init monolog wrapper when all the modifications to DI container
+        // are done.
+        MonologWrapper::init(self::$containerInstance);
+
+        $logger = MonologWrapper::getLogger(get_called_class());
+        $logger->pushProcessor(function ($record) {
+            $record['context'] =
+                array_merge(
+                    $record['context'],
+                    LogContextMixinHelper::getContextMixin()
+                );
+
+            return $record;
+        });
+
+        $host = false === gethostname() ? 'unknown' : gethostname();
+        LogContextMixinHelper::addToContext('host', $host);
+        LogContextMixinHelper::addToContext('http_host', $_SERVER['HTTP_HOST']);
+        LogContextMixinHelper::addToContext('version', self::$pluginVersion);
+
+        self::$loggerInstance = $logger;
+    }
+
+    private static function injectLoggerCustomizations(ContainerBuilder $di)
+    {
+        $storedConfiguration = SimpleStorageHelper::get(Bootstrap::LOGGING_CUSTOMIZATION, []);
+
+        $handler = $di->getDefinition('fileLoggerHandlerRotatable');
+
+        if (0 < count($storedConfiguration)) {
+            foreach ($storedConfiguration as $level => $items) {
+                $loggerClass = 'Smartling\MonologWrapper\Logger\\'
+                               . ('mute' === $level ? 'DevNullLogger' : 'LevelLogger');
+
+                $level = ('mute' === $level) ? 'debug' : $level;
+
+                if (is_array($items)) {
+                    foreach ($items as $item) {
+                        $defId = vsprintf('logger.%s.%s', [$level, md5($item)]);
+
+                        $di->register($defId, $loggerClass)
+                            ->addArgument($item)
+                            ->addArgument($level)
+                            ->addArgument([$handler]);
+                    }
+                }
+            }
+        }
     }
 
     private static function handleLoggerConfiguration()
     {
         add_action(ExportedAPI::ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT, function (ContainerBuilder $di) {
-
             $defaultLogFileName = Bootstrap::getLogFileName(false, true);
             $storedFile = SimpleStorageHelper::get(self::SMARTLING_CUSTOM_LOG_FILE, false);
             $logFileName = false !== $storedFile ? $storedFile : $defaultLogFileName;
@@ -99,8 +147,12 @@ trait DITrait
 
     private static function nullLog(ContainerBuilder $di)
     {
-        $logger = $di->get('logger');
-        $logger->setHandlers([new NullHandler()]);
+        // Disable all defined loggers.
+        foreach ($di->getDefinitions() as $serviceId => $serviceDefinition) {
+            if ($serviceDefinition->getClass() == 'Smartling\MonologWrapper\Logger\LevelLogger') {
+                $di->get($serviceId)->setHandlers([new NullHandler()]);
+            }
+        };
     }
 
     public static function disableLogging(ContainerBuilder $di)

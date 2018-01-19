@@ -99,9 +99,9 @@ class TaxonomyEntityStd extends EntityAbstract
     /**
      * @inheritdoc
      */
-    public function __construct(LoggerInterface $logger, $type, array $related = [])
+    public function __construct($type, array $related = [])
     {
-        parent::__construct($logger);
+        parent::__construct();
 
         $this->hashAffectingFields = [
             'name',

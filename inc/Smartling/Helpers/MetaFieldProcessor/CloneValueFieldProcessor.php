@@ -24,13 +24,12 @@ class CloneValueFieldProcessor extends MetaFieldProcessorAbstract
      *
      * @param string          $fieldRegexp
      * @param ContentHelper   $contentHelper
-     * @param LoggerInterface $logger
      */
-    public function __construct($fieldRegexp, ContentHelper $contentHelper, LoggerInterface $logger)
+    public function __construct($fieldRegexp, ContentHelper $contentHelper)
     {
         $this->setFieldRegexp($fieldRegexp);
         $this->setContentHelper($contentHelper);
-        $this->setLogger($logger);
+        parent::__construct();
     }
 
     /**

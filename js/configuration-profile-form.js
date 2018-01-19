@@ -25,7 +25,9 @@
                     'selfCheckDisabled': $('#selfCheckDisabled').val(),
                     'disableLogging': $('#disableLogging').val(),
                     'loggingPath': $('#loggingPath').val(),
-                    'pageSize': $('#pageSize').val()
+                    'pageSize': $('#pageSize').val(),
+                    'disableDBLookup': $('#disableDBLookup').val(),
+                    'loggingCustomization': $('#loggingCustomization').val()
                 }
             };
 
@@ -40,6 +42,13 @@
 
             $('#loggingPath').attr('value',($(this).attr('data-path')));
 
+        });
+
+        $('#resetLoggingCustomization').on('click', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            $('#loggingCustomization').text($('#defaultLoggingCustomizations').text());
         });
 
         $('#resetPageSize').on('click', function (e) {
