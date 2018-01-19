@@ -16,7 +16,7 @@ class Migration170922 implements SmartlingDbMigrationInterface
     {
         return [
             vsprintf(
-                'ALTER TABLE `%s%s` ADD COLUMN `job_id` %s AFTER %s',
+                'ALTER TABLE `%s%s` ADD COLUMN `batch_uid` %s AFTER %s',
                 [
                     $tablePrefix,
                     SubmissionEntity::getTableName(),

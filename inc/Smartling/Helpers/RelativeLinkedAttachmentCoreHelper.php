@@ -139,7 +139,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                                     $this->getParams()->getSubmission()->getTargetBlogId(),
                                     $attachmentId,
                                     $this->getParams()->getSubmission()->getIsCloned(),
-                                    $this->getParams()->getSubmission()->getJobId()
+                                    $this->getParams()->getSubmission()->getBatchUid()
                                 );
                             $replacer->addReplacementPair(
                                 $path,
@@ -222,7 +222,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                                 $this->getParams()->getSubmission()->getTargetBlogId(),
                                 $attachmentId,
                                 $this->getParams()->getSubmission()->getIsCloned(),
-                                $this->getParams()->getSubmission()->getJobId()
+                                $this->getParams()->getSubmission()->getBatchUid()
                             );
 
                         $targetUploadInfo = $this->getCore()

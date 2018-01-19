@@ -135,7 +135,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
                         $this->getParams()->getSubmission()->getTargetBlogId(),
                         $attachmentId,
                         $this->getParams()->getSubmission()->getIsCloned(),
-                        $this->getParams()->getSubmission()->getJobId()
+                        $this->getParams()->getSubmission()->getBatchUid()
                     );
 
                 $newPath = $this->generateTranslatedUrl($path, $attachmentSubmission);

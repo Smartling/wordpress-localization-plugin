@@ -104,7 +104,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
             'last_modified'          => self::DB_TYPE_DATETIME,
             'outdated'               => self::DB_TYPE_UINT_SWITCH,
             'last_error'             => self::DB_TYPE_STRING_TEXT,
-            'job_id'                 => self::DB_TYPE_STRING_64 . ' ' . self::DB_TYPE_DEFAULT_EMPTYSTRING,
+            'batch_uid'                 => self::DB_TYPE_STRING_64 . ' ' . self::DB_TYPE_DEFAULT_EMPTYSTRING,
         ];
     }
 
@@ -780,14 +780,14 @@ class SubmissionEntity extends SmartlingEntityAbstract
     /**
      * @return string
      */
-    public function getJobId()
+    public function getBatchUid()
     {
-        return $this->stateFields['job_id'];
+        return $this->stateFields['batch_uid'];
     }
 
-    public function setJobId($jobId)
+    public function setBatchUid($batchUid)
     {
-        $this->stateFields['job_id'] = trim($jobId);
+        $this->stateFields['batch_uid'] = trim($batchUid);
     }
 
     /**

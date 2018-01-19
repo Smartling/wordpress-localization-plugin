@@ -128,7 +128,7 @@ class CustomPostType extends PostBasedContentTypeAbstract
                             $element->term_id,
                             $params->getSubmission()->getTargetBlogId(),
                             (1 === $params->getSubmission()->getIsCloned()),
-                            $params->getSubmission()->getJobId()
+                            $params->getSubmission()->getBatchUid()
                         );
                     $params->getAccumulator()[$params->getContentType()][] = $relatedSubmission->getTargetId();
                     $logger->debug(

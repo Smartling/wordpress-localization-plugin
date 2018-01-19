@@ -161,7 +161,7 @@ trait SmartlingCoreUploadTrait
                     ]
                 );
                 $this->getLogger()->warning($message);
-                $submission->setJobId('');
+                $submission->setBatchUid('');
                 $submission = $this->getSubmissionManager()
                     ->setErrorMessage($submission, 'There is no original content for translation.');
 
@@ -336,8 +336,8 @@ trait SmartlingCoreUploadTrait
                 'is_locked' => [0],
             ];
 
-            if (!StringHelper::isNullOrEmpty($submission->getJobId())) {
-                $params['job_id'] = [$submission->getJobId()];
+            if (!StringHelper::isNullOrEmpty($submission->getBatchUid())) {
+                $params['job_id'] = [$submission->getBatchUid()];
             }
 
             /**
@@ -375,7 +375,7 @@ trait SmartlingCoreUploadTrait
                 if ($this->sendFile($submission, $xml, [])) {
                     if ($this->addFileToJobBySubmission($submissions)) {
                         foreach ($submissions as $_submission) {
-                            $_submission->setJobId('');
+                            $_submission->setBatchUid('');
                             $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                         }
                     }
@@ -387,7 +387,7 @@ trait SmartlingCoreUploadTrait
                 $this->getSubmissionManager()->storeSubmissions($submissions);
             }
 
-            $this->authorizeJob($submission->getJobId(), $submission->getSourceBlogId());
+            $this->authorizeJob($submission->getBatchUid(), $submission->getSourceBlogId());
         } catch (\Exception $e) {
             $proceedAuthException = function ($e) use (& $proceedAuthException) {
                 if (401 == $e->getCode()) {
@@ -454,7 +454,7 @@ trait SmartlingCoreUploadTrait
 
                 return true;
             } catch (Exception $e) {
-                $msg = vsprintf('Error occurred while adding file to job = \'%s\'. Message: \'%s\'', [$submission->getJobId(),
+                $msg = vsprintf('Error occurred while adding file to job = \'%s\'. Message: \'%s\'', [$submission->getBatchUid(),
                                                                                                       $e->getMessage()]);
                 $this->getLogger()->warning($msg);
 
@@ -509,7 +509,7 @@ trait SmartlingCoreUploadTrait
                     $submission->getSourceBlogId(),
                     $submission->getSourceId(),
                     $submission->getContentType(),
-                    $submission->getJobId(),
+                    $submission->getBatchUid(),
                 ]
             )
         );

@@ -597,7 +597,7 @@ class ApiWrapper implements ApiWrapperInterface
         }
         $param->setTargetLocales($locales);
         try {
-            $this->getJobsApi($profile)->addFileToJobSync($submission->getJobId(), $param);
+            $this->getJobsApi($profile)->addFileToJobSync($submission->getBatchUid(), $param);
         } catch (\Exception $e) {
             throw $e;
         }

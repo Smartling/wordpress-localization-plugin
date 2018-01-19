@@ -317,7 +317,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
                                     if (0 < $submission->getId()) {
                                         $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                                        $submission->setJobId($data['jobId']);
+                                        $submission->setBatchUid($data['jobId']);
                                         $submission = $core->getSubmissionManager()->storeEntity($submission);
                                     }
 
@@ -330,7 +330,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                                 $originalId,
                                                 (int)$blogId,
                                                 $submission->getTargetLocale(),
-                                                $submission->getJobId(),
+                                                $submission->getBatchUid(),
                                             ]
                                         ));
                                 }

@@ -57,7 +57,7 @@ class UploadJob extends JobAbstract
                         $entity->getSourceId(),
                         $entity->getTargetBlogId(),
                         $entity->getTargetLocale(),
-                        $entity->getJobId(),
+                        $entity->getBatchUid(),
                     ]
                 )
             );

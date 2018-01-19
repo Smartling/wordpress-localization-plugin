@@ -177,7 +177,7 @@ class TranslationHelper
                 ]
             );
 
-            $relatedSubmission->setJobId($jobId);
+            $relatedSubmission->setBatchUid($jobId);
             $serialized = $relatedSubmission->toArray(false);
             if (null === $serialized['file_uri']) {
                 $relatedSubmission->getFileUri();
