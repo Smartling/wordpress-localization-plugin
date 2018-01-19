@@ -9,7 +9,7 @@
     "symfony/config" :               "~2.8",
     "symfony/yaml" :                 "~2.8",
     "smartling/api-sdk-php" :        "~1.9",
-    "smartling/jobs-sdk-php" :       "dev-master"
+    "smartling/jobs-sdk-php" :       "~1"
   },
   "repositories" : [
     {
