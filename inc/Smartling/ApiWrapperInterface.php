@@ -123,20 +123,4 @@ interface ApiWrapperInterface
      * @throws SmartlingApiException
      */
     public function executeBatch(ConfigurationProfileEntity $profile, $batchUid);
-
-    /**
-     * @param SubmissionEntity[] $submissions
-     *
-     * @return void
-     * @throws \Exception
-     */
-    public function addToJob(array $submissions);
-
-    /**
-     * @param ConfigurationProfileEntity $profile
-     * @param string                     $jobId
-     *
-     * @return bool
-     */
-    public function authorizeJob(ConfigurationProfileEntity $profile, $jobId);
 }

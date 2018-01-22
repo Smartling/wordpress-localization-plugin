@@ -634,38 +634,4 @@ class ApiWrapper implements ApiWrapperInterface
     {
         $this->getBatchApi($profile)->executeBatch($batchUid);
     }
-
-    /**
-     * @param array $submissions
-     *
-     * @throws \Exception
-     */
-    public function addToJob(array $submissions)
-    {
-        $_submission = ArrayHelper::first($submissions);
-        $profile = $this->getConfigurationProfile($_submission);
-        $param = new AddFileToJobParameters();
-        $param->setFileUri($_submission->getFileUri());
-        $locales = [];
-        foreach ($submissions as $submission) {
-            $locales[] = $this->getSettings()->getSmartlingLocaleBySubmission($submission);
-        }
-        $param->setTargetLocales($locales);
-        try {
-            $this->getJobsApi($profile)->addFileToJobSync($submission->getBatchUid(), $param);
-        } catch (\Exception $e) {
-            throw $e;
-        }
-    }
-
-    public function authorizeJob(ConfigurationProfileEntity $profile, $jobId)
-    {
-        try {
-            $this->getJobsApi($profile)->authorizeJob($jobId);
-
-            return true;
-        } catch (SmartlingApiException $e) {
-            return false;
-        }
-    }
 }
