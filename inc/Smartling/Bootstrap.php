@@ -22,6 +22,7 @@ use Smartling\Helpers\SchedulerHelper;
 use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\Jobs\JobStatus;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPInstallableInterface;
@@ -602,16 +603,20 @@ class Bootstrap
             if (array_key_exists('innerAction', $data)) {
                 switch ($data['innerAction']) {
                     case 'list-jobs' :
-                        $jobs = $wrapper->listJobs($profile);
+                        $jobs = $wrapper->listJobs($profile, null, [
+                          JobStatus::AWAITING_AUTHORIZATION,
+                          JobStatus::IN_PROGRESS,
+                          JobStatus::COMPLETED,
+                        ]);
                         $preparcedJobs = [];
                         if (is_array($jobs) && array_key_exists('items', $jobs) &&
                             array_key_exists('totalCount', $jobs) && 0 < (int)$jobs['totalCount']) {
                             foreach ($jobs['items'] as $job) {
-                                if ('CANCELLED' === $job['jobStatus']) {
-                                    continue;
+                                if (!empty($job['dueDate'])) {
+                                    $job['dueDate'] = \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $job['dueDate'])
+                                      ->format('Y-m-d H:i:s');
                                 }
-                                $job['dueDate'] = \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $job['dueDate'])
-                                    ->format('Y-m-d H:i:s');
+
                                 $preparcedJobs[] = $job;
                             }
                         }
