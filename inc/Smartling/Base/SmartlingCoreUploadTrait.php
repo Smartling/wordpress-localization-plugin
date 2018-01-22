@@ -366,13 +366,12 @@ trait SmartlingCoreUploadTrait
                 do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $_submission);
                 // Preparing placeholders
                 $this->prepareRelatedSubmissions($_submission);
+
+                $locales[] = $this->getSettingsManager()->getSmartlingLocaleBySubmission($_submission);
             }
 
             if (!StringHelper::isNullOrEmpty($xml)) {
-                /**
-                 * With jobs we don't use locales on file upload.
-                 */
-                if ($this->sendFile($submission, $xml, [])) {
+                if ($this->sendFile($submission, $xml, $locales, $submission->getBatchUid())) {
                     foreach ($submissions as $_submission) {
                         $_submission->setBatchUid('');
                         $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);

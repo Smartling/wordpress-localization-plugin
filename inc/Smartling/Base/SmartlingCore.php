@@ -125,15 +125,18 @@ class SmartlingCore extends SmartlingCoreAbstract
      * @param SubmissionEntity $submission
      * @param string           $xmlFileContent
      * @param array            $smartlingLocaleList
+     * @param string           $batchUid
      *
      * @return bool
      */
-    protected function sendFile(SubmissionEntity $submission, $xmlFileContent, array $smartlingLocaleList = [])
+    protected function sendFile(SubmissionEntity $submission, $xmlFileContent, array $smartlingLocaleList = [], $batchUid)
     {
         $workDir = sys_get_temp_dir();
 
         if (is_writable($workDir)) {
-            $tmp_file = tempnam($workDir, '_smartling_temp_');
+            // File extension is needed for Guzzle. Library sets content type
+            // depending on file extension (application/xml).
+            $tmp_file = tempnam($workDir, '_smartling_temp_') . '.xml';
             $bytesWritten = file_put_contents($tmp_file, $xmlFileContent);
 
             if (0 === $bytesWritten) {
@@ -145,7 +148,7 @@ class SmartlingCore extends SmartlingCoreAbstract
                     $this->getLogger()->warning('Expected size of temporary file doesn\'t equals to real.');
                     return false;
                 } else {
-                    $result = $this->getApiWrapper()->uploadContent($submission, '', $tmp_file, $smartlingLocaleList);
+                    $result = $this->getApiWrapper()->uploadContent($submission, '', $tmp_file, $smartlingLocaleList, $batchUid);
                     unlink($tmp_file);
                     return $result;
                 }

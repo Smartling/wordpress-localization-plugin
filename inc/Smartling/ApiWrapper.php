@@ -313,15 +313,9 @@ class ApiWrapper implements ApiWrapperInterface
     }
 
     /**
-     * @param SubmissionEntity $entity
-     * @param string           $xmlString
-     * @param string           $filename
-     * @param array            $smartlingLocaleList
-     *
-     * @return bool
-     * @throws SmartlingFileUploadException
+     * {@inheritdoc}
      */
-    public function uploadContent(SubmissionEntity $entity, $xmlString = '', $filename = '', array $smartlingLocaleList = [])
+    public function uploadContent(SubmissionEntity $entity, $xmlString = '', $filename = '', array $smartlingLocaleList = [], $batchUid)
     {
         $this->getLogger()
             ->info(vsprintf(
@@ -337,27 +331,20 @@ class ApiWrapper implements ApiWrapperInterface
         try {
             $profile = $this->getConfigurationProfile($entity);
 
-            $api = FileApi::create(
-                $this->getAuthProvider($profile),
-                $profile->getProjectId(),
-                $this->getLogger()
-            );
+            $api = $this->getBatchApi($profile);
 
             $params = new UploadFileParameters('wordpress-connector', $this->getPluginVersion());
 
             // We always explicit say do not authorize for all locales
             $params->setAuthorized(false);
-            if ($profile->getAutoAuthorize()) {
-                // Authorize for locale only if user chooses this in settings
-                $locale = $this->getSmartlingLocaleBySubmission($entity);
-                $params->setLocalesToApprove($smartlingLocaleList);
-            }
+            $params->setLocalesToApprove($smartlingLocaleList);
 
             if (FileHelper::testFile($filename)) {
-                $res = $api->uploadFile(
+                $api->uploadBatchFile(
                     $filename,
                     $entity->getFileUri(),
                     'xml',
+                    $batchUid,
                     $params);
 
                 $message = vsprintf(

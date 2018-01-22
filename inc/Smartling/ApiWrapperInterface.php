@@ -45,11 +45,12 @@ interface ApiWrapperInterface
      * @param string           $xmlString
      * @param string           $filename
      * @param array            $smartlingLocaleList
+     * @param string           $batchUid
      *
      * @return bool
      * @throws SmartlingFileUploadException
      */
-    public function uploadContent(SubmissionEntity $entity, $xmlString = '', $filename = '', array $smartlingLocaleList = []);
+    public function uploadContent(SubmissionEntity $entity, $xmlString = '', $filename = '', array $smartlingLocaleList = [], $batchUid);
 
     /**
      * @param ConfigurationProfileEntity $profile
