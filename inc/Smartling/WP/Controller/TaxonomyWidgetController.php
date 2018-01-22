@@ -6,6 +6,7 @@ use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingNotSupportedContentException;
+use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
@@ -204,12 +205,39 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                 switch ($_POST['sub']) {
                     case 'Upload':
                         if (0 < count($locales)) {
+                            $wrapper = $this->getCore()->getApiWrapper();
+                            $eh = $this->getEntityHelper();
+                            $currentBlogId = $eh->getSiteHelper()->getCurrentBlogId();
+                            $profile = $eh->getSettingsManager()->findEntityByMainLocale($currentBlogId);
+
+                            if (empty($profile)) {
+                                $this->getLogger()
+                                  ->error('No suitable configuration profile found.');
+
+                                return;
+                            }
+
+                            if ('true' === $data['authorize']) {
+                                $this->getLogger()
+                                  ->debug(vsprintf('Job \'%s\' should be authorized once upload is finished.', [$data['jobId']]));
+                            }
+
+                            try {
+                                $wrapper->updateJob(ArrayHelper::first($profile), $data['jobId'], $_POST['name'], $_POST['description'], $_POST['dueDate']);
+                                $res = $wrapper->createBatch(ArrayHelper::first($profile), $data['jobId'], 'true' === $data['authorize']);
+                            } catch (SmartlingApiException $e) {
+                                $this->getLogger()
+                                  ->error(vsprintf('Can\'t create batch for a job \'%s\'. Error: %s', [$data['jobId'], $e->formatErrors()]));
+
+                                return;
+                            }
+
                             foreach ($locales as $blogId) {
-                                $submission = $translationHelper->tryPrepareRelatedContent($this->getTaxonomy(), $sourceBlog, $originalId, (int)$blogId, false, $data['jobId']);
+                                $submission = $translationHelper->tryPrepareRelatedContent($this->getTaxonomy(), $sourceBlog, $originalId, (int)$blogId, false, $res['batchUid']);
 
                                 if (0 < $submission->getId()) {
                                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                                    $submission->setBatchUid($data['jobId']);
+                                    $submission->setBatchUid($res['batchUid']);
                                     $submission = $core->getSubmissionManager()->storeEntity($submission);
                                 }
 
@@ -222,20 +250,10 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                                             $originalId,
                                             (int)$blogId,
                                             $submission->getTargetLocale(),
+                                            $data['jobId'],
                                             $submission->getBatchUid(),
                                         ]
                                     ));
-                            }
-
-                            if ('true' === $data['authorize']) {
-                                $this->getLogger()
-                                    ->debug(vsprintf('Job \'%s\' should be authorized once upload is finished.', [$data['jobId']]));
-                                $key = 'AuthorizeJobList';
-                                $authorizeJobList = SimpleStorageHelper::get($key, []);
-                                if (!in_array($data['jobId'], $authorizeJobList)) {
-                                    $authorizeJobList[] = $data['jobId'];
-                                    SimpleStorageHelper::set($key, $authorizeJobList);
-                                }
                             }
 
                             $this->getLogger()->debug('Triggering Upload Job.');

@@ -320,7 +320,9 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
                                 if (empty($profile)) {
                                     $this->getLogger()
-                                      ->debug('No suitable configuration profile found.');
+                                      ->error('No suitable configuration profile found.');
+
+                                    return;
                                 }
 
                                 if ('true' === $data['authorize']) {
