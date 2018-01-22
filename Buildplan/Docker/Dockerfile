@@ -14,5 +14,5 @@ RUN apt-get update && \
 WORKDIR /var/www/html
 
 # Start container.
-COPY startup.sh startup.sh
+COPY Buildplan/Docker/startup.sh startup.sh
 CMD ["/bin/bash", "startup.sh"]
