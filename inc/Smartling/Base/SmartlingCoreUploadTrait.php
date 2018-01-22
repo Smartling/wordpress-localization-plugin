@@ -337,7 +337,7 @@ trait SmartlingCoreUploadTrait
             ];
 
             if (!StringHelper::isNullOrEmpty($submission->getBatchUid())) {
-                $params['job_id'] = [$submission->getBatchUid()];
+                $params['batch_uid'] = [$submission->getBatchUid()];
             }
 
             /**
@@ -373,11 +373,9 @@ trait SmartlingCoreUploadTrait
                  * With jobs we don't use locales on file upload.
                  */
                 if ($this->sendFile($submission, $xml, [])) {
-                    if ($this->addFileToJobBySubmission($submissions)) {
-                        foreach ($submissions as $_submission) {
-                            $_submission->setBatchUid('');
-                            $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
-                        }
+                    foreach ($submissions as $_submission) {
+                        $_submission->setBatchUid('');
+                        $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                     }
                 } else {
                     foreach ($submissions as $_submission) {
@@ -387,7 +385,7 @@ trait SmartlingCoreUploadTrait
                 $this->getSubmissionManager()->storeSubmissions($submissions);
             }
 
-            $this->authorizeJob($submission->getBatchUid(), $submission->getSourceBlogId());
+            $this->executeBatch($submission->getBatchUid(), $submission->getSourceBlogId());
         } catch (\Exception $e) {
             $proceedAuthException = function ($e) use (& $proceedAuthException) {
                 if (401 == $e->getCode()) {
@@ -404,88 +402,27 @@ trait SmartlingCoreUploadTrait
     }
 
     /**
-     * @param string $jobId
-     * @param int    $sourceBlogId
+     * @param $batchUid
+     * @param int $sourceBlogId
      */
-    private function authorizeJob($jobId, $sourceBlogId)
-    {
-
-        $this->getLogger()->debug(vsprintf('Checking job \'%s\' if it should be authorized.', [$jobId]));
-        $key = 'AuthorizeJobList';
-        $authorizeJobList = SimpleStorageHelper::get($key, []);
-
-        if (in_array($jobId, $authorizeJobList)) {
-            try {
-                $profile = $this->getSettingsManager()->getSingleSettingsProfile($sourceBlogId);
-                if ($this->getApiWrapper()->authorizeJob($profile, $jobId)) {
-                    $msg = vsprintf('Job \'%s\' authorized', [$jobId]);
-                    $this->getLogger()->debug($msg);
-
-                    $submissions = $this->getSubmissionManager()->searchByJobId($jobId);
-
-                    if (0 === count($submissions)) {
-                        $keyed = array_flip($authorizeJobList);
-                        unset($keyed[$jobId]);
-                        $authorizeJobList = array_keys($keyed);
-                        SimpleStorageHelper::set($key, $authorizeJobList);
-                    }
-                } else {
-                    $msg = vsprintf('Error authorizing job \'%s\'.', [$jobId]);
-                    $this->getLogger()->warning($msg);
-                }
-            } catch (Exception $e) {
-                $msg = vsprintf('Error authorizing job \'%s\'. Message: \'%s\'', [$jobId, $e->getMessage()]);
-                $this->getLogger()->warning($msg);
-            }
-        }
-    }
-
-    /**
-     * @param SubmissionEntity[] $submissions
-     *
-     * @return bool
-     */
-    private function addFileToJobBySubmission($submissions)
-    {
-        $submission = ArrayHelper::first($submissions);
-        if ($this->checkFileStatusBySubmission($submission)) {
-            try {
-                $response = $this->getApiWrapper()->addToJob($submissions);
-
-                return true;
-            } catch (Exception $e) {
-                $msg = vsprintf('Error occurred while adding file to job = \'%s\'. Message: \'%s\'', [$submission->getBatchUid(),
-                                                                                                      $e->getMessage()]);
-                $this->getLogger()->warning($msg);
-
-                return false;
-            }
-        } else {
-            $this->getLogger()->warning(vsprintf('Failed Status Check for file \'%s\'', [$submission->getFileUri()]));
-
-            return false;
-        }
-    }
-
-    /**
-     * @param SubmissionEntity $submission
-     *
-     * @return bool
-     */
-    private function checkFileStatusBySubmission(SubmissionEntity $submission)
+    private function executeBatch($batchUid, $sourceBlogId)
     {
         try {
-            $this->getApiWrapper()->getStatus($submission);
-        } catch (\Exception $e) {
-            $submission->setLastError($e->getMessage());
-            $this->getSubmissionManager()->storeEntity($submission);
+            $submissions = $this->getSubmissionManager()->searchByBatchUid($batchUid);
 
-            return false;
+            if (0 === count($submissions)) {
+                $profile = $this->getSettingsManager()->getSingleSettingsProfile($sourceBlogId);
+
+                $this->getApiWrapper()->executeBatch($profile, $batchUid);
+
+                $msg = vsprintf('Batch \'%s\' executed', [$batchUid]);
+                $this->getLogger()->debug($msg);
+            }
+        } catch (Exception $e) {
+            $msg = vsprintf('Error executing batch \'%s\'. Message: \'%s\'', [$batchUid, $e->getMessage()]);
+            $this->getLogger()->error($msg);
         }
-
-        return true;
     }
-
 
     /**
      * @param SubmissionEntity $submission

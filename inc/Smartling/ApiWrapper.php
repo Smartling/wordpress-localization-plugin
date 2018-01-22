@@ -561,11 +561,23 @@ class ApiWrapper implements ApiWrapperInterface
     /**
      * @param ConfigurationProfileEntity $profile
      *
+     * @param null $name
+     * @param array $statuses
      * @return array
      */
-    public function listJobs(ConfigurationProfileEntity $profile)
+    public function listJobs(ConfigurationProfileEntity $profile, $name = null, array $statuses = [])
     {
-        return $this->getJobsApi($profile)->listJobs(new ListJobsParameters());
+        $params = new ListJobsParameters();
+
+        if (!empty($name)) {
+            $params->setName($name);
+        }
+
+        if (!empty($statuses)) {
+            $params->setStatuses($statuses);
+        }
+
+        return $this->getJobsApi($profile)->listJobs($params);
     }
 
     /**
@@ -603,6 +615,15 @@ class ApiWrapper implements ApiWrapperInterface
         $createBatchParameters->setAuthorize($authorize);
 
         return $this->getBatchApi($profile)->createBatch($createBatchParameters);
+    }
+
+    /**
+     * @param \Smartling\Settings\ConfigurationProfileEntity $profile
+     * @param $batchUid
+     */
+    public function executeBatch(ConfigurationProfileEntity $profile, $batchUid)
+    {
+        $this->getBatchApi($profile)->executeBatch($batchUid);
     }
 
     /**

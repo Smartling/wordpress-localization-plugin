@@ -279,12 +279,12 @@ class SubmissionManager extends EntityManagerAbstract
     }
 
     /**
-     * @param $jobId
-     *
+     * @param $batchUid
      * @return array
+     *
      */
-    public function searchByJobId($jobId) {
-        $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'job_id', [$jobId]);
+    public function searchByBatchUid($batchUid) {
+        $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'batch_uid', [$batchUid]);
         $block = ConditionBlock::getConditionBlock();
         $block->addCondition($condition);
         $total = 0;
