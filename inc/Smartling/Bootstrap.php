@@ -646,6 +646,12 @@ class Bootstrap
                                 $result['message']['global'] = $e->getMessage();
                                 $result['message'] = array_merge($result['message'], $error_msg);
                             }
+                            catch (Exception $e) {
+                                $error_msg = $e->getMessage();
+                                $result['status'] = 400;
+                                $result['message']['global'] = $error_msg;
+                                $result['message'] = [$error_msg];
+                            }
                         } else {
                             $result['message']['global'] = 'Please fix issues to continue';
                         }

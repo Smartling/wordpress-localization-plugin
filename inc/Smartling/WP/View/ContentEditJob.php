@@ -333,7 +333,7 @@ if ($post instanceof WP_Post) {
                     return '<input type="' + type + '" name="' + name + '" value="' + value + '" />';
                 };
 
-                var formSelector = 0 > $('#post').length ? 'post' : 'edittag';
+                var formSelector = $('#post').length ? 'post' : 'edittag';
 
                 $('#' + formSelector).append(createHiddenInput('smartling[ids]', currentContent.id));
                 $('#' + formSelector).append(createHiddenInput('smartling[locales]', locales));
