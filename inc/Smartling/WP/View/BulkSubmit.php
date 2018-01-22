@@ -99,7 +99,6 @@ $data = $this->getViewData();
         <input type="hidden" id="action" name="action" value="send"/>
         <?php $bulkSubmitTable->display() ?>
         <div id="error-messages"></div>
-        <?= WPAbstract::bulkSubmitSendButton('sent-to-smartling-bulk'); ?>
         &nbsp;
         <?= WPAbstract::bulkSubmitSendButton('clone-locally', 'submit', 'Clone', 'Create clone for another languages.'); ?>
     </form>
