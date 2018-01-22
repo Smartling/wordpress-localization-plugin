@@ -242,7 +242,6 @@ if ($post instanceof WP_Post) {
                     return $option;
                 },
                 renderJobListInDropDown: function (data) {
-                    console.log(data);
                     $('#jobSelect').html('');
                     var createnew = '<option class="new" value="createnew"><span class="new">Create new Job</span></option><option disabled="disabled">&nbsp;</option>';
                     $('#jobSelect').append(createnew);
