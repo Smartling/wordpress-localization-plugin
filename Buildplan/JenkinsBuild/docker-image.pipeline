@@ -8,7 +8,7 @@ pipeline {
   stages {
     stage('Build Docker image') {
       steps {
-        sh "docker build --no-cache --rm --pull --tag=${full_image_name} -f \"./../Docker/Dockerfile\" ."
+        sh "docker build --no-cache --rm --pull --tag=${full_image_name} -f \"Buildplan/Docker/Dockerfile\" ."
       }
     }
 
