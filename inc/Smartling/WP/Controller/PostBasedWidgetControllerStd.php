@@ -313,7 +313,6 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                     switch ($_POST['sub']) {
                         case 'Upload':
                             if (0 < count($locales)) {
-                                // Create batch.
                                 $wrapper = $this->getCore()->getApiWrapper();
                                 $eh = $this->getEntityHelper();
                                 $currentBlogId = $eh->getSiteHelper()->getCurrentBlogId();
@@ -330,6 +329,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                 }
 
                                 try {
+                                    $wrapper->updateJob(ArrayHelper::first($profile), $data['jobId'], $_POST['name'], $_POST['description'], $_POST['dueDate']);
                                     $res = $wrapper->createBatch(ArrayHelper::first($profile), $data['jobId'], 'true' === $data['authorize']);
                                 } catch (SmartlingApiException $e) {
                                     $this->getLogger()

@@ -95,6 +95,36 @@ interface ApiWrapperInterface
     public function createJob(ConfigurationProfileEntity $profile, array $params);
 
     /**
+     * @param ConfigurationProfileEntity $profile
+     * @param $jobId
+     * @param $name
+     * @param $description
+     * @param $dueDate
+     *
+     * @return array
+     * @throws SmartlingApiException
+     */
+    public function updateJob(ConfigurationProfileEntity $profile, $jobId, $name, $description, $dueDate);
+
+    /**
+     * @param \Smartling\Settings\ConfigurationProfileEntity $profile
+     * @param $jobId
+     * @param bool $authorize
+     *
+     * @return array
+     * @throws SmartlingApiException
+     */
+    public function createBatch(ConfigurationProfileEntity $profile, $jobId, $authorize = false);
+
+    /**
+     * @param \Smartling\Settings\ConfigurationProfileEntity $profile
+     * @param $batchUid
+     *
+     * @throws SmartlingApiException
+     */
+    public function executeBatch(ConfigurationProfileEntity $profile, $batchUid);
+
+    /**
      * @param SubmissionEntity[] $submissions
      *
      * @return void

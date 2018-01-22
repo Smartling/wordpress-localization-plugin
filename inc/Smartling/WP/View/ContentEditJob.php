@@ -57,7 +57,7 @@ $data = $this->getViewData();
                 </tr>
                 <tr>
                     <th><label for="name-sm">Name</label></th>
-                    <td><input id="name-sm" type="text"/></td>
+                    <td><input id="name-sm" name="name" type="text"/></td>
                 </tr>
                 <tr>
                     <th><label for="description-sm">Description</label</th>
@@ -281,17 +281,7 @@ if ($post instanceof WP_Post) {
                         this.elements.forEach(function (el) {
                             $('#' + el).val('');
                         });
-                    },
-                    lock: function () {
-                        this.elements.forEach(function (el) {
-                            $('#' + el).attr('disabled', 'disabled');
-                        });
-                    },
-                    unlock: function () {
-                        this.elements.forEach(function (el) {
-                            $('#' + el).removeAttr('disabled');
-                        });
-                    },
+                    }
                 }
             }
         };
@@ -393,11 +383,9 @@ if ($post instanceof WP_Post) {
                 Helper.ui.localeCheckboxes.clear();
                 Helper.ui.jobForm.clear();
                 if ('createnew' === $('#jobSelect').val()) {
-                    Helper.ui.jobForm.unlock();
                     Helper.ui.createJobForm.show();
                 } else {
                     Helper.ui.createJobForm.hide();
-                    Helper.ui.jobForm.lock();
                     $('#dueDate').val($('option[value=' + $('#jobSelect').val() + ']').attr('dueDate'));
                     $('#name-sm').val($('option[value=' + $('#jobSelect').val() + ']').html());
                     $('#description-sm').val($('option[value=' + $('#jobSelect').val() + ']').attr('description'));

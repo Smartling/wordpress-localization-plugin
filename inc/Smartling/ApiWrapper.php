@@ -2,6 +2,8 @@
 
 namespace Smartling;
 
+use DateTime;
+use DateTimeZone;
 use Psr\Log\LoggerInterface;
 use Smartling\AuthApi\AuthTokenProvider;
 use Smartling\Batch\BatchApi;
@@ -23,6 +25,7 @@ use Smartling\Jobs\JobsApi;
 use Smartling\Jobs\Params\AddFileToJobParameters;
 use Smartling\Jobs\Params\CreateJobParameters;
 use Smartling\Jobs\Params\ListJobsParameters;
+use Smartling\Jobs\Params\UpdateJobParameters;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Project\ProjectApi;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -568,11 +571,7 @@ class ApiWrapper implements ApiWrapperInterface
     }
 
     /**
-     * @param ConfigurationProfileEntity $profile
-     * @param array                      $params
-     *
-     * @return array
-     * @throws SmartlingApiException
+     * {@inheritdoc}
      */
     public function createJob(ConfigurationProfileEntity $profile, array $params)
     {
@@ -591,12 +590,36 @@ class ApiWrapper implements ApiWrapperInterface
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function updateJob(ConfigurationProfileEntity $profile, $jobId, $name, $description, $dueDate)
+    {
+        $params = new UpdateJobParameters();
+        $params->setName($name);
+
+        if (!empty($description)) {
+            $params->setDescription($description);
+        }
+
+        if (!empty($dueDate)) {
+            $time_zone = new DateTimeZone('UTC');
+            $date = new DateTime($dueDate, $time_zone);
+            $params->setDueDate($date);
+        }
+
+        return $this->getJobsApi($profile)->updateJob($jobId, $params);
+    }
+
+    /**
      * @param \Smartling\Settings\ConfigurationProfileEntity $profile
      * @param $jobId
      * @param bool $authorize
+     *
      * @return array
+     * @throws SmartlingApiException
      */
-    public function createBatch(ConfigurationProfileEntity $profile, $jobId, $authorize = false) {
+    public function createBatch(ConfigurationProfileEntity $profile, $jobId, $authorize = false)
+    {
         $createBatchParameters = new CreateBatchParameters();
         $createBatchParameters->setTranslationJobUid($jobId);
         $createBatchParameters->setAuthorize($authorize);
@@ -605,8 +628,7 @@ class ApiWrapper implements ApiWrapperInterface
     }
 
     /**
-     * @param \Smartling\Settings\ConfigurationProfileEntity $profile
-     * @param $batchUid
+     * {@inheritdoc}
      */
     public function executeBatch(ConfigurationProfileEntity $profile, $batchUid)
     {
