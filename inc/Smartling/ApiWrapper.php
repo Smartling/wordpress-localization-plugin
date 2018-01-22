@@ -4,6 +4,8 @@ namespace Smartling;
 
 use Psr\Log\LoggerInterface;
 use Smartling\AuthApi\AuthTokenProvider;
+use Smartling\Batch\BatchApi;
+use Smartling\Batch\Params\CreateBatchParameters;
 use Smartling\Exception\SmartligFileDownloadException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingFileDownloadException;
@@ -548,6 +550,15 @@ class ApiWrapper implements ApiWrapperInterface
     }
 
     /**
+     * @param \Smartling\Settings\ConfigurationProfileEntity $profile
+     *
+     * @return \Smartling\Jobs\JobsApi
+     */
+    private function getBatchApi(ConfigurationProfileEntity $profile) {
+        return BatchApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger());
+    }
+
+    /**
      * @param ConfigurationProfileEntity $profile
      *
      * @return array
@@ -578,6 +589,20 @@ class ApiWrapper implements ApiWrapperInterface
         } catch (SmartlingApiException $e) {
             throw $e;
         }
+    }
+
+    /**
+     * @param \Smartling\Settings\ConfigurationProfileEntity $profile
+     * @param $jobId
+     * @param bool $authorize
+     * @return array
+     */
+    public function createBatch(ConfigurationProfileEntity $profile, $jobId, $authorize = false) {
+        $createBatchParameters = new CreateBatchParameters();
+        $createBatchParameters->setTranslationJobUid($jobId);
+        $createBatchParameters->setAuthorize($authorize);
+
+        return $this->getBatchApi($profile)->createBatch($createBatchParameters);
     }
 
     /**

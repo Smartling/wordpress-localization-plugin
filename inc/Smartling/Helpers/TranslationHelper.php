@@ -156,7 +156,7 @@ class TranslationHelper
      *
      * @return SubmissionEntity
      */
-    public function tryPrepareRelatedContent($contentType, $sourceBlog, $sourceId, $targetBlog, $clone = false, $jobId = '')
+    public function tryPrepareRelatedContent($contentType, $sourceBlog, $sourceId, $targetBlog, $clone = false, $batchUid = '')
     {
         $relatedSubmission = $this->prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone);
 
@@ -177,7 +177,7 @@ class TranslationHelper
                 ]
             );
 
-            $relatedSubmission->setBatchUid($jobId);
+            $relatedSubmission->setBatchUid($batchUid);
             $serialized = $relatedSubmission->toArray(false);
             if (null === $serialized['file_uri']) {
                 $relatedSubmission->getFileUri();
