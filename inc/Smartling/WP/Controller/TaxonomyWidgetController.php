@@ -180,8 +180,6 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
 
         $data = $_POST[self::WIDGET_DATA_NAME];
 
-        $locales = [];
-
         if (null !== $data && array_key_exists('locales', $data)) {
             $locales = [];
             if (array_key_exists('locales', $data)) {
@@ -223,7 +221,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                             }
 
                             try {
-                                $wrapper->updateJob(ArrayHelper::first($profile), $data['jobId'], $_POST['name'], $_POST['description'], $_POST['dueDate']);
+                                $wrapper->updateJob(ArrayHelper::first($profile), $data['jobId'], $_POST['jobName'], $_POST['description'], $_POST['dueDate']);
                                 $res = $wrapper->createBatch(ArrayHelper::first($profile), $data['jobId'], 'true' === $data['authorize']);
                             } catch (SmartlingApiException $e) {
                                 $this->getLogger()

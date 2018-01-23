@@ -623,7 +623,7 @@ class Bootstrap
                         $result['data'] = $preparcedJobs;
                         break;
                     case 'create-job':
-                        $jobName = $validateRequires('name');
+                        $jobName = $validateRequires('jobName');
                         $jobDescription = $validateRequires('description');
                         $jobDueDate = $validateRequires('dueDate');
                         $jobLocalesRaw = explode(',', $validateRequires('locales'));

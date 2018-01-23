@@ -45,7 +45,6 @@ $data = $this->getViewData();
 <div class="job-wizard">
     <div id="placeholder">Loading from Smartling. Please wait...</div>
     <div id="tab-existing" class="tab-content hidden">
-        <form action="javascript:void(0);" id="frmJob" class="jobs-form">
             <table>
                 <tr>
                     <th>
@@ -57,7 +56,7 @@ $data = $this->getViewData();
                 </tr>
                 <tr>
                     <th><label for="name-sm">Name</label></th>
-                    <td><input id="name-sm" name="name" type="text"/></td>
+                    <td><input id="name-sm" name="jobName" type="text"/></td>
                 </tr>
                 <tr>
                     <th><label for="description-sm">Description</label</th>
@@ -122,7 +121,6 @@ $data = $this->getViewData();
                     </th>
                 </tr>
             </table>
-        </form>
 
     </div>
 
@@ -188,7 +186,7 @@ if ($post instanceof WP_Post) {
 
                 createJob: function (name, description, dueDate, locales, authorize, success, fail) {
                     this.query('create-job', {
-                        name: name,
+                        jobName: name,
                         description: description,
                         dueDate: dueDate,
                         locales: locales,
