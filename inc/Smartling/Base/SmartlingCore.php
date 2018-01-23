@@ -125,11 +125,10 @@ class SmartlingCore extends SmartlingCoreAbstract
      * @param SubmissionEntity $submission
      * @param string           $xmlFileContent
      * @param array            $smartlingLocaleList
-     * @param string           $batchUid
      *
      * @return bool
      */
-    protected function sendFile(SubmissionEntity $submission, $xmlFileContent, array $smartlingLocaleList = [], $batchUid)
+    protected function sendFile(SubmissionEntity $submission, $xmlFileContent, array $smartlingLocaleList = [])
     {
         $workDir = sys_get_temp_dir();
 
@@ -148,7 +147,7 @@ class SmartlingCore extends SmartlingCoreAbstract
                     $this->getLogger()->warning('Expected size of temporary file doesn\'t equals to real.');
                     return false;
                 } else {
-                    $result = $this->getApiWrapper()->uploadContent($submission, '', $tmp_file, $smartlingLocaleList, $batchUid);
+                    $result = $this->getApiWrapper()->uploadContent($submission, '', $tmp_file, $smartlingLocaleList);
                     unlink($tmp_file);
                     return $result;
                 }

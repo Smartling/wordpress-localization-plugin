@@ -371,7 +371,7 @@ trait SmartlingCoreUploadTrait
             }
 
             if (!StringHelper::isNullOrEmpty($xml)) {
-                if ($this->sendFile($submission, $xml, $locales, $submission->getBatchUid())) {
+                if ($this->sendFile($submission, $xml, $locales)) {
                     foreach ($submissions as $_submission) {
                         $_submission->setBatchUid('');
                         $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);

@@ -318,7 +318,7 @@ class ApiWrapper implements ApiWrapperInterface
     /**
      * {@inheritdoc}
      */
-    public function uploadContent(SubmissionEntity $entity, $xmlString = '', $filename = '', array $smartlingLocaleList = [], $batchUid)
+    public function uploadContent(SubmissionEntity $entity, $xmlString = '', $filename = '', array $smartlingLocaleList = [])
     {
         $this->getLogger()
             ->info(vsprintf(
@@ -337,9 +337,6 @@ class ApiWrapper implements ApiWrapperInterface
             $api = $this->getBatchApi($profile);
 
             $params = new UploadFileParameters('wordpress-connector', $this->getPluginVersion());
-
-            // We always explicit say do not authorize for all locales
-            $params->setAuthorized(false);
             $params->setLocalesToApprove($smartlingLocaleList);
 
             if (FileHelper::testFile($filename)) {
@@ -347,7 +344,7 @@ class ApiWrapper implements ApiWrapperInterface
                     $filename,
                     $entity->getFileUri(),
                     'xml',
-                    $batchUid,
+                    $entity->getBatchUid(),
                     $params);
 
                 $message = vsprintf(
@@ -582,11 +579,7 @@ class ApiWrapper implements ApiWrapperInterface
         $param->setTargetLocales($params['locales']);
         $param->setName($params['name']);
 
-        try {
-            return $this->getJobsApi($profile)->createJob($param);
-        } catch (SmartlingApiException $e) {
-            throw $e;
-        }
+        return $this->getJobsApi($profile)->createJob($param);
     }
 
     /**
