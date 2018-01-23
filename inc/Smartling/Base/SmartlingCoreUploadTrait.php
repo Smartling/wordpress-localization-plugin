@@ -378,6 +378,7 @@ trait SmartlingCoreUploadTrait
                     }
                 } else {
                     foreach ($submissions as $_submission) {
+                        $_submission->setBatchUid('');
                         $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
                     }
                 }
