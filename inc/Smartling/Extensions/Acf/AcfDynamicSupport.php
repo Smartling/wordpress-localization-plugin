@@ -11,6 +11,7 @@ use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SiteHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\ConfigurationProfileEntity;
 
 /**
@@ -46,14 +47,6 @@ class AcfDynamicSupport
     public function getLogger()
     {
         return $this->logger;
-    }
-
-    /**
-     * @param LoggerInterface $logger
-     */
-    public function setLogger($logger)
-    {
-        $this->logger = $logger;
     }
 
     /**
@@ -98,12 +91,11 @@ class AcfDynamicSupport
     /**
      * AcfDynamicSupport constructor.
      *
-     * @param LoggerInterface $logger
-     * @param EntityHelper    $entityHelper
+     * @param EntityHelper $entityHelper
      */
-    public function __construct(LoggerInterface $logger, EntityHelper $entityHelper)
+    public function __construct(EntityHelper $entityHelper)
     {
-        $this->setLogger($logger);
+        $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->setEntityHelper($entityHelper);
     }
 
