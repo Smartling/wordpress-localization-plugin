@@ -48,7 +48,7 @@ class UploadJob extends JobAbstract
              */
             $this->getLogger()->info(
                 vsprintf(
-                    'Cron Job triggers content upload for submission id = \'%s\' with status = \'%s\' for entity = \'%s\', blog = \'%s\', id = \'%s\', targetBlog = \'%s\', locale = \'%s\', job = \'%s\'.',
+                    'Cron Job triggers content upload for submission id="%s" with status="%s" for entity="%s", blog="%s", id="%s", targetBlog="%s", locale="%s", job="%s".',
                     [
                         $entity->getId(),
                         $entity->getStatus(),

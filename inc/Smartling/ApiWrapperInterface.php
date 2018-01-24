@@ -10,6 +10,7 @@ use Smartling\Submissions\SubmissionEntity;
 
 /**
  * Interface ApiWrapperInterface
+ *
  * @package Smartling
  */
 interface ApiWrapperInterface
@@ -37,12 +38,14 @@ interface ApiWrapperInterface
      *
      * @return bool
      * @internal param string $locale
+     *
      */
     public function testConnection(ConfigurationProfileEntity $profile);
 
     /**
      * @param SubmissionEntity $entity
      * @param string           $xmlString
+     *
      * @param string           $filename
      * @param array            $smartlingLocaleList
      *

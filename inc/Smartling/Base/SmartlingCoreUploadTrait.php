@@ -415,11 +415,11 @@ trait SmartlingCoreUploadTrait
 
                 $this->getApiWrapper()->executeBatch($profile, $batchUid);
 
-                $msg = vsprintf('Batch \'%s\' executed', [$batchUid]);
+                $msg = vsprintf('Batch "%s" executed', [$batchUid]);
                 $this->getLogger()->debug($msg);
             }
         } catch (Exception $e) {
-            $msg = vsprintf('Error executing batch \'%s\'. Message: \'%s\'', [$batchUid, $e->getMessage()]);
+            $msg = vsprintf('Error executing batch "%s". Message: "%s"', [$batchUid, $e->getMessage()]);
             $this->getLogger()->error($msg);
         }
     }
@@ -440,7 +440,7 @@ trait SmartlingCoreUploadTrait
 
         $this->getLogger()->debug(
             vsprintf(
-                'Preparing to send submission id = \'%s\' (blog = \'%s\', content = \'%s\', type = \'%s\', job = \'%s\').',
+                'Preparing to send submission id="%s" (blog="%s", content="%s", type="%s", batch="%s").',
                 [
                     $submission->getId(),
                     $submission->getSourceBlogId(),

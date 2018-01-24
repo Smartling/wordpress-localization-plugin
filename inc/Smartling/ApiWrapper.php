@@ -348,7 +348,7 @@ class ApiWrapper implements ApiWrapperInterface
                     $params);
 
                 $message = vsprintf(
-                    'Smartling uploaded \'%s\' for locales:%s.',
+                    'Smartling uploaded "%s" for locales:%s.',
                     [
                         $entity->getFileUri(),
                         implode(',', $smartlingLocaleList),
@@ -357,7 +357,7 @@ class ApiWrapper implements ApiWrapperInterface
 
                 $this->logger->info($message);
             } else {
-                $msg = vsprintf('File \'%s\' should exist if required for upload.', [$filename]);
+                $msg = vsprintf('File "%s" should exist if required for upload.', [$filename]);
                 throw new \InvalidArgumentException($msg);
             }
 
@@ -649,16 +649,16 @@ class ApiWrapper implements ApiWrapperInterface
 
                 $this->updateJob($profile, $jobId, $updateJob['name'], $description, $dueDate);
 
-                $this->getLogger()->debug(vsprintf('Updated job \'%s\': \'%s\'', [$jobId, json_encode($updateJob)]));
+                $this->getLogger()->debug(vsprintf('Updated job "%s": "%s"', [$jobId, json_encode($updateJob)]));
             }
 
             $result = $this->createBatch($profile, $jobId, $authorize);
 
-            $this->getLogger()->debug(vsprintf('Created batch \'%s\' for job \'%s\'', [$result['batchUid'], $jobId]));
+            $this->getLogger()->debug(vsprintf('Created batch "%s" for job "%s"', [$result['batchUid'], $jobId]));
 
             return $result['batchUid'];
         } catch (SmartlingApiException $e) {
-            $this->getLogger()->error(vsprintf('Can\'t create batch for a job \'%s\'. Error: %s', [$jobId, $e->formatErrors()]));
+            $this->getLogger()->error(vsprintf('Can\'t create batch for a job "%s". Error: %s', [$jobId, $e->formatErrors()]));
 
             return null;
         }

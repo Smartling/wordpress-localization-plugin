@@ -9,6 +9,7 @@ use Smartling\Submissions\SubmissionEntity;
 
 /**
  * Class SmartlingEntityAbstract
+ *
  * @package Smartling\Base
  */
 abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterface
