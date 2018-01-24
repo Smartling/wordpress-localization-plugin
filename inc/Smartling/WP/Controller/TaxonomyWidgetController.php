@@ -221,7 +221,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                             }
 
                             try {
-                                $wrapper->updateJob(ArrayHelper::first($profile), $data['jobId'], $_POST['jobName'], $_POST['description'], $_POST['dueDate']);
+                                $wrapper->updateJob(ArrayHelper::first($profile), $data['jobId'], $data['jobName'], $data['jobDescription'], $data['jobDueDate']);
                                 $res = $wrapper->createBatch(ArrayHelper::first($profile), $data['jobId'], 'true' === $data['authorize']);
                             } catch (SmartlingApiException $e) {
                                 $this->getLogger()
