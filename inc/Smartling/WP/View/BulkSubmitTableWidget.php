@@ -291,19 +291,13 @@ class BulkSubmitTableWidget extends SmartlingListTable
             $wrapper = Bootstrap::getContainer()->get('wrapper.sdk.api.smartling');
             $profile = $this->getProfile();
 
-            if ('true' === $smartlingData['authorize']) {
-                $this->getLogger()
-                  ->debug(vsprintf('Job \'%s\' should be authorized once upload is finished.', [$smartlingData['jobId']]));
-            }
+            $batchUid = $wrapper->retrieveBatch($profile, $smartlingData['jobId'], 'true' === $smartlingData['authorize'], [
+              'name' => $smartlingData['jobName'],
+              'description' => $smartlingData['jobDescription'],
+              'dueDate' => $smartlingData['jobDueDate'],
+            ]);
 
-            try {
-                $wrapper->updateJob($profile, $smartlingData['jobId'], $smartlingData['jobName'], $smartlingData['jobDescription'], $smartlingData['jobDueDate']);
-                $res = $wrapper->createBatch($profile, $smartlingData['jobId'], 'true' === $smartlingData['authorize']);
-                $batchUid = $res['batchUid'];
-            } catch (SmartlingApiException $e) {
-                $this->getLogger()
-                  ->error(vsprintf('Can\'t create batch for a job \'%s\'. Error: %s', [$data['jobId'], $e->formatErrors()]));
-
+            if (empty($batchUid)) {
                 return;
             }
         }

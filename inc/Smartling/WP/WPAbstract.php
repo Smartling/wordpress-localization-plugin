@@ -165,6 +165,16 @@ abstract class WPAbstract
     }
 
     /**
+     * @return \Smartling\Settings\ConfigurationProfileEntity[]
+     */
+    public function getProfiles() {
+        $eh = $this->getEntityHelper();
+        $currentBlogId = $eh->getSiteHelper()->getCurrentBlogId();
+
+        return $eh->getSettingsManager()->findEntityByMainLocale($currentBlogId);
+    }
+
+    /**
      * @param null $data
      */
     public function view($data = null)

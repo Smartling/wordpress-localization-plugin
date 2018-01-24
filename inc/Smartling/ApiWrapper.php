@@ -627,4 +627,40 @@ class ApiWrapper implements ApiWrapperInterface
     {
         $this->getBatchApi($profile)->executeBatch($batchUid);
     }
+
+    /**
+     * Returns batch uid for a given job.
+     *
+     * @param $profile
+     * @param $jobId
+     * @param bool $authorize
+     * @param array $updateJob
+     * @return string|null
+     */
+    public function retrieveBatch($profile, $jobId, $authorize = true, $updateJob = []) {
+        if ($authorize) {
+            $this->getLogger()->debug(vsprintf('Job \'%s\' should be authorized once upload is finished.', [$jobId]));
+        }
+
+        try {
+            if (!empty($updateJob['name'])) {
+                $description = empty($updateJob['description']) ? null : $updateJob['description'];
+                $dueDate = empty($updateJob['dueDate']) ? null : $updateJob['dueDate'];
+
+                $this->updateJob($profile, $jobId, $updateJob['name'], $description, $dueDate);
+
+                $this->getLogger()->debug(vsprintf('Updated job \'%s\': \'%s\'', [$jobId, json_encode($updateJob)]));
+            }
+
+            $result = $this->createBatch($profile, $jobId, $authorize);
+
+            $this->getLogger()->debug(vsprintf('Created batch \'%s\' for job \'%s\'', [$result['batchUid'], $jobId]));
+
+            return $result['batchUid'];
+        } catch (SmartlingApiException $e) {
+            $this->getLogger()->error(vsprintf('Can\'t create batch for a job \'%s\'. Error: %s', [$jobId, $e->formatErrors()]));
+
+            return null;
+        }
+    }
 }

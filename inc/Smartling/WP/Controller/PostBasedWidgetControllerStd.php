@@ -314,38 +314,30 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                         case 'Upload':
                             if (0 < count($locales)) {
                                 $wrapper = $this->getCore()->getApiWrapper();
-                                $eh = $this->getEntityHelper();
-                                $currentBlogId = $eh->getSiteHelper()->getCurrentBlogId();
-                                $profile = $eh->getSettingsManager()->findEntityByMainLocale($currentBlogId);
+                                $profiles = $this->getProfiles();
 
-                                if (empty($profile)) {
-                                    $this->getLogger()
-                                      ->error('No suitable configuration profile found.');
+                                if (empty($profiles)) {
+                                    $this->getLogger()->error('No suitable configuration profile found.');
 
                                     return;
                                 }
 
-                                if ('true' === $data['authorize']) {
-                                    $this->getLogger()
-                                      ->debug(vsprintf('Job \'%s\' should be authorized once upload is finished.', [$data['jobId']]));
-                                }
+                                $batchUid = $wrapper->retrieveBatch(ArrayHelper::first($profiles), $data['jobId'], 'true' === $data['authorize'], [
+                                    'name' => $data['jobName'],
+                                    'description' => $data['jobDescription'],
+                                    'dueDate' => $data['jobDueDate'],
+                                ]);
 
-                                try {
-                                    $wrapper->updateJob(ArrayHelper::first($profile), $data['jobId'], $data['jobName'], $data['jobDescription'], $data['jobDueDate']);
-                                    $res = $wrapper->createBatch(ArrayHelper::first($profile), $data['jobId'], 'true' === $data['authorize']);
-                                } catch (SmartlingApiException $e) {
-                                    $this->getLogger()
-                                      ->error(vsprintf('Can\'t create batch for a job \'%s\'. Error: %s', [$data['jobId'], $e->formatErrors()]));
-
+                                if (empty($batchUid)) {
                                     return;
                                 }
 
                                 foreach ($locales as $blogId) {
-                                    $submission = $translationHelper->tryPrepareRelatedContent($this->servedContentType, $sourceBlog, $originalId, (int)$blogId, false, $res['batchUid']);
+                                    $submission = $translationHelper->tryPrepareRelatedContent($this->servedContentType, $sourceBlog, $originalId, (int)$blogId, false, $batchUid);
 
                                     if (0 < $submission->getId()) {
                                         $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                                        $submission->setBatchUid($res['batchUid']);
+                                        $submission->setBatchUid($batchUid);
                                         $submission = $core->getSubmissionManager()->storeEntity($submission);
                                     }
 
