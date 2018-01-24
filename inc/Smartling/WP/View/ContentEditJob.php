@@ -40,6 +40,9 @@ $data = $this->getViewData();
         font-size: larger;
     }
 
+    .job-wizard {
+        margin-top: 25px;
+    }
 
 </style>
 <div class="job-wizard">
@@ -309,6 +312,9 @@ if ($post instanceof WP_Post) {
                 e.stopPropagation();
                 e.preventDefault();
                 var jobId = $('#jobSelect').val();
+                var jobName = $('input[name="jobName"]').val();
+                var jobDescription = $('textarea[name="description"]').val();
+                var jobDueDate = $('input[name="dueDate"]').val();
 
                 var locales = Helper.ui.getSelecterTargetLocales();
 
@@ -321,13 +327,36 @@ if ($post instanceof WP_Post) {
                 };
 
                 var formSelector = $('#post').length ? 'post' : 'edittag';
+                var isBulkSubmitPage = $('form#bulk-submit-main').length;
 
-                $('#' + formSelector).append(createHiddenInput('smartling[ids]', currentContent.id));
-                $('#' + formSelector).append(createHiddenInput('smartling[locales]', locales));
-                $('#' + formSelector).append(createHiddenInput('smartling[jobId]', jobId));
-                $('#' + formSelector).append(createHiddenInput('smartling[authorize]', $('.authorize:checked').length > 0));
-                $('#' + formSelector).append(createHiddenInput('sub', 'Upload'));
+                // Support for bulk submit form.
+                if (isBulkSubmitPage) {
+                    formSelector = 'bulk-submit-main';
+                    currentContent.id = $("input.bulkaction:checked").map(function() {
+                        return $(this).val();
+                    }).get();
+
+                    $('#action').val('send');
+                }
+
+                // Add hidden fields only if validation is passed.
+                if (currentContent.id.length) {
+                    $('#' + formSelector).append(createHiddenInput('smartling[ids]', currentContent.id));
+                    $('#' + formSelector).append(createHiddenInput('smartling[locales]', locales));
+                    $('#' + formSelector).append(createHiddenInput('smartling[jobId]', jobId));
+                    $('#' + formSelector).append(createHiddenInput('smartling[jobName]', jobName));
+                    $('#' + formSelector).append(createHiddenInput('smartling[jobDescription]', jobDescription));
+                    $('#' + formSelector).append(createHiddenInput('smartling[jobDueDate]', jobDueDate));
+                    $('#' + formSelector).append(createHiddenInput('smartling[authorize]', $('.authorize:checked').length > 0));
+                    $('#' + formSelector).append(createHiddenInput('sub', 'Upload'));
+                }
+
                 $('#' + formSelector).submit();
+
+                // Support for bulk submit form.
+                if (isBulkSubmitPage && currentContent.id.length) {
+                    $('input[type="submit"]').click();
+                }
             });
 
             $('#createJob').on('click', function (e) {

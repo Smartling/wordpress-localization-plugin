@@ -11,15 +11,6 @@ use Smartling\WP\WPAbstract;
 $data = $this->getViewData();
 
 ?>
-<script>
-    jQuery(document).ready(function () {
-        (function ($) {
-            $('#clone-locally').on('click', function () {
-                $('#action').val('clone');
-            });
-        })(jQuery);
-    });
-</script>
 <div class="wrap">
     <style>
         table.form-table th {
@@ -96,11 +87,11 @@ $data = $this->getViewData();
         </table>
         <input type="hidden" name="content-type" id="ct" value=""/>
         <input type="hidden" name="page" value="<?= $_REQUEST['page']; ?>"/>
-        <input type="hidden" id="action" name="action" value="send"/>
+        <input type="hidden" id="action" name="action" value="clone"/>
         <?php $bulkSubmitTable->display() ?>
         <div id="error-messages"></div>
         &nbsp;
-        <?= WPAbstract::bulkSubmitSendButton('clone-locally', 'submit', 'Clone', 'Create clone for another languages.'); ?>
+        <?= WPAbstract::bulkSubmitCloneButton(); ?>
     </form>
 
 </div>

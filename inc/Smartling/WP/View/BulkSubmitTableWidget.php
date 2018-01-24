@@ -7,6 +7,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EntityHelper;
@@ -268,9 +269,44 @@ class BulkSubmitTableWidget extends SmartlingListTable
         /**
          * @var array $submissions
          */
+        $action = $this->getFromSource('action', 'send');
         $submissions = $this->getFormElementValue('submission', []);
         $locales = [];
+        $batchUid = '';
         $data = $this->getFromSource('bulk-submit-locales', []);
+
+        if ($action == 'send') {
+            $smartlingData = $this->getFromSource('smartling', []);
+
+            if (empty($smartlingData)) {
+                return;
+            }
+
+            if (!empty($smartlingData['locales'])) {
+                foreach (explode(',', $smartlingData['locales']) as $localeId) {
+                    $data['locales'][$localeId]['enabled'] = 'on';
+                }
+            }
+
+            $wrapper = Bootstrap::getContainer()->get('wrapper.sdk.api.smartling');
+            $profile = $this->getProfile();
+
+            if ('true' === $smartlingData['authorize']) {
+                $this->getLogger()
+                  ->debug(vsprintf('Job \'%s\' should be authorized once upload is finished.', [$smartlingData['jobId']]));
+            }
+
+            try {
+                $wrapper->updateJob($profile, $smartlingData['jobId'], $smartlingData['jobName'], $smartlingData['jobDescription'], $smartlingData['jobDueDate']);
+                $res = $wrapper->createBatch($profile, $smartlingData['jobId'], 'true' === $smartlingData['authorize']);
+                $batchUid = $res['batchUid'];
+            } catch (SmartlingApiException $e) {
+                $this->getLogger()
+                  ->error(vsprintf('Can\'t create batch for a job \'%s\'. Error: %s', [$data['jobId'], $e->formatErrors()]));
+
+                return;
+            }
+        }
 
         if (null !== $data && array_key_exists('locales', $data)) {
             foreach ($data['locales'] as $blogId => $blogName) {
@@ -285,7 +321,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
             $ep = Bootstrap::getContainer()->get('entrypoint');
 
             if (is_array($submissions) && count($locales) > 0) {
-                $action = $this->getFromSource('action', 'send');
                 $clone = 'clone' === $action ? true : false;
                 foreach ($submissions as $submission) {
                     list($id, $type) = explode('-', $submission);
@@ -295,7 +330,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
                         /**
                          * @var SubmissionEntity $submissionEntity
                          */
-                        $submissionEntity = $ep->createForTranslation($type, $curBlogId, $id, (int)$blogId, null, $clone);
+                        $submissionEntity = $ep->createForTranslation($type, $curBlogId, $id, (int)$blogId, null, $clone, $batchUid);
 
                         $this->getLogger()
                             ->info(vsprintf(

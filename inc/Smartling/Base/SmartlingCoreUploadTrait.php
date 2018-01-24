@@ -509,10 +509,11 @@ trait SmartlingCoreUploadTrait
      * @param int      $targetBlog
      * @param int|null $targetEntity
      * @param bool     $clone
+     * @param string   $batchUid
      *
      * @return bool
      */
-    public function createForTranslation($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null, $clone = false)
+    public function createForTranslation($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null, $clone = false, $batchUid = '')
     {
         /**
          * @var SubmissionEntity $submission
@@ -539,6 +540,7 @@ trait SmartlingCoreUploadTrait
 
         $isCloned = true === $clone ? 1 : 0;
         $submission->setIsCloned($isCloned);
+        $submission->setBatchUid($batchUid);
 
         return $this->getSubmissionManager()->storeEntity($submission);
     }

@@ -71,6 +71,13 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
                 $profile
             );
             $this->view($table);
+
+            // Render job wizard.
+            $this->setViewData([
+              'profile'     => $profile,
+              'contentType' => '',
+            ]);
+            $this->renderViewScript('ContentEditJob.php');
         }
     }
 }
