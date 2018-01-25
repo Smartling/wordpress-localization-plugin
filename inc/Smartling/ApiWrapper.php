@@ -676,6 +676,13 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
+    /**
+     * Returns batch uid for a daily bucket job.
+     *
+     * @param \Smartling\Settings\ConfigurationProfileEntity $profile
+     * @param $authorize
+     * @return string|null
+     */
     public function retrieveBatchForBucketJob(ConfigurationProfileEntity $profile, $authorize) {
         $getName = function($suffix = '') {
             $date = date('m/d/Y');
