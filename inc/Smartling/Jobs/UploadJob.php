@@ -120,8 +120,6 @@ class UploadJob extends JobAbstract
         } while (0 < count($entities));
 
         // Daily bucket job.
-        $this->getLogger()->info('Started dealing with daily bucket job.');
-
         foreach ($this->getSettingsManager()->getActiveProfiles() as $activeProfile) {
             /**
              * @var ConfigurationProfileEntity $activeProfile.
@@ -137,6 +135,8 @@ class UploadJob extends JobAbstract
             );
 
             if (!empty($entities)) {
+                $this->getLogger()->info('Started dealing with daily bucket job.');
+
                 try {
                     $batchUid = $this->getApi()->retrieveBatchForBucketJob($activeProfile, (bool) $activeProfile->getAutoAuthorize());
 
@@ -184,10 +184,11 @@ class UploadJob extends JobAbstract
                 } catch (SmartlingApiException $e) {
                     $this->getLogger()->error($e->formatErrors());
                 }
+
+                $this->getLogger()->info('Finished dealing with daily bucket job.');
             }
         }
 
-        $this->getLogger()->info('Finished dealing with daily bucket job.');
         $this->getLogger()->info('Finished UploadJob.');
     }
 
