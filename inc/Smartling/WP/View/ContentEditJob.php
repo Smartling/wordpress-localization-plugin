@@ -71,7 +71,7 @@ $data = $this->getViewData();
                 </tr>
                 <tr>
                     <th><label for="cbAuthorize">Authorize Job</label</th>
-                    <td><input type="checkbox" class="authorize" id="cbAuthorize" name="cbAuthorize"/></td>
+                    <td><input type="checkbox" class="authorize" id="cbAuthorize" name="cbAuthorize" <?= $data['profile']->getAutoAuthorize() ? 'checked="checked"' : ''; ?>/></td>
                 </tr>
                 <tr>
                     <th>Target Locales</th>

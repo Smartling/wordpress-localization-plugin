@@ -465,7 +465,7 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                             ?>
                             <input type="checkbox"
                                    name="smartling_settings[autoAuthorize]" <?= $checked; ?> / >
-                            <?= __('Auto authorize content', $domain) ?>
+                            <?= __('Auto authorize job', $domain) ?>
                         </p>
                     </label>
                 </td>

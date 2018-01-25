@@ -22,6 +22,7 @@ use Smartling\Helpers\FileHelper;
 use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\RuntimeCacheHelper;
 use Smartling\Jobs\JobsApi;
+use Smartling\Jobs\JobStatus;
 use Smartling\Jobs\Params\AddFileToJobParameters;
 use Smartling\Jobs\Params\CreateJobParameters;
 use Smartling\Jobs\Params\ListJobsParameters;
@@ -574,10 +575,21 @@ class ApiWrapper implements ApiWrapperInterface
     {
         $param = new CreateJobParameters();
 
-        $param->setDescription($params['description']);
-        $param->setDueDate($params['dueDate']);
-        $param->setTargetLocales($params['locales']);
-        $param->setName($params['name']);
+        if (!empty($params['dueDate'])) {
+            $param->setDueDate($params['dueDate']);
+        }
+
+        if (!empty($params['name'])) {
+            $param->setName($params['name']);
+        }
+
+        if (!empty($params['locales'])) {
+            $param->setTargetLocales($params['locales']);
+        }
+
+        if (!empty($params['description'])) {
+            $param->setDescription($params['description']);
+        }
 
         return $this->getJobsApi($profile)->createJob($param);
     }
@@ -659,6 +671,68 @@ class ApiWrapper implements ApiWrapperInterface
             return $result['batchUid'];
         } catch (SmartlingApiException $e) {
             $this->getLogger()->error(vsprintf('Can\'t create batch for a job "%s". Error: %s', [$jobId, $e->formatErrors()]));
+
+            return null;
+        }
+    }
+
+    public function retrieveBatchForBucketJob(ConfigurationProfileEntity $profile, $authorize) {
+        $getName = function($suffix = '') {
+            $date = date('m/d/Y');
+            $name = "Daily Bucket Job $date";
+
+            return $name . $suffix;
+        };
+
+        $jobName = $getName();
+        $jobId = null;
+
+        try {
+            $response = $this->listJobs($profile, $jobName, [
+                JobStatus::AWAITING_AUTHORIZATION,
+                JobStatus::IN_PROGRESS,
+                JobStatus::COMPLETED,
+            ]);
+
+            // Try to find the latest created bucket job.
+            if (!empty($response['items'])) {
+                $jobId = $response['items'][0]['translationJobUid'];
+            }
+
+            // If there is no existing bucket job then create new one.
+            if (empty($jobId)) {
+                try {
+                    $result = $this->createJob($profile, [
+                      'name' => $jobName,
+                      'description' => 'Bucket job: contains updated content.',
+                    ]);
+                }
+                catch (SmartlingApiException $e) {
+                    // If there is a CLOSED bucket job then we have to
+                    // come up with new job name in order to avoid
+                    // "Job name is already taken" error.
+                    $jobName = $getName(' ' . date('H:i:s'));
+                    $result = $this->createJob($profile, [
+                      'name' => $jobName,
+                      'description' => 'Bucket job: contains updated content.',
+                    ]);
+                }
+
+                $jobId = $result['translationJobUid'];
+            }
+
+            if (empty($jobId)) {
+                $this->getLogger()->error("Queueing file upload into the bucket job failed: can't find/create job.");
+
+                return null;
+            }
+
+            $result = $this->createBatch($profile, $jobId, $authorize);
+
+            return $result['batchUid'];
+        }
+        catch (SmartlingApiException $e) {
+            $this->getLogger()->error(vsprintf('Can\'t create batch for a daily job "%s". Error: %s', [$jobName, $e->formatErrors()]));
 
             return null;
         }

@@ -21,6 +21,8 @@ services:
     arguments:
       - "@manager.submission"
       - "%cron.job.default_ttl%"
+      - "@wrapper.sdk.api.smartling"
+      - "@manager.settings"
     calls:
       - [ "setJobRunInterval", [ %cron.interval.upload% ] ]
 
