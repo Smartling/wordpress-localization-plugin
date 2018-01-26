@@ -287,6 +287,7 @@ class SubmissionManager extends EntityManagerAbstract
         $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'batch_uid', [$batchUid]);
         $block = ConditionBlock::getConditionBlock();
         $block->addCondition($condition);
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'status', ['New']));
         $total = 0;
         return $this->searchByCondition($block, null, null, null,[], null, $total);
     }
