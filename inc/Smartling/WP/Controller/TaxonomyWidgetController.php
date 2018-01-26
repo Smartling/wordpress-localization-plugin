@@ -215,7 +215,10 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                             $batchUid = $wrapper->retrieveBatch(ArrayHelper::first($profiles), $data['jobId'], 'true' === $data['authorize'], [
                                 'name' => $data['jobName'],
                                 'description' => $data['jobDescription'],
-                                'dueDate' => $data['jobDueDate'],
+                                'dueDate' => [
+                                    'date' => $data['jobDueDate'],
+                                    'timezone' => $data['timezone'],
+                                ],
                             ]);
 
                             if (empty($batchUid)) {
