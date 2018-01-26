@@ -88,8 +88,8 @@ class ReferencedFileFieldProcessor extends MetaFieldProcessorAbstract
                 $submission->getSourceBlogId(),
                 $value,
                 $submission->getTargetBlogId(),
-                (1 === $submission->getIsCloned()),
-                $submission->getBatchUid()
+                $submission->getBatchUid(),
+                (1 === $submission->getIsCloned())
             );
 
             return $attSubmission->getTargetId();

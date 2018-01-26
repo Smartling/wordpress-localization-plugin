@@ -152,11 +152,12 @@ class TranslationHelper
      * @param int    $sourceBlog
      * @param int    $sourceId
      * @param int    $targetBlog
+     * @param string $batchUid
      * @param bool   $clone
      *
      * @return SubmissionEntity
      */
-    public function tryPrepareRelatedContent($contentType, $sourceBlog, $sourceId, $targetBlog, $clone = false, $batchUid = '')
+    public function tryPrepareRelatedContent($contentType, $sourceBlog, $sourceId, $targetBlog, $batchUid, $clone = false)
     {
         $relatedSubmission = $this->prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone);
 

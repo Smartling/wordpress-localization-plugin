@@ -333,7 +333,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                 }
 
                                 foreach ($locales as $blogId) {
-                                    $submission = $translationHelper->tryPrepareRelatedContent($this->servedContentType, $sourceBlog, $originalId, (int)$blogId, false, $batchUid);
+                                    $submission = $translationHelper->tryPrepareRelatedContent($this->servedContentType, $sourceBlog, $originalId, (int)$blogId, $batchUid, false);
 
                                     if (0 < $submission->getId()) {
                                         $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
