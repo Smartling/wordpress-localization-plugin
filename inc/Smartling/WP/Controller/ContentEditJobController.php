@@ -120,8 +120,8 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                         break;
                     case 'create-job':
                         $jobName = $validateRequires('jobName');
-                        $jobDescription = $validateRequires('description');
-                        $jobDueDate = $validateRequires('dueDate');
+                        $jobDescription = $params['description'];
+                        $jobDueDate = $params['dueDate'];
                         $jobLocalesRaw = explode(',', $validateRequires('locales'));
                         $jobLocales = [];
                         foreach ($jobLocalesRaw as $blogId) {
@@ -133,11 +133,10 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                                 $res = $wrapper->createJob($profile, [
                                     'name'        => $jobName,
                                     'description' => $jobDescription,
-                                    'dueDate'     => \DateTime::createFromFormat('Y-m-d H:i:s', $jobDueDate),
+                                    'dueDate'     => empty($jobDueDate) ? '' : \DateTime::createFromFormat('Y-m-d H:i:s', $jobDueDate),
                                     'locales'     => $jobLocales,
                                 ]);
-                                $res['dueDate'] = \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $res['dueDate'])
-                                    ->format('Y-m-d H:i:s');
+                                $res['dueDate'] = empty($res['dueDate']) ? $res['dueDate'] : \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $res['dueDate'])->format('Y-m-d H:i:s');
                                 $result['data'] = $res;
                             } catch (SmartlingApiException $e) {
                                 $error_msg = array_map(function ($a) {
