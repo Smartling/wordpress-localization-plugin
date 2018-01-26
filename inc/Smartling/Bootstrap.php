@@ -14,7 +14,6 @@ use Smartling\ContentTypes\ContentTypeWidget;
 use Smartling\ContentTypes\CustomPostType;
 use Smartling\ContentTypes\CustomTaxonomyType;
 use Smartling\Exception\SmartlingBootException;
-use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\MetaFieldProcessor\CustomFieldFilterHandler;
@@ -22,7 +21,6 @@ use Smartling\Helpers\SchedulerHelper;
 use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
-use Smartling\Jobs\JobStatus;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPInstallableInterface;
@@ -258,7 +256,6 @@ class Bootstrap
         $this->testMinimalWordpressVersion();
 
         $this->testTimeLimit();
-        $this->initJobApiProxy();
         add_action('wp_ajax_' . 'smartling_expert_global_settings_update', function () {
 
             $data =& $_POST['params'];
@@ -558,119 +555,6 @@ class Bootstrap
     {
         $this->initializeBuildInContentTypes(self::getContainer());
         do_action(ExportedAPI::ACTION_SMARTLING_REGISTER_CONTENT_TYPE, self::getContainer());
-    }
-
-    public function initJobApiProxy()
-    {
-        add_action('wp_ajax_' . 'smartling_job_api_proxy', function () {
-
-            $data =& $_POST;
-
-            $result = [
-                'status' => 200,
-            ];
-
-            $wrapper = self::getContainer()->get('wrapper.sdk.api.smartling');
-            /**
-             * @var ApiWrapper $wrapper
-             */
-
-            $siteHelper = self::getContainer()->get('site.helper');
-            /**
-             * @var SiteHelper $siteHelper
-             */
-
-            $settingsManager = self::getContainer()->get('manager.settings');
-            /**
-             * @var SettingsManager $settingsManager
-             */
-
-            $curSiteId = $siteHelper->getCurrentBlogId();
-            $profile = $settingsManager->getSingleSettingsProfile($curSiteId);
-            $params = &$data['params'];
-
-            $validateRequires = function ($fieldName) use (&$result, $params) {
-                if (array_key_exists($fieldName, $params) && '' !== ($value = trim($params[$fieldName]))) {
-                    return $value;
-                } else {
-                    $msg = vsprintf('The field \'%s\' cannot be empty', [$fieldName]);
-                    Bootstrap::getLogger()->warning($msg);
-                    $result['status'] = 400;
-                    $result['message'][$fieldName] = $msg;
-                }
-            };
-
-            if (array_key_exists('innerAction', $data)) {
-                switch ($data['innerAction']) {
-                    case 'list-jobs' :
-                        $jobs = $wrapper->listJobs($profile, null, [
-                          JobStatus::AWAITING_AUTHORIZATION,
-                          JobStatus::IN_PROGRESS,
-                          JobStatus::COMPLETED,
-                        ]);
-                        $preparcedJobs = [];
-                        if (is_array($jobs) && array_key_exists('items', $jobs) &&
-                            array_key_exists('totalCount', $jobs) && 0 < (int)$jobs['totalCount']) {
-                            foreach ($jobs['items'] as $job) {
-                                if (!empty($job['dueDate'])) {
-                                    $job['dueDate'] = \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $job['dueDate'])
-                                      ->format('Y-m-d H:i:s');
-                                }
-
-                                $preparcedJobs[] = $job;
-                            }
-                        }
-                        $result['data'] = $preparcedJobs;
-                        break;
-                    case 'create-job':
-                        $jobName = $validateRequires('jobName');
-                        $jobDescription = $validateRequires('description');
-                        $jobDueDate = $validateRequires('dueDate');
-                        $jobLocalesRaw = explode(',', $validateRequires('locales'));
-                        $jobLocales = [];
-                        foreach ($jobLocalesRaw as $blogId) {
-                            $jobLocales[] = $settingsManager->getSmartlingLocaleIdBySettingsProfile($profile, (int)$blogId);
-                        }
-                        $debug['status'] = $result['status'];
-                        if ($result['status'] === 200) {
-                            try {
-                                $res = $wrapper->createJob($profile, [
-                                    'name'        => $jobName,
-                                    'description' => $jobDescription,
-                                    'dueDate'     => \DateTime::createFromFormat('Y-m-d H:i:s', $jobDueDate),
-                                    'locales'     => $jobLocales,
-                                ]);
-                                $res['dueDate'] = \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $res['dueDate'])
-                                    ->format('Y-m-d H:i:s');
-                                $result['data'] = $res;
-                            } catch (SmartlingApiException $e) {
-                                $error_msg = array_map(function ($a) {
-                                    return $a['message'];
-                                }, $e->getErrors());
-                                $result['status'] = 400;
-                                $result['message']['global'] = $e->getMessage();
-                                $result['message'] = array_merge($result['message'], $error_msg);
-                            }
-                            catch (Exception $e) {
-                                $error_msg = $e->getMessage();
-                                $result['status'] = 400;
-                                $result['message']['global'] = $error_msg;
-                                $result['message'] = [$error_msg];
-                            }
-                        } else {
-                            $result['message']['global'] = 'Please fix issues to continue';
-                        }
-                        break;
-                    default:
-                        $result['status'] = 400;
-                        $result['message']['global'] = 'Invalid inner action.';
-                        break;
-                }
-            }
-
-            echo json_encode($result);
-            exit;
-        });
     }
 
     public function run()
