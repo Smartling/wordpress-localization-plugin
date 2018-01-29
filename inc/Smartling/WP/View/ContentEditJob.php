@@ -247,6 +247,7 @@ if ($post instanceof WP_Post) {
                 renderOption: function (id, name, description, dueDate, locales) {
                     description = description == null ? '' : description;
 
+                    // Format due date from UTC to user's local time.
                     if (dueDate == null) {
                         dueDate = '';
                     }
@@ -402,9 +403,7 @@ if ($post instanceof WP_Post) {
                 $('#error-messages').html('');
 
                 Helper.queryProxy.createJob(name, description, dueDate, locales, authorize, timezone, function (data) {
-                    var description = data.description == null ? '' : data.description;
-                    var dueDate = data.dueDate == null ? '' : data.dueDate;
-                    var $option = Helper.ui.renderOption(data.translationJobUid, data.jobName, description, dueDate, data.targetLocaleIds.join(','));
+                    var $option = Helper.ui.renderOption(data.translationJobUid, data.jobName, data.description, data.dueDate, data.targetLocaleIds.join(','));
                     $('#jobSelect').append($option);
                     $('#jobSelect').val(data.translationJobUid);
                     $('#jobSelect').change();
