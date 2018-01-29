@@ -7,6 +7,7 @@ use Exception;
 use Smartling\Bootstrap;
 use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Jobs\JobStatus;
@@ -111,7 +112,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                             foreach ($jobs['items'] as $job) {
                                 if (!empty($job['dueDate'])) {
                                     $job['dueDate'] = \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $job['dueDate'])
-                                        ->format('Y-m-d H:i:s');
+                                        ->format(DateTimeHelper::DATE_TIME_FORMAT_JOB);
                                 }
 
                                 $preparcedJobs[] = $job;
@@ -136,7 +137,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                                 $utcDateTime = '';
 
                                 if (!empty($jobDueDate)) {
-                                    $utcDateTime = \DateTime::createFromFormat('Y-m-d H:i', $jobDueDate, new DateTimeZone($timezone));
+                                    $utcDateTime = \DateTime::createFromFormat(DateTimeHelper::DATE_TIME_FORMAT_JOB, $jobDueDate, new DateTimeZone($timezone));
                                     $utcDateTime->setTimeZone(new DateTimeZone('UTC'));
                                 }
 
@@ -146,7 +147,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                                     'dueDate'     => $utcDateTime,
                                     'locales'     => $jobLocales,
                                 ]);
-                                $res['dueDate'] = empty($res['dueDate']) ? $res['dueDate'] : \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $res['dueDate'])->format('Y-m-d H:i');
+                                $res['dueDate'] = empty($res['dueDate']) ? $res['dueDate'] : \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $res['dueDate'])->format(DateTimeHelper::DATE_TIME_FORMAT_JOB);
                                 $result['data'] = $res;
                             } catch (SmartlingApiException $e) {
                                 $error_msg = array_map(function ($a) {

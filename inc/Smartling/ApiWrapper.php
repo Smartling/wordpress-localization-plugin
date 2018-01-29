@@ -18,6 +18,7 @@ use Smartling\File\FileApi;
 use Smartling\File\Params\DownloadFileParameters;
 use Smartling\File\Params\UploadFileParameters;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\FileHelper;
 use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\RuntimeCacheHelper;
@@ -658,7 +659,7 @@ class ApiWrapper implements ApiWrapperInterface
                 $dueDate = null;
 
                 if (!empty($updateJob['dueDate']['date']) && !empty($updateJob['dueDate']['timezone'])) {
-                    $dueDate = \DateTime::createFromFormat('Y-m-d H:i', $updateJob['dueDate']['date'], new DateTimeZone($updateJob['dueDate']['timezone']));
+                    $dueDate = \DateTime::createFromFormat(DateTimeHelper::DATE_TIME_FORMAT_JOB, $updateJob['dueDate']['date'], new DateTimeZone($updateJob['dueDate']['timezone']));
                     $dueDate->setTimeZone(new DateTimeZone('UTC'));
                 }
 
