@@ -223,13 +223,15 @@ class AcfDynamicSupport
      */
     private function rawReadGroups()
     {
-        $args = [
-            'posts_per_page'   => 100000,
-            'post_type'        => 'acf-field-group',
-            'suppress_filters' => false,
-            'post_status'      => ['publish'],
-        ];
-        $posts = get_posts($args);
+        $posts = (new \WP_Query(
+            [
+                'post_type'        => 'acf-field-group',
+                'suppress_filters' => true,
+                'posts_per_page'   => -1,
+                'post_status'      => 'publish',
+            ]
+        ))->get_posts();
+
         $groups = [];
         foreach ($posts as $post) {
             $groups[$post->post_name] = [
@@ -243,14 +245,16 @@ class AcfDynamicSupport
 
     private function rawReadFields($parentId, $parentKey)
     {
-        $args = [
-            'posts_per_page'   => 100000,
-            'post_type'        => 'acf-field',
-            'suppress_filters' => false,
-            'post_status'      => ['publish'],
-            'post_parent'      => $parentId,
-        ];
-        $posts = get_posts($args);
+        $posts = (new \WP_Query(
+            [
+                'post_type'        => 'acf-field',
+                'suppress_filters' => true,
+                'posts_per_page'   => -1,
+                'post_status'      => 'publish',
+                'post_parent'      => $parentId,
+            ]
+        ))->get_posts();
+
         $fields = [];
         foreach ($posts as $post) {
             $configuration = unserialize($post->post_content);
