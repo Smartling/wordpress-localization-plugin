@@ -295,8 +295,8 @@ class BulkSubmitTableWidget extends SmartlingListTable
                 'name' => $smartlingData['jobName'],
                 'description' => $smartlingData['jobDescription'],
                 'dueDate' => [
-                    'date' => $data['jobDueDate'],
-                    'timezone' => $data['timezone'],
+                    'date' => $smartlingData['jobDueDate'],
+                    'timezone' => $smartlingData['timezone'],
                 ],
             ]);
 
