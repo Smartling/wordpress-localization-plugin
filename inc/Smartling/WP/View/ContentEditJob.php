@@ -242,7 +242,15 @@ if ($post instanceof WP_Post) {
                 },
                 renderOption: function (id, name, description, dueDate, locales) {
                     description = description == null ? '' : description;
-                    dueDate = dueDate == null ? '' : dueDate;
+
+                    if (dueDate == null) {
+                        dueDate = '';
+                    }
+                    else {
+                        dueDate = moment.utc(dueDate).toDate();
+                        dueDate = moment(dueDate).format('YYYY-MM-DD HH:mm');
+                    }
+
                     $option = '<option value="' + id + '" description="' + description + '" dueDate="' + dueDate + '" targetLocaleIds="' + locales + '">' + name + '</option>';
                     return $option;
                 },
@@ -292,7 +300,9 @@ if ($post instanceof WP_Post) {
 
 
         $(document).ready(function () {
-            $('#timezone-sm').val(Intl.DateTimeFormat().resolvedOptions().timeZone);
+            console.log(Intl.DateTimeFormat().resolvedOptions().timeZone);
+            console.log(moment.tz.guess());
+            $('#timezone-sm').val(moment.tz.guess());
 
             var timezone = $('#timezone-sm').val();
 

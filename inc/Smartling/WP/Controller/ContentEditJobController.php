@@ -219,6 +219,8 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
         $jsFiles = [
             'select2.min.js',
             'jquery.datetimepicker.js',
+            'moment.js',
+            'moment-timezone-with-data.js',
         ];
         foreach ($jsFiles as $jFile) {
             $jFile = $jsPath . $jFile;

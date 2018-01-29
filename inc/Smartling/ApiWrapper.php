@@ -658,7 +658,7 @@ class ApiWrapper implements ApiWrapperInterface
                 $dueDate = null;
 
                 if (!empty($updateJob['dueDate']['date']) && !empty($updateJob['dueDate']['timezone'])) {
-                    $dueDate = \DateTime::createFromFormat('Y-m-d H:i:s', $dueDate, new DateTimeZone($updateJob['dueDate']['timezone']));
+                    $dueDate = \DateTime::createFromFormat('Y-m-d H:i', $updateJob['dueDate']['date'], new DateTimeZone($updateJob['dueDate']['timezone']));
                     $dueDate->setTimeZone(new DateTimeZone('UTC'));
                 }
 
