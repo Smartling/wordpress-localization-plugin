@@ -300,8 +300,6 @@ if ($post instanceof WP_Post) {
 
 
         $(document).ready(function () {
-            console.log(Intl.DateTimeFormat().resolvedOptions().timeZone);
-            console.log(moment.tz.guess());
             $('#timezone-sm').val(moment.tz.guess());
 
             var timezone = $('#timezone-sm').val();
