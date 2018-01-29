@@ -44,6 +44,10 @@ $data = $this->getViewData();
         margin-top: 25px;
     }
 
+    .smartling_page_smartling-bulk-submit .job-wizard {
+        margin-right: 17px;
+    }
+
 </style>
 <div class="job-wizard">
     <div id="placeholder">Loading from Smartling. Please wait...</div>
