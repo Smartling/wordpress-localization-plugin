@@ -1,5 +1,8 @@
 <?php
 namespace {
+
+    use Smartling\DbAl\MultiligualPressConnector;
+
     function injectMocks()
     {
         /**

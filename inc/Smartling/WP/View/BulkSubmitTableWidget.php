@@ -292,9 +292,12 @@ class BulkSubmitTableWidget extends SmartlingListTable
             $profile = $this->getProfile();
 
             $batchUid = $wrapper->retrieveBatch($profile, $smartlingData['jobId'], 'true' === $smartlingData['authorize'], [
-              'name' => $smartlingData['jobName'],
-              'description' => $smartlingData['jobDescription'],
-              'dueDate' => $smartlingData['jobDueDate'],
+                'name' => $smartlingData['jobName'],
+                'description' => $smartlingData['jobDescription'],
+                'dueDate' => [
+                    'date' => $smartlingData['jobDueDate'],
+                    'timezone' => $smartlingData['timezone'],
+                ],
             ]);
 
             if (empty($batchUid)) {

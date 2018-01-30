@@ -18,6 +18,7 @@ use Smartling\File\FileApi;
 use Smartling\File\Params\DownloadFileParameters;
 use Smartling\File\Params\UploadFileParameters;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\FileHelper;
 use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\RuntimeCacheHelper;
@@ -597,7 +598,7 @@ class ApiWrapper implements ApiWrapperInterface
     /**
      * {@inheritdoc}
      */
-    public function updateJob(ConfigurationProfileEntity $profile, $jobId, $name, $description, $dueDate)
+    public function updateJob(ConfigurationProfileEntity $profile, $jobId, $name, $description = null, $dueDate = null)
     {
         $params = new UpdateJobParameters();
         $params->setName($name);
@@ -607,9 +608,7 @@ class ApiWrapper implements ApiWrapperInterface
         }
 
         if (!empty($dueDate)) {
-            $time_zone = new DateTimeZone('UTC');
-            $date = new DateTime($dueDate, $time_zone);
-            $params->setDueDate($date);
+            $params->setDueDate($dueDate);
         }
 
         return $this->getJobsApi($profile)->updateJob($jobId, $params);
@@ -657,7 +656,12 @@ class ApiWrapper implements ApiWrapperInterface
         try {
             if (!empty($updateJob['name'])) {
                 $description = empty($updateJob['description']) ? null : $updateJob['description'];
-                $dueDate = empty($updateJob['dueDate']) ? null : $updateJob['dueDate'];
+                $dueDate = null;
+
+                if (!empty($updateJob['dueDate']['date']) && !empty($updateJob['dueDate']['timezone'])) {
+                    $dueDate = \DateTime::createFromFormat(DateTimeHelper::DATE_TIME_FORMAT_JOB, $updateJob['dueDate']['date'], new DateTimeZone($updateJob['dueDate']['timezone']));
+                    $dueDate->setTimeZone(new DateTimeZone('UTC'));
+                }
 
                 $this->updateJob($profile, $jobId, $updateJob['name'], $description, $dueDate);
 

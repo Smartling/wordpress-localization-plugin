@@ -44,6 +44,8 @@ class DateTimeHelper
      */
     const DATE_TIME_FORMAT_STANDARD = 'Y-m-d H:i:s';
 
+    const DATE_TIME_FORMAT_JOB = 'Y-m-d H:i';
+
     /**
      * Sets default timezone for conversion operations
      *

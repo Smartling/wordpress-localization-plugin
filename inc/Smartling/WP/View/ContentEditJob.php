@@ -44,6 +44,10 @@ $data = $this->getViewData();
         margin-top: 25px;
     }
 
+    .smartling_page_smartling-bulk-submit .job-wizard {
+        margin-right: 17px;
+    }
+
 </style>
 <div class="job-wizard">
     <div id="placeholder">Loading from Smartling. Please wait...</div>
@@ -123,6 +127,7 @@ $data = $this->getViewData();
                         </button>
                     </th>
                 </tr>
+                <input type="hidden" id="timezone-sm" name="timezone-sm" value="UTC"/>
             </table>
 
     </div>
@@ -187,13 +192,14 @@ if ($post instanceof WP_Post) {
                     });
                 },
 
-                createJob: function (name, description, dueDate, locales, authorize, success, fail) {
+                createJob: function (name, description, dueDate, locales, authorize, timezone, success, fail) {
                     this.query('create-job', {
                         jobName: name,
                         description: description,
                         dueDate: dueDate,
                         locales: locales,
-                        authorize: authorize
+                        authorize: authorize,
+                        timezone: timezone
                     }, function (response) {
                         response = JSON.parse(response);
                         if (response.status <= 300) {
@@ -239,6 +245,17 @@ if ($post instanceof WP_Post) {
                     }
                 },
                 renderOption: function (id, name, description, dueDate, locales) {
+                    description = description == null ? '' : description;
+
+                    // Format due date from UTC to user's local time.
+                    if (dueDate == null) {
+                        dueDate = '';
+                    }
+                    else {
+                        dueDate = moment.utc(dueDate).toDate();
+                        dueDate = moment(dueDate).format('YYYY-MM-DD HH:mm');
+                    }
+
                     $option = '<option value="' + id + '" description="' + description + '" dueDate="' + dueDate + '" targetLocaleIds="' + locales + '">' + name + '</option>';
                     return $option;
                 },
@@ -288,6 +305,9 @@ if ($post instanceof WP_Post) {
 
 
         $(document).ready(function () {
+            $('#timezone-sm').val(moment.tz.guess());
+
+            var timezone = $('#timezone-sm').val();
 
             $('#jobSelect').select2({
                 placeholder: 'Please select a job',
@@ -304,7 +324,7 @@ if ($post instanceof WP_Post) {
             Helper.ui.displayJobList();
 
             $('#dueDate').datetimepicker({
-                format: 'Y-m-d H:i:s',
+                format: 'Y-m-d H:i',
                 minDate: 0
             });
 
@@ -347,6 +367,7 @@ if ($post instanceof WP_Post) {
                     $('#' + formSelector).append(createHiddenInput('smartling[jobName]', jobName));
                     $('#' + formSelector).append(createHiddenInput('smartling[jobDescription]', jobDescription));
                     $('#' + formSelector).append(createHiddenInput('smartling[jobDueDate]', jobDueDate));
+                    $('#' + formSelector).append(createHiddenInput('smartling[timezone]', timezone));
                     $('#' + formSelector).append(createHiddenInput('smartling[authorize]', $('.authorize:checked').length > 0));
                     $('#' + formSelector).append(createHiddenInput('sub', 'Upload'));
                 }
@@ -369,7 +390,6 @@ if ($post instanceof WP_Post) {
                 var locales = [];
                 var authorize = $('.authorize:checked').length > 0;
 
-
                 var checkedLocales = $('.job-wizard .mcheck:checkbox:checked');
 
                 checkedLocales.each(
@@ -382,7 +402,7 @@ if ($post instanceof WP_Post) {
                 locales = locales.join(',');
                 $('#error-messages').html('');
 
-                Helper.queryProxy.createJob(name, description, dueDate, locales, authorize, function (data) {
+                Helper.queryProxy.createJob(name, description, dueDate, locales, authorize, timezone, function (data) {
                     var $option = Helper.ui.renderOption(data.translationJobUid, data.jobName, data.description, data.dueDate, data.targetLocaleIds.join(','));
                     $('#jobSelect').append($option);
                     $('#jobSelect').val(data.translationJobUid);

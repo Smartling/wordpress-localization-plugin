@@ -2,10 +2,12 @@
 
 namespace Smartling\WP\Controller;
 
+use DateTimeZone;
 use Exception;
 use Smartling\Bootstrap;
 use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Jobs\JobStatus;
@@ -110,7 +112,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                             foreach ($jobs['items'] as $job) {
                                 if (!empty($job['dueDate'])) {
                                     $job['dueDate'] = \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $job['dueDate'])
-                                        ->format('Y-m-d H:i:s');
+                                        ->format(DateTimeHelper::DATE_TIME_FORMAT_JOB);
                                 }
 
                                 $preparcedJobs[] = $job;
@@ -120,6 +122,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                         break;
                     case 'create-job':
                         $jobName = $validateRequires('jobName');
+                        $timezone = $validateRequires('timezone');
                         $jobDescription = $params['description'];
                         $jobDueDate = $params['dueDate'];
                         $jobLocalesRaw = explode(',', $validateRequires('locales'));
@@ -130,13 +133,21 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                         $debug['status'] = $result['status'];
                         if ($result['status'] === 200) {
                             try {
+                                // Convert user's time to UTC.
+                                $utcDateTime = '';
+
+                                if (!empty($jobDueDate)) {
+                                    $utcDateTime = \DateTime::createFromFormat(DateTimeHelper::DATE_TIME_FORMAT_JOB, $jobDueDate, new DateTimeZone($timezone));
+                                    $utcDateTime->setTimeZone(new DateTimeZone('UTC'));
+                                }
+
                                 $res = $wrapper->createJob($profile, [
                                     'name'        => $jobName,
                                     'description' => $jobDescription,
-                                    'dueDate'     => empty($jobDueDate) ? '' : \DateTime::createFromFormat('Y-m-d H:i:s', $jobDueDate),
+                                    'dueDate'     => $utcDateTime,
                                     'locales'     => $jobLocales,
                                 ]);
-                                $res['dueDate'] = empty($res['dueDate']) ? $res['dueDate'] : \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $res['dueDate'])->format('Y-m-d H:i:s');
+                                $res['dueDate'] = empty($res['dueDate']) ? $res['dueDate'] : \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $res['dueDate'])->format(DateTimeHelper::DATE_TIME_FORMAT_JOB);
                                 $result['data'] = $res;
                             } catch (SmartlingApiException $e) {
                                 $error_msg = array_map(function ($a) {
@@ -209,6 +220,8 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
         $jsFiles = [
             'select2.min.js',
             'jquery.datetimepicker.js',
+            'moment.js',
+            'moment-timezone-with-data.js',
         ];
         foreach ($jsFiles as $jFile) {
             $jFile = $jsPath . $jFile;
