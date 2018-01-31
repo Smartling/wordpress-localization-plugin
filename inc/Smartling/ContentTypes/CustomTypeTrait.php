@@ -2,7 +2,6 @@
 
 namespace Smartling\ContentTypes;
 
-use Smartling\Bootstrap;
 use Smartling\ContentTypes\ConfigParsers\ConfigParserInterface;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Symfony\Component\DependencyInjection\ContainerBuilder;

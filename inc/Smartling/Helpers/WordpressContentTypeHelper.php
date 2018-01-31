@@ -132,6 +132,15 @@ class WordpressContentTypeHelper
         }
     }
 
+    public static function getBaseTypeByContentType($contentType) {
+        /**
+         * @var ContentTypeAbstract $ctHandler
+         */
+        $ctHandler = self::getContentTypeManager()->getHandler($contentType);
+
+        return $ctHandler->getBaseType();
+    }
+
     public static function getEditUrl(SubmissionEntity $submission) {
         /**
          * @var ContentTypeAbstract $ctHandler

@@ -22,20 +22,22 @@ trait SmartlingCoreExportApi
     }
 
     /**
-     * @param int  $sourceBlogId
-     * @param int  $targetBlogId
-     * @param int  $sourceId
-     * @param bool $clone
+     * @param int    $sourceBlogId
+     * @param int    $targetBlogId
+     * @param int    $sourceId
+     * @param string $batchUid
+     * @param bool   $clone
      *
      * @return SubmissionEntity
      */
-    public function sendAttachmentForTranslation($sourceBlogId, $targetBlogId, $sourceId, $clone = false)
+    public function sendAttachmentForTranslation($sourceBlogId, $targetBlogId, $sourceId, $batchUid, $clone = false)
     {
         $submission = $this->getTranslationHelper()->tryPrepareRelatedContent(
             'attachment',
             $sourceBlogId,
             $sourceId,
             $targetBlogId,
+            $batchUid,
             $clone
         );
 

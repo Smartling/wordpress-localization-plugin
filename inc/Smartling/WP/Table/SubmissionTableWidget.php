@@ -226,7 +226,6 @@ class SubmissionTableWidget extends SmartlingListTable
     public function get_bulk_actions()
     {
         $actions = [
-            self::ACTION_UPLOAD   => __('Enqueue for Upload'),
             self::ACTION_DOWNLOAD => __('Enqueue for Download'),
             self::ACTION_LOCK     => __('Lock translation'),
             self::ACTION_UNLOCK   => __('Unlock translation'),

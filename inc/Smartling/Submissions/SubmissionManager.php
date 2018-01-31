@@ -279,6 +279,20 @@ class SubmissionManager extends EntityManagerAbstract
     }
 
     /**
+     * @param $batchUid
+     * @return array
+     *
+     */
+    public function searchByBatchUid($batchUid) {
+        $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'batch_uid', [$batchUid]);
+        $block = ConditionBlock::getConditionBlock();
+        $block->addCondition($condition);
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'status', ['New']));
+        $total = 0;
+        return $this->searchByCondition($block, null, null, null,[], null, $total);
+    }
+
+    /**
      * Gets SubmissionEntity from database by primary key
      * alias to getEntities
      *
@@ -473,6 +487,37 @@ class SubmissionManager extends EntityManagerAbstract
             $block->addCondition($condition);
         }
 
+
+        $pageOptions = 0 === $limit ? null : ['limit' => $limit, 'page' => 1];
+
+        $query = $this->buildQuery(null, null, null, [], $pageOptions, $block);
+
+        return $this->fetchData($query);
+    }
+
+    /**
+     * Search submission by params.
+     *
+     * @param array $params
+     * @param int   $limit (if 0 - unlimited)
+     *
+     * @return SubmissionEntity[]
+     */
+    public function findBatchUidNotEmpty(array $params = [], $limit = 0, $group = [])
+    {
+        $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
+
+        foreach ($params as $field => $value) {
+            if (is_array($value)) {
+                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_IN, $field, $value);
+            } else {
+                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, $field, [$value]);
+            }
+
+            $block->addCondition($condition);
+        }
+
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_NOT_EQ, 'batch_uid', ['']));
 
         $pageOptions = 0 === $limit ? null : ['limit' => $limit, 'page' => 1];
 

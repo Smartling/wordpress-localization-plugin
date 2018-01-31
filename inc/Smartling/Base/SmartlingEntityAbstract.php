@@ -17,6 +17,7 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
 
     const DB_TYPE_INT_MODIFIER_AUTOINCREMENT = 'AUTO_INCREMENT';
     const DB_TYPE_DEFAULT_ZERO               = 'DEFAULT \'0\'';
+    const DB_TYPE_DEFAULT_EMPTYSTRING        = 'DEFAULT \'\'';
 
     const DB_TYPE_U_BIGINT        = 'INT(20) UNSIGNED NOT NULL'; // BIGINT alias of INT(20)
     const DB_TYPE_DATETIME        = 'DATETIME NOT NULL DEFAULT \'0000-00-00 00:00:00\'';
@@ -121,7 +122,6 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
         return $arr;
     }
 
-    
 
     /**
      * @return array
@@ -167,7 +167,6 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
 
         return $obj;
     }
-
 
 
     /**

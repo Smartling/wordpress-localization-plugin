@@ -152,11 +152,12 @@ class TranslationHelper
      * @param int    $sourceBlog
      * @param int    $sourceId
      * @param int    $targetBlog
+     * @param string $batchUid
      * @param bool   $clone
      *
      * @return SubmissionEntity
      */
-    public function tryPrepareRelatedContent($contentType, $sourceBlog, $sourceId, $targetBlog, $clone = false)
+    public function tryPrepareRelatedContent($contentType, $sourceBlog, $sourceId, $targetBlog, $batchUid, $clone = false)
     {
         $relatedSubmission = $this->prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone);
 
@@ -177,6 +178,12 @@ class TranslationHelper
                 ]
             );
 
+            $relatedSubmission->setBatchUid($batchUid);
+            $serialized = $relatedSubmission->toArray(false);
+            if (null === $serialized['file_uri']) {
+                $relatedSubmission->getFileUri();
+            }
+            $relatedSubmission = $this->getSubmissionManager()->storeEntity($relatedSubmission);
             // try to create target entity
             $relatedSubmission = apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $relatedSubmission);
 

@@ -104,6 +104,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
             'last_modified'          => self::DB_TYPE_DATETIME,
             'outdated'               => self::DB_TYPE_UINT_SWITCH,
             'last_error'             => self::DB_TYPE_STRING_TEXT,
+            'batch_uid'                 => self::DB_TYPE_STRING_64 . ' ' . self::DB_TYPE_DEFAULT_EMPTYSTRING,
         ];
     }
 
@@ -774,6 +775,19 @@ class SubmissionEntity extends SmartlingEntityAbstract
     public function setLastError($message)
     {
         $this->stateFields['last_error'] = trim($message);
+    }
+
+    /**
+     * @return string
+     */
+    public function getBatchUid()
+    {
+        return $this->stateFields['batch_uid'];
+    }
+
+    public function setBatchUid($batchUid)
+    {
+        $this->stateFields['batch_uid'] = trim($batchUid);
     }
 
     /**

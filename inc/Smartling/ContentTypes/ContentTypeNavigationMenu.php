@@ -122,6 +122,7 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
                     $params->getSubmission()->getSourceBlogId(),
                     $menuItemEntity->getPK(),
                     $params->getSubmission()->getTargetBlogId(),
+                    $params->getSubmission()->getBatchUid(),
                     (1 === $params->getSubmission()->getIsCloned())
                 );
 
@@ -170,6 +171,7 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
                     $params->getSubmission()->getSourceBlogId(),
                     $menuId,
                     $params->getSubmission()->getTargetBlogId(),
+                    $params->getSubmission()->getBatchUid(),
                     (1 === $params->getSubmission()->getIsCloned())
                 );
 

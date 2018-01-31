@@ -165,6 +165,16 @@ abstract class WPAbstract
     }
 
     /**
+     * @return \Smartling\Settings\ConfigurationProfileEntity[]
+     */
+    public function getProfiles() {
+        $eh = $this->getEntityHelper();
+        $currentBlogId = $eh->getSiteHelper()->getCurrentBlogId();
+
+        return $eh->getSettingsManager()->findEntityByMainLocale($currentBlogId);
+    }
+
+    /**
      * @param null $data
      */
     public function view($data = null)
@@ -203,6 +213,20 @@ abstract class WPAbstract
                 'id'    => $id,
                 'name'  => $name,
             ]);
+    }
+
+    public static function bulkSubmitCloneButton()
+    {
+        return HtmlTagGeneratorHelper::tag(
+          'input',
+          '',
+          [
+            'type'  => 'submit',
+            'value' => 'Clone',
+            'class' => 'button button-primary',
+            'id'    => 'clone-locally',
+            'name'  => 'submit',
+          ]);
     }
 
     public static function sendButton($id = 'submit', $name = 'submit')
@@ -244,7 +268,7 @@ abstract class WPAbstract
             'name'  => 'sub',
         ]);
 
-        $contents = $sendButton . '&nbsp;' . $downloadButton;
+        $contents = /* $sendButton . '&nbsp;' .*/ $downloadButton;
 
         $container = HtmlTagGeneratorHelper::tag('div', $contents, ['class' => 'bottom']);
 
@@ -274,10 +298,13 @@ abstract class WPAbstract
      * @param string $blog_name
      * @param bool   $checked
      * @param bool   $enabled
+     * @param string $editLink
+     * @param array  $extraAttributes
      *
      * @return string
      */
-    public static function localeSelectionCheckboxBlock($namePrefix, $blog_id, $blog_name, $checked = false, $enabled = true, $editLink = '')
+
+    public static function localeSelectionCheckboxBlock($namePrefix, $blog_id, $blog_name, $checked = false, $enabled = true, $editLink = '', array $extraAttributes = [])
     {
         $parts = [];
 
@@ -295,9 +322,10 @@ abstract class WPAbstract
         ]);
 
         $checkboxAttributes = [
-            'name'  => vsprintf('%s[locales][%s][enabled]', [$namePrefix, $blog_id]),
-            'class' => 'mcheck',
-            'type'  => 'checkbox',
+            'name'         => vsprintf('%s[locales][%s][enabled]', [$namePrefix, $blog_id]),
+            'class'        => 'mcheck',
+            'type'         => 'checkbox',
+            'data-blog-id' => $blog_id,
         ];
 
         if (true === $checked) {
@@ -311,6 +339,8 @@ abstract class WPAbstract
                 'class'    => 'nomcheck',
             ]);
         }
+
+        $checkboxAttributes = array_merge($checkboxAttributes, $extraAttributes);
 
         $parts[] = HtmlTagGeneratorHelper::tag('input', '', $checkboxAttributes);
 

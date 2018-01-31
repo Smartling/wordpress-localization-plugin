@@ -258,7 +258,6 @@ class Bootstrap
         $this->testMinimalWordpressVersion();
 
         $this->testTimeLimit();
-
         add_action('wp_ajax_' . 'smartling_expert_global_settings_update', function () {
 
             $data =& $_POST['params'];
@@ -572,6 +571,7 @@ class Bootstrap
 
     public function run()
     {
+
         $this->initRoles();
     }
 }

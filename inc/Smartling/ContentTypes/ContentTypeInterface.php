@@ -2,7 +2,6 @@
 
 namespace Smartling\ContentTypes;
 
-use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**

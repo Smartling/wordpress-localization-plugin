@@ -10,6 +10,7 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
+use Smartling\Helpers\StringHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -132,7 +133,9 @@ class SmartlingCore extends SmartlingCoreAbstract
         $workDir = sys_get_temp_dir();
 
         if (is_writable($workDir)) {
-            $tmp_file = tempnam($workDir, '_smartling_temp_');
+            // File extension is needed for Guzzle. Library sets content type
+            // depending on file extension (application/xml).
+            $tmp_file = tempnam($workDir, '_smartling_temp_') . '.xml';
             $bytesWritten = file_put_contents($tmp_file, $xmlFileContent);
 
             if (0 === $bytesWritten) {

@@ -37,11 +37,11 @@
             });
         });
 
-        $('#resetLogPath').on('click', function (e) {
+        $('#resetLogPath').on('click', function(e){
             e.stopPropagation();
             e.preventDefault();
 
-            $('#loggingPath').attr('value', ($(this).attr('data-path')));
+            $('#loggingPath').attr('value',($(this).attr('data-path')));
 
         });
 

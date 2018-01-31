@@ -77,9 +77,10 @@ if (!empty($locales)) {
             $submission = null;
             $statusValue = null;
             $id = null;
+            $editUrl = '';
             if (null !== $data['submissions']) {
                 foreach ($data['submissions'] as $item) {
-                    $editUrl = '';
+
                     /**
                      * @var SubmissionEntity $item
                      */

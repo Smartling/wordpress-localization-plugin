@@ -6,6 +6,7 @@ use Smartling\Base\ExportedAPI;
 use Smartling\ContentTypes\ConfigParsers\PostTypeConfigParser;
 use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
 use Smartling\Helpers\StringHelper;
+use Smartling\Helpers\TranslationHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 
 /**
@@ -77,7 +78,25 @@ class CustomPostType extends PostBasedContentTypeAbstract
                 ->addMethodCall('setNoOriginalFound', [__($this->getConfigParser()->getWidgetMessage())]);
 
             $di->get($tag)->register();
+            $this->registerJobWidget();
         }
+    }
+
+    protected function registerJobWidget()
+    {
+        $di = $this->getContainerBuilder();
+        $tag = 'wp.job.' . static::getSystemName();
+
+        $definition = $di
+            ->register($tag, 'Smartling\WP\Controller\ContentEditJobController')
+            ->addArgument($di->getDefinition('multilang.proxy'))
+            ->addArgument($di->getDefinition('plugin.info'))
+            ->addArgument($di->getDefinition('entity.helper'))
+            ->addArgument($di->getDefinition('manager.submission'))
+            ->addArgument($di->getDefinition('site.cache'))
+            ->addMethodCall('setServedContentType', [static::getSystemName()])
+        ;
+        $di->get($tag)->register();
     }
 
     public function registerTaxonomyRelations(ProcessRelatedContentParams $params)
@@ -108,6 +127,7 @@ class CustomPostType extends PostBasedContentTypeAbstract
                             $params->getSubmission()->getSourceBlogId(),
                             $element->term_id,
                             $params->getSubmission()->getTargetBlogId(),
+                            $params->getSubmission()->getBatchUid(),
                             (1 === $params->getSubmission()->getIsCloned())
                         );
                     $params->getAccumulator()[$params->getContentType()][] = $relatedSubmission->getTargetId();

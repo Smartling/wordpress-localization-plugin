@@ -2,19 +2,32 @@
 
 namespace Smartling;
 
+use DateTime;
+use DateTimeZone;
 use Psr\Log\LoggerInterface;
 use Smartling\AuthApi\AuthTokenProvider;
+use Smartling\Batch\BatchApi;
+use Smartling\Batch\Params\CreateBatchParameters;
 use Smartling\Exception\SmartligFileDownloadException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
+use Smartling\Exceptions\SmartlingApiException;
 use Smartling\File\FileApi;
 use Smartling\File\Params\DownloadFileParameters;
 use Smartling\File\Params\UploadFileParameters;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\DateTimeHelper;
+use Smartling\Helpers\FileHelper;
 use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\RuntimeCacheHelper;
+use Smartling\Jobs\JobsApi;
+use Smartling\Jobs\JobStatus;
+use Smartling\Jobs\Params\AddFileToJobParameters;
+use Smartling\Jobs\Params\CreateJobParameters;
+use Smartling\Jobs\Params\ListJobsParameters;
+use Smartling\Jobs\Params\UpdateJobParameters;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Project\ProjectApi;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -305,13 +318,7 @@ class ApiWrapper implements ApiWrapperInterface
     }
 
     /**
-     * @param SubmissionEntity $entity
-     * @param string           $xmlString
-     * @param string           $filename
-     * @param array            $smartlingLocaleList
-     *
-     * @return bool
-     * @throws SmartlingFileUploadException
+     * {@inheritdoc}
      */
     public function uploadContent(SubmissionEntity $entity, $xmlString = '', $filename = '', array $smartlingLocaleList = [])
     {
@@ -329,40 +336,34 @@ class ApiWrapper implements ApiWrapperInterface
         try {
             $profile = $this->getConfigurationProfile($entity);
 
-            $api = FileApi::create(
-                $this->getAuthProvider($profile),
-                $profile->getProjectId(),
-                $this->getLogger()
-            );
+            $api = $this->getBatchApi($profile);
 
             $params = new UploadFileParameters('wordpress-connector', $this->getPluginVersion());
+            $params->setLocalesToApprove($smartlingLocaleList);
 
-            // We always explicit say do not authorize for all locales
-            $params->setAuthorized(false);
-            if ($profile->getAutoAuthorize()) {
-                // Authorize for locale only if user chooses this in settings
-                $locale = $this->getSmartlingLocaleBySubmission($entity);
-                $params->setLocalesToApprove($smartlingLocaleList);
+            if (FileHelper::testFile($filename)) {
+                $api->uploadBatchFile(
+                    $filename,
+                    $entity->getFileUri(),
+                    'xml',
+                    $entity->getBatchUid(),
+                    $params);
+
+                $message = vsprintf(
+                    'Smartling uploaded "%s" for locales:%s.',
+                    [
+                        $entity->getFileUri(),
+                        implode(',', $smartlingLocaleList),
+                    ]
+                );
+
+                $this->logger->info($message);
+            } else {
+                $msg = vsprintf('File "%s" should exist if required for upload.', [$filename]);
+                throw new \InvalidArgumentException($msg);
             }
 
-            $res = $api->uploadFile(
-                $filename,
-                $entity->getFileUri(),
-                'xml',
-                $params);
-
-            $message = vsprintf(
-                'Smartling uploaded \'%s\' for locales:%s.',
-                [
-                    $entity->getFileUri(),
-                    implode(',', $smartlingLocaleList),
-                ]
-            );
-
-            $this->logger->info($message);
-
             return true;
-
         } catch (\Exception $e) {
             throw new SmartlingFileUploadException($e->getMessage(), $e->getCode(), $e);
         }
@@ -461,7 +462,7 @@ class ApiWrapper implements ApiWrapperInterface
                 if (array_key_exists($localeId, $submissions)) {
                     $completedStrings = $descriptor['completedStringCount'];
                     $authorizedStrings = $descriptor['authorizedStringCount'];
-                    $totalStringCount = $descriptor['totalStringCount'];
+                    $totalStringCount = $data['totalStringCount'];
                     $excludedStringCount = $descriptor['excludedStringCount'];
 
                     $currentProgress = $submissions[$localeId]->getCompletionPercentage(); // current progress value 0..100
@@ -524,6 +525,227 @@ class ApiWrapper implements ApiWrapperInterface
             $api->deleteFile($submission->getFileUri());
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
+        }
+    }
+
+    /**
+     * @param ConfigurationProfileEntity $profile
+     *
+     * @return JobsApi
+     */
+    private function getJobsApi(ConfigurationProfileEntity $profile)
+    {
+        return JobsApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger());
+    }
+
+    /**
+     * @param \Smartling\Settings\ConfigurationProfileEntity $profile
+     *
+     * @return \Smartling\Jobs\JobsApi
+     */
+    private function getBatchApi(ConfigurationProfileEntity $profile) {
+        return BatchApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger());
+    }
+
+    /**
+     * @param ConfigurationProfileEntity $profile
+     *
+     * @param null $name
+     * @param array $statuses
+     * @return array
+     */
+    public function listJobs(ConfigurationProfileEntity $profile, $name = null, array $statuses = [])
+    {
+        $params = new ListJobsParameters();
+
+        if (!empty($name)) {
+            $params->setName($name);
+        }
+
+        if (!empty($statuses)) {
+            $params->setStatuses($statuses);
+        }
+
+        return $this->getJobsApi($profile)->listJobs($params);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function createJob(ConfigurationProfileEntity $profile, array $params)
+    {
+        $param = new CreateJobParameters();
+
+        if (!empty($params['dueDate'])) {
+            $param->setDueDate($params['dueDate']);
+        }
+
+        if (!empty($params['name'])) {
+            $param->setName($params['name']);
+        }
+
+        if (!empty($params['locales'])) {
+            $param->setTargetLocales($params['locales']);
+        }
+
+        if (!empty($params['description'])) {
+            $param->setDescription($params['description']);
+        }
+
+        return $this->getJobsApi($profile)->createJob($param);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function updateJob(ConfigurationProfileEntity $profile, $jobId, $name, $description = null, $dueDate = null)
+    {
+        $params = new UpdateJobParameters();
+        $params->setName($name);
+
+        if (!empty($description)) {
+            $params->setDescription($description);
+        }
+
+        if (!empty($dueDate)) {
+            $params->setDueDate($dueDate);
+        }
+
+        return $this->getJobsApi($profile)->updateJob($jobId, $params);
+    }
+
+    /**
+     * @param \Smartling\Settings\ConfigurationProfileEntity $profile
+     * @param $jobId
+     * @param bool $authorize
+     *
+     * @return array
+     * @throws SmartlingApiException
+     */
+    public function createBatch(ConfigurationProfileEntity $profile, $jobId, $authorize = false)
+    {
+        $createBatchParameters = new CreateBatchParameters();
+        $createBatchParameters->setTranslationJobUid($jobId);
+        $createBatchParameters->setAuthorize($authorize);
+
+        return $this->getBatchApi($profile)->createBatch($createBatchParameters);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function executeBatch(ConfigurationProfileEntity $profile, $batchUid)
+    {
+        $this->getBatchApi($profile)->executeBatch($batchUid);
+    }
+
+    /**
+     * Returns batch uid for a given job.
+     *
+     * @param $profile
+     * @param $jobId
+     * @param bool $authorize
+     * @param array $updateJob
+     * @return string|null
+     */
+    public function retrieveBatch($profile, $jobId, $authorize = true, $updateJob = []) {
+        if ($authorize) {
+            $this->getLogger()->debug(vsprintf('Job \'%s\' should be authorized once upload is finished.', [$jobId]));
+        }
+
+        try {
+            if (!empty($updateJob['name'])) {
+                $description = empty($updateJob['description']) ? null : $updateJob['description'];
+                $dueDate = null;
+
+                if (!empty($updateJob['dueDate']['date']) && !empty($updateJob['dueDate']['timezone'])) {
+                    $dueDate = \DateTime::createFromFormat(DateTimeHelper::DATE_TIME_FORMAT_JOB, $updateJob['dueDate']['date'], new DateTimeZone($updateJob['dueDate']['timezone']));
+                    $dueDate->setTimeZone(new DateTimeZone('UTC'));
+                }
+
+                $this->updateJob($profile, $jobId, $updateJob['name'], $description, $dueDate);
+
+                $this->getLogger()->debug(vsprintf('Updated job "%s": "%s"', [$jobId, json_encode($updateJob)]));
+            }
+
+            $result = $this->createBatch($profile, $jobId, $authorize);
+
+            $this->getLogger()->debug(vsprintf('Created batch "%s" for job "%s"', [$result['batchUid'], $jobId]));
+
+            return $result['batchUid'];
+        } catch (SmartlingApiException $e) {
+            $this->getLogger()->error(vsprintf('Can\'t create batch for a job "%s". Error: %s', [$jobId, $e->formatErrors()]));
+
+            return null;
+        }
+    }
+
+    /**
+     * Returns batch uid for a daily bucket job.
+     *
+     * @param \Smartling\Settings\ConfigurationProfileEntity $profile
+     * @param $authorize
+     * @return string|null
+     */
+    public function retrieveBatchForBucketJob(ConfigurationProfileEntity $profile, $authorize) {
+        $getName = function($suffix = '') {
+            $date = date('m/d/Y');
+            $name = "Daily Bucket Job $date";
+
+            return $name . $suffix;
+        };
+
+        $jobName = $getName();
+        $jobId = null;
+
+        try {
+            $response = $this->listJobs($profile, $jobName, [
+                JobStatus::AWAITING_AUTHORIZATION,
+                JobStatus::IN_PROGRESS,
+                JobStatus::COMPLETED,
+            ]);
+
+            // Try to find the latest created bucket job.
+            if (!empty($response['items'])) {
+                $jobId = $response['items'][0]['translationJobUid'];
+            }
+
+            // If there is no existing bucket job then create new one.
+            if (empty($jobId)) {
+                try {
+                    $result = $this->createJob($profile, [
+                      'name' => $jobName,
+                      'description' => 'Bucket job: contains updated content.',
+                    ]);
+                }
+                catch (SmartlingApiException $e) {
+                    // If there is a CLOSED bucket job then we have to
+                    // come up with new job name in order to avoid
+                    // "Job name is already taken" error.
+                    $jobName = $getName(' ' . date('H:i:s'));
+                    $result = $this->createJob($profile, [
+                      'name' => $jobName,
+                      'description' => 'Bucket job: contains updated content.',
+                    ]);
+                }
+
+                $jobId = $result['translationJobUid'];
+            }
+
+            if (empty($jobId)) {
+                $this->getLogger()->error("Queueing file upload into the bucket job failed: can't find/create job.");
+
+                return null;
+            }
+
+            $result = $this->createBatch($profile, $jobId, $authorize);
+
+            return $result['batchUid'];
+        }
+        catch (SmartlingApiException $e) {
+            $this->getLogger()->error(vsprintf('Can\'t create batch for a daily job "%s". Error: %s', [$jobName, $e->formatErrors()]));
+
+            return null;
         }
     }
 }

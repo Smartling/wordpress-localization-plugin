@@ -14,6 +14,7 @@ use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
+use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\XmlEncoder;
@@ -160,6 +161,7 @@ trait SmartlingCoreUploadTrait
                     ]
                 );
                 $this->getLogger()->warning($message);
+                $submission->setBatchUid('');
                 $submission = $this->getSubmissionManager()
                     ->setErrorMessage($submission, 'There is no original content for translation.');
 
@@ -327,54 +329,63 @@ trait SmartlingCoreUploadTrait
         try {
             $xml = '';
 
-            /**
-             * Submission may have not saved value for 'file_uri'
-             * So need to check and fix it save the submission BEFORE next step.
-             */
-            $submissionFields = $submission->toArray(false);
-            if (StringHelper::isNullOrEmpty($submissionFields['file_uri'])) {
-                // Generating fileUri
-                $submission->getFileUri();
-                $submission = $this->getSubmissionManager()->storeEntity($submission);
+            $params = [
+                'status'    => [SubmissionEntity::SUBMISSION_STATUS_NEW],
+                'file_uri'  => $submission->getFileUri(),
+                'is_cloned' => [0],
+                'is_locked' => [0],
+            ];
+
+            if (!StringHelper::isNullOrEmpty($submission->getBatchUid())) {
+                $params['batch_uid'] = [$submission->getBatchUid()];
             }
-            unset ($submissionFields);
 
             /**
-             * Looking for other locales to send all at a time.
+             * Looking for other locales to pass filters and create placeholders.
              */
-            $submissions = $this->getSubmissionManager()->find(
-                [
-                    'status'    => [SubmissionEntity::SUBMISSION_STATUS_NEW],
-                    'file_uri'  => [$submission->getFileUri()],
-                    'is_cloned' => [0],
-                    'is_locked' => [0],
-                ]
-            );
+            $submissions = $this->getSubmissionManager()->find($params);
 
             $locales = [];
 
+            $xml = $this->getXMLFiltered($submission);
+
             foreach ($submissions as $_submission) {
+                /**
+                 * If submission still doesn't have file URL - create it
+                 */
+                $submissionFields = $_submission->toArray(false);
+                if (StringHelper::isNullOrEmpty($submissionFields['file_uri'])) {
+                    // Generating fileUri
+                    $_submission->getFileUri();
+                    $_submission = $this->getSubmissionManager()->storeEntity($_submission);
+                }
+                unset ($submissionFields);
+                // Passing filters
                 $xml = $this->getXMLFiltered($_submission);
+                // Processing attachments
                 do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $_submission);
+                // Preparing placeholders
                 $this->prepareRelatedSubmissions($_submission);
+
                 $locales[] = $this->getSettingsManager()->getSmartlingLocaleBySubmission($_submission);
             }
-            $newStatus = SubmissionEntity::SUBMISSION_STATUS_FAILED;
 
-            if ('' !== $xml) {
-                $result = $this->sendFile($submission, $xml, $locales);
-
-                if (false !== $result) {
-                    $newStatus = SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS;
+            if (!StringHelper::isNullOrEmpty($xml)) {
+                if ($this->sendFile($submission, $xml, $locales)) {
+                    foreach ($submissions as $_submission) {
+                        $_submission->setBatchUid('');
+                        $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
+                    }
+                } else {
+                    foreach ($submissions as $_submission) {
+                        $_submission->setBatchUid('');
+                        $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+                    }
                 }
+                $this->getSubmissionManager()->storeSubmissions($submissions);
             }
 
-            foreach ($submissions as $_submission) {
-                $_submission->setStatus($newStatus);
-            }
-
-            $this->getSubmissionManager()->storeSubmissions($submissions);
-
+            $this->executeBatch($submission->getBatchUid(), $submission->getSourceBlogId());
         } catch (\Exception $e) {
             $proceedAuthException = function ($e) use (& $proceedAuthException) {
                 if (401 == $e->getCode()) {
@@ -387,6 +398,29 @@ trait SmartlingCoreUploadTrait
             $this->getLogger()->error($e->getMessage());
             $this->getSubmissionManager()
                 ->setErrorMessage($submission, vsprintf('Could not submit because: %s', [$e->getMessage()]));
+        }
+    }
+
+    /**
+     * @param $batchUid
+     * @param int $sourceBlogId
+     */
+    private function executeBatch($batchUid, $sourceBlogId)
+    {
+        try {
+            $submissions = $this->getSubmissionManager()->searchByBatchUid($batchUid);
+
+            if (0 === count($submissions)) {
+                $profile = $this->getSettingsManager()->getSingleSettingsProfile($sourceBlogId);
+
+                $this->getApiWrapper()->executeBatch($profile, $batchUid);
+
+                $msg = vsprintf('Batch "%s" executed', [$batchUid]);
+                $this->getLogger()->debug($msg);
+            }
+        } catch (Exception $e) {
+            $msg = vsprintf('Error executing batch "%s". Message: "%s"', [$batchUid, $e->getMessage()]);
+            $this->getLogger()->error($msg);
         }
     }
 
@@ -406,12 +440,13 @@ trait SmartlingCoreUploadTrait
 
         $this->getLogger()->debug(
             vsprintf(
-                'Preparing to send submission id = \'%s\' (blog = \'%s\', content = \'%s\', type = \'%s\').',
+                'Preparing to send submission id="%s" (blog="%s", content="%s", type="%s", batch="%s").',
                 [
                     $submission->getId(),
                     $submission->getSourceBlogId(),
                     $submission->getSourceId(),
                     $submission->getContentType(),
+                    $submission->getBatchUid(),
                 ]
             )
         );
@@ -474,10 +509,11 @@ trait SmartlingCoreUploadTrait
      * @param int      $targetBlog
      * @param int|null $targetEntity
      * @param bool     $clone
+     * @param string   $batchUid
      *
      * @return bool
      */
-    public function createForTranslation($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null, $clone = false)
+    public function createForTranslation($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null, $clone = false, $batchUid = '')
     {
         /**
          * @var SubmissionEntity $submission
@@ -504,6 +540,7 @@ trait SmartlingCoreUploadTrait
 
         $isCloned = true === $clone ? 1 : 0;
         $submission->setIsCloned($isCloned);
+        $submission->setBatchUid($batchUid);
 
         return $this->getSubmissionManager()->storeEntity($submission);
     }
