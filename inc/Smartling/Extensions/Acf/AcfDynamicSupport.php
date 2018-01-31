@@ -11,6 +11,7 @@ use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SiteHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\ConfigurationProfileEntity;
 
 /**
@@ -19,6 +20,11 @@ use Smartling\Settings\ConfigurationProfileEntity;
  */
 class AcfDynamicSupport
 {
+    const ACF_TYPE_ACF = 0;
+
+    const ACF_TYPE_ACF_PRO = 1;
+
+    private static $acfType = null;
     /**
      * @var LoggerInterface
      */
@@ -46,14 +52,6 @@ class AcfDynamicSupport
     public function getLogger()
     {
         return $this->logger;
-    }
-
-    /**
-     * @param LoggerInterface $logger
-     */
-    public function setLogger($logger)
-    {
-        $this->logger = $logger;
     }
 
     /**
@@ -98,12 +96,11 @@ class AcfDynamicSupport
     /**
      * AcfDynamicSupport constructor.
      *
-     * @param LoggerInterface $logger
-     * @param EntityHelper    $entityHelper
+     * @param EntityHelper $entityHelper
      */
-    public function __construct(LoggerInterface $logger, EntityHelper $entityHelper)
+    public function __construct(EntityHelper $entityHelper)
     {
-        $this->setLogger($logger);
+        $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->setEntityHelper($entityHelper);
     }
 
@@ -231,13 +228,15 @@ class AcfDynamicSupport
      */
     private function rawReadGroups()
     {
-        $args = [
-            'posts_per_page'   => 100000,
-            'post_type'        => 'acf-field-group',
-            'suppress_filters' => false,
-            'post_status'      => ['publish'],
-        ];
-        $posts = get_posts($args);
+        $posts = (new \WP_Query(
+            [
+                'post_type'        => 'acf-field-group',
+                'suppress_filters' => true,
+                'posts_per_page'   => -1,
+                'post_status'      => 'publish',
+            ]
+        ))->get_posts();
+
         $groups = [];
         foreach ($posts as $post) {
             $groups[$post->post_name] = [
@@ -251,14 +250,16 @@ class AcfDynamicSupport
 
     private function rawReadFields($parentId, $parentKey)
     {
-        $args = [
-            'posts_per_page'   => 100000,
-            'post_type'        => 'acf-field',
-            'suppress_filters' => false,
-            'post_status'      => ['publish'],
-            'post_parent'      => $parentId,
-        ];
-        $posts = get_posts($args);
+        $posts = (new \WP_Query(
+            [
+                'post_type'        => 'acf-field',
+                'suppress_filters' => true,
+                'posts_per_page'   => -1,
+                'post_status'      => 'publish',
+                'post_parent'      => $parentId,
+            ]
+        ))->get_posts();
+
         $fields = [];
         foreach ($posts as $post) {
             $configuration = unserialize($post->post_content);
@@ -626,8 +627,19 @@ class AcfDynamicSupport
      */
     private function checkAcfTypes()
     {
-        return in_array('acf-field', $this->getPostTypes(), true) &&
-               in_array('acf-field-group', $this->getPostTypes(), true);
+        $acfType = (in_array('acf-field', $this->getPostTypes(), true) &&
+                    in_array('acf-field-group', $this->getPostTypes(), true))
+            ? self::ACF_TYPE_ACF_PRO
+            :
+            (in_array('acf', $this->getPostTypes()) ? self::ACF_TYPE_ACF : null);
+
+        if (null !== $acfType) {
+            self::$acfType = $acfType;
+
+            return true;
+        }
+
+        return false;
     }
 
     /**

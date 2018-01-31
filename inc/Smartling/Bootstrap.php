@@ -44,6 +44,8 @@ class Bootstrap
 
     const DISABLE_ACF_DB_LOOKUP = 'smartling_disable_db_lookup';
 
+    const DISABLE_ACF = 'smartling_disable_acf';
+
     const SMARTLING_CUSTOM_LOG_FILE = 'smartling_log_file';
 
     const SMARTLING_CUSTOM_PAGE_SIZE = 'smartling_ui_page_size';
@@ -263,11 +265,13 @@ class Bootstrap
             $selfCheckDisabled = (int)$data['selfCheckDisabled'];
             $disableLogging = (int)$data['disableLogging'];
             $logPath = $data['loggingPath'];
-            $disableACFDBLookup = (int) $data['disableDBLookup'];
+            $disableACFDBLookup = (int)$data['disableDBLookup'];
             $defaultPageSize = Bootstrap::getPageSize(true);
             $rawPageSize = (int)$data['pageSize'];
             $pageSize = $rawPageSize < 1 ? $defaultPageSize : $rawPageSize;
             $loggingCustomization = yaml_parse(stripslashes($data['loggingCustomization']));
+
+            $disableACF = (int)$data['disableACF'];
 
             if (is_array($loggingCustomization)) {
                 SimpleStorageHelper::set(Bootstrap::LOGGING_CUSTOMIZATION, $loggingCustomization);
@@ -275,11 +279,15 @@ class Bootstrap
 
             SimpleStorageHelper::set(Bootstrap::SELF_CHECK_IDENTIFIER, $selfCheckDisabled);
             SimpleStorageHelper::set(Bootstrap::DISABLE_LOGGING, $disableLogging);
+            SimpleStorageHelper::set(self::DISABLE_ACF_DB_LOOKUP, $disableACFDBLookup);
+            SimpleStorageHelper::set(Bootstrap::DISABLE_ACF, $disableACF);
 
-            if ($disableACFDBLookup === 0) {
+            if (0 === $disableACF) {
+                SimpleStorageHelper::drop(self::DISABLE_ACF);
+            }
+
+            if (0 == $disableACFDBLookup) {
                 SimpleStorageHelper::drop(self::DISABLE_ACF_DB_LOOKUP);
-            } else {
-                SimpleStorageHelper::set(self::DISABLE_ACF_DB_LOOKUP, $disableACFDBLookup);
             }
 
             if ($pageSize === $defaultPageSize) {
@@ -295,7 +303,6 @@ class Bootstrap
             }
 
             echo json_encode($data);
-
         });
 
         if (0 === (int)SimpleStorageHelper::get(self::SELF_CHECK_IDENTIFIER, 0)) {
@@ -475,14 +482,19 @@ class Bootstrap
 
         $action = defined('DOING_CRON') && true === DOING_CRON ? 'wp_loaded' : 'admin_init';
 
-        add_action ($action, function(){
+        if (1 === (int)SimpleStorageHelper::get(Bootstrap::DISABLE_ACF, 0)) {
+            DiagnosticsHelper::addDiagnosticsMessage('Warning, ACF plugin support is disabled.');
 
-            /**
-             * Initializing ACF and ACF Option Pages support.
-             */
-            (new AcfDynamicSupport(self::getLogger(), self::fromContainer('entity.helper')))->run();
 
-        }, 15);
+        } else {
+            add_action($action, function () {
+                /**
+                 * Initializing ACF and ACF Option Pages support.
+                 */
+                (new AcfDynamicSupport(self::fromContainer('entity.helper')))->run();
+
+            }, 15);
+        }
         /**
          * Post types and taxonomies are registered on 'init' hook, but this code is executed on 'plugins_loaded' hook,
          * so we need to postpone dynamic handlers execution

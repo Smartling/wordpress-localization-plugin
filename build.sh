@@ -56,6 +56,7 @@ rm -Rf ./*.pid
 rm -Rf ./nginx*
 rm -Rf ./install-composer
 rm -Rf ./inc/third-party/bin
+rm -Rf ./Buildplan
 
 zip -9 ./$BUILD_FILENAME -r ./*
 

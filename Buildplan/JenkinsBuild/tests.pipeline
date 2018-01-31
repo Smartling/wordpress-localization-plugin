@@ -1,0 +1,53 @@
+pipeline {
+  agent any
+
+  environment {
+    full_image_name = "011954687103.dkr.ecr.us-east-1.amazonaws.com/wordpress-connector-build"
+  }
+
+  stages {
+    stage('Run tests') {
+      steps {
+        sh 'eval $(aws ecr get-login --region us-east-1)'
+        sh "docker run --rm -v \"${WORKSPACE}/sonar_sources:/var/www/html/sonar_sources\" -v \"${WORKSPACE}/test_results:/var/www/html/test_results\" -e GITHUB_OAUTH=${params.GITHUB_OAUTH} -e PROJECT_ID=${params.PROJECT_ID} -e USER_IDENTIFIER=${params.USER_IDENTIFIER} -e TOKEN_SECRET=${params.TOKEN_SECRET} ${full_image_name}:latest"
+      }
+    }
+
+    stage('Junit') {
+      steps {
+        junit '**/test_results/*.xml'
+      }
+    }
+    stage('Sonar') {
+      steps {
+        script {
+          String scannerHome = tool name: 'sonar', type: 'hudson.plugins.sonar.SonarRunnerInstallation';
+          withSonarQubeEnv('sonar') {
+            sh "${scannerHome}/bin/sonar-scanner -Dsonar.language=php -Dsonar.php.tests.reportsPath=\"${WORKSPACE}/test_results\" -Dsonar.sources=sonar_sources -Dsonar.projectKey=\"${params.SONAR_PROJECT_KEY}\" -Dsonar.projectName=\"${params.SONAR_PROJECT_NAME}\" -Dsonar.projectVersion=${env.BUILD_NUMBER} -Dsonar.php.file.suffixes=\"php\" -Dsonar.exclusions=\"${params.SONAR_EXCLUDE_PATH}\""
+          }
+        }
+      }
+    }
+    stage('Clean up') {
+      steps {
+        deleteDir()
+      }
+    }
+  }
+  post {
+    unstable {
+      slackSend (
+        channel: "${params.SLACK_CHAT}",
+        color: 'bad',
+        message: "Tests failed: <${env.BUILD_URL}|${env.JOB_BASE_NAME} #${env.BUILD_NUMBER}>"
+      )
+    }
+    failure {
+      slackSend (
+        channel: "${params.SLACK_CHAT}",
+        color: 'bad',
+        message: "Build of <${env.BUILD_URL}|${env.JOB_BASE_NAME} #${env.BUILD_NUMBER}> is failed!"
+      )
+    }
+  }
+}

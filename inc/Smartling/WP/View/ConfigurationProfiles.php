@@ -128,18 +128,38 @@ $data = $this->getViewData();
                     <tr>
                         <th><label for="loggingCustomization">Logging Customization</label></th>
                         <td>
-                            <textarea id="loggingCustomization"><?= \Symfony\Component\Yaml\Yaml::dump(\Smartling\Helpers\SimpleStorageHelper::get(\Smartling\Bootstrap::LOGGING_CUSTOMIZATION,['mute'=>null,'debug'=>['Smartling']])); ?></textarea>
+                            <textarea id="loggingCustomization"><?= \Symfony\Component\Yaml\Yaml::dump(\Smartling\Helpers\SimpleStorageHelper::get(\Smartling\Bootstrap::LOGGING_CUSTOMIZATION,['debug' => null])); ?></textarea>
 
-                            <div id="defaultLoggingCustomizations" style="display: none">mute: ~
-debug:
-- Smartling</div>
+                            <div id="defaultLoggingCustomizations" style="display: none">debug:~</div>
 
                         <a href="javascript:void(0)" id="resetLoggingCustomization">reset to defaults</a>
-                        | note, levels can be debug, info, notice, warning, error, critical, alert, emergency. Mo disable logging use level <em>mute</em><br/>
+                        | note, levels can be debug, info, notice, warning, error, critical, alert, emergency.<br/>
                         </td>
                     </tr>
                     <tr>
                         <th colspan="2" class="center">ACF Runtime settings</th>
+                    </tr>
+                    <tr>
+                        <th><label for="disableACF">Disable ACF support</label></th>
+                        <td>
+                            <?=
+                            \Smartling\Helpers\HtmlTagGeneratorHelper::tag(
+                                'select',
+                                \Smartling\Helpers\HtmlTagGeneratorHelper::renderSelectOptions(
+                                    \Smartling\Helpers\SimpleStorageHelper::get(\Smartling\Bootstrap::DISABLE_ACF, 0),
+                                    [
+                                        0 => 'No',
+                                        1 => 'Yes',
+                                    ]),
+                                [
+                                    'id'   => 'disableACF',
+                                    'name' => 'disableACF',
+                                ]
+                            );
+                            ?>
+                            <br />Disabling of ACF plugin increases speed but disables support of ACF plugin content and handling of content relations. It is highly recommended to keep ACF plugin support enabled.<br/>
+                        </td>
+                        </td>
                     </tr>
                     <tr>
                         <th><label for="disableDBLookup">Disable ACF configuration database lookup (not recommended)</label></th>
