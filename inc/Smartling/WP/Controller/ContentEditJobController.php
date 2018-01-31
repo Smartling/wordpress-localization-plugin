@@ -150,12 +150,14 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                                 $res['dueDate'] = empty($res['dueDate']) ? $res['dueDate'] : \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $res['dueDate'])->format(DateTimeHelper::DATE_TIME_FORMAT_JOB);
                                 $result['data'] = $res;
                             } catch (SmartlingApiException $e) {
-                                $error_msg = array_map(function ($a) {
-                                    return $a['message'];
-                                }, $e->getErrors());
+                                $result['message']['global'] = vsprintf('Cannot create job \'%s\'',[$jobName]);
                                 $result['status'] = 400;
-                                $result['message']['global'] = $e->getMessage();
-                                $result['message'] = array_merge($result['message'], $error_msg);
+
+                                foreach ($e->getErrors() as $message) {
+                                    $result['message'][
+                                        $message['details']['field']
+                                    ] = $message['message'];
+                                }
                             }
                             catch (Exception $e) {
                                 $error_msg = $e->getMessage();
@@ -231,6 +233,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
         $cssFiles = [
             'select2.min.css',
             'jquery.datetimepicker.css',
+            'jobs.css',
         ];
 
         foreach ($cssFiles as $cssFile) {

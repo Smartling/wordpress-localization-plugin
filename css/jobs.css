@@ -1,0 +1,71 @@
+#tab-existing table {
+    width: 100%;
+}
+
+#tab-existing th {
+    text-align: right;
+    width: 150px;
+    max-width: 150px;
+}
+
+#tab-existing table td > * {
+    min-width: 100%;
+    max-width: 100%;
+}
+
+#tab-existing table td > input[type=checkbox] {
+    min-width: inherit;
+    max-width: inherit;
+}
+
+#placeholder {
+    width: 100%;
+    font-size: larger;
+}
+
+.job-wizard {
+    margin-top: 25px;
+}
+
+.smartling_page_smartling-bulk-submit .job-wizard {
+    margin-right: 17px;
+}
+
+div#job-tabs {
+    width: 100%;
+    max-width: 100%;
+    height: 32px;
+    min-height: 32px;
+}
+
+div#job-tabs span {
+    display: inline-block;
+    padding: 8px 5px 5px 5px;
+    float: left;
+    width: 120px;
+    min-width: 120px;
+    height: 22px;
+    vertical-align: center;
+    text-align: center;
+    margin: 2px;
+    border: 1px dotted black;
+}
+
+div#job-tabs span:hover, div#job-tabs span.active {
+    background-color: lightgray;
+    color: black;
+    text-shadow: 1px 1px 1px grey;
+}
+
+div#job-tabs span:hover {
+    cursor: pointer;
+    background-color: #2A495F;
+    color: whitesmoke;
+}
+
+span.loader {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background:  url("../images/loader-m.gif") no-repeat;
+}

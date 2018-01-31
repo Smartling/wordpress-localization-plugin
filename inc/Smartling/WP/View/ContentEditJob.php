@@ -6,76 +6,8 @@
 $data = $this->getViewData();
 ?>
 
-<style>
-    #tab-existing table {
-        width: 100%;
-    }
-
-    #tab-existing th {
-        text-align: right;
-        width: 150px;
-        max-width: 150px;
-    }
-
-    #tab-existing table td > * {
-        min-width: 100%;
-        max-width: 100%;
-    }
-
-    #tab-existing table td > input[type=checkbox] {
-        min-width: inherit;
-        max-width: inherit;
-    }
-
-    #placeholder {
-        width: 100%;
-        font-size: larger;
-    }
-
-    .job-wizard {
-        margin-top: 25px;
-    }
-
-    .smartling_page_smartling-bulk-submit .job-wizard {
-        margin-right: 17px;
-    }
-
-    div#job-tabs {
-        width: 100%;
-        max-width: 100%;
-        height: 32px;
-        min-height: 32px;
-    }
-
-    div#job-tabs span {
-        display: inline-block;
-        padding: 8px 5px 5px 5px;
-        float: left;
-        width: 120px;
-        min-width: 120px;
-        height: 22px;
-        vertical-align: center;
-        text-align: center;
-        margin: 2px;
-        border: 1px dotted black;
-    }
-
-    div#job-tabs span:hover, div#job-tabs span.active {
-        background-color: lightgray;
-        color: black;
-        text-shadow: 1px 1px 1px grey;
-    }
-
-    div#job-tabs span:hover {
-        cursor: pointer;
-        background-color: #2A495F;
-        color: whitesmoke;
-    }
-</style>
 <div class="job-wizard">
-    <div id="placeholder"><img
-                src="data:image/gif;base64,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"
-                width="16" height="16" alt="Please wait..."/> Please wait...
+    <div id="placeholder"><span class="loader"></span> Please wait...
     </div>
     <div id="tab-existing" class="tab-content hidden">
         <div id="job-tabs">
@@ -149,7 +81,9 @@ $data = $this->getViewData();
             </tr>
             <tr>
                 <th class="center" colspan="2">
+
                     <div id="error-messages"></div>
+                    <div id="loader-image" class="hidden"><span class="loader"></span></div>
                     <button class="button button-primary" id="createJob"
                             title="Create a new job and add content into it">Create Job
                     </button>
@@ -224,6 +158,7 @@ if ($post instanceof WP_Post) {
                 },
 
                 createJob: function (name, description, dueDate, locales, authorize, timezone, success, fail) {
+                    $('#loader-image').removeClass('hidden');
                     this.query('create-job', {
                         jobName: name,
                         description: description,
@@ -232,6 +167,7 @@ if ($post instanceof WP_Post) {
                         authorize: authorize,
                         timezone: timezone
                     }, function (response) {
+                        $('#loader-image').addClass('hidden');
                         response = JSON.parse(response);
                         if (response.status <= 300) {
                             if (typeof success === 'function') {
