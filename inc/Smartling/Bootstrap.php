@@ -483,17 +483,23 @@ class Bootstrap
         $action = defined('DOING_CRON') && true === DOING_CRON ? 'wp_loaded' : 'admin_init';
 
         if (1 === (int)SimpleStorageHelper::get(Bootstrap::DISABLE_ACF, 0)) {
-            DiagnosticsHelper::addDiagnosticsMessage('Warning, ACF plugin support is disabled.');
-
-
+            DiagnosticsHelper::addDiagnosticsMessage('Warning, ACF plugin support is <strong>disabled</strong>.');
         } else {
             add_action($action, function () {
+                $postTypes = array_keys(get_post_types());
+                if (in_array('acf', $postTypes, true)) {
+                    $msg = 'Detected a free version of ACF plugin that is not supported anymore. Please upgrade to full version.';
+                    DiagnosticsHelper::addDiagnosticsMessage($msg, false);
+                    MonologWrapper::getLogger(get_class($this))->notice($msg);
+                }
+            });
+
+            add_action('acf/init', function () {
                 /**
                  * Initializing ACF and ACF Option Pages support.
                  */
                 (new AcfDynamicSupport(self::fromContainer('entity.helper')))->run();
-
-            }, 15);
+            });
         }
         /**
          * Post types and taxonomies are registered on 'init' hook, but this code is executed on 'plugins_loaded' hook,

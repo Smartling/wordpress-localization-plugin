@@ -20,11 +20,6 @@ use Smartling\Settings\ConfigurationProfileEntity;
  */
 class AcfDynamicSupport
 {
-    const ACF_TYPE_ACF = 0;
-
-    const ACF_TYPE_ACF_PRO = 1;
-
-    private static $acfType = null;
     /**
      * @var LoggerInterface
      */
@@ -627,15 +622,9 @@ class AcfDynamicSupport
      */
     private function checkAcfTypes()
     {
-        $acfType = (in_array('acf-field', $this->getPostTypes(), true) &&
-                    in_array('acf-field-group', $this->getPostTypes(), true))
-            ? self::ACF_TYPE_ACF_PRO
-            :
-            (in_array('acf', $this->getPostTypes()) ? self::ACF_TYPE_ACF : null);
+        $postTypes = $this->getPostTypes();
 
-        if (null !== $acfType) {
-            self::$acfType = $acfType;
-
+        if ((in_array('acf-field', $postTypes, true) && in_array('acf-field-group', $postTypes, true))) {
             return true;
         }
 
