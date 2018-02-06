@@ -2,7 +2,6 @@
 
 namespace Smartling\Submissions;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
 use Smartling\DbAl\EntityManagerAbstract;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
@@ -16,7 +15,6 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressUserHelper;
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Processors\EntityProcessor;
 
 /**
@@ -278,18 +276,69 @@ class SubmissionManager extends EntityManagerAbstract
         return $result;
     }
 
+    private function getTotalByFieldInValues(array $condition)
+    {
+        $block = ConditionBlock::getConditionBlock();
+
+        foreach ($condition as $field => $values) {
+            $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_IN, $field, $values));
+        }
+
+        $countQuery = $this->buildCountQuery(
+            null,
+            null,
+            null,
+            $block
+        );
+
+        $totalCount = $this->getDbal()->fetch($countQuery);
+
+        // extracting from result
+        $totalCount = (int)$totalCount[0]->cnt;
+
+        return $totalCount;
+    }
+
+    public function getTotalInUploadQueue()
+    {
+        return $this->getTotalByFieldInValues(
+            [
+                'status'    => [
+                    SubmissionEntity::SUBMISSION_STATUS_NEW,
+                ],
+                'is_locked' => [0],
+            ]);
+    }
+
+    public function getTotalInCheckStatusHelperQueue()
+    {
+
+        return $this->getTotalByFieldInValues(
+            [
+                'status'    => [
+                    SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
+                    SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
+                ],
+                'is_locked' => [0],
+            ]
+        );
+    }
+
+
     /**
      * @param $batchUid
-     * @return array
      *
+     * @return array
      */
-    public function searchByBatchUid($batchUid) {
+    public function searchByBatchUid($batchUid)
+    {
         $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'batch_uid', [$batchUid]);
         $block = ConditionBlock::getConditionBlock();
         $block->addCondition($condition);
         $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'status', ['New']));
         $total = 0;
-        return $this->searchByCondition($block, null, null, null,[], null, $total);
+
+        return $this->searchByCondition($block, null, null, null, [], null, $total);
     }
 
     /**

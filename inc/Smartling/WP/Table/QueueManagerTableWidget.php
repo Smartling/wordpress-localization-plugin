@@ -1,4 +1,5 @@
 <?php
+
 namespace Smartling\WP\Table;
 
 use Smartling\Helpers\HtmlTagGeneratorHelper;
@@ -7,7 +8,6 @@ use Smartling\Jobs\LastModifiedCheckJob;
 use Smartling\Jobs\SubmissionCollectorJob;
 use Smartling\Jobs\UploadJob;
 use Smartling\Queue\Queue;
-use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\Controller\ConfigurationProfilesController;
 use Smartling\WP\Controller\SmartlingListTable;
@@ -116,20 +116,9 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
     {
         $curStats = $this->getQueue()->stats();
 
-        $newSubmissionsCount = count(
-            $this->getSubmissionManager()->find(['status' => SubmissionEntity::SUBMISSION_STATUS_NEW])
-        );
+        $newSubmissionsCount = $this->getSubmissionManager()->getTotalInUploadQueue();
 
-        $collectorQueueSize = count(
-            $this->getSubmissionManager()->find(
-                [
-                    'status' => [
-                        SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
-                        SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
-                    ],
-                ]
-            )
-        );
+        $collectorQueueSize = $this->getSubmissionManager()->getTotalInCheckStatusHelperQueue();
 
         $checkStatusPoolSize = array_key_exists(Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE, $curStats)
             ? $curStats[Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE]
