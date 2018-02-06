@@ -84,6 +84,14 @@ class UploadJob extends JobAbstract
     {
         $this->getLogger()->info('Started UploadJob.');
 
+        $this->processUploadQueue();
+
+        $this->setBatchUidForItemsInUploadQueue();
+
+        $this->getLogger()->info('Finished UploadJob.');
+    }
+
+    private function processUploadQueue() {
         do {
             $entities = $this->getSubmissionManager()->findBatchUidNotEmpty(
                 [
@@ -118,7 +126,9 @@ class UploadJob extends JobAbstract
             do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $entity);
 
         } while (0 < count($entities));
+    }
 
+    private function setBatchUidForItemsInUploadQueue() {
         // Daily bucket job.
         foreach ($this->getSettingsManager()->getActiveProfiles() as $activeProfile) {
             /**
@@ -186,10 +196,14 @@ class UploadJob extends JobAbstract
                 }
 
                 $this->getLogger()->info('Finished dealing with daily bucket job.');
+
+                $this->getLogger()->info('Started uploading to daily job.');
+
+                $this->processUploadQueue();
+
+                $this->getLogger()->info('Finished uploading to daily job.');
             }
         }
-
-        $this->getLogger()->info('Finished UploadJob.');
     }
 
 
