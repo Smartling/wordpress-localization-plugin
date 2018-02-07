@@ -4,7 +4,6 @@ namespace Smartling\Tests\IntegrationTests\tests;
 
 use Smartling\ContentTypes\CustomPostType;
 use Smartling\Helpers\ArrayHelper;
-use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
@@ -43,20 +42,9 @@ class MetadataPartialVsFullIntegration extends SmartlingUnitTestCaseAbstract
             $profile = $this->createProfile();
             $this->getSettingsManager()->storeEntity($profile);
             $profile = $this->getProfileById(1);
-            self::commit_transaction();
         }
 
         return $profile;
-    }
-
-    private function forceSubmissionDownload(SubmissionEntity $submission)
-    {
-        $queue = $this->get('queue.db');
-        /**
-         * @var Queue $queue
-         */
-        $queue->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
-        $this->executeDownload();
     }
 
     private function updateMetaRebuildOnDownload($newValue)
@@ -68,7 +56,6 @@ class MetadataPartialVsFullIntegration extends SmartlingUnitTestCaseAbstract
         $profile->setCleanMetadataOnDownload($newValue);
         //print_r($profile->toArray(false));
         $profile = $this->getSettingsManager()->storeEntity($profile);
-        self::commit_transaction();
     }
 
     private static $postId = 0;
@@ -90,19 +77,6 @@ class MetadataPartialVsFullIntegration extends SmartlingUnitTestCaseAbstract
     public function testTranslatePostWithMetadata()
     {
         $this->getLogger()->critical('**********');
-        CustomPostType::registerCustomType($this->getContainer(), [
-            "type" =>
-                [
-                    'identifier' => 'post',
-                    'widget'     => [
-                        'visible' => false,
-                    ],
-                    'visibility' => [
-                        'submissionBoard' => true,
-                        'bulkSubmit'      => true,
-                    ],
-                ],
-        ]);
 
         self::$postId = $this->createPostWithMeta('Title', 'Body', 'post', self::$meta['standard']);
         $submission = $this->createSubmission('post', self::$postId);
@@ -115,10 +89,8 @@ class MetadataPartialVsFullIntegration extends SmartlingUnitTestCaseAbstract
             $this->assertArrayHasKey($k, $originalMetaRead);
             $this->assertEquals($originalMetaRead[$k], self::$meta['standard'][$k]);
         }
-        self::commit_transaction();
         $this->executeUpload();
         $this->forceSubmissionDownload($this->getSubmissionById(self::$submissionId));
-        self::commit_transaction();
         $submission = ArrayHelper::first($this->getSubmissionManager()->getEntityById(self::$submissionId));
 
         $metaRead = $this->getContentHelper()->readTargetMetadata($submission);

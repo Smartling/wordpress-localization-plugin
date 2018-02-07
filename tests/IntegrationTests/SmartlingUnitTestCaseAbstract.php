@@ -4,15 +4,19 @@ namespace Smartling\Tests\IntegrationTests;
 
 use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
+use Smartling\ContentTypes\CustomPostType;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Jobs\UploadJob;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\Locale;
 use Smartling\Settings\SettingsManager;
 use Smartling\Settings\TargetLocale;
+use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -24,6 +28,34 @@ abstract class SmartlingUnitTestCaseAbstract extends \WP_UnitTestCase
             require_once ABSPATH . '/wp-includes/post.php';
             create_initial_post_types();
         }
+
+        CustomPostType::registerCustomType($this->getContainer(), [
+            "type" =>
+                [
+                    'identifier' => 'post',
+                    'widget'     => [
+                        'visible' => false,
+                    ],
+                    'visibility' => [
+                        'submissionBoard' => true,
+                        'bulkSubmit'      => true,
+                    ],
+                ],
+        ]);
+
+        CustomPostType::registerCustomType($this->getContainer(), [
+            "type" =>
+                [
+                    'identifier' => 'attachment',
+                    'widget'     => [
+                        'visible' => false,
+                    ],
+                    'visibility' => [
+                        'submissionBoard' => true,
+                        'bulkSubmit'      => true,
+                    ],
+                ],
+        ]);
     }
 
     public function tearDown()
@@ -58,6 +90,34 @@ abstract class SmartlingUnitTestCaseAbstract extends \WP_UnitTestCase
     private function getWPInstallDirEnv($envVar = 'WP_INSTALL_DIR')
     {
         return getenv($envVar);
+    }
+
+    /**
+     * @param \Smartling\Submissions\SubmissionEntity $submission
+     * @return bool|mixed
+     */
+    protected function uploadDownload(SubmissionEntity $submission)
+    {
+        $this->executeUpload();
+        $this->forceSubmissionDownload($submission);
+
+        return $this->getSubmissionById($submission->getId());
+    }
+
+    protected function editPost($edit = [])
+    {
+        wp_update_post($edit);
+        wp_cache_flush();
+    }
+
+    protected function forceSubmissionDownload(SubmissionEntity $submission)
+    {
+        $queue = $this->get('queue.db');
+        /**
+         * @var Queue $queue
+         */
+        $queue->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
+        $this->executeDownload();
     }
 
     /**

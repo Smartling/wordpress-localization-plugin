@@ -38,23 +38,6 @@ class LinkedImageCloneIntegration extends SmartlingUnitTestCaseAbstract
     {
         $translationHelper = $this->getTranslationHelper();
 
-        $this->commit_transaction();
-
-        CustomPostType::registerCustomType($this->getContainer(), [
-            "type" =>
-                [
-                    'identifier' => 'attachment',
-                    'widget'     => [
-                        'visible' => false,
-                    ],
-                    'visibility' => [
-                        'submissionBoard' => true,
-                        'bulkSubmit'      => true,
-                    ],
-                ],
-        ]);
-
-
         /**
          * @var SubmissionEntity $submission
          */

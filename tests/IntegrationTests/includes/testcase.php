@@ -73,14 +73,11 @@ class WP_UnitTestCase extends PHPUnit_Framework_TestCase {
 
 		$c = self::get_called_class();
 		if ( ! method_exists( $c, 'wpSetUpBeforeClass' ) ) {
-			self::commit_transaction();
 			return;
 		}
 
 		call_user_func( array( $c, 'wpSetUpBeforeClass' ), self::factory() );
-
-		self::commit_transaction();
-	}
+    }
 
 	public static function tearDownAfterClass() {
 		parent::tearDownAfterClass();
@@ -90,13 +87,10 @@ class WP_UnitTestCase extends PHPUnit_Framework_TestCase {
 
 		$c = self::get_called_class();
 		if ( ! method_exists( $c, 'wpTearDownAfterClass' ) ) {
-			self::commit_transaction();
 			return;
 		}
 
 		call_user_func( array( $c, 'wpTearDownAfterClass' ) );
-
-		self::commit_transaction();
 	}
 
 	function setUp() {
@@ -131,7 +125,6 @@ class WP_UnitTestCase extends PHPUnit_Framework_TestCase {
 			}
 		}
 
-		$this->start_transaction();
 		$this->expectDeprecated();
 		add_filter( 'wp_die_handler', array( $this, 'get_wp_die_handler' ) );
 	}
