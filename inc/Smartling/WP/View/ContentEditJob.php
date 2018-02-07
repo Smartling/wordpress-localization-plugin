@@ -7,8 +7,7 @@ $data = $this->getViewData();
 ?>
 
 <div class="job-wizard">
-    <div id="placeholder"><span class="loader"></span> Please wait...
-    </div>
+    <div id="placeholder"><span class="loader"></span> Please wait...</div>
     <div id="tab-existing" class="tab-content hidden">
         <div id="job-tabs">
             <span class="active" data-action="new">New Job</span><span data-action="existing">Existing Job</span>
@@ -307,6 +306,7 @@ if ($post instanceof WP_Post) {
             $('#addToJob').on('click', function (e) {
                 e.stopPropagation();
                 e.preventDefault();
+                console.log('test');
                 var jobId = $('#jobSelect').val();
                 var jobName = $('input[name="jobName"]').val();
                 var jobDescription = $('textarea[name="description"]').val();

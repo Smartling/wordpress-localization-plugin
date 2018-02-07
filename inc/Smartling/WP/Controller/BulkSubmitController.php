@@ -5,7 +5,7 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
-use Smartling\WP\View\BulkSubmitTableWidget;
+use Smartling\WP\Table\BulkSubmitTableWidget;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
@@ -71,13 +71,6 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
                 $profile
             );
             $this->view($table);
-
-            // Render job wizard.
-            $this->setViewData([
-              'profile'     => $profile,
-              'contentType' => '',
-            ]);
-            $this->renderViewScript('ContentEditJob.php');
         }
     }
 }

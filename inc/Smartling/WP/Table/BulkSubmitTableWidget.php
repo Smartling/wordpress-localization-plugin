@@ -1,6 +1,6 @@
 <?php
 
-namespace Smartling\WP\View;
+namespace Smartling\WP\Table;
 
 use DateTime;
 use Psr\Log\LoggerInterface;

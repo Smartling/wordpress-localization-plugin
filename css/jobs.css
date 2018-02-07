@@ -1,3 +1,7 @@
+#tab-existing, div#clone {
+    margin: 8px;
+}
+
 #tab-existing table {
     width: 100%;
 }
@@ -24,40 +28,39 @@
 }
 
 .job-wizard {
-    margin-top: 25px;
+    margin: 25px 14px 14px;
 }
 
 .smartling_page_smartling-bulk-submit .job-wizard {
     margin-right: 17px;
 }
 
-div#job-tabs {
+div#job-tabs, div#action-tabs {
     width: 100%;
     max-width: 100%;
     height: 32px;
     min-height: 32px;
 }
 
-div#job-tabs span {
+div#job-tabs span, div#action-tabs span {
     display: inline-block;
     padding: 8px 5px 5px 5px;
     float: left;
     width: 120px;
     min-width: 120px;
-    height: 22px;
-    vertical-align: center;
+
     text-align: center;
-    margin: 2px;
-    border: 1px dotted black;
+    margin-bottom: -1px;
+    border: 1px solid darkgray;
 }
 
-div#job-tabs span:hover, div#job-tabs span.active {
+div#job-tabs span:hover, div#job-tabs span.active, div#action-tabs span.active, div#action-tabs span:hover {
     background-color: lightgray;
     color: black;
     text-shadow: 1px 1px 1px grey;
 }
 
-div#job-tabs span:hover {
+div#job-tabs span:hover, div#action-tabs span:hover {
     cursor: pointer;
     background-color: #2A495F;
     color: whitesmoke;
@@ -67,5 +70,28 @@ span.loader {
     display: inline-block;
     width: 16px;
     height: 16px;
-    background:  url("../images/loader-m.gif") no-repeat;
+    background: url("../images/loader-m.gif") no-repeat;
+}
+
+div.tab, div#job-tabs span {
+
+}
+
+div#job-tabs span:first-child, div#action-tabs span:first-child {
+    border-top-left-radius: 5px;
+}
+
+div#job-tabs span:last-child, div#action-tabs span:last-child {
+    border-top-right-radius: 5px;
+    margin-left: -1px;
+}
+
+div.tab-content table, div.tab-panel {
+    border: 1px solid darkgray;
+}
+
+
+
+.clone-button {
+    text-align: right;
 }
