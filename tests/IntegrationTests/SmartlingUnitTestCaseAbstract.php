@@ -20,50 +20,79 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
-abstract class SmartlingUnitTestCaseAbstract extends \WP_UnitTestCase
+
+abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
 {
-    public function setUp()
+
+    protected function registerPostTypes()
     {
+
         if (!function_exists('create_initial_post_types')) {
             require_once ABSPATH . '/wp-includes/post.php';
             create_initial_post_types();
         }
 
-        CustomPostType::registerCustomType($this->getContainer(), [
-            "type" =>
-                [
-                    'identifier' => 'post',
-                    'widget'     => [
-                        'visible' => false,
-                    ],
-                    'visibility' => [
-                        'submissionBoard' => true,
-                        'bulkSubmit'      => true,
-                    ],
-                ],
-        ]);
+        $postTypesToRegister = ['post', 'page', 'attachment'];
 
-        CustomPostType::registerCustomType($this->getContainer(), [
-            "type" =>
-                [
-                    'identifier' => 'attachment',
-                    'widget'     => [
-                        'visible' => false,
+        foreach ($postTypesToRegister as $item) {
+            CustomPostType::registerCustomType($this->getContainer(), [
+                "type" =>
+                    [
+                        'identifier' => $item,
+                        'widget'     => [
+                            'visible' => false,
+                        ],
+                        'visibility' => [
+                            'submissionBoard' => true,
+                            'bulkSubmit'      => true,
+                        ],
                     ],
-                    'visibility' => [
-                        'submissionBoard' => true,
-                        'bulkSubmit'      => true,
-                    ],
-                ],
-        ]);
+            ]);
+        }
     }
 
-    public function tearDown()
+    protected function ensureProfileExists()
     {
+        if (false === $this->getProfileById(1)) {
+            /**
+             * @var ConfigurationProfileEntity $profile
+             */
+            $profile = $this->createProfile();
+
+            $this->getSettingsManager()->storeEntity($profile);
+        }
     }
 
-    public static function tearDownAfterClass()
+    protected function cleanUpTables()
     {
+        $tableList = [
+            'postmeta',
+            'posts',
+            'termmeta',
+            'terms',
+            'term_relationships',
+            'term_taxonomy',
+            'smartling_configuration_profiles',
+            'smartling_queue',
+            'smartling_submissions',
+        ];
+
+        $tablePrefix = getenv('WP_DB_TABLE_PREFIX');
+
+        $template = "'TRUNCATE TABLE `%s%s`;'";
+
+        foreach ($tableList as $tableName) {
+            $query = vsprintf($template, [$tablePrefix, $tableName]);
+            $this->wpcli_exec('db', 'query', vsprintf('%s', [$query]));
+        }
+    }
+
+    public function setUp()
+    {
+        parent::setUp();
+        $this->cleanUpTables();
+        $this->registerPostTypes();
+        $this->ensureProfileExists();
     }
 
 
@@ -94,6 +123,7 @@ abstract class SmartlingUnitTestCaseAbstract extends \WP_UnitTestCase
 
     /**
      * @param \Smartling\Submissions\SubmissionEntity $submission
+     *
      * @return bool|mixed
      */
     protected function uploadDownload(SubmissionEntity $submission)
@@ -107,7 +137,7 @@ abstract class SmartlingUnitTestCaseAbstract extends \WP_UnitTestCase
     protected function editPost($edit = [])
     {
         wp_update_post($edit);
-        wp_cache_flush();
+        self::flush_cache();
     }
 
     protected function forceSubmissionDownload(SubmissionEntity $submission)
@@ -282,6 +312,14 @@ abstract class SmartlingUnitTestCaseAbstract extends \WP_UnitTestCase
         $this->runCronTask(DownloadTranslationJob::JOB_HOOK_NAME);
     }
 
+    /**
+     * @param string $contentType
+     * @param int    $sourceId
+     * @param int    $sourceBlogId
+     * @param int    $targetBlogId
+     *
+     * @return SubmissionEntity
+     */
     protected function createSubmission($contentType, $sourceId, $sourceBlogId = 1, $targetBlogId = 2)
     {
         $submission = $this->getTranslationHelper()
@@ -303,6 +341,11 @@ abstract class SmartlingUnitTestCaseAbstract extends \WP_UnitTestCase
         return $contentHelper;
     }
 
+    /**
+     * @param $id
+     *
+     * @return bool|ConfigurationProfileEntity
+     */
     public function getProfileById($id)
     {
         $result = $this->getSettingsManager()->getEntityById($id);
@@ -313,6 +356,11 @@ abstract class SmartlingUnitTestCaseAbstract extends \WP_UnitTestCase
         return false;
     }
 
+    /**
+     * @param $id
+     *
+     * @return bool|SubmissionEntity
+     */
     public function getSubmissionById($id)
     {
         $result = $this->getSubmissionManager()->getEntityById($id);
@@ -323,5 +371,18 @@ abstract class SmartlingUnitTestCaseAbstract extends \WP_UnitTestCase
         return false;
     }
 
+    protected function createPostWithMeta($title, $body, $post_type = 'post', array $meta)
+    {
+        $template = [
+            'post_title'   => $title,
+            'post_content' => $body,
+            'post_status'  => 'publish',
+            'post_type'    => $post_type,
+            'meta_input'   => $meta,
+        ];
 
+        $postId = $this->factory()->post->create_object($template);
+
+        return $postId;
+    }
 }

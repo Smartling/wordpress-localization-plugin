@@ -5,19 +5,15 @@ namespace Smartling\Tests\IntegrationTests\tests;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 
-class LockTranslationIntegration extends SmartlingUnitTestCaseAbstract
+class LockTranslationTest extends SmartlingUnitTestCaseAbstract
 {
     /**
      * Test lock post flow.
-     *
      * Create post. Translate it. Edit and translate without locking. Edit
      * and translate with locking.
      */
     public function testLockPostFlow()
     {
-        $profile = $this->createProfile();
-        $this->getSettingsManager()->storeEntity($profile);
-
         // Create post and submission.
         $postId = $this->createPost('post', 'Locked post title');
         $submission = $this->createSubmission('post', $postId);
@@ -32,10 +28,12 @@ class LockTranslationIntegration extends SmartlingUnitTestCaseAbstract
 
         $translatedTitle = $this->getContentHelper()->readTargetContent($submission)->getTitle();
 
-        $this->editPost([
-            'ID' => $postId,
-            'post_title' => $sourceTitle . ' EDITED.',
-        ]);
+        $this->editPost(
+            [
+                'ID'         => $postId,
+                'post_title' => $sourceTitle . ' EDITED.',
+            ]
+        );
 
         $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
         $submission = $this->getSubmissionManager()->storeEntity($submission);
@@ -47,10 +45,12 @@ class LockTranslationIntegration extends SmartlingUnitTestCaseAbstract
         // Case 2: "lock translation" id enabled. Edit post, lock translation
         // and re-upload/re-download it again - previous edited title = new
         // "translated" title.
-        $this->editPost([
-            'ID' => $postId,
-            'post_title' => $sourceTitle . ' EDITED ONCE AGAIN.',
-        ]);
+        $this->editPost(
+            [
+                'ID'         => $postId,
+                'post_title' => $sourceTitle . ' EDITED ONCE AGAIN.',
+            ]
+        );
 
         $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
         $submission->setIsLocked(true);
@@ -63,3 +63,4 @@ class LockTranslationIntegration extends SmartlingUnitTestCaseAbstract
     }
 
 }
+
