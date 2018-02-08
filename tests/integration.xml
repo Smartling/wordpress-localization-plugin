@@ -9,7 +9,7 @@
     </php>
     <testsuites>
         <testsuite name="smartling-connector WordPress integration test">
-            <directory suffix="Integration.php" phpVersion="5.5.0" phpVersionOperator=">=">./IntegrationTests/tests</directory>
+            <directory suffix="Test.php" phpVersion="5.5.0" phpVersionOperator=">=">./IntegrationTests/tests</directory>
         </testsuite>
     </testsuites>
     <logging>
