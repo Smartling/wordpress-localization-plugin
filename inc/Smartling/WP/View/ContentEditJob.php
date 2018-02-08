@@ -306,7 +306,6 @@ if ($post instanceof WP_Post) {
             $('#addToJob').on('click', function (e) {
                 e.stopPropagation();
                 e.preventDefault();
-                console.log('test');
                 var jobId = $('#jobSelect').val();
                 var jobName = $('input[name="jobName"]').val();
                 var jobDescription = $('textarea[name="description"]').val();
