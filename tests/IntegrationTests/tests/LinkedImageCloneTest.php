@@ -50,4 +50,56 @@ class LinkedImageCloneTest extends SmartlingUnitTestCaseAbstract
          */
         $this->assertTrue($imageSubmissionId === $submission->getId());
     }
+
+    public function testAlwaysCloneOff()
+    {
+        $profile = $this->getProfileById(1);
+        $profile->setCloneAttachment(0);
+        $this->getSettingsManager()->storeEntity($profile);
+
+        $imageId = $this->createAttachment();
+        $postId = $this->createPost('page');
+        set_post_thumbnail($postId, $imageId);
+        $this->assertTrue(has_post_thumbnail($postId));
+
+        $submission = $this->createSubmission('page', $postId);
+        $submission = $this->getSubmissionManager()->storeEntity($submission);
+
+        $this->uploadDownload($submission);
+
+        $submissions = $this->getSubmissionManager()->find(
+            [
+                'content_type' => 'attachment',
+                'is_cloned'    => 0,
+            ]);
+        $this->assertTrue(1 === count($submissions));
+    }
+
+    public function testAlwaysCloneOn()
+    {
+        $profile = $this->getProfileById(1);
+        $profile->setCloneAttachment(1);
+        $this->getSettingsManager()->storeEntity($profile);
+
+        $imageId = $this->createAttachment();
+        $postId = $this->createPost('page');
+        set_post_thumbnail($postId, $imageId);
+        $this->assertTrue(has_post_thumbnail($postId));
+
+        $submission = $this->createSubmission('page', $postId);
+        $submission = $this->getSubmissionManager()->storeEntity($submission);
+
+        $this->uploadDownload($submission);
+
+        $submissions = $this->getSubmissionManager()->find(
+            [
+                'content_type' => 'attachment',
+                'is_cloned'    => 1,
+            ]);
+        $this->assertTrue(1 === count($submissions));
+
+        $profile = $this->getProfileById(1);
+        $profile->setCloneAttachment(0);
+        $this->getSettingsManager()->storeEntity($profile);
+    }
 }
