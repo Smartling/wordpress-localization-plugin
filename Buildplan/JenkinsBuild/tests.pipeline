@@ -8,7 +8,7 @@ pipeline {
   stages {
     stage('Run tests') {
       steps {
-        sh 'eval $(aws ecr get-login --region us-east-1)'
+        sh 'eval $(aws ecr get-login --region us-east-1 --no-include-email)'
         sh "docker run --rm -v \"${WORKSPACE}/sonar_sources:/var/www/html/sonar_sources\" -v \"${WORKSPACE}/test_results:/var/www/html/test_results\" -e GITHUB_OAUTH=${params.GITHUB_OAUTH} -e PROJECT_ID=${params.PROJECT_ID} -e USER_IDENTIFIER=${params.USER_IDENTIFIER} -e TOKEN_SECRET=${params.TOKEN_SECRET} ${full_image_name}:latest"
       }
     }
