@@ -447,6 +447,7 @@ trait SmartlingCoreUploadTrait
         // option is enabled in configuration profile.
         if (1 === $configurationProfile->getCloneAttachment() && $submission->getContentType() == 'attachment') {
             $submission->setIsCloned(1);
+            $submission = $this->getSubmissionManager()->storeEntity($submission);
 
             $this->getLogger()->info(
                 vsprintf(
