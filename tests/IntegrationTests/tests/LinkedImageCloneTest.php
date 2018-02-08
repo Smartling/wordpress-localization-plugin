@@ -51,10 +51,10 @@ class LinkedImageCloneTest extends SmartlingUnitTestCaseAbstract
         $this->assertTrue($imageSubmissionId === $submission->getId());
     }
 
-    public function testAlwaysCloneOff()
+    private function sendPageForTranslationWithAttachedImage($alwaysClone = 0)
     {
         $profile = $this->getProfileById(1);
-        $profile->setCloneAttachment(0);
+        $profile->setCloneAttachment($alwaysClone);
         $this->getSettingsManager()->storeEntity($profile);
 
         $imageId = $this->createAttachment();
@@ -66,6 +66,11 @@ class LinkedImageCloneTest extends SmartlingUnitTestCaseAbstract
         $submission = $this->getSubmissionManager()->storeEntity($submission);
 
         $this->uploadDownload($submission);
+    }
+
+    public function testAlwaysCloneOff()
+    {
+        $this->sendPageForTranslationWithAttachedImage(0);
 
         $submissions = $this->getSubmissionManager()->find(
             [
@@ -77,19 +82,7 @@ class LinkedImageCloneTest extends SmartlingUnitTestCaseAbstract
 
     public function testAlwaysCloneOn()
     {
-        $profile = $this->getProfileById(1);
-        $profile->setCloneAttachment(1);
-        $this->getSettingsManager()->storeEntity($profile);
-
-        $imageId = $this->createAttachment();
-        $postId = $this->createPost('page');
-        set_post_thumbnail($postId, $imageId);
-        $this->assertTrue(has_post_thumbnail($postId));
-
-        $submission = $this->createSubmission('page', $postId);
-        $submission = $this->getSubmissionManager()->storeEntity($submission);
-
-        $this->uploadDownload($submission);
+        $this->sendPageForTranslationWithAttachedImage(1);
 
         $submissions = $this->getSubmissionManager()->find(
             [
@@ -97,9 +90,5 @@ class LinkedImageCloneTest extends SmartlingUnitTestCaseAbstract
                 'is_cloned'    => 1,
             ]);
         $this->assertTrue(1 === count($submissions));
-
-        $profile = $this->getProfileById(1);
-        $profile->setCloneAttachment(0);
-        $this->getSettingsManager()->storeEntity($profile);
     }
 }
