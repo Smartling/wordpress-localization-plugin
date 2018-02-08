@@ -455,7 +455,7 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                 </td>
             </tr>
             <tr class="toggleExpert hidden">
-                <th scope="row"><?= __('Clone attachment'); ?></th>
+                <th scope="row"><?= __('Always clone attachments'); ?></th>
                 <td>
                     <?=
                     HtmlTagGeneratorHelper::tag(
