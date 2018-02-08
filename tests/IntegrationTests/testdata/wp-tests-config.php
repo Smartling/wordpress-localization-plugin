@@ -9,7 +9,7 @@ define( 'ABSPATH', getenv('WP_INSTALL_DIR') .'/');
  * The 'default' theme is symlinked from test/phpunit/data/themedir1/default into
  * the themes directory of the WordPress installation defined above.
  */
-define( 'WP_DEFAULT_THEME', 'default' );
+defined ('WP_DEFAULT_THEME') or define( 'WP_DEFAULT_THEME', 'default' );
 define( 'WP_DEBUG', true );
 
 define( 'DB_NAME', getenv('WP_DB_NAME') );

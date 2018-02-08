@@ -2,47 +2,26 @@
 
 namespace Smartling\Tests\IntegrationTests\tests;
 
-use Smartling\ContentTypes\CustomPostType;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 
-class LinkedImageCloneIntegration extends SmartlingUnitTestCaseAbstract
+class LinkedImageCloneTest extends SmartlingUnitTestCaseAbstract
 {
-    protected $backupStaticAttributesBlacklist = [
-        __CLASS__ => [
-            'imageId',
-            'postId',
-            'imageSubmissionId',
-        ],
-    ];
-
-    private static $imageId           = 0;
-    private static $postId            = 0;
-    private static $imageSubmissionId = 0;
-
-    public function setUp()
-    {
-        parent::setUp();
-    }
-
-    public function testPageThumbnail()
-    {
-        self::$imageId = $this->createAttachment();
-        self::$postId = $this->createPost('page');
-        set_post_thumbnail(self::$postId, self::$imageId);
-        $this->assertTrue(has_post_thumbnail(self::$postId));
-    }
-
     public function testCloneImage()
     {
+        $imageId = $this->createAttachment();
+        $postId = $this->createPost('page');
+        set_post_thumbnail($postId, $imageId);
+        $this->assertTrue(has_post_thumbnail($postId));
+
         $translationHelper = $this->getTranslationHelper();
 
         /**
          * @var SubmissionEntity $submission
          */
-        $submission = $translationHelper->prepareSubmission('attachment', 1, self::$imageId, 2, true);
-        self::$imageSubmissionId = $submission->getId();
+        $submission = $translationHelper->prepareSubmission('attachment', 1, $imageId, 2, true);
+        $imageSubmissionId = $submission->getId();
 
         /**
          * Check submission status
@@ -69,6 +48,6 @@ class LinkedImageCloneIntegration extends SmartlingUnitTestCaseAbstract
         /**
          * @var SubmissionEntity $submission
          */
-        $this->assertTrue(self::$imageSubmissionId === $submission->getId());
+        $this->assertTrue($imageSubmissionId === $submission->getId());
     }
 }
