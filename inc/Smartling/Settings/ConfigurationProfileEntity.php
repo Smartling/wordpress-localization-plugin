@@ -81,6 +81,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
             'filter_copy_by_field_name'        => 'TEXT NULL',
             'filter_copy_by_field_value_regex' => 'TEXT NULL',
             'filter_flag_seo'                  => 'TEXT NULL',
+            'clone_attachment'                 => self::DB_TYPE_UINT_SWITCH . ' ' . self::DB_TYPE_DEFAULT_ZERO,
         ];
     }
 
@@ -348,6 +349,14 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
     public function setPublishCompleted($publishCompleted)
     {
         $this->stateFields['publish_completed'] = (int)$publishCompleted;
+    }
+
+    public function setCloneAttachment($cloneAttachment) {
+        $this->stateFields['clone_attachment'] = (int) $cloneAttachment;
+    }
+
+    public function getCloneAttachment() {
+        return (int) $this->stateFields['clone_attachment'];
     }
 
     public function setAlwaysSyncImagesOnUpload( $alwaysSyncImagesOnUpload )

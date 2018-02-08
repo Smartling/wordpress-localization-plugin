@@ -438,6 +438,31 @@ trait SmartlingCoreUploadTrait
             return;
         }
 
+        /**
+         * @var ConfigurationProfileEntity $configurationProfile
+         */
+        $configurationProfile = $this->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
+
+        // Mark attachment submission as "Cloned" if there is "Clone attachment"
+        // option is enabled in configuration profile.
+        if (1 === $configurationProfile->getCloneAttachment() && $submission->getContentType() == 'attachment') {
+            $submission->setIsCloned(1);
+            $submission = $this->getSubmissionManager()->storeEntity($submission);
+
+            $this->getLogger()->info(
+                vsprintf(
+                    'Attachment submission id="%s" marked as cloned (blog="%s", content="%s", type="%s", batch="%s").',
+                    [
+                        $submission->getId(),
+                        $submission->getSourceBlogId(),
+                        $submission->getSourceId(),
+                        $submission->getContentType(),
+                        $submission->getBatchUid(),
+                    ]
+                )
+            );
+        }
+
         $this->getLogger()->debug(
             vsprintf(
                 'Preparing to send submission id="%s" (blog="%s", content="%s", type="%s", batch="%s").',
