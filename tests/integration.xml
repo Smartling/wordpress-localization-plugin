@@ -14,5 +14,6 @@
     </testsuites>
     <logging>
         <log type="junit" target="log-integration.xml" logIncompleteSkipped="false"/>
+        <log type="coverage-clover" target="integration-coverage.xml"/>
     </logging>
 </phpunit>

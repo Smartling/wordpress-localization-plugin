@@ -198,4 +198,6 @@ installSmartlingConnector
 runTests
 mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/log-integration.xml" "$PLUGIN_DEV_DIR/tests"
 mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/log-unit-tests.xml" "$PLUGIN_DEV_DIR/tests"
+mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/unit-coverage.xml" "$PLUGIN_DEV_DIR/tests"
+mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/integration-coverage.xml" "$PLUGIN_DEV_DIR/tests"
 cleanDatabase
