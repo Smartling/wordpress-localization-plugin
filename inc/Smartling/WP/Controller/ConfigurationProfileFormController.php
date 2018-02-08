@@ -115,6 +115,10 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
             $profile->setUploadOnUpdate($settings['uploadOnUpdate']);
         }
 
+        if (array_key_exists('cloneAttachment', $settings)) {
+            $profile->setCloneAttachment($settings['cloneAttachment']);
+        }
+
         if (array_key_exists('always_sync_images_on_upload', $settings)) {
             $profile->setAlwaysSyncImagesOnUpload($settings['always_sync_images_on_upload']);
         }

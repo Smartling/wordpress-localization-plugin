@@ -455,6 +455,28 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                 </td>
             </tr>
             <tr class="toggleExpert hidden">
+                <th scope="row"><?= __('Clone attachment'); ?></th>
+                <td>
+                    <?=
+                    HtmlTagGeneratorHelper::tag(
+                        'select',
+                        HtmlTagGeneratorHelper::renderSelectOptions(
+                            $profile->getCloneAttachment(),
+                            [
+                                0 => __('Disabled', $domain),
+                                1 => __('Enabled', $domain)
+                            ]
+                        ),
+                        ['name' => 'smartling_settings[cloneAttachment]']
+                    );
+                    ?>
+                    <br/>
+                    <small>
+                        <?= __('Always clone attachments', $domain) ?>.
+                    </small>
+                </td>
+            </tr>
+            <tr class="toggleExpert hidden">
                 <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('auto_authorize'); ?></th>
                 <td>
                     <label class="radio-label">
