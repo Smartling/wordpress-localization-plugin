@@ -28,10 +28,12 @@ class LockTranslationTest extends SmartlingUnitTestCaseAbstract
 
         $translatedTitle = $this->getContentHelper()->readTargetContent($submission)->getTitle();
 
-        $this->editPost([
-                            'ID'         => $postId,
-                            'post_title' => $sourceTitle . ' EDITED.',
-                        ]);
+        $this->editPost(
+            [
+                'ID'         => $postId,
+                'post_title' => $sourceTitle . ' EDITED.',
+            ]
+        );
 
         $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
         $submission = $this->getSubmissionManager()->storeEntity($submission);
@@ -43,10 +45,12 @@ class LockTranslationTest extends SmartlingUnitTestCaseAbstract
         // Case 2: "lock translation" id enabled. Edit post, lock translation
         // and re-upload/re-download it again - previous edited title = new
         // "translated" title.
-        $this->editPost([
-                            'ID'         => $postId,
-                            'post_title' => $sourceTitle . ' EDITED ONCE AGAIN.',
-                        ]);
+        $this->editPost(
+            [
+                'ID'         => $postId,
+                'post_title' => $sourceTitle . ' EDITED ONCE AGAIN.',
+            ]
+        );
 
         $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
         $submission->setIsLocked(true);
@@ -59,3 +63,4 @@ class LockTranslationTest extends SmartlingUnitTestCaseAbstract
     }
 
 }
+

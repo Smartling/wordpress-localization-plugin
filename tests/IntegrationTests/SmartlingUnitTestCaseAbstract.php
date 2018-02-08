@@ -24,10 +24,6 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
 {
 
-    public static function setUpBeforeClass()
-    {
-    }
-
     protected function registerPostTypes()
     {
 
