@@ -20,6 +20,6 @@
     </testsuites>
     <logging>
         <log type="junit" target="log-unit-tests.xml" logIncompleteSkipped="false"/>
-        <log type="coverage-clover" target="unit-coverage.xml"/>
+        <!--<log type="coverage-clover" target="unit-coverage.xml"/>-->
     </logging>
 </phpunit>
