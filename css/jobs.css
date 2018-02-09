@@ -95,3 +95,19 @@ div.tab-content table, div.tab-panel {
 .clone-button {
     text-align: right;
 }
+
+#panel-box h2 span {
+    padding-left: 20px;
+}
+
+#panel-box h2 {
+    margin: 1em 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 1em;
+}
+
+#panel-box .postbox {
+
+    padding-bottom: 10px;
+    margin-bottom: 16px;
+}

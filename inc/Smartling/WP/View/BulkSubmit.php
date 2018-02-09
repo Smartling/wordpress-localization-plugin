@@ -49,70 +49,75 @@ $data = $this->getViewData();
     <form class="form-table" id="bulk-submit-main" method="post">
         <?php $bulkSubmitTable->display() ?>
         <div id="error-messages" class="tab"></div>
-        <div id="action-tabs">
-            <span class="active" data-action="translate">Translate</span>
-            <span data-action="clone">Clone</span>
-        </div>
-        <div class="tab-panel">
-            <div id="translate" class="tab">
-                <?php
-                // Render job wizard.
-                $this->setViewData(
-                    [
-                        'profile'     => $bulkSubmitTable->getProfile(),
-                        'contentType' => '',
-                    ]
-                );
-                $this->renderViewScript('ContentEditJob.php');
-                ?>
-            </div>
-            <div id="clone" class="tab hidden">
-                <table>
-                    <tr>
-                        <td>
-                            <h3><?= __('Clone into next languages:'); ?></h3>
-                            <div>
-                                <?= WPAbstract::checkUncheckBlock(); ?>
-                            </div>
+        <div class="postbox-container">
+            <div id="panel-box" class="postbox hndle"><h2><span>Content actions</span></h2>
+                <div class="inside">
+                    <div id="action-tabs">
+                        <span class="active" data-action="translate">Translate</span>
+                        <span data-action="clone">Clone</span>
+                    </div>
+                    <div class="tab-panel">
+                        <div id="translate" class="tab">
                             <?php
-                            /**
-                             * @var BulkSubmitTableWidget $data
-                             */
+                            // Render job wizard.
+                            $this->setViewData(
+                                [
+                                    'profile'     => $bulkSubmitTable->getProfile(),
+                                    'contentType' => '',
+                                ]
+                            );
+                            $this->renderViewScript('ContentEditJob.php');
+                            ?>
+                        </div>
+                        <div id="clone" class="tab hidden">
+                            <table>
+                                <tr>
+                                    <td>
+                                        <h3><?= __('Clone into next languages:'); ?></h3>
+                                        <div>
+                                            <?= WPAbstract::checkUncheckBlock(); ?>
+                                        </div>
+                                        <?php
+                                        /**
+                                         * @var BulkSubmitTableWidget $data
+                                         */
 
-                            $locales = $data->getProfile()
-                                ->getTargetLocales();
+                                        $locales = $data->getProfile()
+                                            ->getTargetLocales();
 
-                            \Smartling\Helpers\ArrayHelper::sortLocales($locales);
+                                        \Smartling\Helpers\ArrayHelper::sortLocales($locales);
 
-                            foreach ($locales as $locale) {
-                                /**
-                                 * @var TargetLocale $locale
-                                 */
-                                if (!$locale->isEnabled()) {
-                                    continue;
-                                }
-                                ?>
-                                <p>
-                                    <?= WPAbstract::localeSelectionCheckboxBlock(
-                                        'bulk-submit-locales',
-                                        $locale->getBlogId(),
-                                        $locale->getLabel(),
-                                        false
-                                    ); ?>
-                                </p>
-                            <?php } ?>
-                        </td>
-                    </tr>
-                </table>
-                <div class="clone-button">
-                    <?= WPAbstract::bulkSubmitCloneButton(); ?>
+                                        foreach ($locales as $locale) {
+                                            /**
+                                             * @var TargetLocale $locale
+                                             */
+                                            if (!$locale->isEnabled()) {
+                                                continue;
+                                            }
+                                            ?>
+                                            <p>
+                                                <?= WPAbstract::localeSelectionCheckboxBlock(
+                                                    'bulk-submit-locales',
+                                                    $locale->getBlogId(),
+                                                    $locale->getLabel(),
+                                                    false
+                                                ); ?>
+                                            </p>
+                                        <?php } ?>
+                                    </td>
+                                </tr>
+                            </table>
+                            <div class="clone-button">
+                                <?= WPAbstract::bulkSubmitCloneButton(); ?>
+                            </div>
+
+                        </div>
+                    </div>
                 </div>
-
             </div>
-        </div>
-        <input type="hidden" name="content-type" id="ct" value=""/>
-        <input type="hidden" name="page" value="<?= $_REQUEST['page']; ?>"/>
-        <input type="hidden" id="action" name="action" value="clone"/>
+            <input type="hidden" name="content-type" id="ct" value=""/>
+            <input type="hidden" name="page" value="<?= $_REQUEST['page']; ?>"/>
+            <input type="hidden" id="action" name="action" value="clone"/>
     </form>
 
     <script>

@@ -5,6 +5,17 @@
  */
 $data = $this->getViewData();
 ?>
+<?php
+global $tag;
+$needWrapper = ($tag instanceof WP_Term);
+?>
+
+
+<?php if($needWrapper) : ?>
+<div class="postbox-container">
+    <div id="panel-box" class="postbox hndle"><h2><span>Translate content</span></h2>
+        <div class="inside">
+<?php endif; ?>
 
 <div class="job-wizard">
     <div id="placeholder"><span class="loader"></span> Please wait...</div>
@@ -98,6 +109,14 @@ $data = $this->getViewData();
 
 
 </div>
+
+<?php if($needWrapper) : ?>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+
 <?php
 $id = 0;
 $baseType = 'unknown';
