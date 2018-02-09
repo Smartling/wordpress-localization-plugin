@@ -111,3 +111,11 @@ div.tab-content table, div.tab-panel {
     padding-bottom: 10px;
     margin-bottom: 16px;
 }
+
+#tab-existing table td p {
+    min-width: 200px;
+}
+
+p.locale-list {
+    margin: 3px;
+}

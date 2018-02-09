@@ -56,6 +56,7 @@ $needWrapper = ($tag instanceof WP_Term);
                     <div>
                         <?= \Smartling\WP\WPAbstract::checkUncheckBlock(); ?>
                     </div>
+                    <div class="locale-list">
                     <?php
                     /**
                      * @var BulkSubmitTableWidget $data
@@ -73,7 +74,7 @@ $needWrapper = ($tag instanceof WP_Term);
                             continue;
                         }
                         ?>
-                        <p>
+                        <p class="locale-list">
                             <?= \Smartling\WP\WPAbstract::localeSelectionCheckboxBlock(
                                 'bulk-submit-locales',
                                 $locale->getBlogId(),
@@ -87,6 +88,7 @@ $needWrapper = ($tag instanceof WP_Term);
                             ); ?>
                         </p>
                     <?php } ?>
+                    </div>
                 </td>
             </tr>
             <tr>

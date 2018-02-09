@@ -309,7 +309,7 @@ form.form-table table, form.form-table tr, form.form-table td {
     width: 100%;
 }
 
-form.form-table td p {
+form.form-table td p, p.locale-list {
     min-height: 22px;
     min-width: 200px;
     max-width: 200px;
