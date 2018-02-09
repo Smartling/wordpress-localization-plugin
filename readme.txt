@@ -2,8 +2,8 @@
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
-Tested up to: 4.9.2
-Stable tag: 1.7.0
+Tested up to: 4.9.4
+Stable tag: 1.7.1
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -58,13 +58,20 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 1.7.1 =
+* Improved Upload cron task to speed up upload of related content.
+* Optimized database requests for `Settings` page. Fixed possible issue when plugin ran out of memory with large amount of submissions.
+* Updated `Bulk Submit` page to have two tabs: `Translate` and `Clone`.
+* Added optional profile option `Clone attachments` that forces attachments to be cloned always if enabled.
+* Improved Job Widget UI.
+* Improved Translation Locales list in Job Widget to display locales in several columns if possible.
+
 = 1.7.0 =
 * Moved to Translation Jobs
 * Added ability to manually disable ACF plugin support.
 * Dropped support of a free ACF plugin.
 * Optimized database requests related to ACF plugin support
 * Improved logging subsystem
-
 
 = 1.6.12 =
 * Added ability to disable automatic ACF configuration lookup.
