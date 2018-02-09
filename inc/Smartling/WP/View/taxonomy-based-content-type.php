@@ -49,7 +49,7 @@ $locales = $filteredLocales;
 
 <?php
 if (!empty($locales)) {
-    $widgetTitle = vsprintf('Translate this %s into', [WordpressContentTypeHelper::getLocalizedContentType($data['term']->taxonomy)]);
+    $widgetTitle = 'Download translation';
     ?>
 
     <div id="smartling-post-widget">
