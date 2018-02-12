@@ -177,7 +177,7 @@ class SubmissionCleanupHelper implements WPHookInterface
 
             $this->lookForSubmissions($post_type, $currentBlogId, (int)$postId);
         } catch (EntityNotFoundException $e) {
-
+            $this->getLogger()->warning($e->getMessage());
         }
 
         add_action('before_delete_post', [$this, 'beforeDeletePostHandler']);

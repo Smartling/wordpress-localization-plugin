@@ -6,6 +6,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\Exception\SmartlingIOException;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
@@ -193,7 +194,7 @@ abstract class WPAbstract
         $filename = plugin_dir_path(__FILE__) . 'View/' . $script;
 
         if (!file_exists($filename) || !is_file($filename) || !is_readable($filename)) {
-            throw new \Exception(vsprintf('Requested view file (%s) not found.', [$filename]));
+            throw new SmartlingIOException(vsprintf('Requested view file (%s) not found.', [$filename]));
         } else {
             /** @noinspection PhpIncludeInspection */
             require_once $filename;

@@ -15,12 +15,10 @@ class TextHelper
      *
      * @param string $string
      * @param int    $width
-     * @param string $break
-     * @param bool   $cut
      *
      * @return string
      */
-    public static function mb_wordwrap($string, $width = 75, $break = "\n", $cut = false)
+    public static function mb_wordwrap($string, $width = 75)
     {
         $breakChars = [
             "\n",

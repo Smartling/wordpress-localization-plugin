@@ -39,11 +39,6 @@ class SmartlingCore extends SmartlingCoreAbstract
     }
 
     /**
-     * current mode to send data to Smartling
-     */
-    const SEND_MODE = self::SEND_MODE_FILE;
-
-    /**
      * @param SubmissionEntity $submission
      *
      * @throws BlogNotFoundException

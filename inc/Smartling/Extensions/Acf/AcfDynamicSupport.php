@@ -483,7 +483,7 @@ class AcfDynamicSupport
                     'pattern'       => vsprintf('^meta\/%s$', [$this->buildFullFieldName($key)]),
                     'action'        => 'localize',
                     'value'         => 'reference',
-                    'serialization' => $this->getSerializationTypeByKey($key),
+                    'serialization' => 'none',
                     'type'          => $this->getReferencedTypeByKey($key),
                 ];
 
@@ -498,28 +498,6 @@ class AcfDynamicSupport
         $def = &$this->definitions;
 
         return array_key_exists($key, $def) && array_key_exists('type', $def[$key]) ? $def[$key]['type'] : false;
-    }
-
-    private function getSerializationTypeByKey($key)
-    {
-        $type = $this->getFieldTypeByKey($key);
-
-        switch ($type) {
-            case 'image':
-            case 'file':
-            case 'post_object':
-            case 'page_link':
-                return 'none';
-                break;
-            case 'relationship':
-            case 'gallery':
-            case 'taxonomy':
-                return 'none';
-                //return 'array-value';
-                break;
-            default:
-                return 'none';
-        }
     }
 
     private function getReferencedTypeByKey($key)

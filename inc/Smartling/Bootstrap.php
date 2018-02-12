@@ -118,8 +118,6 @@ class Bootstrap
             $object = $this->fromContainer($hook);
             if ($object instanceof WPInstallableInterface) {
                 $object->activate();
-            } else {
-
             }
         }
     }
@@ -477,8 +475,10 @@ class Bootstrap
         ContentTypeNavigationMenuItem::register($di);
         ContentTypeNavigationMenu::register($di);
 
-        new Taxonomies($di);
-        new PostTypes($di);
+        $handlers = [
+            'taxonomies' => (new Taxonomies($di)),
+            'posts'      => (new PostTypes($di)),
+        ];
 
         $action = defined('DOING_CRON') && true === DOING_CRON ? 'wp_loaded' : 'admin_init';
 

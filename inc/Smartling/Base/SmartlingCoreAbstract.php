@@ -26,16 +26,6 @@ use Smartling\Submissions\SubmissionManager;
 abstract class SmartlingCoreAbstract
 {
     /**
-     * Mode to send data to smartling directly
-     */
-    const SEND_MODE_STREAM = 1;
-
-    /**
-     * Mode to send data to smartling via temporary file
-     */
-    const SEND_MODE_FILE = 2;
-
-    /**
      * @var LoggerInterface
      */
     private $logger;
