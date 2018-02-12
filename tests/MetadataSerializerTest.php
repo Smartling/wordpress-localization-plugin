@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests;
 
+use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Traits\DummyLoggerMock;
@@ -12,7 +13,7 @@ use Smartling\Tests\Traits\SettingsManagerMock;
  * @package Smartling\Tests
  * @covers  \Smartling\Helpers\FieldsFilterHelper
  */
-class MetadataSerializerTest extends \PHPUnit_Framework_TestCase
+class MetadataSerializerTest extends TestCase
 {
 
     use DummyLoggerMock;

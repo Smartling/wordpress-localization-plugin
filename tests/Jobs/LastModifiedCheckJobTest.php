@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests\Jobs;
 
+use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
 use Smartling\Jobs\LastModifiedCheckJob;
@@ -27,7 +28,7 @@ use Smartling\Tests\Traits\SubmissionManagerMock;
  * @package Jobs
  * @covers  \Smartling\Jobs\LastModifiedCheckJob
  */
-class LastModifiedCheckJobTest extends \PHPUnit_Framework_TestCase
+class LastModifiedCheckJobTest extends TestCase
 {
     use DummyLoggerMock;
     use DateTimeBuilder;

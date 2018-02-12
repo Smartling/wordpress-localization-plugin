@@ -27,3 +27,4 @@ $GLOBALS['_wp_die_disabled'] = false;
 // Allow tests to override wp_die
 tests_add_filter('wp_die_handler', '_wp_die_handler_filter');
 require_once ABSPATH . '/wp-settings.php';
+require_once "../../../inc/autoload.php";
