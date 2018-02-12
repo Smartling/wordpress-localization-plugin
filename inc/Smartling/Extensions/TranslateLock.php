@@ -6,12 +6,12 @@ use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\SiteHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
 /**
  * Class TranslateLock
- *
  * @package Smartling\Extensions
  */
 class TranslateLock implements ExtensionInterface
@@ -39,8 +39,7 @@ class TranslateLock implements ExtensionInterface
      */
     private function getSubmissionManager()
     {
-        return Bootstrap::getContainer()
-                        ->get('manager.submission');
+        return Bootstrap::getContainer()->get('manager.submission');
     }
 
     /**
@@ -51,8 +50,7 @@ class TranslateLock implements ExtensionInterface
         /**
          * @var SiteHelper $siteHelper
          */
-        $siteHelper = Bootstrap::getContainer()
-                               ->get('site.helper');
+        $siteHelper = Bootstrap::getContainer()->get('site.helper');
 
         return $siteHelper->getCurrentBlogId();
     }
@@ -66,13 +64,15 @@ class TranslateLock implements ExtensionInterface
     private function getSubmission($postId)
     {
         $submissionManager = $this->getSubmissionManager();
-        $submissions = $submissionManager->find([
-            'target_blog_id' => $this->getCurrentBlogId(),
-            'target_id'      => $postId,
-        ]);
+        $submissions = $submissionManager->find(
+            [
+                'target_blog_id' => $this->getCurrentBlogId(),
+                'target_id'      => $postId,
+            ]
+        );
 
         if (0 < count($submissions)) {
-            $submission =  ArrayHelper::first($submissions);
+            $submission = ArrayHelper::first($submissions);
 
             /**
              * @var SubmissionEntity $submission
@@ -114,7 +114,7 @@ class TranslateLock implements ExtensionInterface
             <div id="locked_page" class="misc-pub-section misc-pub-post-status">
                 <label for="locked_page"><?= __('Translation Locked'); ?></label>
                 <input id="locked_page" type="checkbox" value="yes" name="lock_page" <?php checked('yes',
-                    $locked); ?> />
+                                                                                                   $locked); ?> />
                 <input type="hidden" name="locked_page_form_flag" value="1"/>
             </div>
             <?php
@@ -132,21 +132,18 @@ class TranslateLock implements ExtensionInterface
 
         remove_action('save_post', [$this, 'postSaveHandler']);
 
+        $flagName = 'locked_page_form_flag';
 
-        $flagName='locked_page_form_flag';
-
-
-        if(array_key_exists($flagName, $_POST) && '1'===$_POST[$flagName])
-        {
+        if (array_key_exists($flagName, $_POST) && '1' === $_POST[$flagName]) {
             $curValue = array_key_exists('lock_page', $_POST) && 'yes' === $_POST['lock_page'] ? 1 : 0;
 
             try {
                 $submission = $this->getSubmission($postId);
                 $submission->setIsLocked($curValue);
-                $this->getSubmissionManager()
-                    ->storeEntity($submission);
+                $this->getSubmissionManager()->storeEntity($submission);
             } catch (\Exception $e) {
-
+                MonologWrapper::getLogger(get_class($this))
+                    ->warning(vsprintf('Error marking submission as locked for post=%s', [$postId]));
             }
         }
     }

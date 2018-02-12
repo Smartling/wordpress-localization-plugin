@@ -522,6 +522,7 @@ class SubmissionTableWidget extends SmartlingListTable
                 $locale->setLabel($siteHelper->getBlogLabelById($this->entityHelper->getConnector(), $blogId));
                 $locales[] = $locale;
             } catch (BlogNotFoundException $e) {
+                $this->getLogger()->warning($e->getMessage());
             }
         }
 

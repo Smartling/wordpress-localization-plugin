@@ -197,6 +197,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 
                     $locales[] = $tLocale;
                 } catch (BlogNotFoundException $e) {
+                    $this->getLogger()->warning($e->getMessage());
                 }
             }
 

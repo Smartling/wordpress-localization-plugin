@@ -316,6 +316,7 @@ if (0 === $profileId) {
                                 $settingsManager->getSiteHelper()
                                     ->getBlogLabelById($settingsManager->getPluginProxy(), $blogId);
                         } catch (BlogNotFoundException $e) {
+                            $this->getLogger()->warning($e->getMessage());
                         }
                     }
                     ?>

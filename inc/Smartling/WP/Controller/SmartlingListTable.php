@@ -57,18 +57,18 @@ class SmartlingListTable extends WP_List_Table
              * @var ContentTypeInterface $descriptor
              */
             $descriptor = $contentTypeManager->getDescriptorByType($contentTypeName);
-            try {
-                if (!($descriptor instanceof ContentTypeInterface)) {
-                    continue;
-                }
-            } catch (\Exception $e) {
+
+            if (!($descriptor instanceof ContentTypeInterface)) {
+                continue;
             }
+
             if (true === $descriptor->getVisibility()[$page]) {
                 if ($descriptor->isVirtual() || in_array($contentTypeName, $registeredInWordpressTypes, true)) {
                     $output[$contentTypeName] = $contentTypeLabel;
                 }
             }
         }
+
         return $output;
     }
 

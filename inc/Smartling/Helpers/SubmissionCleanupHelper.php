@@ -207,7 +207,7 @@ class SubmissionCleanupHelper implements WPHookInterface
         try {
             $this->lookForSubmissions($taxonomy, $currentBlogId, (int)$term);
         } catch (\Exception $e) {
-
+            $this->getLogger()->warning($e->getMessage());
         }
         
         add_action('pre_delete_term', [$this, 'preDeleteTermHandler']);
