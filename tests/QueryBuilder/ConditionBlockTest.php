@@ -1,6 +1,7 @@
 <?php
 namespace Smartling\Tests\QueryBuilder;
 
+use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
@@ -9,7 +10,7 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
  * Class ConditionBlockTest
  * @package Smartling\Tests\QueryBuilder
  */
-class ConditionBlockTest extends \PHPUnit_Framework_TestCase
+class ConditionBlockTest extends TestCase
 {
     public function testSimpleBlock()
     {

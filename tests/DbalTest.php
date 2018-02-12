@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests;
 
+use PHPUnit\Framework\TestCase;
 use Smartling\DbAl\DB;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 
@@ -11,7 +12,7 @@ use Smartling\Tests\Traits\InvokeMethodTrait;
  * @package Smartling\Tests
  * @covers \Smartling\DbAl\DB
  */
-class DbAlTest extends \PHPUnit_Framework_TestCase
+class DbAlTest extends TestCase
 {
     use InvokeMethodTrait;
 

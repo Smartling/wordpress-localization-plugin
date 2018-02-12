@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-export CUR_DIR=$(pwd)
-export SCRIPT_DIR=$(dirname $0)
-cd $SCRIPT_DIR
-export SCRIPT_DIR=$(pwd)
-cd $SCRIPT_DIR/../
-export PLUGIN_DEV_DIR=$(pwd)
+export CUR_DIR="$(pwd)"
+export SCRIPT_DIR="$(dirname $0)"
+cd "$SCRIPT_DIR"
+export SCRIPT_DIR="$(pwd)"
+cd "$SCRIPT_DIR/../"
+export PLUGIN_DEV_DIR="$(pwd)"
 
 logit () {
     DATE=$(date +"[%Y-%m-%d %H:%M:%S]")
@@ -94,7 +94,7 @@ installComposer () {
     php composer-setup.php --install-dir="$PLUGIN_DEV_DIR/inc/third-party/bin" --filename=composer --version=1.0.0
     php -r "unlink('composer-setup.php');"
     export COMPOSER_BIN="$PLUGIN_DEV_DIR/inc/third-party/bin/composer"
-    cd $PLUGIN_DEV_DIR
+    cd "$PLUGIN_DEV_DIR"
     $COMPOSER_BIN update
 }
 
@@ -167,13 +167,11 @@ installWordpress () {
 }
 
 runTests () {
-    cd $WP_INSTALL_DIR/wp-content/plugins/smartling-connector/inc/third-party/bin
+    cd "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/inc/third-party/bin"
     PHPUNIT_BIN="$(pwd)/phpunit"
     chmod +x $PHPUNIT_BIN
-    PHPUNIT_XML_INTEGRATION="$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/integration.xml"
-    PHPUNIT_XML_UNIT="$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/phpunit.xml"
-    $PHPUNIT_BIN -c $PHPUNIT_XML_INTEGRATION
-    $PHPUNIT_BIN -c $PHPUNIT_XML_UNIT
+    PHPUNIT_XML="$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/phpunit.xml"
+    $PHPUNIT_BIN -c $PHPUNIT_XML
 }
 
 cleanDatabase () {
@@ -196,8 +194,6 @@ installSmartlingConnector () {
 installWordpress
 installSmartlingConnector
 runTests
-mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/log-integration.xml" "$PLUGIN_DEV_DIR/tests"
-mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/log-unit-tests.xml" "$PLUGIN_DEV_DIR/tests"
-#mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/unit-coverage.xml" "$PLUGIN_DEV_DIR/tests"
-#mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/integration-coverage.xml" "$PLUGIN_DEV_DIR/tests"
+mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/phpunit-results.xml" "$PLUGIN_DEV_DIR/tests"
+mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/phpunit-coverage.xml" "$PLUGIN_DEV_DIR/tests"
 cleanDatabase

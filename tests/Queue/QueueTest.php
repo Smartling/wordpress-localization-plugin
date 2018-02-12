@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests\Queue;
 
+use PHPUnit\Framework\TestCase;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Queue\Queue;
 use Smartling\Queue\QueueInterface;
@@ -16,7 +17,7 @@ use Smartling\Tests\Traits\InvokeMethodTrait;
  * @package Smartling\Tests\Queue
  * @covers  \Smartling\Queue\Queue
  */
-class QueueTest extends \PHPUnit_Framework_TestCase
+class QueueTest extends TestCase
 {
 
     use DbAlMock;

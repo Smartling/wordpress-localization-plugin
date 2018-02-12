@@ -1,13 +1,14 @@
 <?php
 namespace Smartling\Tests\QueryBuilder;
 
+use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 
 /**
  * Class ConditionTest
  */
-class ConditionTest extends \PHPUnit_Framework_TestCase
+class ConditionTest extends TestCase
 {
 
 	/**

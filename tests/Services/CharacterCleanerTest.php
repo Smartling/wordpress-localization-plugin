@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests\Services;
 
+use PHPUnit\Framework\TestCase;
 use Smartling\Services\InvalidCharacterCleaner;
 
 /**
@@ -9,7 +10,7 @@ use Smartling\Services\InvalidCharacterCleaner;
  * @package Smartling\Tests\Services
  * @covers  \Smartling\Services\InvalidCharacterCleaner
  */
-class CharacterCleanerTest extends \PHPUnit_Framework_TestCase
+class CharacterCleanerTest extends TestCase
 {
     /**
      * Data Provider for testRun test

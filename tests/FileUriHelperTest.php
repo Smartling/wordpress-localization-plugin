@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests;
 
+use PHPUnit\Framework\TestCase;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 use Smartling\Tests\Traits\SubmissionEntityMock;
@@ -12,7 +13,7 @@ use Smartling\Tests\Traits\SubmissionEntityMock;
  * Test class for \Smartling\Helpers\FileUriHelper.
  * @package Smartling\Tests
  */
-class FileUriHelperTest extends \PHPUnit_Framework_TestCase
+class FileUriHelperTest extends TestCase
 {
     use InvokeMethodTrait;
     use SubmissionEntityMock;

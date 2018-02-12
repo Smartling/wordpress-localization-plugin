@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests;
 
+use PHPUnit\Framework\TestCase;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Tests\Traits\DummyLoggerMock;
 
@@ -10,7 +11,7 @@ use Smartling\Tests\Traits\DummyLoggerMock;
  * @package Smartling\Tests
  * @covers  \Smartling\DbAl\WordpressContentEntities\PostEntityStd
  */
-class PostEntityStdTest extends \PHPUnit_Framework_TestCase
+class PostEntityStdTest extends TestCase
 {
 
     use DummyLoggerMock;

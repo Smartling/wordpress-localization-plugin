@@ -1,6 +1,7 @@
 <?php
 namespace Smartling\Tests\QueryBuilder;
 
+use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
@@ -10,7 +11,7 @@ use Smartling\Helpers\QueryBuilder\QueryBuilder;
  * Class QueryBuilderTest
  *
  */
-class QueryBuilderTest extends \PHPUnit_Framework_TestCase
+class QueryBuilderTest extends TestCase
 {
 
 	public function testFieldNameEscapingSimple()

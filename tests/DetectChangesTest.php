@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests;
 
+use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\DetectChangesHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
@@ -15,7 +16,7 @@ use Smartling\Tests\Traits\SubmissionEntityMock;
  * @package Smartling\Tests
  * @covers  Smartling\Helpers\DetectChangesHelper
  */
-class DetectChangesTest extends \PHPUnit_Framework_TestCase
+class DetectChangesTest extends TestCase
 {
     use DummyLoggerMock;
     use SubmissionEntityMock;
