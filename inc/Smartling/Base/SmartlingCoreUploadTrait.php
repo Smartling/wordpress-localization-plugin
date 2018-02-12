@@ -168,7 +168,7 @@ trait SmartlingCoreUploadTrait
                 throw new NothingFoundForTranslationException($message);
             } else {
                 $this->prepareFieldProcessorValues($submission);
-                $xml = XmlEncoder::xmlEncode($filteredValues, $source, $submission);
+                $xml = XmlEncoder::xmlEncode($filteredValues, $submission, $source);
                 $this->getLogger()->debug(vsprintf('Serialized fields to XML: %s', [base64_encode($xml),]));
 
                 return $xml;

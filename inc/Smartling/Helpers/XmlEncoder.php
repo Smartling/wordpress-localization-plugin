@@ -104,12 +104,12 @@ class XmlEncoder
 
     /**
      * @param array            $source
-     * @param array            $originalContent
      * @param SubmissionEntity $submission
+     * @param array            $originalContent
      *
      * @return string
      */
-    public static function xmlEncode(array $source, array $originalContent = [], SubmissionEntity $submission)
+    public static function xmlEncode(array $source, SubmissionEntity $submission, array $originalContent = [])
     {
         self::logMessage(vsprintf('Started creating XML for fields: %s', [base64_encode(var_export($source, true))]));
         $xml = self::setTranslationComments(self::initXml());
