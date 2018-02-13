@@ -33,7 +33,7 @@ pipeline {
         script {
           String scannerHome = tool name: 'sonar', type: 'hudson.plugins.sonar.SonarRunnerInstallation';
           withSonarQubeEnv('sonar') {
-            sh "${scannerHome}/bin/sonar-scanner -Dsonar.sources=\"${WORKSPACE}/inc/Smartling\" -Dsonar.coverage.exclusions=\"${WORKSPACE}/inc/Smartling/WP/View/**, ${WORKSPACE}/inc/Smartling/DbAl/Migrations/**\" -Dsonar.projectKey=\"${sonar_project_key}\" -Dsonar.projectName=\"{sonar_project_name}\" -Dsonar.projectVersion=${env.BUILD_NUMBER} -Dsonar.language=php -Dsonar.php.file.suffixes=\"php\" -Dsonar.php.tests.reportPath=\"${WORKSPACE}/tests/phpunit-results.xml\" -Dsonar.php.coverage.reportPaths=\"${WORKSPACE}/tests/phpunit-coverage.xml\""
+            sh "${scannerHome}/bin/sonar-scanner -Dsonar.sources=\"${WORKSPACE}/inc/Smartling\" -Dsonar.coverage.exclusions=\"${WORKSPACE}/inc/Smartling/WP/View/**, ${WORKSPACE}/inc/Smartling/DbAl/Migrations/**\" -Dsonar.projectKey=\"${sonar_project_key}\" -Dsonar.projectName=\"${sonar_project_name}\" -Dsonar.projectVersion=${env.BUILD_NUMBER} -Dsonar.language=php -Dsonar.php.file.suffixes=\"php\" -Dsonar.php.tests.reportPath=\"${WORKSPACE}/tests/phpunit-results.xml\" -Dsonar.php.coverage.reportPaths=\"${WORKSPACE}/tests/phpunit-coverage.xml\""
           }
         }
       }
