@@ -12,4 +12,4 @@ RUN apt-get update && \
 
 # Start container.
 COPY Buildplan/Docker/startup.sh startup.sh
-CMD ["/bin/bash", "startup.sh"]
+CMD ["/bin/bash", "/startup.sh"]
