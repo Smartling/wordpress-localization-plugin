@@ -65,7 +65,8 @@ trait DITrait
         $host = false === gethostname() ? 'unknown' : gethostname();
         LogContextMixinHelper::addToContext('host', $host);
         LogContextMixinHelper::addToContext('http_host', $_SERVER['HTTP_HOST']);
-        LogContextMixinHelper::addToContext('version', self::$pluginVersion);
+        LogContextMixinHelper::addToContext('moduleVersion', self::$pluginVersion);
+        LogContextMixinHelper::addToContext('pluginVersion', self::$pluginVersion);
 
         self::$loggerInstance = $logger;
     }
