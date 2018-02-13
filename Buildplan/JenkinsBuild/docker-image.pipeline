@@ -29,7 +29,7 @@ pipeline {
   post {
     failure {
       slackSend (
-        channel: "${params.SLACK_CHAT}",
+        channel: "#emergency-connectors",
         color: 'bad',
         message: "Build of <${env.BUILD_URL}|${env.JOB_BASE_NAME} #${env.BUILD_NUMBER}> is failed!"
       )
