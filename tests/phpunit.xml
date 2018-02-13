@@ -30,6 +30,10 @@
     <filter>
         <whitelist>
             <directory suffix=".php">./../inc/Smartling/</directory>
+            <exclude>
+                <directory suffix=".php">./../inc/Smartling/WP/View/</directory>
+                <directory suffix=".php">./../inc/Smartling/DbAl/Migrations/</directory>
+            </exclude>
         </whitelist>
     </filter>
 </phpunit>

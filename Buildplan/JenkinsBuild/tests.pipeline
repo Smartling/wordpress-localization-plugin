@@ -15,10 +15,8 @@ pipeline {
 
     stage('Fix phpunit artifacts') {
       steps {
-        sh "sed -i 's/tests\/IntegrationTests\/src\/wp-content\/plugins\/smartling-connector\///g' tests/phpunit-results.xml"
-        sh "sed -i 's/tests\/IntegrationTests\/src\/wp-content\/plugins\/smartling-connector\///g' tests/phpunit-coverage.xml"
-        sh "cat tests/phpunit-results.xml"
-        sh "cat tests/phpunit-coverage.xml"
+        sh "sed -i \"s/tests\\/IntegrationTests\\/src\\/wp-content\\/plugins\\/smartling-connector\\///g\" tests/phpunit-results.xml"
+        sh "sed -i \"s/tests\\/IntegrationTests\\/src\\/wp-content\\/plugins\\/smartling-connector\\///g\" tests/phpunit-coverage.xml"
       }
     }
 
@@ -33,7 +31,7 @@ pipeline {
         script {
           String scannerHome = tool name: 'sonar', type: 'hudson.plugins.sonar.SonarRunnerInstallation';
           withSonarQubeEnv('sonar') {
-            sh "${scannerHome}/bin/sonar-scanner -Dsonar.sources=\"${WORKSPACE}/tests/IntegrationTests/src/wp-content/plugins/smartling-connector/inc/Smartling\" -Dsonar.exclusions=\"${WORKSPACE}/tests/IntegrationTests/src/wp-content/plugins/smartling-connector/inc/third-party/,${WORKSPACE}/tests/IntegrationTests/src/wp-content/plugins/smartling-connector/tests/,${WORKSPACE}/tests/IntegrationTests/src/wp-admin/\" -Dsonar.projectKey=\"${params.SONAR_PROJECT_KEY}\" -Dsonar.projectName=\"${params.SONAR_PROJECT_NAME}\" -Dsonar.projectVersion=${env.BUILD_NUMBER} -Dsonar.language=php -Dsonar.php.file.suffixes=\"php\" -Dsonar.php.tests.reportPath=\"${WORKSPACE}/tests/phpunit-results.xml\" -Dsonar.php.coverage.reportPaths=\"${WORKSPACE}/tests/phpunit-coverage.xml\""
+            sh "${scannerHome}/bin/sonar-scanner -Dsonar.sources=\"${WORKSPACE}/inc/Smartling\" -Dsonar.exclusions=\"${WORKSPACE}/inc/Smartling/WP/View/**,${WORKSPACE}/inc/Smartling/DbAl/Migrations/**,${WORKSPACE}/inc/third-party/**,${WORKSPACE}/tests/**\" -Dsonar.projectKey=\"${params.SONAR_PROJECT_KEY}\" -Dsonar.projectName=\"${params.SONAR_PROJECT_NAME}\" -Dsonar.projectVersion=${env.BUILD_NUMBER} -Dsonar.language=php -Dsonar.php.file.suffixes=\"php\" -Dsonar.php.tests.reportPath=\"${WORKSPACE}/tests/phpunit-results.xml\" -Dsonar.php.coverage.reportPaths=\"${WORKSPACE}/tests/phpunit-coverage.xml\""
           }
         }
       }
@@ -42,21 +40,20 @@ pipeline {
     stage("Quality Gate") {
       steps {
         script {
+          def qg = null
+
           try {
             timeout(time: 5, unit: 'MINUTES') {
-              def qg = waitForQualityGate()
-              if (qg.status != 'OK') {
-                error "Pipeline aborted due to quality gate failure"
-              }
+              qg = waitForQualityGate()
             }
           }
-          catch (err) {
-            // Catch timeout exception but not Quality Gate.
-            String errorString = err.getMessage();
+          catch (hudson.AbortException err) {
+            echo 'Got timeout error for Sonar. Continue build without Sonar results'
+            qg = null
+          }
 
-            if (errorString == "Pipeline aborted due to quality gate failure") {
-              error errorString
-            }
+          if (qg != null && qg.status != 'OK') {
+            error "Pipeline aborted due to quality gate failure: ${qg.status}"
           }
         }
       }
