@@ -25,6 +25,7 @@ use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPInstallableInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\Yaml\Parser;
 
 /**
  * Class Bootstrap
@@ -267,7 +268,14 @@ class Bootstrap
             $defaultPageSize = Bootstrap::getPageSize(true);
             $rawPageSize = (int)$data['pageSize'];
             $pageSize = $rawPageSize < 1 ? $defaultPageSize : $rawPageSize;
-            $loggingCustomization = yaml_parse(stripslashes($data['loggingCustomization']));
+
+            $parser = new Parser();
+            $loggingCustomization = null;
+            try {
+                $loggingCustomization = $parser->parse($data['loggingCustomization'], true);
+            } catch (\Exception $e) {
+                Bootstrap::getLogger()->warning(vsprintf('Failed parsing new value: "%s"', [$data['loggingCustomization']]));
+            }
 
             $disableACF = (int)$data['disableACF'];
 
