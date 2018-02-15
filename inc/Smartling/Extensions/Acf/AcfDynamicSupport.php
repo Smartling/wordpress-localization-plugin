@@ -95,7 +95,7 @@ class AcfDynamicSupport
      */
     public function __construct(EntityHelper $entityHelper)
     {
-        $this->logger = MonologWrapper::getLogger(get_called_class());
+        $this->logger = MonologWrapper::getLogger(get_class($this));
         $this->setEntityHelper($entityHelper);
     }
 

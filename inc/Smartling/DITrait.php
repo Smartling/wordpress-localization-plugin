@@ -60,7 +60,7 @@ trait DITrait
         // are done.
         MonologWrapper::init(self::$containerInstance);
 
-        $logger = MonologWrapper::getLogger(get_called_class());
+        $logger = MonologWrapper::getLogger(__CLASS__);
 
         $host = false === gethostname() ? 'unknown' : gethostname();
         LogContextMixinHelper::addToContext('host', $host);
@@ -73,22 +73,38 @@ trait DITrait
 
     private static function injectLoggerCustomizations(ContainerBuilder $di)
     {
-        $storedConfiguration = SimpleStorageHelper::get(Bootstrap::LOGGING_CUSTOMIZATION, []);
+        $storedConfiguration = SimpleStorageHelper::get(
+            Bootstrap::LOGGING_CUSTOMIZATION,
+            Bootstrap::getContainer()->getParameter('logger.filter.default')
+        );
 
+        $allowedLevels = [
+            'debug',
+            'info',
+            'notice',
+            'warning',
+            'error',
+            'critical',
+            'alert',
+            'emergency',
+        ];
         $handler = $di->getDefinition('fileLoggerHandlerRotatable');
 
         if (0 < count($storedConfiguration)) {
             foreach ($storedConfiguration as $level => $items) {
-                $loggerClass = 'Smartling\MonologWrapper\Logger\\'
-                               . ('mute' === $level ? 'DevNullLogger' : 'LevelLogger');
-
-                $level = ('mute' === $level) ? 'debug' : $level;
+                if (!in_array($level, $allowedLevels)) {
+                    $msg = vsprintf('Found invalid logger configuration block \'%s\', with values: %s skipping...', [$level,
+                                                                                                                     var_export($items, true)]);
+                    MonologWrapper::getLogger(__CLASS__)->warning($msg);
+                    DiagnosticsHelper::addDiagnosticsMessage($msg);
+                    continue;
+                }
 
                 if (is_array($items)) {
                     foreach ($items as $item) {
                         $defId = vsprintf('logger.%s.%s', [$level, md5($item)]);
 
-                        $di->register($defId, $loggerClass)
+                        $di->register($defId, 'Smartling\MonologWrapper\Logger\LevelLogger')
                             ->addArgument($item)
                             ->addArgument($level)
                             ->addArgument([$handler]);

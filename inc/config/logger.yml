@@ -20,6 +20,14 @@ parameters:
   logger.formatter.output.short_with_request_id_reduced: "[%%datetime%%] %%extra.request_id%% %%level_name%%: %%message%%\n"
   logger.formatter.allow_multiline: true
 
+  logger.filter.default:
+    info:
+      - SettingsManager
+      - SubmissionManager
+      - Acf
+      - FieldsFilterHelper
+      - MetaFieldProcessorManager
+
 services:
   fileLoggerLineFormatter:
     class: Smartling\Base\CustomLogLineFormatter

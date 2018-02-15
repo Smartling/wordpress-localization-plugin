@@ -128,9 +128,9 @@ $data = $this->getViewData();
                     <tr>
                         <th><label for="loggingCustomization">Logging Customization</label></th>
                         <td>
-                            <textarea id="loggingCustomization"><?= \Symfony\Component\Yaml\Yaml::dump(\Smartling\Helpers\SimpleStorageHelper::get(\Smartling\Bootstrap::LOGGING_CUSTOMIZATION,['debug' => null])); ?></textarea>
+                            <textarea id="loggingCustomization"><?= stripslashes(\Symfony\Component\Yaml\Yaml::dump(\Smartling\Helpers\SimpleStorageHelper::get(\Smartling\Bootstrap::LOGGING_CUSTOMIZATION,\Smartling\Bootstrap::getContainer()->getParameter('logger.filter.default')))); ?></textarea>
 
-                            <div id="defaultLoggingCustomizations" style="display: none">debug:~</div>
+                            <div id="defaultLoggingCustomizations" style="display: none"><?= \Symfony\Component\Yaml\Yaml::dump(\Smartling\Bootstrap::getContainer()->getParameter('logger.filter.default'));?></div>
 
                         <a href="javascript:void(0)" id="resetLoggingCustomization">reset to defaults</a>
                         | note, levels can be debug, info, notice, warning, error, critical, alert, emergency.<br/>

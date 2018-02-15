@@ -4,6 +4,7 @@ namespace Smartling\Base;
 
 use Smartling\Bootstrap;
 use Smartling\Helpers\SiteHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 
 
 /**
@@ -31,7 +32,7 @@ trait LoggerTrait
      */
     public function logMessage($message)
     {
-        Bootstrap::getLogger()
-                 ->debug(vsprintf('Site: %s; Message: %s', [$this->getSiteContext(), $message]));
+        MonologWrapper::getLogger(get_class($this))
+            ->debug(vsprintf('Site: %s; Message: %s', [$this->getSiteContext(), $message]));
     }
 }

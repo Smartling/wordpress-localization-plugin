@@ -276,12 +276,13 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
             $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
             $originalId = (int)$post_id;
-
+            $this->getLogger()->debug(vsprintf('Detecting changes for \'%s\' id=%d',[$this->servedContentType, $post_id]));
             $this->detectChange($sourceBlog, $originalId, $this->servedContentType);
 
             if (false === $this->runValidation($post_id)) {
                 return $post_id;
             }
+            $this->getLogger()->debug(vsprintf('Validation completed for \'%s\' id=%d',[$this->servedContentType, $post_id]));
 
             if (!array_key_exists(self::WIDGET_DATA_NAME, $_POST)) {
                 $this->getLogger()
@@ -291,6 +292,8 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             }
 
             $data = $_POST[self::WIDGET_DATA_NAME];
+
+            $this->getLogger()->debug(vsprintf('got POST data: %s',[var_export($_POST, true)]));
 
             if (null !== $data && array_key_exists('locales', $data)) {
                 $locales = [];
@@ -307,11 +310,13 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                         return;
                     }
                 }
+                $this->getLogger()->debug(vsprintf('Finished parsing locales: %s',[var_export($locales, true)]));
                 $core = $this->getCore();
                 $translationHelper = $core->getTranslationHelper();
                 if (array_key_exists('sub', $_POST) && count($locales) > 0) {
                     switch ($_POST['sub']) {
                         case 'Upload':
+                            $this->getLogger()->debug('Upload case detected.');
                             if (0 < count($locales)) {
                                 $wrapper = $this->getCore()->getApiWrapper();
                                 $profiles = $this->getProfiles();
@@ -321,7 +326,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
                                     return;
                                 }
-
+                                $this->getLogger()->debug(vsprintf('Retrieving batch for jobId=%s',[$data['jobId']]));
                                 $batchUid = $wrapper->retrieveBatch(ArrayHelper::first($profiles), $data['jobId'], 'true' === $data['authorize'], [
                                     'name' => $data['jobName'],
                                     'description' => $data['jobDescription'],
@@ -332,6 +337,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                 ]);
 
                                 if (empty($batchUid)) {
+                                    $this->getLogger()->warning(vsprintf('Failed retrieving batch for job %s',[var_export($_POST['jobId'], true)]));
                                     return;
                                 }
 
@@ -361,6 +367,8 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
                                 $this->getLogger()->debug('Triggering Upload Job.');
                                 do_action(UploadJob::JOB_HOOK_NAME);
+                            } else {
+                                $this->getLogger()->debug('No locales found.');
                             }
                             break;
                         case 'Download':
@@ -401,8 +409,14 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                             $this->getLogger()->debug(vsprintf('Initiating Download Job', []));
                             do_action(DownloadTranslationJob::JOB_HOOK_NAME);
                             break;
+                        default:
+                            $this->getLogger()->debug(vsprintf('got Unknown action: \'%s\'',[$_POST['sub']]));
                     }
+                } else {
+                    $this->getLogger()->debug('No smartling action found.');
                 }
+            } else {
+                $this->getLogger()->debug('Seems that no data to process.');
             }
             add_action('save_post', [$this, 'save']);
         }

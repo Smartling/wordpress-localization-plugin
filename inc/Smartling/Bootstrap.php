@@ -274,13 +274,16 @@ class Bootstrap
             try {
                 $loggingCustomization = $parser->parse($data['loggingCustomization'], true);
             } catch (\Exception $e) {
-                Bootstrap::getLogger()->warning(vsprintf('Failed parsing new value: "%s"', [$data['loggingCustomization']]));
+                Bootstrap::getLogger()
+                    ->warning(vsprintf('Failed parsing new value: "%s"', [var_export($data['loggingCustomization'], true)]));
             }
 
             $disableACF = (int)$data['disableACF'];
 
             if (is_array($loggingCustomization)) {
                 SimpleStorageHelper::set(Bootstrap::LOGGING_CUSTOMIZATION, $loggingCustomization);
+            } else {
+                Bootstrap::getLogger()->warning(var_export($loggingCustomization, true));
             }
 
             SimpleStorageHelper::set(Bootstrap::SELF_CHECK_IDENTIFIER, $selfCheckDisabled);
