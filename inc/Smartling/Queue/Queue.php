@@ -37,10 +37,10 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
     public static function getFieldDefinitions()
     {
         return [
-            'id'           => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
-            'queue'        => self::DB_TYPE_STRING_64,
-            'payload'      => self::DB_TYPE_STRING_TEXT,
-            'payload_hash' => self::DB_TYPE_HASH_MD5,
+            'id'           => static::DB_TYPE_U_BIGINT . ' ' . static::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
+            'queue'        => static::DB_TYPE_STRING_64,
+            'payload'      => static::DB_TYPE_STRING_TEXT,
+            'payload_hash' => static::DB_TYPE_HASH_MD5,
         ];
     }
 
@@ -100,7 +100,7 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
 
     private function getRealTableName()
     {
-        return $this->getDbal()->completeTableName(self::getTableName());
+        return $this->getDbal()->completeTableName(static::getTableName());
     }
 
     private function set($value, $queue)

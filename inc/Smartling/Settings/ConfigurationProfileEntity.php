@@ -7,7 +7,6 @@ use Smartling\Base\SmartlingEntityAbstract;
 
 /**
  * Class ConfigurationProfileEntity
- *
  * @package Smartling\Settings
  */
 class ConfigurationProfileEntity extends SmartlingEntityAbstract
@@ -16,12 +15,12 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
     const REGEX_PROJECT_ID = '([0-9a-f]){9}';
 
     const UPLOAD_ON_CHANGE_MANUAL = 0;
-    
+
     const UPLOAD_ON_CHANGE_AUTO = 1;
-    
+
     protected static function getInstance(LoggerInterface $logger)
     {
-        return new self($logger);
+        return new static($logger);
     }
 
     public static function getRetrievalTypes()
@@ -29,7 +28,6 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         return [
             'pseudo'    => __('Pseudo'),
             'published' => __('Published'),
-            //'pending'   => __('Pending'),
         ];
     }
 
@@ -61,27 +59,27 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
     {
 
         return [
-            'id'                               => self::DB_TYPE_U_BIGINT . ' ' .
-                                                  self::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
-            'profile_name'                     => self::DB_TYPE_STRING_STANDARD,
+            'id'                               => static::DB_TYPE_U_BIGINT . ' ' .
+                                                  static::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
+            'profile_name'                     => static::DB_TYPE_STRING_STANDARD,
             'project_id'                       => 'CHAR(9) NOT NULL',
-            'user_identifier'                  => self::DB_TYPE_STRING_STANDARD,
-            'secret_key'                       => self::DB_TYPE_STRING_STANDARD,
-            'is_active'                        => self::DB_TYPE_UINT_SWITCH,
-            'original_blog_id'                 => self::DB_TYPE_U_BIGINT,
-            'auto_authorize'                   => self::DB_TYPE_UINT_SWITCH,
-            'retrieval_type'                   => self::DB_TYPE_STRING_SMALL,
-            'upload_on_update'                 => self::DB_TYPE_UINT_SWITCH,
-            'publish_completed'                => self::DB_TYPE_UINT_SWITCH_ON,
-            'download_on_change'               => self::DB_TYPE_UINT_SWITCH,
-            'clean_metadata_on_download'       => self::DB_TYPE_UINT_SWITCH,
-            'always_sync_images_on_upload'     => self::DB_TYPE_UINT_SWITCH,
+            'user_identifier'                  => static::DB_TYPE_STRING_STANDARD,
+            'secret_key'                       => static::DB_TYPE_STRING_STANDARD,
+            'is_active'                        => static::DB_TYPE_UINT_SWITCH,
+            'original_blog_id'                 => static::DB_TYPE_U_BIGINT,
+            'auto_authorize'                   => static::DB_TYPE_UINT_SWITCH,
+            'retrieval_type'                   => static::DB_TYPE_STRING_SMALL,
+            'upload_on_update'                 => static::DB_TYPE_UINT_SWITCH,
+            'publish_completed'                => static::DB_TYPE_UINT_SWITCH_ON,
+            'download_on_change'               => static::DB_TYPE_UINT_SWITCH,
+            'clean_metadata_on_download'       => static::DB_TYPE_UINT_SWITCH,
+            'always_sync_images_on_upload'     => static::DB_TYPE_UINT_SWITCH,
             'target_locales'                   => 'TEXT NULL',
             'filter_skip'                      => 'TEXT NULL',
             'filter_copy_by_field_name'        => 'TEXT NULL',
             'filter_copy_by_field_value_regex' => 'TEXT NULL',
             'filter_flag_seo'                  => 'TEXT NULL',
-            'clone_attachment'                 => self::DB_TYPE_UINT_SWITCH . ' ' . self::DB_TYPE_DEFAULT_ZERO,
+            'clone_attachment'                 => static::DB_TYPE_UINT_SWITCH . ' ' . static::DB_TYPE_DEFAULT_ZERO,
         ];
     }
 
@@ -174,7 +172,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
     {
         $this->stateFields['project_id'] = $projectId;
 
-        if (!preg_match(vsprintf('/%s/ius', [self::REGEX_PROJECT_ID]), trim($projectId, '/'))) {
+        if (!preg_match(vsprintf('/%s/ius', [static::REGEX_PROJECT_ID]), trim($projectId, '/'))) {
             $this->logger->warning(vsprintf('Got invalid project ID: %s', [$projectId]));
         }
     }
@@ -245,11 +243,11 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function setRetrievalType($retrievalType)
     {
-        if (array_key_exists($retrievalType, self::getRetrievalTypes())) {
+        if (array_key_exists($retrievalType, static::getRetrievalTypes())) {
             $this->stateFields['retrieval_type'] = $retrievalType;
         } else {
             $this->logger->warning(vsprintf('Got invalid retrievalType: %s, expected one of: %s',
-                [$retrievalType, implode(', ', array_keys(self::getRetrievalTypes()))]));
+                                            [$retrievalType, implode(', ', array_keys(static::getRetrievalTypes()))]));
         }
     }
 
@@ -328,7 +326,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getDownloadOnChange()
     {
-        return (int) $this->stateFields['download_on_change'];
+        return (int)$this->stateFields['download_on_change'];
     }
 
     public function setCleanMetadataOnDownload($cleanMetadataOnDownload)
@@ -338,12 +336,12 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getCleanMetadataOnDownload()
     {
-        return (int) $this->stateFields['clean_metadata_on_download'];
+        return (int)$this->stateFields['clean_metadata_on_download'];
     }
 
     public function getPublishCompleted()
     {
-        return (int) $this->stateFields['publish_completed'];
+        return (int)$this->stateFields['publish_completed'];
     }
 
     public function setPublishCompleted($publishCompleted)
@@ -351,22 +349,24 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         $this->stateFields['publish_completed'] = (int)$publishCompleted;
     }
 
-    public function setCloneAttachment($cloneAttachment) {
-        $this->stateFields['clone_attachment'] = (int) $cloneAttachment;
+    public function setCloneAttachment($cloneAttachment)
+    {
+        $this->stateFields['clone_attachment'] = (int)$cloneAttachment;
     }
 
-    public function getCloneAttachment() {
-        return (int) $this->stateFields['clone_attachment'];
+    public function getCloneAttachment()
+    {
+        return (int)$this->stateFields['clone_attachment'];
     }
 
-    public function setAlwaysSyncImagesOnUpload( $alwaysSyncImagesOnUpload )
+    public function setAlwaysSyncImagesOnUpload($alwaysSyncImagesOnUpload)
     {
         $this->stateFields['always_sync_images_on_upload'] = (int)$alwaysSyncImagesOnUpload;
     }
 
-    public function getAlwaysSyncImagesOnUpload( )
+    public function getAlwaysSyncImagesOnUpload()
     {
-        return (int) $this->stateFields['always_sync_images_on_upload'];
+        return (int)$this->stateFields['always_sync_images_on_upload'];
     }
 
     public function toArray($addVirtualColumns = true)

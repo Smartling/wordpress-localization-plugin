@@ -18,7 +18,7 @@ class SimpleStorageHelper
      */
     public static function set($storageKey, $value)
     {
-        if (false === self::get($storageKey, false)) {
+        if (false === static::get($storageKey, false)) {
             $result = add_site_option($storageKey, $value);
         } else {
             $result = update_site_option($storageKey, $value);

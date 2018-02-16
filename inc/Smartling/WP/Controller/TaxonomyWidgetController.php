@@ -236,7 +236,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
 
                                 $this->getLogger()->info(
                                     vsprintf(
-                                        self::$MSG_UPLOAD_ENQUEUE_ENTITY_JOB,
+                                        static::$MSG_UPLOAD_ENQUEUE_ENTITY_JOB,
                                         [
                                             $this->getTaxonomy(),
                                             $sourceBlog,

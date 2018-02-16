@@ -33,7 +33,7 @@ class IntegerParser
     public static function integerOrDefault($value, $default)
     {
         $parsed = $default;
-        self::tryParseString($value,$parsed);
+        static::tryParseString($value,$parsed);
         return $parsed;
     }
 }

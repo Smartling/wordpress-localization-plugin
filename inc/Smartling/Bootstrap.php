@@ -39,7 +39,7 @@ class Bootstrap
 
     public static $pluginVersion = 'undefined';
 
-    const SELF_CHECK_IDENTIFIER = 'smartling_self_check_disabled';
+    const static_CHECK_IDENTIFIER = 'smartling_static_check_disabled';
 
     const DISABLE_LOGGING = 'smartling_disable_logging';
 
@@ -94,7 +94,7 @@ class Bootstrap
 
     public static function getCurrentVersion()
     {
-        return self::getContainer()->getParameter('plugin.version');
+        return static::getContainer()->getParameter('plugin.version');
     }
 
 
@@ -136,9 +136,9 @@ class Bootstrap
 
     public static function uninstall()
     {
-        $hooks = self::getContainer()->getParameter('hooks.installable');
+        $hooks = static::getContainer()->getParameter('hooks.installable');
         foreach ($hooks as $hook) {
-            $object = self::getContainer()->get($hook);
+            $object = static::getContainer()->get($hook);
             if ($object instanceof WPInstallableInterface) {
                 $object->uninstall();
             }
@@ -162,13 +162,13 @@ class Bootstrap
     {
         register_shutdown_function([$this, 'shutdownHandler']);
 
-        self::getContainer()->setParameter('plugin.version', self::$pluginVersion);
+        static::getContainer()->setParameter('plugin.version', static::$pluginVersion);
 
         //always try to migrate db
         try {
             $this->fromContainer('site.db')->activate();
         } catch (\Exception $e) {
-            self::getLogger()->error(vsprintf('Migration attempt finished with error: %s', [$e->getMessage()]));
+            static::getLogger()->error(vsprintf('Migration attempt finished with error: %s', [$e->getMessage()]));
         }
 
         try {
@@ -183,11 +183,11 @@ class Bootstrap
             $message .= "Message: '" . $e->getMessage() . "'\n";
             $message .= "Location: '" . $e->getFile() . ':' . $e->getLine() . "'\n";
             $message .= "Trace: " . $e->getTraceAsString() . "\n";
-            self::getLogger()->emergency($message);
+            static::getLogger()->emergency($message);
             DiagnosticsHelper::addDiagnosticsMessage($message, true);
         }
 
-        self::getContainer()->get('extension.loader')->runExtensions();
+        static::getContainer()->get('extension.loader')->runExtensions();
     }
 
 
@@ -203,12 +203,12 @@ class Bootstrap
                 $role->add_cap($capability, true);
             }
         } else {
-            $siteHelper = self::getContainer()->get('site.helper');
+            $siteHelper = static::getContainer()->get('site.helper');
             /**
              * @var SiteHelper $siteHelper
              */
             $msg = vsprintf('\'administrator\' role doesn\'t exists in site id=%s', [$siteHelper->getCurrentBlogId()]);
-            self::getLogger()->warning($msg);
+            static::getLogger()->warning($msg);
         }
     }
 
@@ -231,7 +231,7 @@ class Bootstrap
             });
         }
 
-        self::getContainer()->setParameter('multilang_plugins', $mlPluginsStatuses);
+        static::getContainer()->setParameter('multilang_plugins', $mlPluginsStatuses);
     }
 
     /**
@@ -261,7 +261,7 @@ class Bootstrap
 
             $data =& $_POST['params'];
 
-            $selfCheckDisabled = (int)$data['selfCheckDisabled'];
+            $staticCheckDisabled = (int)$data['staticCheckDisabled'];
             $disableLogging = (int)$data['disableLogging'];
             $logPath = $data['loggingPath'];
             $disableACFDBLookup = (int)$data['disableDBLookup'];
@@ -286,35 +286,35 @@ class Bootstrap
                 Bootstrap::getLogger()->warning(var_export($loggingCustomization, true));
             }
 
-            SimpleStorageHelper::set(Bootstrap::SELF_CHECK_IDENTIFIER, $selfCheckDisabled);
+            SimpleStorageHelper::set(Bootstrap::static_CHECK_IDENTIFIER, $staticCheckDisabled);
             SimpleStorageHelper::set(Bootstrap::DISABLE_LOGGING, $disableLogging);
-            SimpleStorageHelper::set(self::DISABLE_ACF_DB_LOOKUP, $disableACFDBLookup);
+            SimpleStorageHelper::set(static::DISABLE_ACF_DB_LOOKUP, $disableACFDBLookup);
             SimpleStorageHelper::set(Bootstrap::DISABLE_ACF, $disableACF);
 
             if (0 === $disableACF) {
-                SimpleStorageHelper::drop(self::DISABLE_ACF);
+                SimpleStorageHelper::drop(static::DISABLE_ACF);
             }
 
             if (0 == $disableACFDBLookup) {
-                SimpleStorageHelper::drop(self::DISABLE_ACF_DB_LOOKUP);
+                SimpleStorageHelper::drop(static::DISABLE_ACF_DB_LOOKUP);
             }
 
             if ($pageSize === $defaultPageSize) {
-                SimpleStorageHelper::drop(self::SMARTLING_CUSTOM_PAGE_SIZE);
+                SimpleStorageHelper::drop(static::SMARTLING_CUSTOM_PAGE_SIZE);
             } else {
-                SimpleStorageHelper::set(self::SMARTLING_CUSTOM_PAGE_SIZE, $pageSize);
+                SimpleStorageHelper::set(static::SMARTLING_CUSTOM_PAGE_SIZE, $pageSize);
             }
 
             if ($logPath === Bootstrap::getLogFileName(false, true)) {
-                SimpleStorageHelper::drop(self::SMARTLING_CUSTOM_LOG_FILE);
+                SimpleStorageHelper::drop(static::SMARTLING_CUSTOM_LOG_FILE);
             } else {
-                SimpleStorageHelper::set(self::SMARTLING_CUSTOM_LOG_FILE, $logPath);
+                SimpleStorageHelper::set(static::SMARTLING_CUSTOM_LOG_FILE, $logPath);
             }
 
             echo json_encode($data);
         });
 
-        if (0 === (int)SimpleStorageHelper::get(self::SELF_CHECK_IDENTIFIER, 0)) {
+        if (0 === (int)SimpleStorageHelper::get(static::static_CHECK_IDENTIFIER, 0)) {
             $this->testCronSetup();
             $this->testUpdates();
         }
@@ -330,7 +330,7 @@ class Bootstrap
             $mainMessage = vsprintf('<strong>Smartling-connector</strong> configuration is not optimal.<br /><strong>max_execution_time</strong> is highly recommended to be set at least %s. Current value is %s', [$recommended,
                                                                                                                                                                                                                      $timeLimit]);
 
-            self::$loggerInstance->warning($mainMessage);
+            static::$loggerInstance->warning($mainMessage);
 
             DiagnosticsHelper::addDiagnosticsMessage($mainMessage, false);
         }
@@ -340,7 +340,7 @@ class Bootstrap
     {
         if (!defined('DISABLE_WP_CRON') || true !== DISABLE_WP_CRON) {
             $logMessage = 'Cron doesn\'t seem to be configured.';
-            self::getLogger()->warning($logMessage);
+            static::getLogger()->warning($logMessage);
             if (current_user_can('manage_network_plugins')) {
                 $mainMessage = vsprintf('<strong>Smartling-connector</strong> configuration is not optimal.<br />Warning! Wordpress cron installation is not configured properly. Please follow steps described <a target="_blank" href="https://help.smartling.com/v1.0/docs/wordpress-connector-install-and-configure#section-configure-wp-cron">here</a>.', []);
                 DiagnosticsHelper::addDiagnosticsMessage($mainMessage, false);
@@ -353,7 +353,7 @@ class Bootstrap
         $minVersion = '4.6';
         if (version_compare(get_bloginfo('version'), $minVersion, '<')) {
             $msg = vsprintf('Wordpress has to be at least version %s to run smartlnig connector plugin. Please upgrade Your Wordpress installation.', [$minVersion]);
-            self::getLogger()->critical('Boot :: ' . $msg);
+            static::getLogger()->critical('Boot :: ' . $msg);
             DiagnosticsHelper::addDiagnosticsMessage($msg, true);
         }
     }
@@ -363,7 +363,7 @@ class Bootstrap
         /**
          * @var array $data
          */
-        $data = self::getContainer()->getParameter('multilang_plugins');
+        $data = static::getContainer()->getParameter('multilang_plugins');
 
         $blockWork = true;
 
@@ -381,7 +381,7 @@ class Bootstrap
                            '<a href="' . get_site_url() .
                            '/wp-admin/network/plugin-install.php?tab=search&s=multilingual+press">Multilingual Press.</a>';
 
-            self::getLogger()->critical('Boot :: ' . $mainMessage);
+            static::getLogger()->critical('Boot :: ' . $mainMessage);
             DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
         } else {
             $data = SimpleStorageHelper::get('state_modules', false);
@@ -390,7 +390,7 @@ class Bootstrap
                 $msg = '<strong>Advanced Translator</strong> feature of Multilingual Press plugin is currently turned on.<br/>
  Please turn it off to use Smartling-connector plugin. <br/> Use <a href="' . get_site_url() .
                        '/wp-admin/network/settings.php?page=mlp"><strong>this link</strong></a> to visit Multilingual Press network settings page.';
-                self::getLogger()->critical('Boot :: ' . $msg);
+                static::getLogger()->critical('Boot :: ' . $msg);
                 DiagnosticsHelper::addDiagnosticsMessage($msg, true);
             }
         }
@@ -401,7 +401,7 @@ class Bootstrap
         if (!extension_loaded($extension)) {
             $mainMessage = $extension . ' php extension is required to run the plugin is not installed or enabled.';
 
-            self::$loggerInstance->critical('Boot :: ' . $mainMessage);
+            static::$loggerInstance->critical('Boot :: ' . $mainMessage);
 
             DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
         }
@@ -409,8 +409,8 @@ class Bootstrap
 
     protected function testUpdates()
     {
-        $selfSlug = $this->fromContainer('plugin.name', true);
-        $cur_version = self::$pluginVersion;
+        $staticSlug = $this->fromContainer('plugin.name', true);
+        $cur_version = static::$pluginVersion;
         $new_version = '0.0.0';
 
         $info = get_site_transient('update_plugins');
@@ -418,7 +418,7 @@ class Bootstrap
             $response = $info->response;
             if (is_array($response)) {
                 foreach ($response as $definition) {
-                    if ($selfSlug !== $definition->slug) {
+                    if ($staticSlug !== $definition->slug) {
                         continue;
                     }
                     $new_version = $definition->new_version;
@@ -426,15 +426,15 @@ class Bootstrap
                 }
             }
         } else {
-            self::getLogger()->warning('No cached information found about updates. Requesting info...');
+            static::getLogger()->warning('No cached information found about updates. Requesting info...');
             if (!function_exists('plugins_api')) {
                 require_once(ABSPATH . 'wp-admin/includes/plugin-install.php');
             }
-            $args = ['slug' => $selfSlug, 'fields' => ['version' => true]];
+            $args = ['slug' => $staticSlug, 'fields' => ['version' => true]];
             $response = plugins_api('plugin_information', $args);
 
             if (is_wp_error($response)) {
-                self::getLogger()
+                static::getLogger()
                     ->error(vsprintf('Updates information request ended with error: %s', [$response->get_error_message()]));
             } else {
                 $new_version = $response->version;
@@ -449,7 +449,7 @@ class Bootstrap
                     site_url('/wp-admin/network/plugins.php?s=smartling+connector&plugin_status=all'),
                 ]);
 
-            self::$loggerInstance->warning($mainMessage);
+            static::$loggerInstance->warning($mainMessage);
             DiagnosticsHelper::addDiagnosticsMessage($mainMessage, false);
         }
     }
@@ -459,7 +459,7 @@ class Bootstrap
         /**
          * @var SettingsManager $sm
          */
-        $sm = self::getContainer()->get('manager.settings');
+        $sm = static::getContainer()->get('manager.settings');
 
         $total = 0;
         $profiles = $sm->getEntities([], null, $total, true);
@@ -470,7 +470,7 @@ class Bootstrap
                            '<a href="' . get_site_url() .
                            '/wp-admin/admin.php?page=smartling_configuration_profile_list">settings page</a>';
 
-            self::getLogger()->critical('Boot :: ' . $mainMessage);
+            static::getLogger()->critical('Boot :: ' . $mainMessage);
 
             DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
         }
@@ -509,7 +509,7 @@ class Bootstrap
                 /**
                  * Initializing ACF and ACF Option Pages support.
                  */
-                (new AcfDynamicSupport(self::fromContainer('entity.helper')))->run();
+                (new AcfDynamicSupport(static::fromContainer('entity.helper')))->run();
             });
         }
         /**
@@ -566,7 +566,7 @@ class Bootstrap
                 try {
                     CustomFieldFilterHandler::registerFilter($di, $filter);
                 } catch (\Exception $e) {
-                    self::getLogger()->warning(
+                    static::getLogger()->warning(
                         vsprintf(
                             'Error registering filter with message: \'%s\', params: \'%s\'',
                             [
@@ -582,8 +582,8 @@ class Bootstrap
 
     public function initializeContentTypes()
     {
-        $this->initializeBuildInContentTypes(self::getContainer());
-        do_action(ExportedAPI::ACTION_SMARTLING_REGISTER_CONTENT_TYPE, self::getContainer());
+        $this->initializeBuildInContentTypes(static::getContainer());
+        do_action(ExportedAPI::ACTION_SMARTLING_REGISTER_CONTENT_TYPE, static::getContainer());
     }
 
     public function run()

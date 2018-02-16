@@ -80,31 +80,31 @@ class SubmissionEntity extends SmartlingEntityAbstract
     public static function getFieldDefinitions()
     {
         return [
-            'id'                     => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
-            'source_title'           => self::DB_TYPE_STRING_STANDARD,
-            'source_blog_id'         => self::DB_TYPE_U_BIGINT,
+            'id'                     => static::DB_TYPE_U_BIGINT . ' ' . static::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
+            'source_title'           => static::DB_TYPE_STRING_STANDARD,
+            'source_blog_id'         => static::DB_TYPE_U_BIGINT,
             'source_content_hash'    => 'CHAR(32) NULL',
             'content_type'           => 'VARCHAR(32) NOT NULL',
-            'source_id'              => self::DB_TYPE_U_BIGINT,
+            'source_id'              => static::DB_TYPE_U_BIGINT,
             'file_uri'               => 'VARCHAR(255) NULL',
-            'target_locale'          => self::DB_TYPE_STRING_SMALL,
-            'target_blog_id'         => self::DB_TYPE_U_BIGINT,
-            'target_id'              => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_DEFAULT_ZERO,
-            'submitter'              => self::DB_TYPE_STRING_STANDARD,
-            'submission_date'        => self::DB_TYPE_DATETIME,
-            'applied_date'           => self::DB_TYPE_DATETIME,
-            'approved_string_count'  => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_DEFAULT_ZERO,
-            'completed_string_count' => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_DEFAULT_ZERO,
-            'excluded_string_count'  => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_DEFAULT_ZERO,
-            'total_string_count'     => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_DEFAULT_ZERO,
-            'word_count'             => self::DB_TYPE_U_BIGINT . ' ' . self::DB_TYPE_DEFAULT_ZERO,
-            'status'                 => self::DB_TYPE_STRING_SMALL,
-            'is_locked'              => self::DB_TYPE_UINT_SWITCH . ' ' . self::DB_TYPE_DEFAULT_ZERO,
-            'is_cloned'              => self::DB_TYPE_UINT_SWITCH . ' ' . self::DB_TYPE_DEFAULT_ZERO,
-            'last_modified'          => self::DB_TYPE_DATETIME,
-            'outdated'               => self::DB_TYPE_UINT_SWITCH,
-            'last_error'             => self::DB_TYPE_STRING_TEXT,
-            'batch_uid'                 => self::DB_TYPE_STRING_64 . ' ' . self::DB_TYPE_DEFAULT_EMPTYSTRING,
+            'target_locale'          => static::DB_TYPE_STRING_SMALL,
+            'target_blog_id'         => static::DB_TYPE_U_BIGINT,
+            'target_id'              => static::DB_TYPE_U_BIGINT . ' ' . static::DB_TYPE_DEFAULT_ZERO,
+            'submitter'              => static::DB_TYPE_STRING_STANDARD,
+            'submission_date'        => static::DB_TYPE_DATETIME,
+            'applied_date'           => static::DB_TYPE_DATETIME,
+            'approved_string_count'  => static::DB_TYPE_U_BIGINT . ' ' . static::DB_TYPE_DEFAULT_ZERO,
+            'completed_string_count' => static::DB_TYPE_U_BIGINT . ' ' . static::DB_TYPE_DEFAULT_ZERO,
+            'excluded_string_count'  => static::DB_TYPE_U_BIGINT . ' ' . static::DB_TYPE_DEFAULT_ZERO,
+            'total_string_count'     => static::DB_TYPE_U_BIGINT . ' ' . static::DB_TYPE_DEFAULT_ZERO,
+            'word_count'             => static::DB_TYPE_U_BIGINT . ' ' . static::DB_TYPE_DEFAULT_ZERO,
+            'status'                 => static::DB_TYPE_STRING_SMALL,
+            'is_locked'              => static::DB_TYPE_UINT_SWITCH . ' ' . static::DB_TYPE_DEFAULT_ZERO,
+            'is_cloned'              => static::DB_TYPE_UINT_SWITCH . ' ' . static::DB_TYPE_DEFAULT_ZERO,
+            'last_modified'          => static::DB_TYPE_DATETIME,
+            'outdated'               => static::DB_TYPE_UINT_SWITCH,
+            'last_error'             => static::DB_TYPE_STRING_TEXT,
+            'batch_uid'                 => static::DB_TYPE_STRING_64 . ' ' . static::DB_TYPE_DEFAULT_EMPTYSTRING,
         ];
     }
 
@@ -114,10 +114,10 @@ class SubmissionEntity extends SmartlingEntityAbstract
     public static function getSubmissionStatusLabels()
     {
         return [
-            self::SUBMISSION_STATUS_NEW         => __(self::SUBMISSION_STATUS_NEW),
-            self::SUBMISSION_STATUS_IN_PROGRESS => __(self::SUBMISSION_STATUS_IN_PROGRESS),
-            self::SUBMISSION_STATUS_COMPLETED   => __(self::SUBMISSION_STATUS_COMPLETED),
-            self::SUBMISSION_STATUS_FAILED      => __(self::SUBMISSION_STATUS_FAILED),
+            static::SUBMISSION_STATUS_NEW         => __(static::SUBMISSION_STATUS_NEW),
+            static::SUBMISSION_STATUS_IN_PROGRESS => __(static::SUBMISSION_STATUS_IN_PROGRESS),
+            static::SUBMISSION_STATUS_COMPLETED   => __(static::SUBMISSION_STATUS_COMPLETED),
+            static::SUBMISSION_STATUS_FAILED      => __(static::SUBMISSION_STATUS_FAILED),
         ];
     }
 
@@ -144,7 +144,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
 
     protected static function getInstance(LoggerInterface $logger)
     {
-        return new self($logger);
+        return new static($logger);
     }
 
     public static function getSortableFields()
@@ -202,7 +202,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
     {
         $value = $this->stateFields['last_modified'];
 
-        $dt = \DateTime::createFromFormat(self::DATETIME_FORMAT, $value);
+        $dt = \DateTime::createFromFormat(static::DATETIME_FORMAT, $value);
 
         if (false === $dt) {
             $dt = \DateTime::createFromFormat('U', 0);
@@ -217,13 +217,13 @@ class SubmissionEntity extends SmartlingEntityAbstract
     public function setLastModified($dateTime)
     {
         if ($dateTime instanceof \DateTime) {
-            $this->stateFields['last_modified'] = $dateTime->format(self::DATETIME_FORMAT);
+            $this->stateFields['last_modified'] = $dateTime->format(static::DATETIME_FORMAT);
         } else {
-            $dt = \DateTime::createFromFormat(self::DATETIME_FORMAT, $dateTime);
+            $dt = \DateTime::createFromFormat(static::DATETIME_FORMAT, $dateTime);
             if (false === $dt) {
                 $dt = '1990-01-01 12:00:00';
             } else {
-                $dt = $dt->format(self::DATETIME_FORMAT);
+                $dt = $dt->format(static::DATETIME_FORMAT);
             }
             $this->stateFields['last_modified'] = $dt;
         }
@@ -291,12 +291,12 @@ class SubmissionEntity extends SmartlingEntityAbstract
      */
     public function setStatus($status)
     {
-        if (in_array($status, self::$submissionStatuses)) {
+        if (in_array($status, static::$submissionStatuses)) {
             $this->stateFields['status'] = $status;
         } else {
             $message = vsprintf('Invalid status value. Got \'%s\', expected one of: %s', [
                 $status,
-                implode(',', self::$submissionStatuses),
+                implode(',', static::$submissionStatuses),
             ]);
 
             $this->logger->error($message);
@@ -305,11 +305,11 @@ class SubmissionEntity extends SmartlingEntityAbstract
         }
 
         switch ($this->getStatus()) {
-            case self::SUBMISSION_STATUS_NEW:
+            case static::SUBMISSION_STATUS_NEW:
                 $this->setLastError('');
                 $this->setSubmitter(WordpressUserHelper::getUserLogin());
                 break;
-            case self::SUBMISSION_STATUS_IN_PROGRESS:
+            case static::SUBMISSION_STATUS_IN_PROGRESS:
                 $this->setOutdated(0);
                 break;
             default:
@@ -324,10 +324,10 @@ class SubmissionEntity extends SmartlingEntityAbstract
     public function getStatusColor()
     {
         $statusColors = [
-            self::SUBMISSION_STATUS_NEW         => 'yellow',
-            self::SUBMISSION_STATUS_IN_PROGRESS => 'blue',
-            self::SUBMISSION_STATUS_COMPLETED   => 'green',
-            self::SUBMISSION_STATUS_FAILED      => 'red',
+            static::SUBMISSION_STATUS_NEW         => 'yellow',
+            static::SUBMISSION_STATUS_IN_PROGRESS => 'blue',
+            static::SUBMISSION_STATUS_COMPLETED   => 'green',
+            static::SUBMISSION_STATUS_FAILED      => 'red',
         ];
 
         $classes = [
@@ -455,7 +455,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
 
             $this->stateFields['content_type'] = $content_type;
             $this->setLastError('Invalid Content Type');
-            $this->setStatus(self::SUBMISSION_STATUS_FAILED);
+            $this->setStatus(static::SUBMISSION_STATUS_FAILED);
             $message = vsprintf('Invalid content type. Got \'%s\', expected one of: %s', [
                 $content_type,
                 implode(',', $reverseMap),

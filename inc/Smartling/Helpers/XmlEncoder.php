@@ -111,7 +111,7 @@ class XmlEncoder
      */
     public static function xmlEncode(array $source, SubmissionEntity $submission, array $originalContent = [])
     {
-        self::logMessage(vsprintf('Started creating XML for fields: %s', [base64_encode(var_export($source, true))]));
+        static::logMessage(vsprintf('Started creating XML for fields: %s', [base64_encode(var_export($source, true))]));
         $xml = self::setTranslationComments(self::initXml());
         $settings = self::getFieldProcessingParams();
         $keySettings = &$settings['key'];
@@ -177,7 +177,7 @@ class XmlEncoder
      */
     public static function xmlDecode($content, SubmissionEntity $submission)
     {
-        self::logMessage(vsprintf('Starting XML file decoding : %s', [base64_encode(var_export($content, true))]));
+        static::logMessage(vsprintf('Starting XML file decoding : %s', [base64_encode(var_export($content, true))]));
         $xpath = self::prepareXPath($content);
         $stringPath = '/data/string';
         $nodeList = $xpath->query($stringPath);

@@ -33,7 +33,7 @@ class QueryBuilder
         if (empty($fieldNames)) {
             throw new \InvalidArgumentException(
                 'Field list CANNOT be empty',
-                self::EXCEPTION_CODE_EMPTY_FIELD_LIST
+                static::EXCEPTION_CODE_EMPTY_FIELD_LIST
             );
         }
 
@@ -108,13 +108,13 @@ class QueryBuilder
      */
     public static function buildSelectQuery($tableName, $fieldsList, ConditionBlock $conditions = null, $sortOptions = [], $pageOptions = null, $groupOptions = null)
     {
-        $fieldsString = self::buildFieldListString($fieldsList);
+        $fieldsString = static::buildFieldListString($fieldsList);
 
         $query = vsprintf(
             'SELECT %s FROM %s',
             [
                 $fieldsString,
-                self::escapeName($tableName),
+                static::escapeName($tableName),
             ]
         );
 
@@ -122,11 +122,11 @@ class QueryBuilder
             $query .= vsprintf(' WHERE %s', [(string)$conditions]);
         }
 
-        $query .= self::buildGroupSubQuery($groupOptions);
+        $query .= static::buildGroupSubQuery($groupOptions);
 
-        $query .= self::buildSortSubQuery($sortOptions);
+        $query .= static::buildSortSubQuery($sortOptions);
 
-        $query .= self::buildLimitSubQuery($pageOptions);
+        $query .= static::buildLimitSubQuery($pageOptions);
 
         return $query;
     }
@@ -140,13 +140,13 @@ class QueryBuilder
      */
     public static function buildDeleteQuery($tableName, ConditionBlock $conditions = null, $pageOptions = null)
     {
-        $query = vsprintf('DELETE FROM %s', [self::escapeName($tableName)]);
+        $query = vsprintf('DELETE FROM %s', [static::escapeName($tableName)]);
 
         if ($conditions instanceof ConditionBlock) {
             $query .= vsprintf(' WHERE %s', [(string)$conditions]);
         }
 
-        $query .= self::buildLimitSubQuery($pageOptions, true);
+        $query .= static::buildLimitSubQuery($pageOptions, true);
 
         return $query;
     }
@@ -164,8 +164,8 @@ class QueryBuilder
         $template = 'UPDATE %s SET %s';
 
         $query = vsprintf($template, [
-            self::escapeName($tableName),
-            self::buildAssignmentSubQuery($fieldValueList),
+            static::escapeName($tableName),
+            static::buildAssignmentSubQuery($fieldValueList),
         ]);
 
         if ($conditions instanceof ConditionBlock) {
@@ -173,7 +173,7 @@ class QueryBuilder
         }
 
         if (null !== $pageOptions) {
-            $query .= self::buildLimitSubQuery($pageOptions, true);
+            $query .= static::buildLimitSubQuery($pageOptions, true);
         }
 
         return $query;
@@ -194,11 +194,11 @@ class QueryBuilder
 
         $query = vsprintf($template, [
             $ignore,
-            self::escapeName($tableName),
-            self::buildFieldListString(array_keys($fieldValueList)),
+            static::escapeName($tableName),
+            static::buildFieldListString(array_keys($fieldValueList)),
             implode(',', array_map(function ($item) {
                 return null === $item ? 'null' : "'{$item}'";
-            }, self::escapeValues(array_values($fieldValueList)))),
+            }, static::escapeValues(array_values($fieldValueList)))),
         ]);
 
         return $query;
@@ -218,9 +218,9 @@ class QueryBuilder
                 $keys = array_keys($field);
                 $fld = reset($keys);
                 $alias = end($field);
-                $prebuild[] = self::escapeName($fld) . ' AS ' . self::escapeName($alias);
+                $prebuild[] = static::escapeName($fld) . ' AS ' . static::escapeName($alias);
             } else {
-                $prebuild[] = self::escapeName($field);
+                $prebuild[] = static::escapeName($field);
             }
         }
 
@@ -268,7 +268,7 @@ class QueryBuilder
         $parts = [];
 
         foreach ($groupOptions as $element) {
-            $parts[] = self::escapeName($element);
+            $parts[] = static::escapeName($element);
         }
 
         $part = implode(', ', $parts);
@@ -314,8 +314,8 @@ class QueryBuilder
         foreach ($fieldValueList as $column => $value) {
             $subQueryParts[] = vsprintf('%s = %s',
                                         [
-                                            self::escapeName($column),
-                                            '\'' . self::escapeValue($value) . '\'',
+                                            static::escapeName($column),
+                                            '\'' . static::escapeValue($value) . '\'',
                                         ]);
         }
 
@@ -347,7 +347,7 @@ class QueryBuilder
         $result = [];
 
         foreach ($values as $value) {
-            $result[] = self::escapeValue($value);
+            $result[] = static::escapeValue($value);
         }
 
         return $result;
@@ -366,7 +366,7 @@ class QueryBuilder
 
         $is_function = false;
 
-        foreach (self::$sqlFunctionNames as $functionName) {
+        foreach (static::$sqlFunctionNames as $functionName) {
             $pos = strpos($tmp, $functionName . '(');
 
             if (false !== $pos && 0 === $pos) {

@@ -276,7 +276,7 @@ class WidgetHelper
      */
     private static function cleanBarFromWidget($barId, $widgetId)
     {
-        $content = array_flip(self::getSideBarWidgets($barId));
+        $content = array_flip(static::getSideBarWidgets($barId));
 
         if (array_key_exists($widgetId, $content)) {
             unset($content[$widgetId]);

@@ -189,7 +189,7 @@ class SmartlingCore extends SmartlingCoreAbstract
         $messages = [];
 
         try {
-            $this->getLogger()->info(vsprintf(self::$MSG_CRON_CHECK, [
+            $this->getLogger()->info(vsprintf(static::$MSG_CRON_CHECK, [
                 $submission->getId(),
                 $submission->getStatus(),
                 $submission->getContentType(),
@@ -201,7 +201,7 @@ class SmartlingCore extends SmartlingCoreAbstract
 
             $submission = $this->getApiWrapper()->getStatus($submission);
 
-            $this->getLogger()->info(vsprintf(self::$MSG_CRON_CHECK_RESULT, [
+            $this->getLogger()->info(vsprintf(static::$MSG_CRON_CHECK_RESULT, [
                 $submission->getContentType(),
                 $submission->getSourceBlogId(),
                 $submission->getSourceId(),

@@ -396,7 +396,6 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                     switch ($error->level) {
                         case LIBXML_ERR_NONE:
                             continue;
-                            break;
                         case LIBXML_ERR_WARNING:
                             $level = 'WARNING';
                             break;

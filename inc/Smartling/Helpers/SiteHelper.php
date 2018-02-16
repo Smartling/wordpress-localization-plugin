@@ -75,8 +75,8 @@ class SiteHelper
             $sites = get_sites(['number' => 1000]);
             foreach ($sites as $site) {
 
-                self::$_siteCache[$site->site_id][] = $site->blog_id;
-                self::$_flatBlogIdCache[] = (int)$site->blog_id;
+                static::$_siteCache[$site->site_id][] = $site->blog_id;
+                static::$_flatBlogIdCache[] = (int)$site->blog_id;
             }
         }
     }
@@ -124,7 +124,7 @@ class SiteHelper
     {
         $this->cacheSites();
 
-        return self::$_flatBlogIdCache;
+        return static::$_flatBlogIdCache;
     }
 
     /**
@@ -183,7 +183,7 @@ class SiteHelper
 
         if (!in_array($blogId, self::$_flatBlogIdCache)) {
             $message = vsprintf('Invalid blogId value. Got %s, expected one of [%s]',
-                [$blogId, implode(',', self::$_flatBlogIdCache)]);
+                [$blogId, implode(',', static::$_flatBlogIdCache)]);
 
             throw new BlogNotFoundException($message);
         }

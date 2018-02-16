@@ -48,7 +48,7 @@ class WordpressContentTypeHelper
     {
         self::checkRuntimeState();
 
-        return array_merge(self::$internalTypes, self::getDynamicReverseMap());
+        return array_merge(self::$internalTypes, static::getDynamicReverseMap());
     }
 
     private static function getDynamicLabelMap()
