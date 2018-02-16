@@ -70,12 +70,9 @@ trait CustomTypeTrait
 
     /**
      * Display name of content type, e.g.: Post
-     *
-     * @param string $default
-     *
      * @return string
      */
-    public function getLabel($default = 'unknown')
+    public function getLabel()
     {
         return $this->label;
     }

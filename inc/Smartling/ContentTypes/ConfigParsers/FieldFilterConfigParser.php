@@ -331,32 +331,24 @@ class FieldFilterConfigParser
                     $this->getService('translation.helper'),
                     $this->getPattern()
                 );
-
                 $filter->setContentHelper($this->getService('content.helper'));
                 $filter->setSerializer($serializer);
-
                 break;
             case 'post':
-
                 $filter = new PostBasedProcessor(
                     $this->getService('translation.helper'),
                     $this->getPattern()
                 );
-
                 $filter->setContentHelper($this->getService('content.helper'));
                 $filter->setSerializer($serializer);
-
                 break;
             case 'media':
-
                 $filter = new MediaBasedProcessor(
                     $this->getService('translation.helper'),
                     $this->getPattern()
                 );
-
                 $filter->setContentHelper($this->getService('content.helper'));
                 $filter->setSerializer($serializer);
-
                 break;
             default:
                 $filter = new CustomTypeProcessor(
@@ -364,10 +356,8 @@ class FieldFilterConfigParser
                     $this->getPattern(),
                     $this->getFilterType()
                 );
-
                 $filter->setContentHelper($this->getService('content.helper'));
                 $filter->setSerializer($serializer);
-
                 break;
         }
 

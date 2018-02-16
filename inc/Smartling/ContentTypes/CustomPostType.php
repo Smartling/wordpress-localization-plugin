@@ -65,7 +65,7 @@ class CustomPostType extends PostBasedContentTypeAbstract
         if ($this->getConfigParser()->hasWidget()) {
             $di = $this->getContainerBuilder();
             $tag = 'wp.' . static::getSystemName();
-            $definition = $di
+            $di
                 ->register($tag, 'Smartling\WP\Controller\PostBasedWidgetControllerStd')
                 ->addArgument($di->getDefinition('multilang.proxy'))
                 ->addArgument($di->getDefinition('plugin.info'))
@@ -87,15 +87,14 @@ class CustomPostType extends PostBasedContentTypeAbstract
         $di = $this->getContainerBuilder();
         $tag = 'wp.job.' . static::getSystemName();
 
-        $definition = $di
+        $di
             ->register($tag, 'Smartling\WP\Controller\ContentEditJobController')
             ->addArgument($di->getDefinition('multilang.proxy'))
             ->addArgument($di->getDefinition('plugin.info'))
             ->addArgument($di->getDefinition('entity.helper'))
             ->addArgument($di->getDefinition('manager.submission'))
             ->addArgument($di->getDefinition('site.cache'))
-            ->addMethodCall('setServedContentType', [static::getSystemName()])
-        ;
+            ->addMethodCall('setServedContentType', [static::getSystemName()]);
         $di->get($tag)->register();
     }
 
@@ -111,10 +110,10 @@ class CustomPostType extends PostBasedContentTypeAbstract
             if (0 < count($terms)) {
                 foreach ($terms as $element) {
                     $logger->debug(vsprintf('Sending for translation term = \'%s\' id = \'%s\' related to submission = \'%s\'.', [
-                            $element->taxonomy,
-                            $element->term_id,
-                            $params->getSubmission()->getId(),
-                        ]));
+                        $element->taxonomy,
+                        $element->term_id,
+                        $params->getSubmission()->getId(),
+                    ]));
 
                     /**
                      * @var TranslationHelper $translationHelper
@@ -132,14 +131,14 @@ class CustomPostType extends PostBasedContentTypeAbstract
                         );
                     $params->getAccumulator()[$params->getContentType()][] = $relatedSubmission->getTargetId();
                     $logger->debug(
-                            vsprintf(
-                                'Received id=%s for submission id=%s',
-                                [
-                                    $relatedSubmission->getTargetId(),
-                                    $relatedSubmission->getId(),
-                                ]
-                            )
-                        );
+                        vsprintf(
+                            'Received id=%s for submission id=%s',
+                            [
+                                $relatedSubmission->getTargetId(),
+                                $relatedSubmission->getId(),
+                            ]
+                        )
+                    );
                 }
             }
         }

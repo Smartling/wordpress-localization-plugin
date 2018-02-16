@@ -82,7 +82,7 @@ class CustomTaxonomyType extends TermBasedContentTypeAbstract
         $di = $this->getContainerBuilder();
         $tag = 'wp.job.' . static::getSystemName();
 
-        $definition = $di
+        $di
             ->register($tag, 'Smartling\WP\Controller\ContentEditJobController')
             ->addArgument($di->getDefinition('multilang.proxy'))
             ->addArgument($di->getDefinition('plugin.info'))
