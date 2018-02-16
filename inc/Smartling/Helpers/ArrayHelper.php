@@ -125,7 +125,7 @@ class ArrayHelper
      */
     public static function first(array $array)
     {
-        if (!self::notEmpty($array)) {
+        if (!static::notEmpty($array)) {
             return false; // as reset() does
         }
 

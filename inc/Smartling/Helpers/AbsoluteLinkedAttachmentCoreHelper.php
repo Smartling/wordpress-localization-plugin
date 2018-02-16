@@ -165,7 +165,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
             }
         } else {
             $matches = [];
-            if (0 < preg_match_all(StringHelper::buildPattern(self::PATTERN_IMAGE_GENERAL), $stringValue, $matches)) {
+            if (0 < preg_match_all(StringHelper::buildPattern(static::PATTERN_IMAGE_GENERAL), $stringValue, $matches)) {
                 foreach ($matches[0] as $match) {
                     $path = $this->getAttributeFromTag($match, 'img', 'src');
                     $this->processContent($replacer, $path);
@@ -232,7 +232,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
             $possibleId = $this->lookForDirectGuidEntry($url);
             if (false === $possibleId && $this->fileLooksLikeThumbnail($originalPathinfo['filename'])) {
                 $originalFilename = preg_replace(
-                    StringHelper::buildPattern(self::PATTERN_THUMBNAIL_IDENTITY), '', $originalPathinfo['filename']
+                    StringHelper::buildPattern(static::PATTERN_THUMBNAIL_IDENTITY), '', $originalPathinfo['filename']
                 );
                 $possibleOriginalUrl = str_replace($originalPathinfo['filename'], $originalFilename, $url);
                 $possibleId = $this->lookForDirectGuidEntry($possibleOriginalUrl);

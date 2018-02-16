@@ -413,12 +413,12 @@ class AcfDynamicSupport
             $this->getLogger()->debug('ACF detected.');
             $localDefinitions = $this->getLocalDefinitions();
 
-            if (1 === (int) SimpleStorageHelper::get(Bootstrap::DISABLE_ACF_DB_LOOKUP, 0)) {
+            if (1 === (int)SimpleStorageHelper::get(Bootstrap::DISABLE_ACF_DB_LOOKUP, 0)) {
                 $definitions = $localDefinitions;
                 $url = admin_url('edit.php?post_type=acf-field-group&page=acf-tools');
                 $msg = [
                     'Automatic ACF support is disabled. Please ensure that you use relevant exported ACF configuration.',
-                    vsprintf('To export your ACF configuration click <strong><a href="%s">here</a></strong>',[$url]),
+                    vsprintf('To export your ACF configuration click <strong><a href="%s">here</a></strong>', [$url]),
                 ];
                 DiagnosticsHelper::addDiagnosticsMessage(implode('<br/>', $msg));
                 $this->getLogger()->notice('Automatic ACF support is disabled.');
@@ -504,23 +504,26 @@ class AcfDynamicSupport
     {
         $type = $this->getFieldTypeByKey($key);
 
+        $value = 'none';
+
         switch ($type) {
             case 'image':
             case 'file':
             case 'gallery':
-                return 'media';
+                $value = 'media';
                 break;
             case 'post_object':
             case 'page_link':
             case 'relationship':
-                return 'post';
+                $value = 'post';
                 break;
             case 'taxonomy':
-                return 'taxonomy';
+                $value = 'taxonomy';
                 break;
             default:
-                return 'none';
         }
+
+        return $value;
     }
 
     private function buildFullFieldName($fieldId)

@@ -114,7 +114,7 @@ trait DebugTrait
      */
     public static function getLogFileName($withDate = true, $forceDefault = false)
     {
-        $container = self::getContainer();
+        $container = static::getContainer();
         $pluginDir = $container->getParameter('plugin.dir');
 
         $paramName = true === $forceDefault
@@ -138,7 +138,7 @@ trait DebugTrait
         if (true === $forceDefault) {
             $paramName .= '.default';
         }
-        $container = self::getContainer();
+        $container = static::getContainer();
         $pageSize = $container->getParameter($paramName);
         return $pageSize;
     }
@@ -148,7 +148,7 @@ trait DebugTrait
      */
     public static function getCurrentLogFileSize()
     {
-        $logFile = self::getLogFileName();
+        $logFile = static::getLogFileName();
 
         if (!file_exists($logFile) || !is_readable($logFile)) {
             return '0';
@@ -156,7 +156,7 @@ trait DebugTrait
 
         $size = filesize($logFile);
 
-        return self::prettyPrintSize($size);
+        return static::prettyPrintSize($size);
     }
 
     /**

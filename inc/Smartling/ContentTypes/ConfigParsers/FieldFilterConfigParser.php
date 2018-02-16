@@ -324,7 +324,6 @@ class FieldFilterConfigParser
             throw new \InvalidArgumentException('Currently only \'reference\' is supported.');
         }
 
-
         switch ($this->getFilterType()) {
             case 'term':
             case 'taxonomy':
@@ -335,8 +334,6 @@ class FieldFilterConfigParser
 
                 $filter->setContentHelper($this->getService('content.helper'));
                 $filter->setSerializer($serializer);
-
-                return $filter;
 
                 break;
             case 'post':
@@ -349,8 +346,6 @@ class FieldFilterConfigParser
                 $filter->setContentHelper($this->getService('content.helper'));
                 $filter->setSerializer($serializer);
 
-                return $filter;
-
                 break;
             case 'media':
 
@@ -362,9 +357,6 @@ class FieldFilterConfigParser
                 $filter->setContentHelper($this->getService('content.helper'));
                 $filter->setSerializer($serializer);
 
-                return $filter;
-
-                // reference to any attachment
                 break;
             default:
                 $filter = new CustomTypeProcessor(
@@ -376,9 +368,10 @@ class FieldFilterConfigParser
                 $filter->setContentHelper($this->getService('content.helper'));
                 $filter->setSerializer($serializer);
 
-                return $filter;
                 break;
         }
+
+        return $filter;
     }
 
     /**

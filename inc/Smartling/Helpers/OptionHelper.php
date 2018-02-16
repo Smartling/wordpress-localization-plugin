@@ -14,7 +14,7 @@ class OptionHelper
 
     public static function set($key, $value)
     {
-        self::$internalDefault === self::get($key, self::$internalDefault)
+        self::$internalDefault === static::get($key, self::$internalDefault)
             ? add_option($key, $value)
             : update_option($key, $value);
     }

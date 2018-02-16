@@ -19,7 +19,7 @@ class LogContextMixinHelper
      */
     public static function addToContext($key, $value)
     {
-        self::$mixin[$key] = $value;
+        static::$mixin[$key] = $value;
     }
 
     /**
@@ -28,7 +28,7 @@ class LogContextMixinHelper
     public static function removeFromContext($key)
     {
         if (array_key_exists($key, self::$mixin)) {
-            unset(self::$mixin[$key]);
+            unset(static::$mixin[$key]);
         }
     }
 

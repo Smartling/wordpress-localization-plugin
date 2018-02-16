@@ -48,7 +48,7 @@ class WordpressContentTypeHelper
     {
         self::checkRuntimeState();
 
-        return array_merge(self::$internalTypes, static::getDynamicReverseMap());
+        return array_merge(static::$internalTypes, static::getDynamicReverseMap());
     }
 
     private static function getDynamicLabelMap()
@@ -89,13 +89,15 @@ class WordpressContentTypeHelper
         foreach ($descriptors as $descriptor) {
             $dynamicallyRegisteredTaxonomies[] = $descriptor->getSystemName();
         }
+
         return $dynamicallyRegisteredTaxonomies;
     }
 
     /**
      * @return ContentTypeManager
      */
-    private static function getContentTypeManager() {
+    private static function getContentTypeManager()
+    {
         return Bootstrap::getContainer()->get('content-type-descriptor-manager');
     }
 
@@ -132,7 +134,8 @@ class WordpressContentTypeHelper
         }
     }
 
-    public static function getBaseTypeByContentType($contentType) {
+    public static function getBaseTypeByContentType($contentType)
+    {
         /**
          * @var ContentTypeAbstract $ctHandler
          */
@@ -141,7 +144,8 @@ class WordpressContentTypeHelper
         return $ctHandler->getBaseType();
     }
 
-    public static function getEditUrl(SubmissionEntity $submission) {
+    public static function getEditUrl(SubmissionEntity $submission)
+    {
         /**
          * @var ContentTypeAbstract $ctHandler
          */
@@ -154,7 +158,7 @@ class WordpressContentTypeHelper
                     $tail = vsprintf('/post.php?post=%s&action=edit', [$submission->getTargetId()]);
                     break;
                 case 'taxonomy':
-                    $tail =  '/term.php?taxonomy=category&tag_ID=2';
+                    $tail = '/term.php?taxonomy=category&tag_ID=2';
                     break;
                 default:
                     return '';
@@ -166,10 +170,11 @@ class WordpressContentTypeHelper
                 vsprintf(
                     'Requested edit URI for unknown content-type \'%s\'',
                     [
-                        $submission->getContentType()
+                        $submission->getContentType(),
                     ]
                 )
             );
+
             return '';
         }
 

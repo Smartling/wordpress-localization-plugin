@@ -38,7 +38,7 @@ class CustomScheduleIntervalHelper implements WPHookInterface
      */
     public function registerInterval($intervalId, $intervalLength, $intervalDisplay)
     {
-        self::$intervals[$intervalId] = [
+        static::$intervals[$intervalId] = [
             'interval' => $intervalLength,
             'display'  => $intervalDisplay,
         ];

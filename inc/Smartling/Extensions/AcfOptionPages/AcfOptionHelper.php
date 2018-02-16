@@ -106,7 +106,7 @@ class AcfOptionHelper
 
     public function tryGetOptionId()
     {
-        $map = self::getMap();
+        $map = static::getMap();
 
         if (array_key_exists($this->getName(), $map)) {
             return $map[$this->getName()];
@@ -137,7 +137,7 @@ class AcfOptionHelper
      */
     public function getPk()
     {
-        $map = self::getMap();
+        $map = static::getMap();
 
         return array_key_exists($this->getName(), $map) ? (int)$map[$this->getName()] : null;
     }

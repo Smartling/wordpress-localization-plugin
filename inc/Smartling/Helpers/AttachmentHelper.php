@@ -42,7 +42,7 @@ class AttachmentHelper
         }
         $targetFileName = pathinfo($originalFile, PATHINFO_BASENAME);
         $targetFile = pathinfo($targetPath, PATHINFO_DIRNAME) . DIRECTORY_SEPARATOR . $targetFileName;
-        if (true === $overwrite && self::checkIfTargetFileExists($originalFile, $targetPath)) {
+        if (true === $overwrite && static::checkIfTargetFileExists($originalFile, $targetPath)) {
             $logger->debug(vsprintf('Trying to remove existing target file :\'%s\'', [$targetFile]));
             if (false === unlink($targetFile)) {
                 $logger->debug(vsprintf('Failed removing target file :\'%s\'', [$targetFile]));

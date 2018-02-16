@@ -127,7 +127,7 @@ class FieldsFilterHelper
         $result = [];
         switch ($valueType) {
             case 'array':
-                $result = self::flatternArray($elementValue, $currentPath, $divider);
+                $result = static::flatternArray($elementValue, $currentPath, $divider);
                 break;
             case 'NULL':
             case 'boolean':

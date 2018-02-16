@@ -79,7 +79,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
                     } else {
                         $temp['lang'] = 'unknown';
                     }
-                    self::$_blogLocalesCache[$blogId] = $temp;
+                    static::$_blogLocalesCache[$blogId] = $temp;
                 }
             }
         }
