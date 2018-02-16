@@ -389,7 +389,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                     $this->getLogger()
                                         ->info(
                                             vsprintf(
-                                                self::$MSG_DOWNLOAD_ENQUEUE_ENTITY,
+                                                static::$MSG_DOWNLOAD_ENQUEUE_ENTITY,
                                                 [
                                                     $submission->getId(),
                                                     $submission->getStatus(),

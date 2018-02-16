@@ -168,7 +168,8 @@ abstract class WPAbstract
     /**
      * @return \Smartling\Settings\ConfigurationProfileEntity[]
      */
-    public function getProfiles() {
+    public function getProfiles()
+    {
         $eh = $this->getEntityHelper();
         $currentBlogId = $eh->getSiteHelper()->getCurrentBlogId();
 
@@ -219,15 +220,15 @@ abstract class WPAbstract
     public static function bulkSubmitCloneButton()
     {
         return HtmlTagGeneratorHelper::tag(
-          'input',
-          '',
-          [
-            'type'  => 'submit',
-            'value' => 'Clone',
-            'class' => 'button button-primary',
-            'id'    => 'clone-locally',
-            'name'  => 'submit',
-          ]);
+            'input',
+            '',
+            [
+                'type'  => 'submit',
+                'value' => 'Clone',
+                'class' => 'button button-primary',
+                'id'    => 'clone-locally',
+                'name'  => 'submit',
+            ]);
     }
 
     public static function sendButton($id = 'submit', $name = 'submit')
@@ -245,20 +246,6 @@ abstract class WPAbstract
 
     public static function submitBlock()
     {
-        $sendButton = self::sendButton('', 'sub');
-
-        $downloadButton = HtmlTagGeneratorHelper::tag(
-            'button',
-            HtmlTagGeneratorHelper::tag('span', __('Download'), []),
-            [
-                'type'  => 'submit',
-                'value' => 'download',
-                'title' => __('Add to Download queue and trigger download process'),
-                'class' => 'button button-primary',
-                'id'    => '',
-                'name'  => 'sub',
-            ]);
-
         $downloadButton = HtmlTagGeneratorHelper::tag(
             'input', '', [
             'type'  => 'submit',
@@ -269,7 +256,7 @@ abstract class WPAbstract
             'name'  => 'sub',
         ]);
 
-        $contents = /* $sendButton . '&nbsp;' .*/ $downloadButton;
+        $contents = $downloadButton;
 
         $container = HtmlTagGeneratorHelper::tag('div', $contents, ['class' => 'bottom']);
 
@@ -346,7 +333,8 @@ abstract class WPAbstract
         $parts[] = HtmlTagGeneratorHelper::tag('input', '', $checkboxAttributes);
 
         if (!StringHelper::isNullOrEmpty($editLink)) {
-            $parts[] = HtmlTagGeneratorHelper::tag('a', $blog_name, ['title' => __('Open translation'),'href'=>$editLink, 'target'=>'_blank']);
+            $parts[] = HtmlTagGeneratorHelper::tag('a', $blog_name, ['title' => __('Open translation'),
+                                                                     'href'  => $editLink, 'target' => '_blank']);
             $container = HtmlTagGeneratorHelper::tag('span', implode('', $parts), []);
         } else {
             $parts[] = HtmlTagGeneratorHelper::tag('span', $blog_name, ['title' => $blog_name]);

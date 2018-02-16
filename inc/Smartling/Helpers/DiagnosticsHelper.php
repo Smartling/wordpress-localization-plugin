@@ -31,7 +31,7 @@ class DiagnosticsHelper
     public static function addDiagnosticsMessage($message, $blockPlugin = false)
     {
         if (is_string($message)) {
-            self::$messages[] = $message;
+            static::$messages[] = $message;
             if (true === $blockPlugin) {
                 self::$pluginBlocked = true;
             }
@@ -50,7 +50,7 @@ class DiagnosticsHelper
 
     public static function populateErrorsToWordpress()
     {
-        $messages = self::getMessages();
+        $messages = static::getMessages();
 
         if (0 < count($messages)) {
             global $error;

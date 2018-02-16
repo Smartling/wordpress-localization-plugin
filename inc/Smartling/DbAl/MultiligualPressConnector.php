@@ -62,7 +62,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
      */
     private function cacheLocales()
     {
-        if (empty(self::$_blogLocalesCache)) {
+        if (empty(static::$_blogLocalesCache)) {
             $rawValue = get_site_option(self::MULTILINGUAL_PRESS_PRO_SITE_OPTION, false, false);
 
             if (false === $rawValue) {
@@ -96,7 +96,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
         $this->cacheLocales();
 
         $locales = [];
-        foreach (self::$_blogLocalesCache as $blogId => $blogLocale) {
+        foreach (static::$_blogLocalesCache as $blogId => $blogLocale) {
             $locales[$blogId] = $blogLocale['text'];
         }
 
@@ -114,8 +114,8 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
 
         $this->cacheLocales();
 
-        if (array_key_exists($blogId, self::$_blogLocalesCache)) {
-            $locale = self::$_blogLocalesCache[$blogId];
+        if (array_key_exists($blogId, static::$_blogLocalesCache)) {
+            $locale = static::$_blogLocalesCache[$blogId];
         } else {
             //$message = vsprintf('The blog %s is not configured in multilingual press plugin', [$blogId]);
             // $this->getLogger()->warning($message);

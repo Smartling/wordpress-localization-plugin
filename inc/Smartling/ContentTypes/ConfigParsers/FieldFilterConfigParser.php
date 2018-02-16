@@ -381,17 +381,20 @@ class FieldFilterConfigParser
     {
         switch ($this->getAction()) {
             case self::ACTION_SKIP:
-                return new SkipFieldProcessor($this->getPattern());
+                $action = new SkipFieldProcessor($this->getPattern());
                 break;
             case self::ACTION_COPY:
-                return new CloneValueFieldProcessor($this->getPattern(), $this->getService('content.helper'));
+                $action = new CloneValueFieldProcessor($this->getPattern(), $this->getService('content.helper'));
                 break;
             case self::ACTION_LOCALIZE:
-                return $this->getLocalizeFilter();
+                $action = $this->getLocalizeFilter();
                 break;
             default:
-                MonologWrapper::getLogger(get_called_class())->error(vsprintf('Invalid filter action: \'%s\'', [$this->getAction()]));
+                MonologWrapper::getLogger(get_called_class())
+                    ->error(vsprintf('Invalid filter action: \'%s\'', [$this->getAction()]));
                 die ($this->getAction());
         }
+
+        return $action;
     }
 }

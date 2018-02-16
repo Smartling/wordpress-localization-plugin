@@ -8,7 +8,6 @@ use DateTimeZone;
 
 /**
  * Class DateTimeHelper
- *
  * @package Smartling\Helpers
  */
 class DateTimeHelper
@@ -56,7 +55,7 @@ class DateTimeHelper
         if (null === $timezone) {
             $timezone = date_default_timezone_get();
         }
-        self::$tz_object = new DateTimeZone($timezone);
+        static::$tz_object = new DateTimeZone($timezone);
     }
 
     /**
@@ -64,12 +63,12 @@ class DateTimeHelper
      */
     public static function getDefaultTimezone()
     {
-        if (!(self::$tz_object instanceof DateTimeZone)) {
-            self::setDefaultTimeZone();
+        if (!(static::$tz_object instanceof DateTimeZone)) {
+            static::setDefaultTimeZone();
 
         }
 
-        return self::$tz_object;
+        return static::$tz_object;
     }
 
     /**
@@ -82,7 +81,7 @@ class DateTimeHelper
      */
     public static function stringToDateTime($dateTime, $format = self::DATE_TIME_FORMAT_STANDARD)
     {
-        return \DateTime::createFromFormat($format, $dateTime, self::getDefaultTimezone());
+        return \DateTime::createFromFormat($format, $dateTime, static::getDefaultTimezone());
     }
 
     /**
@@ -107,7 +106,7 @@ class DateTimeHelper
      */
     public static function timestampToDateTime($dateTime)
     {
-        $dateTimeObject = new DateTime('now', self::getDefaultTimezone());
+        $dateTimeObject = new DateTime('now', static::getDefaultTimezone());
 
         return $dateTimeObject->setTimestamp($dateTime);
     }
@@ -126,12 +125,11 @@ class DateTimeHelper
 
     /**
      * Returns current date and time as a string like '2014-18-14 22:18:63' in UTC timezone
-     *
      * @return string
      */
     public static function nowAsString()
     {
-        return self::dateTimeToString(new DateTime('now', self::getDefaultTimezone()));
+        return static::dateTimeToString(new DateTime('now', static::getDefaultTimezone()));
     }
 
     /**
@@ -139,11 +137,11 @@ class DateTimeHelper
      */
     public static function getWordpressDateFormat()
     {
-        if (null === self::$wp_date_format) {
-            self::$wp_date_format = get_option('date_format');
+        if (null === static::$wp_date_format) {
+            static::$wp_date_format = get_option('date_format');
         }
 
-        return self::$wp_date_format;
+        return static::$wp_date_format;
     }
 
     /**
@@ -151,11 +149,11 @@ class DateTimeHelper
      */
     public static function getWordpressTimeFormat()
     {
-        if (null === self::$wp_time_format) {
-            self::$wp_time_format = get_option('time_format');
+        if (null === static::$wp_time_format) {
+            static::$wp_time_format = get_option('time_format');
         }
 
-        return self::$wp_time_format;
+        return static::$wp_time_format;
     }
 
     /**
@@ -163,13 +161,13 @@ class DateTimeHelper
      */
     public static function getWordpressTimeZone()
     {
-        if (null === self::$wp_local_timezone) {
-            $tz = get_option('timezone_string', self::TIMEZONE_UTC);
-            $tz = empty($tz) ? self::TIMEZONE_UTC : $tz;
-            self::$wp_local_timezone = new DateTimeZone($tz);
+        if (null === static::$wp_local_timezone) {
+            $tz = get_option('timezone_string', static::TIMEZONE_UTC);
+            $tz = empty($tz) ? static::TIMEZONE_UTC : $tz;
+            static::$wp_local_timezone = new DateTimeZone($tz);
         }
 
-        return self::$wp_local_timezone;
+        return static::$wp_local_timezone;
     }
 
     /**
@@ -177,7 +175,7 @@ class DateTimeHelper
      */
     public static function getWordpressDateTimeFormat()
     {
-        return self::getWordpressDateFormat() . ' ' . self::getWordpressTimeFormat();
+        return static::getWordpressDateFormat() . ' ' . static::getWordpressTimeFormat();
     }
 
     /**
@@ -189,8 +187,8 @@ class DateTimeHelper
     {
         $o = clone $dateTime;
 
-        $o->setTimezone(self::getWordpressTimeZone());
+        $o->setTimezone(static::getWordpressTimeZone());
 
-        return $o->format(self::getWordpressDateTimeFormat());
+        return $o->format(static::getWordpressDateTimeFormat());
     }
 }

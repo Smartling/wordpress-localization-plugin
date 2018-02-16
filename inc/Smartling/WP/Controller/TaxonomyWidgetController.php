@@ -264,7 +264,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                         if (0 < count($submissions)) {
                             foreach ($submissions as $submission) {
                                 $this->getLogger()->info(vsprintf(
-                                                             self::$MSG_DOWNLOAD_ENQUEUE_ENTITY,
+                                                             static::$MSG_DOWNLOAD_ENQUEUE_ENTITY,
                                                              [
                                                                  $submission->getId(),
                                                                  $submission->getStatus(),

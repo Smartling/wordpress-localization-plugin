@@ -31,7 +31,7 @@ class WordpressContentTypeHelper
     private static function getDynamicReverseMap()
     {
         $map = [];
-        foreach (self::getContentTypeManager()->getRegisteredContentTypes() as $type) {
+        foreach (static::getContentTypeManager()->getRegisteredContentTypes() as $type) {
             $map[$type] = $type;
         }
 
@@ -46,14 +46,14 @@ class WordpressContentTypeHelper
      */
     public static function getReverseMap()
     {
-        self::checkRuntimeState();
+        static::checkRuntimeState();
 
         return array_merge(static::$internalTypes, static::getDynamicReverseMap());
     }
 
     private static function getDynamicLabelMap()
     {
-        $contentTypeManager = self::getContentTypeManager();
+        $contentTypeManager = static::getContentTypeManager();
 
         $map = [];
         foreach ($contentTypeManager->getRegisteredContentTypes() as $type) {
@@ -69,14 +69,14 @@ class WordpressContentTypeHelper
      */
     public static function getLabelMap()
     {
-        self::checkRuntimeState();
+        static::checkRuntimeState();
 
-        return self::getDynamicLabelMap();
+        return static::getDynamicLabelMap();
     }
 
     public static function getTypesRestrictedToBulkSubmit()
     {
-        return [self::getContentTypeManager()->getRestrictedForBulkSubmit()];
+        return [static::getContentTypeManager()->getRestrictedForBulkSubmit()];
     }
 
     /**
@@ -84,7 +84,7 @@ class WordpressContentTypeHelper
      */
     public static function getSupportedTaxonomyTypes()
     {
-        $descriptors = self::getContentTypeManager()->getDescriptorsByBaseType('taxonomy');
+        $descriptors = static::getContentTypeManager()->getDescriptorsByBaseType('taxonomy');
         $dynamicallyRegisteredTaxonomies = [];
         foreach ($descriptors as $descriptor) {
             $dynamicallyRegisteredTaxonomies[] = $descriptor->getSystemName();
@@ -108,11 +108,11 @@ class WordpressContentTypeHelper
      */
     public static function getLocalizedContentType($contentType)
     {
-        $map = self::getLabelMap();
+        $map = static::getLabelMap();
         if (array_key_exists($contentType, $map)) {
             return $map[$contentType];
         } else {
-            $mgr = self::getContentTypeManager();
+            $mgr = static::getContentTypeManager();
             $message = vsprintf('Content-type \'%s\' is not supported.', [$contentType]);
             /**
              * @var ContentTypeManager $mgr
@@ -139,7 +139,7 @@ class WordpressContentTypeHelper
         /**
          * @var ContentTypeAbstract $ctHandler
          */
-        $ctHandler = self::getContentTypeManager()->getHandler($contentType);
+        $ctHandler = static::getContentTypeManager()->getHandler($contentType);
 
         return $ctHandler->getBaseType();
     }
@@ -149,7 +149,7 @@ class WordpressContentTypeHelper
         /**
          * @var ContentTypeAbstract $ctHandler
          */
-        $ctHandler = self::getContentTypeManager()->getHandler($submission->getContentType());
+        $ctHandler = static::getContentTypeManager()->getHandler($submission->getContentType());
 
         if ($ctHandler instanceof ContentTypeAbstract) {
             $tail = '';

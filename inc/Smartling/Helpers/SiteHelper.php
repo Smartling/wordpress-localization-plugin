@@ -57,7 +57,6 @@ class SiteHelper
 
     /**
      * Fallback for direct run if Wordpress functionality is not reachable
-     *
      * @throws SmartlingDirectRunRuntimeException
      */
     private function directRunDetectedFallback()
@@ -71,7 +70,7 @@ class SiteHelper
 
     private function cacheSites()
     {
-        if (empty(self::$_siteCache)) {
+        if (empty(static::$_siteCache)) {
             $sites = get_sites(['number' => 1000]);
             foreach ($sites as $site) {
 
@@ -92,7 +91,7 @@ class SiteHelper
 
         $this->cacheSites();
 
-        return array_keys(self::$_siteCache);
+        return array_keys(static::$_siteCache);
     }
 
     /**
@@ -109,8 +108,8 @@ class SiteHelper
 
         $this->cacheSites();
 
-        if (isset(self::$_siteCache[$siteId])) {
-            return self::$_siteCache[$siteId];
+        if (isset(static::$_siteCache[$siteId])) {
+            return static::$_siteCache[$siteId];
         } else {
             $message = 'Invalid site_id value set.';
             throw new \InvalidArgumentException($message);
@@ -181,9 +180,9 @@ class SiteHelper
     {
         $this->cacheSites();
 
-        if (!in_array($blogId, self::$_flatBlogIdCache)) {
+        if (!in_array($blogId, static::$_flatBlogIdCache)) {
             $message = vsprintf('Invalid blogId value. Got %s, expected one of [%s]',
-                [$blogId, implode(',', static::$_flatBlogIdCache)]);
+                                [$blogId, implode(',', static::$_flatBlogIdCache)]);
 
             throw new BlogNotFoundException($message);
         }

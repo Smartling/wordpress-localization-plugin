@@ -167,12 +167,10 @@ abstract class EntityAbstract
                 $field = $this->getFieldNameByMethodName($method);
 
                 return $this->$field; // get the very first arg
-                break;
             default :
                 $template = 'Method \'%s\' does not exists in class \'%s\'';
                 $message = vsprintf($template, [$method, get_class($this)]);
                 throw new \BadMethodCallException($message);
-                break;
         }
     }
 

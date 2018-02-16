@@ -73,7 +73,7 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
     public function __set($key, $value)
     {
         if (array_key_exists($key, $this->stateFields)) {
-            $setter = 'set' . self::under_score2camelCase($key);
+            $setter = 'set' . static::under_score2camelCase($key);
             if (!$this->initialValuesFixed && !array_key_exists($key, $this->initialFields)) {
                 $this->initialFields[$key] = $value;
             }
@@ -93,7 +93,7 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
     public function __get($key)
     {
         if (array_key_exists($key, $this->stateFields)) {
-            $getter = 'get' . self::under_score2camelCase($key);
+            $getter = 'get' . static::under_score2camelCase($key);
 
             return $this->$getter();
         }
