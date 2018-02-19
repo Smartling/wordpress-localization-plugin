@@ -39,7 +39,7 @@ class Bootstrap
 
     public static $pluginVersion = 'undefined';
 
-    const static_CHECK_IDENTIFIER = 'smartling_static_check_disabled';
+    const SELF_CHECK_IDENTIFIER = 'smartling_static_check_disabled';
 
     const DISABLE_LOGGING = 'smartling_disable_logging';
 
@@ -286,7 +286,7 @@ class Bootstrap
                 Bootstrap::getLogger()->warning(var_export($loggingCustomization, true));
             }
 
-            SimpleStorageHelper::set(Bootstrap::static_CHECK_IDENTIFIER, $staticCheckDisabled);
+            SimpleStorageHelper::set(Bootstrap::SELF_CHECK_IDENTIFIER, $staticCheckDisabled);
             SimpleStorageHelper::set(Bootstrap::DISABLE_LOGGING, $disableLogging);
             SimpleStorageHelper::set(static::DISABLE_ACF_DB_LOOKUP, $disableACFDBLookup);
             SimpleStorageHelper::set(Bootstrap::DISABLE_ACF, $disableACF);
@@ -314,7 +314,7 @@ class Bootstrap
             echo json_encode($data);
         });
 
-        if (0 === (int)SimpleStorageHelper::get(static::static_CHECK_IDENTIFIER, 0)) {
+        if (0 === (int)SimpleStorageHelper::get(static::SELF_CHECK_IDENTIFIER, 0)) {
             $this->testCronSetup();
             $this->testUpdates();
         }

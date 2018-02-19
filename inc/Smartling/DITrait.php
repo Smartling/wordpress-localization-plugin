@@ -102,6 +102,7 @@ trait DITrait
 
                 if (is_array($items)) {
                     foreach ($items as $item) {
+                        $item = stripslashes($item);
                         $defId = vsprintf('logger.%s.%s', [$level, md5($item)]);
 
                         $di->register($defId, 'Smartling\MonologWrapper\Logger\LevelLogger')
