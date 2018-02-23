@@ -94,6 +94,7 @@ class QueryBuilder
 
     protected static $sqlFunctionNames = [
         'count',
+        'group_concat',
     ];
 
     /**

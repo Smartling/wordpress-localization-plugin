@@ -947,4 +947,33 @@ class SubmissionManager extends EntityManagerAbstract
 
         return $this->storeEntity($submission);
     }
+
+    public function getGroupedIdsByFileUri()
+    {
+        $this->getDbal()->query('SET group_concat_max_len=2048000');
+        $block = ConditionBlock::getConditionBlock();
+        $block->addCondition(
+            Condition::getCondition(
+                ConditionBuilder::CONDITION_SIGN_IN,
+                'status',
+                [
+                    SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
+                    SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
+                ]
+            )
+        );
+        $query = QueryBuilder::buildSelectQuery(
+            $this->getDbal()->completeTableName(SubmissionEntity::getTableName()),
+            [
+                ['file_uri' => 'fileUri'],
+                ['GROUP_CONCAT(`id`)' => 'ids'],
+            ],
+            $block,
+            [],
+            null,
+            ['file_uri']
+        );
+
+        return $this->getDbal()->fetch($query, ARRAY_A);
+    }
 }

@@ -8,7 +8,7 @@
     "symfony/dependency-injection" : "~2.8",
     "symfony/config" :               "~2.8",
     "symfony/yaml" :                 "~2.8",
-    "smartling/api-sdk-php" :        "~1.9",
+    "smartling/api-sdk-php" :        "~1.10",
     "smartling/jobs-sdk-php" :       "~1"
   },
   "repositories" : [

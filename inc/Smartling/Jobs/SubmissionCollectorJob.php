@@ -3,8 +3,6 @@
 namespace Smartling\Jobs;
 
 use Smartling\Queue\Queue;
-use Smartling\Submissions\SubmissionEntity;
-use Smartling\Submissions\SubmissionManager;
 
 /**
  * Class SubmissionCollectorJob
@@ -45,56 +43,27 @@ class SubmissionCollectorJob extends JobAbstract
     }
 
     /**
-     * @return array
+     * @param int $iterationLimit
      */
-    private function getFileList()
+    private function fixEmptyFileUriSubmissions($iterationLimit = 100)
     {
-        $this->getLogger()->info(vsprintf('Getting list of files...', []));
-        $entities = $this->getSubmissionManager()->find(
-            [
-                'status' => [
-                    SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
-                    SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
-                ],
-            ],
-            0,
-            ['file_uri']
-        );
+        $params = [
+            'file_uri' => '',
+        ];
 
-        $fileList = [];
-        if (0 < count($entities)) {
-            foreach ($entities as $entity) {
-                $fileList[] = $entity->getFileUri();
+        do {
+            $this->getLogger()
+                ->debug(vsprintf('Trying to get %d submissions with empty fileUri from database.', [$iterationLimit]));
+            $submissions = $this->getSubmissionManager()->find($params, $iterationLimit);
+            $this->getLogger()->debug(vsprintf('Found %d submissions with empty fileUri.', [count($submissions)]));
+            if (0 === count($submissions)) {
+                break;
             }
-        }
-
-        return $fileList;
-    }
-
-    /**
-     * @param $fileUri
-     *
-     * @return int[]
-     */
-    private function getSubmissionIdsByFileUri($fileUri)
-    {
-        $this->getLogger()->info(vsprintf('Getting list of files...', []));
-        $entities = $this->getSubmissionManager()->find(
-            [
-                'status'   => [
-                    SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
-                    SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
-                ],
-                'file_uri' => $fileUri,
-            ],
-            0
-        );
-        $ids = [];
-        $entities = $this->getSubmissionManager()->filterBrokenSubmissions($entities);
-        foreach ($entities as $entity) {
-            $ids[] = $entity->getId();
-        }
-        return $ids;
+            foreach ($submissions as $submission) {
+                $submission->getFileUri();
+            }
+            $this->getSubmissionManager()->storeSubmissions($submissions);
+        } while (0 < count($submissions));
     }
 
     /**
@@ -103,15 +72,17 @@ class SubmissionCollectorJob extends JobAbstract
     public function run()
     {
         $this->getLogger()->info('Started Submission Collector Job.');
-        $fileList = $this->getFileList();
-        $this->getLogger()->info(vsprintf('Submission Collector Job. Got %s files', [count($fileList)]));
-        if (0 < count($fileList)) {
-            foreach ($fileList as $fileUri) {
-                $submissionIds = $this->getSubmissionIdsByFileUri($fileUri);
-                $this->getQueue()->enqueue([$fileUri => $submissionIds], Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE);
-                $this->getLogger()->info(vsprintf('Submission Collector Job. Done file \'%s\'.', [$fileUri]));
+        $this->fixEmptyFileUriSubmissions();
+        $preparedList = $this->getSubmissionManager()->getGroupedIdsByFileUri();
+        if (0 < count($preparedList)) {
+            foreach ($preparedList as $_result) {
+                $fileUri = &$_result['fileUri'];
+                $idsList = explode(',', $_result['ids']);
+                array_walk($idsList, function (& $id) {
+                    $id = (int)$id;
+                });
+                $this->getQueue()->enqueue([$fileUri => $idsList], Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE);
             }
-
         }
         $this->getLogger()->info('Finished Submission Collector Job.');
     }
