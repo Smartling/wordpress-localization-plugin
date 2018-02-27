@@ -393,6 +393,16 @@ class Bootstrap
                 static::getLogger()->critical('Boot :: ' . $msg);
                 DiagnosticsHelper::addDiagnosticsMessage($msg, true);
             }
+
+            add_filter('wpmu_new_blog', function () {
+                // ignore basedOn value by setting it to 0
+                $_POST['blog']['basedon'] = 0;
+            }, 9);
+
+            add_filter('mlp_after_new_blog_fields', function () {
+                // remove basedOn select element from UI
+                echo '<script>(function($){$($(\'#mlp-base-site-id\').parents(\'tr\')).remove();})(jQuery);</script>';
+            }, 99);
         }
     }
 
