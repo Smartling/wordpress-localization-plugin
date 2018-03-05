@@ -477,13 +477,15 @@ trait SmartlingCoreUploadTrait
 
         try {
             if (1 === $submission->getIsCloned()) {
+                $this->prepareRelatedSubmissions($submission);
                 $xml = $this->getXMLFiltered($submission);
+                $submission->getFileUri();
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                 $submission = $this->getSubmissionManager()->storeEntity($submission);
                 $this->applyXML($submission, $xml);
+            } else {
+                $this->bulkSubmit($submission);
             }
-
-            $this->bulkSubmit($submission);
         } catch (EntityNotFoundException $e) {
             $this->getLogger()->error($e->getMessage());
             $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent content.');

@@ -93,11 +93,7 @@ class UploadJob extends JobAbstract
 
     private function processUploadQueue() {
         do {
-            $entities = $this->getSubmissionManager()->findBatchUidNotEmpty(
-                [
-                    'status'    => [SubmissionEntity::SUBMISSION_STATUS_NEW],
-                    'is_locked' => [0],
-                ], 1);
+            $entities = $this->getSubmissionManager()->findSubmissionsForUploadJob();
 
             if (0 === count($entities)) {
                 break;
@@ -137,9 +133,10 @@ class UploadJob extends JobAbstract
             $originalBlogId = $activeProfile->getOriginalBlogId()->getBlogId();
             $entities = $this->getSubmissionManager()->find(
                 [
-                    'status'    => [SubmissionEntity::SUBMISSION_STATUS_NEW],
-                    'is_locked' => [0],
-                    'batch_uid' => '',
+                    'status'         => [SubmissionEntity::SUBMISSION_STATUS_NEW],
+                    'is_locked'      => 0,
+                    'is_cloned'      => 0,
+                    'batch_uid'      => '',
                     'source_blog_id' => $originalBlogId,
                 ]
             );

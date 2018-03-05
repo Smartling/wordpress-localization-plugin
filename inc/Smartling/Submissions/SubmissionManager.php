@@ -544,6 +544,40 @@ class SubmissionManager extends EntityManagerAbstract
         return $this->fetchData($query);
     }
 
+
+    /**
+     * Looks for submissions with status = 'New' AND (is_cloned = 1 or batch_uid <> '') AND is_locked = 0
+     */
+    public function findSubmissionsForUploadJob()
+    {
+        $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
+
+        $blockBase = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
+        $blockBase->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'status', [SubmissionEntity::SUBMISSION_STATUS_NEW]));
+        $blockBase->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'is_locked', [0]));
+        $block->addConditionBlock($blockBase);
+
+        $blockAlt = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR);
+        $blockAlt->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'is_cloned', [1]));
+        $blockAlt->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_NOT_EQ, 'batch_uid', ['']));
+        $block->addConditionBlock($blockAlt);
+
+        $pageOptions = ['limit' => 1, 'page' => 1];
+
+        $query = QueryBuilder::buildSelectQuery(
+            $this->getDbal()->completeTableName(SubmissionEntity::getTableName()),
+            array_keys(SubmissionEntity::getFieldDefinitions()),
+            $block,
+            [],
+            $pageOptions
+        );
+
+        var_dump($query);
+
+        return $this->fetchData($query);
+
+    }
+
     /**
      * Search submission by params.
      *
