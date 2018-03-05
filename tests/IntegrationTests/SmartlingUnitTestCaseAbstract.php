@@ -5,6 +5,7 @@ namespace Smartling\Tests\IntegrationTests;
 use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
 use Smartling\ContentTypes\CustomPostType;
+use Smartling\ContentTypes\CustomTaxonomyType;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\TranslationHelper;
@@ -32,6 +33,28 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
             create_initial_post_types();
         }
 
+        if (!function_exists('create_initial_taxonomies')) {
+            require_once ABSPATH . '/wp-includes/taxonomy.php';
+            create_initial_taxonomies();
+        }
+
+        $taxonomiesToRegister = ['post_tag', 'category'];
+
+        foreach ($taxonomiesToRegister as $item) {
+            CustomTaxonomyType::registerCustomType($this->getContainer(), [
+                'taxonomy' => [
+                    'identifier' => $item,
+                    'widget'     => [
+                        'visible' => true,
+                    ],
+                    'visibility' => [
+                        'submissionBoard' => true,
+                        'bulkSubmit'      => true,
+                    ],
+                ],
+            ]);
+        }
+
         $postTypesToRegister = ['post', 'page', 'attachment'];
 
         foreach ($postTypesToRegister as $item) {
@@ -49,6 +72,8 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
                     ],
             ]);
         }
+
+
     }
 
     protected function ensureProfileExists()
