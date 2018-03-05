@@ -14,7 +14,6 @@ use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
-use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\XmlEncoder;
@@ -31,7 +30,8 @@ trait SmartlingCoreUploadTrait
     /**
      * @param $id
      *
-     * @return bool
+     * @return void
+     * @throws \Smartling\Exception\SmartlingDbException
      */
     public function sendForTranslationBySubmissionId($id)
     {
@@ -73,51 +73,11 @@ trait SmartlingCoreUploadTrait
     }
 
     /**
-     * @param SubmissionEntity $submission
-     */
-    public function cloneWithoutTranslation(SubmissionEntity $submission)
-    {
-        $this->getLogger()->debug(
-            vsprintf(
-                'Preparing to clone submission id = \'%s\' (blog = \'%s\', content = \'%s\', type = \'%s\').',
-                [
-                    $submission->getId(),
-                    $submission->getSourceBlogId(),
-                    $submission->getSourceId(),
-                    $submission->getContentType(),
-                ]
-            )
-        );
-
-        try {
-            if (null === $submission->getId()) {
-                $submission->getFileUri();
-            }
-
-            $submission = $this->renewContentHash($submission);
-            $submission = $this->prepareTargetEntity($submission, true);
-            $submission->setIsCloned(1);
-            $this->getSubmissionManager()->storeEntity($submission);
-        } catch (EntityNotFoundException $e) {
-            $this->getLogger()->error($e->getMessage());
-            $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent content.');
-        } catch (BlogNotFoundException $e) {
-            $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent blog.');
-            $this->handleBadBlogId($submission);
-        } catch (Exception $e) {
-            $this->getSubmissionManager()
-                ->setErrorMessage($submission, vsprintf('Error occurred: %s', [$e->getMessage()]));
-            $this->getLogger()->error($e->getMessage());
-        }
-    }
-
-    /**
      * Processes content by submission and returns only XML string for translation
      *
      * @param SubmissionEntity $submission
      *
      * @return string
-     * @throws NothingFoundForTranslationException
      */
     public function getXMLFiltered(SubmissionEntity $submission)
     {
@@ -401,7 +361,7 @@ trait SmartlingCoreUploadTrait
     }
 
     /**
-     * @param $batchUid
+     * @param     $batchUid
      * @param int $sourceBlogId
      */
     private function executeBatch($batchUid, $sourceBlogId)
@@ -426,7 +386,7 @@ trait SmartlingCoreUploadTrait
     /**
      * @param SubmissionEntity $submission
      *
-     * @return bool
+     * @return void
      */
     public function sendForTranslationBySubmission(SubmissionEntity $submission)
     {
