@@ -31,6 +31,112 @@ if (array_key_exists('profile', $_GET)) {
 
 $defaultFilter = Smartling\Bootstrap::getContainer()->getParameter('field.processor.default');
 
+?>
+<script>
+    (function ($) {
+        $(document).ready(function () {
+            var queryProxy = {
+                baseEndpoint: '<?= admin_url('admin-ajax.php') ?>?action=smartling_test_connection',
+                getProjectLocales: function (params, success) {
+                    $.post(this.baseEndpoint, params, function (response) {
+                        var cb = success;
+                        cb(response);
+                    });
+                },
+            };
+            var mkblockTag = function (tag, content, attributes) {
+                if (undefined === attributes) {
+                    attributes = {};
+                }
+                if (undefined === content) {
+                    content = '';
+                }
+                var attributesPart = '';
+                for (var v in attributes) {
+                    if (attributes.hasOwnProperty(v)) {
+                        attributesPart += ' ' + v + '="' + attributes[v] + '"';
+                    }
+                }
+                return '<' + tag + attributesPart + '>' + content + '</' + tag + '>';
+            };
+            var mkTag = function (tag, attributes) {
+                if (undefined === attributes) {
+                    attributes = {};
+                }
+                var attributesPart = '';
+                for (var v in attributes) {
+                    if (attributes.hasOwnProperty(v)) {
+                        attributesPart += ' ' + v + '="' + attributes[v] + '"';
+                    }
+                }
+                return '<' + tag + attributesPart + '/>';
+            };
+            var getSelect = function (selectName, options, value) {
+                var opts = [];
+                for (var e in options) {
+                    if (options.hasOwnProperty(e)) {
+                        var attributes = {
+                            value: e,
+                        }
+                        if (value === e) {
+                            attributes.selected = 'selected';
+                        }
+                        _option = mkblockTag('option', options[e], attributes);
+                        opts.push(_option);
+                    }
+                }
+                return mkblockTag('select', opts.join(''), {name: selectName});
+                ;
+            };
+
+            $('#testConnection').on('click', function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+
+                queryProxy.getProjectLocales({
+                    profileId: '<?= $profileId ?>',
+                    projectId: $('#project-id').val(),
+                    userIdent: $('#userIdentifier').val(),
+                    tokenSecret: $('#secretKey').val()
+                }, function (r) {
+                    var r = JSON.parse(r);
+                    if (200 === r.status && undefined !== r.locales) {
+
+                        var inputs = $('#target-locale-block input[type=text]');
+                        for (var i = 0; i < inputs.length; i++) {
+                            var el = inputs[i];
+                            var _name = $(el).attr('name');
+                            var _value = $(el).val();
+                            var select = getSelect(_name, r.locales, _value);
+                            var place = $(el).parent();
+                            place.html(select);
+                        }
+
+                    } else {
+
+                        var selects = $('#target-locale-block select');
+                        if (0 < selects.length) {
+                            for (var i = 0; i < selects.length; i++) {
+                                var el = selects[i];
+                                var _name = $(el).attr('name');
+                                var _value = $(el).val();
+                                var input = mkTag('input', {type: 'text', name: _name, value: _value});
+                                var place = $(el).parent();
+                                place.html(input);
+                            }
+                        }
+
+                        alert('Test failed');
+                    }
+
+                });
+                return false;
+            });
+        });
+    })(jQuery);
+</script>
+<?php
+
 if (0 === $profileId) {
     $profile = $settingsManager->createProfile(
         [
@@ -299,6 +405,7 @@ if (0 === $profileId) {
 
                     ?>
                     <?= HtmlTagGeneratorHelper::tag('input', '', $tokenOptions); ?>
+                    <input type="button" id="testConnection" value="Test Connection"/>
                     <br>
                     <?php if ($key): ?>
                         <small><?= __('Current Key', $domain) ?>: <?= substr($key, 0, -10) . '**********' ?></small>
