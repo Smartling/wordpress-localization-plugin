@@ -111,6 +111,7 @@ $defaultFilter = Smartling\Bootstrap::getContainer()->getParameter('field.proces
                             var place = $(el).parent();
                             place.html(select);
                         }
+                        alert('Test successful.');
 
                     } else {
 
@@ -126,7 +127,7 @@ $defaultFilter = Smartling\Bootstrap::getContainer()->getParameter('field.proces
                             }
                         }
 
-                        alert('Test failed');
+                        alert('Test failed.');
                     }
 
                 });
