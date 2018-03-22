@@ -2,9 +2,8 @@
 
 namespace Smartling\Helpers\MetaFieldProcessor;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
-use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Extensions\Acf\AcfTypeDetector;
 use Smartling\Processors\SmartlingFactoryAbstract;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPHookInterface;
@@ -19,6 +18,27 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
      * @var array
      */
     private $collection = [];
+
+    /**
+     * @var AcfTypeDetector
+     */
+    private $acfTypeDetector;
+
+    /**
+     * @return AcfTypeDetector
+     */
+    public function getAcfTypeDetector()
+    {
+        return $this->acfTypeDetector;
+    }
+
+    /**
+     * @param mixed $acfTypeDetector
+     */
+    public function setAcfTypeDetector(AcfTypeDetector $acfTypeDetector)
+    {
+        $this->acfTypeDetector = $acfTypeDetector;
+    }
 
     protected function setCollection(array $collection = [])
     {
@@ -83,9 +103,8 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
 
     public function handlePostTranslationFields($fieldName, $fieldValue, SubmissionEntity $submission)
     {
-
         $processor = $this->getProcessor($fieldName);
-
+        $processor = $this->tryGetAcfProcessor($fieldName, $submission, $processor);
         $result = $processor->processFieldPostTranslation($submission, $fieldName, $fieldValue);
 
         $this->getLogger()->debug(
@@ -171,6 +190,18 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
         }
     }
 
+    private function tryGetAcfProcessor($fieldName, SubmissionEntity $submission, MetaFieldProcessorInterface $processor)
+    {
+        if ('Smartling\Helpers\MetaFieldProcessor\DefaultMetaFieldProcessor' === get_class($processor)) {
+            $_processor = $this->getAcfTypeDetector()->getProcessor($fieldName, $submission);
+            if (false !== $_processor) {
+                return $_processor;
+            }
+        }
+
+        return $processor;
+    }
+
     /**
      * @param SubmissionEntity $submission
      * @param string           $fieldName
@@ -182,7 +213,7 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
     public function handlePreTranslationFields(SubmissionEntity $submission, $fieldName, $fieldValue, array $collectedValues = [])
     {
         $processor = $this->getProcessor($fieldName);
-
+        $processor = $this->tryGetAcfProcessor($fieldName, $submission, $processor);
         $result = $processor->processFieldPreTranslation($submission, $fieldName, $fieldValue, $collectedValues);
 
         if ($processor instanceof DefaultMetaFieldProcessor) {

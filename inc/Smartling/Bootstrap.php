@@ -515,7 +515,8 @@ class Bootstrap
                 }
             });
 
-            add_action('acf/init', function () {
+            add_action($action, function () {
+
                 /**
                  * Initializing ACF and ACF Option Pages support.
                  */

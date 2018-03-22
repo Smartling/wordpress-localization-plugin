@@ -25,6 +25,8 @@ class AcfDynamicSupport
      */
     private $logger;
 
+    public static $acfReverseDefinitionAction = [];
+
     /**
      * @var EntityHelper
      */
@@ -100,18 +102,6 @@ class AcfDynamicSupport
     }
 
     /**
-     * Metadata filter filter handler
-     *
-     * @param array $filters
-     *
-     * @return array
-     */
-    public function filterSetup(array $filters)
-    {
-        return array_merge($filters, $this->filters);
-    }
-
-    /**
      * @return array
      */
     private function getBlogs()
@@ -182,6 +172,10 @@ class AcfDynamicSupport
                                         'name'        => $field['name'],
                                         'parent'      => $field['parent'],
                                     ];
+
+                                    if ('clone' === $field['type']) {
+                                        $defs[$fieldKey]['clone'] = $field['clone'];
+                                    }
                                 }
                             }
                         }
@@ -344,6 +338,11 @@ class AcfDynamicSupport
                             'name'        => $field['name'],
                             'parent'      => $field['parent'],
                         ];
+
+                        if ('clone' === $field['type']) {
+                            $defs[$field['key']]['clone'] = $field['clone'];
+                        }
+
                     }
                 }
             }
@@ -440,7 +439,6 @@ class AcfDynamicSupport
             $this->definitions = $definitions;
             $this->sortFields();
             $this->prepareFilters();
-            add_filter(ExportedAPI::FILTER_SMARTLING_REGISTER_FIELD_FILTER, [$this, 'filterSetup'], 1);
         } else {
             $this->getLogger()->debug('ACF not detected.');
         }
@@ -456,41 +454,34 @@ class AcfDynamicSupport
     {
         $rules = [];
 
-
         if (0 < count($this->rules['copy'])) {
             foreach ($this->rules['copy'] as $key) {
-                $rules[] = [
-                    'pattern' => vsprintf('^meta\/%s$', [$this->buildFullFieldName($key)]),
-                    'action'  => 'copy',
+                $rules[$key] = [
+                    'action' => 'copy',
                 ];
-
             }
         }
 
         if (0 < count($this->rules['skip'])) {
             foreach ($this->rules['skip'] as $key) {
-                $rules[] = [
-                    'pattern' => vsprintf('^meta\/%s$', [$this->buildFullFieldName($key)]),
-                    'action'  => 'skip',
+                $rules[$key] = [
+                    'action' => 'skip',
                 ];
-
             }
         }
 
         if (0 < count($this->rules['localize'])) {
             foreach ($this->rules['localize'] as $key) {
-                $rules[] = [
-                    'pattern'       => vsprintf('^meta\/%s$', [$this->buildFullFieldName($key)]),
+                $rules[$key] = [
                     'action'        => 'localize',
                     'value'         => 'reference',
                     'serialization' => 'none',
                     'type'          => $this->getReferencedTypeByKey($key),
                 ];
-
             }
         }
 
-        $this->filters = $rules;
+        self::$acfReverseDefinitionAction = $rules;
     }
 
     private function getFieldTypeByKey($key)
@@ -524,18 +515,6 @@ class AcfDynamicSupport
         }
 
         return $value;
-    }
-
-    private function buildFullFieldName($fieldId)
-    {
-        $definition = &$this->definitions[$fieldId];
-        $pattern = '|field_[0-9A-F]{12,12}|ius';
-        $prefix = '';
-        if (array_key_exists('parent', $definition) && preg_match($pattern, $definition['parent'])) {
-            $prefix = $this->buildFullFieldName($definition['parent']) . '_\d+_';
-        }
-
-        return $prefix . $definition['name'];
     }
 
     private function sortFields()
@@ -583,6 +562,9 @@ class AcfDynamicSupport
                 case 'repeater':
                 case 'message':
                 case 'tab':
+                case 'clone':
+                case 'group':
+                case 'link':
                     break;
                 default:
                     $this->getLogger()->debug(vsprintf('Got unknown type: %s', [$definition['type']]));

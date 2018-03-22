@@ -187,6 +187,7 @@ services:
     class: Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager
     calls:
       - [ "setDefaultHandler", [ "@default.meta-field-processor" ] ]
+      - [ "setAcfTypeDetector", [ "@acf.type.detector" ] ]
 
   service.side-removal-handler:
     class: Smartling\Services\BlogRemovalHandler
@@ -227,3 +228,9 @@ services:
     arguments:
     - "@content.helper"
     - "@fields-filter.helper"
+
+  acf.type.detector:
+    class: Smartling\Extensions\Acf\AcfTypeDetector
+    arguments:
+      - "@content.helper"
+      - "@site.cache"

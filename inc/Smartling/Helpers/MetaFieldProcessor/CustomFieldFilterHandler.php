@@ -8,24 +8,41 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class CustomFieldFilterHandler
 {
+    private static function getLogger()
+    {
+        return MonologWrapper::getLogger(__CLASS__);
+    }
+
     /**
      * @param ContainerBuilder $di
      * @param array            $config
      */
     public static function registerFilter(ContainerBuilder $di, array $config)
     {
-        // $di->get('logger')->debug(vsprintf('Registering filter for config: %s',[var_export($config, true)]));
+        self::getLogger()->debug(vsprintf('Registering filter for config: %s', [var_export($config, true)]));
         $parser = new FieldFilterConfigParser($config, $di);
-        // $di->get('logger')->debug(vsprintf('Validating filter...',[]));
+        self::getLogger()->debug(vsprintf('Validating filter...', []));
         $isValid = $parser->getValidFiler();
         if (true === $isValid) {
             $filter = $parser->getFilter();
-            // $di->get('logger')->debug(vsprintf('Adding filter for config: %s',[var_export($config, true)]));
+            self::getLogger()->debug(vsprintf('Adding filter for config: %s', [var_export($config, true)]));
             $di->get('meta-field.processor.manager')->registerProcessor($filter);
         } else {
-            $logger = MonologWrapper::getLogger(get_called_class());
-            $logger->warning(vsprintf('Filter isn\'t valid for config: %s',[var_export($config, true)]));
-            $logger->warning(vsprintf('Filter isn\'t added.',[]));
+            self::getLogger()->warning
+            (vsprintf('Filter isn\'t added. Filter isn\'t valid for config: %s', [var_export($config, true)])
+            );
         }
     }
+
+    public static function getProcessor(ContainerBuilder $di, array $config)
+    {
+        $parser = new FieldFilterConfigParser($config, $di);
+        self::getLogger()->warning(vsprintf('looking for processor for config: %s', [var_export($config, true)]));
+        if (true === $isValid = $parser->getValidFiler()) {
+            return $parser->getFilter();
+        }
+
+        return false;
+    }
+
 }
