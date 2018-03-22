@@ -572,8 +572,6 @@ class SubmissionManager extends EntityManagerAbstract
             $pageOptions
         );
 
-        var_dump($query);
-
         return $this->fetchData($query);
 
     }
