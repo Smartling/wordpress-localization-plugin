@@ -58,6 +58,11 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 1.7.6 =
+* Fixed possible issue when new category may be not assigned to translation after download.
+* Improved support of ACF plugin. Added support of fields with `clone` type.
+* Added `Test Connection` button on Configuration profile creation (edit) screen.
+
 = 1.7.5 =
 * Moved to new version of Guzzle library.
 
