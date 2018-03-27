@@ -7,55 +7,34 @@ use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 
 class TaxonomyTest extends SmartlingUnitTestCaseAbstract
 {
-    /**
-     * Creates taxonomy term.
-     *
-     * @param $name
-     * @return mixed
-     * @throws \Smartling\Exception\SmartlingDbException
-     */
-    protected function createTerm($name) {
-        $categoryResult = wp_insert_term($name, 'category');
-        $categoryId = $categoryResult['term_id'];
-
-        return $categoryId;
-    }
 
     /**
      * Makes relation between terms.
      *
-     * @param $wpdb
      * @param $parentTermId
      * @param $childTermId
      */
-    protected function makeRelationBetweenTerms($wpdb, $parentTermId, $childTermId) {
+    protected function makeRelationBetweenTerms($parentTermId, $childTermId)
+    {
+        global $wpdb;
         $queryTemplate = "UPDATE `%sterm_taxonomy` SET `parent` = '%s', `count` = '1' WHERE `term_taxonomy_id` = '%s'";
         $query = vsprintf($queryTemplate, [$wpdb->base_prefix, $parentTermId, $childTermId]);
         $wpdb->query($query);
     }
 
-    protected function addTaxonomyToPost($wpdb, $postId, $termId) {
-        $queryTemplate = "REPLACE INTO `%sterm_relationships` VALUES('%s', '%s', 0)";
-        $query = vsprintf($queryTemplate, [$wpdb->base_prefix, $postId, $termId]);
-        $wpdb->query($query);
-    }
-
     /**
      * Submit post with attached category which has parent category.
-     *
      * Attached only child category but not parent.
      * Expected result: 3 not cloned submissions in "Completed" state
      * (1 post, 2 categories).
      */
     public function testSubmitPostWithCategoryWhichHasParentCategory()
     {
-        global $wpdb;
-
         $rootCategoryId = $this->createTerm('Category A');
         $childCategoryId = $this->createTerm('Category B');
         $postId = $this->createPost();
-        $this->makeRelationBetweenTerms($wpdb, $rootCategoryId, $childCategoryId);
-        $this->addTaxonomyToPost($wpdb, $postId, $childCategoryId);
+        $this->makeRelationBetweenTerms($rootCategoryId, $childCategoryId);
+        $this->addTaxonomyToPost($postId, $childCategoryId);
 
         $translationHelper = $this->getTranslationHelper();
         $submission = $translationHelper->prepareSubmission('post', 1, $postId, 2);
@@ -70,8 +49,8 @@ class TaxonomyTest extends SmartlingUnitTestCaseAbstract
         $submissions = $this->getSubmissionManager()->find(
             [
                 'content_type' => 'category',
-                'status' => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
-                'is_cloned' => 0,
+                'status'       => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
+                'is_cloned'    => 0,
             ]
         );
 
@@ -80,7 +59,6 @@ class TaxonomyTest extends SmartlingUnitTestCaseAbstract
 
     /**
      * Submit cloned post with attached category which has parent category.
-     *
      * Attached only child category but not parent.
      * Expected result: 3 cloned submissions in "Completed" state
      * (1 post, 2 categories).
@@ -92,8 +70,8 @@ class TaxonomyTest extends SmartlingUnitTestCaseAbstract
         $rootCategoryId = $this->createTerm('Category A');
         $childCategoryId = $this->createTerm('Category B');
         $postId = $this->createPost();
-        $this->makeRelationBetweenTerms($wpdb, $rootCategoryId, $childCategoryId);
-        $this->addTaxonomyToPost($wpdb, $postId, $childCategoryId);
+        $this->makeRelationBetweenTerms($rootCategoryId, $childCategoryId);
+        $this->addTaxonomyToPost($postId, $childCategoryId);
 
         $translationHelper = $this->getTranslationHelper();
         $submission = $translationHelper->prepareSubmission('post', 1, $postId, 2, true);
@@ -113,8 +91,8 @@ class TaxonomyTest extends SmartlingUnitTestCaseAbstract
                 // TODO: fix SubmissionEntity::getCompletionPercentage() and
                 // fix this test then (replace SUBMISSION_STATUS_COMPLETED with
                 // SUBMISSION_STATUS_IN_PROGRESS).
-                'status' => SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
-                'is_cloned' => 1,
+                'status'       => SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
+                'is_cloned'    => 1,
             ]
         );
 

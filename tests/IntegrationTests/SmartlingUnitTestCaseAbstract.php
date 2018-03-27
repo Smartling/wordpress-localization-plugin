@@ -410,4 +410,19 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
 
         return $postId;
     }
+
+    protected function createTerm($name, $taxonomy = 'category')
+    {
+        $categoryResult = wp_insert_term($name, $taxonomy);
+        $categoryId = $categoryResult['term_id'];
+
+        return $categoryId;
+    }
+
+    protected function addTaxonomyToPost($postId, $termId) {
+        global $wpdb;
+        $queryTemplate = "REPLACE INTO `%sterm_relationships` VALUES('%s', '%s', 0)";
+        $query = vsprintf($queryTemplate, [$wpdb->base_prefix, $postId, $termId]);
+        $wpdb->query($query);
+    }
 }
