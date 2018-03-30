@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-#####################################################################################################################################
-#    Script allows to bring up default development-environment for                                                                  #
-# smartling-connector plugin.                                                                                                       #
-#                                                                                                                                   #
-# Usage:                                                                                                                            #
-#  curl -s https://raw.githubusercontent.com/Smartling/wordpress-localization-plugin/master/init.sh | bash -s --target-dir=<dir>    #
-# e.g.:                                                                                                                             #
-#  curl -s https://raw.githubusercontent.com/Smartling/wordpress-localization-plugin/master/init.sh | bash -s --target-dir=/var/www #
-#                                                                                                                                   #
-#####################################################################################################################################
+#############################################################################################################################################
+#    Script allows to bring up default development-environment for                                                                          #
+# smartling-connector plugin.                                                                                                               #
+#                                                                                                                                           #
+# Usage:                                                                                                                                    #
+#  curl -s https://raw.githubusercontent.com/Smartling/wordpress-localization-plugin/master/init.sh | bash -s --target-dir=<dir>            #
+# e.g.:                                                                                                                                     #
+#  curl -s https://raw.githubusercontent.com/Smartling/wordpress-localization-plugin/master/init.sh | bash /dev/stdin --target-dir=/var/www #
+#                                                                                                                                           #
+#############################################################################################################################################
 
 export CUR_DIR=$(pwd)
 
@@ -58,19 +58,14 @@ export WP_INSTALLATION_DOMAIN="mlp.wp.dev.local"
 
 download_wp_cli() {
     INSTALLPATH=$1
-
     if [ ! -d "$INSTALLPATH" ]; then
         mkdir -p "$INSTALLPATH"
     fi
-
     cd $INSTALLPATH
-
     if [ -f "wp-cli.phar" ]; then
         rm wp-cli.phar
     fi
-
     WPCLI_DIST="https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar"
-
     curl -O $WPCLI_DIST
     chmod +x ./wp-cli.phar
 }
@@ -109,12 +104,10 @@ install_wordpress() {
 
 install_composer() {
     PLUGIN_DIR=$1
-
     COMPOSER_INSTALL_DIR="$PLUGIN_DIR/inc/third-party/bin"
     if [ ! -d "$COMPOSER_INSTALL_DIR" ]; then
         mkdir -p "$COMPOSER_INSTALL_DIR"
     fi
-
     php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
     php composer-setup.php --install-dir="$COMPOSER_INSTALL_DIR" --filename=composer --version=1.0.0
     php -r "unlink('composer-setup.php');"
@@ -126,15 +119,11 @@ install_composer() {
 install_connector() {
     CONNECTOR_DIR_NAME="smarting-connector-dev-test"
     CONNECTOR_DIR="$WP_INSTALL_DIR/wp-content/plugins/$CONNECTOR_DIR_NAME"
-
     if [ -d "$CONNECTOR_DIR" ]; then
         rm -rf "$CONNECTOR_DIR"
     fi
-
     mkdir -p $CONNECTOR_DIR
-
     git clone https://github.com/Smartling/wordpress-localization-plugin.git $CONNECTOR_DIR
-
     install_composer $CONNECTOR_DIR
 }
 
