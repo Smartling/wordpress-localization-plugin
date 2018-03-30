@@ -117,7 +117,7 @@ install_composer() {
 }
 
 install_connector() {
-    CONNECTOR_DIR_NAME="smarting-connector-dev-test"
+    CONNECTOR_DIR_NAME="smarting-connector-dev"
     CONNECTOR_DIR="$WP_INSTALL_DIR/wp-content/plugins/$CONNECTOR_DIR_NAME"
     if [ -d "$CONNECTOR_DIR" ]; then
         rm -rf "$CONNECTOR_DIR"
