@@ -4,7 +4,7 @@
 # smartling-connector plugin.                                                                                                               #
 #                                                                                                                                           #
 # Usage:                                                                                                                                    #
-#  curl -s https://raw.githubusercontent.com/Smartling/wordpress-localization-plugin/master/init.sh | bash -s --target-dir=<dir>            #
+#  curl -s https://raw.githubusercontent.com/Smartling/wordpress-localization-plugin/master/init.sh | bash /dev/stdin --target-dir=<dir>    #
 # e.g.:                                                                                                                                     #
 #  curl -s https://raw.githubusercontent.com/Smartling/wordpress-localization-plugin/master/init.sh | bash /dev/stdin --target-dir=/var/www #
 #                                                                                                                                           #
