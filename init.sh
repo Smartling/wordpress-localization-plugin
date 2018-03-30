@@ -1,62 +1,142 @@
 #!/usr/bin/env bash
-###############################################################################
-#                                                                             #
-#                                                                             #
-#                                                                             #
-#                                                                             #
-#                                                                             #
-###############################################################################
+#####################################################################################################################################
+#    Script allows to bring up default development-environment for                                                                  #
+# smartling-connector plugin.                                                                                                       #
+#                                                                                                                                   #
+# Usage:                                                                                                                            #
+#  curl -s https://raw.githubusercontent.com/Smartling/wordpress-localization-plugin/master/init.sh | bash -s --target-dir=<dir>    #
+# e.g.:                                                                                                                             #
+#  curl -s https://raw.githubusercontent.com/Smartling/wordpress-localization-plugin/master/init.sh | bash -s --target-dir=/var/www #
+#                                                                                                                                   #
+#####################################################################################################################################
 
-# Understanding pathes
 export CUR_DIR=$(pwd)
-SCRIPT_DIR=$(dirname $0)
-cd $SCRIPT_DIR
-export SCRIPT_DIR=$(pwd)
-cd "$SCRIPT_DIR/../../../"
-export WP_DIR=$(pwd)
 
-cd $SCRIPT_DIR
+logit () {
+    DATE=$(date +"[%Y-%m-%d %H:%M:%S]")
+    echo -n "$DATE "
+    case $1 in
+        info) echo -n '[INFO] '
+            ;;
+        warn) echo -n '[WARNING] '
+            ;;
+        err)  echo -n '[ERROR] '
+            ;;
+        *) echo $1
+            ;;
+    esac
+    echo $2
+}
 
-#### wget -O - https://raw.github.com/luismartingil/commands/master/101_remote2local_wireshark.sh | bash
-#### curl -s http://server/path/script.sh | bash -s arg1 arg2
+usage () {
+    echo -e "\n\n"
+    echo -e "Usage:\n$0 --target-dir=<target directory>"
+    echo -e "\n\nWhere:"
+    echo -e "\t--target-dir\t\t- Path to directory where wordpress should be deployed"
+    exit 1
+}
 
+set -- $(getopt -n$0 -u --longoptions="target-dir: " "h" "$@") || usage
+while [ $# -gt 0 ];do
+    case "$1" in
+        --target-dir) export WP_INSTALL_DIR="$2";shift;;
+        --)     shift;break;;
+        -*)     usage;break;;
+        *)      break;;
+    esac
+    shift
+done
 
-mkdir -p "$SCRIPT_DIR/inc/third-party/bin"
+validateParams () {
+    [ -z "$WP_INSTALL_DIR" ] && { logit err "--target-dir should be set"; usage; }
+}
 
-cd "$SCRIPT_DIR/inc/third-party/bin"
-COMPOSER_VER="1.0.0"
-COMPOSER_BIN="$(pwd)/composer"
+validateParams
 
-php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-php composer-setup.php --filename="composer" --version="$COMPOSER_VER"
-php -r "unlink('composer-setup.php');"
+# Installation settings
+export WP_INSTALLATION_DOMAIN="mlp.wp.dev.local"
 
-cd $SCRIPT_DIR
+download_wp_cli() {
+    INSTALLPATH=$1
 
+    if [ ! -d "$INSTALLPATH" ]; then
+        mkdir -p "$INSTALLPATH"
+    fi
 
-WPCLI_DIST="https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar"
+    cd $INSTALLPATH
 
-cd $WP_DIR
+    if [ -f "wp-cli.phar" ]; then
+        rm wp-cli.phar
+    fi
 
-echo Downloading wp-cli...
-curl -O $WPCLI_DIST
-chmod +x ./wp-cli.phar
-WP_CLI="$WP_DIR/wp-cli.phar"
+    WPCLI_DIST="https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar"
 
-echo Downloadind Wordpress distribution...
-$WP_CLI core download
-echo Configuring Wordpress...
-$WP_CLI core config --dbname=wp --dbuser=wp --dbpass=wp --dbhost=localhost
-echo Installing Wordpress...
-$WP_CLI core install --url=mlp.wp.dev.local --title="Dev installation" --admin_user=wp --admin_password=wp --admin_email=no@ema.il
-echo Enabling network mode...
-$WP_CLI core multisite-convert
-echo Creating sites...
-$WP_CLI site create --slug=es --title="Spanish site" --email=es@no.mail
-$WP_CLI site create --slug=fr --title="French site" --email=fr@no.mail
-$WP_CLI site create --slug=ru --title="Russian site" --email=ru@no.mail
-$WP_CLI site create --slug=ua --title="Ukrainian site" --email=ua@no.mail
-echo Installing plugins...
-$WP_CLI plugin install multilingual-press advanced-custom-fields wordpress-seo debug cmb2 debug-bar debug-bar-extender duplicate-post edit-flow image-widget stream wordpress-importer smartling-connector
-echo Activating plugins...
-$WP_CLI plugin activate multilingual-press advanced-custom-fields wordpress-seo debug cmb2 debug-bar debug-bar-extender duplicate-post edit-flow image-widget stream wordpress-importer --network
+    curl -O $WPCLI_DIST
+    chmod +x ./wp-cli.phar
+}
+
+install_wordpress() {
+    download_wp_cli $WP_INSTALL_DIR
+    WPCLI="$WP_INSTALL_DIR/wp-cli.phar"
+    URL=mlp.wp.dev.local
+    $WPCLI core download
+    $WPCLI core config --dbname=wp --dbuser=wp --dbpass=wp --dbhost=localhost
+    $WPCLI core install --url=$URL --title="Dev installation" --admin_user=wp --admin_password=wp --admin_email=no@ema.il --skip-email
+
+    $WPCLI option update siteurl "http://$URL"
+    $WPCLI option update home "http://$URL"
+
+    $WPCLI core multisite-convert
+    echo Creating sites...
+    # List of created sites is separated by ',' char
+    # Definition of each site has 3 fields: Site title, Smartling locale, Site slug all fields are separated by ':' char
+    export SITES="Spanish Site:es:es,French Site:fr-FR:fr,Russian Site:ru-RU:ru,Ukrainian Site:uk-UA:ua"
+    PREV_IFS=$IFS
+    IFS=',' read -a array <<< "$SITES"
+    for site in "${array[@]}"
+    do
+        $WPCLI site create --slug="${site##*\:}" --title="${site%%\:*}" --email=test@wp.org
+    done
+    DEPENDENCIES="multilingual-press;advanced-custom-fields;wordpress-seo"
+    IFS=';' read -a array <<< "$DEPENDENCIES"
+    for plugin_name in "${array[@]}"
+    do
+        $WPCLI plugin install $plugin_name
+        $WPCLI plugin activate $plugin_name --network
+    done
+    IFS=$PREV_IFS
+}
+
+install_composer() {
+    PLUGIN_DIR=$1
+
+    COMPOSER_INSTALL_DIR="$PLUGIN_DIR/inc/third-party/bin"
+    if [ ! -d "$COMPOSER_INSTALL_DIR" ]; then
+        mkdir -p "$COMPOSER_INSTALL_DIR"
+    fi
+
+    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+    php composer-setup.php --install-dir="$COMPOSER_INSTALL_DIR" --filename=composer --version=1.0.0
+    php -r "unlink('composer-setup.php');"
+    export COMPOSER_BIN="$COMPOSER_INSTALL_DIR/composer"
+    cd $PLUGIN_DIR
+    $COMPOSER_BIN update
+}
+
+install_connector() {
+    CONNECTOR_DIR_NAME="smarting-connector-dev-test"
+    CONNECTOR_DIR="$WP_INSTALL_DIR/wp-content/plugins/$CONNECTOR_DIR_NAME"
+
+    if [ -d "$CONNECTOR_DIR" ]; then
+        rm -rf "$CONNECTOR_DIR"
+    fi
+
+    mkdir -p $CONNECTOR_DIR
+
+    git clone https://github.com/Smartling/wordpress-localization-plugin.git $CONNECTOR_DIR
+
+    install_composer $CONNECTOR_DIR
+}
+
+install_wordpress
+install_connector
