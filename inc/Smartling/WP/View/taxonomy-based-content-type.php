@@ -72,7 +72,7 @@ if (!empty($locales)) {
             }
 
             $value = false;
-
+            $enabled = false;
             $status = '';
             $submission = null;
             $statusValue = null;
@@ -91,6 +91,7 @@ if (!empty($locales)) {
                         $percent = $item->getCompletionPercentage();
                         $status = $item->getStatusColor();
                         $editUrl = \Smartling\Helpers\WordpressContentTypeHelper::getEditUrl($item);
+                        $enabled = 1 === $item->getIsCloned() || 1 === $item->getIsLocked() ? false : true;
                         break;
                     }
                 }
@@ -98,7 +99,7 @@ if (!empty($locales)) {
             ?>
             <div class="smtPostWidget-rowWrapper" style="display: inline-block; width: 100%;">
                 <div class="smtPostWidget-row">
-                    <?= WPAbstract::localeSelectionCheckboxBlock($nameKey, $locale->getBlogId(), $locale->getLabel(), $value, true, $editUrl) ?>
+                    <?= WPAbstract::localeSelectionCheckboxBlock($nameKey, $locale->getBlogId(), $locale->getLabel(), $value, $enabled, $editUrl) ?>
                 </div>
                 <div class="smtPostWidget-progress" style="left: 15px;">
                     <?php if ($value) { ?>

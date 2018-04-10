@@ -56,7 +56,7 @@ if (!empty($locales)) {
             $submission = null;
             $statusValue = null;
             $id = null;
-            $enabled = true;
+            $enabled = false;
             if (null !== $data['submissions']) {
                 foreach ($data['submissions'] as $item) {
 
