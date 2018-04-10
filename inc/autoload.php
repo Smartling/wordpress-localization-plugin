@@ -26,22 +26,5 @@ if ( file_exists( $composerAutoLoadScriptFile ) && is_readable( $composerAutoLoa
 		), 1 );
 }
 
-/**
- * To switch classes that are using in real Wordpress or in unit tests
- */
-defined( 'SMARTLING_CLI_EXECUTION' )
-|| define( 'SMARTLING_CLI_EXECUTION', ! defined( 'ABSPATH' ) );
-
-/**
- * Debug is always on for UnitTests
- */
-defined( 'SMARTLING_DEBUG' )
-|| define( 'SMARTLING_DEBUG', SMARTLING_CLI_EXECUTION );
-
-
-if ( defined( 'SMARTLING_DEBUG' ) && SMARTLING_DEBUG === true ) {
-	error_reporting( E_ALL ^ E_STRICT );
-	ini_set( 'display_errors', 'on' );
-}
 
 

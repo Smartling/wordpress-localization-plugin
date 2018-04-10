@@ -22,10 +22,11 @@ if (!defined('WPINC')) {
     die;
 }
 
+defined('SMARTLING_DEBUG') || file_exists(__DIR__ . '/smartling.debug') && define('SMARTLING_DEBUG', true);
 /**
  * Execute everything only on admin pages or while running cron tasks
  */
-if (is_admin() || (defined('DOING_CRON') && true === DOING_CRON)) {
+if (defined('SMARTLING_DEBUG') || is_admin() || (defined('DOING_CRON') && true === DOING_CRON)) {
 
     if (!class_exists('Smartling_Version_Check')) {
         /**

@@ -105,7 +105,8 @@ class Bootstrap
         $container->setParameter('plugin.upload', SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . 'upload');
 
         $pluginUrl = '';
-        if (defined('SMARTLING_CLI_EXECUTION') && false === SMARTLING_CLI_EXECUTION) {
+
+        if (function_exists('plugin_dir_url')) {
             $pluginUrl = plugin_dir_url(SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . '..');
         }
 
@@ -172,12 +173,11 @@ class Bootstrap
         }
 
         try {
-            if (defined('SMARTLING_CLI_EXECUTION') && SMARTLING_CLI_EXECUTION === false) {
                 $this->test();
                 $this->initializeContentTypes();
                 $this->registerHooks();
                 $this->run();
-            }
+
         } catch (Exception $e) {
             $message = "Unhandled exception caught. Disabling plugin.\n";
             $message .= "Message: '" . $e->getMessage() . "'\n";

@@ -166,7 +166,13 @@ installWordpress () {
     done
 }
 
+makeDebugFlagFile() {
+    cd "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector"
+    touch "smartling.debug"
+}
+
 runTests () {
+    makeDebugFlagFile
     cd "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/inc/third-party/bin"
     PHPUNIT_BIN="$(pwd)/phpunit"
     chmod +x $PHPUNIT_BIN
