@@ -24,7 +24,7 @@ logit () {
 
 usage () {
     echo -e "\n\n"
-    echo -e "Usage:\n$0 --oauth=<token> --db-host=<host> --db-user=<user> --db-pass=<pass> --db-name=<name> --project-id=<project> --user-ident=<identifier> --token-secret=<secret>"
+    echo -e "Usage:\n$0 --oauth=<token> --db-host=<host> --db-user=<user> --db-pass=<pass> --db-name=<name> --project-id=<project> --user-ident=<identifier> --token-secret=<secret> --acf-pro-key=<developer key>"
     echo -e "\n\nWhere:"
     echo -e "\t--oauth\t\t- The github oauth token"
     echo -e "\t--db-host\t- The hostname/ip of MySQL server. Optional. Default:localhost"
@@ -34,10 +34,11 @@ usage () {
     echo -e "\t--project-id\t- Smartling connection credential: Project ID"
     echo -e "\t--user-ident\t- Smartling connection credential: User Identifier"
     echo -e "\t--token-secret\t- Smartling connection credential: Token Secret"
+    echo -e "\t--acf-pro-key\t- ACF pro plugin license key for downloading"
     exit 1
 }
 
-set -- $(getopt -n$0 -u --longoptions="oauth: db-host: db-user: db-pass: db-name: project-id: user-ident: token-secret: " "h" "$@") || usage
+set -- $(getopt -n$0 -u --longoptions="oauth: db-host: db-user: db-pass: db-name: project-id: user-ident: token-secret: acf-pro-key:" "h" "$@") || usage
 while [ $# -gt 0 ];do
     case "$1" in
         --oauth) export GITHUB_OAUTH_TOKEN="$2";shift;;
@@ -48,6 +49,7 @@ while [ $# -gt 0 ];do
         --project-id) export CRE_PROJECT_ID="$2";shift;;
         --user-ident) export CRE_USER_IDENTIFIER="$2";shift;;
         --token-secret) export CRE_TOKEN_SECRET="$2";shift;;
+        --acf-pro-key) export ACFPRO_KEY="$2";shift;;
         --)     shift;break;;
         -*)     usage;break;;
         *)      break;;
@@ -141,9 +143,50 @@ installWPCLI () {
     fi
 }
 
+installACFPro () {
+    cd "$PLUGIN_DEV_DIR/../"
+    ACFPRO_PLUGIN_NAME="advanced-custom-fields-pro"
+
+    if [ ! -z "$ACFPRO_KEY" ]; then
+        if [ -f "$ACFPRO_PLUGIN_NAME.zip" ]; then
+            rm "$ACFPRO_PLUGIN_NAME.zip"
+        fi
+
+        DLINK="https://connect.advancedcustomfields.com/index.php?a=download&p=pro&k=$ACFPRO_KEY"
+
+        BUILD_FQFN="$(pwd)/$ACFPRO_PLUGIN_NAME.zip"
+
+        curl $DLINK --output $BUILD_FQFN
+
+        cd "$WP_INSTALL_DIR"
+        $WPCLI plugin deactivate advanced-custom-fields --network
+        # install pro version
+        $WPCLI plugin install $BUILD_FQFN --activate-network
+
+    else
+
+        if [ -d "$ACFPRO_PLUGIN_NAME" ]; then
+
+            BUILD_FQFN="/tmp/$ACFPRO_PLUGIN_NAME.zip"
+            if [ -f "$BUILD_FQFN" ]; then
+                rm -rf "$BUILD_FQFN"
+            fi
+
+            cd "$PLUGIN_DEV_DIR/../$ACFPRO_PLUGIN_NAME/"
+            zip -9 $BUILD_FQFN -r ./*
+            # disable advanced-custom-fields plugin
+            cd "$WP_INSTALL_DIR"
+            $WPCLI plugin deactivate advanced-custom-fields --network
+            # install pro version
+            $WPCLI plugin install $BUILD_FQFN --activate-network
+        fi
+    fi
+}
+
 installWordpress () {
     installWPCLI
     cd "$WP_INSTALL_DIR"
+
     $WPCLI core download
     $WPCLI config create --dbname=$WP_DB_NAME --dbuser=$WP_DB_USER --dbpass=$WP_DB_PASS --dbprefix=$WP_DB_TABLE_PREFIX
     $WPCLI core install --url=$WP_INSTALLATION_DOMAIN --title=Test --admin_user=wp --admin_password=wp --admin_email=test@wp.org --skip-email
@@ -164,11 +207,34 @@ installWordpress () {
         $WPCLI plugin install $plugin_name
         $WPCLI plugin activate $plugin_name --network
     done
+
+    installACFPro
 }
 
 makeDebugFlagFile() {
     cd "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector"
     touch "smartling.debug"
+}
+
+generateTestExecutionScript () {
+    export TESTEXECSCRIPT="/tmp/runSmartlingConnectorIntegrationTests"
+    export REQUIRED_VARS="WP_INSTALLATION_DOMAIN,WPCLI,WP_INSTALL_DIR,CRE_PROJECT_ID,CRE_USER_IDENTIFIER,CRE_TOKEN_SECRET,SITES,WP_DB_TABLE_PREFIX,PHPUNIT_XML,PHPUNIT_BIN,TEST_DATA_DIR,TEST_CONFIG,WP_DB_HOST,WP_DB_NAME,WP_DB_USER,WP_DB_PASS"
+    echo -e "#!/usr/bin/env bash\n" > $TESTEXECSCRIPT
+    OLD_IFS=$IFS
+    IFS=',' read -a array <<< "$REQUIRED_VARS"
+    for dependency_var in "${array[@]}"
+    do
+        TMPVAR=$(eval echo "\$$dependency_var")
+        echo -e "export $dependency_var=\"$TMPVAR\"" >> $TESTEXECSCRIPT
+    done
+
+    echo -e "export BACKDIR=\"$(pwd)\"\n" >> $TESTEXECSCRIPT
+
+    echo -e "cd \"$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests\"\n" >> $TESTEXECSCRIPT
+
+    echo -e "\$PHPUNIT_BIN -c \$PHPUNIT_XML\n" >> $TESTEXECSCRIPT
+
+    echo -e "cd \"\$BACKDIR\"\n" >> $TESTEXECSCRIPT
 }
 
 runTests () {
@@ -177,7 +243,10 @@ runTests () {
     PHPUNIT_BIN="$(pwd)/phpunit"
     chmod +x $PHPUNIT_BIN
     PHPUNIT_XML="$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/phpunit.xml"
-    $PHPUNIT_BIN -c $PHPUNIT_XML
+
+    generateTestExecutionScript
+    chmod +x $TESTEXECSCRIPT
+    sh $TESTEXECSCRIPT
 }
 
 cleanDatabase () {
@@ -193,6 +262,19 @@ installSmartlingConnector () {
     fi
     createBuild
     $WPCLI plugin install "$PLUGIN_DEV_DIR/smartling-connector.zip" --activate-network --path="$WP_INSTALL_DIR"
+
+	rm -rf "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/IntegrationTests/tests"
+	ln -s "$PLUGIN_DEV_DIR/tests/IntegrationTests/tests" "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/IntegrationTests/tests"
+	#rm -rf "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/inc"
+	#ln -s "$PLUGIN_DEV_DIR/inc" "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/inc"
+	rm -rf "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/IntegrationTests/testdata"
+	ln -s "$PLUGIN_DEV_DIR/tests/IntegrationTests/testdata" "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/IntegrationTests/testdata"
+	ln -s "$PLUGIN_DEV_DIR/tests/IntegrationTests/testdata/acf-pro-test-definitions" "$WP_INSTALL_DIR/wp-content/plugins/acf-pro-test-definitions"
+	rm -rf "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/logs"
+	ln -s "$PLUGIN_DEV_DIR/logs" "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/logs"
+	rm -rf "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/phpunit.xml"
+	ln -s "$PLUGIN_DEV_DIR/tests/phpunit.xml" "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/phpunit.xml"
+
     $WPCLI cron event run wp_version_check --path="$WP_INSTALL_DIR"
 }
 
@@ -202,4 +284,4 @@ installSmartlingConnector
 runTests
 mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/phpunit-results.xml" "$PLUGIN_DEV_DIR/tests"
 mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/phpunit-coverage.xml" "$PLUGIN_DEV_DIR/tests"
-cleanDatabase
+#cleanDatabase

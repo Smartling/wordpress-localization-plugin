@@ -396,6 +396,14 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         return false;
     }
 
+    /**
+     * @param string $title
+     * @param string $body
+     * @param string $post_type
+     * @param array  $meta
+     *
+     * @return int
+     */
     protected function createPostWithMeta($title, $body, $post_type = 'post', array $meta)
     {
         $template = [
