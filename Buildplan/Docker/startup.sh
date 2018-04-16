@@ -14,4 +14,4 @@ echo "Create database $MYSQL_BASE;" > /tmp/script.sql
 mysql -u$MYSQL_USER -p$MYSQL_PASS < /tmp/script.sql
 
 cd tests
-sudo /bin/bash ./runIntegrationTests.sh --oauth="$GITHUB_OAUTH" --db-host="$MYSQL_HOST" --db-user="$MYSQL_USER" --db-pass="$MYSQL_PASS" --db-name="$MYSQL_BASE" --project-id="$PROJECT_ID" --user-ident="$USER_IDENTIFIER" --token-secret="$TOKEN_SECRET"
+sudo /bin/bash ./runIntegrationTests.sh --oauth="$GITHUB_OAUTH" --db-host="$MYSQL_HOST" --db-user="$MYSQL_USER" --db-pass="$MYSQL_PASS" --db-name="$MYSQL_BASE" --project-id="$PROJECT_ID" --user-ident="$USER_IDENTIFIER" --token-secret="$TOKEN_SECRET" --acf-pro-key="$ACF_PRO_KEY"
