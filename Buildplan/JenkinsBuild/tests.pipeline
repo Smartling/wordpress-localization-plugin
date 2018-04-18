@@ -10,7 +10,7 @@ pipeline {
   stages {
     stage('Run tests') {
       steps {
-        withCredentials([string(credentialsId: 'GITHUB_OAUTH', variable: 'GITHUB_OAUTH'), string(credentialsId: 'PROJECT_ID', variable: 'PROJECT_ID'), string(credentialsId: 'USER_IDENTIFIER', variable: 'USER_IDENTIFIER'), string(credentialsId: 'TOKEN_SECRET', variable: 'TOKEN_SECRET')]) {
+        withCredentials([string(credentialsId: 'GITHUB_OAUTH', variable: 'GITHUB_OAUTH'), string(credentialsId: 'PROJECT_ID', variable: 'PROJECT_ID'), string(credentialsId: 'USER_IDENTIFIER', variable: 'USER_IDENTIFIER'), string(credentialsId: 'TOKEN_SECRET', variable: 'TOKEN_SECRET'), string(credentialsId: 'ACF_PRO_KEY', variable: 'ACF_PRO_KEY')]) {
           sh 'eval $(aws ecr get-login --region us-east-1 --no-include-email)'
           sh "docker run --rm -w \"${WORKSPACE}\" -v \"${WORKSPACE}:/${WORKSPACE}\" -e GITHUB_OAUTH=${GITHUB_OAUTH} -e PROJECT_ID=${PROJECT_ID} -e USER_IDENTIFIER=${USER_IDENTIFIER} -e TOKEN_SECRET=${TOKEN_SECRET} ${full_image_name}:latest"
         }
