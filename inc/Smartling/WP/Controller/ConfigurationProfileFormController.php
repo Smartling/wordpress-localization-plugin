@@ -209,11 +209,11 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
         }
 
         if (array_key_exists('filter_skip', $settings)) {
-            $profile->setFilterSkip($settings['filter_skip']);
+            $profile->setFilterSkip(stripslashes($settings['filter_skip']));
         }
 
         if (array_key_exists('filter_copy_by_field_name', $settings)) {
-            $profile->setFilterCopyByFieldName($settings['filter_copy_by_field_name']);
+            $profile->setFilterCopyByFieldName(stripslashes($settings['filter_copy_by_field_name']));
         }
 
         if (array_key_exists('filter_copy_by_field_value_regex', $settings)) {
@@ -221,7 +221,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
         }
 
         if (array_key_exists('filter_flag_seo', $settings)) {
-            $profile->setFilterFlagSeo($settings['filter_flag_seo']);
+            $profile->setFilterFlagSeo(stripslashes($settings['filter_flag_seo']));
         }
 
         if (array_key_exists('defaultLocale', $settings)) {
