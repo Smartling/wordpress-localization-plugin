@@ -99,6 +99,9 @@ class UploadJob extends JobAbstract
                 break;
             }
 
+            // refreshing the lock flag value
+            $this->placeLockFlag();
+
             $entity = ArrayHelper::first($entities);
             /**
              * @var SubmissionEntity $entity
