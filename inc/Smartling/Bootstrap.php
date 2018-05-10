@@ -156,40 +156,12 @@ class Bootstrap
         $manager->registerServices();
     }
 
-    private function registerCloudLogExtension()
-    {
-        add_action('smartling_before_init', function(ContainerBuilder $di) {
-
-                // tune logger to store files for 2 days
-                $di->setParameter('logger.filehandler.standard.maxfiles', 2);
-
-                $defSmartling = $di->register('smartlingLogFileHandler','Smartling\Base\SmartlingLogHandler')
-                    ->addArgument('https://api.smartling.com/updates/status');
-
-                $defBuffer = $di->register('bufferHandler', '\Monolog\Handler\BufferHandler')
-                    ->addArgument($defSmartling)
-                    ->addArgument(1000)
-                    ->addArgument('DEBUG')
-                    ->addArgument(true)
-                    ->addArgument(true);
-
-                foreach ($di->getDefinitions() as $serviceId => $serviceDefinition) {
-                    if ($serviceDefinition->getClass() == 'Smartling\MonologWrapper\Logger\LevelLogger') {
-                        $serviceDefinition->addMethodCall('pushHandler',[$defBuffer]);
-                    }
-                };
-
-            });
-    }
-
     /**
      * The initial entry point tor plugins_loaded hook
      */
     public function load()
     {
         register_shutdown_function([$this, 'shutdownHandler']);
-
-        $this->registerCloudLogExtension();
 
         static::getContainer()->setParameter('plugin.version', static::$pluginVersion);
 

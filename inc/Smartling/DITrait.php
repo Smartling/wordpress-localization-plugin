@@ -51,6 +51,8 @@ trait DITrait
         self::injectLoggerCustomizations(self::$containerInstance);
         self::handleLoggerConfiguration();
 
+        self::registerCloudLogExtension(self::$containerInstance);
+
         /**
          * Exposing reference to DI interface
          */
@@ -69,6 +71,25 @@ trait DITrait
         LogContextMixinHelper::addToContext('pluginVersion', static::$pluginVersion);
 
         self::$loggerInstance = $logger;
+    }
+
+    private static function registerCloudLogExtension(ContainerBuilder $di)
+    {
+        $defSmartling = $di->register('smartlingLogFileHandler','\Smartling\Base\SmartlingLogHandler')
+            ->addArgument('https://api.smartling.com/updates/status');
+
+        $defBuffer = $di->register('bufferHandler', '\Monolog\Handler\BufferHandler')
+            ->addArgument($defSmartling)
+            ->addArgument(1000)
+            ->addArgument('DEBUG')
+            ->addArgument(true)
+            ->addArgument(true);
+
+        foreach ($di->getDefinitions() as $serviceId => $serviceDefinition) {
+            if ($serviceDefinition->getClass() === 'Smartling\MonologWrapper\Logger\LevelLogger') {
+                $serviceDefinition->addMethodCall('pushHandler',[$defBuffer]);
+            }
+        };
     }
 
     private static function injectLoggerCustomizations(ContainerBuilder $di)
