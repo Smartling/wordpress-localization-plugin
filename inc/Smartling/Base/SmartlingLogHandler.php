@@ -46,7 +46,7 @@ class SmartlingLogHandler extends AbstractHandler
         try {
             $client = new Client(['defaults' => ['exceptions' => false]]);
             $data = $this->formatRecords($records);
-            $request = $client->createRequest(
+            $response = $client->request(
                 'POST',
                 $this->host,
                 [
@@ -54,8 +54,6 @@ class SmartlingLogHandler extends AbstractHandler
                     'timeout' => $this->timeout,
                 ]
             );
-
-            $client->send($request);
         } catch (\Exception $e) {
         }
     }
