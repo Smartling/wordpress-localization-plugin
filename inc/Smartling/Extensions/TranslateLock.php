@@ -2,10 +2,14 @@
 
 namespace Smartling\Extensions;
 
+use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\ContentHelper;
+use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\SiteHelper;
+use Smartling\Helpers\StringHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -18,12 +22,129 @@ class TranslateLock implements ExtensionInterface
 {
 
     /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
+     * @var SubmissionManager
+     */
+    private $submissionManager;
+
+    /**
+     * @var ContentHelper
+     */
+    private $contentHelper;
+
+    /**
+     * @return SubmissionManager
+     */
+    public function getSubmissionManager()
+    {
+        return $this->submissionManager;
+    }
+
+    /**
+     * @param SubmissionManager $submissionManager
+     */
+    public function setSubmissionManager($submissionManager)
+    {
+        $this->submissionManager = $submissionManager;
+    }
+
+    /**
+     * @return ContentHelper
+     */
+    public function getContentHelper()
+    {
+        return $this->contentHelper;
+    }
+
+    /**
+     * @param ContentHelper $contentHelper
+     */
+    public function setContentHelper($contentHelper)
+    {
+        $this->contentHelper = $contentHelper;
+    }
+
+    /**
+     * @return LoggerInterface
+     */
+    public function getLogger()
+    {
+        if (!($this->logger instanceof LoggerInterface)) {
+            $this->setLogger(MonologWrapper::getLogger(__CLASS__));
+        }
+
+        return $this->logger;
+    }
+
+    /**
+     * @param LoggerInterface $logger
+     */
+    public function setLogger(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+
+    public function __construct(SubmissionManager $submissionManager, ContentHelper $contentHelper)
+    {
+        $this->setSubmissionManager($submissionManager);
+        $this->setContentHelper($contentHelper);
+    }
+
+    /**
      * @inheritdoc
      */
     public function getName()
     {
         return __CLASS__;
     }
+
+    /**
+     * @param $id
+     *
+     * @return SubmissionEntity|null
+     */
+    private function getSubmissionById($id)
+    {
+        $_result = $this->getSubmissionManager()->getEntityById($id);
+
+        return 1 === count($_result) ? ArrayHelper::first($_result) : null;
+    }
+
+    private function getTranslationFields($submissionId)
+    {
+        $submission = $this->getSubmissionById($submissionId);
+
+        $_fields = [];
+        if (null !== $submission) {
+            foreach ($this->getContentHelper()->readTargetContent($submission)->toArray() as $k => $v) {
+                $_fields['entity/' . $k] = $v;
+            }
+            foreach ($this->getContentHelper()->readTargetMetadata($submission) as $k => $v) {
+                $_fields['meta/' . $k] = $v;
+            }
+
+        }
+
+        return $_fields;
+    }
+
+
+    private function getLockedFields($submissionId)
+    {
+        $submission = $this->getSubmissionById($submissionId);
+
+        $_fields = [];
+        if (null !== $submission && 0 < strlen($submission->getLockedFields())) {
+            $_fields = unserialize($submission->getLockedFields());
+        }
+
+        return $_fields;
+    }
+
 
     /**
      * @inheritdoc
@@ -34,13 +155,6 @@ class TranslateLock implements ExtensionInterface
         add_action('save_post', [$this, 'postSaveHandler']);
     }
 
-    /**
-     * @return SubmissionManager
-     */
-    private function getSubmissionManager()
-    {
-        return Bootstrap::getContainer()->get('manager.submission');
-    }
 
     /**
      * @return int
@@ -110,12 +224,93 @@ class TranslateLock implements ExtensionInterface
                     -webkit-font-smoothing: antialiased;
                     -moz-osx-font-smoothing: grayscale;
                 }
+
+                #misc-publishing-actions a[class=thickbox]:before {
+                    content: '\f163';
+                    display: inline-block;
+                    font: 400 20px/1 dashicons;
+                    speak: none;
+                    left: -1px;
+                    padding: 0 5px 0 0;
+                    position: relative;
+                    top: 0;
+                    text-decoration: none !important;
+                    vertical-align: top;
+                    -webkit-font-smoothing: antialiased;
+                    -moz-osx-font-smoothing: grayscale;
+                }
+
+                table.fieldlist-table {
+                    width: 100%;
+                }
+
+                table.fieldlist-table tr td:last-child {
+                    max-width: 40px;
+                }
+
+                table.fieldlist-table tr {
+                    width: 100%;
+                }
+
+                table.fieldlist-table {
+                    border-collapse: collapse;
+                }
+
+                table.fieldlist-table, table.fieldlist-table tr td, table.fieldlist-table tr th {
+                    border: 1px lightgrey solid;
+                }
+
+                table.fieldlist-table tr:nth-child(even) {
+                    background-color: lightgrey;
+                }
+
             </style>
-            <div id="locked_page" class="misc-pub-section misc-pub-post-status">
+            <div id="locked_page_block" class="misc-pub-section">
                 <label for="locked_page"><?= __('Translation Locked'); ?></label>
-                <input id="locked_page" type="checkbox" value="yes" name="lock_page" <?php checked('yes',
-                                                                                                   $locked); ?> />
+                <input id="locked_page" type="checkbox" value="yes"
+                       name="lock_page" <?php checked('yes', $locked); ?> />
                 <input type="hidden" name="locked_page_form_flag" value="1"/>
+                <?php add_thickbox(); ?>
+                <br>
+                <div id="field_lock_block_wizard" style="display:none;">
+                    <?php
+                    $fields = $this->getTranslationFields($submission->id);
+                    $lockedFields = $this->getLockedFields($submission->id);
+                    ?>
+
+                    <table class="fieldlist-table">
+                        <tr>
+                            <th>Field Name</th>
+                            <th>Field Value</th>
+                            <th>Locked</th>
+                        </tr>
+                        <?php foreach ($fields as $field => $value) {
+                            ?>
+                            <tr>
+                                <td><?= StringHelper::safeHtmlStringShrink($field, 30); ?></td>
+                                <td><?= StringHelper::safeHtmlStringShrink($value, 50); ?></td>
+                                <td><?php
+                                    $options = [
+                                        'type'       => 'checkbox',
+                                        'data-field' => $field,
+                                        'name'       => vsprintf('lockField[%s]', [$field]),
+                                    ];
+
+                                    if (is_array($lockedFields) && in_array($field, $lockedFields)) {
+                                        $options['checked'] = 'checked';
+                                    }
+                                    ?>
+                                    <?= HtmlTagGeneratorHelper::tag('input', '', $options); ?>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                    </table>
+                </div>
+            </div>
+            <div id="locked_fields_block" class="misc-pub-section">
+                <a href="#TB_inline?width=400&height=300&inlineId=field_lock_block_wizard" class="thickbox">
+                    Field level lock settings.
+                </a>
             </div>
             <?php
         } catch (SmartlingDbException $e) {
@@ -125,7 +320,6 @@ class TranslateLock implements ExtensionInterface
 
     public function postSaveHandler($postId)
     {
-
         if (wp_is_post_revision($postId)) {
             return;
         }
@@ -140,6 +334,7 @@ class TranslateLock implements ExtensionInterface
             try {
                 $submission = $this->getSubmission($postId);
                 $submission->setIsLocked($curValue);
+                $submission->setLockedFields(serialize(array_keys($_POST['lockField'])));
                 $this->getSubmissionManager()->storeEntity($submission);
             } catch (\Exception $e) {
                 MonologWrapper::getLogger(get_class($this))

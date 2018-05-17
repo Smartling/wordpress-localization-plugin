@@ -104,7 +104,8 @@ class SubmissionEntity extends SmartlingEntityAbstract
             'last_modified'          => static::DB_TYPE_DATETIME,
             'outdated'               => static::DB_TYPE_UINT_SWITCH,
             'last_error'             => static::DB_TYPE_STRING_TEXT,
-            'batch_uid'                 => static::DB_TYPE_STRING_64 . ' ' . static::DB_TYPE_DEFAULT_EMPTYSTRING,
+            'batch_uid'              => static::DB_TYPE_STRING_64 . ' ' . static::DB_TYPE_DEFAULT_EMPTYSTRING,
+            'locked_fields'          => 'TEXT NULL',
         ];
     }
 
@@ -788,6 +789,16 @@ class SubmissionEntity extends SmartlingEntityAbstract
     public function setBatchUid($batchUid)
     {
         $this->stateFields['batch_uid'] = trim($batchUid);
+    }
+
+    public function getLockedFields()
+    {
+        return $this->stateFields['locked_fields'];
+    }
+
+    public function setLockedFields($lockFields)
+    {
+        $this->stateFields['locked_fields'] = $lockFields;
     }
 
     /**
