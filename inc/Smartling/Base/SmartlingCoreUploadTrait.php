@@ -190,7 +190,7 @@ trait SmartlingCoreUploadTrait
         return $lockedData;
     }
 
-    private function arrayMergeIfKeyNotExists($lockedData, $translation)
+    private static function arrayMergeIfKeyNotExists($lockedData, $translation)
     {
         foreach ($lockedData as $lockedDatumKey => $lockedDatum) {
             $translation[$lockedDatumKey] = $lockedDatum;
@@ -226,7 +226,7 @@ trait SmartlingCoreUploadTrait
             $params = new AfterDeserializeContentEventParameters($translation, $submission, $targetContent, $translation['meta']);
             do_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
             if (array_key_exists('entity', $translation) && ArrayHelper::notEmpty($translation['entity'])) {
-                $translation['entity'] = $this->arrayMergeIfKeyNotExists($lockedData['entity'], $translation['entity']);
+                $translation['entity'] = self::arrayMergeIfKeyNotExists($lockedData['entity'], $translation['entity']);
                 $this->setValues($targetContent, $translation['entity']);
             }
             /**
@@ -249,7 +249,7 @@ trait SmartlingCoreUploadTrait
                 if (1 === $configurationProfile->getCleanMetadataOnDownload()) {
                     $this->getContentHelper()->removeTargetMetadata($submission);
                 }
-                $metaFields = $this->arrayMergeIfKeyNotExists($lockedData['meta'], $metaFields);
+                $metaFields = self::arrayMergeIfKeyNotExists($lockedData['meta'], $metaFields);
                 $this->getContentHelper()->writeTargetMetadata($submission, $metaFields);
                 do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $submission);
             }

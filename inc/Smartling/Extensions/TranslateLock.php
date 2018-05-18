@@ -264,54 +264,120 @@ class TranslateLock implements ExtensionInterface
                     background-color: lightgrey;
                 }
 
+                /* The Modal (background) */
+                .modal {
+                    display: none; /* Hidden by default */
+                    position: fixed; /* Stay in place */
+                    z-index: 10000; /* Sit on top */
+                    left: 0;
+                    top: 0;
+                    width: 100%; /* Full width */
+                    height: 100%; /* Full height */
+                    overflow: auto; /* Enable scroll if needed */
+                    background-color: rgb(0, 0, 0); /* Fallback color */
+                    background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+                }
+
+                /* Modal Content/Box */
+                .modal-content {
+                    background-color: #fefefe;
+                    margin: 10% auto; /* 15% from the top and centered */
+                    padding: 20px;
+                    border: 1px solid #888;
+                    width: 80%; /* Could be more or less, depending on screen size */
+                    max-width: 730px;
+                    height: 60%;
+                    overflow: auto;
+                }
+
+                /* The Close Button */
+                .close {
+                    color: #aaa;
+                    float: right;
+                    font-size: 28px;
+                    font-weight: bold;
+                }
+
+                .close:hover,
+                .close:focus {
+                    color: black;
+                    text-decoration: none;
+                    cursor: pointer;
+                }
+
             </style>
             <div id="locked_page_block" class="misc-pub-section">
                 <label for="locked_page"><?= __('Translation Locked'); ?></label>
                 <input id="locked_page" type="checkbox" value="yes"
                        name="lock_page" <?php checked('yes', $locked); ?> />
                 <input type="hidden" name="locked_page_form_flag" value="1"/>
-                <?php add_thickbox(); ?>
                 <br>
-                <div id="field_lock_block_wizard" style="display:none;">
-                    <?php
-                    $fields = $this->getTranslationFields($submission->id);
-                    $lockedFields = $this->getLockedFields($submission->id);
-                    ?>
 
-                    <table class="fieldlist-table">
-                        <tr>
-                            <th>Field Name</th>
-                            <th>Field Value</th>
-                            <th>Locked</th>
-                        </tr>
-                        <?php foreach ($fields as $field => $value) {
+                <div id="field_lock_block_wizard" class="modal">
+                    <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <div>
+                            <?php
+                            $fields = $this->getTranslationFields($submission->id);
+                            $lockedFields = $this->getLockedFields($submission->id);
                             ?>
-                            <tr>
-                                <td><?= StringHelper::safeHtmlStringShrink($field, 30); ?></td>
-                                <td><?= StringHelper::safeHtmlStringShrink($value, 50); ?></td>
-                                <td><?php
-                                    $options = [
-                                        'type'       => 'checkbox',
-                                        'data-field' => $field,
-                                        'name'       => vsprintf('lockField[%s]', [$field]),
-                                    ];
 
-                                    if (is_array($lockedFields) && in_array($field, $lockedFields)) {
-                                        $options['checked'] = 'checked';
-                                    }
+                            <table class="fieldlist-table">
+                                <tr>
+                                    <th>Field Name</th>
+                                    <th>Field Value</th>
+                                    <th>Locked</th>
+                                </tr>
+                                <?php foreach ($fields as $field => $value) {
                                     ?>
-                                    <?= HtmlTagGeneratorHelper::tag('input', '', $options); ?>
-                                </td>
-                            </tr>
-                        <?php } ?>
-                    </table>
+                                    <tr>
+                                        <td><?= StringHelper::safeHtmlStringShrink($field, 30); ?></td>
+                                        <td><?= StringHelper::safeHtmlStringShrink($value, 50); ?></td>
+                                        <td><?php
+                                            $options = [
+                                                'type'       => 'checkbox',
+                                                'data-field' => $field,
+                                                'name'       => vsprintf('lockField[%s]', [$field]),
+                                            ];
+
+                                            if (is_array($lockedFields) && in_array($field, $lockedFields)) {
+                                                $options['checked'] = 'checked';
+                                            }
+                                            ?>
+                                            <?= HtmlTagGeneratorHelper::tag('input', '', $options); ?>
+                                        </td>
+                                    </tr>
+                                <?php } ?>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div id="locked_fields_block" class="misc-pub-section">
-                <a href="#TB_inline?width=400&height=300&inlineId=field_lock_block_wizard" class="thickbox">
-                    Field level lock settings.
-                </a>
+                <button id="fieldLockModal">Field level lock settings.</button>
             </div>
+            <script>
+                (function () {
+                    var Modal = function (triggerId, modalId) {
+                        var modal = document.getElementById(modalId);
+                        var btn = document.getElementById(triggerId);
+                        var span = document.getElementsByClassName("close")[0];
+                        btn.onclick = function (e) {
+                            e.preventDefault();
+                            modal.style.display = "block";
+                        };
+                        span.onclick = function () {
+                            modal.style.display = "none";
+                        };
+                        window.onclick = function (event) {
+                            if (event.target == modal) {
+                                modal.style.display = "none";
+                            }
+                        };
+                    };
+                    Modal('fieldLockModal', 'field_lock_block_wizard');
+                })();
+            </script>
             <?php
         } catch (SmartlingDbException $e) {
             return;
