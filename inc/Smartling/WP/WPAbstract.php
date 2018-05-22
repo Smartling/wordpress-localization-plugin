@@ -441,4 +441,15 @@ abstract class WPAbstract
 
         return implode('', $parts);
     }
+
+    protected function getQueryParam($paramName, $defaultValue = null)
+    {
+        $result = $defaultValue;
+
+        if (array_key_exists($paramName, $_GET)) {
+            $result = $_GET[$paramName];
+        }
+
+        return $result;
+    }
 }

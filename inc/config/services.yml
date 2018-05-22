@@ -207,7 +207,7 @@ services:
   extension.loader:
     class: Smartling\Extensions\ExtensionLoader
     calls:
-      - [ "registerExtension", [ "@extension.translation_lock" ]]
+    #  - [ "registerExtension", [ "@extension.translation_lock" ]]
 
   translation.helper:
     class: Smartling\Helpers\TranslationHelper
@@ -237,3 +237,14 @@ services:
     arguments:
       - "@content.helper"
       - "@site.cache"
+
+  wp.translation.lock:
+    class: Smartling\WP\Controller\TranslationLockController
+    arguments:
+      - "@multilang.proxy"
+      - "@plugin.info"
+      - "@entity.helper"
+      - "@manager.submission"
+      - "@site.cache"
+    calls:
+    - [ "setContentHelper" , [ "@content.helper"]]
