@@ -52,8 +52,10 @@ class TranslationLockTableWidget extends SmartlingListTable
     {
         foreach ($this->data as & $datum) {
 
-            $options = ['type' => 'checkbox',
-                        'name' => vsprintf('lockField[%s]', [$datum['name']]),
+            $options = [
+                'type'  => 'checkbox',
+                'name'  => vsprintf('lockField[%s]', [$datum['name']]),
+                'class' => 'field_lock_element',
             ];
 
             if (true === $datum['locked']) {

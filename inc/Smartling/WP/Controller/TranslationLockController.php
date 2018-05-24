@@ -6,6 +6,7 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\Table\TranslationLockTableWidget;
 use Smartling\WP\WPAbstract;
@@ -35,7 +36,6 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
         $this->contentHelper = $contentHelper;
     }
 
-
     /**
      * Registers wp hook handlers. Invoked by wordpress.
      * @return void
@@ -43,7 +43,6 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
     public function register()
     {
         add_action('post_submitbox_misc_actions', [$this, 'extendSubmitBox']);
-
         add_action('admin_post_smartling_translation_lock_popup', [$this, 'popupIFrame']);
     }
 
@@ -79,9 +78,43 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
 
     public function popupIFrame()
     {
-        // SmartlingUserCapabilities::SMARTLING_CAPABILITY_MENU_CAP
-        //handle save
+        $user = wp_get_current_user();
+        if (!($user instanceof \WP_User)) {
+            return;
+        }
+
+        if (!user_can($user, SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+            $this->notAllowed();
+
+            return;
+        }
+
+        $this->handleFormPost();
         $this->renderPage();
+    }
+
+    public function handleFormPost()
+    {
+        if (0 < count($_POST)) {
+            $_pageLock = array_key_exists('lock_page', $_POST) ? 1 : 0;
+            $_lockedFields =
+                array_key_exists('lockField', $_POST) && is_array($_POST['lockField'])
+                    ? array_keys($_POST['lockField'])
+                    : [];
+
+            $submission = $this->getSubmissionFromQuery();
+            if (false !== $submission) {
+                $submission->setLockedFields(serialize($_lockedFields));
+                $submission->setIsLocked($_pageLock);
+                $this->getManager()->storeEntity($submission);
+            }
+
+        }
+    }
+
+    public function notAllowed()
+    {
+        echo "Sorry, you're not allowed to go here.";
     }
 
     public function extendSubmitBox()
@@ -146,7 +179,10 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
         return $_fields;
     }
 
-    public function renderPage()
+    /**
+     * @return false|SubmissionEntity
+     */
+    private function getSubmissionFromQuery()
     {
         $submissionId = (int)$this->getQueryParam('submission', 0);
         if (0 < $submissionId) {
@@ -156,26 +192,38 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
                  * @var SubmissionEntity $submission
                  */
                 $submission = ArrayHelper::first($searchResult);
-                $fields = $this->getTranslationFields($submission);
-                $lockedFields = $this->getLockedFields($submission);
-                $data = [];
-                foreach ($fields as $fielName => $fieldValue) {
-                    $data[] = [
-                        'name'   => $fielName,
-                        'value'  => $fieldValue,
-                        'locked' => is_array($lockedFields) && in_array($fielName, $lockedFields),
-                    ];
-                }
-                $table = new TranslationLockTableWidget();
-                $table->setData($data);
-                $table->prepare_items();
-                $this->view(
-                    [
-                        'table'      => $table,
-                        'submission' => $submission,
-                    ]
-                );
+
+                return $submission;
             }
+        }
+
+        return false;
+    }
+
+    public function renderPage()
+    {
+        $submission = $this->getSubmissionFromQuery();
+
+        if (false !== $submission) {
+            $fields = $this->getTranslationFields($submission);
+            $lockedFields = $this->getLockedFields($submission);
+            $data = [];
+            foreach ($fields as $fielName => $fieldValue) {
+                $data[] = [
+                    'name'   => $fielName,
+                    'value'  => $fieldValue,
+                    'locked' => is_array($lockedFields) && in_array($fielName, $lockedFields),
+                ];
+            }
+            $table = new TranslationLockTableWidget();
+            $table->setData($data);
+            $table->prepare_items();
+            $this->view(
+                [
+                    'table'      => $table,
+                    'submission' => $submission,
+                ]
+            );
         }
     }
 }

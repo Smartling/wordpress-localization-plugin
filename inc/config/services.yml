@@ -198,12 +198,6 @@ services:
   service.invalid-character-cleaner:
     class: Smartling\Services\InvalidCharacterCleaner
 
-  extension.translation_lock:
-    class: Smartling\Extensions\TranslateLock
-    arguments:
-      - "@manager.submission"
-      - "@content.helper"
-
   extension.loader:
     class: Smartling\Extensions\ExtensionLoader
     calls:
