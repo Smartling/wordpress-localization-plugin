@@ -19,6 +19,30 @@ global $menu;
 $menu = [];
 include(ABSPATH . 'wp-admin/admin-header.php');
 ?>
+    <style>
+        #adminmenumain {
+            display: none;
+        }
+
+        #wpcontent {
+            margin: 0 !important;
+        }
+
+        div.error, div.update-nag, div#screen-meta-links {
+            display: none;
+        }
+
+        th#locked {
+            max-width: 50px;
+        }
+
+        th#locked {
+            max-width: 70px !important;
+            width: 70px;
+        }
+
+        }
+    </style>
     <div class="wrap">
     <h1 class="wp-heading-inline"><?= esc_html($title); ?></h1>
     <hr class="wp-header-end">
@@ -37,6 +61,7 @@ include(ABSPATH . 'wp-admin/admin-header.php');
      */
     $submission = $data['submission'];
     ?>
+
     <form method="post">
         <div>
             <?=
@@ -96,7 +121,7 @@ include(ABSPATH . 'wp-admin/admin-header.php');
 
             $('#locked_page').on('click', setStates);
 
-            $('#submit').on('click', function(e){
+            $('#submit').on('click', function (e) {
                 $('.field_lock_element').each(function (i, v) {
                     $(v).removeAttr('disabled');
                 });
