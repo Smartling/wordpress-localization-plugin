@@ -345,10 +345,26 @@ th.center {
     text-align: left;
 }
 
-.update-nag table td input[type=text],.update-nag table td textarea {
+.update-nag table td input[type=text], .update-nag table td textarea {
     width: 100%;
 }
 
 .update-nag table td textarea {
     height: 160px;
+}
+
+div.misc-pub-section a.thickbox:before {
+    content: '\f173';
+    display: inline-block;
+    font: 400 20px/1 dashicons;
+    speak: none;
+    left: -1px;
+    padding: 0 5px 0 0;
+    position: relative;
+    top: 0;
+    text-decoration: none !important;
+    vertical-align: top;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
 }

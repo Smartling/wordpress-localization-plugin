@@ -147,10 +147,65 @@ trait SmartlingCoreUploadTrait
         }
     }
 
+    /**
+     * @param SubmissionEntity $submission
+     *
+     * @return array
+     */
+    private function readLockedTranslationFieldsBySubmission(SubmissionEntity $submission)
+    {
+        $this->getLogger()->debug(vsprintf('Starting loading locked fields for submission id=%s',[$submission->getId()]));
+
+        $lockedData = [
+            'entity' => [],
+            'meta'   => [],
+        ];
+
+        $lockedFields = maybe_unserialize($submission->getLockedFields());
+        $lockedFields = (!is_array($lockedFields)) ? [] : $lockedFields;
+
+        $targetContent = $this->getContentHelper()->readTargetContent($submission)->toArray(false);
+        $targetMeta = $this->getContentHelper()->readTargetMetadata($submission);
+
+        $this->getLogger()->debug(vsprintf('Got target metadata: %s.', [var_export($targetMeta, true)]));
+
+        foreach ($lockedFields as $lockedFieldName) {
+
+            if (preg_match('/^meta\//ius', $lockedFieldName)) {
+                $_fieldName = preg_replace('/^meta\//ius', '', $lockedFieldName);
+                $this->getLogger()->debug(vsprintf('Got field \'%s\'',[$_fieldName]));
+                if (array_key_exists($_fieldName, $targetMeta)) {
+                    $lockedData['meta'][$_fieldName] = $targetMeta[$_fieldName];
+                }
+            }
+
+            if (preg_match('/^entity\//ius', $lockedFieldName)) {
+                $_fieldName = preg_replace('/^entity\//ius', '', $lockedFieldName);
+                if (array_key_exists($_fieldName, $targetContent)) {
+                    $lockedData['entity'][$_fieldName] = $targetContent[$_fieldName];
+                }
+            }
+        }
+
+        return $lockedData;
+    }
+
+    private static function arrayMergeIfKeyNotExists($lockedData, $translation)
+    {
+        foreach ($lockedData as $lockedDatumKey => $lockedDatum) {
+            $translation[$lockedDatumKey] = $lockedDatum;
+        }
+
+        return $translation;
+    }
+
     public function applyXML(SubmissionEntity $submission, $xml)
     {
         $messages = [];
         try {
+
+            $lockedData = $this->readLockedTranslationFieldsBySubmission($submission);
+
             $this->prepareFieldProcessorValues($submission);
             if ('' === $xml) {
                 $translation = [];
@@ -171,6 +226,7 @@ trait SmartlingCoreUploadTrait
             $params = new AfterDeserializeContentEventParameters($translation, $submission, $targetContent, $translation['meta']);
             do_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
             if (array_key_exists('entity', $translation) && ArrayHelper::notEmpty($translation['entity'])) {
+                $translation['entity'] = self::arrayMergeIfKeyNotExists($lockedData['entity'], $translation['entity']);
                 $this->setValues($targetContent, $translation['entity']);
             }
             /**
@@ -193,7 +249,7 @@ trait SmartlingCoreUploadTrait
                 if (1 === $configurationProfile->getCleanMetadataOnDownload()) {
                     $this->getContentHelper()->removeTargetMetadata($submission);
                 }
-
+                $metaFields = self::arrayMergeIfKeyNotExists($lockedData['meta'], $metaFields);
                 $this->getContentHelper()->writeTargetMetadata($submission, $metaFields);
                 do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $submission);
             }

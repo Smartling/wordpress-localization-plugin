@@ -46,4 +46,31 @@ class StringHelper
             ]
         );
     }
+
+    /**
+     * @param string $string
+     * @param int    $maxLength
+     * @param string $encoding
+     * @param bool   $applyHtmlEncoding
+     * @param string $wrapperTag
+     *
+     * @return string
+     */
+    public static function safeHtmlStringShrink($string, $maxLength = 50, $encoding = 'utf8', $applyHtmlEncoding = true, $wrapperTag = 'span')
+    {
+        if (mb_strlen($string, $encoding) > $maxLength) {
+            $orig = $string;
+
+            if (true === $applyHtmlEncoding) {
+                $orig = htmlentities($orig);
+            }
+
+            $shrinked = mb_substr($orig, 0, $maxLength - 3, $encoding) . '...';
+
+            $string = HtmlTagGeneratorHelper::tag($wrapperTag, $shrinked, ['title' => $orig]);
+        }
+
+        return $string;
+    }
+
 }
