@@ -121,18 +121,21 @@
     text-indent: 0px;
 }
 
-.widget-btn.outdated:before {
-    content: '\26A0';
-    font: 400 16px/1 dashicons;
-    speak: none;
-    left: -15px;
+.widget-btn > span {
+    display: inline;
     position: relative;
-    top: 0;
-    text-decoration: none !important;
-    color: #f06d61;
-    vertical-align: top;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    left: -65px;
+    font-size: inherit;
+}
+
+span.percent-completed {
+    left: -25px;
+}
+
+a.link-blog-name-limited {
+    width: 130px;
+    max-width: 130px;
+    overflow: hidden;
 }
 
 #smartling-configuration-profile-form .plugin-locales input[type=text] {
@@ -367,4 +370,20 @@ div.misc-pub-section a.thickbox:before {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 
+}
+
+.status-flag-outdated, .status-flag-cloned, .status-flag-locked {
+    bottom: 0px !important;
+}
+
+.status-flag-outdated {
+    color: #aa5500;
+}
+
+.status-flag-cloned {
+    color: #622aa9;
+}
+
+.status-flag-locked {
+    color: #000000;
 }

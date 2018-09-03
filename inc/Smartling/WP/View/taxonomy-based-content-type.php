@@ -78,6 +78,7 @@ if (!empty($locales)) {
             $statusValue = null;
             $id = null;
             $editUrl = '';
+            $statusFlags = [];
             if (null !== $data['submissions']) {
                 foreach ($data['submissions'] as $item) {
 
@@ -90,6 +91,7 @@ if (!empty($locales)) {
                         $id = $item->getId();
                         $percent = $item->getCompletionPercentage();
                         $status = $item->getStatusColor();
+                        $statusFlags = $item->getStatusFlags();
                         $editUrl = \Smartling\Helpers\WordpressContentTypeHelper::getEditUrl($item);
                         $enabled = 1 === $item->getIsCloned() || 1 === $item->getIsLocked() ? false : true;
                         break;
@@ -103,7 +105,7 @@ if (!empty($locales)) {
                 </div>
                 <div class="smtPostWidget-progress" style="left: 15px;">
                     <?php if ($value) { ?>
-                        <?= WPAbstract::localeSelectionTranslationStatusBlock(__($statusValue), $status, $percent); ?>
+                        <?= WPAbstract::localeSelectionTranslationStatusBlock(__($statusValue), $status, $percent, $statusFlags); ?>
                         <?= WPAbstract::inputHidden($id); ?>
                     <?php } ?>
                 </div>

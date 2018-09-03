@@ -73,4 +73,19 @@ class StringHelper
         return $string;
     }
 
+    public static function safeStringShrink($string, $maxLength = 50, $encoding = 'utf8', $applyHtmlEncoding = true)
+    {
+        if (mb_strlen($string, $encoding) > $maxLength) {
+            $orig = $string;
+
+            if (true === $applyHtmlEncoding) {
+                $orig = htmlentities($orig);
+            }
+
+            $string = mb_substr($orig, 0, $maxLength - 3, $encoding) . '...';
+        }
+
+        return $string;
+    }
+
 }

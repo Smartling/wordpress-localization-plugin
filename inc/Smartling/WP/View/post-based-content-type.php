@@ -1,4 +1,5 @@
 <?php
+
 use Smartling\Helpers\StringHelper;
 use Smartling\Settings\TargetLocale;
 use Smartling\Submissions\SubmissionEntity;
@@ -45,57 +46,59 @@ if (!empty($locales)) {
         $nameKey = PostBasedWidgetControllerStd::WIDGET_DATA_NAME;
         ?>
         <div class="locale-list">
-        <?php
+            <?php
 
-        \Smartling\Helpers\ArrayHelper::sortLocales($locales);
+            \Smartling\Helpers\ArrayHelper::sortLocales($locales);
 
-        foreach ($locales as $locale) {
-            $value = false;
-            $editUrl = '';
-            $status = '';
-            $submission = null;
-            $statusValue = null;
-            $id = null;
-            $enabled = false;
-            if (null !== $data['submissions']) {
-                foreach ($data['submissions'] as $item) {
+            foreach ($locales as $locale) {
+                $value = false;
+                $editUrl = '';
+                $status = '';
+                $submission = null;
+                $statusValue = null;
+                $id = null;
+                $enabled = false;
+                $statusFlags = [];
+                if (null !== $data['submissions']) {
+                    foreach ($data['submissions'] as $item) {
 
-                    /**
-                     * @var SubmissionEntity $item
-                     */
-                    if ($item->getTargetBlogId() === $locale->getBlogId()) {
-                        $value = true;
-                        $statusValue = $item->getStatus();
-                        $id = $item->getId();
-                        $percent = 1 === $item->getIsCloned() ? 100 : $item->getCompletionPercentage();
-                        $status =  $item->getStatusColor();
-                        $enabled = 1 === $item->getIsCloned() || 1 === $item->getIsLocked() ? false : true;
-                        $editUrl = \Smartling\Helpers\WordpressContentTypeHelper::getEditUrl($item);
-                        break;
+                        /**
+                         * @var SubmissionEntity $item
+                         */
+                        if ($item->getTargetBlogId() === $locale->getBlogId()) {
+                            $value = true;
+                            $statusValue = $item->getStatus();
+                            $id = $item->getId();
+                            $percent = 1 === $item->getIsCloned() ? 100 : $item->getCompletionPercentage();
+                            $status = $item->getStatusColor();
+                            $statusFlags = $item->getStatusFlags();
+                            $enabled = 1 === $item->getIsCloned() || 1 === $item->hasLocks() ? false : true;
+                            $editUrl = \Smartling\Helpers\WordpressContentTypeHelper::getEditUrl($item);
+                            break;
+                        }
                     }
                 }
-            }
-            ?>
-            <div class="smtPostWidget-rowWrapper">
-                <div class="smtPostWidget-row">
-                    <?= WPAbstract::localeSelectionCheckboxBlock(
-                        $nameKey,
-                        $locale->getBlogId(),
-                        $locale->getLabel(),
-                        (false === $enabled ? false : $value),
-                        $enabled,
-                        $editUrl
-                    ); ?>
-                </div>
-                <div class="smtPostWidget-progress">
+                ?>
+                <div class="smtPostWidget-rowWrapper">
+                    <div class="smtPostWidget-row">
+                        <?= WPAbstract::localeSelectionCheckboxBlock(
+                            $nameKey,
+                            $locale->getBlogId(),
+                            $locale->getLabel(),
+                            (false === $enabled ? false : $value),
+                            $enabled,
+                            $editUrl
+                        ); ?>
+                    </div>
+                    <div class="smtPostWidget-progress">
 
-                    <?php if ($value) { ?>
-                        <?= WPAbstract::localeSelectionTranslationStatusBlock(__($statusValue), $status, $percent); ?>
-                        <?= WPAbstract::inputHidden($id); ?>
-                    <?php } ?>
+                        <?php if ($value) { ?>
+                            <?= WPAbstract::localeSelectionTranslationStatusBlock(__($statusValue), $status, $percent, $statusFlags); ?>
+                            <?= WPAbstract::inputHidden($id); ?>
+                        <?php } ?>
+                    </div>
                 </div>
-            </div>
-        <?php } ?>
+            <?php } ?>
 
         </div>
 
@@ -110,7 +113,7 @@ if (!empty($locales)) {
         <div class="fields">
             No suitable target locales found.<br/>
             Please check your <a
-                href="<?= get_site_url(); ?>/wp-admin/network/admin.php?page=smartling_configuration_profile_setup&action=edit&profile=<?= $data['profile']->getId(); ?>">settings.</a>
+                    href="<?= get_site_url(); ?>/wp-admin/network/admin.php?page=smartling_configuration_profile_setup&action=edit&profile=<?= $data['profile']->getId(); ?>">settings.</a>
         </div>
     </div>
 <?php } ?>

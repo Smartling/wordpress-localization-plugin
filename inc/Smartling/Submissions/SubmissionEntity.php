@@ -319,6 +319,29 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return $this;
     }
 
+    public function hasLocks()
+    {
+        $fields = maybe_unserialize($this->getLockedFields());
+
+        return 1 === $this->getIsLocked() || (is_array($fields) && 0 < count($fields));
+    }
+
+    public function getStatusFlags()
+    {
+        $result = [];
+        if (1 === $this->getOutdated()) {
+            $result['outdated'] = 'dashicons dashicons-warning';
+        }
+        if (1 === $this->getIsCloned()) {
+            $result['cloned'] = 'dashicons dashicons-admin-page';
+        }
+        if ($this->hasLocks()) {
+            $result['locked'] = 'dashicons dashicons-lock';
+        }
+
+        return $result;
+    }
+
     /**
      * @return string
      */
@@ -331,19 +354,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
             static::SUBMISSION_STATUS_FAILED      => 'red',
         ];
 
-        $classes = [
-            $statusColors[$this->getStatus()],
-        ];
-
-        if (1 === $this->getOutdated()) {
-            $classes[] = 'outdated';
-        }
-
-        if (1 === $this->getIsCloned()) {
-            $classes[] = 'cloned';
-        }
-
-        return implode(' ', $classes);
+        return $statusColors[$this->getStatus()];
     }
 
     /**

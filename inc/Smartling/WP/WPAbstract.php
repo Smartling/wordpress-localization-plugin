@@ -323,7 +323,7 @@ abstract class WPAbstract
         if (false === $enabled) {
             $checkboxAttributes = array_merge($checkboxAttributes, [
                 'disabled' => 'disabled',
-                'title'    => 'Content is cloned or locked',
+                'title'    => 'Content cannot be downloaded',
                 'class'    => 'nomcheck',
             ]);
         }
@@ -333,8 +333,15 @@ abstract class WPAbstract
         $parts[] = HtmlTagGeneratorHelper::tag('input', '', $checkboxAttributes);
 
         if (!StringHelper::isNullOrEmpty($editLink)) {
-            $parts[] = HtmlTagGeneratorHelper::tag('a', $blog_name, ['title' => __('Open translation'),
-                                                                     'href'  => $editLink, 'target' => '_blank']);
+            $parts[] = HtmlTagGeneratorHelper::tag(
+                'a',
+                StringHelper::safeStringShrink($blog_name, 22),
+                [
+                    'title' => __(vsprintf('%s. Click to open translation', [$blog_name])),
+                    'href'  => $editLink, 'target' => '_blank',
+                    'class' => 'link-blog-name-limited'
+                ]
+            );
             $container = HtmlTagGeneratorHelper::tag('span', implode('', $parts), []);
         } else {
             $parts[] = HtmlTagGeneratorHelper::tag('span', $blog_name, ['title' => $blog_name]);
@@ -344,16 +351,30 @@ abstract class WPAbstract
         return $container;
     }
 
-    public static function localeSelectionTranslationStatusBlock($statusText, $statusColor, $percentage)
+    public static function localeSelectionTranslationStatusBlock($statusText, $statusColor, $percentage, $statusFlags = [])
     {
         $percentageSpanBlock = 100 === $percentage
             ? HtmlTagGeneratorHelper::tag('span', '', [])
-            : HtmlTagGeneratorHelper::tag('span', vsprintf('%s%%', [$percentage]), []);
+            : HtmlTagGeneratorHelper::tag('span', vsprintf('%s%%', [$percentage]), [ 'class' => 'percent-completed']);
 
+        $flagBlockParts = [];
+
+        if (is_array($statusFlags) && 0 < count($statusFlags)) {
+            foreach ($statusFlags as $k => $v) {
+                $flagBlockParts[] = HtmlTagGeneratorHelper::tag(
+                    'span',
+                    '',
+                    [
+                        'class' => vsprintf('status-flag-%s %s', [$k, $v]),
+                        'title' => ucfirst($k),
+                    ]
+                );
+            }
+        }
 
         return HtmlTagGeneratorHelper::tag(
             'span',
-            $percentageSpanBlock,
+            vsprintf('%s%s', [implode('', $flagBlockParts), $percentageSpanBlock]),
             [
                 'title' => $statusText,
                 'class' => vsprintf('widget-btn %s', [$statusColor]),
