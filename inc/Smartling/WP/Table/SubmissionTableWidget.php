@@ -46,7 +46,11 @@ class SubmissionTableWidget extends SmartlingListTable
     const SUBMISSION_STATUS_SELECT_ELEMENT_NAME = 'status';
 
 
-    const SUBMISSION_OUTDATE_STATE = 'state';
+    const SUBMISSION_OUTDATE_STATE = 'state_outdated';
+
+    const SUBMISSION_LOCKED_STATE = 'state_locked';
+
+    const SUBMISSION_CLONED_STATE = 'state_cloned';
 
 
     const SUBMISSION_TARGET_LOCALE = 'target-locale';
@@ -117,6 +121,8 @@ class SubmissionTableWidget extends SmartlingListTable
         self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME => null,
         self::SUBMISSION_OUTDATE_STATE              => 'any',
         self::SUBMISSION_TARGET_LOCALE              => 'any',
+        self::SUBMISSION_CLONED_STATE               => 'any',
+        self::SUBMISSION_LOCKED_STATE               => 'any',
     ];
 
     private $_settings = ['singular' => 'submission', 'plural' => 'submissions', 'ajax' => false,];
@@ -198,6 +204,8 @@ class SubmissionTableWidget extends SmartlingListTable
     {
         $columns = $this->manager->getColumnsLabels();
 
+        $columns['outdated'] = 'States';
+
         $columns = array_merge(['bulkActionCb' => '<input type="checkbox" class="checkall" />'], $columns);
 
         return $columns;
@@ -248,14 +256,6 @@ class SubmissionTableWidget extends SmartlingListTable
             $submissions = $this->manager->findByIds($submissionsIds);
             if (0 < count($submissions)) {
                 switch ($this->current_action()) {
-                    case self::ACTION_UPLOAD:
-                        foreach ($submissions as $submission) {
-                            if (0 === $submission->getIsLocked()) {
-                                $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                                $this->manager->storeEntity($submission);
-                            }
-                        }
-                        break;
                     case self::ACTION_DOWNLOAD:
                         foreach ($submissions as $submission) {
                             $this->getQueue()->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
@@ -328,6 +328,22 @@ class SubmissionTableWidget extends SmartlingListTable
     /**
      * @return int|null
      */
+    private function getLockedFlagFilterValue()
+    {
+        return $this->getFormElementValue(self::SUBMISSION_LOCKED_STATE, $this->defaultValues[self::SUBMISSION_LOCKED_STATE]);
+    }
+
+    /**
+     * @return int|null
+     */
+    private function getClonedFlagFilterValue()
+    {
+        return $this->getFormElementValue(self::SUBMISSION_CLONED_STATE, $this->defaultValues[self::SUBMISSION_CLONED_STATE]);
+    }
+
+    /**
+     * @return int|null
+     */
     private function getTargetLocaleFilterValue()
     {
         $value = $this->getFormElementValue(self::SUBMISSION_TARGET_LOCALE, $this->defaultValues[self::SUBMISSION_TARGET_LOCALE]);
@@ -352,6 +368,8 @@ class SubmissionTableWidget extends SmartlingListTable
         $contentTypeFilterValue = $this->getContentTypeFilterValue();
         $statusFilterValue = $this->getStatusFilterValue();
         $outdatedFlag = $this->getOutdatedFlagFilterValue();
+        $lockedFlag = $this->getLockedFlagFilterValue();
+        $clonedFlag = $this->getClonedFlagFilterValue();
         $targetLocale = $this->getTargetLocaleFilterValue();
         $searchText = $this->getFromSource('s', '');
 
@@ -387,6 +405,34 @@ class SubmissionTableWidget extends SmartlingListTable
             $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'target_blog_id', [$targetLocale]));
         }
 
+        if ('any' !== $lockedFlag) {
+
+            $lockConditionTotal = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'is_locked', [(int)$lockedFlag]);
+
+            if (1 === (int)$lockedFlag) {
+                $lockConditionFields = Condition::getCondition(ConditionBuilder::CONDITION_IS_NOT_NULL, 'locked_fields', []);
+                $lockConditionFields2 = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_NOT_EQ, 'locked_fields', [serialize([])]);
+            } else {
+                $lockConditionFields = Condition::getCondition(ConditionBuilder::CONDITION_IS_NULL, 'locked_fields', []);
+                $lockConditionFields2 = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'locked_fields', [serialize([])]);
+            }
+
+            $lockBlockHL = ConditionBlock::getConditionBlock();
+
+            $lockBlock = ConditionBlock::getConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR);
+            $lockBlockHL->addCondition($lockConditionTotal);
+
+
+            $lockBlock->addCondition($lockConditionFields);
+            $lockBlock->addCondition($lockConditionFields2);
+
+            $lockBlockHL->addConditionBlock($lockBlock);
+            $block->addConditionBlock($lockBlockHL);
+        }
+
+        if ('any' !== $clonedFlag) {
+            $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'is_cloned', [(int)$clonedFlag]));
+        }
 
         $data = $this->manager->searchByCondition(
             $block,
@@ -411,8 +457,22 @@ class SubmissionTableWidget extends SmartlingListTable
             $row['submission_date'] = DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row['submission_date']));
             $row['applied_date'] = '0000-00-00 00:00:00' === $row['applied_date'] ? __('Never')
                 : DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row['applied_date']));
-            $row['target_locale'] =  $siteHelper->getBlogLabelById($this->entityHelper->getConnector(), $row['target_blog_id']);
-            $row['outdated'] = 0 === $row['outdated'] ? '&nbsp;' : '&#10003;';
+            $row['target_locale'] = $siteHelper->getBlogLabelById($this->entityHelper->getConnector(), $row['target_blog_id']);
+
+            $flagBlockParts = [];
+
+            foreach ($element->getStatusFlags() as $k => $v) {
+                $flagBlockParts[] = HtmlTagGeneratorHelper::tag(
+                    'span',
+                    '',
+                    [
+                        'class' => vsprintf('status-flag-%s %s', [$k, $v]),
+                        'title' => ucfirst($k),
+                    ]
+                );
+            }
+
+            $row['outdated'] = implode('', $flagBlockParts);
 
             if (SubmissionEntity::SUBMISSION_STATUS_FAILED === $row['status'] &&
                 !StringHelper::isNullOrEmpty($row['last_error'])
@@ -468,7 +528,7 @@ class SubmissionTableWidget extends SmartlingListTable
     /**
      * @return string
      */
-    public function stateSelectRender()
+    public function outdatedStateSelectRender()
     {
         $controlName = self::SUBMISSION_OUTDATE_STATE;
 
@@ -483,6 +543,54 @@ class SubmissionTableWidget extends SmartlingListTable
         $value = $this->getFormElementValue($controlName, $this->defaultValues[$controlName]);
 
         $html = HtmlTagGeneratorHelper::tag('label', __('Content Status'), ['for' => $this->buildHtmlTagName($controlName),]) .
+                HtmlTagGeneratorHelper::tag('select', HtmlTagGeneratorHelper::renderSelectOptions($value, $states), ['id'   => $this->buildHtmlTagName($controlName),
+                                                                                                                     'name' => $this->buildHtmlTagName($controlName),]);
+
+        return $html;
+    }
+
+    /**
+     * @return string
+     */
+    public function lockedStateSelectRender()
+    {
+        $controlName = self::SUBMISSION_LOCKED_STATE;
+
+        $states = [
+            0 => __('Not locked'),
+            1 => __('Locked'),
+        ];
+
+        // add 'Any' to turn off filter
+        $states = array_merge(['any' => __('Any')], $states);
+
+        $value = $this->getFormElementValue($controlName, $this->defaultValues[$controlName]);
+
+        $html = HtmlTagGeneratorHelper::tag('label', __('Lock Status'), ['for' => $this->buildHtmlTagName($controlName),]) .
+                HtmlTagGeneratorHelper::tag('select', HtmlTagGeneratorHelper::renderSelectOptions($value, $states), ['id'   => $this->buildHtmlTagName($controlName),
+                                                                                                                     'name' => $this->buildHtmlTagName($controlName),]);
+
+        return $html;
+    }
+
+    /**
+     * @return string
+     */
+    public function clonedStateSelectRender()
+    {
+        $controlName = self::SUBMISSION_CLONED_STATE;
+
+        $states = [
+            0 => __('Translated'),
+            1 => __('Cloned'),
+        ];
+
+        // add 'Any' to turn off filter
+        $states = array_merge(['any' => __('Any')], $states);
+
+        $value = $this->getFormElementValue($controlName, $this->defaultValues[$controlName]);
+
+        $html = HtmlTagGeneratorHelper::tag('label', __('Clone Status'), ['for' => $this->buildHtmlTagName($controlName),]) .
                 HtmlTagGeneratorHelper::tag('select', HtmlTagGeneratorHelper::renderSelectOptions($value, $states), ['id'   => $this->buildHtmlTagName($controlName),
                                                                                                                      'name' => $this->buildHtmlTagName($controlName),]);
 

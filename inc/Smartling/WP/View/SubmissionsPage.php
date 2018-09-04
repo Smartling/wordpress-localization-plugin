@@ -42,7 +42,9 @@ $data = $this->getViewData();
                         <input type="hidden" name="page" value="<?= $_REQUEST['page']; ?>"/>
                         <?= $submissionsTable->contentTypeSelectRender(); ?>
                         <?= $submissionsTable->statusSelectRender(); ?>
-                        <?= $submissionsTable->stateSelectRender(); ?>
+                        <?= $submissionsTable->outdatedStateSelectRender(); ?>
+                        <?= $submissionsTable->clonedStateSelectRender(); ?>
+                        <?= $submissionsTable->lockedStateSelectRender(); ?>
                         <?= $submissionsTable->targetLocaleSelectRender(); ?>
                         <?= $submissionsTable->renderSearchBox(); ?>
                         <?= $submissionsTable->renderSubmitButton(__('Apply Filter')); ?>

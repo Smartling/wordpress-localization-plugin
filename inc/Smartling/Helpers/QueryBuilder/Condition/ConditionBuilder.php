@@ -62,6 +62,16 @@ class ConditionBuilder
     const CONDITION_SIGN_NOT_IN = '%s NOT IN(%s)';
 
     /**
+     * const for 'IS NULL'
+     */
+    const CONDITION_IS_NULL = '%s IS NULL';
+
+    /**
+     * const for 'NOT IS NULL'
+     */
+    const CONDITION_IS_NOT_NULL = '%s IS NOT NULL';
+
+    /**
      * const for 'AND'
      */
     const CONDITION_BLOCK_LEVEL_OPERATOR_AND = 'AND';
@@ -80,7 +90,12 @@ class ConditionBuilder
     public static function buildBlock($condition, $parameters)
     {
 
-        $customConditions = [self::CONDITION_SIGN_IN, self::CONDITION_SIGN_NOT_IN];
+        $customConditions = [
+            self::CONDITION_SIGN_IN,
+            self::CONDITION_SIGN_NOT_IN,
+            self::CONDITION_IS_NULL,
+            self::CONDITION_IS_NOT_NULL
+        ];
 
         if (!(in_array($condition, $customConditions)) && !self::validate($condition, $parameters)) {
             throw new \InvalidArgumentException('Invalid condition or parameters');
