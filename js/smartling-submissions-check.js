@@ -84,7 +84,7 @@
                         'class': 'widget-btn ' + item["color"],
                         'title': item["status"]
                     });
-                    span.children('span').text(item["percentage"] + '%');
+                    span.children('span.percent-completed').text(item["percentage"] + '%');
                 }
             }
         },

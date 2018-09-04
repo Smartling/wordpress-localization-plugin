@@ -16,6 +16,10 @@ use Smartling\WP\WPAbstract;
         padding-top: 3px;
         padding-bottom: 4px;
     }
+
+    span.percent-completed {
+        left: -5px;
+    }
 </style>
 <?php
 /**
