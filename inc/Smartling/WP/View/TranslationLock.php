@@ -11,7 +11,6 @@ wp_enqueue_script('common');
 global $pagenow, $wp_importers, $hook_suffix, $plugin_page, $typenow, $taxnow;
 $page_hook = null;
 $editing = false;
-do_action('admin_init');
 set_current_screen();
 $title = __('Add Plugins');
 $parent_file = 'admin.php';
