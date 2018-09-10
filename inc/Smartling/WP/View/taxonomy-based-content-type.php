@@ -4,7 +4,6 @@
  */
 
 use Smartling\Helpers\StringHelper;
-use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Settings\TargetLocale;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\Controller\TaxonomyWidgetController;
@@ -18,7 +17,9 @@ use Smartling\WP\WPAbstract;
     }
 
     span.percent-completed {
-        left: -5px;
+        left: -1px;
+        position: absolute;
+        bottom: -2px;
     }
 </style>
 <?php
@@ -65,56 +66,64 @@ if (!empty($locales)) {
         <?php
         $nameKey = TaxonomyWidgetController::WIDGET_DATA_NAME;
         \Smartling\Helpers\ArrayHelper::sortLocales($locales);
-        ?> <div class="locale-list"> <?php
+        ?>
+        <div class="locale-list"> <?php
 
-        foreach ($locales as $locale) {
-            /**
-             * @var TargetLocale $locale
-             */
-            if (!$locale->isEnabled()) {
-                continue;
-            }
+            foreach ($locales as $locale) {
+                /**
+                 * @var TargetLocale $locale
+                 */
+                if (!$locale->isEnabled()) {
+                    continue;
+                }
 
-            $value = false;
-            $enabled = false;
-            $status = '';
-            $submission = null;
-            $statusValue = null;
-            $id = null;
-            $editUrl = '';
-            $statusFlags = [];
-            if (null !== $data['submissions']) {
-                foreach ($data['submissions'] as $item) {
+                $value = false;
+                $enabled = false;
+                $status = '';
+                $submission = null;
+                $statusValue = null;
+                $id = null;
+                $editUrl = '';
+                $statusFlags = [];
+                if (null !== $data['submissions']) {
+                    foreach ($data['submissions'] as $item) {
 
-                    /**
-                     * @var SubmissionEntity $item
-                     */
-                    if ($item->getTargetBlogId() === $locale->getBlogId()) {
-                        $value = true;
-                        $statusValue = $item->getStatus();
-                        $id = $item->getId();
-                        $percent = $item->getCompletionPercentage();
-                        $status = $item->getStatusColor();
-                        $statusFlags = $item->getStatusFlags();
-                        $editUrl = \Smartling\Helpers\WordpressContentTypeHelper::getEditUrl($item);
-                        $enabled = 1 === $item->getIsCloned() || 1 === $item->getIsLocked() ? false : true;
-                        break;
+                        /**
+                         * @var SubmissionEntity $item
+                         */
+                        if ($item->getTargetBlogId() === $locale->getBlogId()) {
+                            $value = true;
+                            $statusValue = $item->getStatus();
+                            $id = $item->getId();
+                            $percent = $item->getCompletionPercentage();
+                            $status = $item->getStatusColor();
+                            $statusFlags = $item->getStatusFlags();
+                            $editUrl = \Smartling\Helpers\WordpressContentTypeHelper::getEditUrl($item);
+                            $enabled = 1 === $item->getIsCloned() || 1 === $item->getIsLocked() ? false : true;
+                            break;
+                        }
                     }
                 }
-            }
-            ?>
-            <div class="smtPostWidget-rowWrapper" style="display: inline-block; width: 100%;">
-                <div class="smtPostWidget-row">
-                    <?= WPAbstract::localeSelectionCheckboxBlock($nameKey, $locale->getBlogId(), $locale->getLabel(), $value, $enabled, $editUrl) ?>
+                ?>
+                <div class="smtPostWidget-rowWrapper" style="display: inline-block; width: 100%;">
+                    <div class="smtPostWidget-row">
+                        <?= WPAbstract::localeSelectionCheckboxBlock(
+                            $nameKey,
+                            $locale->getBlogId(),
+                            $locale->getLabel(),
+                            (false === $enabled ? false : $value),
+                            $enabled,
+                            $editUrl
+                        ) ?>
+                    </div>
+                    <div class="smtPostWidget-progress" style="left: 15px;">
+                        <?php if ($value) { ?>
+                            <?= WPAbstract::localeSelectionTranslationStatusBlock(__($statusValue), $status, $percent, $statusFlags); ?>
+                            <?= WPAbstract::inputHidden($id); ?>
+                        <?php } ?>
+                    </div>
                 </div>
-                <div class="smtPostWidget-progress" style="left: 15px;">
-                    <?php if ($value) { ?>
-                        <?= WPAbstract::localeSelectionTranslationStatusBlock(__($statusValue), $status, $percent, $statusFlags); ?>
-                        <?= WPAbstract::inputHidden($id); ?>
-                    <?php } ?>
-                </div>
-            </div>
-        <?php } ?>
+            <?php } ?>
         </div>
     </div>
     <?= WPAbstract::submitBlock(); ?>

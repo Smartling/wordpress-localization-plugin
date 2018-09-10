@@ -129,7 +129,9 @@
 }
 
 span.percent-completed {
-    left: -25px;
+    left: -1px;
+    position: absolute;
+    bottom: -2px;
 }
 
 a.link-blog-name-limited {
