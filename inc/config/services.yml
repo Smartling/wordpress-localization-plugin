@@ -242,3 +242,9 @@ services:
       - "@site.cache"
     calls:
     - [ "setContentHelper" , [ "@content.helper"]]
+
+  live_notification.service:
+    class: Smartling\WP\Controller\LiveNotificationController
+    arguments:
+      - "@wrapper.sdk.api.smartling"
+      - "@@manager.settings"
