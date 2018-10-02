@@ -80,6 +80,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
             'filter_copy_by_field_value_regex' => 'TEXT NULL',
             'filter_flag_seo'                  => 'TEXT NULL',
             'clone_attachment'                 => static::DB_TYPE_UINT_SWITCH . ' ' . static::DB_TYPE_DEFAULT_ZERO,
+            'enable_notifications'             => static::DB_TYPE_UINT_SWITCH . ' ' . static::DB_TYPE_DEFAULT_ZERO,
         ];
     }
 
@@ -367,6 +368,16 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
     public function getAlwaysSyncImagesOnUpload()
     {
         return (int)$this->stateFields['always_sync_images_on_upload'];
+    }
+
+    public function getEnableNotifications()
+    {
+        return (int)$this->stateFields['enable_notifications'];
+    }
+
+    public function setEnableNotifications($enableNotifications)
+    {
+        $this->stateFields['enable_notifications'] = (int)$enableNotifications;
     }
 
     public function toArray($addVirtualColumns = true)

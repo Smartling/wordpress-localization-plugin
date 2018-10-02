@@ -564,6 +564,27 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                 </td>
             </tr>
             <tr class="toggleExpert hidden">
+                <th scope="row"><?= __('Live notifications', $domain) ?></th>
+                <td>
+                    <?=
+                    HtmlTagGeneratorHelper::tag(
+                        'select',
+                        HtmlTagGeneratorHelper::renderSelectOptions(
+                            $profile->getEnableNotifications(),
+                            [0 => __('Disabled', $domain),
+                             1 => __('Enabled', $domain),]
+
+                        ),
+                        ['name' => 'smartling_settings[enable_notifications]']);
+
+                    ?>
+                    <br/>
+                    <small>
+                        <?= __('Display notifications for background running tasks in Admin panel', $domain) ?>.
+                    </small>
+                </td>
+            </tr>
+            <tr class="toggleExpert hidden">
                 <th scope="row"><?= __('Clone attachments'); ?></th>
                 <td>
                     <?=
