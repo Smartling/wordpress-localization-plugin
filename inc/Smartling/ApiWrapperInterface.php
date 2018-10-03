@@ -62,6 +62,13 @@ interface ApiWrapperInterface
     public function getSupportedLocales(ConfigurationProfileEntity $profile);
 
     /**
+     * @param ConfigurationProfileEntity $profile
+     *
+     * @return mixed
+     */
+    public function getAccountUid(ConfigurationProfileEntity $profile);
+
+    /**
      * @param SubmissionEntity $submission
      *
      * @return array mixed
@@ -125,4 +132,28 @@ interface ApiWrapperInterface
      * @throws SmartlingApiException
      */
     public function executeBatch(ConfigurationProfileEntity $profile, $batchUid);
+
+    /**
+     * @param ConfigurationProfileEntity $profile
+     *
+     * @return mixed
+     */
+    public function getProgressToken(ConfigurationProfileEntity $profile);
+
+    /**
+     * @param ConfigurationProfileEntity $profile
+     * @param string                     $space
+     * @param string                     $object
+     * @param string                     $record
+     */
+    public function deleteNotificationRecord(ConfigurationProfileEntity $profile, $space, $object, $record);
+
+    /**
+     * @param ConfigurationProfileEntity $profile
+     * @param string                     $space
+     * @param string                     $object
+     * @param array                      $data
+     * @param int                        $ttl
+     */
+    public function createNotificationRecord(ConfigurationProfileEntity $profile, $space, $object, $data = [], $ttl = 30);
 }

@@ -161,4 +161,10 @@ interface ExportedAPI
      * Handler should add an array that defines a filter.
      */
     const FILTER_SMARTLING_REGISTER_FIELD_FILTER = 'smartling_register_field_filter';
+
+    /**
+     *
+     */
+    const ACTION_SMARTLING_PUSH_LIVE_NOTIFICATION = 'smartling_push_notification';
+
 }

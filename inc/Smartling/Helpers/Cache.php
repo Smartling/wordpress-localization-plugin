@@ -1,14 +1,11 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: sergey@slepokurov.com
- * Date: 23.02.2015
- * Time: 13:59
- */
 
 namespace Smartling\Helpers;
 
-
+/**
+ * Class Cache
+ * @package Smartling\Helpers
+ */
 class Cache
 {
     const GROUP = "smartling";
@@ -49,7 +46,6 @@ class Cache
     {
         return wp_cache_get($key, $group);
     }
-
 
     /**
      * @param string $key

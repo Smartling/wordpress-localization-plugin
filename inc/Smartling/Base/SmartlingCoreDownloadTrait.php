@@ -3,6 +3,7 @@
 namespace Smartling\Base;
 
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\WP\Controller\LiveNotificationController;
 
 /**
  * Class SmartlingCoreDownloadTrait
@@ -19,6 +20,7 @@ trait SmartlingCoreDownloadTrait
                 $entity->getTargetId(),
             ]);
             $this->getLogger()->warning($msg);
+
             return;
         }
         if (1 === $entity->getIsCloned()) {
@@ -27,6 +29,7 @@ trait SmartlingCoreDownloadTrait
                 $entity->getTargetId(),
             ]);
             $this->getLogger()->warning($msg);
+
             return;
         }
         if (0 === $entity->getTargetId()) {
@@ -35,12 +38,50 @@ trait SmartlingCoreDownloadTrait
         }
 
         try {
+            LiveNotificationController::pushNotification(
+                $this
+                    ->getSettingsManager()
+                    ->getSingleSettingsProfile($entity->getSourceBlogId())
+                    ->getProjectId(),
+                LiveNotificationController::SEVERITY_SUCCESS,
+                vsprintf('<p>Downloading file %s.</p>', [
+                    $entity->getFileUri(),
+                ])
+            );
             $data = (string)$this->getApiWrapper()->downloadFile($entity);
-            $msg = vsprintf('Downloaded file for submission id = \'%s\'. Dump: %s', [$entity->getId(), base64_encode($data)]);
+            $msg = vsprintf('Downloaded file for submission id = \'%s\'. Dump: %s', [$entity->getId(),
+                                                                                     base64_encode($data)]);
             $this->getLogger()->debug($msg);
+            LiveNotificationController::pushNotification(
+                $this
+                    ->getSettingsManager()
+                    ->getSingleSettingsProfile($entity->getSourceBlogId())
+                    ->getProjectId(),
+                LiveNotificationController::SEVERITY_SUCCESS,
+                vsprintf('<p>Applying translation for file %s and locale %s.</p>', [
+                    $entity->getFileUri(),
+                    $entity->getTargetLocale(),
+                ])
+            );
             $this->applyXML($entity, $data);
         } catch (\Exception $e) {
-            $msg = vsprintf('Error occurred while downloading translation for submission id=\'%s\'. Message: %s.', [$entity->getId(), $e->getMessage()]);
+            LiveNotificationController::pushNotification(
+                $this
+                    ->getSettingsManager()
+                    ->getSingleSettingsProfile($entity->getSourceBlogId())
+                    ->getProjectId(),
+                LiveNotificationController::SEVERITY_ERROR,
+                vsprintf('<p>Failed downloading file %s.</p>', [
+                    $entity->getFileUri(),
+                ])
+            );
+            $msg = vsprintf(
+                'Error occurred while downloading translation for submission id=\'%s\'. Message: %s.',
+                [
+                    $entity->getId(),
+                    $e->getMessage(),
+                ]
+            );
             $this->getLogger()->error($msg);
         }
 

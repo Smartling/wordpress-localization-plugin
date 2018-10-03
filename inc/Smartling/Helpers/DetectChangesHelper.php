@@ -10,6 +10,7 @@ use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\WP\Controller\LiveNotificationController;
 
 /**
  * Class DetectChangesHelper
@@ -152,6 +153,20 @@ class DetectChangesHelper
                         [$submission->getId(), $newStatus]
                     )
                 );
+
+                LiveNotificationController::pushNotification(
+                    $this
+                        ->getSettingsManager()
+                        ->getSingleSettingsProfile($submission->getSourceBlogId())
+                        ->getProjectId(),
+                    LiveNotificationController::SEVERITY_WARNING,
+                    vsprintf('<p>Content outdated for %s %s blog %s.</p>', [
+                        $submission->getContentType(),
+                        $submission->getSourceId(),
+                        $submission->getSourceBlogId()
+                    ])
+                );
+
                 $submission->setStatus($newStatus);
             }
         } else {

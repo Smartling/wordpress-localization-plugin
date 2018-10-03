@@ -389,3 +389,36 @@ div.misc-pub-section a.thickbox:before {
 .status-flag-locked {
     color: #000000;
 }
+
+.notification-message-box {
+    height: 60px;
+    background: #fff;
+    border-left: 4px solid #fff;
+    box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .1);
+    display: none;
+    max-width: 200px;
+    width:200px;
+    margin: 5px 10px 5px 13px !important;
+    padding: 1px 12px;
+}
+
+.notification-success {
+    border-left-color: #46b450;
+}
+
+.notification-warning {
+    border-left-color: #ffba00;
+}
+
+.notification-error {
+    border-left-color: #dc3232;
+}
+
+.smartling-notification-wrapper {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    z-index: 10001;
+    width: 280px;
+}
+

@@ -2,7 +2,6 @@
 
 namespace Smartling;
 
-use DateTime;
 use DateTimeZone;
 use Psr\Log\LoggerInterface;
 use Smartling\AuthApi\AuthTokenProvider;
@@ -24,11 +23,12 @@ use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\RuntimeCacheHelper;
 use Smartling\Jobs\JobsApi;
 use Smartling\Jobs\JobStatus;
-use Smartling\Jobs\Params\AddFileToJobParameters;
 use Smartling\Jobs\Params\CreateJobParameters;
 use Smartling\Jobs\Params\ListJobsParameters;
 use Smartling\Jobs\Params\UpdateJobParameters;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\ProgressTracker\Params\CreateRecordParameters;
+use Smartling\ProgressTracker\ProgressTrackerApi;
 use Smartling\Project\ProjectApi;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
@@ -395,6 +395,25 @@ class ApiWrapper implements ApiWrapperInterface
         return $supportedLocales;
     }
 
+    public function getAccountUid(ConfigurationProfileEntity $profile)
+    {
+        try {
+            $api = ProjectApi::create(
+                $this->getAuthProvider($profile),
+                $profile->getProjectId(),
+                $this->getLogger()
+            );
+
+            $details = $api->getProjectDetails();
+
+            return $details['accountUid'];
+        } catch (\Exception $e) {
+            $message = vsprintf('Response has error messages. Message:\'%s\'.', [$e->getMessage()]);
+            $this->logger->error($message);
+            throw $e;
+        }
+    }
+
     /**
      * @param SubmissionEntity $submission
      *
@@ -543,15 +562,16 @@ class ApiWrapper implements ApiWrapperInterface
      *
      * @return \Smartling\Jobs\JobsApi
      */
-    private function getBatchApi(ConfigurationProfileEntity $profile) {
+    private function getBatchApi(ConfigurationProfileEntity $profile)
+    {
         return BatchApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger());
     }
 
     /**
      * @param ConfigurationProfileEntity $profile
+     * @param null                       $name
+     * @param array                      $statuses
      *
-     * @param null $name
-     * @param array $statuses
      * @return array
      */
     public function listJobs(ConfigurationProfileEntity $profile, $name = null, array $statuses = [])
@@ -616,8 +636,8 @@ class ApiWrapper implements ApiWrapperInterface
 
     /**
      * @param \Smartling\Settings\ConfigurationProfileEntity $profile
-     * @param $jobId
-     * @param bool $authorize
+     * @param                                                $jobId
+     * @param bool                                           $authorize
      *
      * @return array
      * @throws SmartlingApiException
@@ -642,13 +662,15 @@ class ApiWrapper implements ApiWrapperInterface
     /**
      * Returns batch uid for a given job.
      *
-     * @param $profile
-     * @param $jobId
-     * @param bool $authorize
+     * @param       $profile
+     * @param       $jobId
+     * @param bool  $authorize
      * @param array $updateJob
+     *
      * @return string|null
      */
-    public function retrieveBatch($profile, $jobId, $authorize = true, $updateJob = []) {
+    public function retrieveBatch($profile, $jobId, $authorize = true, $updateJob = [])
+    {
         if ($authorize) {
             $this->getLogger()->debug(vsprintf('Job \'%s\' should be authorized once upload is finished.', [$jobId]));
         }
@@ -674,7 +696,8 @@ class ApiWrapper implements ApiWrapperInterface
 
             return $result['batchUid'];
         } catch (SmartlingApiException $e) {
-            $this->getLogger()->error(vsprintf('Can\'t create batch for a job "%s". Error: %s', [$jobId, $e->formatErrors()]));
+            $this->getLogger()->error(vsprintf('Can\'t create batch for a job "%s". Error: %s', [$jobId,
+                                                                                                 $e->formatErrors()]));
 
             return null;
         }
@@ -684,11 +707,14 @@ class ApiWrapper implements ApiWrapperInterface
      * Returns batch uid for a daily bucket job.
      *
      * @param \Smartling\Settings\ConfigurationProfileEntity $profile
-     * @param $authorize
+     * @param                                                $authorize
+     *
      * @return string|null
+     * @throws \Exception
      */
-    public function retrieveBatchForBucketJob(ConfigurationProfileEntity $profile, $authorize) {
-        $getName = function($suffix = '') {
+    public function retrieveBatchForBucketJob(ConfigurationProfileEntity $profile, $authorize)
+    {
+        $getName = function ($suffix = '') {
             $date = date('m/d/Y');
             $name = "Daily Bucket Job $date";
 
@@ -714,18 +740,17 @@ class ApiWrapper implements ApiWrapperInterface
             if (empty($jobId)) {
                 try {
                     $result = $this->createJob($profile, [
-                      'name' => $jobName,
-                      'description' => 'Bucket job: contains updated content.',
+                        'name'        => $jobName,
+                        'description' => 'Bucket job: contains updated content.',
                     ]);
-                }
-                catch (SmartlingApiException $e) {
+                } catch (SmartlingApiException $e) {
                     // If there is a CLOSED bucket job then we have to
                     // come up with new job name in order to avoid
                     // "Job name is already taken" error.
                     $jobName = $getName(' ' . date('H:i:s'));
                     $result = $this->createJob($profile, [
-                      'name' => $jobName,
-                      'description' => 'Bucket job: contains updated content.',
+                        'name'        => $jobName,
+                        'description' => 'Bucket job: contains updated content.',
                     ]);
                 }
 
@@ -741,11 +766,108 @@ class ApiWrapper implements ApiWrapperInterface
             $result = $this->createBatch($profile, $jobId, $authorize);
 
             return $result['batchUid'];
-        }
-        catch (SmartlingApiException $e) {
-            $this->getLogger()->error(vsprintf('Can\'t create batch for a daily job "%s". Error: %s', [$jobName, $e->formatErrors()]));
+        } catch (SmartlingApiException $e) {
+            $this->getLogger()->error(vsprintf('Can\'t create batch for a daily job "%s". Error: %s', [$jobName,
+                                                                                                       $e->formatErrors()]));
 
             return null;
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getProgressToken(ConfigurationProfileEntity $profile)
+    {
+        try {
+            $accountUid = $this->getAccountUid($profile);
+
+            $progressApi = ProgressTrackerApi::create(
+                $this->getAuthProvider($profile),
+                $profile->getProjectId(),
+                $this->getLogger()
+            );
+
+            $token = $progressApi->getToken($accountUid);
+
+            $token = array_merge($token, [
+                'accountUid' => $accountUid,
+                'projectId'  => $profile->getProjectId(),
+            ]);
+
+            return $token;
+        } catch (\Exception $e) {
+            $this->getLogger()->error(
+                vsprintf(
+                    'Can\'t get progress token for project id "%s". Error: %s',
+                    [$profile->getProjectId(), $e->formatErrors()]
+                )
+            );
+
+            throw $e;
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function deleteNotificationRecord(ConfigurationProfileEntity $profile, $space, $object, $record)
+    {
+        try {
+            $progressApi = ProgressTrackerApi::create(
+                $this->getAuthProvider($profile),
+                $profile->getProjectId(),
+                $this->getLogger()
+            );
+
+            $progressApi->deleteRecord($space, $object, $record);
+        } catch (\Exception $e) {
+            $this
+                ->getLogger()
+                ->error(
+                    vsprintf(
+                        'Error occurred while deleting notification for space="%s" object="%s" record="%s". Error: %s',
+                        [
+                            $space,
+                            $object,
+                            $record,
+                            $e->formatErrors(),
+                        ]
+                    ));
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function createNotificationRecord(ConfigurationProfileEntity $profile, $space, $object, $data = [], $ttl = 30)
+    {
+        try {
+            $progressApi = ProgressTrackerApi::create(
+                $this->getAuthProvider($profile),
+                $profile->getProjectId(),
+                $this->getLogger()
+            );
+
+            $params = new CreateRecordParameters();
+            $params->setTtl((int)$ttl);
+            $params->setData($data);
+
+            $progressApi->createRecord($space, $object, $params);
+        } catch (\Exception $e) {
+            $this
+                ->getLogger()
+                ->error(
+                    vsprintf(
+                        'Error occurred while creating notification for space="%s" object="%s" data="%s" ttl="%s". Error: %s',
+                        [
+                            $space,
+                            $object,
+                            var_export($data, true),
+                            $ttl,
+                            $e->formatErrors(),
+                        ]
+                    ));
         }
     }
 }

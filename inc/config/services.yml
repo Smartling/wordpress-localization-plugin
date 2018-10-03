@@ -247,4 +247,6 @@ services:
     class: Smartling\WP\Controller\LiveNotificationController
     arguments:
       - "@wrapper.sdk.api.smartling"
-      - "@@manager.settings"
+      - "@manager.settings"
+      - "@site.cache"
+      - "@plugin.info"

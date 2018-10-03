@@ -19,6 +19,7 @@ use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\WP\Controller\LiveNotificationController;
 
 
 /**
@@ -154,7 +155,8 @@ trait SmartlingCoreUploadTrait
      */
     private function readLockedTranslationFieldsBySubmission(SubmissionEntity $submission)
     {
-        $this->getLogger()->debug(vsprintf('Starting loading locked fields for submission id=%s',[$submission->getId()]));
+        $this->getLogger()
+            ->debug(vsprintf('Starting loading locked fields for submission id=%s', [$submission->getId()]));
 
         $lockedData = [
             'entity' => [],
@@ -173,7 +175,7 @@ trait SmartlingCoreUploadTrait
 
             if (preg_match('/^meta\//ius', $lockedFieldName)) {
                 $_fieldName = preg_replace('/^meta\//ius', '', $lockedFieldName);
-                $this->getLogger()->debug(vsprintf('Got field \'%s\'',[$_fieldName]));
+                $this->getLogger()->debug(vsprintf('Got field \'%s\'', [$_fieldName]));
                 if (array_key_exists($_fieldName, $targetMeta)) {
                     $lockedData['meta'][$_fieldName] = $targetMeta[$_fieldName];
                 }
@@ -388,12 +390,45 @@ trait SmartlingCoreUploadTrait
             }
 
             if (!StringHelper::isNullOrEmpty($xml)) {
+                LiveNotificationController::pushNotification(
+                    $this
+                        ->getSettingsManager()
+                        ->getSingleSettingsProfile($submission->getSourceBlogId())
+                        ->getProjectId(),
+                    LiveNotificationController::SEVERITY_SUCCESS,
+                    vsprintf('<p>Sending file %s for locales %s.</p>', [
+                        $submission->getFileUri(),
+                        implode(',', array_values($locales)),
+                    ])
+                );
                 if ($this->sendFile($submission, $xml, $locales)) {
+                    LiveNotificationController::pushNotification(
+                        $this
+                            ->getSettingsManager()
+                            ->getSingleSettingsProfile($submission->getSourceBlogId())
+                            ->getProjectId(),
+                        LiveNotificationController::SEVERITY_SUCCESS,
+                        vsprintf('<p>Sent file %s for locales %s.</p>', [
+                            $submission->getFileUri(),
+                            implode(',', $locales),
+                        ])
+                    );
                     foreach ($submissions as $_submission) {
                         $_submission->setBatchUid('');
                         $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                     }
                 } else {
+                    LiveNotificationController::pushNotification(
+                        $this
+                            ->getSettingsManager()
+                            ->getSingleSettingsProfile($submission->getSourceBlogId())
+                            ->getProjectId(),
+                        LiveNotificationController::SEVERITY_ERROR,
+                        vsprintf('<p>Failed sending file %s for locales %s.</p>', [
+                            $submission->getFileUri(),
+                            implode(',', $locales),
+                        ])
+                    );
                     foreach ($submissions as $_submission) {
                         $_submission->setBatchUid('');
                         $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
@@ -415,6 +450,17 @@ trait SmartlingCoreUploadTrait
             $this->getLogger()->error($e->getMessage());
             $this->getSubmissionManager()
                 ->setErrorMessage($submission, vsprintf('Could not submit because: %s', [$e->getMessage()]));
+
+            LiveNotificationController::pushNotification(
+                $this
+                    ->getSettingsManager()
+                    ->getSingleSettingsProfile($submission->getSourceBlogId())
+                    ->getProjectId(),
+                LiveNotificationController::SEVERITY_ERROR,
+                vsprintf('<p>Failed sending file %s.</p>', [
+                    $submission->getFileUri(),
+                ])
+            );
         }
     }
 
@@ -493,6 +539,16 @@ trait SmartlingCoreUploadTrait
             )
         );
 
+        LiveNotificationController::pushNotification(
+            $configurationProfile->getProjectId(),
+            LiveNotificationController::SEVERITY_SUCCESS,
+            vsprintf('<p>Processing upload queue.<br/>Uploading %s %s in blog %s.</p>', [
+                $submission->getContentType(),
+                $submission->getSourceId(),
+                $submission->getSourceBlogId(),
+            ])
+        );
+
         try {
             if (1 === $submission->getIsCloned()) {
                 $this->prepareRelatedSubmissions($submission);
@@ -501,18 +557,61 @@ trait SmartlingCoreUploadTrait
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                 $submission = $this->getSubmissionManager()->storeEntity($submission);
                 $this->applyXML($submission, $xml);
+
+                LiveNotificationController::pushNotification(
+                    $configurationProfile->getProjectId(),
+                    LiveNotificationController::SEVERITY_SUCCESS,
+                    vsprintf('<p>Cloned %s %s in blog %s.</p>', [
+                        $submission->getContentType(),
+                        $submission->getSourceId(),
+                        $submission->getSourceBlogId(),
+                    ])
+                );
+
             } else {
                 $this->bulkSubmit($submission);
             }
         } catch (EntityNotFoundException $e) {
             $this->getLogger()->error($e->getMessage());
             $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent content.');
+
+            LiveNotificationController::pushNotification(
+                $configurationProfile->getProjectId(),
+                LiveNotificationController::SEVERITY_ERROR,
+                vsprintf('<p>Failed processing %s %s in blog %s.</p>', [
+                    $submission->getContentType(),
+                    $submission->getSourceId(),
+                    $submission->getSourceBlogId(),
+                ])
+            );
         } catch (BlogNotFoundException $e) {
             $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent blog.');
+
+            LiveNotificationController::pushNotification(
+                $configurationProfile->getProjectId(),
+                LiveNotificationController::SEVERITY_ERROR,
+                vsprintf('<p>Failed processing %s %s in blog %s.</p>', [
+                    $submission->getContentType(),
+                    $submission->getSourceId(),
+                    $submission->getSourceBlogId(),
+                ])
+            );
+
             $this->handleBadBlogId($submission);
+
         } catch (Exception $e) {
-            $this->getSubmissionManager()
-                ->setErrorMessage($submission, vsprintf('Error occurred: %s', [$e->getMessage()]));
+            $this->getSubmissionManager()->setErrorMessage(
+                $submission, vsprintf('Error occurred: %s', [$e->getMessage()])
+            );
+            LiveNotificationController::pushNotification(
+                $configurationProfile->getProjectId(),
+                LiveNotificationController::SEVERITY_ERROR,
+                vsprintf('<p>Failed processing %s %s in blog %s.</p>', [
+                    $submission->getContentType(),
+                    $submission->getSourceId(),
+                    $submission->getSourceBlogId(),
+                ])
+            );
             $this->getLogger()->error($e->getMessage());
         }
     }

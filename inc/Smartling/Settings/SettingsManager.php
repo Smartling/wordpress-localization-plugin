@@ -4,6 +4,7 @@ namespace Smartling\Settings;
 
 use Smartling\DbAl\EntityManagerAbstract;
 use Smartling\Exception\BlogNotFoundException;
+use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
@@ -49,9 +50,11 @@ class SettingsManager extends EntityManagerAbstract
         return $result;
     }
 
-    public function getActiveProfiles() {
-       $cnt = 0;
-       return $this->getEntities([], null, $cnt, true);
+    public function getActiveProfiles()
+    {
+        $cnt = 0;
+
+        return $this->getEntities([], null, $cnt, true);
     }
 
     public function getSmartlingLocaleBySubmission(SubmissionEntity $submission)
@@ -84,12 +87,12 @@ class SettingsManager extends EntityManagerAbstract
 
     /**
      * @param ConfigurationProfileEntity $profile
-     *
      * @param int                        $targetBlog
      *
      * @return string
      */
-    public function getSmartlingLocaleIdBySettingsProfile(ConfigurationProfileEntity $profile, $targetBlog) {
+    public function getSmartlingLocaleIdBySettingsProfile(ConfigurationProfileEntity $profile, $targetBlog)
+    {
         $locale = '';
 
         $locales = $profile->getTargetLocales();
@@ -101,6 +104,27 @@ class SettingsManager extends EntityManagerAbstract
         }
 
         return $locale;
+    }
+
+    /**
+     * @param $projectId
+     *
+     * @return ConfigurationProfileEntity
+     * @throws SmartlingConfigException
+     */
+    public function getActiveProfileByProjectId($projectId)
+    {
+        $cond = ConditionBlock::getConditionBlock();
+        $cond->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'project_id', [$projectId]));
+        $cond->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'is_active', [1]));
+        $dataQuery = $this->buildQuery([], null, $cond);
+        $result = $this->fetchData($dataQuery);
+
+        if (0 < count($result)) {
+            return ArrayHelper::first($result);
+        } else {
+            throw new SmartlingConfigException(vsprintf('No profile found for projectId="%s".', [$projectId]));
+        }
     }
 
     public function getEntityById($id)
@@ -205,7 +229,7 @@ class SettingsManager extends EntityManagerAbstract
                                                          ['limit' => 1]);
         }
 
-        $this->getLogger()->debug(vsprintf('Saving profile: %s',[ $storeQuery ]));
+        $this->getLogger()->debug(vsprintf('Saving profile: %s', [$storeQuery]));
         $result = $this->getDbal()->query($storeQuery);
         if (false === $result) {
             $message = vsprintf('Failed saving profile entity to database with following error message: %s',
