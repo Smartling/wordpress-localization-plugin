@@ -309,6 +309,8 @@ class SubmissionEntity extends SmartlingEntityAbstract
             case static::SUBMISSION_STATUS_NEW:
                 $this->setLastError('');
                 $this->setSubmitter(WordpressUserHelper::getUserLogin());
+                $this->setApprovedStringCount(0);
+                $this->setCompletedStringCount(0);
                 break;
             case static::SUBMISSION_STATUS_IN_PROGRESS:
                 $this->setOutdated(0);
