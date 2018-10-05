@@ -391,15 +391,22 @@ div.misc-pub-section a.thickbox:before {
 }
 
 .notification-message-box {
-    height: 60px;
+    height: auto;
+    min-height: 60px;
     background: #fff;
     border-left: 4px solid #fff;
     box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .1);
     display: none;
-    max-width: 200px;
-    width:200px;
+    max-width: 250px;
+    width:250px;
     margin: 5px 10px 5px 13px !important;
     padding: 1px 12px;
+    word-wrap: break-word;
+    opacity: 80%;
+}
+
+.notification-message-box:hover {
+    opacity: inherit;
 }
 
 .notification-success {
