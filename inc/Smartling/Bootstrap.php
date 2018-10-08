@@ -342,7 +342,7 @@ class Bootstrap
             $logMessage = 'Cron doesn\'t seem to be configured.';
             static::getLogger()->warning($logMessage);
             if (current_user_can('manage_network_plugins')) {
-                $mainMessage = vsprintf('<strong>Smartling-connector</strong> configuration is not optimal.<br />Warning! Wordpress cron installation is not configured properly. Please follow steps described <a target="_blank" href="https://help.smartling.com/v1.0/docs/wordpress-connector-install-and-configure#section-configure-wp-cron">here</a>.', []);
+                $mainMessage = vsprintf('<strong>Smartling-connector</strong> configuration is not optimal.<br />Warning! Wordpress cron installation is not configured properly. Please follow configuration steps described <a target="_blank" href="https://help.smartling.com/hc/en-us/articles/360008158133-Install-and-Configure">here</a>.', []);
                 DiagnosticsHelper::addDiagnosticsMessage($mainMessage, false);
             }
         }
