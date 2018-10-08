@@ -365,8 +365,11 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                         ));
                                 }
 
-                                $this->getLogger()->debug('Triggering Upload Job.');
-                                do_action(UploadJob::JOB_HOOK_NAME);
+                                /**
+                                 * $this->getLogger()->debug('Triggering Upload Job.');
+                                 * do_action(UploadJob::JOB_HOOK_NAME);
+                                 */
+
                             } else {
                                 $this->getLogger()->debug('No locales found.');
                             }
