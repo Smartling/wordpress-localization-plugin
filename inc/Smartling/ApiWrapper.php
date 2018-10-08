@@ -700,6 +700,11 @@ class ApiWrapper implements ApiWrapperInterface
                                                                                                  $e->formatErrors()]));
 
             return null;
+        } catch (\Exception $e) {
+            $this->getLogger()->error(vsprintf('Can\'t create batch for a job "%s". Error: %s', [$jobId,
+                                                                                                 $e->formatErrors()]));
+
+            return null;
         }
     }
 

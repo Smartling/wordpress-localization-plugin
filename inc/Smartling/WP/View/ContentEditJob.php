@@ -332,6 +332,15 @@ if ($post instanceof WP_Post) {
                 var jobDescription = $('textarea[name="description"]').val();
                 var jobDueDate = $('input[name="dueDate"]').val();
 
+                if ('' !== jobDueDate) {
+                    var nowTS = Math.floor((new Date()).getTime() / 1000);
+                    var formTS = Math.floor(moment(jobDueDate, 'YYYY-MM-DD HH:mm').toDate().getTime() / 1000);
+                    if (nowTS >= formTS) {
+                        alert("Invalid Due Date value. It cannot be in the past!.");
+                        return false;
+                    }
+                }
+
                 var locales = Helper.ui.getSelecterTargetLocales();
 
                 var createHiddenInput = function (name, value) {
