@@ -10,7 +10,6 @@ use Smartling\Submissions\SubmissionEntity;
 
 /**
  * Interface ApiWrapperInterface
- *
  * @package Smartling
  */
 interface ApiWrapperInterface
@@ -38,14 +37,12 @@ interface ApiWrapperInterface
      *
      * @return bool
      * @internal param string $locale
-     *
      */
     public function testConnection(ConfigurationProfileEntity $profile);
 
     /**
      * @param SubmissionEntity $entity
      * @param string           $xmlString
-     *
      * @param string           $filename
      * @param array            $smartlingLocaleList
      *
@@ -105,10 +102,10 @@ interface ApiWrapperInterface
 
     /**
      * @param ConfigurationProfileEntity $profile
-     * @param $jobId
-     * @param $name
-     * @param $description
-     * @param $dueDate
+     * @param                            $jobId
+     * @param                            $name
+     * @param                            $description
+     * @param                            $dueDate
      *
      * @return array
      * @throws SmartlingApiException
@@ -117,8 +114,8 @@ interface ApiWrapperInterface
 
     /**
      * @param \Smartling\Settings\ConfigurationProfileEntity $profile
-     * @param $jobId
-     * @param bool $authorize
+     * @param                                                $jobId
+     * @param bool                                           $authorize
      *
      * @return array
      * @throws SmartlingApiException
@@ -127,7 +124,7 @@ interface ApiWrapperInterface
 
     /**
      * @param \Smartling\Settings\ConfigurationProfileEntity $profile
-     * @param $batchUid
+     * @param                                                $batchUid
      *
      * @throws SmartlingApiException
      */
@@ -152,8 +149,11 @@ interface ApiWrapperInterface
      * @param ConfigurationProfileEntity $profile
      * @param string                     $space
      * @param string                     $object
+     * @param string                     $record
      * @param array                      $data
      * @param int                        $ttl
+     *
+     * @return array
      */
-    public function createNotificationRecord(ConfigurationProfileEntity $profile, $space, $object, $data = [], $ttl = 30);
+    public function setNotificationRecord(ConfigurationProfileEntity $profile, $space, $object, $record, $data = [], $ttl = 30);
 }

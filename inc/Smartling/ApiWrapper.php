@@ -28,6 +28,7 @@ use Smartling\Jobs\Params\ListJobsParameters;
 use Smartling\Jobs\Params\UpdateJobParameters;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\ProgressTracker\Params\CreateRecordParameters;
+use Smartling\ProgressTracker\Params\RecordParameters;
 use Smartling\ProgressTracker\ProgressTrackerApi;
 use Smartling\Project\ProjectApi;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -845,7 +846,7 @@ class ApiWrapper implements ApiWrapperInterface
     /**
      * @inheritdoc
      */
-    public function createNotificationRecord(ConfigurationProfileEntity $profile, $space, $object, $data = [], $ttl = 30)
+    public function setNotificationRecord(ConfigurationProfileEntity $profile, $space, $object, $recordId, $data = [], $ttl = 30)
     {
         try {
             $progressApi = ProgressTrackerApi::create(
@@ -854,17 +855,17 @@ class ApiWrapper implements ApiWrapperInterface
                 $this->getLogger()
             );
 
-            $params = new CreateRecordParameters();
+            $params = new RecordParameters();
             $params->setTtl((int)$ttl);
             $params->setData($data);
 
-            $progressApi->createRecord($space, $object, $params);
+            $progressApi->updateRecord($space, $object, $recordId, $params);
         } catch (\Exception $e) {
             $this
                 ->getLogger()
                 ->error(
                     vsprintf(
-                        'Error occurred while creating notification for space="%s" object="%s" data="%s" ttl="%s". Error: %s',
+                        'Error occurred while setting notification for space="%s" object="%s" data="%s" ttl="%s". Error: %s',
                         [
                             $space,
                             $object,

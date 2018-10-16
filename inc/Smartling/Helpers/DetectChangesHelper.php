@@ -159,6 +159,7 @@ class DetectChangesHelper
                         ->getSettingsManager()
                         ->getSingleSettingsProfile($submission->getSourceBlogId())
                         ->getProjectId(),
+                    LiveNotificationController::getContentId($submission),
                     LiveNotificationController::SEVERITY_WARNING,
                     vsprintf('<p>Content outdated for %s %s blog %s.</p>', [
                         $submission->getContentType(),

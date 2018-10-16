@@ -60,6 +60,12 @@ if (!empty($locales)) {
                 $enabled = false;
                 $statusFlags = [];
                 if (null !== $data['submissions']) {
+
+                    do_action(
+                        \Smartling\Base\ExportedAPI::ACTION_SMARTLING_PLACE_RECORD_ID,
+                        \Smartling\Helpers\ArrayHelper::first($data['submissions'])
+                    );
+
                     foreach ($data['submissions'] as $item) {
 
                         /**

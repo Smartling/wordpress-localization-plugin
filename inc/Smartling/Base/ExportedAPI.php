@@ -167,4 +167,6 @@ interface ExportedAPI
      */
     const ACTION_SMARTLING_PUSH_LIVE_NOTIFICATION = 'smartling_push_notification';
 
+    const ACTION_SMARTLING_PLACE_RECORD_ID = 'smartling_place_record_id';
+
 }

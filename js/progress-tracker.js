@@ -1,6 +1,6 @@
 (function ($) {
     $(document).ready(function () {
-        var NotificationsManager = function (firebase, data, appName) {
+        var NotificationsManager = function (firebase, data, appName, recordId) {
             this.data = data;
             this.spaceId = window.firebaseIds.space_id;
             this.objectId = window.firebaseIds.object_id;
@@ -23,7 +23,8 @@
                     .child("projects")
                     .child(this.data.projectId)
                     .child(this.spaceId)
-                    .child(this.objectId).on(event, function (snap) {
+                    .child(this.objectId)
+                    .child(recordId).on(event, function (snap) {
                     callback(snap, thisContext);
                 });
 
@@ -42,7 +43,8 @@
             }
         };
 
-        if (!Object.prototype.hasOwnProperty.call(window, 'firebaseConfig')) {
+        if (!Object.prototype.hasOwnProperty.call(window, 'firebaseConfig')
+            || !Object.prototype.hasOwnProperty.call(window, 'recordId')) {
             return;
         }
 
@@ -53,25 +55,44 @@
             var notificationManager = new NotificationsManager(
                 firebase,
                 window.firebaseConfig[e],
-                e == 0 ? "[DEFAULT]" : Math.random().toString()
+                e == 0 ? "[DEFAULT]" : Math.random().toString(),
+                recordId
             );
 
-            notificationManager.listen("child_added", function (snap, notificationManager) {
-                var id = snap.key;
-                var messageData = snap.val().data;
-                var $wrapper = $(`.${window.notificationClassName}`);
-                var messageBlock = `<div id="${id}" role="contentinfo" aria-label="Status message" class="notification-message-box ${messageData.severity}">${messageData.message}</div>`;
-                var $message = $(messageBlock);
-                $message.on("click", function () {
-                    notificationManager.deleteRecord(id);
-                    $message.slideUp(100, function () {
-                        $message.remove();
+            var getBoxId = function (id) {
+                return `box_${id}`;
+            }
+
+            var placeBox = function (id) {
+                if (0 === $(`#${getBoxId(id)}`).length) {
+                    var $wrapper = $(`.${window.notificationClassName}`);
+                    $($wrapper).append(`<div id="${getBoxId(id)}" class="notification-message-box"></div>`);
+                    $message = $(`#${getBoxId(id)}`);
+                    $message.on("click", function () {
+                        notificationManager.deleteRecord(recordId);
+                        $message.slideUp(100, function () {
+                            $message.remove();
+                        });
                     });
-                });
-                $wrapper.append($message);
-                $message.slideDown(100);
-            }).listen("child_removed", function (snap) {
-                var $target = $(`#${snap.key}`);
+                    $message.slideDown(100);
+                }
+            };
+
+            var setMessage = function (id, severity, message) {
+                $(`#${getBoxId(id)}`).attr("class", `notification-message-box ${severity}`);
+                $(`#${getBoxId(id)}`).html(message);
+            }
+
+            notificationManager
+                .listen("child_changed", function (snap, notificationManager) {
+                    console.log(snap.val());
+                    placeBox(recordId);
+                    var messageData = snap.val();
+                    console.log(snap.val());
+                    setMessage(recordId, messageData.severity, messageData.message);
+                })
+                .listen("child_removed", function (snap) {
+                var $target = $(`#${getBoxId((recordId))}`);
                 $target.slideUp(100, function () {
                     $target.remove();
                 });

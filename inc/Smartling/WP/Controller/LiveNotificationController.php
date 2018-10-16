@@ -5,13 +5,13 @@ namespace Smartling\WP\Controller;
 use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
 use Smartling\Base\ExportedAPI;
-use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
+use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPHookInterface;
 
 /**
@@ -278,6 +278,17 @@ EOF;
         exit;
     }
 
+    public function placeRecordId(SubmissionEntity $submissionEntity)
+    {
+        $recordId = static::getContentId($submissionEntity);
+        $script = <<<EOF
+<script>
+    var recordId="{$recordId}";
+</script>
+EOF;
+        echo $script;
+    }
+
     /**
      * Registers wp hook handlers. Invoked by wordpress.
      * @return void
@@ -326,15 +337,37 @@ EOF;
              * Registering hook to add notification
              */
             add_action(ExportedAPI::ACTION_SMARTLING_PUSH_LIVE_NOTIFICATION, [$this, 'pushNotificationHandler']);
+
+            add_action(ExportedAPI::ACTION_SMARTLING_PLACE_RECORD_ID, [$this, 'placeRecordId']);
         }
     }
 
-    public static function pushNotification($projectId, $severity, $message) {
+    /**
+     * @param SubmissionEntity $submissionEntity
+     *
+     * @return string
+     */
+    public static function getContentId(SubmissionEntity $submissionEntity)
+    {
+        return md5(
+            serialize(
+                [
+                    $submissionEntity->getSourceBlogId(),
+                    $submissionEntity->getSourceId(),
+                    $submissionEntity->getContentType(),
+                ]
+            )
+        );
+    }
+
+    public static function pushNotification($projectId, $contentId, $severity, $message)
+    {
         do_action(ExportedAPI::ACTION_SMARTLING_PUSH_LIVE_NOTIFICATION,
 
                   [
-                      'projectId' => $projectId,
-                      'message'   => [
+                      'projectId'  => $projectId,
+                      'content_id' => $contentId,
+                      'message'    => [
                           'severity' => $severity,
                           'message'  => $message,
                       ],
@@ -346,14 +379,16 @@ EOF;
     public function pushNotificationHandler($params)
     {
         $projectId = $params['projectId'];
+        $contentId = $params['content_id'];
         $message = $params['message'];
         try {
             $profile = $this->getSettingsManager()->getActiveProfileByProjectId($projectId);
 
-            $this->getApiWrapper()->createNotificationRecord(
+            $this->getApiWrapper()->setNotificationRecord(
                 $profile,
                 static::FIREBASE_SPACE_ID,
                 static::FIREBASE_OBJECT_ID,
+                $contentId,
                 $message
             );
         } catch (\Exception $e) {

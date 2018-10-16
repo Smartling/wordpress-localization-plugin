@@ -43,6 +43,7 @@ trait SmartlingCoreDownloadTrait
                     ->getSettingsManager()
                     ->getSingleSettingsProfile($entity->getSourceBlogId())
                     ->getProjectId(),
+                LiveNotificationController::getContentId($entity),
                 LiveNotificationController::SEVERITY_SUCCESS,
                 vsprintf('<p>Downloading file %s.</p>', [
                     $entity->getFileUri(),
@@ -57,6 +58,7 @@ trait SmartlingCoreDownloadTrait
                     ->getSettingsManager()
                     ->getSingleSettingsProfile($entity->getSourceBlogId())
                     ->getProjectId(),
+                LiveNotificationController::getContentId($entity),
                 LiveNotificationController::SEVERITY_SUCCESS,
                 vsprintf('<p>Applying translation for file %s and locale %s.</p>', [
                     $entity->getFileUri(),
@@ -70,6 +72,7 @@ trait SmartlingCoreDownloadTrait
                     ->getSettingsManager()
                     ->getSingleSettingsProfile($entity->getSourceBlogId())
                     ->getProjectId(),
+                LiveNotificationController::getContentId($entity),
                 LiveNotificationController::SEVERITY_ERROR,
                 vsprintf('<p>Failed downloading file %s.</p>', [
                     $entity->getFileUri(),

@@ -395,6 +395,7 @@ trait SmartlingCoreUploadTrait
                         ->getSettingsManager()
                         ->getSingleSettingsProfile($submission->getSourceBlogId())
                         ->getProjectId(),
+                    LiveNotificationController::getContentId($submission),
                     LiveNotificationController::SEVERITY_SUCCESS,
                     vsprintf('<p>Sending file %s for locales %s.</p>', [
                         $submission->getFileUri(),
@@ -407,6 +408,7 @@ trait SmartlingCoreUploadTrait
                             ->getSettingsManager()
                             ->getSingleSettingsProfile($submission->getSourceBlogId())
                             ->getProjectId(),
+                        LiveNotificationController::getContentId($submission),
                         LiveNotificationController::SEVERITY_SUCCESS,
                         vsprintf('<p>Sent file %s for locales %s.</p>', [
                             $submission->getFileUri(),
@@ -423,6 +425,7 @@ trait SmartlingCoreUploadTrait
                             ->getSettingsManager()
                             ->getSingleSettingsProfile($submission->getSourceBlogId())
                             ->getProjectId(),
+                        LiveNotificationController::getContentId($submission),
                         LiveNotificationController::SEVERITY_ERROR,
                         vsprintf('<p>Failed sending file %s for locales %s.</p>', [
                             $submission->getFileUri(),
@@ -456,6 +459,7 @@ trait SmartlingCoreUploadTrait
                     ->getSettingsManager()
                     ->getSingleSettingsProfile($submission->getSourceBlogId())
                     ->getProjectId(),
+                LiveNotificationController::getContentId($submission),
                 LiveNotificationController::SEVERITY_ERROR,
                 vsprintf('<p>Failed sending file %s.</p>', [
                     $submission->getFileUri(),
@@ -541,6 +545,7 @@ trait SmartlingCoreUploadTrait
 
         LiveNotificationController::pushNotification(
             $configurationProfile->getProjectId(),
+            LiveNotificationController::getContentId($submission),
             LiveNotificationController::SEVERITY_SUCCESS,
             vsprintf('<p>Processing upload queue.<br/>Uploading %s %s in blog %s.</p>', [
                 $submission->getContentType(),
@@ -560,6 +565,7 @@ trait SmartlingCoreUploadTrait
 
                 LiveNotificationController::pushNotification(
                     $configurationProfile->getProjectId(),
+                    LiveNotificationController::getContentId($submission),
                     LiveNotificationController::SEVERITY_SUCCESS,
                     vsprintf('<p>Cloned %s %s in blog %s.</p>', [
                         $submission->getContentType(),
@@ -577,6 +583,7 @@ trait SmartlingCoreUploadTrait
 
             LiveNotificationController::pushNotification(
                 $configurationProfile->getProjectId(),
+                LiveNotificationController::getContentId($submission),
                 LiveNotificationController::SEVERITY_ERROR,
                 vsprintf('<p>Failed processing %s %s in blog %s.</p>', [
                     $submission->getContentType(),
@@ -589,6 +596,7 @@ trait SmartlingCoreUploadTrait
 
             LiveNotificationController::pushNotification(
                 $configurationProfile->getProjectId(),
+                LiveNotificationController::getContentId($submission),
                 LiveNotificationController::SEVERITY_ERROR,
                 vsprintf('<p>Failed processing %s %s in blog %s.</p>', [
                     $submission->getContentType(),
@@ -605,6 +613,7 @@ trait SmartlingCoreUploadTrait
             );
             LiveNotificationController::pushNotification(
                 $configurationProfile->getProjectId(),
+                LiveNotificationController::getContentId($submission),
                 LiveNotificationController::SEVERITY_ERROR,
                 vsprintf('<p>Failed processing %s %s in blog %s.</p>', [
                     $submission->getContentType(),
