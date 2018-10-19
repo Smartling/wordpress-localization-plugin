@@ -79,24 +79,26 @@
             };
 
             var setMessage = function (id, severity, message) {
-                $(`#${getBoxId(id)}`).attr("class", `notification-message-box ${severity}`);
+                var cssClass = `notification-message-box ${severity}`;
+                $(`#${getBoxId(id)}`).attr("class", cssClass);
                 $(`#${getBoxId(id)}`).html(message);
             }
 
             notificationManager
                 .listen("child_changed", function (snap, notificationManager) {
-                    console.log(snap.val());
                     placeBox(recordId);
                     var messageData = snap.val();
-                    console.log(snap.val());
-                    setMessage(recordId, messageData.severity, messageData.message);
+                    if (Object.prototype.hasOwnProperty.call(messageData, "severity")
+                        && Object.prototype.hasOwnProperty.call(messageData, "message")) {
+                        setMessage(recordId, messageData.severity, messageData.message);
+                    }
                 })
                 .listen("child_removed", function (snap) {
-                var $target = $(`#${getBoxId((recordId))}`);
-                $target.slideUp(100, function () {
-                    $target.remove();
+                    var $target = $(`#${getBoxId((recordId))}`);
+                    $target.slideUp(100, function () {
+                        $target.remove();
+                    });
                 });
-            });
         });
     });
 })(jQuery);

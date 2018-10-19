@@ -402,11 +402,6 @@ div.misc-pub-section a.thickbox:before {
     margin: 5px 10px 5px 13px !important;
     padding: 1px 12px;
     word-wrap: break-word;
-    opacity: 80%;
-}
-
-.notification-message-box:hover {
-    opacity: inherit;
 }
 
 .notification-success {
