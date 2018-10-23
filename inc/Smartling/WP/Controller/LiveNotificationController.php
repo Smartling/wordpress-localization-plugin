@@ -38,6 +38,8 @@ class LiveNotificationController implements WPHookInterface
 
     const UI_NOTIFICATION_IDENTIFIER_CLASS = 'smartling-notification-wrapper';
 
+    const UI_NOTIFICATION_IDENTIFIER_CLASS_GENERAL = 'smartling-notification-wrapper-general';
+
     const SEVERITY_WARNING = 'notification-warning';
 
     const SEVERITY_SUCCESS = 'notification-success';
@@ -239,6 +241,7 @@ class LiveNotificationController implements WPHookInterface
         );
 
         $wrapperClassName = static::UI_NOTIFICATION_IDENTIFIER_CLASS;
+        $wrapperClassNameGeneral = static::UI_NOTIFICATION_IDENTIFIER_CLASS_GENERAL;
 
         $script = <<<EOF
 <script>
@@ -246,6 +249,7 @@ class LiveNotificationController implements WPHookInterface
     var deleteNotificationEndpoint = "{$deleteEndpoint}";
     var firebaseIds = {$firebaseIds};
     var notificationClassName = "{$wrapperClassName}";
+    var notificationClassNameGeneral = "{$wrapperClassNameGeneral}";
 </script>
 EOF;
 
@@ -278,15 +282,17 @@ EOF;
         exit;
     }
 
-    public function placeRecordId(SubmissionEntity $submissionEntity)
+    public function placeRecordId($submissionEntity)
     {
-        $recordId = static::getContentId($submissionEntity);
-        $script = <<<EOF
+        if ($submissionEntity instanceof SubmissionEntity) {
+            $recordId = static::getContentId($submissionEntity);
+            $script = <<<EOF
 <script>
     var recordId="{$recordId}";
 </script>
 EOF;
-        echo $script;
+            echo $script;
+        }
     }
 
     /**
@@ -339,7 +345,23 @@ EOF;
             add_action(ExportedAPI::ACTION_SMARTLING_PUSH_LIVE_NOTIFICATION, [$this, 'pushNotificationHandler']);
 
             add_action(ExportedAPI::ACTION_SMARTLING_PLACE_RECORD_ID, [$this, 'placeRecordId']);
+
+            add_action('admin_bar_menu', [$this, 'adminMenuHandler'], 80);
         }
+    }
+
+    public function adminMenuHandler(\WP_Admin_Bar $menuBar)
+    {
+        $menuBar
+            ->add_menu([
+                           'id'    => 'smartling-live-menu',
+                           'title' => '<span class="circle"></span> Smartling Live',
+                           'href'  => '#',
+                           'meta'  => [
+                               'class' => 'smartling-live-menu',
+                           ],
+                       ]
+            );
     }
 
     /**

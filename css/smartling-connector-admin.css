@@ -416,11 +416,29 @@ div.misc-pub-section a.thickbox:before {
     border-left-color: #dc3232;
 }
 
-.smartling-notification-wrapper {
+.smartling-notification-wrapper, .smartling-notification-wrapper-general {
     position: fixed;
     left: 0;
     bottom: 0;
     z-index: 10001;
     width: 280px;
+}
+
+.smartling-notification-wrapper-general {
+    left: 310px;
+}
+
+.hidden {
+    display: none;
+}
+
+span.circle {
+    background-color: #888a85;
+    display: inline-block !important;
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 50% !important;
+    top: 2px !important;
+    position: relative !important;
 }
 

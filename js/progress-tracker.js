@@ -101,4 +101,139 @@
                 });
         });
     });
+
+    $(document).ready(function () {
+        var NotificationsManagerGeneral = function (firebase, data, appName) {
+            this.data = data;
+            this.spaceId = window.firebaseIds.space_id;
+            this.objectId = window.firebaseIds.object_id;
+
+            if (data.config && data.token) {
+                firebase.initializeApp(data.config, appName);
+                firebase.auth().onAuthStateChanged(function (user) {
+                    if (!user) {
+                        firebase.auth().signInWithCustomToken(data.token);
+                    }
+                });
+            }
+
+            var thisContext = this;
+
+            this.listen = function (event, callback) {
+                firebase.database().ref()
+                    .child("accounts")
+                    .child(this.data.accountUid)
+                    .child("projects")
+                    .child(this.data.projectId)
+                    .child(this.spaceId)
+                    .child(this.objectId).on(event, function (snap) {
+                    callback(snap, thisContext);
+                });
+
+                return this;
+            };
+
+            this.deleteRecord = function (recordId) {
+                $.post(window.deleteNotificationEndpoint, {
+                    project_id: this.data.projectId,
+                    space_id: this.spaceId,
+                    object_id: this.object_id,
+                    record_id: recordId
+                }, function (data) {
+                    console.log(data);
+                });
+            }
+        };
+
+        if (!Object.prototype.hasOwnProperty.call(window, 'firebaseConfig')) {
+            return;
+        }
+
+        var wrapperBlock = `<div class="${window.notificationClassNameGeneral} hidden"></div>`;
+
+        $("body").append(wrapperBlock);
+
+        Object.keys(window.firebaseConfig).forEach(function (e) {
+            var notificationManager = new NotificationsManagerGeneral(
+                firebase,
+                window.firebaseConfig[e],
+                e == 0 ? "[DEFAULT]" : Math.random().toString()
+            );
+
+            var messageBoxSelector = 'smartling_notification_general';
+
+            var placeBox = function () {
+                if (0 === $(`#${messageBoxSelector}`).length) {
+                    var $wrapper = $(`.${window.notificationClassNameGeneral}`);
+                    $($wrapper).append(`<div id="${messageBoxSelector}" class="notification-message-box"></div>`);
+                    var $message = $(`#${messageBoxSelector}`);
+                    $message.on("click", function () {
+                        var recordId = $(this).attr("data-record-id");
+                        notificationManager.deleteRecord(recordId);
+                        $message.slideUp(100, function () {
+                            $message.remove();
+                        });
+                    });
+                    $message.slideDown(100);
+                }
+            };
+
+            var setMessage = function (severity, message, recordId) {
+                var cssClass = `notification-message-box ${severity}`;
+                $(`#${messageBoxSelector}`).attr("class", cssClass);
+                $(`#${messageBoxSelector}`).attr("data-record-id", recordId);
+                $(`#${messageBoxSelector}`).html(message);
+
+                setTimeout(function () {
+                    clearNotification(recordId);
+                }, 10000);
+
+            }
+
+            var clearNotification = function (recordId) {
+                var el = $(`#${messageBoxSelector} [data-record-id=${recordId}]`);
+                if (0 !== el.length) {
+                    $(el[0]).remove();
+                }
+
+                if (0 === $(`.${window.notificationClassNameGeneral} div`).length) {
+                    $(`.${window.notificationClassNameGeneral}`).toggleClass('hidden');
+                }
+            };
+
+            notificationManager
+                .listen("child_changed", function (snap, notificationManager) {
+                    eventAnimate();
+                    placeBox();
+                    var messageData = snap.val();
+
+                    if (Object.prototype.hasOwnProperty.call(messageData.data, "severity")
+                        && Object.prototype.hasOwnProperty.call(messageData.data, "message")) {
+                        setMessage(messageData.data.severity, messageData.data.message, snap.key);
+                    }
+                })
+                .listen("child_removed", function (snap) {
+                    eventAnimate();
+                    var $target = $(`messageBoxSelector [data-record-id=${snap.key}]`);
+                    $target.slideUp(100, function () {
+                        $target.remove();
+                        clearNotification(snap.key);
+                    });
+                });
+        });
+
+        var eventAnimate = function () {
+            jQuery('li.smartling-live-menu span.circle')
+                .animate({backgroundColor: "#FF3333"}, 1) /* event color */
+                .delay(300).animate({backgroundColor: "#888a85"}, 700);
+        };
+
+        $('.smartling-live-menu').on('click', function (e) {
+            var identifier = `.${window.notificationClassNameGeneral}`;
+            $(identifier).toggleClass('hidden');
+        });
+    });
+
+
+
 })(jQuery);
