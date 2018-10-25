@@ -66,6 +66,18 @@ trait SmartlingCoreDownloadTrait
                 ])
             );
             $this->applyXML($entity, $data);
+            LiveNotificationController::pushNotification(
+                $this
+                    ->getSettingsManager()
+                    ->getSingleSettingsProfile($entity->getSourceBlogId())
+                    ->getProjectId(),
+                LiveNotificationController::getContentId($entity),
+                LiveNotificationController::SEVERITY_SUCCESS,
+                vsprintf('<p>Completed processing for file %s and locale %s.</p>', [
+                    $entity->getFileUri(),
+                    $entity->getTargetLocale(),
+                ])
+            );
         } catch (\Exception $e) {
             LiveNotificationController::pushNotification(
                 $this
