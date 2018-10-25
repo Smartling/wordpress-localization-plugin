@@ -100,6 +100,7 @@ class ContentSerializationHelper
                 '_edit_lock',
                 '_edit_last',
                 '_encloseme',
+                '_pingme',
             ],
         ];
 
@@ -134,7 +135,9 @@ class ContentSerializationHelper
         if (false === ($cached = $cache->get($key, 'hashCalculator'))) {
             $collectedContent = $this->collectSubmissionSourceContent($submission);
             $collectedContent = $this->cleanUpFields($collectedContent);
-            $hash = md5(serialize($collectedContent));
+            $serializedContent = serialize($collectedContent);
+            $this->getLogger()->debug(vsprintf('Calculating hash for submission=%s using data=%s', [$submission->getId(), base64_encode($serializedContent)]));
+            $hash = md5($serializedContent);
             $cached = $hash;
             $cache->set($key, $hash, 'hashCalculator');
         }
