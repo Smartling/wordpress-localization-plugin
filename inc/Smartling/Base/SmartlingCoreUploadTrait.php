@@ -237,9 +237,40 @@ trait SmartlingCoreUploadTrait
             $configurationProfile = $this->getSettingsManager()
                 ->getSingleSettingsProfile($submission->getSourceBlogId());
 
-            if (100 === $submission->getCompletionPercentage()) {
+
+            $percentage = $submission->getCompletionPercentage();
+            $this->getLogger()->debug(vsprintf('Current percentage is %s',[$percentage]));
+
+            if (100 === $percentage) {
+                $this->getLogger()->debug(
+                    vsprintf(
+                        'Submission id=%s (blog=%s, item=%s, content-type=%s) has %s%% completion. Setting status %s.',
+                        [
+                            $submission->getId(),
+                            $submission->getSourceBlogId(),
+                            $submission->getSourceId(),
+                            $submission->getContentType(),
+                            $submission->getCompletionPercentage(),
+                            SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
+                        ]
+                    )
+                );
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
                 if (1 == $configurationProfile->getPublishCompleted()) {
+
+                    $this->getLogger()->debug(
+                        vsprintf(
+                            'Submission id=%s (blog=%s, item=%s, content-type=%s) setting status %s for translation. Profile snapshot: %s',
+                            [
+                                $submission->getId(),
+                                $submission->getSourceBlogId(),
+                                $submission->getSourceId(),
+                                $submission->getContentType(),
+                                'publish',
+                                base64_encode(serialize($configurationProfile->toArray(false))),
+                            ]
+                        )
+                    );
                     $targetContent->translationCompleted();
                 }
                 $submission->setAppliedDate(DateTimeHelper::nowAsString());
