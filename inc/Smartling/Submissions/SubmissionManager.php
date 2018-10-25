@@ -347,7 +347,7 @@ class SubmissionManager extends EntityManagerAbstract
      *
      * @param integer $id
      *
-     * @return null|SubmissionEntity
+     * @return null|SubmissionEntity[]
      */
     public function getEntityById($id)
     {
