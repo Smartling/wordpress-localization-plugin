@@ -337,7 +337,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                 ]);
 
                                 if (empty($batchUid)) {
-                                    $this->getLogger()->warning(vsprintf('Failed retrieving batch for job %s',[var_export($_POST['jobId'], true)]));
+                                    $this->getLogger()->error(vsprintf('Failed retrieving batch for job %s. Translation aborted.',[var_export($_POST['jobId'], true)]));
                                     return;
                                 }
 

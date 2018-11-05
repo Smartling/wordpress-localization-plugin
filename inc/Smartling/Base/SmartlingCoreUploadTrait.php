@@ -505,6 +505,8 @@ trait SmartlingCoreUploadTrait
      */
     private function executeBatch($batchUid, $sourceBlogId)
     {
+        $msg = vsprintf('Preparing to start batch "%s" execution...', [$batchUid]);
+        $this->getLogger()->debug($msg);
         try {
             $submissions = $this->getSubmissionManager()->searchByBatchUid($batchUid);
 
