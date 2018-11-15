@@ -20,6 +20,8 @@ class StartupRegisterManager
         {
             $service->register();
         }
+
+        do_action('smartling_register_service');
     }
 
     /**

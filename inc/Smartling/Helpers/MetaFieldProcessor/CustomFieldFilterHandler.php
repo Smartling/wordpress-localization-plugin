@@ -8,6 +8,8 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class CustomFieldFilterHandler
 {
+    public static $filters = [];
+
     private static function getLogger()
     {
         return MonologWrapper::getLogger(__CLASS__);
@@ -24,6 +26,7 @@ class CustomFieldFilterHandler
         self::getLogger()->debug(vsprintf('Validating filter...', []));
         $isValid = $parser->getValidFiler();
         if (true === $isValid) {
+            static::$filters[] = $config;
             $filter = $parser->getFilter();
             self::getLogger()->debug(vsprintf('Adding filter for config: %s', [var_export($config, true)]));
             $di->get('meta-field.processor.manager')->registerProcessor($filter);
