@@ -27,6 +27,7 @@ parameters:
       - Acf
       - FieldsFilterHelper
       - MetaFieldProcessorManager
+      - CustomFieldFilterHandler
 
 services:
   fileLoggerLineFormatter:
