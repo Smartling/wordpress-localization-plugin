@@ -227,7 +227,7 @@ class Bootstrap
 
         if (false === $found) {
             add_action('admin_init', function () {
-                DiagnosticsHelper::addDiagnosticsMessage('Required plugin <strong>Multilingual Press</strong> not found. Please install and activate it.', true);
+                DiagnosticsHelper::addDiagnosticsMessage('Recommended plugin <strong>Multilingual Press</strong> not found. Please install and activate it.', false);
             });
         }
 
@@ -382,7 +382,12 @@ class Bootstrap
                            '/wp-admin/network/plugin-install.php?tab=search&s=multilingual+press">Multilingual Press.</a>';
 
             static::getLogger()->critical('Boot :: ' . $mainMessage);
-            DiagnosticsHelper::addDiagnosticsMessage($mainMessage, true);
+            DiagnosticsHelper::addDiagnosticsMessage($mainMessage, false);
+
+            // replace localization plugin proxy with dummy class
+
+            Bootstrap::getContainer()->register('multilang.proxy', 'Smartling\DbAl\DummyLocalizationPlugin');
+
         } else {
             $data = SimpleStorageHelper::get('state_modules', false);
             $advTranslatorKey = 'class-Mlp_Advanced_Translator';
