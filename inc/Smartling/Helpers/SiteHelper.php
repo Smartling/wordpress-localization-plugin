@@ -233,13 +233,13 @@ class SiteHelper
      */
     public function getBlogLabelById($localizationPluginProxyInterface, $blogId)
     {
-        return vsprintf(
-            '%s - %s',
-            [
-                $this->getBlogNameById($blogId),
-                $localizationPluginProxyInterface->getBlogLocaleById($blogId),
-            ]
+        $locale = $localizationPluginProxyInterface->getBlogLocaleById($blogId);
+
+        return ((StringHelper::isNullOrEmpty($locale))
+            ? $this->getBlogNameById($blogId)
+            : vsprintf('%s - %s', [$this->getBlogNameById($blogId), $locale])
         );
+
     }
 
     /**
