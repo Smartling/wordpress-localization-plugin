@@ -61,7 +61,6 @@ Additional information on the Smartling Connector for WordPress can be found [he
 * Multilingual Press free plugin is no longer required, but is recommended for better site naming.
 * Improved background cron jobs to be thread-safe for multi-instance installation.
 
-* Multilingual Press free plugin
 = 1.8.6 =
 * Improved internal API for better integration
 
