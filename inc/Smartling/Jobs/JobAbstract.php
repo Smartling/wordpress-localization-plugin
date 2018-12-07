@@ -3,9 +3,15 @@
 namespace Smartling\Jobs;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Bootstrap;
+use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\OptionHelper;
-use Smartling\Helpers\Parsers\IntegerParser;
+use Smartling\Helpers\QueryBuilder\Condition\Condition;
+use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
+use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
+use Smartling\Helpers\QueryBuilder\QueryBuilder;
+use Smartling\Helpers\QueryBuilder\TransactionManager;
 use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionManager;
@@ -163,30 +169,6 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         return 'smartling_cron_flag_' . $this->getJobHookName();
     }
 
-    protected function getFlagValue()
-    {
-        return IntegerParser::integerOrDefault(SimpleStorageHelper::get($this->getCronFlagName(), 0), 0);
-    }
-
-    protected function checkCanRun()
-    {
-        $currentTS = time();
-        $flagTS = $this->getFlagValue();
-
-        $this->getLogger()->debug(
-            vsprintf(
-                'Checking flag \'%s\' for cron job \'%s\'. Stored value=\'%s\'',
-                [
-                    $this->getCronFlagName(),
-                    $this->getJobHookName(),
-                    $flagTS,
-                ]
-            )
-        );
-
-        return $currentTS > $flagTS;
-    }
-
     public function placeLockFlag()
     {
         $flagName = $this->getCronFlagName();
@@ -234,21 +216,77 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
             )
         );
 
-        if ($this->checkCanRun()) {
-            $this->placeLockFlag();
-            $this->run();
-            $this->dropLockFlag();
-        } else {
-            $this->getLogger()->debug(
-                vsprintf(
-                    'Cron \'%s\' is not allowed to run. TTL=%s has not expired yet. Expecting TTL expiration in %s seconds.',
-                    [
-                        $this->getJobHookName(),
-                        $this->getWorkerTTL(),
-                        $this->getFlagValue() - time(),
-                    ]
-                )
-            );
+        $this->tryRunJob();
+    }
+
+    private function tryRunJob()
+    {
+        /**
+         * @var SmartlingToCMSDatabaseAccessWrapperInterface $db
+         */
+        $db = Bootstrap::getContainer()->get('site.db');
+
+        $block = ConditionBlock::getConditionBlock();
+        $block->addCondition(
+            Condition::getCondition(
+                ConditionBuilder::CONDITION_SIGN_EQ,
+                'meta_key',
+                [$this->getCronFlagName()]
+            )
+        );
+        $query = QueryBuilder::buildSelectQuery(
+            $db->completeTableName('sitemeta'),
+            [
+                ['meta_value' => 'ts'],
+            ],
+            $block);
+
+        $transactionManager = new TransactionManager($db);
+        $transactionManager->setAutocommit(0);
+        $allowedToRun = false;
+        try {
+            $transactionManager->transactionStart();
+            $result = $transactionManager->executeSelectForUpdate($query);
+            if (null !== $result) {
+                $currentTS = time();
+                $flagTS = (0 < count($result)) ? (int)$result[0]['ts'] : 0;
+
+                $this->getLogger()->debug(
+                    vsprintf(
+                        'Checking flag \'%s\' for cron job \'%s\'. Stored value=\'%s\'',
+                        [
+                            $this->getCronFlagName(),
+                            $this->getJobHookName(),
+                            $flagTS,
+                        ]
+                    )
+                );
+                $allowedToRun = $currentTS > $flagTS;
+                if ($allowedToRun) {
+                    $this->placeLockFlag();
+                } else {
+                    $this->getLogger()->debug(
+                        vsprintf(
+                            'Cron \'%s\' is not allowed to run. TTL=%s has not expired yet. Expecting TTL expiration in %s seconds.',
+                            [
+                                $this->getJobHookName(),
+                                $this->getWorkerTTL(),
+                                $flagTS - time(),
+                            ]
+                        )
+                    );
+                }
+            }
+        } catch (\Exception $e) {
+            $this->getLogger()->warn(vsprintf('Cron job %s execution failed: %s', [$this->getJobHookName(),
+                                                                                   $e->getMessage()]));
+        } finally {
+            $transactionManager->transactionCommit();
+            $transactionManager->setAutocommit(1);
+            if ($allowedToRun) {
+                $this->run();
+                $this->dropLockFlag();
+            }
         }
     }
 
