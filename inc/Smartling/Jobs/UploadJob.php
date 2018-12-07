@@ -196,12 +196,6 @@ class UploadJob extends JobAbstract
                 }
 
                 $this->getLogger()->info('Finished dealing with daily bucket job.');
-
-                $this->getLogger()->info('Started uploading to daily job.');
-
-                $this->processUploadQueue();
-
-                $this->getLogger()->info('Finished uploading to daily job.');
             }
         }
     }
