@@ -3,7 +3,7 @@ Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
 Tested up to: 4.9.8
-Stable tag: 1.8.6
+Stable tag: 1.9.0
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -26,7 +26,6 @@ Integration Features
 = Minimum Requirements =
 * WordPress 4.6 or higher
 * Multisite mode enabled
-* Multilingual Press free plugin
 * PHP Version 5.5 or higher
 * PHP extensions:
  * `mbstring`
@@ -58,6 +57,11 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 1.9.0 =
+* Multilingual Press free plugin is no longer required, but is recommended for better site naming.
+* Improved background cron jobs to be thread-safe for multi-instance installation.
+
+* Multilingual Press free plugin
 = 1.8.6 =
 * Improved internal API for better integration
 
