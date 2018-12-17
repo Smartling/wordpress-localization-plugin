@@ -181,14 +181,8 @@ class ShortcodeHelper implements WPHookInterface
         $this->setParams($params);
         $node = $this->getNode();
 
-        $string = '';
-        // getting string
-        foreach ($node->childNodes as $childNode) {
-            if ($childNode->nodeType === XML_CDATA_SECTION_NODE) {
-                $string = $childNode->nodeValue;
-                break;
-            }
-        }
+        $string = static::getCdata($node);
+
         // getting attributes translation
         foreach ($node->childNodes as $cNode) {
             $this->getLogger()->debug(vsprintf('Looking for translations (subnodes)', []));
@@ -225,7 +219,7 @@ class ShortcodeHelper implements WPHookInterface
         $node->appendChild(new \DOMCdataSection($string));
         // unmasking string
         $this->unmaskShortcodes();
-        $string = $this->getNode()->nodeValue;
+        $string = static::getCdata($this->getNode());
         $detectedShortcodes = $this->getRegisteredShortcodes();
         $this->replaceHandlerForApplying($detectedShortcodes);
         $string_m = do_shortcode($string);
@@ -235,6 +229,23 @@ class ShortcodeHelper implements WPHookInterface
         self::replaceCData($node, $string_m);
 
         return $this->getParams();
+    }
+
+    public static function getCdata(\DOMNode $node)
+    {
+        foreach ($node->childNodes as $childNode) {
+            /**
+             * @var \DOMNode $childNode
+             */
+            if (XML_CDATA_SECTION_NODE === $childNode->nodeType) {
+                /**
+                 * @var \DOMCdataSection $childNode
+                 */
+                return $childNode->data;
+            }
+        }
+
+        return '';
     }
 
     /**
@@ -279,7 +290,7 @@ class ShortcodeHelper implements WPHookInterface
     {
         $this->getLogger()->debug(vsprintf('Removing masking...', []));
         $node = $this->getNode();
-        $string = $node->nodeValue;
+        $string = self::getCdata($node);
         $string = preg_replace(vsprintf('/%s\[/', [self::SMARTLING_SHORTCODE_MASK_S]), '[', $string);
         $string = preg_replace(vsprintf('/\]%s/', [self::SMARTLING_SHORTCODE_MASK_E]), ']', $string);
         $string = preg_replace(vsprintf('/\]%s/', [self::SMARTLING_SHORTCODE_MASK_OLD]), ']', $string);
@@ -361,7 +372,12 @@ class ShortcodeHelper implements WPHookInterface
     {
         $this->resetInternalState();
         $this->setParams($params);
-        $string = $params->getNode()->nodeValue;
+        $string = self::getCdata($params->getNode());
+
+        if (StringHelper::isNullOrEmpty($string)) {
+            return $params;
+        }
+
         $detectedShortcodes = $this->getRegisteredShortcodes();
 
 
@@ -446,6 +462,7 @@ class ShortcodeHelper implements WPHookInterface
         $submission = $this->getParams()->getSubmission();
         $fFilter = $this->getFieldsFilter();
         $attributes = $fFilter->passFieldProcessorsFilters($submission, $attributes);
+
         return $attributes;
     }
 
