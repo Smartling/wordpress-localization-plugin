@@ -120,11 +120,17 @@ class XmlEncoder
             $rootNode->appendChild(self::rowToXMLNode($xml, $name, $value, $keySettings, $submission));
         }
         $xml->appendChild($rootNode);
-        $sourceNode = $xml->createElement(self::XML_SOURCE_NODE_NAME);
-        $sourceNode->appendChild(new DOMCdataSection(self::encodeSource($originalContent)));
-        $rootNode->appendChild($sourceNode);
+
+        static::addSource($rootNode, $xml, $originalContent);
 
         return $xml->saveXML();
+    }
+
+    private static function addSource(\DOMNode $root, \DOMDocument $xml, $content)
+    {
+        $node = $xml->createElement(self::XML_SOURCE_NODE_NAME);
+        $node->appendChild(new DOMCdataSection(self::encodeSource($content)));
+        $root->appendChild($node);
     }
 
     /**
