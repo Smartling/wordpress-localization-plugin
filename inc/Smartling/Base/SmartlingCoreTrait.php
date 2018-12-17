@@ -3,11 +3,8 @@
 namespace Smartling\Base;
 
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
-use Smartling\Exception\SmartlingWpDataIntegrityException;
 use Smartling\Helpers\ArrayHelper;
-use Smartling\Helpers\AttachmentHelper;
 use Smartling\Helpers\ContentSerializationHelper;
-use Smartling\Helpers\StringHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
@@ -65,7 +62,9 @@ trait SmartlingCoreTrait
      */
     protected function prepareTargetEntity(SubmissionEntity $submission, $forceClone = false)
     {
+
         $update = 0 !== $submission->getTargetId();
+
 
         if (true === $update && false === $forceClone) {
             return $submission;
@@ -92,6 +91,7 @@ trait SmartlingCoreTrait
             $targetContent = $this->getContentHelper()->readTargetContent($submission);
         }
 
+
         $this->prepareFieldProcessorValues($submission);
         $unfilteredSourceData = $this->readSourceContentWithMetadataAsArray($submission);
 
@@ -116,6 +116,7 @@ trait SmartlingCoreTrait
         if (false === $forceClone) {
             $targetContent->translationDrafted();
         }
+
 
         /**
          * @var EntityAbstract $targetContent
