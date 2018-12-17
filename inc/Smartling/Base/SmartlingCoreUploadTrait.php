@@ -206,7 +206,10 @@ trait SmartlingCoreUploadTrait
         $messages = [];
         try {
 
-            $lockedData = $this->readLockedTranslationFieldsBySubmission($submission);
+            $lockedData = (0 !== $submission->getTargetId())
+                ? $this->readLockedTranslationFieldsBySubmission($submission)
+                : ['entity' => [], 'meta' => []];
+
 
             $this->prepareFieldProcessorValues($submission);
             if ('' === $xml) {
