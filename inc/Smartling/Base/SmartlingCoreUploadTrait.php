@@ -242,7 +242,7 @@ trait SmartlingCoreUploadTrait
 
 
             $percentage = $submission->getCompletionPercentage();
-            $this->getLogger()->debug(vsprintf('Current percentage is %s',[$percentage]));
+            $this->getLogger()->debug(vsprintf('Current percentage is %s', [$percentage]));
 
             if (100 === $percentage) {
                 $this->getLogger()->debug(
