@@ -460,6 +460,16 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
     }
 
     /**
+     * @param $tableName
+     *
+     * @return string
+     */
+    public function completeMultisiteTableName($tableName)
+    {
+        return $this->getWpdb()->prefix . $tableName;
+    }
+
+    /**
      * @inheritdoc
      */
     public function query($query)
