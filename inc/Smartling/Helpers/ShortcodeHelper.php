@@ -233,6 +233,8 @@ class ShortcodeHelper implements WPHookInterface
 
     public static function getCdata(\DOMNode $node)
     {
+        $result = '';
+
         foreach ($node->childNodes as $childNode) {
             /**
              * @var \DOMNode $childNode
@@ -241,11 +243,11 @@ class ShortcodeHelper implements WPHookInterface
                 /**
                  * @var \DOMCdataSection $childNode
                  */
-                return $childNode->data;
+                $result .= $childNode->data;
             }
         }
 
-        return '';
+        return $result;
     }
 
     /**
