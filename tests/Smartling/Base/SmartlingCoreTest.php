@@ -80,7 +80,7 @@ class SmartlingCoreTest extends TestCase
     {
 
         return [
-            [
+            'test with new content' => [
                 [
                     'entity' => [],
                     'meta'   => [],
@@ -110,7 +110,7 @@ class SmartlingCoreTest extends TestCase
                 [],
                 [],
             ],
-            [
+            'test only entity'      => [
                 [
                     'entity' => [
                         'a' => 'b',
@@ -143,7 +143,7 @@ class SmartlingCoreTest extends TestCase
                 ['a' => 'b'],
                 [],
             ],
-            [
+            'test only meta'        => [
                 [
                     'entity' => [],
                     'meta'   => [
@@ -181,7 +181,7 @@ class SmartlingCoreTest extends TestCase
                     'e' => 'f',
                 ],
             ],
-            [
+            'test entity and meta'  => [
                 [
                     'entity' => [
                         'a' => 'b',
@@ -222,7 +222,7 @@ class SmartlingCoreTest extends TestCase
                     'e' => 'f',
                 ],
             ],
-            [
+            'test with bad fields'  => [
                 [
                     'entity' => [
                         'a' => 'b',
@@ -252,6 +252,43 @@ class SmartlingCoreTest extends TestCase
                         'is_locked'              => 0,
                         'outdated'               => SubmissionEntity::FLAG_CONTENT_IS_UP_TO_DATE,
                         'locked_fields'          => serialize(['entity/a', 'meta/c', 'strange/?']),
+                    ], $this->getLogger()
+                ),
+                [
+                    'a' => 'b',
+                    'q' => 'p',
+                ],
+                [
+                    'c' => 'd',
+                    'e' => 'f',
+                ],
+            ],
+            'test with broken data' => [
+                [
+                    'entity' => [],
+                    'meta'   => [],
+                ],
+                SubmissionEntity::fromArray(
+                    [
+                        'id'                     => 1,
+                        'source_title'           => '',
+                        'source_blog_id'         => 1,
+                        'source_content_hash'    => 'abc',
+                        'content_type'           => 'post',
+                        'source_id'              => 1,
+                        'file_uri'               => 'any',
+                        'target_locale'          => 'any',
+                        'target_blog_id'         => 0,
+                        'target_id'              => 1,
+                        'submitter'              => 'any',
+                        'submission_date'        => 'any',
+                        'applied_date'           => 'any',
+                        'approved_string_count'  => 0,
+                        'completed_string_count' => 0,
+                        'status'                 => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
+                        'is_locked'              => 0,
+                        'outdated'               => SubmissionEntity::FLAG_CONTENT_IS_UP_TO_DATE,
+                        'locked_fields'          => '!' . serialize(['entity/a', 'meta/c', 'strange/?']),
                     ], $this->getLogger()
                 ),
                 [
