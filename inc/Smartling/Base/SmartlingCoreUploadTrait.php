@@ -163,6 +163,13 @@ trait SmartlingCoreUploadTrait
             'meta'   => [],
         ];
 
+        if (0 === (int)$submission->getTargetId()) {
+            /**
+             * there is still no translation or placeholder
+             */
+            return $lockedData;
+        }
+
         $lockedFields = maybe_unserialize($submission->getLockedFields());
         $lockedFields = (!is_array($lockedFields)) ? [] : $lockedFields;
 
@@ -179,13 +186,13 @@ trait SmartlingCoreUploadTrait
                 if (array_key_exists($_fieldName, $targetMeta)) {
                     $lockedData['meta'][$_fieldName] = $targetMeta[$_fieldName];
                 }
-            }
-
-            if (preg_match('/^entity\//ius', $lockedFieldName)) {
+            } elseif (preg_match('/^entity\//ius', $lockedFieldName)) {
                 $_fieldName = preg_replace('/^entity\//ius', '', $lockedFieldName);
                 if (array_key_exists($_fieldName, $targetContent)) {
                     $lockedData['entity'][$_fieldName] = $targetContent[$_fieldName];
                 }
+            } else {
+                $this->getLogger()->debug(vsprintf('Got strange unknown field \'%s\'', [$lockedFieldName]));
             }
         }
 
@@ -206,10 +213,7 @@ trait SmartlingCoreUploadTrait
         $messages = [];
         try {
 
-            $lockedData = (0 !== $submission->getTargetId())
-                ? $this->readLockedTranslationFieldsBySubmission($submission)
-                : ['entity' => [], 'meta' => []];
-
+            $lockedData = $this->readLockedTranslationFieldsBySubmission($submission);
 
             $this->prepareFieldProcessorValues($submission);
             if ('' === $xml) {
