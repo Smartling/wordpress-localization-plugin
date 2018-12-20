@@ -21,6 +21,7 @@ trait DbAlMock
                     'fetch',
                     'escape',
                     'completeTableName',
+                    'completeMultisiteTableName',
                     'getLastInsertedId',
                     'getLastErrorMessage',
                 ]
