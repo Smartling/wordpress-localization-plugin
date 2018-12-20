@@ -9,6 +9,7 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 use Smartling\Tests\Traits\DummyLoggerMock;
 use Smartling\Tests\Traits\InvokeMethodTrait;
+use Smartling\Tests\Traits\SettingsManagerMock;
 use Smartling\Tests\Traits\SubmissionEntityMock;
 
 /**
@@ -21,6 +22,7 @@ class DetectChangesTest extends TestCase
     use DummyLoggerMock;
     use SubmissionEntityMock;
     use InvokeMethodTrait;
+    use SettingsManagerMock;
 
     /**
      * @var DetectChangesHelper|\PHPUnit_Framework_MockObject_MockObject
@@ -43,7 +45,6 @@ class DetectChangesTest extends TestCase
         $this->detectChangesHelperMock = $detectChangesHelperMock;
     }
 
-
     /**
      * {@inheritDoc}
      */
@@ -52,6 +53,16 @@ class DetectChangesTest extends TestCase
         $mock = $this->getMockBuilder('Smartling\Helpers\DetectChangesHelper')
             ->setMethods(null)
             ->getMock();
+
+        $profileMock = $this
+            ->getMockBuilder('Smartling\Settings\ConfigurationProfileEntity')
+            ->setMethods(null)
+            ->getMock();
+        $profileMock->expects(self::any())->method('getProjectId')->willReturn(1);
+
+        $mock->setSettingsManager($this->getSettingsManagerMock());
+        $mock->getSettingsManager()->expects(self::any())->method('getSingleSettingsProfile')
+            ->willReturn($profileMock);
 
         $this->setDetectChangesHelperMock($mock);
     }
@@ -70,6 +81,7 @@ class DetectChangesTest extends TestCase
         WordpressFunctionsMockHelper::injectFunctionsMocks();
         $initialSubmission = SubmissionEntity::fromArray($submissionFields, $this->getLogger());
         $submission = SubmissionEntity::fromArray($submissionFields, $this->getLogger());
+
 
         $processedSubmission = $this->invokeMethod(
             $this->getDetectChangesHelperMock(),
