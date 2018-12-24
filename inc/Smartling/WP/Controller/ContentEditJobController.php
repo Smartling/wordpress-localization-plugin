@@ -10,6 +10,7 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Jobs\JobStatus;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -187,7 +188,8 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
      */
     public function register()
     {
-        if (!DiagnosticsHelper::isBlocked()) {
+        if (!DiagnosticsHelper::isBlocked() &&
+            current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
             add_action('admin_enqueue_scripts', [$this, 'wp_enqueue'], 99);
 
             $this->initJobApiProxy();
