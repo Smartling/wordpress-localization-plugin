@@ -148,19 +148,19 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                                     'dueDate'     => $utcDateTime,
                                     'locales'     => $jobLocales,
                                 ]);
-                                $res['dueDate'] = empty($res['dueDate']) ? $res['dueDate'] : \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $res['dueDate'])->format(DateTimeHelper::DATE_TIME_FORMAT_JOB);
+                                $res['dueDate'] = empty($res['dueDate'])
+                                    ? $res['dueDate']
+                                    : \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $res['dueDate'])
+                                        ->format(DateTimeHelper::DATE_TIME_FORMAT_JOB);
                                 $result['data'] = $res;
                             } catch (SmartlingApiException $e) {
-                                $result['message']['global'] = vsprintf('Cannot create job \'%s\'',[$jobName]);
+                                $result['message']['global'] = vsprintf('Cannot create job \'%s\'', [$jobName]);
                                 $result['status'] = 400;
 
                                 foreach ($e->getErrors() as $message) {
-                                    $result['message'][
-                                        $message['details']['field']
-                                    ] = $message['message'];
+                                    $result['message'][$message['details']['field']] = $message['message'];
                                 }
-                            }
-                            catch (Exception $e) {
+                            } catch (Exception $e) {
                                 $error_msg = $e->getMessage();
                                 $result['status'] = 400;
                                 $result['message']['global'] = $error_msg;
@@ -269,7 +269,10 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                 $id = 'smartling.job.' . $contentType;
                 add_meta_box($id, 'Jobs', function ($meta_id) use ($contentType) {
                     $currentBlogId = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
-                    $applicableProfiles = $this->getEntityHelper()->getSettingsManager()->findEntityByMainLocale($currentBlogId);
+                    $applicableProfiles = $this
+                        ->getEntityHelper()
+                        ->getSettingsManager()
+                        ->findEntityByMainLocale($currentBlogId);
                     if (0 === count($applicableProfiles)) {
                         echo HtmlTagGeneratorHelper::tag('p', __('No suitable profile found for this site.'));
                     } else {
