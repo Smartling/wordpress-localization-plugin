@@ -38,6 +38,10 @@ class FieldsFilterHelperTest extends TestCase
     public function structurizeArrayDataProvider()
     {
         $fields = [
+            'a'                                                                   => ['a' => 'test'],
+            ''                                                                    => ['' => 'test'],
+            'a\\b'                                                                => ['a\\b' => 'test'],
+            'b/'                                                                  => ['b' => ['' => 'test']],
             'entity/post_title'                                                   => ['entity' => ['post_title' => 'test']],
             'meta/_elementor_data/32f683b/8f903f2/03d5534/headline'               => ['meta' => ['_elementor_data' => ['32f683b' => ['8f903f2' => ['03d5534' => ['headline' => 'test']]]]]],
             'meta/_elementor_data/32f683b/8f903f2/background_background'          => ['meta' => ['_elementor_data' => ['32f683b' => ['8f903f2' => ['background_background' => 'test']]]]],
