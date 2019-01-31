@@ -372,7 +372,7 @@ class AcfDynamicSupport
                         ) {
                             // ACF Option Pages has internal issue in definition, so skip it:
                             if ('group_572b269b668a4' === $local['parent']) {
-                                continue;
+                                break;
                             }
 
                             return false;
