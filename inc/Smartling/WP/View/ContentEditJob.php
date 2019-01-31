@@ -38,7 +38,7 @@ $needWrapper = ($tag instanceof WP_Term);
             </tr>
             <tr>
                 <th><label for="description-sm">Description</label</th>
-                <td><textarea id="description-sm" name="description"></textarea></td>
+                <td><textarea id="description-sm" name="description-sm"></textarea></td>
             </tr>
             <tr>
                 <th><label for="dueDate">Due Date</label</th>
@@ -329,7 +329,7 @@ if ($post instanceof WP_Post) {
                 e.preventDefault();
                 var jobId = $('#jobSelect').val();
                 var jobName = $('input[name="jobName"]').val();
-                var jobDescription = $('textarea[name="description"]').val();
+                var jobDescription = $('textarea[name="description-sm"]').val();
                 var jobDueDate = $('input[name="dueDate"]').val();
 
                 if ('' !== jobDueDate) {
