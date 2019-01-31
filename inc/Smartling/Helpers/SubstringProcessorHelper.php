@@ -2,6 +2,7 @@
 
 namespace Smartling\Helpers;
 
+
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
@@ -9,17 +10,12 @@ use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\WP\WPHookInterface;
 
-/**
- * Class ShortcodeHelper
- * @package Smartling\Helpers
- */
-class ShortcodeHelper implements WPHookInterface
+class SubstringProcessorHelper implements WPHookInterface
 {
     const SMARTLING_SHORTCODE_MASK_OLD = '##';
 
     const SMARTLING_SHORTCODE_MASK_S = '#sl-start#';
     const SMARTLING_SHORTCODE_MASK_E = '#sl-end#';
-    const SHORTCODE_SUBSTRING_NODE_NAME = 'shortcodeattribute';
 
     /**
      * Returns a regexp for masked shortcodes
@@ -190,7 +186,7 @@ class ShortcodeHelper implements WPHookInterface
             /**
              * @var \DOMNode $cNode
              */
-            if ($cNode->nodeName === static::SHORTCODE_SUBSTRING_NODE_NAME && $cNode->hasAttributes()) {
+            if ($cNode->nodeName === 'shortcodeattribute' && $cNode->hasAttributes()) {
                 $tStruct = [];
                 /** @noinspection ForeachSourceInspection */
                 foreach ($cNode->attributes as $attribute => $value) {
@@ -200,7 +196,8 @@ class ShortcodeHelper implements WPHookInterface
                     $tStruct[$attribute] = $value->value;
                 }
                 $tStruct['value'] = $cNode->nodeValue;
-                $this->addShortcodeAttribute($tStruct['shortcode'], $tStruct['name'], $tStruct['value'], $tStruct['hash']);
+                $this->addShortcodeAttribute($tStruct['shortcode'], $tStruct['name'], $tStruct['value'],
+                    $tStruct['hash']);
                 $this->getLogger()->debug(
                     vsprintf(
                         'Found translation for shortcode = \'%s\' for attribute = \'%s\'.',
@@ -210,14 +207,13 @@ class ShortcodeHelper implements WPHookInterface
                         ]
                     )
                 );
-                $this->getLogger()->debug(vsprintf('Removing subnode. Name=\'%s\', Contents: \'%s\'', [
-                    static::SHORTCODE_SUBSTRING_NODE_NAME,
-                    var_export($tStruct, true)
-                ]));
-                $node->removeChild($cNode);
             }
         }
-
+        // removing translations subnodes
+        $this->getLogger()->debug(vsprintf('Rebuilding child nodes...', []));
+        while ($node->childNodes->length > 0) {
+            $node->removeChild($node->childNodes->item(0));
+        }
         $node->appendChild(new \DOMCdataSection($string));
         // unmasking string
         $this->unmaskShortcodes();
@@ -306,7 +302,7 @@ class ShortcodeHelper implements WPHookInterface
      * Searches and replaces CData section with new one
      *
      * @param \DOMNode $node
-     * @param string   $string
+     * @param string $string
      */
     private static function replaceCData(\DOMNode $node, $string)
     {
@@ -319,7 +315,7 @@ class ShortcodeHelper implements WPHookInterface
      * Removes all child nodes of given type
      *
      * @param \DOMNode $node
-     * @param int      $nodeType
+     * @param int $nodeType
      */
     private static function removeChildrenByType(\DOMNode $node, $nodeType)
     {
@@ -352,7 +348,7 @@ class ShortcodeHelper implements WPHookInterface
     /**
      * Sets the new handler for a set of shortcodes to process them in a native way
      *
-     * @param array  $shortcodes
+     * @param array $shortcodes
      * @param string $callback
      */
     private function replaceShortcodeHandler($shortcodes, $callback)
@@ -473,9 +469,9 @@ class ShortcodeHelper implements WPHookInterface
     /**
      * Handler for shortcodes to prepare strings for translation
      *
-     * @param array       $attributes
+     * @param array $attributes
      * @param string|null $content
-     * @param string      $name
+     * @param string $name
      *
      * @return string
      */
@@ -494,7 +490,7 @@ class ShortcodeHelper implements WPHookInterface
             $preparedAttributes = self::unmaskAttributes($name, $preparedAttributes);
             if (0 < count($preparedAttributes)) {
                 foreach ($preparedAttributes as $attribute => $value) {
-                    $node = $this->getParams()->getDom()->createElement(static::SHORTCODE_SUBSTRING_NODE_NAME);
+                    $node = $this->getParams()->getDom()->createElement('shortcodeattribute');
                     $node->setAttributeNode(new \DOMAttr('shortcode', $name));
                     $node->setAttributeNode(new \DOMAttr('hash', md5($value)));
                     $node->setAttributeNode(new \DOMAttr('name', $attribute));
@@ -598,9 +594,9 @@ class ShortcodeHelper implements WPHookInterface
     /**
      * Applies translation to shortcodes
      *
-     * @param string      $attr
+     * @param string $attr
      * @param string|null $content
-     * @param string      $name
+     * @param string $name
      *
      * @return string
      */
@@ -618,10 +614,13 @@ class ShortcodeHelper implements WPHookInterface
                     ArrayHelper::first(array_keys($translation)) === md5($attr[$attributeName])
                 ) {
                     $this->getLogger()
-                        ->debug(vsprintf('Validated translation of \'%s\' as \'%s\' with hash=%s for shortcode \'%s\'', [$attr[$attributeName],
-                                                                                                                         reset($translation),
-                                                                                                                         md5($attr[$attributeName]),
-                                                                                                                         $name]));
+                        ->debug(vsprintf('Validated translation of \'%s\' as \'%s\' with hash=%s for shortcode \'%s\'',
+                            [
+                                $attr[$attributeName],
+                                reset($translation),
+                                md5($attr[$attributeName]),
+                                $name
+                            ]));
                     $attr[$attributeName] = reset($translation);
                 }
             }
