@@ -10,15 +10,15 @@ use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\WP\WPHookInterface;
 
 /**
- * Class GutenbergBlockHelper
+ * Class SubstringProcessorHelperAbstract
  * @package Smartling\Helpers
  */
-class GutenbergBlockHelper implements WPHookInterface
+abstract class SubstringProcessorHelperAbstract implements WPHookInterface
 {
-    const SMARTLING_SHORTCODE_MASK_OLD = '##';
 
     const SMARTLING_SHORTCODE_MASK_S = '#sl-start#';
     const SMARTLING_SHORTCODE_MASK_E = '#sl-end#';
+    const SHORTCODE_SUBSTRING_NODE_NAME = 'shortcodeattribute';
 
     /**
      * Returns a regexp for masked shortcodes
@@ -189,7 +189,7 @@ class GutenbergBlockHelper implements WPHookInterface
             /**
              * @var \DOMNode $cNode
              */
-            if ($cNode->nodeName === 'shortcodeattribute' && $cNode->hasAttributes()) {
+            if ($cNode->nodeName === static::SHORTCODE_SUBSTRING_NODE_NAME && $cNode->hasAttributes()) {
                 $tStruct = [];
                 /** @noinspection ForeachSourceInspection */
                 foreach ($cNode->attributes as $attribute => $value) {
@@ -209,13 +209,14 @@ class GutenbergBlockHelper implements WPHookInterface
                         ]
                     )
                 );
+                $this->getLogger()->debug(vsprintf('Removing subnode. Name=\'%s\', Contents: \'%s\'', [
+                    static::SHORTCODE_SUBSTRING_NODE_NAME,
+                    var_export($tStruct, true)
+                ]));
+                $node->removeChild($cNode);
             }
         }
-        // removing translations subnodes
-        $this->getLogger()->debug(vsprintf('Rebuilding child nodes...', []));
-        while ($node->childNodes->length > 0) {
-            $node->removeChild($node->childNodes->item(0));
-        }
+
         $node->appendChild(new \DOMCdataSection($string));
         // unmasking string
         $this->unmaskShortcodes();
@@ -487,11 +488,12 @@ class GutenbergBlockHelper implements WPHookInterface
             $this->postReceiveFiltering($preparedAttributes);
             $preparedAttributes = $this->preSendFiltering($preparedAttributes);
             $this->getLogger()
-                ->debug(vsprintf('Post filtered attributes (while uploading) %s', [var_export($preparedAttributes, true)]));
+                ->debug(vsprintf('Post filtered attributes (while uploading) %s',
+                    [var_export($preparedAttributes, true)]));
             $preparedAttributes = self::unmaskAttributes($name, $preparedAttributes);
             if (0 < count($preparedAttributes)) {
                 foreach ($preparedAttributes as $attribute => $value) {
-                    $node = $this->getParams()->getDom()->createElement('shortcodeattribute');
+                    $node = $this->getParams()->getDom()->createElement(static::SHORTCODE_SUBSTRING_NODE_NAME);
                     $node->setAttributeNode(new \DOMAttr('shortcode', $name));
                     $node->setAttributeNode(new \DOMAttr('hash', md5($value)));
                     $node->setAttributeNode(new \DOMAttr('name', $attribute));
@@ -616,9 +618,9 @@ class GutenbergBlockHelper implements WPHookInterface
                 ) {
                     $this->getLogger()
                         ->debug(vsprintf('Validated translation of \'%s\' as \'%s\' with hash=%s for shortcode \'%s\'', [$attr[$attributeName],
-                                                                                                                         reset($translation),
-                                                                                                                         md5($attr[$attributeName]),
-                                                                                                                         $name]));
+                            reset($translation),
+                            md5($attr[$attributeName]),
+                            $name]));
                     $attr[$attributeName] = reset($translation);
                 }
             }

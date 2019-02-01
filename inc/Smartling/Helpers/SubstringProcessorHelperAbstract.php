@@ -10,7 +10,7 @@ use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\WP\WPHookInterface;
 
-class SubstringProcessorHelper implements WPHookInterface
+class SubstringProcessorHelperAbstract implements WPHookInterface
 {
     const SMARTLING_SHORTCODE_MASK_OLD = '##';
 
@@ -59,7 +59,7 @@ class SubstringProcessorHelper implements WPHookInterface
     /**
      * @var \DOMNode[]
      */
-    private $subNodes = [];
+    protected $subNodes = [];
 
     /**
      * @var TranslationStringFilterParameters

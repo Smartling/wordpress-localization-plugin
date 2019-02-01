@@ -2,23 +2,21 @@
 
 namespace Smartling\Helpers;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
-use Smartling\MonologWrapper\MonologWrapper;
-use Smartling\WP\WPHookInterface;
 
 /**
  * Class ShortcodeHelper
  * @package Smartling\Helpers
  */
-class ShortcodeHelper implements WPHookInterface
+class ShortcodeHelper extends SubstringProcessorHelperAbstract
 {
     const SMARTLING_SHORTCODE_MASK_OLD = '##';
 
     const SMARTLING_SHORTCODE_MASK_S = '#sl-start#';
     const SMARTLING_SHORTCODE_MASK_E = '#sl-end#';
+
     const SHORTCODE_SUBSTRING_NODE_NAME = 'shortcodeattribute';
 
     /**
@@ -45,40 +43,12 @@ class ShortcodeHelper implements WPHookInterface
         );
     }
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @var array
-     */
-    private $initialShortcodeHandlers;
 
     /**
      * @var array
      */
     private $shortcodeAttributes = [];
 
-    /**
-     * @var \DOMNode[]
-     */
-    private $subNodes = [];
-
-    /**
-     * @var TranslationStringFilterParameters
-     */
-    private $params;
-
-    /**
-     * @var FieldsFilterHelper
-     */
-    private $fieldsFilter;
-
-    public function __construct()
-    {
-        $this->logger = MonologWrapper::getLogger(get_called_class());
-    }
 
     private function resetInternalState()
     {
@@ -93,41 +63,18 @@ class ShortcodeHelper implements WPHookInterface
         }
     }
 
-    /**
-     * @return array
-     */
-    protected function getInitialShortcodeHandlers()
-    {
-        return $this->initialShortcodeHandlers;
-    }
-
-    /**
-     * @param array $initialShortcodeHandlers
-     */
-    protected function setInitialShortcodeHandlers($initialShortcodeHandlers)
-    {
-        $this->initialShortcodeHandlers = $initialShortcodeHandlers;
-    }
 
     /**
      * Restores original shortcode handlers
      */
     private function restoreShortcodeHandler()
     {
-        //$this->getLogger()->debug(vsprintf('Restoring original shortcode handlers', []));
         if (null !== $this->getInitialShortcodeHandlers()) {
             $this->setShortcodeAssignments($this->getInitialShortcodeHandlers());
             $this->setInitialShortcodeHandlers(null);
         }
     }
 
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
-    {
-        return $this->logger;
-    }
 
     /**
      * Setter for global $shortcode_tags
@@ -140,22 +87,6 @@ class ShortcodeHelper implements WPHookInterface
 
         /** @noinspection OnlyWritesOnParameterInspection */
         $shortcode_tags = $assignments;
-    }
-
-    /**
-     * @return FieldsFilterHelper
-     */
-    public function getFieldsFilter()
-    {
-        return $this->fieldsFilter;
-    }
-
-    /**
-     * @param FieldsFilterHelper $fieldsFilter
-     */
-    public function setFieldsFilter($fieldsFilter)
-    {
-        $this->fieldsFilter = $fieldsFilter;
     }
 
 
@@ -200,7 +131,8 @@ class ShortcodeHelper implements WPHookInterface
                     $tStruct[$attribute] = $value->value;
                 }
                 $tStruct['value'] = $cNode->nodeValue;
-                $this->addShortcodeAttribute($tStruct['shortcode'], $tStruct['name'], $tStruct['value'], $tStruct['hash']);
+                $this->addShortcodeAttribute($tStruct['shortcode'], $tStruct['name'], $tStruct['value'],
+                    $tStruct['hash']);
                 $this->getLogger()->debug(
                     vsprintf(
                         'Found translation for shortcode = \'%s\' for attribute = \'%s\'.',
@@ -233,24 +165,6 @@ class ShortcodeHelper implements WPHookInterface
         return $this->getParams();
     }
 
-    public static function getCdata(\DOMNode $node)
-    {
-        $result = '';
-
-        foreach ($node->childNodes as $childNode) {
-            /**
-             * @var \DOMNode $childNode
-             */
-            if (XML_CDATA_SECTION_NODE === $childNode->nodeType) {
-                /**
-                 * @var \DOMCdataSection $childNode
-                 */
-                $result .= $childNode->data;
-            }
-        }
-
-        return $result;
-    }
 
     /**
      * @return \DOMNode
@@ -260,21 +174,6 @@ class ShortcodeHelper implements WPHookInterface
         return $this->getParams()->getNode();
     }
 
-    /**
-     * @return TranslationStringFilterParameters
-     */
-    public function getParams()
-    {
-        return $this->params;
-    }
-
-    /**
-     * @param TranslationStringFilterParameters $params
-     */
-    public function setParams($params)
-    {
-        $this->params = $params;
-    }
 
     /**
      * @param string $shortcodeName
@@ -306,7 +205,7 @@ class ShortcodeHelper implements WPHookInterface
      * Searches and replaces CData section with new one
      *
      * @param \DOMNode $node
-     * @param string   $string
+     * @param string $string
      */
     private static function replaceCData(\DOMNode $node, $string)
     {
@@ -319,7 +218,7 @@ class ShortcodeHelper implements WPHookInterface
      * Removes all child nodes of given type
      *
      * @param \DOMNode $node
-     * @param int      $nodeType
+     * @param int $nodeType
      */
     private static function removeChildrenByType(\DOMNode $node, $nodeType)
     {
@@ -340,19 +239,13 @@ class ShortcodeHelper implements WPHookInterface
 
     private function replaceHandlerForApplying(array $shortcodeList)
     {
-        //$this->getLogger()->debug(
-        //    vsprintf(
-        //        'Replacing handler for shortcode applying translation to %s::%s for shortcodes %s',
-        //        [__CLASS__, 'shortcodeHandler', implode(';', $shortcodeList)]
-        //    )
-        //);
         $this->replaceShortcodeHandler($shortcodeList, 'shortcodeApplyerHandler');
     }
 
     /**
      * Sets the new handler for a set of shortcodes to process them in a native way
      *
-     * @param array  $shortcodes
+     * @param array $shortcodes
      * @param string $callback
      */
     private function replaceShortcodeHandler($shortcodes, $callback)
@@ -385,14 +278,6 @@ class ShortcodeHelper implements WPHookInterface
         $detectedShortcodes = $this->getRegisteredShortcodes();
 
 
-        //$this->getLogger()->debug(
-        //    vsprintf(
-        //        'Got string for translation looking for shortcodes: \'%s\'',
-        //        [
-        //            implode('\'; \'', $detectedShortcodes),
-        //        ]
-        //    )
-        //);
         $this->replaceHandlerForMining($detectedShortcodes);
         //$this->getLogger()->debug(vsprintf('Starting processing shortcodes...', []));
         $string_m = do_shortcode($string);
@@ -413,19 +298,10 @@ class ShortcodeHelper implements WPHookInterface
     private function replaceHandlerForMining(array $shortcodeList)
     {
         $handlerName = 'uploadShortcodeHandler';
-        //$this->getLogger()->debug(
-        //    vsprintf(
-        //        'Replacing handler for shortcode mining to %s::%s for shortcodes \'%s\'',
-        //        [__CLASS__, $handlerName, implode('\'; \'', $shortcodeList)]
-        //    )
-        //);
+
         $this->replaceShortcodeHandler($shortcodeList, $handlerName);
     }
 
-    public function getSubNodes()
-    {
-        return $this->subNodes;
-    }
 
     /**
      * @param array $attributes
@@ -473,9 +349,9 @@ class ShortcodeHelper implements WPHookInterface
     /**
      * Handler for shortcodes to prepare strings for translation
      *
-     * @param array       $attributes
+     * @param array $attributes
      * @param string|null $content
-     * @param string      $name
+     * @param string $name
      *
      * @return string
      */
@@ -590,17 +466,13 @@ class ShortcodeHelper implements WPHookInterface
         return $output;
     }
 
-    public function addSubNode(\DOMNode $node)
-    {
-        $this->subNodes[] = $node;
-    }
 
     /**
      * Applies translation to shortcodes
      *
-     * @param string      $attr
+     * @param string $attr
      * @param string|null $content
-     * @param string      $name
+     * @param string $name
      *
      * @return string
      */
@@ -618,10 +490,13 @@ class ShortcodeHelper implements WPHookInterface
                     ArrayHelper::first(array_keys($translation)) === md5($attr[$attributeName])
                 ) {
                     $this->getLogger()
-                        ->debug(vsprintf('Validated translation of \'%s\' as \'%s\' with hash=%s for shortcode \'%s\'', [$attr[$attributeName],
-                                                                                                                         reset($translation),
-                                                                                                                         md5($attr[$attributeName]),
-                                                                                                                         $name]));
+                        ->debug(vsprintf('Validated translation of \'%s\' as \'%s\' with hash=%s for shortcode \'%s\'',
+                            [
+                                $attr[$attributeName],
+                                reset($translation),
+                                md5($attr[$attributeName]),
+                                $name
+                            ]));
                     $attr[$attributeName] = reset($translation);
                 }
             }
