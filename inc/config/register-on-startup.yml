@@ -18,6 +18,7 @@ services:
       - [ "addService", [ "@smartling.helper.absolute-image-path-support" ]]
       - [ "addService", [ "@service.submission-cleanup" ]]
       - [ "addService", [ "@helper.shortcode" ]]
+      - [ "addService", [ "@helper.gutenberg" ]]
       - [ "addService", [ "@meta-field.processor.manager" ]]
       - [ "addService", [ "@service.side-removal-handler"]]
       - [ "addService", [ "@service.invalid-character-cleaner" ]]

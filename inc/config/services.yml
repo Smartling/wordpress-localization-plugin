@@ -175,6 +175,11 @@ services:
       - "@manager.submission"
       - "@site.cache"
 
+  helper.gutenberg:
+    class: Smartling\Helpers\GutenbergBlockHelper
+    calls:
+      - [ "setFieldsFilter", [ "@fields-filter.helper" ]]
+
   helper.shortcode:
     class: Smartling\Helpers\ShortcodeHelper
     calls:

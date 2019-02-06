@@ -79,7 +79,13 @@ class XmlEncoder
             vsprintf(
                 ' smartling.placeholder_format_custom = %s ',
                 [
-                    ShortcodeHelper::getShortcodeMaskRegexp(),
+                    ShortcodeHelper::getMaskRegexp(),
+                ]
+            ),
+            vsprintf(
+                ' smartling.placeholder_format_custom = %s ',
+                [
+                    GutenbergBlockHelper::getMaskRegexp(),
                 ]
             ),
         ];
