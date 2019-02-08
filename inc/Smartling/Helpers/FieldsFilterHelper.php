@@ -78,7 +78,7 @@ class FieldsFilterHelper
      *
      * @return array
      */
-    protected function flatternArray(array $array, $base = '', $divider = self::ARRAY_DIVIDER)
+    public function flatternArray(array $array, $base = '', $divider = self::ARRAY_DIVIDER)
     {
         $output = [];
         foreach ($array as $key => $element) {
@@ -95,7 +95,7 @@ class FieldsFilterHelper
      *
      * @return array
      */
-    protected function structurizeArray(array $flatArray, $divider = self::ARRAY_DIVIDER)
+    public function structurizeArray(array $flatArray, $divider = self::ARRAY_DIVIDER)
     {
         $output = [];
 

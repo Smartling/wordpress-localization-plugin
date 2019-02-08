@@ -82,12 +82,6 @@ class XmlEncoder
                     ShortcodeHelper::getMaskRegexp(),
                 ]
             ),
-            vsprintf(
-                ' smartling.placeholder_format_custom = %s ',
-                [
-                    GutenbergBlockHelper::getMaskRegexp(),
-                ]
-            ),
         ];
 
         foreach ($additionalComments as $extraComment) {

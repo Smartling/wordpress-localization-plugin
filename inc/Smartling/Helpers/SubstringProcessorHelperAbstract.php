@@ -14,7 +14,9 @@ abstract class SubstringProcessorHelperAbstract implements WPHookInterface
      * Returns a regexp for masked shortcodes
      * @return string
      */
-    abstract public static function getMaskRegexp();
+    public static function getMaskRegexp() {
+        return '';
+    }
 
     /**
      * @var LoggerInterface

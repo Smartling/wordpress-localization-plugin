@@ -3,6 +3,7 @@
 namespace Smartling\Base;
 
 use Exception;
+use Smartling\Bootstrap;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
@@ -405,7 +406,7 @@ trait SmartlingCoreUploadTrait
             $locales = [];
 
             $xml = $this->getXMLFiltered($submission);
-
+Bootstrap::DebugPrint($xml, true);
             foreach ($submissions as $_submission) {
                 /**
                  * If submission still doesn't have file URL - create it
@@ -428,6 +429,7 @@ trait SmartlingCoreUploadTrait
             }
 
             if (!StringHelper::isNullOrEmpty($xml)) {
+                //Bootstrap::DebugPrint($xml, true);
                 LiveNotificationController::pushNotification(
                     $this
                         ->getSettingsManager()

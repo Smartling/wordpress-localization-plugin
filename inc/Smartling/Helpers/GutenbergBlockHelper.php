@@ -3,7 +3,6 @@
 namespace Smartling\Helpers;
 
 use Smartling\Base\ExportedAPI;
-use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingGutenbergNotFoundException;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 
@@ -13,35 +12,6 @@ use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
  */
 class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 {
-    const SMARTLING_GUTENBERG_MASK_S = '#sl-gutenberg-start#';
-    const SMARTLING_GUTENBERG_MASK_E = '#sl-gutenberg-end#';
-
-    const SMARTLING_SUBSTRING_NODE_NAME = 'gutenbergblockattribute';
-
-    /**
-     * Returns a regexp for masked shortcodes
-     * @return string
-     */
-    public static function getMaskRegexp()
-    {
-
-        $variants = [
-            '%s\<!--\s\/?[^(-->)]+-->%e',
-        ];
-
-        return str_replace(
-            [
-                '%s',
-                '%e',
-            ],
-            [
-                self::SMARTLING_GUTENBERG_MASK_S,
-                self::SMARTLING_GUTENBERG_MASK_E,
-            ],
-            ('(' . implode('|', $variants) . ')')
-        );
-    }
-
     /**
      * Registers wp hook handlers. Invoked by wordpress.
      * @return void
@@ -57,13 +27,13 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         }
     }
 
-    private function renderBlock(array $block, $masked = false)
+    private function renderBlock(array $block)
     {
         /**
          * render content out of blocks
          */
         if (null === $block['blockName']) {
-            return $block['innerContent'];
+            return implode('', $block['innerContent']);
         }
 
         $indexPointer = 0;
@@ -77,11 +47,11 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 
         $renderBlockTag = function ($blockName, array $attributes, $closingTag = false, $masked = false) {
 
-            return vsprintf('%s<!-- %swp:%s %s -->%s', [
+            return vsprintf('%s<!-- %swp:%s%s -->%s', [
                 (true === $masked ? self::SMARTLING_GUTENBERG_MASK_S : ''),
                 (true === $closingTag ? '/' : ''),
                 $blockName,
-                json_encode($attributes),
+                (0 < count($attributes) ? ' ' . json_encode($attributes) : ''),
                 (true === $masked ? self::SMARTLING_GUTENBERG_MASK_E : ''),
             ]);
         };
@@ -97,59 +67,73 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     }
 
     /**
-     * @param array $block
+     * @param $blockName
+     * @param array $flatAttributes
+     * @return array
      */
-    public function processBlockAttributes(array $block)
+    public function processAttributes($blockName, array $flatAttributes)
     {
-        if (null !== $block['blockName'] && 0 < count($block['attrs'])) {
+        $attributes = [];
+        if (null !== $blockName && 0 < count($flatAttributes)) {
             $logMsg = vsprintf(
-                'Pre filtered block \'%s\' attributes \'%s\'',
-                [
-                    $block['blockName'],
-                    var_export($block['attrs'], true)
-                ]
+                'Pre filtered block \'%s\' attributes \'%s\'', [$blockName, var_export($flatAttributes, true)]
             );
             $this->getLogger()->debug($logMsg);
-            $preparedAttributes = self::maskAttributes($block['blockName'], $block['attrs']);
-            $this->postReceiveFiltering($preparedAttributes);
-            $preparedAttributes = $this->preSendFiltering($preparedAttributes);
+            $prepAttributes = self::maskAttributes($blockName, $flatAttributes);
+            $this->postReceiveFiltering($prepAttributes);
+            $prepAttributes = $this->preSendFiltering($prepAttributes);
             $logMsg = vsprintf(
-                'Post filtered block \'%s\' attributes \'%s\'',
-                [
-                    $block['blockName'],
-                    var_export($preparedAttributes, true)
-                ]
+                'Post filtered block \'%s\' attributes \'%s\'', [$blockName, var_export($prepAttributes, true)]
             );
             $this->getLogger()->debug($logMsg);
-
-            $preparedAttributes = self::unmaskAttributes($block['blockName'], $preparedAttributes);
-            if (0 < count($preparedAttributes)) {
-                foreach ($preparedAttributes as $attribute => $value) {
-                    if(is_array($value)) {
-                        Bootstrap::DebugPrint($block, true);
-                    }
-
-                    $node = $this->createDomNode(
-                        static::SMARTLING_SUBSTRING_NODE_NAME,
-                        [
-                            'block' => $block['blockName'],
-                            'hash' => md5($value),
-                            'name' => $attribute,
-                        ],
-                        $value
-                    );
-
-                    $this->addSubNode($node);
-                }
-            }
+            $attributes = self::unmaskAttributes($blockName, $prepAttributes);
         } else {
-            $this->getLogger()->debug(vsprintf('No attributes found in block \'%s\'.', [$block['blockName']]));
+            $this->getLogger()->debug(vsprintf('No attributes found in block \'%s\'.', [$blockName]));
         }
+        return $attributes;
     }
 
     private function hasBlocks($string)
     {
         return (false !== strpos($string, '<!-- wp:'));
+    }
+
+    private function placeBlock(array $block)
+    {
+        $indexPointer = 0;
+
+        $node = self::createDomNode(
+            'gutenbergBlock',
+            [
+                'blockName' => $block['blockName'],
+                'originalAttributes' => base64_encode(serialize($block['attrs']))
+            ],
+            ''
+        );
+
+        foreach ($block['innerContent'] as $chunk) {
+            $part = null;
+            if (is_string($chunk)) {
+                $part = self::createDomNode('contentChunk', ['hash' => md5($chunk)], $chunk);
+            } else {
+                $part = $this->placeBlock($block['innerBlocks'][$indexPointer++]);
+            }
+            $node->appendChild($part);
+        }
+
+        $flatAttributes = $this->getFieldsFilter()->flatternArray($block['attrs']);
+
+        $filteredAttributes = $this->processAttributes($block['blockName'], $flatAttributes);
+
+        foreach ($filteredAttributes as $attrName => $attrValue) {
+            $arrtNode = self::createDomNode('blockAttribute', [
+                'name' => $attrName,
+                'hash' => md5($attrValue),
+            ], $attrValue);
+            $node->appendChild($arrtNode);
+        }
+
+        return $node;
     }
 
     /**
@@ -168,13 +152,12 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             return $params;
         }
         $originalBlocks = gutenberg_parse_blocks($string);
-        $reRenderedString = '';
-        foreach ($originalBlocks as $id => $block) {
-            $reRenderedString .= $this->renderBlock($block, true);
-            $this->processBlockAttributes($block);
+
+        foreach ($originalBlocks as $block) {
+            $node = $this->placeBlock($block);
+            $params->getNode()->appendChild($node);
         }
-        self::replaceCData($params->getNode(), $reRenderedString);
-        $this->attachSubnodes();
+        self::replaceCData($params->getNode(), '');
 
         return $params;
     }
