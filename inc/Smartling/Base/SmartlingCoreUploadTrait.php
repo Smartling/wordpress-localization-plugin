@@ -406,7 +406,7 @@ trait SmartlingCoreUploadTrait
             $locales = [];
 
             $xml = $this->getXMLFiltered($submission);
-Bootstrap::DebugPrint($xml, true);
+;
             foreach ($submissions as $_submission) {
                 /**
                  * If submission still doesn't have file URL - create it

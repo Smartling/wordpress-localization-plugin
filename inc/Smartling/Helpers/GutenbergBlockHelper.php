@@ -12,58 +12,34 @@ use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
  */
 class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 {
+
+    const BLOCK_NODE_NAME = 'gutenbergBlock';
+
+    const CHUNK_NODE_NAME = 'contentChunk';
+
+    const ATTRIBUTE_NODE_NAME = 'blockAttribute';
+
     /**
      * Registers wp hook handlers. Invoked by wordpress.
      * @return void
      */
     public function register()
     {
+        $handlers = [
+            ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING => 'processString',
+            ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING_RECEIVED => 'processTranslation',
+        ];
+
         try {
             $this->loadBlockClass();
-            add_filter(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING, [$this, 'processString']);
-            add_filter(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING_RECEIVED, [$this, 'processTranslation']);
+
+            foreach ($handlers as $hook => $handler) {
+                add_filter($hook, [$this, $handler]);
+            }
+
         } catch (SmartlingGutenbergNotFoundException $e) {
             $this->getLogger()->notice($e->getMessage());
         }
-    }
-
-    private function renderBlock(array $block)
-    {
-        /**
-         * render content out of blocks
-         */
-        if (null === $block['blockName']) {
-            return implode('', $block['innerContent']);
-        }
-
-        $indexPointer = 0;
-        $content = '';
-
-        foreach ($block['innerContent'] as $chunk) {
-            $content .= is_string($chunk)
-                ? $chunk
-                : $this->renderBlock($block['innerBlocks'][$indexPointer++], $masked);
-        }
-
-        $renderBlockTag = function ($blockName, array $attributes, $closingTag = false, $masked = false) {
-
-            return vsprintf('%s<!-- %swp:%s%s -->%s', [
-                (true === $masked ? self::SMARTLING_GUTENBERG_MASK_S : ''),
-                (true === $closingTag ? '/' : ''),
-                $blockName,
-                (0 < count($attributes) ? ' ' . json_encode($attributes) : ''),
-                (true === $masked ? self::SMARTLING_GUTENBERG_MASK_E : ''),
-            ]);
-        };
-
-        $block = vsprintf('%s%s%s', [
-            $renderBlockTag($block['blockName'], $block['attrs'], false, $masked),
-            $content,
-            $renderBlockTag($block['blockName'], $block['attrs'], true, $masked),
-        ]);
-
-        return $block;
-
     }
 
     /**
@@ -98,15 +74,29 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return (false !== strpos($string, '<!-- wp:'));
     }
 
+    private function packData(array $data)
+    {
+        return base64_encode(serialize($data));
+    }
+
+    private function unpackData($data)
+    {
+        return unserialize(base64_decode($data));
+    }
+
+    /**
+     * @param array $block
+     * @return \DOMElement
+     */
     private function placeBlock(array $block)
     {
         $indexPointer = 0;
 
         $node = self::createDomNode(
-            'gutenbergBlock',
+            static::BLOCK_NODE_NAME,
             [
                 'blockName' => $block['blockName'],
-                'originalAttributes' => base64_encode(serialize($block['attrs']))
+                'originalAttributes' => $this->packData($block['attrs'])
             ],
             ''
         );
@@ -114,7 +104,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         foreach ($block['innerContent'] as $chunk) {
             $part = null;
             if (is_string($chunk)) {
-                $part = self::createDomNode('contentChunk', ['hash' => md5($chunk)], $chunk);
+                $part = self::createDomNode(static::CHUNK_NODE_NAME, ['hash' => md5($chunk)], $chunk);
             } else {
                 $part = $this->placeBlock($block['innerBlocks'][$indexPointer++]);
             }
@@ -122,11 +112,9 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         }
 
         $flatAttributes = $this->getFieldsFilter()->flatternArray($block['attrs']);
-
         $filteredAttributes = $this->processAttributes($block['blockName'], $flatAttributes);
-
         foreach ($filteredAttributes as $attrName => $attrValue) {
-            $arrtNode = self::createDomNode('blockAttribute', [
+            $arrtNode = self::createDomNode(static::ATTRIBUTE_NODE_NAME, [
                 'name' => $attrName,
                 'hash' => md5($attrValue),
             ], $attrValue);
@@ -163,75 +151,123 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     }
 
     /**
-     * @param \DOMNode $stringNode
+     * @param \DOMNode $node
+     * @param array $chunks
+     * @param array $attrs
      */
-    protected function extractAttributeTranslations(\DOMNode $stringNode)
+    private function sortChildNodesContent(\DOMNode $node, array & $chunks, array & $attrs)
     {
-        foreach ($stringNode->childNodes as $cNode) {
-            $this->getLogger()->debug(vsprintf('Looking for translations (subnodes)', []));
-            /**
-             * @var \DOMNode $cNode
-             */
-            if ($cNode->nodeName === static::SMARTLING_SUBSTRING_NODE_NAME && $cNode->hasAttributes()) {
-                $tStruct = $this->nodeToArray($cNode);
+        $chunks = [];
+        $attrs = [];
 
-                $this->addBlockAttribute($tStruct['block'], $tStruct['name'], $tStruct['value'], $tStruct['hash']);
-                $this->getLogger()->debug(
-                    vsprintf(
-                        'Found translation for block = \'%s\' for attribute = \'%s\'.',
-                        [
-                            $tStruct['block'],
-                            $tStruct['name'],
-                        ]
-                    )
-                );
-                $this->getLogger()->debug(vsprintf('Removing subnode. Name=\'%s\', Contents: \'%s\'', [
-                    static::SMARTLING_SUBSTRING_NODE_NAME,
-                    var_export($tStruct, true)
-                ]));
-                $stringNode->removeChild($cNode);
+        foreach ($node->childNodes as $childNode) {
+            /**
+             * @var \DOMNode $childNode
+             */
+
+            switch ($childNode->nodeName) {
+                case static::BLOCK_NODE_NAME :
+                    $chunks[] = $this->renderTranslatedBlockNode($childNode);
+                    break;
+                case static::CHUNK_NODE_NAME :
+                    $chunks[] = $childNode->nodeValue;
+                    break;
+                case static::ATTRIBUTE_NODE_NAME :
+                    $attrs[$childNode->getAttribute('name')] = $childNode->nodeValue;
+                    break;
+                default:
+                    $this->getLogger()->notice(
+                        vsprintf(
+                            'Got unexpected child with name=\'%s\' while applying translation.',
+                            [$childNode->nodeName]
+                        )
+                    );
+                    break;
             }
+
+            $node->removeChild($childNode);
         }
     }
 
-    private function processAttributesTranslations(array $block)
+    /**
+     * @param string $blockName
+     * @param array $originalAttributes
+     * @param array $translatedAttributes
+     * @return array
+     */
+    private function processTranslationAttributes($blockName, $originalAttributes, $translatedAttributes)
     {
-        if (null === $block['blockName']) {
-            return $block;
-        }
+        if (0 < count($originalAttributes)) {
+            $flatAttributes = $this->getFieldsFilter()->flatternArray($originalAttributes);
 
-        $attr = &$block['attrs'];
-
-        if (!is_array($attr)) {
-            $attr = [];
-        }
-
-        // action 0: apply translations
-        $translations = $this->getBlockAttributes($block['blockName']);
-        if (false !== $translations) {
-            foreach ($translations as $attributeName => $translation) {
-                if (array_key_exists($attributeName,
-                        $attr) && ArrayHelper::first(array_keys($translation)) === md5($attr[$attributeName])) {
-                    $this->getLogger()
-                        ->debug(vsprintf('Validated translation of \'%s\' as \'%s\' with hash=%s for block \'%s\'',
-                            [
-                                $attr[$attributeName],
-                                reset($translation),
-                                md5($attr[$attributeName]),
-                                $block['blockName']
-                            ]));
-                    $attr[$attributeName] = reset($translation);
-                }
+            if (0 < count($flatAttributes)) {
+                $attr = self::maskAttributes($blockName, $flatAttributes);
+                $attr = $this->postReceiveFiltering($attr);
+                $attr = self::unmaskAttributes($blockName, $attr);
             }
+
+            $filteredAttributes = array_merge($flatAttributes, $attr, $translatedAttributes);
+
+            $processedAttributes = $this->getFieldsFilter()->structurizeArray($filteredAttributes);
+        } else {
+            $processedAttributes = [];
         }
 
-        if (0 < count($attr)) {
-            $attr = self::maskAttributes($block['blockName'], $attr);
-            $attr = $this->postReceiveFiltering($attr);
-            $attr = self::unmaskAttributes($block['blockName'], $attr);
+        return $processedAttributes;
+    }
+
+    public function renderTranslatedBlockNode(\DOMNode $node)
+    {
+        $blockName = $node->getAttribute('blockName');
+        $blockName = '' === $blockName ? null : $blockName;
+
+        $originalAttributesEncoded = $node->getAttribute('originalAttributes');
+
+        $chunks = [];
+        $translatedAttributes = [];
+
+        $this->sortChildNodesContent($node, $chunks, $translatedAttributes);
+
+        // simple plain blocks
+        if (null === $blockName) {
+            return implode('', $chunks);
         }
 
-        return $block;
+        $originalAttributes = $this->unpackData($originalAttributesEncoded);
+
+        $processedAttributes = $this->processTranslationAttributes($blockName, $originalAttributes,
+            $translatedAttributes);
+
+        return $this->renderGutenbergBlock($blockName, $processedAttributes, $chunks);
+    }
+
+    /**
+     * @param string $name
+     * @param array $attrs
+     * @param array $chunks
+     * @return string
+     */
+    private function renderGutenbergBlock($name, array $attrs = [], array $chunks = [])
+    {
+        $renderedBlock = (0 < count($chunks))
+            ? vsprintf(
+                '<!-- wp:%s%s -->%s<!-- /wp:%s -->',
+                [
+                    $name,
+                    (0 < count($attrs) ? ' ' . json_encode($attrs) : ''),
+                    implode('', $chunks),
+                    $name
+                ]
+            )
+            : vsprintf(
+                '<!-- wp:%s%s /-->',
+                [
+                    $name,
+                    (0 < count($attrs) ? ' ' . json_encode($attrs) : ''),
+                ]
+            );
+
+        return $renderedBlock;
     }
 
     /**
@@ -245,21 +281,26 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     {
         $this->setParams($params);
         $node = $this->getNode();
-        $this->extractAttributeTranslations($node);
-
         $string = static::getCdata($node);
 
-        // getting attributes translation
-        $this->unmask();
+        /**
+         * @var \DOMNodeList $children
+         */
+        $children = $node->childNodes;
 
-        $originalBlocks = gutenberg_parse_blocks($string);
-        $reRenderedString = '';
-        foreach ($originalBlocks as $id => $block) {
-            $this->processAttributesTranslations($block);
-            $reRenderedString .= $this->renderBlock($block, false);
+        if ('' === $string) {
+            foreach ($children as $child) {
+                /**
+                 * @var \DOMNode $child
+                 */
+                if ('gutenbergBlock' === $child->nodeName) {
+                    $string .= $this->renderTranslatedBlockNode($child);
+                    $node->removeChild($child);
+                }
+            }
         }
-        self::replaceCData($params->getNode(), $reRenderedString);
 
+        self::replaceCData($params->getNode(), $string);
         return $this->getParams();
     }
 
@@ -268,12 +309,6 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
      */
     protected function unmask()
     {
-        $this->getLogger()->debug(vsprintf('Removing masking...', []));
-        $node = $this->getNode();
-        $string = self::getCdata($node);
-        $string = preg_replace(vsprintf('/%s\<!--/', [self::SMARTLING_GUTENBERG_MASK_S]), '<!--', $string);
-        $string = preg_replace(vsprintf('/\-->%s/', [self::SMARTLING_GUTENBERG_MASK_E]), '-->', $string);
-        self::replaceCData($node, $string);
     }
 
     /**
