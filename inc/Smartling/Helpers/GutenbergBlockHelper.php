@@ -3,7 +3,6 @@
 namespace Smartling\Helpers;
 
 use Smartling\Base\ExportedAPI;
-use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingGutenbergNotFoundException;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 
@@ -91,16 +90,28 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $attributes;
     }
 
+    /**
+     * @param $string
+     * @return bool
+     */
     private function hasBlocks($string)
     {
         return (false !== strpos($string, '<!-- wp:'));
     }
 
+    /**
+     * @param array $data
+     * @return string
+     */
     private function packData(array $data)
     {
         return base64_encode(serialize($data));
     }
 
+    /**
+     * @param $data
+     * @return mixed
+     */
     private function unpackData($data)
     {
         return unserialize(base64_decode($data));
@@ -304,10 +315,9 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
                     $node->removeChild($child);
                 }
             }
-
+            self::replaceCData($params->getNode(), $string);
         }
 
-        self::replaceCData($params->getNode(), $string);
         return $this->getParams();
     }
 
