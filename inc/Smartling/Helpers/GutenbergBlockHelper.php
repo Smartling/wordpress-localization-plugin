@@ -230,20 +230,15 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
      */
     private function processTranslationAttributes($blockName, $originalAttributes, $translatedAttributes)
     {
+        $processedAttributes = $originalAttributes;
+
         if (0 < count($originalAttributes)) {
             $flatAttributes = $this->getFieldsFilter()->flatternArray($originalAttributes);
-
-            if (0 < count($flatAttributes)) {
-                $attr = self::maskAttributes($blockName, $flatAttributes);
-                $attr = $this->postReceiveFiltering($attr);
-                $attr = self::unmaskAttributes($blockName, $attr);
-            }
-
+            $attr = self::maskAttributes($blockName, $flatAttributes);
+            $attr = $this->postReceiveFiltering($attr);
+            $attr = self::unmaskAttributes($blockName, $attr);
             $filteredAttributes = array_merge($flatAttributes, $attr, $translatedAttributes);
-
             $processedAttributes = $this->getFieldsFilter()->structurizeArray($filteredAttributes);
-        } else {
-            $processedAttributes = [];
         }
 
         return $processedAttributes;
