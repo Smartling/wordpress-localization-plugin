@@ -353,7 +353,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
 
         // action 0: apply translations
         $translations = $this->getBlockAttributes($name);
-        if (false !== $translations) {
+        if (0 < count($translations)) {
             foreach ($translations as $attributeName => $translation) {
                 if (array_key_exists($attributeName, $attr) &&
                     ArrayHelper::first(array_keys($translation)) === md5($attr[$attributeName])

@@ -97,13 +97,13 @@ abstract class SubstringProcessorHelperAbstract implements WPHookInterface
     /**
      * @param string $blockName
      *
-     * @return array|false
+     * @return array
      */
     public function getBlockAttributes($blockName)
     {
         return array_key_exists($blockName, $this->blockAttributes)
             ? $this->blockAttributes[$blockName]
-            : false;
+            : [];
     }
 
     /**
