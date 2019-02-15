@@ -92,7 +92,9 @@ abstract class SubstringProcessorHelperAbstract implements WPHookInterface
     /**
      * Removes smartling masks from the string
      */
-    abstract protected function unmask();
+    protected function unmask(){
+
+    }
 
     /**
      * @param string $blockName

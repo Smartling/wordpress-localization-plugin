@@ -3,6 +3,7 @@
 namespace Smartling\Helpers;
 
 use Smartling\Base\ExportedAPI;
+use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingGutenbergNotFoundException;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 
@@ -17,7 +18,6 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     const BLOCK_NODE_NAME = 'gutenbergBlock';
     const CHUNK_NODE_NAME = 'contentChunk';
     const ATTRIBUTE_NODE_NAME = 'blockAttribute';
-
 
     /**
      * @param array $definitions
@@ -48,6 +48,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
      * Registers wp hook handlers. Invoked by wordpress.
      *
      * @return void
+     * @throws SmartlingConfigException
      */
     public function register()
     {
@@ -58,7 +59,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         ];
 
         try {
-            $this->loadBlockClass();
+            $this->loadExternalDependencies();
 
             foreach ($handlers as $hook => $handler) {
                 add_filter($hook, [$this, $handler]);
@@ -66,6 +67,9 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 
         } catch (SmartlingGutenbergNotFoundException $e) {
             $this->getLogger()->notice($e->getMessage());
+        } catch (SmartlingConfigException $e) {
+            $this->getLogger()->notice($e->getMessage());
+            throw $e;
         }
     }
 
@@ -80,7 +84,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         if (null !== $blockName && 0 < count($flatAttributes)) {
             $this->getLogger()->debug(vsprintf('Pre filtered block \'%s\' attributes \'%s\'',
                 [$blockName, var_export($flatAttributes, true)]));
-            $this->postReceiveFiltering($flatAttributes);
+            $this->createDomNode($flatAttributes);
             $attributes = $this->preSendFiltering($flatAttributes);
             $this->getLogger()->debug(vsprintf('Post filtered block \'%s\' attributes \'%s\'',
                 [$blockName, var_export($flatAttributes, true)]));
@@ -96,7 +100,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
      */
     private function hasBlocks($string)
     {
-        return (false !== strpos($string, '<!-- wp:'));
+        return 0 < (int)preg_match('/<!--\s+wp\:/ius', $string);
     }
 
     /**
@@ -125,7 +129,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     {
         $indexPointer = 0;
 
-        $node = self::createDomNode(
+        $node = $this->createDomNode(
             static::BLOCK_NODE_NAME,
             [
                 'blockName' => $block['blockName'],
@@ -137,7 +141,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         foreach ($block['innerContent'] as $chunk) {
             $part = null;
             if (is_string($chunk)) {
-                $part = self::createDomNode(static::CHUNK_NODE_NAME, ['hash' => md5($chunk)], $chunk);
+                $part = $this->createDomNode(static::CHUNK_NODE_NAME, [], $chunk);
             } else {
                 $part = $this->placeBlock($block['innerBlocks'][$indexPointer++]);
             }
@@ -149,8 +153,11 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 
         if (0 < count($filteredAttributes)) {
             foreach ($filteredAttributes as $attrName => $attrValue) {
-                $arrtNode = self::createDomNode(static::ATTRIBUTE_NODE_NAME,
-                    ['name' => $attrName, 'hash' => md5($attrValue),], $attrValue);
+                $arrtNode = $this->createDomNode(
+                    static::ATTRIBUTE_NODE_NAME,
+                    ['name' => $attrName],
+                    $attrValue
+                );
                 $node->appendChild($arrtNode);
             }
         }
@@ -188,7 +195,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
      * @param array    $chunks
      * @param array    $attrs
      */
-    private function sortChildNodesContent(\DOMNode $node, array & $chunks, array & $attrs)
+    public function sortChildNodesContent(\DOMNode $node)
     {
         $chunks = [];
         $attrs = [];
@@ -197,7 +204,6 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             /**
              * @var \DOMNode $childNode
              */
-
             switch ($childNode->nodeName) {
                 case static::BLOCK_NODE_NAME :
                     $chunks[] = $this->renderTranslatedBlockNode($childNode);
@@ -317,21 +323,20 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     }
 
     /**
-     * Removes smartling masks from the string
-     */
-    protected function unmask()
-    {
-    }
-
-    /**
      * @throws SmartlingGutenbergNotFoundException
+     * @throws SmartlingConfigException
      */
-    private function loadBlockClass()
+    private function loadExternalDependencies()
     {
+        if (!defined('ABSPATH')) {
+            throw new SmartlingConfigException("Execution requires declared ABSPATH const.");
+        }
+
         $paths = [
             vsprintf('%swp-includes/blocks.php', [ABSPATH]),
             vsprintf('%swp-content/plugins/gutenberg/lib/blocks.php', [ABSPATH]),
         ];
+
 
         foreach ($paths as $path) {
             //$this->getLogger()->debug(vsprintf('Trying to get block class from file: %s', [$path]));
