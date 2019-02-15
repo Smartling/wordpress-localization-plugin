@@ -29,12 +29,13 @@ class GutenbergBlockHelperTest extends TestCase
     use SettingsManagerMock;
 
     /**
+     * @param array $methods
      * @return \PHPUnit_Framework_MockObject_MockObject|GutenbergBlockHelper
      */
-    private function mockHelper()
+    private function mockHelper($methods = ['postReceiveFiltering', 'preSendFiltering', 'processAttributes'])
     {
         return $this->getMockBuilder('\Smartling\Helpers\GutenbergBlockHelper')
-                    ->setMethods(['postReceiveFiltering', 'preSendFiltering', 'processAttributes'])
+                    ->setMethods($methods)
                     ->getMock();
     }
 
@@ -86,15 +87,16 @@ class GutenbergBlockHelperTest extends TestCase
      */
     public function testProcessAttributes($blockName, $flatAttributes, $postFilterMock, $preFilterMock)
     {
-        $helper = $this->mockHelper();
+        $helper = $this->mockHelper(['postReceiveFiltering', 'preSendFiltering']);
+
         $helper
-            ->expects((!empty($flatAttributes) ? self::once() : self::never()))
+            ->expects(self::any())
             ->method('postReceiveFiltering')
             ->with($flatAttributes)
             ->willReturn($postFilterMock);
 
         $helper
-            ->expects((!empty($flatAttributes) ? self::once() : self::never()))
+            ->expects(self::any())
             ->method('preSendFiltering')
             ->with($flatAttributes)
             ->willReturn($preFilterMock);
@@ -111,28 +113,18 @@ class GutenbergBlockHelperTest extends TestCase
     public function processAttributesDataProvider()
     {
         return [
-            'empty' => [
-                'block',
+            'plain' => [
+                null,
                 [],
                 [],
                 [],
             ],
+            'empty' => ['block', [], [], [],],
             'simple' => [
                 'block',
-                [
-                    'a/0' => 'first',
-                    'a/1' => 'second',
-                    'a/2/0' => '5',
-                ],
-                [
-                    'a/0' => 'first',
-                    'a/1' => 'second',
-                    'a/2/0' => '6',
-                ],
-                [
-                    'a/0' => 'first',
-                    'a/1' => 'second',
-                ],
+                ['a/0' => 'first', 'a/1' => 'second', 'a/2/0' => '5',],
+                ['a/0' => 'first', 'a/1' => 'second', 'a/2/0' => '6',],
+                ['a/0' => 'first', 'a/1' => 'second',],
             ],
         ];
     }
@@ -290,7 +282,8 @@ class GutenbergBlockHelperTest extends TestCase
      * @param array  $chunks
      * @param string $expected
      * @throws \ReflectionException
-     * @dataProvider \Smartling\Helpers\GutenbergBlockHelper::renderGutenbergBlock
+     * @covers       \Smartling\Helpers\GutenbergBlockHelper::renderGutenbergBlock
+     * @dataProvider renderGutenbergBlockDataProvider
      */
     public function testRenderGutenbergBlock($blockName, array $attributes, array $chunks, $expected)
     {

@@ -74,20 +74,27 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     }
 
     /**
-     * @param       $blockName
-     * @param array $flatAttributes
+     * @param string $blockName
+     * @param array  $flatAttributes
      * @return array
      */
     public function processAttributes($blockName, array $flatAttributes)
     {
         $attributes = [];
-        if (null !== $blockName && 0 < count($flatAttributes)) {
+
+        if (null === $blockName) {
+            return $attributes;
+        }
+
+        if (!empty($flatAttributes)) {
+            $ve_attributes = var_export($flatAttributes, true);
+
             $this->getLogger()->debug(vsprintf('Pre filtered block \'%s\' attributes \'%s\'',
-                [$blockName, var_export($flatAttributes, true)]));
-            $this->createDomNode($flatAttributes);
+                [$blockName, $ve_attributes]));
+            $this->postReceiveFiltering($flatAttributes);
             $attributes = $this->preSendFiltering($flatAttributes);
             $this->getLogger()->debug(vsprintf('Post filtered block \'%s\' attributes \'%s\'',
-                [$blockName, var_export($flatAttributes, true)]));
+                [$blockName, $ve_attributes]));
         } else {
             $this->getLogger()->debug(vsprintf('No attributes found in block \'%s\'.', [$blockName]));
         }
