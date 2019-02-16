@@ -209,7 +209,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 
         foreach ($node->childNodes as $childNode) {
             /**
-             * @var \DOMNode $childNode
+             * @var \DOMElement $childNode
              */
 
             switch ($childNode->nodeName) {
@@ -264,7 +264,11 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $processedAttributes;
     }
 
-    public function renderTranslatedBlockNode(\DOMNode $node)
+    /**
+     * @param \DOMElement $node
+     * @return string
+     */
+    public function renderTranslatedBlockNode(\DOMElement $node)
     {
         $blockName = $node->getAttribute('blockName');
         $blockName = '' === $blockName ? null : $blockName;
@@ -318,7 +322,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             $children = $node->childNodes;
             foreach ($children as $child) {
                 /**
-                 * @var \DOMNode $child
+                 * @var \DOMElement $child
                  */
                 if (static::BLOCK_NODE_NAME === $child->nodeName) {
                     $string .= $this->renderTranslatedBlockNode($child);
