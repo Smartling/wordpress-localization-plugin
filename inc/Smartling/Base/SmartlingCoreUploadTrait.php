@@ -404,7 +404,6 @@ trait SmartlingCoreUploadTrait
 
             $locales = [];
 
-            $xml = $this->getXMLFiltered($submission);
 
             foreach ($submissions as $_submission) {
                 /**
