@@ -87,9 +87,24 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         add_filter(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING_RECEIVED, [$this, 'processTranslation'], 99);
     }
 
+    /**
+     * @param $string
+     * @return bool
+     */
     private function hasShortcodes($string)
     {
-        return preg_match('/\[\/?[^\]]+\]/ius', $string);
+        $possibleShortcodes = $this->getRegisteredShortcodes();
+        foreach ($possibleShortcodes as $possibleShortcode) {
+            $result = has_shortcode($string, $possibleShortcode);
+            if (true === $result) {
+                $this
+                    ->getLogger()
+                    ->debug(vsprintf('Detected \'%s\' shortcode in string \'%s\'', [$possibleShortcode, $string]));
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
