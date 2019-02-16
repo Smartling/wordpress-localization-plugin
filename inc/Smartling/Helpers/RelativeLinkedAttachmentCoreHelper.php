@@ -395,7 +395,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                     $level = '';
                     switch ($error->level) {
                         case LIBXML_ERR_NONE:
-                            continue;
+                            break;
                         case LIBXML_ERR_WARNING:
                             $level = 'WARNING';
                             break;
@@ -408,15 +408,16 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                         default:
                             $level = 'UNKNOWN:' . $error->level;
                     }
-
-                    $template = 'An \'%s\' raised with message: \'%s\' by XML (libxml) parser while parsing string \'%s\' line %s.';
-                    $message = vsprintf($template, [
-                        $level,
-                        $error->message,
-                        base64_encode($tagString),
-                        $error->line,
-                    ]);
-                    $this->getLogger()->debug($message);
+                    if ('' !== $level) {
+                        $template = 'An \'%s\' raised with message: \'%s\' by XML (libxml) parser while parsing string \'%s\' line %s.';
+                        $message = vsprintf($template, [
+                            $level,
+                            $error->message,
+                            base64_encode($tagString),
+                            $error->line,
+                        ]);
+                        $this->getLogger()->debug($message);
+                    }
                 }
             }
         }
