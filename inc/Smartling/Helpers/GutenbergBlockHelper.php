@@ -199,18 +199,19 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 
     /**
      * @param \DOMNode $node
-     * @param array    $chunks
-     * @param array    $attrs
+     * @return array
      */
     public function sortChildNodesContent(\DOMNode $node)
     {
         $chunks = [];
         $attrs = [];
+        $nodesToRemove = [];
 
         foreach ($node->childNodes as $childNode) {
             /**
              * @var \DOMNode $childNode
              */
+
             switch ($childNode->nodeName) {
                 case static::BLOCK_NODE_NAME :
                     $chunks[] = $this->renderTranslatedBlockNode($childNode);
@@ -230,9 +231,15 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
                     );
                     break;
             }
-
-            $node->removeChild($childNode);
+            $nodesToRemove[] = $childNode;
         }
+        foreach ($nodesToRemove as $item) {
+            $node->removeChild($item);
+        }
+        return [
+            'chunks' => $chunks,
+            'attributes' => $attrs,
+        ];
     }
 
     /**
@@ -262,9 +269,9 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         $blockName = $node->getAttribute('blockName');
         $blockName = '' === $blockName ? null : $blockName;
         $originalAttributesEncoded = $node->getAttribute('originalAttributes');
-        $chunks = [];
-        $translatedAttributes = [];
-        $this->sortChildNodesContent($node, $chunks, $translatedAttributes);
+        $sortedResult = $this->sortChildNodesContent($node);
+        $chunks = $sortedResult['chunks'];
+        $translatedAttributes = $sortedResult['attributes'];
         // simple plain blocks
         if (null === $blockName) {
             return implode('\n', $chunks);

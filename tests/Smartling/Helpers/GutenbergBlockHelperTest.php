@@ -6,12 +6,8 @@ use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
-use Smartling\Tests\Traits\DbAlMock;
-use Smartling\Tests\Traits\EntityHelperMock;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 use Smartling\Tests\Traits\SettingsManagerMock;
-use Smartling\Tests\Traits\SiteHelperMock;
-use Smartling\Tests\Traits\SubmissionManagerMock;
 
 /**
  * Class GutenbergBlockHelperTest
@@ -22,10 +18,6 @@ use Smartling\Tests\Traits\SubmissionManagerMock;
 class GutenbergBlockHelperTest extends TestCase
 {
     use InvokeMethodTrait;
-    use SubmissionManagerMock;
-    use DbAlMock;
-    use EntityHelperMock;
-    use SiteHelperMock;
     use SettingsManagerMock;
 
     /**
@@ -382,28 +374,8 @@ class GutenbergBlockHelperTest extends TestCase
      */
     public function testRenderTranslatedBlockNode()
     {
-        $xmlPart = '<gutenbergBlock blockName="core/foo" originalAttributes="YToxOntzOjQ6ImRhdGEiO2E6Mzp7czo2OiJ0ZXh0X2EiO3M6NzoiVGl0bGUgMSI7czo2OiJ0ZXh0X2IiO3M6NzoiVGl0bGUgMiI7czo1OiJ0ZXh0cyI7YToyOntpOjA7czo1OiJsb3JlbSI7aToxO3M6NToiaXBzdW0iO319fQ==">
-			<![CDATA[]]>
-			<contentChunk hash="d3d67cc32ac556aae106e606357f449e">
-				<![CDATA[
-<p>Inner HTML</p>
-]]>
-			</contentChunk>
-			<blockAttribute name="data/text_a" hash="90bc6d3874182275bd4cd88cbd734fe9">
-				<![CDATA[Title 1]]>
-			</blockAttribute>
-			<blockAttribute name="data/text_b" hash="e4bb56dda4ecb60c34ccb89fd50506df">
-				<![CDATA[Title 2]]>
-			</blockAttribute>
-			<blockAttribute name="data/texts/0" hash="d2e16e6ef52a45b7468f1da56bba1953">
-				<![CDATA[lorem]]>
-			</blockAttribute>
-			<blockAttribute name="data/texts/1" hash="e78f5438b48b39bcbdea61b73679449d">
-				<![CDATA[ipsum]]>
-			</blockAttribute>
-		</gutenbergBlock>';
-
-        $expectedBlock = '<!-- wp:core/foo {"data":{"text_a":"Title 1","text_b":"Title 2","texts":["lorem","ipsum"]}} /-->';
+        $xmlPart = '<gutenbergBlock blockName="core/foo" originalAttributes="YToxOntzOjQ6ImRhdGEiO2E6Mzp7czo2OiJ0ZXh0X2EiO3M6NzoiVGl0bGUgMSI7czo2OiJ0ZXh0X2IiO3M6NzoiVGl0bGUgMiI7czo1OiJ0ZXh0cyI7YToyOntpOjA7czo1OiJsb3JlbSI7aToxO3M6NToiaXBzdW0iO319fQ=="><![CDATA[]]><contentChunk hash="d3d67cc32ac556aae106e606357f449e"><![CDATA[<p>Inner HTML</p>]]></contentChunk><blockAttribute name="data/text_a" hash="90bc6d3874182275bd4cd88cbd734fe9"><![CDATA[Title 1]]></blockAttribute><blockAttribute name="data/text_b" hash="e4bb56dda4ecb60c34ccb89fd50506df"><![CDATA[Title 2]]></blockAttribute><blockAttribute name="data/texts/0" hash="d2e16e6ef52a45b7468f1da56bba1953"><![CDATA[lorem]]></blockAttribute><blockAttribute name="data/texts/1" hash="e78f5438b48b39bcbdea61b73679449d"><![CDATA[ipsum]]></blockAttribute></gutenbergBlock>';
+        $expectedBlock = '<!-- wp:core/foo {"data":{"text_a":"Title 1","text_b":"Title 2","texts":["lorem","ipsum"]}} --><p>Inner HTML</p><!-- /wp:core/foo -->';
 
         $dom = new \DOMDocument('1.0', 'utf8');
         $dom->loadXML($xmlPart);
@@ -423,5 +395,48 @@ class GutenbergBlockHelperTest extends TestCase
 
         $result = $helper->renderTranslatedBlockNode($node);
         self::assertEquals($expectedBlock, $result);
+    }
+
+    /**
+     * @covers       \Smartling\Helpers\GutenbergBlockHelper::sortChildNodesContent
+     */
+    public function testSortChildNodesContent()
+    {
+        $dom = new \DOMDocument('1.0', 'utf8');
+
+        $createElement = function ($name, array $attributes = [], $cdata = null) use ($dom) {
+            $element = $dom->createElement($name);
+            foreach ($attributes as $attrName => $attrValue) {
+                $element->setAttributeNode(new \DOMAttr($attrName, $attrValue));
+            }
+            if (null !== $cdata) {
+                $element->appendChild(new \DOMCdataSection($cdata));
+            }
+            return $element;
+        };
+
+        $node = $createElement('gutenbergBlock', ['blockName' => 'block']);
+        $node->appendChild($createElement('contentChunk', [], 'chunk a'));
+        $node->appendChild($createElement('contentChunk', [], 'chunk b'));
+        $node->appendChild($createElement('contentChunk', [], 'chunk c'));
+        $node->appendChild($createElement('blockAttribute', ['name' => 'attr_a'], 'attr a'));
+        $node->appendChild($createElement('blockAttribute', ['name' => 'attr_b'], 'attr b'));
+        $node->appendChild($createElement('blockAttribute', ['name' => 'attr_c'], 'attr c'));
+        $node->appendChild($createElement('blockAttribute', ['name' => 'attr_d'], 'attr d'));
+
+        $expected = [
+            'chunks' => ['chunk a', 'chunk b', 'chunk c'],
+            'attributes' => ['attr_a' => 'attr a', 'attr_b' => 'attr b', 'attr_c' => 'attr c', 'attr_d' => 'attr d'],
+        ];
+        $helper = $this->mockHelper(['postReceiveFiltering']);
+        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock()));
+        $helper->expects(self::any())
+               ->method('postReceiveFiltering')
+               ->willReturnCallback(function ($attr) {
+                   return $attr;
+               });
+
+        $result = $helper->sortChildNodesContent($node);
+        self::assertEquals($expected, $result);
     }
 }
