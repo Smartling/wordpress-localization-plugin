@@ -272,18 +272,14 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     {
         $blockName = $node->getAttribute('blockName');
         $blockName = '' === $blockName ? null : $blockName;
-        $originalAttributesEncoded = $node->getAttribute('originalAttributes');
+        $originalAttributes = $this->unpackData($node->getAttribute('originalAttributes'));
         $sortedResult = $this->sortChildNodesContent($node);
-        $chunks = $sortedResult['chunks'];
-        $translatedAttributes = $sortedResult['attributes'];
         // simple plain blocks
         if (null === $blockName) {
-            return implode('\n', $chunks);
+            return implode('\n', $sortedResult['chunks']);
         }
-        $originalAttributes = $this->unpackData($originalAttributesEncoded);
-        $processedAttributes = $this->processTranslationAttributes($blockName, $originalAttributes,
-            $translatedAttributes);
-        $renderedBlock = $this->renderGutenbergBlock($blockName, $processedAttributes, $chunks);
+        $attributes = $this->processTranslationAttributes($blockName, $originalAttributes, $sortedResult['attributes']);
+        $renderedBlock = $this->renderGutenbergBlock($blockName, $attributes, $sortedResult['chunks']);
         return $renderedBlock;
     }
 
