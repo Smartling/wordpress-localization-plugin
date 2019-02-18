@@ -180,22 +180,31 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
      */
     public function processString(TranslationStringFilterParameters $params)
     {
-        $this->subNodes = [];
         $this->setParams($params);
         $string = self::getCdata($params->getNode());
         if (!$this->hasBlocks($string)) {
             return $params;
         }
-        $originalBlocks = gutenberg_parse_blocks($string);
-
+        $originalBlocks = $this->parseBlocks($string);
         foreach ($originalBlocks as $block) {
             $node = $this->placeBlock($block);
             $params->getNode()->appendChild($node);
         }
         self::replaceCData($params->getNode(), '');
-
         return $params;
     }
+
+    /**
+     * A wrapper for WP::gutenberg gutenberg_parse_blocks() function
+     *
+     * @param $string
+     * @return array
+     */
+    protected function parseBlocks($string)
+    {
+        return gutenberg_parse_blocks($string);
+    }
+
 
     /**
      * @param \DOMNode $node

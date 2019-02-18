@@ -6,8 +6,10 @@ use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
+use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 use Smartling\Tests\Traits\SettingsManagerMock;
+
 
 /**
  * Class GutenbergBlockHelperTest
@@ -67,6 +69,17 @@ class GutenbergBlockHelperTest extends TestCase
     public function testRegister()
     {
         $this->helper->register();
+    }
+
+    /**
+     * @covers                   \Smartling\Helpers\GutenbergBlockHelper::loadExternalDependencies
+     * @expectedException        \Smartling\Exception\SmartlingGutenbergNotFoundException
+     * @expectedExceptionMessage Gutenberg class not found. Disabling GutenbergSupport.
+     */
+    public function testLoadExternalDependencies()
+    {
+        defined('ABSPATH') || define('ABSPATH', '');
+        $this->invokeMethod($this->helper, 'loadExternalDependencies', []);
     }
 
     /**
@@ -438,5 +451,197 @@ class GutenbergBlockHelperTest extends TestCase
 
         $result = $helper->sortChildNodesContent($node);
         self::assertEquals($expected, $result);
+    }
+
+    /**
+     * @covers       \Smartling\Helpers\GutenbergBlockHelper::processString
+     * @dataProvider processStringDataProvider
+     * @param string $contentString
+     * @param int    $parseCount
+     * @param array  $parseResult
+     * @param string $expectedString
+     */
+    public function testProcessString($contentString, $parseCount, $parseResult, $expectedString)
+    {
+        $sourceString = vsprintf('<string name="entity/post_content"><![CDATA[%s]]></string>', [$contentString]);
+        $dom = new \DOMDocument('1.0', 'uft8');
+        $dom->loadXML($sourceString);
+        $node = $dom->getElementsByTagName('string')->item(0);
+
+        $params = new TranslationStringFilterParameters();
+        $params->setDom($dom);
+        $params->setFilterSettings([]);
+        $params->setSubmission(new SubmissionEntity());
+        $params->setNode($node);
+
+
+        $helper = $this->mockHelper(['postReceiveFiltering', 'preSendFiltering', 'parseBlocks']);
+
+        $helper->expects(self::any())
+               ->method('postReceiveFiltering')
+               ->willReturnCallback(function ($attributes) {
+                   return $attributes;
+               });
+        $helper->expects(self::any())
+               ->method('preSendFiltering')
+               ->willReturnCallback(function ($attributes) {
+                   return $attributes;
+               });
+
+        $helper->expects(self::exactly($parseCount))
+               ->method('parseBlocks')
+               ->with($contentString)
+               ->willReturn($parseResult);
+
+        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock()));
+
+        $result = $helper->processString($params);
+
+        $xml = $dom->saveXML($result->getNode());
+
+        self::assertEquals($expectedString, $xml);
+    }
+
+    /**
+     * @return array
+     */
+    public function processStringDataProvider()
+    {
+        return [
+            'no blocks' => [
+                'Hello World',
+                0,
+                [],
+                '<string name="entity/post_content"><![CDATA[Hello World]]></string>',
+            ],
+            'with blocks' => [
+                '<!-- wp:paragraph -->
+<p>some par 1</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>some par 2</p>
+<!-- /wp:paragraph -->',
+                1,
+                [
+                    [
+                        'blockName' => 'core/paragraph',
+                        'attrs' => [],
+                        'innerBlocks' => [],
+                        'innerHTML' => '
+some par 1
+
+',
+                        'innerContent' => [
+                            0 => '
+some par 1
+
+',
+                        ],
+                    ],
+                    [
+                        'blockName' => null,
+                        'attrs' => [],
+                        'innerBlocks' => [],
+                        'innerHTML' => ' ',
+                        'innerContent' => [0 => ' ',],
+                    ],
+                    [
+                        'blockName' => 'core/paragraph',
+                        'attrs' => [],
+                        'innerBlocks' => [],
+                        'innerHTML' => '
+some par 2
+
+',
+                        'innerContent' => [
+                            0 => '
+some par 2
+
+',
+                        ],
+                    ],
+                ],
+                '<string name="entity/post_content"><gutenbergBlock blockName="core/paragraph" originalAttributes="YTowOnt9"><![CDATA[]]><contentChunk><![CDATA[
+some par 1
+
+]]></contentChunk></gutenbergBlock><gutenbergBlock blockName="" originalAttributes="YTowOnt9"><![CDATA[]]><contentChunk><![CDATA[ ]]></contentChunk></gutenbergBlock><gutenbergBlock blockName="core/paragraph" originalAttributes="YTowOnt9"><![CDATA[]]><contentChunk><![CDATA[
+some par 2
+
+]]></contentChunk></gutenbergBlock><![CDATA[]]></string>',
+            ],
+        ];
+    }
+
+    /**
+     * @covers       \Smartling\Helpers\GutenbergBlockHelper::processTranslation
+     * @dataProvider processTranslationDataProvider
+     * @param string $inXML
+     * @param string $expectedXML
+     */
+    public function testProcessTranslation($inXML, $expectedXML)
+    {
+
+        $dom = new \DOMDocument('1.0', 'uft8');
+        $dom->loadXML($inXML);
+        $node = $dom->getElementsByTagName('string')->item(0);
+
+        $params = new TranslationStringFilterParameters();
+        $params->setDom($dom);
+        $params->setFilterSettings([]);
+        $params->setSubmission(new SubmissionEntity());
+        $params->setNode($node);
+
+
+        $helper = $this->mockHelper(['postReceiveFiltering', 'preSendFiltering']);
+
+        $helper->expects(self::any())
+               ->method('postReceiveFiltering')
+               ->willReturnCallback(function ($attributes) {
+                   return $attributes;
+               });
+        $helper->expects(self::any())
+               ->method('preSendFiltering')
+               ->willReturnCallback(function ($attributes) {
+                   return $attributes;
+               });
+
+        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock()));
+
+        $result = $helper->processTranslation($params);
+
+        $xml = $dom->saveXML($result->getNode());
+
+        self::assertEquals($expectedXML, $xml);
+    }
+
+    /**
+     * @return array
+     */
+    public function processTranslationDataProvider()
+    {
+        return [
+            'no blocks' => [
+                '<string name="entity/post_content"><![CDATA[Hello World]]></string>',
+                '<string name="entity/post_content"><![CDATA[Hello World]]></string>',
+            ],
+            'with blocks' => [
+                '<string name="entity/post_content"><gutenbergBlock blockName="core/paragraph" originalAttributes="YTowOnt9"><![CDATA[]]><contentChunk><![CDATA[
+some par 1
+
+]]></contentChunk></gutenbergBlock><gutenbergBlock blockName="" originalAttributes="YTowOnt9"><![CDATA[]]><contentChunk><![CDATA[ ]]></contentChunk></gutenbergBlock><gutenbergBlock blockName="core/paragraph" originalAttributes="YTowOnt9"><![CDATA[]]><contentChunk><![CDATA[
+some par 2
+
+]]></contentChunk></gutenbergBlock><![CDATA[]]></string>',
+
+                '<string name="entity/post_content"><gutenbergBlock blockName="" originalAttributes="YTowOnt9"/><gutenbergBlock blockName="core/paragraph" originalAttributes="YTowOnt9"/><![CDATA[<!-- wp:core/paragraph -->
+some par 1
+
+<!-- /wp:core/paragraph --> <!-- wp:core/paragraph -->
+some par 2
+
+<!-- /wp:core/paragraph -->]]></string>',
+            ],
+        ];
     }
 }
