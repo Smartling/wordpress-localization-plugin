@@ -2,8 +2,8 @@
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
-Tested up to: 4.9.9
-Stable tag: 1.9.3
+Tested up to: 5.0.3
+Stable tag: 1.10.0
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -57,6 +57,12 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 1.10.0 =
+* Added support for Gutenberg posts. Now smartling-connector supports Gutenberg blocks in posts.
+* Fixed possible issue when a duplicate of post is created on content upload.
+* Known issue: ACF version 5.7.11+  is not supported yet
+* Known issie: Download button on Smartling widget on content edit page may not work as expected if Gutenberg editor is used.
+
 = 1.9.3 =
 * Fixed possible deprecation warning when running at PHP 7.3
 * Fixed possible issue when Job description overwrites taxonomy description.
