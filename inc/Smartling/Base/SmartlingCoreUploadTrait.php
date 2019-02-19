@@ -384,7 +384,8 @@ trait SmartlingCoreUploadTrait
     public function bulkSubmit(SubmissionEntity $submission)
     {
         try {
-            $xml = '';
+            $xml = $this->getXMLFiltered($submission);
+            $submission = $this->getSubmissionManager()->storeEntity($submission);
 
             $params = [
                 'status'    => [SubmissionEntity::SUBMISSION_STATUS_NEW],
@@ -404,7 +405,6 @@ trait SmartlingCoreUploadTrait
 
             $locales = [];
 
-            $xml = $this->getXMLFiltered($submission);
 
             foreach ($submissions as $_submission) {
                 /**
