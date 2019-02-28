@@ -7,7 +7,6 @@ use Psr\Log\LoggerInterface;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
-use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EntityHelper;
@@ -291,16 +290,27 @@ class BulkSubmitTableWidget extends SmartlingListTable
             $wrapper = Bootstrap::getContainer()->get('wrapper.sdk.api.smartling');
             $profile = $this->getProfile();
 
-            $batchUid = $wrapper->retrieveBatch($profile, $smartlingData['jobId'], 'true' === $smartlingData['authorize'], [
-                'name' => $smartlingData['jobName'],
-                'description' => $smartlingData['jobDescription'],
-                'dueDate' => [
-                    'date' => $smartlingData['jobDueDate'],
-                    'timezone' => $smartlingData['timezone'],
-                ],
-            ]);
-
-            if (empty($batchUid)) {
+            try {
+                $batchUid = $wrapper->retrieveBatch($profile, $smartlingData['jobId'],
+                    'true' === $smartlingData['authorize'], [
+                        'name' => $smartlingData['jobName'],
+                        'description' => $smartlingData['jobDescription'],
+                        'dueDate' => [
+                            'date' => $smartlingData['jobDueDate'],
+                            'timezone' => $smartlingData['timezone'],
+                        ],
+                    ]);
+            } catch (\Exception $e) {
+                $this
+                    ->getLogger()
+                    ->error(
+                        vsprintf(
+                            'Failed retrieving batch for job %s. Translation aborted.',
+                            [
+                                var_export($_POST['jobId'], true),
+                            ]
+                        )
+                    );
                 return;
             }
         }

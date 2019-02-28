@@ -668,9 +668,10 @@ class ApiWrapper implements ApiWrapperInterface
      * @param bool  $authorize
      * @param array $updateJob
      *
-     * @return string|null
+     * @return string
+     * @throws SmartlingApiException
      */
-    public function retrieveBatch($profile, $jobId, $authorize = true, $updateJob = [])
+    public function retrieveBatch(ConfigurationProfileEntity $profile, $jobId, $authorize = true, $updateJob = [])
     {
         if ($authorize) {
             $this->getLogger()->debug(vsprintf('Job \'%s\' should be authorized once upload is finished.', [$jobId]));
@@ -697,15 +698,36 @@ class ApiWrapper implements ApiWrapperInterface
 
             return $result['batchUid'];
         } catch (SmartlingApiException $e) {
-            $this->getLogger()->error(vsprintf('Can\'t create batch for a job "%s". Error: %s', [$jobId,
-                                                                                                 $e->formatErrors()]));
+            $this
+                ->getLogger()
+                ->error(
+                    vsprintf(
+                        'Can\'t create batch for a job "%s".\nProfile: %s\nError:%s.\nTrace:%s',
+                        [
+                            $jobId,
+                            base64_encode(serialize($profile->toArray(false))),
+                            $e->formatErrors(),
+                            $e->getTraceAsString()
+                        ]
+                    )
+                );
+            throw $e;
 
-            return null;
         } catch (\Exception $e) {
-            $this->getLogger()->error(vsprintf('Can\'t create batch for a job "%s". Error: %s', [$jobId,
-                                                                                                 $e->getMessage()]));
-
-            return null;
+            $this
+                ->getLogger()
+                ->error(
+                    vsprintf(
+                        'Can\'t create batch for a job "%s".\nProfile: %s\nError:%s.\nTrace:%s',
+                        [
+                            $jobId,
+                            base64_encode(serialize($profile->toArray(false))),
+                            $e->getMessage(),
+                            $e->getTraceAsString()
+                        ]
+                    )
+                );
+            throw $e;
         }
     }
 
@@ -773,10 +795,12 @@ class ApiWrapper implements ApiWrapperInterface
 
             return $result['batchUid'];
         } catch (SmartlingApiException $e) {
-            $this->getLogger()->error(vsprintf('Can\'t create batch for a daily job "%s". Error: %s', [$jobName,
-                                                                                                       $e->formatErrors()]));
+            $this->getLogger()->error(vsprintf('Can\'t create batch for a daily job "%s". Error: %s', [
+                $jobName,
+                $e->formatErrors(),
+            ]));
 
-            return null;
+            throw $e;
         }
     }
 

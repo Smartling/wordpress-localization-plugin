@@ -3,8 +3,10 @@
 namespace Smartling\Helpers;
 
 
+use UnexpectedValueException;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
+use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\SmartlingDataReadException;
 use Smartling\MonologWrapper\MonologWrapper;
@@ -87,6 +89,20 @@ class TranslationHelper
      */
     public function prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null)
     {
+        if (0 === (int)$targetBlog) {
+            $exception = new UnexpectedValueException('Unexpected value: targetBlog must be > 0');
+            $this->getLogger()->warning(
+                vsprintf(
+                    'Trying to create get a submission with invalid targetBlogId, trace:\n%s\nRequest dump:\n%s',
+                    [
+                        $exception->getTraceAsString(),
+                        base64_encode(serialize(Bootstrap::getRequestContext())),
+                    ]
+                )
+            );
+            throw $exception;
+        }
+
         return $this->getSubmissionManager()->getSubmissionEntity(
             $contentType,
             $sourceBlog,

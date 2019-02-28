@@ -40,6 +40,33 @@ trait DebugTrait
         }
     }
 
+    public static function getRequestContext()
+    {
+        return [
+            'get' => $_GET,
+            'post' => $_POST,
+        ];
+    }
+
+    public static function getTrace()
+    {
+        $stack = [];
+        $trace = debug_backtrace();
+        array_shift($trace);
+        foreach ($trace as $hop => $ex) {
+            $stack [] =
+                vsprintf('#%d %s:%s %s%s%s()', [
+                    ++$hop,
+                    $ex['file'],
+                    $ex['line'],
+                    (array_key_exists('class', $ex) ? $ex['class'] : ''),
+                    (array_key_exists('type', $ex) ? $ex['type'] : ''),
+                    $ex['function'],
+                ]);
+        }
+        return implode(PHP_EOL, $stack);
+    }
+
     public static function Backtrace()
     {
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);

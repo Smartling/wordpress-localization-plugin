@@ -3,7 +3,7 @@
   "description" :  "",
   "type" :         "wordpress-plugin",
   "require" :      {
-    "php" :                          ">=5.4",
+    "php" :                          ">=5.5",
     "monolog/monolog" :              "~1",
     "symfony/dependency-injection" : "~2.8",
     "symfony/config" :               "~2.8",

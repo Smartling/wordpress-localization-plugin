@@ -826,7 +826,7 @@ class SubmissionManager extends EntityManagerAbstract
             );
 
             $this->getLogger()->error($message);
-            $this->getLogger()->error(implode(PHP_EOL, Bootstrap::Backtrace()));
+            $this->getLogger()->error(Bootstrap::getTrace());
 
             throw new \InvalidArgumentException($message);
         }
