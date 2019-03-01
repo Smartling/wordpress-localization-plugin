@@ -705,7 +705,7 @@ class ApiWrapper implements ApiWrapperInterface
                         'Can\'t create batch for a job "%s".\nProfile: %s\nError:%s.\nTrace:%s',
                         [
                             $jobId,
-                            base64_encode(serialize($profile->toArray(false))),
+                            base64_encode(serialize($profile->toArraySafe())),
                             $e->formatErrors(),
                             $e->getTraceAsString()
                         ]
@@ -721,7 +721,7 @@ class ApiWrapper implements ApiWrapperInterface
                         'Can\'t create batch for a job "%s".\nProfile: %s\nError:%s.\nTrace:%s',
                         [
                             $jobId,
-                            base64_encode(serialize($profile->toArray(false))),
+                            base64_encode(serialize($profile->toArraySafe())),
                             $e->getMessage(),
                             $e->getTraceAsString()
                         ]

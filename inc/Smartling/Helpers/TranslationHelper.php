@@ -32,6 +32,11 @@ class TranslationHelper
     private $submissionManager;
 
     /**
+     * @var SiteHelper
+     */
+    private $siteHelper;
+
+    /**
      * TranslationHelper constructor.
      */
     public function __construct() {
@@ -79,6 +84,82 @@ class TranslationHelper
     }
 
     /**
+     * @return SiteHelper
+     */
+    public function getSiteHelper()
+    {
+        return $this->siteHelper;
+    }
+
+    /**
+     * @param SiteHelper $siteHelper
+     */
+    public function setSiteHelper($siteHelper)
+    {
+        $this->siteHelper = $siteHelper;
+    }
+
+    /**
+     * @param $sourceBlogId
+     * @param $targetBlogId
+     */
+    private function validateBlogs($sourceBlogId, $targetBlogId) {
+
+        $blogs = $this->getSiteHelper()->listBlogIdsFlat();
+
+        if (!in_array((int) $sourceBlogId, $blogs)) {
+            $exception = new UnexpectedValueException(
+                vsprintf('Unexpected value: sourceBlogId must be one of [%s], %s got',
+                    [implode(', ',$blogs),$sourceBlogId])
+            );
+
+            $this->getLogger()->warning(
+                vsprintf(
+                    'Trying to get/create submission with invalid sourceBlogId, trace:\n\n%s\nRequest dump:\n%s',
+                    [
+                        $exception->getTraceAsString(),
+                        base64_encode(serialize(Bootstrap::getRequestContext())),
+                    ]
+                )
+            );
+            throw $exception;
+        }
+
+        if (!in_array((int) $targetBlogId, $blogs)) {
+            $exception = new UnexpectedValueException(
+                vsprintf('Unexpected value: targetBlogId must be one of [%s], %s got',
+                    [implode(', ',$blogs),targetBlogId])
+            );
+
+            $this->getLogger()->warning(
+                vsprintf(
+                    'Trying to get/create submission with invalid targetBlogId, trace:\n\n%s\nRequest dump:\n%s',
+                    [
+                        $exception->getTraceAsString(),
+                        base64_encode(serialize(Bootstrap::getRequestContext())),
+                    ]
+                )
+            );
+            throw $exception;
+        }
+
+        if (((int) $sourceBlogId) === ((int) $targetBlogId)) {
+            $exception = new UnexpectedValueException('Unexpected value: sourceBlogId cannot be same as targetBlogId');
+
+            $this->getLogger()->warning(
+                vsprintf(
+                    'Trying to get/create submission with same sourceBlogId and targetBlogId, trace:\n\n%s\nRequest dump:\n%s',
+                    [
+                        $exception->getTraceAsString(),
+                        base64_encode(serialize(Bootstrap::getRequestContext())),
+                    ]
+                )
+            );
+            throw $exception;
+        }
+    }
+
+    /**
      * @param string   $contentType
      * @param int      $sourceBlog
      * @param mixed    $sourceEntity
@@ -89,19 +170,7 @@ class TranslationHelper
      */
     public function prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null)
     {
-        if (0 === (int)$targetBlog) {
-            $exception = new UnexpectedValueException('Unexpected value: targetBlog must be > 0');
-            $this->getLogger()->warning(
-                vsprintf(
-                    'Trying to create get a submission with invalid targetBlogId, trace:\n%s\nRequest dump:\n%s',
-                    [
-                        $exception->getTraceAsString(),
-                        base64_encode(serialize(Bootstrap::getRequestContext())),
-                    ]
-                )
-            );
-            throw $exception;
-        }
+        $this->validateBlogs($sourceBlog,$targetBlog);
 
         return $this->getSubmissionManager()->getSubmissionEntity(
             $contentType,
