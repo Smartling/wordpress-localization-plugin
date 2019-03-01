@@ -3,13 +3,22 @@
 namespace Smartling\Tests\Smartling\Base;
 
 use PHPUnit\Framework\TestCase;
+use Smartling\ApiWrapper;
+use Smartling\Exception\SmartlingDbException;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
+use Smartling\Tests\Traits\DbAlMock;
 use Smartling\Tests\Traits\DummyLoggerMock;
+use Smartling\Tests\Traits\EntityHelperMock;
 use Smartling\Tests\Traits\InvokeMethodTrait;
+use Smartling\Tests\Traits\SettingsManagerMock;
+use Smartling\Tests\Traits\SiteHelperMock;
+use Smartling\Tests\Traits\SubmissionManagerMock;
 
 /**
  * Class SmartlingCoreTest
+ *
  * @package Smartling\Tests\Smartling\Base
  * @covers  \Smartling\Base\SmartlingCore
  */
@@ -18,7 +27,11 @@ class SmartlingCoreTest extends TestCase
 
     use InvokeMethodTrait;
     use DummyLoggerMock;
-
+    use SettingsManagerMock;
+    use SubmissionManagerMock;
+    use SiteHelperMock;
+    use EntityHelperMock;
+    use DbAlMock;
 
     public function __construct($name = null, array $data = [], $dataName = '')
     {
@@ -40,8 +53,12 @@ class SmartlingCoreTest extends TestCase
      * @param array            $entity
      * @param array            $meta
      */
-    public function testReadLockedTranslationFieldsBySubmission(array $expected, SubmissionEntity $submission, array $entity = [], array $meta = [])
-    {
+    public function testReadLockedTranslationFieldsBySubmission(
+        array $expected,
+        SubmissionEntity $submission,
+        array $entity = [],
+        array $meta = []
+    ) {
         $entityMock = $this
             ->getMockBuilder('Smartling\DbAl\WordpressContentEntities\PostEntityStd')
             ->setMethods(['toArray'])
@@ -83,94 +100,94 @@ class SmartlingCoreTest extends TestCase
             'test with new content' => [
                 [
                     'entity' => [],
-                    'meta'   => [],
+                    'meta' => [],
                 ],
                 SubmissionEntity::fromArray(
                     [
-                        'id'                     => 1,
-                        'source_title'           => '',
-                        'source_blog_id'         => 1,
-                        'source_content_hash'    => 'abc',
-                        'content_type'           => 'post',
-                        'source_id'              => 1,
-                        'file_uri'               => 'any',
-                        'target_locale'          => 'any',
-                        'target_blog_id'         => 0,
-                        'target_id'              => 0,
-                        'submitter'              => 'any',
-                        'submission_date'        => 'any',
-                        'applied_date'           => 'any',
-                        'approved_string_count'  => 0,
+                        'id' => 1,
+                        'source_title' => '',
+                        'source_blog_id' => 1,
+                        'source_content_hash' => 'abc',
+                        'content_type' => 'post',
+                        'source_id' => 1,
+                        'file_uri' => 'any',
+                        'target_locale' => 'any',
+                        'target_blog_id' => 0,
+                        'target_id' => 0,
+                        'submitter' => 'any',
+                        'submission_date' => 'any',
+                        'applied_date' => 'any',
+                        'approved_string_count' => 0,
                         'completed_string_count' => 0,
-                        'status'                 => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
-                        'is_locked'              => 0,
-                        'outdated'               => SubmissionEntity::FLAG_CONTENT_IS_UP_TO_DATE,
+                        'status' => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
+                        'is_locked' => 0,
+                        'outdated' => SubmissionEntity::FLAG_CONTENT_IS_UP_TO_DATE,
                     ], $this->getLogger()
                 ),
                 [],
                 [],
             ],
-            'test only entity'      => [
+            'test only entity' => [
                 [
                     'entity' => [
                         'a' => 'b',
                     ],
-                    'meta'   => [],
+                    'meta' => [],
                 ],
                 SubmissionEntity::fromArray(
                     [
-                        'id'                     => 1,
-                        'source_title'           => '',
-                        'source_blog_id'         => 1,
-                        'source_content_hash'    => 'abc',
-                        'content_type'           => 'post',
-                        'source_id'              => 1,
-                        'file_uri'               => 'any',
-                        'target_locale'          => 'any',
-                        'target_blog_id'         => 0,
-                        'target_id'              => 1,
-                        'submitter'              => 'any',
-                        'submission_date'        => 'any',
-                        'applied_date'           => 'any',
-                        'approved_string_count'  => 0,
+                        'id' => 1,
+                        'source_title' => '',
+                        'source_blog_id' => 1,
+                        'source_content_hash' => 'abc',
+                        'content_type' => 'post',
+                        'source_id' => 1,
+                        'file_uri' => 'any',
+                        'target_locale' => 'any',
+                        'target_blog_id' => 0,
+                        'target_id' => 1,
+                        'submitter' => 'any',
+                        'submission_date' => 'any',
+                        'applied_date' => 'any',
+                        'approved_string_count' => 0,
                         'completed_string_count' => 0,
-                        'status'                 => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
-                        'is_locked'              => 0,
-                        'outdated'               => SubmissionEntity::FLAG_CONTENT_IS_UP_TO_DATE,
-                        'locked_fields'          => serialize(['entity/a']),
+                        'status' => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
+                        'is_locked' => 0,
+                        'outdated' => SubmissionEntity::FLAG_CONTENT_IS_UP_TO_DATE,
+                        'locked_fields' => serialize(['entity/a']),
                     ], $this->getLogger()
                 ),
                 ['a' => 'b'],
                 [],
             ],
-            'test only meta'        => [
+            'test only meta' => [
                 [
                     'entity' => [],
-                    'meta'   => [
+                    'meta' => [
                         'c' => 'd',
                     ],
                 ],
                 SubmissionEntity::fromArray(
                     [
-                        'id'                     => 1,
-                        'source_title'           => '',
-                        'source_blog_id'         => 1,
-                        'source_content_hash'    => 'abc',
-                        'content_type'           => 'post',
-                        'source_id'              => 1,
-                        'file_uri'               => 'any',
-                        'target_locale'          => 'any',
-                        'target_blog_id'         => 0,
-                        'target_id'              => 1,
-                        'submitter'              => 'any',
-                        'submission_date'        => 'any',
-                        'applied_date'           => 'any',
-                        'approved_string_count'  => 0,
+                        'id' => 1,
+                        'source_title' => '',
+                        'source_blog_id' => 1,
+                        'source_content_hash' => 'abc',
+                        'content_type' => 'post',
+                        'source_id' => 1,
+                        'file_uri' => 'any',
+                        'target_locale' => 'any',
+                        'target_blog_id' => 0,
+                        'target_id' => 1,
+                        'submitter' => 'any',
+                        'submission_date' => 'any',
+                        'applied_date' => 'any',
+                        'approved_string_count' => 0,
                         'completed_string_count' => 0,
-                        'status'                 => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
-                        'is_locked'              => 0,
-                        'outdated'               => SubmissionEntity::FLAG_CONTENT_IS_UP_TO_DATE,
-                        'locked_fields'          => serialize(['meta/c']),
+                        'status' => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
+                        'is_locked' => 0,
+                        'outdated' => SubmissionEntity::FLAG_CONTENT_IS_UP_TO_DATE,
+                        'locked_fields' => serialize(['meta/c']),
                     ], $this->getLogger()
                 ),
                 [
@@ -181,36 +198,36 @@ class SmartlingCoreTest extends TestCase
                     'e' => 'f',
                 ],
             ],
-            'test entity and meta'  => [
+            'test entity and meta' => [
                 [
                     'entity' => [
                         'a' => 'b',
                     ],
-                    'meta'   => [
+                    'meta' => [
                         'c' => 'd',
                     ],
                 ],
                 SubmissionEntity::fromArray(
                     [
-                        'id'                     => 1,
-                        'source_title'           => '',
-                        'source_blog_id'         => 1,
-                        'source_content_hash'    => 'abc',
-                        'content_type'           => 'post',
-                        'source_id'              => 1,
-                        'file_uri'               => 'any',
-                        'target_locale'          => 'any',
-                        'target_blog_id'         => 0,
-                        'target_id'              => 1,
-                        'submitter'              => 'any',
-                        'submission_date'        => 'any',
-                        'applied_date'           => 'any',
-                        'approved_string_count'  => 0,
+                        'id' => 1,
+                        'source_title' => '',
+                        'source_blog_id' => 1,
+                        'source_content_hash' => 'abc',
+                        'content_type' => 'post',
+                        'source_id' => 1,
+                        'file_uri' => 'any',
+                        'target_locale' => 'any',
+                        'target_blog_id' => 0,
+                        'target_id' => 1,
+                        'submitter' => 'any',
+                        'submission_date' => 'any',
+                        'applied_date' => 'any',
+                        'approved_string_count' => 0,
                         'completed_string_count' => 0,
-                        'status'                 => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
-                        'is_locked'              => 0,
-                        'outdated'               => SubmissionEntity::FLAG_CONTENT_IS_UP_TO_DATE,
-                        'locked_fields'          => serialize(['entity/a', 'meta/c']),
+                        'status' => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
+                        'is_locked' => 0,
+                        'outdated' => SubmissionEntity::FLAG_CONTENT_IS_UP_TO_DATE,
+                        'locked_fields' => serialize(['entity/a', 'meta/c']),
                     ], $this->getLogger()
                 ),
                 [
@@ -222,36 +239,36 @@ class SmartlingCoreTest extends TestCase
                     'e' => 'f',
                 ],
             ],
-            'test with bad fields'  => [
+            'test with bad fields' => [
                 [
                     'entity' => [
                         'a' => 'b',
                     ],
-                    'meta'   => [
+                    'meta' => [
                         'c' => 'd',
                     ],
                 ],
                 SubmissionEntity::fromArray(
                     [
-                        'id'                     => 1,
-                        'source_title'           => '',
-                        'source_blog_id'         => 1,
-                        'source_content_hash'    => 'abc',
-                        'content_type'           => 'post',
-                        'source_id'              => 1,
-                        'file_uri'               => 'any',
-                        'target_locale'          => 'any',
-                        'target_blog_id'         => 0,
-                        'target_id'              => 1,
-                        'submitter'              => 'any',
-                        'submission_date'        => 'any',
-                        'applied_date'           => 'any',
-                        'approved_string_count'  => 0,
+                        'id' => 1,
+                        'source_title' => '',
+                        'source_blog_id' => 1,
+                        'source_content_hash' => 'abc',
+                        'content_type' => 'post',
+                        'source_id' => 1,
+                        'file_uri' => 'any',
+                        'target_locale' => 'any',
+                        'target_blog_id' => 0,
+                        'target_id' => 1,
+                        'submitter' => 'any',
+                        'submission_date' => 'any',
+                        'applied_date' => 'any',
+                        'approved_string_count' => 0,
                         'completed_string_count' => 0,
-                        'status'                 => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
-                        'is_locked'              => 0,
-                        'outdated'               => SubmissionEntity::FLAG_CONTENT_IS_UP_TO_DATE,
-                        'locked_fields'          => serialize(['entity/a', 'meta/c', 'strange/?']),
+                        'status' => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
+                        'is_locked' => 0,
+                        'outdated' => SubmissionEntity::FLAG_CONTENT_IS_UP_TO_DATE,
+                        'locked_fields' => serialize(['entity/a', 'meta/c', 'strange/?']),
                     ], $this->getLogger()
                 ),
                 [
@@ -266,29 +283,29 @@ class SmartlingCoreTest extends TestCase
             'test with broken data' => [
                 [
                     'entity' => [],
-                    'meta'   => [],
+                    'meta' => [],
                 ],
                 SubmissionEntity::fromArray(
                     [
-                        'id'                     => 1,
-                        'source_title'           => '',
-                        'source_blog_id'         => 1,
-                        'source_content_hash'    => 'abc',
-                        'content_type'           => 'post',
-                        'source_id'              => 1,
-                        'file_uri'               => 'any',
-                        'target_locale'          => 'any',
-                        'target_blog_id'         => 0,
-                        'target_id'              => 1,
-                        'submitter'              => 'any',
-                        'submission_date'        => 'any',
-                        'applied_date'           => 'any',
-                        'approved_string_count'  => 0,
+                        'id' => 1,
+                        'source_title' => '',
+                        'source_blog_id' => 1,
+                        'source_content_hash' => 'abc',
+                        'content_type' => 'post',
+                        'source_id' => 1,
+                        'file_uri' => 'any',
+                        'target_locale' => 'any',
+                        'target_blog_id' => 0,
+                        'target_id' => 1,
+                        'submitter' => 'any',
+                        'submission_date' => 'any',
+                        'applied_date' => 'any',
+                        'approved_string_count' => 0,
                         'completed_string_count' => 0,
-                        'status'                 => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
-                        'is_locked'              => 0,
-                        'outdated'               => SubmissionEntity::FLAG_CONTENT_IS_UP_TO_DATE,
-                        'locked_fields'          => '!' . serialize(['entity/a', 'meta/c', 'strange/?']),
+                        'status' => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
+                        'is_locked' => 0,
+                        'outdated' => SubmissionEntity::FLAG_CONTENT_IS_UP_TO_DATE,
+                        'locked_fields' => '!' . serialize(['entity/a', 'meta/c', 'strange/?']),
                     ], $this->getLogger()
                 ),
                 [
@@ -301,5 +318,171 @@ class SmartlingCoreTest extends TestCase
                 ],
             ],
         ];
+    }
+
+    /**
+     * @covers \Smartling\Base\SmartlingCore::fixSubmissionBatchUid
+     * @expectedException Smartling\Exception\SmartlingDbException
+     */
+    public function testFixSubmissionBatchUid()
+    {
+        $obj = new \Smartling\Base\SmartlingCore();
+        $submission = new SubmissionEntity();
+        $submission
+            ->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW)
+            ->setContentType('post')
+            ->setSourceBlogId(1)
+            ->setSourceId(1)
+            ->setTargetBlogId(1);
+
+
+        $settingsManager = $this->getSettingsManagerMock();
+
+        $submissionManager = $this->mockSubmissionManager(
+            $this->mockDbAl(),
+            $this->mockEntityHelper($this->mockSiteHelper())
+        );
+
+        $submissionManager->expects(self::once())->method('storeEntity')->with($submission)->willReturn($submission);
+
+        $obj->setSubmissionManager($submissionManager);
+
+        $settingsManager
+            ->expects(self::any())
+            ->method('findEntityByMainLocale')
+            ->with($submission->getSourceBlogId())
+            ->willReturn([]);
+
+        $settingsManager
+            ->expects(self::any())
+            ->method('getSingleSettingsProfile')
+            ->with($submission->getSourceBlogId())
+            ->willReturnCallback(function () {
+                throw new SmartlingDbException('');
+            });
+
+        $obj->setSettingsManager($settingsManager);
+        $this->invokeMethod($obj, 'fixSubmissionBatchUid', [$submission]);
+    }
+
+    /**
+     * @covers \Smartling\Base\SmartlingCore::fixSubmissionBatchUid
+     * @expectedException Smartling\Exceptions\SmartlingApiException
+     */
+    public function testFixSubmissionBatchUidWithApiWrapper()
+    {
+        $obj = new \Smartling\Base\SmartlingCore();
+        $submission = new SubmissionEntity();
+        $submission
+            ->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW)
+            ->setContentType('post')
+            ->setSourceBlogId(1)
+            ->setSourceId(1)
+            ->setTargetBlogId(1);
+
+
+        $profile = new ConfigurationProfileEntity();
+        $profile->setIsActive(true);
+        $profile->setProjectId('a');
+        $profile->setUserIdentifier('b');
+        $profile->setSecretKey('c');
+        $profile->setOriginalBlogId($submission->getSourceBlogId());
+
+        $settingsManager = $this->getSettingsManagerMock();
+
+        $submissionManager = $this->mockSubmissionManager(
+            $this->mockDbAl(),
+            $this->mockEntityHelper($this->mockSiteHelper())
+        );
+
+        $submissionManager->expects(self::once())->method('storeEntity')->with($submission)->willReturn($submission);
+
+        $obj->setSubmissionManager($submissionManager);
+
+        $settingsManager
+            ->expects(self::any())
+            ->method('findEntityByMainLocale')
+            ->with($submission->getSourceBlogId())
+            ->willReturn([$profile]);
+
+        $settingsManager
+            ->expects(self::any())
+            ->method('getSingleSettingsProfile')
+            ->with($submission->getSourceBlogId())
+            ->willReturn($profile);
+
+        $obj->setSettingsManager($settingsManager);
+
+        $apiWrapper = new ApiWrapper($settingsManager,'a','b');
+        $obj->setApiWrapper($apiWrapper);
+
+        $this->invokeMethod($obj, 'fixSubmissionBatchUid', [$submission]);
+    }
+
+
+    /**
+     * @covers \Smartling\Base\SmartlingCore::fixSubmissionBatchUid
+     */
+    public function testFixSubmissionBatchUidWithApiWrapperAndBatchUid()
+    {
+        $obj = new \Smartling\Base\SmartlingCore();
+        $submission = new SubmissionEntity();
+        $submission
+            ->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW)
+            ->setContentType('post')
+            ->setSourceBlogId(1)
+            ->setSourceId(1)
+            ->setTargetBlogId(1);
+
+
+        $profile = new ConfigurationProfileEntity();
+        $profile->setIsActive(true);
+        $profile->setProjectId('a');
+        $profile->setUserIdentifier('b');
+        $profile->setSecretKey('c');
+        $profile->setOriginalBlogId($submission->getSourceBlogId());
+
+        $settingsManager = $this->getSettingsManagerMock();
+
+        $submissionManager = $this->mockSubmissionManager(
+            $this->mockDbAl(),
+            $this->mockEntityHelper($this->mockSiteHelper())
+        );
+
+        $submissionManager->expects(self::once())->method('storeEntity')->with($submission)->willReturn($submission);
+
+        $obj->setSubmissionManager($submissionManager);
+
+        $settingsManager
+            ->expects(self::any())
+            ->method('findEntityByMainLocale')
+            ->with($submission->getSourceBlogId())
+            ->willReturn([$profile]);
+
+        $settingsManager
+            ->expects(self::any())
+            ->method('getSingleSettingsProfile')
+            ->with($submission->getSourceBlogId())
+            ->willReturn($profile);
+
+        $obj->setSettingsManager($settingsManager);
+
+        $apiWrapperMock = $this->getMockBuilder('Smartling\ApiWrapper')
+             ->setMethods(['retrieveBatchForBucketJob'])
+             ->disableOriginalConstructor()
+             ->getMock();
+
+        $apiWrapperMock
+            ->expects(self::once())
+            ->method('retrieveBatchForBucketJob')
+            ->with($profile, false)
+            ->willReturn('testtest');
+
+
+        $obj->setApiWrapper($apiWrapperMock);
+
+        $result = $this->invokeMethod($obj, 'fixSubmissionBatchUid', [$submission]);
+
+        self::assertEquals('testtest', $result->getBatchUid());
     }
 }
