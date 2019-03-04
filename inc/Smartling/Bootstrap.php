@@ -376,14 +376,6 @@ class Bootstrap
         }
 
         if (true === $blockWork) {
-            $mainMessage = 'No active suitable localization plugin found. Please install and activate one, e.g.: '
-                           .
-                           '<a href="' . get_site_url() .
-                           '/wp-admin/network/plugin-install.php?tab=search&s=multilingual+press">Multilingual Press.</a>';
-
-            static::getLogger()->critical('Boot :: ' . $mainMessage);
-            DiagnosticsHelper::addDiagnosticsMessage($mainMessage, false);
-
             // replace localization plugin proxy with dummy class
 
             Bootstrap::getContainer()->register('multilang.proxy', 'Smartling\DbAl\DummyLocalizationPlugin');
