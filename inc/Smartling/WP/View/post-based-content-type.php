@@ -59,6 +59,7 @@ if (!empty($locales)) {
                 $id = null;
                 $enabled = false;
                 $statusFlags = [];
+                $submissionId = null;
                 if (null !== $data['submissions']) {
 
                     do_action(
@@ -80,6 +81,7 @@ if (!empty($locales)) {
                             $statusFlags = $item->getStatusFlags();
                             $enabled = 1 === $item->getIsCloned() || 1 === $item->hasLocks() ? false : true;
                             $editUrl = \Smartling\Helpers\WordpressContentTypeHelper::getEditUrl($item);
+                            $submissionId = $item->getId();
                             break;
                         }
                     }
@@ -93,7 +95,9 @@ if (!empty($locales)) {
                             $locale->getLabel(),
                             (false === $enabled ? false : $value),
                             $enabled,
-                            $editUrl
+                            $editUrl,
+                            [],
+                            $submissionId
                         ); ?>
                     </div>
                     <div class="smtPostWidget-progress">

@@ -254,3 +254,58 @@ jQuery(document).ready(function () {
 
 });
 
+jQuery(document).ready(function () {
+    if (window.React) {
+        var $ = jQuery;
+        /**
+         * Means that we face gutenberg and need to switch to ajax download handler.
+         */
+
+        var btnSelector = ".smtPostWidget-submitBlock input[value=Download]";
+        var wp5an = "components-button editor-post-publish-button is-button is-default is-primary is-large is-busy";
+        var btn = $(btnSelector);
+        var btnLockWait = function () {
+            $(btn).addClass(wp5an);
+            $(btn).val("Wait...");
+        };
+        var btnUnlockWait = function () {
+            $(btn).removeClass(wp5an);
+            $(btn).val("Download");
+        };
+
+        $(btnSelector).on("click", function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            var submissionIds = [];
+            var checkedTargetLocales = $(".smtPostWidget-row input.mcheck:checked");
+
+            if (0 < checkedTargetLocales.length) {
+                btnLockWait();
+                for (var i = 0; i < checkedTargetLocales.length; i++) {
+                    var submissionId = $(checkedTargetLocales[i]).attr("data-submission-id");
+                    submissionIds = submissionIds.concat([submissionId]);
+                }
+                $.post(
+                    ajaxurl + "?action=" + "smartling_force_download_handler",
+                    {
+                        submissionIds: submissionIds.join(",")
+                    },
+                    function (data) {
+                        data = JSON.parse(data);
+                        switch (data.status) {
+                            case "SUCCESS":
+                                wp.data.dispatch("core/notices").createSuccessNotice("Translations downloaded.");
+                                break;
+                            case "FAIL":
+                                wp.data.dispatch("core/notices").createErrorNotice("Translations download failed.");
+                                break;
+                            default:
+                        }
+                        btnUnlockWait();
+                    }
+                );
+            }
+        });
+    }
+});

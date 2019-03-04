@@ -250,7 +250,7 @@ abstract class WPAbstract
             'input', '', [
             'type'  => 'submit',
             'value' => 'Download',
-            'title' => __('Add to Download queue and trigger upload process'),
+            'title' => __('Add to Download queue and trigger download process'),
             'class' => 'button button-primary',
             //'id'    => $id,
             'name'  => 'sub',
@@ -288,11 +288,11 @@ abstract class WPAbstract
      * @param bool   $enabled
      * @param string $editLink
      * @param array  $extraAttributes
-     *
+     * @param null   $submissionId
      * @return string
      */
 
-    public static function localeSelectionCheckboxBlock($namePrefix, $blog_id, $blog_name, $checked = false, $enabled = true, $editLink = '', array $extraAttributes = [])
+    public static function localeSelectionCheckboxBlock($namePrefix, $blog_id, $blog_name, $checked = false, $enabled = true, $editLink = '', array $extraAttributes = [], $submissionId = null)
     {
         $parts = [];
 
@@ -325,6 +325,12 @@ abstract class WPAbstract
                 'disabled' => 'disabled',
                 'title'    => 'Content cannot be downloaded',
                 'class'    => 'nomcheck',
+            ]);
+        }
+
+        if (null !== $submissionId) {
+            $checkboxAttributes = array_merge($checkboxAttributes, [
+                'data-submission-id' => $submissionId
             ]);
         }
 

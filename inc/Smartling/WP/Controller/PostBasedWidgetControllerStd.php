@@ -93,6 +93,25 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     use CommonLogMessagesTrait;
 
 
+    public function ajaxDownloadHandler()
+    {
+        if (array_key_exists('submissionIds', $_POST)) {
+            $submissionIds = explode(',', $_POST['submissionIds']);
+            foreach ($submissionIds as $submissionId) {
+                $this->getCore()->getQueue()->enqueue([$submissionId], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
+            }
+            $result = [];
+            try {
+                do_action(DownloadTranslationJob::JOB_HOOK_NAME);
+                $result['status'] = 'SUCCESS';
+            } catch (\Exception $e) {
+                $result['status'] = 'FAIL';
+            }
+            echo json_encode($result);
+            exit;
+        }
+    }
+
     /**
      * @inheritdoc
      */
@@ -101,6 +120,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
         if (!DiagnosticsHelper::isBlocked() && !$this->isMuted()) {
             add_action('add_meta_boxes', [$this, 'box']);
             add_action('save_post', [$this, 'save']);
+            add_action('wp_ajax_' . 'smartling_force_download_handler', [$this, 'ajaxDownloadHandler']);
         }
     }
 
