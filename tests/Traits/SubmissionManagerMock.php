@@ -21,7 +21,14 @@ trait SubmissionManagerMock
     private function mockSubmissionManager(SmartlingToCMSDatabaseAccessWrapperInterface $dbal, EntityHelper $entityHelper)
     {
         return $this->getMockBuilder('Smartling\Submissions\SubmissionManager')
-            ->setMethods(['find', 'findByIds','filterBrokenSubmissions'])
+            ->setMethods(
+                [
+                    'find',
+                    'findByIds',
+                    'filterBrokenSubmissions',
+                    'storeEntity'
+                ]
+            )
             ->setConstructorArgs([$dbal, 10, $entityHelper])
             ->getMock();
     }

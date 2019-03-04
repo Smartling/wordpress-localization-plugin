@@ -213,6 +213,7 @@ services:
     calls:
       - [ "setMutilangProxy", [ "@multilang.proxy" ]]
       - [ "setSubmissionManager", [ "@manager.submission" ]]
+      - [ "setSiteHelper", [ "@site.helper" ]]
 
   content.helper:
     class: Smartling\Helpers\ContentHelper

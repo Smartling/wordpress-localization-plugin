@@ -6,7 +6,6 @@ use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingNotSupportedContentException;
-use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
@@ -211,20 +210,29 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
 
                                 return;
                             }
-
-                            $batchUid = $wrapper->retrieveBatch(ArrayHelper::first($profiles), $data['jobId'], 'true' === $data['authorize'], [
-                                'name' => $data['jobName'],
-                                'description' => $data['jobDescription'],
-                                'dueDate' => [
-                                    'date' => $data['jobDueDate'],
-                                    'timezone' => $data['timezone'],
-                                ],
-                            ]);
-
-                            if (empty($batchUid)) {
+                            try {
+                                $batchUid = $wrapper->retrieveBatch(ArrayHelper::first($profiles), $data['jobId'],
+                                    'true' === $data['authorize'], [
+                                        'name' => $data['jobName'],
+                                        'description' => $data['jobDescription'],
+                                        'dueDate' => [
+                                            'date' => $data['jobDueDate'],
+                                            'timezone' => $data['timezone'],
+                                        ],
+                                    ]);
+                            } catch (\Exception $e) {
+                                $this
+                                    ->getLogger()
+                                    ->error(
+                                        vsprintf(
+                                            'Failed retrieving batch for job %s. Translation aborted.',
+                                            [
+                                                var_export($_POST['jobId'], true),
+                                            ]
+                                        )
+                                    );
                                 return;
                             }
-
                             foreach ($locales as $blogId) {
                                 $submission = $translationHelper->tryPrepareRelatedContent($this->getTaxonomy(), $sourceBlog, $originalId, (int)$blogId, $batchUid, false);
 

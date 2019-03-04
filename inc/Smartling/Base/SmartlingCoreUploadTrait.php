@@ -3,6 +3,7 @@
 namespace Smartling\Base;
 
 use Exception;
+use Smartling\Bootstrap;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
@@ -533,6 +534,53 @@ trait SmartlingCoreUploadTrait
 
     /**
      * @param SubmissionEntity $submission
+     * @return SubmissionEntity
+     * @throws Exception
+     */
+    private function fixSubmissionBatchUid(SubmissionEntity $submission)
+    {
+        $submissionDump = base64_encode(serialize($submission->toArray(false)));
+
+        $this
+            ->getLogger()
+            ->info(
+                vsprintf(
+                    'Got submission \'%s\' without batchUid. Trying to get batchUid. Original trace:\n%s ',
+                    [
+                        $submissionDump,
+                        implode(PHP_EOL, Bootstrap::Backtrace())
+                    ]
+                )
+            );
+
+        try {
+            $profile = $this
+                ->getSettingsManager()
+                ->getSingleSettingsProfile($submission->getSourceBlogId());
+
+            $batchUid = $this
+                ->getApiWrapper()
+                ->retrieveBatchForBucketJob($profile, (bool)$profile->getAutoAuthorize());
+
+            $submission->setBatchUid($batchUid);
+            $submission = $this->getSubmissionManager()->storeEntity($submission);
+        } catch (\Exception $e) {
+            $msg = vsprintf(
+                'Failed getting batchUid for submission \'%s\'. Message: %s',
+                [$submissionDump, $e->getMessage(),]
+            );
+            $submission->setLastError('Cannot upload without BatchUid. Manual reupload needed.');
+            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+            $this->getLogger()->warning($msg);
+            $this->getSubmissionManager()->storeEntity($submission);
+            throw $e;
+        }
+
+        return $submission;
+    }
+
+    /**
+     * @param SubmissionEntity $submission
      *
      * @return void
      */
@@ -615,6 +663,10 @@ trait SmartlingCoreUploadTrait
                 );
 
             } else {
+                if (empty(trim($submission->getBatchUid()))) {
+                    $submission = $this->fixSubmissionBatchUid($submission);
+                }
+
                 $this->bulkSubmit($submission);
             }
         } catch (EntityNotFoundException $e) {

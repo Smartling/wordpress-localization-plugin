@@ -16,7 +16,12 @@ trait SettingsManagerMock
     private function getSettingsManagerMock()
     {
         return $this->getMockBuilder('Smartling\Settings\SettingsManager')
-            ->setMethods(['getSingleSettingsProfile'])
+            ->setMethods(
+                [
+                    'getSingleSettingsProfile',
+                    'findEntityByMainLocale'
+                ]
+            )
             ->disableOriginalConstructor()
             ->getMock();
     }

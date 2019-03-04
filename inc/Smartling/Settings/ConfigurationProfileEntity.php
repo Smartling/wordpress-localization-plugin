@@ -437,4 +437,14 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
         return $obj;
     }
+
+    /**
+     * @return array
+     */
+    public function toArraySafe()
+    {
+        $struct = $this->toArray(false);
+        unset($struct['secret_key']);
+        return $struct;
+    }
 }

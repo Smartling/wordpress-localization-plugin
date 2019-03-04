@@ -814,24 +814,6 @@ class SubmissionManager extends EntityManagerAbstract
      */
     public function getSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, LocalizationPluginProxyInterface $localizationProxy, $targetEntity = null)
     {
-        if ($sourceBlog === $targetBlog) {
-            $message = vsprintf(
-                'Cancelled preparing submission for contentType=%s sourceId=%s sourceBlog=%s targetBlog=%s. Source and Target blogs must differ.',
-                [
-                    $contentType,
-                    $sourceBlog,
-                    $sourceEntity,
-                    $targetBlog,
-                ]
-            );
-
-            $this->getLogger()->error($message);
-            $this->getLogger()->error(implode(PHP_EOL, Bootstrap::Backtrace()));
-
-            throw new \InvalidArgumentException($message);
-        }
-        $entity = null;
-
         $params = [
             'content_type'   => $contentType,
             'source_blog_id' => $sourceBlog,

@@ -111,7 +111,7 @@ trait DITrait
         ];
         $handler = $di->getDefinition('fileLoggerHandlerRotatable');
 
-        if (0 < count($storedConfiguration)) {
+        if (is_array($storedConfiguration) && 0 < count($storedConfiguration)) {
             foreach ($storedConfiguration as $level => $items) {
                 if (!in_array($level, $allowedLevels)) {
                     $msg = vsprintf('Found invalid logger configuration block \'%s\', with values: %s skipping...', [$level,

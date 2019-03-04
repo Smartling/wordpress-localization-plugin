@@ -40,6 +40,14 @@ trait DebugTrait
         }
     }
 
+    public static function getRequestContext()
+    {
+        return [
+            'get' => $_GET,
+            'post' => $_POST,
+        ];
+    }
+
     public static function Backtrace()
     {
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);

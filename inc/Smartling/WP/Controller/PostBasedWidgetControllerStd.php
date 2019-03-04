@@ -5,14 +5,11 @@ namespace Smartling\WP\Controller;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingDbException;
-use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
-use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Jobs\DownloadTranslationJob;
-use Smartling\Jobs\UploadJob;
 use Smartling\Queue\Queue;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPAbstract;
@@ -326,18 +323,29 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
                                     return;
                                 }
-                                $this->getLogger()->debug(vsprintf('Retrieving batch for jobId=%s',[$data['jobId']]));
-                                $batchUid = $wrapper->retrieveBatch(ArrayHelper::first($profiles), $data['jobId'], 'true' === $data['authorize'], [
-                                    'name' => $data['jobName'],
-                                    'description' => $data['jobDescription'],
-                                    'dueDate' => [
-                                        'date' => $data['jobDueDate'],
-                                        'timezone' => $data['timezone'],
-                                    ],
-                                ]);
+                                $this->getLogger()->debug(vsprintf('Retrieving batch for jobId=%s', [$data['jobId']]));
 
-                                if (empty($batchUid)) {
-                                    $this->getLogger()->error(vsprintf('Failed retrieving batch for job %s. Translation aborted.',[var_export($_POST['jobId'], true)]));
+                                try {
+                                    $batchUid = $wrapper->retrieveBatch(ArrayHelper::first($profiles), $data['jobId'],
+                                        'true' === $data['authorize'], [
+                                            'name' => $data['jobName'],
+                                            'description' => $data['jobDescription'],
+                                            'dueDate' => [
+                                                'date' => $data['jobDueDate'],
+                                                'timezone' => $data['timezone'],
+                                            ],
+                                        ]);
+                                } catch (\Exception $e) {
+                                    $this
+                                        ->getLogger()
+                                        ->error(
+                                            vsprintf(
+                                                'Failed retrieving batch for job %s. Translation aborted.',
+                                                [
+                                                    var_export($_POST['jobId'], true)
+                                                ]
+                                            )
+                                        );
                                     return;
                                 }
 
