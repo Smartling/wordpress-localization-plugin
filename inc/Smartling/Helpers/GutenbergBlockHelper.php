@@ -5,6 +5,7 @@ namespace Smartling\Helpers;
 use Smartling\Base\ExportedAPI;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingGutenbergNotFoundException;
+use Smartling\Exception\SmartlingGutenbergParserNotFoundException;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 
 /**
@@ -199,10 +200,17 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
      *
      * @param $string
      * @return array
+     * @throws SmartlingGutenbergParserNotFoundException
      */
     protected function parseBlocks($string)
     {
-        return gutenberg_parse_blocks($string);
+        if (function_exists('\parse_blocks')) {
+            return \parse_blocks($string);
+        } elseif (function_exists('\gutenberg_parse_blocks')) {
+            return \gutenberg_parse_blocks($string);
+        } else {
+            throw new SmartlingGutenbergParserNotFoundException('No block parser found.');
+        }
     }
 
 
