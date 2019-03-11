@@ -94,17 +94,6 @@ class ArrayHelper
         return $default;
     }
 
-    public static function simplifyArray(array $array = [])
-    {
-        foreach ($array as $key => &$value) {
-            if (is_array($value) && 1 === count($value)) {
-                $value = reset($value);
-            }
-        }
-
-        return $array;
-    }
-
     /**
      * @param $value
      *
