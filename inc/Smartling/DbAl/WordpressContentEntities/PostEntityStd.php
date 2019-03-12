@@ -164,7 +164,7 @@ class PostEntityStd extends EntityAbstract
      * @param array $metadata
      * @return bool
      */
-    private function testIsMetaMultiValue(array $metadata)
+    private function areMetadataValuesUnique(array $metadata)
     {
         $valueHash = function ($value) {
             return md5(serialize($value));
@@ -189,7 +189,7 @@ class PostEntityStd extends EntityAbstract
     private function formatMetadata(array $metadata)
     {
         foreach ($metadata as & $mValue) {
-            if (!$this->testIsMetaMultiValue($mValue)) {
+            if (!$this->areMetadataValuesUnique($mValue)) {
                 $mValue = ArrayHelper::first($mValue);
             } else {
                 $msg = vsprintf(
@@ -200,6 +200,7 @@ class PostEntityStd extends EntityAbstract
                         $this->getPK(),
                     ]
                 );
+                $this->getLogger()->warning($msg);
                 throw new SmartlingMultiValueMetadataDetectedException($msg);
             }
         }

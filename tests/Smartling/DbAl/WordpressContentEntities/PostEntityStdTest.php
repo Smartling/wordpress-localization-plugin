@@ -18,8 +18,8 @@ class PostEntityStdTest extends TestCase
     use InvokeMethodTrait;
 
     /**
-     * @covers       \Smartling\DbAl\WordpressContentEntities\PostEntityStd::testIsMetaMultiValue
-     * @dataProvider isMetaMultiValueDataProvider
+     * @covers       \Smartling\DbAl\WordpressContentEntities\PostEntityStd::areMetadataValuesUnique
+     * @dataProvider areMetadataValuesUniqueDataProvider
      */
     public function testTestIsMetaMultiValue($inpudData, $expectedResult)
     {
@@ -27,14 +27,14 @@ class PostEntityStdTest extends TestCase
 
         self::assertEquals(
             $expectedResult,
-            $this->invokeMethod($obj, 'testIsMetaMultiValue', [$inpudData])
+            $this->invokeMethod($obj, 'areMetadataValuesUnique', [$inpudData])
         );
     }
 
     /**
      * @return array
      */
-    public function isMetaMultiValueDataProvider()
+    public function areMetadataValuesUniqueDataProvider()
     {
         return [
             'empty data' => [[], false],
