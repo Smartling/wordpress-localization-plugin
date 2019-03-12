@@ -2,8 +2,8 @@
 
 namespace Smartling\DbAl\WordpressContentEntities;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Exception\SmartlingDataUpdateException;
+use Smartling\Exception\SmartlingMultiValueMetadataDetectedException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\RawDbQueryHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
@@ -153,17 +153,73 @@ class PostEntityStd extends EntityAbstract
     }
 
     /**
+     * @return WordpressFunctionProxyHelper
+     */
+    protected function getWpProxyHelper()
+    {
+        return new WordpressFunctionProxyHelper();
+    }
+
+    /**
+     * @param array $metadata
+     * @return bool
+     */
+    private function areMetadataValuesUnique(array $metadata)
+    {
+        $valueHash = function ($value) {
+            return md5(serialize($value));
+        };
+
+        if (1 < count($metadata)) {
+            $firstHash = $valueHash(array_shift($metadata));
+            foreach ($metadata as $metadatum) {
+                if ($valueHash($metadatum) !== $firstHash) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param array $metadata
+     * @return array
+     * @throws SmartlingMultiValueMetadataDetectedException
+     */
+    private function formatMetadata(array $metadata)
+    {
+        foreach ($metadata as & $mValue) {
+            if (!$this->areMetadataValuesUnique($mValue)) {
+                $mValue = ArrayHelper::first($mValue);
+            } else {
+                $msg = vsprintf(
+                    'Detected unsupported metadata: \'%s\' for entity %s=\'%s\'',
+                    [
+                        \json_encode($metadata),
+                        $this->getPrimaryFieldName(),
+                        $this->getPK(),
+                    ]
+                );
+                $this->getLogger()->warning($msg);
+                throw new SmartlingMultiValueMetadataDetectedException($msg);
+            }
+        }
+
+        return $metadata;
+    }
+
+    /**
      * @inheritdoc
      */
     public function getMetadata()
     {
-        $metadata = (new WordpressFunctionProxyHelper())->getPostMeta($this->ID);
+        $metadata = $this->getWpProxyHelper()->getPostMeta($this->ID);
 
         if ((is_array($metadata) && 0 === count($metadata)) || !is_array($metadata)) {
             $this->rawLogPostMetadata($this->ID);
         }
 
-        return ArrayHelper::simplifyArray($metadata);
+        return $this->formatMetadata($metadata);
     }
 
     private function rawLogPostMetadata($postId)
