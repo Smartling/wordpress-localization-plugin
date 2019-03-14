@@ -289,31 +289,18 @@ class PostEntityStd extends EntityAbstract
     public function set(EntityAbstract $entity = null)
     {
         $instance = null === $entity ? $this : $entity;
-
         $array = $instance->toArray();
-
         $array['post_category'] = \wp_get_post_categories($instance->ID);
-
         $res = wp_insert_post($array, true);
-
-        if (is_wp_error($res)) {
-
-            $msgFields = [];
-
-            $curFields = $entity->toArray();
-
-            foreach ($curFields as $field => $value) {
-                $msgFields[] = vsprintf("%s = %s", [$field, htmlentities($value)]);
+        if (is_wp_error($res) || 0 === $res) {
+            $msg = vsprintf('An error had happened while saving post : \'%s\'', [\json_encode($array)]);
+            if (is_wp_error($res)) {
+                $msg .= vsprintf(' Error messages: %s', [
+                    implode(' | ', $res->get_error_messages()),
+                ]);
             }
-
-            $message = vsprintf('An error had happened while saving post to database: %s. Params: %s',
-                                [implode(' | ', $res->get_error_messages()), implode(' || ', $msgFields)]);
-
-            $this->getLogger()
-                ->error($message);
-
-            throw new SmartlingDataUpdateException($message);
-
+            $this->getLogger()->error($msg);
+            throw new SmartlingDataUpdateException($msg);
         }
 
         return (int)$res;
