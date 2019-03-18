@@ -2,8 +2,8 @@
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
-Tested up to: 5.1
-Stable tag: 1.10.2
+Tested up to: 5.1.1
+Stable tag: 1.10.3
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -57,6 +57,12 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 1.10.3 =
+* Fixed possible issue when wordpress api returns unexpected result while saving post
+* Fixed support for ACF pro for version 5.7.11+
+* Known issie: Due to API change upload widget is not displayed on content edit screen in WP 5+
+* Known issue: Due to API change translation lock UI is not accessible in WP 5+
+
 = 1.10.2 =
 * Fixed possible issue when last version of Gutenberg plugin breaks connector functionality.
 
