@@ -80,7 +80,11 @@ if (!empty($locales)) {
                             $status = $item->getStatusColor();
                             $statusFlags = $item->getStatusFlags();
                             $enabled = 1 === $item->getIsCloned() || 1 === $item->hasLocks() ? false : true;
-                            $editUrl = \Smartling\Helpers\WordpressContentTypeHelper::getEditUrl($item);
+
+                            if (0 !== (int) $item->getTargetId()) {
+                                $editUrl = \Smartling\Helpers\WordpressContentTypeHelper::getEditUrl($item);
+                            }
+                            
                             /**
                              * Disable download checkbox for new state
                              */
