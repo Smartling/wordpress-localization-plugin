@@ -33,8 +33,20 @@ trait SmartlingCoreDownloadTrait
             return;
         }
         if (0 === $entity->getTargetId()) {
-            //Fix for trying to download before send.
-            do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $entity);
+            $msg = vsprintf(
+                'Cannot download \'%s\' (blog = \'%s\', id = \'%s\') fot blog = \'%s\' that doesn\'t have a translation placeholder yet. Please upload first.',
+                [
+                    $entity->getContentType(),
+                    $entity->getSourceBlogId(),
+                    $entity->getSourceId(),
+                    $entity->getTargetBlogId(),
+                ]
+            );
+            $entity->setLastError($msg);
+            $entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+            $this->getSubmissionManager()->storeEntity($entity);
+            $this->getLogger()->warning($msg);
+            return;
         }
 
         try {
