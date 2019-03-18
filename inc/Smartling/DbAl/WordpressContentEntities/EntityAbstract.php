@@ -202,7 +202,7 @@ abstract class EntityAbstract
                     $this->{$this->getContentTypeProperty()},
                     $this->getType(),
                 ]);
-                $this->getLogger()->debug($message);
+                $this->getLogger()->warning($message);
 
                 return false;
             } else {
