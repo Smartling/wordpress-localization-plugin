@@ -196,12 +196,6 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
 
             switch ($this->getBaseType()) {
                 case 'post':
-                    $action = 'edit_form_before_permalink';
-                    add_action($action, function () {
-                        global $post, $wp_meta_boxes;
-                        do_meta_boxes(get_current_screen(), 'top', $post);
-                        unset($wp_meta_boxes[get_post_type($post)]['top']);
-                    });
                     add_action('add_meta_boxes', [$this, 'box']);
                     break;
                 case 'taxonomy':
@@ -267,7 +261,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                 }
             } else {
                 $id = 'smartling.job.' . $contentType;
-                add_meta_box($id, 'Jobs', function ($meta_id) use ($contentType) {
+                add_meta_box($id, 'Smartling Upload Widget', function ($meta_id) use ($contentType) {
                     $currentBlogId = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
                     $applicableProfiles = $this
                         ->getEntityHelper()
@@ -284,7 +278,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                             ]
                         );
                     }
-                }, $contentType, 'top', 'high');
+                }, $contentType, 'normal', 'high');
             }
         }
     }
