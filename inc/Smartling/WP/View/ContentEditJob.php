@@ -329,6 +329,23 @@ if ($post instanceof WP_Post) {
                     e.stopPropagation();
                     e.preventDefault();
 
+                    var btnSelector = "#addToJob";
+                    var wp5an = "components-button is-primary is-busy is-large";
+                    var btn = $(btnSelector);
+
+                    var defaultText = btn.val();
+
+                    var btnLockWait = function () {
+                        $(btn).addClass(wp5an);
+                        $(btn).val("Please wait...");
+                        $(btn).attr("disabled","disabled");
+                    };
+                    var btnUnlockWait = function () {
+                        $(btn).removeClass(wp5an);
+                        $(btn).val(defaultText);
+                        $(btn).removeAttr("disabled");
+                    };
+
                     var checkedLocalesCbs = $("div.job-wizard input[type=checkbox].mcheck:checked");
                     var blogs = [];
 
@@ -336,6 +353,8 @@ if ($post instanceof WP_Post) {
                         var blogId = $(checkedLocalesCbs[i]).attr("data-blog-id");
                         blogs = blogs.concat([blogId]);
                     }
+
+                    $("#jobSelect").select();
 
                     var obj = {
                         content: {
@@ -347,12 +366,30 @@ if ($post instanceof WP_Post) {
                             name: $("input[name=\"jobName\"]").val(),
                             description: $("textarea[name=\"description-sm\"]").val(),
                             dueDate: $("input[name=\"dueDate\"]").val(),
+                            timeZone: timezone,
                             authorize: ($("div.job-wizard input[type=checkbox].authorize:checked").length > 0)
                         },
                         blogs: blogs.join(",")
                     };
-
-                    console.log(obj);
+                    btnLockWait();
+                    $.post(
+                        ajaxurl + "?action=" + "smartling_upload_handler",
+                        obj,
+                        function (data) {
+                            data = JSON.parse(data);
+                            switch (data.status) {
+                                case "SUCCESS":
+                                    wp.data.dispatch("core/notices").createSuccessNotice("Content added to Upload queue.");
+                                    break;
+                                case "FAIL":
+                                    wp.data.dispatch("core/notices").createErrorNotice("Failed adding content to download queue: " + data.message);
+                                    break;
+                                default:
+                                    console.log(data);
+                            }
+                            btnUnlockWait();
+                        }
+                    );
                 });
             } else {
                 $('#addToJob').on('click', function (e) {

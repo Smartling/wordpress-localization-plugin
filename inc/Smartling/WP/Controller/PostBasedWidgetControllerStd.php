@@ -17,20 +17,48 @@ use Smartling\WP\WPHookInterface;
 
 /**
  * Class PostWidgetController
+ *
  * @package Smartling\WP\Controller
  */
 class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 {
     use DetectContentChangeTrait;
 
-    const WIDGET_NAME      = 'smartling_connector_widget';
+    const WIDGET_NAME = 'smartling_connector_widget';
     const WIDGET_DATA_NAME = 'smartling';
-    const CONNECTOR_NONCE  = 'smartling_connector_nonce';
+    const CONNECTOR_NONCE = 'smartling_connector_nonce';
 
     protected $servedContentType = 'undefined';
-    protected $needSave          = 'Need to have title';
-    protected $noOriginalFound   = 'No original post found';
-    protected $abilityNeeded     = 'edit_post';
+    protected $needSave = 'Need to have title';
+    protected $noOriginalFound = 'No original post found';
+    protected $abilityNeeded = 'edit_post';
+
+
+    const RESPONSE_AJAX_STATUS_FAIL = 'FAIL';
+    const RESPONSE_AJAX_STATUS_SUCCESS = 'SUCCESS';
+
+    const ERROR_KEY_FIELD_MISSING = 'field.missing';
+    const ERROR_MSG_FIELD_MISSING = 'Required field \'%s\' is missing.';
+
+    const ERROR_KEY_NO_PROFILE_FOUND = 'profile.not.found';
+    const ERROR_MSG_NO_PROFILE_FOUND = 'No suitable configuration profile found.';
+
+    const ERROR_KEY_TARGET_BLOG_EMPTY = 'no.target';
+    const ERROR_MSG_TARGET_BLOG_EMPTY = 'No target blog selected.';
+
+    const ERROR_KEY_NO_CONTENT = 'no.content';
+    const ERROR_MSG_NO_CONTENT = 'No source content selected.';
+
+
+    const ERROR_KEY_INVALID_BLOG = 'invalid.blog';
+    const ERROR_MSG_INVALID_BLOG = 'Invalid blog value.';
+
+    const ERROR_KEY_BATCH_FETCH_FAILED = 'fail.fetch.batch';
+    const ERROR_MSG_BATCH_FETCH_FAILED = 'Failed fetching batch for job.';
+
+    const ERROR_KEY_TYPE_MISSING = 'content.type.missing';
+    const ERROR_MSG_TYPE_MISSING = 'Source content-type missing.';
+
 
     private $mutedTypes = [
         'attachment',
@@ -113,14 +141,245 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     }
 
     /**
+     * @param int $blogId
+     * @return bool
+     */
+    private function validateTargetBlog($blogId)
+    {
+        $blogs = $this->getEntityHelper()->getSiteHelper()->listBlogIdsFlat();
+        return in_array((int)$blogId, $blogs);
+    }
+
+    public function ajaxUploadHandler()
+    {
+        $result = [];
+
+        $data = &$_POST;
+
+        $requiredFields = ['blogs', 'job', 'content'];
+
+        $continue = true;
+
+        foreach ($requiredFields as $requiredField) {
+            $continue = array_key_exists($requiredField, $data);
+            if (!$continue) {
+                $msg = vsprintf(self::ERROR_MSG_FIELD_MISSING, [$requiredField]);
+                $this->getLogger()->error(
+                    vsprintf('Failed adding content to upload queue: %s for %s', [$msg, var_export($_POST, true)])
+                );
+                $result = [
+                    'status' => 'FAIL',
+                    'key' => self::ERROR_KEY_FIELD_MISSING,
+                    'message' => $msg,
+                ];
+            }
+        }
+
+        $profiles = $this->getProfiles();
+
+        /**
+         * checking profiles
+         */
+        if ($continue && empty($profiles)) {
+            $this->getLogger()->error(
+                vsprintf(
+                    'Failed adding content to upload queue: %s for %s',
+                    [self::ERROR_MSG_NO_PROFILE_FOUND, var_export($_POST, true)])
+            );
+
+            $result = [
+                'status' => 'FAIL',
+                'key' => self::ERROR_KEY_NO_PROFILE_FOUND,
+                'message' => self::ERROR_MSG_NO_PROFILE_FOUND,
+            ];
+
+            $continue = false;
+        }
+
+        /**
+         * checking 'blogs'
+         */
+        if ($continue) {
+
+            $data['blogs'] = explode(',', $data['blogs']);
+
+            if (empty($data['blogs'])) {
+
+                $this->getLogger()->error(
+                    vsprintf(
+                        'Failed adding content to upload queue: %s for %s',
+                        [self::ERROR_MSG_TARGET_BLOG_EMPTY, var_export($_POST, true)])
+                );
+
+                $result = [
+                    'status' => 'FAIL',
+                    'key' => self::ERROR_KEY_TARGET_BLOG_EMPTY,
+                    'message' => self::ERROR_MSG_TARGET_BLOG_EMPTY,
+                ];
+                $continue = false;
+            } else {
+                foreach ($data['blogs'] as $blogId) {
+                    $continue &= $this->validateTargetBlog($blogId);
+
+                    if (!$continue) {
+                        $this->getLogger()->error(
+                            vsprintf(
+                                'Failed adding content to upload queue: %s for %s',
+                                [self::ERROR_MSG_INVALID_BLOG, var_export($_POST, true)])
+                        );
+
+                        $result = [
+                            'status' => 'FAIL',
+                            'key' => self::ERROR_KEY_INVALID_BLOG,
+                            'message' => self::ERROR_MSG_INVALID_BLOG,
+                        ];
+                    }
+                }
+            }
+        }
+
+        if ($continue) {
+            $data['content']['id'] = explode(',', $data['content']['id']);
+
+            if (empty($data['content']['id'])) {
+
+                $this->getLogger()->error(
+                    vsprintf(
+                        'Failed adding content to upload queue: %s for %s. Translation aborted.',
+                        [self::ERROR_MSG_NO_CONTENT, var_export($_POST, true)])
+                );
+                $result = [
+                    'status' => 'FAIL',
+                    'key' => self::ERROR_KEY_NO_CONTENT,
+                    'message' => self::ERROR_MSG_NO_CONTENT,
+                ];
+                $continue = false;
+            } elseif (!array_key_exists('type', $data['content'])) {
+
+                $this->getLogger()->error(
+                    vsprintf(
+                        'Failed adding content to upload queue: %s for %s. Translation aborted.',
+                        [self::ERROR_MSG_TYPE_MISSING, var_export($_POST, true)])
+                );
+                $result = [
+                    'status' => 'FAIL',
+                    'key' => self::ERROR_KEY_TYPE_MISSING,
+                    'message' => self::ERROR_MSG_TYPE_MISSING,
+                ];
+                $continue = false;
+            }
+        }
+
+        $batchUid = null;
+
+        if ($continue) {
+            try {
+                $batchUid = $this->getCore()->getApiWrapper()->retrieveBatch(
+                    ArrayHelper::first($profiles),
+                    $data['job']['id'],
+                    'true' === $data['job']['authorize'],
+                    [
+                        'name' => $data['job']['name'],
+                        'description' => $data['job']['description'],
+                        'dueDate' => [
+                            'date' => $data['job']['dueDate'],
+                            'timezone' => $data['job']['timezone'],
+                        ],
+                    ]
+                );
+            } catch (\Exception $e) {
+                $this->getLogger()->error(
+                    vsprintf(
+                        'Failed adding content to upload queue: %s for %s. Translation aborted.',
+                        [self::ERROR_MSG_BATCH_FETCH_FAILED, var_export($_POST, true)])
+                );
+                $result = [
+                    'status' => 'FAIL',
+                    'key' => self::ERROR_KEY_BATCH_FETCH_FAILED,
+                    'message' => self::ERROR_MSG_BATCH_FETCH_FAILED,
+                ];
+            }
+        }
+
+
+        if ($continue) {
+
+            $sourceIds = &$data['content']['id'];
+            $contentType = &$data['content']['type'];
+            $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
+
+            /**
+             * Walk through target blogs
+             */
+            foreach ($data['blogs'] as $targetBlogId) {
+                /**
+                 * Walk source content ids
+                 */
+                foreach ($sourceIds as $sourceId) {
+                    try {
+                        $submission = $this->getCore()->getTranslationHelper()->tryPrepareRelatedContent(
+                            $contentType,
+                            $sourceBlog,
+                            (int)$sourceId,
+                            (int)$targetBlogId,
+                            $batchUid,
+                            false
+                        );
+
+                        if (0 < $submission->getId()) {
+                            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+                            $submission->setBatchUid($batchUid);
+                            $submission = $this->getCore()->getSubmissionManager()->storeEntity($submission);
+                        }
+
+                        $this->getLogger()->info(
+                            vsprintf(
+                                static::$MSG_UPLOAD_ENQUEUE_ENTITY_JOB,
+                                [
+                                    $contentType,
+                                    $sourceBlog,
+                                    $sourceId,
+                                    $targetBlogId,
+                                    $submission->getTargetLocale(),
+                                    $data['job']['id'],
+                                    $submission->getBatchUid(),
+                                ]
+                            ));
+                    } catch (\Exception $e) {
+                        $msg = vsprintf(
+                            'Failed adding \'%s\' from blog=\'%s\', id=\'%s\' for tatget blog id=\'%s\' for translation queue with batchUid=\'%s\'. ',
+                            [
+                                $contentType,
+                                $sourceBlog,
+                                (int)$sourceId,
+                                (int)$targetBlogId,
+                                $batchUid,
+                            ]
+                        );
+                        $this->getLogger()->error($msg);
+                    }
+                }
+            }
+
+            $result = [
+                'status' => self::RESPONSE_AJAX_STATUS_SUCCESS,
+            ];
+        }
+
+        echo json_encode($result);
+        exit;
+    }
+
+    /**
      * @inheritdoc
      */
     public function register()
     {
         if (!DiagnosticsHelper::isBlocked() && !$this->isMuted()) {
             add_action('add_meta_boxes', [$this, 'box']);
-            add_action('save_post', [$this, 'save']);
+            add_action('save_post', [$this, 'save']); // old logic 2 be refactored
             add_action('wp_ajax_' . 'smartling_force_download_handler', [$this, 'ajaxDownloadHandler']);
+            add_action('wp_ajax_' . 'smartling_upload_handler', [$this, 'ajaxUploadHandler']);
         }
     }
 
@@ -178,17 +437,17 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
                 if (0 < count($profile)) {
                     $submissions = $this->getManager()
-                        ->find([
-                                   'source_blog_id' => $currentBlogId,
-                                   'source_id'      => $post->ID,
-                                   'content_type'   => $this->servedContentType,
-                               ]);
+                                        ->find([
+                                            'source_blog_id' => $currentBlogId,
+                                            'source_id' => $post->ID,
+                                            'content_type' => $this->servedContentType,
+                                        ]);
 
                     $this->view([
-                                    'submissions' => $submissions,
-                                    'post'        => $post,
-                                    'profile'     => ArrayHelper::first($profile),
-                                ]
+                            'submissions' => $submissions,
+                            'post' => $post,
+                            'profile' => ArrayHelper::first($profile),
+                        ]
                     );
                 } else {
                     echo '<p>' . __('No suitable configuration profile found.') . '</p>';
@@ -198,18 +457,18 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             } catch (SmartlingDbException $e) {
                 $message = 'Failed to search for the original post. No source post found for blog %s, post %s. Hiding widget';
                 $this->getLogger()
-                    ->warning(
-                        vsprintf($message, [
-                            $this->getEntityHelper()
-                                ->getSiteHelper()
-                                ->getCurrentBlogId(),
-                            $post->ID,
-                        ])
-                    );
+                     ->warning(
+                         vsprintf($message, [
+                             $this->getEntityHelper()
+                                  ->getSiteHelper()
+                                  ->getCurrentBlogId(),
+                             $post->ID,
+                         ])
+                     );
                 echo '<p>' . __($this->noOriginalFound) . '</p>';
             } catch (\Exception $e) {
                 $this->getLogger()
-                    ->error($e->getMessage() . '[' . $e->getFile() . ':' . $e->getLine() . ']');
+                     ->error($e->getMessage() . '[' . $e->getFile() . ':' . $e->getLine() . ']');
             }
         } else {
             echo '<p>' . __($this->needSave) . '</p>';
@@ -258,7 +517,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
         if (false === $result) {
             $this->getLogger()
-                ->debug(vsprintf('Validation failed: current user doesn\'t have enough rights save the post', []));
+                 ->debug(vsprintf('Validation failed: current user doesn\'t have enough rights save the post', []));
         }
 
         return $result;
@@ -280,10 +539,10 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
             $this->getLogger()->debug(
                 vsprintf('Entering post save hook. post_id = \'%s\', blog_id = \'%s\'',
-                         [
-                             $post_id,
-                             $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
-                         ])
+                    [
+                        $post_id,
+                        $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
+                    ])
             );
             // Handle case when a revision is being saved. Get post_id by
             // revision id.
@@ -293,24 +552,26 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
             $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
             $originalId = (int)$post_id;
-            $this->getLogger()->debug(vsprintf('Detecting changes for \'%s\' id=%d',[$this->servedContentType, $post_id]));
+            $this->getLogger()->debug(vsprintf('Detecting changes for \'%s\' id=%d',
+                [$this->servedContentType, $post_id]));
             $this->detectChange($sourceBlog, $originalId, $this->servedContentType);
 
             if (false === $this->runValidation($post_id)) {
                 return $post_id;
             }
-            $this->getLogger()->debug(vsprintf('Validation completed for \'%s\' id=%d',[$this->servedContentType, $post_id]));
+            $this->getLogger()->debug(vsprintf('Validation completed for \'%s\' id=%d',
+                [$this->servedContentType, $post_id]));
 
             if (!array_key_exists(self::WIDGET_DATA_NAME, $_POST)) {
                 $this->getLogger()
-                    ->debug(vsprintf('Validation failed: no smartling info while saving. Ignoring', [$post_id]));
+                     ->debug(vsprintf('Validation failed: no smartling info while saving. Ignoring', [$post_id]));
 
                 return;
             }
 
             $data = $_POST[self::WIDGET_DATA_NAME];
 
-            $this->getLogger()->debug(vsprintf('got POST data: %s',[var_export($_POST, true)]));
+            $this->getLogger()->debug(vsprintf('got POST data: %s', [var_export($_POST, true)]));
 
             if (null !== $data && array_key_exists('locales', $data)) {
                 $locales = [];
@@ -327,7 +588,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                         return;
                     }
                 }
-                $this->getLogger()->debug(vsprintf('Finished parsing locales: %s',[var_export($locales, true)]));
+                $this->getLogger()->debug(vsprintf('Finished parsing locales: %s', [var_export($locales, true)]));
                 $core = $this->getCore();
                 $translationHelper = $core->getTranslationHelper();
                 if (array_key_exists('sub', $_POST) && count($locales) > 0) {
@@ -362,7 +623,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                             vsprintf(
                                                 'Failed retrieving batch for job %s. Translation aborted.',
                                                 [
-                                                    var_export($_POST['jobId'], true)
+                                                    var_export($_POST['jobId'], true),
                                                 ]
                                             )
                                         );
@@ -370,7 +631,8 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                 }
 
                                 foreach ($locales as $blogId) {
-                                    $submission = $translationHelper->tryPrepareRelatedContent($this->servedContentType, $sourceBlog, $originalId, (int)$blogId, $batchUid, false);
+                                    $submission = $translationHelper->tryPrepareRelatedContent($this->servedContentType,
+                                        $sourceBlog, $originalId, (int)$blogId, $batchUid, false);
 
                                     if (0 < $submission->getId()) {
                                         $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
@@ -405,43 +667,43 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                         case 'Download':
                             foreach ($locales as $targetBlogId) {
                                 $submissions = $this->getManager()
-                                    ->find(
-                                        [
-                                            'source_id'      => $originalId,
-                                            'source_blog_id' => $sourceBlog,
-                                            'content_type'   => $this->servedContentType,
-                                            'target_blog_id' => $targetBlogId,
-                                        ]
-                                    );
+                                                    ->find(
+                                                        [
+                                                            'source_id' => $originalId,
+                                                            'source_blog_id' => $sourceBlog,
+                                                            'content_type' => $this->servedContentType,
+                                                            'target_blog_id' => $targetBlogId,
+                                                        ]
+                                                    );
 
                                 if (0 < count($submissions)) {
                                     $submission = ArrayHelper::first($submissions);
 
                                     $this->getLogger()
-                                        ->info(
-                                            vsprintf(
-                                                static::$MSG_DOWNLOAD_ENQUEUE_ENTITY,
-                                                [
-                                                    $submission->getId(),
-                                                    $submission->getStatus(),
-                                                    $this->servedContentType,
-                                                    $sourceBlog,
-                                                    $originalId,
-                                                    $submission->getTargetBlogId(),
-                                                    $submission->getTargetLocale(),
-                                                ]
-                                            )
-                                        );
+                                         ->info(
+                                             vsprintf(
+                                                 static::$MSG_DOWNLOAD_ENQUEUE_ENTITY,
+                                                 [
+                                                     $submission->getId(),
+                                                     $submission->getStatus(),
+                                                     $this->servedContentType,
+                                                     $sourceBlog,
+                                                     $originalId,
+                                                     $submission->getTargetBlogId(),
+                                                     $submission->getTargetLocale(),
+                                                 ]
+                                             )
+                                         );
 
                                     $core->getQueue()
-                                        ->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
+                                         ->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
                                 }
                             }
                             $this->getLogger()->debug(vsprintf('Initiating Download Job', []));
                             do_action(DownloadTranslationJob::JOB_HOOK_NAME);
                             break;
                         default:
-                            $this->getLogger()->debug(vsprintf('got Unknown action: \'%s\'',[$_POST['sub']]));
+                            $this->getLogger()->debug(vsprintf('got Unknown action: \'%s\'', [$_POST['sub']]));
                     }
                 } else {
                     $this->getLogger()->debug('No smartling action found.');
