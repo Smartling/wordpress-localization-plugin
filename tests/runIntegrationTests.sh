@@ -187,7 +187,7 @@ installWordpress () {
     installWPCLI
     cd "$WP_INSTALL_DIR"
 
-    $WPCLI core download
+    $WPCLI core download --version=4.9.9
     $WPCLI config create --dbname=$WP_DB_NAME --dbuser=$WP_DB_USER --dbpass=$WP_DB_PASS --dbprefix=$WP_DB_TABLE_PREFIX
     $WPCLI core install --url=$WP_INSTALLATION_DOMAIN --title=Test --admin_user=wp --admin_password=wp --admin_email=test@wp.org --skip-email
     $WPCLI core multisite-convert
@@ -232,7 +232,7 @@ generateTestExecutionScript () {
 
     echo -e "cd \"$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests\"\n" >> $TESTEXECSCRIPT
 
-    echo -e "\$PHPUNIT_BIN -c \$PHPUNIT_XML\n" >> $TESTEXECSCRIPT
+    echo -e "\$PHPUNIT_BIN --verbose -c \$PHPUNIT_XML\n" >> $TESTEXECSCRIPT
 
     echo -e "cd \"\$BACKDIR\"\n" >> $TESTEXECSCRIPT
 }
