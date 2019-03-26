@@ -43,6 +43,7 @@ trait SmartlingCoreTrait
             }
         } catch (\Exception $e) {
             $submission->setLastError($e->getMessage());
+            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
             $resultSubmission = $this->getSubmissionManager()->storeEntity($submission);
         }
 

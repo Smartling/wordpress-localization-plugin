@@ -3,13 +3,13 @@
 namespace Smartling\Base;
 
 use Exception;
-use Smartling\Bootstrap;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\InvalidXMLException;
 use Smartling\Exception\NothingFoundForTranslationException;
 use Smartling\Exception\SmartlingFileDownloadException;
+use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DateTimeHelper;
@@ -103,6 +103,28 @@ trait SmartlingCoreUploadTrait
             }
 
             $submission = apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $submission);
+
+            /**
+             * Creating of target placeholder has failed
+             */
+            if (SubmissionEntity::SUBMISSION_STATUS_FAILED === $submission->getStatus()) {
+                /**
+                 * @var SubmissionEntity $submission
+                 */
+                $msg = vsprintf(
+                    'Failed creating target placeholder for submission id=\'%s\', source_blog_id=\'%s\', source_id=\'%s\', target_blog_id=\'%s\' with message: \'%s\'',
+                    [
+                        $submission->getId(),
+                        $submission->getSourceBlogId(),
+                        $submission->getSourceId(),
+                        $submission->getTargetId(),
+                        $submission->getLastError(),
+                    ]
+                );
+                $this->getLogger()->error($msg);
+                throw new SmartlingTargetPlaceholderCreationFailedException($msg);
+            }
+
             $submission = $this->renewContentHash($submission);
 
             $source = $this->readSourceContentWithMetadataAsArray($submission);
@@ -137,6 +159,9 @@ trait SmartlingCoreUploadTrait
         } catch (EntityNotFoundException $e) {
             $this->getLogger()->error($e->getMessage());
             $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent content.');
+        } catch (SmartlingTargetPlaceholderCreationFailedException $e) {
+            // do not overwrite error message.
+            throw $e;
         } catch (BlogNotFoundException $e) {
             $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent blog.');
             $this->handleBadBlogId($submission);
