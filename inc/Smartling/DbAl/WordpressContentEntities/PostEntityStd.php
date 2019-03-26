@@ -3,7 +3,6 @@
 namespace Smartling\DbAl\WordpressContentEntities;
 
 use Smartling\Exception\SmartlingDataUpdateException;
-use Smartling\Exception\SmartlingMultiValueMetadataDetectedException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\RawDbQueryHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
@@ -182,7 +181,6 @@ class PostEntityStd extends EntityAbstract
     /**
      * @param array $metadata
      * @return array
-     * @throws SmartlingMultiValueMetadataDetectedException
      */
     private function formatMetadata(array $metadata)
     {
@@ -199,7 +197,24 @@ class PostEntityStd extends EntityAbstract
                     ]
                 );
                 $this->getLogger()->warning($msg);
-                throw new SmartlingMultiValueMetadataDetectedException($msg);
+
+                /**
+                 * Get last value
+                 */
+                $lastValue = end($mValue);
+
+                $msg = vsprintf(
+                    'Got unsupported metadata \'%s\' for post ID=\'%s\' Continue using last value = \'%s\'.',
+                    [
+                        \json_encode($mValue),
+                        $this->getPK(),
+                        $lastValue,
+                    ]
+                );
+
+                $this->getLogger()->warning($msg);
+
+                $mValue = $lastValue;
             }
         }
 
