@@ -22,4 +22,9 @@ class WordpressFunctionProxyHelper
     {
         return get_post_meta($postId);
     }
+
+    public function apply_filters()
+    {
+        return call_user_func_array('apply_filters', func_get_args());
+    }
 }

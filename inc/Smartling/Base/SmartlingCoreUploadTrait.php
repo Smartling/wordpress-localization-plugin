@@ -3,6 +3,7 @@
 namespace Smartling\Base;
 
 use Exception;
+use Smartling\Bootstrap;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
@@ -17,6 +18,7 @@ use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
@@ -74,6 +76,10 @@ trait SmartlingCoreUploadTrait
         return $source;
     }
 
+    protected function getFunctionProxyHelper() {
+        return new WordpressFunctionProxyHelper();
+    }
+
     /**
      * Processes content by submission and returns only XML string for translation
      *
@@ -102,7 +108,9 @@ trait SmartlingCoreUploadTrait
                 $submission = $this->getSubmissionManager()->storeEntity($submission);
             }
 
-            $submission = apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $submission);
+            $submission = $this
+                ->getFunctionProxyHelper()
+                ->apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $submission);
 
             /**
              * Creating of target placeholder has failed
@@ -159,9 +167,6 @@ trait SmartlingCoreUploadTrait
         } catch (EntityNotFoundException $e) {
             $this->getLogger()->error($e->getMessage());
             $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent content.');
-        } catch (SmartlingTargetPlaceholderCreationFailedException $e) {
-            // do not overwrite error message.
-            throw $e;
         } catch (BlogNotFoundException $e) {
             $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent blog.');
             $this->handleBadBlogId($submission);
@@ -171,6 +176,7 @@ trait SmartlingCoreUploadTrait
             $this->getSubmissionManager()
                 ->setErrorMessage($submission, vsprintf('Error occurred: %s', [$e->getMessage()]));
             $this->getLogger()->error($e->getMessage());
+            throw $e;
         }
     }
 
