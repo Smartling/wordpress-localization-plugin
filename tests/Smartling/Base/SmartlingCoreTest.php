@@ -485,4 +485,58 @@ class SmartlingCoreTest extends TestCase
 
         self::assertEquals('testtest', $result->getBatchUid());
     }
+
+    /**
+     * @covers \Smartling\Base\SmartlingCore::getXMLFiltered
+     * @expectedException \Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException
+     * @expectedExceptionMessage Failed creating target placeholder for submission id='5', source_blog_id='1', source_id='1', target_blog_id='0' with message: 'Invalid Content Type'
+     */
+    public function testExceptionOnTargetPlaceholderCreationFail()
+    {
+        $obj = $this->getMockBuilder('\Smartling\Base\SmartlingCore')
+                   ->setMethods(
+                       [
+                           'getFunctionProxyHelper',
+                       ]
+                   )
+                   ->getMock();
+
+        $submissionManager = $this->mockSubmissionManager(
+            $this->mockDbAl(),
+            $this->mockEntityHelper($this->mockSiteHelper())
+        );
+        
+        $obj->setSubmissionManager ($submissionManager);
+
+        $submission = new SubmissionEntity();
+        $submission
+            ->setId(5)
+            ->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW)
+            ->setContentType('post')
+            ->setSourceBlogId(1)
+            ->setSourceId(1)
+            ->setTargetBlogId(1);
+
+
+        $returnedSubmission = clone $submission;
+        $returnedSubmission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+
+        $proxyMock = $this->getMockBuilder('Smartling\Helpers\WordpressFunctionProxyHelper')
+             ->setMethods(
+                 [
+                     'apply_filters',
+                 ]
+             )
+             ->disableOriginalConstructor()
+             ->getMock();
+
+
+        $proxyMock->expects(self::once())->method('apply_filters')->willReturn($returnedSubmission);
+        $obj->expects(self::once())->method('getFunctionProxyHelper')->willReturn($proxyMock);
+
+
+
+
+        $this->invokeMethod($obj, 'getXMLFiltered', [$submission]);
+    }
 }

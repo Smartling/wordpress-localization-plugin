@@ -116,16 +116,14 @@ class PostEntityStdTest extends TestCase
     }
 
     /**
-     * @covers                   \Smartling\DbAl\WordpressContentEntities\PostEntityStd::formatMetadata
-     * @expectedException Smartling\Exception\SmartlingMultiValueMetadataDetectedException
-     * @expectedExceptionMessage Detected unsupported metadata: '{"foo":["foo","bar"]}' for entity ID='555'
+     * @covers  \Smartling\DbAl\WordpressContentEntities\PostEntityStd::formatMetadata
      */
-    public function testFormatMetadataWithException()
+    public function testFormatMetadataWithUniqueMetavalues()
     {
         $obj = new PostEntityStd();
         $obj->ID = 555;
 
-        $this->invokeMethod(
+        $result = $this->invokeMethod(
             $obj,
             'formatMetadata',
             [
@@ -136,5 +134,7 @@ class PostEntityStdTest extends TestCase
                     ],
                 ],
             ]);
+
+        self::assertEquals(['foo' => 'bar'], $result);
     }
 }
