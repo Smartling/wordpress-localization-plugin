@@ -10,6 +10,7 @@ use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\InvalidXMLException;
 use Smartling\Exception\NothingFoundForTranslationException;
 use Smartling\Exception\SmartlingFileDownloadException;
+use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DateTimeHelper;
@@ -17,6 +18,7 @@ use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\XmlEncoder;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
@@ -74,6 +76,10 @@ trait SmartlingCoreUploadTrait
         return $source;
     }
 
+    protected function getFunctionProxyHelper() {
+        return new WordpressFunctionProxyHelper();
+    }
+
     /**
      * Processes content by submission and returns only XML string for translation
      *
@@ -102,7 +108,31 @@ trait SmartlingCoreUploadTrait
                 $submission = $this->getSubmissionManager()->storeEntity($submission);
             }
 
-            $submission = apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $submission);
+            $submission = $this
+                ->getFunctionProxyHelper()
+                ->apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $submission);
+
+            /**
+             * Creating of target placeholder has failed
+             */
+            if (SubmissionEntity::SUBMISSION_STATUS_FAILED === $submission->getStatus()) {
+                /**
+                 * @var SubmissionEntity $submission
+                 */
+                $msg = vsprintf(
+                    'Failed creating target placeholder for submission id=\'%s\', source_blog_id=\'%s\', source_id=\'%s\', target_blog_id=\'%s\' with message: \'%s\'',
+                    [
+                        $submission->getId(),
+                        $submission->getSourceBlogId(),
+                        $submission->getSourceId(),
+                        $submission->getTargetId(),
+                        $submission->getLastError(),
+                    ]
+                );
+                $this->getLogger()->error($msg);
+                throw new SmartlingTargetPlaceholderCreationFailedException($msg);
+            }
+
             $submission = $this->renewContentHash($submission);
 
             $source = $this->readSourceContentWithMetadataAsArray($submission);
@@ -146,6 +176,7 @@ trait SmartlingCoreUploadTrait
             $this->getSubmissionManager()
                 ->setErrorMessage($submission, vsprintf('Error occurred: %s', [$e->getMessage()]));
             $this->getLogger()->error($e->getMessage());
+            throw $e;
         }
     }
 

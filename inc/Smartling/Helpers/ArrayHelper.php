@@ -110,7 +110,6 @@ class ArrayHelper
      * @param array $array
      *
      * @return mixed
-     * @throws \InvalidArgumentException
      */
     public static function first(array $array)
     {
@@ -121,6 +120,18 @@ class ArrayHelper
         $keys = array_keys($array);
 
         return $array[$keys[0]];
+    }
+
+    /**
+     * @param array $array
+     * @return bool|mixed
+     */
+    public static function last(array $array) {
+        if (!static::notEmpty($array)) {
+            return false; // as reset() does
+        }
+
+        return end($array);
     }
 
     /**
