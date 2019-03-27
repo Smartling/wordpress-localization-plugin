@@ -489,7 +489,7 @@ class SmartlingCoreTest extends TestCase
     /**
      * @covers \Smartling\Base\SmartlingCore::getXMLFiltered
      * @expectedException \Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException
-     * @expectedExceptionMessage Failed creating target placeholder for submission id='5', source_blog_id='1', source_id='1', target_blog_id='0' with message: 'Invalid Content Type'
+     * @expectedExceptionMessage Failed creating target placeholder for submission id='5', source_blog_id='1', source_id='1', target_blog_id='0' with message: ''
      */
     public function testExceptionOnTargetPlaceholderCreationFail()
     {
@@ -505,6 +505,14 @@ class SmartlingCoreTest extends TestCase
             $this->mockDbAl(),
             $this->mockEntityHelper($this->mockSiteHelper())
         );
+
+        $submissionManager
+            ->expects(self::once())
+            ->method('setErrorMessage')
+            ->willReturnCallback(function(SubmissionEntity $s, $msg) {
+                $s->setLastError($msg);
+                return $s;
+            });
         
         $obj->setSubmissionManager ($submissionManager);
 
