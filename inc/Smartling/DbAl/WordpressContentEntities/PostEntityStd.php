@@ -201,7 +201,7 @@ class PostEntityStd extends EntityAbstract
                 /**
                  * Get last value
                  */
-                $lastValue = end($mValue);
+                $lastValue = ArrayHelper::last($mValue);
 
                 $msg = vsprintf(
                     'Got unsupported metadata \'%s\' for post ID=\'%s\' Continue using last value = \'%s\'.',
