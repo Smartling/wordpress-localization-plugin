@@ -5,6 +5,7 @@ namespace Smartling\WP\Controller;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
+use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Submissions\SubmissionEntity;
@@ -42,8 +43,71 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
      */
     public function register()
     {
-        add_action('post_submitbox_misc_actions', [$this, 'extendSubmitBox']);
-        add_action('admin_post_smartling_translation_lock_popup', [$this, 'popupIFrame']);
+        if (!DiagnosticsHelper::isBlocked()) {
+            add_action('add_meta_boxes', [$this, 'boxRegister'], 10, 2);
+            add_action('admin_post_smartling_translation_lock_popup', [$this, 'popupIFrame']);
+        }
+    }
+
+    public function boxRegister($post_type, $post)
+    {
+        /**
+         * @var \WP_Post $post
+         */
+        try {
+            if (current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)
+                && $submission = $this->getSubmission($post->ID)) {
+                add_meta_box(
+                    'translation_lock',
+                    __('Translation Lock'),
+                    [$this, 'boxRender'],
+                    null,
+                    'side',
+                    'high'
+                );
+            }
+
+        } catch (\Exception $e) {
+        }
+
+
+    }
+
+    public function boxRender($post)
+    {
+        try {
+            $submission = $this->getSubmission($post->ID);
+            add_thickbox();
+            echo HtmlTagGeneratorHelper::tag(
+                'div',
+                HtmlTagGeneratorHelper::tag(
+                    'a',
+                    __('Translation lock'),
+                    [
+                        'class' => 'thickbox',
+                        'href' => vsprintf(
+                            '%s/wp-admin/admin-post.php?'
+                            . implode(
+                                '&',
+                                [
+                                    'action=smartling_translation_lock_popup',
+                                    'submission=%s',
+                                    'TB_iframe=true',
+                                    'width=600',
+                                    'height=550',
+                                ]
+                            ),
+                            [
+                                get_site_url(),
+                                $submission->getId(),
+                            ]
+                        ),
+                    ]
+                ),
+                ['class' => 'misc-pub-section']);
+        } catch (SmartlingDbException $e) {
+            return;
+        }
     }
 
     /**
@@ -115,44 +179,6 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
     public function notAllowed()
     {
         echo "Sorry, you're not allowed to go here.";
-    }
-
-    public function extendSubmitBox()
-    {
-        global $post;
-        try {
-            $submission = $this->getSubmission($post->ID);
-            add_thickbox();
-            echo HtmlTagGeneratorHelper::tag(
-                'div',
-                HtmlTagGeneratorHelper::tag(
-                    'a',
-                    __('Translation lock'),
-                    [
-                        'class' => 'thickbox',
-                        'href'  => vsprintf(
-                            '%s/wp-admin/admin-post.php?'
-                            . implode(
-                                '&',
-                                [
-                                    'action=smartling_translation_lock_popup',
-                                    'submission=%s',
-                                    'TB_iframe=true',
-                                    'width=600',
-                                    'height=550',
-                                ]
-                            ),
-                            [
-                                get_site_url(),
-                                $submission->getId(),
-                            ]
-                        ),
-                    ]
-                ),
-                ['class' => 'misc-pub-section']);
-        } catch (SmartlingDbException $e) {
-            return;
-        }
     }
 
     private function getTranslationFields(SubmissionEntity $submission)

@@ -62,27 +62,6 @@ class GutenbergBlockHelperTest extends TestCase
     }
 
     /**
-     * @covers                   \Smartling\Helpers\GutenbergBlockHelper::register
-     * @expectedException        \Smartling\Exception\SmartlingConfigException
-     * @expectedExceptionMessage Execution requires declared ABSPATH const.
-     */
-    public function testRegister()
-    {
-        $this->helper->register();
-    }
-
-    /**
-     * @covers                   \Smartling\Helpers\GutenbergBlockHelper::loadExternalDependencies
-     * @expectedException        \Smartling\Exception\SmartlingGutenbergNotFoundException
-     * @expectedExceptionMessage Gutenberg class not found. Disabling GutenbergSupport.
-     */
-    public function testLoadExternalDependencies()
-    {
-        defined('ABSPATH') || define('ABSPATH', '');
-        $this->invokeMethod($this->helper, 'loadExternalDependencies', []);
-    }
-
-    /**
      * @param $blockName
      * @param $flatAttributes
      * @param $postFilterMock

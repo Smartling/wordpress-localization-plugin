@@ -324,66 +324,135 @@ if ($post instanceof WP_Post) {
                 minDate: 0
             });
 
-            $('#addToJob').on('click', function (e) {
-                e.stopPropagation();
-                e.preventDefault();
-                var jobId = $('#jobSelect').val();
-                var jobName = $('input[name="jobName"]').val();
-                var jobDescription = $('textarea[name="description-sm"]').val();
-                var jobDueDate = $('input[name="dueDate"]').val();
+            if (window.React) {
+                $("#addToJob").on("click", function (e) {
+                    e.stopPropagation();
+                    e.preventDefault();
 
-                if ('' !== jobDueDate) {
-                    var nowTS = Math.floor((new Date()).getTime() / 1000);
-                    var formTS = Math.floor(moment(jobDueDate, 'YYYY-MM-DD HH:mm').toDate().getTime() / 1000);
-                    if (nowTS >= formTS) {
-                        alert("Invalid Due Date value. It cannot be in the past!.");
-                        return false;
+                    var btnSelector = "#addToJob";
+                    var wp5an = "components-button is-primary is-busy is-large";
+                    var btn = $(btnSelector);
+
+                    var defaultText = btn.val();
+
+                    var btnLockWait = function () {
+                        $(btn).addClass(wp5an);
+                        $(btn).val("Please wait...");
+                        $(btn).attr("disabled","disabled");
+                    };
+                    var btnUnlockWait = function () {
+                        $(btn).removeClass(wp5an);
+                        $(btn).val(defaultText);
+                        $(btn).removeAttr("disabled");
+                    };
+
+                    var checkedLocalesCbs = $("div.job-wizard input[type=checkbox].mcheck:checked");
+                    var blogs = [];
+
+                    for (var i = 0; i < checkedLocalesCbs.length; i++) {
+                        var blogId = $(checkedLocalesCbs[i]).attr("data-blog-id");
+                        blogs = blogs.concat([blogId]);
                     }
-                }
 
-                var locales = Helper.ui.getSelecterTargetLocales();
+                    $("#jobSelect").select();
 
-                var createHiddenInput = function (name, value) {
-                    return createInput('hidden', name, value);
-                };
+                    var obj = {
+                        content: {
+                            type: currentContent.contentType,
+                            id: currentContent.id.join(",")
+                        },
+                        job: {
+                            id: $("#jobSelect").val(),
+                            name: $("input[name=\"jobName\"]").val(),
+                            description: $("textarea[name=\"description-sm\"]").val(),
+                            dueDate: $("input[name=\"dueDate\"]").val(),
+                            timeZone: timezone,
+                            authorize: ($("div.job-wizard input[type=checkbox].authorize:checked").length > 0)
+                        },
+                        blogs: blogs.join(",")
+                    };
+                    btnLockWait();
+                    $.post(
+                        ajaxurl + "?action=" + "smartling_upload_handler",
+                        obj,
+                        function (data) {
+                            data = JSON.parse(data);
+                            switch (data.status) {
+                                case "SUCCESS":
+                                    wp.data.dispatch("core/notices").createSuccessNotice("Content added to Upload queue.");
+                                    break;
+                                case "FAIL":
+                                    wp.data.dispatch("core/notices").createErrorNotice("Failed adding content to download queue: " + data.message);
+                                    break;
+                                default:
+                                    console.log(data);
+                            }
+                            btnUnlockWait();
+                        }
+                    );
+                });
+            } else {
+                $('#addToJob').on('click', function (e) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    var jobId = $('#jobSelect').val();
+                    var jobName = $('input[name="jobName"]').val();
+                    var jobDescription = $('textarea[name="description-sm"]').val();
+                    var jobDueDate = $('input[name="dueDate"]').val();
 
-                var createInput = function (type, name, value) {
-                    return '<input type="' + type + '" name="' + name + '" value="' + value + '" />';
-                };
+                    if ('' !== jobDueDate) {
+                        var nowTS = Math.floor((new Date()).getTime() / 1000);
+                        var formTS = Math.floor(moment(jobDueDate, 'YYYY-MM-DD HH:mm').toDate().getTime() / 1000);
+                        if (nowTS >= formTS) {
+                            alert("Invalid Due Date value. It cannot be in the past!.");
+                            return false;
+                        }
+                    }
 
-                var formSelector = $('#post').length ? 'post' : 'edittag';
-                var isBulkSubmitPage = $('form#bulk-submit-main').length;
+                    var locales = Helper.ui.getSelecterTargetLocales();
 
-                // Support for bulk submit form.
-                if (isBulkSubmitPage) {
-                    formSelector = 'bulk-submit-main';
-                    currentContent.id = $("input.bulkaction:checked").map(function () {
-                        return $(this).val();
-                    }).get();
+                    var createHiddenInput = function (name, value) {
+                        return createInput('hidden', name, value);
+                    };
 
-                    $('#action').val('send');
-                }
+                    var createInput = function (type, name, value) {
+                        return '<input type="' + type + '" name="' + name + '" value="' + value + '" />';
+                    };
 
-                // Add hidden fields only if validation is passed.
-                if (currentContent.id.length) {
-                    $('#' + formSelector).append(createHiddenInput('smartling[ids]', currentContent.id));
-                    $('#' + formSelector).append(createHiddenInput('smartling[locales]', locales));
-                    $('#' + formSelector).append(createHiddenInput('smartling[jobId]', jobId));
-                    $('#' + formSelector).append(createHiddenInput('smartling[jobName]', jobName));
-                    $('#' + formSelector).append(createHiddenInput('smartling[jobDescription]', jobDescription));
-                    $('#' + formSelector).append(createHiddenInput('smartling[jobDueDate]', jobDueDate));
-                    $('#' + formSelector).append(createHiddenInput('smartling[timezone]', timezone));
-                    $('#' + formSelector).append(createHiddenInput('smartling[authorize]', $('.authorize:checked').length > 0));
-                    $('#' + formSelector).append(createHiddenInput('sub', 'Upload'));
-                }
+                    var formSelector = $('#post').length ? 'post' : 'edittag';
+                    var isBulkSubmitPage = $('form#bulk-submit-main').length;
 
-                $('#' + formSelector).submit();
+                    // Support for bulk submit form.
+                    if (isBulkSubmitPage) {
+                        formSelector = 'bulk-submit-main';
+                        currentContent.id = $("input.bulkaction:checked").map(function () {
+                            return $(this).val();
+                        }).get();
 
-                // Support for bulk submit form.
-                if (isBulkSubmitPage && currentContent.id.length) {
-                    $('input[type="submit"]').click();
-                }
-            });
+                        $('#action').val('send');
+                    }
+
+                    // Add hidden fields only if validation is passed.
+                    if (currentContent.id.length) {
+                        $('#' + formSelector).append(createHiddenInput('smartling[ids]', currentContent.id));
+                        $('#' + formSelector).append(createHiddenInput('smartling[locales]', locales));
+                        $('#' + formSelector).append(createHiddenInput('smartling[jobId]', jobId));
+                        $('#' + formSelector).append(createHiddenInput('smartling[jobName]', jobName));
+                        $('#' + formSelector).append(createHiddenInput('smartling[jobDescription]', jobDescription));
+                        $('#' + formSelector).append(createHiddenInput('smartling[jobDueDate]', jobDueDate));
+                        $('#' + formSelector).append(createHiddenInput('smartling[timezone]', timezone));
+                        $('#' + formSelector).append(createHiddenInput('smartling[authorize]', $('.authorize:checked').length > 0));
+                        $('#' + formSelector).append(createHiddenInput('sub', 'Upload'));
+                    }
+
+                    $('#' + formSelector).submit();
+
+                    // Support for bulk submit form.
+                    if (isBulkSubmitPage && currentContent.id.length) {
+                        $('input[type="submit"]').click();
+                    }
+                });
+            }
 
             $('#createJob').on('click', function (e) {
                 e.stopPropagation();

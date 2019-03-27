@@ -579,7 +579,7 @@ trait SmartlingCoreUploadTrait
                     'Got submission \'%s\' without batchUid. Trying to get batchUid. Original trace:\n%s ',
                     [
                         $submissionDump,
-                        implode(PHP_EOL, Bootstrap::Backtrace())
+                        (new \Exception())->getTraceAsString()
                     ]
                 )
             );
