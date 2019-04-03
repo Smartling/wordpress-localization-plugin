@@ -3,7 +3,7 @@ Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
 Tested up to: 5.1.1
-Stable tag: 1.10.4
+Stable tag: 1.10.5
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -57,6 +57,12 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 1.10.5 =
+* Fixed UI issue when Translation Lock block is not displayed when using Gutenberg editor.
+* Fixed UI issue when Content upload widget is not displayed when using Gutenberg editor.
+* Fixed possible issue when post metadata has several values for single meta_key. Last value is used.
+* Known issue: Gutenberg (when installed as plugin) build-in UI js library conflicts with smartling-connector Upload widget when using Gutenberg editor.
+
 = 1.10.4 =
 * Fixed possible issue when submission has not valid value for Post-based content-type
 * Removed old way to re-send content to Smartling on download
