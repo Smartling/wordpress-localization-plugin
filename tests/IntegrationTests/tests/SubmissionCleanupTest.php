@@ -14,8 +14,6 @@ class SubmissionCleanupTest extends SmartlingUnitTestCaseAbstract
      */
     private function makePreparations()
     {
-        $this->wpcli_exec('plugin', 'activate', 'exec-plugin --network');
-
         $postId = $this->createPost();
         $translationHelper = $this->getTranslationHelper();
         /**
@@ -66,19 +64,27 @@ class SubmissionCleanupTest extends SmartlingUnitTestCaseAbstract
 
     public function testRemovedOriginalContent()
     {
+        $this->wpcli_exec('plugin', 'activate', 'exec-plugin --network');
+
         $submission = $this->makePreparations();
         $this->prepareTempFile($submission);
 
         $this->wpcli_exec('cron', 'event', 'run exec_plugin_execute_hook');
         $this->checkSubmissionIsRemoved();
+
+        $this->wpcli_exec('plugin', 'deactivate', 'exec-plugin --network');
     }
 
     public function testRemovedTranslatedContent()
     {
+        $this->wpcli_exec('plugin', 'activate', 'exec-plugin --network');
+
         $submission = $this->makePreparations();
         $this->prepareTempFile($submission);
 
         $this->wpcli_exec('cron', 'event', 'run exec_plugin_execute_hook');
         $this->checkSubmissionIsRemoved();
+
+        $this->wpcli_exec('plugin', 'deactivate', 'exec-plugin --network');
     }
 }
