@@ -35,8 +35,7 @@ RUN apt-get update && \
 
 # creating database
 RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
-    echo "CREATE DATABASE ${MYSQL_BASE};" > /tmp/script.sql && \
-    mysql -u${MYSQL_USER} -p${MYSQL_PASS} < /tmp/script.sql
+    echo "CREATE DATABASE ${MYSQL_BASE};" | mysql -u${MYSQL_USER} -p${MYSQL_PASS}
 
 # install php 5.6
 RUN apt-get install software-properties-common -y && \

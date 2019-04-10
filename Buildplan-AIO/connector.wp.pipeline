@@ -29,6 +29,7 @@ pipeline {
 
     stage('Fix phpunit artifacts') {
           steps {
+            sh "ls -lah ${WORKSPACE}/tests"
             sh "sed -i \"s/\\/plugin-dir\\///g\" tests/phpunit-results.xml"
             sh "sed -i \"s/tests\\/IntegrationTests\\/src\\/wp-content\\/plugins\\/smartling-connector\\///g\" tests/phpunit-coverage.xml"
           }
