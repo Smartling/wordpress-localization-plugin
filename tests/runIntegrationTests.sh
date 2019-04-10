@@ -289,6 +289,12 @@ echo "---> coverage start"
 
 cat "$WP_INSTALL_TEST_DIR/phpunit-coverage.xml"
 
+echo "Making replacements"
+
+sed -i 's/wordpress-connector-tests\/tests\/inc/wordpress-connector-tests\/tests\/tests\/inc/g' "$WP_INSTALL_TEST_DIR/phpunit-coverage.xml"
+
+cat "$WP_INSTALL_TEST_DIR/phpunit-coverage.xml"
+
 echo "---> coverage finish"
 
 rm -f "$PLUGIN_DEV_DIR/tests/phpunit-results.xml"
