@@ -12,8 +12,7 @@ pipeline {
       steps {
         withCredentials([string(credentialsId: 'GITHUB_OAUTH', variable: 'GITHUB_OAUTH'), string(credentialsId: 'ACF_PRO_KEY', variable: 'ACF_PRO_KEY')]) {
           sh 'eval $(aws ecr get-login --region us-east-1 --no-include-email)'
-          /*  sh "docker build --no-cache --rm --pull --tag=${full_image_name} -f \"Buildplan-AIO/Dockerfile\" --build-arg ACFPRO_KEY=\"${ACF_PRO_KEY}\" --build-arg GITHUB_OAUTH_TOKEN=\"${GITHUB_OAUTH}\" ." */
-          sh "docker build --rm --pull --tag=${full_image_name} -f \"Buildplan-AIO/Dockerfile\" --build-arg ACFPRO_KEY=\"${ACF_PRO_KEY}\" --build-arg GITHUB_OAUTH_TOKEN=\"${GITHUB_OAUTH}\" ."
+          sh "docker build --no-cache --rm --pull --tag=${full_image_name} -f \"Buildplan-AIO/Dockerfile\" --build-arg ACFPRO_KEY=\"${ACF_PRO_KEY}\" --build-arg GITHUB_OAUTH_TOKEN=\"${GITHUB_OAUTH}\" ."
         }
       }
     }
@@ -28,23 +27,19 @@ pipeline {
     }
 
     stage('Fix phpunit artifacts') {
-          steps {
-            sh "ls -lah \"${WORKSPACE}/tests\""
-            sh "sed -i \"s/\\/plugin-dir\\///g\" tests/phpunit-results.xml"
-            sh "sed -i \"s/\\/plugin-dir\\///g\" tests/phpunit-coverage.xml"
-          }
-        }
+      steps {
+        sh "sed -i \"s/\\/plugin-dir\\///g\" tests/phpunit-results.xml"
+        sh "sed -i \"s/\\/plugin-dir\\///g\" tests/phpunit-coverage.xml"
+      }
+    }
 
-        stage('Junit') {
-          steps {
-            junit 'tests/phpunit-results.xml'
-          }
-        }
+    stage('Junit') {
+      steps {
+        junit 'tests/phpunit-results.xml'
+      }
+    }
 
-
-
-
-stage('Sonar') {
+    stage('Sonar') {
       steps {
         script {
           String scannerHome = tool name: 'sonar', type: 'hudson.plugins.sonar.SonarRunnerInstallation';
@@ -77,11 +72,6 @@ stage('Sonar') {
       }
     }
 
-
-
-
-
-
     stage('Post build clean up') {
       steps {
         sh "docker rmi ${full_image_name}"
@@ -89,10 +79,10 @@ stage('Sonar') {
     }
 
     stage('Clean up') {
-          steps {
-            deleteDir()
-          }
-        }
+      steps {
+        deleteDir()
+      }
+    }
   }
 
   post {
