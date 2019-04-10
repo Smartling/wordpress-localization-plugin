@@ -287,6 +287,7 @@ runTests
 WP_INSTALL_TEST_DIR="$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests"
 
 echo "---> test results begin"
+ls -lah  "$WP_INSTALL_TEST_DIR"
 cat "$WP_INSTALL_TEST_DIR/phpunit-results.xml"
 echo "---> test results end"
 
