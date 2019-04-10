@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 
+echo ---
+pwd
 
 
 #COPY smartling-connector-dev ${PLUGIN_DIR}
