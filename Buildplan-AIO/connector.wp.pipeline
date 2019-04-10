@@ -1,0 +1,38 @@
+pipeline {
+  agent any
+
+  environment {
+    full_image_name = "wordpress-connector-build"
+  }
+
+  stages {
+    stage('Build Docker image') {
+      steps {
+        sh "docker build --no-cache --rm --pull --tag=${full_image_name} -f \"Buildplan-AIO/Dockerfile\" ."
+      }
+    }
+
+    stage('Push docker images') {
+      steps {
+        sh 'eval $(aws ecr get-login --region us-east-1 --no-include-email)'
+
+      }
+    }
+
+    stage('Post build clean up') {
+      steps {
+        sh "docker rmi ${full_image_name}"
+      }
+    }
+  }
+
+  post {
+    failure {
+      slackSend (
+        channel: "#emergency-connectors",
+        color: 'bad',
+        message: "Build of <${env.BUILD_URL}|${env.JOB_BASE_NAME} #${env.BUILD_NUMBER}> is failed!"
+      )
+    }
+  }
+}
