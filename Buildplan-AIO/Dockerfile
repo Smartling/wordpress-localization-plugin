@@ -2,16 +2,43 @@ FROM ubuntu:14.04
 
 ENV DEBIAN_FRONTEND="noninteractive"
 
+ARG WP_INSTALL_DIR="/WP_INSTALL_DIR"
+ARG MYSQL_USER="root"
+ARG MYSQL_PASS="root"
+ARG MYSQL_BASE="wp"
+ARG WP_DB_TABLE_PREFIX="wp_"
+ARG WP_INSTALLATION_DOMAIN="test.com"
+ARG SITES="Spanish Site:es:es,French Site:fr-FR:fr,Russian Site:ru-RU:ru,Ukrainian Site:uk-UA:ua"
+ARG ACFPRO_KEY
+ARG GITHUB_OAUTH_TOKEN
+
+ENV WP_INSTALL_DIR=${WP_INSTALL_DIR}
+ENV MYSQL_USER=${MYSQL_USER}
+ENV MYSQL_PASS=${MYSQL_PASS}
+ENV MYSQL_BASE=${MYSQL_BASE}
+ENV WP_DB_TABLE_PREFIX=${WP_DB_TABLE_PREFIX}
+ENV WP_INSTALLATION_DOMAIN=${WP_INSTALLATION_DOMAIN}
+ENV SITES=${SITES}
+ENV DEPENDENCIES="smartling-connector;wordpress-seo"
+ENV ACFPRO_KEY=${ACFPRO_KEY}
+ENV DLINK="https://connect.advancedcustomfields.com/index.php?a=download&p=pro&k=${ACFPRO_KEY}"
+ENV GITHUB_OAUTH_TOKEN=${GITHUB_OAUTH_TOKEN}
+ENV BUILD_FQFN="${WP_INSTALL_DIR}/advanced-custom-fields-pro.zip"
+
 #install MySQL
 RUN apt-get update && \
-    echo "mysql-server mysql-server/root_password password root" | debconf-set-selections && \
-    echo "mysql-server mysql-server/root_password_again password root" | debconf-set-selections && \
+    echo "mysql-server mysql-server/root_password password ${MYSQL_PASS}" | debconf-set-selections && \
+    echo "mysql-server mysql-server/root_password_again password ${MYSQL_PASS}" | debconf-set-selections && \
     apt-get install mysql-server -y --force-yes && \
     apt-get autoclean -y && \
     apt-get autoremove -y
 
 
-#install PHP 5.6
+RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
+    echo "CREATE DATABASE ${MYSQL_BASE};" > /tmp/script.sql && \
+    mysql -u${MYSQL_USER} -p${MYSQL_PASS} < /tmp/script.sql
+
+# add repository with PHP 5.6
 RUN apt-get install software-properties-common -y && \
     add-apt-repository ppa:ondrej/php && \
     apt-get update && \
@@ -20,6 +47,7 @@ RUN apt-get install software-properties-common -y && \
         git \
         curl \
         zip \
+        mc \
         php5.6 \
         php5.6-cli \
         php5.6-xml \
@@ -32,6 +60,48 @@ RUN apt-get install software-properties-common -y && \
         apt-get autoclean -y && apt-get autoremove -y
 
 
-# Start container.
-COPY Buildplan/Docker/startup.sh startup.sh
-CMD ["/bin/bash", "/startup.sh"]
+RUN mkdir -p ${WP_INSTALL_DIR}
+RUN cd ${WP_INSTALL_DIR} && curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && chmod +x ./wp-cli.phar
+ENV WPCLI="${WP_INSTALL_DIR}/wp-cli.phar --allow-root --path=${WP_INSTALL_DIR}"
+
+RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
+    cd ${WP_INSTALL_DIR} && \
+    ${WPCLI} core download && \
+    ${WPCLI} config create --dbname=${MYSQL_BASE} --dbuser=${MYSQL_USER} --dbpass=${MYSQL_PASS} --dbprefix=${WP_DB_TABLE_PREFIX} && \
+    ${WPCLI} core install --url=${WP_INSTALLATION_DOMAIN} --title=Test --admin_user=wp --admin_password=wp --admin_email=test@wp.org --skip-email && \
+    ${WPCLI} core multisite-convert && \
+    curl ${DLINK} --output ${BUILD_FQFN} && \
+    if [ ! -d "/root/.composer" ]; then mkdir "/root/.composer"; fi; echo "{\"github-oauth\":{\"github.com\":\"$GITHUB_OAUTH_TOKEN\"}}" > "/root/.composer/auth.json"
+
+SHELL ["/bin/bash", "-c"]
+RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
+    IFS=',' read -a array <<< "${SITES}"; for site in "${array[@]}"; do ${WPCLI} site create --slug="${site##*\:}" --title="${site%%\:*}" --email=test@wp.org; done
+
+RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
+    IFS=';' read -a array <<< "${DEPENDENCIES}"; for plugin_name in "${array[@]}"; do ${WPCLI} plugin install $plugin_name --activate-network; done
+
+ENV WP_PLUGINS_DIR="${WP_INSTALL_DIR}/wp-content/plugins"
+
+ENV PLUGIN_DIR="${WP_PLUGINS_DIR}/smartling-connector"
+
+ENV DLINK="https://connect.advancedcustomfields.com/index.php?a=download&p=pro&k=${ACFPRO_KEY}"
+ENV PPATH="${WP_INSTALL_DIR}/advanced-custom-fields-pro.zip"
+RUN curl ${DLINK} --output ${PPATH}
+
+RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
+    ${WPCLI} plugin install ${PPATH} --activate-network
+
+#RUN ln -s "${PLUGIN_DIR}/tests/IntegrationTests/testdata/advanced-custom-fields-pro" "${WP_PLUGINS_DIR}/advanced-custom-fields-pro"
+
+COPY Buildplan-AIO/boot.sh boot.sh
+
+CMD WP_INSTALL_DIR=${WP_INSTALL_DIR} \
+    PLUGIN_DIR=${PLUGIN_DIR} \
+    WPCLI=${WPCLI} \
+    WP_DB_USER=${MYSQL_USER} \
+    WP_DB_PASS=${MYSQL_PASS} \
+    WP_DB_NAME=${MYSQL_BASE} \
+    WP_DB_TABLE_PREFIX=${WP_DB_TABLE_PREFIX} \
+    WP_INSTALLATION_DOMAIN=${WP_INSTALLATION_DOMAIN} \
+    SITES=${SITES} \
+    /boot.sh

@@ -2,31 +2,50 @@ pipeline {
   agent any
 
   environment {
-    full_image_name = "wordpress-connector-build"
+    full_image_name = "wordpress-connector-build-image-name"
+    sonar_project_key = "wordpress-connector:master"
+    sonar_project_name = "wordpress-connector"
   }
 
   stages {
     stage('Build Docker image') {
       steps {
-        sh "docker build --no-cache --rm --pull --tag=${full_image_name} -f \"Buildplan-AIO/Dockerfile\" ."
+        withCredentials([string(credentialsId: 'GITHUB_OAUTH', variable: 'GITHUB_OAUTH'), string(credentialsId: 'ACF_PRO_KEY', variable: 'ACF_PRO_KEY')]) {
+          /* sh 'eval $(aws ecr get-login --region us-east-1 --no-include-email)' */
+          sh "docker build --no-cache --rm --pull --tag=${full_image_name} -f \"Buildplan-AIO/Dockerfile\" --build-arg ACFPRO_KEY=\"${ACF_PRO_KEY}\" --build-arg GITHUB_OAUTH_TOKEN=\"${GITHUB_OAUTH}\" ."
+        }
       }
     }
 
-    stage('Push docker images') {
+    stage('Run tests') {
       steps {
-        sh 'eval $(aws ecr get-login --region us-east-1 --no-include-email)'
-
+        withCredentials([string(credentialsId: 'PROJECT_ID', variable: 'PROJECT_ID'), string(credentialsId: 'USER_IDENTIFIER', variable: 'USER_IDENTIFIER'), string(credentialsId: 'TOKEN_SECRET', variable: 'TOKEN_SECRET')]) {
+          /* sh 'eval $(aws ecr get-login --region us-east-1 --no-include-email)' */
+          sh "docker run --rm -w \"${WORKSPACE}\" -v \"${WORKSPACE}:/${WORKSPACE}\"  -e MYSQL_HOST=\"localhost\" -e CRE_PROJECT_ID=\"${PROJECT_ID}\" -e CRE_USER_IDENTIFIER=\"${USER_IDENTIFIER}\" -e CRE_TOKEN_SECRET=\"${TOKEN_SECRET}\" ${full_image_name}:latest"
+        }
       }
     }
+
 
     stage('Post build clean up') {
       steps {
         sh "docker rmi ${full_image_name}"
       }
     }
+
+    stage('Clean up') {
+          steps {
+            deleteDir()
+          }
+        }
   }
 
   post {
+
+    always {
+        deleteDir()
+    }
+
     failure {
       slackSend (
         channel: "#emergency-connectors",
