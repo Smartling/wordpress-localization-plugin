@@ -29,6 +29,7 @@ COMPOSER_BIN="$COMPOSER_INSTALL_DIR/composer"
 
 
 cd "$LOCAL_GIT_DIR"
+ls -lah
 $COMPOSER_BIN update
 
 echo ---
