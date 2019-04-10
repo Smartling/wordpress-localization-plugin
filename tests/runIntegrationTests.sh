@@ -285,8 +285,11 @@ installSmartlingConnector
 runTests
 
 WP_INSTALL_TEST_DIR="$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests"
+echo "---> coverage start"
 
-cat "$WP_INSTALL_TEST_DIR/results.xml"
+cat "$WP_INSTALL_TEST_DIR/phpunit-coverage.xml"
+
+echo "---> coverage finish"
 
 rm -f "$PLUGIN_DEV_DIR/tests/phpunit-results.xml"
 mv "$WP_INSTALL_TEST_DIR/results.xml" "$PLUGIN_DEV_DIR/tests/phpunit-results.xml"
