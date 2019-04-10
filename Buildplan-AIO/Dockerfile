@@ -97,6 +97,7 @@ ENV WP_PLUGINS_DIR="${WP_INSTALL_DIR}/wp-content/plugins"
 ENV PLUGIN_DIR="${WP_PLUGINS_DIR}/smartling-connector"
 
 COPY Buildplan-AIO/boot.sh /boot.sh
+RUN chmod +x /boot.sh
 
 CMD WP_INSTALL_DIR=${WP_INSTALL_DIR} \
     PLUGIN_DIR=${PLUGIN_DIR} \
@@ -107,4 +108,4 @@ CMD WP_INSTALL_DIR=${WP_INSTALL_DIR} \
     WP_DB_TABLE_PREFIX=${WP_DB_TABLE_PREFIX} \
     WP_INSTALLATION_DOMAIN=${WP_INSTALLATION_DOMAIN} \
     SITES=${SITES} \
-    ls -lah /
+    /boot.sh
