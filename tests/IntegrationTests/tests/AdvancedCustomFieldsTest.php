@@ -76,18 +76,16 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
 
     public function testAdvancedCustomFields()
     {
-
-        //static::markTestSkipped('Works, but test should be fixed.');
         $imageId = $this->createAttachment();
-
         $taxonomyIds = $this->createTaxonomy('Category A');
-
         $postId = $this->createSourcePostWithMetadata($imageId, $taxonomyIds);
         $translationHelper = $this->getTranslationHelper();
+
         /**
          * @var SubmissionEntity $submission
          */
         $submission = $translationHelper->prepareSubmission('post', 1, $postId, 2, true);
+
         /**
          * Check submission status
          */

@@ -286,6 +286,10 @@ runTests
 
 WP_INSTALL_TEST_DIR="$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests"
 
-mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/phpunit-results.xml" "$PLUGIN_DEV_DIR/tests"
+cat "$WP_INSTALL_TEST_DIR/results.xml"
+
+rm -f "$PLUGIN_DEV_DIR/tests/phpunit-results.xml"
+mv "$WP_INSTALL_TEST_DIR/results.xml" "$PLUGIN_DEV_DIR/tests/phpunit-results.xml"
 mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/phpunit-coverage.xml" "$PLUGIN_DEV_DIR/tests"
+
 cleanDatabase
