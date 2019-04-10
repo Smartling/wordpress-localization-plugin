@@ -12,7 +12,7 @@ pipeline {
       steps {
         withCredentials([string(credentialsId: 'GITHUB_OAUTH', variable: 'GITHUB_OAUTH'), string(credentialsId: 'ACF_PRO_KEY', variable: 'ACF_PRO_KEY')]) {
           sh 'eval $(aws ecr get-login --region us-east-1 --no-include-email)'
-          sh "docker build --no-cache --rm --pull --tag=${full_image_name} -f \"Buildplan-AIO/Dockerfile\" --build-arg ACFPRO_KEY=\"${ACF_PRO_KEY}\" --build-arg GITHUB_OAUTH_TOKEN=\"${GITHUB_OAUTH}\" ."
+          sh "docker build --rm --pull --tag=${full_image_name} -f \"Buildplan-AIO/Dockerfile\" --build-arg ACFPRO_KEY=\"${ACF_PRO_KEY}\" --build-arg GITHUB_OAUTH_TOKEN=\"${GITHUB_OAUTH}\" ."
         }
       }
     }
