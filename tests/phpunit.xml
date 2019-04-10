@@ -25,7 +25,7 @@
         </testsuite>
     </testsuites>
     <logging>
-        <log type="junit" target="results.xml" logIncompleteSkipped="false"/>
+        <log type="junit" target="phpunit-results.xml" logIncompleteSkipped="false"/>
         <log type="coverage-clover" target="phpunit-coverage.xml"/>
     </logging>
     <filter>
