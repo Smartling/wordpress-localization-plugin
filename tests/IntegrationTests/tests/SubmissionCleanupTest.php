@@ -14,10 +14,10 @@ class SubmissionCleanupTest extends SmartlingUnitTestCaseAbstract
      */
     private function makePreparations()
     {
+        $this->wpcli_exec('plugin', 'activate', 'exec-plugin --network');
+
         $postId = $this->createPost();
-
         $translationHelper = $this->getTranslationHelper();
-
         /**
          * @var SubmissionEntity $submission
          */

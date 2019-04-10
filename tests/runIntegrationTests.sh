@@ -276,7 +276,6 @@ installSmartlingConnector () {
 	rm -rf "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/phpunit.xml"
 	ln -s "$PLUGIN_DEV_DIR/tests/phpunit.xml" "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/phpunit.xml"
 
-    $WPCLI plugin activate exec-plugin --network
     $WPCLI cron event run wp_version_check --path="$WP_INSTALL_DIR"
 }
 
