@@ -288,9 +288,9 @@ WP_INSTALL_TEST_DIR="$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/test
 
 echo "---> test results begin"
 ls -lah  "$WP_INSTALL_TEST_DIR"
-cat "$WP_INSTALL_TEST_DIR/phpunit-results.xml"
+cat "$WP_INSTALL_TEST_DIR/results.xml"
 echo "---> test results end"
 
-mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/phpunit-results.xml" "$PLUGIN_DEV_DIR/tests"
+mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/results.xml" "$PLUGIN_DEV_DIR/tests"
 mv "$WP_INSTALL_DIR/wp-content/plugins/smartling-connector/tests/phpunit-coverage.xml" "$PLUGIN_DEV_DIR/tests"
 cleanDatabase
