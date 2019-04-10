@@ -27,27 +27,35 @@ php composer-setup.php --install-dir="$COMPOSER_INSTALL_DIR" --filename=composer
 php -r "unlink('composer-setup.php');"
 COMPOSER_BIN="$COMPOSER_INSTALL_DIR/composer"
 
+chown -R mysql:mysql /var/lib/mysql && service mysql start
 
 cd "$LOCAL_GIT_DIR"
-ls -lah
 $COMPOSER_BIN update
 
-echo ---
-pwd
+# remove installev plugin dir and replace with dev dir
+rm -rf "$PLUGIN_DIR"
+ln -s "$LOCAL_GIT_DIR" "$PLUGIN_DIR"
+
+export AUTOLOADER="${PLUGIN_DIR}/inc/autoload.php"
+export TEST_DATA_DIR="${PLUGIN_DIR}/tests/IntegrationTests/testdata"
+export TEST_CONFIG="$TEST_DATA_DIR/wp-tests-config.php"
 
 
-#COPY smartling-connector-dev ${PLUGIN_DIR}
+ln -s "${TEST_DATA_DIR}/acf-pro-test-definitions" "${WP_PLUGINS_DIR}/acf-pro-test-definitions"
+ln -s "${TEST_DATA_DIR}/exec-plugin" "${WP_PLUGINS_DIR}/exec-plugin"
 
-#RUN ln -s "${PLUGIN_DIR}/tests/IntegrationTests/testdata/acf-pro-test-definitions" "${WP_PLUGINS_DIR}/acf-pro-test-definitions"
-#RUN ln -s "${PLUGIN_DIR}/tests/IntegrationTests/testdata/exec-plugin" "${WP_PLUGINS_DIR}/exec-plugin"
+cd ${PLUGIN_DIR}
 
-#RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
-#    ${WPCLI} plugin activate \
-#    exec-plugin \
-#    advanced-custom-fields-pro \
-#    --network
+${WPCLI} cron event run wp_version_check --path="${WP_INSTALL_DIR}"
 
+cd "${PLUGIN_DIR}/inc/third-party/bin"
 
+PHPUNIT_BIN="$(pwd)/phpunit"
 
-ls -lah /
+chmod +x $PHPUNIT_BIN
 
+PHPUNIT_XML="${PLUGIN_DIR}/tests/phpunit.xml"
+
+${PHPUNIT_BIN} -c ${PHPUNIT_XML}
+
+service mysql stop
