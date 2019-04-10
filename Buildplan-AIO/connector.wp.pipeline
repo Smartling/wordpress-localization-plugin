@@ -11,9 +11,8 @@ pipeline {
     stage('Build Docker image') {
       steps {
         withCredentials([string(credentialsId: 'GITHUB_OAUTH', variable: 'GITHUB_OAUTH'), string(credentialsId: 'ACF_PRO_KEY', variable: 'ACF_PRO_KEY')]) {
-        sh "docker rmi ${full_image_name}"
           sh 'eval $(aws ecr get-login --region us-east-1 --no-include-email)'
-          sh "docker build --no-cache --rm --pull --tag=${full_image_name} -f \"Buildplan-AIO/Dockerfile\" --build-arg ACFPRO_KEY=\"${ACF_PRO_KEY}\" --build-arg GITHUB_OAUTH_TOKEN=\"${GITHUB_OAUTH}\" ."
+          sh "docker build --rm --pull --tag=${full_image_name} -f \"Buildplan-AIO/Dockerfile\" --build-arg ACFPRO_KEY=\"${ACF_PRO_KEY}\" --build-arg GITHUB_OAUTH_TOKEN=\"${GITHUB_OAUTH}\" ."
         }
       }
     }
@@ -22,7 +21,7 @@ pipeline {
       steps {
         withCredentials([string(credentialsId: 'PROJECT_ID', variable: 'PROJECT_ID'), string(credentialsId: 'USER_IDENTIFIER', variable: 'USER_IDENTIFIER'), string(credentialsId: 'TOKEN_SECRET', variable: 'TOKEN_SECRET')]) {
           sh 'eval $(aws ecr get-login --region us-east-1 --no-include-email)'
-          sh "docker run --rm -w \"${WORKSPACE}\" -v \"${WORKSPACE}:${WORKSPACE}" -e MYSQL_HOST=\"localhost\" -e CRE_PROJECT_ID=\"${PROJECT_ID}\" -e CRE_USER_IDENTIFIER=\"${USER_IDENTIFIER}\" -e CRE_TOKEN_SECRET=\"${TOKEN_SECRET}\" ${full_image_name}:latest"
+          sh "docker run --rm -w \"/plugin-dir\" -v \"/plugin-dir:/plugin-dir\" -e MYSQL_HOST=\"localhost\" -e CRE_PROJECT_ID=\"${PROJECT_ID}\" -e CRE_USER_IDENTIFIER=\"${USER_IDENTIFIER}\" -e CRE_TOKEN_SECRET=\"${TOKEN_SECRET}\" ${full_image_name}:latest"
         }
       }
     }
