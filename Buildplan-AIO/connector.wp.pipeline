@@ -27,6 +27,19 @@ pipeline {
       }
     }
 
+    stage('Fix phpunit artifacts') {
+          steps {
+            sh "sed -i \"s/\\/plugin-dir\\///g\" tests/phpunit-results.xml"
+            sh "sed -i \"s/tests\\/IntegrationTests\\/src\\/wp-content\\/plugins\\/smartling-connector\\///g\" tests/phpunit-coverage.xml"
+          }
+        }
+
+        stage('Junit') {
+          steps {
+            junit 'tests/phpunit-results.xml'
+          }
+        }
+
     stage('Post build clean up') {
       steps {
         sh "docker rmi ${full_image_name}"
