@@ -11,7 +11,7 @@ pipeline {
     stage('Build Docker image') {
       steps {
         withCredentials([string(credentialsId: 'GITHUB_OAUTH', variable: 'GITHUB_OAUTH'), string(credentialsId: 'ACF_PRO_KEY', variable: 'ACF_PRO_KEY')]) {
-          sh "docker build --no-cache --rm --pull --tag=${full_image_name} -f \"Buildplan-AIO/Dockerfile\" --build-arg ACFPRO_KEY=\"${ACF_PRO_KEY}\" --build-arg WP_VERSION=\"${WP_VERSION}\" --build-arg ACF_PRO_VERSION=\"${ACF_PRO_VERSION}\" --build-arg GITHUB_OAUTH_TOKEN=\"${GITHUB_OAUTH}\" ."
+          sh "docker build --no-cache --rm --pull --tag=${full_image_name} -f \"Buildplan/Dockerfile\" --build-arg ACFPRO_KEY=\"${ACF_PRO_KEY}\" --build-arg WP_VERSION=\"${WP_VERSION}\" --build-arg ACF_PRO_VERSION=\"${ACF_PRO_VERSION}\" --build-arg GITHUB_OAUTH_TOKEN=\"${GITHUB_OAUTH}\" ."
         }
       }
     }
