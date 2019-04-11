@@ -77,7 +77,8 @@ RUN if [ "latest" == "${WP_VERSION}" ] ; then WP_VER_STR="" ; else WP_VER_STR=" 
 
 RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
     cd ${WP_INSTALL_DIR} && \
-    ${WPCLI} core download ${WP_VER_STR} && \
+    if [ "latest" == "${WP_VERSION}" ] ; then WP_VER_STR="" ; else WP_VER_STR=" --version=\"${WP_VERSION}\""; fi; && \
+    ${WPCLI} core download${WP_VER_STR} && \
     ${WPCLI} config create --dbname=${MYSQL_BASE} --dbuser=${MYSQL_USER} --dbpass=${MYSQL_PASS} --dbprefix=${WP_DB_TABLE_PREFIX} && \
     ${WPCLI} core install --url=${WP_INSTALLATION_DOMAIN} --title=Test --admin_user=wp --admin_password=wp --admin_email=test@wp.org --skip-email && \
     ${WPCLI} core multisite-convert && \
@@ -95,17 +96,16 @@ RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
     IFS=';' read -a array <<< "${DEPENDENCIES}"; for plugin_name in "${array[@]}"; do ${WPCLI} plugin install $plugin_name --activate-network; done
 
 # install ACF Pro (latest) add &t=<ver> to download URI for customization
-RUN if [ "latest" == "${ACF_PRO_VERSION}" ] ; then ACF_VER_STR="" ; else ACF_VER_STR="&t=${ACF_PRO_VERSION}"; fi;
-ENV DLINK="https://connect.advancedcustomfields.com/index.php?a=download&p=pro&k=${ACFPRO_KEY}${ACF_VER_STR}"
-ENV PPATH="${WP_INSTALL_DIR}/advanced-custom-fields-pro.zip"
-RUN curl ${DLINK} --output ${PPATH}
-RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
-    ${WPCLI} plugin install ${PPATH} --activate-network
 
+RUN DLINK="https://connect.advancedcustomfields.com/index.php?a=download&p=pro&k=${ACFPRO_KEY}" && \
+    PPATH="${WP_INSTALL_DIR}/advanced-custom-fields-pro.zip" && \
+    chown -R mysql:mysql /var/lib/mysql && service mysql start && \
+    if [ "latest" == "${ACF_PRO_VERSION}" ] ; then ACF_VER_STR="" ; else ACF_VER_STR="&t=${ACF_PRO_VERSION}"; fi; && \
+    curl ${DLINK}${ACF_VER_STR} --output ${PPATH} && \
+    ${WPCLI} plugin install ${PPATH} --activate-network
 
 ENV WP_PLUGINS_DIR="${WP_INSTALL_DIR}/wp-content/plugins"
 ENV PLUGIN_DIR="${WP_PLUGINS_DIR}/smartling-connector"
-
 ENV LOCAL_GIT_DIR="/plugin-dir"
 
 COPY Buildplan/boot.sh /boot.sh
