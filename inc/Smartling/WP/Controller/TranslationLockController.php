@@ -122,8 +122,8 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
         $submissionManager = $this->getManager();
         $submissions = $submissionManager->find(
             [
-                'target_blog_id' => $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
-                'target_id'      => $postId,
+                SubmissionEntity::FIELD_TARGET_BLOG_ID => $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
+                SubmissionEntity::FIELD_TARGET_ID      => $postId,
             ]
         );
 
@@ -238,7 +238,7 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
                 $data[] = [
                     'name'   => $fielName,
                     'value'  => $fieldValue,
-                    'locked' => is_array($lockedFields) && in_array($fielName, $lockedFields),
+                    'locked' => is_array($lockedFields) && in_array($fielName, $lockedFields, true),
                 ];
             }
             $table = new TranslationLockTableWidget();

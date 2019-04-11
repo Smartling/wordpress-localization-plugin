@@ -223,7 +223,7 @@ class WidgetHelper
 
     private function placeWidgetToBar()
     {
-        $bar = in_array($this->getSideBar(), ThemeSidebarHelper::getSideBarsIds())
+        $bar = in_array($this->getSideBar(), ThemeSidebarHelper::getSideBarsIds(), true)
             ? $this->getSideBar()
             : ThemeSidebarHelper::INACTIVE_BAR_ID;
 

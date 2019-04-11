@@ -610,7 +610,7 @@ class HtmlTagGeneratorHelper
                 $attrs['value'] = (string)$key;
                 $attrs['selected'] = $selection !== null &&
                     (!is_array($selection) && !strcmp($key, $selection)
-                        || is_array($selection) && in_array($key, $selection));
+                        || is_array($selection) && in_array($key, $selection, true));
                 $lines[] = static::tag('option',
                     ($encodeSpaces ? str_replace(' ', '&nbsp;',
                         static::encode($value)) : static::encode($value)),
@@ -670,7 +670,7 @@ class HtmlTagGeneratorHelper
         foreach ($items as $value => $label) {
             $checked = $selection !== null &&
                 (!is_array($selection) && !strcmp($value, $selection)
-                    || is_array($selection) && in_array($value, $selection));
+                    || is_array($selection) && in_array($value, $selection, true));
             if ($formatter !== null) {
                 $lines[] = call_user_func($formatter, $index, $label, $name, $checked, $value);
             } else {
@@ -809,7 +809,7 @@ class HtmlTagGeneratorHelper
         foreach ($items as $value => $label) {
             $checked = $selection !== null &&
                 (!is_array($selection) && !strcmp($value, $selection)
-                    || is_array($selection) && in_array($value, $selection));
+                    || is_array($selection) && in_array($value, $selection, true));
             if ($formatter !== null) {
                 $lines[] = call_user_func($formatter, $index, $label, $name, $checked, $value);
             } else {

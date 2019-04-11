@@ -37,8 +37,8 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
                 '%e',
             ],
             [
-                self::SMARTLING_SHORTCODE_MASK_S,
-                self::SMARTLING_SHORTCODE_MASK_E,
+                static::SMARTLING_SHORTCODE_MASK_S,
+                static::SMARTLING_SHORTCODE_MASK_E,
             ],
             ('(' . implode('|', $variants) . ')')
         );
@@ -160,7 +160,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
 
             $this->restoreHandlers();
 
-            self::replaceCData($node, $string_m);
+            static::replaceCData($node, $string_m);
         }
 
 
@@ -174,12 +174,12 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     {
         $this->getLogger()->debug(vsprintf('Removing masking...', []));
         $node = $this->getNode();
-        $string = self::getCdata($node);
-        $string = preg_replace(vsprintf('/%s\[/', [self::SMARTLING_SHORTCODE_MASK_S]), '[', $string);
-        $string = preg_replace(vsprintf('/\]%s/', [self::SMARTLING_SHORTCODE_MASK_E]), ']', $string);
-        $string = preg_replace(vsprintf('/\]%s/', [self::SMARTLING_SHORTCODE_MASK_OLD]), ']', $string);
-        $string = preg_replace(vsprintf('/%s\[/', [self::SMARTLING_SHORTCODE_MASK_OLD]), '[', $string);
-        self::replaceCData($node, $string);
+        $string = static::getCdata($node);
+        $string = preg_replace(vsprintf('/%s\[/', [static::SMARTLING_SHORTCODE_MASK_S]), '[', $string);
+        $string = preg_replace(vsprintf('/\]%s/', [static::SMARTLING_SHORTCODE_MASK_E]), ']', $string);
+        $string = preg_replace(vsprintf('/\]%s/', [static::SMARTLING_SHORTCODE_MASK_OLD]), ']', $string);
+        $string = preg_replace(vsprintf('/%s\[/', [static::SMARTLING_SHORTCODE_MASK_OLD]), '[', $string);
+        static::replaceCData($node, $string);
     }
 
     public function getTranslatedShortcodes()
@@ -219,7 +219,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     {
         $this->resetInternalState();
         $this->setParams($params);
-        $string = self::getCdata($params->getNode());
+        $string = static::getCdata($params->getNode());
 
         if (StringHelper::isNullOrEmpty($string)) {
             return $params;
@@ -231,7 +231,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         $this->replaceHandlerForMining($detectedShortcodes);
         //$this->getLogger()->debug(vsprintf('Starting processing shortcodes...', []));
         $string_m = do_shortcode($string);
-        self::replaceCData($params->getNode(), $string_m);
+        static::replaceCData($params->getNode(), $string_m);
         //$this->getLogger()->debug(vsprintf('Finished processing shortcodes.', []));
         $this->attachSubnodes();
 
@@ -264,12 +264,12 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
             $this->getLogger()->debug(vsprintf('Pre filtered attributes (while uploading) %s',
                 [var_export($attributes, true)]));
             //passing download filters to create relative structures
-            $preparedAttributes = self::maskAttributes($name, $attributes);
+            $preparedAttributes = static::maskAttributes($name, $attributes);
             $this->postReceiveFiltering($preparedAttributes);
             $preparedAttributes = $this->preSendFiltering($preparedAttributes);
             $this->getLogger()->debug(vsprintf('Post filtered attributes (while uploading) %s',
                 [var_export($preparedAttributes, true)]));
-            $preparedAttributes = self::unmaskAttributes($name, $preparedAttributes);
+            $preparedAttributes = static::unmaskAttributes($name, $preparedAttributes);
             if (0 < count($preparedAttributes)) {
                 foreach ($preparedAttributes as $attribute => $value) {
                     $node = $this->createDomNode(
@@ -295,7 +295,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
             $attributes = [];
         }
 
-        return self::buildMaskedShortcode($name, $attributes, $content);
+        return static::buildMaskedShortcode($name, $attributes, $content);
     }
 
     /**
@@ -309,7 +309,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
      */
     private static function buildMaskedShortcode($name, array $attributes, $content)
     {
-        $output = self::SMARTLING_SHORTCODE_MASK_S . '[' . $name;
+        $output = static::SMARTLING_SHORTCODE_MASK_S . '[' . $name;
         foreach ($attributes as $attributeName => $attributeValue) {
             $output .= ' ' . (
                 (is_string($attributeName))
@@ -317,15 +317,15 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
                     : vsprintf('"%s"', [esc_attr($attributeValue)])
                 );
         }
-        $output .= ']' . self::SMARTLING_SHORTCODE_MASK_E;
+        $output .= ']' . static::SMARTLING_SHORTCODE_MASK_E;
         if (!StringHelper::isNullOrEmpty($content)) {
             $output .= vsprintf(
                 '%s%s[/%s]%s',
                 [
                     $content,
-                    self::SMARTLING_SHORTCODE_MASK_S,
+                    static::SMARTLING_SHORTCODE_MASK_S,
                     $name,
-                    self::SMARTLING_SHORTCODE_MASK_E,
+                    static::SMARTLING_SHORTCODE_MASK_E,
                 ]
             );
         }
@@ -392,13 +392,13 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         }
         // action 1: pass through post-translation filters
         if (0 < count($attr)) {
-            $attr = self::maskAttributes($name, $attr);
+            $attr = static::maskAttributes($name, $attr);
             $attr = $this->postReceiveFiltering($attr);
-            $attr = self::unmaskAttributes($name, $attr);
+            $attr = static::unmaskAttributes($name, $attr);
         }
 
         // action 3: return rebuilded shortcode.
-        return self::buildShortcode($name, $attr, $content);
+        return static::buildShortcode($name, $attr, $content);
     }
 
 

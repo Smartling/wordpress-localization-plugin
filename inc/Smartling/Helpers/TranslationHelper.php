@@ -107,7 +107,7 @@ class TranslationHelper
 
         $blogs = $this->getSiteHelper()->listBlogIdsFlat();
 
-        if (!in_array((int) $sourceBlogId, $blogs)) {
+        if (!in_array((int) $sourceBlogId, $blogs, true)) {
             $exception = new UnexpectedValueException(
                 vsprintf('Unexpected value: sourceBlogId must be one of [%s], %s got',
                     [implode(', ',$blogs),$sourceBlogId])
@@ -125,7 +125,7 @@ class TranslationHelper
             throw $exception;
         }
 
-        if (!in_array((int) $targetBlogId, $blogs)) {
+        if (!in_array((int) $targetBlogId, $blogs, true)) {
             $exception = new UnexpectedValueException(
                 vsprintf('Unexpected value: targetBlogId must be one of [%s], %s got',
                     [implode(', ',$blogs),targetBlogId])
@@ -265,7 +265,7 @@ class TranslationHelper
 
             $relatedSubmission->setBatchUid($batchUid);
             $serialized = $relatedSubmission->toArray(false);
-            if (null === $serialized['file_uri']) {
+            if (null === $serialized[SubmissionEntity::FIELD_FILE_URI]) {
                 $relatedSubmission->getFileUri();
             }
             $relatedSubmission = $this->getSubmissionManager()->storeEntity($relatedSubmission);

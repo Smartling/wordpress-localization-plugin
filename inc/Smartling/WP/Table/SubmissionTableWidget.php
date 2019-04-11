@@ -383,9 +383,9 @@ class SubmissionTableWidget extends SmartlingListTable
             $searchBlock = ConditionBlock::getConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR);
 
             $searchFields = [
-                'source_title',
-                'source_id',
-                'file_uri',
+                SubmissionEntity::FIELD_SOURCE_TITLE,
+                SubmissionEntity::FIELD_SOURCE_TITLE,
+                SubmissionEntity::FIELD_FILE_URI,
             ];
 
             foreach ($searchFields as $searchField) {
@@ -402,19 +402,19 @@ class SubmissionTableWidget extends SmartlingListTable
         }
 
         if (null !== $targetLocale) {
-            $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'target_blog_id', [$targetLocale]));
+            $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_TARGET_BLOG_ID, [$targetLocale]));
         }
 
         if ('any' !== $lockedFlag) {
 
-            $lockConditionTotal = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'is_locked', [(int)$lockedFlag]);
+            $lockConditionTotal = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_LOCKED, [(int)$lockedFlag]);
 
             if (1 === (int)$lockedFlag) {
-                $lockConditionFields = Condition::getCondition(ConditionBuilder::CONDITION_IS_NOT_NULL, 'locked_fields', []);
-                $lockConditionFields2 = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_NOT_EQ, 'locked_fields', [serialize([])]);
+                $lockConditionFields = Condition::getCondition(ConditionBuilder::CONDITION_IS_NOT_NULL, SubmissionEntity::FIELD_LOCKED_FIELDS, []);
+                $lockConditionFields2 = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_NOT_EQ, SubmissionEntity::FIELD_LOCKED_FIELDS, [serialize([])]);
             } else {
-                $lockConditionFields = Condition::getCondition(ConditionBuilder::CONDITION_IS_NULL, 'locked_fields', []);
-                $lockConditionFields2 = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'locked_fields', [serialize([])]);
+                $lockConditionFields = Condition::getCondition(ConditionBuilder::CONDITION_IS_NULL, SubmissionEntity::FIELD_LOCKED_FIELDS, []);
+                $lockConditionFields2 = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_LOCKED_FIELDS, [serialize([])]);
             }
 
             $lockBlockHL = ConditionBlock::getConditionBlock();
@@ -431,7 +431,7 @@ class SubmissionTableWidget extends SmartlingListTable
         }
 
         if ('any' !== $clonedFlag) {
-            $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'is_cloned', [(int)$clonedFlag]));
+            $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_CLONED, [(int)$clonedFlag]));
         }
 
         $data = $this->manager->searchByCondition(
@@ -451,13 +451,13 @@ class SubmissionTableWidget extends SmartlingListTable
         foreach ($data as $element) {
             $row = $element->toArray();
 
-            $row["file_uri"] = htmlentities($row["file_uri"]);
-            $row['source_title'] = htmlentities($row['source_title']);
-            $row['content_type'] = WordpressContentTypeHelper::getLocalizedContentType($row['content_type']);
-            $row['submission_date'] = DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row['submission_date']));
-            $row['applied_date'] = '0000-00-00 00:00:00' === $row['applied_date'] ? __('Never')
-                : DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row['applied_date']));
-            $row['target_locale'] = $siteHelper->getBlogLabelById($this->entityHelper->getConnector(), $row['target_blog_id']);
+            $row[SubmissionEntity::FIELD_FILE_URI] = htmlentities($row[SubmissionEntity::FIELD_FILE_URI]);
+            $row[SubmissionEntity::FIELD_SOURCE_TITLE] = htmlentities($row[SubmissionEntity::FIELD_SOURCE_TITLE]);
+            $row[SubmissionEntity::FIELD_CONTENT_TYPE] = WordpressContentTypeHelper::getLocalizedContentType($row[SubmissionEntity::FIELD_CONTENT_TYPE]);
+            $row[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row[SubmissionEntity::FIELD_SUBMISSION_DATE]));
+            $row[SubmissionEntity::FIELD_APPLIED_DATE] = '0000-00-00 00:00:00' === $row[SubmissionEntity::FIELD_APPLIED_DATE] ? __('Never')
+                : DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row[SubmissionEntity::FIELD_APPLIED_DATE]));
+            $row[SubmissionEntity::FIELD_TARGET_LOCALE] = $siteHelper->getBlogLabelById($this->entityHelper->getConnector(), $row[SubmissionEntity::FIELD_TARGET_BLOG_ID]);
 
             $flagBlockParts = [];
 
@@ -475,19 +475,19 @@ class SubmissionTableWidget extends SmartlingListTable
             $row['outdated'] = implode('', $flagBlockParts);
 
             if (SubmissionEntity::SUBMISSION_STATUS_FAILED === $row['status'] &&
-                !StringHelper::isNullOrEmpty($row['last_error'])
+                !StringHelper::isNullOrEmpty($row[SubmissionEntity::FIELD_LAST_ERROR])
             ) {
-                $row['status'] = HtmlTagGeneratorHelper::tag('span', $row['status'], [
+                $row[SubmissionEntity::FIELD_STATUS] = HtmlTagGeneratorHelper::tag('span', $row[SubmissionEntity::FIELD_STATUS], [
                     'class' => 'submission-failed',
-                    'title' => trim($row['last_error']),
+                    'title' => trim($row[SubmissionEntity::FIELD_LAST_ERROR]),
                 ]);
             }
 
-            if (mb_strlen($row['file_uri'], 'utf8') > $file_uri_max_chars) {
-                $orig = $row['file_uri'];
+            if (mb_strlen($row[SubmissionEntity::FIELD_FILE_URI], 'utf8') > $file_uri_max_chars) {
+                $orig = $row[SubmissionEntity::FIELD_FILE_URI];
                 $shrinked = mb_substr($orig, 0, $file_uri_max_chars - 3, 'utf8') . '...';
 
-                $row['file_uri'] = HtmlTagGeneratorHelper::tag('span', $shrinked, ['title' => $orig]);
+                $row[SubmissionEntity::FIELD_FILE_URI] = HtmlTagGeneratorHelper::tag('span', $shrinked, ['title' => $orig]);
 
             }
 

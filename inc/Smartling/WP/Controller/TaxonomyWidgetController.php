@@ -133,9 +133,9 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                 if (0 < count($applicableProfiles)) {
                     $submissions = $this->getManager()
                         ->find([
-                                   'source_blog_id' => $curBlogId,
-                                   'source_id'      => $term->term_id,
-                                   'content_type'   => $taxonomyType,
+                                   SubmissionEntity::FIELD_SOURCE_BLOG_ID => $curBlogId,
+                                   SubmissionEntity::FIELD_SOURCE_ID      => $term->term_id,
+                                   SubmissionEntity::FIELD_CONTENT_TYPE   => $taxonomyType,
                                ]);
 
                     $this->view([
@@ -165,7 +165,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
             return;
         }
         $termType = $_POST['taxonomy'];
-        if (!in_array($termType, WordpressContentTypeHelper::getSupportedTaxonomyTypes())) {
+        if (!in_array($termType, WordpressContentTypeHelper::getSupportedTaxonomyTypes(), true)) {
             return;
         }
         $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
@@ -264,9 +264,9 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                     case 'Download':
                         $submissions = $this->getManager()->find(
                             [
-                                'source_blog_id' => $curBlogId,
-                                'source_id'      => $term_id,
-                                'content_type'   => $termType,
+                                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $curBlogId,
+                                SubmissionEntity::FIELD_SOURCE_ID      => $term_id,
+                                SubmissionEntity::FIELD_CONTENT_TYPE   => $termType,
                             ]
                         );
                         if (0 < count($submissions)) {

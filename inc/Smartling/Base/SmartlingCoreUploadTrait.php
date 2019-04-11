@@ -420,14 +420,14 @@ trait SmartlingCoreUploadTrait
             $submission = $this->getSubmissionManager()->storeEntity($submission);
 
             $params = [
-                'status'    => [SubmissionEntity::SUBMISSION_STATUS_NEW],
-                'file_uri'  => $submission->getFileUri(),
-                'is_cloned' => [0],
-                'is_locked' => [0],
+                SubmissionEntity::FIELD_STATUS    => [SubmissionEntity::SUBMISSION_STATUS_NEW],
+                SubmissionEntity::FIELD_FILE_URI  => $submission->getFileUri(),
+                SubmissionEntity::FIELD_IS_CLONED => [0],
+                SubmissionEntity::FIELD_IS_LOCKED => [0],
             ];
 
             if (!StringHelper::isNullOrEmpty($submission->getBatchUid())) {
-                $params['batch_uid'] = [$submission->getBatchUid()];
+                $params[SubmissionEntity::FIELD_BATCH_UID] = [$submission->getBatchUid()];
             }
 
             /**
@@ -443,7 +443,7 @@ trait SmartlingCoreUploadTrait
                  * If submission still doesn't have file URL - create it
                  */
                 $submissionFields = $_submission->toArray(false);
-                if (StringHelper::isNullOrEmpty($submissionFields['file_uri'])) {
+                if (StringHelper::isNullOrEmpty($submissionFields[SubmissionEntity::FIELD_FILE_URI])) {
                     // Generating fileUri
                     $_submission->getFileUri();
                     $_submission = $this->getSubmissionManager()->storeEntity($_submission);

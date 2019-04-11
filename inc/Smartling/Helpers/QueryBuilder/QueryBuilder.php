@@ -45,7 +45,7 @@ class QueryBuilder
         ];
 
         foreach ($sortOptions as $field => $order) {
-            if (!in_array($field, $fieldNames) || !in_array($order, $fieldValues)) {
+            if (!in_array($field, $fieldNames, true) || !in_array($order, $fieldValues, true)) {
                 $valid = false;
                 break;
             }

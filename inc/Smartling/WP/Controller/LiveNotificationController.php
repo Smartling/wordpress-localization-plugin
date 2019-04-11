@@ -278,8 +278,7 @@ EOF;
                 'message' => $e->getMessage(),
             ];
         }
-        echo \json_encode($result, JSON_PRETTY_PRINT);
-        exit;
+        wp_send_json($result);
     }
 
     public function placeRecordId($submissionEntity)

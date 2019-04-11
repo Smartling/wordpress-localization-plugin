@@ -134,7 +134,7 @@ class AcfDynamicSupport
             if (
                 ($profile instanceof ConfigurationProfileEntity)
 
-                && in_array($profile->getOriginalBlogId()->getBlogId(), $blogs)
+                && in_array($profile->getOriginalBlogId()->getBlogId(), $blogs, true)
             ) {
                 $blogsToSearch[] = $profile->getOriginalBlogId()->getBlogId();
             }
@@ -537,7 +537,7 @@ class AcfDynamicSupport
             }
         }
 
-        self::$acfReverseDefinitionAction = $rules;
+        static::$acfReverseDefinitionAction = $rules;
     }
 
     private function getFieldTypeByKey($key)

@@ -64,7 +64,7 @@ class AcfOptionEntity extends VirtualEntityAbstract
     {
         $way = substr($method, 0, 3);
         $possibleField = lcfirst(substr($method, 3));
-        if (in_array($way, ['set', 'get']) && in_array($possibleField, $this->fields)) {
+        if (in_array($way, ['set', 'get']) && in_array($possibleField, $this->fields, true)) {
             return $possibleField;
         } else {
             $message = vsprintf('Method %s not found in %s', [$method, __CLASS__]);

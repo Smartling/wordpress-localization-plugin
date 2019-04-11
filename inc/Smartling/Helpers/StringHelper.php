@@ -24,7 +24,7 @@ class StringHelper
      */
     public static function isNullOrEmpty($string)
     {
-        return in_array($string, [false, null, self::EMPTY_STRING]);
+        return in_array($string, [false, null, self::EMPTY_STRING], true);
     }
 
     /**

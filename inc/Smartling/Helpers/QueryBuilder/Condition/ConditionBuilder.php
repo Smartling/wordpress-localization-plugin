@@ -97,11 +97,11 @@ class ConditionBuilder
             self::CONDITION_IS_NOT_NULL
         ];
 
-        if (!(in_array($condition, $customConditions)) && !self::validate($condition, $parameters)) {
+        if (!(in_array($condition, $customConditions, true)) && !self::validate($condition, $parameters)) {
             throw new \InvalidArgumentException('Invalid condition or parameters');
         }
 
-        if (in_array($condition, $customConditions)) {
+        if (in_array($condition, $customConditions, true)) {
             foreach ($parameters as $index => & $param) {
                 if ($index > 0) {
                     $param = vsprintf('\'%s\'', [QueryBuilder::escapeValue($param)]);
@@ -155,7 +155,7 @@ class ConditionBuilder
             self::CONDITION_SIGN_NOT_IN,
         ];
 
-        return in_array($condition, $conditions);
+        return in_array($condition, $conditions, true);
     }
 
     /**

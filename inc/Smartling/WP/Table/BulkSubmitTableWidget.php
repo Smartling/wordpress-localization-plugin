@@ -441,9 +441,9 @@ class BulkSubmitTableWidget extends SmartlingListTable
                 if (isset($row['id'], $row['type'])) {
                     $entities = $this->getManager()
                         ->find([
-                                   'source_blog_id' => $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
-                                   'source_id'      => $row['id'],
-                                   'content_type'   => $this->getContentTypeFilterValue(),
+                                   SubmissionEntity::FIELD_SOURCE_BLOG_ID => $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
+                                   SubmissionEntity::FIELD_SOURCE_ID      => $row['id'],
+                                   SubmissionEntity::FIELD_CONTENT_TYPE   => $this->getContentTypeFilterValue(),
                                ]
                         );
                 } else {
@@ -509,7 +509,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
         $typesFiltered = [];
 
         foreach ($types as $value => $title) {
-            if (in_array($value, $restrictedTypes)) {
+            if (in_array($value, $restrictedTypes, true)) {
                 continue;
             }
             $typesFiltered[$value] = $title;

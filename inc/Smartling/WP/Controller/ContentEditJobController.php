@@ -176,9 +176,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                         break;
                 }
             }
-
-            echo json_encode($result);
-            exit;
+            wp_send_json($result);
         });
     }
 

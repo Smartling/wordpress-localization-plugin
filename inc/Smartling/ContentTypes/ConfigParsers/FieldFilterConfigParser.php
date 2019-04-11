@@ -237,7 +237,7 @@ class FieldFilterConfigParser
 
     private function validateAction()
     {
-        if (null !== ($action = $this->getConfigParam('action')) && in_array($action, $this->actions)) {
+        if (null !== ($action = $this->getConfigParam('action')) && in_array($action, $this->actions, true)) {
             $this->setAction($action);
             if (self::ACTION_LOCALIZE === $this->getAction()) {
                 return $this->validateSerialization() && $this->validateValueType() && $this->validateRelatedType();
@@ -262,7 +262,7 @@ class FieldFilterConfigParser
 
     private function validateValueType()
     {
-        if (null !== ($value = $this->getConfigParam('value')) && in_array($value, $this->valueTypes)) {
+        if (null !== ($value = $this->getConfigParam('value')) && in_array($value, $this->valueTypes, true)) {
             $this->setValueType($value);
 
             return true;

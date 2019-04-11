@@ -135,8 +135,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             } catch (\Exception $e) {
                 $result['status'] = 'FAIL';
             }
-            echo json_encode($result);
-            exit;
+            wp_send_json($result);
         }
     }
 
@@ -147,7 +146,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     private function validateTargetBlog($blogId)
     {
         $blogs = $this->getEntityHelper()->getSiteHelper()->listBlogIdsFlat();
-        return in_array((int)$blogId, $blogs);
+        return in_array((int)$blogId, $blogs, true);
     }
 
     public function ajaxUploadHandler()
@@ -366,8 +365,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             ];
         }
 
-        echo json_encode($result);
-        exit;
+        wp_send_json($result);
     }
 
     /**
@@ -375,7 +373,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
      */
     public function register()
     {
-        if (!DiagnosticsHelper::isBlocked() && !$this->isMuted()) {
+        if (!DiagnosticsHelper::isBlocked() && !$this->isMuted() && current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
             add_action('add_meta_boxes', [$this, 'box']);
             add_action('save_post', [$this, 'save']); // old logic 2 be refactored
             add_action('wp_ajax_' . 'smartling_force_download_handler', [$this, 'ajaxDownloadHandler']);
@@ -409,7 +407,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     {
         $post_types = [$this->servedContentType];
 
-        if (in_array($post_type, $post_types) &&
+        if (in_array($post_type, $post_types, true) &&
             current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)
         ) {
             add_meta_box(
@@ -438,9 +436,9 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                 if (0 < count($profile)) {
                     $submissions = $this->getManager()
                                         ->find([
-                                            'source_blog_id' => $currentBlogId,
-                                            'source_id' => $post->ID,
-                                            'content_type' => $this->servedContentType,
+                                            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
+                                            SubmissionEntity::FIELD_SOURCE_ID => $post->ID,
+                                            SubmissionEntity::FIELD_CONTENT_TYPE => $this->servedContentType,
                                         ]);
 
                     $this->view([
@@ -669,10 +667,10 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                 $submissions = $this->getManager()
                                                     ->find(
                                                         [
-                                                            'source_id' => $originalId,
-                                                            'source_blog_id' => $sourceBlog,
-                                                            'content_type' => $this->servedContentType,
-                                                            'target_blog_id' => $targetBlogId,
+                                                            SubmissionEntity::FIELD_SOURCE_ID=> $originalId,
+                                                            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlog,
+                                                            SubmissionEntity::FIELD_CONTENT_TYPE => $this->servedContentType,
+                                                            SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
                                                         ]
                                                     );
 
