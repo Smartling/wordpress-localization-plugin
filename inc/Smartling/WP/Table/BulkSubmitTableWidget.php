@@ -509,7 +509,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
         $typesFiltered = [];
 
         foreach ($types as $value => $title) {
-            if (in_array($value, $restrictedTypes)) {
+            if (in_array($value, $restrictedTypes, true)) {
                 continue;
             }
             $typesFiltered[$value] = $title;

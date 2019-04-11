@@ -208,8 +208,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
             ? 'post'
             : $contentType;
 
-        $contentType = in_array($contentType,
-                                WordpressContentTypeHelper::getSupportedTaxonomyTypes())
+        $contentType = in_array($contentType, WordpressContentTypeHelper::getSupportedTaxonomyTypes(), true)
             ? 'term'
             : $contentType;
 

@@ -238,7 +238,7 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
                 $data[] = [
                     'name'   => $fielName,
                     'value'  => $fieldValue,
-                    'locked' => is_array($lockedFields) && in_array($fielName, $lockedFields),
+                    'locked' => is_array($lockedFields) && in_array($fielName, $lockedFields, true),
                 ];
             }
             $table = new TranslationLockTableWidget();

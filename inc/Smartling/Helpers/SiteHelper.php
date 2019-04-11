@@ -180,7 +180,7 @@ class SiteHelper
     {
         $this->cacheSites();
 
-        if (!in_array($blogId, static::$_flatBlogIdCache)) {
+        if (!in_array($blogId, static::$_flatBlogIdCache, true)) {
             $message = vsprintf('Invalid blogId value. Got %s, expected one of [%s]',
                                 [$blogId, implode(',', static::$_flatBlogIdCache)]);
 

@@ -92,7 +92,8 @@ if (!empty($locales)) {
                             in_array(
                                 $item->getStatus(), [
                                     SubmissionEntity::SUBMISSION_STATUS_NEW,
-                                ]
+                                ],
+                                true
                             )
                             ) ? false : $enabled;
 

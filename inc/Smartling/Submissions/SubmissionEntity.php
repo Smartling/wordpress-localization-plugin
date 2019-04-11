@@ -292,7 +292,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
      */
     public function setStatus($status)
     {
-        if (in_array($status, static::$submissionStatuses)) {
+        if (in_array($status, static::$submissionStatuses, true)) {
             $this->stateFields['status'] = $status;
         } else {
             $message = vsprintf('Invalid status value. Got \'%s\', expected one of: %s', [

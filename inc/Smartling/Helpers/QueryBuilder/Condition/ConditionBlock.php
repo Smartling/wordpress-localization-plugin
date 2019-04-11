@@ -51,7 +51,7 @@ class ConditionBlock
             ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND,
         ];
 
-        return in_array($operator, $validOperators);
+        return in_array($operator, $validOperators, true);
     }
 
     /**

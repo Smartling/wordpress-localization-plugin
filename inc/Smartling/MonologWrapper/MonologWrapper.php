@@ -38,8 +38,11 @@ class MonologWrapper
     {
         foreach ($container->getDefinitions() as $serviceId => $serviceDefinition) {
             if (in_array($serviceDefinition->getClass(),
-                         ['Smartling\MonologWrapper\Logger\DevNullLogger',
-                          'Smartling\MonologWrapper\Logger\LevelLogger'])) {
+                         [
+                             'Smartling\MonologWrapper\Logger\DevNullLogger',
+                             'Smartling\MonologWrapper\Logger\LevelLogger'
+                         ],
+                true)) {
                 $service = $container->get($serviceId);
                 static::$loggers[$service->getName()] = $service;
             }

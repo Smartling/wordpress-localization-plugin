@@ -165,7 +165,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
             return;
         }
         $termType = $_POST['taxonomy'];
-        if (!in_array($termType, WordpressContentTypeHelper::getSupportedTaxonomyTypes())) {
+        if (!in_array($termType, WordpressContentTypeHelper::getSupportedTaxonomyTypes(), true)) {
             return;
         }
         $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();

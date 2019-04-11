@@ -147,7 +147,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     private function validateTargetBlog($blogId)
     {
         $blogs = $this->getEntityHelper()->getSiteHelper()->listBlogIdsFlat();
-        return in_array((int)$blogId, $blogs);
+        return in_array((int)$blogId, $blogs, true);
     }
 
     public function ajaxUploadHandler()
@@ -409,7 +409,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     {
         $post_types = [$this->servedContentType];
 
-        if (in_array($post_type, $post_types) &&
+        if (in_array($post_type, $post_types, true) &&
             current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)
         ) {
             add_meta_box(

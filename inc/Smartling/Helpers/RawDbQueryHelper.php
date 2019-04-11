@@ -19,8 +19,7 @@ class RawDbQueryHelper
      */
     public static function getTableName($tableName)
     {
-        if (in_array($tableName, self::getWpdb()
-                                     ->tables())) {
+        if (in_array($tableName, self::getWpdb()->tables(), true)) {
             return self::getWpdb()->{$tableName};
         } else {
             return self::getWpdb()->base_prefix . $tableName;
