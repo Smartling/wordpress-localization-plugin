@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    full_image_name = "wordpress-connector-build-image-name"
+    full_image_name = "wordpress-connector-wp-${WP_VERSION}-acf-${ACF_PRO_VERSION}"
     sonar_project_key = "wordpress-connector:master"
     sonar_project_name = "wordpress-connector"
   }
@@ -11,8 +11,7 @@ pipeline {
     stage('Build Docker image') {
       steps {
         withCredentials([string(credentialsId: 'GITHUB_OAUTH', variable: 'GITHUB_OAUTH'), string(credentialsId: 'ACF_PRO_KEY', variable: 'ACF_PRO_KEY')]) {
-          sh 'eval $(aws ecr get-login --region us-east-1 --no-include-email)'
-          sh "docker build --no-cache --rm --pull --tag=${full_image_name} -f \"Buildplan-AIO/Dockerfile\" --build-arg ACFPRO_KEY=\"${ACF_PRO_KEY}\" --build-arg GITHUB_OAUTH_TOKEN=\"${GITHUB_OAUTH}\" ."
+          sh "docker build --no-cache --rm --pull --tag=${full_image_name} -f \"Buildplan-AIO/Dockerfile\" --build-arg ACFPRO_KEY=\"${ACF_PRO_KEY}\" --build-arg WP_VERSION=\"${WP_VERSION}\" --build-arg ACF_PRO_VERSION=\"${ACF_PRO_VERSION}\" --build-arg GITHUB_OAUTH_TOKEN=\"${GITHUB_OAUTH}\" ."
         }
       }
     }
@@ -20,7 +19,6 @@ pipeline {
     stage('Run tests') {
       steps {
         withCredentials([string(credentialsId: 'PROJECT_ID', variable: 'PROJECT_ID'), string(credentialsId: 'USER_IDENTIFIER', variable: 'USER_IDENTIFIER'), string(credentialsId: 'TOKEN_SECRET', variable: 'TOKEN_SECRET')]) {
-          sh 'eval $(aws ecr get-login --region us-east-1 --no-include-email)'
           sh "docker run --rm -w \"/plugin-dir\" -v \"${WORKSPACE}:/plugin-dir\" -e MYSQL_HOST=\"localhost\" -e CRE_PROJECT_ID=\"${PROJECT_ID}\" -e CRE_USER_IDENTIFIER=\"${USER_IDENTIFIER}\" -e CRE_TOKEN_SECRET=\"${TOKEN_SECRET}\" ${full_image_name}:latest"
         }
       }
@@ -53,50 +51,29 @@ pipeline {
     stage("Quality Gate") {
       steps {
         script {
-          def qg = null
-
           try {
             timeout(time: 5, unit: 'MINUTES') {
-              qg = waitForQualityGate()
+              def qg = waitForQualityGate()
+              if (qg.status != 'OK') {
+                error "Pipeline aborted due to quality gate failure"
+              }
+            }
+          } catch (err) {
+            // Catch timeout exception but not Quality Gate.
+            String errorString = err.getMessage();
+            if (errorString == "Pipeline aborted due to quality gate failure") {
+              error errorString
             }
           }
-          catch (hudson.AbortException err) {
-            echo 'Got timeout error for Sonar. Continue build without Sonar results'
-            qg = null
-          }
-
-          if (qg != null && qg.status != 'OK') {
-            error "Pipeline aborted due to quality gate failure: ${qg.status}"
-          }
         }
-      }
-    }
-
-    stage('Post build clean up') {
-      steps {
-        sh "docker rmi ${full_image_name}"
-      }
-    }
-
-    stage('Clean up') {
-      steps {
-        deleteDir()
       }
     }
   }
 
   post {
-
     always {
+        sh "docker rmi ${full_image_name}"
         deleteDir()
-    }
-
-    failure {
-      slackSend (
-        channel: "#emergency-connectors",
-        color: 'bad',
-        message: "Build of <${env.BUILD_URL}|${env.JOB_BASE_NAME} #${env.BUILD_NUMBER}> is failed!"
-      )
     }
   }
 }

@@ -12,6 +12,12 @@ ARG SITES="Spanish Site:es:es,French Site:fr-FR:fr,Russian Site:ru-RU:ru,Ukraini
 ARG ACFPRO_KEY
 ARG GITHUB_OAUTH_TOKEN
 
+# if not set latest is used. Value should be like "4.9.8"
+ARG WP_VERSION=latest
+
+# if not set latest is used. Value should be like "5.7.10" (before internal refactoring) or "5.7.12"
+ARG ACF_PRO_VERSION=latest
+
 ENV WP_INSTALL_DIR=${WP_INSTALL_DIR}
 ENV MYSQL_USER=${MYSQL_USER}
 ENV MYSQL_PASS=${MYSQL_PASS}
@@ -24,6 +30,10 @@ ENV ACFPRO_KEY=${ACFPRO_KEY}
 ENV DLINK="https://connect.advancedcustomfields.com/index.php?a=download&p=pro&k=${ACFPRO_KEY}"
 ENV GITHUB_OAUTH_TOKEN=${GITHUB_OAUTH_TOKEN}
 ENV BUILD_FQFN="${WP_INSTALL_DIR}/advanced-custom-fields-pro.zip"
+ENV WP_VERSION=${WP_VERSION}
+ENV ACF_PRO_VERSION=${ACF_PRO_VERSION}
+
+RUN echo -e "Building image with Wordpress:${WP_VERSION} and ACF Pro plugin:${ACF_PRO_VERSION}"
 
 # install MySQL
 RUN apt-get update && \
@@ -63,16 +73,16 @@ RUN mkdir -p ${WP_INSTALL_DIR}
 RUN cd ${WP_INSTALL_DIR} && curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && chmod +x ./wp-cli.phar
 ENV WPCLI="${WP_INSTALL_DIR}/wp-cli.phar --allow-root --path=${WP_INSTALL_DIR}"
 
+RUN if [ "latest" == "${WP_VERSION}" ] ; then WP_VER_STR="" ; else WP_VER_STR=" --version=\"${WP_VERSION}\""; fi;
+
 RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
     cd ${WP_INSTALL_DIR} && \
-    ${WPCLI} core download && \
+    ${WPCLI} core download ${WP_VER_STR} && \
     ${WPCLI} config create --dbname=${MYSQL_BASE} --dbuser=${MYSQL_USER} --dbpass=${MYSQL_PASS} --dbprefix=${WP_DB_TABLE_PREFIX} && \
     ${WPCLI} core install --url=${WP_INSTALLATION_DOMAIN} --title=Test --admin_user=wp --admin_password=wp --admin_email=test@wp.org --skip-email && \
     ${WPCLI} core multisite-convert && \
     curl ${DLINK} --output ${BUILD_FQFN} && \
     if [ ! -d "/root/.composer" ]; then mkdir "/root/.composer"; fi; echo "{\"github-oauth\":{\"github.com\":\"$GITHUB_OAUTH_TOKEN\"}}" > "/root/.composer/auth.json"
-
-RUN cat /root/.composer/auth.json
 
 SHELL ["/bin/bash", "-c"]
 
@@ -85,7 +95,8 @@ RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
     IFS=';' read -a array <<< "${DEPENDENCIES}"; for plugin_name in "${array[@]}"; do ${WPCLI} plugin install $plugin_name --activate-network; done
 
 # install ACF Pro (latest) add &t=<ver> to download URI for customization
-ENV DLINK="https://connect.advancedcustomfields.com/index.php?a=download&p=pro&k=${ACFPRO_KEY}"
+RUN if [ "latest" == "${ACF_PRO_VERSION}" ] ; then ACF_VER_STR="" ; else ACF_VER_STR="&t=${ACF_PRO_VERSION}"; fi;
+ENV DLINK="https://connect.advancedcustomfields.com/index.php?a=download&p=pro&k=${ACFPRO_KEY}${ACF_VER_STR}"
 ENV PPATH="${WP_INSTALL_DIR}/advanced-custom-fields-pro.zip"
 RUN curl ${DLINK} --output ${PPATH}
 RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
@@ -97,7 +108,7 @@ ENV PLUGIN_DIR="${WP_PLUGINS_DIR}/smartling-connector"
 
 ENV LOCAL_GIT_DIR="/plugin-dir"
 
-COPY Buildplan-AIO/boot.sh /boot.sh
+COPY Buildplan/boot.sh /boot.sh
 RUN chmod +x /boot.sh
 
 CMD WP_INSTALL_DIR=${WP_INSTALL_DIR} \

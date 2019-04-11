@@ -294,38 +294,36 @@ class AcfDynamicSupport
         return $dbFields;
     }
 
-    protected function extractGroupsDefinitions(array $groups) {
+    protected function extractGroupsDefinitions(array $groups)
+    {
         $defs = [];
-
-        if (is_array($groups) && 0 < count($groups)) {
-            foreach ($groups as $group) {
-                $defs[$group['key']] = [
-                    'global_type' => 'group',
-                    'active'      => $group['active'],
-                ];
-            }
+        foreach ($groups as $group) {
+            $defs[$group['key']] = [
+                'global_type' => 'group',
+                'active' => $group['active'],
+            ];
         }
+
 
         return $defs;
     }
 
-    protected function extractFieldDefinitions(array $fields) {
+    protected function extractFieldDefinitions(array $fields)
+    {
         $defs = [];
 
-        if (is_array($fields) && 0 < count($fields)) {
-            foreach ($fields as $field) {
-                $defs[$field['key']] = [
-                    'global_type' => 'field',
-                    'type'        => $field['type'],
-                    'name'        => $field['name'],
-                    'parent'      => $field['parent'],
-                ];
+        foreach ($fields as $field) {
+            $defs[$field['key']] = [
+                'global_type' => 'field',
+                'type' => $field['type'],
+                'name' => $field['name'],
+                'parent' => $field['parent'],
+            ];
 
-                if ('clone' === $field['type']) {
-                    $defs[$field['key']]['clone'] = $field['clone'];
-                }
-
+            if ('clone' === $field['type']) {
+                $defs[$field['key']]['clone'] = $field['clone'];
             }
+
         }
 
         return $defs;
@@ -335,7 +333,7 @@ class AcfDynamicSupport
      * Get local definitions for ACF Pro ver < 5.7.12
      * @return array
      */
-    private function getLocalDefinitionsOld(){
+    private function getLocalDefinitionsOld() {
         $acf = null;
         $defs = [];
         try {
@@ -370,8 +368,7 @@ class AcfDynamicSupport
             && array_key_exists('local-groups', $acf_stores)
             && ($acf_stores['local-groups'] instanceof \ACF_Data)
             && array_key_exists('local-fields', $acf_stores)
-            && ($acf_stores['local-fields'] instanceof \ACF_Data)
-            ;
+            && ($acf_stores['local-fields'] instanceof \ACF_Data);
     }
 
     /**
