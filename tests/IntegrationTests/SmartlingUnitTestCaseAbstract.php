@@ -328,6 +328,12 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
 
     protected function executeUpload()
     {
+        /**
+         * Should be executed twice.
+         * 1-st pass generates batch_uid;
+         * 2-nd pass executes upload job
+         */
+        $this->runCronTask(UploadJob::JOB_HOOK_NAME);
         $this->runCronTask(UploadJob::JOB_HOOK_NAME);
     }
 

@@ -76,23 +76,25 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
 
     public function testAdvancedCustomFields()
     {
-        static::markTestSkipped('Works, but test should be fixed.');
         $imageId = $this->createAttachment();
         $taxonomyIds = $this->createTaxonomy('Category A');
-        $this->wpcli_exec('plugin', 'activate', 'acf-pro-test-definitions --network');
         $postId = $this->createSourcePostWithMetadata($imageId, $taxonomyIds);
         $translationHelper = $this->getTranslationHelper();
+
         /**
          * @var SubmissionEntity $submission
          */
         $submission = $translationHelper->prepareSubmission('post', 1, $postId, 2, true);
+
         /**
          * Check submission status
          */
         $this->assertTrue(SubmissionEntity::SUBMISSION_STATUS_NEW === $submission->getStatus());
         $this->assertTrue(1 === $submission->getIsCloned());
-        $this->uploadDownload($submission);
 
+        $this->wpcli_exec('plugin', 'activate', 'acf-pro-test-definitions --network');
+
+        $this->executeUpload();
 
         $submissions = $this->getSubmissionManager()->find(
             [

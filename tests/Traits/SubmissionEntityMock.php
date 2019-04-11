@@ -43,7 +43,7 @@ trait SubmissionEntityMock
      */
     private function getSerializedSubmission($fileUri, $locale, $lastModified = null, $completion = 0, $id = 1)
     {
-        WordpressContentTypeHelper::$internalTypes = ['post' => 'Post'];
+        WordpressContentTypeHelper::$internalTypes = ['Post' => 'post'];
 
         return [
             'id'                     => $id,

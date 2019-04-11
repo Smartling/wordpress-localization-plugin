@@ -294,19 +294,53 @@ class AcfDynamicSupport
         return $dbFields;
     }
 
+    protected function extractGroupsDefinitions(array $groups)
+    {
+        $defs = [];
+        foreach ($groups as $group) {
+            $defs[$group['key']] = [
+                'global_type' => 'group',
+                'active' => $group['active'],
+            ];
+        }
+
+
+        return $defs;
+    }
+
+    protected function extractFieldDefinitions(array $fields)
+    {
+        $defs = [];
+
+        foreach ($fields as $field) {
+            $defs[$field['key']] = [
+                'global_type' => 'field',
+                'type' => $field['type'],
+                'name' => $field['name'],
+                'parent' => $field['parent'],
+            ];
+
+            if ('clone' === $field['type']) {
+                $defs[$field['key']]['clone'] = $field['clone'];
+            }
+
+        }
+
+        return $defs;
+    }
+
     /**
-     * Reads local (PHP and JSON) ACF Definitions
+     * Get local definitions for ACF Pro ver < 5.7.12
      * @return array
      */
-    private function getLocalDefinitions()
-    {
+    private function getLocalDefinitionsOld() {
         $acf = null;
         $defs = [];
         try {
             $acf = (array)$this->getAcf();
         } catch (SmartlingConfigException $e) {
             $this->getLogger()->warning($e->getMessage());
-            $this->getLogger()->warning('Unable to load local ACF definitions.');
+            $this->getLogger()->warning('Unable to load old type local ACF definitions.');
 
             return $defs;
         }
@@ -317,35 +351,57 @@ class AcfDynamicSupport
                  * @var \acf_local $local
                  */
                 $local = $acf['local'];
-                $groups = $local->groups;
 
-                if (is_array($groups) && 0 < count($groups)) {
-                    foreach ($groups as $group) {
-                        $defs[$group['key']] = [
-                            'global_type' => 'group',
-                            'active'      => $group['active'],
-                        ];
-                    }
-                }
+                $defs = array_merge($defs, $this->extractGroupsDefinitions($local->groups));
+                $defs = array_merge($defs, $this->extractFieldDefinitions($local->fields));
 
-                $fields = $local->fields;
-
-                if (is_array($fields) && 0 < count($fields)) {
-                    foreach ($fields as $field) {
-                        $defs[$field['key']] = [
-                            'global_type' => 'field',
-                            'type'        => $field['type'],
-                            'name'        => $field['name'],
-                            'parent'      => $field['parent'],
-                        ];
-
-                        if ('clone' === $field['type']) {
-                            $defs[$field['key']]['clone'] = $field['clone'];
-                        }
-
-                    }
-                }
             }
+        }
+
+        return $defs;
+    }
+
+    protected function validateAcfStores() {
+        global $acf_stores;
+
+        return is_array($acf_stores)
+            && array_key_exists('local-groups', $acf_stores)
+            && ($acf_stores['local-groups'] instanceof \ACF_Data)
+            && array_key_exists('local-fields', $acf_stores)
+            && ($acf_stores['local-fields'] instanceof \ACF_Data);
+    }
+
+    /**
+     * Get local definitions for ACF Pro ver 5.7.12+
+     * @return array
+     */
+    private function getLocalDefinitionsNew() {
+
+        $defs = [];
+
+        if ($this->validateAcfStores()) {
+            global $acf_stores;
+
+            $defs = array_merge($defs, $this->extractGroupsDefinitions($acf_stores['local-groups']->get_data()));
+            $defs = array_merge($defs, $this->extractFieldDefinitions($acf_stores['local-fields']->get_data()));
+
+        } else {
+            $this->getLogger()->warning('Unable to load new type local ACF definitions.');
+        }
+
+        return $defs;
+    }
+
+    /**
+     * Reads local (PHP and JSON) ACF Definitions
+     * @return array
+     */
+    private function getLocalDefinitions()
+    {
+        $defs = $this->getLocalDefinitionsOld();
+
+        if (empty($defs)) {
+            $defs = $this->getLocalDefinitionsNew();
         }
 
         return $defs;
