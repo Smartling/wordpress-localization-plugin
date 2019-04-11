@@ -5,6 +5,7 @@ namespace Smartling\WP\Controller;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -32,7 +33,7 @@ class CheckStatusController extends WPAbstract implements WPHookInterface
      */
     public function register()
     {
-        if (!DiagnosticsHelper::isBlocked()) {
+        if (!DiagnosticsHelper::isBlocked() && current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
             add_action('wp_ajax_ajax_submissions_update_status', [$this, 'ajaxHandler']);
             add_action('admin_enqueue_scripts', [$this, 'wp_enqueue']);
         }

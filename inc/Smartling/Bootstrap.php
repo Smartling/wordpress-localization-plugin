@@ -234,6 +234,62 @@ class Bootstrap
         static::getContainer()->setParameter('multilang_plugins', $mlPluginsStatuses);
     }
 
+    public function updateGlobalExpertSettings () {
+        $data =& $_POST['params'];
+
+        $staticCheckDisabled = (int)$data['staticCheckDisabled'];
+        $disableLogging = (int)$data['disableLogging'];
+        $logPath = $data['loggingPath'];
+        $disableACFDBLookup = (int)$data['disableDBLookup'];
+        $defaultPageSize = Bootstrap::getPageSize(true);
+        $rawPageSize = (int)$data['pageSize'];
+        $pageSize = $rawPageSize < 1 ? $defaultPageSize : $rawPageSize;
+
+        $parser = new Parser();
+        $loggingCustomization = null;
+        try {
+            $loggingCustomization = $parser->parse($data['loggingCustomization'], true);
+        } catch (\Exception $e) {
+            Bootstrap::getLogger()
+                     ->warning(vsprintf('Failed parsing new value: "%s"', [var_export($data['loggingCustomization'], true)]));
+        }
+
+        $disableACF = (int)$data['disableACF'];
+
+        if (is_array($loggingCustomization)) {
+            SimpleStorageHelper::set(Bootstrap::LOGGING_CUSTOMIZATION, $loggingCustomization);
+        } else {
+            Bootstrap::getLogger()->warning(var_export($loggingCustomization, true));
+        }
+
+        SimpleStorageHelper::set(Bootstrap::SELF_CHECK_IDENTIFIER, $staticCheckDisabled);
+        SimpleStorageHelper::set(Bootstrap::DISABLE_LOGGING, $disableLogging);
+        SimpleStorageHelper::set(static::DISABLE_ACF_DB_LOOKUP, $disableACFDBLookup);
+        SimpleStorageHelper::set(Bootstrap::DISABLE_ACF, $disableACF);
+
+        if (0 === $disableACF) {
+            SimpleStorageHelper::drop(static::DISABLE_ACF);
+        }
+
+        if (0 == $disableACFDBLookup) {
+            SimpleStorageHelper::drop(static::DISABLE_ACF_DB_LOOKUP);
+        }
+
+        if ($pageSize === $defaultPageSize) {
+            SimpleStorageHelper::drop(static::SMARTLING_CUSTOM_PAGE_SIZE);
+        } else {
+            SimpleStorageHelper::set(static::SMARTLING_CUSTOM_PAGE_SIZE, $pageSize);
+        }
+
+        if ($logPath === Bootstrap::getLogFileName(false, true)) {
+            SimpleStorageHelper::drop(static::SMARTLING_CUSTOM_LOG_FILE);
+        } else {
+            SimpleStorageHelper::set(static::SMARTLING_CUSTOM_LOG_FILE, $logPath);
+        }
+
+        wp_send_json($data);
+    }
+
     /**
      * Tests if current Wordpress Configuration can work with Smartling Plugin
      * @return mixed
@@ -253,66 +309,12 @@ class Bootstrap
         }
 
         $this->testPluginSetup();
-
         $this->testMinimalWordpressVersion();
-
         $this->testTimeLimit();
-        add_action('wp_ajax_' . 'smartling_expert_global_settings_update', function () {
 
-            $data =& $_POST['params'];
-
-            $staticCheckDisabled = (int)$data['staticCheckDisabled'];
-            $disableLogging = (int)$data['disableLogging'];
-            $logPath = $data['loggingPath'];
-            $disableACFDBLookup = (int)$data['disableDBLookup'];
-            $defaultPageSize = Bootstrap::getPageSize(true);
-            $rawPageSize = (int)$data['pageSize'];
-            $pageSize = $rawPageSize < 1 ? $defaultPageSize : $rawPageSize;
-
-            $parser = new Parser();
-            $loggingCustomization = null;
-            try {
-                $loggingCustomization = $parser->parse($data['loggingCustomization'], true);
-            } catch (\Exception $e) {
-                Bootstrap::getLogger()
-                    ->warning(vsprintf('Failed parsing new value: "%s"', [var_export($data['loggingCustomization'], true)]));
-            }
-
-            $disableACF = (int)$data['disableACF'];
-
-            if (is_array($loggingCustomization)) {
-                SimpleStorageHelper::set(Bootstrap::LOGGING_CUSTOMIZATION, $loggingCustomization);
-            } else {
-                Bootstrap::getLogger()->warning(var_export($loggingCustomization, true));
-            }
-
-            SimpleStorageHelper::set(Bootstrap::SELF_CHECK_IDENTIFIER, $staticCheckDisabled);
-            SimpleStorageHelper::set(Bootstrap::DISABLE_LOGGING, $disableLogging);
-            SimpleStorageHelper::set(static::DISABLE_ACF_DB_LOOKUP, $disableACFDBLookup);
-            SimpleStorageHelper::set(Bootstrap::DISABLE_ACF, $disableACF);
-
-            if (0 === $disableACF) {
-                SimpleStorageHelper::drop(static::DISABLE_ACF);
-            }
-
-            if (0 == $disableACFDBLookup) {
-                SimpleStorageHelper::drop(static::DISABLE_ACF_DB_LOOKUP);
-            }
-
-            if ($pageSize === $defaultPageSize) {
-                SimpleStorageHelper::drop(static::SMARTLING_CUSTOM_PAGE_SIZE);
-            } else {
-                SimpleStorageHelper::set(static::SMARTLING_CUSTOM_PAGE_SIZE, $pageSize);
-            }
-
-            if ($logPath === Bootstrap::getLogFileName(false, true)) {
-                SimpleStorageHelper::drop(static::SMARTLING_CUSTOM_LOG_FILE);
-            } else {
-                SimpleStorageHelper::set(static::SMARTLING_CUSTOM_LOG_FILE, $logPath);
-            }
-
-            echo json_encode($data);
-        });
+        if (current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+            add_action('wp_ajax_' . 'smartling_expert_global_settings_update', [$this, 'updateGlobalExpertSettings']);
+        }
 
         if (0 === (int)SimpleStorageHelper::get(static::SELF_CHECK_IDENTIFIER, 0)) {
             $this->testCronSetup();

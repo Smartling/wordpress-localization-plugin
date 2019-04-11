@@ -135,8 +135,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             } catch (\Exception $e) {
                 $result['status'] = 'FAIL';
             }
-            echo json_encode($result);
-            exit;
+            wp_send_json($result);
         }
     }
 
@@ -366,8 +365,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             ];
         }
 
-        echo json_encode($result);
-        exit;
+        wp_send_json($result);
     }
 
     /**
@@ -375,7 +373,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
      */
     public function register()
     {
-        if (!DiagnosticsHelper::isBlocked() && !$this->isMuted()) {
+        if (!DiagnosticsHelper::isBlocked() && !$this->isMuted() && current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
             add_action('add_meta_boxes', [$this, 'box']);
             add_action('save_post', [$this, 'save']); // old logic 2 be refactored
             add_action('wp_ajax_' . 'smartling_force_download_handler', [$this, 'ajaxDownloadHandler']);

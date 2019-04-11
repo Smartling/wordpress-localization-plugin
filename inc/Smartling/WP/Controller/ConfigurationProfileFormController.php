@@ -38,66 +38,65 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
         add_action('admin_menu', [$this, 'menu']);
         add_action('network_admin_menu', [$this, 'menu']);
         add_action('admin_post_smartling_configuration_profile_save', [$this, 'save']);
-        $this->initTestConnectionEndpoint();
+
+        if(current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+            add_action('wp_ajax_' . 'smartling_test_connection', [$this, 'initTestConnectionEndpoint']);
+        }
     }
 
     public function initTestConnectionEndpoint()
     {
-        add_action('wp_ajax_' . 'smartling_test_connection', function () {
+        $data =& $_POST;
 
-            $data =& $_POST;
+        $result = [
+            'status' => 200,
+        ];
 
-            $result = [
-                'status' => 200,
-            ];
+        $wrapper = Bootstrap::getContainer()->get('wrapper.sdk.api.smartling');
+        /**
+         * @var ApiWrapper $wrapper
+         */
 
-            $wrapper = Bootstrap::getContainer()->get('wrapper.sdk.api.smartling');
-            /**
-             * @var ApiWrapper $wrapper
-             */
+        $settingsManager = Bootstrap::getContainer()->get('manager.settings');
+        /**
+         * @var SettingsManager $settingsManager
+         */
 
-            $settingsManager = Bootstrap::getContainer()->get('manager.settings');
-            /**
-             * @var SettingsManager $settingsManager
-             */
-
-            if (StringHelper::isNullOrEmpty($data['tokenSecret']) && 0 < (int)$data['profileId']) {
-                $_profiles = $settingsManager->getEntityById((int)$data['profileId']);
-                if (0 < count($_profiles)) {
-                    $_profile = ArrayHelper::first($_profiles);
-                    /**
-                     * @var ConfigurationProfileEntity $_profile
-                     */
-                    $data['tokenSecret'] = $_profile->getSecretKey();
-                }
+        if (StringHelper::isNullOrEmpty($data['tokenSecret']) && 0 < (int)$data['profileId']) {
+            $_profiles = $settingsManager->getEntityById((int)$data['profileId']);
+            if (0 < count($_profiles)) {
+                $_profile = ArrayHelper::first($_profiles);
+                /**
+                 * @var ConfigurationProfileEntity $_profile
+                 */
+                $data['tokenSecret'] = $_profile->getSecretKey();
             }
+        }
 
-            $testProfile = $settingsManager->createProfile(
-                [
-                    'auto_authorize'   => true,
-                    'upload_on_update' => true,
-                    'retrieval_type'   => 'published',
-                    'profile_name'     => 'test profile',
-                    'project_id'       => $data['projectId'],
-                    'user_identifier'  => $data['userIdent'],
-                    'secret_key'       => $data['tokenSecret'],
-                ]
-            );
+        $testProfile = $settingsManager->createProfile(
+            [
+                'auto_authorize' => true,
+                'upload_on_update' => true,
+                'retrieval_type' => 'published',
+                'profile_name' => 'test profile',
+                'project_id' => $data['projectId'],
+                'user_identifier' => $data['userIdent'],
+                'secret_key' => $data['tokenSecret'],
+            ]
+        );
 
-            try {
-                $_result = $wrapper->getSupportedLocales($testProfile);
-                $result['locales'] = $_result;
-                if (0 === count($_result)) {
-                    $result['status'] = 400;
-                }
-            } catch (\Exception $e) {
+        try {
+            $_result = $wrapper->getSupportedLocales($testProfile);
+            $result['locales'] = $_result;
+            if (0 === count($_result)) {
                 $result['status'] = 400;
-                $result['message'] = $e->getMessage();
             }
+        } catch (\Exception $e) {
+            $result['status'] = 400;
+            $result['message'] = $e->getMessage();
+        }
 
-            echo json_encode($result);
-            exit;
-        });
+        wp_send_json($result);
     }
 
     public function menu()
