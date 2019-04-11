@@ -73,12 +73,14 @@ RUN mkdir -p ${WP_INSTALL_DIR}
 RUN cd ${WP_INSTALL_DIR} && curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && chmod +x ./wp-cli.phar
 ENV WPCLI="${WP_INSTALL_DIR}/wp-cli.phar --allow-root --path=${WP_INSTALL_DIR}"
 
-RUN if [ "latest" == "${WP_VERSION}" ] ; then WP_VER_STR="" ; else WP_VER_STR=" --version=\"${WP_VERSION}\""; fi;
+
 
 RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
     cd ${WP_INSTALL_DIR} && \
-    if [ "latest" == "${WP_VERSION}" ] ; then WP_VER_STR="" ; else WP_VER_STR=" --version=\"${WP_VERSION}\""; fi; && \
-    ${WPCLI} core download${WP_VER_STR} && \
+    if [ "latest" == "${WP_VERSION}" ] \
+        then  ${WPCLI} core download ; \
+        else  ${WPCLI} core download --version="${WP_VERSION}" ; \
+    fi; && \
     ${WPCLI} config create --dbname=${MYSQL_BASE} --dbuser=${MYSQL_USER} --dbpass=${MYSQL_PASS} --dbprefix=${WP_DB_TABLE_PREFIX} && \
     ${WPCLI} core install --url=${WP_INSTALLATION_DOMAIN} --title=Test --admin_user=wp --admin_password=wp --admin_email=test@wp.org --skip-email && \
     ${WPCLI} core multisite-convert && \
