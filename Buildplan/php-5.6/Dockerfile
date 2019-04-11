@@ -33,7 +33,7 @@ ENV BUILD_FQFN="${WP_INSTALL_DIR}/advanced-custom-fields-pro.zip"
 ENV WP_VERSION=${WP_VERSION}
 ENV ACF_PRO_VERSION=${ACF_PRO_VERSION}
 
-RUN echo -e "Building image with Wordpress:${WP_VERSION} and ACF Pro plugin:${ACF_PRO_VERSION}"
+RUN echo Building image with Wordpress:${WP_VERSION} and ACF Pro plugin:${ACF_PRO_VERSION}
 
 # install MySQL
 RUN apt-get update && \
