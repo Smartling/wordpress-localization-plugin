@@ -537,7 +537,7 @@ class AcfDynamicSupport
             }
         }
 
-        self::$acfReverseDefinitionAction = $rules;
+        static::$acfReverseDefinitionAction = $rules;
     }
 
     private function getFieldTypeByKey($key)

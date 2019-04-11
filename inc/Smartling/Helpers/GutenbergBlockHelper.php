@@ -182,7 +182,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     public function processString(TranslationStringFilterParameters $params)
     {
         $this->setParams($params);
-        $string = self::getCdata($params->getNode());
+        $string = static::getCdata($params->getNode());
         if (!$this->hasBlocks($string)) {
             return $params;
         }
@@ -191,7 +191,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             $node = $this->placeBlock($block);
             $params->getNode()->appendChild($node);
         }
-        self::replaceCData($params->getNode(), '');
+        static::replaceCData($params->getNode(), '');
         return $params;
     }
 
@@ -271,9 +271,9 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 
         if (0 < count($originalAttributes)) {
             $flatAttributes = $this->getFieldsFilter()->flatternArray($originalAttributes);
-            $attr = self::maskAttributes($blockName, $flatAttributes);
+            $attr = static::maskAttributes($blockName, $flatAttributes);
             $attr = $this->postReceiveFiltering($attr);
-            $attr = self::unmaskAttributes($blockName, $attr);
+            $attr = static::unmaskAttributes($blockName, $attr);
             $filteredAttributes = array_merge($flatAttributes, $attr, $translatedAttributes);
             $processedAttributes = $this->getFieldsFilter()->structurizeArray($filteredAttributes);
         }
@@ -347,7 +347,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
                     $node->removeChild($child);
                 }
             }
-            self::replaceCData($params->getNode(), $string);
+            static::replaceCData($params->getNode(), $string);
         }
 
         return $this->getParams();

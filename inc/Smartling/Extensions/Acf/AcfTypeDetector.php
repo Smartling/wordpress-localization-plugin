@@ -89,7 +89,7 @@ class AcfTypeDetector
             $_realFieldName = preg_replace('#^meta\/#ius', '', $fieldName);
             if (array_key_exists('_' . $_realFieldName, $sourceMeta)) {
                 $fieldKey = $sourceMeta['_' . $_realFieldName];
-                $this->getCache()->set($this->getCacheKeyByFieldName($fieldName), $fieldKey, self::$cacheExpireSec);
+                $this->getCache()->set($this->getCacheKeyByFieldName($fieldName), $fieldKey, static::$cacheExpireSec);
             } else {
                 return false;
             }
