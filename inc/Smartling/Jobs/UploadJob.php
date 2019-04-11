@@ -136,11 +136,11 @@ class UploadJob extends JobAbstract
             $originalBlogId = $activeProfile->getOriginalBlogId()->getBlogId();
             $entities = $this->getSubmissionManager()->find(
                 [
-                    'status'         => [SubmissionEntity::SUBMISSION_STATUS_NEW],
-                    'is_locked'      => 0,
-                    'is_cloned'      => 0,
-                    'batch_uid'      => '',
-                    'source_blog_id' => $originalBlogId,
+                    SubmissionEntity::FIELD_STATUS         => [SubmissionEntity::SUBMISSION_STATUS_NEW],
+                    SubmissionEntity::FIELD_IS_LOCKED      => 0,
+                    SubmissionEntity::FIELD_IS_CLONED      => 0,
+                    SubmissionEntity::FIELD_BATCH_UID      => '',
+                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $originalBlogId,
                 ]
             );
 

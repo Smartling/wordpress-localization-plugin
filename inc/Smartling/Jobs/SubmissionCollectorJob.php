@@ -3,6 +3,7 @@
 namespace Smartling\Jobs;
 
 use Smartling\Queue\Queue;
+use Smartling\Submissions\SubmissionEntity;
 
 /**
  * Class SubmissionCollectorJob
@@ -48,7 +49,7 @@ class SubmissionCollectorJob extends JobAbstract
     private function fixEmptyFileUriSubmissions($iterationLimit = 100)
     {
         $params = [
-            'file_uri' => '',
+            SubmissionEntity::FIELD_FILE_URI => '',
         ];
 
         do {

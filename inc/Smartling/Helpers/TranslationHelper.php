@@ -265,7 +265,7 @@ class TranslationHelper
 
             $relatedSubmission->setBatchUid($batchUid);
             $serialized = $relatedSubmission->toArray(false);
-            if (null === $serialized['file_uri']) {
+            if (null === $serialized[SubmissionEntity::FIELD_FILE_URI]) {
                 $relatedSubmission->getFileUri();
             }
             $relatedSubmission = $this->getSubmissionManager()->storeEntity($relatedSubmission);

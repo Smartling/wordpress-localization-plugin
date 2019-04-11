@@ -2,7 +2,6 @@
 
 namespace Smartling\Submissions;
 
-use Smartling\Bootstrap;
 use Smartling\DbAl\EntityManagerAbstract;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
@@ -23,11 +22,6 @@ use Smartling\Processors\EntityProcessor;
  */
 class SubmissionManager extends EntityManagerAbstract
 {
-    /**
-     * The table name
-     */
-    const SUBMISSIONS_TABLE_NAME = 'smartling_submissions';
-
     /**
      * @return array
      */
@@ -152,8 +146,15 @@ class SubmissionManager extends EntityManagerAbstract
      * or null if no pagination needed
      * e.g.: array('limit' => 20, 'page' => 1)
      */
-    public function getEntities($contentType = null, $status = null, $outdatedFlag = null, array $sortOptions = [], $pageOptions = null, $targetBlogId = null, & $totalCount = 0)
-    {
+    public function getEntities(
+        $contentType = null,
+        $status = null,
+        $outdatedFlag = null,
+        array $sortOptions = [],
+        $pageOptions = null,
+        $targetBlogId = null,
+        & $totalCount = 0
+    ) {
         $validRequest = $this->validateRequest($contentType, $sortOptions, $pageOptions);
 
         $result = [];
@@ -162,7 +163,8 @@ class SubmissionManager extends EntityManagerAbstract
 
             if (null !== $targetBlogId) {
                 $block = ConditionBlock::getConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
-                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'target_blog_id', [$targetBlogId]);
+                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ,
+                    SubmissionEntity::FIELD_TARGET_BLOG_ID, [$targetBlogId]);
                 $block->addCondition($condition);
             } else {
                 $block = null;
@@ -205,8 +207,7 @@ class SubmissionManager extends EntityManagerAbstract
         array $sortOptions = [],
         $pageOptions = null,
         & $totalCount = 0
-    )
-    {
+    ) {
 
         $searchText = trim($searchText);
 
@@ -247,11 +248,18 @@ class SubmissionManager extends EntityManagerAbstract
         return $result;
     }
 
-    public function searchByCondition(ConditionBlock $block, $contentType = null, $status = null, $outdatedFlag = null, array $sortOptions = [], $pageOptions = null, & $totalCount = 0)
-    {
+    public function searchByCondition(
+        ConditionBlock $block,
+        $contentType = null,
+        $status = null,
+        $outdatedFlag = null,
+        array $sortOptions = [],
+        $pageOptions = null,
+        & $totalCount = 0
+    ) {
 
         $validRequest = $block instanceof ConditionBlock &&
-                        $this->validateRequest($contentType, $sortOptions, $pageOptions);
+            $this->validateRequest($contentType, $sortOptions, $pageOptions);
 
         $result = [];
 
@@ -303,10 +311,10 @@ class SubmissionManager extends EntityManagerAbstract
     {
         return $this->getTotalByFieldInValues(
             [
-                'status'    => [
+                SubmissionEntity::FIELD_STATUS => [
                     SubmissionEntity::SUBMISSION_STATUS_NEW,
                 ],
-                'is_locked' => [0],
+                SubmissionEntity::FIELD_IS_LOCKED => [0],
             ]);
     }
 
@@ -315,11 +323,11 @@ class SubmissionManager extends EntityManagerAbstract
 
         return $this->getTotalByFieldInValues(
             [
-                'status'    => [
+                SubmissionEntity::FIELD_STATUS => [
                     SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
                     SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
                 ],
-                'is_locked' => [0],
+                SubmissionEntity::FIELD_IS_LOCKED => [0],
             ]
         );
     }
@@ -332,10 +340,12 @@ class SubmissionManager extends EntityManagerAbstract
      */
     public function searchByBatchUid($batchUid)
     {
-        $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'batch_uid', [$batchUid]);
+        $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_BATCH_UID,
+            [$batchUid]);
         $block = ConditionBlock::getConditionBlock();
         $block->addCondition($condition);
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'status', ['New']));
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ,
+            SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_NEW]));
         $total = 0;
 
         return $this->searchByCondition($block, null, null, null, [], null, $total);
@@ -351,7 +361,7 @@ class SubmissionManager extends EntityManagerAbstract
      */
     public function getEntityById($id)
     {
-        $query = $this->buildSelectQuery(['id' => (int)$id]);
+        $query = $this->buildSelectQuery([SubmissionEntity::FIELD_ID => (int)$id]);
 
         $obj = $this->fetchData($query, false);
 
@@ -372,7 +382,7 @@ class SubmissionManager extends EntityManagerAbstract
      */
     public function getEntityBySourceGuid($sourceGuid)
     {
-        $query = $this->buildSelectQuery(['source_id' => $sourceGuid]);
+        $query = $this->buildSelectQuery([SubmissionEntity::FIELD_SOURCE_ID => $sourceGuid]);
 
         $obj = $this->fetchData($query, false);
 
@@ -421,7 +431,7 @@ class SubmissionManager extends EntityManagerAbstract
                 $whereOptions->addCondition(
                     Condition::getCondition(
                         ConditionBuilder::CONDITION_SIGN_EQ,
-                        'content_type',
+                        SubmissionEntity::FIELD_CONTENT_TYPE,
                         [$contentType]
                     )
                 );
@@ -431,7 +441,7 @@ class SubmissionManager extends EntityManagerAbstract
                 $whereOptions->addCondition(
                     Condition::getCondition(
                         ConditionBuilder::CONDITION_SIGN_EQ,
-                        'status',
+                        SubmissionEntity::FIELD_STATUS,
                         [$status]
                     )
                 );
@@ -441,7 +451,7 @@ class SubmissionManager extends EntityManagerAbstract
                 $whereOptions->addCondition(
                     Condition::getCondition(
                         ConditionBuilder::CONDITION_SIGN_EQ,
-                        'outdated',
+                        SubmissionEntity::FIELD_OUTDATED,
                         [$outdatedFlag]
                     )
                 );
@@ -496,15 +506,15 @@ class SubmissionManager extends EntityManagerAbstract
         if (!in_array($submission->getSourceBlogId(), $blogs, true)) {
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
             $submission->setLastError(vsprintf(
-                                          'Submission has source blog = %s, expected one of: [%s]',
-                                          [$submission->getSourceBlogId(), implode(',', $blogs)]
-                                      ));
+                'Submission has source blog = %s, expected one of: [%s]',
+                [$submission->getSourceBlogId(), implode(',', $blogs)]
+            ));
         } elseif (!in_array($submission->getTargetBlogId(), $blogs, true)) {
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
             $submission->setLastError(vsprintf(
-                                          'Submission has target blog = %s, expected one of: [%s]',
-                                          [$submission->getTargetBlogId(), implode(',', $blogs)]
-                                      ));
+                'Submission has target blog = %s, expected one of: [%s]',
+                [$submission->getTargetBlogId(), implode(',', $blogs)]
+            ));
         }
 
         if (true === $updateState) {
@@ -553,13 +563,17 @@ class SubmissionManager extends EntityManagerAbstract
         $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
 
         $blockBase = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
-        $blockBase->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'status', [SubmissionEntity::SUBMISSION_STATUS_NEW]));
-        $blockBase->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'is_locked', [0]));
+        $blockBase->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ,
+            SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_NEW]));
+        $blockBase->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ,
+            SubmissionEntity::FIELD_IS_LOCKED, [0]));
         $block->addConditionBlock($blockBase);
 
         $blockAlt = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR);
-        $blockAlt->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'is_cloned', [1]));
-        $blockAlt->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_NOT_EQ, 'batch_uid', ['']));
+        $blockAlt->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ,
+            SubmissionEntity::FIELD_IS_CLONED, [1]));
+        $blockAlt->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_NOT_EQ,
+            SubmissionEntity::FIELD_BATCH_UID, ['']));
         $block->addConditionBlock($blockAlt);
 
         $pageOptions = ['limit' => 1, 'page' => 1];
@@ -598,7 +612,8 @@ class SubmissionManager extends EntityManagerAbstract
             $block->addCondition($condition);
         }
 
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_NOT_EQ, 'batch_uid', ['']));
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_NOT_EQ,
+            SubmissionEntity::FIELD_BATCH_UID, ['']));
 
         $pageOptions = 0 === $limit ? null : ['limit' => $limit, 'page' => 1];
 
@@ -615,7 +630,7 @@ class SubmissionManager extends EntityManagerAbstract
     public function findByIds(array $ids)
     {
         $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
-        $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_IN, 'id', $ids);
+        $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_IN, SubmissionEntity::FIELD_ID, $ids);
         $block->addCondition($condition);
         $query = $this->buildQuery(null, null, null, [], null, $block);
 
@@ -643,8 +658,7 @@ class SubmissionManager extends EntityManagerAbstract
         $pageOptions,
         ConditionBlock $baseCondition = null,
         $groupOptions = null
-    )
-    {
+    ) {
 
         $whereOptions = null;
 
@@ -655,17 +669,20 @@ class SubmissionManager extends EntityManagerAbstract
             }
 
             if (!is_null($contentType)) {
-                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'content_type', [$contentType]);
+                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ,
+                    SubmissionEntity::FIELD_CONTENT_TYPE, [$contentType]);
                 $whereOptions->addCondition($condition);
             }
 
             if (!is_null($status)) {
-                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'status', [$status]);
+                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ,
+                    SubmissionEntity::FIELD_STATUS, [$status]);
                 $whereOptions->addCondition($condition);
             }
 
             if (!is_null($outdatedFlag)) {
-                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'outdated', [$outdatedFlag]);
+                $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ,
+                    SubmissionEntity::FIELD_OUTDATED, [$outdatedFlag]);
                 $whereOptions->addCondition($condition);
             }
         } else {
@@ -738,8 +755,8 @@ class SubmissionManager extends EntityManagerAbstract
             }
         }
 
-        if (array_key_exists('id', $fields)) {
-            unset ($fields['id']);
+        if (array_key_exists(SubmissionEntity::FIELD_ID, $fields)) {
+            unset ($fields[SubmissionEntity::FIELD_ID]);
         }
 
         if (0 === count($fields)) {
@@ -779,7 +796,7 @@ class SubmissionManager extends EntityManagerAbstract
 
         if (true === $is_insert && false !== $result) {
             $entityFields = $entity->toArray(false);
-            $entityFields['id'] = $this->getDbal()->getLastInsertedId();
+            $entityFields[SubmissionEntity::FIELD_ID] = $this->getDbal()->getLastInsertedId();
             // update reference to entity
             $entity = SubmissionEntity::fromArray($entityFields, $this->getLogger());
         }
@@ -812,17 +829,23 @@ class SubmissionManager extends EntityManagerAbstract
      *
      * @return SubmissionEntity
      */
-    public function getSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, LocalizationPluginProxyInterface $localizationProxy, $targetEntity = null)
-    {
+    public function getSubmissionEntity(
+        $contentType,
+        $sourceBlog,
+        $sourceEntity,
+        $targetBlog,
+        LocalizationPluginProxyInterface $localizationProxy,
+        $targetEntity = null
+    ) {
         $params = [
-            'content_type'   => $contentType,
-            'source_blog_id' => $sourceBlog,
-            'source_id'      => $sourceEntity,
-            'target_blog_id' => $targetBlog,
+            SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlog,
+            SubmissionEntity::FIELD_SOURCE_ID => $sourceEntity,
+            SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlog,
         ];
 
         if (null !== $targetEntity) {
-            $params['target_id'] = (int)$targetEntity;
+            $params[SubmissionEntity::FIELD_TARGET_ID] = (int)$targetEntity;
         }
 
         $entities = $this->find($params);
@@ -907,7 +930,7 @@ class SubmissionManager extends EntityManagerAbstract
                 $block->addCondition(
                     Condition::getCondition(
                         ConditionBuilder::CONDITION_SIGN_EQ,
-                        'id',
+                        SubmissionEntity::FIELD_ID,
                         [
                             $submission->getId(),
                         ]
@@ -969,7 +992,7 @@ class SubmissionManager extends EntityManagerAbstract
         $block->addCondition(
             Condition::getCondition(
                 ConditionBuilder::CONDITION_SIGN_IN,
-                'status',
+                SubmissionEntity::FIELD_STATUS,
                 [
                     SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
                     SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
@@ -979,7 +1002,7 @@ class SubmissionManager extends EntityManagerAbstract
         $query = QueryBuilder::buildSelectQuery(
             $this->getDbal()->completeTableName(SubmissionEntity::getTableName()),
             [
-                ['file_uri' => 'fileUri'],
+                [SubmissionEntity::FIELD_FILE_URI => 'fileUri'],
                 ['GROUP_CONCAT(`id`)' => 'ids'],
             ],
             $block,

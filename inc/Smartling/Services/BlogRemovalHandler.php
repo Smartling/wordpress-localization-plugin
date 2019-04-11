@@ -6,6 +6,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\SettingsManager;
+use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\WPHookInterface;
 
@@ -148,12 +149,12 @@ class BlogRemovalHandler implements WPHookInterface
 
     private function getSubmissions($targetBlogId)
     {
-        return $this->getSubmissionManager()->find(['target_blog_id' => $targetBlogId]);
+        return $this->getSubmissionManager()->find([SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId]);
     }
 
     private function getSubmissionCountByFileUri($fileUri)
     {
-        return count($this->getSubmissionManager()->find(['file_uri' => $fileUri]));
+        return count($this->getSubmissionManager()->find([SubmissionEntity::FIELD_FILE_URI => $fileUri]));
     }
 
 }

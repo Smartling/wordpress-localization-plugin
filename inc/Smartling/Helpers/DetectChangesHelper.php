@@ -111,9 +111,9 @@ class DetectChangesHelper
     private function getSubmissions($blogId, $contentId, $contentType)
     {
         $params = [
-            'source_id'      => $contentId,
-            'source_blog_id' => $blogId,
-            'content_type'   => $contentType,
+            SubmissionEntity::FIELD_SOURCE_ID      => $contentId,
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $blogId,
+            SubmissionEntity::FIELD_CONTENT_TYPE   => $contentType,
         ];
 
         return $this->getSubmissionManager()->find($params);

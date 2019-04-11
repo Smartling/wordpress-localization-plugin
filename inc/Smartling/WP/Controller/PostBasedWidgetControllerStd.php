@@ -436,9 +436,9 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                 if (0 < count($profile)) {
                     $submissions = $this->getManager()
                                         ->find([
-                                            'source_blog_id' => $currentBlogId,
-                                            'source_id' => $post->ID,
-                                            'content_type' => $this->servedContentType,
+                                            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
+                                            SubmissionEntity::FIELD_SOURCE_ID => $post->ID,
+                                            SubmissionEntity::FIELD_CONTENT_TYPE => $this->servedContentType,
                                         ]);
 
                     $this->view([
@@ -667,10 +667,10 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                 $submissions = $this->getManager()
                                                     ->find(
                                                         [
-                                                            'source_id' => $originalId,
-                                                            'source_blog_id' => $sourceBlog,
-                                                            'content_type' => $this->servedContentType,
-                                                            'target_blog_id' => $targetBlogId,
+                                                            SubmissionEntity::FIELD_SOURCE_ID=> $originalId,
+                                                            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlog,
+                                                            SubmissionEntity::FIELD_CONTENT_TYPE => $this->servedContentType,
+                                                            SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
                                                         ]
                                                     );
 

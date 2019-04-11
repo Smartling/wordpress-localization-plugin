@@ -223,17 +223,17 @@ class SubmissionCleanupHelper implements WPHookInterface
 
         // try treat as translation
         $params = $searchParams = [
-            'target_blog_id' => $blogId,
-            'content_type'   => $contentType,
-            'target_id'      => $contentId,
+            SubmissionEntity::FIELD_TARGET_BLOG_ID => $blogId,
+            SubmissionEntity::FIELD_CONTENT_TYPE   => $contentType,
+            SubmissionEntity::FIELD_TARGET_ID      => $contentId,
         ];
         $this->processDeletion($params);
 
         // try treat as original
         $params = [
-            'source_blog_id' => $blogId,
-            'content_type'   => $contentType,
-            'source_id'      => $contentId,
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $blogId,
+            SubmissionEntity::FIELD_CONTENT_TYPE   => $contentType,
+            SubmissionEntity::FIELD_SOURCE_ID      => $contentId,
         ];
 
         $this->processDeletion($params);
@@ -309,7 +309,7 @@ class SubmissionCleanupHelper implements WPHookInterface
     private function deleteFile(SubmissionEntity $submission)
     {
         $this->getLogger()->debug(vsprintf('Preparing to delete XML file: %s', [$submission->getFileUri()]));
-        $storedSubmissions = $this->getSubmissionManager()->find(['file_uri' => $submission->getFileUri()]);
+        $storedSubmissions = $this->getSubmissionManager()->find([SubmissionEntity::FIELD_FILE_URI => $submission->getFileUri()]);
         if (0 === count($storedSubmissions)) {
             $this->getLogger()
                 ->debug(vsprintf('File %s is not in use and will be deleted', [$submission->getFileUri()]));
