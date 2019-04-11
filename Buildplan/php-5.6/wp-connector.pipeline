@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    full_image_name = "wordpress-connector-wp-${WP_VERSION}-acf-${ACF_PRO_VERSION}"
+    full_image_name = "php-5.6-wordpress-connector-wp-${WP_VERSION}-acf-${ACF_PRO_VERSION}"
     sonar_project_key = "wordpress-connector:master"
     sonar_project_name = "wordpress-connector"
   }

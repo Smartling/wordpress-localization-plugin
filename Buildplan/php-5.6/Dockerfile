@@ -77,10 +77,7 @@ ENV WPCLI="${WP_INSTALL_DIR}/wp-cli.phar --allow-root --path=${WP_INSTALL_DIR}"
 
 RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
     cd ${WP_INSTALL_DIR} && \
-    if [ "latest" == "${WP_VERSION}" ] \
-        then  ${WPCLI} core download ; \
-        else  ${WPCLI} core download --version="${WP_VERSION}" ; \
-    fi; && \
+    if [ "latest" = "${WP_VERSION}" ]; then ${WPCLI} core download; else ${WPCLI} core download --version="${WP_VERSION}"; fi && \
     ${WPCLI} config create --dbname=${MYSQL_BASE} --dbuser=${MYSQL_USER} --dbpass=${MYSQL_PASS} --dbprefix=${WP_DB_TABLE_PREFIX} && \
     ${WPCLI} core install --url=${WP_INSTALLATION_DOMAIN} --title=Test --admin_user=wp --admin_password=wp --admin_email=test@wp.org --skip-email && \
     ${WPCLI} core multisite-convert && \
@@ -100,9 +97,9 @@ RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
 # install ACF Pro (latest) add &t=<ver> to download URI for customization
 
 RUN DLINK="https://connect.advancedcustomfields.com/index.php?a=download&p=pro&k=${ACFPRO_KEY}" && \
+    if [ "latest" != "${ACF_PRO_VERSION}" ]; then DLINK="${DLINK}&t=${ACF_PRO_VERSION}"; fi && \
     PPATH="${WP_INSTALL_DIR}/advanced-custom-fields-pro.zip" && \
     chown -R mysql:mysql /var/lib/mysql && service mysql start && \
-    if [ "latest" == "${ACF_PRO_VERSION}" ] ; then ACF_VER_STR="" ; else ACF_VER_STR="&t=${ACF_PRO_VERSION}"; fi; && \
     curl ${DLINK}${ACF_VER_STR} --output ${PPATH} && \
     ${WPCLI} plugin install ${PPATH} --activate-network
 
