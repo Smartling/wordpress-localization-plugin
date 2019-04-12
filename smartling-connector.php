@@ -7,7 +7,7 @@
  * Plugin Name:       Smartling Connector
  * Plugin URI:        https://www.smartling.com/products/automate/integrations/wordpress/
  * Description:       Integrate your Wordpress site with Smartling to upload your content and download translations.
- * Version:           1.10.5
+ * Version:           1.10.6
  * Author:            Smartling
  * Author URI:        https://www.smartling.com
  * License:           GPL-2.0+
@@ -37,7 +37,7 @@ if (defined('SMARTLING_DEBUG') || is_admin() || (defined('DOING_CRON') && true =
             /**
              * Minimum version to run smartling plugin [major.minor]
              */
-            const SMARTLING_MIN_PHP_VERSION = '5.5';
+            const SMARTLING_MIN_PHP_VERSION = '5.6';
 
             public static function check_php_version()
             {

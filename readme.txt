@@ -3,7 +3,7 @@ Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
 Tested up to: 5.1.1
-Stable tag: 1.10.5
+Stable tag: 1.10.6
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -26,7 +26,7 @@ Integration Features
 = Minimum Requirements =
 * WordPress 4.6 or higher
 * Multisite mode enabled
-* PHP Version 5.5 or higher
+* PHP Version 5.6 or higher
 * PHP extensions:
  * `mbstring`
  * `curl`
@@ -57,6 +57,12 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 1.10.6 =
+* Changed minimum required PHP version to 5.6
+* Fixed possible issue when ACF configuration is not handled correctly for ACF Pro 5.7.12+
+* Improved security on AJAX requests
+* Improved total plugin stability
+
 = 1.10.5 =
 * Fixed UI issue when Translation Lock block is not displayed when using Gutenberg editor.
 * Fixed UI issue when Content upload widget is not displayed when using Gutenberg editor.
