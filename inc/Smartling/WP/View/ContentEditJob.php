@@ -166,7 +166,6 @@ if ($post instanceof WP_Post) {
                 },
                 listJobs: function (cb) {
                     this.query('list-jobs', {}, function (response) {
-                        response = JSON.parse(response);
                         if (200 == response.status) {
                             if (typeof cb === 'function') {
                                 cb(response.data);
@@ -188,7 +187,6 @@ if ($post instanceof WP_Post) {
                         timezone: timezone
                     }, function (response) {
                         $('#loader-image').addClass('hidden');
-                        response = JSON.parse(response);
                         if (response.status <= 300) {
                             if (typeof success === 'function') {
                                 success(response.data);
@@ -376,7 +374,6 @@ if ($post instanceof WP_Post) {
                         ajaxurl + "?action=" + "smartling_upload_handler",
                         obj,
                         function (data) {
-                            data = JSON.parse(data);
                             switch (data.status) {
                                 case "SUCCESS":
                                     wp.data.dispatch("core/notices").createSuccessNotice("Content added to Upload queue.");

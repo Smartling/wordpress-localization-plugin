@@ -99,7 +99,6 @@ $defaultFilter = Smartling\Bootstrap::getContainer()->getParameter('field.proces
                     userIdent: $('#userIdentifier').val(),
                     tokenSecret: $('#secretKey').val()
                 }, function (r) {
-                    var r = JSON.parse(r);
                     if (200 === r.status && undefined !== r.locales) {
 
                         var inputs = $('#target-locale-block input[type=text]');
