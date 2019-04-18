@@ -178,6 +178,7 @@ class SiteHelper
      */
     public function switchBlogId($blogId)
     {
+        $blogId = (int) $blogId;
         $this->cacheSites();
 
         if (!in_array($blogId, static::$_flatBlogIdCache, true)) {
