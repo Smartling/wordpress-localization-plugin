@@ -317,7 +317,7 @@ if ($post instanceof WP_Post) {
 
             Helper.ui.displayJobList();
 
-            $('#dueDate').datetimepicker({
+            $('#dueDate').datetimepicker2({
                 format: 'Y-m-d H:i',
                 minDate: 0
             });
