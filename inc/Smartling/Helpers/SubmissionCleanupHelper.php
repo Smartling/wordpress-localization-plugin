@@ -189,8 +189,6 @@ class SubmissionCleanupHelper implements WPHookInterface
      */
     public function preDeleteTermHandler($term, $taxonomy)
     {
-        remove_action('pre_delete_term', [$this, 'preDeleteTermHandler']);
-
         $currentBlogId = $this->getSiteHelper()->getCurrentBlogId();
 
         $this->getLogger()->debug(
@@ -209,8 +207,6 @@ class SubmissionCleanupHelper implements WPHookInterface
         } catch (\Exception $e) {
             $this->getLogger()->warning($e->getMessage());
         }
-        
-        add_action('pre_delete_term', [$this, 'preDeleteTermHandler']);
     }
 
     /**
