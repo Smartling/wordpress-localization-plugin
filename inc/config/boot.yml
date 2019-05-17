@@ -8,4 +8,5 @@ parameters:
     - "field-processor.yml"
     - "migrations.yml"
     - "installable.yml"
+    - "ignored-types.yml"
     - "register-on-startup.yml"

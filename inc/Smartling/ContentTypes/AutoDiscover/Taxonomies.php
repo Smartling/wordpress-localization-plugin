@@ -18,6 +18,11 @@ class Taxonomies
     private $logger;
 
     /**
+     * @var array
+     */
+    private $ignoredTypes;
+
+    /**
      * @return ContainerBuilder
      */
     public function getDi()
@@ -49,18 +54,40 @@ class Taxonomies
         $this->logger = $logger;
     }
 
+    /**
+     * @return array
+     */
+    public function getIgnoredTypes()
+    {
+        return $this->ignoredTypes;
+    }
+
+    /**
+     * @param array $ignoredTypes
+     */
+    public function setIgnoredTypes($ignoredTypes)
+    {
+        $this->ignoredTypes = $ignoredTypes;
+    }
+
     public function __construct(ContainerBuilder $di)
     {
         $this->setDi($di);
         $this->setLogger($di->get('logger'));
+
+        $ignoredTypes = $di->getParameter('ignoredTypes')['taxonomies'];
+        $ignoredTypes = null === $ignoredTypes ? [] : $ignoredTypes;
+        $this->setIgnoredTypes($ignoredTypes);
 
         add_action('registered_taxonomy', [$this, 'hookHandler']);
     }
 
     public function hookHandler($taxonomy)
     {
-        //$msg = 'Detected taxonomy \'%s\' registration. Adding it to smartling-connector.';
-        //$this->getLogger()->debug(vsprintf($msg, [$taxonomy]));
+        if (in_array($taxonomy, $this->getIgnoredTypes(), true)) {
+            return;
+        }
+
         add_action('smartling_register_custom_taxonomy', function (array $definition) use ($taxonomy) {
             return array_merge(
                 $definition,

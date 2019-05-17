@@ -18,6 +18,11 @@ class PostTypes
     private $logger;
 
     /**
+     * @var array
+     */
+    private $ignoredTypes;
+
+    /**
      * @return ContainerBuilder
      */
     public function getDi()
@@ -42,6 +47,22 @@ class PostTypes
     }
 
     /**
+     * @return array
+     */
+    public function getIgnoredTypes()
+    {
+        return $this->ignoredTypes;
+    }
+
+    /**
+     * @param array $ignoredTypes
+     */
+    public function setIgnoredTypes($ignoredTypes)
+    {
+        $this->ignoredTypes = $ignoredTypes;
+    }
+
+    /**
      * @param LoggerInterface $logger
      */
     public function setLogger($logger)
@@ -54,13 +75,19 @@ class PostTypes
 
         $this->setDi($di);
         $this->setLogger($di->get('logger'));
+
+        $ignoredTypes = $di->getParameter('ignoredTypes')['posts'];
+        $ignoredTypes = null === $ignoredTypes ? [] : $ignoredTypes;
+        $this->setIgnoredTypes($ignoredTypes);
+
         add_action('registered_post_type', [$this, 'hookHandler']);
     }
 
     public function hookHandler($postType)
     {
-        //$msg = 'Detected post-type \'%s\' registration. Adding it to smartling-connector.';
-        //$this->getLogger()->debug(vsprintf($msg, [$postType]));
+        if (in_array($postType, $this->getIgnoredTypes(), true)) {
+            return;
+        }
 
         add_action('smartling_register_custom_type', function (array $definition) use ($postType) {
             global $wp_post_types;

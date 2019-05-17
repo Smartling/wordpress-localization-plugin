@@ -1,0 +1,6 @@
+parameters:
+  ignoredTypes:
+    taxonomies:
+      - "yst_prominent_words"
+    posts:
+      ~
