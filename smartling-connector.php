@@ -21,9 +21,6 @@
 if (!defined('WPINC')) {
     die;
 }
-if (!defined('SCRIPT_DEBUG')) {
-	define('SCRIPT_DEBUG', true);
-}
 defined('SMARTLING_DEBUG') || file_exists(__DIR__ . '/smartling.debug') && define('SMARTLING_DEBUG', true);
 /**
  * Execute everything only on admin pages or while running cron tasks
