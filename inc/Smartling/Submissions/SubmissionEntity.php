@@ -68,6 +68,11 @@ class SubmissionEntity extends SmartlingEntityAbstract
     const SUBMISSION_STATUS_FAILED = 'Failed';
 
     /**
+     * Submission Status 'Cancelled'
+     */
+    const SUBMISSION_STATUS_CANCELLED = 'Cancelled';
+
+    /**
      * @var array Submission Statuses
      */
     public static $submissionStatuses = [
@@ -75,6 +80,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
         self::SUBMISSION_STATUS_IN_PROGRESS,
         self::SUBMISSION_STATUS_COMPLETED,
         self::SUBMISSION_STATUS_FAILED,
+        self::SUBMISSION_STATUS_CANCELLED,
     ];
 
     const FIELD_ID = 'id';

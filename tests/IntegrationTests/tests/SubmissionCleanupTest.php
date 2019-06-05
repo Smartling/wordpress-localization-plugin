@@ -37,14 +37,15 @@ class SubmissionCleanupTest extends SmartlingUnitTestCaseAbstract
         return reset($submissions);
     }
 
-    private function checkSubmissionIsRemoved()
+    private function checkSubmissionIsCancelled()
     {
         $submissions = $this->getSubmissionManager()->find(
             [
                 'content_type' => 'post',
                 'is_cloned'    => 1,
+                'status'       => SubmissionEntity::SUBMISSION_STATUS_CANCELLED,
             ]);
-        $this->assertTrue(0 === count($submissions));
+        $this->assertTrue(1 === count($submissions));
     }
 
     private function prepareTempFile(SubmissionEntity $submission)
@@ -70,7 +71,7 @@ class SubmissionCleanupTest extends SmartlingUnitTestCaseAbstract
         $this->prepareTempFile($submission);
 
         $this->wpcli_exec('cron', 'event', 'run exec_plugin_execute_hook');
-        $this->checkSubmissionIsRemoved();
+        $this->checkSubmissionIsCancelled();
 
         $this->wpcli_exec('plugin', 'deactivate', 'exec-plugin --network');
     }
@@ -83,7 +84,7 @@ class SubmissionCleanupTest extends SmartlingUnitTestCaseAbstract
         $this->prepareTempFile($submission);
 
         $this->wpcli_exec('cron', 'event', 'run exec_plugin_execute_hook');
-        $this->checkSubmissionIsRemoved();
+        $this->checkSubmissionIsCancelled();
 
         $this->wpcli_exec('plugin', 'deactivate', 'exec-plugin --network');
     }

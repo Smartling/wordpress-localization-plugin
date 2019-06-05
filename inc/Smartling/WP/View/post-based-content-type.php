@@ -72,7 +72,7 @@ if (!empty($locales)) {
                         /**
                          * @var SubmissionEntity $item
                          */
-                        if ($item->getTargetBlogId() === $locale->getBlogId()) {
+                        if ($item->getTargetBlogId() === $locale->getBlogId() && SubmissionEntity::SUBMISSION_STATUS_CANCELLED !== $item->getStatus()) {
                             $value = true;
                             $statusValue = $item->getStatus();
                             $id = $item->getId();
