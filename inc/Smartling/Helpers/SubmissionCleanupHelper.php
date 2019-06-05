@@ -263,7 +263,6 @@ class SubmissionCleanupHelper implements WPHookInterface
         $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_CANCELLED);
         $submission->setTargetId(0);
         $submission = $this->getSubmissionManager()->storeEntity($submission);
-        $this->deleteFile($submission);
     }
 
     /**
@@ -300,22 +299,4 @@ class SubmissionCleanupHelper implements WPHookInterface
 
         $this->getLogger()->debug(vsprintf($message, [var_export($submission->toArray(false), true)]));
     }
-
-    /**
-     * @param SubmissionEntity $submission
-     */
-    private function deleteFile(SubmissionEntity $submission)
-    {
-        $this->getLogger()->debug(vsprintf('Preparing to delete XML file: %s', [$submission->getFileUri()]));
-        $storedSubmissions = $this->getSubmissionManager()->find([SubmissionEntity::FIELD_FILE_URI => $submission->getFileUri()]);
-        if (0 === count($storedSubmissions)) {
-            $this->getLogger()
-                ->debug(vsprintf('File %s is not in use and will be deleted', [$submission->getFileUri()]));
-            $this->getApiWrapper()->deleteFile($submission);
-        } else {
-            $this->getLogger()
-                ->debug(vsprintf('File %s is still in use and won\'t be deleted', [$submission->getFileUri()]));
-        }
-    }
-
 }
