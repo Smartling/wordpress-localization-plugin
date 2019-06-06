@@ -418,12 +418,16 @@ trait SmartlingCoreUploadTrait
         try {
             $xml = $this->getXMLFiltered($submission);
             $submission = $this->getSubmissionManager()->storeEntity($submission);
-
+            /**
+             * @var SubmissionEntity $submission
+             */
             $params = [
-                SubmissionEntity::FIELD_STATUS    => [SubmissionEntity::SUBMISSION_STATUS_NEW],
-                SubmissionEntity::FIELD_FILE_URI  => $submission->getFileUri(),
-                SubmissionEntity::FIELD_IS_CLONED => [0],
-                SubmissionEntity::FIELD_IS_LOCKED => [0],
+                SubmissionEntity::FIELD_STATUS          => [SubmissionEntity::SUBMISSION_STATUS_NEW],
+                SubmissionEntity::FIELD_FILE_URI        => $submission->getFileUri(),
+                SubmissionEntity::FIELD_IS_CLONED       => [0],
+                SubmissionEntity::FIELD_IS_LOCKED       => [0],
+                SubmissionEntity::FIELD_TARGET_BLOG_ID  => $this->getSettingsManager()
+                                                                ->getProfileTargetBlogIdsByMainBlogId($submission->getSourceBlogId()),
             ];
 
             if (!StringHelper::isNullOrEmpty($submission->getBatchUid())) {
