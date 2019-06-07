@@ -86,6 +86,30 @@ class SettingsManager extends EntityManagerAbstract
     }
 
     /**
+     * @param $mainBlogId
+     * @return array
+     * @throws SmartlingDbException
+     * @throws SmartlingConfigException
+     */
+    public function getProfileTargetBlogIdsByMainBlogId($mainBlogId) {
+        $profile = $this->getSingleSettingsProfile($mainBlogId);
+
+        $targetBlogIds = [];
+
+        foreach ($profile->getTargetLocales() as $targetLocale) {
+            if ($targetLocale->isEnabled()) {
+                $targetBlogIds[]=$targetLocale->getBlogId();
+            }
+        }
+
+        if (0 < count($targetBlogIds)) {
+            return $targetBlogIds;
+        } else {
+            throw new SmartlingConfigException(vsprintf('No active target locales found for profile id=%s.', [$profile->getId()]));
+        }
+    }
+
+    /**
      * @param ConfigurationProfileEntity $profile
      * @param int                        $targetBlog
      *

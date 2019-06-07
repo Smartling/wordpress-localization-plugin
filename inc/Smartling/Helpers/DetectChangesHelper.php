@@ -106,17 +106,23 @@ class DetectChangesHelper
      * @param $contentId
      * @param $contentType
      *
-     * @return \Smartling\Submissions\SubmissionEntity[]
+     * @return SubmissionEntity[]
      */
     private function getSubmissions($blogId, $contentId, $contentType)
     {
-        $params = [
-            SubmissionEntity::FIELD_SOURCE_ID      => $contentId,
-            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $blogId,
-            SubmissionEntity::FIELD_CONTENT_TYPE   => $contentType,
-        ];
+        try {
+            $params = [
+                SubmissionEntity::FIELD_SOURCE_ID       => $contentId,
+                SubmissionEntity::FIELD_SOURCE_BLOG_ID  => $blogId,
+                SubmissionEntity::FIELD_CONTENT_TYPE    => $contentType,
+                SubmissionEntity::FIELD_TARGET_BLOG_ID  => $this->getSettingsManager()
+                                                                ->getProfileTargetBlogIdsByMainBlogId($blogId),
+            ];
 
-        return $this->getSubmissionManager()->find($params);
+            return $this->getSubmissionManager()->find($params);
+        } catch (Exception $e) {
+            return [];
+        }
     }
 
     /**
