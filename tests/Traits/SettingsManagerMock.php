@@ -19,7 +19,8 @@ trait SettingsManagerMock
             ->setMethods(
                 [
                     'getSingleSettingsProfile',
-                    'findEntityByMainLocale'
+                    'findEntityByMainLocale',
+                    'find',
                 ]
             )
             ->disableOriginalConstructor()
