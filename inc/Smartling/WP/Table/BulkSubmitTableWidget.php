@@ -7,6 +7,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EntityHelper;
@@ -128,6 +129,12 @@ class BulkSubmitTableWidget extends SmartlingListTable
         $this->profile = $profile;
 
         $this->setLogger($entityHelper->getLogger());
+
+        /*
+         * Set default content type to first known
+         */
+        $this->defaultValues[static::CONTENT_TYPE_SELECT_ELEMENT_NAME] =
+            ArrayHelper::first(array_keys($this->getFilteredAllowedTypes()));
 
         parent::__construct($this->_settings);
     }
@@ -495,12 +502,8 @@ class BulkSubmitTableWidget extends SmartlingListTable
                                    ]);
     }
 
-    /**
-     * @return string
-     */
-    public function contentTypeSelectRender()
+    private function getFilteredAllowedTypes()
     {
-        $controlName = self::CONTENT_TYPE_SELECT_ELEMENT_NAME;
 
         $types = $this->getActiveContentTypes($this->entityHelper->getSiteHelper(), 'bulkSubmit');
 
@@ -514,6 +517,17 @@ class BulkSubmitTableWidget extends SmartlingListTable
             }
             $typesFiltered[$value] = $title;
         }
+
+        return $typesFiltered;
+    }
+
+    /**
+     * @return string
+     */
+    public function contentTypeSelectRender()
+    {
+        $controlName = self::CONTENT_TYPE_SELECT_ELEMENT_NAME;
+        $typesFiltered = $this->getFilteredAllowedTypes();
 
         $value = $this->getFormElementValue(
             $controlName,
