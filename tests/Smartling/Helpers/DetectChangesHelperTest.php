@@ -67,6 +67,12 @@ class DetectChangesHelperTest extends TestCase
                 SubmissionEntity::FIELD_SOURCE_BLOG_ID => 2,
                 SubmissionEntity::FIELD_CONTENT_TYPE => 'page',
                 SubmissionEntity::FIELD_TARGET_BLOG_ID => $expectedLocales,
+                SubmissionEntity::FIELD_STATUS => [
+                    SubmissionEntity::SUBMISSION_STATUS_NEW,
+                    SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
+                    SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
+                    SubmissionEntity::SUBMISSION_STATUS_FAILED,
+                ]
             ])
             ->willReturn($profile);
 
