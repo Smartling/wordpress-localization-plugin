@@ -323,9 +323,29 @@ if ($post instanceof WP_Post) {
             });
 
             if (window.React) {
+                var hasProp = function(obj, prop) {
+                    return Object.prototype.hasOwnProperty.call(obj, prop);
+                };
+
+                var canDispatch = hasProp(window, "wp")
+                    && hasProp(window.wp, "data")
+                    && hasProp(window.wp.data, "dispatch");
+
                 $("#addToJob").on("click", function (e) {
                     e.stopPropagation();
                     e.preventDefault();
+
+                    if (null !== document.getElementById("smartling-bulk-submit-page-content-type")) {
+                        // we're on bulk submit page and need to rebuild currentContent structure for WP 5.2+
+                        currentContent.contentType = $("#smartling-bulk-submit-page-content-type").val();
+                        currentContent.id = [];
+
+                        $("input.bulkaction[type=checkbox]:checked").each(
+                            function () {
+                                var id = parseInt($(this).attr("id").split("-")[0]);
+                                currentContent.id = currentContent.id.concat([id]);
+                            });
+                    }
 
                     var btnSelector = "#addToJob";
                     var wp5an = "components-button is-primary is-busy is-large";
@@ -374,15 +394,17 @@ if ($post instanceof WP_Post) {
                         ajaxurl + "?action=" + "smartling_upload_handler",
                         obj,
                         function (data) {
-                            switch (data.status) {
-                                case "SUCCESS":
-                                    wp.data.dispatch("core/notices").createSuccessNotice("Content added to Upload queue.");
-                                    break;
-                                case "FAIL":
-                                    wp.data.dispatch("core/notices").createErrorNotice("Failed adding content to download queue: " + data.message);
-                                    break;
-                                default:
-                                    console.log(data);
+                            if (canDispatch) {
+                                switch (data.status) {
+                                    case "SUCCESS":
+                                        wp.data.dispatch("core/notices").createSuccessNotice("Content added to Upload queue.");
+                                        break;
+                                    case "FAIL":
+                                        wp.data.dispatch("core/notices").createErrorNotice("Failed adding content to download queue: " + data.message);
+                                        break;
+                                    default:
+                                        console.log(data);
+                                }
                             }
                             btnUnlockWait();
                         }
