@@ -60,6 +60,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 = 1.10.13 =
 * Fixed possible issue when window.React is present not only on Gutenberg Edit page, but on all Admin pages and makes Bulk Submit page unusable.
 * Fixed possible issue when permanently removed translation is re-sent for translation after original content is changed and auto-resubmit function is enabled.
+* Fixed possible issue of unhandled Exception on BulkSubmit page when default 'post' content-type is disabled.
 
 = 1.10.12 =
 * Fixed possible unhandled exception when translation is manually edited and saved.
