@@ -83,9 +83,9 @@ RUN mkdir -p ${WP_INSTALL_DIR}
 RUN cd ${WP_INSTALL_DIR} && curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && chmod +x ./wp-cli.phar
 ENV WPCLI="${WP_INSTALL_DIR}/wp-cli.phar --allow-root --path=${WP_INSTALL_DIR}"
 
+ENV START_MYSQL="find /var/lib/mysql/mysql -exec touch -c -a {} + && service mysql start"
 
-
-RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
+RUN ${START_MYSQL} && \
     cd ${WP_INSTALL_DIR} && \
     if [ "latest" = "${WP_VERSION}" ]; then ${WPCLI} core download; else ${WPCLI} core download --version="${WP_VERSION}"; fi && \
     ${WPCLI} config create --dbname=${MYSQL_BASE} --dbuser=${MYSQL_USER} --dbpass=${MYSQL_PASS} --dbprefix=${WP_DB_TABLE_PREFIX} && \
@@ -97,19 +97,21 @@ RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
 SHELL ["/bin/bash", "-c"]
 
 # create sites
-RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
+RUN ${START_MYSQL} && \
     IFS=',' read -a array <<< "${SITES}"; for site in "${array[@]}"; do ${WPCLI} site create --slug="${site##*\:}" --title="${site%%\:*}" --email=test@wp.org; done
 
 # install plugins
-RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
+RUN ${START_MYSQL} && \
     IFS=';' read -a array <<< "${DEPENDENCIES}"; for plugin_name in "${array[@]}"; do ${WPCLI} plugin install $plugin_name --activate-network; done
 
 # install ACF Pro (latest) add &t=<ver> to download URI for customization
 
+
+
 RUN DLINK="https://connect.advancedcustomfields.com/index.php?a=download&p=pro&k=${ACFPRO_KEY}" && \
     if [ "latest" != "${ACF_PRO_VERSION}" ]; then DLINK="${DLINK}&t=${ACF_PRO_VERSION}"; fi && \
     PPATH="${WP_INSTALL_DIR}/advanced-custom-fields-pro.zip" && \
-    chown -R mysql:mysql /var/lib/mysql && service mysql start && sleep 30 && \
+    ${START_MYSQL} && \
     curl ${DLINK}${ACF_VER_STR} --output ${PPATH} && \
     ${WPCLI} plugin install ${PPATH} --activate-network
 
