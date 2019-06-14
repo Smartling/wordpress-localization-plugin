@@ -1,4 +1,4 @@
-FROM ubuntu:14.04
+FROM ubuntu:16.04
 
 ENV DEBIAN_FRONTEND="noninteractive"
 
@@ -47,26 +47,36 @@ RUN apt-get update && \
 RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
     echo "CREATE DATABASE ${MYSQL_BASE};" | mysql -u${MYSQL_USER} -p${MYSQL_PASS}
 
-# install php 5.6
-RUN apt-get install software-properties-common -y && \
-    add-apt-repository ppa:ondrej/php && \
-    apt-get update && \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common \
+  && apt-get clean \
+  && rm -fr /var/lib/apt/lists/*
+
+RUN LC_ALL=C.UTF-8 add-apt-repository ppa:ondrej/php
+RUN LC_ALL=C.UTF-8 add-apt-repository 'deb http://archive.ubuntu.com/ubuntu trusty universe'
+
+
+RUN apt-get update && \
     apt-get install \
         wget \
         git \
+        nano \
         curl \
         zip \
-        mc \
-        php5.6 \
-        php5.6-cli \
-        php5.6-xml \
-        php5.6-mysql \
-        php5.6-gd \
-        php5.6-curl \
-        php5.6-mcrypt \
-        php5.6-mbstring \
-        php5.6-xdebug -y --force-yes && \
-        apt-get autoclean -y && apt-get autoremove -y
+        unzip \
+        php7.2 \
+        php7.2-mysql \
+        php7.2-cli \
+        php7.2-gd \
+        php7.2-curl \
+        php7.2-zip \
+        php7.2-dom \
+        php7.2-simplexml \
+        php7.2-xml \
+        php7.2-mbstring \
+        php7.2-xdebug -y && \
+        apt-get autoclean -y && \
+        apt-get autoremove -y
 
 # install wpcli
 RUN mkdir -p ${WP_INSTALL_DIR}
