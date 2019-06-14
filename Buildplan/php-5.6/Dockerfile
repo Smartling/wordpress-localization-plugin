@@ -109,7 +109,7 @@ RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
 RUN DLINK="https://connect.advancedcustomfields.com/index.php?a=download&p=pro&k=${ACFPRO_KEY}" && \
     if [ "latest" != "${ACF_PRO_VERSION}" ]; then DLINK="${DLINK}&t=${ACF_PRO_VERSION}"; fi && \
     PPATH="${WP_INSTALL_DIR}/advanced-custom-fields-pro.zip" && \
-    chown -R mysql:mysql /var/lib/mysql && service mysql start && \
+    chown -R mysql:mysql /var/lib/mysql && service mysql start && sleep 30 && \
     curl ${DLINK}${ACF_VER_STR} --output ${PPATH} && \
     ${WPCLI} plugin install ${PPATH} --activate-network
 
