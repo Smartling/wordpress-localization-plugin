@@ -116,16 +116,6 @@ abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProce
                 return $value;
             }
 
-        } catch (SmartlingDataReadException $e) {
-            $message = vsprintf(
-                'An error happened while processing referenced content with original value=%s. Keeping original value.',
-                [
-                    var_export($originalValue, true),
-                ]
-            );
-            $this->getLogger()->error($message);
-
-
         } catch (\Exception $e) {
             $message = vsprintf(
                 'An exception occurred while sending related item=%s, submission=%s for translation. Message: %s',
