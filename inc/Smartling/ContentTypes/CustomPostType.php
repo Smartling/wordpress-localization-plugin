@@ -4,6 +4,7 @@ namespace Smartling\ContentTypes;
 
 use Smartling\Base\ExportedAPI;
 use Smartling\ContentTypes\ConfigParsers\PostTypeConfigParser;
+use Smartling\Helpers\CustomMenuContentTypeHelper;
 use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\TranslationHelper;

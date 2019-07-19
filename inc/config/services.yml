@@ -256,3 +256,10 @@ services:
       - "@manager.settings"
       - "@site.cache"
       - "@plugin.info"
+
+  service.relation-discovery:
+    class: Smartling\Services\ContentRelationDiscoveryService
+    arguments:
+      - "@content.helper"
+      - "@fields-filter.helper"
+      - "@meta-field.processor.manager"
