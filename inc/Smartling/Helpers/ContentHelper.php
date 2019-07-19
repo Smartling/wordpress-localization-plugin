@@ -344,6 +344,7 @@ class ContentHelper
     public function checkEntityExists($blogId, $contentType, $contentId)
     {
         $needSiteSwitch = (int)$blogId !== $this->getSiteHelper()->getCurrentBlogId();
+        $result         = false;
 
         if ($needSiteSwitch) {
             $this->getSiteHelper()->switchBlogId((int)$blogId);
@@ -351,7 +352,7 @@ class ContentHelper
 
         try {
             if (($this->getIoFactory()->getMapper($contentType)->get($contentId)) instanceof EntityAbstract) {
-                return true;
+                $result = true;
             }
         } catch (Exception $e) {
         }
@@ -359,6 +360,6 @@ class ContentHelper
         if ($needSiteSwitch) {
             $this->getSiteHelper()->restoreBlogId();
         }
-        return false;
+        return $result;
     }
 }
