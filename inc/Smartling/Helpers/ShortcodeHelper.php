@@ -94,16 +94,23 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     private function hasShortcodes($string)
     {
         $possibleShortcodes = $this->getRegisteredShortcodes();
+
+        global $shortcode_tags;
+        $oldTags = $shortcode_tags;
+
+        $shortcode_tags = array_flip($possibleShortcodes);
+
         foreach ($possibleShortcodes as $possibleShortcode) {
             $result = has_shortcode($string, $possibleShortcode);
             if (true === $result) {
                 $this
                     ->getLogger()
                     ->debug(vsprintf('Detected \'%s\' shortcode in string \'%s\'', [$possibleShortcode, $string]));
+                $shortcode_tags = $oldTags;
                 return true;
             }
         }
-
+        $shortcode_tags = $oldTags;
         return false;
     }
 
@@ -120,9 +127,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         $this->setParams($params);
         $node = $this->getNode();
 
-        $string = static::getCdata($node);
-
-        if ($this->hasShortcodes($string)) {
+        if ($this->hasShortcodes(static::getCdata($node))) {
             // getting attributes translation
             foreach ($node->childNodes as $cNode) {
                 $this->getLogger()->debug(vsprintf('Looking for translations (subnodes)', []));
@@ -150,7 +155,6 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
                 }
             }
 
-            $node->appendChild(new \DOMCdataSection($string));
             // unmasking string
             $this->unmask();
             $string = static::getCdata($this->getNode());
