@@ -80,6 +80,7 @@ ENV PLUGIN_DIR="${WP_PLUGINS_DIR}/smartling-connector"
 ENV LOCAL_GIT_DIR="/plugin-dir"
 
 COPY Buildplan/boot.sh /boot.sh
+RUN chmod +x /boot.sh
 
 RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
     mkdir -p ${WP_INSTALL_DIR} && \
@@ -90,16 +91,12 @@ RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
     ${WPCLI} core install --url=${WP_INSTALLATION_DOMAIN} --title=Test --admin_user=wp --admin_password=wp --admin_email=test@wp.org --skip-email && \
     ${WPCLI} core multisite-convert && \
     IFS=',' read -a array <<< "${SITES}"; for site in "${array[@]}"; do ${WPCLI} site create --slug="${site##*\:}" --title="${site%%\:*}" --email=test@wp.org; done && \
-    IFS=';' read -a array <<< "${DEPENDENCIES}"; for plugin_name in "${array[@]}"; do ${WPCLI} plugin install $plugin_name --activate-network; done
-
-RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
+    IFS=';' read -a array <<< "${DEPENDENCIES}"; for plugin_name in "${array[@]}"; do ${WPCLI} plugin install $plugin_name --activate-network; done && \
     if [ "latest" != "${ACF_PRO_VERSION}" ]; then DLINK="${DLINK}&t=${ACF_PRO_VERSION}"; fi && \
     DLINK="https://connect.advancedcustomfields.com/index.php?a=download&p=pro&k=${ACFPRO_KEY}" && \
-    echo Downloading from $DLINK && \
     BUILD_FQFN="${WP_INSTALL_DIR}/advanced-custom-fields-pro.zip" && \
     curl ${DLINK} --output ${BUILD_FQFN} && \
-    ${WPCLI} plugin install ${BUILD_FQFN} --activate-network && \
-    chmod +x /boot.sh
+    ${WPCLI} plugin install ${BUILD_FQFN} --activate-network
 
 CMD WP_INSTALL_DIR=${WP_INSTALL_DIR} \
     PLUGIN_DIR=${PLUGIN_DIR} \
