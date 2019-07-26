@@ -18,6 +18,8 @@ ARG WP_VERSION=latest
 # if not set latest is used. Value should be like "5.7.10" (before internal refactoring) or "5.7.12"
 ARG ACF_PRO_VERSION=latest
 
+ARG PHP_version=5.6
+
 ENV WP_INSTALL_DIR=${WP_INSTALL_DIR}
 ENV MYSQL_USER=${MYSQL_USER}
 ENV MYSQL_PASS=${MYSQL_PASS}
@@ -56,17 +58,17 @@ RUN apt-get install -y --no-install-recommends software-properties-common && \
 
 RUN apt-get update && \
     apt-get install -y \
-        php5.6 \
-        php5.6-mysql \
-        php5.6-cli \
-        php5.6-gd \
-        php5.6-curl \
-        php5.6-zip \
-        php5.6-dom \
-        php5.6-simplexml \
-        php5.6-xml \
-        php5.6-mbstring \
-        php5.6-xdebug && \
+        php${PHP_version} \
+        php${PHP_version}-mysql \
+        php${PHP_version}-cli \
+        php${PHP_version}-gd \
+        php${PHP_version}-curl \
+        php${PHP_version}-zip \
+        php${PHP_version}-dom \
+        php${PHP_version}-simplexml \
+        php${PHP_version}-xml \
+        php${PHP_version}-mbstring \
+        php${PHP_version}-xdebug && \
         apt-get autoclean -y && \
         apt-get autoremove -y
 
