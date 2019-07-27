@@ -1,6 +1,4 @@
-FROM ubuntu:16.04
-
-ENV DEBIAN_FRONTEND="noninteractive"
+FROM pratushnyi/anyphp:ubuntu
 
 ARG WP_INSTALL_DIR="/WP_INSTALL_DIR"
 ARG MYSQL_USER="root"
@@ -29,35 +27,18 @@ ENV WP_INSTALLATION_DOMAIN=${WP_INSTALLATION_DOMAIN}
 ENV SITES=${SITES}
 ENV DEPENDENCIES="smartling-connector;wordpress-seo"
 
-RUN echo Building image with Wordpress:${WP_VERSION} and ACF Pro plugin:${ACF_PRO_VERSION}
+RUN echo Building image with Wordpress:${WP_VERSION} and ACF Pro plugin:${ACF_PRO_VERSION} and PHP:${PHP_version}
 
-# install MySQL
-RUN apt-get update && \
-    echo "mysql-server mysql-server/root_password password ${MYSQL_PASS}" | debconf-set-selections && \
-    echo "mysql-server mysql-server/root_password_again password ${MYSQL_PASS}" | debconf-set-selections && \
-    apt-get install mysql-server -y && \
-    apt-get autoclean -y && \
-    apt-get autoremove -y
-
-RUN apt-get install -y \
-    git \
-    nano \
-    curl \
-    zip \
-    unzip
-
-# creating database
-RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
-    echo "CREATE DATABASE ${MYSQL_BASE};" | mysql -u${MYSQL_USER} -p${MYSQL_PASS}
-
-RUN apt-get install -y --no-install-recommends software-properties-common && \
-    apt-get clean && \
-    rm -fr /var/lib/apt/lists/* && \
-    LC_ALL=C.UTF-8 add-apt-repository ppa:ondrej/php && \
-    LC_ALL=C.UTF-8 add-apt-repository 'deb http://archive.ubuntu.com/ubuntu trusty universe'
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
     apt-get install -y \
+        git \
+        nano \
+        curl \
+        zip \
+        unzip \
+        mysql-server \
         php${PHP_version} \
         php${PHP_version}-mysql \
         php${PHP_version}-cli \
@@ -71,6 +52,15 @@ RUN apt-get update && \
         php${PHP_version}-xdebug && \
         apt-get autoclean -y && \
         apt-get autoremove -y
+
+RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
+    find /var/lib/mysql -type f -exec touch {} \; && \
+    sed -i 's/^bind-address\s*=.*$/bind-address = "0.0.0.0"/' /etc/mysql/my.cnf && \
+    sleep 5 && \
+    echo "CREATE USER '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASS}';" | mysql && \
+    echo "GRANT ALL PRIVILEGES ON *.* TO '${MYSQL_USER}'@'%' WITH GRANT OPTION;" | mysql && \
+    echo "CREATE DATABASE ${MYSQL_BASE};" | mysql -u${MYSQL_USER} -p${MYSQL_PASS} && \
+    service mysql stop
 
 SHELL ["/bin/bash", "-c"]
 
@@ -98,7 +88,8 @@ RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
     DLINK="https://connect.advancedcustomfields.com/index.php?a=download&p=pro&k=${ACFPRO_KEY}" && \
     BUILD_FQFN="${WP_INSTALL_DIR}/advanced-custom-fields-pro.zip" && \
     curl ${DLINK} --output ${BUILD_FQFN} && \
-    ${WPCLI} plugin install ${BUILD_FQFN} --activate-network
+    ${WPCLI} plugin install ${BUILD_FQFN} --activate-network && \
+    service mysql stop
 
 CMD WP_INSTALL_DIR=${WP_INSTALL_DIR} \
     PLUGIN_DIR=${PLUGIN_DIR} \

@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    full_image_name = "php-5.6-wordpress-connector-wp-${WP_VERSION}-acf-${ACF_PRO_VERSION}"
+    full_image_name = "php-wordpress-connector-wp-${WP_VERSION}-acf-${ACF_PRO_VERSION}"
     sonar_project_key = "wordpress-connector:master"
     sonar_project_name = "wordpress-connector"
   }
@@ -11,7 +11,7 @@ pipeline {
     stage('Build Docker image') {
       steps {
         withCredentials([string(credentialsId: 'GITHUB_OAUTH', variable: 'GITHUB_OAUTH'), string(credentialsId: 'ACF_PRO_KEY', variable: 'ACF_PRO_KEY')]) {
-          sh "docker build --no-cache --rm --pull --tag=${full_image_name} -f \"Buildplan/php-5.6/Dockerfile\" --build-arg PHP_version=\"${PHP_version}\" --build-arg ACFPRO_KEY=\"${ACF_PRO_KEY}\" --build-arg WP_VERSION=\"${WP_VERSION}\" --build-arg ACF_PRO_VERSION=\"${ACF_PRO_VERSION}\" --build-arg GITHUB_OAUTH_TOKEN=\"${GITHUB_OAUTH}\" ."
+          sh "docker build --no-cache --rm --pull --tag=${full_image_name} -f \"Buildplan/Dockerfile\" --build-arg PHP_version=\"${PHP_version}\" --build-arg ACFPRO_KEY=\"${ACF_PRO_KEY}\" --build-arg WP_VERSION=\"${WP_VERSION}\" --build-arg ACF_PRO_VERSION=\"${ACF_PRO_VERSION}\" --build-arg GITHUB_OAUTH_TOKEN=\"${GITHUB_OAUTH}\" ."
         }
       }
     }
