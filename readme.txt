@@ -2,8 +2,8 @@
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
-Tested up to: 5.2.1
-Stable tag: 1.10.13
+Tested up to: 5.2.2
+Stable tag: 1.10.14
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -57,6 +57,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 1.10.14 =
+* Fixed possible issue when shortcodes are not processed correctly if they are not registered in admin-panel
+
 = 1.10.13 =
 * Fixed possible issue when window.React is present not only on Gutenberg Edit page, but on all Admin pages and makes Bulk Submit page unusable.
 * Fixed possible issue when permanently removed translation is re-sent for translation after original content is changed and auto-resubmit function is enabled.

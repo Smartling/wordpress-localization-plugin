@@ -20,6 +20,7 @@ rm -rf $BASEDIR/$BUILD_FILENAME
 rm -rf $SMARTLING_BUILD_DIR
 mkdir $SMARTLING_BUILD_DIR
 
+$BASEDIR/composer self-update
 $BASEDIR/composer update --no-dev
 
 cp -r $BASEDIR/* $SMARTLING_BUILD_DIR
@@ -32,12 +33,12 @@ cd $SMARTLING_BUILD_DIR
 cd ./inc/third-party/
 
 # cleanup from tests
-find . -name "tests" -type d|xargs rm -Rf
-find . -name "Tests" -type d|xargs rm -Rf
+#find . -name "tests" -type d|xargs rm -Rf
+#find . -name "Tests" -type d|xargs rm -Rf
 #find . -name "docs" -type d|xargs rm -Rf
 #find . -name "phpunit.xml*" -type f|xargs rm -Rf
-find . -name "composer" -type f|xargs rm -Rf
-#find . -name "*.md" -type f|xargs rm -Rf
+#find . -name "composer" -type f|xargs rm -Rf
+find . -name "*.md" -type f|xargs rm -Rf
 find . -name "*travis*" -type f|xargs rm -Rf
 #find . -name "*LICENSE*" -type f|xargs rm -Rf
 

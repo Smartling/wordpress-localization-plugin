@@ -23,7 +23,7 @@ if [ ! -d "$COMPOSER_INSTALL_DIR" ]; then
     mkdir -p "$COMPOSER_INSTALL_DIR"
 fi
 php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-php composer-setup.php --install-dir="$COMPOSER_INSTALL_DIR" --filename=composer --version=1.0.0
+php composer-setup.php --install-dir="$COMPOSER_INSTALL_DIR" --filename=composer
 php -r "unlink('composer-setup.php');"
 COMPOSER_BIN="$COMPOSER_INSTALL_DIR/composer"
 
@@ -58,4 +58,8 @@ PHPUNIT_XML="${PLUGIN_DIR}/tests/phpunit.xml"
 
 ${PHPUNIT_BIN} -c ${PHPUNIT_XML}
 
+PHPUNIT_EXIT_CODE=$?
+
 service mysql stop
+
+exit $PHPUNIT_EXIT_CODE
