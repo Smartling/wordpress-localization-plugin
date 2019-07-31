@@ -322,7 +322,11 @@ if ($post instanceof WP_Post) {
                 minDate: 0
             });
 
-            if (window.React) {
+            /*
+            * Use class checking method for detecting Gutenberg as defined here https://github.com/WordPress/gutenberg/issues/12200
+            * This prevents conflicts with plugins that enqueue the React library when the Classic Editor is enabled.
+            */
+            if (document.body.classList.contains( 'block-editor-page' )) {
                 var hasProp = function(obj, prop) {
                     return Object.prototype.hasOwnProperty.call(obj, prop);
                 };
