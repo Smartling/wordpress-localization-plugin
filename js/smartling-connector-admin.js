@@ -255,7 +255,11 @@ jQuery(document).ready(function () {
 });
 
 jQuery(document).ready(function () {
-    if (window.React) {
+    /*
+     * Use class checking method for detecting Gutenberg as defined here https://github.com/WordPress/gutenberg/issues/12200
+     * This prevents conflicts with plugins that enqueue the React library when the Classic Editor is enabled.
+     */
+    if (document.body.classList.contains( 'block-editor-page' )) {
         var $ = jQuery;
         /**
          * Means that we face gutenberg and need to switch to ajax download handler.
