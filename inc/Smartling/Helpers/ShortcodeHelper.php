@@ -61,7 +61,6 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         }
     }
 
-
     /**
      * Setter for global $shortcode_tags
      *
@@ -74,7 +73,6 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         /** @noinspection OnlyWritesOnParameterInspection */
         $shortcode_tags = $assignments;
     }
-
 
     /**
      * Registers wp hook handlers. Invoked by wordpress.
@@ -344,11 +342,16 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     {
         $attributesString = '';
 
+        $isIneger = function ($data) {
+            return is_int($data)
+                || (string)(int)$data === $data;
+        };
+
         foreach ($attributes as $attributeName => $attributeValue) {
 
-            $attribute = is_int($attributeValue)
+            $attribute = $isIneger($attributeValue)
                 ? (int)$attributeValue
-                : vsprintf('"%s"', [esc_attr($attributeValue)]);
+                : vsprintf('"%s"', [static::escapeValue($attributeValue)]);
 
             if (is_string($attributeName)) {
                 $attribute = vsprintf('%s=%s', [$attributeName, $attribute]);
@@ -358,6 +361,15 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         }
 
         return $attributesString;
+    }
+
+    private static function escapeValue($data)
+    {
+        if (function_exists('esc_attr')) {
+            return esc_attr($data);
+        } else {
+            return htmlspecialchars($data);
+        }
     }
 
     /**
@@ -433,7 +445,6 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         // action 3: return rebuilded shortcode.
         return static::buildShortcode($name, $attr, $content);
     }
-
 
     /**
      * Returns list of all registered shortcoders in the wordpress

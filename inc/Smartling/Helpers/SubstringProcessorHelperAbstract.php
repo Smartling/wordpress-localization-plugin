@@ -134,7 +134,7 @@ abstract class SubstringProcessorHelperAbstract implements WPHookInterface
      */
     public function addBlockAttribute($blockName, $attributeName, $translatedString, $originalHash)
     {
-        $this->blockAttributes[$blockName][$attributeName] = [$originalHash => $translatedString];
+        $this->blockAttributes[$blockName][$attributeName][$originalHash] = $translatedString;
     }
 
     /**
