@@ -122,7 +122,7 @@ abstract class SubstringProcessorHelperAbstract implements WPHookInterface
              */
             $struct[$attributeName] = $attributeValue->value;
         }
-        $struct['value'] = $node->nodeValue;
+        $struct['value'] = static::getCdata($node);
         return $struct;
     }
 

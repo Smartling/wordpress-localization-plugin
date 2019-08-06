@@ -47,7 +47,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     private function resetInternalState()
     {
         $this->blockAttributes = [];
-        $this->subNodes = [];
+        $this->subNodes        = [];
     }
 
     /**
@@ -115,6 +115,52 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     }
 
     /**
+     * @param \DOMNode $node
+     * @return array
+     */
+    private function extractTranslations(\DOMNode $node)
+    {
+        $translations = [];
+
+        /**
+         * Walking back to avoid internal pointer reset
+         */
+        $index = $node->childNodes->count();
+        if (0 === $index) {
+            return $translations;
+        }
+        while ($index) {
+            $cNode = $node->childNodes->item(--$index);
+
+            if ($cNode->nodeName === static::SHORTCODE_SUBSTRING_NODE_NAME && $cNode->hasAttributes()) {
+                $translation = $this->nodeToArray($cNode);
+
+                $this->addBlockAttribute(
+                    $translation['shortcode'],
+                    $translation['name'],
+                    $translation['value'],
+                    $translation['hash']
+                );
+
+                $this->getLogger()->debug(
+                    vsprintf(
+                        'Found translation for shortcode = \'%s\' for attribute = \'%s\'.',
+                        [
+                            $translation['shortcode'],
+                            $translation['name'],
+                        ]
+                    )
+                );
+                $this->getLogger()->debug(vsprintf('Removing subnode. Name=\'%s\', Contents: \'%s\'', [
+                    static::SHORTCODE_SUBSTRING_NODE_NAME,
+                    var_export($translation, true),
+                ]));
+                $node->removeChild($cNode);
+            }
+        }
+    }
+
+    /**
      * Filter handler
      *
      * @param TranslationStringFilterParameters $params
@@ -125,48 +171,19 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     {
         $this->resetInternalState();
         $this->setParams($params);
-        $node = $this->getNode();
-
-        if ($this->hasShortcodes(static::getCdata($node))) {
+        $node   = $this->getNode();
+        $string = static::getCdata($node);
+        if ($this->hasShortcodes($string)) {
             // getting attributes translation
-            foreach ($node->childNodes as $cNode) {
-                $this->getLogger()->debug(vsprintf('Looking for translations (subnodes)', []));
-                /**
-                 * @var \DOMNode $cNode
-                 */
-                if ($cNode->nodeName === static::SHORTCODE_SUBSTRING_NODE_NAME && $cNode->hasAttributes()) {
-                    $tStruct = $this->nodeToArray($cNode);
-                    $this->addBlockAttribute($tStruct['shortcode'], $tStruct['name'], $tStruct['value'],
-                        $tStruct['hash']);
-                    $this->getLogger()->debug(
-                        vsprintf(
-                            'Found translation for shortcode = \'%s\' for attribute = \'%s\'.',
-                            [
-                                $tStruct['shortcode'],
-                                $tStruct['name'],
-                            ]
-                        )
-                    );
-                    $this->getLogger()->debug(vsprintf('Removing subnode. Name=\'%s\', Contents: \'%s\'', [
-                        static::SHORTCODE_SUBSTRING_NODE_NAME,
-                        var_export($tStruct, true),
-                    ]));
-                    $node->removeChild($cNode);
-                }
-            }
-
+            $this->extractTranslations($node);
             // unmasking string
             $this->unmask();
-            $string = static::getCdata($this->getNode());
             $detectedShortcodes = $this->getRegisteredShortcodes();
             $this->replaceHandlerForApplying($detectedShortcodes);
             $string_m = do_shortcode($string);
-
             $this->restoreHandlers();
-
             static::replaceCData($node, $string_m);
         }
-
 
         return $this->getParams();
     }
@@ -177,7 +194,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     protected function unmask()
     {
         $this->getLogger()->debug(vsprintf('Removing masking...', []));
-        $node = $this->getNode();
+        $node   = $this->getNode();
         $string = static::getCdata($node);
         $string = preg_replace(vsprintf('/%s\[/', [static::SMARTLING_SHORTCODE_MASK_S]), '[', $string);
         $string = preg_replace(vsprintf('/\]%s/', [static::SMARTLING_SHORTCODE_MASK_E]), ']', $string);
@@ -280,8 +297,8 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
                         static::SHORTCODE_SUBSTRING_NODE_NAME,
                         [
                             'shortcode' => $name,
-                            'hash' => md5($value),
-                            'name' => $attribute,
+                            'hash'      => md5($value),
+                            'name'      => $attribute,
                         ],
                         $value);
                     $this->addSubNode($node);
@@ -305,54 +322,66 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     /**
      * Generates masked shortcode
      *
-     * @param       $name
-     * @param array $attributes
-     * @param       $content
+     * @param string $name
+     * @param array  $attributes
+     * @param string $content
      *
      * @return string
      */
     private static function buildMaskedShortcode($name, array $attributes, $content)
     {
-        $output = static::SMARTLING_SHORTCODE_MASK_S . '[' . $name;
-        foreach ($attributes as $attributeName => $attributeValue) {
-            $output .= ' ' . (
-                (is_string($attributeName))
-                    ? vsprintf('%s="%s"', [$attributeName, esc_attr($attributeValue)])
-                    : vsprintf('"%s"', [esc_attr($attributeValue)])
-                );
-        }
-        $output .= ']' . static::SMARTLING_SHORTCODE_MASK_E;
-        if (!StringHelper::isNullOrEmpty($content)) {
-            $output .= vsprintf(
-                '%s%s[/%s]%s',
-                [
-                    $content,
-                    static::SMARTLING_SHORTCODE_MASK_S,
-                    $name,
-                    static::SMARTLING_SHORTCODE_MASK_E,
-                ]
-            );
-        }
+        $openString  = static::SMARTLING_SHORTCODE_MASK_S . '[';
+        $closeString = ']' . static::SMARTLING_SHORTCODE_MASK_E;
 
-        return $output;
+        return static::buildShortcode($name, $attributes, $content, $openString, $closeString);
     }
 
-    private static function buildShortcode($name, array $attributes, $content)
+    /**
+     * @param array $attributes
+     * @return string
+     */
+    private static function buildShortcodeAttributes(array $attributes = [])
     {
-        $output = '[' . $name;
+        $attributesString = '';
+
         foreach ($attributes as $attributeName => $attributeValue) {
-            $output .= ' ' . (
-                (is_string($attributeName))
-                    ? vsprintf('%s="%s"', [$attributeName, esc_attr($attributeValue)])
-                    : vsprintf('"%s"', [esc_attr($attributeValue)])
-                );
-        }
-        $output .= ']';
-        if (!StringHelper::isNullOrEmpty($content)) {
-            $output .= vsprintf('%s[/%s]', [$content, $name]);
+
+            $attribute = is_int($attributeValue)
+                ? (int)$attributeValue
+                : vsprintf('"%s"', [esc_attr($attributeValue)]);
+
+            if (is_string($attributeName)) {
+                $attribute = vsprintf('%s=%s', [$attributeName, $attribute]);
+            }
+
+            $attributesString .= vsprintf(' %s', [$attribute]);
         }
 
-        return $output;
+        return $attributesString;
+    }
+
+    /**
+     * Since PHP Wordpress shortcode handlers are not sensitive whether shortcode has closing tag or not moving to
+     * always-enclosed shortcodes
+     * @param string $name
+     * @param array  $attributes
+     * @param string $content
+     * @param string $openString
+     * @param string $closeString
+     * @return string
+     */
+    private static function buildShortcode($name, array $attributes, $content, $openString = '[', $closeString = ']')
+    {
+        return vsprintf('%s%s%s%s%s%s/%s%s', [
+            $openString,
+            $name,
+            static::buildShortcodeAttributes($attributes),
+            $closeString,
+            $content,
+            $openString,
+            $name,
+            $closeString,
+        ]);
     }
 
     /**
