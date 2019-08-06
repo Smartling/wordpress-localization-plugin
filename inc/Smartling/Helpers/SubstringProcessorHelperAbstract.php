@@ -109,6 +109,25 @@ abstract class SubstringProcessorHelperAbstract implements WPHookInterface
     }
 
     /**
+     * Returns attribute translation if exists or original value
+     * @param string $shortcodeName
+     * @param string $attributeName
+     * @param string $originalText
+     * @return mixed
+     */
+    public function getAttributeTranslation($shortcodeName, $attributeName, $originalText)
+    {
+        return (
+            array_key_exists($shortcodeName, $this->blockAttributes)
+            && array_key_exists($attributeName, $this->blockAttributes[$shortcodeName])
+            && array_key_exists(md5($originalText), $this->blockAttributes[$shortcodeName][$attributeName])
+        )
+            ? $this->blockAttributes[$shortcodeName][$attributeName][md5($originalText)] // translation exists
+            : $originalText                                                              // no translation found
+            ;
+    }
+
+    /**
      * @param \DOMNode $node
      * @return array
      */
@@ -127,7 +146,7 @@ abstract class SubstringProcessorHelperAbstract implements WPHookInterface
     }
 
     /**
-     * @param $blockName
+     * @param string $blockName
      * @param string $attributeName
      * @param string $translatedString
      * @param string $originalHash

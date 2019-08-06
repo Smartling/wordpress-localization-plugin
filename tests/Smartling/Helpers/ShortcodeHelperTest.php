@@ -4,6 +4,7 @@ namespace Smartling\Tests\Smartling\Helpers;
 
 use DOMDocument;
 use PHPUnit\Framework\TestCase;
+use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 
@@ -112,6 +113,8 @@ class ShortcodeHelperTest extends TestCase
     /**
      * @covers       \Smartling\Helpers\ShortcodeHelper::buildShortcodeAttributes
      * @dataProvider buildShortcodeAttributesDataProvider
+     * @param array  $attributes
+     * @param string $expectedAttributeString
      */
     public function testBuildShortcodeAttributes(array $attributes, $expectedAttributeString)
     {
@@ -163,6 +166,12 @@ class ShortcodeHelperTest extends TestCase
     /**
      * @covers       \Smartling\Helpers\ShortcodeHelper::buildShortcode
      * @dataProvider buildShortcodeDataProvider
+     * @param string $name
+     * @param array  $attributes
+     * @param string $content
+     * @param string $openString
+     * @param string $closeString
+     * @param string $expectedString
      */
     public function testBuildShortcode($name, $attributes, $content, $openString, $closeString, $expectedString)
     {
@@ -201,6 +210,129 @@ class ShortcodeHelperTest extends TestCase
                 '#sl-start#[vc_row a="b" c="d"]#sl-end#Row here#sl-start#[/vc_row]#sl-end#',
             ],
         ];
+    }
+
+    /**
+     * @covers  \Smartling\Helpers\ShortcodeHelper::uploadShortcodeHandler
+     */
+    public function testUploadShortcodeHandler()
+    {
+        $expectedXML = '<?xml version="1.0" encoding="UTF-8"?>
+<data>
+  <string name="entity/post_content"><shortcodeattribute shortcode="vc_row" hash="7dca36e91549bd307f2aed1257244f52" name="title_a"><![CDATA[Title A]]></shortcodeattribute><shortcodeattribute shortcode="vc_row" hash="2efe5cb3c5ea44c993aaaf19cf09158b" name="title_b"><![CDATA[Title B]]></shortcodeattribute><![CDATA[#sl-start#[vc_row title_a="Title A" title_b="Title B"]#sl-end#inner content#sl-start#[/vc_row]#sl-end#]]></string>
+</data>
+';
+
+        /**
+         * Source XML for test
+         */
+        $xml_raw = '<?xml version="1.0" encoding="UTF-8"?><data><string name="entity/post_content" /></data>';
+        $xml     = new DOMDocument('1.0', 'UTF-8');
+        $xml->loadXML($xml_raw);
+        $xPath    = new \DOMXPath($xml);
+        $nodeList = $xPath->query('/data/string');
+        $node     = $nodeList->item(0);
+
+        $helper = new ShortcodeHelper();
+
+        $name = 'vc_row';
+
+        $attributes = [
+            'title_a' => 'Title A',
+            'title_b' => 'Title B',
+        ];
+
+        $content = 'inner content';
+
+
+        /**
+         * [vc_row title_a="Title A" title_b="Title B"]inner content[/vc_row]
+         */
+        $shortcode = $this->invokeStaticMethod(
+            get_class($helper),
+            'buildShortcode',
+            [
+                $name,
+                $attributes,
+                $content,
+            ]
+        );
+
+        $node->appendChild(new \DOMCdataSection($shortcode));
+
+        $mock = $this
+            ->getMockBuilder('Smartling\Helpers\ShortcodeHelper')
+            ->setMethods(['preUploadFiltering'])
+            ->getMock();
+
+        $mock->expects(self::once())
+             ->method('preUploadFiltering')
+             ->with($name, $attributes)
+             ->willReturnArgument(1);
+
+        $param = new TranslationStringFilterParameters();
+        $param->setDom($xml);
+        $param->setNode($node);
+
+        $mock->setParams($param);
+        $maskedShortcode = $mock->uploadShortcodeHandler($attributes, $content, $name);
+
+        ShortcodeHelper::replaceCData($node, $maskedShortcode);
+
+        $xml->preserveWhiteSpace = true;
+        $xml->formatOutput       = true;
+        $result                  = $xml->saveXML();
+
+        self::assertEquals($expectedXML, $result);
+    }
+
+    /**
+     * @covers  \Smartling\Helpers\ShortcodeHelper::shortcodeApplierHandler
+     */
+    public function testShortcodeApplierHandler()
+    {
+        $sourceXML   = '<?xml version="1.0" encoding="UTF-8"?>
+<data>
+  <string name="entity/post_content"><shortcodeattribute shortcode="vc_row" hash="7dca36e91549bd307f2aed1257244f52" name="title_a"><![CDATA[Title A Translated]]></shortcodeattribute><shortcodeattribute shortcode="vc_row" hash="2efe5cb3c5ea44c993aaaf19cf09158b" name="title_b"><![CDATA[Title B Translated]]></shortcodeattribute><![CDATA[#sl-start#[vc_row title_a="Title A" title_b="Title B"]#sl-end#inner content#sl-start#[/vc_row]#sl-end#]]></string>
+</data>
+';
+        $expectedXML = '[vc_row title_a="Title A Translated" title_b="Title B Translated"]inner content[/vc_row]';
+
+        $xml = new DOMDocument('1.0', 'UTF-8');
+        $xml->loadXML($sourceXML);
+        $xPath    = new \DOMXPath($xml);
+        $nodeList = $xPath->query('/data/string');
+        $node     = $nodeList->item(0);
+
+        $name       = 'vc_row';
+        $attributes = [
+            'title_a' => 'Title A Translated',
+            'title_b' => 'Title B Translated',
+        ];
+        $content    = 'inner content';
+
+        $mock = $this
+            ->getMockBuilder('Smartling\Helpers\ShortcodeHelper')
+            ->setMethods(['passPostDownloadFilters'])
+            ->getMock();
+
+        $param = new TranslationStringFilterParameters();
+        $param->setDom($xml);
+        $param->setNode($node);
+
+        $mock->setParams($param);
+
+        $mock->extractTranslations($node);
+        $mock->unmask($node);
+
+        $mock->expects(self::once())
+             ->method('passPostDownloadFilters')
+             ->with($name, $attributes)
+             ->willReturnArgument(1);
+
+        $result = $mock->shortcodeApplierHandler($attributes, $content, $name);
+
+        self::assertEquals($expectedXML, $result);
     }
 
     /**

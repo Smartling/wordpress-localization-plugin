@@ -2,6 +2,8 @@
 
 namespace Smartling\Helpers;
 
+use DOMElement;
+use DOMNode;
 use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 
@@ -100,7 +102,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
 
         foreach ($possibleShortcodes as $possibleShortcode) {
             $result = has_shortcode($string, $possibleShortcode);
-            if (true === $result) {
+            if ($result) {
                 $this
                     ->getLogger()
                     ->debug(vsprintf('Detected \'%s\' shortcode in string \'%s\'', [$possibleShortcode, $string]));
@@ -113,17 +115,17 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     }
 
     /**
-     * @param \DOMNode $node
+     * @param DOMNode $node
      * @return array
      */
-    private function extractTranslations(\DOMNode $node)
+    public function extractTranslations(DOMNode $node)
     {
         $translations = [];
 
         /**
          * Walking back to avoid internal pointer reset
          */
-        $index = $node->childNodes->count();
+        $index = $node->childNodes->length;
         if (0 === $index) {
             return $translations;
         }
@@ -169,16 +171,16 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     {
         $this->resetInternalState();
         $this->setParams($params);
-        $node   = $this->getNode();
-        $string = static::getCdata($node);
-        if ($this->hasShortcodes($string)) {
+        $node = $this->getNode();
+        if ($this->hasShortcodes(static::getCdata($node))) {
+
             // getting attributes translation
             $this->extractTranslations($node);
             // unmasking string
             $this->unmask();
             $detectedShortcodes = $this->getRegisteredShortcodes();
             $this->replaceHandlerForApplying($detectedShortcodes);
-            $string_m = do_shortcode($string);
+            $string_m = $this->renderString(static::getCdata($node));
             $this->restoreHandlers();
             static::replaceCData($node, $string_m);
         }
@@ -189,7 +191,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     /**
      * Removes smartling masks from the string
      */
-    protected function unmask()
+    public function unmask()
     {
         $this->getLogger()->debug(vsprintf('Removing masking...', []));
         $node   = $this->getNode();
@@ -201,14 +203,9 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         static::replaceCData($node, $string);
     }
 
-    public function getTranslatedShortcodes()
-    {
-        return array_keys($this->blockAttributes);
-    }
-
     private function replaceHandlerForApplying(array $shortcodeList)
     {
-        $this->replaceShortcodeHandler($shortcodeList, 'shortcodeApplyerHandler');
+        $this->replaceShortcodeHandler($shortcodeList, 'shortcodeApplierHandler');
     }
 
     /**
@@ -239,26 +236,16 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         $this->resetInternalState();
         $this->setParams($params);
         $string = static::getCdata($params->getNode());
-
         if (StringHelper::isNullOrEmpty($string)) {
             return $params;
         }
-
         $detectedShortcodes = $this->getRegisteredShortcodes();
-
-
         $this->replaceHandlerForMining($detectedShortcodes);
-        //$this->getLogger()->debug(vsprintf('Starting processing shortcodes...', []));
-        $string_m = do_shortcode($string);
+        $string_m = $this->renderString($string);
         static::replaceCData($params->getNode(), $string_m);
-        //$this->getLogger()->debug(vsprintf('Finished processing shortcodes.', []));
-        $this->attachSubnodes();
-
         $this->blockAttributes = [];
         $this->restoreHandlers();
-
         return $params;
-
     }
 
     private function replaceHandlerForMining(array $shortcodeList)
@@ -266,6 +253,41 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         $handlerName = 'uploadShortcodeHandler';
 
         $this->replaceShortcodeHandler($shortcodeList, $handlerName);
+    }
+
+    /**
+     * @param string $name
+     * @param array  $attributes
+     * @return array
+     */
+    protected function preUploadFiltering($name, $attributes)
+    {
+        $preparedAttributes = static::maskAttributes($name, $attributes);
+        $this->postReceiveFiltering($preparedAttributes);
+        $preparedAttributes = $this->preSendFiltering($preparedAttributes);
+        $this->getLogger()->debug(vsprintf('Post filtered attributes (while uploading) %s',
+            [var_export($preparedAttributes, true)]));
+        $preparedAttributes = static::unmaskAttributes($name, $preparedAttributes);
+
+        return $preparedAttributes;
+    }
+
+    /**
+     * @param string $shortcodeName
+     * @param string $attributeName
+     * @param string $value
+     * @return DOMElement
+     */
+    private function createShortcodeAttributeNode($shortcodeName, $attributeName, $value)
+    {
+        return $this->createDomNode(
+            static::SHORTCODE_SUBSTRING_NODE_NAME,
+            [
+                'shortcode' => $shortcodeName,
+                'hash'      => md5($value),
+                'name'      => $attributeName,
+            ],
+            $value);
     }
 
     /**
@@ -282,24 +304,11 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         if (is_array($attributes)) {
             $this->getLogger()->debug(vsprintf('Pre filtered attributes (while uploading) %s',
                 [var_export($attributes, true)]));
-            //passing download filters to create relative structures
-            $preparedAttributes = static::maskAttributes($name, $attributes);
-            $this->postReceiveFiltering($preparedAttributes);
-            $preparedAttributes = $this->preSendFiltering($preparedAttributes);
-            $this->getLogger()->debug(vsprintf('Post filtered attributes (while uploading) %s',
-                [var_export($preparedAttributes, true)]));
-            $preparedAttributes = static::unmaskAttributes($name, $preparedAttributes);
+            $preparedAttributes = $this->preUploadFiltering($name, $attributes);
             if (0 < count($preparedAttributes)) {
                 foreach ($preparedAttributes as $attribute => $value) {
-                    $node = $this->createDomNode(
-                        static::SHORTCODE_SUBSTRING_NODE_NAME,
-                        [
-                            'shortcode' => $name,
-                            'hash'      => md5($value),
-                            'name'      => $attribute,
-                        ],
-                        $value);
-                    $this->addSubNode($node);
+                    $this->getParams()->getNode()->appendChild($this->createShortcodeAttributeNode($name, $attribute,
+                        $value));
                 }
             }
         } else {
@@ -307,7 +316,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         }
         if (null !== $content) {
             $this->getLogger()->debug(vsprintf('Shortcode \'%s\' has content, digging deeper...', [$name]));
-            $content = do_shortcode($content);
+            $content = $this->renderString($content);
         }
 
         if (!is_array($attributes)) {
@@ -341,25 +350,19 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     private static function buildShortcodeAttributes(array $attributes = [])
     {
         $attributesString = '';
-
-        $isIneger = function ($data) {
+        $isInteger        = function ($data) {
             return is_int($data)
                 || (string)(int)$data === $data;
         };
-
         foreach ($attributes as $attributeName => $attributeValue) {
-
-            $attribute = $isIneger($attributeValue)
+            $attribute = $isInteger($attributeValue)
                 ? (int)$attributeValue
                 : vsprintf('"%s"', [static::escapeValue($attributeValue)]);
-
             if (is_string($attributeName)) {
                 $attribute = vsprintf('%s=%s', [$attributeName, $attribute]);
             }
-
             $attributesString .= vsprintf(' %s', [$attribute]);
         }
-
         return $attributesString;
     }
 
@@ -397,52 +400,44 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     }
 
     /**
+     * @param string $shortcodeName
+     * @param array  $attributes
+     * @return array
+     */
+    protected function passPostDownloadFilters($shortcodeName, $attributes)
+    {
+        if (0 < count($attributes)) {
+            $attributes = static::maskAttributes($shortcodeName, $attributes);
+            $attributes = $this->postReceiveFiltering($attributes);
+            $attributes = static::unmaskAttributes($shortcodeName, $attributes);
+        }
+
+        return $attributes;
+    }
+
+    /**
      * Applies translation to shortcodes
      *
-     * @param string      $attr
-     * @param string|null $content
-     * @param string      $name
+     * @param string $attr
+     * @param string $content
+     * @param string $name
      *
      * @return string
      */
-    public function shortcodeApplyerHandler($attr, $content = null, $name)
+    public function shortcodeApplierHandler($attr, $content, $name)
     {
-        if (!is_array($attr)) {
-            $attr = [];
+        $attr = is_array($attr) ? $attr : [];
+
+        foreach ($attr as $attributeName => $attributeValue) {
+            $attr[$attributeName] = $this->getAttributeTranslation($name, $attributeName, $attributeValue);
         }
 
-        // action 0: apply translations
-        $translations = $this->getBlockAttributes($name);
-        if (0 < count($translations)) {
-            foreach ($translations as $attributeName => $translation) {
-                if (array_key_exists($attributeName, $attr) &&
-                    ArrayHelper::first(array_keys($translation)) === md5($attr[$attributeName])
-                ) {
-                    $this->getLogger()
-                         ->debug(vsprintf('Validated translation of \'%s\' as \'%s\' with hash=%s for shortcode \'%s\'',
-                             [
-                                 $attr[$attributeName],
-                                 reset($translation),
-                                 md5($attr[$attributeName]),
-                                 $name,
-                             ]));
-                    $attr[$attributeName] = reset($translation);
-                }
-            }
-        }/* else {
-            $this->getLogger()->debug(vsprintf('No translation found for shortcode %s', [$name]));
-        }*/
+        $attr = $this->passPostDownloadFilters($name, $attr);
+
         if (!StringHelper::isNullOrEmpty($content)) {
-            $content = do_shortcode($content);
-        }
-        // action 1: pass through post-translation filters
-        if (0 < count($attr)) {
-            $attr = static::maskAttributes($name, $attr);
-            $attr = $this->postReceiveFiltering($attr);
-            $attr = static::unmaskAttributes($name, $attr);
+            $content = $this->renderString($content);
         }
 
-        // action 3: return rebuilded shortcode.
         return static::buildShortcode($name, $attr, $content);
     }
 
@@ -453,31 +448,21 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
      */
     private function getRegisteredShortcodes()
     {
-        $output = array_keys($this->getShortcodeAssignments());
+        $shortcodes = array_keys($this->getShortcodeAssignments());
         try {
-            $extraShortcodes = apply_filters(ExportedAPI::FILTER_SMARTLING_INJECT_SHORTCODE, []);
-            if (is_array($extraShortcodes) && 0 < count($extraShortcodes)) {
-                foreach ($extraShortcodes as $shortcode) {
-                    if (is_string($shortcode)) {
-                        $output[] = $shortcode;
-                    }
-                }
-            }
+            $shortcodes = array_merge($shortcodes, apply_filters(ExportedAPI::FILTER_SMARTLING_INJECT_SHORTCODE, []));
         } catch (\Exception $e) {
             $this->getLogger()->warning(
                 vsprintf(
-                    'An exception got while applying \'%s\' filter. Ignoring result.',
+                    'An exception got while applying \'%s\' filter. Ignoring result. Message: %s',
                     [
                         ExportedAPI::FILTER_SMARTLING_INJECT_SHORTCODE,
+                        $e->getMessage(),
                     ]
                 )
             );
         }
-
-        $output = array_flip(array_flip($output));
-        asort($output);
-
-        return array_values($output);
+        return array_unique($shortcodes);
     }
 
     /**
@@ -490,5 +475,18 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         global $shortcode_tags;
 
         return $shortcode_tags;
+    }
+
+    /**
+     * Wrapper for WP do_shortcode() function. Does nothing while testing
+     * @param string $string
+     * @return string
+     */
+    public function renderString($string)
+    {
+        if (function_exists('do_shortcode')) {
+            return do_shortcode($string);
+        }
+        return $string;
     }
 }
