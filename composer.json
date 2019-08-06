@@ -9,7 +9,6 @@
     "symfony/config" :               "~2.8",
     "symfony/yaml" :                 "~2.8",
     "smartling/api-sdk-php" :        "3.6.4",
-    "thunderer/shortcode" :          "0.7.2",
     "ext-dom": "*"
   },
   "require-dev" :  {
