@@ -8,6 +8,15 @@ namespace Smartling\Tests\Traits;
  */
 trait InvokeMethodTrait
 {
+
+    protected function getProperty($object, $propertyName)
+    {
+        $reflection = new \ReflectionClass(get_class($object));
+        $property   = $reflection->getProperty($propertyName);
+        $property->setAccessible(true);
+        return $property->getValue($object);
+    }
+
     /**
      * Invokes protected or private method of given object.
      *
