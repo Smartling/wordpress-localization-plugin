@@ -23,7 +23,7 @@ COPY Buildplan/boot.sh /boot.sh
 RUN chmod +x /boot.sh
 
 RUN chown -R mysql:mysql /var/lib/mysql && service mysql start && \
-    cd ${WP_INSTALL_DIR}
+    cd ${WP_INSTALL_DIR} && \
     if [ ! -d "${COMPOSER_H_DIR}" ]; then mkdir "${COMPOSER_H_DIR}"; fi; echo "{\"github-oauth\":{\"github.com\":\"$GITHUB_OAUTH_TOKEN\"}}" > "${COMPOSER_H_DIR}/auth.json" && \
     ${WPCLI} core multisite-convert && \
     IFS=',' read -a array <<< "${SITES}"; for site in "${array[@]}"; do ${WPCLI} site create --slug="${site##*\:}" --title="${site%%\:*}" --email=test@wp.org; done && \
