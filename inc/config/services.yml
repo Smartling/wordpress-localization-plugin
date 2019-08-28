@@ -263,3 +263,4 @@ services:
       - "@content.helper"
       - "@fields-filter.helper"
       - "@meta-field.processor.manager"
+      - "@smartling.helper.absolute-image-path-support"
