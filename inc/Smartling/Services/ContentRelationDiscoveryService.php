@@ -275,7 +275,7 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
             );
 
         } else {
-            $this->returnError('content.not.exists', 'Requested content is not found', 404);
+            $this->returnError('content.not.found', 'Requested content is not found', 404);
         }
     }
 }
