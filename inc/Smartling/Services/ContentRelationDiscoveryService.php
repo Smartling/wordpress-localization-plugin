@@ -9,6 +9,8 @@ use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\MetaFieldProcessor\DefaultMetaFieldProcessor;
 use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorAbstract;
 use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
+use Smartling\Helpers\ShortcodeHelper;
+use Smartling\Helpers\StringHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 
 /**
@@ -48,6 +50,11 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
      * @var MetaFieldProcessorManager
      */
     private $metaFieldProcessorManager;
+
+    /**
+     * @var ShortcodeHelper
+     */
+    private $shortcodeHelper;
 
     /**
      * @return LoggerInterface
@@ -109,19 +116,38 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
     }
 
     /**
+     * @return ShortcodeHelper
+     */
+    public function getShortcodeHelper()
+    {
+        return $this->shortcodeHelper;
+    }
+
+    /**
+     * @param ShortcodeHelper $shortcodeHelper
+     */
+    public function setShortcodeHelper($shortcodeHelper)
+    {
+        $this->shortcodeHelper = $shortcodeHelper;
+    }
+
+    /**
      * ContentRelationDiscoveryService constructor.
      * @param ContentHelper             $contentHelper
      * @param FieldsFilterHelper        $fieldFilterHelper
      * @param MetaFieldProcessorManager $fieldProcessorManager
+     * @param ShortcodeHelper           $shortcodeHelper
      */
     public function __construct(
         ContentHelper $contentHelper,
         FieldsFilterHelper $fieldFilterHelper,
-        MetaFieldProcessorManager $fieldProcessorManager
+        MetaFieldProcessorManager $fieldProcessorManager,
+        ShortcodeHelper $shortcodeHelper
     ) {
         $this->setContentHelper($contentHelper);
         $this->setFieldFilterHelper($fieldFilterHelper);
         $this->setMetaFieldProcessorManager($fieldProcessorManager);
+        $this->setShortcodeHelper($shortcodeHelper);
     }
 
     public function getRequestSource()
@@ -172,6 +198,43 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
         return $detectedReferences;
     }
 
+    private $shortcodeFields = [];
+
+    /**
+     * @param array  $attributes
+     * @param string $content
+     * @param string $shortcodeName
+     */
+    public function shortcodeHandler(array $attributes, $content, $shortcodeName)
+    {
+        foreach ($attributes as $attributeName => $attributeValue) {
+            $this->shortcodeFields[$shortcodeName . '/' . $attributeName][] = $attributeValue;
+            if (!StringHelper::isNullOrEmpty($content)) {
+                $this->getShortcodeHelper()->renderString($content);
+            }
+        }
+    }
+
+    /**
+     * @param string $baseName
+     * @param string $string
+     * @return array
+     */
+    private function extractFieldsFromShortcodes($baseName, $string)
+    {
+        $detectedShortcodes = $this->getShortcodeHelper()->getRegisteredShortcodes();
+        $this->getShortcodeHelper()->replaceShortcodeHandler($detectedShortcodes, 'shortcodeHandler', $this);
+        $this->getShortcodeHelper()->renderString($string);
+        $this->getShortcodeHelper()->restoreHandlers();
+        $fields = [];
+        foreach ($this->shortcodeFields as $fName => $fValue) {
+            $fields[$baseName . '/' . $fName] = $fValue;
+        }
+
+        $this->shortcodeFields = [];
+        return $fields;
+    }
+
     public function actionHandler()
     {
         $contentType = $this->getContentType();
@@ -188,6 +251,16 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
             ];
 
             $fields = $this->getFieldFilterHelper()->flatternArray($content);
+
+            /**
+             * adding fields from shortcodes
+             */
+            $extraFields = [];
+            foreach ($fields as $fName => $fValue) {
+                $extraFields = array_merge($extraFields,
+                    $this->getFieldFilterHelper()->flatternArray($this->extractFieldsFromShortcodes($fName, $fValue)));
+            }
+            $fields = array_merge($fields, $extraFields);
 
             $detectedReferences = [];
 

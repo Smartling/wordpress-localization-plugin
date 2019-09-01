@@ -55,7 +55,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     /**
      * Restores original shortcode handlers
      */
-    protected function restoreHandlers()
+    public function restoreHandlers()
     {
         if (null !== $this->getInitialHandlers()) {
             $this->setShortcodeAssignments($this->getInitialHandlers());
@@ -213,13 +213,17 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
      *
      * @param array  $shortcodes
      * @param string $callback
+     * @param null   $obj
      */
-    private function replaceShortcodeHandler($shortcodes, $callback)
+    public function replaceShortcodeHandler($shortcodes, $callback, $obj = null)
     {
+        if (null === $obj) {
+            $obj = $this;
+        }
         $activeShortcodeAssignments = $this->getShortcodeAssignments();
         $this->setInitialHandlers($activeShortcodeAssignments);
         foreach ($shortcodes as $shortcodeName) {
-            $activeShortcodeAssignments[$shortcodeName] = [$this, $callback];
+            $activeShortcodeAssignments[$shortcodeName] = [$obj, $callback];
         }
         $this->setShortcodeAssignments($activeShortcodeAssignments);
     }
@@ -446,7 +450,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
      *
      * @return array
      */
-    private function getRegisteredShortcodes()
+    public function getRegisteredShortcodes()
     {
         $shortcodes = array_keys($this->getShortcodeAssignments());
         try {
