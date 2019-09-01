@@ -14,7 +14,12 @@ trait SmartlingCoreExportApi
      */
     public function getFullyRelateAttachmentPath(SubmissionEntity $postSubmission, $foundRelativePath)
     {
-        $prefix = $this->getUploadPathForSite($postSubmission->getSourceBlogId());
+        return $this->getFullyRelateAttachmentPathByBlogId($postSubmission->getSourceBlogId(), $foundRelativePath);
+    }
+
+    public function getFullyRelateAttachmentPathByBlogId($blogId, $foundRelativePath)
+    {
+        $prefix = $this->getUploadPathForSite($blogId);
 
         $fullyRelativePath = trim(str_replace($prefix, '', $foundRelativePath), '/');
 

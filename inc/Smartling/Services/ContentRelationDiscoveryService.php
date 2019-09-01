@@ -3,6 +3,7 @@
 namespace Smartling\Services;
 
 use Psr\Log\LoggerInterface;
+use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\FieldsFilterHelper;
@@ -50,6 +51,11 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
      * @var MetaFieldProcessorManager
      */
     private $metaFieldProcessorManager;
+
+    /**
+     * @var AbsoluteLinkedAttachmentCoreHelper
+     */
+    private $absoluteLinkedAttachmentCoreHelper;
 
     /**
      * @var ShortcodeHelper
@@ -116,6 +122,22 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
     }
 
     /**
+     * @return AbsoluteLinkedAttachmentCoreHelper
+     */
+    public function getAbsoluteLinkedAttachmentCoreHelper()
+    {
+        return $this->absoluteLinkedAttachmentCoreHelper;
+    }
+
+    /**
+     * @param AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper
+     */
+    public function setAbsoluteLinkedAttachmentCoreHelper($absoluteLinkedAttachmentCoreHelper)
+    {
+        $this->absoluteLinkedAttachmentCoreHelper = $absoluteLinkedAttachmentCoreHelper;
+    }
+
+    /**
      * @return ShortcodeHelper
      */
     public function getShortcodeHelper()
@@ -133,20 +155,23 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
 
     /**
      * ContentRelationDiscoveryService constructor.
-     * @param ContentHelper             $contentHelper
-     * @param FieldsFilterHelper        $fieldFilterHelper
-     * @param MetaFieldProcessorManager $fieldProcessorManager
-     * @param ShortcodeHelper           $shortcodeHelper
+     * @param ContentHelper                      $contentHelper
+     * @param FieldsFilterHelper                 $fieldFilterHelper
+     * @param MetaFieldProcessorManager          $fieldProcessorManager
+     * @param AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper
+     * @param ShortcodeHelper                    $shortcodeHelper
      */
     public function __construct(
         ContentHelper $contentHelper,
         FieldsFilterHelper $fieldFilterHelper,
         MetaFieldProcessorManager $fieldProcessorManager,
+        AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper,
         ShortcodeHelper $shortcodeHelper
     ) {
         $this->setContentHelper($contentHelper);
         $this->setFieldFilterHelper($fieldFilterHelper);
         $this->setMetaFieldProcessorManager($fieldProcessorManager);
+        $this->setAbsoluteLinkedAttachmentCoreHelper($absoluteLinkedAttachmentCoreHelper);
         $this->setShortcodeHelper($shortcodeHelper);
     }
 
@@ -288,6 +313,14 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
                         $shortProcessorName = ArrayHelper::last(explode('\\', get_class($processor)));
 
                         $detectedReferences[$shortProcessorName][$fValue][] = $fName;
+                    } else {
+                        if (!isset($detectedReferences['images'])) {
+                            $detectedReferences['images'] = [];
+                        }
+                        $detectedReferences['images'] = array_merge($detectedReferences['images'],
+                            $this->getAbsoluteLinkedAttachmentCoreHelper()->getImagesIdsFromString($fValue,
+                                $curBlogId));
+                        $detectedReferences['images'] = array_unique($detectedReferences['images']);
                     }
                 } catch (\Exception $e) {
                     $this
