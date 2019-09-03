@@ -202,7 +202,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
      * @return array
      * @throws SmartlingGutenbergParserNotFoundException
      */
-    protected function parseBlocks($string)
+    public function parseBlocks($string)
     {
         if (function_exists('\parse_blocks')) {
             return \parse_blocks($string);
@@ -357,7 +357,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
      * @throws SmartlingGutenbergNotFoundException
      * @throws SmartlingConfigException
      */
-    private function loadExternalDependencies()
+    public function loadExternalDependencies()
     {
         if (!defined('ABSPATH')) {
             throw new SmartlingConfigException("Execution requires declared ABSPATH const.");

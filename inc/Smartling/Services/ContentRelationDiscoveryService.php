@@ -7,6 +7,7 @@ use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\MetaFieldProcessor\DefaultMetaFieldProcessor;
 use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorAbstract;
 use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
@@ -61,6 +62,11 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
      * @var ShortcodeHelper
      */
     private $shortcodeHelper;
+
+    /**
+     * @var GutenbergBlockHelper
+     */
+    private $gutenbergBlockHelper;
 
     /**
      * @return LoggerInterface
@@ -154,25 +160,44 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
     }
 
     /**
+     * @return GutenbergBlockHelper
+     */
+    public function getGutenbergBlockHelper()
+    {
+        return $this->gutenbergBlockHelper;
+    }
+
+    /**
+     * @param GutenbergBlockHelper $gutenbergBlockHelper
+     */
+    public function setGutenbergBlockHelper($gutenbergBlockHelper)
+    {
+        $this->gutenbergBlockHelper = $gutenbergBlockHelper;
+    }
+
+    /**
      * ContentRelationDiscoveryService constructor.
      * @param ContentHelper                      $contentHelper
      * @param FieldsFilterHelper                 $fieldFilterHelper
      * @param MetaFieldProcessorManager          $fieldProcessorManager
      * @param AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper
      * @param ShortcodeHelper                    $shortcodeHelper
+     * @param GutenbergBlockHelper               $blockHelper
      */
     public function __construct(
         ContentHelper $contentHelper,
         FieldsFilterHelper $fieldFilterHelper,
         MetaFieldProcessorManager $fieldProcessorManager,
         AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper,
-        ShortcodeHelper $shortcodeHelper
+        ShortcodeHelper $shortcodeHelper,
+        GutenbergBlockHelper $blockHelper
     ) {
         $this->setContentHelper($contentHelper);
         $this->setFieldFilterHelper($fieldFilterHelper);
         $this->setMetaFieldProcessorManager($fieldProcessorManager);
         $this->setAbsoluteLinkedAttachmentCoreHelper($absoluteLinkedAttachmentCoreHelper);
         $this->setShortcodeHelper($shortcodeHelper);
+        $this->setGutenbergBlockHelper($blockHelper);
     }
 
     public function getRequestSource()
@@ -260,6 +285,36 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
         return $fields;
     }
 
+    private function extractFieldsFromGutenbergBlock($basename, $string)
+    {
+        $fields = [];
+        $blocks = $this->getGutenbergBlockHelper()->parseBlocks($string);
+        foreach ($blocks as $block) {
+            $pointer       = 0;
+            $blockNamePart = $basename . '/' . $block['blockName'];
+            $_fields       = $block['attrs'];
+
+            /**
+             * Extract regular attributes
+             */
+            foreach ($_fields as $fName => $fValue) {
+                $fields[$blockNamePart . '/' . $fName] = $fValue;
+            }
+
+            /**
+             * get nested content attributes
+             */
+            foreach ($block['innerContent'] as $chunk) {
+                if (!is_string($chunk)) {
+                    $chunkFields = $this->extractFieldsFromGutenbergBlock($blockNamePart,
+                        $block['innerBlocks'][$pointer++]);
+                    $fields      = array_merge($fields, $chunkFields);
+                }
+            }
+        }
+        return $fields;
+    }
+
     public function actionHandler()
     {
         $contentType = $this->getContentType();
@@ -286,6 +341,33 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
                     $this->getFieldFilterHelper()->flatternArray($this->extractFieldsFromShortcodes($fName, $fValue)));
             }
             $fields = array_merge($fields, $extraFields);
+
+            try {
+                /**
+                 * check if gutenberg exists
+                 */
+                $this->getGutenbergBlockHelper()->loadExternalDependencies();
+
+                /**
+                 * adding fields from blocks
+                 */
+                $extraFields = [];
+                foreach ($fields as $fName => $fValue) {
+                    $extraFields = array_merge($extraFields,
+                        $this->getFieldFilterHelper()->flatternArray($this->extractFieldsFromGutenbergBlock($fName,
+                            $fValue)));
+                }
+                $fields = array_merge($fields, $extraFields);
+            } catch (\Exception $e) {
+                $this->getLogger()->info(
+                    vsprintf(
+                        'Gutenberg not detected, skipping search for references in Gutenberg blocks for request %s',
+                        [
+                            var_export($this->getRequestSource(), true),
+                        ]
+                    )
+                );
+            }
 
             $detectedReferences = [];
 
