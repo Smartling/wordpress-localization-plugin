@@ -265,3 +265,4 @@ services:
       - "@meta-field.processor.manager"
       - "@smartling.helper.absolute-image-path-support"
       - "@helper.shortcode"
+      - "@helper.gutenberg"
