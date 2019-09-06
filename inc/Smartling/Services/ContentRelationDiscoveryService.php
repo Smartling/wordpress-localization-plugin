@@ -14,11 +14,37 @@ use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
 use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 
 /**
  *
  * ajax service that discovers related items.
- * usage: GET /wp-admin/admin-ajax.php?action=smartling-get-relations&content-type=post&id=48
+ * usage: GET /wp-admin/admin-ajax.php?action=smartling-get-relations&id=48&content-type=post&targetBlogIds=2,3,4,5
+ *
+ * Response Example:
+ *
+ * {
+ *  "status":"SUCCESS",
+ *  "response":{
+ *      "data":{
+ *          "originalReferences":{
+ *              "attachment":[244,232,26,231],
+ *              "post":[1],
+ *              "page":[2],
+ *              "post_tag":[13,14],
+ *              "category":[1]
+ *          },
+ *          "missingTranslatedReferences":{
+ *              "2":{"attachment":[244,232,231]},
+ *              "3":{"attachment":[244,232,26,231]},
+ *              "4":{"attachment":[244,232,26,231],"post":[1],"post_tag":[13,14]},
+ *              "5":{"attachment":[244,232,26,231],"post_tag":[13,14]}
+ *          }
+ *      }
+ *  }
+ * }
+ *
  *
  * blogId is discovered from current active blog via Wordpress Multisite API
  *
@@ -67,6 +93,11 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
      * @var GutenbergBlockHelper
      */
     private $gutenbergBlockHelper;
+
+    /**
+     * @var SubmissionManager
+     */
+    private $submissionManager;
 
     /**
      * @return LoggerInterface
@@ -176,6 +207,22 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
     }
 
     /**
+     * @return SubmissionManager
+     */
+    public function getSubmissionManager()
+    {
+        return $this->submissionManager;
+    }
+
+    /**
+     * @param SubmissionManager $submissionManager
+     */
+    public function setSubmissionManager($submissionManager)
+    {
+        $this->submissionManager = $submissionManager;
+    }
+
+    /**
      * ContentRelationDiscoveryService constructor.
      * @param ContentHelper                      $contentHelper
      * @param FieldsFilterHelper                 $fieldFilterHelper
@@ -183,6 +230,7 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
      * @param AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper
      * @param ShortcodeHelper                    $shortcodeHelper
      * @param GutenbergBlockHelper               $blockHelper
+     * @param SubmissionManager                  $submissionManager
      */
     public function __construct(
         ContentHelper $contentHelper,
@@ -190,7 +238,8 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
         MetaFieldProcessorManager $fieldProcessorManager,
         AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper,
         ShortcodeHelper $shortcodeHelper,
-        GutenbergBlockHelper $blockHelper
+        GutenbergBlockHelper $blockHelper,
+        SubmissionManager $submissionManager
     ) {
         $this->setContentHelper($contentHelper);
         $this->setFieldFilterHelper($fieldFilterHelper);
@@ -198,6 +247,7 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
         $this->setAbsoluteLinkedAttachmentCoreHelper($absoluteLinkedAttachmentCoreHelper);
         $this->setShortcodeHelper($shortcodeHelper);
         $this->setGutenbergBlockHelper($blockHelper);
+        $this->setSubmissionManager($submissionManager);
     }
 
     public function getRequestSource()
@@ -213,6 +263,19 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
     public function getId()
     {
         return (int)$this->getRequiredParam('id');
+    }
+
+    public function getTargetBlogIds()
+    {
+        $blogs = explode(',', $this->getRequiredParam('targetBlogIds'));
+
+        array_walk($blogs, function ($el) {
+            return (int)$el;
+        });
+
+        $blogs = array_unique($blogs);
+
+        return $blogs;
     }
 
     private function getTaxonomiesForContentType($contentType)
@@ -317,9 +380,10 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
 
     public function actionHandler()
     {
-        $contentType = $this->getContentType();
-        $id          = $this->getId();
-        $curBlogId   = $this->getContentHelper()->getSiteHelper()->getCurrentBlogId();
+        $contentType   = $this->getContentType();
+        $id            = $this->getId();
+        $curBlogId     = $this->getContentHelper()->getSiteHelper()->getCurrentBlogId();
+        $targetBlogIds = $this->getTargetBlogIds();
 
         if ($this->getContentHelper()->checkEntityExists($curBlogId, $contentType, $id)) {
 
@@ -396,13 +460,13 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
 
                         $detectedReferences[$shortProcessorName][$fValue][] = $fName;
                     } else {
-                        if (!isset($detectedReferences['images'])) {
-                            $detectedReferences['images'] = [];
+                        if (!isset($detectedReferences['attachment'])) {
+                            $detectedReferences['attachment'] = [];
                         }
-                        $detectedReferences['images'] = array_merge($detectedReferences['images'],
+                        $detectedReferences['attachment'] = array_merge($detectedReferences['attachment'],
                             $this->getAbsoluteLinkedAttachmentCoreHelper()->getImagesIdsFromString($fValue,
                                 $curBlogId));
-                        $detectedReferences['images'] = array_unique($detectedReferences['images']);
+                        $detectedReferences['attachment'] = array_unique($detectedReferences['attachment']);
                     }
                 } catch (\Exception $e) {
                     $this
@@ -421,16 +485,93 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
 
             $detectedReferences['taxonomies'] = $this->getBackwardRelatedTaxonomies($id, $contentType);
 
+            $detectedReferences = $this->normalizeReferences($detectedReferences);
+
+            $responseData = [
+                'originalReferences' => $detectedReferences,
+            ];
+
+            foreach ($targetBlogIds as $targetBlogId) {
+                foreach ($detectedReferences as $contentType => $ids) {
+                    foreach ($ids as $id) {
+                        if (!$this->submissionExists($contentType, $curBlogId, $id, $targetBlogId)) {
+                            $responseData['missingTranslatedReferences'][$targetBlogId][$contentType][] = $id;
+                        }
+                    }
+                }
+            }
+
             $this->returnSuccess(
                 [
-                    'items' => [
-                        $detectedReferences,
-                    ],
+                    'data' => $responseData,
                 ]
             );
 
         } else {
             $this->returnError('content.not.found', 'Requested content is not found', 404);
         }
+    }
+
+    /**
+     * @param string $contentType
+     * @param int    $sourceBlogId
+     * @param int    $contentId
+     * @param int    $targetBlogId
+     * @return bool
+     */
+    protected function submissionExists($contentType, $sourceBlogId, $contentId, $targetBlogId)
+    {
+        return 1 === count($this->getSubmissionManager()->find([
+                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+                SubmissionEntity::FIELD_CONTENT_TYPE   => $contentType,
+                SubmissionEntity::FIELD_SOURCE_ID      => $contentId,
+                SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+            ], 1));
+    }
+
+    protected function normalizeReferences(array $references)
+    {
+        $result = [];
+
+        if (isset($references['attachment'])) {
+            $result['attachment'] = $references['attachment'];
+        }
+
+        if (isset($references['MediaBasedProcessor'])) {
+            $result['attachment'] = array_merge((isset($result['attachment']) ? $result['attachment'] : []),
+                array_keys($references['MediaBasedProcessor']));
+        }
+
+        if (isset($references['PostBasedProcessor'])) {
+            $postTypeIds = array_keys($references['PostBasedProcessor']);
+            foreach ($postTypeIds as $postTypeId) {
+                $post = get_post($postTypeId);
+                if ($post instanceof \WP_Post) {
+                    $result[$post->post_type][] = $post->ID;
+                }
+            }
+        }
+
+        if (isset($references['TermBasedProcessor'])) {
+            $termTypeIds = array_keys($references['TermBasedProcessor']);
+            foreach ($termTypeIds as $termTypeId) {
+                $term = get_term($termTypeId, '', \ARRAY_A);
+                if (is_array($term)) {
+                    $result[$term['taxonomy']][] = $termTypeId;
+                }
+            }
+        }
+
+        if (isset($references['taxonomies'])) {
+            foreach ($references['taxonomies'] as $taxonomy => $ids) {
+                $result[$taxonomy] = $ids;
+            }
+        }
+
+        foreach ($result as $contentType => $items) {
+            $result[$contentType] = array_unique($items);
+        }
+
+        return $result;
     }
 }

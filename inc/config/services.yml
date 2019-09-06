@@ -266,3 +266,4 @@ services:
       - "@smartling.helper.absolute-image-path-support"
       - "@helper.shortcode"
       - "@helper.gutenberg"
+      - "@manager.submission"
