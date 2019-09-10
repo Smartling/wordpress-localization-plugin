@@ -3,6 +3,8 @@
 namespace Smartling;
 
 
+use Smartling\Helpers\SimpleStorageHelper;
+
 trait DebugTrait
 {
     /**
@@ -149,6 +151,11 @@ trait DebugTrait
         $container = static::getContainer();
         $pageSize = $container->getParameter($paramName);
         return $pageSize;
+    }
+
+    public static function getRelationHandlingMode()
+    {
+        return SimpleStorageHelper::get(static::SMARTLING_HANDLE_RELATIONS_MANUALLY, 0);
     }
 
     /**

@@ -198,6 +198,28 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
+                        <th><label for="handleRelationsManually">Handle relations</label></th>
+                        <td>
+                            <?=
+                            \Smartling\Helpers\HtmlTagGeneratorHelper::tag(
+                                'select',
+                                \Smartling\Helpers\HtmlTagGeneratorHelper::renderSelectOptions(
+                                    \Smartling\Helpers\SimpleStorageHelper::get(\Smartling\Bootstrap::SMARTLING_HANDLE_RELATIONS_MANUALLY, 0),
+                                    [
+                                        0 => 'Automatically',
+                                        1 => 'Manually',
+                                    ]),
+                                [
+                                    'id'   => 'handleRelationsManually',
+                                    'name' => 'handleRelationsManually',
+                                ]
+                            );
+                            ?>
+                            <br /><a href="javascript:void(0)" id="resetHandleRelationsManually" data-default="0">reset to defaults</a>
+                            <br />Note, that switching handling of relations to Manual cuts off plugin functionality, e.g. Bulk Submit cannot be used while handling relations manually.<br/>
+                        </td>
+                    </tr>
+                    <tr>
                         <td colspan="2" class="center">
                             <a class="button action saveExpertSkip"
                                actionUrl="<?= admin_url('admin-ajax.php') ?>?action=smartling_expert_global_settings_update" href="javascript:void(0)">Apply changes</a>

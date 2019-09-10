@@ -51,6 +51,8 @@ class Bootstrap
 
     const SMARTLING_CUSTOM_PAGE_SIZE = 'smartling_ui_page_size';
 
+    const SMARTLING_HANDLE_RELATIONS_MANUALLY = 'smartling_handle_relations_manually';
+
     const LOGGING_CUSTOMIZATION = 'smartling_logging_customization';
 
     public function __construct()
@@ -244,6 +246,7 @@ class Bootstrap
         $defaultPageSize = Bootstrap::getPageSize(true);
         $rawPageSize = (int)$data['pageSize'];
         $pageSize = $rawPageSize < 1 ? $defaultPageSize : $rawPageSize;
+        $handleRelationsManually = (int) $data['handleRelationsManually'];
 
         $parser = new Parser();
         $loggingCustomization = null;
@@ -266,6 +269,11 @@ class Bootstrap
         SimpleStorageHelper::set(Bootstrap::DISABLE_LOGGING, $disableLogging);
         SimpleStorageHelper::set(static::DISABLE_ACF_DB_LOOKUP, $disableACFDBLookup);
         SimpleStorageHelper::set(Bootstrap::DISABLE_ACF, $disableACF);
+        SimpleStorageHelper::set(static::SMARTLING_HANDLE_RELATIONS_MANUALLY, $handleRelationsManually);
+
+        if (0 === $handleRelationsManually) {
+            SimpleStorageHelper::drop(static::SMARTLING_HANDLE_RELATIONS_MANUALLY);
+        }
 
         if (0 === $disableACF) {
             SimpleStorageHelper::drop(static::DISABLE_ACF);
