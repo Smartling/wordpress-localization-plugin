@@ -128,7 +128,7 @@ class TranslationHelper
         if (!in_array((int) $targetBlogId, $blogs, true)) {
             $exception = new UnexpectedValueException(
                 vsprintf('Unexpected value: targetBlogId must be one of [%s], %s got',
-                    [implode(', ',$blogs),targetBlogId])
+                    [implode(', ', $blogs), $targetBlogId])
             );
 
             $this->getLogger()->warning(
