@@ -105,7 +105,7 @@ class ReferencedFileFieldProcessor extends MetaFieldProcessorAbstract
 
         } catch (\Exception $e) {
             $message = vsprintf(
-                'An exception occurred while sending related item=%s, submission=%s for translation. Message:',
+                'An exception occurred while sending related item=%s, submission=%s for translation. Message: %s',
                 [
                     var_export($originalValue, true),
                     $submission->getId(),
