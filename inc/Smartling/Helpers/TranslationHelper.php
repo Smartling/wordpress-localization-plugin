@@ -205,6 +205,16 @@ class TranslationHelper
         );
 
         if (0 === (int)$submission->getId()) {
+            /**
+             * Do not allow to create new submissions
+             */
+            if (1 === (int)SimpleStorageHelper::get(Bootstrap::SMARTLING_HANDLE_RELATIONS_MANUALLY)) {
+                throw new \Exception(vsprintf('Creation of submission [%s] cancelled due to manual relation processing mode.',
+                    [
+                        var_export($submission->toArray(false), true),
+                    ]));
+            }
+
             if (true === $clone) {
                 $submission->setIsCloned(1);
             }
