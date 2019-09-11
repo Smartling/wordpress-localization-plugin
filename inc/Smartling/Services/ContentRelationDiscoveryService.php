@@ -2,7 +2,9 @@
 
 namespace Smartling\Services;
 
+use Exception;
 use Psr\Log\LoggerInterface;
+use Smartling\ApiWrapper;
 use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
@@ -14,6 +16,7 @@ use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
 use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
@@ -59,6 +62,8 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
      */
     const ACTION_NAME = 'smartling-get-relations';
 
+    const ACTION_NAME_CREATE_SUBMISSIONS = 'smartling-create-submissions';
+
     /**
      * @var LoggerInterface
      */
@@ -98,6 +103,16 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
      * @var SubmissionManager
      */
     private $submissionManager;
+
+    /**
+     * @var ApiWrapper
+     */
+    private $apiWrapper;
+
+    /**
+     * @var SettingsManager
+     */
+    private $settingsManager;
 
     /**
      * @return LoggerInterface
@@ -223,6 +238,38 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
     }
 
     /**
+     * @return ApiWrapper
+     */
+    public function getApiWrapper()
+    {
+        return $this->apiWrapper;
+    }
+
+    /**
+     * @param ApiWrapper $apiWrapper
+     */
+    public function setApiWrapper($apiWrapper)
+    {
+        $this->apiWrapper = $apiWrapper;
+    }
+
+    /**
+     * @return SettingsManager
+     */
+    public function getSettingsManager()
+    {
+        return $this->settingsManager;
+    }
+
+    /**
+     * @param SettingsManager $settingsManager
+     */
+    public function setSettingsManager($settingsManager)
+    {
+        $this->settingsManager = $settingsManager;
+    }
+
+    /**
      * ContentRelationDiscoveryService constructor.
      * @param ContentHelper                      $contentHelper
      * @param FieldsFilterHelper                 $fieldFilterHelper
@@ -231,6 +278,8 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
      * @param ShortcodeHelper                    $shortcodeHelper
      * @param GutenbergBlockHelper               $blockHelper
      * @param SubmissionManager                  $submissionManager
+     * @param ApiWrapper                         $apiWrapper
+     * @param SettingsManager                    $settingsManager
      */
     public function __construct(
         ContentHelper $contentHelper,
@@ -239,7 +288,9 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
         AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper,
         ShortcodeHelper $shortcodeHelper,
         GutenbergBlockHelper $blockHelper,
-        SubmissionManager $submissionManager
+        SubmissionManager $submissionManager,
+        ApiWrapper $apiWrapper,
+        SettingsManager $settingsManager
     ) {
         $this->setContentHelper($contentHelper);
         $this->setFieldFilterHelper($fieldFilterHelper);
@@ -248,6 +299,126 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
         $this->setShortcodeHelper($shortcodeHelper);
         $this->setGutenbergBlockHelper($blockHelper);
         $this->setSubmissionManager($submissionManager);
+        $this->setApiWrapper($apiWrapper);
+        $this->setSettingsManager($settingsManager);
+    }
+
+    public function register()
+    {
+        parent::register();
+        add_action('wp_ajax_' . static::ACTION_NAME_CREATE_SUBMISSIONS, [$this, 'createSubmissionsHandler']);
+    }
+
+    /**
+     * @param string $sourceBlogId
+     * @param array  $job
+     * @return string
+     * @throws \Smartling\Exception\SmartlingConfigException
+     * @throws \Smartling\Exception\SmartlingDbException
+     * @throws \Smartling\Exceptions\SmartlingApiException
+     */
+    protected function getBatchUid($sourceBlogId, array $job)
+    {
+        return $this
+            ->getApiWrapper()
+            ->retrieveBatch(
+                $this->getSettingsManager()->getSingleSettingsProfile($sourceBlogId),
+                $job['id'],
+                'true' === $job['authorize'],
+                [
+                    'name'        => $job['name'],
+                    'description' => $job['description'],
+                    'dueDate'     => [
+                        'date'     => $job['dueDate'],
+                        'timezone' => $job['timeZone'],
+                    ],
+                ]
+            );
+    }
+
+    /**
+     * Handler for POST request that creates submissions for main content and selected relations
+     *
+     * Request Example:
+     *
+     *  [
+     *      'source'       => ['contentType' => 'post', 'id' => [0 => '48']],
+     *      'job'          =>
+     *      [
+     *          'id'          => 'abcdef123456',
+     *          'name'        => '',
+     *          'description' => '',
+     *          'dueDate'     => '',
+     *          'timeZone'    => 'Europe/Kiev',
+     *          'authorize'   => 'true',
+     *      ],
+     *      'targetBlogId' => '3',
+     *      'relations'    =>
+     *      [
+     *          0 => ['type' => 'attachment', 'id' => '232'],
+     *          1 => ['type' => 'attachment', 'id' => '26'],
+     *      ],
+     *  ]
+     */
+    public function createSubmissionsHandler()
+    {
+        $data = &$_POST;
+        try {
+            $curBlogId = $this->getContentHelper()->getSiteHelper()->getCurrentBlogId();
+            $batchUid  = $this->getBatchUid($curBlogId, $data['job']);
+
+            $submissionTemplateArray = [
+                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $this->getContentHelper()->getSiteHelper()->getCurrentBlogId(),
+                SubmissionEntity::FIELD_TARGET_BLOG_ID => (int)$data['targetBlogId'],
+            ];
+
+            /**
+             * Submission for original content may already exist
+             */
+            $searchParams = array_merge($submissionTemplateArray, [
+                SubmissionEntity::FIELD_CONTENT_TYPE => $data['source']['contentType'],
+                SubmissionEntity::FIELD_SOURCE_ID    => ArrayHelper::first($data['source']['id']),
+            ]);
+
+            $result  = $this->getSubmissionManager()->find($searchParams, 1);
+            $sources = $data['relations'];
+            if (empty($result)) {
+                $sources[] = [
+                    'type' => $data['source']['contentType'],
+                    'id'   => ArrayHelper::first($data['source']['id']),
+                ];
+            } else {
+                /**
+                 * @var SubmissionEntity $submission
+                 */
+                $submission = ArrayHelper::first($result);
+                $submission->setBatchUid($batchUid);
+                $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+                $this->getSubmissionManager()->storeEntity($submission);
+            }
+
+            /**
+             * Adding fields to template
+             */
+            $submissionTemplateArray = array_merge($submissionTemplateArray, [
+                SubmissionEntity::FIELD_STATUS    => SubmissionEntity::SUBMISSION_STATUS_NEW,
+                SubmissionEntity::FIELD_BATCH_UID => $batchUid,
+            ]);
+
+            foreach ($sources as $source) {
+                $submissionArray = array_merge($submissionTemplateArray, [
+                    SubmissionEntity::FIELD_CONTENT_TYPE => $source['type'],
+                    SubmissionEntity::FIELD_SOURCE_ID    => $source['id'],
+                ]);
+
+                $submission = SubmissionEntity::fromArray($submissionArray, $this->getLogger());
+                $this->getSubmissionManager()->storeEntity($submission);
+            }
+
+            $this->returnResponse(['status' => 'SUCCESS']);
+        } catch (Exception $e) {
+            $this->returnError('content.submission.failed', $e->getMessage());
+        }
     }
 
     public function getRequestSource()
@@ -422,7 +593,7 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
                             $fValue)));
                 }
                 $fields = array_merge($fields, $extraFields);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->getLogger()->info(
                     vsprintf(
                         'Gutenberg not detected, skipping search for references in Gutenberg blocks for request %s',
@@ -468,7 +639,7 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
                                 $curBlogId));
                         $detectedReferences['attachment'] = array_unique($detectedReferences['attachment']);
                     }
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $this
                         ->getLogger()
                         ->warning(

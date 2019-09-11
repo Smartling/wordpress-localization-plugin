@@ -267,3 +267,5 @@ services:
       - "@helper.shortcode"
       - "@helper.gutenberg"
       - "@manager.submission"
+      - "@wrapper.sdk.api.smartling"
+      - "@manager.settings"

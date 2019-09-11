@@ -10,109 +10,150 @@ global $tag;
 $needWrapper = ($tag instanceof WP_Term);
 ?>
 
+<script>
+    var handleRelationsManually = "<?= 0 === \Smartling\Helpers\SimpleStorageHelper::get(\Smartling\Bootstrap::SMARTLING_HANDLE_RELATIONS_MANUALLY,
+        0) ? 'false' : 'true' ?>";
+</script>
 
-<?php if($needWrapper) : ?>
+<?php if ($needWrapper) : ?>
 <div class="postbox-container">
     <div id="panel-box" class="postbox hndle"><h2><span>Translate content</span></h2>
         <div class="inside">
-<?php endif; ?>
+            <?php endif; ?>
 
-<div class="job-wizard">
-    <div id="placeholder"><span class="loader"></span> Please wait...</div>
-    <div id="tab-existing" class="tab-content hidden">
-        <div id="job-tabs">
-            <span class="active" data-action="new">New Job</span><span data-action="existing">Existing Job</span>
-        </div>
-        <table>
-            <tr id="jobList" class="hidden">
-                <th>
-                    <lable for="jobSelect">Existing jobs</lable>
-                </th>
-                <td>
-                    <select id="jobSelect"></select>
-                </td>
-            </tr>
-            <tr>
-                <th><label for="name-sm">Name</label></th>
-                <td><input id="name-sm" name="jobName" type="text"/></td>
-            </tr>
-            <tr>
-                <th><label for="description-sm">Description</label</th>
-                <td><textarea id="description-sm" name="description-sm"></textarea></td>
-            </tr>
-            <tr>
-                <th><label for="dueDate">Due Date</label</th>
-                <td><input type="text" id="dueDate" name="dueDate"/></td>
-            </tr>
-            <tr>
-                <th><label for="cbAuthorize">Authorize Job</label</th>
-                <td><input type="checkbox" class="authorize" id="cbAuthorize"
-                           name="cbAuthorize" <?= $data['profile']->getAutoAuthorize() ? 'checked="checked"' : ''; ?>/>
-                </td>
-            </tr>
-            <tr>
-                <th>Target Locales</th>
-                <td>
-                    <div>
-                        <?= \Smartling\WP\WPAbstract::checkUncheckBlock(); ?>
+            <div class="job-wizard">
+                <div id="placeholder"><span class="loader"></span> Please wait...</div>
+                <div id="tab-existing" class="tab-content hidden">
+                    <div id="job-tabs">
+                        <span class="active" data-action="new">New Job</span><span
+                                data-action="existing">Existing Job</span>
                     </div>
-                    <div class="locale-list">
-                    <?php
-                    /**
-                     * @var BulkSubmitTableWidget $data
-                     */
-                    $profile = $data['profile'];
-                    $contentType = $data['contentType'];
+                    <table>
+                        <tr id="jobList" class="hidden">
+                            <th>
+                                <lable for="jobSelect">Existing jobs</lable>
+                            </th>
+                            <td>
+                                <select id="jobSelect"></select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><label for="name-sm">Name</label></th>
+                            <td><input id="name-sm" name="jobName" type="text"/></td>
+                        </tr>
+                        <tr>
+                            <th><label for="description-sm">Description</label</th>
+                            <td><textarea id="description-sm" name="description-sm"></textarea></td>
+                        </tr>
+                        <tr>
+                            <th><label for="dueDate">Due Date</label</th>
+                            <td><input type="text" id="dueDate" name="dueDate"/></td>
+                        </tr>
+                        <tr>
+                            <th><label for="cbAuthorize">Authorize Job</label</th>
+                            <td><input type="checkbox" class="authorize" id="cbAuthorize"
+                                       name="cbAuthorize" <?= $data['profile']->getAutoAuthorize() ? 'checked="checked"' : ''; ?>/>
+                            </td>
+                        </tr>
 
-                    $locales = $profile->getTargetLocales();
-                    \Smartling\Helpers\ArrayHelper::sortLocales($locales);
-                    foreach ($locales as $locale) {
+                        <?php
                         /**
-                         * @var \Smartling\Settings\TargetLocale $locale
+                         * @var BulkSubmitTableWidget $data
                          */
-                        if (!$locale->isEnabled()) {
-                            continue;
-                        }
+                        $profile     = $data['profile'];
+                        $contentType = $data['contentType'];
+
+                        $locales = $profile->getTargetLocales();
+                        \Smartling\Helpers\ArrayHelper::sortLocales($locales);
                         ?>
-                        <p class="locale-list">
-                            <?= \Smartling\WP\WPAbstract::localeSelectionCheckboxBlock(
-                                'bulk-submit-locales',
-                                $locale->getBlogId(),
-                                $locale->getLabel(),
-                                false,
-                                true,
-                                '',
-                                [
-                                    'data-smartling-locale' => $locale->getSmartlingLocale(),
-                                ]
-                            ); ?>
-                        </p>
-                    <?php } ?>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <th class="center" colspan="2">
 
-                    <div id="error-messages"></div>
-                    <div id="loader-image" class="hidden"><span class="loader"></span></div>
-                    <button class="button button-primary" id="createJob"
-                            title="Create a new job and add content into it">Create Job
-                    </button>
-                    <button class="button button-primary hidden" id="addToJob"
-                            title="Add content into your chosen job">Add to selected Job
-                    </button>
-                </th>
-            </tr>
-            <input type="hidden" id="timezone-sm" name="timezone-sm" value="UTC"/>
-        </table>
+                        <?php if (0 === \Smartling\Helpers\SimpleStorageHelper::get(\Smartling\Bootstrap::SMARTLING_HANDLE_RELATIONS_MANUALLY,
+                                0)) : ?>
+                            <tr>
+                                <th>Target Locales</th>
+                                <td>
+                                    <div>
+                                        <?= \Smartling\WP\WPAbstract::checkUncheckBlock(); ?>
+                                    </div>
+                                    <div class="locale-list">
+                                        <?php
 
-    </div>
+                                        foreach ($locales as $locale) {
+                                            /**
+                                             * @var \Smartling\Settings\TargetLocale $locale
+                                             */
+                                            if (!$locale->isEnabled()) {
+                                                continue;
+                                            }
+                                            ?>
+                                            <p class="locale-list">
+                                                <?= \Smartling\WP\WPAbstract::localeSelectionCheckboxBlock(
+                                                    'bulk-submit-locales',
+                                                    $locale->getBlogId(),
+                                                    $locale->getLabel(),
+                                                    false,
+                                                    true,
+                                                    '',
+                                                    [
+                                                        'data-smartling-locale' => $locale->getSmartlingLocale(),
+                                                    ]
+                                                ); ?>
+                                            </p>
+                                        <?php } ?>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php else: ?>
+                            <tr>
+                                <th>Target Locale</th>
+                                <td>
+
+                                    <?php
+                                    $options = [];
+
+                                    foreach ($locales as $locale) {
+                                        /**
+                                         * @var \Smartling\Settings\TargetLocale $locale
+                                         */
+                                        if (!$locale->isEnabled()) {
+                                            continue;
+                                        }
+                                        $options[] = \Smartling\Helpers\HtmlTagGeneratorHelper::tag('option',
+                                            $locale->getLabel(), ['value' => $locale->getBlogId()]);
+                                    }
+                                    ?>
+                                    <?= \Smartling\Helpers\HtmlTagGeneratorHelper::tag('select', implode('', $options),
+                                        ['id' => 'targetBlogId']); ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Related <strong>new</strong> Content recommended to be uploaded:</th>
+                                <td id="relatedContent"/>
+                                Please wait...</td>
+                            </tr>
+                        <?php endif; ?>
+                        <tr>
+                            <th class="center" colspan="2">
+
+                                <div id="error-messages"></div>
+                                <div id="loader-image" class="hidden"><span class="loader"></span></div>
+                                <button class="button button-primary" id="createJob"
+                                        title="Create a new job and add content into it">Create Job
+                                </button>
+                                <button class="button button-primary hidden" id="addToJob"
+                                        title="Add content into your chosen job">Add to selected Job
+                                </button>
+                            </th>
+                        </tr>
+                        <input type="hidden" id="timezone-sm" name="timezone-sm" value="UTC"/>
+                    </table>
+
+                </div>
 
 
-</div>
+            </div>
 
-<?php if($needWrapper) : ?>
+            <?php if ($needWrapper) : ?>
         </div>
     </div>
 </div>
@@ -120,16 +161,16 @@ $needWrapper = ($tag instanceof WP_Term);
 
 
 <?php
-$id = 0;
+$id       = 0;
 $baseType = 'unknown';
 global $post;
 if ($post instanceof WP_Post) {
-    $id = $post->ID;
+    $id       = $post->ID;
     $baseType = 'post';
 } else {
     global $tag;
     if ($tag instanceof WP_Term) {
-        $id = $tag->term_id;
+        $id       = $tag->term_id;
         $baseType = 'taxonomy';
     }
 }
@@ -137,37 +178,37 @@ if ($post instanceof WP_Post) {
 <script>
     (function ($) {
         var currentContent = {
-            'contentType': '<?= $contentType ?>',
-            'id': [<?= $id ?>],
+            "contentType": '<?= $contentType ?>',
+            "id": [<?= $id ?>]
         };
 
         var Helper = {
             placeHolder: {
-                cls: 'hidden',
-                placeholderId: 'placeholder',
-                contentId: 'tab-existing',
+                cls: "hidden",
+                placeholderId: "placeholder",
+                contentId: "tab-existing",
                 show: function () {
-                    $('#' + this.placeholderId).removeClass(this.cls);
-                    $('#' + this.contentId).addClass(this.cls);
+                    $("#" + this.placeholderId).removeClass(this.cls);
+                    $("#" + this.contentId).addClass(this.cls);
                 },
                 hide: function () {
-                    $('#' + this.placeholderId).addClass(this.cls);
-                    $('#' + this.contentId).removeClass(this.cls);
+                    $("#" + this.placeholderId).addClass(this.cls);
+                    $("#" + this.contentId).removeClass(this.cls);
                 }
             },
             queryProxy: {
                 baseEndpoint: '<?= admin_url('admin-ajax.php') ?>?action=smartling_job_api_proxy',
                 query: function (action, params, success) {
-                    var data = {'innerAction': action, 'params': params};
+                    var data = { "innerAction": action, "params": params };
                     $.post(this.baseEndpoint, data, function (response) {
                         var cb = success;
                         cb(response);
                     });
                 },
                 listJobs: function (cb) {
-                    this.query('list-jobs', {}, function (response) {
+                    this.query("list-jobs", {}, function (response) {
                         if (200 == response.status) {
-                            if (typeof cb === 'function') {
+                            if (typeof cb === "function") {
                                 cb(response.data);
                             }
                         } else {
@@ -177,8 +218,8 @@ if ($post instanceof WP_Post) {
                 },
 
                 createJob: function (name, description, dueDate, locales, authorize, timezone, success, fail) {
-                    $('#loader-image').removeClass('hidden');
-                    this.query('create-job', {
+                    $("#loader-image").removeClass("hidden");
+                    this.query("create-job", {
                         jobName: name,
                         description: description,
                         dueDate: dueDate,
@@ -186,14 +227,13 @@ if ($post instanceof WP_Post) {
                         authorize: authorize,
                         timezone: timezone
                     }, function (response) {
-                        $('#loader-image').addClass('hidden');
+                        $("#loader-image").addClass("hidden");
                         if (response.status <= 300) {
-                            if (typeof success === 'function') {
+                            if (typeof success === "function") {
                                 success(response.data);
                             }
-                        }
-                        else if (response.status >= 400) {
-                            if (typeof fail === 'function') {
+                        } else if (response.status >= 400) {
+                            if (typeof fail === "function") {
                                 fail(response.message);
                             }
                         }
@@ -207,68 +247,67 @@ if ($post instanceof WP_Post) {
                 },
                 getSelecterTargetLocales: function () {
                     var locales = [];
-                    var checkedLocales = $('.job-wizard .mcheck:checkbox:checked');
+                    var checkedLocales = $(".job-wizard .mcheck:checkbox:checked");
                     checkedLocales.each(
                         function (e) {
-                            locales.push($(checkedLocales[e]).attr('data-blog-id'));
+                            locales.push($(checkedLocales[e]).attr("data-blog-id"));
                         }
                     );
-                    locales = locales.join(',');
+                    locales = locales.join(",");
                     return locales;
                 },
                 createJobForm: {
-                    cls: 'hidden',
-                    btnAdd: 'addToJob',
-                    btnCreate: 'createJob',
+                    cls: "hidden",
+                    btnAdd: "addToJob",
+                    btnCreate: "createJob",
                     show: function () {
-                        $('#' + this.btnCreate).removeClass(this.cls);
-                        $('#' + this.btnAdd).addClass(this.cls);
-                        $('#jobList').addClass(this.cls);
+                        $("#" + this.btnCreate).removeClass(this.cls);
+                        $("#" + this.btnAdd).addClass(this.cls);
+                        $("#jobList").addClass(this.cls);
                     },
                     hide: function () {
-                        $('#' + this.btnCreate).addClass(this.cls);
-                        $('#' + this.btnAdd).removeClass(this.cls);
-                        $('#jobList').removeClass(this.cls);
+                        $("#" + this.btnCreate).addClass(this.cls);
+                        $("#" + this.btnAdd).removeClass(this.cls);
+                        $("#jobList").removeClass(this.cls);
                     }
                 },
                 renderOption: function (id, name, description, dueDate, locales) {
-                    description = description == null ? '' : description;
+                    description = description == null ? "" : description;
 
                     // Format due date from UTC to user's local time.
                     if (dueDate == null) {
-                        dueDate = '';
-                    }
-                    else {
+                        dueDate = "";
+                    } else {
                         dueDate = moment.utc(dueDate).toDate();
-                        dueDate = moment(dueDate).format('YYYY-MM-DD HH:mm');
+                        dueDate = moment(dueDate).format("YYYY-MM-DD HH:mm");
                     }
 
-                    $option = '<option value="' + id + '" description="' + description + '" dueDate="' + dueDate + '" targetLocaleIds="' + locales + '">' + name + '</option>';
+                    $option = "<option value=\"" + id + "\" description=\"" + description + "\" dueDate=\"" + dueDate + "\" targetLocaleIds=\"" + locales + "\">" + name + "</option>";
                     return $option;
                 },
                 renderJobListInDropDown: function (data) {
-                    $('#jobSelect').html('');
+                    $("#jobSelect").html("");
                     data.forEach(function (job) {
-                        $option = Helper.ui.renderOption(job.translationJobUid, job.jobName, job.description, job.dueDate, job.targetLocaleIds.join(','));
-                        $('#jobSelect').append($option);
+                        $option = Helper.ui.renderOption(job.translationJobUid, job.jobName, job.description, job.dueDate, job.targetLocaleIds.join(","));
+                        $("#jobSelect").append($option);
                     });
                     Helper.placeHolder.hide();
                 },
                 localeCheckboxes: {
                     clear: function () {
-                        $('.job-wizard .mcheck:checkbox:checked').each(function (i, el) {
-                            $(el).removeAttr('checked');
+                        $(".job-wizard .mcheck:checkbox:checked").each(function (i, el) {
+                            $(el).removeAttr("checked");
                         });
                     },
                     set: function (locales) {
                         this.clear();
-                        var localeList = locales.split(',');
+                        var localeList = locales.split(",");
 
                         for (var ind in localeList) {
-                            var $elements = $('.job-wizard .mcheck:checkbox[data-smartling-locale="' + localeList[ind] + '"]');
+                            var $elements = $(".job-wizard .mcheck:checkbox[data-smartling-locale=\"" + localeList[ind] + "\"]");
 
                             if (0 < $elements.length) {
-                                $($elements[0]).attr('checked', 'checked');
+                                $($elements[0]).attr("checked", "checked");
                             }
 
                         }
@@ -277,112 +316,256 @@ if ($post instanceof WP_Post) {
                 },
                 jobForm: {
                     elements: [
-                        'name-sm', 'description-sm', 'dueDate', 'authorize'
+                        "name-sm", "description-sm", "dueDate", "authorize"
                     ],
                     clear: function () {
                         this.elements.forEach(function (el) {
-                            $('#' + el).val('');
+                            $("#" + el).val("");
                         });
                     }
                 }
             }
         };
 
-
         $(document).ready(function () {
             // emulate tabs
-            $('div#job-tabs span').on('click', function () {
-                var $action = $(this).attr('data-action');
-                $('div#job-tabs span').removeClass('active');
-                $(this).addClass('active');
+            $("div#job-tabs span").on("click", function () {
+                var $action = $(this).attr("data-action");
+                $("div#job-tabs span").removeClass("active");
+                $(this).addClass("active");
                 switch ($action) {
-                    case 'new':
+                    case "new":
                         Helper.ui.createJobForm.show();
                         break;
-                    case 'existing':
+                    case "existing":
                         Helper.ui.createJobForm.hide();
                         break;
                     default:
                 }
             });
 
-            $('#timezone-sm').val(moment.tz.guess());
+            $("#timezone-sm").val(moment.tz.guess());
 
-            var timezone = $('#timezone-sm').val();
+            var timezone = $("#timezone-sm").val();
 
-            $('#jobSelect').select2({
-                placeholder: 'Please select a job',
+            $("#jobSelect").select2({
+                placeholder: "Please select a job",
                 allowClear: false
             });
 
             Helper.ui.displayJobList();
 
-            $('#dueDate').datetimepicker2({
-                format: 'Y-m-d H:i',
+            $("#dueDate").datetimepicker2({
+                format: "Y-m-d H:i",
                 minDate: 0
             });
 
-            /*
-            * Use class checking method for detecting Gutenberg as defined here https://github.com/WordPress/gutenberg/issues/12200
-            * This prevents conflicts with plugins that enqueue the React library when the Classic Editor is enabled.
-            */
-            if (document.body.classList.contains( 'block-editor-page' )) {
-                var hasProp = function(obj, prop) {
-                    return Object.prototype.hasOwnProperty.call(obj, prop);
-                };
+            var loadRelations = function (contentType, contentId, targetBlogId) {
+                var url = `${ajaxurl}?action=smartling-get-relations&id=${contentId}&content-type=${contentType}&targetBlogIds=${targetBlogId}`;
+                $("#relatedContent").html("Please wait...");
+                $.get(url, function (data) {
+                    if (data.response.data.missingTranslatedReferences) {
+                        if (Object.prototype.hasOwnProperty.call(data.response.data.missingTranslatedReferences, targetBlogId)) {
+                            var missingRelations = data.response.data.missingTranslatedReferences[targetBlogId];
+                            var content = "";
+                            for (var sysType in missingRelations) {
+                                content += "<h4>" + sysType + "</h4>";
+                                for (var id in missingRelations[sysType]) {
+                                    content += `<br><label for="${sysType}-${missingRelations[sysType][id]}">${missingRelations[sysType][id]}</label><input id="${sysType}-${missingRelations[sysType][id]}" type="checkbox" data-type="${sysType}" data-id="${missingRelations[sysType][id]}" class="related" />`;
+                                }
+                            }
+                            $("#relatedContent").html(content);
+                        }
 
-                var canDispatch = hasProp(window, "wp")
-                    && hasProp(window.wp, "data")
-                    && hasProp(window.wp.data, "dispatch");
+                    }
+
+                });
+            };
+            /**
+             * Load list of related items
+             */
+            (function () {
+                loadRelations(currentContent.contentType, currentContent.id, $("#targetBlogId").val());
+            })();
+
+            $("#targetBlogId").on("change", function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                loadRelations(currentContent.contentType, currentContent.id, $(this).val());
+            });
+
+            if (!handleRelationsManually) {
+                /*
+                * Use class checking method for detecting Gutenberg as defined here https://github.com/WordPress/gutenberg/issues/12200
+                * This prevents conflicts with plugins that enqueue the React library when the Classic Editor is enabled.
+                */
+                if (document.body.classList.contains("block-editor-page")) {
+                    var hasProp = function (obj, prop) {
+                        return Object.prototype.hasOwnProperty.call(obj, prop);
+                    };
+
+                    var canDispatch = hasProp(window, "wp")
+                        && hasProp(window.wp, "data")
+                        && hasProp(window.wp.data, "dispatch");
+
+                    $("#addToJob").on("click", function (e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+
+                        if (null !== document.getElementById("smartling-bulk-submit-page-content-type")) {
+                            // we're on bulk submit page and need to rebuild currentContent structure for WP 5.2+
+                            currentContent.contentType = $("#smartling-bulk-submit-page-content-type").val();
+                            currentContent.id = [];
+
+                            $("input.bulkaction[type=checkbox]:checked").each(
+                                function () {
+                                    var id = parseInt($(this).attr("id").split("-")[0]);
+                                    currentContent.id = currentContent.id.concat([id]);
+                                });
+                        }
+
+                        var btnSelector = "#addToJob";
+                        var wp5an = "components-button is-primary is-busy is-large";
+                        var btn = $(btnSelector);
+
+                        var defaultText = btn.val();
+
+                        var btnLockWait = function () {
+                            $(btn).addClass(wp5an);
+                            $(btn).val("Please wait...");
+                            $(btn).attr("disabled", "disabled");
+                        };
+                        var btnUnlockWait = function () {
+                            $(btn).removeClass(wp5an);
+                            $(btn).val(defaultText);
+                            $(btn).removeAttr("disabled");
+                        };
+
+                        var checkedLocalesCbs = $("div.job-wizard input[type=checkbox].mcheck:checked");
+                        var blogs = [];
+
+                        for (var i = 0; i < checkedLocalesCbs.length; i++) {
+                            var blogId = $(checkedLocalesCbs[i]).attr("data-blog-id");
+                            blogs = blogs.concat([blogId]);
+                        }
+
+                        $("#jobSelect").select();
+
+                        var obj = {
+                            content: {
+                                type: currentContent.contentType,
+                                id: currentContent.id.join(",")
+                            },
+                            job: {
+                                id: $("#jobSelect").val(),
+                                name: $("input[name=\"jobName\"]").val(),
+                                description: $("textarea[name=\"description-sm\"]").val(),
+                                dueDate: $("input[name=\"dueDate\"]").val(),
+                                timeZone: timezone,
+                                authorize: ($("div.job-wizard input[type=checkbox].authorize:checked").length > 0)
+                            },
+                            blogs: blogs.join(",")
+                        };
+                        btnLockWait();
+                        $.post(
+                            ajaxurl + "?action=" + "smartling_upload_handler",
+                            obj,
+                            function (data) {
+                                if (canDispatch) {
+                                    switch (data.status) {
+                                        case "SUCCESS":
+                                            wp.data.dispatch("core/notices").createSuccessNotice("Content added to Upload queue.");
+                                            break;
+                                        case "FAIL":
+                                            wp.data.dispatch("core/notices").createErrorNotice("Failed adding content to download queue: " + data.message);
+                                            break;
+                                        default:
+                                            console.log(data);
+                                    }
+                                }
+                                btnUnlockWait();
+                            }
+                        );
+                    });
+                } else {
+                    $("#addToJob").on("click", function (e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        var jobId = $("#jobSelect").val();
+                        var jobName = $("input[name=\"jobName\"]").val();
+                        var jobDescription = $("textarea[name=\"description-sm\"]").val();
+                        var jobDueDate = $("input[name=\"dueDate\"]").val();
+
+                        if ("" !== jobDueDate) {
+                            var nowTS = Math.floor((new Date()).getTime() / 1000);
+                            var formTS = Math.floor(moment(jobDueDate, "YYYY-MM-DD HH:mm").toDate().getTime() / 1000);
+                            if (nowTS >= formTS) {
+                                alert("Invalid Due Date value. It cannot be in the past!.");
+                                return false;
+                            }
+                        }
+
+                        var locales = Helper.ui.getSelecterTargetLocales();
+
+                        var createHiddenInput = function (name, value) {
+                            return createInput("hidden", name, value);
+                        };
+
+                        var createInput = function (type, name, value) {
+                            return "<input type=\"" + type + "\" name=\"" + name + "\" value=\"" + value + "\" />";
+                        };
+
+                        var formSelector = $("#post").length ? "post" : "edittag";
+                        var isBulkSubmitPage = $("form#bulk-submit-main").length;
+
+                        // Support for bulk submit form.
+                        if (isBulkSubmitPage) {
+                            formSelector = "bulk-submit-main";
+                            currentContent.id = $("input.bulkaction:checked").map(function () {
+                                return $(this).val();
+                            }).get();
+
+                            $("#action").val("send");
+                        }
+
+                        // Add hidden fields only if validation is passed.
+                        if (currentContent.id.length) {
+                            $("#" + formSelector).append(createHiddenInput("smartling[ids]", currentContent.id));
+                            $("#" + formSelector).append(createHiddenInput("smartling[locales]", locales));
+                            $("#" + formSelector).append(createHiddenInput("smartling[jobId]", jobId));
+                            $("#" + formSelector).append(createHiddenInput("smartling[jobName]", jobName));
+                            $("#" + formSelector).append(createHiddenInput("smartling[jobDescription]", jobDescription));
+                            $("#" + formSelector).append(createHiddenInput("smartling[jobDueDate]", jobDueDate));
+                            $("#" + formSelector).append(createHiddenInput("smartling[timezone]", timezone));
+                            $("#" + formSelector).append(createHiddenInput("smartling[authorize]", $(".authorize:checked").length > 0));
+                            $("#" + formSelector).append(createHiddenInput("sub", "Upload"));
+                        }
+
+                        $("#" + formSelector).submit();
+
+                        // Support for bulk submit form.
+                        if (isBulkSubmitPage && currentContent.id.length) {
+                            $("input[type=\"submit\"]").click();
+                        }
+                    });
+                }
+            } else {
 
                 $("#addToJob").on("click", function (e) {
                     e.stopPropagation();
                     e.preventDefault();
 
-                    if (null !== document.getElementById("smartling-bulk-submit-page-content-type")) {
-                        // we're on bulk submit page and need to rebuild currentContent structure for WP 5.2+
-                        currentContent.contentType = $("#smartling-bulk-submit-page-content-type").val();
-                        currentContent.id = [];
+                    var url = `${ajaxurl}?action=smartling-create-submissions`;
 
-                        $("input.bulkaction[type=checkbox]:checked").each(
-                            function () {
-                                var id = parseInt($(this).attr("id").split("-")[0]);
-                                currentContent.id = currentContent.id.concat([id]);
-                            });
-                    }
+                    var relations = [];
 
-                    var btnSelector = "#addToJob";
-                    var wp5an = "components-button is-primary is-busy is-large";
-                    var btn = $(btnSelector);
+                    $("input[type=checkbox].related:checked").each(function () {
+                        var _data = Object.assign({}, this.dataset);
+                        relations.push(_data);
+                    });
 
-                    var defaultText = btn.val();
-
-                    var btnLockWait = function () {
-                        $(btn).addClass(wp5an);
-                        $(btn).val("Please wait...");
-                        $(btn).attr("disabled","disabled");
-                    };
-                    var btnUnlockWait = function () {
-                        $(btn).removeClass(wp5an);
-                        $(btn).val(defaultText);
-                        $(btn).removeAttr("disabled");
-                    };
-
-                    var checkedLocalesCbs = $("div.job-wizard input[type=checkbox].mcheck:checked");
-                    var blogs = [];
-
-                    for (var i = 0; i < checkedLocalesCbs.length; i++) {
-                        var blogId = $(checkedLocalesCbs[i]).attr("data-blog-id");
-                        blogs = blogs.concat([blogId]);
-                    }
-
-                    $("#jobSelect").select();
-
-                    var obj = {
-                        content: {
-                            type: currentContent.contentType,
-                            id: currentContent.id.join(",")
-                        },
+                    var data = {
+                        source: currentContent,
                         job: {
                             id: $("#jobSelect").val(),
                             name: $("input[name=\"jobName\"]").val(),
@@ -391,149 +574,76 @@ if ($post instanceof WP_Post) {
                             timeZone: timezone,
                             authorize: ($("div.job-wizard input[type=checkbox].authorize:checked").length > 0)
                         },
-                        blogs: blogs.join(",")
-                    };
-                    btnLockWait();
-                    $.post(
-                        ajaxurl + "?action=" + "smartling_upload_handler",
-                        obj,
-                        function (data) {
-                            if (canDispatch) {
-                                switch (data.status) {
-                                    case "SUCCESS":
-                                        wp.data.dispatch("core/notices").createSuccessNotice("Content added to Upload queue.");
-                                        break;
-                                    case "FAIL":
-                                        wp.data.dispatch("core/notices").createErrorNotice("Failed adding content to download queue: " + data.message);
-                                        break;
-                                    default:
-                                        console.log(data);
-                                }
-                            }
-                            btnUnlockWait();
-                        }
-                    );
-                });
-            } else {
-                $('#addToJob').on('click', function (e) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    var jobId = $('#jobSelect').val();
-                    var jobName = $('input[name="jobName"]').val();
-                    var jobDescription = $('textarea[name="description-sm"]').val();
-                    var jobDueDate = $('input[name="dueDate"]').val();
-
-                    if ('' !== jobDueDate) {
-                        var nowTS = Math.floor((new Date()).getTime() / 1000);
-                        var formTS = Math.floor(moment(jobDueDate, 'YYYY-MM-DD HH:mm').toDate().getTime() / 1000);
-                        if (nowTS >= formTS) {
-                            alert("Invalid Due Date value. It cannot be in the past!.");
-                            return false;
-                        }
-                    }
-
-                    var locales = Helper.ui.getSelecterTargetLocales();
-
-                    var createHiddenInput = function (name, value) {
-                        return createInput('hidden', name, value);
+                        targetBlogId: $("#targetBlogId").val(),
+                        relations
                     };
 
-                    var createInput = function (type, name, value) {
-                        return '<input type="' + type + '" name="' + name + '" value="' + value + '" />';
-                    };
-
-                    var formSelector = $('#post').length ? 'post' : 'edittag';
-                    var isBulkSubmitPage = $('form#bulk-submit-main').length;
-
-                    // Support for bulk submit form.
-                    if (isBulkSubmitPage) {
-                        formSelector = 'bulk-submit-main';
-                        currentContent.id = $("input.bulkaction:checked").map(function () {
-                            return $(this).val();
-                        }).get();
-
-                        $('#action').val('send');
-                    }
-
-                    // Add hidden fields only if validation is passed.
-                    if (currentContent.id.length) {
-                        $('#' + formSelector).append(createHiddenInput('smartling[ids]', currentContent.id));
-                        $('#' + formSelector).append(createHiddenInput('smartling[locales]', locales));
-                        $('#' + formSelector).append(createHiddenInput('smartling[jobId]', jobId));
-                        $('#' + formSelector).append(createHiddenInput('smartling[jobName]', jobName));
-                        $('#' + formSelector).append(createHiddenInput('smartling[jobDescription]', jobDescription));
-                        $('#' + formSelector).append(createHiddenInput('smartling[jobDueDate]', jobDueDate));
-                        $('#' + formSelector).append(createHiddenInput('smartling[timezone]', timezone));
-                        $('#' + formSelector).append(createHiddenInput('smartling[authorize]', $('.authorize:checked').length > 0));
-                        $('#' + formSelector).append(createHiddenInput('sub', 'Upload'));
-                    }
-
-                    $('#' + formSelector).submit();
-
-                    // Support for bulk submit form.
-                    if (isBulkSubmitPage && currentContent.id.length) {
-                        $('input[type="submit"]').click();
-                    }
+                    $.post(url, data, function (d) {
+                        alert(d.status);
+                    });
                 });
             }
 
-            $('#createJob').on('click', function (e) {
+            $("#createJob").on("click", function (e) {
                 e.stopPropagation();
                 e.preventDefault();
 
-                var name = $('#name-sm').val();
-                var description = $('#description-sm').val();
-                var dueDate = $('#dueDate').val();
+                var name = $("#name-sm").val();
+                var description = $("#description-sm").val();
+                var dueDate = $("#dueDate").val();
                 var locales = [];
-                var authorize = $('.authorize:checked').length > 0;
+                var authorize = $(".authorize:checked").length > 0;
 
-                var checkedLocales = $('.job-wizard .mcheck:checkbox:checked');
+                if (!handleRelationsManually) {
+                    var checkedLocales = $(".job-wizard .mcheck:checkbox:checked");
 
-                checkedLocales.each(
-                    function (e) {
-                        locales.push($(checkedLocales[e]).attr('data-blog-id'));
-                    }
-                );
+                    checkedLocales.each(
+                        function (e) {
+                            locales.push($(checkedLocales[e]).attr("data-blog-id"));
+                        }
+                    );
+                } else {
+                    locales = [$("#targetBlogId").val()];
+                }
 
-
-                locales = locales.join(',');
-                $('#error-messages').html('');
+                locales = locales.join(",");
+                $("#error-messages").html("");
 
                 Helper.queryProxy.createJob(name, description, dueDate, locales, authorize, timezone, function (data) {
-                    var $option = Helper.ui.renderOption(data.translationJobUid, data.jobName, data.description, data.dueDate, data.targetLocaleIds.join(','));
-                    $('#jobSelect').append($option);
-                    $('#jobSelect').val(data.translationJobUid);
-                    $('#jobSelect').change();
+                    var $option = Helper.ui.renderOption(data.translationJobUid, data.jobName, data.description, data.dueDate, data.targetLocaleIds.join(","));
+                    $("#jobSelect").append($option);
+                    $("#jobSelect").val(data.translationJobUid);
+                    $("#jobSelect").change();
 
-                    $('#addToJob').click();
+                    $("#addToJob").click();
 
                 }, function (data) {
                     var messages = [];
-                    if (undefined !== data['global']) {
-                        messages.push(data['global']);
+                    if (undefined !== data["global"]) {
+                        messages.push(data["global"]);
                     }
                     for (var i in data) {
-                        if ('global' === i) {
+                        if ("global" === i) {
                             continue;
                         } else {
                             messages.push(data[i]);
                         }
                     }
-                    var text = '<span>' + messages.join('</span><span>') + '</span>';
-                    $('#error-messages').html(text);
+                    var text = "<span>" + messages.join("</span><span>") + "</span>";
+                    $("#error-messages").html(text);
                 });
 
             });
 
-            $('#jobSelect').on('change', function () {
+            $("#jobSelect").on("change", function () {
                 Helper.ui.localeCheckboxes.clear();
                 Helper.ui.jobForm.clear();
-                $('#dueDate').val($('option[value=' + $('#jobSelect').val() + ']').attr('dueDate'));
-                $('#name-sm').val($('option[value=' + $('#jobSelect').val() + ']').html());
-                $('#description-sm').val($('option[value=' + $('#jobSelect').val() + ']').attr('description'));
+                $("#dueDate").val($("option[value=" + $("#jobSelect").val() + "]").attr("dueDate"));
+                $("#name-sm").val($("option[value=" + $("#jobSelect").val() + "]").html());
+                $("#description-sm").val($("option[value=" + $("#jobSelect").val() + "]").attr("description"));
                 Helper.ui.localeCheckboxes.clear();
-                Helper.ui.localeCheckboxes.set($('option[value=' + $('#jobSelect').val() + ']').attr('targetlocaleids'))
+                Helper.ui.localeCheckboxes.set($("option[value=" + $("#jobSelect").val() + "]").attr("targetlocaleids"));
             });
-        })
-    })(jQuery)
+        });
+    })(jQuery);
 </script>
