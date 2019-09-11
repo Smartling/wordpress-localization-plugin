@@ -190,6 +190,7 @@ class TranslationHelper
      * @param bool   $clone
      *
      * @return mixed
+     * @throws SmartlingDataReadException
      */
     public function prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone = false)
     {
@@ -217,7 +218,7 @@ class TranslationHelper
      * @param SubmissionEntity $submission
      *
      * @return mixed
-     * @throws \Smartling\Exception\SmartlingDataReadException
+     * @throws SmartlingDataReadException
      */
     public function reloadSubmission(SubmissionEntity $submission)
     {
@@ -241,6 +242,7 @@ class TranslationHelper
      * @param bool   $clone
      *
      * @return SubmissionEntity
+     * @throws SmartlingDataReadException
      */
     public function tryPrepareRelatedContent($contentType, $sourceBlog, $sourceId, $targetBlog, $batchUid, $clone = false)
     {
