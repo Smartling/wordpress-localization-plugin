@@ -4,6 +4,7 @@ use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Services\GlobalSettingsManager;
 use Smartling\WP\Controller\ConfigurationProfilesWidget;
 use Smartling\WP\Table\QueueManagerTableWidget;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * @var WPAbstract $this
@@ -131,9 +132,9 @@ $data = $this->getViewData();
                     <tr>
                         <th><label for="loggingCustomization">Logging Customization</label></th>
                         <td>
-                            <textarea id="loggingCustomization"><?= stripslashes(\Symfony\Component\Yaml\Yaml::dump(GlobalSettingsManager::getLoggingCustomization())); ?></textarea>
+                            <textarea id="loggingCustomization"><?= stripslashes(Yaml::dump( GlobalSettingsManager::getLoggingCustomization())); ?></textarea>
 
-                            <div id="defaultLoggingCustomizations" style="display: none"><?= \Symfony\Component\Yaml\Yaml::dump(GlobalSettingsManager::getLoggingCustomizationDefault());?></div>
+                            <div id="defaultLoggingCustomizations" style="display: none"><?= Yaml::dump(GlobalSettingsManager::getLoggingCustomizationDefault());?></div>
 
                         <a href="javascript:void(0)" id="resetLoggingCustomization">reset to defaults</a>
                         | note, levels can be debug, info, notice, warning, error, critical, alert, emergency.<br/>

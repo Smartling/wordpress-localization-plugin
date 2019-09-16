@@ -169,18 +169,18 @@ class GlobalSettingsManager
         $parsedData = static::parseYamlData($value);
 
         if (is_array($parsedData)) {
-            SimpleStorageHelper::set(static::LOGGING_CUSTOMIZATION, $value);
-        }
-
-        if (static::getLoggingCustomizationDefault() === $parsedData) {
-            SimpleStorageHelper::drop(static::LOGGING_CUSTOMIZATION);
+            SimpleStorageHelper::set(static::LOGGING_CUSTOMIZATION, $parsedData);
         } else {
             Bootstrap::getLogger()->warning(
                 vsprintf(
                     'Got unexpected logging customization data \'%s\' converted from \'%s\'',
-                    [$parsedData, $value]
+                    [var_export($parsedData, true), $value]
                 )
             );
+        }
+
+        if (static::getLoggingCustomizationDefault() === $parsedData) {
+            SimpleStorageHelper::drop(static::LOGGING_CUSTOMIZATION);
         }
     }
 

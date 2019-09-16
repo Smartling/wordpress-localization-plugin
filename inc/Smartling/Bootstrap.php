@@ -227,7 +227,7 @@ class Bootstrap
         $rawPageSize = (int)$data['pageSize'];
         $pageSize = $rawPageSize < 1 ? GlobalSettingsManager::getPageSizeDefault() : $rawPageSize;
 
-        GlobalSettingsManager::setSkipSelfCheck((int)$data['staticCheckDisabled']);
+        GlobalSettingsManager::setSkipSelfCheck((int)$data['selfCheckDisabled']);
         GlobalSettingsManager::setDisableLogging((int)$data['disableLogging']);
         GlobalSettingsManager::setDisableACF((int)$data['disableACF']);
         GlobalSettingsManager::setDisableAcfDbLookup((int)$data['disableDBLookup']);
