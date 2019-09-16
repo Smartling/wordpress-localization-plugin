@@ -9,9 +9,9 @@ use Smartling\Exception\SmartlingConfigException;
 use Smartling\Extensions\AcfOptionPages\ContentTypeAcfOption;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\EntityHelper;
-use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\ConfigurationProfileEntity;
 
 /**
@@ -122,7 +122,7 @@ class AcfDynamicSupport
      */
     private function getBlogListForSearch()
     {
-        $blogs = $this->getBlogs();
+        $blogs    = $this->getBlogs();
         $profiles = $this->getActiveProfiles();
 
         $blogsToSearch = [];
@@ -163,7 +163,7 @@ class AcfDynamicSupport
                                 'global_type' => 'group',
                                 'active'      => 1,
                             ];
-                            $fields = $this->getFieldsByGroup($blog, [$groupKey => $group]);
+                            $fields          = $this->getFieldsByGroup($blog, [$groupKey => $group]);
                             if (0 < count($fields) && false !== $fields) {
                                 foreach ($fields as $fieldKey => $field) {
                                     $defs[$fieldKey] = [
@@ -191,7 +191,7 @@ class AcfDynamicSupport
 
     protected function getGroups($blogId)
     {
-        $dbGroups = [];
+        $dbGroups   = [];
         $needChange = $this->getSiteHelper()->getCurrentBlogId() !== $blogId;
         try {
             if ($needChange) {
@@ -251,13 +251,13 @@ class AcfDynamicSupport
 
         $fields = [];
         foreach ($posts as $post) {
-            $configuration = unserialize($post->post_content);
+            $configuration            = unserialize($post->post_content);
             $fields[$post->post_name] = [
                 'parent' => $parentKey,
                 'name'   => $post->post_excerpt,
                 'type'   => $configuration['type'],
             ];
-            $subFields = $this->rawReadFields($post->ID, $post->post_name);
+            $subFields                = $this->rawReadFields($post->ID, $post->post_name);
             if (0 < count($subFields)) {
                 $fields = array_merge($fields, $subFields);
             }
@@ -268,16 +268,16 @@ class AcfDynamicSupport
 
     protected function getFieldsByGroup($blogId, $group)
     {
-        $dbFields = [];
+        $dbFields   = [];
         $needChange = $this->getSiteHelper()->getCurrentBlogId() !== $blogId;
         try {
             if ($needChange) {
                 $this->getSiteHelper()->switchBlogId($blogId);
             }
-            $keys = array_keys($group);
-            $key = reset($keys);
+            $keys   = array_keys($group);
+            $key    = reset($keys);
             $_group = reset($group);
-            $id = $_group['post_id'];
+            $id     = $_group['post_id'];
 
             $dbFields = $this->rawReadFields($id, $key);
 
@@ -300,7 +300,7 @@ class AcfDynamicSupport
         foreach ($groups as $group) {
             $defs[$group['key']] = [
                 'global_type' => 'group',
-                'active' => $group['active'],
+                'active'      => $group['active'],
             ];
         }
 
@@ -315,9 +315,9 @@ class AcfDynamicSupport
         foreach ($fields as $field) {
             $defs[$field['key']] = [
                 'global_type' => 'field',
-                'type' => $field['type'],
-                'name' => $field['name'],
-                'parent' => $field['parent'],
+                'type'        => $field['type'],
+                'name'        => $field['name'],
+                'parent'      => $field['parent'],
             ];
 
             if ('clone' === $field['type']) {
@@ -333,8 +333,9 @@ class AcfDynamicSupport
      * Get local definitions for ACF Pro ver < 5.7.12
      * @return array
      */
-    private function getLocalDefinitionsOld() {
-        $acf = null;
+    private function getLocalDefinitionsOld()
+    {
+        $acf  = null;
         $defs = [];
         try {
             $acf = (array)$this->getAcf();
@@ -361,7 +362,8 @@ class AcfDynamicSupport
         return $defs;
     }
 
-    protected function validateAcfStores() {
+    protected function validateAcfStores()
+    {
         global $acf_stores;
 
         return is_array($acf_stores)
@@ -375,7 +377,8 @@ class AcfDynamicSupport
      * Get local definitions for ACF Pro ver 5.7.12+
      * @return array
      */
-    private function getLocalDefinitionsNew() {
+    private function getLocalDefinitionsNew()
+    {
 
         $defs = [];
 
@@ -468,10 +471,10 @@ class AcfDynamicSupport
             $this->getLogger()->debug('ACF detected.');
             $localDefinitions = $this->getLocalDefinitions();
 
-            if (1 === (int)SimpleStorageHelper::get(Bootstrap::DISABLE_ACF_DB_LOOKUP, 0)) {
+            if (1 === (int)GlobalSettingsManager::getDisableAcfDbLookup()) {
                 $definitions = $localDefinitions;
-                $url = admin_url('edit.php?post_type=acf-field-group&page=acf-tools');
-                $msg = [
+                $url         = admin_url('edit.php?post_type=acf-field-group&page=acf-tools');
+                $msg         = [
                     'Automatic ACF support is disabled. Please ensure that you use relevant exported ACF configuration.',
                     vsprintf('To export your ACF configuration click <strong><a href="%s">here</a></strong>', [$url]),
                 ];
@@ -485,7 +488,8 @@ class AcfDynamicSupport
                     $msg = [
                         'ACF Configuration has been changed.',
                         'Please update groups and fields definitions for all sites (As PHP generated code).',
-                        vsprintf('Use <strong><a href="%s">this</a></strong> page to generate export code and add it to your theme or extra plugin.', [$url]),
+                        vsprintf('Use <strong><a href="%s">this</a></strong> page to generate export code and add it to your theme or extra plugin.',
+                            [$url]),
                     ];
                     DiagnosticsHelper::addDiagnosticsMessage(implode('<br/>', $msg));
                 }

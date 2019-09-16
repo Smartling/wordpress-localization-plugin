@@ -6,6 +6,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
 use Smartling\Helpers\SiteHelper;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Services\GlobalSettingsManager;
 
 /**
  * Class EntityManagerAbstract
@@ -69,7 +70,7 @@ abstract class EntityManagerAbstract
      */
     public function getPageSize()
     {
-        return $this->pageSize < 1 ? Bootstrap::getPageSize(true) : $this->pageSize;
+        return $this->pageSize < 1 ? GlobalSettingsManager::getPageSizeDefault() : $this->pageSize;
     }
 
     /**

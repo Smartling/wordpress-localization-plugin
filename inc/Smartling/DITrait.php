@@ -9,6 +9,7 @@ use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Services\GlobalSettingsManager;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
@@ -94,10 +95,7 @@ trait DITrait
 
     private static function injectLoggerCustomizations(ContainerBuilder $di)
     {
-        $storedConfiguration = SimpleStorageHelper::get(
-            Bootstrap::LOGGING_CUSTOMIZATION,
-            Bootstrap::getContainer()->getParameter('logger.filter.default')
-        );
+        $storedConfiguration = GlobalSettingsManager::getLoggingCustomization();
 
         $allowedLevels = [
             'debug',
@@ -139,19 +137,9 @@ trait DITrait
     private static function handleLoggerConfiguration()
     {
         add_action(ExportedAPI::ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT, function (ContainerBuilder $di) {
-            $defaultLogFileName = Bootstrap::getLogFileName(false, true);
-            $storedFile = SimpleStorageHelper::get(self::SMARTLING_CUSTOM_LOG_FILE, false);
-            $logFileName = false !== $storedFile ? $storedFile : $defaultLogFileName;
-
-            $storedPageSize = SimpleStorageHelper::get(self::SMARTLING_CUSTOM_PAGE_SIZE, false);
-            $pageSize = false !== $storedPageSize ? $storedPageSize : self::getPageSize(true);
-
-            $di->setParameter('logger.filehandler.standard.filename', $logFileName);
-            $di->setParameter('submission.pagesize', $pageSize);
-
-
-            $val = (int)SimpleStorageHelper::get(self::DISABLE_LOGGING, 0);
-            if (1 === $val) {
+            $di->setParameter('logger.filehandler.standard.filename', GlobalSettingsManager::getLogFileSpec());
+            $di->setParameter('submission.pagesize', GlobalSettingsManager::getPageSize());
+            if (1 === (int) GlobalSettingsManager::getDisableLogging()) {
                 Bootstrap::disableLogging($di);
             }
         }, 8);
@@ -159,7 +147,7 @@ trait DITrait
         add_action(ExportedAPI::ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT, function (ContainerBuilder $di) {
             $file = self::getLogFileName();
             if (file_exists($file) && !is_writable($file)) {
-                if (1 === (int)SimpleStorageHelper::get(self::DISABLE_LOGGING, 0)) {
+                if (1 === (int) GlobalSettingsManager::getDisableLogging()) {
                     return;
                 }
                 add_action('admin_init', function () {
