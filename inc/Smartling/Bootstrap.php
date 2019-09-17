@@ -22,6 +22,7 @@ use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPInstallableInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -38,20 +39,6 @@ class Bootstrap
     use DITrait;
 
     public static $pluginVersion = 'undefined';
-
-    const SELF_CHECK_IDENTIFIER = 'smartling_static_check_disabled';
-
-    const DISABLE_LOGGING = 'smartling_disable_logging';
-
-    const DISABLE_ACF_DB_LOOKUP = 'smartling_disable_db_lookup';
-
-    const DISABLE_ACF = 'smartling_disable_acf';
-
-    const SMARTLING_CUSTOM_LOG_FILE = 'smartling_log_file';
-
-    const SMARTLING_CUSTOM_PAGE_SIZE = 'smartling_ui_page_size';
-
-    const LOGGING_CUSTOMIZATION = 'smartling_logging_customization';
 
     public function __construct()
     {
@@ -237,55 +224,16 @@ class Bootstrap
     public function updateGlobalExpertSettings () {
         $data =& $_POST['params'];
 
-        $staticCheckDisabled = (int)$data['staticCheckDisabled'];
-        $disableLogging = (int)$data['disableLogging'];
-        $logPath = $data['loggingPath'];
-        $disableACFDBLookup = (int)$data['disableDBLookup'];
-        $defaultPageSize = Bootstrap::getPageSize(true);
         $rawPageSize = (int)$data['pageSize'];
-        $pageSize = $rawPageSize < 1 ? $defaultPageSize : $rawPageSize;
+        $pageSize = $rawPageSize < 1 ? GlobalSettingsManager::getPageSizeDefault() : $rawPageSize;
 
-        $parser = new Parser();
-        $loggingCustomization = null;
-        try {
-            $loggingCustomization = $parser->parse($data['loggingCustomization'], true);
-        } catch (\Exception $e) {
-            Bootstrap::getLogger()
-                     ->warning(vsprintf('Failed parsing new value: "%s"', [var_export($data['loggingCustomization'], true)]));
-        }
-
-        $disableACF = (int)$data['disableACF'];
-
-        if (is_array($loggingCustomization)) {
-            SimpleStorageHelper::set(Bootstrap::LOGGING_CUSTOMIZATION, $loggingCustomization);
-        } else {
-            Bootstrap::getLogger()->warning(var_export($loggingCustomization, true));
-        }
-
-        SimpleStorageHelper::set(Bootstrap::SELF_CHECK_IDENTIFIER, $staticCheckDisabled);
-        SimpleStorageHelper::set(Bootstrap::DISABLE_LOGGING, $disableLogging);
-        SimpleStorageHelper::set(static::DISABLE_ACF_DB_LOOKUP, $disableACFDBLookup);
-        SimpleStorageHelper::set(Bootstrap::DISABLE_ACF, $disableACF);
-
-        if (0 === $disableACF) {
-            SimpleStorageHelper::drop(static::DISABLE_ACF);
-        }
-
-        if (0 == $disableACFDBLookup) {
-            SimpleStorageHelper::drop(static::DISABLE_ACF_DB_LOOKUP);
-        }
-
-        if ($pageSize === $defaultPageSize) {
-            SimpleStorageHelper::drop(static::SMARTLING_CUSTOM_PAGE_SIZE);
-        } else {
-            SimpleStorageHelper::set(static::SMARTLING_CUSTOM_PAGE_SIZE, $pageSize);
-        }
-
-        if ($logPath === Bootstrap::getLogFileName(false, true)) {
-            SimpleStorageHelper::drop(static::SMARTLING_CUSTOM_LOG_FILE);
-        } else {
-            SimpleStorageHelper::set(static::SMARTLING_CUSTOM_LOG_FILE, $logPath);
-        }
+        GlobalSettingsManager::setSkipSelfCheck((int)$data['selfCheckDisabled']);
+        GlobalSettingsManager::setDisableLogging((int)$data['disableLogging']);
+        GlobalSettingsManager::setDisableACF((int)$data['disableACF']);
+        GlobalSettingsManager::setDisableAcfDbLookup((int)$data['disableDBLookup']);
+        GlobalSettingsManager::setLogFileSpec($data['loggingPath']);
+        GlobalSettingsManager::setPageSize($pageSize);
+        GlobalSettingsManager::setLoggingCustomization($data['loggingCustomization']);
 
         wp_send_json($data);
     }
@@ -316,7 +264,7 @@ class Bootstrap
             add_action('wp_ajax_' . 'smartling_expert_global_settings_update', [$this, 'updateGlobalExpertSettings']);
         }
 
-        if (0 === (int)SimpleStorageHelper::get(static::SELF_CHECK_IDENTIFIER, 0)) {
+        if (0 === (int) GlobalSettingsManager::getSkipSelfCheck()) {
             $this->testCronSetup();
             $this->testUpdates();
         }
@@ -502,7 +450,7 @@ class Bootstrap
 
         $action = defined('DOING_CRON') && true === DOING_CRON ? 'wp_loaded' : 'admin_init';
 
-        if (1 === (int)SimpleStorageHelper::get(Bootstrap::DISABLE_ACF, 0)) {
+        if (1 === (int) GlobalSettingsManager::getDisableACF()) {
             DiagnosticsHelper::addDiagnosticsMessage('Warning, ACF plugin support is <strong>disabled</strong>.');
         } else {
             add_action($action, function () {
