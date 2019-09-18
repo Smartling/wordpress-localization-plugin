@@ -1,12 +1,11 @@
 <?php
 namespace Smartling\WP\Controller;
 
-use Smartling\Bootstrap;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
-use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\Services\GlobalSettingsManager;
 use Smartling\WP\Table\BulkSubmitTableWidget;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -23,8 +22,7 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
      */
     public function register()
     {
-        if (!DiagnosticsHelper::isBlocked()
-            && 0 === SimpleStorageHelper::get(Bootstrap::SMARTLING_HANDLE_RELATIONS_MANUALLY, 0)) {
+        if (!DiagnosticsHelper::isBlocked() && 0 === (int) GlobalSettingsManager::getHandleRelationsManually()) {
             add_action('admin_menu', [$this, 'menu']);
             add_action('admin_enqueue_scripts', [$this, 'wp_enqueue']);
         }

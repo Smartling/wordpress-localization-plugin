@@ -2,9 +2,6 @@
 
 namespace Smartling;
 
-
-use Smartling\Helpers\SimpleStorageHelper;
-
 trait DebugTrait
 {
     /**
@@ -140,22 +137,6 @@ trait DebugTrait
         }
 
         return $fullFilename;
-    }
-
-    public static function getPageSize($forceDefault = false)
-    {
-        $paramName = 'submission.pagesize';
-        if (true === $forceDefault) {
-            $paramName .= '.default';
-        }
-        $container = static::getContainer();
-        $pageSize = $container->getParameter($paramName);
-        return $pageSize;
-    }
-
-    public static function getRelationHandlingMode()
-    {
-        return SimpleStorageHelper::get(static::SMARTLING_HANDLE_RELATIONS_MANUALLY, 0);
     }
 
     /**

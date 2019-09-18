@@ -1,6 +1,10 @@
 <?php
+
+use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Services\GlobalSettingsManager;
 use Smartling\WP\Controller\ConfigurationProfilesWidget;
 use Smartling\WP\Table\QueueManagerTableWidget;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * @var WPAbstract $this
@@ -72,10 +76,10 @@ $data = $this->getViewData();
                         </th>
                         <td>
                             <?=
-                            \Smartling\Helpers\HtmlTagGeneratorHelper::tag(
+                            HtmlTagGeneratorHelper::tag(
                                 'select',
-                                \Smartling\Helpers\HtmlTagGeneratorHelper::renderSelectOptions(
-                                    \Smartling\Helpers\SimpleStorageHelper::get(\Smartling\Bootstrap::SELF_CHECK_IDENTIFIER, 0),
+                                HtmlTagGeneratorHelper::renderSelectOptions(
+                                    GlobalSettingsManager::getSkipSelfCheck(),
                                     [
                                         0 => 'No',
                                         1 => 'Yes',
@@ -95,10 +99,10 @@ $data = $this->getViewData();
                         <th><label for="disableLogging">Enable logging</label></th>
                         <td>
                             <?=
-                            \Smartling\Helpers\HtmlTagGeneratorHelper::tag(
+                            HtmlTagGeneratorHelper::tag(
                                 'select',
-                                \Smartling\Helpers\HtmlTagGeneratorHelper::renderSelectOptions(
-                                    \Smartling\Helpers\SimpleStorageHelper::get(\Smartling\Bootstrap::DISABLE_LOGGING, 0),
+                                HtmlTagGeneratorHelper::renderSelectOptions(
+                                    GlobalSettingsManager::getDisableLogging(),
                                     [
                                         0 => 'Yes',
                                         1 => 'No',
@@ -115,22 +119,22 @@ $data = $this->getViewData();
                         <th><label for="loggingPath">Logging Path</label></th>
                         <td>
                             <?=
-                            \Smartling\Helpers\HtmlTagGeneratorHelper::tag('input', '', [
+                            HtmlTagGeneratorHelper::tag('input', '', [
                                 'type'  => 'text',
                                 'value' => \Smartling\Bootstrap::getLogFileName(false),
                                 'id'    => 'loggingPath',
                             ]);
                             ?>
-                            <a href="javascript:void(0)" id="resetLogPath" data-path="<?= \Smartling\Bootstrap::getLogFileName(false, true); ?>">reset to defaults</a>
+                            <a href="javascript:void(0)" id="resetLogPath" data-path="<?= GlobalSettingsManager::getLogFileSpecDefault(); ?>">reset to defaults</a>
                             | note, absolute or relative path may be used. Current path points to <em>/wp-admin</em> folder.<br/>
                         </td>
                     </tr>
                     <tr>
                         <th><label for="loggingCustomization">Logging Customization</label></th>
                         <td>
-                            <textarea id="loggingCustomization"><?= stripslashes(\Symfony\Component\Yaml\Yaml::dump(\Smartling\Helpers\SimpleStorageHelper::get(\Smartling\Bootstrap::LOGGING_CUSTOMIZATION,\Smartling\Bootstrap::getContainer()->getParameter('logger.filter.default')))); ?></textarea>
+                            <textarea id="loggingCustomization"><?= stripslashes(Yaml::dump( GlobalSettingsManager::getLoggingCustomization())); ?></textarea>
 
-                            <div id="defaultLoggingCustomizations" style="display: none"><?= \Symfony\Component\Yaml\Yaml::dump(\Smartling\Bootstrap::getContainer()->getParameter('logger.filter.default'));?></div>
+                            <div id="defaultLoggingCustomizations" style="display: none"><?= Yaml::dump(GlobalSettingsManager::getLoggingCustomizationDefault());?></div>
 
                         <a href="javascript:void(0)" id="resetLoggingCustomization">reset to defaults</a>
                         | note, levels can be debug, info, notice, warning, error, critical, alert, emergency.<br/>
@@ -143,10 +147,10 @@ $data = $this->getViewData();
                         <th><label for="disableACF">Disable ACF support</label></th>
                         <td>
                             <?=
-                            \Smartling\Helpers\HtmlTagGeneratorHelper::tag(
+                            HtmlTagGeneratorHelper::tag(
                                 'select',
-                                \Smartling\Helpers\HtmlTagGeneratorHelper::renderSelectOptions(
-                                    \Smartling\Helpers\SimpleStorageHelper::get(\Smartling\Bootstrap::DISABLE_ACF, 0),
+                                HtmlTagGeneratorHelper::renderSelectOptions(
+                                        GlobalSettingsManager::getDisableACF(),
                                     [
                                         0 => 'No',
                                         1 => 'Yes',
@@ -165,10 +169,10 @@ $data = $this->getViewData();
                         <th><label for="disableDBLookup">Disable ACF configuration database lookup (not recommended)</label></th>
                         <td>
                             <?=
-                            \Smartling\Helpers\HtmlTagGeneratorHelper::tag(
+                            HtmlTagGeneratorHelper::tag(
                                 'select',
-                                \Smartling\Helpers\HtmlTagGeneratorHelper::renderSelectOptions(
-                                    \Smartling\Helpers\SimpleStorageHelper::get(\Smartling\Bootstrap::DISABLE_ACF_DB_LOOKUP, 0),
+                                HtmlTagGeneratorHelper::renderSelectOptions(
+                                    GlobalSettingsManager::getDisableAcfDbLookup(),
                                     [
                                         0 => 'No',
                                         1 => 'Yes',
@@ -188,13 +192,13 @@ $data = $this->getViewData();
                         <th><label for="loggingPath">Elements per page</label></th>
                         <td>
                             <?=
-                            \Smartling\Helpers\HtmlTagGeneratorHelper::tag('input', '', [
+                            HtmlTagGeneratorHelper::tag('input', '', [
                                 'type'  => 'text',
-                                'value' => \Smartling\Bootstrap::getPageSize(),
+                                'value' => GlobalSettingsManager::getPageSizeRuntime(),
                                 'id'    => 'pageSize',
                             ]);
                             ?>
-                            <a href="javascript:void(0)" id="resetPageSize" data-default="<?= \Smartling\Bootstrap::getPageSize( true); ?>">reset to defaults</a>
+                            <a href="javascript:void(0)" id="resetPageSize" data-default="<?= GlobalSettingsManager::getPageSizeDefault(); ?>">reset to defaults</a>
                         </td>
                     </tr>
                     <tr>
@@ -204,7 +208,7 @@ $data = $this->getViewData();
                             \Smartling\Helpers\HtmlTagGeneratorHelper::tag(
                                 'select',
                                 \Smartling\Helpers\HtmlTagGeneratorHelper::renderSelectOptions(
-                                    \Smartling\Helpers\SimpleStorageHelper::get(\Smartling\Bootstrap::SMARTLING_HANDLE_RELATIONS_MANUALLY, 0),
+                                    GlobalSettingsManager::getHandleRelationsManually(),
                                     [
                                         0 => 'Automatically',
                                         1 => 'Manually',
@@ -215,7 +219,7 @@ $data = $this->getViewData();
                                 ]
                             );
                             ?>
-                            <br /><a href="javascript:void(0)" id="resetHandleRelationsManually" data-default="0">reset to defaults</a>
+                            <br /><a href="javascript:void(0)" id="resetHandleRelationsManually" data-default="<?= GlobalSettingsManager::getHandleRelationsManuallyDefault(); ?>">reset to defaults</a>
                             <br />Note, that switching handling of relations to Manual cuts off plugin functionality, e.g. Bulk Submit cannot be used while handling relations manually.<br/>
                         </td>
                     </tr>

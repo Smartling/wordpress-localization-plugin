@@ -11,8 +11,7 @@ $needWrapper = ($tag instanceof WP_Term);
 ?>
 
 <script>
-    var handleRelationsManually = "<?= 0 === \Smartling\Helpers\SimpleStorageHelper::get(\Smartling\Bootstrap::SMARTLING_HANDLE_RELATIONS_MANUALLY,
-        0) ? 'false' : 'true' ?>";
+    var handleRelationsManually = "<?= 0 === (int) \Smartling\Services\GlobalSettingsManager::getHandleRelationsManually() ? 'false' : 'true' ?>";
 </script>
 
 <?php if ($needWrapper) : ?>
@@ -67,8 +66,7 @@ $needWrapper = ($tag instanceof WP_Term);
                         \Smartling\Helpers\ArrayHelper::sortLocales($locales);
                         ?>
 
-                        <?php if (0 === \Smartling\Helpers\SimpleStorageHelper::get(\Smartling\Bootstrap::SMARTLING_HANDLE_RELATIONS_MANUALLY,
-                                0)) : ?>
+                        <?php if (0 === (int) \Smartling\Services\GlobalSettingsManager::getHandleRelationsManually() ) : ?>
                             <tr>
                                 <th>Target Locales</th>
                                 <td>

@@ -3,6 +3,7 @@
 namespace Smartling\Helpers;
 
 
+use Smartling\Services\GlobalSettingsManager;
 use UnexpectedValueException;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
@@ -208,7 +209,7 @@ class TranslationHelper
             /**
              * Do not allow to create new submissions
              */
-            if (1 === (int)SimpleStorageHelper::get(Bootstrap::SMARTLING_HANDLE_RELATIONS_MANUALLY)) {
+            if (1 === (int)GlobalSettingsManager::getHandleRelationsManually()) {
                 throw new \Exception(vsprintf('Creation of submission [%s] cancelled due to manual relation processing mode.',
                     [
                         var_export($submission->toArray(false), true),
