@@ -352,13 +352,10 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
      *          'timeZone'    => 'Europe/Kiev',
      *          'authorize'   => 'true',
      *      ],
-     *      'targetBlogId' => '3',
-     *      'relations'    =>
-     *      [
-     *          0 => ['type' => 'attachment', 'id' => '232'],
-     *          1 => ['type' => 'attachment', 'id' => '26'],
-     *      ],
+     *      'targetBlogIds' => '3,2',
+     *      'relations'    => {{see @actionHandler }} relations response
      *  ]
+     *
      */
     public function createSubmissionsHandler()
     {
@@ -367,52 +364,69 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
             $curBlogId = $this->getContentHelper()->getSiteHelper()->getCurrentBlogId();
             $batchUid  = $this->getBatchUid($curBlogId, $data['job']);
 
-            $submissionTemplateArray = [
-                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $this->getContentHelper()->getSiteHelper()->getCurrentBlogId(),
-                SubmissionEntity::FIELD_TARGET_BLOG_ID => (int)$data['targetBlogId'],
-            ];
+            $targetBlogIds = explode(',', $data['targetBlogIds']);
 
-            /**
-             * Submission for original content may already exist
-             */
-            $searchParams = array_merge($submissionTemplateArray, [
-                SubmissionEntity::FIELD_CONTENT_TYPE => $data['source']['contentType'],
-                SubmissionEntity::FIELD_SOURCE_ID    => ArrayHelper::first($data['source']['id']),
-            ]);
-
-            $result  = $this->getSubmissionManager()->find($searchParams, 1);
-            $sources = $data['relations'];
-            if (empty($result)) {
-                $sources[] = [
-                    'type' => $data['source']['contentType'],
-                    'id'   => ArrayHelper::first($data['source']['id']),
+            foreach ($targetBlogIds as $targetBlogId) {
+                $submissionTemplateArray = [
+                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $this->getContentHelper()->getSiteHelper()->getCurrentBlogId(),
+                    SubmissionEntity::FIELD_TARGET_BLOG_ID => (int)$targetBlogId,
                 ];
-            } else {
+
                 /**
-                 * @var SubmissionEntity $submission
+                 * Submission for original content may already exist
                  */
-                $submission = ArrayHelper::first($result);
-                $submission->setBatchUid($batchUid);
-                $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                $this->getSubmissionManager()->storeEntity($submission);
-            }
-
-            /**
-             * Adding fields to template
-             */
-            $submissionTemplateArray = array_merge($submissionTemplateArray, [
-                SubmissionEntity::FIELD_STATUS    => SubmissionEntity::SUBMISSION_STATUS_NEW,
-                SubmissionEntity::FIELD_BATCH_UID => $batchUid,
-            ]);
-
-            foreach ($sources as $source) {
-                $submissionArray = array_merge($submissionTemplateArray, [
-                    SubmissionEntity::FIELD_CONTENT_TYPE => $source['type'],
-                    SubmissionEntity::FIELD_SOURCE_ID    => $source['id'],
+                $searchParams = array_merge($submissionTemplateArray, [
+                    SubmissionEntity::FIELD_CONTENT_TYPE => $data['source']['contentType'],
+                    SubmissionEntity::FIELD_SOURCE_ID    => ArrayHelper::first($data['source']['id']),
                 ]);
 
-                $submission = SubmissionEntity::fromArray($submissionArray, $this->getLogger());
-                $this->getSubmissionManager()->storeEntity($submission);
+                $sources = [];
+
+                if (array_key_exists($targetBlogId, $data['relations'])) {
+                    foreach ($data['relations'][$targetBlogId] as $sysType => $ids) {
+                        foreach ($ids as $id) {
+                            $sources[] = [
+                                'type' => $sysType,
+                                'id'   => $id,
+                            ];
+                        }
+                    }
+                }
+
+                $result = $this->getSubmissionManager()->find($searchParams, 1);
+
+                if (empty($result)) {
+                    $sources[] = [
+                        'type' => $data['source']['contentType'],
+                        'id'   => ArrayHelper::first($data['source']['id']),
+                    ];
+                } else {
+                    /**
+                     * @var SubmissionEntity $submission
+                     */
+                    $submission = ArrayHelper::first($result);
+                    $submission->setBatchUid($batchUid);
+                    $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+                    $this->getSubmissionManager()->storeEntity($submission);
+                }
+
+                /**
+                 * Adding fields to template
+                 */
+                $submissionTemplateArray = array_merge($submissionTemplateArray, [
+                    SubmissionEntity::FIELD_STATUS    => SubmissionEntity::SUBMISSION_STATUS_NEW,
+                    SubmissionEntity::FIELD_BATCH_UID => $batchUid,
+                ]);
+
+                foreach ($sources as $source) {
+                    $submissionArray = array_merge($submissionTemplateArray, [
+                        SubmissionEntity::FIELD_CONTENT_TYPE => $source['type'],
+                        SubmissionEntity::FIELD_SOURCE_ID    => $source['id'],
+                    ]);
+
+                    $submission = SubmissionEntity::fromArray($submissionArray, $this->getLogger());
+                    $this->getSubmissionManager()->storeEntity($submission);
+                }
             }
 
             $this->returnResponse(['status' => 'SUCCESS']);

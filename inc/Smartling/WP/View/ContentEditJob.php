@@ -11,7 +11,7 @@ $needWrapper = ($tag instanceof WP_Term);
 ?>
 
 <script>
-    var handleRelationsManually = "<?= 0 === (int) \Smartling\Services\GlobalSettingsManager::getHandleRelationsManually() ? 'false' : 'true' ?>";
+    var handleRelationsManually = <?= 0 === (int)\Smartling\Services\GlobalSettingsManager::getHandleRelationsManually() ? 'false' : 'true' ?>;
 </script>
 
 <?php if ($needWrapper) : ?>
@@ -65,49 +65,16 @@ $needWrapper = ($tag instanceof WP_Term);
                         $locales = $profile->getTargetLocales();
                         \Smartling\Helpers\ArrayHelper::sortLocales($locales);
                         ?>
-
-                        <?php if (0 === (int) \Smartling\Services\GlobalSettingsManager::getHandleRelationsManually() ) : ?>
-                            <tr>
-                                <th>Target Locales</th>
-                                <td>
-                                    <div>
-                                        <?= \Smartling\WP\WPAbstract::checkUncheckBlock(); ?>
-                                    </div>
-                                    <div class="locale-list">
-                                        <?php
-
-                                        foreach ($locales as $locale) {
-                                            /**
-                                             * @var \Smartling\Settings\TargetLocale $locale
-                                             */
-                                            if (!$locale->isEnabled()) {
-                                                continue;
-                                            }
-                                            ?>
-                                            <p class="locale-list">
-                                                <?= \Smartling\WP\WPAbstract::localeSelectionCheckboxBlock(
-                                                    'bulk-submit-locales',
-                                                    $locale->getBlogId(),
-                                                    $locale->getLabel(),
-                                                    false,
-                                                    true,
-                                                    '',
-                                                    [
-                                                        'data-smartling-locale' => $locale->getSmartlingLocale(),
-                                                    ]
-                                                ); ?>
-                                            </p>
-                                        <?php } ?>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php else: ?>
-                            <tr>
-                                <th>Target Locale</th>
-                                <td>
-
+                        <tr>
+                            <th>Target Locales</th>
+                            <td>
+                                <div>
+                                    <?= \Smartling\WP\WPAbstract::checkUncheckBlock(); ?>
+                                </div>
+                                <div class="locale-list">
                                     <?php
-                                    $options = [];
+
+                                    $localeList = [];
 
                                     foreach ($locales as $locale) {
                                         /**
@@ -116,19 +83,34 @@ $needWrapper = ($tag instanceof WP_Term);
                                         if (!$locale->isEnabled()) {
                                             continue;
                                         }
-                                        $options[] = \Smartling\Helpers\HtmlTagGeneratorHelper::tag('option',
-                                            $locale->getLabel(), ['value' => $locale->getBlogId()]);
-                                    }
-                                    ?>
-                                    <?= \Smartling\Helpers\HtmlTagGeneratorHelper::tag('select', implode('', $options),
-                                        ['id' => 'targetBlogId']); ?>
-                                </td>
-                            </tr>
+
+                                        $localeList[] = $locale->getBlogId();
+                                        ?>
+                                        <p class="locale-list">
+                                            <?= \Smartling\WP\WPAbstract::localeSelectionCheckboxBlock(
+                                                'bulk-submit-locales',
+                                                $locale->getBlogId(),
+                                                $locale->getLabel(),
+                                                false,
+                                                true,
+                                                '',
+                                                [
+                                                    'data-smartling-locale' => $locale->getSmartlingLocale(),
+                                                ]
+                                            ); ?>
+                                        </p>
+                                    <?php } ?>
+                                    <script>
+                                        var localeList = "<?= implode(',', $localeList)?>";
+                                    </script>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php if (1 === (int)\Smartling\Services\GlobalSettingsManager::getHandleRelationsManually()) : ?>
                             <tr>
-                                <th>Related <strong>new</strong> Content recommended to be uploaded:</th>
+                                <th>New content to be uploaded:</th>
                                 <td id="relatedContent"/>
-                                Please wait...</td>
-                            </tr>
+                                </td></tr>
                         <?php endif; ?>
                         <tr>
                             <th class="center" colspan="2">
@@ -358,39 +340,48 @@ if ($post instanceof WP_Post) {
                 minDate: 0
             });
 
-            var loadRelations = function (contentType, contentId, targetBlogId) {
-                var url = `${ajaxurl}?action=smartling-get-relations&id=${contentId}&content-type=${contentType}&targetBlogIds=${targetBlogId}`;
-                $("#relatedContent").html("Please wait...");
+            var loadRelations = function (contentType, contentId) {
+                var url = `${ajaxurl}?action=smartling-get-relations&id=${contentId}&content-type=${contentType}&targetBlogIds=${localeList}`;
+
                 $.get(url, function (data) {
-                    if (data.response.data.missingTranslatedReferences) {
-                        if (Object.prototype.hasOwnProperty.call(data.response.data.missingTranslatedReferences, targetBlogId)) {
-                            var missingRelations = data.response.data.missingTranslatedReferences[targetBlogId];
-                            var content = "";
-                            for (var sysType in missingRelations) {
-                                content += "<h4>" + sysType + "</h4>";
-                                for (var id in missingRelations[sysType]) {
-                                    content += `<br><label for="${sysType}-${missingRelations[sysType][id]}">${missingRelations[sysType][id]}</label><input id="${sysType}-${missingRelations[sysType][id]}" type="checkbox" data-type="${sysType}" data-id="${missingRelations[sysType][id]}" class="related" />`;
-                                }
-                            }
-                            $("#relatedContent").html(content);
-                        }
-
+                    if (data.response.data) {
+                        window.relationsInfo = data.response.data;
+                        recalculateRelations();
                     }
-
                 });
             };
-            /**
-             * Load list of related items
-             */
-            (function () {
-                loadRelations(currentContent.contentType, currentContent.id, $("#targetBlogId").val());
-            })();
 
-            $("#targetBlogId").on("change", function (e) {
-                e.stopPropagation();
-                e.preventDefault();
-                loadRelations(currentContent.contentType, currentContent.id, $(this).val());
-            });
+            if (handleRelationsManually) {
+                var recalculateRelations = function () {
+                    $('#relatedContent').html("");
+                    var relations = [];
+                    var missingRelations = window.relationsInfo.missingTranslatedReferences;
+                    var buildRelationsHint = function(relations) {
+                        var html = "";
+                        for (var type in relations) {
+                            html += `${type} (${relations[type]}) </br>`;
+                        }
+                        return html;
+                    };
+                    $(".job-wizard input.mcheck[type=checkbox]:checked").each(function () {
+                        var blogId = this.dataset.blogId;
+                        if (Object.prototype.hasOwnProperty.call(missingRelations,blogId)) {
+                            for (var sysType in missingRelations[blogId]) {
+                                var sysCount = missingRelations[blogId][sysType].length;
+                                if (Object.prototype.hasOwnProperty.call( relations,sysType)) {
+                                    relations[sysType] += sysCount;
+                                } else {
+                                    relations[sysType] = sysCount;
+                                }
+                                $('#relatedContent').html(buildRelationsHint(relations));
+                            }
+                        }
+                    });
+                };
+                loadRelations(currentContent.contentType, currentContent.id, localeList);
+                $(".job-wizard input.mcheck").on("click", recalculateRelations);
+                $(".job-wizard a").on("click", recalculateRelations);
+            }
 
             if (!handleRelationsManually) {
                 /*
@@ -548,18 +539,16 @@ if ($post instanceof WP_Post) {
                     });
                 }
             } else {
-
                 $("#addToJob").on("click", function (e) {
                     e.stopPropagation();
                     e.preventDefault();
 
                     var url = `${ajaxurl}?action=smartling-create-submissions`;
 
-                    var relations = [];
+                    var blogIds = [];
 
-                    $("input[type=checkbox].related:checked").each(function () {
-                        var _data = Object.assign({}, this.dataset);
-                        relations.push(_data);
+                    $(".job-wizard input.mcheck[type=checkbox]:checked").each(function(){
+                        blogIds.push(this.dataset.blogId);
                     });
 
                     var data = {
@@ -572,11 +561,12 @@ if ($post instanceof WP_Post) {
                             timeZone: timezone,
                             authorize: ($("div.job-wizard input[type=checkbox].authorize:checked").length > 0)
                         },
-                        targetBlogId: $("#targetBlogId").val(),
-                        relations
+                        targetBlogIds: blogIds.join(','),
+                        relations: window.relationsInfo.missingTranslatedReferences
                     };
 
                     $.post(url, data, function (d) {
+                        loadRelations(currentContent.contentType, currentContent.id, localeList);
                         alert(d.status);
                     });
                 });
