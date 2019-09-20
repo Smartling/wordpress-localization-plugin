@@ -4,7 +4,8 @@
  * @var WPAbstract self
  */
 $data = $this->getViewData();
-?>
+
+use Smartling\Helpers\HtmlTagGeneratorHelper; ?>
 <?php
 global $tag;
 $needWrapper = ($tag instanceof WP_Term);
@@ -107,10 +108,22 @@ $needWrapper = ($tag instanceof WP_Term);
                             </td>
                         </tr>
                         <?php if (1 === (int)\Smartling\Services\GlobalSettingsManager::getHandleRelationsManually()) : ?>
-                            <tr>
+                            <tr id="relationsInfo">
                                 <th>New content to be uploaded:</th>
                                 <td id="relatedContent"/>
-                                </td></tr>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th> Extra upload options</th>
+                                <td>
+                                    <label for="skipRelations">Skip all related content and send <strong>only</strong>
+                                        current content</label>
+                                    <?=
+                                    HtmlTagGeneratorHelper::tag('input', '',
+                                        ['id' => 'skipRelations', 'type' => 'checkbox']);
+                                    ?>
+                                </td>
+                            </tr>
                         <?php endif; ?>
                         <tr>
                             <th class="center" colspan="2">
@@ -352,11 +365,20 @@ if ($post instanceof WP_Post) {
             };
 
             if (handleRelationsManually) {
+
+                $("#skipRelations").on("change", function () {
+                    if ($(this).is(":checked")) {
+                        $("#relationsInfo").addClass("hidden");
+                    } else {
+                        $("#relationsInfo").removeClass("hidden");
+                    }
+                });
+
                 var recalculateRelations = function () {
-                    $('#relatedContent').html("");
+                    $("#relatedContent").html("");
                     var relations = [];
                     var missingRelations = window.relationsInfo.missingTranslatedReferences;
-                    var buildRelationsHint = function(relations) {
+                    var buildRelationsHint = function (relations) {
                         var html = "";
                         for (var type in relations) {
                             html += `${type} (${relations[type]}) </br>`;
@@ -365,15 +387,15 @@ if ($post instanceof WP_Post) {
                     };
                     $(".job-wizard input.mcheck[type=checkbox]:checked").each(function () {
                         var blogId = this.dataset.blogId;
-                        if (Object.prototype.hasOwnProperty.call(missingRelations,blogId)) {
+                        if (Object.prototype.hasOwnProperty.call(missingRelations, blogId)) {
                             for (var sysType in missingRelations[blogId]) {
                                 var sysCount = missingRelations[blogId][sysType].length;
-                                if (Object.prototype.hasOwnProperty.call( relations,sysType)) {
+                                if (Object.prototype.hasOwnProperty.call(relations, sysType)) {
                                     relations[sysType] += sysCount;
                                 } else {
                                     relations[sysType] = sysCount;
                                 }
-                                $('#relatedContent').html(buildRelationsHint(relations));
+                                $("#relatedContent").html(buildRelationsHint(relations));
                             }
                         }
                     });
@@ -547,7 +569,7 @@ if ($post instanceof WP_Post) {
 
                     var blogIds = [];
 
-                    $(".job-wizard input.mcheck[type=checkbox]:checked").each(function(){
+                    $(".job-wizard input.mcheck[type=checkbox]:checked").each(function () {
                         blogIds.push(this.dataset.blogId);
                     });
 
@@ -564,6 +586,10 @@ if ($post instanceof WP_Post) {
                         targetBlogIds: blogIds.join(','),
                         relations: window.relationsInfo.missingTranslatedReferences
                     };
+
+                    if ($("#skipRelations").is(":checked")) {
+                        data['relations'] = [];
+                    }
 
                     $.post(url, data, function (d) {
                         loadRelations(currentContent.contentType, currentContent.id, localeList);
