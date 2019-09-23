@@ -108,11 +108,6 @@ $needWrapper = ($tag instanceof WP_Term);
                             </td>
                         </tr>
                         <?php if (1 === (int)\Smartling\Services\GlobalSettingsManager::getHandleRelationsManually()) : ?>
-                            <tr id="relationsInfo">
-                                <th>New content to be uploaded:</th>
-                                <td id="relatedContent"/>
-                                </td>
-                            </tr>
                             <tr>
                                 <th> Extra upload options</th>
                                 <td>
@@ -124,6 +119,12 @@ $needWrapper = ($tag instanceof WP_Term);
                                     ?>
                                 </td>
                             </tr>
+                            <tr id="relationsInfo">
+                                <th>New content to be uploaded:</th>
+                                <td id="relatedContent"/>
+                                </td>
+                            </tr>
+
                         <?php endif; ?>
                         <tr>
                             <th class="center" colspan="2">
@@ -404,6 +405,13 @@ if ($post instanceof WP_Post) {
                 $(".job-wizard input.mcheck").on("click", recalculateRelations);
                 $(".job-wizard a").on("click", recalculateRelations);
             }
+            var hasProp = function (obj, prop) {
+                return Object.prototype.hasOwnProperty.call(obj, prop);
+            };
+
+            var canDispatch = hasProp(window, "wp")
+                && hasProp(window.wp, "data")
+                && hasProp(window.wp.data, "dispatch");
 
             if (!handleRelationsManually) {
                 /*
@@ -411,14 +419,6 @@ if ($post instanceof WP_Post) {
                 * This prevents conflicts with plugins that enqueue the React library when the Classic Editor is enabled.
                 */
                 if (document.body.classList.contains("block-editor-page")) {
-                    var hasProp = function (obj, prop) {
-                        return Object.prototype.hasOwnProperty.call(obj, prop);
-                    };
-
-                    var canDispatch = hasProp(window, "wp")
-                        && hasProp(window.wp, "data")
-                        && hasProp(window.wp.data, "dispatch");
-
                     $("#addToJob").on("click", function (e) {
                         e.stopPropagation();
                         e.preventDefault();
@@ -583,17 +583,59 @@ if ($post instanceof WP_Post) {
                             timeZone: timezone,
                             authorize: ($("div.job-wizard input[type=checkbox].authorize:checked").length > 0)
                         },
-                        targetBlogIds: blogIds.join(','),
+                        targetBlogIds: blogIds.join(","),
                         relations: window.relationsInfo.missingTranslatedReferences
                     };
 
                     if ($("#skipRelations").is(":checked")) {
-                        data['relations'] = [];
+                        data["relations"] = [];
+                    }
+
+                    var uiShowMessage = function (style, message) {
+                        var cssStyle;
+                        switch (style) {
+                            case "SUCCESS":
+                                cssStyle='success';
+                                break;
+                            case "FAILED":
+                                cssStyle='error';
+                                break;
+                            default:
+                                cssStyle='info';
+                                break;
+                        }
+                        var msg = `<div id="smartling_upload_msg" class="notice-${cssStyle} notice"><p>${message}</p></div>`;
+                        $(msg).insertAfter('hr.wp-header-end');
+                    };
+
+                    if (document.body.classList.contains("block-editor-page")) {
+                        var uiShowMessage = function (style, message) {
+                            if (canDispatch) {
+                                switch (style) {
+                                    case "SUCCESS":
+                                        wp.data.dispatch("core/notices").createSuccessNotice(message);
+                                        break;
+                                    case "FAIL":
+                                        wp.data.dispatch("core/notices").createErrorNotice(message);
+                                        break;
+                                    default:
+                                        console.log(data);
+                                }
+                            }
+                        };
                     }
 
                     $.post(url, data, function (d) {
                         loadRelations(currentContent.contentType, currentContent.id, localeList);
-                        alert(d.status);
+                        switch (d.status) {
+                            case "SUCCESS":
+                                uiShowMessage(d.status, "Content successfully added to upload queue.");
+                                break;
+                            case "FAILED":
+                            default:
+                                uiShowMessage("FAILED", "Failed adding content to upload queue.");
+                                break;
+                        }
                     });
                 });
             }
