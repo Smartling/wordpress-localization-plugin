@@ -21,9 +21,9 @@ use Smartling\WP\WPInstallableInterface;
 abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallableInterface
 {
     /**
-     * The default TTL for workers in seconds (20 minutes)
+     * The default TTL for workers in seconds (5 minutes)
      */
-    const WORKER_DEFAULT_TTL = 1200;
+    const WORKER_DEFAULT_TTL = 300;
 
     /**
      * @var int
@@ -169,22 +169,29 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         return 'smartling_cron_flag_' . $this->getJobHookName();
     }
 
-    public function placeLockFlag()
+    /**
+     * @param bool $renew
+     */
+    public function placeLockFlag($renew = false)
     {
         $flagName = $this->getCronFlagName();
         $newFlagValue = time() + $this->getWorkerTTL();
 
-        $this->getLogger()->debug(
-            vsprintf(
-                'Placing flag \'%s\' for cron job \'%s\' with value \'%s\' (TTL=%s)',
-                [
-                    $flagName,
-                    $this->getJobHookName(),
-                    $newFlagValue,
-                    $this->getWorkerTTL(),
-                ]
-            )
-        );
+        if (true === $renew) {
+            $msgTemplate = 'Renewing flag \'%s\' for cron job \'%s\' with value \'%s\' (TTL=%s)';
+        } else {
+            $msgTemplate = 'Placing flag \'%s\' for cron job \'%s\' with value \'%s\' (TTL=%s)';
+        }
+
+        $this->getLogger()->debug(vsprintf(
+            $msgTemplate,
+            [
+                $flagName,
+                $this->getJobHookName(),
+                $newFlagValue,
+                $this->getWorkerTTL(),
+            ]
+        ));
 
         SimpleStorageHelper::set($flagName, $newFlagValue);
     }

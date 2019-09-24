@@ -141,6 +141,7 @@ class LastModifiedCheckJob extends JobAbstract
                     // without this fix
                     $filteredSubmissions[$smartlingLocaleId] = $submission;
                 }
+                $this->placeLockFlag(true);
             }
         }
 

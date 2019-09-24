@@ -71,6 +71,7 @@ class DownloadTranslationJob extends JobAbstract
             }
 
             do_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, $entity);
+            $this->placeLockFlag(true);
         }
     }
 }
