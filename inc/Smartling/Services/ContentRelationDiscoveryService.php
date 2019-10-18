@@ -425,6 +425,9 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
                     ]);
 
                     $submission = SubmissionEntity::fromArray($submissionArray, $this->getLogger());
+
+                    // trigger generation of fileUri
+                    $submission->getFileUri();
                     $this->getSubmissionManager()->storeEntity($submission);
                 }
             }
