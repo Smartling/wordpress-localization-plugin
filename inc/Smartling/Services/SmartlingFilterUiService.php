@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Smartling\Services;
 
 use Smartling\Tuner\FilterManager;
