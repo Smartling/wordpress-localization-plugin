@@ -28,7 +28,8 @@
                     'pageSize': $('#pageSize').val(),
                     'disableDBLookup': $('#disableDBLookup').val(),
                     'disableACF': $('#disableACF').val(),
-                    'loggingCustomization': $('#loggingCustomization').val()
+                    'loggingCustomization': $('#loggingCustomization').val(),
+                    'enableFilterUI':$('#enableFilterUI').val()
                 }
             };
 

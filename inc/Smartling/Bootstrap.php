@@ -234,6 +234,7 @@ class Bootstrap
         GlobalSettingsManager::setLogFileSpec($data['loggingPath']);
         GlobalSettingsManager::setPageSize($pageSize);
         GlobalSettingsManager::setLoggingCustomization($data['loggingCustomization']);
+        GlobalSettingsManager::setFilterUiVisible((int) $data['enableFilterUI']);
 
         wp_send_json($data);
     }

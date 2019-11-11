@@ -212,4 +212,21 @@ class GlobalSettingsManager
     {
         return Bootstrap::getContainer()->getParameter('submission.pagesize');
     }
+
+    const SMARTLING_FILTER_UI_VISIBLE         = 'smartling_filter_ui_visible';
+    const SMARTLING_FILTER_UI_VISIBLE_DEFAULT = 0;
+
+    public static function getFilterUiVisible()
+    {
+        return SimpleStorageHelper::get(static::SMARTLING_FILTER_UI_VISIBLE, static::SMARTLING_FILTER_UI_VISIBLE_DEFAULT);
+    }
+
+    public static function setFilterUiVisible($value)
+    {
+        SimpleStorageHelper::set(static::SMARTLING_FILTER_UI_VISIBLE, $value);
+
+        if (static::SMARTLING_FILTER_UI_VISIBLE_DEFAULT === (int)$value) {SimpleStorageHelper::drop(static::SMARTLING_FILTER_UI_VISIBLE);
+        }
+    }
+
 }

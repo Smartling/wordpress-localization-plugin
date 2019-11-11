@@ -24,3 +24,4 @@ services:
       - [ "addService", [ "@service.invalid-character-cleaner" ]]
       - [ "addService", [ "@wp.translation.lock" ]]
       - [ "addService", [ "@live_notification.service" ]]
+      - [ "addService", [ "@service.filter-ui" ]]
