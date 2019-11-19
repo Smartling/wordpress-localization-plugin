@@ -29,7 +29,8 @@
                     'disableDBLookup': $('#disableDBLookup').val(),
                     'disableACF': $('#disableACF').val(),
                     'loggingCustomization': $('#loggingCustomization').val(),
-                    'handleRelationsManually': $('#handleRelationsManually').val()
+                    'handleRelationsManually': $('#handleRelationsManually').val(),
+                    'enableFilterUI':$('#enableFilterUI').val()
                 }
             };
 

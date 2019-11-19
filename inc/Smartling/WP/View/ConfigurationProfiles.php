@@ -224,6 +224,26 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
+                        <th><label for="loggingPath">Enable Shortcode &amp; Filter extension</label></th>
+                        <td>
+                            <?=
+                            HtmlTagGeneratorHelper::tag(
+                                'select',
+                                HtmlTagGeneratorHelper::renderSelectOptions(
+                                    GlobalSettingsManager::getFilterUiVisible(),
+                                    [
+                                        0 => 'No',
+                                        1 => 'Yes',
+                                    ]),
+                                [
+                                    'id'   => 'enableFilterUI',
+                                    'name' => 'enableFilterUI',
+                                ]
+                            );
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
                         <td colspan="2" class="center">
                             <a class="button action saveExpertSkip"
                                actionUrl="<?= admin_url('admin-ajax.php') ?>?action=smartling_expert_global_settings_update" href="javascript:void(0)">Apply changes</a>

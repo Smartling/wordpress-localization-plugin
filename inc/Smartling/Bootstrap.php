@@ -235,6 +235,7 @@ class Bootstrap
         GlobalSettingsManager::setPageSize($pageSize);
         GlobalSettingsManager::setLoggingCustomization($data['loggingCustomization']);
         GlobalSettingsManager::setHandleRelationsManually((int)$data['handleRelationsManually']);
+        GlobalSettingsManager::setFilterUiVisible((int) $data['enableFilterUI']);
 
         wp_send_json($data);
     }

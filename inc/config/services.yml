@@ -203,6 +203,9 @@ services:
   service.invalid-character-cleaner:
     class: Smartling\Services\InvalidCharacterCleaner
 
+  service.filter-ui:
+    class: Smartling\Services\SmartlingFilterUiService
+
   extension.loader:
     class: Smartling\Extensions\ExtensionLoader
     calls:

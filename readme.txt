@@ -57,6 +57,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 1.11.0 =
+* Added extension to manage shortcodes and filters to be handled by smartling-connector.
+
 = 1.10.16 =
 * Improved ACF Pro plugin support.
 * Improved background tasks.

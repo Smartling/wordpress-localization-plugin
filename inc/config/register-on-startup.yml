@@ -25,3 +25,4 @@ services:
       - [ "addService", [ "@wp.translation.lock" ]]
       - [ "addService", [ "@live_notification.service" ]]
       - [ "addService", [ "@service.relation-discovery"]]
+      - [ "addService", [ "@service.filter-ui" ]]
