@@ -296,7 +296,6 @@ jQuery(document).ready(function () {
                         submissionIds: submissionIds.join(",")
                     },
                     function (data) {
-                        data = JSON.parse(data);
                         switch (data.status) {
                             case "SUCCESS":
                                 wp.data.dispatch("core/notices").createSuccessNotice("Translations downloaded.");
