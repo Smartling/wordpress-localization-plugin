@@ -61,7 +61,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 * Fixed issue with download button at post edit page.
 
 = 1.11.1 =
-* Updated 3rd party libraries.
+* Added required third-party libraries
 
 = 1.11.0 =
 * Added extension to manage shortcodes and filters to be handled by smartling-connector.
