@@ -1,18 +1,34 @@
 <?php
+
+use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Services\GlobalSettingsManager;
+use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\WP\Table\BulkSubmitTableWidget;
+use Smartling\WP\WPAbstract;
+
 /**
  * @var WPAbstract $this
- * @var WPAbstract self
+ * @var BulkSubmitTableWidget $data
+ * @var ConfigurationProfileEntity $profile
  */
 $data = $this->getViewData();
+$profile = $data['profile'];
 
-use Smartling\Helpers\HtmlTagGeneratorHelper; ?>
+?>
 <?php
+$screen = get_current_screen();
+$isBulkSubmitPage = false;
+if ($screen !== null) {
+    $isBulkSubmitPage = $screen->id === 'smartling_page_smartling-bulk-submit';
+}
 global $tag;
 $needWrapper = ($tag instanceof WP_Term);
 ?>
 
 <script>
-    var handleRelationsManually = <?= 0 === (int)\Smartling\Services\GlobalSettingsManager::getHandleRelationsManually() ? 'false' : 'true' ?>;
+    var handleRelationsManually = <?= 0 === (int) GlobalSettingsManager::getHandleRelationsManually() ? 'false' : 'true' ?>;
+    var isBulkSubmitPage = <?= $isBulkSubmitPage ? 'true' : 'false'?>;
 </script>
 
 <?php if ($needWrapper) : ?>
@@ -31,7 +47,7 @@ $needWrapper = ($tag instanceof WP_Term);
                     <table>
                         <tr id="jobList" class="hidden">
                             <th>
-                                <lable for="jobSelect">Existing jobs</lable>
+                                <label for="jobSelect">Existing jobs</label>
                             </th>
                             <td>
                                 <select id="jobSelect"></select>
@@ -52,25 +68,21 @@ $needWrapper = ($tag instanceof WP_Term);
                         <tr>
                             <th><label for="cbAuthorize">Authorize Job</label</th>
                             <td><input type="checkbox" class="authorize" id="cbAuthorize"
-                                       name="cbAuthorize" <?= $data['profile']->getAutoAuthorize() ? 'checked="checked"' : ''; ?>/>
+                                       name="cbAuthorize" <?= $profile->getAutoAuthorize() ? 'checked="checked"' : '' ?>/>
                             </td>
                         </tr>
 
                         <?php
-                        /**
-                         * @var BulkSubmitTableWidget $data
-                         */
-                        $profile     = $data['profile'];
                         $contentType = $data['contentType'];
 
                         $locales = $profile->getTargetLocales();
-                        \Smartling\Helpers\ArrayHelper::sortLocales($locales);
+                        ArrayHelper::sortLocales($locales);
                         ?>
                         <tr>
                             <th>Target Locales</th>
                             <td>
                                 <div>
-                                    <?= \Smartling\WP\WPAbstract::checkUncheckBlock(); ?>
+                                    <?= WPAbstract::checkUncheckBlock() ?>
                                 </div>
                                 <div class="locale-list">
                                     <?php
@@ -78,9 +90,6 @@ $needWrapper = ($tag instanceof WP_Term);
                                     $localeList = [];
 
                                     foreach ($locales as $locale) {
-                                        /**
-                                         * @var \Smartling\Settings\TargetLocale $locale
-                                         */
                                         if (!$locale->isEnabled()) {
                                             continue;
                                         }
@@ -88,7 +97,7 @@ $needWrapper = ($tag instanceof WP_Term);
                                         $localeList[] = $locale->getBlogId();
                                         ?>
                                         <p class="locale-list">
-                                            <?= \Smartling\WP\WPAbstract::localeSelectionCheckboxBlock(
+                                            <?= WPAbstract::localeSelectionCheckboxBlock(
                                                 'bulk-submit-locales',
                                                 $locale->getBlogId(),
                                                 $locale->getLabel(),
@@ -98,7 +107,7 @@ $needWrapper = ($tag instanceof WP_Term);
                                                 [
                                                     'data-smartling-locale' => $locale->getSmartlingLocale(),
                                                 ]
-                                            ); ?>
+                                            ) ?>
                                         </p>
                                     <?php } ?>
                                     <script>
@@ -107,9 +116,9 @@ $needWrapper = ($tag instanceof WP_Term);
                                 </div>
                             </td>
                         </tr>
-                        <?php if (1 === (int)\Smartling\Services\GlobalSettingsManager::getHandleRelationsManually()) : ?>
+                        <?php if ( !$isBulkSubmitPage && 1 === (int) GlobalSettingsManager::getHandleRelationsManually() ) { ?>
                             <tr>
-                                <th> Extra upload options</th>
+                                <th>Extra upload options</th>
                                 <td>
                                     <label for="skipRelations">Skip all related content and send <strong>only</strong>
                                         current content</label>
@@ -125,7 +134,7 @@ $needWrapper = ($tag instanceof WP_Term);
                                 </td>
                             </tr>
 
-                        <?php endif; ?>
+                        <?php } ?>
                         <tr>
                             <th class="center" colspan="2">
 
@@ -195,8 +204,7 @@ if ($post instanceof WP_Post) {
                 query: function (action, params, success) {
                     var data = { "innerAction": action, "params": params };
                     $.post(this.baseEndpoint, data, function (response) {
-                        var cb = success;
-                        cb(response);
+                        success(response);
                     });
                 },
                 listJobs: function (cb) {
@@ -276,14 +284,12 @@ if ($post instanceof WP_Post) {
                         dueDate = moment(dueDate).format("YYYY-MM-DD HH:mm");
                     }
 
-                    $option = "<option value=\"" + id + "\" description=\"" + description + "\" dueDate=\"" + dueDate + "\" targetLocaleIds=\"" + locales + "\">" + name + "</option>";
-                    return $option;
+                    return "<option value=\"" + id + "\" description=\"" + description + "\" dueDate=\"" + dueDate + "\" targetLocaleIds=\"" + locales + "\">" + name + "</option>";
                 },
                 renderJobListInDropDown: function (data) {
                     $("#jobSelect").html("");
                     data.forEach(function (job) {
-                        $option = Helper.ui.renderOption(job.translationJobUid, job.jobName, job.description, job.dueDate, job.targetLocaleIds.join(","));
-                        $("#jobSelect").append($option);
+                        $("#jobSelect").append(Helper.ui.renderOption(job.translationJobUid, job.jobName, job.description, job.dueDate, job.targetLocaleIds.join(",")));
                     });
                     Helper.placeHolder.hide();
                 },
@@ -338,11 +344,13 @@ if ($post instanceof WP_Post) {
                 }
             });
 
-            $("#timezone-sm").val(moment.tz.guess());
+            var timezoneEl = $("#timezone-sm");
+            timezoneEl.val(moment.tz.guess());
 
-            var timezone = $("#timezone-sm").val();
+            var timezone = timezoneEl.val();
 
-            $("#jobSelect").select2({
+            var jobSelectEl = $("#jobSelect");
+            jobSelectEl.select2({
                 placeholder: "Please select a job",
                 allowClear: false
             });
@@ -365,8 +373,7 @@ if ($post instanceof WP_Post) {
                 });
             };
 
-            if (handleRelationsManually) {
-
+            if (handleRelationsManually && !isBulkSubmitPage) {
                 $("#skipRelations").on("change", function () {
                     if ($(this).is(":checked")) {
                         $("#relationsInfo").addClass("hidden");
@@ -388,7 +395,7 @@ if ($post instanceof WP_Post) {
                     };
                     $(".job-wizard input.mcheck[type=checkbox]:checked").each(function () {
                         var blogId = this.dataset.blogId;
-                        if (Object.prototype.hasOwnProperty.call(missingRelations, blogId)) {
+                        if (missingRelations && Object.prototype.hasOwnProperty.call(missingRelations, blogId)) {
                             for (var sysType in missingRelations[blogId]) {
                                 var sysCount = missingRelations[blogId][sysType].length;
                                 if (Object.prototype.hasOwnProperty.call(relations, sysType)) {
@@ -423,7 +430,7 @@ if ($post instanceof WP_Post) {
                         e.stopPropagation();
                         e.preventDefault();
 
-                        if (null !== document.getElementById("smartling-bulk-submit-page-content-type")) {
+                        if (isBulkSubmitPage) {
                             // we're on bulk submit page and need to rebuild currentContent structure for WP 5.2+
                             currentContent.contentType = $("#smartling-bulk-submit-page-content-type").val();
                             currentContent.id = [];
@@ -460,7 +467,8 @@ if ($post instanceof WP_Post) {
                             blogs = blogs.concat([blogId]);
                         }
 
-                        $("#jobSelect").select();
+                        var jobSelectEl = $("#jobSelect");
+                        jobSelectEl.select();
 
                         var obj = {
                             content: {
@@ -468,7 +476,7 @@ if ($post instanceof WP_Post) {
                                 id: currentContent.id.join(",")
                             },
                             job: {
-                                id: $("#jobSelect").val(),
+                                id: jobSelectEl.val(),
                                 name: $("input[name=\"jobName\"]").val(),
                                 description: $("textarea[name=\"description-sm\"]").val(),
                                 dueDate: $("input[name=\"dueDate\"]").val(),
@@ -498,7 +506,7 @@ if ($post instanceof WP_Post) {
                             }
                         );
                     });
-                } else {
+                } else { // document.body doesn't contain block-editor-page
                     $("#addToJob").on("click", function (e) {
                         e.stopPropagation();
                         e.preventDefault();
@@ -540,19 +548,20 @@ if ($post instanceof WP_Post) {
                         }
 
                         // Add hidden fields only if validation is passed.
+                        var formSelectorEl = $("#" + formSelector);
                         if (currentContent.id.length) {
-                            $("#" + formSelector).append(createHiddenInput("smartling[ids]", currentContent.id));
-                            $("#" + formSelector).append(createHiddenInput("smartling[locales]", locales));
-                            $("#" + formSelector).append(createHiddenInput("smartling[jobId]", jobId));
-                            $("#" + formSelector).append(createHiddenInput("smartling[jobName]", jobName));
-                            $("#" + formSelector).append(createHiddenInput("smartling[jobDescription]", jobDescription));
-                            $("#" + formSelector).append(createHiddenInput("smartling[jobDueDate]", jobDueDate));
-                            $("#" + formSelector).append(createHiddenInput("smartling[timezone]", timezone));
-                            $("#" + formSelector).append(createHiddenInput("smartling[authorize]", $(".authorize:checked").length > 0));
-                            $("#" + formSelector).append(createHiddenInput("sub", "Upload"));
+                            formSelectorEl.append(createHiddenInput("smartling[ids]", currentContent.id));
+                            formSelectorEl.append(createHiddenInput("smartling[locales]", locales));
+                            formSelectorEl.append(createHiddenInput("smartling[jobId]", jobId));
+                            formSelectorEl.append(createHiddenInput("smartling[jobName]", jobName));
+                            formSelectorEl.append(createHiddenInput("smartling[jobDescription]", jobDescription));
+                            formSelectorEl.append(createHiddenInput("smartling[jobDueDate]", jobDueDate));
+                            formSelectorEl.append(createHiddenInput("smartling[timezone]", timezone));
+                            formSelectorEl.append(createHiddenInput("smartling[authorize]", $(".authorize:checked").length > 0));
+                            formSelectorEl.append(createHiddenInput("sub", "Upload"));
                         }
 
-                        $("#" + formSelector).submit();
+                        formSelectorEl.submit();
 
                         // Support for bulk submit form.
                         if (isBulkSubmitPage && currentContent.id.length) {
@@ -560,7 +569,7 @@ if ($post instanceof WP_Post) {
                         }
                     });
                 }
-            } else {
+            } else { // handle relations manually
                 $("#addToJob").on("click", function (e) {
                     e.stopPropagation();
                     e.preventDefault();
@@ -584,11 +593,21 @@ if ($post instanceof WP_Post) {
                             authorize: ($("div.job-wizard input[type=checkbox].authorize:checked").length > 0)
                         },
                         targetBlogIds: blogIds.join(","),
-                        relations: window.relationsInfo.missingTranslatedReferences
                     };
 
-                    if ($("#skipRelations").is(":checked")) {
+                    if ($("#skipRelations").is(":checked") || isBulkSubmitPage) {
                         data["relations"] = [];
+                    } else {
+                        data.relations = window.relationsInfo.missingTranslatedReferences;
+                    }
+
+                    if (isBulkSubmitPage) {
+                        data.ids = [];
+                        $("input.bulkaction[type=checkbox]:checked").each(function () {
+                            var parts = $(this).attr("id").split("-");
+                            data.ids.push(parseInt(parts[0]));
+                            data.source.contentType = parts[1];
+                        });
                     }
 
                     var uiShowMessage = function (style, message) {
@@ -604,12 +623,12 @@ if ($post instanceof WP_Post) {
                                 cssStyle='info';
                                 break;
                         }
-                        var msg = `<div id="smartling_upload_msg" class="notice-${cssStyle} notice"><p>${message}</p></div>`;
-                        $(msg).insertAfter('hr.wp-header-end');
+                        var msg = `<div id="smartling_upload_msg" class="notice-${cssStyle} notice is-dismissible"><p>${message}</p><button type="button" class="notice-dismiss" onclick="this.parentNode.remove()"></button></div>`;
+                        $(msg).insertAfter(isBulkSubmitPage ? '#loader-image' : 'hr.wp-header-end');
                     };
 
                     if (document.body.classList.contains("block-editor-page")) {
-                        var uiShowMessage = function (style, message) {
+                        uiShowMessage = function (style, message) {
                             if (canDispatch) {
                                 switch (style) {
                                     case "SUCCESS":
@@ -626,7 +645,9 @@ if ($post instanceof WP_Post) {
                     }
 
                     $.post(url, data, function (d) {
-                        loadRelations(currentContent.contentType, currentContent.id, localeList);
+                        if (!isBulkSubmitPage) {
+                            loadRelations(currentContent.contentType, currentContent.id, localeList);
+                        }
                         switch (d.status) {
                             case "SUCCESS":
                                 uiShowMessage(d.status, "Content successfully added to upload queue.");
@@ -650,7 +671,7 @@ if ($post instanceof WP_Post) {
                 var locales = [];
                 var authorize = $(".authorize:checked").length > 0;
 
-                if (!handleRelationsManually) {
+                if (!handleRelationsManually || isBulkSubmitPage) {
                     var checkedLocales = $(".job-wizard .mcheck:checkbox:checked");
 
                     checkedLocales.each(
@@ -667,9 +688,9 @@ if ($post instanceof WP_Post) {
 
                 Helper.queryProxy.createJob(name, description, dueDate, locales, authorize, timezone, function (data) {
                     var $option = Helper.ui.renderOption(data.translationJobUid, data.jobName, data.description, data.dueDate, data.targetLocaleIds.join(","));
-                    $("#jobSelect").append($option);
-                    $("#jobSelect").val(data.translationJobUid);
-                    $("#jobSelect").change();
+                    jobSelectEl.append($option);
+                    jobSelectEl.val(data.translationJobUid);
+                    jobSelectEl.change();
 
                     $("#addToJob").click();
 
@@ -679,9 +700,7 @@ if ($post instanceof WP_Post) {
                         messages.push(data["global"]);
                     }
                     for (var i in data) {
-                        if ("global" === i) {
-                            continue;
-                        } else {
+                        if ("global" !== i) {
                             messages.push(data[i]);
                         }
                     }
@@ -691,14 +710,15 @@ if ($post instanceof WP_Post) {
 
             });
 
-            $("#jobSelect").on("change", function () {
+            jobSelectEl.on("change", function () {
                 Helper.ui.localeCheckboxes.clear();
                 Helper.ui.jobForm.clear();
-                $("#dueDate").val($("option[value=" + $("#jobSelect").val() + "]").attr("dueDate"));
-                $("#name-sm").val($("option[value=" + $("#jobSelect").val() + "]").html());
-                $("#description-sm").val($("option[value=" + $("#jobSelect").val() + "]").attr("description"));
+                var optionEl = $("option[value=" + jobSelectEl.val() + "]");
+                $("#dueDate").val(optionEl.attr("dueDate"));
+                $("#name-sm").val(optionEl.html());
+                $("#description-sm").val(optionEl.attr("description"));
                 Helper.ui.localeCheckboxes.clear();
-                Helper.ui.localeCheckboxes.set($("option[value=" + $("#jobSelect").val() + "]").attr("targetlocaleids"));
+                Helper.ui.localeCheckboxes.set(optionEl.attr("targetlocaleids"));
             });
         });
     })(jQuery);

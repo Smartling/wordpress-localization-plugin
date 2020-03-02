@@ -266,6 +266,7 @@ services:
       - "@content.helper"
       - "@fields-filter.helper"
       - "@meta-field.processor.manager"
+      - "@multilang.proxy"
       - "@smartling.helper.absolute-image-path-support"
       - "@helper.shortcode"
       - "@helper.gutenberg"

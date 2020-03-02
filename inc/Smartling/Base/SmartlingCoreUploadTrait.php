@@ -102,7 +102,7 @@ trait SmartlingCoreUploadTrait
         );
 
         try {
-            if (null === $submission->getId()) {
+			if (null === $submission->getId() || empty($submission->getFileUri())) {
                 // generate URI
                 $submission->getFileUri();
                 $submission = $this->getSubmissionManager()->storeEntity($submission);
@@ -440,7 +440,6 @@ trait SmartlingCoreUploadTrait
             $submissions = $this->getSubmissionManager()->find($params);
 
             $locales = [];
-
 
             foreach ($submissions as $_submission) {
                 /**

@@ -10,7 +10,6 @@ use Smartling\Tests\Traits\InvokeMethodTrait;
  * Class DbAlTest
  * Test class for \Smartling\DbAl\DB.
  * @package Smartling\Tests
- * @covers \Smartling\DbAl\DB
  */
 class DbAlTest extends TestCase
 {
@@ -21,7 +20,6 @@ class DbAlTest extends TestCase
      */
     private $dbal;
 
-
     /**
      * Sets up the fixture, for example, open a network connection.
      * This method is called before a test is executed.
@@ -29,17 +27,15 @@ class DbAlTest extends TestCase
     protected function setUp()
     {
         $mock = $this
-            ->getMockBuilder('Smartling\DbAl\DB')
+            ->getMockBuilder( DB::class )
             ->setMethods(['getWpdb'])
             ->disableOriginalConstructor()
             ->getMock();
-
 
         $this->dbal = $mock;
     }
 
     /**
-     * @covers       Smartling\DbAl\DB::getCharsetCollate
      * @dataProvider getCharsetCollateDataProvider
      *
      * @param string $charset
@@ -49,7 +45,6 @@ class DbAlTest extends TestCase
     public function testGetCharsetCollate($charset, $collate, $expectedResult)
     {
         $this->dbal
-            ->expects(self::any())
             ->method('getWpdb')
             ->willReturn(
                 (object)

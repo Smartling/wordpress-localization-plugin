@@ -97,6 +97,11 @@ class SubmissionManager extends EntityManagerAbstract
             || in_array($contentType, array_keys(WordpressContentTypeHelper::getReverseMap()), true);
     }
 
+	/**
+	 * @param array $dbRow
+	 *
+	 * @return SubmissionEntity
+	 */
     protected function dbResultToEntity(array $dbRow)
     {
         return SubmissionEntity::fromArray((array)$dbRow, $this->getLogger());
