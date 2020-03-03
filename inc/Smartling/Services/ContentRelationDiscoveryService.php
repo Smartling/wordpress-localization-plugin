@@ -368,6 +368,7 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
 				}
 				$submission->setBatchUid( $batchUid );
 				$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_NEW );
+				$submission->getFileUri();
 				$this->getSubmissionManager()->storeEntity( $submission );
 			}
 		}
