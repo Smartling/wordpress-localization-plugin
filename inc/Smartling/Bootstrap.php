@@ -26,7 +26,6 @@ use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPInstallableInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\Yaml\Parser;
 
 /**
  * Class Bootstrap
@@ -225,6 +224,7 @@ class Bootstrap
         $data =& $_POST['params'];
 
         $rawPageSize = (int)$data['pageSize'];
+
         $pageSize = $rawPageSize < 1 ? GlobalSettingsManager::getPageSizeDefault() : $rawPageSize;
 
         GlobalSettingsManager::setSkipSelfCheck((int)$data['selfCheckDisabled']);
@@ -234,6 +234,7 @@ class Bootstrap
         GlobalSettingsManager::setLogFileSpec($data['loggingPath']);
         GlobalSettingsManager::setPageSize($pageSize);
         GlobalSettingsManager::setLoggingCustomization($data['loggingCustomization']);
+        GlobalSettingsManager::setHandleRelationsManually((int)$data['handleRelationsManually']);
         GlobalSettingsManager::setFilterUiVisible((int) $data['enableFilterUI']);
 
         wp_send_json($data);
@@ -265,7 +266,7 @@ class Bootstrap
             add_action('wp_ajax_' . 'smartling_expert_global_settings_update', [$this, 'updateGlobalExpertSettings']);
         }
 
-        if (0 === (int) GlobalSettingsManager::getSkipSelfCheck()) {
+        if (0 === (int)GlobalSettingsManager::getSkipSelfCheck()) {
             $this->testCronSetup();
             $this->testUpdates();
         }
@@ -451,7 +452,7 @@ class Bootstrap
 
         $action = defined('DOING_CRON') && true === DOING_CRON ? 'wp_loaded' : 'admin_init';
 
-        if (1 === (int) GlobalSettingsManager::getDisableACF()) {
+        if (1 === (int)GlobalSettingsManager::getDisableACF()) {
             DiagnosticsHelper::addDiagnosticsMessage('Warning, ACF plugin support is <strong>disabled</strong>.');
         } else {
             add_action($action, function () {

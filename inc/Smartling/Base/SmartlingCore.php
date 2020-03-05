@@ -4,14 +4,11 @@ namespace Smartling\Base;
 
 use Exception;
 use Smartling\ContentTypes\ContentTypeNavigationMenu;
-use Smartling\DbAl\WordpressContentEntities\MenuItemEntity;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
-use Smartling\Helpers\StringHelper;
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
@@ -40,6 +37,8 @@ class SmartlingCore extends SmartlingCoreAbstract
     /**
      * @param SubmissionEntity $submission
      *
+	 * @return void
+	 *
      * @throws BlogNotFoundException
      */
     public function prepareRelatedSubmissions(SubmissionEntity $submission)
@@ -47,7 +46,6 @@ class SmartlingCore extends SmartlingCoreAbstract
         $this->getLogger()->info(vsprintf('Searching for related content for submission = \'%s\' for translation', [
             $submission->getId(),
         ]));
-        $tagretContentId = $submission->getTargetId();
         $originalEntity = $this->getContentHelper()->readSourceContent($submission);
         $relatedContentTypes = $originalEntity->getRelatedTypes();
         $accumulator = [
@@ -78,7 +76,7 @@ class SmartlingCore extends SmartlingCoreAbstract
                             $type,
                             implode(',', $ids),
                             $submission->getContentType(),
-                            $tagretContentId,
+							$submission->getTargetId(),
                             $submission->getTargetBlogId(),
                         ]));
 

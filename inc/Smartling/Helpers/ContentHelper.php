@@ -2,6 +2,7 @@
 
 namespace Smartling\Helpers;
 
+use Exception;
 use Psr\Log\LoggerInterface;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\PostEntity;
@@ -327,7 +328,7 @@ class ContentHelper
                                                     $submission->getId()]);
                     $this->getLogger()->debug($msg);
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $msg = vsprintf('Error while deleting target metadata for submission id=\'%s\'. Message: %s',
                                 [
                                     $submission->getId(),
@@ -338,5 +339,27 @@ class ContentHelper
         }
 
         $this->ensureRestoredBlogId();
+    }
+
+    public function checkEntityExists($blogId, $contentType, $contentId)
+    {
+        $needSiteSwitch = (int)$blogId !== $this->getSiteHelper()->getCurrentBlogId();
+        $result         = false;
+
+        if ($needSiteSwitch) {
+            $this->getSiteHelper()->switchBlogId((int)$blogId);
+        }
+
+        try {
+            if (($this->getIoFactory()->getMapper($contentType)->get($contentId)) instanceof EntityAbstract) {
+                $result = true;
+            }
+        } catch (Exception $e) {
+        }
+
+        if ($needSiteSwitch) {
+            $this->getSiteHelper()->restoreBlogId();
+        }
+        return $result;
     }
 }

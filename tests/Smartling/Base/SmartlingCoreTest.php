@@ -5,6 +5,7 @@ namespace Smartling\Tests\Smartling\Base;
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapper;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
@@ -15,6 +16,8 @@ use Smartling\Tests\Traits\InvokeMethodTrait;
 use Smartling\Tests\Traits\SettingsManagerMock;
 use Smartling\Tests\Traits\SiteHelperMock;
 use Smartling\Tests\Traits\SubmissionManagerMock;
+use Smartling\Base\SmartlingCore;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 
 /**
  * Class SmartlingCoreTest
@@ -493,7 +496,7 @@ class SmartlingCoreTest extends TestCase
      */
     public function testExceptionOnTargetPlaceholderCreationFail()
     {
-        $obj = $this->getMockBuilder('\Smartling\Base\SmartlingCore')
+        $obj = $this->getMockBuilder(SmartlingCore::class)
                    ->setMethods(
                        [
                            'getFunctionProxyHelper',
@@ -529,7 +532,7 @@ class SmartlingCoreTest extends TestCase
         $returnedSubmission = clone $submission;
         $returnedSubmission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
 
-        $proxyMock = $this->getMockBuilder('Smartling\Helpers\WordpressFunctionProxyHelper')
+        $proxyMock = $this->getMockBuilder(WordpressFunctionProxyHelper::class)
              ->setMethods(
                  [
                      'apply_filters',
@@ -541,9 +544,6 @@ class SmartlingCoreTest extends TestCase
 
         $proxyMock->expects(self::once())->method('apply_filters')->willReturn($returnedSubmission);
         $obj->expects(self::once())->method('getFunctionProxyHelper')->willReturn($proxyMock);
-
-
-
 
         $this->invokeMethod($obj, 'getXMLFiltered', [$submission]);
     }

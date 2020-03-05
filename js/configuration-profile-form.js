@@ -29,6 +29,7 @@
                     'disableDBLookup': $('#disableDBLookup').val(),
                     'disableACF': $('#disableACF').val(),
                     'loggingCustomization': $('#loggingCustomization').val(),
+                    'handleRelationsManually': $('#handleRelationsManually').val(),
                     'enableFilterUI':$('#enableFilterUI').val()
                 }
             };
@@ -57,6 +58,12 @@
             e.stopPropagation();
             e.preventDefault();
             $('#pageSize').attr('value', ($(this).attr('data-default')));
+        });
+
+        $('#resetHandleRelationsManually').on('click', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            $('#handleRelationsManually').attr('value', ($(this).attr('data-default')));
         });
     });
 })(jQuery);

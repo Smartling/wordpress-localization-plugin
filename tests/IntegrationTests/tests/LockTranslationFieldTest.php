@@ -58,6 +58,4 @@ class LockTranslationFieldTest extends SmartlingUnitTestCaseAbstract
         $translatedTitleEditedOnceAgain = $this->getContentHelper()->readTargetContent($submission)->getTitle();
         $this->assertEquals($translatedTitleEdited, $translatedTitleEditedOnceAgain);
     }
-
 }
-

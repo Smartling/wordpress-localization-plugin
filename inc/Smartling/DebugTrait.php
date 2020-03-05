@@ -2,7 +2,6 @@
 
 namespace Smartling;
 
-
 trait DebugTrait
 {
     /**

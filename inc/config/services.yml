@@ -259,3 +259,17 @@ services:
       - "@manager.settings"
       - "@site.cache"
       - "@plugin.info"
+
+  service.relations-discovery:
+    class: Smartling\Services\ContentRelationsDiscoveryService
+    arguments:
+      - "@content.helper"
+      - "@fields-filter.helper"
+      - "@meta-field.processor.manager"
+      - "@multilang.proxy"
+      - "@smartling.helper.absolute-image-path-support"
+      - "@helper.shortcode"
+      - "@helper.gutenberg"
+      - "@manager.submission"
+      - "@wrapper.sdk.api.smartling"
+      - "@manager.settings"

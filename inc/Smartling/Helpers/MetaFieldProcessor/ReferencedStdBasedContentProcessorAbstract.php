@@ -2,7 +2,7 @@
 
 namespace Smartling\Helpers\MetaFieldProcessor;
 
-use Psr\Log\LoggerInterface;
+use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\SmartlingDataReadException;
 use Smartling\Exception\SmartlingWpDataIntegrityException;
 use Smartling\Helpers\ArrayHelper;
@@ -92,10 +92,20 @@ abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProce
                 )
             );
 
-            $contentType = null;
-            try {
-                $contentType = $this->detectRealContentType($submission->getSourceBlogId(), $value);
-            } catch (SmartlingWpDataIntegrityException $e) {
+            $contentType = $this->detectRealContentType($submission->getSourceBlogId(), $value);
+            if ($this->getContentHelper()->checkEntityExists($submission->getSourceBlogId(),$contentType,$value)) {
+                // trying to detect
+                $attSubmission = $this->getTranslationHelper()->tryPrepareRelatedContent(
+                    $contentType,
+                    $submission->getSourceBlogId(),
+                    $value,
+                    $submission->getTargetBlogId(),
+                    $submission->getBatchUid(),
+                    (1 === $submission->getIsCloned())
+                );
+
+                return $attSubmission->getTargetId();
+            } else {
                 $this->getLogger()->debug(
                     vsprintf(
                         'Couldn\'t identify content type for id=\'%s\', blog=\'%s\'. Keeping existing value \'%s\'.',
@@ -105,27 +115,6 @@ abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProce
 
                 return $value;
             }
-
-            // trying to detect
-            $attSubmission = $this->getTranslationHelper()->tryPrepareRelatedContent(
-                $contentType,
-                $submission->getSourceBlogId(),
-                $value,
-                $submission->getTargetBlogId(),
-                $submission->getBatchUid(),
-                (1 === $submission->getIsCloned())
-            );
-
-            return $attSubmission->getTargetId();
-        } catch (SmartlingDataReadException $e) {
-            $message = vsprintf(
-                'An error happened while processing referenced content with original value=%s. Keeping original value.',
-                [
-                    var_export($originalValue, true),
-                ]
-            );
-            $this->getLogger()->error($message);
-
 
         } catch (\Exception $e) {
             $message = vsprintf(

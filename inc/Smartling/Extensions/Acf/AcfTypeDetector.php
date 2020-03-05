@@ -86,9 +86,17 @@ class AcfTypeDetector
     {
         if (false === $fieldKey = $this->getCache()->get($this->getCacheKeyByFieldName($fieldName))) {
             $sourceMeta = $this->getContentHelper()->readSourceMetadata($submission);
+            return $this->getFieldKeyFieldNameByMetaFields($fieldName, $sourceMeta);
+        }
+        return $fieldKey;
+    }
+
+    private function getFieldKeyFieldNameByMetaFields($fieldName, array $metadata)
+    {
+        if (false === $fieldKey = $this->getCache()->get($this->getCacheKeyByFieldName($fieldName))) {
             $_realFieldName = preg_replace('#^meta\/#ius', '', $fieldName);
-            if (array_key_exists('_' . $_realFieldName, $sourceMeta)) {
-                $fieldKey = $sourceMeta['_' . $_realFieldName];
+            if (array_key_exists('_' . $_realFieldName, $metadata)) {
+                $fieldKey = $metadata['_' . $_realFieldName];
                 $this->getCache()->set($this->getCacheKeyByFieldName($fieldName), $fieldKey, static::$cacheExpireSec);
             } else {
                 return false;
@@ -102,7 +110,7 @@ class AcfTypeDetector
     {
         if (!array_key_exists($key, AcfDynamicSupport::$acfReverseDefinitionAction)) {
             MonologWrapper::getLogger(__CLASS__)
-                ->warning(vsprintf('No definition found for field \'%s\', key \'%s\'', [$fieldName, $key]));
+                ->info(vsprintf('No definition found for field \'%s\', key \'%s\'', [$fieldName, $key]));
 
             return false;
         }
@@ -112,11 +120,19 @@ class AcfTypeDetector
         return CustomFieldFilterHandler::getProcessor(Bootstrap::getContainer(), $config);
     }
 
-
     public function getProcessor($field, SubmissionEntity $submission)
     {
-        $key = $this->getFieldKeyFieldName($field, $submission);
-        $mathes = [];
+        return $this->getAcfProcessor($field, $this->getFieldKeyFieldName($field, $submission));
+    }
+
+    public function getProcessorByMetaFields($field, array $metaFields)
+    {
+        return $this->getAcfProcessor($field, $this->getFieldKeyFieldNameByMetaFields($field, $metaFields));
+    }
+
+    private function getAcfProcessor($field, $key)
+    {
+        $mathes  = [];
         $pattern = '#(field|group)_([0-9a-f]){13}#ius';
         preg_match_all($pattern, $key, $mathes);
         $key = end($mathes[0]);

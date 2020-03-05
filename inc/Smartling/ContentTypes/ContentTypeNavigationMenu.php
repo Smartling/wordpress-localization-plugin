@@ -11,6 +11,7 @@ use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
 
 /**
  * Class ContentTypeNavigationMenu
@@ -46,7 +47,7 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
         $descriptor = new static($di);
         $mgr = $di->get($manager);
         /**
-         * @var \Smartling\ContentTypes\ContentTypeManager $mgr
+         * @var ContentTypeManager $mgr
          */
         $mgr->addDescriptor($descriptor);
     }
@@ -68,7 +69,7 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
     {
         $di = $this->getContainerBuilder();
         $wrapperId = 'wrapper.entity.' . $this->getSystemName();
-        $definition = $di->register($wrapperId, 'Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd');
+        $definition = $di->register($wrapperId, TaxonomyEntityStd::class );
         $definition
             ->addArgument($this->getSystemName())
             ->addArgument([ContentTypeNavigationMenuItem::WP_CONTENT_TYPE]);
@@ -83,7 +84,7 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
         $helper = $this->getContainerBuilder()->get('helper.customMenu');
         $contentHelper = $this->getContainerBuilder()->get('content.helper');
         $translationHelper = $this->getContainerBuilder()->get('translation.helper');
-        $logger = MonologWrapper::getLogger(get_called_class());
+        $logger = MonologWrapper::getLogger( static::class  );
 
         /**
          * @var CustomMenuContentTypeHelper $helper
@@ -103,12 +104,7 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
                 $params->getSubmission()->getSourceBlogId()
             );
 
-            $menuItemIds = [];
-
-            /** @var MenuItemEntity $menuItem */
             foreach ($ids as $menuItemEntity) {
-
-                $menuItemIds[] = $menuItemEntity->getPK();
 
                 $logger->debug(
                     vsprintf('Sending for translation entity = \'%s\' id = \'%s\' related to submission = \'%s\'.', [
@@ -132,12 +128,12 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
                     Queue::QUEUE_NAME_DOWNLOAD_QUEUE
                 );
 
-                $accumulator[ContentTypeNavigationMenu::WP_CONTENT_TYPE][] = $menuItemSubmission->getTargetId();
+                $accumulator[self::WP_CONTENT_TYPE][] = $menuItemSubmission->getTargetId();
             }
             do_action(DownloadTranslationJob::JOB_HOOK_NAME);
         }
 
-        if (ContentTypeNavigationMenu::WP_CONTENT_TYPE === $params->getContentType() &&
+        if (self::WP_CONTENT_TYPE === $params->getContentType() &&
             ContentTypeWidget::WP_CONTENT_TYPE === $params->getSubmission()->getContentType()
         ) {
             $logger->debug(vsprintf('Searching for menu related to widget for submission = \'%s\'.', [
@@ -191,7 +187,6 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
 
         }
     }
-
 
     /**
      * @return void

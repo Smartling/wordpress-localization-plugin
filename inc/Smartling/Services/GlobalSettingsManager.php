@@ -213,6 +213,28 @@ class GlobalSettingsManager
         return Bootstrap::getContainer()->getParameter('submission.pagesize');
     }
 
+    const SMARTLING_HANDLE_RELATIONS_MANUALLY = 'smartling_handle_relations_manually';
+    const SMARTLING_HANDLE_RELATIONS_MANUALLY_DEFAULT = 0;
+
+    public static function getHandleRelationsManuallyDefault()
+    {
+        return static::SMARTLING_HANDLE_RELATIONS_MANUALLY_DEFAULT;
+    }
+
+    public static function getHandleRelationsManually()
+    {
+        return SimpleStorageHelper::get(static::SMARTLING_HANDLE_RELATIONS_MANUALLY, static::getHandleRelationsManuallyDefault());
+    }
+
+    public static function setHandleRelationsManually($value)
+    {
+        SimpleStorageHelper::set(static::SMARTLING_HANDLE_RELATIONS_MANUALLY, $value);
+
+        if (static::getHandleRelationsManuallyDefault() === (int)$value) {
+            SimpleStorageHelper::drop(static::SMARTLING_HANDLE_RELATIONS_MANUALLY);
+        }
+    }
+
     const SMARTLING_FILTER_UI_VISIBLE         = 'smartling_filter_ui_visible';
     const SMARTLING_FILTER_UI_VISIBLE_DEFAULT = 0;
 
@@ -230,3 +252,4 @@ class GlobalSettingsManager
     }
 
 }
+

@@ -3,6 +3,7 @@
 namespace Smartling\Helpers;
 
 
+use Smartling\Services\GlobalSettingsManager;
 use UnexpectedValueException;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
@@ -128,7 +129,7 @@ class TranslationHelper
         if (!in_array((int) $targetBlogId, $blogs, true)) {
             $exception = new UnexpectedValueException(
                 vsprintf('Unexpected value: targetBlogId must be one of [%s], %s got',
-                    [implode(', ',$blogs),targetBlogId])
+                    [implode(', ', $blogs), $targetBlogId])
             );
 
             $this->getLogger()->warning(
@@ -190,6 +191,7 @@ class TranslationHelper
      * @param bool   $clone
      *
      * @return mixed
+     * @throws SmartlingDataReadException
      */
     public function prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone = false)
     {
@@ -204,6 +206,16 @@ class TranslationHelper
         );
 
         if (0 === (int)$submission->getId()) {
+            /**
+             * Do not allow to create new submissions
+             */
+            if (1 === (int)GlobalSettingsManager::getHandleRelationsManually()) {
+                throw new \Exception(vsprintf('Creation of submission [%s] cancelled due to manual relation processing mode.',
+                    [
+                        var_export($submission->toArray(false), true),
+                    ]));
+            }
+
             if (true === $clone) {
                 $submission->setIsCloned(1);
             }
@@ -217,7 +229,7 @@ class TranslationHelper
      * @param SubmissionEntity $submission
      *
      * @return mixed
-     * @throws \Smartling\Exception\SmartlingDataReadException
+     * @throws SmartlingDataReadException
      */
     public function reloadSubmission(SubmissionEntity $submission)
     {
@@ -241,6 +253,7 @@ class TranslationHelper
      * @param bool   $clone
      *
      * @return SubmissionEntity
+     * @throws SmartlingDataReadException
      */
     public function tryPrepareRelatedContent($contentType, $sourceBlog, $sourceId, $targetBlog, $batchUid, $clone = false)
     {
