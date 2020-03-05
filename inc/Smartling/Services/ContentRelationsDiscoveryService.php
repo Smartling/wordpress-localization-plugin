@@ -51,11 +51,8 @@ use Smartling\Submissions\SubmissionManager;
  *
  *
  * blogId is discovered from current active blog via Wordpress Multisite API
- *
- * Class ContentRelationDiscoveryService
- * @package Smartling\Services
  */
-class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
+class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 {
 
     /**
@@ -392,13 +389,16 @@ class ContentRelationDiscoveryService extends BaseAjaxServiceAbstract
      *          'authorize'   => 'true',
      *      ],
      *      'targetBlogIds' => '3,2',
-     *      'relations'    => {{see @actionHandler }} relations response
+     *      'relations'    => {{@see actionHandler }} relations response
      *  ]
+     * @var array|string $data
      * @return void
      */
-    public function createSubmissionsHandler()
+    public function createSubmissionsHandler($data = '')
     {
-		$data = $_POST;
+		if (!is_array($data)) {
+            $data = $_POST;
+        }
         try {
 			$contentType = $data['source']['contentType'];
             $curBlogId = $this->getContentHelper()->getSiteHelper()->getCurrentBlogId();

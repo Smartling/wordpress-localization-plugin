@@ -1,38 +1,40 @@
 {
-  "name" : "smartling/wordpress-connector",
-  "description" :  "",
-  "type" :         "wordpress-plugin",
-  "require" :      {
-    "php" :                          ">=5.6",
-    "monolog/monolog" :              "~1",
-    "symfony/dependency-injection" : "~2.8",
-    "symfony/config" :               "~2.8",
-    "symfony/yaml" :                 "~2.8",
-    "smartling/api-sdk-php" :        "3.6.4",
+  "name": "smartling/wordpress-connector",
+  "license": "GPL-2.0-or-later",
+  "version": "1.12.0",
+  "description": "",
+  "type": "wordpress-plugin",
+  "require": {
+    "php": ">=5.6",
+    "monolog/monolog": "~1",
+    "symfony/dependency-injection": "~2.8",
+    "symfony/config": "~2.8",
+    "symfony/yaml": "~2.8",
+    "smartling/api-sdk-php": "3.6.4",
     "ext-dom": "*"
   },
-  "require-dev" :  {
-    "phpunit/phpunit" :  "~4",
-    "fzaninotto/faker" : "master-dev",
-    "kint-php/kint" :    "master-dev"
+  "require-dev": {
+    "phpunit/phpunit": "~4",
+    "fzaninotto/faker": "master-dev",
+    "kint-php/kint": "master-dev"
   },
-  "config" :       {
-    "vendor-dir" : "inc/third-party"
+  "config": {
+    "vendor-dir": "inc/third-party"
   },
-  "autoload-dev" : {
-    "psr-4" : {
-      "Smartling\\Tests\\" : "tests/"
+  "autoload-dev": {
+    "psr-4": {
+      "Smartling\\Tests\\": "tests/"
     }
   },
-  "autoload" :     {
-    "psr-0" : {
-      "Smartling" : "inc/"
+  "autoload": {
+    "psr-0": {
+      "Smartling": "inc/"
     }
   },
-  "scripts" :      {
-    "post-install-cmd" : [
+  "scripts": {
+    "post-install-cmd": [
     ],
-    "post-update-cmd" :  [
+    "post-update-cmd": [
     ]
   }
 }

@@ -260,8 +260,8 @@ services:
       - "@site.cache"
       - "@plugin.info"
 
-  service.relation-discovery:
-    class: Smartling\Services\ContentRelationDiscoveryService
+  service.relations-discovery:
+    class: Smartling\Services\ContentRelationsDiscoveryService
     arguments:
       - "@content.helper"
       - "@fields-filter.helper"

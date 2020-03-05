@@ -76,7 +76,7 @@ class SmartlingCore extends SmartlingCoreAbstract
                             $type,
                             implode(',', $ids),
                             $submission->getContentType(),
-	                        $submission->getTargetId(),
+							$submission->getTargetId(),
                             $submission->getTargetBlogId(),
                         ]));
 

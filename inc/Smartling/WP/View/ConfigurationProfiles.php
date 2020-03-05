@@ -220,7 +220,7 @@ $data = $this->getViewData();
                             );
                             ?>
                             <br /><a href="javascript:void(0)" id="resetHandleRelationsManually" data-default="<?= GlobalSettingsManager::getHandleRelationsManuallyDefault(); ?>">reset to defaults</a>
-                            <br />Note, that switching handling of relations to Manual cuts off plugin functionality, e.g. Bulk Submit cannot be used while handling relations manually.<br/>
+                            <br /><?= __('Note, that switching handling of relations to Manual changes how plugin will work with related assets. An example, if &quot;post&quot; has category and image, then plugin will not create them on a target site. As a result, your translated post layout may look broken')?><br/>
                         </td>
                     </tr>
                     <tr>
