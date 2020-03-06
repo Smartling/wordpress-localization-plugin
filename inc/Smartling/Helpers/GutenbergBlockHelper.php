@@ -8,11 +8,6 @@ use Smartling\Exception\SmartlingGutenbergNotFoundException;
 use Smartling\Exception\SmartlingGutenbergParserNotFoundException;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 
-/**
- * Class SubstringProcessorHelperAbstract
- *
- * @package Smartling\Helpers
- */
 class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 {
 
@@ -102,14 +97,14 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $attributes;
     }
 
-    /**
-     * @param $string
-     * @return bool
-     */
-    private function hasBlocks($string)
-    {
-        return 0 < (int)preg_match('/<!--\s+wp\:/ius', $string);
-    }
+	/**
+	 * @param $string
+	 *
+	 * @return bool
+	 */
+	private function hasBlocks( $string ) {
+		return 0 < (int) preg_match( '/<!--\s+wp:/iu', $string );
+	}
 
     /**
      * @param array $data
@@ -195,24 +190,24 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $params;
     }
 
-    /**
-     * A wrapper for WP::gutenberg gutenberg_parse_blocks() function
-     *
-     * @param $string
-     * @return array
-     * @throws SmartlingGutenbergParserNotFoundException
-     */
-    public function parseBlocks($string)
-    {
-        if (function_exists('\parse_blocks')) {
-            return \parse_blocks($string);
-        } elseif (function_exists('\gutenberg_parse_blocks')) {
-            return \gutenberg_parse_blocks($string);
-        } else {
-            throw new SmartlingGutenbergParserNotFoundException('No block parser found.');
-        }
-    }
+	/**
+	 * A wrapper for WP::gutenberg gutenberg_parse_blocks() function
+	 *
+	 * @param string $string
+	 *
+	 * @return array
+	 * @throws SmartlingGutenbergParserNotFoundException
+	 */
+	public function parseBlocks( $string ) {
+		if ( function_exists( '\parse_blocks' ) ) {
+			return \parse_blocks( $string );
+		}
+		if ( function_exists( '\gutenberg_parse_blocks' ) ) {
+			return \gutenberg_parse_blocks( $string );
+		}
 
+		throw new SmartlingGutenbergParserNotFoundException( 'No block parser found.' );
+	}
 
     /**
      * @param \DOMNode $node
@@ -281,39 +276,42 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $processedAttributes;
     }
 
-    /**
-     * @param \DOMElement $node
-     * @return string
-     */
-    public function renderTranslatedBlockNode(\DOMElement $node)
-    {
-        $blockName = $node->getAttribute('blockName');
-        $blockName = '' === $blockName ? null : $blockName;
-        $originalAttributes = $this->unpackData($node->getAttribute('originalAttributes'));
-        $sortedResult = $this->sortChildNodesContent($node);
-        // simple plain blocks
-        if (null === $blockName) {
-            return implode('\n', $sortedResult['chunks']);
-        }
-        $attributes = $this->processTranslationAttributes($blockName, $originalAttributes, $sortedResult['attributes']);
-        $renderedBlock = $this->renderGutenbergBlock($blockName, $attributes, $sortedResult['chunks']);
-        return $renderedBlock;
-    }
+	/**
+	 * @param \DOMElement $node
+	 *
+	 * @return string
+	 */
+	public function renderTranslatedBlockNode( \DOMElement $node ) {
+		$blockName    = $node->getAttribute( 'blockName' );
+		$sortedResult = $this->sortChildNodesContent( $node );
+		// simple plain blocks
+		if ( '' === $blockName ) {
+			return implode( '\n', $sortedResult['chunks'] );
+		}
+		$attributes = $this->processTranslationAttributes(
+			$blockName,
+			$this->unpackData( $node->getAttribute( 'originalAttributes' ) ),
+			$sortedResult['attributes']
+		);
 
-    /**
-     * @param string $name
-     * @param array  $attrs
-     * @param array  $chunks
-     * @return string
-     */
-    private function renderGutenbergBlock($name, array $attrs = [], array $chunks = [])
-    {
-        $attributes = 0 < count($attrs) ? ' ' . json_encode($attrs) : '';
-        $content = implode('', $chunks);
-        return ('' !== $content)
-            ? vsprintf('<!-- wp:%s%s -->%s<!-- /wp:%s -->', [$name, $attributes, $content, $name])
-            : vsprintf('<!-- wp:%s%s /-->', [$name, $attributes]);
-    }
+		return $this->renderGutenbergBlock( $blockName, $attributes, $sortedResult['chunks'] );
+	}
+
+	/**
+	 * @param string $name
+	 * @param array $attrs
+	 * @param array $chunks
+	 *
+	 * @return string
+	 */
+	public function renderGutenbergBlock( $name, array $attrs = [], array $chunks = [] ) {
+		$attributes = 0 < count( $attrs ) ? ' ' . json_encode( $attrs, JSON_UNESCAPED_UNICODE ) : '';
+		$content    = implode( '', $chunks );
+
+		return ( '' !== $content )
+			? vsprintf( '<!-- wp:%s%s -->%s<!-- /wp:%s -->', [ $name, $attributes, $content, $name ] )
+			: vsprintf( '<!-- wp:%s%s /-->', [ $name, $attributes ] );
+	}
 
     /**
      * Filter handler

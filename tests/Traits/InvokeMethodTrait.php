@@ -20,6 +20,8 @@ trait InvokeMethodTrait
     /**
      * Invokes protected or private method of given object.
      *
+     * @throws \ReflectionException
+     *
      * @param mixed  $object
      *   Object with protected or private method to invoke.
      * @param string $methodName
@@ -42,7 +44,7 @@ trait InvokeMethodTrait
     /**
      * Invokes protected or private static method of given class.
      *
-     * @param Object $object
+     * @param Object $className
      *   Object with protected or private method to invoke.
      * @param string $methodName
      *   Name of the property to invoke.
