@@ -269,28 +269,39 @@ class GutenbergBlockHelperTest extends TestCase
      */
     public function testRenderGutenbergBlock($blockName, array $attributes, array $chunks, $expected)
     {
-		self::assertEquals($expected, $this->helper->renderGutenbergBlock($blockName, $attributes, $chunks));
-	}
+        $result = $this->invokeMethod($this->helper, 'renderGutenbergBlock', [$blockName, $attributes, $chunks]);
+        self::assertEquals($expected, $result);
+    }
 
-	public function testIssueWP500() {
-		$result = $this->helper->renderGutenbergBlock( 'acf/sticky-cta', [
-			'id'    => 'block_5e46fa29a5a8e',
-			'name'  => 'acf/sticky-cta',
-			'data'  =>
-				[
-					'copy'            => 'Pronto para reservar seu próximo evento?',
-					'cta_copy'        => 'Obter uma cotação',
-					'cta_url'         => 'https://www.wework.com/host-event-contact',
-					'sticky_behavior' => 'bottom',
-				],
-			'align' => '',
-			'mode'  => 'auto',
-		], [] );
-		$this->assertEquals( '<!-- wp:acf/sticky-cta {"id":"block_5e46fa29a5a8e","name":"acf\/sticky-cta",' .
-		                     '"data":{"copy":"Pronto para reservar seu próximo evento?","cta_copy":"Obter uma cotação"' .
-		                     ',"cta_url":"https:\/\/www.wework.com\/host-event-contact","sticky_behavior":"bottom"},' .
-		                     '"align":"","mode":"auto"} /-->', $result );
-	}
+    public function testRenderGutenbergBlockWithAccentedCharacters()
+    {
+        $result = $this->helper->renderGutenbergBlock('acf/sticky-cta', [
+            'id' => 'block_5e46fa29a5a8e',
+            'name' => 'acf/sticky-cta',
+            'data' =>
+                [
+                    'copy' => 'Pronto para reservar seu próximo evento?',
+                    'cta_copy' => 'Obter uma cotação',
+                    'cta_url' => 'https://www.wework.com/host-event-contact',
+                    'sticky_behavior' => 'bottom',
+                ],
+            'align' => '',
+            'mode' => 'auto',
+        ], []);
+
+        $this->assertEquals('<!-- wp:acf/sticky-cta {"id":"block_5e46fa29a5a8e","name":"acf\/sticky-cta",' .
+            '"data":{"copy":"Pronto para reservar seu próximo evento?","cta_copy":"Obter uma cotação"' .
+            ',"cta_url":"https:\/\/www.wework.com\/host-event-contact","sticky_behavior":"bottom"},' .
+            '"align":"","mode":"auto"} /-->', $result);
+    }
+
+    public function testRenderGutenbergBlockWithEmoji()
+    {
+        $this->assertEquals(
+            '<!-- wp:acf/test {"data":{"copy":"Test 𝒞 and 😂, 絵文字, 👩‍🦽, ⚛️."}} /-->',
+            $this->helper->renderGutenbergBlock('acf/test', ['data' => ['copy' => 'Test 𝒞 and 😂, 絵文字, 👩‍🦽, ⚛️.']])
+        );
+    }
 
     /**
      * @return array

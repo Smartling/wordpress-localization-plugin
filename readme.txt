@@ -57,6 +57,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 1.12.1 =
+* Fixed compatibility with ACF plugin and non-latin characters in translation.
+
 = 1.12.0 =
 * Added expert setting to handle relations manually
 
