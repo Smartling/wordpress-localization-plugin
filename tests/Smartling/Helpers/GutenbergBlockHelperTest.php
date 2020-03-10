@@ -282,7 +282,7 @@ class GutenbergBlockHelperTest extends TestCase
                 [
                     'copy' => 'Pronto para reservar seu próximo evento?',
                     'cta_copy' => 'Obter uma cotação',
-                    'cta_url' => 'https://www.wework.com/host-event-contact',
+                    'cta_url' => 'https://www.test.com/somePath',
                     'sticky_behavior' => 'bottom',
                 ],
             'align' => '',
@@ -291,7 +291,7 @@ class GutenbergBlockHelperTest extends TestCase
 
         $this->assertEquals('<!-- wp:acf/sticky-cta {"id":"block_5e46fa29a5a8e","name":"acf\/sticky-cta",' .
             '"data":{"copy":"Pronto para reservar seu próximo evento?","cta_copy":"Obter uma cotação"' .
-            ',"cta_url":"https:\/\/www.wework.com\/host-event-contact","sticky_behavior":"bottom"},' .
+            ',"cta_url":"https:\/\/www.test.com\/somePath","sticky_behavior":"bottom"},' .
             '"align":"","mode":"auto"} /-->', $result);
     }
 
