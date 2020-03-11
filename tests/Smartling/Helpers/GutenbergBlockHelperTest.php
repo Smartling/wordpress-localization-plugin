@@ -332,7 +332,7 @@ class GutenbergBlockHelperTest extends TestCase
                 'acf/test',
                 ['data' => ['copy' => "Pronto para reservar seu pr\\u00f3ximo evento?"]],
                 [],
-                '<!-- wp:acf/test {"data":{"copy":"Pronto para reservar seu pr\\u00f3ximo evento?"}} /-->'
+                '<!-- wp:acf/test {"data":{"copy":"Pronto para reservar seu pr\\\\u00f3ximo evento?"}} /-->'
             ],
         ];
     }
