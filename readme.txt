@@ -2,7 +2,7 @@
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
-Tested up to: 5.3
+Tested up to: 5.4
 Stable tag: 1.12.1
 License: GPLv2 or later
 
@@ -36,6 +36,7 @@ Integration Features
  * `xmlwriter`
  * `yaml`
  * `gd`
+ * `json`
 * For wpengine hosting maximum execution time should be set to 300 seconds.
 
 
@@ -48,7 +49,7 @@ Integration Features
 
 == Frequently Asked Questions ==
 
-Additional information on the Smartling Connector for WordPress can be found [here](https://help.smartling.com/v1.0/docs/wordpress-connector/).
+Additional information on the Smartling Connector for WordPress can be found [here](https://help.smartling.com/hc/en-us/sections/360001716653-WordPress-Connector).
 
 == Screenshots ==
 
@@ -58,10 +59,19 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 1.12.1 =
-* Fixed compatibility with ACF plugin and non-latin characters in translation.
+* Changed the default behavior for how we handle related content for the "request translations" flow (see v1.12.0 for more details):
+ * When you request the translation from the `Post Edit` screen it submits only the current page and optionally you can tell it to submit only the immediate related content (tags, categories, images, etc)
+ * When you request from the `Bulk Submit` screen, it will only submit the selected content (any related content should be requested manually)
+* Fixed compatibility with the ACF plugin and extended support for unicode characters (emoji, accented characters) in translation
 
 = 1.12.0 =
-* Added expert setting to handle relations manually
+This release brings major changes to how the connector works with related content. An example, a page may have a tag and a featured image. Before when you requested translation for a page, the connector submitted the page, plus the tag and image (3 file uploads in total). This approach guarantees that the translated page will look similar to the original page and the layout is not broken. The drawback of this approach, you can't control how much content will be uploaded to Smartling. If your site has cross-references between pages then requesting a single page may trigger hundreds of uploads.
+The new connector version adds the new toggle that controls this behavior. Now you can tell the connector to submit only requested content or requested content + immediate related content.
+
+The new toggle can be found in `Smartling` -> `Settings` -> `Show Expert Settings` -> `Handle relations`, where:
+
+* `Automatically` - use the legacy approach, upload as much related content to Smartling as possible.
+* `Manually` - use the new approach, upload only the requested content or the requested content + the immediate related content.
 
 = 1.11.2 =
 * Fixed issue with download button at post edit page.

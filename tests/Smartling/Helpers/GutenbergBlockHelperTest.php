@@ -269,38 +269,7 @@ class GutenbergBlockHelperTest extends TestCase
      */
     public function testRenderGutenbergBlock($blockName, array $attributes, array $chunks, $expected)
     {
-        $result = $this->invokeMethod($this->helper, 'renderGutenbergBlock', [$blockName, $attributes, $chunks]);
-        self::assertEquals($expected, $result);
-    }
-
-    public function testRenderGutenbergBlockWithAccentedCharacters()
-    {
-        $result = $this->helper->renderGutenbergBlock('acf/sticky-cta', [
-            'id' => 'block_5e46fa29a5a8e',
-            'name' => 'acf/sticky-cta',
-            'data' =>
-                [
-                    'copy' => 'Pronto para reservar seu próximo evento?',
-                    'cta_copy' => 'Obter uma cotação',
-                    'cta_url' => 'https://www.test.com/somePath',
-                    'sticky_behavior' => 'bottom',
-                ],
-            'align' => '',
-            'mode' => 'auto',
-        ], []);
-
-        $this->assertEquals('<!-- wp:acf/sticky-cta {"id":"block_5e46fa29a5a8e","name":"acf\/sticky-cta",' .
-            '"data":{"copy":"Pronto para reservar seu próximo evento?","cta_copy":"Obter uma cotação"' .
-            ',"cta_url":"https:\/\/www.test.com\/somePath","sticky_behavior":"bottom"},' .
-            '"align":"","mode":"auto"} /-->', $result);
-    }
-
-    public function testRenderGutenbergBlockWithEmoji()
-    {
-        $this->assertEquals(
-            '<!-- wp:acf/test {"data":{"copy":"Test 𝒞 and 😂, 絵文字, 👩‍🦽, ⚛️."}} /-->',
-            $this->helper->renderGutenbergBlock('acf/test', ['data' => ['copy' => 'Test 𝒞 and 😂, 絵文字, 👩‍🦽, ⚛️.']])
-        );
+        self::assertEquals($expected, $this->helper->renderGutenbergBlock($blockName, $attributes, $chunks));
     }
 
     /**
@@ -332,7 +301,39 @@ class GutenbergBlockHelperTest extends TestCase
                 ],
                 '<!-- wp:block {"a":"b","c":"d"} -->some chunks<!-- /wp:block -->',
             ],
-
+            'accents' => [
+                'acf/sticky-cta',
+                [
+                    'id' => 'block_5e46fa29a5a8e',
+                    'name' => 'acf/sticky-cta',
+                    'data' =>
+                        [
+                            'copy' => 'Pronto para reservar seu próximo evento?',
+                            'cta_copy' => 'Obter uma cotação',
+                            'cta_url' => 'https://www.test.com/somePath',
+                            'sticky_behavior' => 'bottom',
+                        ],
+                    'align' => '',
+                    'mode' => 'auto',
+                ],
+                [],
+                '<!-- wp:acf/sticky-cta {"id":"block_5e46fa29a5a8e","name":"acf\/sticky-cta",' .
+                '"data":{"copy":"Pronto para reservar seu próximo evento?","cta_copy":"Obter uma cotação"' .
+                ',"cta_url":"https:\/\/www.test.com\/somePath","sticky_behavior":"bottom"},' .
+                '"align":"","mode":"auto"} /-->'
+            ],
+            'emojis' => [
+                'acf/test',
+                ['data' => ['copy' => 'Test 𝒞 and 😂, 絵文字, 👩‍🦽, ⚛️.']],
+                [],
+                '<!-- wp:acf/test {"data":{"copy":"Test 𝒞 and 😂, 絵文字, 👩‍🦽, ⚛️."}} /-->'
+            ],
+            'pre-encoded' => [
+                'acf/test',
+                ['data' => ['copy' => "Pronto para reservar seu pr\\u00f3ximo evento?"]],
+                [],
+                '<!-- wp:acf/test {"data":{"copy":"Pronto para reservar seu pr\\u00f3ximo evento?"}} /-->'
+            ],
         ];
     }
 

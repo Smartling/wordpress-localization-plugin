@@ -214,7 +214,7 @@ class GlobalSettingsManager
     }
 
     const SMARTLING_HANDLE_RELATIONS_MANUALLY = 'smartling_handle_relations_manually';
-    const SMARTLING_HANDLE_RELATIONS_MANUALLY_DEFAULT = 0;
+    const SMARTLING_HANDLE_RELATIONS_MANUALLY_DEFAULT = 1;
 
     public static function getHandleRelationsManuallyDefault()
     {
