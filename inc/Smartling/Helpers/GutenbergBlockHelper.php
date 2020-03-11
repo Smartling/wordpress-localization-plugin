@@ -8,11 +8,6 @@ use Smartling\Exception\SmartlingGutenbergNotFoundException;
 use Smartling\Exception\SmartlingGutenbergParserNotFoundException;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 
-/**
- * Class SubstringProcessorHelperAbstract
- *
- * @package Smartling\Helpers
- */
 class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 {
 
@@ -306,9 +301,9 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
      * @param array  $chunks
      * @return string
      */
-    private function renderGutenbergBlock($name, array $attrs = [], array $chunks = [])
+    public function renderGutenbergBlock($name, array $attrs = [], array $chunks = [])
     {
-        $attributes = 0 < count($attrs) ? ' ' . json_encode($attrs) : '';
+        $attributes = 0 < count($attrs) ? ' ' . json_encode($attrs, JSON_UNESCAPED_UNICODE) : '';
         $content = implode('', $chunks);
         return ('' !== $content)
             ? vsprintf('<!-- wp:%s%s -->%s<!-- /wp:%s -->', [$name, $attributes, $content, $name])

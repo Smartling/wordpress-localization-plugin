@@ -13,6 +13,7 @@ use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Jobs\UploadJob;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
+use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\Locale;
 use Smartling\Settings\SettingsManager;
@@ -20,7 +21,6 @@ use Smartling\Settings\TargetLocale;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-
 
 abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
 {
@@ -118,6 +118,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         $this->cleanUpTables();
         $this->registerPostTypes();
         $this->ensureProfileExists();
+        GlobalSettingsManager::setHandleRelationsManually(0);
     }
 
 
