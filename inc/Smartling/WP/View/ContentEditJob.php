@@ -247,12 +247,11 @@ if ($post instanceof WP_Post) {
                     Helper.placeHolder.show();
                     Helper.queryProxy.listJobs(this.renderJobListInDropDown);
                 },
-                getSelecterTargetLocales: function () {
+                getSelectedTargetLocales: function () {
                     var locales = [];
-                    var checkedLocales = $(".job-wizard .mcheck:checkbox:checked");
-                    checkedLocales.each(
-                        function (e) {
-                            locales.push($(checkedLocales[e]).attr("data-blog-id"));
+                    $(".job-wizard .mcheck:checkbox:checked").each(
+                        function (i, e) {
+                            locales.push($(e).attr("data-blog-id"));
                         }
                     );
                     locales = locales.join(",");
@@ -524,7 +523,7 @@ if ($post instanceof WP_Post) {
                             }
                         }
 
-                        var locales = Helper.ui.getSelecterTargetLocales();
+                        var locales = Helper.ui.getSelectedTargetLocales();
 
                         var createHiddenInput = function (name, value) {
                             return createInput("hidden", name, value);
@@ -668,22 +667,9 @@ if ($post instanceof WP_Post) {
                 var name = $("#name-sm").val();
                 var description = $("#description-sm").val();
                 var dueDate = $("#dueDate").val();
-                var locales = [];
+                var locales = Helper.ui.getSelectedTargetLocales();
                 var authorize = $(".authorize:checked").length > 0;
 
-                if (!handleRelationsManually || isBulkSubmitPage) {
-                    var checkedLocales = $(".job-wizard .mcheck:checkbox:checked");
-
-                    checkedLocales.each(
-                        function (e) {
-                            locales.push($(checkedLocales[e]).attr("data-blog-id"));
-                        }
-                    );
-                } else {
-                    locales = [$("#targetBlogId").val()];
-                }
-
-                locales = locales.join(",");
                 $("#error-messages").html("");
 
                 Helper.queryProxy.createJob(name, description, dueDate, locales, authorize, timezone, function (data) {
