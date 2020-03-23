@@ -58,6 +58,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 1.12.3 =
+Fixed issue with locale labels in locale selection wizard when Multilingual Press locale is unknown
+
 = 1.12.2 =
 Fixed issue with creating a new job from the `Post Edit` screen
 

@@ -38,6 +38,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
      * table name
      */
     const ML_CONTENT_LINK_TABLE = 'multilingual_linked';
+    const UNKNOWN_LOCALE = '';
 
     /**
      * @var wpdb
@@ -77,7 +78,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
                     if (array_key_exists('lang', $item)) {
                         $temp['lang'] = $item['lang'];
                     } else {
-                        $temp['lang'] = 'unknown';
+                        $temp['lang'] = self::UNKNOWN_LOCALE;
                     }
                     static::$_blogLocalesCache[$blogId] = $temp;
                 }
@@ -117,9 +118,7 @@ class MultiligualPressConnector extends LocalizationPluginAbstract
         if (array_key_exists($blogId, static::$_blogLocalesCache)) {
             $locale = static::$_blogLocalesCache[$blogId];
         } else {
-            //$message = vsprintf('The blog %s is not configured in multilingual press plugin', [$blogId]);
-            // $this->getLogger()->warning($message);
-            $locale = ['lang' => 'unknown'];
+            $locale = ['lang' => self::UNKNOWN_LOCALE];
         }
 
         return $locale['lang'];
