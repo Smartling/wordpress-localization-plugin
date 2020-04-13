@@ -385,7 +385,7 @@ class Bootstrap
                 }
             }
         } else {
-            static::getLogger()->warning('No cached information found about updates. Requesting info...');
+            static::getLogger()->debug('No cached information found about updates. Requesting info...');
             if (!function_exists('plugins_api')) {
                 require_once(ABSPATH . 'wp-admin/includes/plugin-install.php');
             }
@@ -408,7 +408,7 @@ class Bootstrap
                     site_url('/wp-admin/network/plugins.php?s=smartling+connector&plugin_status=all'),
                 ]);
 
-            static::$loggerInstance->warning($mainMessage);
+            static::$loggerInstance->debug($mainMessage);
             DiagnosticsHelper::addDiagnosticsMessage($mainMessage, false);
         }
     }
