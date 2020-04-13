@@ -16,7 +16,6 @@ use Smartling\MonologWrapper\MonologWrapper;
  */
 class SiteHelper
 {
-
     /**
      * @var LoggerInterface
      */
@@ -46,12 +45,12 @@ class SiteHelper
     }
 
     /**
-     * @var array
+     * @var int[][]
      */
     protected static $_siteCache = [];
 
     /**
-     * @var array
+     * @var int[]
      */
     protected static $_flatBlogIdCache = [];
 
@@ -74,14 +73,14 @@ class SiteHelper
             $sites = get_sites(['number' => 1000]);
             foreach ($sites as $site) {
 
-                static::$_siteCache[$site->site_id][] = $site->blog_id;
+                static::$_siteCache[$site->site_id][] = (int)$site->blog_id;
                 static::$_flatBlogIdCache[] = (int)$site->blog_id;
             }
         }
     }
 
     /**
-     * @return array
+     * @return int[]
      * @throws SmartlingDirectRunRuntimeException
      */
     public function listSites()
@@ -97,7 +96,7 @@ class SiteHelper
     /**
      * @param int $siteId
      *
-     * @return array
+     * @return int[]
      * @throws SmartlingDirectRunRuntimeException
      * @throws InvalidArgumentException
      */
@@ -294,5 +293,4 @@ class SiteHelper
     {
         return $this->logger;
     }
-
 }
