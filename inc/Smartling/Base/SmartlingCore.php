@@ -25,6 +25,7 @@ class SmartlingCore extends SmartlingCoreAbstract
 
     public function __construct()
     {
+        echo "<!-- :) -->";
         parent::__construct();
 
         add_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, [$this, 'sendForTranslationBySubmission']);
