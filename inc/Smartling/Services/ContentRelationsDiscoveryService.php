@@ -9,6 +9,7 @@ use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
+use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\MetaFieldProcessor\DefaultMetaFieldProcessor;
@@ -460,6 +461,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 $submissionTemplateArray = array_merge($submissionTemplateArray, [
                     SubmissionEntity::FIELD_STATUS    => SubmissionEntity::SUBMISSION_STATUS_NEW,
                     SubmissionEntity::FIELD_BATCH_UID => $batchUid,
+                    SubmissionEntity::FIELD_SUBMISSION_DATE => DateTimeHelper::nowAsString(),
                 ]);
 
                 foreach ($sources as $source) {
