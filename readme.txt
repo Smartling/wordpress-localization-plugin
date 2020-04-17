@@ -59,7 +59,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 1.12.5 =
-Minor fix
+Fixed issue where a content linking error causes a wordpress critical error message
 
 = 1.12.4 =
 * Fixed time submitted display on translation progress page
