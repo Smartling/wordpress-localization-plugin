@@ -158,8 +158,12 @@ trait SmartlingCoreTrait
             $submission = $this->getSubmissionManager()->storeEntity($submission);
         }
 
-        $this->getMultilangProxy()->linkObjects($submission);
-
+        try {
+            $this->getMultilangProxy()->linkObjects($submission);
+        } catch (\Error $e) {
+            $this->getLogger()->notice("Caught exception while trying to link objects for submission {$submission->getId()}. " .
+                "Error was: {$e->getMessage()}");
+        }
 
         if ('attachment' === $submission->getContentType()) {
             do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $submission);
