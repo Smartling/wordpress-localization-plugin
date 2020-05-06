@@ -11,6 +11,7 @@ use Smartling\Exception\InvalidXMLException;
 use Smartling\Exception\NothingFoundForTranslationException;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DateTimeHelper;
@@ -268,6 +269,10 @@ trait SmartlingCoreUploadTrait
             do_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
             if (array_key_exists('entity', $translation) && ArrayHelper::notEmpty($translation['entity'])) {
                 $translation['entity'] = self::arrayMergeIfKeyNotExists($lockedData['entity'], $translation['entity']);
+                $acf = AcfDynamicSupport::getAcf();
+                if ($acf !== null && version_compare($acf->version, '5.8.0') >= 0) {
+                    $translation['entity']['post_content'] = AcfDynamicSupport::prepareGutenbergBlocks($translation['entity']['post_content']);
+                }
                 $this->setValues($targetContent, $translation['entity']);
             }
             /**
