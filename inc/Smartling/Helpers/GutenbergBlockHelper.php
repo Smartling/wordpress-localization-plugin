@@ -303,7 +303,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
      */
     public function renderGutenbergBlock($name, array $attrs = [], array $chunks = [])
     {
-        $attributes = 0 < count($attrs) ? ' ' . json_encode($attrs, JSON_UNESCAPED_UNICODE) : '';
+        $attributes = 0 < count($attrs) ? ' ' . json_encode($attrs, JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT) : '';
         $content = implode('', $chunks);
         return ('' !== $content)
             ? vsprintf('<!-- wp:%s%s -->%s<!-- /wp:%s -->', [$name, $attributes, $content, $name])

@@ -346,7 +346,7 @@ class GutenbergBlockHelperTest extends TestCase
                 'acf/offset-impact',
                 ['data' => ['content' => '<h2 id="cleaning-measures">d\'hygiène</h2>']],
                 [],
-                '<!-- wp:acf/offset-impact {"data":{"content":"<h2 id=\"cleaning-measures\">d\'hygiène<\/h2>"}} /-->',
+                '<!-- wp:acf/offset-impact {"data":{"content":"<h2 id=\u0022cleaning-measures\u0022>d\'hygiène<\/h2>"}} /-->',
             ]
         ];
     }
