@@ -5,6 +5,7 @@ namespace Smartling\Extensions\Acf;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
+use Smartling\Exception\SmartlingConfigException;
 use Smartling\Extensions\AcfOptionPages\ContentTypeAcfOption;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\EntityHelper;
@@ -40,6 +41,8 @@ class AcfDynamicSupport
         'translate' => [],
     ];
 
+    private $filters = [];
+
     /**
      * @return LoggerInterface
      */
@@ -73,29 +76,18 @@ class AcfDynamicSupport
     }
 
     /**
-     * @return \ACF|null
+     * @return mixed
+     * @throws SmartlingConfigException
      */
-    public static function getAcf()
+    private function getAcf()
     {
-        if (function_exists('acf')) {
-            return acf();
+        global $acf;
+
+        if (!isset($acf)) {
+            throw new SmartlingConfigException('ACF plugin is not installed or activated.');
+        } else {
+            return $acf;
         }
-
-        return null;
-    }
-
-    /**
-     * @param string $text
-     * @return string
-     */
-    public static function prepareGutenbergBlocks($text) {
-        return preg_replace_callback(
-            '/<!--\s+wp:(?P<name>[\S]+)\s+(?P<attrs>{[\S\s]+?})\s+(?P<void>\/)?-->/',
-            function (array $matches) {
-                return addslashes($matches[0]);
-            },
-            $text
-        );
     }
 
     /**
@@ -343,17 +335,16 @@ class AcfDynamicSupport
      */
     private function getLocalDefinitionsOld()
     {
-        $acf = self::getAcf();
+        $acf  = null;
         $defs = [];
-
-        if ($acf === null) {
-            $this->getLogger()->info('ACF plugin is not installed or activated.');
-            $this->getLogger()->info('Unable to load old type local ACF definitions.');
+        try {
+            $acf = (array)$this->getAcf();
+        } catch (SmartlingConfigException $e) {
+            $this->getLogger()->warning($e->getMessage());
+            $this->getLogger()->warning('Unable to load old type local ACF definitions.');
 
             return $defs;
         }
-
-        $acf = (array)$acf;
 
         if (array_key_exists('local', $acf)) {
             if ($acf['local'] instanceof \acf_local) {
@@ -671,4 +662,6 @@ class AcfDynamicSupport
     {
         return in_array('acf_option_page', $this->getPostTypes(), true);
     }
+
+
 }
