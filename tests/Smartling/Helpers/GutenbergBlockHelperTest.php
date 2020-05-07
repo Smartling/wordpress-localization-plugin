@@ -269,15 +269,7 @@ class GutenbergBlockHelperTest extends TestCase
      */
     public function testRenderGutenbergBlock($blockName, array $attributes, array $chunks, $expected)
     {
-        $actual = $this->helper->renderGutenbergBlock($blockName, $attributes, $chunks);
-        self::assertEquals($expected, $actual);
-        $matches = [];
-        preg_match_all(
-            '/<!--\s+wp:(?P<name>[\S]+)\s+(?P<attrs>{[\S\s]+?})\s+(?P<void>\/)?-->/',
-            $actual,
-            $matches
-        );
-        self::assertNotNull(json_decode(stripslashes($matches['attrs'][0]), true));
+        self::assertEquals($expected, $this->helper->renderGutenbergBlock($blockName, $attributes, $chunks));
     }
 
     /**
@@ -342,12 +334,6 @@ class GutenbergBlockHelperTest extends TestCase
                 [],
                 '<!-- wp:acf/test {"data":{"copy":"Pronto para reservar seu pr\\\\u00f3ximo evento?"}} /-->'
             ],
-            'quotes' => [
-                'acf/offset-impact',
-                ['data' => ['content' => '<h2 id="cleaning-measures">d\'hygiène</h2>']],
-                [],
-                '<!-- wp:acf/offset-impact {"data":{"content":"<h2 id=\u0022cleaning-measures\u0022>d\'hygiène<\/h2>"}} /-->',
-            ]
         ];
     }
 
