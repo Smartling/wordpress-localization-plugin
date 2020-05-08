@@ -59,7 +59,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 1.12.6 =
-Improve translation support of ACF Blocks for Gutenberg
+Improved translation support of ACF Blocks for Gutenberg
 
 = 1.12.5 =
 Fixed issue where a content linking error causes a wordpress critical error message
