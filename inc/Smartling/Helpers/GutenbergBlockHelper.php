@@ -305,9 +305,15 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     {
         $attributes = 0 < count($attrs) ? ' ' . json_encode($attrs, JSON_UNESCAPED_UNICODE) : '';
         $content = implode('', $chunks);
-        return ('' !== $content)
+        $result = ('' !== $content)
             ? vsprintf('<!-- wp:%s%s -->%s<!-- /wp:%s -->', [$name, $attributes, $content, $name])
             : vsprintf('<!-- wp:%s%s /-->', [$name, $attributes]);
+
+        if ((function_exists('acf_parse_save_blocks') && function_exists('acf_has_block_type')) && acf_has_block_type($name)) {
+            $result = addslashes($result);
+        }
+
+        return $result;
     }
 
     /**
