@@ -5,6 +5,7 @@ namespace Smartling\Jobs;
 use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Exception\FrontendSafeException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\OptionHelper;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
@@ -251,6 +252,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         $transactionManager = new TransactionManager($db);
         $transactionManager->setAutocommit(0);
         $allowedToRun = false;
+        $message = null;
         try {
             $transactionManager->transactionStart();
             $result = $transactionManager->executeSelectForUpdate($query);
@@ -272,16 +274,15 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
                 if ($allowedToRun) {
                     $this->placeLockFlag();
                 } else {
-                    $this->getLogger()->debug(
-                        vsprintf(
-                            'Cron \'%s\' is not allowed to run. TTL=%s has not expired yet. Expecting TTL expiration in %s seconds.',
-                            [
-                                $this->getJobHookName(),
-                                $this->getWorkerTTL(),
-                                $flagTS - time(),
-                            ]
-                        )
+                    $message = vsprintf(
+                        'Cron \'%s\' is not allowed to run. TTL=%s has not expired yet. Expecting TTL expiration in %s seconds.',
+                        [
+                            $this->getJobHookName(),
+                            $this->getWorkerTTL(),
+                            $flagTS - time(),
+                        ]
                     );
+                    $this->getLogger()->debug($message);
                 }
             }
         } catch (\Exception $e) {
@@ -293,6 +294,8 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
             if ($allowedToRun) {
                 $this->run();
                 $this->dropLockFlag();
+            } elseif ($message !== null) {
+                throw new FrontendSafeException($message);
             }
         }
     }

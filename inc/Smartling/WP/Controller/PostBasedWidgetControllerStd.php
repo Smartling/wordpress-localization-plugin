@@ -4,6 +4,7 @@ namespace Smartling\WP\Controller;
 
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
+use Smartling\Exception\FrontendSafeException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
@@ -131,9 +132,12 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             $result = [];
             try {
                 do_action(DownloadTranslationJob::JOB_HOOK_NAME);
-                $result['status'] = 'SUCCESS';
+                $result['status'] = self::RESPONSE_AJAX_STATUS_SUCCESS;
             } catch (\Exception $e) {
-                $result['status'] = 'FAIL';
+                $result['status'] = self::RESPONSE_AJAX_STATUS_FAIL;
+                if ($e instanceof FrontendSafeException) {
+                    $result['message'] = $e->getMessage();
+                }
             }
             wp_send_json($result);
         }

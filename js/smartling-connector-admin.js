@@ -301,7 +301,11 @@ jQuery(document).ready(function () {
                                 wp.data.dispatch("core/notices").createSuccessNotice("Translations downloaded.");
                                 break;
                             case "FAIL":
-                                wp.data.dispatch("core/notices").createErrorNotice("Translations download failed.");
+                                let message = "Translations download failed.";
+                                if (data.message) {
+                                    message += "\n" + data.message;
+                                }
+                                wp.data.dispatch("core/notices").createErrorNotice(message);
                                 break;
                             default:
                         }
