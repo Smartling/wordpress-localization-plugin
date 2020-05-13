@@ -212,7 +212,10 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         SimpleStorageHelper::drop($this->getCronFlagName());
     }
 
-    public function runCronJob()
+    /**
+     * @param string $source
+     */
+    public function runCronJob($source = '')
     {
         $this->getLogger()->debug(
             vsprintf(
@@ -224,10 +227,13 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
             )
         );
 
-        $this->tryRunJob();
+        $this->tryRunJob($source);
     }
 
-    private function tryRunJob()
+    /**
+     * @param string $source
+     */
+    private function tryRunJob($source)
     {
         /**
          * @var SmartlingToCMSDatabaseAccessWrapperInterface $db
@@ -288,13 +294,14 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         } catch (\Exception $e) {
             $this->getLogger()->warn(vsprintf('Cron job %s execution failed: %s', [$this->getJobHookName(),
                                                                                    $e->getMessage()]));
+            $message = $e->getMessage();
         } finally {
             $transactionManager->transactionCommit();
             $transactionManager->setAutocommit(1);
             if ($allowedToRun) {
                 $this->run();
                 $this->dropLockFlag();
-            } elseif ($message !== null) {
+            } elseif ($source === DownloadTranslationJob::SOURCE_FRONTEND && $message !== null) {
                 throw new FrontendSafeException($message);
             }
         }
@@ -310,6 +317,4 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
             add_action($this->getJobHookName(), [$this, 'runCronJob']);
         }
     }
-
-
 }

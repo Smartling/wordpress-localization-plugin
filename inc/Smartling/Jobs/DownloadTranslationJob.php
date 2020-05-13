@@ -15,6 +15,8 @@ class DownloadTranslationJob extends JobAbstract
 {
     const JOB_HOOK_NAME = 'smartling-download-task';
 
+    const SOURCE_FRONTEND = 'frontend';
+
     /**
      * @var Queue
      */

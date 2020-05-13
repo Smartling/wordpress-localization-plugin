@@ -131,7 +131,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             }
             $result = [];
             try {
-                do_action(DownloadTranslationJob::JOB_HOOK_NAME);
+                do_action(DownloadTranslationJob::JOB_HOOK_NAME, DownloadTranslationJob::SOURCE_FRONTEND);
                 $result['status'] = self::RESPONSE_AJAX_STATUS_SUCCESS;
             } catch (\Exception $e) {
                 $result['status'] = self::RESPONSE_AJAX_STATUS_FAIL;
