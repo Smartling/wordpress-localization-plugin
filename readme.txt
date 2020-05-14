@@ -101,4 +101,4 @@ The new toggle can be found in `Smartling` -> `Settings` -> `Show Expert Setting
 = 1.11.0 =
 * Added extension to manage shortcodes and filters to be handled by smartling-connector.
 
-Older entries in changelog.txt
+Old entries moved to changelog.txt
