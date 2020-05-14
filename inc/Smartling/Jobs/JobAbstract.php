@@ -5,7 +5,6 @@ namespace Smartling\Jobs;
 use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
-use Smartling\Exception\FrontendSafeException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\OptionHelper;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
@@ -21,6 +20,7 @@ use Smartling\WP\WPInstallableInterface;
 
 abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallableInterface
 {
+    const SOURCE_USER = 'user';
     /**
      * The default TTL for workers in seconds (5 minutes)
      */
@@ -45,6 +45,8 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
      * @var SubmissionManager
      */
     private $submissionManager;
+
+    private $transactionManager;
 
     /**
      * @return string
@@ -111,13 +113,18 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
      * JobAbstract constructor.
      *
      * @param SubmissionManager $submissionManager
-     * @param int               $workerTTL
+     * @param TransactionManager $transactionManager
+     * @param int $workerTTL
      */
-    public function __construct(SubmissionManager $submissionManager, $workerTTL = self::WORKER_DEFAULT_TTL)
-    {
+    public function __construct(
+        SubmissionManager $submissionManager,
+        TransactionManager $transactionManager,
+        $workerTTL = self::WORKER_DEFAULT_TTL
+    ) {
         $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->setSubmissionManager($submissionManager);
         $this->setWorkerTTL($workerTTL);
+        $this->transactionManager = $transactionManager;
     }
 
     private function getInstalledCrons()
@@ -235,33 +242,13 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
      */
     private function tryRunJob($source)
     {
-        /**
-         * @var SmartlingToCMSDatabaseAccessWrapperInterface $db
-         */
-        $db = Bootstrap::getContainer()->get('site.db');
-
-        $block = ConditionBlock::getConditionBlock();
-        $block->addCondition(
-            Condition::getCondition(
-                ConditionBuilder::CONDITION_SIGN_EQ,
-                'meta_key',
-                [$this->getCronFlagName()]
-            )
-        );
-        $query = QueryBuilder::buildSelectQuery(
-            $db->completeTableName('sitemeta'),
-            [
-                ['meta_value' => 'ts'],
-            ],
-            $block);
-
-        $transactionManager = new TransactionManager($db);
-        $transactionManager->setAutocommit(0);
+        $this->transactionManager->setAutocommit(0);
         $allowedToRun = false;
+        $exception = null;
         $message = null;
         try {
-            $transactionManager->transactionStart();
-            $result = $transactionManager->executeSelectForUpdate($query);
+            $this->transactionManager->transactionStart();
+            $result = $this->transactionManager->executeSelectForUpdate($this->buildSelectQuery());
             if (null !== $result) {
                 $currentTS = time();
                 $flagTS = (0 < count($result)) ? (int)$result[0]['ts'] : 0;
@@ -291,18 +278,24 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
                     $this->getLogger()->debug($message);
                 }
             }
-        } catch (\Exception $e) {
-            $this->getLogger()->warn(vsprintf('Cron job %s execution failed: %s', [$this->getJobHookName(),
-                                                                                   $e->getMessage()]));
-            $message = $e->getMessage();
+        } catch (\Exception $exception) {
+            $this->getLogger()->warn(vsprintf(
+                'Cron job %s execution failed: %s',
+                [$this->getJobHookName(), $exception->getMessage()])
+            );
+            $message = $exception->getMessage();
         } finally {
-            $transactionManager->transactionCommit();
-            $transactionManager->setAutocommit(1);
+            $this->transactionManager->transactionCommit();
+            $this->transactionManager->setAutocommit(1);
             if ($allowedToRun) {
                 $this->run();
                 $this->dropLockFlag();
-            } elseif ($source === DownloadTranslationJob::SOURCE_FRONTEND && $message !== null) {
-                throw new FrontendSafeException($message);
+            } elseif ($source === self::SOURCE_USER && $message !== null) {
+                if ($exception !== null) {
+                    throw $exception;
+                }
+
+                throw new \RuntimeException($message);
             }
         }
     }
@@ -316,5 +309,27 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         if (!DiagnosticsHelper::isBlocked()) {
             add_action($this->getJobHookName(), [$this, 'runCronJob']);
         }
+    }
+
+    /**
+     * @return string
+     */
+    public function buildSelectQuery()
+    {
+        $block = ConditionBlock::getConditionBlock();
+        $block->addCondition(
+            Condition::getCondition(
+                ConditionBuilder::CONDITION_SIGN_EQ,
+                'meta_key',
+                [$this->getCronFlagName()]
+            )
+        );
+        return QueryBuilder::buildSelectQuery(
+            Bootstrap::getContainer()->get('site.db')->completeTableName('sitemeta'),
+            [
+                ['meta_value' => 'ts'],
+            ],
+            $block
+        );
     }
 }

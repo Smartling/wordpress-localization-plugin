@@ -59,8 +59,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 1.12.7 =
-* Fixed issue where downloading content in Smartling widget erroneously reports that translations were downloaded even if they weren't
-* Moved older changelog entries to changelog.txt
+* Fixed issue when Smartling widget erroneously reported that translations were downloaded even if they weren't
 
 = 1.12.6 =
 Improved translation support of ACF Blocks for Gutenberg
@@ -101,3 +100,5 @@ The new toggle can be found in `Smartling` -> `Settings` -> `Show Expert Setting
 
 = 1.11.0 =
 * Added extension to manage shortcodes and filters to be handled by smartling-connector.
+
+Older entries in changelog.txt

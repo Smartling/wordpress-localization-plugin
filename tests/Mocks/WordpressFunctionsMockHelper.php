@@ -94,6 +94,16 @@ namespace {
             }
         }
 
+        if (!function_exists('update_site_option')) {
+            function update_site_option($key, $value) {
+            }
+        }
+
+        if (!function_exists('delete_site_option')) {
+            function delete_site_option($key) {
+            }
+        }
+
         if (!function_exists('is_wp_error')) {
             function is_wp_error($something)
             {

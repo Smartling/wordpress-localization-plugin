@@ -6,6 +6,7 @@ use Smartling\ApiWrapperInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\QueryBuilder\TransactionManager;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
@@ -62,8 +63,21 @@ class UploadJob extends JobAbstract
         $this->settingsManager = $settingsManager;
     }
 
-    public function __construct(SubmissionManager $submissionManager, $workerTTL, ApiWrapperInterface $api, SettingsManager $settingsManager) {
-        parent::__construct($submissionManager, $workerTTL);
+    /**
+     * @param SubmissionManager $submissionManager
+     * @param int $workerTTL
+     * @param ApiWrapperInterface $api
+     * @param SettingsManager $settingsManager
+     * @param TransactionManager $transactionManager
+     */
+    public function __construct(
+        SubmissionManager $submissionManager,
+        $workerTTL,
+        ApiWrapperInterface $api,
+        SettingsManager $settingsManager,
+        TransactionManager $transactionManager
+    ) {
+        parent::__construct($submissionManager, $transactionManager, $workerTTL);
 
         $this->setApi($api);
         $this->setSettingsManager($settingsManager);

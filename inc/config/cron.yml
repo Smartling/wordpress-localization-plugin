@@ -13,6 +13,11 @@ services:
       - [ "registerInterval", [ "10m", 600, "Every 10 minutes" ] ]
       - [ "registerInterval", [ "15m", 900, "Every 15 minutes" ] ]
 
+  cron.transaction.manager:
+    class: Smartling\Helpers\QueryBuilder\TransactionManager
+    arguments:
+      - "@site.db"
+
   #
   # Cron worker that sends submissions with status New to Smartling
   #
@@ -23,6 +28,7 @@ services:
       - "%cron.job.default_ttl%"
       - "@wrapper.sdk.api.smartling"
       - "@manager.settings"
+      - "@cron.transaction.manager"
     calls:
       - [ "setJobRunInterval", [ %cron.interval.upload% ] ]
 
@@ -34,6 +40,7 @@ services:
     class: Smartling\Jobs\SubmissionCollectorJob
     arguments:
       - "@manager.submission"
+      - "@cron.transaction.manager"
       - "%cron.job.default_ttl%"
     calls:
       - [ "setJobRunInterval", [ %cron.interval.group.submission% ] ]
@@ -48,6 +55,7 @@ services:
     class: Smartling\Jobs\LastModifiedCheckJob
     arguments:
       - "@manager.submission"
+      - "@cron.transaction.manager"
       - "%cron.job.default_ttl%"
     calls:
       - [ "setJobRunInterval", [ %cron.interval.last-modified-check% ] ]
@@ -63,6 +71,7 @@ services:
     class: Smartling\Jobs\DownloadTranslationJob
     arguments:
       - "@manager.submission"
+      - "@cron.transaction.manager"
       - "%cron.job.default_ttl%"
     calls:
       - [ "setJobRunInterval", [ %cron.interval.download% ] ]

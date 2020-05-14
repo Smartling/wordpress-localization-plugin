@@ -5,7 +5,6 @@ namespace Smartling\Jobs;
 use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Queue\Queue;
-use Smartling\Submissions\SubmissionManager;
 
 /**
  * Class DownloadTranslationJob
@@ -14,8 +13,6 @@ use Smartling\Submissions\SubmissionManager;
 class DownloadTranslationJob extends JobAbstract
 {
     const JOB_HOOK_NAME = 'smartling-download-task';
-
-    const SOURCE_FRONTEND = 'frontend';
 
     /**
      * @var Queue
@@ -47,7 +44,7 @@ class DownloadTranslationJob extends JobAbstract
     }
 
     /**
-     * @return executes job
+     * @return void
      */
     public function run()
     {
