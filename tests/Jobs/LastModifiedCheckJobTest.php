@@ -3,8 +3,8 @@
 namespace Smartling\Tests\Jobs;
 
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
+use Smartling\Helpers\QueryBuilder\TransactionManager;
 use Smartling\Jobs\LastModifiedCheckJob;
 use Smartling\Queue\Queue;
 use Smartling\Settings\SettingsManager;
@@ -132,7 +132,7 @@ class LastModifiedCheckJobTest extends TestCase
     }
 
     /**
-     * @return SettingsManager
+     * @return SettingsManager|\PHPUnit_Framework_MockObject_MockObject
      */
     public function getSettingsManager()
     {
@@ -187,9 +187,13 @@ class LastModifiedCheckJobTest extends TestCase
      */
     private function getWorkerMock(SubmissionManager $submissionManager, ApiWrapperInterface $apiWrapper, Queue $queue)
     {
-        $worker = $this->getMockBuilder('Smartling\Jobs\LastModifiedCheckJob')
+        $transactionManager = $this->getMockBuilder(TransactionManager::class)
+            ->setConstructorArgs([$this->mockDbAl()])
+            ->setMethods(['executeSelectForUpdate'])
+            ->getMock();
+        $worker = $this->getMockBuilder(LastModifiedCheckJob::class)
             ->setMethods(['prepareSubmissionList'])
-            ->setConstructorArgs([$submissionManager])
+            ->setConstructorArgs([$submissionManager, $transactionManager])
             ->getMock();
 
         $worker->setApiWrapper($apiWrapper);
@@ -228,22 +232,22 @@ class LastModifiedCheckJobTest extends TestCase
                     foreach ($submissionList as & $submissionArray) {
                         $submissionArray = SubmissionEntity::fromArray($submissionArray, $this->getLogger());
                     }
+                    unset ($submissionArray);
 
                     $this->getSubmissionManager()
-                        ->expects(self::any())
                         ->method('findByIds')
                         ->with($dequeued)
                         ->willReturn($submissionList);
 
                     $unserializedSubmissions = $this->getSubmissionManager()->findByIds($dequeued);
 
-                    $worker->expects(self::any())
+                    $worker
                         ->method('prepareSubmissionList')
                         ->with($unserializedSubmissions)
                         ->willReturn($this->emulatePrepareSubmissionList($unserializedSubmissions));
 
                     $this->getApiWrapper()
-                        ->expects(self::exactly(1))
+                        ->expects(self::once())
                         ->method('lastModified')
                         ->with(reset($unserializedSubmissions))
                         ->willReturn($lastModifiedResponse);
@@ -260,12 +264,11 @@ class LastModifiedCheckJobTest extends TestCase
 
         // emulate Saving
         $this->getSubmissionManager()
-            ->expects(self::any())
             ->method('storeSubmissions')
             ->will(self::returnArgument(0));
 
         $sm = $this->getSettingsManager();
-        $sm->expects(self::any())->method('getSingleSettingsProfile')->willReturn(false);
+        $sm->method('getSingleSettingsProfile')->willReturn(false);
 
         $worker->setSettingsManager($sm);
 
