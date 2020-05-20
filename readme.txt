@@ -94,6 +94,7 @@ The new toggle can be found in `Smartling` -> `Settings` -> `Show Expert Setting
 
 = 1.11.2 =
 * Fixed issue with download button at post edit page.
+* Fixed issue with daily bucket jobs being created when active profile is set to manual upload
 
 = 1.11.1 =
 * Added required third-party libraries

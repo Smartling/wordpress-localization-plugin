@@ -7,7 +7,6 @@ use Smartling\Base\ExportedAPI;
 use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\QueryBuilder\TransactionManager;
-use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -144,9 +143,13 @@ class UploadJob extends JobAbstract
     private function setBatchUidForItemsInUploadQueue() {
         // Daily bucket job.
         foreach ($this->getSettingsManager()->getActiveProfiles() as $activeProfile) {
-            /**
-             * @var ConfigurationProfileEntity $activeProfile.
-             */
+            if ($activeProfile->getUploadOnUpdate() === 0) {
+                $this->getLogger()->debug(sprintf(
+                    "Skipping profile projectId: %s for daily bucket job processing",
+                    $activeProfile->getProjectId()
+                ));
+                continue;
+            }
             $originalBlogId = $activeProfile->getOriginalBlogId()->getBlogId();
             $entities = $this->getSubmissionManager()->find(
                 [

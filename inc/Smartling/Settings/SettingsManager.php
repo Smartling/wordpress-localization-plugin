@@ -50,6 +50,9 @@ class SettingsManager extends EntityManagerAbstract
         return $result;
     }
 
+    /**
+     * @return ConfigurationProfileEntity[]
+     */
     public function getActiveProfiles()
     {
         $cnt = 0;
