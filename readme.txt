@@ -60,6 +60,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 = 1.12.7 =
 * Fixed issue when Smartling widget erroneously reported that translations were downloaded even if they weren't
+* Fixed issue with daily bucket jobs being created when active profile is set to manual upload
 
 = 1.12.6 =
 Improved translation support of ACF Blocks for Gutenberg
@@ -94,7 +95,6 @@ The new toggle can be found in `Smartling` -> `Settings` -> `Show Expert Setting
 
 = 1.11.2 =
 * Fixed issue with download button at post edit page.
-* Fixed issue with daily bucket jobs being created when active profile is set to manual upload
 
 = 1.11.1 =
 * Added required third-party libraries
