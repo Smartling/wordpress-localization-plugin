@@ -20,6 +20,7 @@ use Smartling\WP\WPInstallableInterface;
 
 abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallableInterface
 {
+    const SOURCE_USER = 'user';
     /**
      * The default TTL for workers in seconds (5 minutes)
      */
@@ -44,6 +45,8 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
      * @var SubmissionManager
      */
     private $submissionManager;
+
+    private $transactionManager;
 
     /**
      * @return string
@@ -110,13 +113,18 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
      * JobAbstract constructor.
      *
      * @param SubmissionManager $submissionManager
-     * @param int               $workerTTL
+     * @param TransactionManager $transactionManager
+     * @param int $workerTTL
      */
-    public function __construct(SubmissionManager $submissionManager, $workerTTL = self::WORKER_DEFAULT_TTL)
-    {
+    public function __construct(
+        SubmissionManager $submissionManager,
+        TransactionManager $transactionManager,
+        $workerTTL = self::WORKER_DEFAULT_TTL
+    ) {
         $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->setSubmissionManager($submissionManager);
         $this->setWorkerTTL($workerTTL);
+        $this->transactionManager = $transactionManager;
     }
 
     private function getInstalledCrons()
@@ -211,7 +219,10 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         SimpleStorageHelper::drop($this->getCronFlagName());
     }
 
-    public function runCronJob()
+    /**
+     * @param string $source
+     */
+    public function runCronJob($source = '')
     {
         $this->getLogger()->debug(
             vsprintf(
@@ -223,37 +234,21 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
             )
         );
 
-        $this->tryRunJob();
+        $this->tryRunJob($source);
     }
 
-    private function tryRunJob()
+    /**
+     * @param string $source
+     */
+    private function tryRunJob($source)
     {
-        /**
-         * @var SmartlingToCMSDatabaseAccessWrapperInterface $db
-         */
-        $db = Bootstrap::getContainer()->get('site.db');
-
-        $block = ConditionBlock::getConditionBlock();
-        $block->addCondition(
-            Condition::getCondition(
-                ConditionBuilder::CONDITION_SIGN_EQ,
-                'meta_key',
-                [$this->getCronFlagName()]
-            )
-        );
-        $query = QueryBuilder::buildSelectQuery(
-            $db->completeTableName('sitemeta'),
-            [
-                ['meta_value' => 'ts'],
-            ],
-            $block);
-
-        $transactionManager = new TransactionManager($db);
-        $transactionManager->setAutocommit(0);
+        $this->transactionManager->setAutocommit(0);
         $allowedToRun = false;
+        $exception = null;
+        $message = null;
         try {
-            $transactionManager->transactionStart();
-            $result = $transactionManager->executeSelectForUpdate($query);
+            $this->transactionManager->transactionStart();
+            $result = $this->transactionManager->executeSelectForUpdate($this->buildSelectQuery());
             if (null !== $result) {
                 $currentTS = time();
                 $flagTS = (0 < count($result)) ? (int)$result[0]['ts'] : 0;
@@ -272,27 +267,35 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
                 if ($allowedToRun) {
                     $this->placeLockFlag();
                 } else {
-                    $this->getLogger()->debug(
-                        vsprintf(
-                            'Cron \'%s\' is not allowed to run. TTL=%s has not expired yet. Expecting TTL expiration in %s seconds.',
-                            [
-                                $this->getJobHookName(),
-                                $this->getWorkerTTL(),
-                                $flagTS - time(),
-                            ]
-                        )
+                    $message = vsprintf(
+                        'Cron \'%s\' is not allowed to run. TTL=%s has not expired yet. Expecting TTL expiration in %s seconds.',
+                        [
+                            $this->getJobHookName(),
+                            $this->getWorkerTTL(),
+                            $flagTS - time(),
+                        ]
                     );
+                    $this->getLogger()->debug($message);
                 }
             }
-        } catch (\Exception $e) {
-            $this->getLogger()->warn(vsprintf('Cron job %s execution failed: %s', [$this->getJobHookName(),
-                                                                                   $e->getMessage()]));
+        } catch (\Exception $exception) {
+            $this->getLogger()->warn(vsprintf(
+                'Cron job %s execution failed: %s',
+                [$this->getJobHookName(), $exception->getMessage()])
+            );
+            $message = $exception->getMessage();
         } finally {
-            $transactionManager->transactionCommit();
-            $transactionManager->setAutocommit(1);
+            $this->transactionManager->transactionCommit();
+            $this->transactionManager->setAutocommit(1);
             if ($allowedToRun) {
                 $this->run();
                 $this->dropLockFlag();
+            } elseif ($source === self::SOURCE_USER && $message !== null) {
+                if ($exception !== null) {
+                    throw $exception;
+                }
+
+                throw new \RuntimeException($message);
             }
         }
     }
@@ -308,5 +311,25 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         }
     }
 
-
+    /**
+     * @return string
+     */
+    public function buildSelectQuery()
+    {
+        $block = ConditionBlock::getConditionBlock();
+        $block->addCondition(
+            Condition::getCondition(
+                ConditionBuilder::CONDITION_SIGN_EQ,
+                'meta_key',
+                [$this->getCronFlagName()]
+            )
+        );
+        return QueryBuilder::buildSelectQuery(
+            Bootstrap::getContainer()->get('site.db')->completeTableName('sitemeta'),
+            [
+                ['meta_value' => 'ts'],
+            ],
+            $block
+        );
+    }
 }

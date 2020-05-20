@@ -130,10 +130,11 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             }
             $result = [];
             try {
-                do_action(DownloadTranslationJob::JOB_HOOK_NAME);
-                $result['status'] = 'SUCCESS';
+                do_action(DownloadTranslationJob::JOB_HOOK_NAME, DownloadTranslationJob::SOURCE_USER);
+                $result['status'] = self::RESPONSE_AJAX_STATUS_SUCCESS;
             } catch (\Exception $e) {
-                $result['status'] = 'FAIL';
+                $result['status'] = self::RESPONSE_AJAX_STATUS_FAIL;
+                $result['message'] = $e->getMessage();
             }
             wp_send_json($result);
         }
