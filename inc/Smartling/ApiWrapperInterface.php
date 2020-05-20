@@ -5,6 +5,7 @@ namespace Smartling;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
+use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -42,9 +43,9 @@ interface ApiWrapperInterface
 
     /**
      * @param SubmissionEntity $entity
-     * @param string           $xmlString
-     * @param string           $filename
-     * @param array            $smartlingLocaleList
+     * @param string $xmlString
+     * @param string $filename
+     * @param array $smartlingLocaleList
      *
      * @return bool
      * @throws SmartlingFileUploadException
@@ -93,7 +94,7 @@ interface ApiWrapperInterface
 
     /**
      * @param ConfigurationProfileEntity $profile
-     * @param array                      $params
+     * @param array $params
      *
      * @return array
      * @throws \Exception
@@ -113,9 +114,9 @@ interface ApiWrapperInterface
     public function updateJob(ConfigurationProfileEntity $profile, $jobId, $name, $description, $dueDate);
 
     /**
-     * @param \Smartling\Settings\ConfigurationProfileEntity $profile
+     * @param ConfigurationProfileEntity $profile
      * @param                                                $jobId
-     * @param bool                                           $authorize
+     * @param bool $authorize
      *
      * @return array
      * @throws SmartlingApiException
@@ -123,7 +124,7 @@ interface ApiWrapperInterface
     public function createBatch(ConfigurationProfileEntity $profile, $jobId, $authorize = false);
 
     /**
-     * @param \Smartling\Settings\ConfigurationProfileEntity $profile
+     * @param ConfigurationProfileEntity $profile
      * @param                                                $batchUid
      *
      * @throws SmartlingApiException
@@ -139,21 +140,31 @@ interface ApiWrapperInterface
 
     /**
      * @param ConfigurationProfileEntity $profile
-     * @param string                     $space
-     * @param string                     $object
-     * @param string                     $record
+     * @param string $space
+     * @param string $object
+     * @param string $record
      */
     public function deleteNotificationRecord(ConfigurationProfileEntity $profile, $space, $object, $record);
 
     /**
      * @param ConfigurationProfileEntity $profile
-     * @param string                     $space
-     * @param string                     $object
-     * @param string                     $record
-     * @param array                      $data
-     * @param int                        $ttl
+     * @param string $space
+     * @param string $object
+     * @param string $record
+     * @param array $data
+     * @param int $ttl
      *
      * @return array
      */
     public function setNotificationRecord(ConfigurationProfileEntity $profile, $space, $object, $record, $data = [], $ttl = 30);
+
+    /**
+     * Returns batch uid for a daily bucket job.
+     *
+     * @param ConfigurationProfileEntity $profile
+     * @param bool $authorize
+     *
+     * @return string|null
+     */
+    public function retrieveBatchForBucketJob(ConfigurationProfileEntity $profile, $authorize);
 }

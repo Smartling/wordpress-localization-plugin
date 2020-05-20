@@ -7,7 +7,6 @@ use Psr\Log\LoggerInterface;
 use Smartling\AuthApi\AuthTokenProvider;
 use Smartling\Batch\BatchApi;
 use Smartling\Batch\Params\CreateBatchParameters;
-use Smartling\Exception\SmartligFileDownloadException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
@@ -27,7 +26,6 @@ use Smartling\Jobs\Params\CreateJobParameters;
 use Smartling\Jobs\Params\ListJobsParameters;
 use Smartling\Jobs\Params\UpdateJobParameters;
 use Smartling\MonologWrapper\MonologWrapper;
-use Smartling\ProgressTracker\Params\CreateRecordParameters;
 use Smartling\ProgressTracker\Params\RecordParameters;
 use Smartling\ProgressTracker\ProgressTrackerApi;
 use Smartling\Project\ProjectApi;
@@ -183,7 +181,7 @@ class ApiWrapper implements ApiWrapperInterface
      * @param SubmissionEntity $entity
      *
      * @return string
-     * @throws SmartligFileDownloadException
+     * @throws SmartlingFileDownloadException
      */
     public function downloadFile(SubmissionEntity $entity)
     {
@@ -487,9 +485,6 @@ class ApiWrapper implements ApiWrapperInterface
 
                     $currentProgress = $submissions[$localeId]->getCompletionPercentage(); // current progress value 0..100
 
-                    /**
-                     * @var SubmissionEntity $submission
-                     */
                     $submission = $this->setTranslationStatusToEntity(
                         $submissions[$localeId],
                         $completedStrings,
@@ -559,9 +554,9 @@ class ApiWrapper implements ApiWrapperInterface
     }
 
     /**
-     * @param \Smartling\Settings\ConfigurationProfileEntity $profile
+     * @param ConfigurationProfileEntity $profile
      *
-     * @return \Smartling\Jobs\JobsApi
+     * @return BatchApi
      */
     private function getBatchApi(ConfigurationProfileEntity $profile)
     {
@@ -636,7 +631,7 @@ class ApiWrapper implements ApiWrapperInterface
     }
 
     /**
-     * @param \Smartling\Settings\ConfigurationProfileEntity $profile
+     * @param ConfigurationProfileEntity $profile
      * @param                                                $jobId
      * @param bool                                           $authorize
      *
@@ -734,7 +729,7 @@ class ApiWrapper implements ApiWrapperInterface
     /**
      * Returns batch uid for a daily bucket job.
      *
-     * @param \Smartling\Settings\ConfigurationProfileEntity $profile
+     * @param ConfigurationProfileEntity $profile
      * @param                                                $authorize
      *
      * @return string|null
