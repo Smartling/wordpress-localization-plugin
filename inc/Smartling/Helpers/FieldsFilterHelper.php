@@ -2,7 +2,6 @@
 
 namespace Smartling\Helpers;
 
-
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
@@ -362,30 +361,31 @@ class FieldsFilterHelper
     }
 
     /**
-     * @param array $array
-     * @param array $list
+     * @param string[] $fields
+     * @param string[] $removeRegexList
      *
-     * @return array
+     * @return string[]
      */
-    public function removeFields($array, array $list)
+    public function removeFields(array $fields, array $removeRegexList)
     {
-        $rebuild = [];
-        if ([] === $list) {
-            return $array;
+        $result = [];
+        if ([] === $removeRegexList) {
+            return $fields;
         }
-        $pattern = '#\/(' . implode('|', $list) . ')$#us';
 
-        foreach ($array as $key => $value) {
-            if (1 === preg_match($pattern, $key)) {
-                $debugMessage = vsprintf('Removed field by name \'%s\' because of configuration.', [$key]);
-                $this->getLogger()->debug($debugMessage);
-                continue;
-            } else {
-                $rebuild[$key] = $value;
+        foreach ($fields as $key => $value) {
+            foreach ($removeRegexList as $regex) {
+                if (0 !== preg_match("/\/$regex$/", $key)) {
+                    $debugMessage = vsprintf('Removed field by name \'%s\' because of configuration.', [$key]);
+                    $this->getLogger()->debug($debugMessage);
+                    continue 2;
+                }
             }
+
+            $result[$key] = $value;
         }
 
-        return $rebuild;
+        return $result;
     }
 
     /**
