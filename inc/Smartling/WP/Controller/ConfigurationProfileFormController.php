@@ -16,6 +16,7 @@ use Smartling\WP\WPHookInterface;
 
 class ConfigurationProfileFormController extends WPAbstract implements WPHookInterface
 {
+    const FILTER_FIELD_NAME_REGEXP = 'filter_field_name_regexp';
 
     public function wp_enqueue()
     {
@@ -209,6 +210,10 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
             $profile->setAutoAuthorize('on' === $settings['autoAuthorize']);
         } else {
             $profile->setAutoAuthorize(false);
+        }
+
+        if (array_key_exists(self::FILTER_FIELD_NAME_REGEXP, $settings)) {
+            $profile->setFilterFieldNameRegexp( '1' === $settings[self::FILTER_FIELD_NAME_REGEXP]);
         }
 
         if (array_key_exists('filter_skip', $settings)) {

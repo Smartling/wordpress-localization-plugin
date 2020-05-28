@@ -113,6 +113,20 @@ class FieldsFilterHelperTest extends TestCase
         return array_merge($data, [[$complex, $complexStructure]]);
     }
 
+    public function testRemoveFields()
+    {
+        $x = new FieldsFilterHelper($this->getSettingsManagerMock());
+        $fields = [
+            'meta/stays' => 'value',
+            'meta/tool_templates_1000_stays' => 'value',
+            'meta/tool_templates_0_stays' => 'value',
+        ];
+
+        $this->assertEquals($fields, $x->removeFields($fields, ['tool_templates'], false));
+
+        $this->assertEquals(['meta/stays' => 'value'], $x->removeFields($fields, ['tool_templates'], true));
+    }
+
     public function testRemoveFieldsRegex()
     {
         $x = new FieldsFilterHelper($this->getSettingsManagerMock());
@@ -135,7 +149,9 @@ class FieldsFilterHelperTest extends TestCase
             ],
             $x->removeFields(
                 $fields,
-                ['^tool_templates_\d{1,3}_(id|category|thumbnail_url|section)$', 'irrelevantRegex']),
+                ['^tool_templates_\d{1,3}_(id|category|thumbnail_url|section)$', 'irrelevant'],
+                true
+            ),
             'Should remove fields that match regex list, fields that don\'t match should remain'
         );
 
@@ -143,18 +159,18 @@ class FieldsFilterHelperTest extends TestCase
             [
                 'meta/stays' => 'value',
             ],
-            $x->removeFields($fields, ['tool_templates_']),
+            $x->removeFields($fields, ['tool_templates_'], true),
             'Should remove fields even on partial regex match'
         );
     }
 
-    public function testRemoveFieldsEmptyRegex()
+    public function testRemoveFieldsRegexEmpty()
     {
         $fields = ['meta/stays' => 'value'];
         $this->assertEquals(
             $fields,
-            (new FieldsFilterHelper($this->getSettingsManagerMock()))->removeFields($fields, []),
-            'All fields should remain on empty regex list'
+            (new FieldsFilterHelper($this->getSettingsManagerMock()))->removeFields($fields, [], true),
+            'Should not remove any fields on empty regex list'
         );
     }
 
@@ -162,7 +178,7 @@ class FieldsFilterHelperTest extends TestCase
     {
         $this->assertEquals(
             [],
-            (new FieldsFilterHelper($this->getSettingsManagerMock()))->removeFields([], ['irrelevantRegex']),
+            (new FieldsFilterHelper($this->getSettingsManagerMock()))->removeFields([], ['irrelevant'], true),
             'Should return empty list on empty fields list'
         );
     }

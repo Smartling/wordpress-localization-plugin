@@ -271,10 +271,12 @@ abstract class SubstringProcessorHelperAbstract implements WPHookInterface
         $submission = $this->getParams()->getSubmission();
         $fFilter = $this->getFieldsFilter();
 
-        ContentSerializationHelper::prepareFieldProcessorValues($fFilter->getSettingsManager(), $submission);
+        $settingsManager = $fFilter->getSettingsManager();
+        ContentSerializationHelper::prepareFieldProcessorValues($settingsManager, $submission);
         $settings = Bootstrap::getContainer()->getParameter('field.processor');
-        $attributes = $fFilter->removeFields($attributes, $settings['ignore']);
-        $attributes = $fFilter->removeFields($attributes, $settings['copy']['name']);
+        $removeAsRegExp = $settingsManager->getSingleSettingsProfile($submission->getSourceBlogId())->getFilterFieldNameRegExp();
+        $attributes = $fFilter->removeFields($attributes, $settings['ignore'], $removeAsRegExp);
+        $attributes = $fFilter->removeFields($attributes, $settings['copy']['name'], $removeAsRegExp);
 
         // adding special pattern to skip:
         $pattern = '^\d+(,\d+)*$';
