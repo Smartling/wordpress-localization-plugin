@@ -375,8 +375,8 @@ class FieldsFilterHelper
 
         foreach ($fields as $key => $value) {
             foreach ($removeRegexList as $regex) {
-                if (0 !== preg_match("/\/$regex$/", $key)) {
-                    $debugMessage = vsprintf('Removed field by name \'%s\' because of configuration.', [$key]);
+                if (0 !== preg_match("/\/$regex/", $key)) {
+                    $debugMessage = "Removed field by name '$key' because of configuration (matches regex '$regex').";
                     $this->getLogger()->debug($debugMessage);
                     continue 2;
                 }

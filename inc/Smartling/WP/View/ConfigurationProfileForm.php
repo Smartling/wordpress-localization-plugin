@@ -721,11 +721,14 @@ Contact Technical Support or your Customer Success Manager before modifying thes
             <tr class="toggleExpert hidden">
                 <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_copy_by_field_name'); ?></th>
                 <td>
-                    <p>Fields listed here will be excluded from translation and copied over from the source content.<br>
+                    <p>Regular expressions listed here will cause matching field names to be excluded from translation
+                        and copied over from the source content.<br>
                         <small>Hints: <br>
                             <ul class="smartling-list">
-                                <li>Each row is unique field.</li>
-                                <li>Fields are case sensitive.</li>
+                                <li>Each row a unique regular expression, delimiter is '/'</li>
+                                <li>Regular expression has no modifiers, (no ignore case etc).</li>
+                                <li>Fields will match even partially, for example regular expression 'a' will match
+                                    every field that has an a inside ("background", "hash", "parent", ...)</li>
                                 <li>Field can be a content object property, meta key name, or a key of a serialized
                                     array.
                                 </li>
@@ -740,8 +743,8 @@ Contact Technical Support or your Customer Success Manager before modifying thes
             <tr class="toggleExpert hidden">
                 <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_copy_by_field_value_regex'); ?></th>
                 <td>
-                    <p>Regular expressions listed here will identify field names to exclude from translation and be
-                        copied over from the source content. <br>
+                    <p>Regular expressions listed here will identify field values to exclude from translation and be
+                        copied over from the source content.<br>
                         <small>Hints:<br>
                             <ul class="smartling-list">
                                 <li>Each row is a unique regular expression</li>
