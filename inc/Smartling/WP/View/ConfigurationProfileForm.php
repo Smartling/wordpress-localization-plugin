@@ -31,6 +31,20 @@ if (array_key_exists('profile', $_GET)) {
 
 $defaultFilter = Smartling\Bootstrap::getContainer()->getParameter('field.processor.default');
 
+/** @see \Smartling\Helpers\FieldsFilterHelper::removeFields() */
+$regexFieldNameHints = <<<HTML
+<small>Hints: <br>
+    <ul class="smartling-list">
+        <li>Each row a unique regular expression, delimiter is '/'</li>
+        <li>Regular expression has no modifiers, (no ignore case etc).</li>
+        <li>Fields will match even partially, for example regular expression 'a' will match
+            every field that has an a inside ("background", "hash", "parent", ...)</li>
+        <li>Field can be a content object property, meta key name, or a key of a serialized
+            array.</li>
+    </ul>
+</small>
+HTML;
+
 ?>
 <script>
     (function ($) {
@@ -698,21 +712,12 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                 </td>
             </tr>
 
-
-
             <tr class="toggleExpert hidden">
                 <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_skip'); ?></th>
                 <td>
-                    <p>Fields listed here will be excluded and not carried over during translation. <br>
-                        <small>Hints:<br>
-                            <ul class="smartling-list">
-                                <li>Each row is a unique field.</li>
-                                <li>Fields are case sensitive.</li>
-                                <li>Field can be a content object property, meta key name, or a key of a serialized
-                                    array.
-                                </li>
-                            </ul>
-                        </small>
+                    <p>Regular expressions listed here will cause matching field names to be excluded
+                        and not carried over during translation.<br>
+<?= $regexFieldNameHints?>
                     </p>
                     <textarea id="filter-skip" wrap="off" cols="45" rows="5" class="nowrap"
                               name="smartling_settings[filter_skip]"><?= trim($profile->getFilterSkip()); ?></textarea>
@@ -723,20 +728,12 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                 <td>
                     <p>Regular expressions listed here will cause matching field names to be excluded from translation
                         and copied over from the source content.<br>
-                        <small>Hints: <br>
-                            <ul class="smartling-list">
-                                <li>Each row a unique regular expression, delimiter is '/'</li>
-                                <li>Regular expression has no modifiers, (no ignore case etc).</li>
-                                <li>Fields will match even partially, for example regular expression 'a' will match
-                                    every field that has an a inside ("background", "hash", "parent", ...)</li>
-                                <li>Field can be a content object property, meta key name, or a key of a serialized
-                                    array.
-                                </li>
-                            </ul>
-                        </small>
+<?= $regexFieldNameHints?>
                     </p>
                     <textarea id="filter-copy-by-name" wrap="off" cols="45" rows="5" class="nowrap"
-                              name="smartling_settings[filter_copy_by_field_name]"><?= trim($profile->getFilterCopyByFieldName()); ?></textarea>
+                              name="smartling_settings[filter_copy_by_field_name]">
+                        <?= trim($profile->getFilterCopyByFieldName())?>
+                    </textarea>
 
                 </td>
             </tr>

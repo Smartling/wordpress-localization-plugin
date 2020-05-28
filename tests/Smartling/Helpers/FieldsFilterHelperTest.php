@@ -133,7 +133,9 @@ class FieldsFilterHelperTest extends TestCase
                 'meta/tool_templates_1000_category' => 'value',
                 'meta/tool_templates_0_stays' => 'value',
             ],
-            $x->removeFields($fields, ['tool_templates_\d{1,3}_(id|category|thumbnail_url|section)', 'irrelevantRegex']),
+            $x->removeFields(
+                $fields,
+                ['^tool_templates_\d{1,3}_(id|category|thumbnail_url|section)$', 'irrelevantRegex']),
             'Should remove fields that match regex list, fields that don\'t match should remain'
         );
 
