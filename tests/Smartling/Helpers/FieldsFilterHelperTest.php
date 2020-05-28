@@ -149,7 +149,12 @@ class FieldsFilterHelperTest extends TestCase
             ],
             $x->removeFields(
                 $fields,
-                ['^tool_templates_\d{1,3}_(id|category|thumbnail_url|section)$', 'irrelevant'],
+                [
+                    'tool_templates_\d{1,3}_id',
+                    'tool_templates_\d{1,3}_category',
+                    'tool_templates_\d{1,3}_thumbnail_url',
+                    'tool_templates_\d{1,3}_section'
+                ],
                 true
             ),
             'Should remove fields that match regex list, fields that don\'t match should remain'
