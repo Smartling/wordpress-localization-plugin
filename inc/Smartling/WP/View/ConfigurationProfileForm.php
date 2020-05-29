@@ -737,7 +737,7 @@ Contact Technical Support or your Customer Success Manager before modifying thes
             <tr class="toggleExpert hidden">
                 <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_skip'); ?></th>
                 <td>
-                    <p>Fields listed here will cause matching field names to be excluded
+                    <p>Fields listed here will be excluded
                         and not carried over during translation.</p>
                     <textarea id="filter-skip" wrap="off" cols="45" rows="5" class="nowrap"
                               name="smartling_settings[filter_skip]"><?= trim($profile->getFilterSkip()); ?></textarea>
@@ -750,9 +750,7 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                         and copied over from the source content.</p>
                     <textarea id="filter-copy-by-name" wrap="off" cols="45" rows="5" class="nowrap"
                               name="smartling_settings[filter_copy_by_field_name]">
-<?= trim($profile->getFilterCopyByFieldName())?>
-                    </textarea>
-
+<?= trim($profile->getFilterCopyByFieldName())?></textarea>
                 </td>
             </tr>
             <tr class="toggleExpert hidden">
