@@ -7,6 +7,7 @@ use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
+use Smartling\WP\Controller\ConfigurationProfileFormController;
 use Smartling\WP\WPAbstract;
 
 /**
@@ -698,22 +699,46 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                 </td>
             </tr>
 
-
+            <tr class="toggleExpert hidden">
+                <th scope="row"><?= __('Treat ' . ConfigurationProfileEntity::getFieldLabel('filter_skip') .
+                        ' and ' . ConfigurationProfileEntity::getFieldLabel('filter_copy_by_field_name') .
+                        ' as regex', $domain)?></th>
+                <td>
+                    <p>Exact match:</p>
+                    <ul class="smartling-list">
+                        <li>Each row is unique field.</li>
+                        <li>Fields are case sensitive.</li>
+                        <li>Field can be a content object property, meta key name, or a key of a serialized array.</li>
+                    </ul>
+                    <p>RegExp:</p>
+                    <ul class="smartling-list">
+                        <li>Each row a unique regular expression, delimiter is '/'</li>
+                        <li>Regular expression has no modifiers, (no ignore case etc).</li>
+                        <li>Fields will match even partially, for example regular expression 'a' will match
+                            every field that has an a inside ("background", "hash", "parent", ...)</li>
+                        <li>Field can be a content object property, meta key name, or a key of a serialized
+                            array.</li>
+                    </ul>
+                    <?=
+                    HtmlTagGeneratorHelper::tag(
+                        'select',
+                        HtmlTagGeneratorHelper::renderSelectOptions(
+                            $profile->getFilterFieldNameRegExp() ? '1' : '0',
+                            [
+                                '0' => __('Exact match', $domain),
+                                '1' => __('RegExp', $domain),
+                            ]
+                        ),
+                        ['name' => 'smartling_settings[' . ConfigurationProfileFormController::FILTER_FIELD_NAME_REGEXP . ']']);
+                    ?>
+                </td>
+            </tr>
 
             <tr class="toggleExpert hidden">
                 <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_skip'); ?></th>
                 <td>
-                    <p>Fields listed here will be excluded and not carried over during translation. <br>
-                        <small>Hints:<br>
-                            <ul class="smartling-list">
-                                <li>Each row is a unique field.</li>
-                                <li>Fields are case sensitive.</li>
-                                <li>Field can be a content object property, meta key name, or a key of a serialized
-                                    array.
-                                </li>
-                            </ul>
-                        </small>
-                    </p>
+                    <p>Fields listed here will cause matching field names to be excluded
+                        and not carried over during translation.</p>
                     <textarea id="filter-skip" wrap="off" cols="45" rows="5" class="nowrap"
                               name="smartling_settings[filter_skip]"><?= trim($profile->getFilterSkip()); ?></textarea>
                 </td>
@@ -721,19 +746,12 @@ Contact Technical Support or your Customer Success Manager before modifying thes
             <tr class="toggleExpert hidden">
                 <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_copy_by_field_name'); ?></th>
                 <td>
-                    <p>Fields listed here will be excluded from translation and copied over from the source content.<br>
-                        <small>Hints: <br>
-                            <ul class="smartling-list">
-                                <li>Each row is unique field.</li>
-                                <li>Fields are case sensitive.</li>
-                                <li>Field can be a content object property, meta key name, or a key of a serialized
-                                    array.
-                                </li>
-                            </ul>
-                        </small>
-                    </p>
+                    <p>Fields listed here will be excluded from translation
+                        and copied over from the source content.</p>
                     <textarea id="filter-copy-by-name" wrap="off" cols="45" rows="5" class="nowrap"
-                              name="smartling_settings[filter_copy_by_field_name]"><?= trim($profile->getFilterCopyByFieldName()); ?></textarea>
+                              name="smartling_settings[filter_copy_by_field_name]">
+<?= trim($profile->getFilterCopyByFieldName())?>
+                    </textarea>
 
                 </td>
             </tr>
@@ -741,7 +759,7 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                 <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_copy_by_field_value_regex'); ?></th>
                 <td>
                     <p>Regular expressions listed here will identify field names to exclude from translation and be
-                        copied over from the source content. <br>
+                        copied over from the source content.<br>
                         <small>Hints:<br>
                             <ul class="smartling-list">
                                 <li>Each row is a unique regular expression</li>

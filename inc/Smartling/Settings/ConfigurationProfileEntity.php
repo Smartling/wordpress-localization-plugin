@@ -4,6 +4,7 @@ namespace Smartling\Settings;
 
 use Psr\Log\LoggerInterface;
 use Smartling\Base\SmartlingEntityAbstract;
+use Smartling\WP\Controller\ConfigurationProfileFormController as Form;
 
 /**
  * Class ConfigurationProfileEntity
@@ -81,6 +82,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
             'filter_flag_seo'                  => 'TEXT NULL',
             'clone_attachment'                 => static::DB_TYPE_UINT_SWITCH . ' ' . static::DB_TYPE_DEFAULT_ZERO,
             'enable_notifications'             => static::DB_TYPE_UINT_SWITCH . ' ' . static::DB_TYPE_DEFAULT_ZERO,
+            Form::FILTER_FIELD_NAME_REGEXP     => static::DB_TYPE_UINT_SWITCH . ' ' . static::DB_TYPE_DEFAULT_ZERO,
         ];
     }
 
@@ -269,6 +271,21 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         $this->stateFields['target_locales'] = $targetLocales;
     }
 
+    /**
+     * @return bool
+     */
+    public function getFilterFieldNameRegExp()
+    {
+        return $this->stateFields[Form::FILTER_FIELD_NAME_REGEXP] === '1';
+    }
+
+    /**
+     * @param bool $value
+     */
+    public function setFilterFieldNameRegexp($value)
+    {
+        $this->stateFields[Form::FILTER_FIELD_NAME_REGEXP] = $value ? '1' : '0';
+    }
 
     public function getFilterSkip()
     {

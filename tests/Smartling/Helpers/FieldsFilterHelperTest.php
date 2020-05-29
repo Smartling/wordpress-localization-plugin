@@ -112,4 +112,79 @@ class FieldsFilterHelperTest extends TestCase
 
         return array_merge($data, [[$complex, $complexStructure]]);
     }
+
+    public function testRemoveFields()
+    {
+        $x = new FieldsFilterHelper($this->getSettingsManagerMock());
+        $fields = [
+            'meta/stays' => 'value',
+            'meta/tool_templates_1000_stays' => 'value',
+            'meta/tool_templates_0_stays' => 'value',
+        ];
+
+        $this->assertEquals($fields, $x->removeFields($fields, ['tool_templates'], false));
+
+        $this->assertEquals(['meta/stays' => 'value'], $x->removeFields($fields, ['tool_templates'], true));
+    }
+
+    public function testRemoveFieldsRegex()
+    {
+        $x = new FieldsFilterHelper($this->getSettingsManagerMock());
+
+        $fields = ['meta/stays' => 'value'];
+        for ($i = 0; $i < 301; $i++) {
+            $fields["meta/tool_templates_{$i}_id"] = 'value';
+            $fields["meta/tool_templates_{$i}_category"] = 'value';
+            $fields["meta/tool_templates_{$i}_thumbnail_url"] = 'value';
+            $fields["meta/tool_templates_{$i}_section"] = 'value';
+        }
+        $fields['meta/tool_templates_1000_category'] = 'value';
+        $fields['meta/tool_templates_0_stays'] = 'value';
+
+        $this->assertEquals(
+            [
+                'meta/stays' => 'value',
+                'meta/tool_templates_1000_category' => 'value',
+                'meta/tool_templates_0_stays' => 'value',
+            ],
+            $x->removeFields(
+                $fields,
+                [
+                    'tool_templates_\d{1,3}_id',
+                    'tool_templates_\d{1,3}_category',
+                    'tool_templates_\d{1,3}_thumbnail_url',
+                    'tool_templates_\d{1,3}_section'
+                ],
+                true
+            ),
+            'Should remove fields that match regex list, fields that don\'t match should remain'
+        );
+
+        $this->assertEquals(
+            [
+                'meta/stays' => 'value',
+            ],
+            $x->removeFields($fields, ['tool_templates_'], true),
+            'Should remove fields even on partial regex match'
+        );
+    }
+
+    public function testRemoveFieldsRegexEmpty()
+    {
+        $fields = ['meta/stays' => 'value'];
+        $this->assertEquals(
+            $fields,
+            (new FieldsFilterHelper($this->getSettingsManagerMock()))->removeFields($fields, [], true),
+            'Should not remove any fields on empty regex list'
+        );
+    }
+
+    public function testRemoveFieldsEmptyFields()
+    {
+        $this->assertEquals(
+            [],
+            (new FieldsFilterHelper($this->getSettingsManagerMock()))->removeFields([], ['irrelevant'], true),
+            'Should return empty list on empty fields list'
+        );
+    }
 }
