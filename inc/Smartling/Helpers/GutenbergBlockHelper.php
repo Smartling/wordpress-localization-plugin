@@ -297,12 +297,13 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 
     /**
      * @param string $name
-     * @param array  $attrs
-     * @param array  $chunks
+     * @param array $attrs
+     * @param array $chunks
      * @return string
      */
     public function renderGutenbergBlock($name, array $attrs = [], array $chunks = [])
     {
+        $attrs = $this->fixAttributeTypes($name, $attrs);
         $attributes = 0 < count($attrs) ? ' ' . json_encode($attrs, JSON_UNESCAPED_UNICODE) : '';
         $content = implode('', $chunks);
         $result = ('' !== $content)
@@ -380,5 +381,39 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         }
 
         throw new SmartlingGutenbergNotFoundException("Gutenberg class not found. Disabling GutenbergSupport.");
+    }
+
+    /**
+     * @param string $name
+     * @param array $attrs
+     * @return array
+     */
+    private function fixAttributeTypes($name, array $attrs)
+    {
+        if ($name === "core/image") { // For some reason, images are not in block type registry
+            $attrs["id"] = (int)$attrs["id"];
+        } elseif (class_exists(\WP_Block_Type_Registry::class)) {
+            $registry = \WP_Block_Type_Registry::get_instance();
+            if ($registry !== null) {
+                $block = $registry->get_registered($name);
+                if ($block !== null) {
+                    $blockAttributes = $block->get_attributes();
+                    foreach ($blockAttributes as $key => $blockAttribute) {
+                        if (array_key_exists($key, $attrs)) {
+                            switch ($blockAttribute["type"]) {
+                                case "boolean":
+                                    $attrs[$key] = (boolean)$attrs[$key];
+                                    break;
+                                case "number":
+                                    $attrs[$key] = (int)$attrs[$key];
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return $attrs;
     }
 }

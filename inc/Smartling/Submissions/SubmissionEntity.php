@@ -815,6 +815,9 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return (int)($percentage * 100);
     }
 
+    /**
+     * @return string
+     */
     public function getLastError()
     {
         return $this->stateFields[static::FIELD_LAST_ERROR];

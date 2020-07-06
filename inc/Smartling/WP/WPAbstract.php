@@ -14,9 +14,10 @@ use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\StringHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
-abstract class WPAbstract
+class WPAbstract
 {
 
     /**
@@ -357,7 +358,21 @@ abstract class WPAbstract
         return $container;
     }
 
-    public static function localeSelectionTranslationStatusBlock($statusText, $statusColor, $percentage, $statusFlags = [])
+    /**
+     * @param string $statusText
+     * @param string $statusColor
+     * @param int $percentage
+     * @param string $lastError
+     * @param array $statusFlags
+     * @return string
+     */
+    public static function localeSelectionTranslationStatusBlock(
+        $statusText,
+        $statusColor,
+        $percentage,
+        $lastError = '',
+        $statusFlags = []
+    )
     {
         $percentageSpanBlock = 100 === $percentage
             ? HtmlTagGeneratorHelper::tag('span', '', [])
@@ -382,7 +397,7 @@ abstract class WPAbstract
             'span',
             vsprintf('%s%s', [implode('', $flagBlockParts), $percentageSpanBlock]),
             [
-                'title' => $statusText,
+                'title' => $statusText . ($statusText === SubmissionEntity::SUBMISSION_STATUS_FAILED ? ": $lastError" : ''),
                 'class' => vsprintf('widget-btn %s', [$statusColor]),
             ]
         );

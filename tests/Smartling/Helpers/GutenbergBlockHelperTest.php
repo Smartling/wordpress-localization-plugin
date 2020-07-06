@@ -28,15 +28,12 @@ class GutenbergBlockHelperTest extends TestCase
      */
     private function mockHelper($methods = ['postReceiveFiltering', 'preSendFiltering', 'processAttributes'])
     {
-        return $this->getMockBuilder('\Smartling\Helpers\GutenbergBlockHelper')
+        return $this->getMockBuilder(GutenbergBlockHelper::class)
                     ->setMethods($methods)
                     ->getMock();
     }
 
-    /**
-     * @var GutenbergBlockHelper|null
-     */
-    public $helper = null;
+    public $helper;
 
     /**
      * @inheritdoc
@@ -74,13 +71,11 @@ class GutenbergBlockHelperTest extends TestCase
         $helper = $this->mockHelper(['postReceiveFiltering', 'preSendFiltering']);
 
         $helper
-            ->expects(self::any())
             ->method('postReceiveFiltering')
             ->with($flatAttributes)
             ->willReturn($postFilterMock);
 
         $helper
-            ->expects(self::any())
             ->method('preSendFiltering')
             ->with($flatAttributes)
             ->willReturn($preFilterMock);
@@ -199,11 +194,9 @@ class GutenbergBlockHelperTest extends TestCase
 
         $helper->setParams($params);
         $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock()));
-        $helper->expects(self::any())
+        $helper
                ->method('processAttributes')
-               ->willReturnCallback(function ($blockName, $attributes) {
-                   return $attributes;
-               });
+               ->willReturnArgument(1);
 
         $result = $this->invokeMethod($helper, 'placeBlock', [$block]);
         $xmlNodeRendered = $params->getDom()->saveXML($result);
@@ -352,11 +345,9 @@ class GutenbergBlockHelperTest extends TestCase
 
         $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock()));
 
-        $helper->expects(self::any())
+        $helper
                ->method('postReceiveFiltering')
-               ->willReturnCallback(function ($attrs) {
-                   return $attrs;
-               });
+               ->willReturnArgument(0);
 
 
         $result = $this->invokeMethod(
@@ -407,11 +398,9 @@ class GutenbergBlockHelperTest extends TestCase
         $helper = $this->mockHelper();
 
         $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock()));
-        $helper->expects(self::any())
+        $helper
                ->method('postReceiveFiltering')
-               ->willReturnCallback(function ($attrs) {
-                   return $attrs;
-               });
+               ->willReturnArgument(0);
 
 
         $result = $helper->renderTranslatedBlockNode($node);
@@ -451,11 +440,9 @@ class GutenbergBlockHelperTest extends TestCase
         ];
         $helper = $this->mockHelper(['postReceiveFiltering']);
         $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock()));
-        $helper->expects(self::any())
+        $helper
                ->method('postReceiveFiltering')
-               ->willReturnCallback(function ($attr) {
-                   return $attr;
-               });
+               ->willReturnArgument(0);
 
         $result = $helper->sortChildNodesContent($node);
         self::assertEquals($expected, $result);
@@ -485,16 +472,12 @@ class GutenbergBlockHelperTest extends TestCase
 
         $helper = $this->mockHelper(['postReceiveFiltering', 'preSendFiltering', 'parseBlocks']);
 
-        $helper->expects(self::any())
+        $helper
                ->method('postReceiveFiltering')
-               ->willReturnCallback(function ($attributes) {
-                   return $attributes;
-               });
-        $helper->expects(self::any())
+               ->willReturnArgument(0);
+        $helper
                ->method('preSendFiltering')
-               ->willReturnCallback(function ($attributes) {
-                   return $attributes;
-               });
+               ->willReturnArgument(0);
 
         $helper->expects(self::exactly($parseCount))
                ->method('parseBlocks')
@@ -603,16 +586,12 @@ some par 2
 
         $helper = $this->mockHelper(['postReceiveFiltering', 'preSendFiltering']);
 
-        $helper->expects(self::any())
+        $helper
                ->method('postReceiveFiltering')
-               ->willReturnCallback(function ($attributes) {
-                   return $attributes;
-               });
-        $helper->expects(self::any())
+               ->willReturnArgument(0);
+        $helper
                ->method('preSendFiltering')
-               ->willReturnCallback(function ($attributes) {
-                   return $attributes;
-               });
+               ->willReturnArgument(0);
 
         $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock()));
 
@@ -621,6 +600,14 @@ some par 2
         $xml = $dom->saveXML($result->getNode());
 
         self::assertEquals($expectedXML, $xml);
+    }
+
+    public function testImageIdConversion()
+    {
+        $this->assertEquals(
+            '<!-- wp:core/image {"id":42} /-->',
+            (new GutenbergBlockHelper())->renderGutenbergBlock("core/image", ["id" => "42"], [])
+        );
     }
 
     /**
