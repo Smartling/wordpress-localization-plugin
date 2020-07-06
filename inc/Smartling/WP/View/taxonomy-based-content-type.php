@@ -120,11 +120,11 @@ if (!empty($locales)) {
                     <div class="smtPostWidget-progress" style="left: 15px;">
                         <?php if ($value) { ?>
                             <?= WPAbstract::localeSelectionTranslationStatusBlock(
-                                    __($statusValue),
-                                    $status,
-                                    $percent,
-                                    $lastError,
-                                    $statusFlags
+                                __($statusValue),
+                                $status,
+                                $percent,
+                                $statusFlags,
+                                $lastError
                             ) ?>
                             <?= WPAbstract::inputHidden($id) ?>
                         <?php } ?>

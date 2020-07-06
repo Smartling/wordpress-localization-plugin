@@ -119,11 +119,11 @@ if (!empty($locales)) {
 
                         <?php if ($value) { ?>
                             <?= WPAbstract::localeSelectionTranslationStatusBlock(
-                                    __($statusValue),
-                                    $status,
-                                    $percent,
-                                    $lastError,
-                                    $statusFlags
+                                __($statusValue),
+                                $status,
+                                $percent,
+                                $statusFlags,
+                                $lastError
                             ) ?>
                             <?= WPAbstract::inputHidden($id) ?>
                         <?php } ?>

@@ -362,16 +362,16 @@ class WPAbstract
      * @param string $statusText
      * @param string $statusColor
      * @param int $percentage
-     * @param string $lastError
      * @param array $statusFlags
+     * @param string $lastError
      * @return string
      */
     public static function localeSelectionTranslationStatusBlock(
         $statusText,
         $statusColor,
         $percentage,
-        $lastError = '',
-        $statusFlags = []
+        $statusFlags = [],
+        $lastError = ''
     )
     {
         $percentageSpanBlock = 100 === $percentage
