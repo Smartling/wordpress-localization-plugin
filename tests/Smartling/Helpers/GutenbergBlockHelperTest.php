@@ -1,6 +1,270 @@
 <?php
 
-namespace Smartling\Tests\Smartling\Helpers;
+namespace {
+    if (!function_exists('wp_parse_str')) {
+        /**
+         * @param string $string
+         * @param array $array
+         */
+        function wp_parse_str($string, &$array)
+        {
+            parse_str($string, $array);
+            $array = apply_filters('wp_parse_str', $array);
+        }
+    }
+    if (!function_exists('wp_parse_args'))
+    {
+        /**
+         * @param string|array|object $args
+         * @param array $defaults
+         * @return array
+         */
+        function wp_parse_args($args, $defaults = '')
+        {
+            if (is_object($args)) {
+                $parsed_args = get_object_vars($args);
+            } elseif (is_array($args)) {
+                $parsed_args =& $args;
+            } else {
+                wp_parse_str($args, $parsed_args);
+            }
+
+            if (is_array($defaults)) {
+                return array_merge($defaults, $parsed_args);
+            }
+            return $parsed_args;
+        }
+    }
+    if (!class_exists(WP_Block_Type::class)) {
+        class WP_Block_Type
+        {
+            public $name;
+            public $render_callback;
+            public $attributes;
+            public $editor_script;
+            public $script;
+            public $editor_style;
+            public $style;
+
+            /**
+             * @param string $block_type
+             * @param array|string $args
+             */
+            public function __construct($block_type, $args = array())
+            {
+                $this->name = $block_type;
+
+                $this->set_props($args);
+            }
+
+            /**
+             * @param array $attributes
+             * @param string $content
+             * @return string
+             */
+            public function render($attributes = array(), $content = '')
+            {
+                if (!$this->is_dynamic()) {
+                    return '';
+                }
+
+                $attributes = $this->prepare_attributes_for_render($attributes);
+
+                return (string)call_user_func($this->render_callback, $attributes, $content);
+            }
+
+            /**
+             * @return boolean
+             */
+            public function is_dynamic()
+            {
+                return is_callable($this->render_callback);
+            }
+
+            /**
+             * @param array $attributes
+             * @return array
+             */
+            public function prepare_attributes_for_render($attributes)
+            {
+                if (!isset($this->attributes)) {
+                    return $attributes;
+                }
+
+                foreach ($attributes as $attribute_name => $value) {
+                    if (!isset($this->attributes[$attribute_name])) {
+                        continue;
+                    }
+
+                    $schema = $this->attributes[$attribute_name];
+                    $is_valid = rest_validate_value_from_schema($value, $schema);
+                    if (is_wp_error($is_valid)) {
+                        unset($attributes[$attribute_name]);
+                    }
+                }
+
+                $missing_schema_attributes = array_diff_key($this->attributes, $attributes);
+                foreach ($missing_schema_attributes as $attribute_name => $schema) {
+                    if (isset($schema['default'])) {
+                        $attributes[$attribute_name] = $schema['default'];
+                    }
+                }
+
+                return $attributes;
+            }
+
+            /**
+             * @param array|string $args
+             */
+            public function set_props($args)
+            {
+                $args = wp_parse_args($args,
+                    [
+                        'render_callback' => null,
+                    ]
+                );
+
+                $args['name'] = $this->name;
+
+                foreach ($args as $property_name => $property_value) {
+                    $this->$property_name = $property_value;
+                }
+            }
+
+            /**
+             * @return array
+             */
+            public function get_attributes()
+            {
+                return is_array($this->attributes) ?
+                    array_merge(
+                        $this->attributes,
+                        [
+                            'layout' => [
+                                'type' => 'string',
+                            ],
+                        ]
+                    ) :
+                    [
+                        'layout' => [
+                            'type' => 'string',
+                        ],
+                    ];
+            }
+        }
+    }
+
+    if (!class_exists(WP_Block_Type_Registry::class)) {
+        class WP_Block_Type_Registry
+        {
+            private $registered_block_types = [];
+            private static $instance = null;
+
+            /**
+             * @param string|WP_Block_Type $name
+             * @param array $args
+             * @return WP_Block_Type|false
+             */
+            public function register($name, array $args = [])
+            {
+                $block_type = null;
+                if ($name instanceof WP_Block_Type) {
+                    $block_type = $name;
+                    $name = $block_type->name;
+                }
+
+                if (!is_string($name)) {
+                    throw new RuntimeException('Block type names must be strings.');
+                }
+
+                if (preg_match('/[A-Z]+/', $name)) {
+                    throw new RuntimeException('Block type names must not contain uppercase characters.');
+                }
+
+                $name_matcher = '/^[a-z0-9-]+\/[a-z0-9-]+$/';
+                if (!preg_match($name_matcher, $name)) {
+                    throw new RuntimeException('Block type names must contain a namespace prefix. Example: my-plugin/my-custom-block-type');
+                }
+
+                if ($this->is_registered($name)) {
+                    throw new \RuntimeException(sprintf('Block type "%s" is already registered.', $name));
+                }
+
+                if (!$block_type) {
+                    $block_type = new WP_Block_Type($name, $args);
+                }
+
+                $this->registered_block_types[$name] = $block_type;
+
+                return $block_type;
+            }
+
+            /**
+             * @param string|WP_Block_Type $name
+             * @return WP_Block_Type|false
+             */
+            public function unregister($name)
+            {
+                if ($name instanceof WP_Block_Type) {
+                    $name = $name->name;
+                }
+
+                if (!$this->is_registered($name)) {
+                    throw new RuntimeException(sprintf('Block type "%s" is not registered.', $name));
+                }
+
+                $unregistered_block_type = $this->registered_block_types[$name];
+                unset($this->registered_block_types[$name]);
+
+                return $unregistered_block_type;
+            }
+
+            /**
+             * @param string $name
+             * @return WP_Block_Type|null
+             */
+            public function get_registered($name)
+            {
+                if (!$this->is_registered($name)) {
+                    return null;
+                }
+
+                return $this->registered_block_types[$name];
+            }
+
+            /**
+             * @return WP_Block_Type[]
+             */
+            public function get_all_registered()
+            {
+                return $this->registered_block_types;
+            }
+
+            /**
+             * @param string $name
+             * @return bool
+             */
+            public function is_registered($name)
+            {
+                return isset($this->registered_block_types[$name]);
+            }
+
+            /**
+             * @return WP_Block_Type_Registry
+             */
+            public static function get_instance()
+            {
+                if (null === self::$instance) {
+                    self::$instance = new self();
+                }
+
+                return self::$instance;
+            }
+        }
+    }
+}
+
+namespace Smartling\Tests\Smartling\Helpers {
 
 use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
@@ -9,7 +273,6 @@ use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 use Smartling\Tests\Traits\SettingsManagerMock;
-
 
 /**
  * Class GutenbergBlockHelperTest
@@ -610,6 +873,18 @@ some par 2
         );
     }
 
+    public function testRegisteredBlockConversion()
+    {
+        \WP_Block_Type_Registry::get_instance()->register(
+            "core/test",
+            ["attributes" => ["boolean" => ["type" => "boolean"], "numeric" => ["type" => "number"]]]
+        );
+        $this->assertEquals(
+            '<!-- wp:core/test {"boolean":true,"numeric":42} /-->',
+            (new GutenbergBlockHelper())->renderGutenbergBlock("core/test", ["boolean" => "true", "numeric" => "42"], [])
+        );
+    }
+
     /**
      * @return array
      */
@@ -639,4 +914,5 @@ some par 2
             ],
         ];
     }
+}
 }

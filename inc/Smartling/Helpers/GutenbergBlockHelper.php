@@ -399,7 +399,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
                 if ($block !== null) {
                     $blockAttributes = $block->get_attributes();
                     foreach ($blockAttributes as $key => $blockAttribute) {
-                        if (array_key_exists($key, $attrs)) {
+                        if (array_key_exists($key, $attrs) && array_key_exists("type", $blockAttribute)) {
                             switch ($blockAttribute["type"]) {
                                 case "boolean":
                                     $attrs[$key] = (boolean)$attrs[$key];
