@@ -670,6 +670,28 @@ class GutenbergBlockHelperTest extends TestCase
         self::assertEquals($expectedBlock, $result);
     }
 
+    public function testRenderTranslatedBlockNodeAttributeTypes()
+    {
+        $blockData = ["id" => 42, "boolean" => true];
+        $xmlPart = '<gutenbergBlock blockName="core/foo" originalAttributes="' . base64_encode(serialize($blockData)) . '"><![CDATA[]]></gutenbergBlock>';
+        $expectedBlock = '<!-- wp:core/foo ' . json_encode($blockData) . ' /-->';
+
+        $dom = new \DOMDocument('1.0', 'utf8');
+        $dom->loadXML($xmlPart);
+        $xpath = new \DOMXPath($dom);
+
+        $list = $xpath->query('/gutenbergBlock');
+        $node = $list->item(0);
+        $helper = $this->mockHelper();
+
+        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock()));
+        $helper->method('postReceiveFiltering')->willReturnArgument(0);
+
+
+        $result = $helper->renderTranslatedBlockNode($node);
+        self::assertEquals($expectedBlock, $result);
+    }
+
     /**
      * @covers       \Smartling\Helpers\GutenbergBlockHelper::sortChildNodesContent
      */
@@ -863,26 +885,6 @@ some par 2
         $xml = $dom->saveXML($result->getNode());
 
         self::assertEquals($expectedXML, $xml);
-    }
-
-    public function testImageIdConversion()
-    {
-        $this->assertEquals(
-            '<!-- wp:core/image {"id":42} /-->',
-            (new GutenbergBlockHelper())->renderGutenbergBlock("core/image", ["id" => "42"], [])
-        );
-    }
-
-    public function testRegisteredBlockConversion()
-    {
-        \WP_Block_Type_Registry::get_instance()->register(
-            "core/test",
-            ["attributes" => ["boolean" => ["type" => "boolean"], "numeric" => ["type" => "number"]]]
-        );
-        $this->assertEquals(
-            '<!-- wp:core/test {"boolean":true,"numeric":42} /-->',
-            (new GutenbergBlockHelper())->renderGutenbergBlock("core/test", ["boolean" => "true", "numeric" => "42"], [])
-        );
     }
 
     /**
