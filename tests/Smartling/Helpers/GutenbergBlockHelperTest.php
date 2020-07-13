@@ -673,23 +673,18 @@ class GutenbergBlockHelperTest extends TestCase
     public function testRenderTranslatedBlockNodeAttributeTypes()
     {
         $blockData = ["id" => 42, "boolean" => true];
-        $xmlPart = '<gutenbergBlock blockName="core/foo" originalAttributes="' . base64_encode(serialize($blockData)) . '"><![CDATA[]]></gutenbergBlock>';
-        $expectedBlock = '<!-- wp:core/foo ' . json_encode($blockData) . ' /-->';
-
         $dom = new \DOMDocument('1.0', 'utf8');
-        $dom->loadXML($xmlPart);
-        $xpath = new \DOMXPath($dom);
+        $dom->loadXML('<gutenbergBlock blockName="core/foo" originalAttributes="' . base64_encode(serialize($blockData)) . '"><![CDATA[]]></gutenbergBlock>');
+        $node = $dom->childNodes->item(0);
 
-        $list = $xpath->query('/gutenbergBlock');
-        $node = $list->item(0);
         $helper = $this->mockHelper();
-
         $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock()));
         $helper->method('postReceiveFiltering')->willReturnArgument(0);
 
-
-        $result = $helper->renderTranslatedBlockNode($node);
-        self::assertEquals($expectedBlock, $result);
+        self::assertEquals(
+            '<!-- wp:core/foo ' . json_encode($blockData) . ' /-->',
+            $helper->renderTranslatedBlockNode($node)
+        );
     }
 
     /**
