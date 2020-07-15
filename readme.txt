@@ -60,6 +60,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 = 1.13.2 =
 * Fixed issue where clicking the download button would not download translations
+* Further improved support for Gutenberg blocks
 
 = 1.13.1 =
 * Display reason for failed submissions in status circle
