@@ -2,7 +2,7 @@
  * @var ajaxurl
  * @var wp
  */
-var btnSelector = ".smtPostWidget-submitBlock input[value=Download]";
+var downloadSelector = "#smartling-download";
 (function ($) {
     'use strict';
 
@@ -12,7 +12,7 @@ var btnSelector = ".smtPostWidget-submitBlock input[value=Download]";
             form: '#smartling-form',
             post_widget: '#smartling-post-widget',
             submit: '#submit',
-            download: '#smartling_download',
+            download: downloadSelector,
             errors_container: '.display-errors',
             errors: '.display-errors .error',
             set_default_locale: '#change-default-locale',
@@ -246,7 +246,7 @@ function ajaxDownload() {
     var message = '';
     var type = '';
     var wp5an = "components-button editor-post-publish-button is-button is-default is-primary is-large is-busy";
-    var btn = $(btnSelector);
+    var btn = $(downloadSelector);
     var btnLockWait = function () {
         $(btn).addClass(wp5an);
         $(btn).val("Wait...");
@@ -331,7 +331,7 @@ jQuery(document).on("ready", function () {
         /**
          * Means that we face gutenberg and need to switch to ajax download handler.
          */
-        $(btnSelector).on("click", function () {
+        $(downloadSelector).on("click", function () {
             ajaxDownload();
         });
     }
