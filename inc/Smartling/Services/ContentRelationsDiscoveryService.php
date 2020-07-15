@@ -410,6 +410,13 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 			if (array_key_exists( 'ids', $data)) {
 				return $this->bulkUploadHandler( $batchUid, $data['ids'], $contentType, $curBlogId, $targetBlogIds );
 			}
+            if (array_key_exists('skipRelationsCheckboxState', $data)) {
+                update_user_meta(
+                    get_current_user_id(),
+                    'skipRelationsCheckboxState',
+                    $data['skipRelationsCheckboxState']
+                );
+            }
 
             foreach ($targetBlogIds as $targetBlogId) {
                 $submissionTemplateArray = [

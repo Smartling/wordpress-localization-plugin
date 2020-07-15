@@ -124,7 +124,16 @@ $needWrapper = ($tag instanceof WP_Term);
                                         current content</label>
                                     <?=
                                     HtmlTagGeneratorHelper::tag('input', '',
-                                        ['id' => 'skipRelations', 'type' => 'checkbox']);
+                                        [
+                                            'id' => 'skipRelations',
+                                            'type' => 'checkbox',
+                                            'checked' => get_user_meta(
+                                                get_current_user_id(),
+                                                'skipRelationsCheckboxState',
+                                                true
+                                            ) === 'true' // as sent by the browser
+                                        ]
+                                    )
                                     ?>
                                 </td>
                             </tr>
@@ -505,7 +514,7 @@ if ($post instanceof WP_Post) {
                             }
                         );
                     });
-                } else { // document.body doesn't contain block-editor-page
+                } else { // document.body doesn't contain block-editor-page (non-gutenberg editor or admin page)
                     $("#addToJob").on("click", function (e) {
                         e.stopPropagation();
                         e.preventDefault();
@@ -591,6 +600,7 @@ if ($post instanceof WP_Post) {
                             timeZone: timezone,
                             authorize: ($("div.job-wizard input[type=checkbox].authorize:checked").length > 0)
                         },
+                        skipRelationsCheckboxState: $('#skipRelations').is(':checked'),
                         targetBlogIds: blogIds.join(","),
                     };
 
