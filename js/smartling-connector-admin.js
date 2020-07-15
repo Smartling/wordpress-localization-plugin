@@ -331,7 +331,7 @@ jQuery(document).on("ready", function () {
         /**
          * Means that we face gutenberg and need to switch to ajax download handler.
          */
-        $(downloadSelector).on("click", function () {
+        jQuery(downloadSelector).on("click", function () {
             ajaxDownload();
         });
     }
