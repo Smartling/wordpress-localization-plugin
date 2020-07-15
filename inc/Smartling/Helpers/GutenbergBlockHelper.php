@@ -301,7 +301,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
      * @param array $chunks
      * @return string
      */
-    public function renderGutenbergBlock($name, array $attrs = [], array $chunks = [])  // TODO check how this behaves with a custom post type
+    public function renderGutenbergBlock($name, array $attrs = [], array $chunks = [])
     {
         $attributes = 0 < count($attrs) ? ' ' . json_encode($attrs, JSON_UNESCAPED_UNICODE) : '';
         $content = implode('', $chunks);
