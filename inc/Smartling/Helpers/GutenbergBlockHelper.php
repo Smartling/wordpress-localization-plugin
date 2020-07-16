@@ -22,19 +22,17 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     public function registerFilters(array $definitions)
     {
         $copyList = [
-            'type',
-            'providerNameSlug',
-            'align',
-            'className',
+            '^type$',
+            '^providerNameSlug$',
+            '^align$',
+            '^className$',
         ];
 
         foreach ($copyList as $fieldName) {
-            $definitions = array_merge($definitions, [
-                [
-                    'pattern' => $fieldName,
-                    'action' => 'copy',
-                ],
-            ]);
+            $definitions[] = [
+                'pattern' => $fieldName,
+                'action' => 'copy',
+            ];
         }
 
         return $definitions;
