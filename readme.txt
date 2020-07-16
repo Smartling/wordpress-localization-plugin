@@ -59,6 +59,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 1.13.2 =
+* Further improved support for Gutenberg blocks
 * Fixed issue with some items not being ingested when using ACF plugin
 
 = 1.13.1 =
