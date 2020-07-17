@@ -122,24 +122,16 @@ $needWrapper = ($tag instanceof WP_Term);
                                 <td>
                                     <label for="skipRelations">Skip all related content and send <strong>only</strong>
                                         current content</label>
-                                    <?=
-                                    HtmlTagGeneratorHelper::tag('input', '',
-                                        [
+                                    <?= HtmlTagGeneratorHelper::tag('input', '', [
                                             'id' => 'skipRelations',
                                             'type' => 'checkbox',
-                                            'checked' => get_user_meta(
-                                                get_current_user_id(),
-                                                'skipRelationsCheckboxState',
-                                                true
-                                            ) === 'true' // as sent by the browser
-                                        ]
-                                    )
-                                    ?>
+                                            'checked' => GlobalSettingsManager::isRelatedContentCheckboxChecked(),
+                                        ])?>
                                 </td>
                             </tr>
                             <tr id="relationsInfo">
                                 <th>New content to be uploaded:</th>
-                                <td id="relatedContent"/>
+                                <td id="relatedContent">
                                 </td>
                             </tr>
 

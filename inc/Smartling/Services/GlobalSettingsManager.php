@@ -12,12 +12,12 @@ use Symfony\Component\Yaml\Parser;
  */
 class GlobalSettingsManager
 {
-
     /**
      * Disable on-boot self-diagnostics (not recommended)
      */
     const SELF_CHECK_IDENTIFIER         = 'smartling_static_check_disabled';
     const SELF_CHECK_IDENTIFIER_DEFAULT = 0;
+    const RELATED_CHECKBOX_STATE = 'related_checkbox_state';
 
     public static function getSkipSelfCheckDefault()
     {
@@ -232,6 +232,48 @@ class GlobalSettingsManager
 
         if (static::getHandleRelationsManuallyDefault() === (int)$value) {
             SimpleStorageHelper::drop(static::SMARTLING_HANDLE_RELATIONS_MANUALLY);
+        }
+    }
+
+    const SMARTLING_RELATED_CHECKBOX_STATE = 'smartling_related_checkbox_state';
+    const SMARTLING_RELATED_CHECKBOX_STATE_DEFAULT = 1;
+
+    /**
+     * @return int
+     */
+    public static function getRelatedContentCheckboxDefault()
+    {
+        return static::SMARTLING_RELATED_CHECKBOX_STATE_DEFAULT;
+    }
+
+    /**
+     * @return mixed
+     */
+    public static function getRelatedContentCheckboxState()
+    {
+        return SimpleStorageHelper::get(
+            static::SMARTLING_RELATED_CHECKBOX_STATE,
+            static::getRelatedContentCheckboxDefault()
+        );
+    }
+
+    /**
+     * @return boolean
+     */
+    public static function isRelatedContentCheckboxChecked()
+    {
+        return 1 === (int)self::getRelatedContentCheckboxState();
+    }
+
+    /**
+     * @param int $value
+     */
+    public static function setRelatedContentCheckboxState($value)
+    {
+        SimpleStorageHelper::set(static::SMARTLING_RELATED_CHECKBOX_STATE, $value);
+
+        if (static::getRelatedContentCheckboxDefault() === (int)$value) {
+            SimpleStorageHelper::drop(static::SMARTLING_RELATED_CHECKBOX_STATE);
         }
     }
 

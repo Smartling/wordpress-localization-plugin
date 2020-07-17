@@ -224,6 +224,28 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
+                        <th><label for="<?= GlobalSettingsManager::RELATED_CHECKBOX_STATE ?> >">
+                                Upload widget send related content for translation checkbox default state
+                            </label></th>
+                        <td>
+                            <?= HtmlTagGeneratorHelper::tag(
+                                'select',
+                                HtmlTagGeneratorHelper::renderSelectOptions(
+                                    GlobalSettingsManager::getRelatedContentCheckboxState(),
+                                    [
+                                        0 => 'Unchecked',
+                                        1 => 'Checked',
+                                    ]),
+                                [
+                                    'id'   => GlobalSettingsManager::RELATED_CHECKBOX_STATE,
+                                    'name' => GlobalSettingsManager::RELATED_CHECKBOX_STATE,
+                                ]
+                            )
+                            ?>
+                            <br /><a href="javascript:void(0)" id="resetRelatedContentCheckbox" data-default="<?= GlobalSettingsManager::getRelatedContentCheckboxDefault(); ?>">reset to defaults</a>
+                        </td>
+                    </tr>
+                    <tr>
                         <th><label for="loggingPath">Enable Shortcode &amp; Filter extension</label></th>
                         <td>
                             <?=

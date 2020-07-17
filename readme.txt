@@ -59,7 +59,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 1.13.2 =
-* Skip all related content checkbox now persists it's state
+* Skip all related content checkbox now has a default state expert setting
 
 = 1.13.1 =
 * Display reason for failed submissions in status circle
