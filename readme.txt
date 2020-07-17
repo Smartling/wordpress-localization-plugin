@@ -61,6 +61,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 = 1.13.2 =
 * Skip all related content checkbox now has a default state expert setting
 * Further improved support for Gutenberg blocks
+* Fixed issue with some items not being ingested when using ACF plugin
 
 = 1.13.1 =
 * Display reason for failed submissions in status circle

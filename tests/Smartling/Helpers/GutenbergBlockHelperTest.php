@@ -313,10 +313,10 @@ class GutenbergBlockHelperTest extends TestCase
     {
         $result = $this->helper->registerFilters([]);
         $expected = [
-            ['pattern' => 'type', 'action' => 'copy'],
-            ['pattern' => 'providerNameSlug', 'action' => 'copy'],
-            ['pattern' => 'align', 'action' => 'copy'],
-            ['pattern' => 'className', 'action' => 'copy'],
+            ['pattern' => '^type$', 'action' => 'copy'],
+            ['pattern' => '^providerNameSlug$', 'action' => 'copy'],
+            ['pattern' => '^align$', 'action' => 'copy'],
+            ['pattern' => '^className$', 'action' => 'copy'],
         ];
         self::assertEquals($expected, $result);
     }
