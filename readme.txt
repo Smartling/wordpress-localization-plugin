@@ -59,6 +59,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 1.13.2 =
+* Skip all related content checkbox now has a default state expert setting
 * Further improved support for Gutenberg blocks
 
 = 1.13.1 =

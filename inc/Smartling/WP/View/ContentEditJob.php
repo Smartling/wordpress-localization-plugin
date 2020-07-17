@@ -122,15 +122,16 @@ $needWrapper = ($tag instanceof WP_Term);
                                 <td>
                                     <label for="skipRelations">Skip all related content and send <strong>only</strong>
                                         current content</label>
-                                    <?=
-                                    HtmlTagGeneratorHelper::tag('input', '',
-                                        ['id' => 'skipRelations', 'type' => 'checkbox']);
-                                    ?>
+                                    <?= HtmlTagGeneratorHelper::tag('input', '', [
+                                            'id' => 'skipRelations',
+                                            'type' => 'checkbox',
+                                            'checked' => GlobalSettingsManager::isRelatedContentCheckboxChecked(),
+                                        ])?>
                                 </td>
                             </tr>
                             <tr id="relationsInfo">
                                 <th>New content to be uploaded:</th>
-                                <td id="relatedContent"/>
+                                <td id="relatedContent">
                                 </td>
                             </tr>
 
@@ -505,7 +506,7 @@ if ($post instanceof WP_Post) {
                             }
                         );
                     });
-                } else { // document.body doesn't contain block-editor-page
+                } else { // document.body doesn't contain block-editor-page (non-gutenberg editor or admin page)
                     $("#addToJob").on("click", function (e) {
                         e.stopPropagation();
                         e.preventDefault();
@@ -591,6 +592,7 @@ if ($post instanceof WP_Post) {
                             timeZone: timezone,
                             authorize: ($("div.job-wizard input[type=checkbox].authorize:checked").length > 0)
                         },
+                        skipRelationsCheckboxState: $('#skipRelations').is(':checked'),
                         targetBlogIds: blogIds.join(","),
                     };
 
