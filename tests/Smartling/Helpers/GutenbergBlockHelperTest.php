@@ -313,10 +313,10 @@ class GutenbergBlockHelperTest extends TestCase
     {
         $result = $this->helper->registerFilters([]);
         $expected = [
-            ['pattern' => 'type', 'action' => 'copy'],
-            ['pattern' => 'providerNameSlug', 'action' => 'copy'],
-            ['pattern' => 'align', 'action' => 'copy'],
-            ['pattern' => 'className', 'action' => 'copy'],
+            ['pattern' => '^type$', 'action' => 'copy'],
+            ['pattern' => '^providerNameSlug$', 'action' => 'copy'],
+            ['pattern' => '^align$', 'action' => 'copy'],
+            ['pattern' => '^className$', 'action' => 'copy'],
         ];
         self::assertEquals($expected, $result);
     }
@@ -670,6 +670,23 @@ class GutenbergBlockHelperTest extends TestCase
         self::assertEquals($expectedBlock, $result);
     }
 
+    public function testRenderTranslatedBlockNodeAttributeTypes()
+    {
+        $blockData = ["id" => 42, "boolean" => true];
+        $dom = new \DOMDocument('1.0', 'utf8');
+        $dom->loadXML('<gutenbergBlock blockName="core/foo" originalAttributes="' . base64_encode(serialize($blockData)) . '"><![CDATA[]]></gutenbergBlock>');
+        $node = $dom->childNodes->item(0);
+
+        $helper = $this->mockHelper();
+        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock()));
+        $helper->method('postReceiveFiltering')->willReturnArgument(0);
+
+        self::assertEquals(
+            '<!-- wp:core/foo ' . json_encode($blockData) . ' /-->',
+            $helper->renderTranslatedBlockNode($node)
+        );
+    }
+
     /**
      * @covers       \Smartling\Helpers\GutenbergBlockHelper::sortChildNodesContent
      */
@@ -863,26 +880,6 @@ some par 2
         $xml = $dom->saveXML($result->getNode());
 
         self::assertEquals($expectedXML, $xml);
-    }
-
-    public function testImageIdConversion()
-    {
-        $this->assertEquals(
-            '<!-- wp:core/image {"id":42} /-->',
-            (new GutenbergBlockHelper())->renderGutenbergBlock("core/image", ["id" => "42"], [])
-        );
-    }
-
-    public function testRegisteredBlockConversion()
-    {
-        \WP_Block_Type_Registry::get_instance()->register(
-            "core/test",
-            ["attributes" => ["boolean" => ["type" => "boolean"], "numeric" => ["type" => "number"]]]
-        );
-        $this->assertEquals(
-            '<!-- wp:core/test {"boolean":true,"numeric":42} /-->',
-            (new GutenbergBlockHelper())->renderGutenbergBlock("core/test", ["boolean" => "true", "numeric" => "42"], [])
-        );
     }
 
     /**

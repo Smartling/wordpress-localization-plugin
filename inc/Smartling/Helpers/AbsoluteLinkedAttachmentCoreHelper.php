@@ -2,6 +2,7 @@
 
 namespace Smartling\Helpers;
 
+use Smartling\Exception\SmartlingManualRelationsHandlingSubmissionCreationForbiddenException;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
@@ -129,14 +130,20 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
         if ((false !== $path) && $this->urlIsAbsolute($path)) {
             $attachmentId = $this->getAttachmentId($path);
             if (false !== $attachmentId) {
-                $attachmentSubmission = $this->getCore()
-                    ->sendAttachmentForTranslation(
+                try {
+                    $attachmentSubmission = $this->getCore()->sendAttachmentForTranslation(
                         $this->getParams()->getSubmission()->getSourceBlogId(),
                         $this->getParams()->getSubmission()->getTargetBlogId(),
                         $attachmentId,
                         $this->getParams()->getSubmission()->getBatchUid(),
                         $this->getParams()->getSubmission()->getIsCloned()
                     );
+                } catch (SmartlingManualRelationsHandlingSubmissionCreationForbiddenException $e) {
+                    $this->getLogger()->notice(
+                        "Skipped sending attachment $attachmentId for translation due to manual relations handling"
+                    );
+                    return;
+                }
 
                 $newPath = $this->generateTranslatedUrl($path, $attachmentSubmission);
                 $replacer->addReplacementPair($path, $newPath);

@@ -22,19 +22,17 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     public function registerFilters(array $definitions)
     {
         $copyList = [
-            'type',
-            'providerNameSlug',
-            'align',
-            'className',
+            '^type$',
+            '^providerNameSlug$',
+            '^align$',
+            '^className$',
         ];
 
         foreach ($copyList as $fieldName) {
-            $definitions = array_merge($definitions, [
-                [
-                    'pattern' => $fieldName,
-                    'action' => 'copy',
-                ],
-            ]);
+            $definitions[] = [
+                'pattern' => $fieldName,
+                'action' => 'copy',
+            ];
         }
 
         return $definitions;
@@ -273,7 +271,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             $processedAttributes = $this->getFieldsFilter()->structurizeArray($filteredAttributes);
         }
 
-        return $processedAttributes;
+        return $this->fixAttributeTypes($blockName, $originalAttributes, $processedAttributes);
     }
 
     /**
@@ -303,7 +301,6 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
      */
     public function renderGutenbergBlock($name, array $attrs = [], array $chunks = [])
     {
-        $attrs = $this->fixAttributeTypes($name, $attrs);
         $attributes = 0 < count($attrs) ? ' ' . json_encode($attrs, JSON_UNESCAPED_UNICODE) : '';
         $content = implode('', $chunks);
         $result = ('' !== $content)
@@ -384,36 +381,19 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     }
 
     /**
-     * @param string $name
-     * @param array $attrs
+     * @param string $blockName
+     * @param array $translatedAttributes
+     * @param array $originalAttributes
      * @return array
      */
-    private function fixAttributeTypes($name, array $attrs)
+    private function fixAttributeTypes($blockName, array $originalAttributes, array $translatedAttributes)
     {
-        if ($name === "core/image") { // For some reason, images are not in block type registry
-            $attrs["id"] = (int)$attrs["id"];
-        } elseif (class_exists(\WP_Block_Type_Registry::class)) {
-            $registry = \WP_Block_Type_Registry::get_instance();
-            if ($registry !== null) {
-                $block = $registry->get_registered($name);
-                if ($block !== null) {
-                    $blockAttributes = $block->get_attributes();
-                    foreach ($blockAttributes as $key => $blockAttribute) {
-                        if (array_key_exists($key, $attrs) && array_key_exists("type", $blockAttribute)) {
-                            switch ($blockAttribute["type"]) {
-                                case "boolean":
-                                    $attrs[$key] = (boolean)$attrs[$key];
-                                    break;
-                                case "number":
-                                    $attrs[$key] = (int)$attrs[$key];
-                                    break;
-                            }
-                        }
-                    }
-                }
+        foreach ($translatedAttributes as $key => $value) {
+            if (array_key_exists($key, $originalAttributes)) {
+                settype($translatedAttributes[$key], gettype($originalAttributes[$key]));
             }
         }
 
-        return $attrs;
+        return $translatedAttributes;
     }
 }

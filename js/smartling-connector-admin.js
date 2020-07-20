@@ -1,3 +1,8 @@
+/**
+ * @var ajaxurl
+ * @var wp
+ */
+var downloadSelector = "#smartling-download";
 (function ($) {
     'use strict';
 
@@ -7,6 +12,7 @@
             form: '#smartling-form',
             post_widget: '#smartling-post-widget',
             submit: '#submit',
+            download: downloadSelector,
             errors_container: '.display-errors',
             errors: '.display-errors .error',
             set_default_locale: '#change-default-locale',
@@ -47,7 +53,6 @@
             $(this.selectors.form).on('click', this.selectors.submit, $.proxy(this.onSubmit, this));
             $(this.selectors.form + ',' + this.selectors.post_widget).on('click', 'input:checkbox', $.proxy(this.setCheckboxValue, this));
             $(this.selectors.set_default_locale).on('click', $.proxy(this.onChangeDefaultLocale, this));
-
         },
 
         createErrorTemplate: function (msg) {
@@ -80,28 +85,9 @@
             $(this.selectors.errors).remove();
         },
         onSubmit: function () {
-
             this.hideErrors();
 
-            var
-                form_data = $(this.selectors.form).serializeArray(),
-                is_valid = this.validateFields(form_data);
-
-
-            if (is_valid) {
-                return true;
-            }
-            ;
-
-            return false;
-        },
-
-        onTranslationSend: function (e) {
-            e.preventDefault();
-            var
-                data = $(this.selectors.post_widget).serializeArray();
-
-            console.log(e);
+            return this.validateFields($(this.selectors.form).serializeArray());
         },
 
         onChangeDefaultLocale: function (e) {
@@ -203,18 +189,20 @@
     };
 
     $(function () {
-        var content = $('#smartling-form');
-        if (content.length > 0) {
+        if ($(localizationOptions.selectors.form).length > 0) {
             localizationOptions.init();
         }
+        if ($(localizationOptions.selectors.post_widget).length > 0) {
+            $(localizationOptions.selectors.download).on("click", function () {
+                ajaxDownload();
+            });
+        }
     });
-
 })(jQuery);
 
 function bulkCheck(className, action) {
     jQuery.each(jQuery('.' + className), function (i, e) {
-        var act = action;
-        this.checked = 'check' === act;
+        this.checked = 'check' === action;
     });
 }
 
@@ -233,7 +221,6 @@ jQuery(document).ready(function () {
 
     jQuery('#sent-to-smartling-bulk').on('click', function (e) {
         jQuery('#ct').val(jQuery('#smartling-bulk-submit-page-content-type').val());
-        return;
     });
 
     jQuery('.ajaxcall').click(function (e) {
@@ -254,65 +241,83 @@ jQuery(document).ready(function () {
 
 });
 
-jQuery(document).ready(function () {
-    /*
-     * Use class checking method for detecting Gutenberg as defined here https://github.com/WordPress/gutenberg/issues/12200
-     * This prevents conflicts with plugins that enqueue the React library when the Classic Editor is enabled.
-     */
-    if (document.body.classList.contains( 'block-editor-page' )) {
-        var $ = jQuery;
-        /**
-         * Means that we face gutenberg and need to switch to ajax download handler.
-         */
+function ajaxDownload() {
+    var $ = jQuery;
+    var message = '';
+    var type = '';
+    var wp5an = "components-button editor-post-publish-button is-button is-default is-primary is-large is-busy";
+    var btn = $(downloadSelector);
+    var btnLockWait = function () {
+        $(btn).addClass(wp5an);
+        $(btn).val("Wait...");
+    };
+    var btnUnlockWait = function () {
+        $(btn).removeClass(wp5an);
+        $(btn).val("Download");
+    };
 
-        var btnSelector = ".smtPostWidget-submitBlock input[value=Download]";
-        var wp5an = "components-button editor-post-publish-button is-button is-default is-primary is-large is-busy";
-        var btn = $(btnSelector);
-        var btnLockWait = function () {
-            $(btn).addClass(wp5an);
-            $(btn).val("Wait...");
-        };
-        var btnUnlockWait = function () {
-            $(btn).removeClass(wp5an);
-            $(btn).val("Download");
-        };
+    var submissionIds = [];
+    var checkedTargetLocales = $(".smtPostWidget-row input.mcheck:checked");
 
-        $(btnSelector).on("click", function (e) {
-            e.stopPropagation();
-            e.preventDefault();
-
-            var submissionIds = [];
-            var checkedTargetLocales = $(".smtPostWidget-row input.mcheck:checked");
-
-            if (0 < checkedTargetLocales.length) {
-                btnLockWait();
-                for (var i = 0; i < checkedTargetLocales.length; i++) {
-                    var submissionId = $(checkedTargetLocales[i]).attr("data-submission-id");
-                    submissionIds = submissionIds.concat([submissionId]);
-                }
-                $.post(
-                    ajaxurl + "?action=" + "smartling_force_download_handler",
-                    {
-                        submissionIds: submissionIds.join(",")
-                    },
-                    function (data) {
-                        switch (data.status) {
-                            case "SUCCESS":
-                                wp.data.dispatch("core/notices").createSuccessNotice("Translations downloaded.");
-                                break;
-                            case "FAIL":
-                                let message = "Translations download failed.";
-                                if (data.message) {
-                                    message += "\n" + data.message;
-                                }
-                                wp.data.dispatch("core/notices").createErrorNotice(message);
-                                break;
-                            default:
+    if (0 < checkedTargetLocales.length) {
+        btnLockWait();
+        for (var i = 0; i < checkedTargetLocales.length; i++) {
+            var submissionId = $(checkedTargetLocales[i]).attr("data-submission-id");
+            submissionIds = submissionIds.concat([submissionId]);
+        }
+        $.post(
+            ajaxurl + "?action=" + "smartling_force_download_handler",
+            {
+                submissionIds: submissionIds.join(",")
+            },
+            function (data) {
+                switch (data.status) {
+                    case "SUCCESS":
+                        message = "Translations downloaded.";
+                        type = "success";
+                        break;
+                    case "FAIL":
+                        message = "Translations download failed.";
+                        type = "error";
+                        if (data.message) {
+                            message += "\n" + data.message;
                         }
-                        btnUnlockWait();
+                        break;
+                }
+                if (wp && wp.data && wp.data.dispatch) {
+                    var dispatch = wp.data.dispatch("core/notices");
+                    switch (type) {
+                        case "success":
+                            dispatch.createSuccessNotice(message);
+                            break;
+                        case "error":
+                            dispatch.createErrorNotice(message);
+                            break;
                     }
-                );
+                } else {
+                    admin_notice(message, type);
+                }
+                btnUnlockWait();
             }
-        });
+        );
     }
-});
+}
+
+function admin_notice(message, type) {
+    var div = document.createElement("div");
+    div.classList.add("notice", "notice-" + type);
+    div.style.position = "relative";
+    var p = document.createElement("p");
+    p.appendChild(document.createTextNode(message));
+    div.appendChild(p);
+    var dismissButton = document.createElement("button");
+    dismissButton.setAttribute("type", "button");
+    dismissButton.setAttribute("title", "dismiss");
+    dismissButton.classList.add("notice-dismiss");
+    div.appendChild(dismissButton);
+    var h1 = document.getElementsByTagName("h1")[0];
+    h1.parentNode.insertBefore(div, h1.nextSibling);
+    dismissButton.addEventListener("click", function () {
+        div.parentNode.removeChild(div);
+    });
+}

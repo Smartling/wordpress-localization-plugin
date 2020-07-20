@@ -3,7 +3,6 @@
 namespace Smartling\Base;
 
 use Exception;
-use Smartling\Bootstrap;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
@@ -240,6 +239,11 @@ trait SmartlingCoreUploadTrait
         return $translation;
     }
 
+    /**
+     * @param SubmissionEntity $submission
+     * @param string $xml
+     * @return array
+     */
     public function applyXML(SubmissionEntity $submission, $xml)
     {
         $messages = [];
@@ -404,6 +408,10 @@ trait SmartlingCoreUploadTrait
 
             }
         } catch (Exception $e) {
+            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+            $submission->setLastError($e->getMessage());
+            $this->getSubmissionManager()->storeEntity($submission);
+            $this->getLogger()->error($e->getMessage());
             $messages[] = $e->getMessage();
         }
 

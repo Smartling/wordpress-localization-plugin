@@ -23,6 +23,7 @@ use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Services\GlobalSettingsManager;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPInstallableInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -235,6 +236,7 @@ class Bootstrap
         GlobalSettingsManager::setPageSize($pageSize);
         GlobalSettingsManager::setLoggingCustomization($data['loggingCustomization']);
         GlobalSettingsManager::setHandleRelationsManually((int)$data['handleRelationsManually']);
+        GlobalSettingsManager::setRelatedContentCheckboxState((int)$data[GlobalSettingsManager::RELATED_CHECKBOX_STATE]);
         GlobalSettingsManager::setFilterUiVisible((int) $data['enableFilterUI']);
 
         wp_send_json($data);
