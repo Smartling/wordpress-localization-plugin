@@ -321,18 +321,3 @@ function admin_notice(message, type) {
         div.parentNode.removeChild(div);
     });
 }
-
-jQuery(document).on("ready", function () {
-    /*
-     * Use class checking method for detecting Gutenberg as defined here https://github.com/WordPress/gutenberg/issues/12200
-     * This prevents conflicts with plugins that enqueue the React library when the Classic Editor is enabled.
-     */
-    if (document.body.classList.contains( 'block-editor-page' )) {
-        /**
-         * Means that we face gutenberg and need to switch to ajax download handler.
-         */
-        jQuery(downloadSelector).on("click", function () {
-            ajaxDownload();
-        });
-    }
-});

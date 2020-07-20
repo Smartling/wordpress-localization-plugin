@@ -61,7 +61,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 = 1.13.2 =
 * Fixed issue where clicking the download button would not download translations
 * Skip all related content checkbox now has a default state expert setting
-* Further improved support for Gutenberg blocks
+* Further improved support for Gutenberg blocks (editor should no longer display "invalid content" warning)
 * Fixed issue with some items not being ingested when using ACF plugin
 
 = 1.13.1 =
