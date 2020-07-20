@@ -58,7 +58,6 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
      */
     public static function getFieldDefinitions()
     {
-
         return [
             'id'                               => static::DB_TYPE_U_BIGINT . ' ' .
                                                   static::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,

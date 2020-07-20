@@ -30,7 +30,8 @@
                     'disableACF': $('#disableACF').val(),
                     'loggingCustomization': $('#loggingCustomization').val(),
                     'handleRelationsManually': $('#handleRelationsManually').val(),
-                    'enableFilterUI':$('#enableFilterUI').val()
+                    'related_checkbox_state': $('#related_checkbox_state').val(),
+                    'enableFilterUI': $('#enableFilterUI').val()
                 }
             };
 
