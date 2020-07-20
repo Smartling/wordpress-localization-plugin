@@ -120,7 +120,7 @@ class GlobalSettingsManager
 
     public static function getLogFileSpecDefault()
     {
-        return $defaultLogFileName = Bootstrap::getLogFileName(false, true);
+        return Bootstrap::getLogFileName(false, true);
     }
 
     public static function getLogFileSpec()
@@ -224,6 +224,14 @@ class GlobalSettingsManager
     public static function getHandleRelationsManually()
     {
         return SimpleStorageHelper::get(static::SMARTLING_HANDLE_RELATIONS_MANUALLY, static::getHandleRelationsManuallyDefault());
+    }
+
+    /**
+     * @return boolean
+     */
+    public static function isHandleRelationsManually()
+    {
+        return 1 === (int)self::getHandleRelationsManually();
     }
 
     public static function setHandleRelationsManually($value)

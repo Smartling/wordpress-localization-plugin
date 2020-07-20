@@ -249,11 +249,11 @@ class WPAbstract
     {
         $downloadButton = HtmlTagGeneratorHelper::tag(
             'input', '', [
-            'type'  => 'submit',
+            'type'  => 'button',
             'value' => 'Download',
             'title' => __('Add to Download queue and trigger download process'),
             'class' => 'button button-primary',
-            //'id'    => $id,
+            'id'    => 'smartling-download',
             'name'  => 'sub',
         ]);
 

@@ -27,7 +27,7 @@ $needWrapper = ($tag instanceof WP_Term);
 ?>
 
 <script>
-    var handleRelationsManually = <?= 0 === (int) GlobalSettingsManager::getHandleRelationsManually() ? 'false' : 'true' ?>;
+    var handleRelationsManually = <?= GlobalSettingsManager::isHandleRelationsManually() ? 'true' : 'false' ?>;
     var isBulkSubmitPage = <?= $isBulkSubmitPage ? 'true' : 'false'?>;
 </script>
 
@@ -116,7 +116,7 @@ $needWrapper = ($tag instanceof WP_Term);
                                 </div>
                             </td>
                         </tr>
-                        <?php if ( !$isBulkSubmitPage && 1 === (int) GlobalSettingsManager::getHandleRelationsManually() ) { ?>
+                        <?php if (!$isBulkSubmitPage && GlobalSettingsManager::isHandleRelationsManually()) { ?>
                             <tr>
                                 <th>Extra upload options</th>
                                 <td>
