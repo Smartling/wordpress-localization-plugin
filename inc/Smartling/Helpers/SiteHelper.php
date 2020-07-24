@@ -225,20 +225,21 @@ class SiteHelper
     }
 
     /**
-     * @param LocalizationPluginProxyInterface $localizationPluginProxyInterface
-     * @param int $blogId
+     * @param $localizationPluginProxyInterface
+     * @param $blogId
      *
      * @return string
      * @throws BlogNotFoundException
      */
-    public function getBlogLabelById(LocalizationPluginProxyInterface $localizationPluginProxyInterface, $blogId)
+    public function getBlogLabelById($localizationPluginProxyInterface, $blogId)
     {
         $locale = $localizationPluginProxyInterface->getBlogLocaleById($blogId);
 
-        return (StringHelper::isNullOrEmpty($locale)
+        return ((StringHelper::isNullOrEmpty($locale))
             ? $this->getBlogNameById($blogId)
             : vsprintf('%s - %s', [$this->getBlogNameById($blogId), $locale])
         );
+
     }
 
     /**

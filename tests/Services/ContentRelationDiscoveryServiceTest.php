@@ -4,13 +4,7 @@ namespace Smartling\Tests\Services;
 
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapper;
-use Smartling\DbAl\LocalizationPluginProxyInterface;
-use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\ContentHelper;
-use Smartling\Helpers\FieldsFilterHelper;
-use Smartling\Helpers\GutenbergBlockHelper;
-use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
-use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -33,13 +27,9 @@ class ContentRelationDiscoveryServiceTest extends TestCase
         $contentType = 'post';
         $targetBlogId = 2;
         $batchUid = 'batchUid';
-        $targetLocale = 'te_TE';
 
         $apiWrapper = $this->getMockBuilder(ApiWrapper::class)->disableOriginalConstructor()->getMock();
         $apiWrapper->method('retrieveBatch')->willReturn($batchUid);
-
-        $localizationPluginProxy = $this->getMock(LocalizationPluginProxyInterface::class);
-        $localizationPluginProxy->method('getBlogLocaleById')->willReturn($targetLocale);
 
         $settingsManager = $this->getMockBuilder(SettingsManager::class)->disableOriginalConstructor()->getMock();
         $settingsManager->method('getSingleSettingsProfile')->willReturn(new ConfigurationProfileEntity());
@@ -61,20 +51,13 @@ class ContentRelationDiscoveryServiceTest extends TestCase
         $submissionManager->expects(self::once())->method('find')->with([
             'source_blog_id' => $sourceBlogId,
             'target_blog_id' => $targetBlogId,
-            'target_locale' => $targetLocale,
             'content_type' => $contentType,
             'source_id' => $sourceId,
         ])->willReturn([$submission]);
 
         $submissionManager->expects(self::once())->method('storeEntity')->with($submission);
 
-        $x = $this->getContentRelationDiscoveryService(
-            $apiWrapper,
-            $contentHelper,
-            $localizationPluginProxy,
-            $settingsManager,
-            $submissionManager
-        );
+        $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
 
         $x->expects(self::once())->method('returnResponse')->with(['status' => 'SUCCESS']);
 
@@ -137,13 +120,7 @@ class ContentRelationDiscoveryServiceTest extends TestCase
 
         $submissionManager->expects(self::exactly(count($sourceIds)))->method('storeEntity')->with($submission);
 
-        $x = $this->getContentRelationDiscoveryService(
-            $apiWrapper,
-            $contentHelper,
-            $this->getMock(LocalizationPluginProxyInterface::class),
-            $settingsManager,
-            $submissionManager
-        );
+        $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
 
         $x->expects(self::once())->method('returnResponse')->with(['status' => 'SUCCESS']);
 
@@ -166,7 +143,6 @@ class ContentRelationDiscoveryServiceTest extends TestCase
     /**
      * @param ApiWrapper $apiWrapper
      * @param ContentHelper $contentHelper
-     * @param LocalizationPluginProxyInterface $localizationPluginProxy
      * @param SettingsManager $settingsManager
      * @param SubmissionManager $submissionManager
      * @return \PHPUnit_Framework_MockObject_MockObject|ContentRelationsDiscoveryService
@@ -174,26 +150,23 @@ class ContentRelationDiscoveryServiceTest extends TestCase
     private function getContentRelationDiscoveryService(
         ApiWrapper $apiWrapper,
         ContentHelper $contentHelper,
-        LocalizationPluginProxyInterface $localizationPluginProxy,
         SettingsManager $settingsManager,
         SubmissionManager $submissionManager
     ) {
-        return $this->getMockBuilder(ContentRelationsDiscoveryService::class)
-            ->setConstructorArgs([
-                $contentHelper,
-                $this->getMockBuilder(FieldsFilterHelper::class)->disableOriginalConstructor()->getMock(),
-                $this->getMock(MetaFieldProcessorManager::class),
-                $localizationPluginProxy,
-                $this->getMockBuilder(AbsoluteLinkedAttachmentCoreHelper::class)->disableOriginalConstructor()->getMock(),
-                $this->getMock(ShortcodeHelper::class),
-                $this->getMock(GutenbergBlockHelper::class),
-                $submissionManager,
-                $apiWrapper,
-                $settingsManager
-            ])
+        $x = $this->getMockBuilder(ContentRelationsDiscoveryService::class)->disableOriginalConstructor()
             ->setMethods([
+                'getApiWrapper',
+                'getContentHelper',
+                'getSettingsManager',
+                'getSubmissionManager',
                 'returnResponse',
             ])
             ->getMock();
+        $x->method('getApiWrapper')->willReturn($apiWrapper);
+        $x->method('getContentHelper')->willReturn($contentHelper);
+        $x->method('getSettingsManager')->willReturn($settingsManager);
+        $x->method('getSubmissionManager')->willReturn($submissionManager);
+
+        return $x;
     }
 }

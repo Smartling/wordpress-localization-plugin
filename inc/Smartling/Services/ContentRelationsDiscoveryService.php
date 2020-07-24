@@ -112,7 +112,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
      * @var SettingsManager
      */
     private $settingsManager;
-    private $localizationPluginProxy;
+	private $localizationPluginProxy;
 
     /**
      * @return LoggerInterface
@@ -274,7 +274,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
      * @param ContentHelper                      $contentHelper
      * @param FieldsFilterHelper                 $fieldFilterHelper
      * @param MetaFieldProcessorManager          $fieldProcessorManager
-     * @param LocalizationPluginProxyInterface $localizationPluginProxy
+	 * @param LocalizationPluginProxyInterface $localizationPluginProxy
      * @param AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper
      * @param ShortcodeHelper                    $shortcodeHelper
      * @param GutenbergBlockHelper               $blockHelper
@@ -286,7 +286,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         ContentHelper $contentHelper,
         FieldsFilterHelper $fieldFilterHelper,
         MetaFieldProcessorManager $fieldProcessorManager,
-        LocalizationPluginProxyInterface $localizationPluginProxy,
+		LocalizationPluginProxyInterface $localizationPluginProxy,
         AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper,
         ShortcodeHelper $shortcodeHelper,
         GutenbergBlockHelper $blockHelper,
@@ -297,7 +297,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         $this->setContentHelper($contentHelper);
         $this->setFieldFilterHelper($fieldFilterHelper);
         $this->setMetaFieldProcessorManager($fieldProcessorManager);
-        $this->localizationPluginProxy = $localizationPluginProxy;
+		$this->localizationPluginProxy = $localizationPluginProxy;
         $this->setAbsoluteLinkedAttachmentCoreHelper($absoluteLinkedAttachmentCoreHelper);
         $this->setShortcodeHelper($shortcodeHelper);
         $this->setGutenbergBlockHelper($blockHelper);
@@ -397,24 +397,23 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
      */
     public function createSubmissionsHandler($data = '')
     {
-        if (!is_array($data)) {
+		if (!is_array($data)) {
             $data = $_POST;
         }
         try {
-            $contentType = $data['source']['contentType'];
-            $siteHelper = $this->getContentHelper()->getSiteHelper();
-            $curBlogId = $siteHelper->getCurrentBlogId();
+			$contentType = $data['source']['contentType'];
+            $curBlogId = $this->getContentHelper()->getSiteHelper()->getCurrentBlogId();
             $batchUid  = $this->getBatchUid($curBlogId, $data['job']);
 
             $targetBlogIds = explode(',', $data['targetBlogIds']);
 
-            if (array_key_exists( 'ids', $data)) {
-                return $this->bulkUploadHandler( $batchUid, $data['ids'], $contentType, $curBlogId, $targetBlogIds );
-            }
+			if (array_key_exists( 'ids', $data)) {
+				return $this->bulkUploadHandler( $batchUid, $data['ids'], $contentType, $curBlogId, $targetBlogIds );
+			}
 
             foreach ($targetBlogIds as $targetBlogId) {
                 $submissionTemplateArray = [
-                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $siteHelper->getCurrentBlogId(),
+                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $this->getContentHelper()->getSiteHelper()->getCurrentBlogId(),
                     SubmissionEntity::FIELD_TARGET_BLOG_ID => (int)$targetBlogId,
                     SubmissionEntity::FIELD_TARGET_LOCALE => $this->localizationPluginProxy->getBlogLocaleById((int)$targetBlogId),
                 ];
@@ -423,7 +422,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                  * Submission for original content may already exist
                  */
                 $searchParams = array_merge($submissionTemplateArray, [
-                    SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
+					SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
                     SubmissionEntity::FIELD_SOURCE_ID    => ArrayHelper::first($data['source']['id']),
                 ]);
 
@@ -444,7 +443,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 
                 if (empty($result)) {
                     $sources[] = [
-                        'type' => $contentType,
+						'type' => $contentType,
                         'id'   => ArrayHelper::first($data['source']['id']),
                     ];
                 } else {
