@@ -130,7 +130,7 @@ class AcfTypeDetector
         return $this->getAcfProcessor($field, $this->getFieldKeyFieldNameByMetaFields($field, $metaFields));
     }
 
-    private function getAcfProcessor($field, $key)
+    public function getAcfProcessor($field, $key)
     {
         $mathes  = [];
         $pattern = '#(field|group)_([0-9a-f]){13}#ius';
@@ -142,5 +142,4 @@ class AcfTypeDetector
 
         return false;
     }
-
 }

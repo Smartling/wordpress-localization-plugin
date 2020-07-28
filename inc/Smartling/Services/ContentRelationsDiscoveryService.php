@@ -667,7 +667,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 );
             }
 
-            $detectedReferences = [];
+            $detectedReferences = ['attachment' => []];
 
             foreach ($fields as $fName => $fValue) {
                 try {
@@ -679,11 +679,24 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                      * in case that we found simple default processor try to treat as ACF field
                      */
                     if ($processor instanceof DefaultMetaFieldProcessor) {
-                        $this->getLogger()->debug(vsprintf('Trying to threat \'%s\' field as ACF', [$fName]));
+                        $this->getLogger()->debug(vsprintf('Trying to treat \'%s\' field as ACF', [$fName]));
                         $processor = $this
                             ->getMetaFieldProcessorManager()
                             ->getAcfTypeDetector()
                             ->getProcessorByMetaFields($fName, $content['meta']);
+                        if ($processor === false) {
+                            $parts = explode('/', $fName);
+                            $lastPart = end($parts);
+                            if ($lastPart !== false && strpos($lastPart, '_') !== 0) {
+                                $parts[count($parts) - 1] = "_$lastPart";
+                                $field = implode('/', $parts);
+                                if (array_key_exists($field, $fields)) {
+                                    $processor = $this->getMetaFieldProcessorManager()
+                                        ->getAcfTypeDetector()->getAcfProcessor($fName, $fields[$field]);
+                                }
+                            }
+
+                        }
                     }
 
                     /**
