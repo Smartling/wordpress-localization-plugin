@@ -74,9 +74,9 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         $this->params = $params;
     }
 
-    public function __construct(SmartlingCore $core, EntityHelper $entityHelper)
+    public function __construct(SmartlingCore $core, array $acfDefinitions = [])
     {
-        $this->acfDefinitions = (new AcfDynamicSupport($entityHelper))->collectDefinitions();
+        $this->acfDefinitions = $acfDefinitions;
         $this->core = $core;
         $this->logger = MonologWrapper::getLogger(static::class);
     }
@@ -121,7 +121,10 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
             if (array_key_exists('data', $acfData)) {
                 foreach ($acfData['data'] as $key => $value) {
                     if (array_key_exists($value, $this->acfDefinitions)
-                        && $this->acfDefinitions[$value]['type'] === 'image') {
+                        && array_key_exists('type', $this->acfDefinitions[$value])
+                        && $this->acfDefinitions[$value]['type'] === 'image'
+                        && strpos($key, '_') === 0
+                        && array_key_exists(substr($key, 1), $acfData['data'])) {
                         $attachmentId = $acfData['data'][substr($key, 1)];
                         $attachment = $this->getCore()->sendAttachmentForTranslation(
                             $this->getParams()->getSubmission()->getSourceBlogId(),

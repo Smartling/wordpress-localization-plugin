@@ -152,6 +152,13 @@ namespace {
             }
         }
 
+        if (!function_exists('get_post_types')) {
+            function get_post_types()
+            {
+                return ['acf-field' => '', 'acf-field-group' => ''];
+            }
+        }
+
         if (!function_exists('metadata_exists')) {
             function metadata_exists($meta_type, $object_id, $meta_key)
             {

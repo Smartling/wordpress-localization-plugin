@@ -6,6 +6,7 @@ use Smartling\Bootstrap;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\MetaFieldProcessor\CustomFieldFilterHandler;
+use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorInterface;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -130,7 +131,27 @@ class AcfTypeDetector
         return $this->getAcfProcessor($field, $this->getFieldKeyFieldNameByMetaFields($field, $metaFields));
     }
 
-    public function getAcfProcessor($field, $key)
+    /**
+     * @param string $field
+     * @param array $fields
+     * @return bool|MetaFieldProcessorInterface
+     */
+    public function getProcessorForGutenberg($field, array $fields)
+    {
+        $parts = explode('/', $field);
+        $lastPart = end($parts);
+        if ($lastPart !== false && strpos($lastPart, '_') !== 0) {
+            $parts[count($parts) - 1] = "_$lastPart";
+            $acfField = implode('/', $parts);
+            if (array_key_exists($acfField, $fields)) {
+                return $this->getAcfProcessor($acfField, $fields[$acfField]);
+            }
+        }
+
+        return false;
+    }
+
+    private function getAcfProcessor($field, $key)
     {
         $mathes  = [];
         $pattern = '#(field|group)_([0-9a-f]){13}#ius';
