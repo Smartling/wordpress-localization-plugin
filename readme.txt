@@ -3,7 +3,7 @@ Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
 Tested up to: 5.4
-Stable tag: 1.13.2
+Stable tag: 1.13.3
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -58,6 +58,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 1.13.3 =
+* Added support for attachments with ACF in Gutenberg blocks
+
 = 1.13.2 =
 * Fixed issue where clicking the download button would not download translations
 * Skip all related content checkbox now has a default state expert setting
