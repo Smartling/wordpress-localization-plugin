@@ -41,7 +41,6 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
      * @var AfterDeserializeContentEventParameters
      */
     private $params;
-    private $replacer;
 
     /**
      * @return LoggerInterface
@@ -80,7 +79,6 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         $this->acfDefinitions = (new AcfDynamicSupport($entityHelper))->collectDefinitions();
         $this->core = $core;
         $this->logger = MonologWrapper::getLogger(static::class);
-        $this->replacer = new PairReplacerHelper();
     }
 
     public function register()
@@ -111,6 +109,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
      */
     protected function processString(&$stringValue)
     {
+        $replacer = new PairReplacerHelper();
         $matches = [];
         if (is_array($stringValue)) {
             foreach ($stringValue as $item => &$value) {
@@ -127,10 +126,10 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                         $attachment = $this->getCore()->sendAttachmentForTranslation(
                             $this->getParams()->getSubmission()->getSourceBlogId(),
                             $this->getParams()->getSubmission()->getTargetBlogId(),
-	                        (int)$attachmentId,
+                            (int)$attachmentId,
                             $this->getParams()->getSubmission()->getBatchUid()
                         );
-                        $this->replacer->addReplacementPair($attachmentId, $attachment->getTargetId());
+                        $replacer->addReplacementPair($attachmentId, $attachment->getTargetId());
                     }
                 }
             }
@@ -148,7 +147,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                             $this->getParams()->getSubmission()->getBatchUid(),
                             $this->getParams()->getSubmission()->getIsCloned()
                         );
-                        $this->replacer->addReplacementPair(
+                        $replacer->addReplacementPair(
                             $path,
                             $this->getCore()->getAttachmentRelativePathBySubmission($attachmentSubmission)
                         );
@@ -156,13 +155,13 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                         $result = $this->tryProcessThumbnail($path);
 
                         if (false !== $result) {
-                            $this->replacer->addReplacementPair($result['from'], $result['to']);
+                            $replacer->addReplacementPair($result['from'], $result['to']);
                         }
                     }
                 }
             }
         }
-        $stringValue = $this->replacer->processString($stringValue);
+        $stringValue = $replacer->processString($stringValue);
     }
 
     /**
@@ -213,12 +212,12 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 
                     if (false !== $attachmentId) {
                         $attachmentSubmission = $this->getCore()->sendAttachmentForTranslation(
-                                $this->getParams()->getSubmission()->getSourceBlogId(),
-                                $this->getParams()->getSubmission()->getTargetBlogId(),
-                                $attachmentId,
-                                $this->getParams()->getSubmission()->getBatchUid(),
-                                $this->getParams()->getSubmission()->getIsCloned()
-                            );
+                            $this->getParams()->getSubmission()->getSourceBlogId(),
+                            $this->getParams()->getSubmission()->getTargetBlogId(),
+                            $attachmentId,
+                            $this->getParams()->getSubmission()->getBatchUid(),
+                            $this->getParams()->getSubmission()->getIsCloned()
+                        );
 
                         $targetUploadInfo = $this->getCore()
                             ->getUploadFileInfo($this->getParams()
@@ -350,7 +349,8 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
      * @param string $query
      * @return bool|int
      */
-    protected function returnId($query) {
+    protected function returnId($query)
+    {
         $data = RawDbQueryHelper::query($query);
 
         $result = false;
