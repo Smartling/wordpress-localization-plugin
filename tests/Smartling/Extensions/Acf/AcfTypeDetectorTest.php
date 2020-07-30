@@ -15,9 +15,18 @@ use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 
 class AcfTypeDetectorTest extends TestCase
 {
+    private $acfStores;
     protected function setUp()
     {
+        global $acf_stores;
+        $this->acfStores = $acf_stores;
         WordpressFunctionsMockHelper::injectFunctionsMocks();
+    }
+
+    protected function tearDown()
+    {
+        global $acf_stores;
+        $acf_stores = $this->acfStores;
     }
 
     public function testGetProcessorForGutenberg()
