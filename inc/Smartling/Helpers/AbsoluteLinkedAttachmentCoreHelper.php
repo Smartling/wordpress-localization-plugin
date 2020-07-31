@@ -70,19 +70,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
             $conditionBlock
         );
 
-        $data = RawDbQueryHelper::query($query);
-
-        $result = false;
-
-        if (is_array($data) && 1 === count($data)) {
-            $resultRow = ArrayHelper::first($data);
-
-            if (is_array($resultRow) && array_key_exists('id', $resultRow)) {
-                $result = (int)$resultRow['id'];
-            }
-        }
-
-        return $result;
+        return $this->returnId($query);
     }
 
     /**

@@ -34,10 +34,11 @@ class PairReplacerHelper
 
     /**
      * @param string $string
+     * @param string[] $pairWrapper
      *
      * @return string
      */
-    public function processString($string, $pairWrapper = ['\'', '"'])
+    public function processString($string, $pairWrapper = ['\'', '"', '\\"'])
     {
         $collection = $this->getPairCollection();
         foreach ($collection as $pair) {
