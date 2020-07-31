@@ -59,7 +59,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 1.13.3 =
-* Added support for attachments with ACF in Gutenberg blocks
+* Added support for attachments inside ACF fields in Gutenberg blocks
 
 = 1.13.2 =
 * Fixed issue where clicking the download button would not download translations

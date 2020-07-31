@@ -117,22 +117,24 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
             }
             unset($value);
         } elseif (0 < preg_match_all(self::ACF_GUTENBERG_BLOCK, $stringValue, $matches)) {
-            $acfData = json_decode(stripslashes($matches[1][0]), true);
-            if (array_key_exists('data', $acfData)) {
-                foreach ($acfData['data'] as $key => $value) {
-                    if (array_key_exists($value, $this->acfDefinitions)
-                        && array_key_exists('type', $this->acfDefinitions[$value])
-                        && $this->acfDefinitions[$value]['type'] === 'image'
-                        && strpos($key, '_') === 0
-                        && array_key_exists(substr($key, 1), $acfData['data'])) {
-                        $attachmentId = $acfData['data'][substr($key, 1)];
-                        $attachment = $this->getCore()->sendAttachmentForTranslation(
-                            $this->getParams()->getSubmission()->getSourceBlogId(),
-                            $this->getParams()->getSubmission()->getTargetBlogId(),
-                            (int)$attachmentId,
-                            $this->getParams()->getSubmission()->getBatchUid()
-                        );
-                        $replacer->addReplacementPair($attachmentId, $attachment->getTargetId());
+            foreach ($matches[1] as $match) {
+                $acfData = json_decode(stripslashes($match), true);
+                if (array_key_exists('data', $acfData)) {
+                    foreach ($acfData['data'] as $key => $value) {
+                        if (array_key_exists($value, $this->acfDefinitions)
+                            && array_key_exists('type', $this->acfDefinitions[$value])
+                            && $this->acfDefinitions[$value]['type'] === 'image'
+                            && strpos($key, '_') === 0
+                            && array_key_exists(substr($key, 1), $acfData['data'])) {
+                            $attachmentId = $acfData['data'][substr($key, 1)];
+                            $attachment = $this->getCore()->sendAttachmentForTranslation(
+                                $this->getParams()->getSubmission()->getSourceBlogId(),
+                                $this->getParams()->getSubmission()->getTargetBlogId(),
+                                (int)$attachmentId,
+                                $this->getParams()->getSubmission()->getBatchUid()
+                            );
+                            $replacer->addReplacementPair($attachmentId, $attachment->getTargetId());
+                        }
                     }
                 }
             }
