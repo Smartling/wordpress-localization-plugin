@@ -41,7 +41,13 @@ class AcfDynamicSupport
         'translate' => [],
     ];
 
-    private $filters = [];
+    /**
+     * @return array
+     */
+    public function getDefinitions()
+    {
+        return $this->definitions;
+    }
 
     /**
      * @return LoggerInterface
@@ -143,7 +149,7 @@ class AcfDynamicSupport
         return $blogsToSearch;
     }
 
-    public function collectDefinitions()
+    private function getDatabaseDefinitions()
     {
         $defs = [];
         $this->getLogger()->debug('Looking for ACF definitions in the database');
@@ -421,24 +427,17 @@ class AcfDynamicSupport
         foreach ($dbDefinitions as $key => $definition) {
             if (!array_key_exists($key, $localDefinitions)) {
                 return false;
-            } else {
-                switch ($definition['global_type']) {
-                    case 'field':
-                        $local = &$localDefinitions[$key];
-                        $dbdef = &$definition;
-                        if ($local['type'] !== $dbdef['type'] || $local['name'] !== $dbdef['name'] ||
-                            $local['parent'] !== $dbdef['parent']
-                        ) {
-                            // ACF Option Pages has internal issue in definition, so skip it:
-                            if ('group_572b269b668a4' === $local['parent']) {
-                                break;
-                            }
+            }
 
-                            return false;
-                        }
-                        break;
-                    case 'group':
-                    default:
+            if ($definition['global_type'] === 'field') {
+                $local = $localDefinitions[$key];
+                if ($local['type'] !== $definition['type'] || $local['name'] !== $definition['name'] ||
+                    $local['parent'] !== $definition['parent']
+                ) {
+                    // ACF Option Pages has internal issue in definition, so skip it:
+                    if ('group_572b269b668a4' !== $local['parent']) {
+                        return false;
+                    }
                 }
             }
         }
@@ -481,7 +480,7 @@ class AcfDynamicSupport
                 DiagnosticsHelper::addDiagnosticsMessage(implode('<br/>', $msg));
                 $this->getLogger()->notice('Automatic ACF support is disabled.');
             } else {
-                $dbDefinitions = $this->collectDefinitions();
+                $dbDefinitions = $this->getDatabaseDefinitions();
 
                 if (false === $this->verifyDefinitions($localDefinitions, $dbDefinitions)) {
                     $url = admin_url('edit.php?post_type=acf-field-group&page=acf-tools');
@@ -647,11 +646,7 @@ class AcfDynamicSupport
     {
         $postTypes = $this->getPostTypes();
 
-        if ((in_array('acf-field', $postTypes, true) && in_array('acf-field-group', $postTypes, true))) {
-            return true;
-        }
-
-        return false;
+        return in_array('acf-field', $postTypes, true) && in_array('acf-field-group', $postTypes, true);
     }
 
     /**

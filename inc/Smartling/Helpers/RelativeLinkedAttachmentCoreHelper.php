@@ -27,6 +27,8 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     const PATTERN_THUMBNAIL_IDENTITY = '-\d+x\d+$';
 
     private $acfDefinitions;
+    private $acfDynamicSupport;
+
     /**
      * @var LoggerInterface
      */
@@ -74,9 +76,9 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         $this->params = $params;
     }
 
-    public function __construct(SmartlingCore $core, array $acfDefinitions = [])
+    public function __construct(SmartlingCore $core, AcfDynamicSupport $acfDynamicSupport)
     {
-        $this->acfDefinitions = $acfDefinitions;
+        $this->acfDynamicSupport = $acfDynamicSupport;
         $this->core = $core;
         $this->logger = MonologWrapper::getLogger(static::class);
     }
@@ -94,6 +96,10 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     public function processor(AfterDeserializeContentEventParameters $params)
     {
         $this->setParams($params);
+        if (count($this->acfDefinitions) === 0) {
+            $this->acfDynamicSupport->run();
+            $this->acfDefinitions = $this->acfDynamicSupport->getDefinitions();
+        }
 
         $fields = &$params->getTranslatedFields();
 
