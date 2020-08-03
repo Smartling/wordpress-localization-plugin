@@ -12,13 +12,13 @@ services:
     class: Smartling\Helpers\RelativeLinkedAttachmentCoreHelper
     arguments:
       - "@entrypoint"
-      - "@acf.definitions"
+      - "@acf.dynamic.support"
 
   smartling.helper.absolute-image-path-support:
       class: Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper
       arguments:
         - "@entrypoint"
-        - "@acf.definitions"
+        - "@acf.dynamic.support"
 
   helper.customMenu:
     class: Smartling\Helpers\CustomMenuContentTypeHelper
@@ -236,9 +236,6 @@ services:
     arguments:
     - "@content.helper"
     - "@fields-filter.helper"
-
-  acf.definitions:
-    factory: ["@acf.dynamic.support", "collectDefinitions"]
 
   acf.dynamic.support:
     class: Smartling\Extensions\Acf\AcfDynamicSupport
