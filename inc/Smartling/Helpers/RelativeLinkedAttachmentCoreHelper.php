@@ -26,7 +26,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 
     const PATTERN_THUMBNAIL_IDENTITY = '-\d+x\d+$';
 
-    private $acfDefinitions;
+    private $acfDefinitions = [];
     private $acfDynamicSupport;
 
     /**

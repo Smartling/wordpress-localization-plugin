@@ -5,6 +5,8 @@ namespace Smartling\Tests\Smartling\Helpers;
 use PHPUnit\Framework\TestCase;
 use Smartling\Base\SmartlingCore;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
+use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\RelativeLinkedAttachmentCoreHelper;
 use Smartling\Submissions\SubmissionEntity;
@@ -35,6 +37,10 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
         $submission->setTargetId($targetId);
         $submission->setTargetBlogId($targetBlogId);
         $submission->setBatchUid($batchUid);
+        $acf = $this->getMockBuilder(AcfDynamicSupport::class)
+            ->setConstructorArgs([$this->getMock(EntityHelper::class)])
+            ->getMock();
+        $acf->method('getDefinitions')->willReturn($definitions);
 
         $core = $this->getMock(SmartlingCore::class);
         $core->expects(self::once())->method('sendAttachmentForTranslation')
@@ -42,7 +48,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
             ->willReturn($submission);
         $x = $this->getMockBuilder(RelativeLinkedAttachmentCoreHelper::class)->setConstructorArgs([
             $core,
-            $definitions
+            $acf
         ])->setMethods(null)->getMock();
         $source = [$string];
         $meta = [];
