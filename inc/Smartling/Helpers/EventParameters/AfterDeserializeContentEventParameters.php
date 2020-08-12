@@ -32,29 +32,19 @@ class AfterDeserializeContentEventParameters
      * @var array
      */
     private $targetMetadata;
-    private $context;
 
 
-    /**
-     * @param array $source
-     * @param SubmissionEntity $submission
-     * @param EntityAbstract $contentEntity
-     * @param array $meta
-     * @param string $context
-     */
     public function __construct(
-        array &$source,
+        array & $source,
         SubmissionEntity $submission,
         EntityAbstract $contentEntity,
-        array $meta,
-        $context
+        array $meta
     )
     {
         $this->setTranslatedFields($source);
         $this->setSubmission($submission);
         $this->setTargetContent($contentEntity);
         $this->setTargetMetadata($meta);
-        $this->context = $context;
     }
 
     /**
@@ -121,11 +111,5 @@ class AfterDeserializeContentEventParameters
         $this->targetMetadata = $targetMetadata;
     }
 
-    /**
-     * @return string
-     */
-    public function getContext()
-    {
-        return $this->context;
-    }
+
 }

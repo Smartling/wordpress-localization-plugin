@@ -7,6 +7,7 @@ use LibXMLError;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
+use Smartling\Exception\SmartlingManualRelationsHandlingSubmissionCreationForbiddenException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\MonologWrapper\MonologWrapper;
@@ -131,16 +132,20 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                             && array_key_exists('type', $this->acfDefinitions[$value])
                             && $this->acfDefinitions[$value]['type'] === 'image'
                             && strpos($key, '_') === 0
-                            && array_key_exists(substr($key, 1), $acfData['data'])
-                            && $this->params->getContext() === FieldsFilterHelper::FILTER_STRATEGY_UPLOAD) {
+                            && array_key_exists(substr($key, 1), $acfData['data'])) {
                             $attachmentId = $acfData['data'][substr($key, 1)];
-                            $attachment = $this->getCore()->sendAttachmentForTranslation(
-                                $this->getParams()->getSubmission()->getSourceBlogId(),
-                                $this->getParams()->getSubmission()->getTargetBlogId(),
-                                (int)$attachmentId,
-                                $this->getParams()->getSubmission()->getBatchUid()
-                            );
-                            $replacer->addReplacementPair($attachmentId, $attachment->getTargetId());
+                            try {
+                                $attachment = $this->getCore()->sendAttachmentForTranslation(
+                                    $this->getParams()->getSubmission()->getSourceBlogId(),
+                                    $this->getParams()->getSubmission()->getTargetBlogId(),
+                                    (int)$attachmentId,
+                                    $this->getParams()->getSubmission()->getBatchUid()
+                                );
+                                $replacer->addReplacementPair($attachmentId, $attachment->getTargetId());
+                            } catch (SmartlingManualRelationsHandlingSubmissionCreationForbiddenException $e) {
+                                $this->getLogger()->notice("Skipping attachment id $attachmentId: was not uploaded " .
+                                    'due to manual relations handling');
+                            }
                         }
                     }
                 }

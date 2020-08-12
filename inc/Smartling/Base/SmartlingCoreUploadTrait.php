@@ -15,7 +15,6 @@ use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
-use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
@@ -243,10 +242,9 @@ trait SmartlingCoreUploadTrait
     /**
      * @param SubmissionEntity $submission
      * @param string $xml
-     * @param string $context
      * @return array
      */
-    public function applyXML(SubmissionEntity $submission, $xml, $context)
+    public function applyXML(SubmissionEntity $submission, $xml)
     {
         $messages = [];
         try {
@@ -270,16 +268,8 @@ trait SmartlingCoreUploadTrait
                 $translation['meta'] = [];
             }
             $targetContent = $this->getContentHelper()->readTargetContent($submission);
-            do_action(
-                ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT,
-                new AfterDeserializeContentEventParameters(
-                    $translation,
-                    $submission,
-                    $targetContent,
-                    $translation['meta'],
-                    $context
-                )
-            );
+            $params = new AfterDeserializeContentEventParameters($translation, $submission, $targetContent, $translation['meta']);
+            do_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
             if (array_key_exists('entity', $translation) && ArrayHelper::notEmpty($translation['entity'])) {
                 $translation['entity'] = self::arrayMergeIfKeyNotExists($lockedData['entity'], $translation['entity']);
                 $this->setValues($targetContent, $translation['entity']);

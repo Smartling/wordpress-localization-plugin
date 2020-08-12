@@ -2,7 +2,6 @@
 
 namespace Smartling\Base;
 
-use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\Controller\LiveNotificationController;
 
@@ -78,7 +77,7 @@ trait SmartlingCoreDownloadTrait
                     $entity->getTargetLocale(),
                 ])
             );
-            $this->applyXML($entity, $data, FieldsFilterHelper::FILTER_STRATEGY_DOWNLOAD);
+            $this->applyXML($entity, $data);
             LiveNotificationController::pushNotification(
                 $this
                     ->getSettingsManager()
