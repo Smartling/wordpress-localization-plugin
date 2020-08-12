@@ -131,8 +131,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                             && array_key_exists('type', $this->acfDefinitions[$value])
                             && $this->acfDefinitions[$value]['type'] === 'image'
                             && strpos($key, '_') === 0
-                            && array_key_exists(substr($key, 1), $acfData['data'])
-                            && $this->params->getContext() === FieldsFilterHelper::FILTER_STRATEGY_UPLOAD) {
+                            && array_key_exists(substr($key, 1), $acfData['data'])) {
                             $attachmentId = $acfData['data'][substr($key, 1)];
                             $attachment = $this->getCore()->sendAttachmentForTranslation(
                                 $this->getParams()->getSubmission()->getSourceBlogId(),
