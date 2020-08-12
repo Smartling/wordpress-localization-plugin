@@ -15,6 +15,7 @@ use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
+use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
@@ -242,9 +243,10 @@ trait SmartlingCoreUploadTrait
     /**
      * @param SubmissionEntity $submission
      * @param string $xml
+     * @param string $context
      * @return array
      */
-    public function applyXML(SubmissionEntity $submission, $xml)
+    public function applyXML(SubmissionEntity $submission, $xml, $context)
     {
         $messages = [];
         try {
@@ -268,8 +270,16 @@ trait SmartlingCoreUploadTrait
                 $translation['meta'] = [];
             }
             $targetContent = $this->getContentHelper()->readTargetContent($submission);
-            $params = new AfterDeserializeContentEventParameters($translation, $submission, $targetContent, $translation['meta']);
-            do_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
+            do_action(
+                ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT,
+                new AfterDeserializeContentEventParameters(
+                    $translation,
+                    $submission,
+                    $targetContent,
+                    $translation['meta'],
+                    $context
+                )
+            );
             if (array_key_exists('entity', $translation) && ArrayHelper::notEmpty($translation['entity'])) {
                 $translation['entity'] = self::arrayMergeIfKeyNotExists($lockedData['entity'], $translation['entity']);
                 $this->setValues($targetContent, $translation['entity']);
@@ -691,7 +701,7 @@ trait SmartlingCoreUploadTrait
                 $submission->getFileUri();
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                 $submission = $this->getSubmissionManager()->storeEntity($submission);
-                $this->applyXML($submission, $xml);
+                $this->applyXML($submission, $xml, FieldsFilterHelper::FILTER_STRATEGY_UPLOAD);
 
                 LiveNotificationController::pushNotification(
                     $configurationProfile->getProjectId(),

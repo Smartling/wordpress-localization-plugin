@@ -8,6 +8,7 @@ use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
+use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\RelativeLinkedAttachmentCoreHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
@@ -55,7 +56,13 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
 
         $content = $this->getMock(PostEntityStd::class);
 
-        $x->processor(new AfterDeserializeContentEventParameters($source, $submission, $content, $meta));
+        $x->processor(new AfterDeserializeContentEventParameters(
+            $source,
+            $submission,
+            $content,
+            $meta,
+            FieldsFilterHelper::FILTER_STRATEGY_UPLOAD)
+        );
 
         self::assertEquals(
             str_replace($sourceId, $targetId, $string),
