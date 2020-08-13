@@ -691,7 +691,7 @@ trait SmartlingCoreUploadTrait
                 $submission->getFileUri();
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                 $submission = $this->getSubmissionManager()->storeEntity($submission);
-                $this->applyXML($submission, $xml, FieldsFilterHelper::FILTER_STRATEGY_UPLOAD);
+                $this->applyXML($submission, $xml);
 
                 LiveNotificationController::pushNotification(
                     $configurationProfile->getProjectId(),
