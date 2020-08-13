@@ -423,6 +423,7 @@ trait SmartlingCoreUploadTrait
      */
     public function bulkSubmit(SubmissionEntity $submission)
     {
+        $submissionHasBatchUid = !StringHelper::isNullOrEmpty($submission->getBatchUid());
         try {
             $xml = $this->getXMLFiltered($submission);
             $submission = $this->getSubmissionManager()->storeEntity($submission);
@@ -438,7 +439,7 @@ trait SmartlingCoreUploadTrait
                                                                 ->getProfileTargetBlogIdsByMainBlogId($submission->getSourceBlogId()),
             ];
 
-            if (!StringHelper::isNullOrEmpty($submission->getBatchUid())) {
+            if ($submissionHasBatchUid) {
                 $params[SubmissionEntity::FIELD_BATCH_UID] = [$submission->getBatchUid()];
             }
 
@@ -523,14 +524,27 @@ trait SmartlingCoreUploadTrait
 
             $this->executeBatch($submission->getBatchUid(), $submission->getSourceBlogId());
         } catch (\Exception $e) {
-            $proceedAuthException = function ($e) use (& $proceedAuthException) {
-                if (401 == $e->getCode()) {
-                    $this->getLogger()->error(vsprintf('Invalid credentials. Check profile settings.', []));
-                } elseif ($e->getPrevious() instanceof \Exception) {
-                    $proceedAuthException($e->getPrevious());
+            $caught = $e;
+            do {
+                if (401 === $e->getCode()) {
+                    $this->getLogger()->error('Invalid credentials. Check profile settings.');
+                    break;
                 }
-            };
-            $proceedAuthException($e);
+                if ($submissionHasBatchUid
+                    && strpos("Batch is not suitable for adding files", $e->getMessage()) !== false) {
+                    $submissions = $this->getSubmissionManager()->find([
+                        SubmissionEntity::FIELD_STATUS => [SubmissionEntity::SUBMISSION_STATUS_NEW],
+                        SubmissionEntity::FIELD_BATCH_UID => [$submission->getBatchUid()],
+                    ]);
+                    foreach ($submissions as $found) {
+                        $found->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+                    }
+                    $this->getSubmissionManager()->storeSubmissions($submissions);
+                    break;
+                }
+                $e = $e->getPrevious();
+            } while ($e !== null);
+            $e = $caught;
             $this->getLogger()->error($e->getMessage());
             $this->getSubmissionManager()
                 ->setErrorMessage($submission, vsprintf('Could not submit because: %s', [$e->getMessage()]));
