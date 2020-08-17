@@ -537,8 +537,10 @@ trait SmartlingCoreUploadTrait
                         SubmissionEntity::FIELD_BATCH_UID => [$submission->getBatchUid()],
                     ]);
                     foreach ($submissions as $found) {
+                        /** @var SubmissionEntity $found */
                         $found->setBatchUid('');
                         $found->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+                        $this->getLogger()->notice("Setting submission {$found->getId()} status to failed");
                     }
                     $this->getSubmissionManager()->storeSubmissions($submissions);
                     break;
