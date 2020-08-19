@@ -2,7 +2,7 @@
 
 namespace Smartling\Base;
 
-use Smartling\Bootstrap;
+use Smartling\Exception\SmartlingWpDataIntegrityException;
 use Smartling\Helpers\AttachmentHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -80,8 +80,6 @@ trait SmartlingCoreAttachments
      * Forces image thumbnail re-generation
      *
      * @param SubmissionEntity $submission
-     *
-     * @throws BlogNotFoundException
      */
     public function regenerateTargetThumbnailsBySubmission(SubmissionEntity $submission)
     {
