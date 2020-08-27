@@ -471,6 +471,8 @@ trait SmartlingCoreUploadTrait
                 $locales[] = $this->getSettingsManager()->getSmartlingLocaleBySubmission($_submission);
             }
 
+            $this->getLogger()->debug("Sending file {$submission->getFileUri()}");
+
             if (!StringHelper::isNullOrEmpty($xml)) {
                 LiveNotificationController::pushNotification(
                     $this
@@ -485,6 +487,7 @@ trait SmartlingCoreUploadTrait
                     ])
                 );
                 if ($this->sendFile($submission, $xml, $locales)) {
+                    $this->getLogger()->debug("File {$submission->getFileUri()} sent");
                     LiveNotificationController::pushNotification(
                         $this
                             ->getSettingsManager()
@@ -502,6 +505,7 @@ trait SmartlingCoreUploadTrait
                         $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                     }
                 } else {
+                    $this->getLogger()->error("File {$submission->getFileUri()} failed");
                     LiveNotificationController::pushNotification(
                         $this
                             ->getSettingsManager()

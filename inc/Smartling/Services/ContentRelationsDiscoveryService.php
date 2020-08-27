@@ -112,7 +112,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
      * @var SettingsManager
      */
     private $settingsManager;
-	private $localizationPluginProxy;
+    private $localizationPluginProxy;
 
     /**
      * @return LoggerInterface
@@ -274,7 +274,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
      * @param ContentHelper                      $contentHelper
      * @param FieldsFilterHelper                 $fieldFilterHelper
      * @param MetaFieldProcessorManager          $fieldProcessorManager
-	 * @param LocalizationPluginProxyInterface $localizationPluginProxy
+     * @param LocalizationPluginProxyInterface $localizationPluginProxy
      * @param AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper
      * @param ShortcodeHelper                    $shortcodeHelper
      * @param GutenbergBlockHelper               $blockHelper
@@ -286,7 +286,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         ContentHelper $contentHelper,
         FieldsFilterHelper $fieldFilterHelper,
         MetaFieldProcessorManager $fieldProcessorManager,
-		LocalizationPluginProxyInterface $localizationPluginProxy,
+        LocalizationPluginProxyInterface $localizationPluginProxy,
         AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper,
         ShortcodeHelper $shortcodeHelper,
         GutenbergBlockHelper $blockHelper,
@@ -297,7 +297,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         $this->setContentHelper($contentHelper);
         $this->setFieldFilterHelper($fieldFilterHelper);
         $this->setMetaFieldProcessorManager($fieldProcessorManager);
-		$this->localizationPluginProxy = $localizationPluginProxy;
+        $this->localizationPluginProxy = $localizationPluginProxy;
         $this->setAbsoluteLinkedAttachmentCoreHelper($absoluteLinkedAttachmentCoreHelper);
         $this->setShortcodeHelper($shortcodeHelper);
         $this->setGutenbergBlockHelper($blockHelper);
@@ -339,39 +339,40 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             );
     }
 
-	/**
-	 * @param string $batchUid
-	 * @param array $contentIds
-	 * @param string $contentType
-	 * @param int $currentBlogId
-	 * @param array $targetBlogIds
-	 */
-	public function bulkUploadHandler( $batchUid, array $contentIds, $contentType, $currentBlogId, array $targetBlogIds ) {
-		foreach ( $targetBlogIds as $targetBlogId ) {
-			$blogFields = [
-				SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
-				SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
-			];
-			foreach ( $contentIds as $id ) {
-				$existing = $this->getSubmissionManager()->find( array_merge( $blogFields, [
-					SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
-					SubmissionEntity::FIELD_SOURCE_ID    => $id
-				] ) );
+    /**
+     * @param string $batchUid
+     * @param array $contentIds
+     * @param string $contentType
+     * @param int $currentBlogId
+     * @param array $targetBlogIds
+     */
+    public function bulkUploadHandler($batchUid, array $contentIds, $contentType, $currentBlogId, array $targetBlogIds)
+    {
+        foreach ($targetBlogIds as $targetBlogId) {
+            $blogFields = [
+                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
+                SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+            ];
+            foreach ($contentIds as $id) {
+                $existing = $this->getSubmissionManager()->find(array_merge($blogFields, [
+                    SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
+                    SubmissionEntity::FIELD_SOURCE_ID => $id
+                ]));
 
-				if ( empty( $existing ) ) {
-					$submission = $this->getSubmissionManager()->getSubmissionEntity( $contentType, $currentBlogId, $id, $targetBlogId, $this->localizationPluginProxy );
-				} else {
-					/** @var SubmissionEntity $submission */
-					$submission = ArrayHelper::first( $existing );
-				}
-				$submission->setBatchUid( $batchUid );
-				$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_NEW );
-				$submission->getFileUri();
-				$this->getSubmissionManager()->storeEntity( $submission );
-			}
-		}
-		$this->returnResponse( [ 'status' => 'SUCCESS' ] );
-	}
+                if (empty($existing)) {
+                    $submission = $this->getSubmissionManager()->getSubmissionEntity($contentType, $currentBlogId, $id, $targetBlogId, $this->localizationPluginProxy);
+                } else {
+                    /** @var SubmissionEntity $submission */
+                    $submission = ArrayHelper::first($existing);
+                }
+                $submission->setBatchUid($batchUid);
+                $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+                $submission->getFileUri();
+                $this->getSubmissionManager()->storeEntity($submission);
+            }
+        }
+        $this->returnResponse(['status' => 'SUCCESS']);
+    }
 
     /**
      * Handler for POST request that creates submissions for main content and selected relations
@@ -397,19 +398,19 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
      */
     public function createSubmissionsHandler($data = '')
     {
-		if (!is_array($data)) {
+        if (!is_array($data)) {
             $data = $_POST;
         }
         try {
-			$contentType = $data['source']['contentType'];
+            $contentType = $data['source']['contentType'];
             $curBlogId = $this->getContentHelper()->getSiteHelper()->getCurrentBlogId();
             $batchUid  = $this->getBatchUid($curBlogId, $data['job']);
 
             $targetBlogIds = explode(',', $data['targetBlogIds']);
 
-			if (array_key_exists( 'ids', $data)) {
-				return $this->bulkUploadHandler( $batchUid, $data['ids'], $contentType, $curBlogId, $targetBlogIds );
-			}
+            if (array_key_exists( 'ids', $data)) {
+                return $this->bulkUploadHandler($batchUid, $data['ids'], $contentType, $curBlogId, $targetBlogIds);
+            }
 
             foreach ($targetBlogIds as $targetBlogId) {
                 $submissionTemplateArray = [
@@ -420,12 +421,29 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 /**
                  * Submission for original content may already exist
                  */
-                $searchParams = array_merge($submissionTemplateArray, [
-					SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
-                    SubmissionEntity::FIELD_SOURCE_ID    => ArrayHelper::first($data['source']['id']),
-                ]);
+                $result = $this->getSubmissionManager()->find(array_merge($submissionTemplateArray, [
+                    SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
+                    SubmissionEntity::FIELD_SOURCE_ID => ArrayHelper::first($data['source']['id']),
+                ]), 1);
 
                 $sources = [];
+
+                if (empty($result)) {
+                    $this->getLogger()->debug('Source submission not found');
+                    $sources[] = [
+                        'type' => $contentType,
+                        'id'   => ArrayHelper::first($data['source']['id']),
+                    ];
+                } else {
+                    /**
+                     * @var SubmissionEntity $submission
+                     */
+                    $submission = ArrayHelper::first($result);
+                    $this->getLogger()->debug("Found source submission {$submission->getId()} ({$submission->getFileUri()})");
+                    $submission->setBatchUid($batchUid);
+                    $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+                    $this->getSubmissionManager()->storeEntity($submission);
+                }
 
                 if (array_key_exists($targetBlogId, $data['relations'])) {
                     foreach ($data['relations'][$targetBlogId] as $sysType => $ids) {
@@ -438,31 +456,9 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                     }
                 }
 
-                $result = $this->getSubmissionManager()->find($searchParams, 1);
-
-                if (empty($result)) {
-                    $sources[] = [
-						'type' => $contentType,
-                        'id'   => ArrayHelper::first($data['source']['id']),
-                    ];
-                } else {
-                    /**
-                     * @var SubmissionEntity $submission
-                     */
-                    $submission = ArrayHelper::first($result);
-                    $submission->setBatchUid($batchUid);
-                    $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                    $this->getSubmissionManager()->storeEntity($submission);
-                }
-
-                /**
-                 * Adding fields to template
-                 */
-                $submissionTemplateArray = array_merge($submissionTemplateArray, [
-                    SubmissionEntity::FIELD_STATUS    => SubmissionEntity::SUBMISSION_STATUS_NEW,
-                    SubmissionEntity::FIELD_BATCH_UID => $batchUid,
-                    SubmissionEntity::FIELD_SUBMISSION_DATE => DateTimeHelper::nowAsString(),
-                ]);
+                $submissionTemplateArray[SubmissionEntity::FIELD_STATUS] = SubmissionEntity::SUBMISSION_STATUS_NEW;
+                $submissionTemplateArray[SubmissionEntity::FIELD_BATCH_UID] = $batchUid;
+                $submissionTemplateArray[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::nowAsString();
 
                 foreach ($sources as $source) {
                     $submissionArray = array_merge($submissionTemplateArray, [
@@ -474,7 +470,8 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 
                     // trigger generation of fileUri
                     $submission->getFileUri();
-                    $this->getSubmissionManager()->storeEntity($submission);
+                    $submission = $this->getSubmissionManager()->storeEntity($submission);
+                    $this->getLogger()->debug("Stored submission {$submission->getId()}->{$submission->getSourceId()} ({$submission->getFileUri()})");
                 }
             }
 

@@ -60,7 +60,7 @@ class SmartlingCore extends SmartlingCoreAbstract
                         do_action(ExportedAPI::ACTION_SMARTLING_PROCESSOR_RELATED_CONTENT, $params);
                     } catch (\Exception $e) {
                         $this->getLogger()->warning(
-                            vsprintf('An unhandled exception occurred while processing related content for submission=%s', [$submission->getId()])
+                            vsprintf('An unhandled exception occurred while processing related content for submission=%s: %s', [$submission->getId(), $e->getMessage()])
                         );
                     }
                 }
