@@ -527,7 +527,6 @@ trait SmartlingCoreUploadTrait
             }
 
             $this->executeBatch($submission->getBatchUid(), $submission->getSourceBlogId());
-            $this->closeBatch($submission->getBatchUid());
         } catch (\Exception $e) {
             $caught = $e;
             do {
@@ -611,6 +610,7 @@ trait SmartlingCoreUploadTrait
 
                 $msg = vsprintf('Batch "%s" executed', [$batchUid]);
                 $this->getLogger()->debug($msg);
+                $this->closeBatch($batchUid);
             }
         } catch (Exception $e) {
             $msg = vsprintf('Error executing batch "%s". Message: "%s"', [$batchUid, $e->getMessage()]);
