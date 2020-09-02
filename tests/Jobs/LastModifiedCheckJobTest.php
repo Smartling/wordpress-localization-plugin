@@ -491,9 +491,11 @@ class LastModifiedCheckJobTest extends TestCase
 
     /**
      * @param array $groupedSubmissions
+     * @param string $exceptionMessage
+     * @param int $storeEntityCount
      * @dataProvider failLastModifiedDataProvider
      */
-    public function testFailLastModified(array $groupedSubmissions)
+    public function testFailLastModified(array $groupedSubmissions, $exceptionMessage, $storeEntityCount)
     {
         $worker = $this->getLastModifiedWorker();
 
@@ -532,18 +534,7 @@ class LastModifiedCheckJobTest extends TestCase
                         ->expects(self::once())
                         ->method('lastModified')
                         ->with(reset($unserializedSubmissions))
-                        ->willThrowException(new SmartlingNetworkException('Array
-(
-    [0] => Array
-        (
-            [key] => file.not.found
-            [message] => The file "' . $fileUri . '" could not be found
-            [details] => Array
-                (
-                    [field] => fileUri
-                )
-        )
-)'));
+                        ->willThrowException(new SmartlingNetworkException($exceptionMessage));
                 }
             }
         }
@@ -557,7 +548,7 @@ class LastModifiedCheckJobTest extends TestCase
             ->method('storeSubmissions');
 
         $this->getSubmissionManager()
-            ->expects(self::once())
+            ->expects(self::exactly($storeEntityCount))
             ->method('storeEntity');
 
         $sm = $this->getSettingsManager();
@@ -584,6 +575,45 @@ class LastModifiedCheckJobTest extends TestCase
                     ],
                     false,
                 ],
+                'Array
+(
+    [0] => Array
+        (
+            [key] => file.not.found
+            [message] => The file "FileA" could not be found
+            [details] => Array
+                (
+                    [field] => fileUri
+                )
+        )
+)',
+                1, // store failed status on submission
+            ],
+            [
+                [
+                    [
+                        'FileA' =>
+                            [
+                                $this->getSerializedSubmission('FileA', 'LangA', $this->mkDateTime('2016-01-10 00:00:00')),
+                                $this->getSerializedSubmission('FileA', 'LangB', $this->mkDateTime('2016-01-10 00:00:00')),
+                            ],
+
+                    ],
+                    false,
+                ],
+                'Array
+(
+    [0] => Array
+        (
+            [key] => some.key
+            [message] => The file "FileA" could not be found
+            [details] => Array
+                (
+                    [field] => fileUri
+                )
+        )
+)',
+                0, // Don't store failed status on submission
             ],
         ];
     }

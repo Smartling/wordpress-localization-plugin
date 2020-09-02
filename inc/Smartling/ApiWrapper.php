@@ -899,21 +899,6 @@ class ApiWrapper implements ApiWrapperInterface
      * @param \Exception $e
      */
     public function isUnrecoverable(\Exception $e) {
-        $unrecoverableKeys = [
-            'file.not.found',
-        ];
-
-        $message = $e->getMessage();
-        if (strpos($message, 'Array') === 0) {
-            $matches = [];
-            preg_match_all('~\[key] => (.+)~', $message, $matches);
-            foreach ($matches as $match) {
-                if (in_array($match[0], $unrecoverableKeys, true)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        return strpos($e->getMessage(), 'file.not.found') !== false;
     }
 }
