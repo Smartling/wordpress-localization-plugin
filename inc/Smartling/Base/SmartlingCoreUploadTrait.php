@@ -523,7 +523,6 @@ trait SmartlingCoreUploadTrait
             }
 
             $this->executeBatch($submission->getBatchUid(), $submission->getSourceBlogId());
-            $this->closeBatch($submission->getBatchUid());
         } catch (\Exception $e) {
             $caught = $e;
             do {
@@ -566,27 +565,6 @@ trait SmartlingCoreUploadTrait
                 ])
             );
         }
-    }
-
-    private function closeBatch($batchUid)
-    {
-        $params = [
-            SubmissionEntity::FIELD_STATUS => [SubmissionEntity::SUBMISSION_STATUS_NEW],
-            SubmissionEntity::FIELD_BATCH_UID => [$batchUid],
-        ];
-
-        $submissions = $this->getSubmissionManager()->find($params);
-        $count = count($submissions);
-        if ($count > 0) {
-            $this->getLogger()->warning("Found $count new submissions with batchUid=$batchUid while closing batch");
-        }
-        foreach ($submissions as $submission) {
-            /**
-             * @var SubmissionEntity $submission
-             */
-            $submission->setBatchUid('');
-        }
-        $this->getSubmissionManager()->storeSubmissions($submissions);
     }
 
     /**
