@@ -299,6 +299,7 @@ abstract class EntityAbstract
     {
         $template = 'The \'%s\' with ID %s not found in the database.';
         $message = vsprintf($template, [WordpressContentTypeHelper::getLocalizedContentType($type), $guid]);
+        $this->logger->debug(json_encode(debug_backtrace()));
         throw new EntityNotFoundException($message);
     }
 

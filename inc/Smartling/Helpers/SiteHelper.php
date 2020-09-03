@@ -203,6 +203,7 @@ class SiteHelper
 
         if (false === ms_is_switched()) {
             $message = 'Blog was not switched previously';
+            $this->logger->debug(json_encode(debug_backtrace()));
             throw new \LogicException($message);
         }
 
