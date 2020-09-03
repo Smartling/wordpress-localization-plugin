@@ -24,8 +24,8 @@ class NewCategoryIsAttachedToPostOnDownloadTest extends SmartlingUnitTestCaseAbs
         $submission->getFileUri();
         $submission = $this->getSubmissionManager()->storeEntity($submission);
 
-        self::assertTrue(SubmissionEntity::SUBMISSION_STATUS_NEW === $submission->getStatus());
-        self::assertTrue(0 === $submission->getIsCloned());
+        self::assertSame(SubmissionEntity::SUBMISSION_STATUS_NEW, $submission->getStatus());
+        self::assertSame(0, $submission->getIsCloned());
 
         $this->uploadDownload($submission);
 
@@ -37,7 +37,7 @@ class NewCategoryIsAttachedToPostOnDownloadTest extends SmartlingUnitTestCaseAbs
             ]
         );
 
-        self::assertTrue(1 === count($submissions));
+        self::assertCount(1, $submissions);
 
         /**
          * @var SubmissionEntity $submission
@@ -54,7 +54,7 @@ class NewCategoryIsAttachedToPostOnDownloadTest extends SmartlingUnitTestCaseAbs
             ]
         );
 
-        self::assertTrue(1 === count($submissions));
+        self::assertCount(1, $submissions);
 
         /**
          * @var SubmissionEntity $submission
@@ -86,11 +86,11 @@ class NewCategoryIsAttachedToPostOnDownloadTest extends SmartlingUnitTestCaseAbs
             $siteHelper->restoreBlogId();
         }
 
-        self::assertTrue(1 === $this->count($terms));
+        self::assertCount(1, $terms);
 
         $term = ArrayHelper::first($terms);
 
-        self::assertTrue($targetCategoryId === $term->term_id);
+        self::assertSame($targetCategoryId, $term->term_id);
     }
 
 }
