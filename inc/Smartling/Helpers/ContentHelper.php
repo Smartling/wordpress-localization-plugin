@@ -242,9 +242,9 @@ class ContentHelper
 
     /**
      * @param SubmissionEntity $submission
-     * @param EntityAbstract   $entity
+     * @param EntityAbstract $entity
      *
-     * @return EntityAbstract
+     * @return EntityAbstract|int
      */
     public function writeTargetContent(SubmissionEntity $submission, EntityAbstract $entity)
     {
