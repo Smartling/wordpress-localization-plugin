@@ -162,8 +162,11 @@ class ContentHelper
              */
             $wrapper = $this->getWrapper($submission->getContentType());
             $this->ensureSource($submission);
+            $this->getLogger()->debug('Ensured source');
             $sourceContent = $wrapper->get($submission->getSourceId());
+            $this->getLogger()->debug('Got source content');
             $this->ensureRestoredBlogId();
+            $this->getLogger()->debug('Restored blog id');
             $clone = clone $sourceContent;
             $this->getRuntimeCache()->set($submission->getId(), $sourceContent, 'sourceContent');
         } else {
@@ -248,9 +251,6 @@ class ContentHelper
      */
     public function writeTargetContent(SubmissionEntity $submission, EntityAbstract $entity)
     {
-        /**
-         * @var EntityAbstract $wrapper
-         */
         $wrapper = $this->getWrapper($submission->getContentType());
 
         $this->ensureTarget($submission);
@@ -258,11 +258,18 @@ class ContentHelper
         $result = $wrapper->set($entity);
 
         if (is_int($result) && 0 < $result) {
-
-            $result = $wrapper->get($result);
+            try {
+                $result = $wrapper->get($result);
+            } catch (\Exception $e) {
+                $this->getLogger()->warning('Wrapper ' . get_class($wrapper) . " was unable to get post id $result after setting");
+            }
         }
 
-        $this->ensureRestoredBlogId();
+        try {
+            $this->ensureRestoredBlogId();
+        } catch (\LogicException $e) {
+            $this->getLogger()->debug('Suppressed exception: ' . $e->getMessage());
+        }
 
         return $result;
     }

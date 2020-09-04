@@ -1,4 +1,5 @@
-<?php
+<?php /** @noinspection PhpUnusedParameterInspection */
+
 namespace {
 
     use Smartling\DbAl\MultiligualPressConnector;
@@ -119,7 +120,7 @@ namespace {
         }
 
         if (!function_exists('get_post')) {
-            function get_post($id, $returnError)
+            function get_post($id, $output)
             {
 
                 $date = Smartling\Helpers\DateTimeHelper::nowAsString();

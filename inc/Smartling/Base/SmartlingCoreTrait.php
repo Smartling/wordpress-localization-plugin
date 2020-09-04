@@ -123,7 +123,12 @@ trait SmartlingCoreTrait
          * @var EntityAbstract $targetContent
          */
         $targetContent = $this->getContentHelper()->writeTargetContent($submission, $targetContent);
-        $submission->setTargetId($targetContent->getPK());
+        if (is_int($targetContent)) {
+            $targetId = $targetContent;
+        } else {
+            $targetId = $targetContent->getPK();
+        }
+        $submission->setTargetId($targetId);
         $submission = $this->getSubmissionManager()->storeEntity($submission);
 
         $this->getLogger()
@@ -134,7 +139,7 @@ trait SmartlingCoreTrait
                         $submission->getId(),
                         $submission->getTargetLocale(),
                         $submission->getTargetBlogId(),
-                        $targetContent->getPK(),
+                        $targetId,
                     ]
                 )
             );
@@ -154,7 +159,7 @@ trait SmartlingCoreTrait
         }
 
         if (false === $update) {
-            $submission->setTargetId($targetContent->getPK());
+            $submission->setTargetId($targetId);
             $submission = $this->getSubmissionManager()->storeEntity($submission);
         }
 
