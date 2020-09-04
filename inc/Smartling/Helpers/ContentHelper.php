@@ -162,11 +162,8 @@ class ContentHelper
              */
             $wrapper = $this->getWrapper($submission->getContentType());
             $this->ensureSource($submission);
-            $this->getLogger()->debug('Ensured source');
             $sourceContent = $wrapper->get($submission->getSourceId());
-            $this->getLogger()->debug('Got source content');
             $this->ensureRestoredBlogId();
-            $this->getLogger()->debug('Restored blog id');
             $clone = clone $sourceContent;
             $this->getRuntimeCache()->set($submission->getId(), $sourceContent, 'sourceContent');
         } else {
