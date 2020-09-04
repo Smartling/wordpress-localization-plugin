@@ -432,7 +432,6 @@ class ApiWrapper implements ApiWrapperInterface
 
             $data = $api->lastModified($submission->getFileUri());
 
-
             $output = [];
 
             foreach ($data['items'] as $descriptor) {
@@ -894,5 +893,12 @@ class ApiWrapper implements ApiWrapperInterface
                         ]
                     ));
         }
+    }
+
+    /**
+     * @param \Exception $e
+     */
+    public function isUnrecoverable(\Exception $e) {
+        return strpos($e->getMessage(), 'file.not.found') !== false;
     }
 }

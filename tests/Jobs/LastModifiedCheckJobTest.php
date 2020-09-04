@@ -4,6 +4,7 @@ namespace Smartling\Tests\Jobs;
 
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapperInterface;
+use Smartling\Exception\SmartlingNetworkException;
 use Smartling\Helpers\QueryBuilder\TransactionManager;
 use Smartling\Jobs\LastModifiedCheckJob;
 use Smartling\Queue\Queue;
@@ -215,7 +216,6 @@ class LastModifiedCheckJobTest extends TestCase
         $worker = $this->getLastModifiedWorker();
 
         foreach ($groupedSubmissions as $index => $mockedResult) {
-
             $dequeueResult = $this->mockedResultToDequeueResult($groupedSubmissions);
 
             $this->getQueue()
@@ -254,7 +254,6 @@ class LastModifiedCheckJobTest extends TestCase
                 }
             }
         }
-
 
         $this->getApiWrapper()
             ->expects(self::exactly($expectedStatusCheckRequests))
@@ -322,24 +321,6 @@ class LastModifiedCheckJobTest extends TestCase
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
         return [
-            /*[
-                [
-                    [
-                        'FileA' =>
-                            [
-                                $this->getSerializedSubmission('FileA', 'LangA'),
-                                $this->getSerializedSubmission('FileA', 'LangB'),
-                            ],
-
-                    ],
-                    false,
-                ],
-                [
-                    'LangA' => $this->mkDateTime('2016-01-10 00:00:00'),
-                    'LangB' => $this->mkDateTime('2016-01-10 00:14:00'),
-                ],
-                1,
-            ],*/
             [
                 [
                     [
@@ -508,4 +489,132 @@ class LastModifiedCheckJobTest extends TestCase
         ];
     }
 
+    /**
+     * @param array $groupedSubmissions
+     * @param string $exceptionMessage
+     * @param int $storeEntityCount
+     * @dataProvider failLastModifiedDataProvider
+     */
+    public function testFailLastModified(array $groupedSubmissions, $exceptionMessage, $storeEntityCount)
+    {
+        $worker = $this->getLastModifiedWorker();
+
+        foreach ($groupedSubmissions as $index => $mockedResult) {
+            $dequeueResult = $this->mockedResultToDequeueResult($groupedSubmissions);
+
+            $this->getQueue()
+                ->expects(self::at($index))
+                ->method('dequeue')
+                ->with(Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE)
+                ->willReturn($dequeueResult[$index]);
+
+            if (false !== $mockedResult) {
+                foreach ($mockedResult as $fileUri => $submissionList) {
+
+                    $dequeued = $dequeueResult[$index][$fileUri];
+
+                    foreach ($submissionList as & $submissionArray) {
+                        $submissionArray = SubmissionEntity::fromArray($submissionArray, $this->getLogger());
+                    }
+                    unset ($submissionArray);
+
+                    $this->getSubmissionManager()
+                        ->method('findByIds')
+                        ->with($dequeued)
+                        ->willReturn($submissionList);
+
+                    $unserializedSubmissions = $this->getSubmissionManager()->findByIds($dequeued);
+
+                    $worker
+                        ->method('prepareSubmissionList')
+                        ->with($unserializedSubmissions)
+                        ->willReturn($this->emulatePrepareSubmissionList($unserializedSubmissions));
+
+                    $this->getApiWrapper()
+                        ->expects(self::once())
+                        ->method('lastModified')
+                        ->with(reset($unserializedSubmissions))
+                        ->willThrowException(new SmartlingNetworkException($exceptionMessage));
+                }
+            }
+        }
+
+        $this->getApiWrapper()
+            ->expects(self::never())
+            ->method('getStatusForAllLocales');
+
+        $this->getSubmissionManager()
+            ->expects(self::never())
+            ->method('storeSubmissions');
+
+        $this->getSubmissionManager()
+            ->expects(self::exactly($storeEntityCount))
+            ->method('storeEntity');
+
+        $sm = $this->getSettingsManager();
+        $sm->method('getSingleSettingsProfile')->willReturn(false);
+
+        $worker->setSettingsManager($sm);
+
+        $worker->run();
+    }
+
+    public function failLastModifiedDataProvider()
+    {
+        WordpressFunctionsMockHelper::injectFunctionsMocks();
+        return [
+            [
+                [
+                    [
+                        'FileA' =>
+                            [
+                                $this->getSerializedSubmission('FileA', 'LangA', $this->mkDateTime('2016-01-10 00:00:00')),
+                                $this->getSerializedSubmission('FileA', 'LangB', $this->mkDateTime('2016-01-10 00:00:00')),
+                            ],
+
+                    ],
+                    false,
+                ],
+                'Array
+(
+    [0] => Array
+        (
+            [key] => file.not.found
+            [message] => The file "FileA" could not be found
+            [details] => Array
+                (
+                    [field] => fileUri
+                )
+        )
+)',
+                1, // store failed status on submission
+            ],
+            [
+                [
+                    [
+                        'FileA' =>
+                            [
+                                $this->getSerializedSubmission('FileA', 'LangA', $this->mkDateTime('2016-01-10 00:00:00')),
+                                $this->getSerializedSubmission('FileA', 'LangB', $this->mkDateTime('2016-01-10 00:00:00')),
+                            ],
+
+                    ],
+                    false,
+                ],
+                'Array
+(
+    [0] => Array
+        (
+            [key] => some.key
+            [message] => The file "FileA" could not be found
+            [details] => Array
+                (
+                    [field] => fileUri
+                )
+        )
+)',
+                0, // Don't store failed status on submission
+            ],
+        ];
+    }
 }

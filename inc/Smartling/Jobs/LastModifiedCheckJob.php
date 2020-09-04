@@ -9,7 +9,6 @@ use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\Submissions\SubmissionManager;
 
 /**
  * Class LastModifiedCheckJob
@@ -31,14 +30,6 @@ class LastModifiedCheckJob extends JobAbstract
      * @var Queue
      */
     private $queue;
-
-    /**
-     * @return ApiWrapperInterface
-     */
-    public function getApiWrapper()
-    {
-        return $this->apiWrapper;
-    }
 
     /**
      * @param ApiWrapperInterface $apiWrapper
@@ -90,9 +81,6 @@ class LastModifiedCheckJob extends JobAbstract
         return self::JOB_HOOK_NAME;
     }
 
-    /**
-     * @return executes job
-     */
     public function run()
     {
         $this->getLogger()->info('Started Last-Modified Check Job.');
@@ -149,15 +137,24 @@ class LastModifiedCheckJob extends JobAbstract
     }
 
     /**
-     * @param \Smartling\Submissions\SubmissionEntity[] $submissions
+     * @param SubmissionEntity[] $submissions
      *
-     * @return \Smartling\Submissions\SubmissionEntity[]
+     * @return SubmissionEntity[]
      */
     protected function processFileUriSet(array $submissions)
     {
         if (ArrayHelper::notEmpty($submissions)) {
             $submission = ArrayHelper::first($submissions);
-            $lastModified = $this->getApiWrapper()->lastModified($submission);
+            try {
+                $lastModified = $this->apiWrapper->lastModified($submission);
+            } catch (SmartlingNetworkException $e) {
+                if ($this->apiWrapper->isUnrecoverable($e)) {
+                    $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+                    $this->getSubmissionManager()->storeEntity($submission);
+                    $this->getLogger()->warning("Marking submission {$submission->getId()} failed because of an unrecoverable error in ApiWrapper::lastModified response");
+                }
+                throw $e;
+            }
             $submissions = $this->prepareSubmissionList($submissions);
             $submissions = $this->filterSubmissions($lastModified, $submissions);
         }
@@ -166,9 +163,9 @@ class LastModifiedCheckJob extends JobAbstract
     }
 
     /**
-     * @param \Smartling\Submissions\SubmissionEntity[] $submissions
+     * @param SubmissionEntity[] $submissions
      *
-     * @return \Smartling\Submissions\SubmissionEntity[]
+     * @return SubmissionEntity[]
      */
     protected function storeSubmissions(array $submissions)
     {
@@ -236,7 +233,6 @@ class LastModifiedCheckJob extends JobAbstract
                 $submissions = $this->storeSubmissions($submissions);
 
                 if (0 < count($submissions)) {
-
                     try {
                         $this->processDownloadOnChange($submissions);
                         $this->statusCheck($submissions);
@@ -244,7 +240,7 @@ class LastModifiedCheckJob extends JobAbstract
                         $this->getLogger()
                             ->error(
                                 vsprintf(
-                                    'An exception has occurred while executing ApiWrapper::lastModified. Message: %s.',
+                                    'An exception has occurred while executing ApiWrapper::getStatusForAllLocales. Message: %s.',
                                     [$e->getMessage()]
                                 )
                             );
@@ -282,7 +278,7 @@ class LastModifiedCheckJob extends JobAbstract
 
         $submissions = $this->prepareSubmissionList($submissions);
 
-        $statusCheckResult = $this->getApiWrapper()->getStatusForAllLocales($submissions);
+        $statusCheckResult = $this->apiWrapper->getStatusForAllLocales($submissions);
 
         $submissions = $this->getSubmissionManager()->storeSubmissions($statusCheckResult);
 

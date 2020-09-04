@@ -70,6 +70,7 @@ interface ApiWrapperInterface
      * @param SubmissionEntity $submission
      *
      * @return array mixed
+     * @throws SmartlingNetworkException
      */
     public function lastModified(SubmissionEntity $submission);
 
@@ -167,4 +168,10 @@ interface ApiWrapperInterface
      * @return string|null
      */
     public function retrieveBatchForBucketJob(ConfigurationProfileEntity $profile, $authorize);
+
+    /**
+     * @param \Exception $e
+     * @return bool
+     */
+    public function isUnrecoverable(\Exception $e);
 }

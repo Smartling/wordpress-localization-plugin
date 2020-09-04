@@ -67,9 +67,6 @@ class SubmissionCollectorJob extends JobAbstract
         } while (0 < count($submissions));
     }
 
-    /**
-     * @return executes job
-     */
     public function run()
     {
         $this->getLogger()->info('Started Submission Collector Job.');
