@@ -59,10 +59,10 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 1.13.9 =
-* Fixed upload issue on "Create job" form
+* Fixed upload issue if translation was requested from "Create job" form in WP 4.5+
 
 = 1.13.8 =
-* The plugin will now mark submissions failed when receiving certain errors from the api, and not process them again unless resubmitted manually, while checking submissions statuses
+* The plugin will now mark submissions as failed when receiving certain errors from the API. Such submissions will be skipped while checking submissions statuses unless resubmitted manually
 
 = 1.13.7 =
 * Fixed bulk submit page not submitting when post type slug contained dashes
