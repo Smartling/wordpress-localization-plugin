@@ -59,7 +59,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 1.13.9 =
-* Fixed upload issue if translation was requested from "Create job" form in WP 4.5+
+* Fixed upload issue if translation was requested from "Create job" form in WP 5.5.1+
 
 = 1.13.8 =
 * The plugin will now mark submissions as failed when receiving certain errors from the API. Such submissions will be skipped while checking submissions statuses unless resubmitted manually
