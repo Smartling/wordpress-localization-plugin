@@ -196,7 +196,18 @@ class TranslationHelper
     public function prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone = false)
     {
         if (0 == $sourceId) {
-            throw new \InvalidArgumentException('Source id cannot be 0.');
+            $e = new \InvalidArgumentException('Source id cannot be 0.');
+
+            $this->getLogger()->warning("---------- Smartling debug----------");
+            $this->getLogger()->warning(
+              vsprintf(
+                'contentType=%s sourceBlog=%s sourceId=%s targetBlog=%s clone=%',
+                [$contentType, $sourceBlog, $sourceId, $targetBlog, $clone]
+              ));
+            $this->getLogger()->warning($e->getTraceAsString());
+            $this->getLogger()->warning("---------- Smartling debug----------");
+
+            throw $e;
         }
         $submission = $this->prepareSubmissionEntity(
             $contentType,
