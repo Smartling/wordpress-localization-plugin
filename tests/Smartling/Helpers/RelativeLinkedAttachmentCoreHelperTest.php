@@ -68,7 +68,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
      *
      * Connector must not throw `Source id can not be 0` exception in this case.
      */
-    public function testProcessGutenbergBlockAcfWitAttachmentWithEmptyId()
+    public function testProcessGutenbergBlockAcfWithAttachmentWithEmptyId()
     {
         $string = '<!-- wp:acf/testimonial {\"id\":\"block_5f1eb3f391cda\",\"name\":\"acf/testimonial\",\"data\":{\"media\":\"\",\"_media\":\"field_5eb1344b55a84\",\"description\":\"text\",\"_description\":\"field_5ef64590591dc\"},\"align\":\"\",\"mode\":\"edit\"} /-->';
         $sourceId = 0;
@@ -95,9 +95,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
         );
 
         $core = $this->getMock(SmartlingCore::class);
-        $core->method('sendAttachmentForTranslation')
-            ->with($sourceBlogId, $targetBlogId, $sourceId, $batchUid)
-            ->willThrowException(new \Exception("Source id can not be 0"));
+        $core->expects(self::never())->method('sendAttachmentForTranslation');
 
         $x = $this->getMockBuilder(RelativeLinkedAttachmentCoreHelper::class)->setConstructorArgs([
             $core,
@@ -109,11 +107,6 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
         $content = $this->getMock(PostEntityStd::class);
 
         $x->processor(new AfterDeserializeContentEventParameters($source, $submission, $content, $meta));
-
-        self::assertEquals(
-            $source[0],
-            $string
-        );
     }
 
     /**

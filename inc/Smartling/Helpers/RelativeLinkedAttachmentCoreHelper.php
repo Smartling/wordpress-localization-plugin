@@ -133,24 +133,24 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                             && $this->acfDefinitions[$value]['type'] === 'image'
                             && strpos($key, '_') === 0
                             && array_key_exists(substr($key, 1), $acfData['data'])) {
-                            $attachmentId = $acfData['data'][substr($key, 1)];
+                                $attachmentId = $acfData['data'][substr($key, 1)];
 
-                            if (!empty($attachmentId)) {
-                                try {
-                                    $attachment = $this->getCore()->sendAttachmentForTranslation(
-                                        $this->getParams()->getSubmission()->getSourceBlogId(),
-                                        $this->getParams()->getSubmission()->getTargetBlogId(),
-                                        (int)$attachmentId,
-                                        $this->getParams()->getSubmission()->getBatchUid()
-                                    );
-                                    $replacer->addReplacementPair($attachmentId, $attachment->getTargetId());
-                                } catch (SmartlingManualRelationsHandlingSubmissionCreationForbiddenException $e) {
-                                    $this->getLogger()->notice("Skipping attachment id $attachmentId: was not uploaded " .
-                                      'due to manual relations handling');
+                                if (!empty($attachmentId) && is_numeric($attachmentId)) {
+                                    try {
+                                        $attachment = $this->getCore()->sendAttachmentForTranslation(
+                                            $this->getParams()->getSubmission()->getSourceBlogId(),
+                                            $this->getParams()->getSubmission()->getTargetBlogId(),
+                                            (int)$attachmentId,
+                                            $this->getParams()->getSubmission()->getBatchUid()
+                                        );
+                                        $replacer->addReplacementPair($attachmentId, $attachment->getTargetId());
+                                    } catch (SmartlingManualRelationsHandlingSubmissionCreationForbiddenException $e) {
+                                        $this->getLogger()->notice("Skipping attachment id $attachmentId: was not uploaded " .
+                                          'due to manual relations handling');
+                                    }
+                                } else {
+                                    $this->getLogger()->warning("Can not send attachment as it has empty id acfFieldId=${value} acfFieldValue=\"${attachmentId}\"");
                                 }
-                            } else {
-                                $this->getLogger()->warning("Can not send attachment as it has empty id acfFieldId=${value}");
-                            }
                         }
                     }
                 }
