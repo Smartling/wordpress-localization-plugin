@@ -149,7 +149,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                                       'due to manual relations handling');
                                 }
                             } else {
-                              $this->getLogger()->warning("Can not send attachment as it has empty id acfFieldId=${value}");
+                                $this->getLogger()->warning("Can not send attachment as it has empty id acfFieldId=${value}");
                             }
                         }
                     }
