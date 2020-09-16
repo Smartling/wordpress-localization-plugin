@@ -64,6 +64,59 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
     }
 
     /**
+     * Attachment id can be an empty string.
+     *
+     * Connector must not throw `Source id can not be 0` exception in this case.
+     */
+    public function testProcessGutenbergBlockAcfWitAttachmentWithEmptyId()
+    {
+        $string = '<!-- wp:acf/testimonial {\"id\":\"block_5f1eb3f391cda\",\"name\":\"acf/testimonial\",\"data\":{\"media\":\"\",\"_media\":\"field_5eb1344b55a84\",\"description\":\"text\",\"_description\":\"field_5ef64590591dc\"},\"align\":\"\",\"mode\":\"edit\"} /-->';
+        $sourceId = 0;
+        $targetId = 262;
+        $batchUid = '';
+        $sourceBlogId = 1;
+        $targetBlogId = 2;
+
+        $submission = new SubmissionEntity();
+        $submission->setSourceBlogId($sourceBlogId);
+        $submission->setSourceId($sourceId);
+        $submission->setTargetId($targetId);
+        $submission->setTargetBlogId($targetBlogId);
+        $submission->setBatchUid($batchUid);
+
+        $acf = $this->getMockBuilder(AcfDynamicSupport::class)
+            ->setConstructorArgs([$this->getMock(EntityHelper::class)])
+            ->getMock();
+        $acf->method('getDefinitions')->willReturn(
+            [
+                'field_5eb1344b55a84' => ['type' => 'image'],
+                'field_5ef64590591dc' => ['type' => 'text']
+            ]
+        );
+
+        $core = $this->getMock(SmartlingCore::class);
+        $core->method('sendAttachmentForTranslation')
+            ->with($sourceBlogId, $targetBlogId, $sourceId, $batchUid)
+            ->willThrowException(new \Exception("Source id can not be 0"));
+
+        $x = $this->getMockBuilder(RelativeLinkedAttachmentCoreHelper::class)->setConstructorArgs([
+            $core,
+            $acf
+        ])->setMethods(null)->getMock();
+
+        $source = [$string];
+        $meta = [];
+        $content = $this->getMock(PostEntityStd::class);
+
+        $x->processor(new AfterDeserializeContentEventParameters($source, $submission, $content, $meta));
+
+        self::assertEquals(
+            $source[0],
+            $string
+        );
+    }
+
+    /**
      * @return array
      */
     public function processGutenbergBlockAcfProvider()

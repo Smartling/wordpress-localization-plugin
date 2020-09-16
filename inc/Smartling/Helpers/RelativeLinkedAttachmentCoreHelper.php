@@ -134,17 +134,22 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                             && strpos($key, '_') === 0
                             && array_key_exists(substr($key, 1), $acfData['data'])) {
                             $attachmentId = $acfData['data'][substr($key, 1)];
-                            try {
-                                $attachment = $this->getCore()->sendAttachmentForTranslation(
-                                    $this->getParams()->getSubmission()->getSourceBlogId(),
-                                    $this->getParams()->getSubmission()->getTargetBlogId(),
-                                    (int)$attachmentId,
-                                    $this->getParams()->getSubmission()->getBatchUid()
-                                );
-                                $replacer->addReplacementPair($attachmentId, $attachment->getTargetId());
-                            } catch (SmartlingManualRelationsHandlingSubmissionCreationForbiddenException $e) {
-                                $this->getLogger()->notice("Skipping attachment id $attachmentId: was not uploaded " .
-                                    'due to manual relations handling');
+
+                            if (!empty($attachmentId)) {
+                                try {
+                                    $attachment = $this->getCore()->sendAttachmentForTranslation(
+                                        $this->getParams()->getSubmission()->getSourceBlogId(),
+                                        $this->getParams()->getSubmission()->getTargetBlogId(),
+                                        (int)$attachmentId,
+                                        $this->getParams()->getSubmission()->getBatchUid()
+                                    );
+                                    $replacer->addReplacementPair($attachmentId, $attachment->getTargetId());
+                                } catch (SmartlingManualRelationsHandlingSubmissionCreationForbiddenException $e) {
+                                    $this->getLogger()->notice("Skipping attachment id $attachmentId: was not uploaded " .
+                                      'due to manual relations handling');
+                                }
+                            } else {
+                              $this->getLogger()->warning("Can not send attachment as it has empty id acfFieldId=${value}");
                             }
                         }
                     }
