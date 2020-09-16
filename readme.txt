@@ -59,7 +59,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 1.13.10 =
-* Fixed download issue if acf attachment has empty id inside Guttenberg block
+* Fixed download flow if ACF attachment field has an empty id inside Guttenberg block
 
 = 1.13.9 =
 * Fixed upload issue if translation was requested from "Create job" form in WP 5.5.1+
