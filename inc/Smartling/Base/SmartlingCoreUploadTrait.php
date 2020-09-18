@@ -119,11 +119,12 @@ trait SmartlingCoreUploadTrait
                  * @var SubmissionEntity $submission
                  */
                 $msg = vsprintf(
-                    'Failed creating target placeholder for submission id=\'%s\', source_blog_id=\'%s\', source_id=\'%s\', target_blog_id=\'%s\' with message: \'%s\'',
+                    'Failed creating target placeholder for submission id=\'%s\', source_blog_id=\'%s\', source_id=\'%s\', target_blog_id=\'%s\', target_blog=\'%s\' with message: \'%s\'',
                     [
                         $submission->getId(),
                         $submission->getSourceBlogId(),
                         $submission->getSourceId(),
+                        $submission->getTargetBlogId(),
                         $submission->getTargetId(),
                         $submission->getLastError(),
                     ]
@@ -523,7 +524,7 @@ trait SmartlingCoreUploadTrait
             }
 
             $this->executeBatch($submission->getBatchUid(), $submission->getSourceBlogId());
-            $this->closeBatch($submission->getBatchUid());
+            // $this->closeBatch($submission->getBatchUid());
         } catch (\Exception $e) {
             $caught = $e;
             do {
