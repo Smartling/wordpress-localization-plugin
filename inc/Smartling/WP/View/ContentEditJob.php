@@ -307,7 +307,7 @@ if ($post instanceof WP_Post) {
                             var $elements = $(".job-wizard .mcheck:checkbox[data-smartling-locale=\"" + localeList[ind] + "\"]");
 
                             if (0 < $elements.length) {
-                                $($elements[0]).attr("checked", "checked");
+                                $($elements[0]).prop("checked", true);
                             }
 
                         }
