@@ -119,7 +119,7 @@ trait SmartlingCoreUploadTrait
                  * @var SubmissionEntity $submission
                  */
                 $msg = vsprintf(
-                    'Failed creating target placeholder for submission id=\'%s\', source_blog_id=\'%s\', source_id=\'%s\', target_blog_id=\'%s\', target_blog=\'%s\' with message: \'%s\'',
+                    'Failed creating target placeholder for submission id=\'%s\', source_blog_id=\'%s\', source_id=\'%s\', target_blog_id=\'%s\', target_id=\'%s\' with message: \'%s\'',
                     [
                         $submission->getId(),
                         $submission->getSourceBlogId(),
@@ -523,8 +523,7 @@ trait SmartlingCoreUploadTrait
                 $this->getSubmissionManager()->storeSubmissions($submissions);
             }
 
-            $this->executeBatch($submission->getBatchUid(), $submission->getSourceBlogId());
-            // $this->closeBatch($submission->getBatchUid());
+            $this->executeBatchIfNoSubmissionsPending($submission->getBatchUid(), $submission->getSourceBlogId());
         } catch (\Exception $e) {
             $caught = $e;
             do {
@@ -569,32 +568,11 @@ trait SmartlingCoreUploadTrait
         }
     }
 
-    private function closeBatch($batchUid)
-    {
-        $params = [
-            SubmissionEntity::FIELD_STATUS => [SubmissionEntity::SUBMISSION_STATUS_NEW],
-            SubmissionEntity::FIELD_BATCH_UID => [$batchUid],
-        ];
-
-        $submissions = $this->getSubmissionManager()->find($params);
-        $count = count($submissions);
-        if ($count > 0) {
-            $this->getLogger()->warning("Found $count new submissions with batchUid=$batchUid while closing batch");
-        }
-        foreach ($submissions as $submission) {
-            /**
-             * @var SubmissionEntity $submission
-             */
-            $submission->setBatchUid('');
-        }
-        $this->getSubmissionManager()->storeSubmissions($submissions);
-    }
-
     /**
-     * @param     $batchUid
+     * @param string $batchUid
      * @param int $sourceBlogId
      */
-    private function executeBatch($batchUid, $sourceBlogId)
+    private function executeBatchIfNoSubmissionsPending($batchUid, $sourceBlogId)
     {
         $msg = vsprintf('Preparing to start batch "%s" execution...', [$batchUid]);
         $this->getLogger()->debug($msg);
