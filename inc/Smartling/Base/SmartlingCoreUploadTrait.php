@@ -14,7 +14,6 @@ use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DateTimeHelper;
-use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
 use Smartling\Helpers\SiteHelper;
@@ -33,7 +32,6 @@ use Smartling\WP\Controller\LiveNotificationController;
 trait SmartlingCoreUploadTrait
 {
     private $acfCopyRules = [];
-    private $acfDefinitions = [];
 
     /**
      * @param $id
@@ -834,11 +832,10 @@ trait SmartlingCoreUploadTrait
 
     private function restoreAcfMetaFields(array $metaFields, array $sourceMetaFields)
     {
-        if (count($this->acfDefinitions) === 0) {
+        if (count($this->acfCopyRules) === 0) {
             $acfDynamicSupport = new AcfDynamicSupport($this->getSubmissionManager()->getEntityHelper());
             $acfDynamicSupport->run();
             $this->acfCopyRules = $acfDynamicSupport->getCopyRules();
-            $this->acfDefinitions = $acfDynamicSupport->getDefinitions();
         }
 
         foreach ($sourceMetaFields as $key => $value) {
@@ -862,5 +859,4 @@ trait SmartlingCoreUploadTrait
     {
         return strpos($key, '_') === 0;
     }
-
 }
