@@ -326,6 +326,7 @@ trait SmartlingCoreUploadTrait
                 if (1 === $configurationProfile->getCleanMetadataOnDownload()) {
                     $this->getContentHelper()->removeTargetMetadata($submission);
                 }
+                $this->getContentHelper()->cloneMetadataToTarget($submission);
                 $metaFields = self::arrayMergeIfKeyNotExists($lockedData['meta'], $metaFields);
                 $this->getContentHelper()->writeTargetMetadata($submission, $metaFields);
                 do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $submission);
@@ -360,53 +361,7 @@ trait SmartlingCoreUploadTrait
              */
             $customTypes = [ContentTypeNavigationMenuItem::WP_CONTENT_TYPE, 'attachment'];
             if (0 < $submission->getTargetId() && in_array($submission->getContentType(), $customTypes, true)) {
-                $contentHelper = $this->getContentHelper();
-                /**
-                 * @var ContentHelper $contentHelper
-                 */
-                $currentSiteId = $contentHelper->getSiteHelper()->getCurrentSiteId();
-                $sourceMetadata = $contentHelper->readSourceMetadata($submission);
-
-                $filteredMetadata = [];
-
-                foreach ($sourceMetadata as $key => $value) {
-                    try {
-                        $filteredMetadata[$key] =
-                            apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $key, $value, $submission);
-                    } catch (\Exception $ex) {
-                        $this->getLogger()->gebug(
-                            vsprintf(
-                                'An error occurred while processing field %s=\'%s\' of submission id=%s. Message: %s',
-                                [
-                                    $key,
-                                    $value,
-                                    $submission->getId(),
-                                    $ex->getMessage(),
-                                ]
-                            )
-                        );
-
-                        if ($contentHelper->getSiteHelper()->getCurrentSiteId() !== $currentSiteId) {
-                            $contentHelper->getSiteHelper()->resetBlog($currentSiteId);
-                        }
-                    }
-                }
-                $diff = array_diff_assoc($sourceMetadata, $filteredMetadata);
-                if (0 < count($diff)) {
-
-                    foreach ($diff as $k => & $v) {
-                        $v = [
-                            'old_value' => $v,
-                            'new_value' => $filteredMetadata[$k],
-                        ];
-
-                    }
-
-                    $this->getLogger()->debug(vsprintf('Updating metadata: %s', [var_export($diff, true)]));
-
-                    $contentHelper->writeTargetMetadata($submission, $filteredMetadata);
-                }
-
+                $this->getContentHelper()->cloneMetadataToTarget($submission);
             }
         } catch (Exception $e) {
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);

@@ -40,8 +40,8 @@ class CustomFieldFilterHandler
     public static function getProcessor(ContainerBuilder $di, array $config)
     {
         $parser = new FieldFilterConfigParser($config, $di);
-        self::getLogger()->warning(vsprintf('looking for processor for config: %s', [var_export($config, true)]));
-        if (true === $isValid = $parser->getValidFiler()) {
+        self::getLogger()->debug(vsprintf('Looking for processor for config: %s', [var_export($config, true)]));
+        if (true === $parser->getValidFiler()) {
             return $parser->getFilter();
         }
 
