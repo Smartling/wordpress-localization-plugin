@@ -4,8 +4,8 @@ namespace Smartling\Helpers;
 
 use Exception;
 use Psr\Log\LoggerInterface;
-use Smartling\Base\ExportedAPI;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
+use Smartling\DbAl\WordpressContentEntities\PostEntity;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
 use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
@@ -140,17 +140,13 @@ class ContentHelper
     }
 
     /**
-     * @param string $contentType
+     * @param $contentType
      *
      * @return EntityAbstract
      */
     private function getWrapper($contentType)
     {
-        $return = clone $this->getIoFactory()->getHandler($contentType);
-        if (!$return instanceof EntityAbstract) {
-            throw new \RuntimeException("Wrapper for $contentType is supposed to be " . EntityAbstract::class, " but io factory returned " . get_class($return));
-        }
-        return $return;
+        return clone $this->getIoFactory()->getHandler($contentType);
     }
 
     /**
@@ -161,6 +157,9 @@ class ContentHelper
     public function readSourceContent(SubmissionEntity $submission)
     {
         if (false === ($cached = $this->getRuntimeCache()->get($submission->getId(), 'sourceContent'))) {
+            /**
+             * @var EntityAbstract $wrapper
+             */
             $wrapper = $this->getWrapper($submission->getContentType());
             $this->ensureSource($submission);
             $sourceContent = $wrapper->get($submission->getSourceId());
@@ -180,6 +179,9 @@ class ContentHelper
      */
     public function readTargetContent(SubmissionEntity $submission)
     {
+        /**
+         * @var EntityAbstract $wrapper
+         */
         $wrapper = $this->getWrapper($submission->getContentType());
         $this->ensureTarget($submission);
         $targetContent = $wrapper->get($submission->getTargetId());
@@ -197,6 +199,9 @@ class ContentHelper
     {
         if (false === ($cached = $this->getRuntimeCache()->get($submission->getId(), 'sourceMeta'))) {
             $metadata = [];
+            /**
+             * @var EntityAbstract $wrapper
+             */
             $wrapper = $this->getWrapper($submission->getContentType());
             $this->ensureSource($submission);
             $sourceContent = $wrapper->get($submission->getSourceId());
@@ -221,6 +226,9 @@ class ContentHelper
     public function readTargetMetadata(SubmissionEntity $submission)
     {
         $metadata = [];
+        /**
+         * @var EntityAbstract $wrapper
+         */
         $wrapper = $this->getWrapper($submission->getContentType());
         $this->ensureTarget($submission);
         $targetContent = $wrapper->get($submission->getTargetId());
@@ -232,50 +240,6 @@ class ContentHelper
         return $metadata;
     }
 
-    public function cloneMetadataToTarget(SubmissionEntity $submission)
-    {
-        $currentSiteId = $this->getSiteHelper()->getCurrentSiteId();
-        $sourceMetadata = $this->readSourceMetadata($submission);
-
-        $filteredMetadata = [];
-
-        foreach ($sourceMetadata as $key => $value) {
-            try {
-                $filteredMetadata[$key] = maybe_unserialize(apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $key, $value, $submission));
-            } catch (\Exception $ex) {
-                $this->logger->debug(
-                    vsprintf(
-                        'An error occurred while processing field %s=\'%s\' of submission id=%s. Message: %s',
-                        [
-                            $key,
-                            $value,
-                            $submission->getId(),
-                            $ex->getMessage(),
-                        ]
-                    )
-                );
-
-                if ($this->getSiteHelper()->getCurrentSiteId() !== $currentSiteId) {
-                    $this->getSiteHelper()->resetBlog($currentSiteId);
-                }
-            }
-        }
-
-        $diff = array_diff_assoc($sourceMetadata, $filteredMetadata);
-        if (0 < count($diff)) {
-            array_walk($diff, static function(&$value, $key) use ($filteredMetadata) {
-                $value = [
-                    'old_value' => $value,
-                    'new_value' => $filteredMetadata[$key],
-                ];
-            });
-
-            $this->logger->debug(sprintf('Updating metadata of entity %d in blog %d (listing only changed values of %d total): %s', $submission->getTargetId(), $submission->getTargetBlogId(), count($filteredMetadata), var_export($diff, true)));
-
-            $this->writeTargetMetadata($submission, $filteredMetadata);
-        }
-    }
-
     /**
      * @param SubmissionEntity $submission
      * @param EntityAbstract   $entity
@@ -284,6 +248,9 @@ class ContentHelper
      */
     public function writeTargetContent(SubmissionEntity $submission, EntityAbstract $entity)
     {
+        /**
+         * @var EntityAbstract $wrapper
+         */
         $wrapper = $this->getWrapper($submission->getContentType());
 
         $this->ensureTarget($submission);
@@ -306,10 +273,10 @@ class ContentHelper
      */
     public function writeTargetMetadata(SubmissionEntity $submission, array $metadata)
     {
+        /**
+         * @var EntityAbstract $wrapper
+         */
         $wrapper = $this->getIoFactory()->getHandler($submission->getContentType());
-        if (!$wrapper instanceof EntityAbstract) {
-            throw new \RuntimeException("Handler for {$submission->getContentType()} is supposed to be " . EntityAbstract::class, " but io factory returned " . get_class($wrapper));
-        }
         $this->ensureTarget($submission);
         $targetEntity = $wrapper->get($submission->getTargetId());
         if ($targetEntity instanceof EntityAbstract) {
@@ -337,7 +304,9 @@ class ContentHelper
             $wpMetaFunction = 'delete_post_meta';
         } elseif ($wrapper instanceof TaxonomyEntityStd) {
             $wpMetaFunction = 'delete_term_meta';
-        } elseif (!$wrapper instanceof VirtualEntityAbstract) {
+        } elseif ($wrapper instanceof VirtualEntityAbstract) {
+            /* Virtual types cannot have metadata */
+        } else {
             $msgTemplate = 'Unknown content-type. Expected %s to be successor of one of: %s';
             $this->getLogger()->warning(
                 vsprintf($msgTemplate,
@@ -352,7 +321,7 @@ class ContentHelper
         if (null !== $wpMetaFunction) {
             try {
                 foreach ($existing_meta as $key => $value) {
-                    $result = $wpMetaFunction($object_id, $key);
+                    $result = call_user_func_array($wpMetaFunction, [$object_id, $key]);
                     $msg_template = 'Removing metadata key=\'%s\' for \'%s\' id=\'%s\' (submission = \'%s\' ) finished ' .
                                     (true === $result ? 'successfully' : 'with error');
                     $msg = vsprintf($msg_template, [$key, $submission->getContentType(), $submission->getTargetId(),

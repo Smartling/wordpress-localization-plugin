@@ -50,6 +50,14 @@ class AcfDynamicSupport
     }
 
     /**
+     * @return string[]
+     */
+    public function getCopyRules()
+    {
+        return $this->rules['copy'];
+    }
+
+    /**
      * @return LoggerInterface
      */
     public function getLogger()
@@ -496,7 +504,7 @@ class AcfDynamicSupport
             }
 
             $this->definitions = $definitions;
-            $this->sortFields();
+            $this->buildRules();
             $this->prepareFilters();
         } else {
             $this->getLogger()->debug('ACF not detected.');
@@ -576,7 +584,7 @@ class AcfDynamicSupport
         return $value;
     }
 
-    private function sortFields()
+    private function buildRules()
     {
         foreach ($this->definitions as $id => $definition) {
             if ('group' === $definition['global_type']) {
@@ -657,6 +665,4 @@ class AcfDynamicSupport
     {
         return in_array('acf_option_page', $this->getPostTypes(), true);
     }
-
-
 }

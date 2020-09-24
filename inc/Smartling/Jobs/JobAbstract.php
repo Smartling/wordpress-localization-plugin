@@ -264,6 +264,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
                     )
                 );
                 $allowedToRun = $currentTS > $flagTS;
+                $allowedToRun = true;
                 if ($allowedToRun) {
                     $this->placeLockFlag();
                 } else {

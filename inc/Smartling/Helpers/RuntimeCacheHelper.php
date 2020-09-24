@@ -56,7 +56,7 @@ class RuntimeCacheHelper
 
     /**
      * @param string $key
-     * @param mixed $value
+     * @param string $value
      * @param string $scope
      */
     public function set($key, $value, $scope = self::DEFAULT_SCOPE)

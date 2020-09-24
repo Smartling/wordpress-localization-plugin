@@ -10,9 +10,11 @@ use Smartling\Exception\InvalidXMLException;
 use Smartling\Exception\NothingFoundForTranslationException;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DateTimeHelper;
+use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
 use Smartling\Helpers\SiteHelper;
@@ -30,6 +32,9 @@ use Smartling\WP\Controller\LiveNotificationController;
  */
 trait SmartlingCoreUploadTrait
 {
+    private $acfCopyRules = [];
+    private $acfDefinitions = [];
+
     /**
      * @param $id
      *
@@ -248,15 +253,20 @@ trait SmartlingCoreUploadTrait
     public function applyXML(SubmissionEntity $submission, $xml)
     {
         $messages = [];
-        try {
+        $sourceFields = ['meta' => []];
+        $translation = [];
 
+        try {
             $lockedData = $this->readLockedTranslationFieldsBySubmission($submission);
 
             $this->prepareFieldProcessorValues($submission);
-            if ('' === $xml) {
-                $translation = [];
-            } else {
-                $translation = XmlEncoder::xmlDecode($xml, $submission);
+            if ('' !== $xml) {
+                $decoded = XmlEncoder::xmlDecode($xml, $submission);
+                $translation = $decoded->getFields();
+                $sourceFields = $decoded->getSourceFields();
+                if (!array_key_exists('meta', $sourceFields)) {
+                    $sourceFields['meta'] = [];
+                }
             }
             $original = $this->readSourceContentWithMetadataAsArray($submission);
             $translation = $this->getFieldsFilter()->processStringsAfterDecoding($translation);
@@ -326,8 +336,8 @@ trait SmartlingCoreUploadTrait
                 if (1 === $configurationProfile->getCleanMetadataOnDownload()) {
                     $this->getContentHelper()->removeTargetMetadata($submission);
                 }
-                $this->getContentHelper()->cloneMetadataToTarget($submission);
                 $metaFields = self::arrayMergeIfKeyNotExists($lockedData['meta'], $metaFields);
+                $metaFields = $this->restoreAcfMetaFields($metaFields, $sourceFields['meta']);
                 $this->getContentHelper()->writeTargetMetadata($submission, $metaFields);
                 do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $submission);
             }
@@ -361,7 +371,53 @@ trait SmartlingCoreUploadTrait
              */
             $customTypes = [ContentTypeNavigationMenuItem::WP_CONTENT_TYPE, 'attachment'];
             if (0 < $submission->getTargetId() && in_array($submission->getContentType(), $customTypes, true)) {
-                $this->getContentHelper()->cloneMetadataToTarget($submission);
+                $contentHelper = $this->getContentHelper();
+                /**
+                 * @var ContentHelper $contentHelper
+                 */
+                $currentSiteId = $contentHelper->getSiteHelper()->getCurrentSiteId();
+                $sourceMetadata = $contentHelper->readSourceMetadata($submission);
+
+                $filteredMetadata = [];
+
+                foreach ($sourceMetadata as $key => $value) {
+                    try {
+                        $filteredMetadata[$key] =
+                            apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $key, $value, $submission);
+                    } catch (\Exception $ex) {
+                        $this->getLogger()->gebug(
+                            vsprintf(
+                                'An error occurred while processing field %s=\'%s\' of submission id=%s. Message: %s',
+                                [
+                                    $key,
+                                    $value,
+                                    $submission->getId(),
+                                    $ex->getMessage(),
+                                ]
+                            )
+                        );
+
+                        if ($contentHelper->getSiteHelper()->getCurrentSiteId() !== $currentSiteId) {
+                            $contentHelper->getSiteHelper()->resetBlog($currentSiteId);
+                        }
+                    }
+                }
+                $diff = array_diff_assoc($sourceMetadata, $filteredMetadata);
+                if (0 < count($diff)) {
+
+                    foreach ($diff as $k => & $v) {
+                        $v = [
+                            'old_value' => $v,
+                            'new_value' => $filteredMetadata[$k],
+                        ];
+
+                    }
+
+                    $this->getLogger()->debug(vsprintf('Updating metadata: %s', [var_export($diff, true)]));
+
+                    $contentHelper->writeTargetMetadata($submission, $filteredMetadata);
+                }
+
             }
         } catch (Exception $e) {
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
@@ -775,4 +831,36 @@ trait SmartlingCoreUploadTrait
 
         return $this->getSubmissionManager()->storeEntity($submission);
     }
+
+    private function restoreAcfMetaFields(array $metaFields, array $sourceMetaFields)
+    {
+        if (count($this->acfDefinitions) === 0) {
+            $acfDynamicSupport = new AcfDynamicSupport($this->getSubmissionManager()->getEntityHelper());
+            $acfDynamicSupport->run();
+            $this->acfCopyRules = $acfDynamicSupport->getCopyRules();
+            $this->acfDefinitions = $acfDynamicSupport->getDefinitions();
+        }
+
+        foreach ($sourceMetaFields as $key => $value) {
+            if (self::isTransientMetaField($key) && in_array($value, $this->acfCopyRules, true)) {
+                $realKey = substr($key, 1);
+                if ($metaFields[$realKey] !== $sourceMetaFields[$realKey]) {
+                    $this->getLogger()->debug("Replaced value of meta field $realKey from source meta field");
+                    $metaFields[$realKey] = $sourceMetaFields[$realKey];
+                }
+            }
+        }
+
+        return $metaFields;
+    }
+
+    /**
+     * @param string $key
+     * @return bool
+     */
+    private static function isTransientMetaField($key)
+    {
+        return strpos($key, '_') === 0;
+    }
+
 }
