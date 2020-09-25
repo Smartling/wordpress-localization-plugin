@@ -30,8 +30,6 @@ use Smartling\WP\Controller\LiveNotificationController;
  */
 trait SmartlingCoreUploadTrait
 {
-    private $acfCopyRules = [];
-
     /**
      * @param $id
      *
