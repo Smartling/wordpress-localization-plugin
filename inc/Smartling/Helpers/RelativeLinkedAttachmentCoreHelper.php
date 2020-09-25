@@ -90,7 +90,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     }
 
     /**
-     * A XmlEncoder::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT event handler
+     * ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT event handler
      *
      * @param AfterDeserializeContentEventParameters $params
      */

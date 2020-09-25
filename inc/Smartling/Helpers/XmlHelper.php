@@ -13,12 +13,7 @@ use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Class XmlEncoder
- * Encodes given array into XML string and backward
- * @package Smartling\Processors
- */
-class XmlEncoder
+class XmlHelper
 {
 
     /**
@@ -98,7 +93,7 @@ class XmlEncoder
     }
 
     /**
-     * @param $source
+     * @param string $source
      * @return array
      */
     private static function decodeSource($source)

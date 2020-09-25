@@ -584,6 +584,30 @@ class AcfDynamicSupport
         return $value;
     }
 
+    /**
+     * @param array $metaFields
+     * @param array $sourceMetaFields
+     * @return array
+     */
+    public function restoreAcfMetaFields(array $metaFields, array $sourceMetaFields)
+    {
+        if (count($this->rules['copy']) === 0) {
+            $this->run();
+        }
+
+        foreach ($sourceMetaFields as $key => $value) {
+            if (strpos($key, '_') === 0 && in_array($value, $this->rules['copy'], true)) {
+                $realKey = substr($key, 1);
+                if ($metaFields[$realKey] !== $sourceMetaFields[$realKey]) {
+                    $this->getLogger()->debug("Replaced value of meta field $realKey from source meta field");
+                    $metaFields[$realKey] = $sourceMetaFields[$realKey];
+                }
+            }
+        }
+
+        return $metaFields;
+    }
+
     private function buildRules()
     {
         foreach ($this->definitions as $id => $definition) {

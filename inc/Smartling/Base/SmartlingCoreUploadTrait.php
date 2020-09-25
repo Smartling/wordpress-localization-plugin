@@ -19,7 +19,7 @@ use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
-use Smartling\Helpers\XmlEncoder;
+use Smartling\Helpers\XmlHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\Controller\LiveNotificationController;
@@ -161,12 +161,10 @@ trait SmartlingCoreUploadTrait
                     ->setErrorMessage($submission, 'There is no original content for translation.');
 
                 throw new NothingFoundForTranslationException($message);
-            } else {
-                $this->prepareFieldProcessorValues($submission);
-                $xml = XmlEncoder::xmlEncode($filteredValues, $submission, $source);
-
-                return $xml;
             }
+
+            $this->prepareFieldProcessorValues($submission);
+            return XmlHelper::xmlEncode($filteredValues, $submission, $source);
         } catch (EntityNotFoundException $e) {
             $this->getLogger()->error($e->getMessage());
             $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent content.');
@@ -251,20 +249,20 @@ trait SmartlingCoreUploadTrait
     public function applyXML(SubmissionEntity $submission, $xml)
     {
         $messages = [];
-        $sourceFields = ['meta' => []];
-        $translation = [];
 
         try {
             $lockedData = $this->readLockedTranslationFieldsBySubmission($submission);
 
             $this->prepareFieldProcessorValues($submission);
+            $sourceFields = [];
+            $translation = [];
             if ('' !== $xml) {
-                $decoded = XmlEncoder::xmlDecode($xml, $submission);
+                $decoded = XmlHelper::xmlDecode($xml, $submission);
                 $translation = $decoded->getFields();
                 $sourceFields = $decoded->getSourceFields();
-                if (!array_key_exists('meta', $sourceFields)) {
-                    $sourceFields['meta'] = [];
-                }
+            }
+            if (!array_key_exists('meta', $sourceFields)) {
+                $sourceFields['meta'] = [];
             }
             $original = $this->readSourceContentWithMetadataAsArray($submission);
             $translation = $this->getFieldsFilter()->processStringsAfterDecoding($translation);
@@ -335,7 +333,8 @@ trait SmartlingCoreUploadTrait
                     $this->getContentHelper()->removeTargetMetadata($submission);
                 }
                 $metaFields = self::arrayMergeIfKeyNotExists($lockedData['meta'], $metaFields);
-                $metaFields = $this->restoreAcfMetaFields($metaFields, $sourceFields['meta']);
+                $metaFields = (new AcfDynamicSupport($this->getSubmissionManager()->getEntityHelper()))
+                    ->restoreAcfMetaFields($metaFields, $sourceFields['meta']);
                 $this->getContentHelper()->writeTargetMetadata($submission, $metaFields);
                 do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $submission);
             }
@@ -828,35 +827,5 @@ trait SmartlingCoreUploadTrait
         $submission->setBatchUid($batchUid);
 
         return $this->getSubmissionManager()->storeEntity($submission);
-    }
-
-    private function restoreAcfMetaFields(array $metaFields, array $sourceMetaFields)
-    {
-        if (count($this->acfCopyRules) === 0) {
-            $acfDynamicSupport = new AcfDynamicSupport($this->getSubmissionManager()->getEntityHelper());
-            $acfDynamicSupport->run();
-            $this->acfCopyRules = $acfDynamicSupport->getCopyRules();
-        }
-
-        foreach ($sourceMetaFields as $key => $value) {
-            if (self::isTransientMetaField($key) && in_array($value, $this->acfCopyRules, true)) {
-                $realKey = substr($key, 1);
-                if ($metaFields[$realKey] !== $sourceMetaFields[$realKey]) {
-                    $this->getLogger()->debug("Replaced value of meta field $realKey from source meta field");
-                    $metaFields[$realKey] = $sourceMetaFields[$realKey];
-                }
-            }
-        }
-
-        return $metaFields;
-    }
-
-    /**
-     * @param string $key
-     * @return bool
-     */
-    private static function isTransientMetaField($key)
-    {
-        return strpos($key, '_') === 0;
     }
 }
