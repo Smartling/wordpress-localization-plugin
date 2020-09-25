@@ -50,14 +50,6 @@ class AcfDynamicSupport
     }
 
     /**
-     * @return string[]
-     */
-    public function getCopyRules()
-    {
-        return $this->rules['copy'];
-    }
-
-    /**
      * @return LoggerInterface
      */
     public function getLogger()
