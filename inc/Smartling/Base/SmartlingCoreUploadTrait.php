@@ -10,7 +10,6 @@ use Smartling\Exception\InvalidXMLException;
 use Smartling\Exception\NothingFoundForTranslationException;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
-use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DateTimeHelper;
@@ -254,15 +253,15 @@ trait SmartlingCoreUploadTrait
             $lockedData = $this->readLockedTranslationFieldsBySubmission($submission);
 
             $this->prepareFieldProcessorValues($submission);
-            $sourceFields = [];
+            $xmlFields = [];
             $translation = [];
             if ('' !== $xml) {
                 $decoded = XmlHelper::xmlDecode($xml, $submission);
                 $translation = $decoded->getFields();
-                $sourceFields = $decoded->getSourceFields();
+                $xmlFields = $decoded->getSourceFields();
             }
-            if (!array_key_exists('meta', $sourceFields)) {
-                $sourceFields['meta'] = [];
+            if (!array_key_exists('meta', $xmlFields)) {
+                $xmlFields['meta'] = [];
             }
             $original = $this->readSourceContentWithMetadataAsArray($submission);
             $translation = $this->getFieldsFilter()->processStringsAfterDecoding($translation);
@@ -306,8 +305,7 @@ trait SmartlingCoreUploadTrait
                     )
                 );
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
-                if (1 == $configurationProfile->getPublishCompleted()) {
-
+                if (1 === $configurationProfile->getPublishCompleted()) {
                     $this->getLogger()->debug(
                         vsprintf(
                             'Submission id=%s (blog=%s, item=%s, content-type=%s) setting status %s for translation. Profile snapshot: %s',
@@ -331,10 +329,9 @@ trait SmartlingCoreUploadTrait
 
                 if (1 === $configurationProfile->getCleanMetadataOnDownload()) {
                     $this->getContentHelper()->removeTargetMetadata($submission);
+                    $metaFields = array_merge($xmlFields['meta'], $metaFields);
                 }
                 $metaFields = self::arrayMergeIfKeyNotExists($lockedData['meta'], $metaFields);
-                $metaFields = (new AcfDynamicSupport($this->getSubmissionManager()->getEntityHelper()))
-                    ->restoreAcfMetaFields($metaFields, $sourceFields['meta']);
                 $this->getContentHelper()->writeTargetMetadata($submission, $metaFields);
                 do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $submission);
             }
@@ -669,7 +666,7 @@ trait SmartlingCoreUploadTrait
 
         // Mark attachment submission as "Cloned" if there is "Clone attachment"
         // option is enabled in configuration profile.
-        if (1 === $configurationProfile->getCloneAttachment() && $submission->getContentType() == 'attachment') {
+        if (1 === $configurationProfile->getCloneAttachment() && $submission->getContentType() === 'attachment') {
             $submission->setIsCloned(1);
             $submission = $this->getSubmissionManager()->storeEntity($submission);
 

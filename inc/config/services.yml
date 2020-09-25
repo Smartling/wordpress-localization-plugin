@@ -230,6 +230,7 @@ services:
     class: Smartling\Helpers\FieldsFilterHelper
     arguments:
       - "@manager.settings"
+      - "@acf.dynamic.support"
 
   content-serialization.helper:
     class: Smartling\Helpers\ContentSerializationHelper

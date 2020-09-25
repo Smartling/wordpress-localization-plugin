@@ -267,7 +267,8 @@ namespace {
 namespace Smartling\Tests\Smartling\Helpers {
 
 use PHPUnit\Framework\TestCase;
-use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
+    use Smartling\Extensions\Acf\AcfDynamicSupport;
+    use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Submissions\SubmissionEntity;
@@ -456,7 +457,7 @@ class GutenbergBlockHelperTest extends TestCase
         $params->setDom(new \DOMDocument('1.0', 'utf8'));
 
         $helper->setParams($params);
-        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock()));
+        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getMock(AcfDynamicSupport::class)));
         $helper
                ->method('processAttributes')
                ->willReturnArgument(1);
@@ -606,7 +607,7 @@ class GutenbergBlockHelperTest extends TestCase
     {
         $helper = $this->mockHelper();
 
-        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock()));
+        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getMock(AcfDynamicSupport::class)));
 
         $helper
                ->method('postReceiveFiltering')
@@ -660,7 +661,7 @@ class GutenbergBlockHelperTest extends TestCase
         $node = $list->item(0);
         $helper = $this->mockHelper();
 
-        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock()));
+        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getMock(AcfDynamicSupport::class)));
         $helper
                ->method('postReceiveFiltering')
                ->willReturnArgument(0);
@@ -678,7 +679,7 @@ class GutenbergBlockHelperTest extends TestCase
         $node = $dom->childNodes->item(0);
 
         $helper = $this->mockHelper();
-        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock()));
+        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getMock(AcfDynamicSupport::class)));
         $helper->method('postReceiveFiltering')->willReturnArgument(0);
 
         self::assertEquals(
@@ -719,7 +720,7 @@ class GutenbergBlockHelperTest extends TestCase
             'attributes' => ['attr_a' => 'attr a', 'attr_b' => 'attr b', 'attr_c' => 'attr c', 'attr_d' => 'attr d'],
         ];
         $helper = $this->mockHelper(['postReceiveFiltering']);
-        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock()));
+        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getMock(AcfDynamicSupport::class)));
         $helper
                ->method('postReceiveFiltering')
                ->willReturnArgument(0);
@@ -764,7 +765,7 @@ class GutenbergBlockHelperTest extends TestCase
                ->with($contentString)
                ->willReturn($parseResult);
 
-        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock()));
+        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getMock(AcfDynamicSupport::class)));
 
         $result = $helper->processString($params);
 
@@ -873,7 +874,7 @@ some par 2
                ->method('preSendFiltering')
                ->willReturnArgument(0);
 
-        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock()));
+        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getMock(AcfDynamicSupport::class)));
 
         $result = $helper->processTranslation($params);
 

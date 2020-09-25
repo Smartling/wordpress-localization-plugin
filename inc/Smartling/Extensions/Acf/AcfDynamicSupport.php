@@ -585,27 +585,27 @@ class AcfDynamicSupport
     }
 
     /**
-     * @param array $metaFields
-     * @param array $sourceMetaFields
+     * @param array $data
      * @return array
      */
-    public function restoreAcfMetaFields(array $metaFields, array $sourceMetaFields)
+    public function removePreTranslationFields(array $data)
     {
+        if (!array_key_exists('meta', $data)) {
+            return $data;
+        }
         if (count($this->rules['copy']) === 0) {
             $this->run();
         }
 
-        foreach ($sourceMetaFields as $key => $value) {
+        foreach ($data['meta'] as $key => $value) {
             if (strpos($key, '_') === 0 && in_array($value, $this->rules['copy'], true)) {
                 $realKey = substr($key, 1);
-                if ($metaFields[$realKey] !== $sourceMetaFields[$realKey]) {
-                    $this->getLogger()->debug("Replaced value of meta field $realKey from source meta field");
-                    $metaFields[$realKey] = $sourceMetaFields[$realKey];
-                }
+                unset($data['meta'][$realKey], $data['meta'][$key]);
+                $this->getLogger()->debug("Unset meta field $realKey");
             }
         }
 
-        return $metaFields;
+        return $data;
     }
 
     private function buildRules()
