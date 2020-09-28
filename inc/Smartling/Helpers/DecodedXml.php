@@ -4,28 +4,28 @@ namespace Smartling\Helpers;
 
 class DecodedXml
 {
-    private $fields;
-    private $sourceFields;
+    private $originalFields;
+    private $translatedFields;
 
-    public function __construct(array $fields, array $sourceFields)
+    public function __construct(array $translatedFields, array $originalFields)
     {
-        $this->fields = $fields;
-        $this->sourceFields = $sourceFields;
+        $this->originalFields = $originalFields;
+        $this->translatedFields = $translatedFields;
     }
 
     /**
      * @return array
      */
-    public function getFields()
+    public function getOriginalFields()
     {
-        return $this->fields;
+        return $this->originalFields;
     }
 
     /**
      * @return array
      */
-    public function getSourceFields()
+    public function getTranslatedFields()
     {
-        return $this->sourceFields;
+        return $this->translatedFields;
     }
 }

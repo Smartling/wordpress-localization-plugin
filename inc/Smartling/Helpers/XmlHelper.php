@@ -177,7 +177,7 @@ class XmlHelper
      *
      * @return DecodedXml
      */
-    public static function xmlDecode($content, SubmissionEntity $submission)
+    public function xmlDecode($content, SubmissionEntity $submission)
     {
         static::logMessage(vsprintf('Starting XML file decoding : %s', [base64_encode(var_export($content, true))]));
         $xpath = self::prepareXPath($content);

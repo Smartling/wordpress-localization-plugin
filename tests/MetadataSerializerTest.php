@@ -38,7 +38,7 @@ class MetadataSerializerTest extends TestCase
      */
     public function testPrepareSourceData(array $entityFields, array $expectedResult)
     {
-        $obj = new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getMock(AcfDynamicSupport::class));
+        $obj = new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock());
         $actualResult = $obj->prepareSourceData($entityFields);
         self::assertEquals($expectedResult, $actualResult);
     }
@@ -135,7 +135,7 @@ class MetadataSerializerTest extends TestCase
 
 
             ], $this->getLogger());
-        $obj = new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getMock(AcfDynamicSupport::class));
+        $obj = new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock());
         $actualResult = $obj->applyTranslatedValues($submission, $originalValues, $translatedValues, false);
         self::assertEquals($expectedResult, $actualResult);
     }
@@ -210,4 +210,11 @@ class MetadataSerializerTest extends TestCase
         ];
     }
 
+    /**
+     * @return \PHPUnit_Framework_MockObject_MockObject|AcfDynamicSupport
+     */
+    private function getAcfDynamicSupportMock()
+    {
+        return $this->getMockBuilder(AcfDynamicSupport::class)->disableOriginalConstructor()->getMock();
+    }
 }

@@ -70,7 +70,9 @@ trait SmartlingCoreUploadTrait
             'meta'   => $this->getContentHelper()->readSourceMetadata($submission),
         ];
 
-        $source['meta'] = $source['meta'] ? : [];
+        if (!is_array($source['meta'])) {
+            $source['meta'] = [];
+        }
 
         return $source;
     }
@@ -241,9 +243,10 @@ trait SmartlingCoreUploadTrait
     /**
      * @param SubmissionEntity $submission
      * @param string $xml
+     * @param XmlHelper $xmlHelper
      * @return array
      */
-    public function applyXML(SubmissionEntity $submission, $xml)
+    public function applyXML(SubmissionEntity $submission, $xml, XmlHelper $xmlHelper)
     {
         $messages = [];
 
@@ -254,9 +257,9 @@ trait SmartlingCoreUploadTrait
             $xmlFields = [];
             $translation = [];
             if ('' !== $xml) {
-                $decoded = XmlHelper::xmlDecode($xml, $submission);
-                $translation = $decoded->getFields();
-                $xmlFields = $decoded->getSourceFields();
+                $decoded = $xmlHelper->xmlDecode($xml, $submission);
+                $translation = $decoded->getTranslatedFields();
+                $xmlFields = $decoded->getOriginalFields();
             }
             if (!array_key_exists('meta', $xmlFields)) {
                 $xmlFields['meta'] = [];
@@ -713,7 +716,7 @@ trait SmartlingCoreUploadTrait
                 $submission->getFileUri();
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                 $submission = $this->getSubmissionManager()->storeEntity($submission);
-                $this->applyXML($submission, $xml);
+                $this->applyXML($submission, $xml, new XmlHelper());
 
                 LiveNotificationController::pushNotification(
                     $configurationProfile->getProjectId(),
