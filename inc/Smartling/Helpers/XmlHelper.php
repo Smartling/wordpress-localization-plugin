@@ -172,13 +172,17 @@ class XmlHelper
     }
 
     /**
-     * @param string           $content
+     * @param string $content
      * @param SubmissionEntity $submission
      *
      * @return DecodedXml
      */
     public function xmlDecode($content, SubmissionEntity $submission)
     {
+        if ($content === '') {
+            static::logMessage('Skipped XML decoding: empty content');
+            return new DecodedXml([], []);
+        }
         static::logMessage(vsprintf('Starting XML file decoding : %s', [base64_encode(var_export($content, true))]));
         $xpath = self::prepareXPath($content);
         return new DecodedXml(self::getFields($xpath, $submission), self::getSource($xpath));

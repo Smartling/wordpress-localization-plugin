@@ -254,16 +254,10 @@ trait SmartlingCoreUploadTrait
             $lockedData = $this->readLockedTranslationFieldsBySubmission($submission);
 
             $this->prepareFieldProcessorValues($submission);
-            $xmlFields = [];
-            $translation = [];
-            if ('' !== $xml) {
-                $decoded = $xmlHelper->xmlDecode($xml, $submission);
-                $translation = $decoded->getTranslatedFields();
-                $xmlFields = $decoded->getOriginalFields();
-            }
-            if (!array_key_exists('meta', $xmlFields)) {
-                $xmlFields['meta'] = [];
-            }
+
+            $decoded = $xmlHelper->xmlDecode($xml, $submission);
+            $translation = $decoded->getTranslatedFields();
+
             $original = $this->readSourceContentWithMetadataAsArray($submission);
             $translation = $this->getFieldsFilter()->processStringsAfterDecoding($translation);
             $translation = $this->getFieldsFilter()->applyTranslatedValues($submission, $original, $translation);
@@ -330,7 +324,10 @@ trait SmartlingCoreUploadTrait
 
                 if (1 === $configurationProfile->getCleanMetadataOnDownload()) {
                     $this->getContentHelper()->removeTargetMetadata($submission);
-                    $metaFields = array_merge($xmlFields['meta'], $metaFields);
+                    $xmlFields = $decoded->getOriginalFields();
+                    if (array_key_exists('meta', $xmlFields)) {
+                        $metaFields = array_merge($xmlFields['meta'], $metaFields);
+                    }
                 }
                 $metaFields = self::arrayMergeIfKeyNotExists($lockedData['meta'], $metaFields);
                 $this->getContentHelper()->writeTargetMetadata($submission, $metaFields);
