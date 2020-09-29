@@ -3,6 +3,7 @@
 namespace Smartling\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Traits\DummyLoggerMock;
@@ -37,7 +38,7 @@ class MetadataSerializerTest extends TestCase
      */
     public function testPrepareSourceData(array $entityFields, array $expectedResult)
     {
-        $obj = new FieldsFilterHelper($this->getSettingsManagerMock());
+        $obj = new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock());
         $actualResult = $obj->prepareSourceData($entityFields);
         self::assertEquals($expectedResult, $actualResult);
     }
@@ -134,7 +135,7 @@ class MetadataSerializerTest extends TestCase
 
 
             ], $this->getLogger());
-        $obj = new FieldsFilterHelper($this->getSettingsManagerMock());
+        $obj = new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock());
         $actualResult = $obj->applyTranslatedValues($submission, $originalValues, $translatedValues, false);
         self::assertEquals($expectedResult, $actualResult);
     }
@@ -209,4 +210,11 @@ class MetadataSerializerTest extends TestCase
         ];
     }
 
+    /**
+     * @return \PHPUnit_Framework_MockObject_MockObject|AcfDynamicSupport
+     */
+    private function getAcfDynamicSupportMock()
+    {
+        return $this->getMockBuilder(AcfDynamicSupport::class)->disableOriginalConstructor()->getMock();
+    }
 }

@@ -13,12 +13,7 @@ use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Class XmlEncoder
- * Encodes given array into XML string and backward
- * @package Smartling\Processors
- */
-class XmlEncoder
+class XmlHelper
 {
 
     /**
@@ -97,6 +92,10 @@ class XmlEncoder
         return "\n" . implode("\n", str_split(base64_encode(serialize($source)), $stringLength)) . "\n";
     }
 
+    /**
+     * @param string $source
+     * @return array
+     */
     private static function decodeSource($source)
     {
         return unserialize(base64_decode($source));
@@ -133,10 +132,7 @@ class XmlEncoder
         $root->appendChild($node);
     }
 
-    /**
-     * @inheritdoc
-     */
-    private static function rowToXMLNode(DOMDocument $document, $name, $value, & $keySettings, SubmissionEntity $submission)
+    private static function rowToXMLNode(DOMDocument $document, $name, $value, $keySettings, SubmissionEntity $submission)
     {
         $node = $document->createElement(self::XML_STRING_NODE_NAME);
         $node->setAttributeNode(new DOMAttr('name', $name));
@@ -176,43 +172,20 @@ class XmlEncoder
     }
 
     /**
-     * @param string           $content
+     * @param string $content
      * @param SubmissionEntity $submission
      *
-     * @return array
+     * @return DecodedXml
      */
-    public static function xmlDecode($content, SubmissionEntity $submission)
+    public function xmlDecode($content, SubmissionEntity $submission)
     {
+        if ($content === '') {
+            static::logMessage('Skipped XML decoding: empty content');
+            return new DecodedXml([], []);
+        }
         static::logMessage(vsprintf('Starting XML file decoding : %s', [base64_encode(var_export($content, true))]));
         $xpath = self::prepareXPath($content);
-        $stringPath = '/data/string';
-        $nodeList = $xpath->query($stringPath);
-        $fields = [];
-        for ($i = 0; $i < $nodeList->length; $i++) {
-            $item = $nodeList->item($i);
-            /**
-             * @var \DOMNode $item
-             */
-
-            $name = $item->attributes->getNamedItem('name')->nodeValue;
-            $params = new TranslationStringFilterParameters();
-            $params->setDom($item->ownerDocument);
-            $params->setNode($item);
-            $params->setFilterSettings(self::getFieldProcessingParams());
-            $params->setSubmission($submission);
-
-            $params = apply_filters(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING_RECEIVED, $params);
-
-            $nodeValue = $params->getNode()->nodeValue;
-            $fields[$name] = $nodeValue;
-        }
-        foreach ($fields as $key => $value) {
-            if (is_numeric($value) && is_string($value)) {
-                $fields[$key] += 0;
-            }
-        }
-
-        return $fields;
+        return new DecodedXml(self::getFields($xpath, $submission), self::getSource($xpath));
     }
 
     /**
@@ -227,5 +200,58 @@ class XmlEncoder
         $nodeList = $xpath->query($stringPath);
 
         return $nodeList->length > 0;
+    }
+
+    /**
+     * @param DOMXPath $xpath
+     * @param SubmissionEntity $submission
+     * @return array
+     */
+    private static function getFields(DOMXPath $xpath, SubmissionEntity $submission)
+    {
+        $nodeList = $xpath->query('/' . self::XML_ROOT_NODE_NAME . '/' . self::XML_STRING_NODE_NAME);
+        $fields = [];
+        for ($i = 0; $i < $nodeList->length; $i++) {
+            $item = $nodeList->item($i);
+            if ($item === null) {
+                break;
+            }
+            $name = $item->attributes->getNamedItem('name')->nodeValue;
+            $params = new TranslationStringFilterParameters();
+            $params->setDom($item->ownerDocument);
+            $params->setNode($item);
+            $params->setFilterSettings(self::getFieldProcessingParams());
+            $params->setSubmission($submission);
+
+            $params = apply_filters(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING_RECEIVED, $params);
+
+            $nodeValue = $params->getNode()->nodeValue;
+            $fields[$name] = $nodeValue;
+        }
+
+        foreach ($fields as $key => $value) {
+            if (is_numeric($value) && is_string($value)) {
+                $fields[$key] += 0;
+            }
+        }
+
+        return $fields;
+    }
+
+    /**
+     * @param DOMXPath $xPath
+     * @return array
+     */
+    private static function getSource(DOMXPath $xPath)
+    {
+        $query = $xPath->query('/' . self::XML_ROOT_NODE_NAME . '/' . self::XML_SOURCE_NODE_NAME);
+        if ($query->length > 0) {
+            try {
+                return self::decodeSource($query[0]->nodeValue);
+            } catch (\Exception $e) {
+                self::logMessage("Failed to decode source: " . $e->getMessage());
+            }
+        }
+        return [];
     }
 }

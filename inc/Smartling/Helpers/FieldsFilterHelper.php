@@ -5,7 +5,9 @@ namespace Smartling\Helpers;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -25,6 +27,7 @@ class FieldsFilterHelper
 
     const FILTER_STRATEGY_DOWNLOAD = 'download';
 
+    private $acfDynamicSupport;
     /**
      * @var LoggerInterface
      */
@@ -60,12 +63,12 @@ class FieldsFilterHelper
     }
 
     /**
-     * FieldsFilterHelper constructor.
-     *
      * @param SettingsManager $settingsManager
+     * @param AcfDynamicSupport $acfDynamicSupport
      */
-    public function __construct(SettingsManager $settingsManager)
+    public function __construct(SettingsManager $settingsManager, AcfDynamicSupport $acfDynamicSupport)
     {
+        $this->acfDynamicSupport = $acfDynamicSupport;
         $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->setSettingsManager($settingsManager);
     }
@@ -126,7 +129,7 @@ class FieldsFilterHelper
         $result = [];
         switch ($valueType) {
             case 'array':
-                $result = static::flatternArray($elementValue, $currentPath, $divider);
+                $result = $this->flatternArray($elementValue, $currentPath, $divider);
                 break;
             case 'NULL':
             case 'boolean':
@@ -158,9 +161,6 @@ class FieldsFilterHelper
     {
         if (array_key_exists('meta', $sourceArray) && is_array($sourceArray['meta'])) {
             $metadata = &$sourceArray['meta'];
-            /**
-             * @var array $metadata
-             */
             foreach ($metadata as $key => & $value) {
                 if (is_array($value) && array_key_exists('entity', $metadata[$key]) &&
                     array_key_exists('meta', $metadata[$key])
@@ -200,7 +200,8 @@ class FieldsFilterHelper
 
     /**
      * @param SubmissionEntity $submission
-     * @param array            $data
+     * @param array $data
+     * @param string $strategy self::FILTER_STRATEGY_UPLOAD or self::FILTER_STRATEGY_DOWNLOAD
      *
      * @return mixed
      */
@@ -210,6 +211,9 @@ class FieldsFilterHelper
         ContentSerializationHelper::prepareFieldProcessorValues($settingsManager, $submission);
         $profile = $settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
         $data = $this->prepareSourceData($data);
+        if ($strategy === self::FILTER_STRATEGY_UPLOAD && !GlobalSettingsManager::isAcfDisabled()) {
+            $data = $this->acfDynamicSupport->removePreTranslationFields($data);
+        }
         $data = $this->flatternArray($data);
 
         $settings = self::getFieldProcessingParams();

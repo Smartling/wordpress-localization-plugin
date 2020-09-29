@@ -3,6 +3,7 @@
 namespace Smartling\Tests\Smartling\Helpers;
 
 use PHPUnit\Framework\TestCase;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 use Smartling\Tests\Traits\SettingsManagerMock;
@@ -27,7 +28,7 @@ class FieldsFilterHelperTest extends TestCase
      */
     public function testStructurizeArray(array $flat, array $structured)
     {
-        $obj = new FieldsFilterHelper($this->getSettingsManagerMock());
+        $obj = new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock());
         $result = $this->invokeMethod($obj, 'structurizeArray', [$flat]);
         self::assertEquals($structured, $result);
     }
@@ -115,7 +116,7 @@ class FieldsFilterHelperTest extends TestCase
 
     public function testRemoveFields()
     {
-        $x = new FieldsFilterHelper($this->getSettingsManagerMock());
+        $x = new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock());
         $fields = [
             'meta/stays' => 'value',
             'meta/tool_templates_1000_stays' => 'value',
@@ -129,7 +130,7 @@ class FieldsFilterHelperTest extends TestCase
 
     public function testRemoveFieldsRegex()
     {
-        $x = new FieldsFilterHelper($this->getSettingsManagerMock());
+        $x = new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock());
 
         $fields = ['meta/stays' => 'value'];
         for ($i = 0; $i < 301; $i++) {
@@ -174,7 +175,7 @@ class FieldsFilterHelperTest extends TestCase
         $fields = ['meta/stays' => 'value'];
         $this->assertEquals(
             $fields,
-            (new FieldsFilterHelper($this->getSettingsManagerMock()))->removeFields($fields, [], true),
+            (new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock()))->removeFields($fields, [], true),
             'Should not remove any fields on empty regex list'
         );
     }
@@ -183,8 +184,16 @@ class FieldsFilterHelperTest extends TestCase
     {
         $this->assertEquals(
             [],
-            (new FieldsFilterHelper($this->getSettingsManagerMock()))->removeFields([], ['irrelevant'], true),
+            (new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock()))->removeFields([], ['irrelevant'], true),
             'Should return empty list on empty fields list'
         );
+    }
+
+    /**
+     * @return \PHPUnit_Framework_MockObject_MockObject|AcfDynamicSupport
+     */
+    private function getAcfDynamicSupportMock()
+    {
+        return $this->getMockBuilder(AcfDynamicSupport::class)->disableOriginalConstructor()->getMock();
     }
 }

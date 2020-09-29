@@ -496,7 +496,7 @@ class AcfDynamicSupport
             }
 
             $this->definitions = $definitions;
-            $this->sortFields();
+            $this->buildRules();
             $this->prepareFilters();
         } else {
             $this->getLogger()->debug('ACF not detected.');
@@ -576,7 +576,31 @@ class AcfDynamicSupport
         return $value;
     }
 
-    private function sortFields()
+    /**
+     * @param array $data
+     * @return array
+     */
+    public function removePreTranslationFields(array $data)
+    {
+        if (!array_key_exists('meta', $data)) {
+            return $data;
+        }
+        if (count($this->rules['copy']) === 0) {
+            $this->run();
+        }
+
+        foreach ($data['meta'] as $key => $value) {
+            if (strpos($key, '_') === 0 && in_array($value, $this->rules['copy'], true)) {
+                $realKey = substr($key, 1);
+                unset($data['meta'][$realKey], $data['meta'][$key]);
+                $this->getLogger()->debug("Unset meta field $realKey");
+            }
+        }
+
+        return $data;
+    }
+
+    private function buildRules()
     {
         foreach ($this->definitions as $id => $definition) {
             if ('group' === $definition['global_type']) {
@@ -657,6 +681,4 @@ class AcfDynamicSupport
     {
         return in_array('acf_option_page', $this->getPostTypes(), true);
     }
-
-
 }

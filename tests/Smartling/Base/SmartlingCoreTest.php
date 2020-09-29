@@ -489,11 +489,6 @@ class SmartlingCoreTest extends TestCase
         self::assertEquals('testtest', $result->getBatchUid());
     }
 
-    /**
-     * @covers \Smartling\Base\SmartlingCore::getXMLFiltered
-     * @expectedException \Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException
-     * @expectedExceptionMessage Failed creating target placeholder for submission id='5', source_blog_id='1', source_id='1', target_blog_id='0' with message: ''
-     */
     public function testExceptionOnTargetPlaceholderCreationFail()
     {
         $obj = $this->getMockBuilder(SmartlingCore::class)
@@ -544,6 +539,10 @@ class SmartlingCoreTest extends TestCase
 
         $proxyMock->expects(self::once())->method('apply_filters')->willReturn($returnedSubmission);
         $obj->expects(self::once())->method('getFunctionProxyHelper')->willReturn($proxyMock);
+        $this->setExpectedException(
+            SmartlingTargetPlaceholderCreationFailedException::class,
+            "Failed creating target placeholder for submission id='5', source_blog_id='1', source_id='1', target_blog_id='1', target_id='0' with message: ''"
+        );
 
         $this->invokeMethod($obj, 'getXMLFiltered', [$submission]);
     }

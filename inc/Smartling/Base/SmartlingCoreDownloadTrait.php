@@ -2,6 +2,7 @@
 
 namespace Smartling\Base;
 
+use Smartling\Helpers\XmlHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\Controller\LiveNotificationController;
 
@@ -77,7 +78,7 @@ trait SmartlingCoreDownloadTrait
                     $entity->getTargetLocale(),
                 ])
             );
-            $this->applyXML($entity, $data);
+            $this->applyXML($entity, $data, new XmlHelper());
             LiveNotificationController::pushNotification(
                 $this
                     ->getSettingsManager()
