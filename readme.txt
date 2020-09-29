@@ -59,7 +59,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 1.14.0 =
-* New behaviour of Auto synchronize properties on translated page with source expert profile setting. When turned on, extends support of ACF flexible fields in metadata.
+* Major change in `Auto synchronize properties` behavior. Starting from this release the connector will always replace all metadata in the translated post with metadata from the source post. The translations are then applied to freshly copied metadata.
+* If you use ACF flexible fields then you should enable `Auto synchronize properties`. It will force connector always replicate ACF fields from source to target and keep flexible fields consistent
+* Fixed error messages not displaying when adding content to existing jobs
 
 = 1.13.11 =
 * Fixed upload flow when post gets uploaded to Smartling without related content
