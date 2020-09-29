@@ -725,7 +725,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             foreach ($targetBlogIds as $targetBlogId) {
                 foreach ($detectedReferences as $contentType => $ids) {
                     foreach ($ids as $id) {
-                        if (!$this->submissionExists($contentType, $curBlogId, $id, $targetBlogId)) {
+                        if ($this->addSubmissionToResponse($contentType, $curBlogId, $id, $targetBlogId)) {
                             // Add check
                             $responseData['missingTranslatedReferences'][$targetBlogId][$contentType][] = $id;
                         }
@@ -805,5 +805,48 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         }
 
         return $result;
+    }
+
+    /**
+     * @param string $contentType
+     * @param int $currentBlogId
+     * @param int $contentId
+     * @param int $targetBlogId
+     * @return bool
+     */
+    private function addSubmissionToResponse($contentType, $currentBlogId, $contentId, $targetBlogId)
+    {
+        if (GlobalSettingsManager::isLinkTaxonomySource()) {
+            $originalSubmission = $this->findOriginalSubmission($contentType, $currentBlogId, $contentId);
+            if ($originalSubmission !== null) {
+                return !$this->submissionExists($contentType, $originalSubmission->getSourceBlogId(), $originalSubmission->getTargetBlogId(), $targetBlogId);
+            }
+        }
+
+        return !$this->submissionExists($contentType, $currentBlogId, $contentId, $targetBlogId);
+    }
+
+    /**
+     * @param string $contentType
+     * @param int $currentBlogId
+     * @param int $contentId
+     * @param SubmissionEntity|null $previous
+     * @return SubmissionEntity|null
+     */
+    public function findOriginalSubmission($contentType, $currentBlogId, $contentId, SubmissionEntity $previous = null)
+    {
+        $submissions = $this->getSubmissionManager()->find([
+            SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
+            SubmissionEntity::FIELD_TARGET_BLOG_ID => $currentBlogId,
+            SubmissionEntity::FIELD_TARGET_ID => $contentId,
+        ]);
+        if (count($submissions) > 0) {
+            $found = ArrayHelper::first($submissions);
+            if ($found instanceof SubmissionEntity) {
+                $previous = $found;
+                return $this->findOriginalSubmission($contentType, $currentBlogId, $contentId, $previous);
+            }
+        }
+        return $previous;
     }
 }
