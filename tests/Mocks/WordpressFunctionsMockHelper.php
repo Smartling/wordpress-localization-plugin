@@ -119,14 +119,14 @@ namespace {
         }
 
         if (!function_exists('get_post')) {
-            function get_post($id, $returnError)
+            function get_post($post = null, $output = OBJECT, $filter = 'raw')
             {
 
                 $date = Smartling\Helpers\DateTimeHelper::nowAsString();
 
-                $type = $id < 10 ? 'post' : 'page';
+                $type = $post < 10 ? 'post' : 'page';
 
-                $post = ['ID'            => $id, 'post_author' => 1, 'post_date' => $date, 'post_date_gmt' => $date,
+                $post = ['ID'            => $post, 'post_author' => 1, 'post_date' => $date, 'post_date_gmt' => $date,
                          'post_content'  => 'Test content', 'post_title' => 'Here goes the title', 'post_excerpt' => '',
                          'post_status'   => 'published', 'comment_status' => 'open', 'ping_status' => '',
                          'post_password' => '', 'post_name' => 'Here goes the title', 'to_ping' => '', 'pinged' => '',
@@ -205,7 +205,7 @@ namespace {
         }
 
         if (!function_exists('add_action')) {
-            function add_action($action, $handler)
+            function add_action($tag, $function_to_add, $priority = 10, $accepted_args = 1)
             {
             }
         }
@@ -291,7 +291,7 @@ namespace {
         }
 
         if (!function_exists('do_action')) {
-            function do_action($a, $b)
+            function do_action($a, ...$b)
             {
             }
         }

@@ -6,8 +6,6 @@ use Exception;
 use Monolog\Logger;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
-use Smartling\ContentTypes\AutoDiscover\PostTypes;
-use Smartling\ContentTypes\AutoDiscover\Taxonomies;
 use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\ContentTypes\ContentTypeWidget;
@@ -23,10 +21,11 @@ use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Services\GlobalSettingsManager;
-use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPInstallableInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Smartling\Helpers\UiMessageHelper;
+use Smartling\DbAl\DummyLocalizationPlugin;
 
 /**
  * Class Bootstrap
@@ -68,15 +67,13 @@ class Bootstrap
      */
     public static function getLogger()
     {
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $object = MonologWrapper::getLogger(get_called_class());
 
         if ($object instanceof LoggerInterface) {
             return $object;
-        } else {
-            $message = 'Something went wrong with initialization of DI Container and logger cannot be retrieved.';
-            throw new SmartlingBootException($message);
         }
+
+        throw new SmartlingBootException('Something went wrong with initialization of DI Container and logger cannot be retrieved.');
     }
 
     public static function getCurrentVersion()
@@ -213,7 +210,7 @@ class Bootstrap
         }
 
         if (false === $found) {
-            add_action('admin_init', function () {
+            add_action('admin_init', static function () {
                 DiagnosticsHelper::addDiagnosticsMessage('Recommended plugin <strong>Multilingual Press</strong> not found. Please install and activate it.', false);
             });
         }
@@ -222,7 +219,7 @@ class Bootstrap
     }
 
     public function updateGlobalExpertSettings () {
-        $data =& $_POST['params'];
+        $data = $_POST['params'];
 
         $rawPageSize = (int)$data['pageSize'];
 
@@ -237,6 +234,7 @@ class Bootstrap
         GlobalSettingsManager::setLoggingCustomization($data['loggingCustomization']);
         GlobalSettingsManager::setHandleRelationsManually((int)$data['handleRelationsManually']);
         GlobalSettingsManager::setRelatedContentCheckboxState((int)$data[GlobalSettingsManager::RELATED_CHECKBOX_STATE]);
+        GlobalSettingsManager::setTaxonomySourceState((int)$data[GlobalSettingsManager::TAXONOMY_SOURCE_STATE]);
         GlobalSettingsManager::setFilterUiVisible((int) $data['enableFilterUI']);
 
         wp_send_json($data);
@@ -244,7 +242,6 @@ class Bootstrap
 
     /**
      * Tests if current Wordpress Configuration can work with Smartling Plugin
-     * @return mixed
      */
     protected function test()
     {
@@ -273,7 +270,7 @@ class Bootstrap
             $this->testUpdates();
         }
 
-        add_action('admin_notices', ['Smartling\Helpers\UiMessageHelper', 'displayMessages']);
+        add_action('admin_notices', [UiMessageHelper::class, 'displayMessages']);
     }
 
     protected function testTimeLimit($recommended = 300)
@@ -332,7 +329,7 @@ class Bootstrap
         if (true === $blockWork) {
             // replace localization plugin proxy with dummy class
 
-            Bootstrap::getContainer()->register('multilang.proxy', 'Smartling\DbAl\DummyLocalizationPlugin');
+            self::getContainer()->register('multilang.proxy', DummyLocalizationPlugin::class);
 
         } else {
             $data = SimpleStorageHelper::get('state_modules', false);
@@ -447,11 +444,6 @@ class Bootstrap
         ContentTypeNavigationMenuItem::register($di);
         ContentTypeNavigationMenu::register($di);
 
-        $handlers = [
-            'taxonomies' => (new Taxonomies($di)),
-            'posts'      => (new PostTypes($di)),
-        ];
-
         $action = defined('DOING_CRON') && true === DOING_CRON ? 'wp_loaded' : 'admin_init';
 
         if (1 === (int)GlobalSettingsManager::getDisableACF()) {
@@ -466,7 +458,7 @@ class Bootstrap
                 }
             });
 
-            add_action($action, function () {
+            add_action($action, static function () {
 
                 /**
                  * Initializing ACF and ACF Option Pages support.
@@ -478,7 +470,7 @@ class Bootstrap
          * Post types and taxonomies are registered on 'init' hook, but this code is executed on 'plugins_loaded' hook,
          * so we need to postpone dynamic handlers execution
          */
-        add_action($action, function () use ($di) {
+        add_action($action, static function () use ($di) {
 
             // registering taxonomies first.
             $dynTermDefinitions = [];

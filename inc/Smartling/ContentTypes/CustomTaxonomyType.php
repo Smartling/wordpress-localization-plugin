@@ -4,6 +4,8 @@ namespace Smartling\ContentTypes;
 
 use Smartling\ContentTypes\ConfigParsers\TermTypeConfigParser;
 use Smartling\Helpers\StringHelper;
+use Smartling\WP\Controller\TaxonomyWidgetController;
+use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
 
 /**
  * Class CustomTaxonomyType
@@ -46,7 +48,7 @@ class CustomTaxonomyType extends TermBasedContentTypeAbstract
     {
         $di = $this->getContainerBuilder();
         $wrapperId = 'wrapper.entity.' . $this->getSystemName();
-        $definition = $di->register($wrapperId, 'Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd');
+        $definition = $di->register($wrapperId, TaxonomyEntityStd::class);
         $definition
             ->addArgument($this->getSystemName())
             ->addArgument([]);
@@ -62,16 +64,16 @@ class CustomTaxonomyType extends TermBasedContentTypeAbstract
     {
         if ($this->getConfigParser()->hasWidget()) {
             $di = $this->getContainerBuilder();
-            $tag = 'wp.taxonomy.' . static::getSystemName();
+            $tag = 'wp.taxonomy.' . $this->getSystemName();
             $di
-                ->register($tag, 'Smartling\WP\Controller\TaxonomyWidgetController')
+                ->register($tag, TaxonomyWidgetController::class)
                 ->addArgument($di->getDefinition('multilang.proxy'))
                 ->addArgument($di->getDefinition('plugin.info'))
                 ->addArgument($di->getDefinition('entity.helper'))
                 ->addArgument($di->getDefinition('manager.submission'))
                 ->addArgument($di->getDefinition('site.cache'))
                 ->addMethodCall('setDetectChangesHelper', [$di->getDefinition('detect-changes.helper')])
-                ->addMethodCall('setTaxonomy', [static::getSystemName()]);
+                ->addMethodCall('setTaxonomy', [$this->getSystemName()]);
             $di->get($tag)->register();
             $this->registerJobWidget();
         }
@@ -80,7 +82,7 @@ class CustomTaxonomyType extends TermBasedContentTypeAbstract
     protected function registerJobWidget()
     {
         $di = $this->getContainerBuilder();
-        $tag = 'wp.job.' . static::getSystemName();
+        $tag = 'wp.job.' . $this->getSystemName();
 
         $di
             ->register($tag, 'Smartling\WP\Controller\ContentEditJobController')
@@ -89,7 +91,7 @@ class CustomTaxonomyType extends TermBasedContentTypeAbstract
             ->addArgument($di->getDefinition('entity.helper'))
             ->addArgument($di->getDefinition('manager.submission'))
             ->addArgument($di->getDefinition('site.cache'))
-            ->addMethodCall('setServedContentType', [static::getSystemName()])
+            ->addMethodCall('setServedContentType', [$this->getSystemName()])
             ->addMethodCall('setBaseType', ['taxonomy']);
         $di->get($tag)->register();
     }

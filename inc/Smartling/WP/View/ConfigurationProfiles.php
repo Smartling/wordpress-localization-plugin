@@ -205,9 +205,9 @@ $data = $this->getViewData();
                         <th><label for="handleRelationsManually">Handle relations</label></th>
                         <td>
                             <?=
-                            \Smartling\Helpers\HtmlTagGeneratorHelper::tag(
+                            HtmlTagGeneratorHelper::tag(
                                 'select',
-                                \Smartling\Helpers\HtmlTagGeneratorHelper::renderSelectOptions(
+                                HtmlTagGeneratorHelper::renderSelectOptions(
                                     GlobalSettingsManager::getHandleRelationsManually(),
                                     [
                                         0 => 'Automatically',
@@ -221,6 +221,28 @@ $data = $this->getViewData();
                             ?>
                             <br /><a href="javascript:void(0)" id="resetHandleRelationsManually" data-default="<?= GlobalSettingsManager::getHandleRelationsManuallyDefault(); ?>">reset to defaults</a>
                             <br /><?= __('Note, that switching handling of relations to Manual changes how plugin will work with related assets. An example, if &quot;post&quot; has category and image, then plugin will not create them on a target site. As a result, your translated post layout may look broken')?><br/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="taxonomySource">Taxonomy source</label></th>
+                        <td>
+                            <?=
+                            HtmlTagGeneratorHelper::tag(
+                                'select',
+                                HtmlTagGeneratorHelper::renderSelectOptions(
+                                    GlobalSettingsManager::getTaxonomySourceDefault(),
+                                    [
+                                        0 => 'Translate',
+                                        1 => 'Link',
+                                    ]),
+                                [
+                                    'id'   => 'taxonomySource',
+                                    'name' => 'taxonomySource',
+                                ]
+                            )
+                            ?>
+                            <br /><a href="javascript:void(0)" id="resetTaxonomySource" data-default="<?= GlobalSettingsManager::getTaxonomySourceDefault(); ?>">reset to defaults</a>
+                            <br /><?= __('Switching taxonomy source to Link changes how plugin will work with taxonomies. If translating from a language, where taxonomies have already been translated, plugin will try to link taxonomies with previously translated ones')?><br/>
                         </td>
                     </tr>
                     <tr>

@@ -9,7 +9,6 @@
             });
             $('#smartling-configuration-profile-form').validate()
         }
-        ;
         $('a.toggleExpert').on('click', function (e) {
             $('.toggleExpert').removeClass('hidden');
             $('a.toggleExpert').addClass('hidden');
@@ -31,6 +30,7 @@
                     'loggingCustomization': $('#loggingCustomization').val(),
                     'handleRelationsManually': $('#handleRelationsManually').val(),
                     'related_checkbox_state': $('#related_checkbox_state').val(),
+                    'taxonomy_source': $('#taxonomySource').val(),
                     'enableFilterUI': $('#enableFilterUI').val()
                 }
             };

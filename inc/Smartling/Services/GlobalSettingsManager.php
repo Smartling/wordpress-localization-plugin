@@ -18,6 +18,7 @@ class GlobalSettingsManager
     const SELF_CHECK_IDENTIFIER         = 'smartling_static_check_disabled';
     const SELF_CHECK_IDENTIFIER_DEFAULT = 0;
     const RELATED_CHECKBOX_STATE = 'related_checkbox_state';
+    const TAXONOMY_SOURCE = 'taxonomy_source';
 
     public static function getSkipSelfCheckDefault()
     {
@@ -277,6 +278,48 @@ class GlobalSettingsManager
      * @param int $value
      */
     public static function setRelatedContentCheckboxState($value)
+    {
+        SimpleStorageHelper::set(static::SMARTLING_RELATED_CHECKBOX_STATE, $value);
+
+        if (static::getRelatedContentCheckboxDefault() === (int)$value) {
+            SimpleStorageHelper::drop(static::SMARTLING_RELATED_CHECKBOX_STATE);
+        }
+    }
+
+    const TAXONOMY_SOURCE_STATE = 'taxonomy_source_state';
+    const TAXONOMY_SOURCE_DEFAULT = 0;
+
+    /**
+     * @return int
+     */
+    public static function getTaxonomySourceDefault()
+    {
+        return static::TAXONOMY_SOURCE_DEFAULT;
+    }
+
+    /**
+     * @return int
+     */
+    public static function getTaxonomySourceState()
+    {
+        return (int)SimpleStorageHelper::get(
+            static::SMARTLING_RELATED_CHECKBOX_STATE,
+            static::getRelatedContentCheckboxDefault()
+        );
+    }
+
+    /**
+     * @return boolean
+     */
+    public static function isLinkTaxonomySource()
+    {
+        return 1 === (int)self::getTaxonomySourceState();
+    }
+
+    /**
+     * @param int $value
+     */
+    public static function setTaxonomySourceState($value)
     {
         SimpleStorageHelper::set(static::SMARTLING_RELATED_CHECKBOX_STATE, $value);
 
