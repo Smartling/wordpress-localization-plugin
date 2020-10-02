@@ -303,7 +303,7 @@ namespace {
         }
 
         if (!function_exists('wp_set_post_terms')) {
-            function wp_set_post_terms($a, $b)
+            function wp_set_post_terms($post_id = 0, $tags = '', $taxonomy = 'post_tag', $append = false)
             {
             }
         }

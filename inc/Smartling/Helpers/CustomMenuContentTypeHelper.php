@@ -158,13 +158,14 @@ class CustomMenuContentTypeHelper
 
     /**
      * @param SubmissionEntity $submission
-     * @param string           $taxonomy
+     * @param string $taxonomy
      *
      * @return array
      */
     public function getTerms($submission, $taxonomy)
     {
         $needBlogSwitch = $submission->getSourceBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
+        $terms = [];
 
         try {
             if ($needBlogSwitch) {
@@ -172,6 +173,10 @@ class CustomMenuContentTypeHelper
             }
 
             $terms = wp_get_object_terms($submission->getSourceId(), $taxonomy);
+            if (!is_array($terms)) {
+                $this->getLogger()->warning("Taxonomy $taxonomy does not exist");
+                $terms = [];
+            }
 
             if ($needBlogSwitch) {
                 $this->getSiteHelper()->restoreBlogId();
@@ -180,7 +185,7 @@ class CustomMenuContentTypeHelper
             $this->getLogger()->warning(vsprintf('Cannot get terms in missing blog.', []));
         }
 
-        return null !== $terms && is_array($terms) ? $terms : [];
+        return $terms;
     }
 
 

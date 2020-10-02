@@ -746,17 +746,17 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 
     /**
      * @param string $contentType
-     * @param int    $sourceBlogId
-     * @param int    $contentId
-     * @param int    $targetBlogId
+     * @param int $sourceBlogId
+     * @param int $sourceId
+     * @param int $targetBlogId
      * @return bool
      */
-    protected function submissionExists($contentType, $sourceBlogId, $contentId, $targetBlogId)
+    protected function submissionExists($contentType, $sourceBlogId, $sourceId, $targetBlogId)
     {
         return 1 === count($this->getSubmissionManager()->find([
                 SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
-                SubmissionEntity::FIELD_CONTENT_TYPE   => $contentType,
-                SubmissionEntity::FIELD_SOURCE_ID      => $contentId,
+                SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
+                SubmissionEntity::FIELD_SOURCE_ID => $sourceId,
                 SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
             ], 1));
     }
@@ -828,17 +828,17 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 
     /**
      * @param string $contentType
-     * @param int $currentBlogId
-     * @param int $contentId
+     * @param int $targetBlogId
+     * @param int $targetId
      * @param SubmissionEntity|null $previous
      * @return SubmissionEntity|null
      */
-    public function findOriginalSubmission($contentType, $currentBlogId, $contentId, SubmissionEntity $previous = null)
+    public function findOriginalSubmission($contentType, $targetBlogId, $targetId, SubmissionEntity $previous = null)
     {
         $submissions = $this->getSubmissionManager()->find([
             SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
-            SubmissionEntity::FIELD_TARGET_BLOG_ID => $currentBlogId,
-            SubmissionEntity::FIELD_TARGET_ID => $contentId,
+            SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+            SubmissionEntity::FIELD_TARGET_ID => $targetId,
         ]);
         if (count($submissions) > 0) {
             $found = ArrayHelper::first($submissions);
