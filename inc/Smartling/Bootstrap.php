@@ -6,6 +6,8 @@ use Exception;
 use Monolog\Logger;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
+use Smartling\ContentTypes\AutoDiscover\PostTypes;
+use Smartling\ContentTypes\AutoDiscover\Taxonomies;
 use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\ContentTypes\ContentTypeWidget;
@@ -443,6 +445,10 @@ class Bootstrap
 
         ContentTypeNavigationMenuItem::register($di);
         ContentTypeNavigationMenu::register($di);
+
+        // add supported taxonomies and post types for translation
+        new Taxonomies($di);
+        new PostTypes($di);
 
         $action = defined('DOING_CRON') && true === DOING_CRON ? 'wp_loaded' : 'admin_init';
 

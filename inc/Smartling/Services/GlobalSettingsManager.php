@@ -311,7 +311,7 @@ class GlobalSettingsManager
     public static function getTaxonomySourceState()
     {
         return (int)SimpleStorageHelper::get(
-            static::SMARTLING_RELATED_CHECKBOX_STATE,
+            static::TAXONOMY_SOURCE_STATE,
             static::getRelatedContentCheckboxDefault()
         );
     }
@@ -329,10 +329,10 @@ class GlobalSettingsManager
      */
     public static function setTaxonomySourceState($value)
     {
-        SimpleStorageHelper::set(static::SMARTLING_RELATED_CHECKBOX_STATE, $value);
-
         if (static::getRelatedContentCheckboxDefault() === (int)$value) {
             SimpleStorageHelper::drop(static::SMARTLING_RELATED_CHECKBOX_STATE);
+        } else {
+            SimpleStorageHelper::set(static::SMARTLING_RELATED_CHECKBOX_STATE, $value);
         }
     }
 

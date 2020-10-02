@@ -819,7 +819,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         if (GlobalSettingsManager::isLinkTaxonomySource()) {
             $originalSubmission = $this->findOriginalSubmission($contentType, $currentBlogId, $contentId);
             if ($originalSubmission !== null) {
-                return !$this->submissionExists($contentType, $originalSubmission->getSourceBlogId(), $originalSubmission->getTargetBlogId(), $targetBlogId);
+                return !$this->submissionExists($contentType, $originalSubmission->getSourceBlogId(), $originalSubmission->getSourceId(), $targetBlogId);
             }
         }
 
@@ -844,7 +844,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             $found = ArrayHelper::first($submissions);
             if ($found instanceof SubmissionEntity) {
                 $previous = $found;
-                return $this->findOriginalSubmission($contentType, $currentBlogId, $contentId, $previous);
+                return $this->findOriginalSubmission($contentType, $previous->getSourceBlogId(), $previous->getSourceId(), $previous);
             }
         }
         return $previous;
