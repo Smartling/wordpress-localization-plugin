@@ -286,7 +286,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         ContentHelper $contentHelper,
         FieldsFilterHelper $fieldFilterHelper,
         MetaFieldProcessorManager $fieldProcessorManager,
-       LocalizationPluginProxyInterface $localizationPluginProxy,
+        LocalizationPluginProxyInterface $localizationPluginProxy,
         AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper,
         ShortcodeHelper $shortcodeHelper,
         GutenbergBlockHelper $blockHelper,
