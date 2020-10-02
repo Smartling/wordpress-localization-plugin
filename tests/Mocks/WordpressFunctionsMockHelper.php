@@ -291,7 +291,7 @@ namespace {
         }
 
         if (!function_exists('do_action')) {
-            function do_action($a, $b)
+            function do_action($a, ...$b)
             {
             }
         }

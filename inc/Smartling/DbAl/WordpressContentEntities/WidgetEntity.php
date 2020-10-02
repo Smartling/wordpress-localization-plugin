@@ -25,7 +25,6 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  */
 class WidgetEntity extends VirtualEntityAbstract
 {
-
     /**
      * @var WidgetHelper[] All widgets of current theme.
      */
@@ -76,12 +75,12 @@ class WidgetEntity extends VirtualEntityAbstract
 
         if (in_array($way, ['set', 'get']) && in_array($possibleField, $this->fields, true)) {
             return $possibleField;
-        } else {
-            $message = vsprintf('Method %s not found in %s', [$method, __CLASS__]);
-            $this->getLogger()
-                ->error($message);
-            throw new \BadMethodCallException($message);
         }
+
+        $message = vsprintf('Method %s not found in %s', [$method, __CLASS__]);
+        $this->getLogger()
+            ->error($message);
+        throw new \BadMethodCallException($message);
     }
 
     /**
@@ -118,9 +117,9 @@ class WidgetEntity extends VirtualEntityAbstract
 
         if (array_key_exists($guid, $this->map)) {
             return $this->resultToEntity($this->map[$guid]->toArray());
-        } else {
-            $this->entityNotFound(WordpressContentTypeHelper::CONTENT_TYPE_WIDGET, $guid);
         }
+
+        $this->entityNotFound(WordpressContentTypeHelper::CONTENT_TYPE_WIDGET, $guid);
     }
 
     /**
@@ -166,10 +165,10 @@ class WidgetEntity extends VirtualEntityAbstract
 
     /**
      * @param string $limit
-     * @param int    $offset
-     * @param bool   $orderBy
-     * @param bool   $order
-     *
+     * @param int $offset
+     * @param bool $orderBy
+     * @param bool $order
+     * @param string $searchString
      * @return mixed
      */
     public function getAll($limit = '', $offset = 0, $orderBy = false, $order = false, $searchString = '')
