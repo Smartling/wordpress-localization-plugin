@@ -645,6 +645,7 @@ if ($post instanceof WP_Post) {
                         };
                     }
 
+                    var message = "Failed adding content to upload queue.";
                     $.post(url, data, function (d) {
                         if (!isBulkSubmitPage) {
                             loadRelations(currentContent.contentType, currentContent.id, localeList);
@@ -655,9 +656,14 @@ if ($post instanceof WP_Post) {
                                 break;
                             case "FAILED":
                             default:
-                                uiShowMessage("FAILED", "Failed adding content to upload queue.");
+                                uiShowMessage("FAILED", message);
                                 break;
                         }
+                    }).fail(function (e) {
+                        if (e.responseJSON && e.responseJSON.response && e.responseJSON.response.message) {
+                            message = e.responseJSON.response.message;
+                        }
+                        $('#error-messages').html(message);
                     });
                 });
             }

@@ -8,11 +8,6 @@ use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 
-/**
- * Class XmlEncoder
- * @package Smartling\Tests\Smartling\Helpers
- * @covers  \Smartling\Helpers\ShortcodeHelper
- */
 class ShortcodeHelperTest extends TestCase
 {
     use InvokeMethodTrait;

@@ -90,6 +90,14 @@ class GlobalSettingsManager
     }
 
     /**
+     * @return boolean
+     */
+    public static function isAcfDisabled()
+    {
+        return 1 === (int)self::getDisableACF();
+    }
+
+    /**
      * Disable built-in ACF-Pro Database definitions lookup support (not recommended)
      */
     const DISABLE_ACF_DB_LOOKUP         = 'smartling_disable_db_lookup';
