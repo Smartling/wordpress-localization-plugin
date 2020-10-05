@@ -37,8 +37,8 @@ class SmartlingCore extends SmartlingCoreAbstract
     /**
      * @param SubmissionEntity $submission
      *
-	 * @return void
-	 *
+     * @return void
+     *
      * @throws BlogNotFoundException
      */
     public function prepareRelatedSubmissions(SubmissionEntity $submission)
@@ -67,7 +67,7 @@ class SmartlingCore extends SmartlingCoreAbstract
             }
 
             if ($submission->getContentType() !== ContentTypeNavigationMenu::WP_CONTENT_TYPE) {
-                $this->getContentHelper()->ensureTarget($submission);
+                $this->getContentHelper()->ensureTargetBlogId($submission);
                 $this->getLogger()
                     ->debug(vsprintf('Preparing to assign accumulator: %s', [var_export($accumulator, true)]));
                 foreach ($accumulator as $type => $ids) {
@@ -76,7 +76,7 @@ class SmartlingCore extends SmartlingCoreAbstract
                             $type,
                             implode(',', $ids),
                             $submission->getContentType(),
-							$submission->getTargetId(),
+                            $submission->getTargetId(),
                             $submission->getTargetBlogId(),
                         ]));
 
