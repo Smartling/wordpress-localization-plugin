@@ -130,7 +130,6 @@ class ContentHelper
             if (array_key_exists('function', $frame) && array_key_exists('args', $frame)) {
                 $args = $frame['args'];
                 if ($frame['function'] === 'do_action' && $args[0] === 'switch_blog') {
-                    array_shift($args);
                     $this->blogSwitches[] = $frame;
                 }
             }
@@ -144,6 +143,10 @@ class ContentHelper
         $state = 'switch';
         foreach ($this->blogSwitches as $frame) {
             $this->getLogger()->debug($this->getSwitchBlogString($frame));
+            if (!is_array($frame) || !array_key_exists('args', $frame) || !is_array($frame['args']) || !array_key_exists(3, $frame['args'])) {
+                $this->getLogger()->error('Invalid frame in stack, skipping blog switch validation: ' . json_encode($frame));
+                return true;
+            }
             $context = $frame['args'][3];
             if ($context === $state) {
                 $this->getLogger()->error("Duplicate call to $state blog");
@@ -160,9 +163,12 @@ class ContentHelper
      */
     private function getSwitchBlogString(array $frame) {
         $template = "Switched to blog %d in %s:%d";
-        $blog = $frame['args'][1];
+        $blog = 0;
         $file = 'Unknown';
         $line = 0;
+        if (array_key_exists('args', $frame) && is_array($frame['args']) && array_key_exists(1, $frame['args'])) {
+            $blog = $frame['args'][1];
+        }
         if (array_key_exists('file', $frame)) {
             $file = $frame['file'];
         }
