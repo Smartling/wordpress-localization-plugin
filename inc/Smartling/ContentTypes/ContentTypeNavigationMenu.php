@@ -86,15 +86,8 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
     {
         $accumulator = &$params->getAccumulator();
         $helper = $this->getContainerBuilder()->get('helper.customMenu');
-        $contentHelper = $this->getContainerBuilder()->get('content.helper');
         $translationHelper = $this->getContainerBuilder()->get('translation.helper');
         $logger = MonologWrapper::getLogger( static::class  );
-
-        /**
-         * @var CustomMenuContentTypeHelper $helper
-         * @var TranslationHelper           $translationHelper
-         * @var ContentHelper               $contentHelper
-         */
 
         if (ContentTypeNavigationMenuItem::WP_CONTENT_TYPE === $params->getContentType()) {
             $logger->debug(
@@ -146,7 +139,7 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
             /**
              * @var WidgetEntity $originalEntity
              */
-            $originalEntity = $contentHelper->readSourceContent($params->getSubmission());
+            $originalEntity = $this->contentHelper->readSourceContent($params->getSubmission());
 
             $_settings = $originalEntity->getSettings();
 

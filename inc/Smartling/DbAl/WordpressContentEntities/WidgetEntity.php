@@ -21,6 +21,7 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  * @method int      getIndex()          Returns Widget index
  * @method string   getBar()            Returns bar related to index
  * @method int      getBarPosition()    Returns Widget position in the bar
+ * @method array setSettings(array $settings)
  * @package Smartling\DbAl\WordpressContentEntities
  */
 class WidgetEntity extends VirtualEntityAbstract
