@@ -3,7 +3,7 @@ Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
 Tested up to: 5.4
-Stable tag: 1.14.0
+Stable tag: 1.14.1
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -58,6 +58,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 1.14.1 =
+* Fixed issue where submitting a widget that has navigation menus for translation caused a WordPress emergency
+
 = 1.14.0 =
 * Major change in `Auto synchronize properties` behavior. Starting from this release the connector will always replace all metadata in the translated post with metadata from the source post. The translations are then applied to freshly copied metadata.
 * If you use ACF flexible fields then you should enable `Auto synchronize properties`. It will force connector always replicate ACF fields from source to target and keep flexible fields consistent
