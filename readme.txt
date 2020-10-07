@@ -59,7 +59,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 1.14.1 =
-* Fixed issue where submitting a widget for translation caused a WordPress emergency
+* Fixed issue where submitting a widget with related menu items for translation caused a WordPress emergency
 
 = 1.14.0 =
 * Major change in `Auto synchronize properties` behavior. Starting from this release the connector will always replace all metadata in the translated post with metadata from the source post. The translations are then applied to freshly copied metadata.
