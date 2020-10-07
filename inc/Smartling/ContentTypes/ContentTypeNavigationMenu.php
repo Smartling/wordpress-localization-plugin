@@ -4,10 +4,9 @@ namespace Smartling\ContentTypes;
 
 use Smartling\Base\ExportedAPI;
 use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
-use Smartling\Helpers\ContentHelper;
-use Smartling\Helpers\CustomMenuContentTypeHelper;
+use Smartling\Exception\BlogNotFoundException;
+use Smartling\Exception\SmartlingDataReadException;
 use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
-use Smartling\Helpers\TranslationHelper;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
@@ -26,6 +25,9 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
     const WP_CONTENT_TYPE = 'nav_menu';
 
     private $contentHelper;
+    private $customMenuHelper;
+    private $logger;
+    private $translationHelper;
 
     /**
      * ContentTypeNavigationMenu constructor.
@@ -36,6 +38,9 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
     {
         parent::__construct($di);
         $this->contentHelper = $di->get('content.helper');
+        $this->customMenuHelper = $di->get('helper.customMenu');
+        $this->logger = MonologWrapper::getLogger(static::class);
+        $this->translationHelper = $this->getContainerBuilder()->get('translation.helper');
 
         $this->registerIOWrapper();
         $this->registerWidgetHandler();
@@ -82,35 +87,39 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
 
     }
 
+    /**
+     * MUTATOR: alters $params->accumulator
+     *
+     * @param ProcessRelatedContentParams $params
+     * @return void
+     * @throws BlogNotFoundException
+     * @throws SmartlingDataReadException
+     */
     public function gatherRelatedContent(ProcessRelatedContentParams $params)
     {
         $accumulator = &$params->getAccumulator();
-        $helper = $this->getContainerBuilder()->get('helper.customMenu');
-        $translationHelper = $this->getContainerBuilder()->get('translation.helper');
-        $logger = MonologWrapper::getLogger( static::class  );
-
         if (ContentTypeNavigationMenuItem::WP_CONTENT_TYPE === $params->getContentType()) {
-            $logger->debug(
+            $this->logger->debug(
                 vsprintf('Searching for menuItems related to submission = \'%s\'.', [
                     $params->getSubmission()->getId(),
                 ])
             );
 
-            $ids = $helper->getMenuItems(
+            $ids = $this->customMenuHelper->getMenuItems(
                 $params->getSubmission()->getSourceId(),
                 $params->getSubmission()->getSourceBlogId()
             );
 
             foreach ($ids as $menuItemEntity) {
 
-                $logger->debug(
+                $this->logger->debug(
                     vsprintf('Sending for translation entity = \'%s\' id = \'%s\' related to submission = \'%s\'.', [
                         ContentTypeNavigationMenuItem::WP_CONTENT_TYPE,
                         $menuItemEntity->getPK(),
                         $params->getSubmission()->getId(),
                     ]));
 
-                $menuItemSubmission = $translationHelper->tryPrepareRelatedContent(
+                $menuItemSubmission = $this->translationHelper->tryPrepareRelatedContent(
                     ContentTypeNavigationMenuItem::WP_CONTENT_TYPE,
                     $params->getSubmission()->getSourceBlogId(),
                     $menuItemEntity->getPK(),
@@ -133,7 +142,7 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
         if (self::WP_CONTENT_TYPE === $params->getContentType() &&
             ContentTypeWidget::WP_CONTENT_TYPE === $params->getSubmission()->getContentType()
         ) {
-            $logger->debug(vsprintf('Searching for menu related to widget for submission = \'%s\'.', [
+            $this->logger->debug(vsprintf('Searching for menu related to widget for submission = \'%s\'.', [
                     $params->getSubmission()->getId(),
                 ]));
             /**
@@ -149,14 +158,14 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
                 $menuId = 0;
             }
             if (0 !== $menuId) {
-                $logger->debug(
+                $this->logger->debug(
                     vsprintf('Sending for translation menu related to widget id = \'%s\' related to submission = \'%s\'.', [
                         $originalEntity->getPK(),
                         $params->getSubmission()->getId(),
                     ])
                 );
 
-                $relatedObjectSubmission = $translationHelper->tryPrepareRelatedContent(
+                $relatedObjectSubmission = $this->translationHelper->tryPrepareRelatedContent(
                     self::WP_CONTENT_TYPE,
                     $params->getSubmission()->getSourceBlogId(),
                     $menuId,
