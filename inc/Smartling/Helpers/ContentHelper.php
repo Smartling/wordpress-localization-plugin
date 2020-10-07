@@ -144,7 +144,8 @@ class ContentHelper
      */
     private function isConnectorSwitch(array $backtrace) {
         foreach ($backtrace as $frame) {
-            if (array_key_exists('function', $frame) && in_array($frame['function'], ['switchBlogId', 'restoreBlogId'])) {
+            if (array_key_exists('class', $frame) && array_key_exists('function', $frame) &&
+                $frame['class'] === SiteHelper::class && in_array($frame['function'], ['switchBlogId', 'restoreBlogId'])) {
                 return true;
             }
         }
