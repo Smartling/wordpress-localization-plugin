@@ -231,9 +231,10 @@ abstract class EntityAbstract
     /**
      * Loads the entity from database
      *
-     * @param $guid
+     * @param mixed $guid
      *
      * @return EntityAbstract
+     * @throws EntityNotFoundException
      */
     abstract public function get($guid);
 

@@ -90,7 +90,7 @@ trait SmartlingCoreAttachments
             ])
         );
 
-        $this->getContentHelper()->ensureTarget($submission);
+        $this->getContentHelper()->ensureTargetBlogId($submission);
 
         $originalImage = get_attached_file($submission->getTargetId(), true);
 

@@ -5,10 +5,10 @@ namespace Smartling\Helpers;
 use Exception;
 use Psr\Log\LoggerInterface;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
-use Smartling\DbAl\WordpressContentEntities\PostEntity;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
 use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
+use Smartling\Exception\EntityNotFoundException;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
@@ -39,6 +39,7 @@ class ContentHelper
      * @var bool
      */
     private $needBlogSwitch;
+    private $externalBlogSwitchFrames = [];
 
     /**
      * @return RuntimeCacheHelper
@@ -117,16 +118,67 @@ class ContentHelper
         $this->setNeedBlogSwitch($this->getSiteHelper()->getCurrentBlogId() !== $blogId);
 
         if ($this->isNeedBlogSwitch()) {
+            $this->externalBlogSwitchFrames = [];
+            add_action('switch_blog', [$this, 'logSwitchBlog']);
             $this->getSiteHelper()->switchBlogId($blogId);
         }
     }
 
-    public function ensureSource(SubmissionEntity $submission)
+    public function logSwitchBlog() {
+        $backtrace = debug_backtrace();
+        foreach ($backtrace as $frame) {
+            if (array_key_exists('function', $frame) && array_key_exists('args', $frame)) {
+                $args = $frame['args'];
+                if ($frame['function'] === 'do_action' && $args[0] === 'switch_blog' && $this->isConnectorSwitch($backtrace)) {
+                    $this->getLogger()->debug("Unexpected blog switch detected: " . json_encode($backtrace));
+                    $this->externalBlogSwitchFrames[] = $frame;
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * @param array $backtrace
+     * @return bool
+     */
+    private function isConnectorSwitch(array $backtrace) {
+        foreach ($backtrace as $frame) {
+            if (array_key_exists('class', $frame) && array_key_exists('function', $frame) &&
+                $frame['class'] === SiteHelper::class && in_array($frame['function'], ['switchBlogId', 'restoreBlogId'])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param array $frame backtrace frame
+     * @return string
+     */
+    private function getSwitchBlogString(array $frame) {
+        $template = "Switched to blog %d in %s:%d";
+        $blog = 0;
+        $file = 'Unknown';
+        $line = 0;
+        if (array_key_exists('args', $frame) && is_array($frame['args']) && array_key_exists(1, $frame['args'])) {
+            $blog = $frame['args'][1];
+        }
+        if (array_key_exists('file', $frame)) {
+            $file = $frame['file'];
+        }
+        if (array_key_exists('line', $frame)) {
+            $line = $frame['line'];
+        }
+        return sprintf($template, $blog, $file, $line);
+    }
+
+    public function ensureSourceBlogId(SubmissionEntity $submission)
     {
         $this->ensureBlog($submission->getSourceBlogId());
     }
 
-    public function ensureTarget(SubmissionEntity $submission)
+    public function ensureTargetBlogId(SubmissionEntity $submission)
     {
         $this->ensureBlog($submission->getTargetBlogId());
     }
@@ -134,19 +186,25 @@ class ContentHelper
     public function ensureRestoredBlogId()
     {
         if ($this->isNeedBlogSwitch()) {
+            remove_action('switch_blog', [$this, 'logSwitchBlog']);
             $this->getSiteHelper()->restoreBlogId();
             $this->setNeedBlogSwitch(false);
         }
     }
 
     /**
-     * @param $contentType
+     * @param string $contentType
      *
      * @return EntityAbstract
      */
     private function getWrapper($contentType)
     {
-        return clone $this->getIoFactory()->getHandler($contentType);
+        $return = clone $this->getIoFactory()->getHandler($contentType);
+        if (!$return instanceof EntityAbstract) {
+            throw new \RuntimeException("Handler for {$contentType} expected to be EntityAbstract, factory returned " . get_class($return));
+        }
+
+        return $return;
     }
 
     /**
@@ -157,11 +215,8 @@ class ContentHelper
     public function readSourceContent(SubmissionEntity $submission)
     {
         if (false === ($cached = $this->getRuntimeCache()->get($submission->getId(), 'sourceContent'))) {
-            /**
-             * @var EntityAbstract $wrapper
-             */
             $wrapper = $this->getWrapper($submission->getContentType());
-            $this->ensureSource($submission);
+            $this->ensureSourceBlogId($submission);
             $sourceContent = $wrapper->get($submission->getSourceId());
             $this->ensureRestoredBlogId();
             $clone = clone $sourceContent;
@@ -179,11 +234,8 @@ class ContentHelper
      */
     public function readTargetContent(SubmissionEntity $submission)
     {
-        /**
-         * @var EntityAbstract $wrapper
-         */
         $wrapper = $this->getWrapper($submission->getContentType());
-        $this->ensureTarget($submission);
+        $this->ensureTargetBlogId($submission);
         $targetContent = $wrapper->get($submission->getTargetId());
         $this->ensureRestoredBlogId();
 
@@ -199,11 +251,8 @@ class ContentHelper
     {
         if (false === ($cached = $this->getRuntimeCache()->get($submission->getId(), 'sourceMeta'))) {
             $metadata = [];
-            /**
-             * @var EntityAbstract $wrapper
-             */
             $wrapper = $this->getWrapper($submission->getContentType());
-            $this->ensureSource($submission);
+            $this->ensureSourceBlogId($submission);
             $sourceContent = $wrapper->get($submission->getSourceId());
             if ($sourceContent instanceof EntityAbstract) {
                 $metadata = $sourceContent->getMetadata();
@@ -226,11 +275,8 @@ class ContentHelper
     public function readTargetMetadata(SubmissionEntity $submission)
     {
         $metadata = [];
-        /**
-         * @var EntityAbstract $wrapper
-         */
         $wrapper = $this->getWrapper($submission->getContentType());
-        $this->ensureTarget($submission);
+        $this->ensureTargetBlogId($submission);
         $targetContent = $wrapper->get($submission->getTargetId());
         if ($targetContent instanceof EntityAbstract) {
             $metadata = $targetContent->getMetadata();
@@ -248,18 +294,24 @@ class ContentHelper
      */
     public function writeTargetContent(SubmissionEntity $submission, EntityAbstract $entity)
     {
-        /**
-         * @var EntityAbstract $wrapper
-         */
         $wrapper = $this->getWrapper($submission->getContentType());
 
-        $this->ensureTarget($submission);
+        $this->ensureTargetBlogId($submission);
 
         $result = $wrapper->set($entity);
 
         if (is_int($result) && 0 < $result) {
-
-            $result = $wrapper->get($result);
+            try {
+                $result = $wrapper->get($result);
+            } catch (EntityNotFoundException $e) {
+                if (count($this->externalBlogSwitchFrames) > 0) {
+                    $message = "Unable to get target content: WordPress blog was switched outside Smartling connector plugin. Detected blog change frames follow:\n";
+                    foreach ($this->externalBlogSwitchFrames as $frame) {
+                        $message .= $this->getSwitchBlogString($frame) . "\n";
+                    }
+                    throw new EntityNotFoundException($message);
+                }
+            }
         }
 
         $this->ensureRestoredBlogId();
@@ -269,15 +321,12 @@ class ContentHelper
 
     /**
      * @param SubmissionEntity $submission
-     * @param array            $metadata
+     * @param array $metadata
      */
     public function writeTargetMetadata(SubmissionEntity $submission, array $metadata)
     {
-        /**
-         * @var EntityAbstract $wrapper
-         */
-        $wrapper = $this->getIoFactory()->getHandler($submission->getContentType());
-        $this->ensureTarget($submission);
+        $wrapper = $this->getWrapper($submission->getContentType());
+        $this->ensureTargetBlogId($submission);
         $targetEntity = $wrapper->get($submission->getTargetId());
         if ($targetEntity instanceof EntityAbstract) {
             foreach ($metadata as $key => $value) {
@@ -297,16 +346,13 @@ class ContentHelper
         $wrapper = $this->getWrapper($submission->getContentType());
         $wpMetaFunction = null;
 
-
-        $this->ensureTarget($submission);
+        $this->ensureTargetBlogId($submission);
 
         if ($wrapper instanceof PostEntityStd) {
             $wpMetaFunction = 'delete_post_meta';
         } elseif ($wrapper instanceof TaxonomyEntityStd) {
             $wpMetaFunction = 'delete_term_meta';
-        } elseif ($wrapper instanceof VirtualEntityAbstract) {
-            /* Virtual types cannot have metadata */
-        } else {
+        } elseif (!$wrapper instanceof VirtualEntityAbstract) {
             $msgTemplate = 'Unknown content-type. Expected %s to be successor of one of: %s';
             $this->getLogger()->warning(
                 vsprintf($msgTemplate,
@@ -321,7 +367,7 @@ class ContentHelper
         if (null !== $wpMetaFunction) {
             try {
                 foreach ($existing_meta as $key => $value) {
-                    $result = call_user_func_array($wpMetaFunction, [$object_id, $key]);
+                    $result = $wpMetaFunction($object_id, $key);
                     $msg_template = 'Removing metadata key=\'%s\' for \'%s\' id=\'%s\' (submission = \'%s\' ) finished ' .
                                     (true === $result ? 'successfully' : 'with error');
                     $msg = vsprintf($msg_template, [$key, $submission->getContentType(), $submission->getTargetId(),
@@ -341,10 +387,16 @@ class ContentHelper
         $this->ensureRestoredBlogId();
     }
 
+    /**
+     * @param int $blogId
+     * @param string $contentType
+     * @param int $contentId
+     * @return bool
+     */
     public function checkEntityExists($blogId, $contentType, $contentId)
     {
         $needSiteSwitch = (int)$blogId !== $this->getSiteHelper()->getCurrentBlogId();
-        $result         = false;
+        $result = false;
 
         if ($needSiteSwitch) {
             $this->getSiteHelper()->switchBlogId((int)$blogId);
