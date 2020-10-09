@@ -119,22 +119,22 @@ namespace {
         }
 
         if (!function_exists('get_post')) {
-            function get_post($id, $returnError)
+            function get_post($post = null, $output = OBJECT, $filter = 'raw')
             {
 
                 $date = Smartling\Helpers\DateTimeHelper::nowAsString();
 
-                $type = $id < 10 ? 'post' : 'page';
+                $type = $post < 10 ? 'post' : 'page';
 
-                $post = ['ID'            => $id, 'post_author' => 1, 'post_date' => $date, 'post_date_gmt' => $date,
-                         'post_content'  => 'Test content', 'post_title' => 'Here goes the title', 'post_excerpt' => '',
-                         'post_status'   => 'published', 'comment_status' => 'open', 'ping_status' => '',
-                         'post_password' => '', 'post_name' => 'Here goes the title', 'to_ping' => '', 'pinged' => '',
-                         'post_modified' => $date, 'post_modified_gmt' => $date, 'post_content_filtered' => '',
-                         'post_parent'   => 0, 'guid' => '/here-goes-the-title', 'menu_order' => 0,
-                         'post_type'     => $type, 'post_mime_type' => 'post', 'comment_count' => 0,];
-
-                return $post;
+                return [
+                    'ID' => $post, 'post_author' => 1, 'post_date' => $date, 'post_date_gmt' => $date,
+                    'post_content' => 'Test content', 'post_title' => 'Here goes the title', 'post_excerpt' => '',
+                    'post_status' => 'published', 'comment_status' => 'open', 'ping_status' => '',
+                    'post_password' => '', 'post_name' => 'Here goes the title', 'to_ping' => '', 'pinged' => '',
+                    'post_modified' => $date, 'post_modified_gmt' => $date, 'post_content_filtered' => '',
+                    'post_parent' => 0, 'guid' => '/here-goes-the-title', 'menu_order' => 0,
+                    'post_type' => $type, 'post_mime_type' => 'post', 'comment_count' => 0,
+                ];
             }
         }
 
