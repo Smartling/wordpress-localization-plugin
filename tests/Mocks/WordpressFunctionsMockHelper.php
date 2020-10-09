@@ -205,7 +205,7 @@ namespace {
         }
 
         if (!function_exists('add_action')) {
-            function add_action($action, $handler)
+            function add_action($tag, $function_to_add, $priority = 10, $accepted_args = 1)
             {
             }
         }

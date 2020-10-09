@@ -132,7 +132,7 @@ class TaxonomyEntityStd extends EntityAbstract
     /**
      * @param $guid
      *
-     * @return array
+     * @return TaxonomyEntityStd
      * @throws SmartlingDbException
      * @throws EntityNotFoundException
      */

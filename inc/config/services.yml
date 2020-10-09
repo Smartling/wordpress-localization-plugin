@@ -150,6 +150,14 @@ services:
     calls:
       - [ "setQueue", [ "@queue.db" ] ]
 
+  wp.taxonomy.linker:
+    class: Smartling\WP\Controller\TaxonomyLinksController
+    arguments:
+      - "@plugin.info"
+      - "@multilang.proxy"
+      - "@site.helper"
+      - "@manager.submission"
+
   wp.checkStatus:
       class: Smartling\WP\Controller\CheckStatusController
       arguments:

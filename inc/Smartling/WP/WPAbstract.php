@@ -6,30 +6,17 @@ use Psr\Log\LoggerInterface;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
-use Smartling\Exception\SmartlingIOException;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\StringHelper;
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
-class WPAbstract
+class WPAbstract extends WPAbstractLight
 {
-
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @var PluginInfo
-     */
-    private $pluginInfo;
-
     /**
      * @var LocalizationPluginProxyInterface
      */
@@ -56,26 +43,12 @@ class WPAbstract
     private $widgetHeader = '';
 
     /**
-     * @var array
-     */
-    private $viewData;
-
-    /**
      * @return mixed
      */
     public function getViewData()
     {
         return $this->viewData;
     }
-
-    /**
-     * @param mixed $viewData
-     */
-    public function setViewData($viewData)
-    {
-        $this->viewData = $viewData;
-    }
-
 
     /**
      * @return string
@@ -110,9 +83,8 @@ class WPAbstract
         Cache $cache
     )
     {
-        $this->logger = MonologWrapper::getLogger(get_called_class());
+        parent::__construct($pluginInfo);
         $this->connector = $connector;
-        $this->pluginInfo = $pluginInfo;
         $this->entityHelper = $entityHelper;
         $this->manager = $manager;
         $this->cache = $cache;
@@ -167,7 +139,7 @@ class WPAbstract
     }
 
     /**
-     * @return \Smartling\Settings\ConfigurationProfileEntity[]
+     * @return ConfigurationProfileEntity[]
      */
     public function getProfiles()
     {
@@ -175,47 +147,6 @@ class WPAbstract
         $currentBlogId = $eh->getSiteHelper()->getCurrentBlogId();
 
         return $eh->getSettingsManager()->findEntityByMainLocale($currentBlogId);
-    }
-
-    /**
-     * @param null $data
-     */
-    public function view($data = null)
-    {
-        $this->setViewData($data);
-        $class = get_called_class();
-        $class = str_replace('Smartling\\WP\\Controller\\', '', $class);
-
-        $class = str_replace('Controller', '', $class);
-
-        $this->renderViewScript($class . '.php');
-    }
-
-    public function renderViewScript($script)
-    {
-        $filename = plugin_dir_path(__FILE__) . 'View/' . $script;
-
-        if (!file_exists($filename) || !is_file($filename) || !is_readable($filename)) {
-            throw new SmartlingIOException(vsprintf('Requested view file (%s) not found.', [$filename]));
-        } else {
-            /** @noinspection PhpIncludeInspection */
-            require_once $filename;
-        }
-    }
-
-    public static function bulkSubmitSendButton($id = 'submit', $name = 'submit', $text = 'Add to Upload Queue', $title = 'Add selected submissions to Upload queue')
-    {
-        return HtmlTagGeneratorHelper::tag(
-            'button',
-            HtmlTagGeneratorHelper::tag('span', __($text), []),
-            [
-                'type'  => 'submit',
-                'value' => $name,
-                'title' => __($title),
-                'class' => 'button button-primary',
-                'id'    => $id,
-                'name'  => $name,
-            ]);
     }
 
     public static function bulkSubmitCloneButton()
@@ -232,19 +163,6 @@ class WPAbstract
             ]);
     }
 
-    public static function sendButton($id = 'submit', $name = 'submit')
-    {
-        return HtmlTagGeneratorHelper::tag(
-            'input', '', [
-            'type'  => 'submit',
-            'value' => 'Upload',
-            'title' => __('Add to Upload queue and trigger upload process'),
-            'class' => 'button button-primary',
-            //'id'    => $id,
-            'name'  => $name,
-        ]);
-    }
-
     public static function submitBlock()
     {
         $downloadButton = HtmlTagGeneratorHelper::tag(
@@ -259,9 +177,7 @@ class WPAbstract
 
         $contents = $downloadButton;
 
-        $container = HtmlTagGeneratorHelper::tag('div', $contents, ['class' => 'bottom']);
-
-        return $container;
+        return HtmlTagGeneratorHelper::tag('div', $contents, ['class' => 'bottom']);
     }
 
     /**
@@ -271,14 +187,12 @@ class WPAbstract
      */
     public static function inputHidden($submissionId)
     {
-        $hiddenId = HtmlTagGeneratorHelper::tag('input', '', [
+        return HtmlTagGeneratorHelper::tag('input', '', [
             'type'  => 'hidden',
             'value' => $submissionId,
             'class' => 'submission-id',
             'id'    => 'submission-id-' . $submissionId,
         ]);
-
-        return $hiddenId;
     }
 
     /**
