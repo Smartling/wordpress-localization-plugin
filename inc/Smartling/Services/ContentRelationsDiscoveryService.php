@@ -727,11 +727,14 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             'originalReferences' => $detectedReferences,
         ];
 
+        $registeredTypes = get_post_types();
         foreach ($targetBlogIds as $targetBlogId) {
             foreach ($detectedReferences as $contentType => $ids) {
-                foreach ($ids as $id) {
-                    if (!$this->submissionExists($contentType, $curBlogId, $id, $targetBlogId)) {
-                        $responseData['missingTranslatedReferences'][$targetBlogId][$contentType][] = $id;
+                if (in_array($contentType, $registeredTypes, true)) {
+                    foreach ($ids as $id) {
+                        if (!$this->submissionExists($contentType, $curBlogId, $id, $targetBlogId)) {
+                            $responseData['missingTranslatedReferences'][$targetBlogId][$contentType][] = $id;
+                        }
                     }
                 }
             }
