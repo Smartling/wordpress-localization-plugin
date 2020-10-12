@@ -271,16 +271,16 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 
     /**
      * ContentRelationDiscoveryService constructor.
-     * @param ContentHelper                      $contentHelper
-     * @param FieldsFilterHelper                 $fieldFilterHelper
-     * @param MetaFieldProcessorManager          $fieldProcessorManager
+     * @param ContentHelper $contentHelper
+     * @param FieldsFilterHelper $fieldFilterHelper
+     * @param MetaFieldProcessorManager $fieldProcessorManager
      * @param LocalizationPluginProxyInterface $localizationPluginProxy
      * @param AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper
-     * @param ShortcodeHelper                    $shortcodeHelper
-     * @param GutenbergBlockHelper               $blockHelper
-     * @param SubmissionManager                  $submissionManager
-     * @param ApiWrapper                         $apiWrapper
-     * @param SettingsManager                    $settingsManager
+     * @param ShortcodeHelper $shortcodeHelper
+     * @param GutenbergBlockHelper $blockHelper
+     * @param SubmissionManager $submissionManager
+     * @param ApiWrapper $apiWrapper
+     * @param SettingsManager $settingsManager
      */
     public function __construct(
         ContentHelper $contentHelper,
@@ -728,9 +728,10 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         ];
 
         $registeredTypes = get_post_types();
+        $taxonomies = $this->contentHelper->getSiteHelper()->getTermTypes();
         foreach ($targetBlogIds as $targetBlogId) {
             foreach ($detectedReferences as $contentType => $ids) {
-                if (in_array($contentType, $registeredTypes, true)) {
+                if (in_array($contentType, $registeredTypes, true) || in_array($contentType, $taxonomies, true)) {
                     foreach ($ids as $id) {
                         if (!$this->submissionExists($contentType, $curBlogId, $id, $targetBlogId)) {
                             $responseData['missingTranslatedReferences'][$targetBlogId][$contentType][] = $id;
