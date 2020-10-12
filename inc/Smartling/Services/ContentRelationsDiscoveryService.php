@@ -737,6 +737,8 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                             $responseData['missingTranslatedReferences'][$targetBlogId][$contentType][] = $id;
                         }
                     }
+                } else {
+                    $this->getLogger()->debug("Excluded $contentType from related submissions");
                 }
             }
         }
