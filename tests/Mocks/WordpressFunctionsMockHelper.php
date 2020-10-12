@@ -153,7 +153,7 @@ namespace {
         }
 
         if (!function_exists('get_post_types')) {
-            function get_post_types()
+            function get_post_types($args = array(), $output = 'names', $operator = 'and')
             {
                 return ['acf-field' => '', 'acf-field-group' => ''];
             }

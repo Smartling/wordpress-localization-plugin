@@ -6,6 +6,7 @@ use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\WPAbstractLight;
@@ -14,15 +15,17 @@ use Smartling\WP\WPHookInterface;
 class TaxonomyLinksController extends WPAbstractLight implements WPHookInterface
 {
     protected $localizationPluginProxy;
-    protected $siteHelper;
+    private $siteHelper;
     private $submissionManager;
+    private $wordpressProxy;
 
-    public function __construct(PluginInfo $pluginInfo, LocalizationPluginProxyInterface $localizationPluginProxy, SiteHelper $siteHelper, SubmissionManager $submissionManager)
+    public function __construct(PluginInfo $pluginInfo, LocalizationPluginProxyInterface $localizationPluginProxy, SiteHelper $siteHelper, SubmissionManager $submissionManager, WordpressFunctionProxyHelper $wordpressProxy)
     {
         parent::__construct($pluginInfo);
         $this->localizationPluginProxy = $localizationPluginProxy;
         $this->siteHelper = $siteHelper;
         $this->submissionManager = $submissionManager;
+        $this->wordpressProxy = $wordpressProxy;
     }
 
     public function wp_enqueue()
@@ -73,26 +76,31 @@ class TaxonomyLinksController extends WPAbstractLight implements WPHookInterface
         $this->view([]);
     }
 
-    public function getTerms()
+    public function getTerms($data = null)
     {
-        if (!isset($_POST['sourceBlogId'], $_POST['taxonomy'], $_POST['targetBlogId'])) {
+        if ($data === null) {
+            $data = $_POST;
+        }
+        if (!isset($data['sourceBlogId'], $data['taxonomy'], $data['targetBlogId'])) {
             return;
         }
-        $sourceBlogId = (int)$_POST['sourceBlogId'];
-        $targetBlogId = (int)$_POST['targetBlogId'];
-        $taxonomy = $_POST['taxonomy'];
+
+        $sourceBlogId = (int)$data['sourceBlogId'];
+        $targetBlogId = (int)$data['targetBlogId'];
+        $taxonomy = $data['taxonomy'];
+
         $submissions = $this->submissionManager->find([
             SubmissionEntity::FIELD_CONTENT_TYPE => $taxonomy,
             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
             SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
         ]);
-        $source = $this->getMappedDiff($submissions, get_terms(['taxonomy' => $taxonomy]), true);
+        $source = $this->getMappedDiff($submissions, $this->wordpressProxy->get_terms(['taxonomy' => $taxonomy]), true);
         $this->siteHelper->switchBlogId($targetBlogId);
-        $targetTerms = get_terms(['taxonomy' => $taxonomy]); // Can't be inlined, must be run while blog switched
+        $targetTerms = $this->wordpressProxy->get_terms(['taxonomy' => $taxonomy]); // Can't be inlined, must be run while blog switched
         $this->siteHelper->restoreBlogId();
         $target = $this->getMappedDiff($submissions, $targetTerms, false);
 
-        wp_send_json(['source' => $source, 'target' => $target]);
+        $this->wordpressProxy->wp_send_json(['source' => $source, 'target' => $target]);
     }
 
     /**

@@ -14,7 +14,7 @@ class WPAbstractLight
 
     public function __construct(PluginInfo $pluginInfo)
     {
-        $this->logger = $this->logger = MonologWrapper::getLogger(static::class);
+        $this->logger = MonologWrapper::getLogger(static::class);
         $this->pluginInfo = $pluginInfo;
     }
 
