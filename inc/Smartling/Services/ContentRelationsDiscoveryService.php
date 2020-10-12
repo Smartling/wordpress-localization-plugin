@@ -112,7 +112,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
      * @var SettingsManager
      */
     private $settingsManager;
-	private $localizationPluginProxy;
+    private $localizationPluginProxy;
 
     /**
      * @return LoggerInterface
@@ -271,22 +271,22 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 
     /**
      * ContentRelationDiscoveryService constructor.
-     * @param ContentHelper                      $contentHelper
-     * @param FieldsFilterHelper                 $fieldFilterHelper
-     * @param MetaFieldProcessorManager          $fieldProcessorManager
-	 * @param LocalizationPluginProxyInterface $localizationPluginProxy
+     * @param ContentHelper $contentHelper
+     * @param FieldsFilterHelper $fieldFilterHelper
+     * @param MetaFieldProcessorManager $fieldProcessorManager
+     * @param LocalizationPluginProxyInterface $localizationPluginProxy
      * @param AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper
-     * @param ShortcodeHelper                    $shortcodeHelper
-     * @param GutenbergBlockHelper               $blockHelper
-     * @param SubmissionManager                  $submissionManager
-     * @param ApiWrapper                         $apiWrapper
-     * @param SettingsManager                    $settingsManager
+     * @param ShortcodeHelper $shortcodeHelper
+     * @param GutenbergBlockHelper $blockHelper
+     * @param SubmissionManager $submissionManager
+     * @param ApiWrapper $apiWrapper
+     * @param SettingsManager $settingsManager
      */
     public function __construct(
         ContentHelper $contentHelper,
         FieldsFilterHelper $fieldFilterHelper,
         MetaFieldProcessorManager $fieldProcessorManager,
-		LocalizationPluginProxyInterface $localizationPluginProxy,
+        LocalizationPluginProxyInterface $localizationPluginProxy,
         AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper,
         ShortcodeHelper $shortcodeHelper,
         GutenbergBlockHelper $blockHelper,
@@ -297,7 +297,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         $this->setContentHelper($contentHelper);
         $this->setFieldFilterHelper($fieldFilterHelper);
         $this->setMetaFieldProcessorManager($fieldProcessorManager);
-		$this->localizationPluginProxy = $localizationPluginProxy;
+        $this->localizationPluginProxy = $localizationPluginProxy;
         $this->setAbsoluteLinkedAttachmentCoreHelper($absoluteLinkedAttachmentCoreHelper);
         $this->setShortcodeHelper($shortcodeHelper);
         $this->setGutenbergBlockHelper($blockHelper);
@@ -339,39 +339,38 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             );
     }
 
-	/**
-	 * @param string $batchUid
-	 * @param array $contentIds
-	 * @param string $contentType
-	 * @param int $currentBlogId
-	 * @param array $targetBlogIds
-	 */
-	public function bulkUploadHandler( $batchUid, array $contentIds, $contentType, $currentBlogId, array $targetBlogIds ) {
-		foreach ( $targetBlogIds as $targetBlogId ) {
-			$blogFields = [
-				SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
-				SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
-			];
-			foreach ( $contentIds as $id ) {
-				$existing = $this->getSubmissionManager()->find( array_merge( $blogFields, [
-					SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
-					SubmissionEntity::FIELD_SOURCE_ID    => $id
-				] ) );
+    /**
+     * @param string $batchUid
+     * @param array $contentIds
+     * @param string $contentType
+     * @param int $currentBlogId
+     * @param array $targetBlogIds
+     */
+    public function bulkUploadHandler($batchUid, array $contentIds, $contentType, $currentBlogId, array $targetBlogIds) {
+        foreach ($targetBlogIds as $targetBlogId) {
+            $blogFields = [
+                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
+                SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+            ];
+            foreach ($contentIds as $id) {
+                $existing = $this->getSubmissionManager()->find( array_merge($blogFields, [
+                    SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
+                    SubmissionEntity::FIELD_SOURCE_ID    => $id
+                ]));
 
-				if ( empty( $existing ) ) {
-					$submission = $this->getSubmissionManager()->getSubmissionEntity( $contentType, $currentBlogId, $id, $targetBlogId, $this->localizationPluginProxy );
-				} else {
-					/** @var SubmissionEntity $submission */
-					$submission = ArrayHelper::first( $existing );
-				}
-				$submission->setBatchUid( $batchUid );
-				$submission->setStatus( SubmissionEntity::SUBMISSION_STATUS_NEW );
-				$submission->getFileUri();
-				$this->getSubmissionManager()->storeEntity( $submission );
-			}
-		}
-		$this->returnResponse( [ 'status' => 'SUCCESS' ] );
-	}
+                if (empty($existing)) {
+                    $submission = $this->getSubmissionManager()->getSubmissionEntity($contentType, $currentBlogId, $id, $targetBlogId, $this->localizationPluginProxy);
+                } else {
+                    $submission = ArrayHelper::first($existing);
+                }
+                $submission->setBatchUid($batchUid);
+                $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+                $submission->getFileUri();
+                $this->getSubmissionManager()->storeEntity($submission);
+            }
+        }
+        $this->returnResponse(['status' => 'SUCCESS']);
+    }
 
     /**
      * Handler for POST request that creates submissions for main content and selected relations
@@ -397,19 +396,19 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
      */
     public function createSubmissionsHandler($data = '')
     {
-		if (!is_array($data)) {
+        if (!is_array($data)) {
             $data = $_POST;
         }
         try {
-			$contentType = $data['source']['contentType'];
+            $contentType = $data['source']['contentType'];
             $curBlogId = $this->getContentHelper()->getSiteHelper()->getCurrentBlogId();
             $batchUid  = $this->getBatchUid($curBlogId, $data['job']);
 
             $targetBlogIds = explode(',', $data['targetBlogIds']);
 
-			if (array_key_exists( 'ids', $data)) {
-				return $this->bulkUploadHandler( $batchUid, $data['ids'], $contentType, $curBlogId, $targetBlogIds );
-			}
+            if (array_key_exists( 'ids', $data)) {
+                return $this->bulkUploadHandler($batchUid, $data['ids'], $contentType, $curBlogId, $targetBlogIds);
+            }
 
             foreach ($targetBlogIds as $targetBlogId) {
                 $submissionTemplateArray = [
@@ -421,7 +420,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                  * Submission for original content may already exist
                  */
                 $searchParams = array_merge($submissionTemplateArray, [
-					SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
+                    SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
                     SubmissionEntity::FIELD_SOURCE_ID    => ArrayHelper::first($data['source']['id']),
                 ]);
 
@@ -442,7 +441,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 
                 if (empty($result)) {
                     $sources[] = [
-						'type' => $contentType,
+                        'type' => $contentType,
                         'id'   => ArrayHelper::first($data['source']['id']),
                     ];
                 } else {
@@ -619,132 +618,136 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         $curBlogId     = $this->getContentHelper()->getSiteHelper()->getCurrentBlogId();
         $targetBlogIds = $this->getTargetBlogIds();
 
-        if ($this->getContentHelper()->checkEntityExists($curBlogId, $contentType, $id)) {
+        if (!$this->getContentHelper()->checkEntityExists($curBlogId, $contentType, $id)) {
+            $this->returnError('content.not.found', 'Requested content is not found', 404);
+        }
 
-            $ioWrapper = $this->getContentHelper()->getIoFactory()->getMapper($contentType);
+        $ioWrapper = $this->getContentHelper()->getIoFactory()->getMapper($contentType);
 
-            $content = [
-                'entity' => $ioWrapper->get($id)->toArray(),
-                'meta'   => $ioWrapper->get($id)->getMetadata(),
-            ];
+        $content = [
+            'entity' => $ioWrapper->get($id)->toArray(),
+            'meta' => $ioWrapper->get($id)->getMetadata(),
+        ];
 
-            $fields = $this->getFieldFilterHelper()->flatternArray($content);
+        $fields = $this->getFieldFilterHelper()->flatternArray($content);
+
+        /**
+         * adding fields from shortcodes
+         */
+        $extraFields = [];
+        foreach ($fields as $fName => $fValue) {
+            $extraFields = array_merge($extraFields,
+                $this->getFieldFilterHelper()->flatternArray($this->extractFieldsFromShortcodes($fName, $fValue)));
+        }
+        $fields = array_merge($fields, $extraFields);
+
+        try {
+            /**
+             * check if gutenberg exists
+             */
+            $this->getGutenbergBlockHelper()->loadExternalDependencies();
 
             /**
-             * adding fields from shortcodes
+             * adding fields from blocks
              */
             $extraFields = [];
             foreach ($fields as $fName => $fValue) {
                 $extraFields = array_merge($extraFields,
-                    $this->getFieldFilterHelper()->flatternArray($this->extractFieldsFromShortcodes($fName, $fValue)));
+                    $this->getFieldFilterHelper()->flatternArray($this->extractFieldsFromGutenbergBlock($fName,
+                        $fValue)));
             }
             $fields = array_merge($fields, $extraFields);
+        } catch (Exception $e) {
+            $this->getLogger()->info(
+                vsprintf(
+                    'Gutenberg not detected, skipping search for references in Gutenberg blocks for request %s',
+                    [
+                        var_export($this->getRequestSource(), true),
+                    ]
+                )
+            );
+        }
 
+        $detectedReferences = ['attachment' => []];
+
+        foreach ($fields as $fName => $fValue) {
             try {
+                $this->getLogger()->debug(vsprintf('Looking for processor for field \'%s\'', [$fName]));
+                $processor = $this->getMetaFieldProcessorManager()->getProcessor($fName);
+                $this->getLogger()->debug(vsprintf('Detected processor \'%s\' for field \'%s\'',
+                    [get_class($processor), $fName]));
                 /**
-                 * check if gutenberg exists
+                 * in case that we found simple default processor try to treat as ACF field
                  */
-                $this->getGutenbergBlockHelper()->loadExternalDependencies();
+                if ($processor instanceof DefaultMetaFieldProcessor) {
+                    $this->getLogger()->debug(vsprintf('Trying to treat \'%s\' field as ACF', [$fName]));
+                    $acfTypeDetector = $this->getMetaFieldProcessorManager()->getAcfTypeDetector();
+                    $processor = $acfTypeDetector->getProcessorByMetaFields($fName, $content['meta']);
+                    if ($processor === false) {
+                        $processor = $acfTypeDetector->getProcessorForGutenberg($fName, $fields);
+                    }
+                }
 
                 /**
-                 * adding fields from blocks
+                 * If processor is detected
                  */
-                $extraFields = [];
-                foreach ($fields as $fName => $fValue) {
-                    $extraFields = array_merge($extraFields,
-                        $this->getFieldFilterHelper()->flatternArray($this->extractFieldsFromGutenbergBlock($fName,
-                            $fValue)));
+                if ($processor instanceof MetaFieldProcessorAbstract && 0 !== (int)$fValue) {
+                    $shortProcessorName = ArrayHelper::last(explode('\\', get_class($processor)));
+
+                    $detectedReferences[$shortProcessorName][$fValue][] = $fName;
+                } else {
+                    if (!isset($detectedReferences['attachment'])) {
+                        $detectedReferences['attachment'] = [];
+                    }
+                    $detectedReferences['attachment'] = array_merge($detectedReferences['attachment'],
+                        $this->getAbsoluteLinkedAttachmentCoreHelper()->getImagesIdsFromString($fValue,
+                            $curBlogId));
+                    $detectedReferences['attachment'] = array_unique($detectedReferences['attachment']);
                 }
-                $fields = array_merge($fields, $extraFields);
             } catch (Exception $e) {
-                $this->getLogger()->info(
-                    vsprintf(
-                        'Gutenberg not detected, skipping search for references in Gutenberg blocks for request %s',
-                        [
-                            var_export($this->getRequestSource(), true),
-                        ]
-                    )
-                );
+                $this
+                    ->getLogger()
+                    ->warning(
+                        vsprintf(
+                            'failed searching for processor for field \'%s\'=\'%s\'',
+                            [
+                                $fName,
+                                $fValue,
+                            ]
+                        )
+                    );
             }
+        }
 
-            $detectedReferences = ['attachment' => []];
+        $detectedReferences['taxonomies'] = $this->getBackwardRelatedTaxonomies($id, $contentType);
 
-            foreach ($fields as $fName => $fValue) {
-                try {
-                    $this->getLogger()->debug(vsprintf('Looking for processor for field \'%s\'', [$fName]));
-                    $processor = $this->getMetaFieldProcessorManager()->getProcessor($fName);
-                    $this->getLogger()->debug(vsprintf('Detected processor \'%s\' for field \'%s\'',
-                        [get_class($processor), $fName]));
-                    /**
-                     * in case that we found simple default processor try to treat as ACF field
-                     */
-                    if ($processor instanceof DefaultMetaFieldProcessor) {
-                        $this->getLogger()->debug(vsprintf('Trying to treat \'%s\' field as ACF', [$fName]));
-                        $acfTypeDetector = $this->getMetaFieldProcessorManager()->getAcfTypeDetector();
-                        $processor = $acfTypeDetector->getProcessorByMetaFields($fName, $content['meta']);
-                        if ($processor === false) {
-                            $processor = $acfTypeDetector->getProcessorForGutenberg($fName, $fields);
-                        }
-                    }
+        $detectedReferences = $this->normalizeReferences($detectedReferences);
 
-                    /**
-                     * If processor is detected
-                     */
-                    if ($processor instanceof MetaFieldProcessorAbstract && 0 !== (int)$fValue) {
-                        $shortProcessorName = ArrayHelper::last(explode('\\', get_class($processor)));
+        $responseData = [
+            'originalReferences' => $detectedReferences,
+        ];
 
-                        $detectedReferences[$shortProcessorName][$fValue][] = $fName;
-                    } else {
-                        if (!isset($detectedReferences['attachment'])) {
-                            $detectedReferences['attachment'] = [];
-                        }
-                        $detectedReferences['attachment'] = array_merge($detectedReferences['attachment'],
-                            $this->getAbsoluteLinkedAttachmentCoreHelper()->getImagesIdsFromString($fValue,
-                                $curBlogId));
-                        $detectedReferences['attachment'] = array_unique($detectedReferences['attachment']);
-                    }
-                } catch (Exception $e) {
-                    $this
-                        ->getLogger()
-                        ->warning(
-                            vsprintf(
-                                'failed searching for processor for field \'%s\'=\'%s\'',
-                                [
-                                    $fName,
-                                    $fValue,
-                                ]
-                            )
-                        );
-                }
-            }
-
-            $detectedReferences['taxonomies'] = $this->getBackwardRelatedTaxonomies($id, $contentType);
-
-            $detectedReferences = $this->normalizeReferences($detectedReferences);
-
-            $responseData = [
-                'originalReferences' => $detectedReferences,
-            ];
-
-            foreach ($targetBlogIds as $targetBlogId) {
-                foreach ($detectedReferences as $contentType => $ids) {
+        $registeredTypes = get_post_types();
+        $taxonomies = $this->contentHelper->getSiteHelper()->getTermTypes();
+        foreach ($targetBlogIds as $targetBlogId) {
+            foreach ($detectedReferences as $contentType => $ids) {
+                if (in_array($contentType, $registeredTypes, true) || in_array($contentType, $taxonomies, true)) {
                     foreach ($ids as $id) {
                         if (!$this->submissionExists($contentType, $curBlogId, $id, $targetBlogId)) {
                             $responseData['missingTranslatedReferences'][$targetBlogId][$contentType][] = $id;
                         }
                     }
+                } else {
+                    $this->getLogger()->debug("Excluded $contentType from related submissions");
                 }
             }
-
-            $this->returnSuccess(
-                [
-                    'data' => $responseData,
-                ]
-            );
-
-        } else {
-            $this->returnError('content.not.found', 'Requested content is not found', 404);
         }
+
+        $this->returnSuccess(
+            [
+                'data' => $responseData,
+            ]
+        );
     }
 
     /**
