@@ -7,10 +7,10 @@ namespace {
             public $term_id;
             public $name;
 
-            public function __construct($term_id, $name)
+            public function __construct($object)
             {
-                $this->term_id = $term_id;
-                $this->name = $name;
+                $this->term_id = $object->term_id;
+                $this->name = $object->name;
             }
         }
     }
@@ -56,8 +56,8 @@ namespace Smartling\Tests\Smartling\WP\Controller {
         public function getTermsDataProvider()
         {
             $defaultTerms = [
-                'source' => [new \WP_Term(1, 'category 1'), new \WP_Term(2, 'category 2')],
-                'target' => [new \WP_Term(1, 'cat~ego~ry 1'), new \WP_Term(2, 'cat~ego~ry 2')],
+                'source' => [new \WP_Term($this->getTermObject(1, 'category 1')), new \WP_Term($this->getTermObject(2, 'category 2'))],
+                'target' => [new \WP_Term($this->getTermObject(1, 'cat~ego~ry 1')), new \WP_Term($this->getTermObject(2, 'cat~ego~ry 2'))],
             ];
             return [
                 [
@@ -134,6 +134,15 @@ namespace Smartling\Tests\Smartling\WP\Controller {
             $submissionManager->method('find')->willReturn($findResult);
 
             return $submissionManager;
+        }
+
+        private function getTermObject($id, $name)
+        {
+            $return = new \StdClass();
+            $return->term_id = $id;
+            $return->name = $name;
+
+            return $return;
         }
     }
 }
