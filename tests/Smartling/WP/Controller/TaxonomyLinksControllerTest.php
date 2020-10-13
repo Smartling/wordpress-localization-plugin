@@ -1,15 +1,17 @@
 <?php
 
 namespace {
-    class WP_Term
-    {
-        public $term_id;
-        public $name;
-
-        public function __construct($term_id, $name)
+    if (!class_exists('WP_Term')) {
+        class WP_Term
         {
-            $this->term_id = $term_id;
-            $this->name = $name;
+            public $term_id;
+            public $name;
+
+            public function __construct($term_id, $name)
+            {
+                $this->term_id = $term_id;
+                $this->name = $name;
+            }
         }
     }
 }
