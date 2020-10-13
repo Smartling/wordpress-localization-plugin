@@ -61,6 +61,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 = 1.15.0 =
 * Added manual taxonomy linking between blogs
 
+= 1.14.2 =
+* Fixed issue where submitting related content type that was not registered in WordPress caused submission to fail
+
 = 1.14.1 =
 * Fixed issue where submitting a widget that has navigation menus for translation caused a WordPress emergency
 
