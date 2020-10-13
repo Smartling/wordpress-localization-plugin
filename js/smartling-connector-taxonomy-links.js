@@ -4,48 +4,76 @@
  */
 jQuery(document).on('ready', function () {
     function createOption(item) {
-        var option = document.createElement('option');
+        const option = document.createElement('option');
         option.value = item.value;
         option.label = item.label;
         return option;
     }
 
-    var form = jQuery('#linkTaxonomyForm');
-    var button = jQuery('#link');
-    var loading = jQuery('#loading');
+    const button = jQuery('#link');
+    const sourceIdSelect = jQuery('#sourceId');
+    const taxonomySelect = jQuery('#taxonomy');
 
-    button.on('click', function() {
+    button.on('click', function () {
         button.prop('disable', true);
-        jQuery.post(ajaxurl + '?action=smartling_link_taxonomies', form.serialize(), function (data) {
-            var message = 'Taxonomies linked';
-            jQuery('#taxonomy').trigger('change');
-            if (wp && wp.data && wp.data.dispatch) {
-                wp.data.dispatch("core/notices").createSuccessNotice(message);
+        jQuery.post(ajaxurl + '?action=smartling_link_taxonomies', jQuery('#linkTaxonomyForm').serialize(), function (data) {
+            const success = data.success;
+            if (success) {
+                const message = 'Taxonomies linked';
+                submissions = data.submissions;
+                taxonomySelect.trigger('change');
+                if (wp && wp.data && wp.data.dispatch) {
+                    wp.data.dispatch('core/notices').createSuccessNotice(message);
+                } else {
+                    admin_notice(message, 'success');
+                }
             } else {
-                admin_notice(message, 'success');
+                if (wp && wp.data && wp.data.dispatch) {
+                    wp.data.dispatch('core/notices').createErrorNotice(data.data);
+                } else {
+                    admin_notice(data.data, 'error');
+                }
             }
         });
         button.prop('disable', false);
     });
 
-    jQuery('#taxonomy, #targetBlogId').on('change', function() {
-        loading.show();
-        form.hide();
-        jQuery.post(ajaxurl + '?action=smartling_get_terms', form.serialize(), function (data) {
-            var sourceIdSelect = jQuery('#sourceId');
-            var targetIdSelect = jQuery('#targetId')
-            sourceIdSelect.find('option').remove();
-            targetIdSelect.find('option').remove();
-            data.source.forEach(function(item) {
-                sourceIdSelect.append(createOption(item));
-            });
-            data.target.forEach(function(item) {
-                targetIdSelect.append(createOption(item));
-            });
-            loading.hide();
-            form.show();
+    sourceIdSelect.on('change', function () {
+        Object.keys(terms).forEach(function (blogId) {
+            const sourceId = sourceIdSelect.val();
+            const targetSelect = jQuery('#targetId_' + blogId);
+            let targetId = 0;
+            if (submissions[sourceId] && submissions[sourceId][blogId]) {
+                targetId = submissions[sourceId][blogId];
+            }
+            targetSelect.val(targetId);
         });
     });
 
-    jQuery('#taxonomy').trigger('change');
+    taxonomySelect.on('change', function () {
+        const taxonomy = taxonomySelect.val();
+        sourceIdSelect.find('option').remove();
+        try {
+            terms[jQuery('#sourceBlogId').val()][taxonomy].forEach(function (item) {
+                sourceIdSelect.append(createOption(item));
+            });
+        } catch (e) {
+            sourceIdSelect.append(createOption({value: 0, label: 'No terms'}));
+        }
+        Object.keys(terms).forEach(function (blogId) {
+            const targetSelect = jQuery('#targetId_' + blogId);
+            targetSelect.find('option').remove();
+            targetSelect.append(createOption({value: 0, label: 'Not linked in Smartling connector'}));
+            try {
+                terms[blogId][taxonomy].forEach(function (item) {
+                    targetSelect.append(createOption(item));
+                });
+            } catch (e) {
+                console.debug(`No terms for ${taxonomy} found in target blog ${blogId}`);
+            }
+        });
+        sourceIdSelect.trigger('change');
+    });
+
+    taxonomySelect.trigger('change');
 });

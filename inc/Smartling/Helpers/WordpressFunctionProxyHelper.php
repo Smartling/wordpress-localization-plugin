@@ -14,6 +14,11 @@ class WordpressFunctionProxyHelper
         return get_taxonomies(...func_get_args());
     }
 
+    public function get_taxonomies()
+    {
+        return get_taxonomies(...func_get_args());
+    }
+
     public function getPostMeta($postId)
     {
         return get_post_meta($postId);
@@ -32,5 +37,10 @@ class WordpressFunctionProxyHelper
     public function wp_send_json()
     {
         return wp_send_json(...func_get_args());
+    }
+
+    public function wp_send_json_error()
+    {
+        return wp_send_json_error(...func_get_args());
     }
 }

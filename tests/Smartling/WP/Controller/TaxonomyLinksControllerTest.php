@@ -4,14 +4,23 @@ namespace {
     if (!class_exists('WP_Term')) {
         class WP_Term
         {
-            public $term_id;
             public $name;
+            public $taxonomy;
+            public $term_id;
 
             public function __construct($object)
             {
-                $this->term_id = $object->term_id;
                 $this->name = $object->name;
+                $this->taxonomy = $object->taxonomy;
+                $this->term_id = $object->term_id;
             }
+        }
+    }
+
+    if (!function_exists('get_current_blog_id')) {
+        function get_current_blog_id()
+        {
+            return 1;
         }
     }
 }
@@ -30,30 +39,31 @@ namespace Smartling\Tests\Smartling\WP\Controller {
     class TaxonomyLinksControllerTest extends TestCase
     {
         /**
-         * @dataProvider getTermsDataProvider
+         * @dataProvider getSourceTermsDataProvider
          * @param array $expected
          * @param array $terms
          * @param array $submissions
          */
-        public function testGetTerms(array $expected, array $terms, array $submissions)
+        public function testGetSourceTerms(array $expected, array $terms, array $submissions)
         {
             $wordpress = $this->getMock(WordpressFunctionProxyHelper::class);
             $wordpress->method('get_terms')->willReturnOnConsecutiveCalls($terms['source'], $terms['target']);
 
-            $wordpress->expects(self::once())->method('wp_send_json')->with(['source' => $expected['source'], 'target' => $expected['target']]);
+            $siteHelper = $this->getMock(SiteHelper::class);
+            $siteHelper->method('listBlogs')->willReturn([]);
 
             $x = new TaxonomyLinksController(
                 $this->getMockBuilder(PluginInfo::class)->disableOriginalConstructor()->getMock(),
                 $this->getMock(LocalizationPluginProxyInterface::class),
-                $this->getMock(SiteHelper::class),
+                $siteHelper,
                 $this->getSubmissionManager($submissions),
                 $wordpress
             );
 
-            $x->getTerms(['sourceBlogId' => 1, 'targetBlogId' => 2, 'taxonomy' => 'category']);
+             $x->getTerms();
         }
 
-        public function getTermsDataProvider()
+        public function getSourceTermsDataProvider()
         {
             $defaultTerms = [
                 'source' => [new \WP_Term($this->getTermObject(1, 'category 1')), new \WP_Term($this->getTermObject(2, 'category 2'))],
@@ -136,11 +146,12 @@ namespace Smartling\Tests\Smartling\WP\Controller {
             return $submissionManager;
         }
 
-        private function getTermObject($id, $name)
+        private function getTermObject($id, $name, $taxonomy = 'category')
         {
             $return = new \StdClass();
             $return->term_id = $id;
             $return->name = $name;
+            $return->taxonomy = $taxonomy;
 
             return $return;
         }

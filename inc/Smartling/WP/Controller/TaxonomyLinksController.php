@@ -3,10 +3,12 @@
 namespace Smartling\WP\Controller;
 
 use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Helpers\WordpressUserHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\WPAbstractLight;
@@ -15,7 +17,7 @@ use Smartling\WP\WPHookInterface;
 class TaxonomyLinksController extends WPAbstractLight implements WPHookInterface
 {
     protected $localizationPluginProxy;
-    private $siteHelper;
+    protected $siteHelper;
     private $submissionManager;
     private $wordpressProxy;
 
@@ -26,6 +28,8 @@ class TaxonomyLinksController extends WPAbstractLight implements WPHookInterface
         $this->siteHelper = $siteHelper;
         $this->submissionManager = $submissionManager;
         $this->wordpressProxy = $wordpressProxy;
+        $this->viewData['terms'] = $this->getTerms();
+        $this->viewData['submissions'] = $this->getSubmissions();
     }
 
     public function wp_enqueue()
@@ -55,7 +59,6 @@ class TaxonomyLinksController extends WPAbstractLight implements WPHookInterface
         add_action('admin_enqueue_scripts', [$this, 'wp_enqueue']);
         add_action('admin_menu', [$this, 'menu']);
         add_action('network_admin_menu', [$this, 'menu']);
-        add_action('wp_ajax_smartling_get_terms', [$this, 'getTerms']);
         add_action('wp_ajax_smartling_link_taxonomies', [$this, 'linkTaxonomies']);
     }
 
@@ -73,81 +76,139 @@ class TaxonomyLinksController extends WPAbstractLight implements WPHookInterface
 
     public function taxonomyLinksWidget()
     {
-        $this->view([]);
+        $this->view($this->viewData);
     }
 
-    public function getTerms($data = null)
+    public function getTerms()
     {
-        if ($data === null) {
-            $data = $_POST;
+        $sourceBlogId = get_current_blog_id();
+
+        $terms = [$sourceBlogId => $this->getMappedTerms()];
+
+        foreach ($this->siteHelper->listBlogs() as $targetBlogId) {
+            if ($sourceBlogId !== $targetBlogId) {
+                $terms[$targetBlogId] = $this->getBlogTerms($targetBlogId);
+            }
         }
-        if (!isset($data['sourceBlogId'], $data['taxonomy'], $data['targetBlogId'])) {
-            return;
+
+        return $terms;
+    }
+
+    public function getSubmissions()
+    {
+        $submissions = [];
+        foreach ($this->submissionManager->find([
+            SubmissionEntity::FIELD_CONTENT_TYPE => $this->wordpressProxy->get_taxonomies(),
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => get_current_blog_id(),
+        ]) as $submission) {
+            $submissions[$submission->getSourceId()][$submission->getTargetBlogId()] = $submission->getTargetId();
         }
-
-        $sourceBlogId = (int)$data['sourceBlogId'];
-        $targetBlogId = (int)$data['targetBlogId'];
-        $taxonomy = $data['taxonomy'];
-
-        $submissions = $this->submissionManager->find([
-            SubmissionEntity::FIELD_CONTENT_TYPE => $taxonomy,
-            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
-            SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
-        ]);
-        $source = $this->getMappedDiff($submissions, $this->wordpressProxy->get_terms(['taxonomy' => $taxonomy]), true);
-        $this->siteHelper->switchBlogId($targetBlogId);
-        $targetTerms = $this->wordpressProxy->get_terms(['taxonomy' => $taxonomy]); // Can't be inlined, must be run while blog switched
-        $this->siteHelper->restoreBlogId();
-        $target = $this->getMappedDiff($submissions, $targetTerms, false);
-
-        $this->wordpressProxy->wp_send_json(['source' => $source, 'target' => $target]);
+        return $submissions;
     }
 
     /**
-     * @param SubmissionEntity[] $submissions
-     * @param \WP_Term[] $terms
-     * @param bool$source
+     * @param int $blogId
      * @return array
      */
-    private function getMappedDiff(array $submissions, array $terms, $source)
+    private function getBlogTerms($blogId)
     {
-        $submissionIds = array_map(static function (SubmissionEntity $submission) use ($source) {
-            $field = $submission->getSourceId();
-            if (!$source) {
-                $field = $submission->getTargetId();
-            }
-            return (int)$field;
-        }, $submissions);
-        $termIds = array_map(static function (\WP_Term $term) {
-            return $term->term_id;
-        }, $terms);
-        $diff = array_diff($termIds, $submissionIds);
-        $filtered = array_filter($terms, static function (\WP_Term $term) use ($diff) {
-            return in_array($term->term_id, $diff, true);
-        });
-        return array_values(array_map(static function (\WP_Term $term) {
-            return ['label' => $term->name, 'value' => $term->term_id];
-        }, $filtered));
+        $this->siteHelper->switchBlogId($blogId);
+        $terms = $this->getMappedTerms();
+        $this->siteHelper->restoreBlogId();
+        return $terms;
     }
 
-    public function linkTaxonomies() {
-        if (!isset($_POST['sourceBlogId'], $_POST['sourceId'], $_POST['taxonomy'], $_POST['targetBlogId'], $_POST['targetId'])) {
-            throw new \RuntimeException('Required parameter missing');
+    /**
+     * @return array
+     */
+    private function getMappedTerms()
+    {
+        $return = [];
+        foreach ($this->wordpressProxy->get_terms(['hide_empty' => false]) as $term) {
+            $return[$term->taxonomy][] = ['value' => $term->term_id, 'label' => $term->name];
         }
-        $sourceBlogId = (int)$_POST['sourceBlogId'];
-        $sourceId = (int)$_POST['sourceId'];
-        $targetBlogId = (int)$_POST['targetBlogId'];
-        $targetId = (int)$_POST['targetId'];
-        $taxonomy = $_POST['taxonomy'];
-        $submission = $this->submissionManager->createSubmission([
+        return $return;
+    }
+
+    public function linkTaxonomies($data)
+    {
+        if ($data === "") {
+            $data = $_POST;
+        }
+        if (!isset($data['sourceBlogId'], $data['sourceId'], $data['taxonomy'])) {
+            wp_send_json_error('Required parameter missing');
+        }
+        $sourceBlogId = (int)$data['sourceBlogId'];
+        $sourceId = (int)$data['sourceId'];
+        $taxonomy = $data['taxonomy'];
+
+        $submissionsToAdd = [];
+        $submissionsToDelete = [];
+        $submissionsToUpdate = [];
+
+        foreach ($data['targetId'] as $targetBlogId => $targetId) {
+            $targetBlogId = (int)$targetBlogId;
+            $targetId = (int)$targetId;
+            if ($targetId === 0) {
+                $submissionsToDelete = $this->addToDeleteListIfNeeded($submissionsToDelete, $sourceBlogId, $sourceId, $targetBlogId, $taxonomy);
+            } else {
+                $existingSubmission = ArrayHelper::first($this->submissionManager->find([
+                    SubmissionEntity::FIELD_CONTENT_TYPE => $taxonomy,
+                    SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+                    SubmissionEntity::FIELD_TARGET_ID => $targetId,
+                ]));
+                if ($existingSubmission !== false) {
+                    if ($existingSubmission->getSourceId() !== $sourceId || $existingSubmission->getSourceBlogId() !== $sourceBlogId) {
+                        wp_send_json_error("Duplicate submission for blog {$this->siteHelper->getBlogLabelById($this->localizationPluginProxy, $targetBlogId)}: referenced by {$this->siteHelper->getBlogLabelById($this->localizationPluginProxy,$existingSubmission->getSourceBlogId())} term id {$existingSubmission->getSourceId()}");
+                    }
+                    if ($existingSubmission->getTargetId() !== $targetId) {
+                        $existingSubmission->setTargetId($targetId);
+                        $submissionsToUpdate[] = $existingSubmission;
+                    }
+                } else {
+                    $submissionsToAdd[] = $this->submissionManager->createSubmission([
+                        SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+                        SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+                        SubmissionEntity::FIELD_CONTENT_TYPE => $taxonomy,
+                        SubmissionEntity::FIELD_SOURCE_ID => $sourceId,
+                        SubmissionEntity::FIELD_STATUS => SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
+                        SubmissionEntity::FIELD_TARGET_ID => $targetId,
+                        SubmissionEntity::FIELD_SUBMISSION_DATE => date(SubmissionEntity::DATETIME_FORMAT),
+                        SubmissionEntity::FIELD_SUBMITTER => WordpressUserHelper::getUserLogin(),
+                    ]);
+                }
+            }
+        }
+        $submissions = array_merge($submissionsToAdd, $submissionsToUpdate);
+        if (count(array_merge($submissions, $submissionsToDelete)) === 0) {
+            wp_send_json_error('No changes');
+        }
+        $this->submissionManager->storeSubmissions($submissions);
+        foreach ($submissionsToDelete as $submission) {
+            $this->submissionManager->delete($submission);
+        }
+        wp_send_json(['success' => true, 'submissions' => $this->getSubmissions()]);
+    }
+
+    /**
+     * @param SubmissionEntity[] $list
+     * @param int $sourceBlogId
+     * @param int $sourceId
+     * @param int $targetBlogId
+     * @param string $taxonomy
+     * @return SubmissionEntity[]
+     */
+    private function addToDeleteListIfNeeded($list, $sourceBlogId, $sourceId, $targetBlogId, $taxonomy)
+    {
+        $existingSubmission = ArrayHelper::first($this->submissionManager->find([
             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+            SubmissionEntity::FIELD_SOURCE_ID => $sourceId,
             SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
             SubmissionEntity::FIELD_CONTENT_TYPE => $taxonomy,
-            SubmissionEntity::FIELD_SOURCE_ID => $sourceId,
-            SubmissionEntity::FIELD_STATUS => SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
-            SubmissionEntity::FIELD_TARGET_ID => $targetId,
-            SubmissionEntity::FIELD_SUBMISSION_DATE => date(SubmissionEntity::DATETIME_FORMAT),
-        ]);
-        $this->submissionManager->storeEntity($submission);
+        ]));
+        if ($existingSubmission !== false && $existingSubmission->getId() !== null) {
+            $list[] = $existingSubmission;
+        }
+        return $list;
     }
 }
