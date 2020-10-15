@@ -37,7 +37,7 @@ interface SmartlingToCMSDatabaseAccessWrapperInterface
      *
      * @return mixed
      */
-    function fetch($query, $output);
+    public function fetch($query, $output = OBJECT);
 
     /**
      * Escape string value

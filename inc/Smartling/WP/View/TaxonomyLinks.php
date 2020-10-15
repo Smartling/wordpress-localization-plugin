@@ -16,7 +16,7 @@ $blogs = $this->getViewData()['blogs'];
 <p>Linked items will not be sent for translation.</p>
 <h1></h1> <!--needed for admin notices-->
 <form id="linkTaxonomyForm">
-    <input type="hidden" id="sourceBlogId" name="sourceBlogId" value="<?= $currentBlogId?>">
+    <input type="hidden" id="sourceBlogId" name="sourceBlogId" value="<?= get_current_blog_id()?>">
     <table class="form-table">
         <tr>
             <th><label for="taxonomy">Taxonomy</label></th>

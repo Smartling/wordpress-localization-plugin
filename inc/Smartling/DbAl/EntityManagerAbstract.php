@@ -150,5 +150,9 @@ abstract class EntityManagerAbstract
         $this->getLogger()->debug($query);
     }
 
+    /**
+     * @param array $dbRow
+     * @return static
+     */
     abstract protected function dbResultToEntity(array $dbRow);
 }
