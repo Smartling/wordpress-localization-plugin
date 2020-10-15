@@ -6,17 +6,30 @@ use Psr\Log\LoggerInterface;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\Exception\SmartlingIOException;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\StringHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
-class WPAbstract extends WPAbstractLight
+class WPAbstract
 {
+
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
+    /**
+     * @var PluginInfo
+     */
+    private $pluginInfo;
+
     /**
      * @var LocalizationPluginProxyInterface
      */
@@ -43,12 +56,26 @@ class WPAbstract extends WPAbstractLight
     private $widgetHeader = '';
 
     /**
+     * @var mixed
+     */
+    private $viewData;
+
+    /**
      * @return mixed
      */
     public function getViewData()
     {
         return $this->viewData;
     }
+
+    /**
+     * @param mixed $viewData
+     */
+    public function setViewData($viewData)
+    {
+        $this->viewData = $viewData;
+    }
+
 
     /**
      * @return string
@@ -83,8 +110,9 @@ class WPAbstract extends WPAbstractLight
         Cache $cache
     )
     {
-        parent::__construct($pluginInfo);
+        $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->connector = $connector;
+        $this->pluginInfo = $pluginInfo;
         $this->entityHelper = $entityHelper;
         $this->manager = $manager;
         $this->cache = $cache;
@@ -149,6 +177,47 @@ class WPAbstract extends WPAbstractLight
         return $eh->getSettingsManager()->findEntityByMainLocale($currentBlogId);
     }
 
+    /**
+     * @param mixed $data
+     */
+    public function view($data = null)
+    {
+        $this->setViewData($data);
+        $class = get_called_class();
+        $class = str_replace('Smartling\\WP\\Controller\\', '', $class);
+
+        $class = str_replace('Controller', '', $class);
+
+        $this->renderViewScript($class . '.php');
+    }
+
+    public function renderViewScript($script)
+    {
+        $filename = plugin_dir_path(__FILE__) . 'View/' . $script;
+
+        if (!file_exists($filename) || !is_file($filename) || !is_readable($filename)) {
+            throw new SmartlingIOException(vsprintf('Requested view file (%s) not found.', [$filename]));
+        } else {
+            /** @noinspection PhpIncludeInspection */
+            require_once $filename;
+        }
+    }
+
+    public static function bulkSubmitSendButton($id = 'submit', $name = 'submit', $text = 'Add to Upload Queue', $title = 'Add selected submissions to Upload queue')
+    {
+        return HtmlTagGeneratorHelper::tag(
+            'button',
+            HtmlTagGeneratorHelper::tag('span', __($text), []),
+            [
+                'type'  => 'submit',
+                'value' => $name,
+                'title' => __($title),
+                'class' => 'button button-primary',
+                'id'    => $id,
+                'name'  => $name,
+            ]);
+    }
+
     public static function bulkSubmitCloneButton()
     {
         return HtmlTagGeneratorHelper::tag(
@@ -177,7 +246,9 @@ class WPAbstract extends WPAbstractLight
 
         $contents = $downloadButton;
 
-        return HtmlTagGeneratorHelper::tag('div', $contents, ['class' => 'bottom']);
+        $container = HtmlTagGeneratorHelper::tag('div', $contents, ['class' => 'bottom']);
+
+        return $container;
     }
 
     /**
@@ -187,12 +258,14 @@ class WPAbstract extends WPAbstractLight
      */
     public static function inputHidden($submissionId)
     {
-        return HtmlTagGeneratorHelper::tag('input', '', [
+        $hiddenId = HtmlTagGeneratorHelper::tag('input', '', [
             'type'  => 'hidden',
             'value' => $submissionId,
             'class' => 'submission-id',
             'id'    => 'submission-id-' . $submissionId,
         ]);
+
+        return $hiddenId;
     }
 
     /**

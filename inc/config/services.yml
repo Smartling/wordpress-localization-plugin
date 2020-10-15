@@ -161,6 +161,8 @@ services:
       - "@site.helper"
       - "@manager.submission"
       - "@wp.proxy"
+      - "@entity.helper"
+      - "@site.cache"
 
   wp.checkStatus:
       class: Smartling\WP\Controller\CheckStatusController

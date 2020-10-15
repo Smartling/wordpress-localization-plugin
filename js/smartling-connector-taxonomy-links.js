@@ -1,5 +1,6 @@
 /**
  * @var ajaxurl
+ * @var submissions
  * @var wp
  */
 jQuery(document).on('ready', function () {

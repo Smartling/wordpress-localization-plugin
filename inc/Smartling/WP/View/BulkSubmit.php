@@ -8,7 +8,7 @@ use Smartling\WP\WPAbstract;
  * @var WPAbstract $this
  * @var WPAbstract self
  */
-$data = $this->viewData;
+$data = $this->getViewData();
 
 ?>
 <div class="wrap">
@@ -60,11 +60,12 @@ $data = $this->viewData;
                         <div id="translate" class="tab">
                             <?php
                             // Render job wizard.
-                            $this->viewData =
+                            $this->setViewData(
                                 [
                                     'profile'     => $bulkSubmitTable->getProfile(),
                                     'contentType' => '',
-                                ];
+                                ]
+                            );
                             $this->renderViewScript('ContentEditJob.php');
                             ?>
                         </div>

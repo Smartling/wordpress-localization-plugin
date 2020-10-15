@@ -4,6 +4,8 @@ namespace Smartling\WP\Controller;
 
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\Cache;
+use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
@@ -11,47 +13,46 @@ use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\WordpressUserHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
-use Smartling\WP\WPAbstractLight;
+use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
-class TaxonomyLinksController extends WPAbstractLight implements WPHookInterface
+class TaxonomyLinksController extends WPAbstract implements WPHookInterface
 {
     protected $localizationPluginProxy;
     protected $siteHelper;
     private $submissionManager;
     private $wordpressProxy;
 
-    public function __construct(PluginInfo $pluginInfo, LocalizationPluginProxyInterface $localizationPluginProxy, SiteHelper $siteHelper, SubmissionManager $submissionManager, WordpressFunctionProxyHelper $wordpressProxy)
+    public function __construct(PluginInfo $pluginInfo, LocalizationPluginProxyInterface $localizationPluginProxy, SiteHelper $siteHelper, SubmissionManager $submissionManager, WordpressFunctionProxyHelper $wordpressProxy, EntityHelper $entityHelper, Cache $cache)
     {
-        parent::__construct($pluginInfo);
+        parent::__construct($localizationPluginProxy, $pluginInfo, $entityHelper, $submissionManager, $cache);
         $this->localizationPluginProxy = $localizationPluginProxy;
         $this->siteHelper = $siteHelper;
         $this->submissionManager = $submissionManager;
         $this->wordpressProxy = $wordpressProxy;
-        $this->viewData['terms'] = $this->getTerms();
-        $this->viewData['submissions'] = $this->getSubmissions();
+        $this->setViewData(['terms' => $this->getTerms(), 'submissions' => $this->getSubmissions()]);
     }
 
     public function wp_enqueue()
     {
         wp_enqueue_script(
-            $this->pluginInfo->getName() . 'settings',
-            $this->pluginInfo->getUrl() . 'js/smartling-connector-taxonomy-links.js', ['jquery'],
-            $this->pluginInfo->getVersion(),
+            $this->getPluginInfo()->getName() . 'settings',
+            $this->getPluginInfo()->getUrl() . 'js/smartling-connector-taxonomy-links.js', ['jquery'],
+            $this->getPluginInfo()->getVersion(),
             false
         );
         wp_enqueue_script(
-            $this->pluginInfo->getName() . 'admin',
-            $this->pluginInfo->getUrl() . 'js/smartling-connector-admin.js', ['jquery'],
-            $this->pluginInfo->getVersion(),
+            $this->getPluginInfo()->getName() . 'admin',
+            $this->getPluginInfo()->getUrl() . 'js/smartling-connector-admin.js', ['jquery'],
+            $this->getPluginInfo()->getVersion(),
             false
         );
         wp_register_style(
-            $this->pluginInfo->getName(),
-            $this->pluginInfo->getUrl() . 'css/smartling-connector-admin.css', [],
-            $this->pluginInfo->getVersion(), 'all'
+            $this->getPluginInfo()->getName(),
+            $this->getPluginInfo()->getUrl() . 'css/smartling-connector-admin.css', [],
+            $this->getPluginInfo()->getVersion(), 'all'
         );
-        wp_enqueue_style($this->pluginInfo->getName());
+        wp_enqueue_style($this->getPluginInfo()->getName());
     }
 
     public function register()
@@ -76,7 +77,7 @@ class TaxonomyLinksController extends WPAbstractLight implements WPHookInterface
 
     public function taxonomyLinksWidget()
     {
-        $this->view($this->viewData);
+        $this->view($this->getViewData());
     }
 
     public function getTerms()
