@@ -29,6 +29,8 @@ namespace Smartling\Tests\Smartling\WP\Controller {
 
     use PHPUnit\Framework\TestCase;
     use Smartling\DbAl\LocalizationPluginProxyInterface;
+    use Smartling\Helpers\Cache;
+    use Smartling\Helpers\EntityHelper;
     use Smartling\Helpers\PluginInfo;
     use Smartling\Helpers\SiteHelper;
     use Smartling\Helpers\WordpressFunctionProxyHelper;
@@ -38,95 +40,25 @@ namespace Smartling\Tests\Smartling\WP\Controller {
 
     class TaxonomyLinksControllerTest extends TestCase
     {
-        /**
-         * @dataProvider getSourceTermsDataProvider
-         * @param array $expected
-         * @param array $terms
-         * @param array $submissions
-         */
-        public function testGetSourceTerms(array $expected, array $terms, array $submissions)
+        public function testGetTerms()
         {
-            $wordpress = $this->getMock(WordpressFunctionProxyHelper::class);
-            $wordpress->method('get_terms')->willReturnOnConsecutiveCalls($terms['source'], $terms['target']);
-
-            $siteHelper = $this->getMock(SiteHelper::class);
-            $siteHelper->method('listBlogs')->willReturn([]);
-
             $x = new TaxonomyLinksController(
                 $this->getMockBuilder(PluginInfo::class)->disableOriginalConstructor()->getMock(),
                 $this->getMock(LocalizationPluginProxyInterface::class),
-                $siteHelper,
-                $this->getSubmissionManager($submissions),
-                $wordpress
+                $this->getSiteHelperMock(),
+                $this->getSubmissionManagerMock(),
+                $this->getWordpressMock(),
+                $this->getMock(EntityHelper::class),
+                $this->getMock(Cache::class)
             );
 
-             $x->getTerms();
-        }
-
-        public function getSourceTermsDataProvider()
-        {
-            $defaultTerms = [
-                'source' => [new \WP_Term($this->getTermObject(1, 'category 1')), new \WP_Term($this->getTermObject(2, 'category 2'))],
-                'target' => [new \WP_Term($this->getTermObject(1, 'cat~ego~ry 1')), new \WP_Term($this->getTermObject(2, 'cat~ego~ry 2'))],
-            ];
-            return [
-                [
-                    'Should return all terms (no linked submissions in terms)' =>
-                    // #0
-                    [
-                        'source' => [
-                            ['label' => 'category 1', 'value' => 1],
-                            ['label' => 'category 2', 'value' => 2],
-                        ],
-                        'target' => [
-                            ['label' => 'cat~ego~ry 1', 'value' => 1],
-                            ['label' => 'cat~ego~ry 2', 'value' => 2],
-                        ],
-                    ],
-                    $defaultTerms,
-                    [$this->getSubmission(3, 3)], // not taxonomy submission
-                ],
-                [
-                    'Should exclude terms with linked source id' =>
-                    // #1
-                    [
-                        'source' => [
-                            ['label' => 'category 2', 'value' => 2],
-                        ],
-                        'target' => [
-                            ['label' => 'cat~ego~ry 1', 'value' => 1],
-                            ['label' => 'cat~ego~ry 2', 'value' => 2],
-                        ],
-                    ],
-                    $defaultTerms,
-                    [$this->getSubmission(1, 3)],
-                ],
-                [
-                    'Should exclude terms with linked target id' =>
-                    // #2
-                    [
-                        'source' => [
-                            ['label' => 'category 1', 'value' => 1],
-                            ['label' => 'category 2', 'value' => 2],
-                        ],
-                        'target' => [
-                            ['label' => 'cat~ego~ry 2', 'value' => 2],
-                        ],
-                    ],
-                    $defaultTerms,
-                    [$this->getSubmission(3, 1)],
-                ],
-                [
-                    'Multiple submissions should exclude every matching entry' =>
-                    // #3
-                    [
-                        'source' => [],
-                        'target' => [],
-                    ],
-                    $defaultTerms,
-                    [$this->getSubmission(1, 2), $this->getSubmission(2, 1)],
-                ],
-            ];
+            self::assertEquals([
+                 1 => [
+                     'category' => [['value' => 1, 'label' => 'category 1'], ['value' => 2, 'label' => 'category 2']],
+                     'post_tag' => [['value' => 3, 'label' => 'tag 1']],
+                 ],
+                 2 => ['category' => [['value' => 1, 'label' => 'cat~ego~ry 1'], ['value' => 2, 'label' => 'cat~ego~ry 2']]],
+             ], $x->getTerms());
         }
 
         private function getSubmission($sourceId, $targetId)
@@ -138,7 +70,7 @@ namespace Smartling\Tests\Smartling\WP\Controller {
             return $submission;
         }
 
-        private function getSubmissionManager($findResult = [])
+        private function getSubmissionManagerMock($findResult = [])
         {
             $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
             $submissionManager->method('find')->willReturn($findResult);
@@ -154,6 +86,29 @@ namespace Smartling\Tests\Smartling\WP\Controller {
             $return->taxonomy = $taxonomy;
 
             return $return;
+        }
+
+        private function getWordpressMock()
+        {
+            $wordpress = $this->getMock(WordpressFunctionProxyHelper::class);
+            $wordpress->method('get_current_blog_id')->willReturn(1);
+            $wordpress->method('get_terms')->willReturnOnConsecutiveCalls([
+                new \WP_Term($this->getTermObject(1, 'category 1')),
+                new \WP_Term($this->getTermObject(2, 'category 2')),
+                new \WP_Term($this->getTermObject(3, 'tag 1', 'post_tag')),
+            ], [
+                new \WP_Term($this->getTermObject(1, 'cat~ego~ry 1')),
+                new \WP_Term($this->getTermObject(2, 'cat~ego~ry 2')),
+            ], []
+            );
+            return $wordpress;
+        }
+
+        private function getSiteHelperMock()
+        {
+            $siteHelper = $this->getMock(SiteHelper::class);
+            $siteHelper->method('listBlogs')->willReturn([1, 2]);
+            return $siteHelper;
         }
     }
 }

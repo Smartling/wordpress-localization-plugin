@@ -6,17 +6,11 @@ use Smartling\WP\Controller\TaxonomyLinksController;
 /**
  * @var TaxonomyLinksController $this
  */
-$blogs = [];
-$currentBlogId = $this->siteHelper->getCurrentBlogId();
-foreach ($this->siteHelper->listBlogs($this->siteHelper->getCurrentSiteId()) as $blogId) {
-    if ($currentBlogId !== $blogId) {
-        $blogs[$blogId] = $this->siteHelper->getBlogLabelById($this->localizationPluginProxy, $blogId);
-    }
-}
+$blogs = $this->getViewData()['blogs'];
 ?>
 <script>
-    let submissions = <?= json_encode($this->viewData['submissions'])?>;
-    const terms = <?= json_encode($this->viewData['terms'])?>;
+    let submissions = <?= json_encode($this->getViewData()['submissions'])?>;
+    const terms = <?= json_encode($this->getViewData()['terms'])?>;
 </script>
 <p>This section allows linking of taxonomy terms between different blogs to avoid target blog terms duplication upon translation.</p>
 <p>Linked items will not be sent for translation.</p>

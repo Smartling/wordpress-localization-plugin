@@ -14,6 +14,11 @@ class WordpressFunctionProxyHelper
         return get_taxonomies(...func_get_args());
     }
 
+    public function get_current_blog_id()
+    {
+        return get_current_blog_id(...func_get_args());
+    }
+
     public function get_taxonomies()
     {
         return get_taxonomies(...func_get_args());

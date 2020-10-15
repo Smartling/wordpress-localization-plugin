@@ -30,7 +30,11 @@ class TaxonomyLinksController extends WPAbstract implements WPHookInterface
         $this->siteHelper = $siteHelper;
         $this->submissionManager = $submissionManager;
         $this->wordpressProxy = $wordpressProxy;
-        $this->setViewData(['terms' => $this->getTerms(), 'submissions' => $this->getSubmissions()]);
+    }
+
+    public function buildViewData()
+    {
+        return ['blogs' => $this->getBlogs(), 'terms' => $this->getTerms(), 'submissions' => $this->getSubmissions()];
     }
 
     public function wp_enqueue()
@@ -77,7 +81,20 @@ class TaxonomyLinksController extends WPAbstract implements WPHookInterface
 
     public function taxonomyLinksWidget()
     {
-        $this->view($this->getViewData());
+        $this->view($this->buildViewData());
+    }
+
+    public function getBlogs()
+    {
+        $blogs = [];
+        $currentBlogId = $this->siteHelper->getCurrentBlogId();
+        foreach ($this->siteHelper->listBlogs($this->siteHelper->getCurrentSiteId()) as $blogId) {
+            if ($currentBlogId !== $blogId) {
+                $blogs[$blogId] = $this->siteHelper->getBlogLabelById($this->localizationPluginProxy, $blogId);
+            }
+        }
+
+        return $blogs;
     }
 
     public function getTerms()
