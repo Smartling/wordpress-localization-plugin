@@ -586,9 +586,9 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
     {
         $fields = [];
         $blocks = $this->getGutenbergBlockHelper()->parseBlocks($string);
-        foreach ($blocks as $block) {
+        foreach ($blocks as $index => $block) {
             $pointer       = 0;
-            $blockNamePart = $basename . '/' . $block['blockName'];
+            $blockNamePart = "{$basename}/{$block['blockName']}_{$index}";
             $_fields       = $block['attrs'];
 
             /**
