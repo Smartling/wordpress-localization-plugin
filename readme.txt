@@ -60,6 +60,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 = 1.15.0 =
 * Added new UI (Smartling -> Taxonomy links) where you can link existing translated taxonomies with the source taxonomies. It helps connector to respect existing translations and use them in translated posts.
+* Fixed issue where attachments were partially uploaded if post content contained multiple ACF blocks of the same type
 
 = 1.14.2 =
 * Fixed issue where submitting related content type that was not registered in WordPress caused submission to fail
