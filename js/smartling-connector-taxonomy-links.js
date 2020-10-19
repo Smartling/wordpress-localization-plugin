@@ -22,7 +22,6 @@ jQuery(document).on('ready', function () {
             if (success) {
                 const message = 'Taxonomies linked';
                 submissions = data.submissions;
-                taxonomySelect.trigger('change');
                 if (wp && wp.data && wp.data.dispatch) {
                     wp.data.dispatch('core/notices').createSuccessNotice(message);
                 } else {

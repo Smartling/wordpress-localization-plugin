@@ -170,17 +170,20 @@ class TaxonomyLinksController extends WPAbstract implements WPHookInterface
             if ($targetId === 0) {
                 $submissionsToDelete = $this->addToDeleteListIfNeeded($submissionsToDelete, $sourceBlogId, $sourceId, $targetBlogId, $taxonomy);
             } else {
-                $existingSubmission = ArrayHelper::first($this->submissionManager->find([
+                $submissions = $this->submissionManager->find([
                     SubmissionEntity::FIELD_CONTENT_TYPE => $taxonomy,
+                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+                    SubmissionEntity::FIELD_SOURCE_ID => $sourceId,
                     SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
-                    SubmissionEntity::FIELD_TARGET_ID => $targetId,
-                ]));
+                ]);
+                if (is_array($submissions) && count($submissions) > 1) {
+                    $this->getLogger()->error(sprintf("More than a single submission exists for $taxonomy: sourceBlogId=%d, sourceBlog=%d, targetBlog=%d", $sourceBlogId, $sourceId, $targetBlogId));
+                }
+                $existingSubmission = ArrayHelper::first($submissions);
                 if ($existingSubmission !== false) {
-                    if ($existingSubmission->getSourceId() !== $sourceId || $existingSubmission->getSourceBlogId() !== $sourceBlogId) {
-                        wp_send_json_error("Duplicate submission for blog {$this->siteHelper->getBlogLabelById($this->localizationPluginProxy, $targetBlogId)}: referenced by {$this->siteHelper->getBlogLabelById($this->localizationPluginProxy,$existingSubmission->getSourceBlogId())} term id {$existingSubmission->getSourceId()}");
-                    }
                     if ($existingSubmission->getTargetId() !== $targetId) {
                         $existingSubmission->setTargetId($targetId);
+                        $existingSubmission->setSubmissionDate(date(SubmissionEntity::DATETIME_FORMAT));
                         $submissionsToUpdate[] = $existingSubmission;
                     }
                 } else {

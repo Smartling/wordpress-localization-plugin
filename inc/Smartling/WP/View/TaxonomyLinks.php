@@ -17,7 +17,7 @@ $blogs = $this->getViewData()['blogs'];
 <h1></h1> <!--needed for admin notices-->
 <form id="linkTaxonomyForm">
     <input type="hidden" id="sourceBlogId" name="sourceBlogId" value="<?= get_current_blog_id()?>">
-    <table class="form-table">
+    <table class="form-table" style="width: 50%">
         <tr>
             <th><label for="taxonomy">Taxonomy</label></th>
             <td><?= HtmlTagGeneratorHelper::tag(
