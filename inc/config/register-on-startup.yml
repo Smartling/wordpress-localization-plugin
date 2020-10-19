@@ -11,6 +11,7 @@ services:
       - [ "addService", [ "@wp.i18n" ]]
       - [ "addService", [ "@wp.checkStatus" ]]
       - [ "addService", [ "@wp.submissions" ]]
+      - [ "addService", [ "@wp.taxonomy.linker" ]]
       - [ "addService", [ "@wp.bulkSubmit" ]]
       - [ "addService", [ "@wp.settings" ]]
       - [ "addService", [ "@wp.settings.edit" ]]

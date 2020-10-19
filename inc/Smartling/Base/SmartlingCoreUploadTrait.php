@@ -18,7 +18,7 @@ use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
-use Smartling\Helpers\XmlEncoder;
+use Smartling\Helpers\XmlHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\Controller\LiveNotificationController;
@@ -70,7 +70,9 @@ trait SmartlingCoreUploadTrait
             'meta'   => $this->getContentHelper()->readSourceMetadata($submission),
         ];
 
-        $source['meta'] = $source['meta'] ? : [];
+        if (!is_array($source['meta'])) {
+            $source['meta'] = [];
+        }
 
         return $source;
     }
@@ -119,11 +121,12 @@ trait SmartlingCoreUploadTrait
                  * @var SubmissionEntity $submission
                  */
                 $msg = vsprintf(
-                    'Failed creating target placeholder for submission id=\'%s\', source_blog_id=\'%s\', source_id=\'%s\', target_blog_id=\'%s\' with message: \'%s\'',
+                    'Failed creating target placeholder for submission id=\'%s\', source_blog_id=\'%s\', source_id=\'%s\', target_blog_id=\'%s\', target_id=\'%s\' with message: \'%s\'',
                     [
                         $submission->getId(),
                         $submission->getSourceBlogId(),
                         $submission->getSourceId(),
+                        $submission->getTargetBlogId(),
                         $submission->getTargetId(),
                         $submission->getLastError(),
                     ]
@@ -157,12 +160,10 @@ trait SmartlingCoreUploadTrait
                     ->setErrorMessage($submission, 'There is no original content for translation.');
 
                 throw new NothingFoundForTranslationException($message);
-            } else {
-                $this->prepareFieldProcessorValues($submission);
-                $xml = XmlEncoder::xmlEncode($filteredValues, $submission, $source);
-
-                return $xml;
             }
+
+            $this->prepareFieldProcessorValues($submission);
+            return XmlHelper::xmlEncode($filteredValues, $submission, $source);
         } catch (EntityNotFoundException $e) {
             $this->getLogger()->error($e->getMessage());
             $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent content.');
@@ -242,21 +243,21 @@ trait SmartlingCoreUploadTrait
     /**
      * @param SubmissionEntity $submission
      * @param string $xml
+     * @param XmlHelper $xmlHelper
      * @return array
      */
-    public function applyXML(SubmissionEntity $submission, $xml)
+    public function applyXML(SubmissionEntity $submission, $xml, XmlHelper $xmlHelper)
     {
         $messages = [];
-        try {
 
+        try {
             $lockedData = $this->readLockedTranslationFieldsBySubmission($submission);
 
             $this->prepareFieldProcessorValues($submission);
-            if ('' === $xml) {
-                $translation = [];
-            } else {
-                $translation = XmlEncoder::xmlDecode($xml, $submission);
-            }
+
+            $decoded = $xmlHelper->xmlDecode($xml, $submission);
+            $translation = $decoded->getTranslatedFields();
+
             $original = $this->readSourceContentWithMetadataAsArray($submission);
             $translation = $this->getFieldsFilter()->processStringsAfterDecoding($translation);
             $translation = $this->getFieldsFilter()->applyTranslatedValues($submission, $original, $translation);
@@ -299,8 +300,7 @@ trait SmartlingCoreUploadTrait
                     )
                 );
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
-                if (1 == $configurationProfile->getPublishCompleted()) {
-
+                if (1 === $configurationProfile->getPublishCompleted()) {
                     $this->getLogger()->debug(
                         vsprintf(
                             'Submission id=%s (blog=%s, item=%s, content-type=%s) setting status %s for translation. Profile snapshot: %s',
@@ -324,6 +324,10 @@ trait SmartlingCoreUploadTrait
 
                 if (1 === $configurationProfile->getCleanMetadataOnDownload()) {
                     $this->getContentHelper()->removeTargetMetadata($submission);
+                    $xmlFields = $decoded->getOriginalFields();
+                    if (array_key_exists('meta', $xmlFields)) {
+                        $metaFields = array_merge($xmlFields['meta'], $metaFields);
+                    }
                 }
                 $metaFields = self::arrayMergeIfKeyNotExists($lockedData['meta'], $metaFields);
                 $this->getContentHelper()->writeTargetMetadata($submission, $metaFields);
@@ -522,8 +526,7 @@ trait SmartlingCoreUploadTrait
                 $this->getSubmissionManager()->storeSubmissions($submissions);
             }
 
-            $this->executeBatch($submission->getBatchUid(), $submission->getSourceBlogId());
-            $this->closeBatch($submission->getBatchUid());
+            $this->executeBatchIfNoSubmissionsPending($submission->getBatchUid(), $submission->getSourceBlogId());
         } catch (\Exception $e) {
             $caught = $e;
             do {
@@ -568,32 +571,11 @@ trait SmartlingCoreUploadTrait
         }
     }
 
-    private function closeBatch($batchUid)
-    {
-        $params = [
-            SubmissionEntity::FIELD_STATUS => [SubmissionEntity::SUBMISSION_STATUS_NEW],
-            SubmissionEntity::FIELD_BATCH_UID => [$batchUid],
-        ];
-
-        $submissions = $this->getSubmissionManager()->find($params);
-        $count = count($submissions);
-        if ($count > 0) {
-            $this->getLogger()->warning("Found $count new submissions with batchUid=$batchUid while closing batch");
-        }
-        foreach ($submissions as $submission) {
-            /**
-             * @var SubmissionEntity $submission
-             */
-            $submission->setBatchUid('');
-        }
-        $this->getSubmissionManager()->storeSubmissions($submissions);
-    }
-
     /**
-     * @param     $batchUid
+     * @param string $batchUid
      * @param int $sourceBlogId
      */
-    private function executeBatch($batchUid, $sourceBlogId)
+    private function executeBatchIfNoSubmissionsPending($batchUid, $sourceBlogId)
     {
         $msg = vsprintf('Preparing to start batch "%s" execution...', [$batchUid]);
         $this->getLogger()->debug($msg);
@@ -682,7 +664,7 @@ trait SmartlingCoreUploadTrait
 
         // Mark attachment submission as "Cloned" if there is "Clone attachment"
         // option is enabled in configuration profile.
-        if (1 === $configurationProfile->getCloneAttachment() && $submission->getContentType() == 'attachment') {
+        if (1 === $configurationProfile->getCloneAttachment() && $submission->getContentType() === 'attachment') {
             $submission->setIsCloned(1);
             $submission = $this->getSubmissionManager()->storeEntity($submission);
 
@@ -731,7 +713,7 @@ trait SmartlingCoreUploadTrait
                 $submission->getFileUri();
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                 $submission = $this->getSubmissionManager()->storeEntity($submission);
-                $this->applyXML($submission, $xml);
+                $this->applyXML($submission, $xml, new XmlHelper());
 
                 LiveNotificationController::pushNotification(
                     $configurationProfile->getProjectId(),

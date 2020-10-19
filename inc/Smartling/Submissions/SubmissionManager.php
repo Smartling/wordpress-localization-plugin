@@ -14,7 +14,6 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressUserHelper;
-use Smartling\Processors\EntityProcessor;
 
 /**
  * Class SubmissionManager
@@ -253,6 +252,16 @@ class SubmissionManager extends EntityManagerAbstract
         return $result;
     }
 
+    /**
+     * @param ConditionBlock|null $block
+     * @param string|null $contentType
+     * @param string|null $status
+     * @param int|null $outdatedFlag
+     * @param array $sortOptions
+     * @param array|null $pageOptions
+     * @param int $totalCount
+     * @return array
+     */
     public function searchByCondition(
         ConditionBlock $block,
         $contentType = null,
@@ -368,7 +377,7 @@ class SubmissionManager extends EntityManagerAbstract
     {
         $query = $this->buildSelectQuery([SubmissionEntity::FIELD_ID => (int)$id]);
 
-        $obj = $this->fetchData($query, false);
+        $obj = $this->fetchData($query);
 
         if (is_array($obj) && empty($obj)) {
             $obj = null;
@@ -378,30 +387,10 @@ class SubmissionManager extends EntityManagerAbstract
     }
 
     /**
-     * Gets SubmissionEntity from database by primary key
-     * alias to getEntities
-     *
-     * @param integer $sourceGuid
-     *
-     * @return null|SubmissionEntity
-     */
-    public function getEntityBySourceGuid($sourceGuid)
-    {
-        $query = $this->buildSelectQuery([SubmissionEntity::FIELD_SOURCE_ID => $sourceGuid]);
-
-        $obj = $this->fetchData($query, false);
-
-        if (is_array($obj) && empty($obj)) {
-            $obj = null;
-        }
-
-        return $obj;
-    }
-
-    /**
+     * @param array $where
      * @return null|string
      */
-    public function buildSelectQuery($where)
+    public function buildSelectQuery(array $where)
     {
         $whereOptions = ConditionBlock::getConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
         foreach ($where as $key => $item) {
@@ -537,7 +526,7 @@ class SubmissionManager extends EntityManagerAbstract
      *
      * @return SubmissionEntity[]
      */
-    public function find(array $params = [], $limit = 0, $group = [])
+    public function find(array $params = [], $limit = 0)
     {
         $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
 
@@ -603,7 +592,7 @@ class SubmissionManager extends EntityManagerAbstract
      *
      * @return SubmissionEntity[]
      */
-    public function findBatchUidNotEmpty(array $params = [], $limit = 0, $group = [])
+    public function findBatchUidNotEmpty(array $params = [], $limit = 0)
     {
         $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
 
@@ -949,13 +938,8 @@ class SubmissionManager extends EntityManagerAbstract
                     $block
                 );
 
-                $this->getLogger()->debug(
-                    vsprintf(
-                        'Executing delete query for submission id=%s',
-                        [
-                            $submissionId,
-                        ]
-                    )
+                $this->getLogger()->info(
+                    sprintf('Executing delete query for submission id=%d (sourceBlog=%d, sourceId=%d, targetBlog=%d, targetId=%d)', $submissionId, $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getTargetBlogId(), $submission->getTargetId())
                 );
                 $result = $this->getDbal()->query($query);
             } else {

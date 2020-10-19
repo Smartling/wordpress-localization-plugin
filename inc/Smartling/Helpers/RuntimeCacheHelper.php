@@ -47,7 +47,7 @@ class RuntimeCacheHelper
      * @param string $key
      * @param string $scope
      *
-     * @return mixed|false
+     * @return mixed
      */
     public function get($key, $scope = self::DEFAULT_SCOPE)
     {
@@ -56,7 +56,7 @@ class RuntimeCacheHelper
 
     /**
      * @param string $key
-     * @param string $value
+     * @param mixed $value
      * @param string $scope
      */
     public function set($key, $value, $scope = self::DEFAULT_SCOPE)

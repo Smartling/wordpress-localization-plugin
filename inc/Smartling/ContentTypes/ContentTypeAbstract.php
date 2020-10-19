@@ -10,10 +10,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  */
 abstract class ContentTypeAbstract implements ContentTypeInterface
 {
-    /**
-     * @var ContainerBuilder
-     */
-    private $containerBuilder = null;
+    private $containerBuilder;
 
     /**
      * @return ContainerBuilder

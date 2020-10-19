@@ -4,18 +4,24 @@ namespace Smartling\Helpers;
 
 class WordpressFunctionProxyHelper
 {
-    /**
-     * Proxy for 'get_post_types' function
-     * @return mixed
-     */
     public static function getPostTypes()
     {
-        return call_user_func_array('get_post_types', func_get_args());
+        return get_post_types(...func_get_args());
     }
 
     public static function getTaxonomies()
     {
-        return call_user_func_array('get_taxonomies', func_get_args());
+        return get_taxonomies(...func_get_args());
+    }
+
+    public function get_current_blog_id()
+    {
+        return get_current_blog_id(...func_get_args());
+    }
+
+    public function get_taxonomies()
+    {
+        return get_taxonomies(...func_get_args());
     }
 
     public function getPostMeta($postId)
@@ -25,6 +31,21 @@ class WordpressFunctionProxyHelper
 
     public function apply_filters()
     {
-        return call_user_func_array('apply_filters', func_get_args());
+        return apply_filters(...func_get_args());
+    }
+
+    public function get_terms()
+    {
+        return get_terms(...func_get_args());
+    }
+
+    public function wp_send_json()
+    {
+        return wp_send_json(...func_get_args());
+    }
+
+    public function wp_send_json_error()
+    {
+        return wp_send_json_error(...func_get_args());
     }
 }

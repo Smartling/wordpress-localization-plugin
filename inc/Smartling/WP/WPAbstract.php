@@ -56,7 +56,7 @@ class WPAbstract
     private $widgetHeader = '';
 
     /**
-     * @var array
+     * @var mixed
      */
     private $viewData;
 
@@ -167,7 +167,7 @@ class WPAbstract
     }
 
     /**
-     * @return \Smartling\Settings\ConfigurationProfileEntity[]
+     * @return ConfigurationProfileEntity[]
      */
     public function getProfiles()
     {
@@ -178,7 +178,7 @@ class WPAbstract
     }
 
     /**
-     * @param null $data
+     * @param mixed $data
      */
     public function view($data = null)
     {
@@ -230,19 +230,6 @@ class WPAbstract
                 'id'    => 'clone-locally',
                 'name'  => 'submit',
             ]);
-    }
-
-    public static function sendButton($id = 'submit', $name = 'submit')
-    {
-        return HtmlTagGeneratorHelper::tag(
-            'input', '', [
-            'type'  => 'submit',
-            'value' => 'Upload',
-            'title' => __('Add to Upload queue and trigger upload process'),
-            'class' => 'button button-primary',
-            //'id'    => $id,
-            'name'  => $name,
-        ]);
     }
 
     public static function submitBlock()
