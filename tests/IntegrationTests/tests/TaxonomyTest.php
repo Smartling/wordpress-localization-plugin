@@ -41,8 +41,8 @@ class TaxonomyTest extends SmartlingUnitTestCaseAbstract
         $submission->getFileUri();
         $submission = $this->getSubmissionManager()->storeEntity($submission);
 
-        $this->assertTrue(SubmissionEntity::SUBMISSION_STATUS_NEW === $submission->getStatus());
-        $this->assertTrue(0 === $submission->getIsCloned());
+        self::assertSame(SubmissionEntity::SUBMISSION_STATUS_NEW, $submission->getStatus());
+        self::assertSame(0, $submission->getIsCloned());
 
         $this->uploadDownload($submission);
 
@@ -54,7 +54,7 @@ class TaxonomyTest extends SmartlingUnitTestCaseAbstract
             ]
         );
 
-        $this->assertTrue(2 === count($submissions));
+        self::assertCount(2, $submissions);
     }
 
     /**
@@ -65,8 +65,6 @@ class TaxonomyTest extends SmartlingUnitTestCaseAbstract
      */
     public function testSubmitClonedPostWithCategoryWhichHasParentCategory()
     {
-        global $wpdb;
-
         $rootCategoryId = $this->createTerm('Category A');
         $childCategoryId = $this->createTerm('Category B');
         $postId = $this->createPost();
@@ -76,8 +74,8 @@ class TaxonomyTest extends SmartlingUnitTestCaseAbstract
         $translationHelper = $this->getTranslationHelper();
         $submission = $translationHelper->prepareSubmission('post', 1, $postId, 2, true);
 
-        $this->assertTrue(SubmissionEntity::SUBMISSION_STATUS_NEW === $submission->getStatus());
-        $this->assertTrue(1 === $submission->getIsCloned());
+        self::assertSame(SubmissionEntity::SUBMISSION_STATUS_NEW, $submission->getStatus());
+        self::assertSame(1, $submission->getIsCloned());
 
         $this->uploadDownload($submission);
 
@@ -96,6 +94,6 @@ class TaxonomyTest extends SmartlingUnitTestCaseAbstract
             ]
         );
 
-        $this->assertTrue(2 === count($submissions));
+        self::assertCount(2, $submissions);
     }
 }
