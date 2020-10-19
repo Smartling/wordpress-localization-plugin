@@ -153,7 +153,7 @@ namespace {
         }
 
         if (!function_exists('get_post_types')) {
-            function get_post_types()
+            function get_post_types($args = array(), $output = 'names', $operator = 'and')
             {
                 return ['acf-field' => '', 'acf-field-group' => ''];
             }
@@ -205,7 +205,7 @@ namespace {
         }
 
         if (!function_exists('add_action')) {
-            function add_action($action, $handler)
+            function add_action($tag, $function_to_add, $priority = 10, $accepted_args = 1)
             {
             }
         }

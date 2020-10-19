@@ -114,6 +114,9 @@ services:
       - [ "setConnector", [ "@multilang.proxy" ]]
       - [ "setSiteHelper", [ "@site.helper" ]]
 
+  wp.proxy:
+    class: Smartling\Helpers\WordpressFunctionProxyHelper
+
   wp.i18n:
     class: Smartling\WP\i18n
     arguments:
@@ -149,6 +152,17 @@ services:
       - "@site.cache"
     calls:
       - [ "setQueue", [ "@queue.db" ] ]
+
+  wp.taxonomy.linker:
+    class: Smartling\WP\Controller\TaxonomyLinksController
+    arguments:
+      - "@plugin.info"
+      - "@multilang.proxy"
+      - "@site.helper"
+      - "@manager.submission"
+      - "@wp.proxy"
+      - "@entity.helper"
+      - "@site.cache"
 
   wp.checkStatus:
       class: Smartling\WP\Controller\CheckStatusController

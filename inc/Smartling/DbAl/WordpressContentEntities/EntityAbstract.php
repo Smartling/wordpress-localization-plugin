@@ -196,19 +196,19 @@ abstract class EntityAbstract
     {
         if ($this instanceof VirtualEntityAbstract) {
             return true;
-        } else {
-            if ($this->{$this->getContentTypeProperty()} !== $this->getType()) {
-                $message = vsprintf('Requested content with invalid content-type, expected \'%s\', got \'%s\'.', [
-                    $this->{$this->getContentTypeProperty()},
-                    $this->getType(),
-                ]);
-                $this->getLogger()->warning($message);
-
-                return false;
-            } else {
-                return true;
-            }
         }
+
+        if ($this->{$this->getContentTypeProperty()} !== $this->getType()) {
+            $message = vsprintf('Requested content with invalid content-type, expected \'%s\', got \'%s\'.', [
+                $this->{$this->getContentTypeProperty()},
+                $this->getType(),
+            ]);
+            $this->getLogger()->warning($message);
+
+            return false;
+        }
+
+        return true;
     }
 
 
@@ -268,18 +268,15 @@ abstract class EntityAbstract
      * Stores entity to database
      *
      * @param EntityAbstract $entity
-     *
-     * @return mixed
+     * @return int
      */
     abstract public function set(EntityAbstract $entity = null);
 
     /**
      * Converts object into EntityAbstract child
      *
-     * @param array          $arr
-     * @param EntityAbstract $entity
-     *
-     * @return EntityAbstract
+     * @param array $arr
+     * @return static
      */
     protected function resultToEntity(array $arr)
     {
@@ -308,9 +305,6 @@ abstract class EntityAbstract
      */
     protected abstract function getNonClonableFields();
 
-    /**
-     * @return EntityAbstract
-     */
     public function __clone()
     {
         $nonCloneFields = $this->getNonClonableFields();
@@ -325,14 +319,13 @@ abstract class EntityAbstract
     }
 
     /**
-     * @param null $value
+     * @param mixed $value
      */
     public function cleanFields($value = null)
     {
         foreach ($this->getNonClonableFields() as $field) {
             $this->$field = $value;
         }
-
     }
 
     /**
@@ -352,13 +345,15 @@ abstract class EntityAbstract
     /**
      * @return string
      */
-    public abstract function getPrimaryFieldName();
+    abstract public function getPrimaryFieldName();
 
+    /**
+     * @return int
+     */
     public function getPK()
     {
         return (int)$this->{$this->getPrimaryFieldName()};
     }
-
 
     /**
      * @return string
