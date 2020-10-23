@@ -216,6 +216,12 @@ namespace {
             }
         }
 
+        if (!function_exists('remove_action')) {
+            function remove_action($tag, $function_to_remove, $priority = 10)
+            {
+            }
+        }
+
         if (!function_exists('maybe_unserialize')) {
             function maybe_unserialize($original)
             {

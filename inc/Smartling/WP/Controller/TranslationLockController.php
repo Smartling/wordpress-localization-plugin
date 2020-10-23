@@ -194,6 +194,10 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
         return $_fields;
     }
 
+    /**
+     * @param SubmissionEntity $submission
+     * @return string[]
+     */
     private function getLockedFields(SubmissionEntity $submission)
     {
         $_fields = [];

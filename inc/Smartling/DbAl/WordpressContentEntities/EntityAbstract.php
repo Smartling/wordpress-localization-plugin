@@ -303,20 +303,7 @@ abstract class EntityAbstract
     /**
      * @return array
      */
-    protected abstract function getNonClonableFields();
-
-    public function __clone()
-    {
-        $nonCloneFields = $this->getNonClonableFields();
-
-        $myFields = $this->toArray();
-        if (is_array($nonCloneFields) && 0 < count($nonCloneFields)) {
-            foreach ($nonCloneFields as $field) {
-                unset ($myFields[$field]);
-            }
-        }
-        $this->resultToEntity($myFields);
-    }
+    abstract protected function getNonClonableFields();
 
     /**
      * @param mixed $value

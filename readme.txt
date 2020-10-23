@@ -58,6 +58,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 1.15.1 =
+* Auto synchronize properties on translated page with source feature doesn't alter locked and excluded fields
+
 = 1.15.0 =
 * Added new UI (Smartling -> Taxonomy links) where you can link existing translated taxonomies with the source taxonomies. It helps connector to respect existing translations and use them in translated posts.
 * Fixed issue where attachments were partially uploaded if post content contained multiple ACF blocks of the same type
