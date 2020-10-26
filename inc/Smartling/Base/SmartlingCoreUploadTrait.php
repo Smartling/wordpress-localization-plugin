@@ -23,11 +23,6 @@ use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\Controller\LiveNotificationController;
 
-
-/**
- * Class SmartlingCoreUploadTrait
- * @package Smartling\Base
- */
 trait SmartlingCoreUploadTrait
 {
     /**
@@ -281,7 +276,6 @@ trait SmartlingCoreUploadTrait
             $configurationProfile = $this->getSettingsManager()
                 ->getSingleSettingsProfile($submission->getSourceBlogId());
 
-
             $percentage = $submission->getCompletionPercentage();
             $this->getLogger()->debug(vsprintf('Current percentage is %s', [$percentage]));
 
@@ -326,7 +320,7 @@ trait SmartlingCoreUploadTrait
                     $this->getContentHelper()->removeTargetMetadata($submission);
                     $xmlFields = $decoded->getOriginalFields();
                     if (array_key_exists('meta', $xmlFields)) {
-                        $metaFields = array_merge($xmlFields['meta'], $metaFields);
+                        $metaFields = array_merge($this->removeExcludedFields($xmlFields['meta'], $configurationProfile), $metaFields);
                     }
                 }
                 $metaFields = self::arrayMergeIfKeyNotExists($lockedData['meta'], $metaFields);
@@ -822,5 +816,15 @@ trait SmartlingCoreUploadTrait
         $submission->setBatchUid($batchUid);
 
         return $this->getSubmissionManager()->storeEntity($submission);
+    }
+
+    /**
+     * @param array $fields
+     * @param ConfigurationProfileEntity $configurationProfile
+     * @return array
+     */
+    private function removeExcludedFields(array $fields, ConfigurationProfileEntity $configurationProfile)
+    {
+        return $this->getFieldsFilter()->removeFields($fields, $configurationProfile->getFilterSkipArray(), $configurationProfile->getFilterFieldNameRegExp());
     }
 }

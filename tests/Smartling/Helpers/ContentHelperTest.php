@@ -57,35 +57,4 @@ class ContentHelperTest extends TestCase
             [1, 1, false],
         ];
     }
-
-    public function testRemoveUnlockedTargetMetadata()
-    {
-        $targetId = 1;
-        $proxy = $this->getMock(WordpressFunctionProxyHelper::class);
-        $proxy->expects(self::once())->method('delete_post_meta')->with($targetId, 'locked_field')->willReturn(true);
-
-        $entity = $this->getMockBuilder(EntityAbstract::class)->setMethods(['get', 'getMetadata', 'toArray'])->getMockForAbstractClass();
-        $entity->method('get')->willReturnSelf();
-        $entity->method('getMetadata')->willReturn(['locked_field' => 'lockedFieldValue', 'unlocked_field' => 'unlockedFieldValue']);
-
-        $handler = $this->getMock(PostEntityStd::class);
-        $handler->method('get')->willReturn($entity);
-
-        $ioFactory = $this->getMock(ContentEntitiesIOFactory::class);
-        $ioFactory->method('getHandler')->willReturn($handler);
-
-        $x = $this->getMockBuilder(ContentHelper::class)->setMethods(['getIoFactory', 'getSiteHelper'])->setConstructorArgs([$proxy])->getMock();
-        $x->method('getIoFactory')->willReturn($ioFactory);
-        $x->method('getSiteHelper')->willReturn($this->getMock(SiteHelper::class));
-
-        /**
-         * @var SubmissionEntity|\PHPUnit_Framework_MockObject_MockObject $submission
-         */
-        $submission = $this->getMockBuilder(SubmissionEntity::class)->setMethods(['getContentType', 'getLockedFields', 'getTargetId'])->getMockForAbstractClass();
-        $submission->method('getContentType')->willReturn('post');
-        $submission->method('getTargetId')->willReturn(1);
-        $submission->method('getLockedFields')->willReturn(['entity/post_title', 'meta/locked_field']);
-
-        $x->removeUnlockedTargetMetadata($submission);
-    }
 }

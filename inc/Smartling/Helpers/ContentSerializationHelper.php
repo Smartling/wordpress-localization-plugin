@@ -191,7 +191,7 @@ class ContentSerializationHelper
              */
             $profile = ArrayHelper::first($profiles);
 
-            $filter['ignore'] = array_map('trim', explode(PHP_EOL, $profile->getFilterSkip()));
+            $filter['ignore'] = $profile->getFilterSkipArray();
             $filter['key']['seo'] = array_map('trim', explode(PHP_EOL, $profile->getFilterFlagSeo()));
             $filter['copy']['name'] = array_map('trim', explode(PHP_EOL, $profile->getFilterCopyByFieldName()));
             $filter['copy']['regexp'] = array_map('trim', explode(PHP_EOL, $profile->getFilterCopyByFieldValueRegex()));

@@ -386,48 +386,6 @@ class ContentHelper
         $this->ensureRestoredBlogId();
     }
 
-    public function removeUnlockedTargetMetadata(SubmissionEntity $submission)
-    {
-        $this->getLogger()->debug(sprintf('Removing unlocked metadata for target content for submission %d', $submission->getId()));
-
-        $metaPrefix = 'meta/';
-        $wrapper = $this->getWrapper($submission->getContentType());
-        $targetId = $submission->getTargetId();
-
-        $this->ensureTargetBlogId($submission);
-        $lockedFields = array_filter($submission->getLockedFields(), static function ($field) use ($metaPrefix) {
-            return strpos($field, $metaPrefix) === 0;
-        });
-        array_walk($lockedFields, static function(&$field) use ($metaPrefix) {
-            $field = substr($field, strlen($metaPrefix));
-        });
-
-        try {
-            foreach (array_intersect(array_keys($this->readTargetMetadata($submission)), $lockedFields) as $key) {
-                if ($wrapper instanceof PostEntityStd) {
-                    $result = $this->proxy->delete_post_meta($targetId, $key);
-                } elseif ($wrapper instanceof TaxonomyEntityStd) {
-                    $result = $this->proxy->delete_term_meta($targetId, $key);
-                } elseif (!$wrapper instanceof VirtualEntityAbstract) {
-                    $msgTemplate = 'Unknown content-type. Expected %s to be successor of one of: %s';
-                    $this->getLogger()->warning(
-                        vsprintf($msgTemplate,
-                            [get_class($wrapper),
-                                implode(',', ['PostEntity', 'TaxonomyEntityAbstract', 'VirtualEntityAbstract']),
-                            ]
-                        )
-                    );
-                    break;
-                }
-                $this->getLogger()->debug(sprintf("Removal of metadata key=%s for '%s' id=%d (submission='%d') finished %s", $key, $submission->getContentType(), $targetId, $submission->getId(), $result ? 'successfully' : 'unsuccessfully'));
-            }
-        } catch (Exception $e) {
-            $this->getLogger()->warning(sprintf("Error while deleting target metadata for submission id=%d. Message: '%s'", $submission->getId(), $e->getMessage()));
-        }
-
-        $this->ensureRestoredBlogId();
-    }
-
     /**
      * @param int $blogId
      * @param string $contentType

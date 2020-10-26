@@ -114,17 +114,23 @@ class SmartlingCoreUploadTraitTest extends TestCase
     public function testApplyXmlCleanMetadata()
     {
         $submission = new SubmissionEntity();
+        $submission->setLockedFields(['meta/locked']);
+        $submission->setTargetId('1');
         $contentHelper = $this->getMockBuilder(ContentHelper::class)->disableOriginalConstructor()->getMock();
         $contentHelper->method('readSourceContent')->willReturnArgument(0);
         $contentHelper->method('readSourceMetadata')->willReturn([]);
         $contentHelper->method('readTargetContent')->willReturn(new PostEntityStd());
+        $contentHelper->method('readTargetMetadata')->willReturn(['locked' => 'locked', 'unlocked' => 'unlocked']);
 
-        $fieldsFilterHelper = $this->getMockBuilder(FieldsFilterHelper::class)->disableOriginalConstructor()->getMock();
+        $fieldsFilterHelper = $this->getMockBuilder(FieldsFilterHelper::class)->disableOriginalConstructor()->setMethods(['applyTranslatedValues', 'getLogger', 'processStringsAfterDecoding'])->getMock();
         $fieldsFilterHelper->method('processStringsAfterDecoding')->willReturnArgument(0);
         $fieldsFilterHelper->method('applyTranslatedValues')->willReturnArgument(2);
+        $fieldsFilterHelper->method('getLogger')->willReturn(new NullLogger());
 
         $profile = $this->getMockBuilder(ConfigurationProfileEntity::class)->disableOriginalConstructor()->getMock();
         $profile->method('getCleanMetadataOnDownload')->willReturn(1);
+        $profile->method('getFilterFieldNameRegExp')->willReturn(true);
+        $profile->method('getFilterSkipArray')->willReturn(['excluded']);
 
         $settingsManager = $this->getMockBuilder(SettingsManager::class)->disableOriginalConstructor()->getMock();
         $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
@@ -136,11 +142,11 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $xmlHelper = $this->getMock(XmlHelper::class);
         $xmlHelper->method('xmlDecode')->willReturn(new DecodedXml(
             ['meta' => ['metaToTranslate' => '~Translated~']],
-            ['meta' => ['sourceMetaField' => 'set', 'metaToTranslate' => 'Original']]
+            ['meta' => ['excludedField' => 'excluded', 'sourceMetaField' => 'set', 'metaToTranslate' => 'Original']]
         ));
 
         $contentHelper->expects(self::once())->method('removeTargetMetadata');
-        $contentHelper->expects(self::once())->method('writeTargetMetadata')->with($submission, ['sourceMetaField' => 'set', 'metaToTranslate' => '~Translated~']);
+        $contentHelper->expects(self::once())->method('writeTargetMetadata')->with($submission, ['sourceMetaField' => 'set', 'metaToTranslate' => '~Translated~', 'locked' => 'locked']);
         self::assertEquals([], $x->applyXML($submission, ' ', $xmlHelper));
     }
 }
