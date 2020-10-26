@@ -4,13 +4,11 @@ namespace Smartling\Tests\Smartling\Helpers;
 
 use PHPUnit\Framework\TestCase;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
-use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Processors\ContentEntitiesIOFactory;
-use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 
 class ContentHelperTest extends TestCase
@@ -26,7 +24,7 @@ class ContentHelperTest extends TestCase
      */
     public function testCheckEntityExists($currentBlogId, $otherBlogId, $exists)
     {
-        $x = $this->getMockBuilder(ContentHelper::class)->setMethods(['getIoFactory', 'getSiteHelper'])->getMock();
+        $x = $this->getMockBuilder(ContentHelper::class)->setMethods(['getIoFactory', 'getSiteHelper'])->setConstructorArgs([new WordpressFunctionProxyHelper()])->getMock();
 
         $entity = $this->getMockBuilder(EntityAbstract::class)->setMethods(['get'])->getMockForAbstractClass();
         $entity->method('get')->willReturnSelf();

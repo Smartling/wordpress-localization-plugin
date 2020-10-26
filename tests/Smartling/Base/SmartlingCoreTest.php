@@ -18,6 +18,7 @@ use Smartling\Tests\Traits\SiteHelperMock;
 use Smartling\Tests\Traits\SubmissionManagerMock;
 use Smartling\Base\SmartlingCore;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Helpers\ContentHelper;
 
 /**
  * Class SmartlingCoreTest
@@ -73,7 +74,8 @@ class SmartlingCoreTest extends TestCase
             ->willReturn($entity);
 
         $contentHelperMock = $this
-            ->getMockBuilder('Smartling\Helpers\ContentHelper')
+            ->getMockBuilder(ContentHelper::class)
+            ->setConstructorArgs([new WordpressFunctionProxyHelper()])
             ->setMethods(['readTargetContent', 'readTargetMetadata'])
             ->getMock();
 
