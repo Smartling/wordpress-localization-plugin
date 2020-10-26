@@ -63,7 +63,6 @@ class TaxonomyLinksController extends WPAbstract implements WPHookInterface
     {
         add_action('admin_enqueue_scripts', [$this, 'wp_enqueue']);
         add_action('admin_menu', [$this, 'menu']);
-        add_action('network_admin_menu', [$this, 'menu']);
         add_action('wp_ajax_smartling_link_taxonomies', [$this, 'linkTaxonomies']);
     }
 
