@@ -842,29 +842,11 @@ class SubmissionEntity extends SmartlingEntityAbstract
     }
 
     /**
-     * @deprecated
-     * @see getLockedFieldsArray
      * @return string serialized array string
      */
     public function getLockedFields()
     {
         return $this->stateFields[static::FIELD_LOCKED_FIELDS];
-    }
-
-    /**
-     * @return array
-     */
-    public function getLockedFieldsArray()
-    {
-        $fields = $this->stateFields[self::FIELD_LOCKED_FIELDS];
-        if (!is_array($fields)) {
-            $fields = unserialize($fields);
-        }
-        if (!is_array($fields)) {
-            throw new \RuntimeException("Unable to get locked fields array for submission");
-        }
-
-        return $fields;
     }
 
     public function setLockedFields($lockFields)

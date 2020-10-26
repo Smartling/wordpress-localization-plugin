@@ -299,7 +299,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
      */
     public function getFilterSkipArray()
     {
-        return array_map('trim', explode(PHP_EOL, $this->stateFields['filter_skip']));
+        return array_map('trim', explode(PHP_EOL, $this->getFilterSkip()));
     }
 
     public function setFilterSkip($value)
