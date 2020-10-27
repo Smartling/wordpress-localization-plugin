@@ -841,6 +841,9 @@ class SubmissionEntity extends SmartlingEntityAbstract
         $this->stateFields[static::FIELD_BATCH_UID] = trim($batchUid);
     }
 
+    /**
+     * @return string serialized array string
+     */
     public function getLockedFields()
     {
         return $this->stateFields[static::FIELD_LOCKED_FIELDS];

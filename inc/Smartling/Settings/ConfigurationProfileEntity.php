@@ -286,9 +286,20 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         $this->stateFields[Form::FILTER_FIELD_NAME_REGEXP] = $value ? '1' : '0';
     }
 
+    /**
+     * @return string
+     */
     public function getFilterSkip()
     {
         return $this->stateFields['filter_skip'];
+    }
+
+    /**
+     * @return array
+     */
+    public function getFilterSkipArray()
+    {
+        return array_map('trim', explode(PHP_EOL, $this->getFilterSkip()));
     }
 
     public function setFilterSkip($value)

@@ -7,10 +7,15 @@ use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\SiteHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Processors\ContentEntitiesIOFactory;
+use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 
 class ContentHelperTest extends TestCase
 {
+    public function setUp() {
+        WordpressFunctionsMockHelper::injectFunctionsMocks();
+    }
     /**
      * @dataProvider providerCheckEntityExists
      * @param int $currentBlogId
@@ -19,7 +24,7 @@ class ContentHelperTest extends TestCase
      */
     public function testCheckEntityExists($currentBlogId, $otherBlogId, $exists)
     {
-        $x = $this->getMockBuilder(ContentHelper::class)->setMethods(['getIoFactory', 'getSiteHelper'])->getMock();
+        $x = $this->getMockBuilder(ContentHelper::class)->setMethods(['getIoFactory', 'getSiteHelper'])->setConstructorArgs([new WordpressFunctionProxyHelper()])->getMock();
 
         $entity = $this->getMockBuilder(EntityAbstract::class)->setMethods(['get'])->getMockForAbstractClass();
         $entity->method('get')->willReturnSelf();
@@ -39,7 +44,7 @@ class ContentHelperTest extends TestCase
         $x->method('getIoFactory')->willReturn($ioFactory);
         $x->method('getSiteHelper')->willReturn($siteHelper);
 
-        $this->assertEquals($exists, $x->checkEntityExists($otherBlogId, 'post', 3));
+        self::assertEquals($exists, $x->checkEntityExists($otherBlogId, 'post', 3));
     }
 
     public function providerCheckEntityExists() {

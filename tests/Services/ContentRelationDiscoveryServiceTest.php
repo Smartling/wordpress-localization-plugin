@@ -6,6 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\SiteHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
@@ -37,7 +38,7 @@ class ContentRelationDiscoveryServiceTest extends TestCase
         $siteHelper = $this->getMock(SiteHelper::class);
         $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
 
-        $contentHelper = new ContentHelper();
+        $contentHelper = new ContentHelper(new WordpressFunctionProxyHelper());
         $contentHelper->setSiteHelper($siteHelper);
 
         $submission = $this->getMockBuilder(SubmissionEntity::class)
@@ -93,7 +94,7 @@ class ContentRelationDiscoveryServiceTest extends TestCase
         $siteHelper = $this->getMock(SiteHelper::class);
         $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
 
-        $contentHelper = new ContentHelper();
+        $contentHelper = new ContentHelper(new WordpressFunctionProxyHelper());
         $contentHelper->setSiteHelper($siteHelper);
 
         $submission = $this->getMockBuilder(SubmissionEntity::class)

@@ -34,6 +34,16 @@ class WordpressFunctionProxyHelper
         return apply_filters(...func_get_args());
     }
 
+    public function delete_post_meta()
+    {
+        return delete_post_meta(...func_get_args());
+    }
+
+    public function delete_term_meta()
+    {
+        return delete_term_meta(...func_get_args());
+    }
+
     public function get_terms()
     {
         return get_terms(...func_get_args());
