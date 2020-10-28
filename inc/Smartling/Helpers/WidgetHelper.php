@@ -117,6 +117,10 @@ class WidgetHelper
         $this->index = $index;
     }
 
+    /**
+     * @param $widgetId
+     * @return WidgetHelper
+     */
     public static function getWidget($widgetId)
     {
         $widgetInstance = new self($widgetId);
@@ -346,11 +350,11 @@ class WidgetHelper
     }
 
     /**
-     * @param $widgetType
+     * @param string $widgetType
      *
-     * @return string | null
+     * @return \WP_Widget|null
      */
-    public static function getWidgetName($widgetType)
+    public static function getWpWidget($widgetType)
     {
         global $wp_widget_factory;
 

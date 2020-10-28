@@ -235,8 +235,6 @@ services:
       - [ "setSiteHelper", [ "@site.helper" ]]
 
   content.helper:
-    arguments:
-      - "@wp.proxy"
     class: Smartling\Helpers\ContentHelper
     calls:
       - [ "setIoFactory", [ "@factory.contentIO" ]]

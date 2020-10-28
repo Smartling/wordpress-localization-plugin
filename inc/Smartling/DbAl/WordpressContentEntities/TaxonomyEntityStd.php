@@ -2,7 +2,6 @@
 
 namespace Smartling\DbAl\WordpressContentEntities;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\WordpressContentTypeHelper;
@@ -52,7 +51,7 @@ class TaxonomyEntityStd extends EntityAbstract
 
         $result = null;
 
-        if ($curValue = !$tagValue) {
+        if ($curValue !== $tagValue) {
             if (false === $curValue) {
                 $this->logMessage(vsprintf('Adding tag %s with value \'%s\' for \'%s\' \'%s\'.', [
                     $tagName,
@@ -166,10 +165,15 @@ class TaxonomyEntityStd extends EntityAbstract
 
     /**
      * Loads ALL entities from database
+     * @param int $limit
+     * @param int $offset
+     * @param string $orderBy
+     * @param string $order
+     * @param string $searchString
      * @return TaxonomyEntityStd[]
      * @throws SmartlingDbException
      */
-    public function getAll($limit = '', $offset = '', $orderBy = 'term_id', $order = 'ASC', $searchString = '')
+    public function getAll($limit = 0, $offset = 0, $orderBy = 'term_id', $order = 'ASC', $searchString = '')
     {
 
         $result = [];
@@ -210,13 +214,10 @@ class TaxonomyEntityStd extends EntityAbstract
                 ->error($message);
 
             throw new SmartlingDbException($message);
-        } else {
-            /**
-             * @var array $terms
-             */
-            foreach ($terms as $term) {
-                $result[] = $this->resultToEntity((array)$term);
-            }
+        }
+
+        foreach ($terms as $term) {
+            $result[] = $this->resultToEntity((array)$term);
         }
 
         return $result;
@@ -273,21 +274,21 @@ class TaxonomyEntityStd extends EntityAbstract
 
                 return $this->set($entity);
 
-            } else {
-                $message = vsprintf(
-                    'An error occurred while saving taxonomy id=%s, type=%s: %s',
-                    [
-                        ($entity->term_id ? $entity->term_id : '<none>'),
-                        $this->getType(),
-                        $result->get_error_message(),
-                    ]
-                );
-
-                $this->getLogger()
-                    ->error($message);
-
-                throw new SmartlingDbException($message);
             }
+
+            $message = vsprintf(
+                'An error occurred while saving taxonomy id=%s, type=%s: %s',
+                [
+                    ($entity->term_id ?: '<none>'),
+                    $this->getType(),
+                    $result->get_error_message(),
+                ]
+            );
+
+            $this->getLogger()
+                ->error($message);
+
+            throw new SmartlingDbException($message);
         }
 
         foreach ($result as $field => $value) {
@@ -301,7 +302,7 @@ class TaxonomyEntityStd extends EntityAbstract
     /**
      * @inheritdoc
      */
-    protected function getNonClonableFields()
+    protected function getNonCloneableFields()
     {
         return [
             'term_id',
@@ -347,12 +348,12 @@ class TaxonomyEntityStd extends EntityAbstract
                                 [$terms->get_error_message()]);
 
             throw new SmartlingDbException($message);
-        } else {
-            foreach ($terms as $term) {
-                if ((int)$term->term_id === (int)$termId) {
-                    $result[] = $term->taxonomy;
-                    break;
-                }
+        }
+
+        foreach ($terms as $term) {
+            if ((int)$term->term_id === (int)$termId) {
+                $result[] = $term->taxonomy;
+                break;
             }
         }
 

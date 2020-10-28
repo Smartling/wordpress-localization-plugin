@@ -2,7 +2,6 @@
 
 namespace Smartling\Extensions\AcfOptionPages;
 
-use Psr\Log\LoggerInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
@@ -12,7 +11,7 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
 
 /**
- * Class AcfOptionEntity
+ * @method string getName
  */
 class AcfOptionEntity extends VirtualEntityAbstract
 {
@@ -66,11 +65,11 @@ class AcfOptionEntity extends VirtualEntityAbstract
         $possibleField = lcfirst(substr($method, 3));
         if (in_array($way, ['set', 'get']) && in_array($possibleField, $this->fields, true)) {
             return $possibleField;
-        } else {
-            $message = vsprintf('Method %s not found in %s', [$method, __CLASS__]);
-            $this->getLogger()->error($message);
-            throw new \BadMethodCallException($message);
         }
+
+        $message = vsprintf('Method %s not found in %s', [$method, __CLASS__]);
+        $this->getLogger()->error($message);
+        throw new \BadMethodCallException($message);
     }
 
     /**
@@ -144,14 +143,14 @@ class AcfOptionEntity extends VirtualEntityAbstract
     }
 
     /**
-     * @param string $limit
-     * @param int    $offset
-     * @param bool   $orderBy
-     * @param bool   $order
-     *
-     * @return mixed
+     * @param int $limit
+     * @param int $offset
+     * @param string $orderBy
+     * @param string $order
+     * @param string $searchString
+     * @return AcfOptionEntity[]
      */
-    public function getAll($limit = '', $offset = 0, $orderBy = false, $order = false, $searchString = '')
+    public function getAll($limit = 0, $offset = 0, $orderBy = '', $order = '', $searchString = '')
     {
         $this->buildMap();
         $collection = [];
@@ -161,34 +160,7 @@ class AcfOptionEntity extends VirtualEntityAbstract
             $collection[] = $this->resultToEntity($stateArray);
         }
 
-        return self::paginateArray($collection, $limit, $offset);
-    }
-
-    /**
-     * @param array $data
-     * @param int   $limit
-     * @param int   $offset
-     *
-     * @return array
-     */
-    private static function paginateArray(array $data, $limit, $offset)
-    {
-        // apply offset;
-        for ($i = 0; $i < $offset; $i++) {
-            if (0 < count($data)) {
-                array_shift($data);
-            }
-        }
-
-        // get page
-        $result = [];
-        for ($i = 0; $i < $limit; $i++) {
-            if (0 < count($data)) {
-                $result[] = array_shift($data);
-            }
-        }
-
-        return $result;
+        return array_slice($collection, $offset, $limit);
     }
 
     /**
@@ -210,8 +182,10 @@ class AcfOptionEntity extends VirtualEntityAbstract
      */
     public function set(EntityAbstract $entity = null)
     {
-        /** @var AcfOptionHelper $entity */
-        $acfOptionHelper = AcfOptionHelper::fromArray($entity->toArray(false));
+        if ($entity === null) {
+            throw new \InvalidArgumentException(self::class . "->set() must be called with " . self::class);
+        }
+        $acfOptionHelper = AcfOptionHelper::fromArray($entity->toArray());
         $acfOptionHelper->write();
 
         return $acfOptionHelper->getPk();
@@ -220,7 +194,7 @@ class AcfOptionEntity extends VirtualEntityAbstract
     /**
      * @return array
      */
-    protected function getNonClonableFields()
+    protected function getNonCloneableFields()
     {
         return [$this->getPrimaryFieldName()];
     }

@@ -9,6 +9,7 @@ namespace PHPSTORM_META {
     override(WordpressFunctionProxyHelper::apply_filters(0), type(1));
     exitPoint(\Smartling\Services\BaseAjaxServiceAbstract::returnResponse());
     exitPoint(\Smartling\Helpers\WordpressFunctionProxyHelper::wp_send_json());
+    exitPoint(\Smartling\DbAl\WordpressContentEntities\EntityAbstract::entityNotFound());
     exitPoint(\wp_send_json());
     exitPoint(\wp_send_json_error());
 }
