@@ -37,6 +37,7 @@ add_action('plugins_loaded', static function () {
                         }
                     } catch (\Exception $e) {
                         $logger->debug(sprintf('URL_REPLACE: Failed getting headers for %s: %s', $result, $e->getMessage()));
+                        return $tag;
                     }
                 }
                 $logger->debug(sprintf("URL_REPLACE: Replacing '%s' with '%s'", $matches[0], $result));
