@@ -205,17 +205,8 @@ class Bootstrap
             'multilingual-press-pro' => false,
         ];
 
-        $found = false;
-
         if (class_exists('Mlp_Load_Controller', false)) {
             $mlPluginsStatuses['multilingual-press-pro'] = true;
-            $found = true;
-        }
-
-        if (false === $found) {
-            add_action('admin_init', function () {
-                DiagnosticsHelper::addDiagnosticsMessage('Recommended plugin <strong>Multilingual Press</strong> not found. Please install and activate it.', false);
-            });
         }
 
         static::getContainer()->setParameter('multilang_plugins', $mlPluginsStatuses);
