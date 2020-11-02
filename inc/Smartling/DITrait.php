@@ -69,7 +69,7 @@ trait DITrait
         LogContextMixinHelper::addToContext('host', $host);
         LogContextMixinHelper::addToContext('http_host', $_SERVER['HTTP_HOST']);
         LogContextMixinHelper::addToContext('phpVersion', PHP_VERSION);
-        LogContextMixinHelper::addToContext('pluginVersion', static::$pluginVersion);
+        LogContextMixinHelper::addToContext('moduleVersion', static::$pluginVersion);
 
         self::$loggerInstance = $logger;
     }
