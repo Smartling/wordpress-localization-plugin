@@ -28,7 +28,7 @@ class WidgetEntity extends VirtualEntityAbstract
     /**
      * @var WidgetHelper[] All widgets of current theme.
      */
-    private $map = [];
+    protected $map = [];
 
     /**
      * Standard 'post' content-type fields
@@ -131,7 +131,7 @@ class WidgetEntity extends VirtualEntityAbstract
     {
     }
 
-    private function buildMap()
+    protected function buildMap()
     {
         $this->map = [];
 
