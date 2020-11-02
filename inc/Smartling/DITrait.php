@@ -69,8 +69,8 @@ trait DITrait
         // context naming based on https://wiki.smartling.net/pages/viewpage.action?spaceKey=DEV&title=Log+service
         LogContextMixinHelper::addToContext('host', $host);
         LogContextMixinHelper::addToContext('http_host', $_SERVER['HTTP_HOST']);
-        LogContextMixinHelper::addToContext('phpVersion', PHP_VERSION);
         LogContextMixinHelper::addToContext('moduleVersion', static::$pluginVersion);
+        LogContextMixinHelper::addToContext('phpVersion', PHP_VERSION);
 
         self::$loggerInstance = $logger;
     }
