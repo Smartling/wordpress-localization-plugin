@@ -23,7 +23,6 @@ use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Services\GlobalSettingsManager;
-use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPInstallableInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -199,23 +198,14 @@ class Bootstrap
         }
     }
 
-    public function testMultilingualPressPlugin()
+    public function detectInstalledMultilangPlugins()
     {
         $mlPluginsStatuses = [
             'multilingual-press-pro' => false,
         ];
 
-        $found = false;
-
         if (class_exists('Mlp_Load_Controller', false)) {
             $mlPluginsStatuses['multilingual-press-pro'] = true;
-            $found = true;
-        }
-
-        if (false === $found) {
-            add_action('admin_init', function () {
-                DiagnosticsHelper::addDiagnosticsMessage('Recommended plugin <strong>Multilingual Press</strong> not found. Please install and activate it.', false);
-            });
         }
 
         static::getContainer()->setParameter('multilang_plugins', $mlPluginsStatuses);
@@ -244,11 +234,11 @@ class Bootstrap
 
     /**
      * Tests if current Wordpress Configuration can work with Smartling Plugin
-     * @return mixed
+     * @return void
      */
     protected function test()
     {
-        $this->testMultilingualPressPlugin();
+        $this->detectInstalledMultilangPlugins();
         $this->testThirdPartyPluginsRequirements();
 
         $phpExtensions = [
