@@ -68,7 +68,7 @@ trait DITrait
         $host = false === gethostname() ? 'unknown' : gethostname();
         // context naming based on https://wiki.smartling.net/pages/viewpage.action?spaceKey=DEV&title=Log+service
         LogContextMixinHelper::addToContext('host', $host);
-        LogContextMixinHelper::addToContext('http_host', $_SERVER['HTTP_HOST']);
+        LogContextMixinHelper::addToContext('httpHost', $_SERVER['HTTP_HOST']);
         LogContextMixinHelper::addToContext('moduleVersion', static::$pluginVersion);
         LogContextMixinHelper::addToContext('phpVersion', PHP_VERSION);
 
