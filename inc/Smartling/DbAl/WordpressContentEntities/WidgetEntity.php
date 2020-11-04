@@ -2,11 +2,9 @@
 
 namespace Smartling\DbAl\WordpressContentEntities;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\ThemeSidebarHelper;
 use Smartling\Helpers\WidgetHelper;
-use Smartling\Helpers\WordpressContentTypeHelper;
 
 /**
  * Class WidgetEntity
@@ -16,6 +14,7 @@ use Smartling\Helpers\WordpressContentTypeHelper;
  * @property string $bar                Sidebar Id
  * @property int    $barPosition        Widget Position in Sidebar
  * @property array  $settings           Widget settings
+ * @method int getId()
  * @method array    getSettings()       Returns settings key => value array
  * @method string   getWidgetType()     Returns Wordpress Widget type
  * @method int      getIndex()          Returns Widget index
@@ -29,7 +28,7 @@ class WidgetEntity extends VirtualEntityAbstract
     /**
      * @var WidgetHelper[] All widgets of current theme.
      */
-    private $map = [];
+    protected $map = [];
 
     /**
      * Standard 'post' content-type fields
@@ -93,7 +92,7 @@ class WidgetEntity extends VirtualEntityAbstract
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getTitle()
     {
@@ -101,7 +100,7 @@ class WidgetEntity extends VirtualEntityAbstract
             ? $this->getSettings()['title'] : null;
 
         return StringHelper::isNullOrEmpty($title)
-            ? WidgetHelper::getWidgetName($this->getWidgetType())->name
+            ? WidgetHelper::getWpWidget($this->getWidgetType())->name
             : $title;
     }
 
@@ -120,7 +119,7 @@ class WidgetEntity extends VirtualEntityAbstract
             return $this->resultToEntity($this->map[$guid]->toArray());
         }
 
-        $this->entityNotFound(WordpressContentTypeHelper::CONTENT_TYPE_WIDGET, $guid);
+        $this->entityNotFound('theme_widget', $guid);
     }
 
     /**
@@ -132,7 +131,7 @@ class WidgetEntity extends VirtualEntityAbstract
     {
     }
 
-    private function buildMap()
+    protected function buildMap()
     {
         $this->map = [];
 
@@ -165,14 +164,14 @@ class WidgetEntity extends VirtualEntityAbstract
     }
 
     /**
-     * @param string $limit
+     * @param int $limit
      * @param int $offset
-     * @param bool $orderBy
-     * @param bool $order
+     * @param string $orderBy
+     * @param string $order
      * @param string $searchString
-     * @return mixed
+     * @return WidgetEntity[]
      */
-    public function getAll($limit = '', $offset = 0, $orderBy = false, $order = false, $searchString = '')
+    public function getAll($limit = 0, $offset = 0, $orderBy = '', $order = '', $searchString = '')
     {
         $this->buildMap();
         $collection = [];
@@ -181,34 +180,7 @@ class WidgetEntity extends VirtualEntityAbstract
             $collection[] = $this->resultToEntity($stateArray);
         }
 
-        return self::paginateArray($collection, $limit, $offset);
-    }
-
-    /**
-     * @param array $data
-     * @param int   $limit
-     * @param int   $offset
-     *
-     * @return array
-     */
-    private static function paginateArray(array $data, $limit, $offset)
-    {
-        // apply offset;
-        for ($i = 0; $i < $offset; $i++) {
-            if (0 < count($data)) {
-                array_shift($data);
-            }
-        }
-
-        // get page
-        $result = [];
-        for ($i = 0; $i < $limit; $i++) {
-            if (0 < count($data)) {
-                $result[] = array_shift($data);
-            }
-        }
-
-        return $result;
+        return array_slice($collection, $offset, $limit);
     }
 
 
@@ -266,7 +238,9 @@ class WidgetEntity extends VirtualEntityAbstract
      */
     public function set(EntityAbstract $entity = null)
     {
-        /** @var WidgetEntity $entity */
+        if (!$entity instanceof self) {
+            throw new \InvalidArgumentException("WidgetEntity->set() must be called with WidgetEntity");
+        }
         $widgetHelper = $this->getWidgetHelperInstance($entity);
         $widgetHelper->write();
 
@@ -276,7 +250,7 @@ class WidgetEntity extends VirtualEntityAbstract
     /**
      * @return array
      */
-    protected function getNonClonableFields()
+    protected function getNonCloneableFields()
     {
         return [$this->getPrimaryFieldName()];
     }

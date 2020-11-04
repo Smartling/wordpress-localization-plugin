@@ -108,7 +108,7 @@ abstract class EntityAbstract
      *
      * @param $fieldName
      *
-     * @return mixed
+     * @return mixed|void
      */
     public function __get($fieldName)
     {
@@ -154,7 +154,7 @@ abstract class EntityAbstract
      * @param string $method
      * @param array  $params
      *
-     * @return mixed
+     * @return mixed|void
      */
     public function __call($method, array $params)
     {
@@ -246,16 +246,16 @@ abstract class EntityAbstract
     abstract public function setMetaTag($tagName, $tagValue, $unique = true);
 
     /**
-     * @param string $limit
-     * @param int    $offset
-     * @param bool   $orderBy
-     * @param bool   $order
-     *
-     * @return mixed
+     * @param int $limit
+     * @param int $offset
+     * @param string $orderBy
+     * @param string $order
+     * @param string $searchString
+     * @return static[]
      */
     // FIXME TODO : Method must be static or better moved out from this class
     // It's not good idea to ask instence of Post\Tag class to return all objects
-    abstract public function getAll($limit = '', $offset = 0, $orderBy = false, $order = false, $searchString = '');
+    abstract public function getAll($limit = 0, $offset = 0, $orderBy = '', $order = '', $searchString = '');
 
     /**
      * @return int
@@ -301,29 +301,16 @@ abstract class EntityAbstract
     }
 
     /**
-     * @return array
+     * @return string[]
      */
-    protected abstract function getNonClonableFields();
-
-    public function __clone()
-    {
-        $nonCloneFields = $this->getNonClonableFields();
-
-        $myFields = $this->toArray();
-        if (is_array($nonCloneFields) && 0 < count($nonCloneFields)) {
-            foreach ($nonCloneFields as $field) {
-                unset ($myFields[$field]);
-            }
-        }
-        $this->resultToEntity($myFields);
-    }
+    abstract protected function getNonCloneableFields();
 
     /**
      * @param mixed $value
      */
     public function cleanFields($value = null)
     {
-        foreach ($this->getNonClonableFields() as $field) {
+        foreach ($this->getNonCloneableFields() as $field) {
             $this->$field = $value;
         }
     }

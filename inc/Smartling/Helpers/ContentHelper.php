@@ -40,7 +40,6 @@ class ContentHelper
      */
     private $needBlogSwitch;
     private $externalBlogSwitchFrames = [];
-    private $proxy;
 
     /**
      * @return RuntimeCacheHelper
@@ -98,10 +97,9 @@ class ContentHelper
         return $this->logger;
     }
 
-    public function __construct(WordpressFunctionProxyHelper $proxy)
+    public function __construct()
     {
         $this->logger = MonologWrapper::getLogger(get_called_class());
-        $this->proxy = $proxy;
     }
 
     /**

@@ -38,7 +38,7 @@ class ContentRelationDiscoveryServiceTest extends TestCase
         $siteHelper = $this->getMock(SiteHelper::class);
         $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
 
-        $contentHelper = new ContentHelper(new WordpressFunctionProxyHelper());
+        $contentHelper = new ContentHelper();
         $contentHelper->setSiteHelper($siteHelper);
 
         $submission = $this->getMockBuilder(SubmissionEntity::class)
@@ -94,7 +94,7 @@ class ContentRelationDiscoveryServiceTest extends TestCase
         $siteHelper = $this->getMock(SiteHelper::class);
         $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
 
-        $contentHelper = new ContentHelper(new WordpressFunctionProxyHelper());
+        $contentHelper = new ContentHelper();
         $contentHelper->setSiteHelper($siteHelper);
 
         $submission = $this->getMockBuilder(SubmissionEntity::class)

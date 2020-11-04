@@ -121,7 +121,7 @@ class PostEntityStd extends EntityAbstract
     /**
      * @inheritdoc
      */
-    protected function getNonClonableFields()
+    protected function getNonCloneableFields()
     {
         return [
             'comment_count',
@@ -144,9 +144,9 @@ class PostEntityStd extends EntityAbstract
             $entity->validateContentType();
 
             return $entity;
-        } else {
-            $this->entityNotFound($this->getType(), $guid);
         }
+
+        $this->entityNotFound($this->getType(), $guid);
     }
 
     /**
@@ -321,14 +321,14 @@ class PostEntityStd extends EntityAbstract
 
 
     /**
-     * @param string $limit
-     * @param int    $offset
+     * @param int $limit
+     * @param int $offset
      * @param string $orderBy
      * @param string $order
-     *
-     * @return array
+     * @param string $searchString
+     * @return PostEntityStd[]
      */
-    public function getAll($limit = '', $offset = 0, $orderBy = 'date', $order = 'DESC', $searchString = '')
+    public function getAll($limit = 0, $offset = 0, $orderBy = 'date', $order = 'DESC', $searchString = '')
     {
         $arguments = [
             'posts_per_page'   => $limit,
