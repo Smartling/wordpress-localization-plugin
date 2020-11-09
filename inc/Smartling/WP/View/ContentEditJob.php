@@ -418,7 +418,10 @@ if ($post instanceof WP_Post) {
 
             var canDispatch = hasProp(window, "wp")
                 && hasProp(window.wp, "data")
-                && hasProp(window.wp.data, "dispatch");
+                && hasProp(window.wp.data, "dispatch")
+                && hasProp(window.wp.data.dispatch("core/notices"), "createSuccessNotice")
+                && hasProp(window.wp.data.dispatch("core/notices"), "createErrorNotice")
+            ;
 
             if (!handleRelationsManually) {
                 /*
