@@ -1,7 +1,7 @@
 <?php
 namespace {
 
-    use Smartling\DbAl\MultiligualPressConnector;
+    use Smartling\DbAl\MultilingualPressConnector;
 
     function injectMocks()
     {
@@ -84,7 +84,7 @@ namespace {
             function get_site_option($key, $default = null, $useCache = true)
             {
                 switch ($key) {
-                    case MultiligualPressConnector::MULTILINGUAL_PRESS_PRO_SITE_OPTION: {
+                    case MultilingualPressConnector::MULTILINGUAL_PRESS_PRO_SITE_OPTION_KEY_NAME: {
                         return [1 => ['text' => '', 'lang' => 'en_US',], 2 => ['text' => '', 'lang' => 'es_ES',],
                                 3 => ['text' => '', 'lang' => 'fr_FR',], 4 => ['text' => '', 'lang' => 'ru_RU',],];
                         break;
