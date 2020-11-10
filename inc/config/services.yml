@@ -102,7 +102,7 @@ services:
         - "%plugin.upload%"
 
   multilang.proxy:
-    class: Smartling\DbAl\MultiligualPressConnector
+    class: Smartling\DbAl\MultilingualPressConnector
     arguments:
       - "@site.helper"
       - "%multilang_plugins%"
