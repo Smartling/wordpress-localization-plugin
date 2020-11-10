@@ -22,13 +22,13 @@ jQuery(document).on('ready', function () {
             if (success) {
                 const message = 'Taxonomies linked';
                 submissions = data.submissions;
-                if (wp && wp.data && wp.data.dispatch) {
+                if (wp && wp.data && wp.data.dispatch && wp.data.dispatch('core/notices').createSuccessNotice) {
                     wp.data.dispatch('core/notices').createSuccessNotice(message);
                 } else {
                     admin_notice(message, 'success');
                 }
             } else {
-                if (wp && wp.data && wp.data.dispatch) {
+                if (wp && wp.data && wp.data.dispatch && wp.data.dispatch('core/notices').createErrorNotice) {
                     wp.data.dispatch('core/notices').createErrorNotice(data.data);
                 } else {
                     admin_notice(data.data, 'error');

@@ -284,7 +284,7 @@ function ajaxDownload() {
                         }
                         break;
                 }
-                if (wp && wp.data && wp.data.dispatch) {
+                if (wp && wp.data && wp.data.dispatch && wp.data.dispatch('core/notices').createSuccessNotice && wp.data.dispatch('core/notices').createErrorNotice) {
                     var dispatch = wp.data.dispatch("core/notices");
                     switch (type) {
                         case "success":
