@@ -14,29 +14,20 @@ use Smartling\MonologWrapper\MonologWrapper;
  */
 abstract class SmartlingFactoryAbstract
 {
-
-    /**
-     * Collection of handlers
-     *
-     * @var array
-     */
     private $collection = [];
 
     /**
-     * @return array
+     * @return object[]
      */
     protected function getCollection()
     {
         return $this->collection;
     }
 
-    /**
-     * @var null
-     */
-    private $defaultHandler = null;
+    private $defaultHandler;
 
     /**
-     * @return null
+     * @return object|null
      */
     public function getDefaultHandler()
     {
@@ -44,16 +35,13 @@ abstract class SmartlingFactoryAbstract
     }
 
     /**
-     * @param null $defaultHandler
+     * @param object $defaultHandler
      */
     public function setDefaultHandler($defaultHandler)
     {
         $this->defaultHandler = $defaultHandler;
     }
 
-    /**
-     * @var bool
-     */
     private $allowDefault = false;
 
     /**
@@ -72,14 +60,7 @@ abstract class SmartlingFactoryAbstract
         $this->allowDefault = $allowDefault;
     }
 
-    /**
-     * @var string
-     */
     protected $message = '';
-
-    /**
-     * @var LoggerInterface
-     */
     private $logger;
 
 
@@ -100,22 +81,21 @@ abstract class SmartlingFactoryAbstract
     }
 
     /**
-     * @param          $contentType
-     * @param          $mapper
-     * @param bool     $force
+     * @param string $contentType
+     * @param object $mapper
+     * @param bool $force
      */
     public function registerHandler($contentType, $mapper, $force = false)
     {
-        if (!array_key_exists($contentType, $this->collection)) {
+        if (!array_key_exists($contentType, $this->collection) || $force) {
             $this->collection[$contentType] = $mapper;
-        } elseif (true === $force) {
-            unset ($this->collection[$contentType]);
-            $this->registerHandler($contentType, $mapper);
+        } else {
+            $this->getLogger()->debug('Trying to register already existing handler for ' . $contentType);
         }
     }
 
     /**
-     * @param $contentType
+     * @param string $contentType
      *
      * @return object
      * @throws SmartlingInvalidFactoryArgumentException
@@ -124,14 +104,14 @@ abstract class SmartlingFactoryAbstract
     {
         if (array_key_exists($contentType, $this->collection)) {
             return $this->collection[$contentType];
-        } else {
-            if (true === $this->getAllowDefault() && null !== $this->getDefaultHandler()) {
-                return $this->getDefaultHandler();
-            } else {
-                $message = vsprintf($this->message, [$contentType, get_called_class()]);
-                $this->getLogger()->error($message);
-                throw new SmartlingInvalidFactoryArgumentException($message);
-            }
         }
+
+        if (true === $this->getAllowDefault() && null !== $this->getDefaultHandler()) {
+            return $this->getDefaultHandler();
+        }
+
+        $message = vsprintf($this->message, [$contentType, get_called_class()]);
+        $this->getLogger()->error($message);
+        throw new SmartlingInvalidFactoryArgumentException($message);
     }
 }
