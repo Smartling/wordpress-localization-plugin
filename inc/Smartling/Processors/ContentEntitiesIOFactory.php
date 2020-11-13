@@ -26,14 +26,13 @@ class ContentEntitiesIOFactory extends SmartlingFactoryAbstract
     }
 
     /**
-     * @param string $contentType
+     * @param                $contentType
      * @param EntityAbstract $mapper
-     * @param bool $force
+     * @param bool           $force
      */
     public function registerMapper($contentType, $mapper, $force = false)
     {
-        $this->getLogger()->debug('called registerMapper with ' . get_class($mapper));
-        $this->registerHandler($contentType, $mapper, $force);
+        parent::registerHandler($contentType, $mapper, $force);
     }
 
     /**
@@ -44,12 +43,13 @@ class ContentEntitiesIOFactory extends SmartlingFactoryAbstract
      */
     public function getMapper($contentType)
     {
-        $obj = $this->getHandler($contentType);
+        $obj = parent::getHandler($contentType);
 
-        if ($obj instanceof EntityAbstract) {
+        if (is_object($obj)){
             return clone $obj;
+        } else {
+            Bootstrap::DebugPrint([$contentType,$obj],true);
         }
 
-        Bootstrap::DebugPrint([$contentType, $obj],true);
     }
 }

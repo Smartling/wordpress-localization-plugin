@@ -2,7 +2,6 @@
 
 namespace Smartling\ContentTypes;
 
-use Smartling\DbAl\WordpressContentEntities\NavigationMenuItemEntity;
 use Smartling\Helpers\CustomMenuContentTypeHelper;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -39,9 +38,9 @@ class ContentTypeNavigationMenuItem extends PostBasedContentTypeAbstract
     {
         $descriptor = new static($di);
         $mgr = $di->get($manager);
-        if (!$mgr instanceof ContentTypeManager) {
-            throw new \RuntimeException(ContentTypeManager::class . ' expected');
-        }
+        /**
+         * @var \Smartling\ContentTypes\ContentTypeManager $mgr
+         */
         $mgr->addDescriptor($descriptor);
     }
 
@@ -62,12 +61,21 @@ class ContentTypeNavigationMenuItem extends PostBasedContentTypeAbstract
     {
         $di = $this->getContainerBuilder();
         $wrapperId = 'wrapper.entity.' . $this->getSystemName();
-        $definition = $di->register($wrapperId, NavigationMenuItemEntity::class);
+        $definition = $di->register($wrapperId, 'Smartling\DbAl\WordpressContentEntities\PostEntityStd');
         $definition
             ->addArgument($this->getSystemName())
             ->addArgument([]);
 
         $di->get('factory.contentIO')->registerHandler($this->getSystemName(), $di->get($wrapperId));
+
+    }
+
+    public function getVisibility()
+    {
+        return [
+            'submissionBoard' => true,
+            'bulkSubmit'      => false,
+        ];
     }
 
     /**

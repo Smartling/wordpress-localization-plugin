@@ -36,7 +36,6 @@ class SmartlingListTable extends WP_List_Table
 
     /**
      * @param SiteHelper $siteHelper
-     * @param string $page
      *
      * @return array
      */
