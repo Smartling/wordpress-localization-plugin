@@ -58,6 +58,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 1.15.3 =
+* Fixed issue where menu items were not sent for translation when sending menus for translation
+
 = 1.15.2 =
 * Fixed issue when notices were not displayed on successful translation download
 * Fixed compatibility with newer Multilingual Press plugin versions

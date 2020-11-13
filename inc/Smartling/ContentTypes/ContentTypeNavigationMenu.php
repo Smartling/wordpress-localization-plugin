@@ -125,7 +125,8 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
                     $menuItemEntity->getPK(),
                     $params->getSubmission()->getTargetBlogId(),
                     $params->getSubmission()->getBatchUid(),
-                    (1 === $params->getSubmission()->getIsCloned())
+                    (1 === $params->getSubmission()->getIsCloned()),
+                    true // Sending only the menu for translation is senseless, ignoring manual relations handling here
                 );
 
                 //enqueue for download menu item

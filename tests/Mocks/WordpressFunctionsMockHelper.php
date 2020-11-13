@@ -193,14 +193,19 @@ namespace {
             }
         }
         if (!function_exists('get_term')) {
-            function get_term($id, $taxonomy, $outputFormat)
+            function get_term($term, $taxonomy = '', $output = 'OBJECT', $filter = 'raw')
             {
-                $category = ['term_id'          => $id, 'name' => 'Fake Name', 'slug' => 'fake-name', 'term_group' => 0,
-                             'term_taxonomy_id' => 0, 'taxonomy' => $taxonomy, 'description' => '', 'parent' => 0,
-                             'count'            => 0,];
-
-
-                return $category;
+                return [
+                    'term_id' => $term,
+                    'name' => 'Fake Name',
+                    'slug' => 'fake-name',
+                    'term_group' => 0,
+                    'term_taxonomy_id' => 0,
+                    'taxonomy' => $taxonomy,
+                    'description' => '',
+                    'parent' => 0,
+                    'count' => 0,
+                ];
             }
         }
 

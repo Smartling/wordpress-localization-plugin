@@ -185,17 +185,18 @@ class TranslationHelper
 
     /**
      * @param string $contentType
-     * @param int    $sourceBlog
-     * @param int    $sourceId
-     * @param int    $targetBlog
-     * @param bool   $clone
-     *
+     * @param int $sourceBlog
+     * @param int $sourceId
+     * @param int $targetBlog
+     * @param bool $clone
+     * @param bool $ignoreManualRelationsHandling
      * @return mixed
      * @throws SmartlingDataReadException
+     * @throws SmartlingManualRelationsHandlingSubmissionCreationForbiddenException
      */
-    public function prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone = false)
+    public function prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone = false, $ignoreManualRelationsHandling = false)
     {
-        if (0 == $sourceId) {
+        if (0 === (int)$sourceId) {
             throw new \InvalidArgumentException('Source id cannot be 0.');
         }
         $submission = $this->prepareSubmissionEntity(
@@ -206,10 +207,10 @@ class TranslationHelper
         );
 
         if (0 === (int)$submission->getId()) {
-            /**
-             * Do not allow to create new submissions
-             */
-            if (GlobalSettingsManager::isHandleRelationsManually()) {
+            if (!$ignoreManualRelationsHandling && GlobalSettingsManager::isHandleRelationsManually()) {
+                /**
+                 * Do not allow to create new submissions
+                 */
                 throw new SmartlingManualRelationsHandlingSubmissionCreationForbiddenException(vsprintf(
                     'Creation of submission [%s] cancelled due to manual relation processing mode.',
                     [var_export($submission->toArray(false), true)]
@@ -246,18 +247,19 @@ class TranslationHelper
 
     /**
      * @param string $contentType
-     * @param int    $sourceBlog
-     * @param int    $sourceId
-     * @param int    $targetBlog
+     * @param int $sourceBlog
+     * @param int $sourceId
+     * @param int $targetBlog
      * @param string $batchUid
-     * @param bool   $clone
+     * @param bool $clone
+     * @param bool $ignoreManualRelationsHandling
      *
      * @return SubmissionEntity
      * @throws SmartlingDataReadException
      */
-    public function tryPrepareRelatedContent($contentType, $sourceBlog, $sourceId, $targetBlog, $batchUid, $clone = false)
+    public function tryPrepareRelatedContent($contentType, $sourceBlog, $sourceId, $targetBlog, $batchUid, $clone = false, $ignoreManualRelationsHandling = false)
     {
-        $relatedSubmission = $this->prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone);
+        $relatedSubmission = $this->prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone, $ignoreManualRelationsHandling);
 
         /**
          * @var SubmissionEntity $relatedSubmission

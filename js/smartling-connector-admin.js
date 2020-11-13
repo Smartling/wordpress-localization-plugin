@@ -284,14 +284,22 @@ function ajaxDownload() {
                         }
                         break;
                 }
-                if (wp && wp.data && wp.data.dispatch && wp.data.dispatch('core/notices').createSuccessNotice && wp.data.dispatch('core/notices').createErrorNotice) {
+                if (wp && wp.data && wp.data.dispatch) {
                     var dispatch = wp.data.dispatch("core/notices");
                     switch (type) {
                         case "success":
-                            dispatch.createSuccessNotice(message);
+                            try {
+                                dispatch.createSuccessNotice(message);
+                            } catch (e) {
+                                admin_notice(message, type);
+                            }
                             break;
                         case "error":
-                            dispatch.createErrorNotice(message);
+                            try {
+                                dispatch.createErrorNotice(message);
+                            } catch (e) {
+                                admin_notice(message, type);
+                            }
                             break;
                     }
                 } else {

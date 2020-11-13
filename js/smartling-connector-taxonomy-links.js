@@ -22,14 +22,24 @@ jQuery(document).on('ready', function () {
             if (success) {
                 const message = 'Taxonomies linked';
                 submissions = data.submissions;
-                if (wp && wp.data && wp.data.dispatch && wp.data.dispatch('core/notices').createSuccessNotice) {
-                    wp.data.dispatch('core/notices').createSuccessNotice(message);
+                if (wp && wp.data && wp.data.dispatch) {
+                    try {
+                        wp.data.dispatch('core/notices').createSuccessNotice(message);
+                    } catch (e) {
+                        admin_notice(message, 'success')
+                        console.log(e);
+                    }
                 } else {
                     admin_notice(message, 'success');
                 }
             } else {
-                if (wp && wp.data && wp.data.dispatch && wp.data.dispatch('core/notices').createErrorNotice) {
-                    wp.data.dispatch('core/notices').createErrorNotice(data.data);
+                if (wp && wp.data && wp.data.dispatch) {
+                    try {
+                        wp.data.dispatch('core/notices').createErrorNotice(data.data);
+                    } catch (e) {
+                        admin_notice(message, 'error');
+                        console.log(e);
+                    }
                 } else {
                     admin_notice(data.data, 'error');
                 }
