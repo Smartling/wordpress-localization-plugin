@@ -133,21 +133,21 @@ class SmartlingCore extends SmartlingCoreAbstract
             if (0 === $bytesWritten) {
                 $this->getLogger()->warning('Nothing was written to temporary file.');
                 return false;
-            } else {
-                $tmpFileSize = filesize($tmp_file);
-                if ($tmpFileSize !== $bytesWritten || $tmpFileSize !== strlen($xmlFileContent)) {
-                    $this->getLogger()->warning('Expected size of temporary file doesn\'t equals to real.');
-                    return false;
-                } else {
-                    $result = $this->getApiWrapper()->uploadContent($submission, '', $tmp_file, $smartlingLocaleList);
-                    unlink($tmp_file);
-                    return $result;
-                }
             }
-        } else {
-            $this->getLogger()->warning(vsprintf('Working directory : \'%s\' doesn\'t seen to be writable',[$workDir]));
-            return false;
+
+            $tmpFileSize = filesize($tmp_file);
+            if ($tmpFileSize !== $bytesWritten || $tmpFileSize !== strlen($xmlFileContent)) {
+                $this->getLogger()->warning('Expected size of temporary file doesn\'t equals to real.');
+                return false;
+            }
+
+            $result = $this->getApiWrapper()->uploadContent($submission, '', $tmp_file, $smartlingLocaleList);
+            unlink($tmp_file);
+            return $result;
         }
+
+        $this->getLogger()->warning(vsprintf('Working directory : \'%s\' doesn\'t seen to be writable',[$workDir]));
+        return false;
     }
 
     /**
@@ -208,7 +208,7 @@ class SmartlingCore extends SmartlingCoreAbstract
             ]));
 
 
-            $submission = $this->getSubmissionManager()->storeEntity($submission);
+            $this->getSubmissionManager()->storeEntity($submission);
         } catch (SmartlingExceptionAbstract $e) {
             $messages[] = $e->getMessage();
         } catch (Exception $e) {
@@ -234,25 +234,22 @@ class SmartlingCore extends SmartlingCoreAbstract
 
         if (count($entities) > 0) {
             return reset($entities);
-        } else {
-            $message = vsprintf('Requested SubmissionEntity with id=%s does not exist.', [$id]);
-
-            $this->getLogger()->error($message);
-            throw new SmartlingDbException($message);
         }
+
+        $message = vsprintf('Requested SubmissionEntity with id=%s does not exist.', [$id]);
+
+        $this->getLogger()->error($message);
+        throw new SmartlingDbException($message);
     }
 
     /**
-     * @param array $items
-     *
+     * @param SubmissionEntity[] $items
      * @return array
-     * @throws SmartlingDbException
      */
     public function bulkCheckByIds(array $items)
     {
         $results = [];
         foreach ($items as $item) {
-            /** @var SubmissionEntity $entity */
             try {
                 $entity = $this->loadSubmissionEntityById($item);
             } catch (SmartlingDbException $e) {

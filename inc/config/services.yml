@@ -4,6 +4,7 @@ parameters:
 
   submission.pagesize.default: 20
   submission.pagesize: 20
+
 services:
   content-type-descriptor-manager:
     class: Smartling\ContentTypes\ContentTypeManager

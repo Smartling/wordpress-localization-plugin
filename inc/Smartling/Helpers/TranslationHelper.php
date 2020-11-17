@@ -171,7 +171,7 @@ class TranslationHelper
      */
     public function prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null)
     {
-        $this->validateBlogs($sourceBlog,$targetBlog);
+        $this->validateBlogs($sourceBlog, $targetBlog);
 
         return $this->getSubmissionManager()->getSubmissionEntity(
             $contentType,
@@ -189,12 +189,11 @@ class TranslationHelper
      * @param int $sourceId
      * @param int $targetBlog
      * @param bool $clone
-     * @param bool $ignoreManualRelationsHandling
-     * @return mixed
+     * @return SubmissionEntity
      * @throws SmartlingDataReadException
      * @throws SmartlingManualRelationsHandlingSubmissionCreationForbiddenException
      */
-    public function prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone = false, $ignoreManualRelationsHandling = false)
+    public function prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone = false)
     {
         if (0 === (int)$sourceId) {
             throw new \InvalidArgumentException('Source id cannot be 0.');
@@ -207,7 +206,7 @@ class TranslationHelper
         );
 
         if (0 === (int)$submission->getId()) {
-            if (!$ignoreManualRelationsHandling && GlobalSettingsManager::isHandleRelationsManually()) {
+            if (GlobalSettingsManager::isHandleRelationsManually()) {
                 /**
                  * Do not allow to create new submissions
                  */
@@ -229,7 +228,7 @@ class TranslationHelper
     /**
      * @param SubmissionEntity $submission
      *
-     * @return mixed
+     * @return SubmissionEntity
      * @throws SmartlingDataReadException
      */
     public function reloadSubmission(SubmissionEntity $submission)
@@ -247,23 +246,48 @@ class TranslationHelper
 
     /**
      * @param string $contentType
+     * @param int $sourceBlogId
+     * @param int $contentId
+     * @param int $targetBlogId
+     * @return bool
+     */
+    public function isRelatedSubmissionCreationNeeded($contentType, $sourceBlogId, $contentId, $targetBlogId) {
+        return !GlobalSettingsManager::isHandleRelationsManually() ||
+            $this->submissionManager->submissionExistsNoLastError($contentType, $sourceBlogId, $contentId, $targetBlogId);
+    }
+
+    /**
+     * @param string $contentType
+     * @param int $sourceBlogId
+     * @param int $contentId
+     * @param int $targetBlogId
+     * @param string $batchUid
+     * @return SubmissionEntity
+     * @throws SmartlingDataReadException
+     */
+    public function getExistingSubmissionOrCreateNew($contentType, $sourceBlogId, $contentId, $targetBlogId, $batchUid) {
+        $submission = $this->submissionManager->getSubmissionEntity($contentType, $sourceBlogId, $contentId, $targetBlogId, $this->getMutilangProxy());
+        if ($submission->getTargetId() === 0) {
+            $this->getLogger()->debug("Got submission with 0 target id");
+            $submission = $this->tryPrepareRelatedContent($contentType, $sourceBlogId, $contentId, $targetBlogId, $batchUid);
+        }
+        return $submission;
+    }
+
+    /**
+     * @param string $contentType
      * @param int $sourceBlog
      * @param int $sourceId
      * @param int $targetBlog
      * @param string $batchUid
      * @param bool $clone
-     * @param bool $ignoreManualRelationsHandling
-     *
      * @return SubmissionEntity
      * @throws SmartlingDataReadException
      */
-    public function tryPrepareRelatedContent($contentType, $sourceBlog, $sourceId, $targetBlog, $batchUid, $clone = false, $ignoreManualRelationsHandling = false)
+    public function tryPrepareRelatedContent($contentType, $sourceBlog, $sourceId, $targetBlog, $batchUid, $clone = false)
     {
-        $relatedSubmission = $this->prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone, $ignoreManualRelationsHandling);
+        $relatedSubmission = $this->prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone);
 
-        /**
-         * @var SubmissionEntity $relatedSubmission
-         */
         if (0 !== $sourceId && 0 === $relatedSubmission->getTargetId() &&
             SubmissionEntity::SUBMISSION_STATUS_FAILED !== $relatedSubmission->getStatus()
         ) {

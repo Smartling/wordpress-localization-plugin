@@ -4,16 +4,13 @@ namespace Smartling\ContentTypes;
 
 use Smartling\Base\ExportedAPI;
 use Smartling\ContentTypes\ConfigParsers\PostTypeConfigParser;
-use Smartling\Helpers\CustomMenuContentTypeHelper;
+use Smartling\Exception\SmartlingDataReadException;
 use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
 use Smartling\Helpers\StringHelper;
-use Smartling\Helpers\TranslationHelper;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\WP\Controller\PostBasedWidgetControllerStd;
+use Smartling\WP\Controller\ContentEditJobController;
 
-/**
- * Class CustomPostType
- * @package Smartling\ContentTypes
- */
 class CustomPostType extends PostBasedContentTypeAbstract
 {
     use CustomTypeTrait;
@@ -32,7 +29,7 @@ class CustomPostType extends PostBasedContentTypeAbstract
 
         if (!StringHelper::isNullOrEmpty($parser->getIdentifier())) {
             $this->setSystemName($parser->getIdentifier());
-            $label = parent::getLabel();
+            $label = $this->getLabel();
             if ('unknown' === $label) {
                 $label = $this->getSystemName();
             }
@@ -43,7 +40,7 @@ class CustomPostType extends PostBasedContentTypeAbstract
     }
 
     /**
-     * Handler to register IO Wrapper
+     * Handler to register IO Wrapper. Alters DI container.
      * @return void
      */
     public function registerIOWrapper()
@@ -58,16 +55,16 @@ class CustomPostType extends PostBasedContentTypeAbstract
     }
 
     /**
-     * Handler to register Widget (Edit Screen)
+     * Handler to register Widget (Edit Screen). Alters DI container.
      * @return void
      */
     public function registerWidgetHandler()
     {
         if ($this->getConfigParser()->hasWidget()) {
             $di = $this->getContainerBuilder();
-            $tag = 'wp.' . static::getSystemName();
+            $tag = 'wp.' . $this->getSystemName();
             $di
-                ->register($tag, 'Smartling\WP\Controller\PostBasedWidgetControllerStd')
+                ->register($tag, PostBasedWidgetControllerStd::class)
                 ->addArgument($di->getDefinition('multilang.proxy'))
                 ->addArgument($di->getDefinition('plugin.info'))
                 ->addArgument($di->getDefinition('entity.helper'))
@@ -75,7 +72,7 @@ class CustomPostType extends PostBasedContentTypeAbstract
                 ->addArgument($di->getDefinition('site.cache'))
                 ->addMethodCall('setDetectChangesHelper', [$di->getDefinition('detect-changes.helper')])
                 ->addMethodCall('setAbilityNeeded', ['edit_post'])
-                ->addMethodCall('setServedContentType', [static::getSystemName()])
+                ->addMethodCall('setServedContentType', [$this->getSystemName()])
                 ->addMethodCall('setNoOriginalFound', [__($this->getConfigParser()->getWidgetMessage())]);
 
             $di->get($tag)->register();
@@ -83,63 +80,57 @@ class CustomPostType extends PostBasedContentTypeAbstract
         }
     }
 
+    /**
+     * Alters DI container
+     */
     protected function registerJobWidget()
     {
         $di = $this->getContainerBuilder();
-        $tag = 'wp.job.' . static::getSystemName();
+        $tag = 'wp.job.' . $this->getSystemName();
 
         $di
-            ->register($tag, 'Smartling\WP\Controller\ContentEditJobController')
+            ->register($tag, ContentEditJobController::class)
             ->addArgument($di->getDefinition('multilang.proxy'))
             ->addArgument($di->getDefinition('plugin.info'))
             ->addArgument($di->getDefinition('entity.helper'))
             ->addArgument($di->getDefinition('manager.submission'))
             ->addArgument($di->getDefinition('site.cache'))
-            ->addMethodCall('setServedContentType', [static::getSystemName()]);
+            ->addMethodCall('setServedContentType', [$this->getSystemName()]);
         $di->get($tag)->register();
     }
 
+    /**
+     * Alters $params->accumulator
+     *
+     * @param ProcessRelatedContentParams $params
+     * @return void
+     * @throws SmartlingDataReadException
+     */
     public function registerTaxonomyRelations(ProcessRelatedContentParams $params)
     {
-        if ($this->getSystemName() === $params->getSubmission()->getContentType()) {
-            /**
-             * @var CustomMenuContentTypeHelper $helper
-             */
-            $helper = $this->getContainerBuilder()->get('helper.customMenu');
-            $terms = $helper->getTerms($params->getSubmission(), $params->getContentType());
-            $logger = MonologWrapper::getLogger(get_called_class());
-            if (0 < count($terms)) {
-                foreach ($terms as $element) {
-                    $logger->debug(vsprintf('Sending for translation term = \'%s\' id = \'%s\' related to submission = \'%s\'.', [
-                        $element->taxonomy,
-                        $element->term_id,
-                        $params->getSubmission()->getId(),
-                    ]));
-
-                    /**
-                     * @var TranslationHelper $translationHelper
-                     */
-                    $translationHelper = $this->getContainerBuilder()->get('translation.helper');
-
-                    $relatedSubmission = $translationHelper
-                        ->tryPrepareRelatedContent(
-                            $element->taxonomy,
-                            $params->getSubmission()->getSourceBlogId(),
-                            $element->term_id,
-                            $params->getSubmission()->getTargetBlogId(),
-                            $params->getSubmission()->getBatchUid(),
-                            (1 === $params->getSubmission()->getIsCloned())
-                        );
-                    $params->getAccumulator()[$params->getContentType()][] = $relatedSubmission->getTargetId();
-                    $logger->debug(
-                        vsprintf(
-                            'Received id=%s for submission id=%s',
-                            [
-                                $relatedSubmission->getTargetId(),
-                                $relatedSubmission->getId(),
-                            ]
-                        )
+        $submission = $params->getSubmission();
+        $sourceBlogId = $submission->getSourceBlogId();
+        $targetBlogId = $submission->getTargetBlogId();
+        if ($this->getSystemName() === $submission->getContentType()) {
+            $logger = MonologWrapper::getLogger(static::class);
+            foreach ($this->getContainerBuilder()->get('helper.customMenu')->getTerms($submission, $params->getContentType()) as $element) {
+                $contentType = $element->taxonomy;
+                $id = $element->term_id;
+                $logger->debug("Sending for translation term = '{$contentType}' id = '$id' related to submission = '{$submission->getId()}'.");
+                $translationHelper = $this->getContainerBuilder()->get('translation.helper');
+                if ($translationHelper->isRelatedSubmissionCreationNeeded($contentType, $sourceBlogId, $id, $targetBlogId)) {
+                    $relatedSubmission = $translationHelper->tryPrepareRelatedContent(
+                        $contentType,
+                        $sourceBlogId,
+                        $id,
+                        $targetBlogId,
+                        $submission->getBatchUid(),
+                        (1 === $submission->getIsCloned())
                     );
+                    $params->getAccumulator()[$params->getContentType()][] = $relatedSubmission->getTargetId();
+                    $logger->debug("Received id={$relatedSubmission->getTargetId()} for submission id={$relatedSubmission->getId()}");
+                } else {
+                    $logger->debug("Skipped sending term $id for translation due to manual relations handling");
                 }
             }
         }

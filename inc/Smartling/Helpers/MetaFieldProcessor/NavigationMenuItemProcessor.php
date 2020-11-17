@@ -6,17 +6,12 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Class NavigationMenuItemProcessor
- * @package Smartling\Helpers\MetaFieldProcessor
- */
 class NavigationMenuItemProcessor extends ReferencedContentProcessor
 {
     /**
      * @param SubmissionEntity $submission
-     * @param string           $fieldName
-     * @param mixed            $value
-     *
+     * @param string $fieldName
+     * @param mixed $value
      * @return mixed
      */
     public function processFieldPostTranslation(SubmissionEntity $submission, $fieldName, $value)
@@ -54,41 +49,28 @@ class NavigationMenuItemProcessor extends ReferencedContentProcessor
             if (array_key_exists('_menu_item_type', $originalMetadata) &&
                 in_array($originalMetadata['_menu_item_type'], ['taxonomy', 'post_type'], true)
             ) {
-
                 $relatedContentType = $originalMetadata['_menu_item_object'];
-                $this->getLogger()->debug(
-                    vsprintf(
-                        'Sending for translation object = \'%s\' id = \'%s\' related to \'%s\' related to submission = \'%s\'.',
-                        [
-                            $relatedContentType,
-                            $value,
-                            ContentTypeNavigationMenuItem::WP_CONTENT_TYPE,
-                            $submission->getId(),
-                        ]
-                    )
-                );
+                $sourceBlogId = $submission->getSourceBlogId();
+                $targetBlogId = $submission->getTargetBlogId();
+                if ($this->getTranslationHelper()->isRelatedSubmissionCreationNeeded($relatedContentType, $sourceBlogId, $value, $targetBlogId)) {
+                    $this->getLogger()->debug(sprintf("Sending for translation object = '$relatedContentType' id = '$value' related to '%s' related to submission = '{$submission->getId()}'.", ContentTypeNavigationMenuItem::WP_CONTENT_TYPE));
 
-                $relatedObjectSubmission = $this->getTranslationHelper()->tryPrepareRelatedContent(
-                    $relatedContentType,
-                    $submission->getSourceBlogId(),
-                    $value,
-                    $submission->getTargetBlogId(),
-                    $submission->getBatchUid(),
-                    (1 === $submission->getIsCloned())
-                );
+                    return $this->getTranslationHelper()->tryPrepareRelatedContent(
+                        $relatedContentType,
+                        $sourceBlogId,
+                        $value,
+                        $targetBlogId,
+                        $submission->getBatchUid(),
+                        (1 === $submission->getIsCloned())
+                    )->getTargetId();
+                }
 
-                return $relatedObjectSubmission->getTargetId();
+                $this->getLogger()->debug("Skip sending object = '$relatedContentType' id = '$value' due to manual relations handling");
             }
         } catch (\Exception $e) {
-            $this->getLogger()->debug(vsprintf(
-                                          'An exception occurred while processing field \'%s\'=\'%s\' of submission %s',
-                                          [
-                                              $fieldName,
-                                              $value,
-                                              $submission->getId(),
-                                          ]
-                                      )
-            );
+            $this->getLogger()->debug("An exception occurred while processing field '$fieldName'='$value' of submission {$submission->getId()}: {$e->getMessage()}");
         }
+
+        return 0;
     }
 }

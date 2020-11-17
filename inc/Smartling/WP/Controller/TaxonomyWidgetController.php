@@ -5,6 +5,7 @@ namespace Smartling\WP\Controller;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingNotSupportedContentException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
@@ -98,7 +99,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
      * @param string $wordpressType
      *
      * @return string
-     * @throws \Smartling\Exception\SmartlingDirectRunRuntimeException
+     * @throws SmartlingDirectRunRuntimeException
      * @throws SmartlingNotSupportedContentException
      */
     private function getInternalType($wordpressType)
@@ -107,14 +108,14 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
 
         if (array_key_exists($wordpressType, $reverseMap)) {
             return $reverseMap[$wordpressType];
-        } else {
-            $message = vsprintf('Tried to translate non supported taxonomy:%s', [$wordpressType]);
-
-            $this->getLogger()
-                ->warning($message);
-
-            throw new SmartlingNotSupportedContentException($message);
         }
+
+        $message = vsprintf('Tried to translate non supported taxonomy:%s', [$wordpressType]);
+
+        $this->getLogger()
+            ->warning($message);
+
+        throw new SmartlingNotSupportedContentException($message);
     }
 
     /**
@@ -161,6 +162,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
 
     public function save($term_id)
     {
+        $this->getLogger()->debug("Usage: class='" . __CLASS__ . "', function='" . __FUNCTION__ . "'");
         if (!array_key_exists('taxonomy', $_POST)) {
             return;
         }
@@ -181,18 +183,16 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
 
         if (null !== $data && array_key_exists('locales', $data)) {
             $locales = [];
-            if (array_key_exists('locales', $data)) {
-                if (is_array($data['locales'])) {
-                    foreach ($data['locales'] as $_locale) {
-                        if (array_key_exists('enabled', $_locale) && 'on' === $_locale['enabled']) {
-                            $locales[] = (int)$_locale['blog'];
-                        }
+            if (is_array($data['locales'])) {
+                foreach ($data['locales'] as $_locale) {
+                    if (array_key_exists('enabled', $_locale) && 'on' === $_locale['enabled']) {
+                        $locales[] = (int)$_locale['blog'];
                     }
-                } elseif (is_string($data['locales'])) {
-                    $locales = explode(',', $data['locales']);
-                } else {
-                    return;
                 }
+            } elseif (is_string($data['locales'])) {
+                $locales = explode(',', $data['locales']);
+            } else {
+                return;
             }
             $core = $this->getCore();
             $translationHelper = $core->getTranslationHelper();
@@ -234,7 +234,11 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                                 return;
                             }
                             foreach ($locales as $blogId) {
-                                $submission = $translationHelper->tryPrepareRelatedContent($this->getTaxonomy(), $sourceBlog, $originalId, (int)$blogId, $batchUid, false);
+                                if ($translationHelper->isRelatedSubmissionCreationNeeded($this->getTaxonomy(), $sourceBlog, $originalId, (int)$blogId)) {
+                                    $submission = $translationHelper->tryPrepareRelatedContent($this->getTaxonomy(), $sourceBlog, $originalId, (int)$blogId, $batchUid);
+                                } else {
+                                    $submission = $translationHelper->getExistingSubmissionOrCreateNew($this->getTaxonomy(), $sourceBlog, $originalId, (int)$blogId, $batchUid);
+                                }
 
                                 if (0 < $submission->getId()) {
                                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);

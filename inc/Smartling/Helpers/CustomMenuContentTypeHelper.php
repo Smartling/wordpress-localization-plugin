@@ -160,11 +160,12 @@ class CustomMenuContentTypeHelper
      * @param SubmissionEntity $submission
      * @param string           $taxonomy
      *
-     * @return array
+     * @return \WP_Term[]
      */
     public function getTerms($submission, $taxonomy)
     {
         $needBlogSwitch = $submission->getSourceBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
+        $terms = [];
 
         try {
             if ($needBlogSwitch) {
@@ -180,7 +181,7 @@ class CustomMenuContentTypeHelper
             $this->getLogger()->warning(vsprintf('Cannot get terms in missing blog.', []));
         }
 
-        return null !== $terms && is_array($terms) ? $terms : [];
+        return is_array($terms) ? $terms : [];
     }
 
 

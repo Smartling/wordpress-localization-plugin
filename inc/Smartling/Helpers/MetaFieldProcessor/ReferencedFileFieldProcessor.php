@@ -2,7 +2,6 @@
 
 namespace Smartling\Helpers\MetaFieldProcessor;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Exception\SmartlingDataReadException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
@@ -10,10 +9,6 @@ use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Class ReferencedFileFieldProcessor
- * @package Smartling\Helpers\MetaFieldProcessor
- */
 class ReferencedFileFieldProcessor extends MetaFieldProcessorAbstract
 {
     /**
@@ -52,10 +47,10 @@ class ReferencedFileFieldProcessor extends MetaFieldProcessorAbstract
 
     /**
      * @param SubmissionEntity $submission
-     * @param string           $fieldName
-     * @param mixed            $value
+     * @param string $fieldName
+     * @param mixed $value
      *
-     * @return mixed|string
+     * @return mixed
      */
     public function processFieldPostTranslation(SubmissionEntity $submission, $fieldName, $value)
     {
@@ -76,23 +71,23 @@ class ReferencedFileFieldProcessor extends MetaFieldProcessorAbstract
         }
 
         try {
-            $this->getLogger()->debug(
-                vsprintf(
-                    'Sending for translation referenced image id = \'%s\' related to submission = \'%s\'.',
-                    [$value, $submission->getId(),]
-                )
-            );
+            $contentType = 'attachment';
+            $sourceBlogId = $submission->getSourceBlogId();
+            $targetBlogId = $submission->getTargetBlogId();
+            if ($this->getTranslationHelper()->isRelatedSubmissionCreationNeeded($contentType, $sourceBlogId, $value, $targetBlogId)) {
+                $this->getLogger()->debug("Sending for translation referenced image id = '$value' related to submission = '{$submission->getId()}'.");
 
-            $attSubmission = $this->getTranslationHelper()->tryPrepareRelatedContent(
-                'attachment',
-                $submission->getSourceBlogId(),
-                $value,
-                $submission->getTargetBlogId(),
-                $submission->getBatchUid(),
-                (1 === $submission->getIsCloned())
-            );
+                return $this->getTranslationHelper()->tryPrepareRelatedContent(
+                    $contentType,
+                    $sourceBlogId,
+                    $value,
+                    $targetBlogId,
+                    $submission->getBatchUid(),
+                    (1 === $submission->getIsCloned())
+                )->getTargetId();
+            }
 
-            return $attSubmission->getTargetId();
+            $this->getLogger()->debug("Skip sending for translation referenced image id = '$value' related to submission = '{$submission->getId()}'.");
         } catch (SmartlingDataReadException $e) {
             $message = vsprintf(
                 'An error happened while processing referenced image with original value=%s. Keeping original value.',
@@ -101,8 +96,6 @@ class ReferencedFileFieldProcessor extends MetaFieldProcessorAbstract
                 ]
             );
             $this->getLogger()->error($message);
-
-
         } catch (\Exception $e) {
             $message = vsprintf(
                 'An exception occurred while sending related item=%s, submission=%s for translation. Message: %s',
@@ -113,7 +106,6 @@ class ReferencedFileFieldProcessor extends MetaFieldProcessorAbstract
                 ]
             );
             $this->getLogger()->error($message);
-
         }
 
         return $originalValue;

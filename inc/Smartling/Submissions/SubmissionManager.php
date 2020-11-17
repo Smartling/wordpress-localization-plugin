@@ -85,50 +85,37 @@ class SubmissionManager extends EntityManagerAbstract
     }
 
     /**
-     * @param $contentType
-     *
+     * @param mixed $contentType
      * @return bool
      */
-    private function validateContentType($contentType)
+    private function isValidContentType($contentType)
     {
         return
             null === $contentType
-            || in_array($contentType, array_keys(WordpressContentTypeHelper::getReverseMap()), true);
-    }
-
-	/**
-	 * @param array $dbRow
-	 *
-	 * @return SubmissionEntity
-	 */
-    protected function dbResultToEntity(array $dbRow)
-    {
-        return SubmissionEntity::fromArray((array)$dbRow, $this->getLogger());
+            || array_key_exists($contentType, WordpressContentTypeHelper::getReverseMap());
     }
 
     /**
-     * Validates request
-     *
-     * @param $contentType
+     * @param array $dbRow
+     * @return SubmissionEntity
+     */
+    protected function dbResultToEntity(array $dbRow)
+    {
+        return SubmissionEntity::fromArray($dbRow, $this->getLogger());
+    }
+
+    /**
+     * @param string $contentType
      * @param $sortOptions
      * @param $pageOptions
      *
      * @return bool
      */
-    private function validateRequest($contentType, $sortOptions, $pageOptions)
+    private function isValidRequest($contentType, $sortOptions, $pageOptions)
     {
-        $fSortOptionsAreValid = QueryBuilder::validateSortOptions(
-            array_keys(
-                SubmissionEntity::getFieldDefinitions()
-            ),
-            $sortOptions
-        );
-
-        $fPageOptionsValid = QueryBuilder::validatePageOptions($pageOptions);
-
-        $fContentTypeValid = $this->validateContentType($contentType);
-
-        $validRequest = $fContentTypeValid && $fPageOptionsValid && $fSortOptionsAreValid;
+        $validRequest = $this->isValidContentType($contentType) &&
+            QueryBuilder::validatePageOptions($pageOptions) &&
+            QueryBuilder::validateSortOptions(array_keys(SubmissionEntity::getFieldDefinitions()), $sortOptions);
 
         return ($validRequest === true);
     }
@@ -159,12 +146,9 @@ class SubmissionManager extends EntityManagerAbstract
         $targetBlogId = null,
         & $totalCount = 0
     ) {
-        $validRequest = $this->validateRequest($contentType, $sortOptions, $pageOptions);
-
         $result = [];
 
-        if ($validRequest) {
-
+        if ($this->isValidRequest($contentType, $sortOptions, $pageOptions)) {
             if (null !== $targetBlogId) {
                 $block = ConditionBlock::getConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
                 $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ,
@@ -174,21 +158,46 @@ class SubmissionManager extends EntityManagerAbstract
                 $block = null;
             }
 
-            $dataQuery = $this->buildQuery($contentType, $status, $outdatedFlag, $sortOptions, $pageOptions, $block);
-
-            $countQuery = $this->buildCountQuery($contentType, $status, $outdatedFlag, $block);
-
-            $totalCount = $this->getDbal()->fetch($countQuery);
-
-            // extracting from result
-            $totalCount = (int)$totalCount[0]->cnt;
-
-            $result = $this->fetchData($dataQuery);
+            list($totalCount, $result) = $this->getTotalCountAndResult($contentType, $status, $outdatedFlag, $sortOptions, $block, $pageOptions);
         }
 
         return $result;
     }
 
+    /**
+     * @param string $contentType
+     * @param int $sourceBlogId
+     * @param int $contentId
+     * @param int $targetBlogId
+     * @return bool
+     */
+    public function submissionExists($contentType, $sourceBlogId, $contentId, $targetBlogId)
+    {
+        return 1 === count($this->find([
+                SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
+                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+                SubmissionEntity::FIELD_SOURCE_ID => $contentId,
+                SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+            ], 1));
+    }
+
+    /**
+     * @param string $contentType
+     * @param int $sourceBlogId
+     * @param int $contentId
+     * @param int $targetBlogId
+     * @return bool
+     */
+    public function submissionExistsNoLastError($contentType, $sourceBlogId, $contentId, $targetBlogId)
+    {
+        return 1 === count($this->find([
+                SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
+                SubmissionEntity::FIELD_LAST_ERROR => '',
+                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+                SubmissionEntity::FIELD_SOURCE_ID => $contentId,
+                SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+            ], 1));
+    }
 
     /**
      * @param string      $searchText
@@ -217,7 +226,7 @@ class SubmissionManager extends EntityManagerAbstract
 
         $totalCount = 0;
 
-        $validRequest = !empty($searchFields) && $this->validateRequest($contentType, $sortOptions, $pageOptions);
+        $validRequest = !empty($searchFields) && $this->isValidRequest($contentType, $sortOptions, $pageOptions);
 
         $result = [];
 
@@ -237,16 +246,7 @@ class SubmissionManager extends EntityManagerAbstract
                 );
             }
 
-            $dataQuery = $this->buildQuery($contentType, $status, $outdatedFlag, $sortOptions, $pageOptions, $block);
-
-            $countQuery = $this->buildCountQuery($contentType, $status, $outdatedFlag, $block);
-
-            $totalCount = $this->getDbal()->fetch($countQuery);
-
-            // extracting from result
-            $totalCount = (int)$totalCount[0]->cnt;
-
-            $result = $this->fetchData($dataQuery);
+            list($totalCount, $result) = $this->getTotalCountAndResult($contentType, $status, $outdatedFlag, $sortOptions, $block, $pageOptions);
         }
 
         return $result;
@@ -273,7 +273,7 @@ class SubmissionManager extends EntityManagerAbstract
     ) {
 
         $validRequest = $block instanceof ConditionBlock &&
-            $this->validateRequest($contentType, $sortOptions, $pageOptions);
+            $this->isValidRequest($contentType, $sortOptions, $pageOptions);
 
         $result = [];
 
@@ -283,16 +283,7 @@ class SubmissionManager extends EntityManagerAbstract
                 $block = null;
             }
 
-            $dataQuery = $this->buildQuery($contentType, $status, $outdatedFlag, $sortOptions, $pageOptions, $block);
-
-            $countQuery = $this->buildCountQuery($contentType, $status, $outdatedFlag, $block);
-
-            $totalCount = $this->getDbal()->fetch($countQuery);
-
-            // extracting from result
-            $totalCount = (int)$totalCount[0]->cnt;
-
-            $result = $this->fetchData($dataQuery);
+            list($totalCount, $result) = $this->getTotalCountAndResult($contentType, $status, $outdatedFlag, $sortOptions, $block, $pageOptions);
         }
 
         return $result;
@@ -715,22 +706,14 @@ class SubmissionManager extends EntityManagerAbstract
 
     public static function getChangedFields(SubmissionEntity $submission)
     {
-        $id = $submission->getId();
-
-        $is_insert = in_array($id, [0, null], true);
-
-        $fields = true === $is_insert
+        return in_array($submission->getId(), [0, null], true) // Inserting submission?
             ? $submission->toArray(false)
             : $submission->getChangedFields();
-
-        return $fields;
     }
 
     /**
-     * Stores SubmissionEntity to database. (fills id in needed)
-     *
+     * Stores SubmissionEntity to database. (fills id if needed)
      * @param SubmissionEntity $entity
-     *
      * @return SubmissionEntity
      */
     public function storeEntity(SubmissionEntity $entity)
@@ -812,6 +795,29 @@ class SubmissionManager extends EntityManagerAbstract
     }
 
     /**
+     * @param string $contentType
+     * @param int $sourceBlogId
+     * @param int $sourceId
+     * @param int $targetBlogId
+     * @return SubmissionEntity|null
+     */
+    public function findSubmission($contentType, $sourceBlogId, $sourceId, $targetBlogId)
+    {
+        $entities = $this->find([
+            SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+            SubmissionEntity::FIELD_SOURCE_ID => $sourceId,
+            SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+        ]);
+
+        if (count($entities) > 0) {
+            return ArrayHelper::first($entities);
+        }
+
+        return null;
+    }
+
+    /**
      * Loads from database or creates a new instance of SubmissionEntity
      *
      * @param string                           $contentType
@@ -846,9 +852,6 @@ class SubmissionManager extends EntityManagerAbstract
 
         if (count($entities) > 0) {
             $entity = ArrayHelper::first($entities);
-            /**
-             * @var SubmissionEntity $entity
-             */
             $entity->setLastError('');
         } else {
             $entity = $this->createSubmission($params);
@@ -1001,5 +1004,21 @@ class SubmissionManager extends EntityManagerAbstract
         );
 
         return $this->getDbal()->fetch($query, ARRAY_A);
+    }
+
+    /**
+     * @param string $contentType
+     * @param string $status
+     * @param string $outdatedFlag
+     * @param array $sortOptions
+     * @param ConditionBlock $block
+     * @param array|null $pageOptions
+     * @return array
+     */
+    private function getTotalCountAndResult($contentType, $status, $outdatedFlag, array $sortOptions, ConditionBlock $block, array $pageOptions = null)
+    {
+        $totalCount = $this->getDbal()->fetch($this->buildCountQuery($contentType, $status, $outdatedFlag, $block));
+
+        return [(int)$totalCount[0]->cnt, $this->fetchData($this->buildQuery($contentType, $status, $outdatedFlag, $sortOptions, $pageOptions, $block))];
     }
 }

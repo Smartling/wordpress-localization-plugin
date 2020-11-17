@@ -2,9 +2,6 @@
 
 namespace Smartling\Helpers\MetaFieldProcessor;
 
-use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
-use Smartling\Exception\SmartlingDataReadException;
-use Smartling\Exception\SmartlingWpDataIntegrityException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
@@ -29,7 +26,7 @@ abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProce
     /**
      * @param ContentHelper $contentHelper
      */
-    public function setContentHelper($contentHelper)
+    public function setContentHelper(ContentHelper $contentHelper)
     {
         $this->contentHelper = $contentHelper;
     }
@@ -85,37 +82,29 @@ abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProce
         }
 
         try {
-            $this->getLogger()->debug(
-                vsprintf(
-                    'Sending for translation referenced content id = \'%s\' related to submission = \'%s\'.',
-                    [$value, $submission->getId()]
-                )
-            );
+            $sourceBlogId = $submission->getSourceBlogId();
+            $contentType = $this->detectRealContentType($sourceBlogId, $value);
+            $targetBlogId = $submission->getTargetBlogId();
+            if ($this->getTranslationHelper()->isRelatedSubmissionCreationNeeded($contentType, $sourceBlogId, $value, $targetBlogId)) {
+                $this->getLogger()->debug("Sending for translation referenced content id = '$value' related to submission = '{$submission->getId()}'.");
 
-            $contentType = $this->detectRealContentType($submission->getSourceBlogId(), $value);
-            if ($this->getContentHelper()->checkEntityExists($submission->getSourceBlogId(),$contentType,$value)) {
-                // trying to detect
-                $attSubmission = $this->getTranslationHelper()->tryPrepareRelatedContent(
-                    $contentType,
-                    $submission->getSourceBlogId(),
-                    $value,
-                    $submission->getTargetBlogId(),
-                    $submission->getBatchUid(),
-                    (1 === $submission->getIsCloned())
-                );
+                if ($this->getContentHelper()->checkEntityExists($sourceBlogId, $contentType, $value)) {
+                    return $this->getTranslationHelper()->tryPrepareRelatedContent(
+                        $contentType,
+                        $sourceBlogId,
+                        $value,
+                        $targetBlogId,
+                        $submission->getBatchUid(),
+                        (1 === $submission->getIsCloned())
+                    )->getTargetId();
+                }
 
-                return $attSubmission->getTargetId();
+                $this->getLogger()->debug("Couldn't identify content type for id='$value', blog='$sourceBlogId'. Keeping existing value '$value'.");
             } else {
-                $this->getLogger()->debug(
-                    vsprintf(
-                        'Couldn\'t identify content type for id=\'%s\', blog=\'%s\'. Keeping existing value \'%s\'.',
-                        [$value, $submission->getSourceBlogId(), $value]
-                    )
-                );
-
-                return $value;
+                $this->getLogger()->debug("Skip sending for translation referenced content id = '$value' related to submission = '{$submission->getId()}' due to manual relations handling");
             }
 
+            return $value;
         } catch (\Exception $e) {
             $message = vsprintf(
                 'An exception occurred while sending related item=%s, submission=%s for translation. Message: %s',
@@ -126,7 +115,6 @@ abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProce
                 ]
             );
             $this->getLogger()->error($message);
-
         }
 
         return $originalValue;
