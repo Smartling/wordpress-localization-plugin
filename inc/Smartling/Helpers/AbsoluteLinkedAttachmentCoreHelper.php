@@ -144,7 +144,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
     public function getAttachmentIdByURL($url, $blogId)
     {
         $result = false;
-        if ((false !== $url) && $this->isAbsoluteUrl($url)) {
+        if (false !== $url && $this->isAbsoluteUrl($url)) {
             $result = $this->getAttachmentIdByBlogId($url, $blogId);
         }
         return $result;

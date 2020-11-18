@@ -143,7 +143,7 @@ class AcfTypeDetector
         if ($lastPart !== false && strpos($lastPart, '_') !== 0) {
             $parts[count($parts) - 1] = "_$lastPart";
             $acfField = implode('/', $parts);
-            if (array_key_exists($acfField, $fields)) {
+            if (array_key_exists($acfField, $fields) && is_string($fields[$acfField])) {
                 return $this->getAcfProcessor($acfField, $fields[$acfField]);
             }
         }
@@ -153,10 +153,10 @@ class AcfTypeDetector
 
     private function getAcfProcessor($field, $key)
     {
-        $mathes  = [];
+        $matches  = [];
         $pattern = '#(field|group)_([0-9a-f]){13}#ius';
-        preg_match_all($pattern, $key, $mathes);
-        $key = end($mathes[0]);
+        preg_match_all($pattern, $key, $matches);
+        $key = end($matches[0]);
         if (false !== $key) {
             return $this->getProcessorByFieldKey($key, $field);
         }
