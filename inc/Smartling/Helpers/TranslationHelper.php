@@ -207,7 +207,7 @@ class TranslationHelper
 
         if (0 === (int)$submission->getId()) {
             if (GlobalSettingsManager::isHandleRelationsManually()) {
-                $this->getLogger()->warning(sprintf('Created potentially unwanted submission [%s] (should have been cancelled due to manual relations handling). Backtrace: %s', var_export($submission->toArray(false), true), json_encode(debug_backtrace())));
+                $this->getLogger()->debug(sprintf('Created submission %s %d despite manual relations handling). Backtrace: %s', $submission->getContentType(), $submission->getSourceId(), json_encode(debug_backtrace())));
             }
 
             if (true === $clone) {
