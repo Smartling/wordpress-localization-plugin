@@ -207,13 +207,7 @@ class TranslationHelper
 
         if (0 === (int)$submission->getId()) {
             if (GlobalSettingsManager::isHandleRelationsManually()) {
-                /**
-                 * Do not allow to create new submissions
-                 */
-                throw new SmartlingManualRelationsHandlingSubmissionCreationForbiddenException(vsprintf(
-                    'Creation of submission [%s] cancelled due to manual relation processing mode.',
-                    [var_export($submission->toArray(false), true)]
-                ));
+                $this->getLogger()->warning(sprintf('Created potentially unwanted submission [%s] (should have been cancelled due to manual relations handling). Backtrace: %s', var_export($submission->toArray(false), true), json_encode(debug_backtrace())));
             }
 
             if (true === $clone) {
