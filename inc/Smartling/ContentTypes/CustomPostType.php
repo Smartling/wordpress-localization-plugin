@@ -10,6 +10,7 @@ use Smartling\Helpers\StringHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\WP\Controller\PostBasedWidgetControllerStd;
 use Smartling\WP\Controller\ContentEditJobController;
+use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 
 class CustomPostType extends PostBasedContentTypeAbstract
 {
@@ -29,7 +30,8 @@ class CustomPostType extends PostBasedContentTypeAbstract
 
         if (!StringHelper::isNullOrEmpty($parser->getIdentifier())) {
             $this->setSystemName($parser->getIdentifier());
-            $label = $this->getLabel();
+            /** @noinspection MissUsingParentKeywordInspection */
+            $label = parent::getLabel();
             if ('unknown' === $label) {
                 $label = $this->getSystemName();
             }
@@ -47,7 +49,7 @@ class CustomPostType extends PostBasedContentTypeAbstract
     {
         $di = $this->getContainerBuilder();
         $wrapperId = 'wrapper.entity.' . $this->getSystemName();
-        $definition = $di->register($wrapperId, 'Smartling\DbAl\WordpressContentEntities\PostEntityStd');
+        $definition = $di->register($wrapperId, PostEntityStd::class);
         $definition
             ->addArgument($this->getSystemName())
             ->addArgument($this->getRelatedTaxonomies());
