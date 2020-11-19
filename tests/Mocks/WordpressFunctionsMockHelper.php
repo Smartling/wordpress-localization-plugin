@@ -187,7 +187,7 @@ namespace {
             }
         }
         if (!function_exists('wp_insert_term')) {
-            function wp_insert_term($name, $type, $args)
+            function wp_insert_term($term, $taxonomy, $args = array())
             {
                 return array_merge($args, ['term_id' => 2]);
             }

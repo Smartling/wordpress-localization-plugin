@@ -1010,12 +1010,12 @@ class SubmissionManager extends EntityManagerAbstract
      * @param string $contentType
      * @param string $status
      * @param string $outdatedFlag
-     * @param array $sortOptions
-     * @param ConditionBlock $block
+     * @param array|null $sortOptions
+     * @param ConditionBlock|null $block
      * @param array|null $pageOptions
      * @return array
      */
-    private function getTotalCountAndResult($contentType, $status, $outdatedFlag, array $sortOptions, ConditionBlock $block, array $pageOptions = null)
+    private function getTotalCountAndResult($contentType, $status, $outdatedFlag, array $sortOptions = null, ConditionBlock $block = null, array $pageOptions = null)
     {
         $totalCount = $this->getDbal()->fetch($this->buildCountQuery($contentType, $status, $outdatedFlag, $block));
 
