@@ -419,8 +419,6 @@ if ($post instanceof WP_Post) {
             var canDispatch = hasProp(window, "wp")
                 && hasProp(window.wp, "data")
                 && hasProp(window.wp.data, "dispatch")
-                && hasProp(window.wp.data.dispatch("core/notices"), "createSuccessNotice")
-                && hasProp(window.wp.data.dispatch("core/notices"), "createErrorNotice")
             ;
 
             if (!handleRelationsManually) {
@@ -493,13 +491,28 @@ if ($post instanceof WP_Post) {
                             ajaxurl + "?action=" + "smartling_upload_handler",
                             obj,
                             function (data) {
+                                function reportDispatchError(e) {
+                                    console.log("An exception prevented proper notification for this event");
+                                    console.log(JSON.stringify(wp.data.dispatch('core/notices')));
+                                    console.log(e);
+                                }
                                 if (canDispatch) {
                                     switch (data.status) {
                                         case "SUCCESS":
-                                            wp.data.dispatch("core/notices").createSuccessNotice("Content added to Upload queue.");
+                                            try {
+                                                wp.data.dispatch("core/notices").createSuccessNotice("Content added to Upload queue.");
+                                            } catch (e) {
+                                                console.log("Content added to Upload queue.");
+                                                reportDispatchError(e);
+                                            }
                                             break;
                                         case "FAIL":
-                                            wp.data.dispatch("core/notices").createErrorNotice("Failed adding content to download queue: " + data.message);
+                                            try {
+                                                wp.data.dispatch("core/notices").createErrorNotice("Failed adding content to download queue: " + data.message);
+                                            } catch (e) {
+                                                console.error("Failed adding content to download queue: " + data.message);
+                                                reportDispatchError(e);
+                                            }
                                             break;
                                         default:
                                             console.log(data);

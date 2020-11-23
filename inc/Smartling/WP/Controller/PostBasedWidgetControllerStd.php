@@ -152,15 +152,12 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
     public function ajaxUploadHandler()
     {
+        $this->getLogger()->debug("Usage: class='" . __CLASS__ . "', function='" . __FUNCTION__ . "'");
         $result = [];
 
         $data = &$_POST;
 
-        $requiredFields = ['blogs', 'job', 'content'];
-
-        $continue = true;
-
-        foreach ($requiredFields as $requiredField) {
+        foreach (['blogs', 'job', 'content'] as $requiredField) {
             $continue = array_key_exists($requiredField, $data);
             if (!$continue) {
                 $msg = vsprintf(self::ERROR_MSG_FIELD_MISSING, [$requiredField]);
@@ -303,7 +300,6 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
 
         if ($continue) {
-
             $sourceIds = &$data['content']['id'];
             $contentType = &$data['content']['type'];
             $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
@@ -317,14 +313,11 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                  */
                 foreach ($sourceIds as $sourceId) {
                     try {
-                        $submission = $this->getCore()->getTranslationHelper()->tryPrepareRelatedContent(
-                            $contentType,
-                            $sourceBlog,
-                            (int)$sourceId,
-                            (int)$targetBlogId,
-                            $batchUid,
-                            false
-                        );
+                        if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId)) {
+                            $submission = $this->getCore()->getTranslationHelper()->tryPrepareRelatedContent($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId, $batchUid);
+                        } else {
+                            $submission = $this->getCore()->getTranslationHelper()->getExistingSubmissionOrCreateNew($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId, $batchUid);
+                        }
 
                         if (0 < $submission->getId()) {
                             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
@@ -346,17 +339,15 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                 ]
                             ));
                     } catch (\Exception $e) {
-                        $msg = vsprintf(
-                            'Failed adding \'%s\' from blog=\'%s\', id=\'%s\' for tatget blog id=\'%s\' for translation queue with batchUid=\'%s\'. ',
-                            [
-                                $contentType,
-                                $sourceBlog,
-                                (int)$sourceId,
-                                (int)$targetBlogId,
-                                $batchUid,
-                            ]
-                        );
-                        $this->getLogger()->error($msg);
+                        $this->getLogger()->error(sprintf(
+                            "Failed adding '%s' from blog='%s', id='%s' for target blog id='%s' for translation queue with batchUid='%s': %s",
+                            $contentType,
+                            $sourceBlog,
+                            $sourceId,
+                            $targetBlogId,
+                            $batchUid,
+                            $e->getMessage()
+                        ));
                     }
                 }
             }
@@ -529,6 +520,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
      */
     public function save($post_id)
     {
+        $this->getLogger()->debug("Usage: class='" . __CLASS__ . "', function='" . __FUNCTION__ . "'");
         remove_action('save_post', [$this, 'save']);
         if (!array_key_exists('post_type', $_POST)) {
             return;
@@ -574,18 +566,16 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
             if (null !== $data && array_key_exists('locales', $data)) {
                 $locales = [];
-                if (array_key_exists('locales', $data)) {
-                    if (is_array($data['locales'])) {
-                        foreach ($data['locales'] as $_locale) {
-                            if (array_key_exists('enabled', $_locale) && 'on' === $_locale['enabled']) {
-                                $locales[] = (int)$_locale['blog'];
-                            }
+                if (is_array($data['locales'])) {
+                    foreach ($data['locales'] as $_locale) {
+                        if (array_key_exists('enabled', $_locale) && 'on' === $_locale['enabled']) {
+                            $locales[] = (int)$_locale['blog'];
                         }
-                    } elseif (is_string($data['locales'])) {
-                        $locales = explode(',', $data['locales']);
-                    } else {
-                        return;
                     }
+                } elseif (is_string($data['locales'])) {
+                    $locales = explode(',', $data['locales']);
+                } else {
+                    return;
                 }
                 $this->getLogger()->debug(vsprintf('Finished parsing locales: %s', [var_export($locales, true)]));
                 $core = $this->getCore();
@@ -630,8 +620,11 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                 }
 
                                 foreach ($locales as $blogId) {
-                                    $submission = $translationHelper->tryPrepareRelatedContent($this->servedContentType,
-                                        $sourceBlog, $originalId, (int)$blogId, $batchUid, false);
+                                    if ($translationHelper->isRelatedSubmissionCreationNeeded($this->servedContentType, $sourceBlog, $originalId, (int)$blogId)) {
+                                        $submission = $translationHelper->tryPrepareRelatedContent($this->servedContentType, $sourceBlog, $originalId, (int)$blogId, $batchUid);
+                                    } else {
+                                        $submission = $translationHelper->getExistingSubmissionOrCreateNew($this->servedContentType, $sourceBlog, $originalId, (int)$blogId, $batchUid);
+                                    }
 
                                     if (0 < $submission->getId()) {
                                         $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);

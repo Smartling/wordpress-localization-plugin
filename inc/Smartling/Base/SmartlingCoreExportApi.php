@@ -8,22 +8,22 @@ trait SmartlingCoreExportApi
 {
     /**
      * @param SubmissionEntity $postSubmission
-     * @param                  $foundRelativePath
-     *
-     * @return mixed
+     * @param string $foundRelativePath
+     * @return string
      */
     public function getFullyRelateAttachmentPath(SubmissionEntity $postSubmission, $foundRelativePath)
     {
         return $this->getFullyRelateAttachmentPathByBlogId($postSubmission->getSourceBlogId(), $foundRelativePath);
     }
 
+    /**
+     * @param int $blogId
+     * @param string $foundRelativePath
+     * @return string
+     */
     public function getFullyRelateAttachmentPathByBlogId($blogId, $foundRelativePath)
     {
-        $prefix = $this->getUploadPathForSite($blogId);
-
-        $fullyRelativePath = trim(str_replace($prefix, '', $foundRelativePath), '/');
-
-        return $fullyRelativePath;
+        return trim(str_replace($this->getUploadPathForSite($blogId), '', $foundRelativePath), '/');
     }
 
     /**
@@ -37,7 +37,7 @@ trait SmartlingCoreExportApi
      */
     public function sendAttachmentForTranslation($sourceBlogId, $targetBlogId, $sourceId, $batchUid, $clone = false)
     {
-        $submission = $this->getTranslationHelper()->tryPrepareRelatedContent(
+        return $this->getTranslationHelper()->tryPrepareRelatedContent(
             'attachment',
             $sourceBlogId,
             $sourceId,
@@ -45,30 +45,34 @@ trait SmartlingCoreExportApi
             $batchUid,
             $clone
         );
-
-        return $submission;
     }
 
+    /**
+     * @param SubmissionEntity $submission
+     * @return string
+     */
     public function getAttachmentRelativePathBySubmission(SubmissionEntity $submission)
     {
         $info = $this->getAttachmentFileInfoBySubmission($submission);
 
-        $absoluteUrl = $info['base_url_target'] . '/' . $info['relative_path'];
-
-        $relativePath = parse_url($absoluteUrl, PHP_URL_PATH);
-
-        return $relativePath;
+        return parse_url($info['base_url_target'] . '/' . $info['relative_path'], PHP_URL_PATH);
     }
 
+    /**
+     * @param SubmissionEntity $submission
+     * @return string
+     */
     public function getAttachmentAbsolutePathBySubmission(SubmissionEntity $submission)
     {
         $info = $this->getAttachmentFileInfoBySubmission($submission);
 
-        $absoluteUrl = $info['base_url_target'] . '/' . $info['relative_path'];
-
-        return $absoluteUrl;
+        return $info['base_url_target'] . '/' . $info['relative_path'];
     }
 
+    /**
+     * @param int $siteId
+     * @return array
+     */
     public function getUploadFileInfo($siteId)
     {
         return $this->getUploadDirForSite($siteId);

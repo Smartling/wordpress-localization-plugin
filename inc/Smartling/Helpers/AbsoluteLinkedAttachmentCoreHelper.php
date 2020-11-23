@@ -2,7 +2,6 @@
 
 namespace Smartling\Helpers;
 
-use Smartling\Exception\SmartlingManualRelationsHandlingSubmissionCreationForbiddenException;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
@@ -18,13 +17,10 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
     const PATTERN_LINK_GENERAL = '<a[^>]+>';
 
     /**
-     * Checks if given URL is absolute
-     *
      * @param string $url
-     *
      * @return bool
      */
-    private function urlIsAbsolute($url)
+    private function isAbsoluteUrl($url)
     {
         $parsedUrl = parse_url($url);
 
@@ -102,7 +98,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
             $result = $this->fileToUrl($translatedFile);
         }
 
-        if (!$this->urlIsAbsolute($originalUrl)) {
+        if (!$this->isAbsoluteUrl($originalUrl)) {
             $result = parse_url($result, PHP_URL_PATH);
         }
 
@@ -111,50 +107,44 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
 
     /**
      * @param PairReplacerHelper $replacer
-     * @param string             $path
+     * @param string $path
+     * @return PairReplacerHelper
      */
     private function processContent(PairReplacerHelper $replacer, $path)
     {
-        if ((false !== $path) && $this->urlIsAbsolute($path)) {
+        $result = $replacer;
+        if (false !== $path && $this->isAbsoluteUrl($path)) {
             $attachmentId = $this->getAttachmentId($path);
             if (false !== $attachmentId) {
-                try {
-                    $attachmentSubmission = $this->getCore()->sendAttachmentForTranslation(
-                        $this->getParams()->getSubmission()->getSourceBlogId(),
-                        $this->getParams()->getSubmission()->getTargetBlogId(),
-                        $attachmentId,
-                        $this->getParams()->getSubmission()->getBatchUid(),
-                        $this->getParams()->getSubmission()->getIsCloned()
-                    );
-                } catch (SmartlingManualRelationsHandlingSubmissionCreationForbiddenException $e) {
-                    $this->getLogger()->notice(
-                        "Skipped sending attachment $attachmentId for translation due to manual relations handling"
-                    );
-                    return;
-                }
+                $submission = $this->getParams()->getSubmission();
+                $sourceBlogId = $submission->getSourceBlogId();
+                $targetBlogId = $submission->getTargetBlogId();
+                if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, (int)$attachmentId, $targetBlogId)) {
+                    $attachmentSubmission = $this->getCore()->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, $attachmentId, $submission->getBatchUid(), $submission->getIsCloned());
 
-                $newPath = $this->generateTranslatedUrl($path, $attachmentSubmission);
-                $replacer->addReplacementPair($path, $newPath);
-                $this->getLogger()->debug(vsprintf('%s has replaced URL from \'%s\' to \'%s\'', [
-                    __CLASS__,
-                    $path,
-                    $newPath,
-                ]));
+                    $newPath = $this->generateTranslatedUrl($path, $attachmentSubmission);
+                    $replacer->addReplacementPair($path, $newPath);
+                    $this->getLogger()->debug(sprintf("%s has replaced URL from '%s' to '%s'", __CLASS__, $path, $newPath));
+                } else {
+                    $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
+                }
             } else {
                 $this->getLogger()->info(vsprintf('No \'attachment\' found for url=%s', [$path]));
             }
         }
+
+        return $result;
     }
 
     /**
      * @param string $url
-     * @param int    $blogId
+     * @param int $blogId
      * @return bool|int
      */
     public function getAttachmentIdByURL($url, $blogId)
     {
         $result = false;
-        if ((false !== $url) && $this->urlIsAbsolute($url)) {
+        if (false !== $url && $this->isAbsoluteUrl($url)) {
             $result = $this->getAttachmentIdByBlogId($url, $blogId);
         }
         return $result;
@@ -195,25 +185,26 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
      *
      * @param $stringValue
      */
-    protected function processString(& $stringValue)
+    protected function processString(&$stringValue)
     {
         $replacer = new PairReplacerHelper();
         if (is_array($stringValue)) {
-            foreach ($stringValue as $item => & $value) {
+            foreach ($stringValue as $item => &$value) {
                 $this->processString($value);
             }
+            unset($value);
         } else {
             $matches = [];
             if (0 < preg_match_all(StringHelper::buildPattern(static::PATTERN_IMAGE_GENERAL), $stringValue, $matches)) {
                 foreach ($matches[0] as $match) {
                     $path = $this->getAttributeFromTag($match, 'img', 'src');
-                    $this->processContent($replacer, $path);
+                    $replacer = $this->processContent($replacer, $path);
                 }
             }
             if (0 < preg_match_all(StringHelper::buildPattern(self::PATTERN_LINK_GENERAL), $stringValue, $matches)) {
                 foreach ($matches[0] as $match) {
                     $path = $this->getAttributeFromTag($match, 'a', 'href');
-                    $this->processContent($replacer, $path);
+                    $replacer = $this->processContent($replacer, $path);
                 }
             }
         }
@@ -237,25 +228,21 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
         $parsedUrlPath = parse_url($url, PHP_URL_PATH);
         $sourceUploadInfo = $this->getCore()->getUploadFileInfo($blogId);
         $relativePath = $this->getCore()->getFullyRelateAttachmentPathByBlogId($blogId, $parsedUrlPath);
-        $localOriginalPath = $sourceUploadInfo['basedir'] . DIRECTORY_SEPARATOR . $relativePath;
-        return $localOriginalPath;
+        return $sourceUploadInfo['basedir'] . DIRECTORY_SEPARATOR . $relativePath;
     }
 
     /**
      * Converts wordpress file location to URL (for translation)
      *
-     * @param $file
+     * @param string $file
      *
-     * @return mixed
+     * @return string
      */
     private function fileToUrl($file)
     {
-
         $targetUploadInfo = $this->getCore()->getUploadFileInfo($this->getParams()->getSubmission()->getTargetBlogId());
 
-        $url = str_replace($targetUploadInfo['basedir'], $targetUploadInfo['baseurl'], $file);
-
-        return $url;
+        return str_replace($targetUploadInfo['basedir'], $targetUploadInfo['baseurl'], $file);
     }
 
     private function getAttachmentIdByBlogId($url, $blogId)

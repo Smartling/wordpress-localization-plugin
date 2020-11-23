@@ -733,7 +733,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             foreach ($detectedReferences as $contentType => $ids) {
                 if (in_array($contentType, $registeredTypes, true) || in_array($contentType, $taxonomies, true)) {
                     foreach ($ids as $id) {
-                        if (!$this->submissionExists($contentType, $curBlogId, $id, $targetBlogId)) {
+                        if (!$this->submissionManager->submissionExists($contentType, $curBlogId, $id, $targetBlogId)) {
                             $responseData['missingTranslatedReferences'][$targetBlogId][$contentType][] = $id;
                         }
                     }
@@ -748,23 +748,6 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 'data' => $responseData,
             ]
         );
-    }
-
-    /**
-     * @param string $contentType
-     * @param int    $sourceBlogId
-     * @param int    $contentId
-     * @param int    $targetBlogId
-     * @return bool
-     */
-    protected function submissionExists($contentType, $sourceBlogId, $contentId, $targetBlogId)
-    {
-        return 1 === count($this->getSubmissionManager()->find([
-                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
-                SubmissionEntity::FIELD_CONTENT_TYPE   => $contentType,
-                SubmissionEntity::FIELD_SOURCE_ID      => $contentId,
-                SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
-            ], 1));
     }
 
     protected function normalizeReferences(array $references)

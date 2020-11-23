@@ -48,8 +48,9 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
     }
 
     /**
+     * Alters DI container
      * @param ContainerBuilder $di
-     * @param string           $manager
+     * @param string $manager
      */
     public static function register(ContainerBuilder $di, $manager = 'content-type-descriptor-manager')
     {
@@ -71,7 +72,7 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
     }
 
     /**
-     * Handler to register IO Wrapper
+     * Handler to register IO Wrapper. Alters DI container.
      * @return void
      */
     public function registerIOWrapper()
@@ -98,20 +99,18 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
     public function gatherRelatedContent(ProcessRelatedContentParams $params)
     {
         $accumulator = &$params->getAccumulator();
+        $submission = $params->getSubmission();
+        $sourceBlogId = $submission->getSourceBlogId();
+        $targetBlogId = $submission->getTargetBlogId();
+
         if (ContentTypeNavigationMenuItem::WP_CONTENT_TYPE === $params->getContentType()) {
             $this->logger->debug(
                 vsprintf('Searching for menuItems related to submission = \'%s\'.', [
-                    $params->getSubmission()->getId(),
+                    $submission->getId(),
                 ])
             );
 
-            $ids = $this->customMenuHelper->getMenuItems(
-                $params->getSubmission()->getSourceId(),
-                $params->getSubmission()->getSourceBlogId()
-            );
-
-            foreach ($ids as $menuItemEntity) {
-
+            foreach ($this->customMenuHelper->getMenuItems($submission->getSourceId(), $sourceBlogId) as $menuItemEntity) {
                 $this->logger->debug(
                     vsprintf('Sending for translation entity = \'%s\' id = \'%s\' related to submission = \'%s\'.', [
                         ContentTypeNavigationMenuItem::WP_CONTENT_TYPE,
@@ -121,11 +120,11 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
 
                 $menuItemSubmission = $this->translationHelper->tryPrepareRelatedContent(
                     ContentTypeNavigationMenuItem::WP_CONTENT_TYPE,
-                    $params->getSubmission()->getSourceBlogId(),
+                    $sourceBlogId,
                     $menuItemEntity->getPK(),
-                    $params->getSubmission()->getTargetBlogId(),
-                    $params->getSubmission()->getBatchUid(),
-                    (1 === $params->getSubmission()->getIsCloned())
+                    $targetBlogId,
+                    $submission->getBatchUid(),
+                    (1 === $submission->getIsCloned())
                 );
 
                 //enqueue for download menu item
@@ -140,52 +139,50 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
         }
 
         if (self::WP_CONTENT_TYPE === $params->getContentType() &&
-            ContentTypeWidget::WP_CONTENT_TYPE === $params->getSubmission()->getContentType()
+            ContentTypeWidget::WP_CONTENT_TYPE === $submission->getContentType()
         ) {
-            $this->logger->debug(vsprintf('Searching for menu related to widget for submission = \'%s\'.', [
-                    $params->getSubmission()->getId(),
-                ]));
-            /**
-             * @var WidgetEntity $originalEntity
-             */
-            $originalEntity = $this->contentHelper->readSourceContent($params->getSubmission());
+            $this->logger->debug("Searching for menu related to widget for submission = '{$submission->getId()}'.");
+
+            $originalEntity = $this->contentHelper->readSourceContent($submission);
+            if (!$originalEntity instanceof WidgetEntity) {
+                throw new \RuntimeException('Original entity expected to be instance of ' . WidgetEntity::class);
+            }
 
             $_settings = $originalEntity->getSettings();
 
+            $menuId = 0;
             if (array_key_exists(self::WP_CONTENT_TYPE, $_settings)) {
                 $menuId = (int)$_settings[self::WP_CONTENT_TYPE];
-            } else {
-                $menuId = 0;
             }
             if (0 !== $menuId) {
-                $this->logger->debug(
-                    vsprintf('Sending for translation menu related to widget id = \'%s\' related to submission = \'%s\'.', [
-                        $originalEntity->getPK(),
-                        $params->getSubmission()->getId(),
-                    ])
-                );
+                $this->logger->debug("Processing menu related to widget id = '{$originalEntity->getPK()}' related to submission = '{$submission->getId()}'.");
 
-                $relatedObjectSubmission = $this->translationHelper->tryPrepareRelatedContent(
-                    self::WP_CONTENT_TYPE,
-                    $params->getSubmission()->getSourceBlogId(),
-                    $menuId,
-                    $params->getSubmission()->getTargetBlogId(),
-                    $params->getSubmission()->getBatchUid(),
-                    (1 === $params->getSubmission()->getIsCloned())
-                );
+                if ($this->translationHelper->isRelatedSubmissionCreationNeeded(self::WP_CONTENT_TYPE, $sourceBlogId, $menuId, $targetBlogId)) {
+                    $this->logger->debug("Sending menu id={$originalEntity->getPK()} for translation");
+                    $relatedObjectSubmission = $this->translationHelper->tryPrepareRelatedContent(
+                        self::WP_CONTENT_TYPE,
+                        $sourceBlogId,
+                        $menuId,
+                        $targetBlogId,
+                        $submission->getBatchUid(),
+                        (1 === $submission->getIsCloned())
+                    );
 
-                $newMenuId = $relatedObjectSubmission->getTargetId();
+                    $newMenuId = $relatedObjectSubmission->getTargetId();
 
-                /**
-                 * @var WidgetEntity $targetContent
-                 */
-                $targetContent = $this->contentHelper->readTargetContent($params->getSubmission());
+                    $targetContent = $this->contentHelper->readTargetContent($submission);
+                    if (!$targetContent instanceof WidgetEntity) {
+                        throw new \RuntimeException('Target entity expected to be instance of ' . WidgetEntity::class);
+                    }
 
-                $settings = $targetContent->getSettings();
-                $settings[self::WP_CONTENT_TYPE] = $newMenuId;
-                $targetContent->setSettings($settings);
+                    $settings = $targetContent->getSettings();
+                    $settings[self::WP_CONTENT_TYPE] = $newMenuId;
+                    $targetContent->setSettings($settings);
 
-                $this->contentHelper->writeTargetContent($params->getSubmission(), $targetContent);
+                    $this->contentHelper->writeTargetContent($submission, $targetContent);
+                } else {
+                    $this->logger->debug("Skip sending menu id={$originalEntity->getPK()} for translation");
+                }
             }
         }
     }

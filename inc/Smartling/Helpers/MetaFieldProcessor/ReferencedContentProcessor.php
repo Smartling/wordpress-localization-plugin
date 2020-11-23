@@ -2,17 +2,13 @@
 
 namespace Smartling\Helpers\MetaFieldProcessor;
 
-use Psr\Log\LoggerInterface;
+use Smartling\Exception\SmartlingDataReadException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Class ReferencedContentProcessor
- * @package Smartling\Helpers\MetaFieldProcessor
- */
 class ReferencedContentProcessor extends MetaFieldProcessorAbstract
 {
     /**
@@ -102,24 +98,23 @@ class ReferencedContentProcessor extends MetaFieldProcessorAbstract
         }
 
         try {
-            $this->getLogger()->debug(
-                vsprintf(
-                    'Sending for translation referenced content id = \'%s\' related to submission = \'%s\'.',
-                    [$value, $submission->getId()]
-                )
-            );
+            $contentType = $this->getContentType();
+            $sourceBlogId = $submission->getSourceBlogId();
+            $targetBlogId = $submission->getTargetBlogId();
+            if ($this->getTranslationHelper()->isRelatedSubmissionCreationNeeded($contentType, $sourceBlogId, $value, $targetBlogId)) {
+                $this->getLogger()->debug("Sending for translation referenced content id = '$value' related to submission = '{$submission->getId()}'.");
 
-            // trying to detect
-            $attSubmission = $this->getTranslationHelper()->tryPrepareRelatedContent(
-                $this->getContentType(),
-                $submission->getSourceBlogId(),
-                $value,
-                $submission->getTargetBlogId(),
-                $submission->getBatchUid(),
-                (1 === $submission->getIsCloned())
-            );
+                return $this->getTranslationHelper()->tryPrepareRelatedContent(
+                    $contentType,
+                    $sourceBlogId,
+                    $value,
+                    $targetBlogId,
+                    $submission->getBatchUid(),
+                    (1 === $submission->getIsCloned())
+                )->getTargetId();
+            }
 
-            return $attSubmission->getTargetId();
+            $this->getLogger()->debug("Skipped sending referenced content id = '$value' related to submission = '{$submission->getId()} due to manual relations handling");
         } catch (SmartlingDataReadException $e) {
             $message = vsprintf(
                 'An error happened while processing referenced content with original value=%s. Keeping original value.',
@@ -128,8 +123,6 @@ class ReferencedContentProcessor extends MetaFieldProcessorAbstract
                 ]
             );
             $this->getLogger()->error($message);
-
-
         } catch (\Exception $e) {
             $message = vsprintf(
                 'An exception occurred while sending related item=%s, submission=%s for translation. Message: %s',
@@ -140,7 +133,6 @@ class ReferencedContentProcessor extends MetaFieldProcessorAbstract
                 ]
             );
             $this->getLogger()->error($message);
-
         }
 
         return $originalValue;

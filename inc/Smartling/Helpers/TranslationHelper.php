@@ -171,7 +171,7 @@ class TranslationHelper
      */
     public function prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null)
     {
-        $this->validateBlogs($sourceBlog,$targetBlog);
+        $this->validateBlogs($sourceBlog, $targetBlog);
 
         return $this->getSubmissionManager()->getSubmissionEntity(
             $contentType,
@@ -185,17 +185,17 @@ class TranslationHelper
 
     /**
      * @param string $contentType
-     * @param int    $sourceBlog
-     * @param int    $sourceId
-     * @param int    $targetBlog
-     * @param bool   $clone
-     *
-     * @return mixed
+     * @param int $sourceBlog
+     * @param int $sourceId
+     * @param int $targetBlog
+     * @param bool $clone
+     * @return SubmissionEntity
      * @throws SmartlingDataReadException
+     * @throws SmartlingManualRelationsHandlingSubmissionCreationForbiddenException
      */
     public function prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone = false)
     {
-        if (0 == $sourceId) {
+        if (0 === (int)$sourceId) {
             throw new \InvalidArgumentException('Source id cannot be 0.');
         }
         $submission = $this->prepareSubmissionEntity(
@@ -206,14 +206,8 @@ class TranslationHelper
         );
 
         if (0 === (int)$submission->getId()) {
-            /**
-             * Do not allow to create new submissions
-             */
             if (GlobalSettingsManager::isHandleRelationsManually()) {
-                throw new SmartlingManualRelationsHandlingSubmissionCreationForbiddenException(vsprintf(
-                    'Creation of submission [%s] cancelled due to manual relation processing mode.',
-                    [var_export($submission->toArray(false), true)]
-                ));
+                $this->getLogger()->debug(sprintf('Created submission %s %d despite manual relations handling). Backtrace: %s', $submission->getContentType(), $submission->getSourceId(), json_encode(debug_backtrace())));
             }
 
             if (true === $clone) {
@@ -228,7 +222,7 @@ class TranslationHelper
     /**
      * @param SubmissionEntity $submission
      *
-     * @return mixed
+     * @return SubmissionEntity
      * @throws SmartlingDataReadException
      */
     public function reloadSubmission(SubmissionEntity $submission)
@@ -246,12 +240,41 @@ class TranslationHelper
 
     /**
      * @param string $contentType
-     * @param int    $sourceBlog
-     * @param int    $sourceId
-     * @param int    $targetBlog
+     * @param int $sourceBlogId
+     * @param int $contentId
+     * @param int $targetBlogId
+     * @return bool
+     */
+    public function isRelatedSubmissionCreationNeeded($contentType, $sourceBlogId, $contentId, $targetBlogId) {
+        return !GlobalSettingsManager::isHandleRelationsManually() ||
+            $this->submissionManager->submissionExistsNoLastError($contentType, $sourceBlogId, $contentId, $targetBlogId);
+    }
+
+    /**
+     * @param string $contentType
+     * @param int $sourceBlogId
+     * @param int $contentId
+     * @param int $targetBlogId
      * @param string $batchUid
-     * @param bool   $clone
-     *
+     * @return SubmissionEntity
+     * @throws SmartlingDataReadException
+     */
+    public function getExistingSubmissionOrCreateNew($contentType, $sourceBlogId, $contentId, $targetBlogId, $batchUid) {
+        $submission = $this->submissionManager->getSubmissionEntity($contentType, $sourceBlogId, $contentId, $targetBlogId, $this->getMutilangProxy());
+        if ($submission->getTargetId() === 0) {
+            $this->getLogger()->debug("Got submission with 0 target id");
+            $submission = $this->tryPrepareRelatedContent($contentType, $sourceBlogId, $contentId, $targetBlogId, $batchUid);
+        }
+        return $submission;
+    }
+
+    /**
+     * @param string $contentType
+     * @param int $sourceBlog
+     * @param int $sourceId
+     * @param int $targetBlog
+     * @param string $batchUid
+     * @param bool $clone
      * @return SubmissionEntity
      * @throws SmartlingDataReadException
      */
@@ -259,9 +282,6 @@ class TranslationHelper
     {
         $relatedSubmission = $this->prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone);
 
-        /**
-         * @var SubmissionEntity $relatedSubmission
-         */
         if (0 !== $sourceId && 0 === $relatedSubmission->getTargetId() &&
             SubmissionEntity::SUBMISSION_STATUS_FAILED !== $relatedSubmission->getStatus()
         ) {

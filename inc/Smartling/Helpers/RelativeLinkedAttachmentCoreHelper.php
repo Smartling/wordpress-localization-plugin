@@ -7,16 +7,11 @@ use LibXMLError;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
-use Smartling\Exception\SmartlingManualRelationsHandlingSubmissionCreationForbiddenException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\WP\WPHookInterface;
 
-/**
- * Class RelativeLinkedAttachmentCoreHelper
- * @package inc\Smartling\Helpers
- */
 class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 {
     const ACF_GUTENBERG_BLOCK = '<!-- wp:acf/.+ ({.+}) /-->';
@@ -125,62 +120,11 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
             unset($value);
         } elseif (0 < preg_match_all(self::ACF_GUTENBERG_BLOCK, $stringValue, $matches)) {
             foreach ($matches[1] as $match) {
-                $acfData = json_decode(stripslashes($match), true);
-                if (array_key_exists('data', $acfData)) {
-                    foreach ($acfData['data'] as $key => $value) {
-                        if (array_key_exists($value, $this->acfDefinitions)
-                            && array_key_exists('type', $this->acfDefinitions[$value])
-                            && $this->acfDefinitions[$value]['type'] === 'image'
-                            && strpos($key, '_') === 0
-                            && array_key_exists(substr($key, 1), $acfData['data'])) {
-                                $attachmentId = $acfData['data'][substr($key, 1)];
-
-                                if (!empty($attachmentId) && is_numeric($attachmentId)) {
-                                    try {
-                                        $attachment = $this->getCore()->sendAttachmentForTranslation(
-                                            $this->getParams()->getSubmission()->getSourceBlogId(),
-                                            $this->getParams()->getSubmission()->getTargetBlogId(),
-                                            (int)$attachmentId,
-                                            $this->getParams()->getSubmission()->getBatchUid()
-                                        );
-                                        $replacer->addReplacementPair($attachmentId, $attachment->getTargetId());
-                                    } catch (SmartlingManualRelationsHandlingSubmissionCreationForbiddenException $e) {
-                                        $this->getLogger()->notice("Skipping attachment id $attachmentId: was not uploaded " .
-                                          'due to manual relations handling');
-                                    }
-                                } else {
-                                    $this->getLogger()->warning("Can not send attachment as it has empty id acfFieldId=${value} acfFieldValue=\"${attachmentId}\"");
-                                }
-                        }
-                    }
-                }
+                $replacer = $this->processAcfGutenbergBlock($match, $replacer);
             }
         } elseif (0 < preg_match_all(StringHelper::buildPattern(self::PATTERN_IMAGE_GENERAL), $stringValue, $matches)) {
             foreach ($matches[0] as $match) {
-                $path = $this->getSourcePathFromImgTag($match);
-
-                if ((false !== $path) && ($this->testIfUrlIsRelative($path))) {
-                    $attachmentId = $this->getAttachmentId($path);
-                    if (false !== $attachmentId) {
-                        $attachmentSubmission = $this->getCore()->sendAttachmentForTranslation(
-                            $this->getParams()->getSubmission()->getSourceBlogId(),
-                            $this->getParams()->getSubmission()->getTargetBlogId(),
-                            $attachmentId,
-                            $this->getParams()->getSubmission()->getBatchUid(),
-                            $this->getParams()->getSubmission()->getIsCloned()
-                        );
-                        $replacer->addReplacementPair(
-                            $path,
-                            $this->getCore()->getAttachmentRelativePathBySubmission($attachmentSubmission)
-                        );
-                    } else {
-                        $result = $this->tryProcessThumbnail($path);
-
-                        if (false !== $result) {
-                            $replacer->addReplacementPair($result['from'], $result['to']);
-                        }
-                    }
-                }
+                $replacer = $this->processImgTag($match, $replacer);
             }
         }
         $stringValue = $replacer->processString($stringValue);
@@ -199,22 +143,20 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     }
 
     /**
-     * @param $path
-     *
-     * @return false|array
+     * @param string $path
+     * @return array|null
      */
     private function tryProcessThumbnail($path)
     {
-        $dir = $this->getCore()->getUploadFileInfo($this->getParams()->getSubmission()->getSourceBlogId())['basedir'];
+        $submission = $this->getParams()->getSubmission();
+        $dir = $this->getCore()->getUploadFileInfo($submission->getSourceBlogId())['basedir'];
 
-        $fullFileName = $dir . DIRECTORY_SEPARATOR .
-            $this->getCore()->getFullyRelateAttachmentPath($this->getParams()->getSubmission(), $path);
+        $fullFileName = $dir . DIRECTORY_SEPARATOR . $this->getCore()->getFullyRelateAttachmentPath($submission, $path);
 
         if (FileHelper::testFile($fullFileName)) {
             $sourceFilePathInfo = pathinfo($fullFileName);
 
             if ($this->fileLooksLikeThumbnail($sourceFilePathInfo['filename'])) {
-
                 $originalFilename =
                     preg_replace(
                         StringHelper::buildPattern(self::PATTERN_THUMBNAIL_IDENTITY),
@@ -233,96 +175,56 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                     $attachmentId = $this->getAttachmentId($relativePathOfOriginalFile);
 
                     if (false !== $attachmentId) {
-                        $attachmentSubmission = $this->getCore()->sendAttachmentForTranslation(
-                            $this->getParams()->getSubmission()->getSourceBlogId(),
-                            $this->getParams()->getSubmission()->getTargetBlogId(),
+                        if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded(
+                            'attachment',
+                            $submission->getSourceBlogId(),
                             $attachmentId,
-                            $this->getParams()->getSubmission()->getBatchUid(),
-                            $this->getParams()->getSubmission()->getIsCloned()
-                        );
+                            $submission->getTargetBlogId())
+                        ) {
+                            $attachmentSubmission = $this->getCore()->sendAttachmentForTranslation(
+                                $submission->getSourceBlogId(),
+                                $submission->getTargetBlogId(),
+                                $attachmentId,
+                                $submission->getBatchUid(),
+                                $submission->getIsCloned()
+                            );
 
-                        $targetUploadInfo = $this->getCore()
-                            ->getUploadFileInfo($this->getParams()
-                                ->getSubmission()
-                                ->getTargetBlogId());
+                            $targetUploadInfo = $this->getCore()->getUploadFileInfo($submission->getTargetBlogId());
 
-                        $fullTargetFileName = $targetUploadInfo['basedir'] . DIRECTORY_SEPARATOR .
-                            $sourceFilePathInfo['filename'] . '.' . $sourceFilePathInfo['extension'];
+                            $fullTargetFileName = $targetUploadInfo['basedir'] . DIRECTORY_SEPARATOR .
+                                $sourceFilePathInfo['filename'] . '.' . $sourceFilePathInfo['extension'];
 
-                        $copyResult = copy($fullFileName, $fullTargetFileName);
+                            if (copy($fullFileName, $fullTargetFileName) === false) {
+                                $this->getLogger()->warning("Unknown error occurred while copying thumbnail from $fullFileName to $fullTargetFileName.");
+                            }
 
-                        if (false === $copyResult) {
-                            $this->getLogger()
-                                ->warning(
-                                    vsprintf(
-                                        'Unknown error occurred while copying thumbnail from %s to %s.',
-                                        [
-                                            $fullFileName,
-                                            $fullTargetFileName,
-                                        ]
-                                    )
-                                );
+                            $targetFileRelativePath = $this->getCore()
+                                ->getAttachmentRelativePathBySubmission($attachmentSubmission);
+
+                            $targetThumbnailPathInfo = pathinfo($targetFileRelativePath);
+
+                            $targetThumbnailRelativePath = $targetThumbnailPathInfo['dirname'] . '/' .
+                                $sourceFilePathInfo['basename'];
+
+                            return ['from' => $path, 'to' => $targetThumbnailRelativePath];
                         }
 
-                        $targetFileRelativePath = $this->getCore()
-                            ->getAttachmentRelativePathBySubmission($attachmentSubmission);
-
-                        $targetThumbnailPathInfo = pathinfo($targetFileRelativePath);
-
-                        $targetThumbnailRelativePath = $targetThumbnailPathInfo['dirname'] . '/' .
-                            $sourceFilePathInfo['basename'];
-
-                        return ['from' => $path, 'to' => $targetThumbnailRelativePath];
+                        $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
+                        return null;
                     }
 
-                    $this->getLogger()
-                        ->warning(
-                            vsprintf(
-                                'Referenced original file (absolute path): %s found by thumbnail (absolute path) : %s is not found in the media library. Skipping.',
-                                [
-                                    $possibleOriginalFilePath,
-                                    $fullFileName,
-                                ]
-                            )
-                        );
+                    $this->getLogger()->warning("Referenced original file (absolute path): $possibleOriginalFilePath found by thumbnail (absolute path) : $fullFileName is not found in the media library. Skipping.");
                 } else {
-                    $this->getLogger()
-                        ->warning(
-                            vsprintf(
-                                'Original file: %s for the referenced thumbnail: %s not found. Skipping.',
-                                [
-                                    $possibleOriginalFilePath,
-                                    $fullFileName,
-                                ]
-                            )
-                        );
+                    $this->getLogger()->warning("Original file: $possibleOriginalFilePath for the referenced thumbnail: $fullFileName not found. Skipping.");
                 }
             } else {
-                $this->getLogger()
-                    ->warning(
-                        vsprintf(
-                            'Referenced file: %s  does not seems to be a thumbnail. Skipping.',
-                            [
-                                $fullFileName,
-                            ]
-                        )
-                    );
+                $this->getLogger()->warning("Referenced file: $fullFileName does not seems to be a thumbnail. Skipping.");
             }
-
-
         } else {
-            $this->getLogger()
-                ->warning(
-                    vsprintf(
-                        'Referenced file (absolute path) not found. Skipping.',
-                        [
-                            $fullFileName,
-                        ]
-                    )
-                );
+            $this->getLogger()->warning('Referenced file (absolute path) not found. Skipping.');
         }
 
-        return false;
+        return null;
     }
 
     /**
@@ -344,7 +246,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
      *
      * @return bool
      */
-    private function testIfUrlIsRelative($url)
+    private function isRelativeUrl($url)
     {
         $parts = parse_url($url);
 
@@ -445,7 +347,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
             /** @var \DOMNode $node */
             $node = $images->item(0);
             if ($node->hasAttributes() && $value = $node->attributes->getNamedItem($attribute)) {
-                if (($value instanceof \DOMAttr)) {
+                if ($value instanceof \DOMAttr) {
                     $value = $value->nodeValue;
                 }
             }
@@ -454,4 +356,74 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         return $value;
     }
 
+    /**
+     * @param string $block
+     * @param PairReplacerHelper $replacer
+     * @return PairReplacerHelper
+     */
+    private function processAcfGutenbergBlock($block, PairReplacerHelper $replacer)
+    {
+        $result = $replacer;
+        $submission = $this->getParams()->getSubmission();
+        $sourceBlogId = $submission->getSourceBlogId();
+        $targetBlogId = $submission->getTargetBlogId();
+
+        $acfData = json_decode(stripslashes($block), true);
+        if (array_key_exists('data', $acfData)) {
+            foreach ($acfData['data'] as $key => $value) {
+                if (array_key_exists($value, $this->acfDefinitions)
+                    && array_key_exists('type', $this->acfDefinitions[$value])
+                    && $this->acfDefinitions[$value]['type'] === 'image'
+                    && strpos($key, '_') === 0
+                    && array_key_exists(substr($key, 1), $acfData['data'])) {
+                    $attachmentId = $acfData['data'][substr($key, 1)];
+
+                    if (!empty($attachmentId) && is_numeric($attachmentId)) {
+                        if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, (int)$attachmentId, $targetBlogId)) {
+                            $attachment = $this->getCore()->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, (int)$attachmentId, $submission->getBatchUid());
+                            $result->addReplacementPair($attachmentId, $attachment->getTargetId());
+                        } else {
+                            $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
+                        }
+                    } else {
+                        $this->getLogger()->warning("Can not send attachment as it has empty id acfFieldId=${value} acfFieldValue=\"${attachmentId}\"");
+                    }
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @param string $tag
+     * @param PairReplacerHelper $replacer
+     * @return PairReplacerHelper
+     */
+    private function processImgTag($tag, PairReplacerHelper $replacer)
+    {
+        $result = $replacer;
+        $path = $this->getSourcePathFromImgTag($tag);
+
+        if (false !== $path && $this->isRelativeUrl($path)) {
+            $attachmentId = $this->getAttachmentId($path);
+            if (false !== $attachmentId) {
+                $submission = $this->getParams()->getSubmission();
+                $sourceBlogId = $submission->getSourceBlogId();
+                $targetBlogId = $submission->getTargetBlogId();
+                if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, $attachmentId, $targetBlogId)) {
+                    $attachmentSubmission = $this->getCore()->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, $attachmentId, $submission->getBatchUid(), $submission->getIsCloned());
+                    $result->addReplacementPair($path, $this->getCore()->getAttachmentRelativePathBySubmission($attachmentSubmission));
+                } else {
+                    $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
+                }
+            } else {
+                $thumbnail = $this->tryProcessThumbnail($path);
+
+                if ($thumbnail !== null) {
+                    $result->addReplacementPair($thumbnail['from'], $thumbnail['to']);
+                }
+            }
+        }
+        return $result;
+    }
 }
