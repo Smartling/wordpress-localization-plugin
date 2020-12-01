@@ -553,6 +553,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
     }
 
     /**
+     * Will try to set file uri if it is currently empty
      * @return string
      */
     public function getFileUri()
@@ -579,6 +580,13 @@ class SubmissionEntity extends SmartlingEntityAbstract
         }
 
         return $this->stateFields[static::FIELD_FILE_URI];
+    }
+
+    /**
+     * @return string
+     */
+    public function getStateFieldFileUri() {
+        return (string)$this->stateFields[static::FIELD_FILE_URI];
     }
 
     /**
