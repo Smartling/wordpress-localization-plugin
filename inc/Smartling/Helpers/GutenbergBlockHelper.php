@@ -101,7 +101,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
      */
     private function hasBlocks($string)
     {
-        return 0 < (int)preg_match('/<!--\s+wp\:/ius', $string);
+        return 0 < (int)preg_match('/<!--\s+wp:/iu', $string);
     }
 
     /**
@@ -199,11 +199,13 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     {
         if (function_exists('\parse_blocks')) {
             return \parse_blocks($string);
-        } elseif (function_exists('\gutenberg_parse_blocks')) {
-            return \gutenberg_parse_blocks($string);
-        } else {
-            throw new SmartlingGutenbergParserNotFoundException('No block parser found.');
         }
+
+        if (function_exists('\gutenberg_parse_blocks')) {
+            return \gutenberg_parse_blocks($string);
+        }
+
+        throw new SmartlingGutenbergParserNotFoundException('No block parser found.');
     }
 
 
@@ -271,7 +273,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             $processedAttributes = $this->getFieldsFilter()->structurizeArray($filteredAttributes);
         }
 
-        return $this->fixAttributeTypes($blockName, $originalAttributes, $processedAttributes);
+        return $this->fixAttributeTypes($originalAttributes, $processedAttributes);
     }
 
     /**
@@ -289,8 +291,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             return implode('\n', $sortedResult['chunks']);
         }
         $attributes = $this->processTranslationAttributes($blockName, $originalAttributes, $sortedResult['attributes']);
-        $renderedBlock = $this->renderGutenbergBlock($blockName, $attributes, $sortedResult['chunks']);
-        return $renderedBlock;
+        return $this->renderGutenbergBlock($blockName, $attributes, $sortedResult['chunks']);
     }
 
     /**
@@ -301,13 +302,19 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
      */
     public function renderGutenbergBlock($name, array $attrs = [], array $chunks = [])
     {
+        $isJson = $this->isJson($attrs);
+        if ($isJson) {
+            array_walk($attrs, static function (&$value) {
+                $value = str_replace('&quot;', '"', $value);
+            });
+        }
         $attributes = 0 < count($attrs) ? ' ' . json_encode($attrs, JSON_UNESCAPED_UNICODE) : '';
         $content = implode('', $chunks);
         $result = ('' !== $content)
             ? vsprintf('<!-- wp:%s%s -->%s<!-- /wp:%s -->', [$name, $attributes, $content, $name])
             : vsprintf('<!-- wp:%s%s /-->', [$name, $attributes]);
 
-        if ((function_exists('acf_parse_save_blocks') && function_exists('acf_has_block_type')) && acf_has_block_type($name)) {
+        if ($isJson || (function_exists('acf_has_block_type') && acf_has_block_type($name))) {
             $result = addslashes($result);
         }
 
@@ -328,9 +335,6 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         $string = static::getCdata($node);
 
         if ('' === $string) {
-            /**
-             * @var \DOMNodeList $children
-             */
             $children = $node->childNodes;
             foreach ($children as $child) {
                 /**
@@ -381,12 +385,11 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     }
 
     /**
-     * @param string $blockName
-     * @param array $translatedAttributes
      * @param array $originalAttributes
+     * @param array $translatedAttributes
      * @return array
      */
-    private function fixAttributeTypes($blockName, array $originalAttributes, array $translatedAttributes)
+    private function fixAttributeTypes(array $originalAttributes, array $translatedAttributes)
     {
         foreach ($translatedAttributes as $key => $value) {
             if (array_key_exists($key, $originalAttributes)) {
@@ -395,5 +398,24 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         }
 
         return $translatedAttributes;
+    }
+
+    /**
+     * @param array $attrs
+     * @return bool
+     */
+    private function isJson(array $attrs)
+    {
+        foreach ($attrs as $attr) {
+            try {
+                $parsed = is_string($attr) ? json_decode(str_replace('&quot;', '"', $attr), true) : null;
+            } catch (\Exception $e) {
+                $parsed = null;
+            }
+            if ($parsed !== null && !is_scalar($parsed)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
