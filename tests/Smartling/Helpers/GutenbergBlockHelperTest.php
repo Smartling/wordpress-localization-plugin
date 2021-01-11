@@ -591,6 +591,12 @@ class GutenbergBlockHelperTest extends TestCase
                 [],
                 '<!-- wp:acf/test {"data":{"copy":"Pronto para reservar seu pr\\\\u00f3ximo evento?"}} /-->'
             ],
+            'quotes as html entities' => [
+                'wework-blocks/geo-location',
+                ['showList' => '[{&quot;value&quot;:&quot;united-states&quot;,&quot;label&quot;:&quot;United States&quot;}]'],
+                [],
+                '<!-- wp:wework-blocks/geo-location {\"showList\":\"[{\\\\\\"value\\\\\\":\\\\\\"united-states\\\\\\",\\\\\\"label\\\\\\":\\\\\\"United States\\\\\\"}]\"} /-->',
+            ]
         ];
     }
 
