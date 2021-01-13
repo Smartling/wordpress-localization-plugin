@@ -2,7 +2,7 @@
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
-Tested up to: 5.4
+Tested up to: 5.5
 Stable tag: 1.15.6
 License: GPLv2 or later
 

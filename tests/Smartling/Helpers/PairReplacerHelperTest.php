@@ -4,6 +4,7 @@ namespace Smartling\Tests\Smartling\Helpers;
 
 use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\PairReplacerHelper;
+use Smartling\Helpers\ReplacementPair;
 
 class PairReplacerHelperTest extends TestCase
 {
@@ -17,7 +18,7 @@ class PairReplacerHelperTest extends TestCase
     public function testProcessString($string, $expected, $search, $replace)
     {
         $x = new PairReplacerHelper();
-        $x->addReplacementPair($search, $replace);
+        $x->addReplacementPair(new ReplacementPair($search, $replace));
         self::assertEquals($expected, $x->processString($string));
     }
 

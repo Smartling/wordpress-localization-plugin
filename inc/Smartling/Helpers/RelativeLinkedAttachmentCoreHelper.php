@@ -119,7 +119,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
             foreach ($stringValue as $item => &$value) {
                 $this->processString($value);
             }
-            unset($value);
+            return;
         }
 
         if (0 < preg_match_all(self::ACF_GUTENBERG_BLOCK, $stringValue, $matches)) {

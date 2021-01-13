@@ -2,11 +2,6 @@
 
 namespace Smartling\Helpers;
 
-/**
- * Class PairReplacerHelper
- *
- * @package Smartling\Helpers
- */
 class PairReplacerHelper
 {
     /**
