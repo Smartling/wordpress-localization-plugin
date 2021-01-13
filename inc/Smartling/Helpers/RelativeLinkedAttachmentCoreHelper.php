@@ -395,7 +395,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                     if (!empty($attachmentId) && is_numeric($attachmentId)) {
                         if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, (int)$attachmentId, $targetBlogId)) {
                             $attachment = $this->getCore()->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, (int)$attachmentId, $submission->getBatchUid());
-                            $result->addReplacementPair(new ReplacementPair($attachmentId, $attachment->getTargetId()));
+                            $result->addReplacementPair(new ReplacementPair((string)$attachmentId, (string)$attachment->getTargetId()));
                         } else {
                             $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
                         }

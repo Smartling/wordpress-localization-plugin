@@ -20,6 +20,66 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
         WordpressFunctionsMockHelper::injectFunctionsMocks();
     }
 
+    public function testProcessGutenbergBlock()
+    {
+        $batchUid = '';
+        $sourceBlogId = 1;
+        $sourceMediaId = 5;
+        $targetBlogId = 2;
+        $targetMediaId = 6;
+        $submission = new SubmissionEntity();
+        $submission->setSourceBlogId($sourceBlogId);
+        $submission->setSourceId($sourceMediaId);
+        $submission->setTargetId($targetMediaId);
+        $submission->setTargetBlogId($targetBlogId);
+        $submission->setBatchUid($batchUid);
+        $acf = $this->getMockBuilder(AcfDynamicSupport::class)
+            ->setConstructorArgs([$this->getMock(EntityHelper::class)])
+            ->getMock();
+        $acf->method('getDefinitions')->willReturn([]);
+
+        $translationHelper = $this->getMock(TranslationHelper::class);
+        $translationHelper->method('isRelatedSubmissionCreationNeeded')->willReturn(true);
+
+        $core = $this->getMock(SmartlingCore::class);
+        $core->method('getTranslationHelper')->willReturn($translationHelper);
+        $core->method('sendAttachmentForTranslation')->willReturn($submission);
+
+        $x = $this->getMockBuilder(RelativeLinkedAttachmentCoreHelper::class)->setConstructorArgs([
+            $core,
+            $acf
+        ])->setMethods(null)->getMock();
+        $source = [<<<HTML
+<!-- wp:core/media-text {"mediaId":$sourceMediaId,"mediaLink":"http://test.com","mediaType":"image"} -->
+<div class="wp-block-media-text alignwide is-stacked-on-mobile"><figure class="wp-block-media-text__media"><img src="http://example.com/image.jpg" alt="" class="wp-image-$sourceMediaId"/></figure><div class="wp-block-media-text__content"><!-- wp:core/paragraph {"placeholder":"Content…","fontSize":"large"} -->
+<p class="has-large-font-size">Some text and wp-image-$sourceMediaId that should NOT be replaced</p>
+<!-- /wp:core/paragraph --></div></div>
+<!-- /wp:core/media-text -->
+
+<!-- wp:core/image {"id":$sourceMediaId,"sizeSlug":"large"} -->
+<figure class="wp-block-image size-large"><img src="http://example.com/image.jpg" alt="" class="wp-image-$sourceMediaId"/></figure>
+<!-- /wp:core/image -->
+HTML
+        ];
+        $x->processor(new AfterDeserializeContentEventParameters($source, $submission, $this->getMock(PostEntityStd::class), []));
+
+        self::assertEquals(
+            <<<HTML
+<!-- wp:media-text {"mediaId":$targetMediaId,"mediaLink":"http:\/\/test.com","mediaType":"image"} -->
+<div class="wp-block-media-text alignwide is-stacked-on-mobile"><figure class="wp-block-media-text__media"><img src="http://example.com/image.jpg" alt="" class="wp-image-$targetMediaId"/></figure><div class="wp-block-media-text__content"><!-- wp:core/paragraph {"placeholder":"Content…","fontSize":"large"} -->
+<p class="has-large-font-size">Some text and wp-image-$sourceMediaId that should NOT be replaced</p>
+<!-- /wp:core/paragraph --></div></div>
+<!-- /wp:core/media-text -->
+
+<!-- wp:image {"id":$targetMediaId,"sizeSlug":"large"} -->
+<figure class="wp-block-image size-large"><img src="http://example.com/image.jpg" alt="" class="wp-image-$targetMediaId"/></figure>
+<!-- /wp:core/image -->
+HTML
+            ,
+            $source[0]
+        );
+    }
+
     /**
      * @param string $string
      * @param array $definitions
