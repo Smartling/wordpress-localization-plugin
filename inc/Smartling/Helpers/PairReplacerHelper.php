@@ -9,27 +9,14 @@ namespace Smartling\Helpers;
  */
 class PairReplacerHelper
 {
-
-    private $_pairCollection = [];
-
     /**
-     * @param string $search
-     * @param string $replace
+     * @var ReplacementPair[] $pairCollection
      */
-    public function addReplacementPair($search, $replace)
-    {
-        $this->addToCollection([
-            'from' => $search,
-            'to'   => $replace,
-        ]);
-    }
+    private $pairCollection = [];
 
-    /**
-     * @param array $pair
-     */
-    private function addToCollection(array $pair)
+    public function addReplacementPair(ReplacementPair $replacementPair)
     {
-        $this->_pairCollection[] = $pair;
+        $this->pairCollection[] = $replacementPair;
     }
 
     /**
@@ -40,12 +27,12 @@ class PairReplacerHelper
      */
     public function processString($string, $pairWrapper = ['\'', '"', '\\"'])
     {
-        $collection = $this->getPairCollection();
-        foreach ($collection as $pair) {
+        $this->removeDuplicates();
+        foreach ($this->pairCollection as $pair) {
             $pattern = '%s%s%s';
             foreach ($pairWrapper as $wrapper) {
-                $search = vsprintf($pattern, [$wrapper, $pair['from'], $wrapper]);
-                $replace = vsprintf($pattern, [$wrapper, $pair['to'], $wrapper]);
+                $search = vsprintf($pattern, [$wrapper, $pair->getFrom(), $wrapper]);
+                $replace = vsprintf($pattern, [$wrapper, $pair->getTo(), $wrapper]);
 
                 $string = str_replace($search, $replace, $string);
             }
@@ -54,13 +41,20 @@ class PairReplacerHelper
         return $string;
     }
 
-    /**
-     * @return array
-     */
-    private function getPairCollection()
-    {
-        return $this->_pairCollection;
+    private function removeDuplicates() {
+        /**
+         * @var ReplacementPair[] $result
+         */
+        $result = [];
+        foreach ($this->pairCollection as $replacementPair) {
+            foreach ($result as $item) {
+                if ($item->getFrom() === $replacementPair->getFrom() && $item->getTo() === $replacementPair->getTo()) {
+                    break 2;
+                }
+            }
+            $result[] = $replacementPair;
+        }
+
+        $this->pairCollection = $result;
     }
-
-
 }

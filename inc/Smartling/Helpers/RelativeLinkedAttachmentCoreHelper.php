@@ -15,6 +15,7 @@ use Smartling\WP\WPHookInterface;
 class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 {
     const ACF_GUTENBERG_BLOCK = '<!-- wp:acf/.+ ({.+}) /-->';
+    const CORE_GUTENBERG_BLOCK = '<!-- wp:core/(.+) ({.+}) -->';
     /**
      * RegEx to catch images from the string
      */
@@ -113,21 +114,35 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     {
         $replacer = new PairReplacerHelper();
         $matches = [];
+
         if (is_array($stringValue)) {
             foreach ($stringValue as $item => &$value) {
                 $this->processString($value);
             }
             unset($value);
-        } elseif (0 < preg_match_all(self::ACF_GUTENBERG_BLOCK, $stringValue, $matches)) {
+        }
+
+        if (0 < preg_match_all(self::ACF_GUTENBERG_BLOCK, $stringValue, $matches)) {
             foreach ($matches[1] as $match) {
-                $replacer = $this->processAcfGutenbergBlock($match, $replacer);
-            }
-        } elseif (0 < preg_match_all(StringHelper::buildPattern(self::PATTERN_IMAGE_GENERAL), $stringValue, $matches)) {
-            foreach ($matches[0] as $match) {
-                $replacer = $this->processImgTag($match, $replacer);
+                $stringValue = $this->getReplacerForAcfGutenbergBlock($match)->processString($stringValue);
             }
         }
-        $stringValue = $replacer->processString($stringValue);
+
+        if (0 < preg_match_all(self::CORE_GUTENBERG_BLOCK, $stringValue, $matches)) {
+            foreach ($matches[1] as $key => $_) {
+                $info = $this->processGutenbergBlock($matches[1][$key], $matches[2][$key]);
+                if ($info !== null) {
+                    $stringValue = str_replace("<!-- wp:core/{$matches[1][$key]} {$matches[2][$key]} -->", "<!-- wp:{$matches[1][$key]} {$info->getReplacement()} -->", $stringValue);
+                    $replacer->addReplacementPair(new ReplacementPair("wp-image-{$info->getSourceId()}", "wp-image-{$info->getTargetId()}"));
+                }
+            }
+        }
+
+        if (0 < preg_match_all(StringHelper::buildPattern(self::PATTERN_IMAGE_GENERAL), $stringValue, $matches)) {
+            foreach ($matches[0] as $match) {
+                $stringValue = $this->getReplacerForImgTag($match, $replacer)->processString($stringValue);
+            }
+        }
     }
 
     /**
@@ -358,12 +373,11 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 
     /**
      * @param string $block
-     * @param PairReplacerHelper $replacer
      * @return PairReplacerHelper
      */
-    private function processAcfGutenbergBlock($block, PairReplacerHelper $replacer)
+    private function getReplacerForAcfGutenbergBlock($block)
     {
-        $result = $replacer;
+        $result = new PairReplacerHelper();
         $submission = $this->getParams()->getSubmission();
         $sourceBlogId = $submission->getSourceBlogId();
         $targetBlogId = $submission->getTargetBlogId();
@@ -381,7 +395,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                     if (!empty($attachmentId) && is_numeric($attachmentId)) {
                         if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, (int)$attachmentId, $targetBlogId)) {
                             $attachment = $this->getCore()->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, (int)$attachmentId, $submission->getBatchUid());
-                            $result->addReplacementPair($attachmentId, $attachment->getTargetId());
+                            $result->addReplacementPair(new ReplacementPair($attachmentId, $attachment->getTargetId()));
                         } else {
                             $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
                         }
@@ -395,11 +409,58 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     }
 
     /**
+     * @param string $type
+     * @param string $content
+     * @return ReplacementInfo|null
+     */
+    private function processGutenbergBlock($type, $content) {
+        $submission = $this->getParams()->getSubmission();
+        $sourceBlogId = $submission->getSourceBlogId();
+        $targetBlogId = $submission->getTargetBlogId();
+        foreach ($this->getGutenbergReplacementRules() as $rule) {
+            if ($rule->getType() === $type) {
+                $data = json_decode($content, true);
+                if (!is_array($data) || !array_key_exists($rule->getProperty(), $data)) {
+                    $this->getLogger()->warning("Unable to find property {$rule->getProperty()} in $type $content");
+                    return null;
+                }
+                $attachmentId = $data[$rule->getProperty()];
+
+                if (!empty($attachmentId) && is_numeric($attachmentId)) {
+                    $dataType = gettype($attachmentId);
+                    if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, (int)$attachmentId, $targetBlogId)) {
+                        $targetId = $this->getCore()->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, (int)$attachmentId, $submission->getBatchUid())->getTargetId();
+                        if ($dataType === 'string') {
+                            $targetId = (string)$targetId;
+                        }
+                        $data[$rule->getProperty()] = $targetId;
+
+                        return new ReplacementInfo(json_encode($data, JSON_UNESCAPED_UNICODE), $attachmentId, $targetId);
+                    }
+                    $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
+                } else {
+                    $this->getLogger()->warning("$type has invalid property {$rule->getProperty()}: {$data[$rule->getProperty()]}");
+                }
+                break;
+            }
+        }
+
+        return null;
+    }
+    
+    private function getGutenbergReplacementRules() {
+        return [
+            new GutenbergReplacementRule('image', 'id'),
+            new GutenbergReplacementRule('media-text', 'mediaId'),
+        ];
+    }
+
+    /**
      * @param string $tag
      * @param PairReplacerHelper $replacer
      * @return PairReplacerHelper
      */
-    private function processImgTag($tag, PairReplacerHelper $replacer)
+    private function getReplacerForImgTag($tag, PairReplacerHelper $replacer)
     {
         $result = $replacer;
         $path = $this->getSourcePathFromImgTag($tag);
@@ -412,7 +473,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                 $targetBlogId = $submission->getTargetBlogId();
                 if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, $attachmentId, $targetBlogId)) {
                     $attachmentSubmission = $this->getCore()->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, $attachmentId, $submission->getBatchUid(), $submission->getIsCloned());
-                    $result->addReplacementPair($path, $this->getCore()->getAttachmentRelativePathBySubmission($attachmentSubmission));
+                    $result->addReplacementPair(new ReplacementPair($path, $this->getCore()->getAttachmentRelativePathBySubmission($attachmentSubmission)));
                 } else {
                     $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
                 }
@@ -420,7 +481,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                 $thumbnail = $this->tryProcessThumbnail($path);
 
                 if ($thumbnail !== null) {
-                    $result->addReplacementPair($thumbnail['from'], $thumbnail['to']);
+                    $result->addReplacementPair(new ReplacementPair($thumbnail['from'], $thumbnail['to']));
                 }
             }
         }

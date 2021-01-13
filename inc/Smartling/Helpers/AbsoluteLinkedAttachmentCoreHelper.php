@@ -30,19 +30,12 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
     }
 
     /**
-     * Checks if given URL is a thumbnail
-     *
-     * @param $url
-     *
+     * @param string $url
      * @return bool
      */
-    private function urlIsThumbnail($url)
+    private function isUrlThumbnail($url)
     {
-        $file = $this->urlToFile($url);
-
-        $pathInfo = pathinfo($file);
-
-        return $this->fileLooksLikeThumbnail($pathInfo['filename']);
+        return $this->fileLooksLikeThumbnail(pathinfo($this->urlToFile($url))['filename']);
     }
 
     /**
@@ -77,11 +70,9 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
      */
     private function generateTranslatedUrl($originalUrl, SubmissionEntity $submission)
     {
-        $translatedUrl = $this->getCore()->getAttachmentAbsolutePathBySubmission($submission);
+        $result = $this->getCore()->getAttachmentAbsolutePathBySubmission($submission);
 
-        $result = $translatedUrl;
-
-        if ($this->urlIsThumbnail($originalUrl)) {
+        if ($this->isUrlThumbnail($originalUrl)) {
 
             $originalPathInfo = pathinfo($this->urlToFile($originalUrl));
 
@@ -123,7 +114,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
                     $attachmentSubmission = $this->getCore()->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, $attachmentId, $submission->getBatchUid(), $submission->getIsCloned());
 
                     $newPath = $this->generateTranslatedUrl($path, $attachmentSubmission);
-                    $replacer->addReplacementPair($path, $newPath);
+                    $replacer->addReplacementPair(new ReplacementPair($path, $newPath));
                     $this->getLogger()->debug(sprintf("%s has replaced URL from '%s' to '%s'", __CLASS__, $path, $newPath));
                 } else {
                     $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
