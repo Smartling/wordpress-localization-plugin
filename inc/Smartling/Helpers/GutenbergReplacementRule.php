@@ -9,7 +9,7 @@ class GutenbergReplacementRule
 
     /**
      * @param string $type
-     * @param $property
+     * @param string $property
      */
     public function __construct($type, $property)
     {
