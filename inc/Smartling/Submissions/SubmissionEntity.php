@@ -642,7 +642,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
     }
 
     /**
-     * @return string
+     * @return int
      */
     public function getTargetId()
     {
