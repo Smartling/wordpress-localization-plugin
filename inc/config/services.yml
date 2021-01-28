@@ -9,17 +9,27 @@ services:
   content-type-descriptor-manager:
     class: Smartling\ContentTypes\ContentTypeManager
 
+  media.attachment.rules.manager:
+    class: Smartling\Tuner\MediaAttachmentRulesManager
+    arguments:
+      - "%known.attachment.rules%"
+
+  known.rules:
+    factory: ["@media.attachment.rules.manager", "getGutenbergReplacementRules"]
+
   smartling.helper.relative-image-path-support:
     class: Smartling\Helpers\RelativeLinkedAttachmentCoreHelper
     arguments:
       - "@entrypoint"
       - "@acf.dynamic.support"
+      - "@media.attachment.rules.manager"
 
   smartling.helper.absolute-image-path-support:
       class: Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper
       arguments:
         - "@entrypoint"
         - "@acf.dynamic.support"
+        - "@media.attachment.rules.manager"
 
   helper.customMenu:
     class: Smartling\Helpers\CustomMenuContentTypeHelper

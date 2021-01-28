@@ -1,5 +1,6 @@
 parameters:
   config.files:
+    - "media-attachment-rules.yml"
     - "services.yml"
     - "serializer.yml"
     - "cron.yml"

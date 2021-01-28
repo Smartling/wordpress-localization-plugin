@@ -1,3 +1,10 @@
+<?php
+
+use Smartling\WP\Table\LocalizationRulesTableWidget;
+use Smartling\WP\Table\MediaAttachmentTableWidget;
+use Smartling\WP\Table\ShortcodeTableClass;
+
+?>
 <style>
     span.nonmanaged {
         color: darkgrey;
@@ -8,16 +15,25 @@
     <h2><?= get_admin_page_title(); ?></h2>
     <h3>Custom Shortcodes</h3>
     <?php
+    /**
+     * @var ShortcodeTableClass $shortcodeTable
+     */
     $shortcodeTable = $this->getViewData()['shortcodes'];
+    /**
+     * @var LocalizationRulesTableWidget $filterTable
+     */
     $filterTable = $this->getViewData()['filters'];
     /**
-     * @var \Smartling\Ui\Table\ShortcodeTableClass $shortcodeTable
+     * @var MediaAttachmentTableWidget $mediaTable
      */
-    $shortcodeTable->prepare_items();
-    /**
-     * @var \Smartling\Ui\Table\LocalizationRulesTableWidget $filterTable
-     */
-    $filterTable->prepare_items();
+    $mediaTable = $this->getViewData()['media'];
+
+    foreach ([$shortcodeTable, $filterTable, $mediaTable] as $widget) {
+        if (!$widget instanceof WP_List_Table) {
+            throw new \RuntimeException('Widgets expected to be children of WP_List_Table');
+        }
+        $widget->prepare_items();
+    }
     ?>
     <div id="icon-users" class="icon32"><br/></div>
 
@@ -37,4 +53,12 @@
         <?php $filterTable->display(); ?>
     </form>
 
+    <h3>Custom media attachment rules</h3>
+
+    <form id="media-rules-table-list" method="get">
+        <?= $mediaTable->renderNewButton()?>
+        <input type="hidden" name="page" value="smartling_customization_tuning_media_form"/>
+        <input type="hidden" name="id"/>
+        <?php $mediaTable->display()?>
+    </form>
 </div>

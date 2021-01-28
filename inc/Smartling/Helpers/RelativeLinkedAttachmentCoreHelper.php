@@ -10,6 +10,7 @@ use Smartling\Base\SmartlingCore;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Tuner\MediaAttachmentRulesManager;
 use Smartling\WP\WPHookInterface;
 
 class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
@@ -25,6 +26,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 
     private $acfDefinitions = [];
     private $acfDynamicSupport;
+    private $gutenbergReplacementRules;
 
     /**
      * @var LoggerInterface
@@ -73,11 +75,12 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         $this->params = $params;
     }
 
-    public function __construct(SmartlingCore $core, AcfDynamicSupport $acfDynamicSupport)
+    public function __construct(SmartlingCore $core, AcfDynamicSupport $acfDynamicSupport, MediaAttachmentRulesManager $mediaAttachmentRulesManager)
     {
         $this->acfDynamicSupport = $acfDynamicSupport;
         $this->core = $core;
         $this->logger = MonologWrapper::getLogger(static::class);
+        $this->gutenbergReplacementRules = $mediaAttachmentRulesManager->getGutenbergReplacementRules();
     }
 
     public function register()
@@ -417,7 +420,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         $submission = $this->getParams()->getSubmission();
         $sourceBlogId = $submission->getSourceBlogId();
         $targetBlogId = $submission->getTargetBlogId();
-        foreach ($this->getGutenbergReplacementRules() as $rule) {
+        foreach ($this->gutenbergReplacementRules as $rule) {
             if ($rule->getType() === $type) {
                 $data = json_decode($content, true);
                 if (!is_array($data) || !array_key_exists($rule->getProperty(), $data)) {
@@ -446,13 +449,6 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         }
 
         return null;
-    }
-    
-    private function getGutenbergReplacementRules() {
-        return [
-            new GutenbergReplacementRule('image', 'id'),
-            new GutenbergReplacementRule('media-text', 'mediaId'),
-        ];
     }
 
     /**

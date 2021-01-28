@@ -1,0 +1,4 @@
+parameters:
+  known.attachment.rules: #built-in wordpress
+      - 'image/id'
+      - 'media-text/mediaId'
