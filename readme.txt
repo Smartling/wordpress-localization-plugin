@@ -37,10 +37,11 @@ Integration Features
  * `yaml`
  * `gd`
  * `json`
-* For wpengine hosting maximum execution time should be set to 300 seconds.
+* For "WP Engine" hosting maximum execution time should be set to 300 seconds.
 
 
-1. Configure [Multilingual Press](https://wordpress.org/plugins/multilingual-press) using instructions found [here](https://help.smartling.com/docs/wordpress-connector-install-and-configure).
+The full step by step guide can be found [here](https://help.smartling.com/hc/en-us/articles/360008158133-WordPress-Connector-Install-and-Configure).
+
 1. Upload the unzipped Smartling Connector plugin to the `/wp-content/plugins/` directory.
 1. Go to the Plugins screen and **Network Activate** the Smartling Connector plugin.
 1. Navigate to the Smartling - Settings page (`/wp-admin/network/admin.php?page=smartling_configuration_profile_list`) and click **Add Profile**.
