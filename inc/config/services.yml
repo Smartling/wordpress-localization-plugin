@@ -14,9 +14,6 @@ services:
     arguments:
       - "%known.attachment.rules%"
 
-  known.rules:
-    factory: ["@media.attachment.rules.manager", "getGutenbergReplacementRules"]
-
   smartling.helper.relative-image-path-support:
     class: Smartling\Helpers\RelativeLinkedAttachmentCoreHelper
     arguments:
