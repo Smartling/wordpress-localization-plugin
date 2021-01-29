@@ -2,9 +2,9 @@
 
 namespace Smartling\WP\Controller;
 
-use Smartling\DI;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Tuner\FilterManager;
+use Smartling\Tuner\MediaAttachmentRulesManager;
 use Smartling\Tuner\ShortcodeManager;
 use Smartling\WP\Table\LocalizationRulesTableWidget;
 use Smartling\WP\Table\MediaAttachmentTableWidget;
@@ -13,6 +13,11 @@ use Smartling\WP\WPHookInterface;
 
 class AdminPage extends ControllerAbstract implements WPHookInterface
 {
+    private $mediaAttachmentRulesManager;
+    public function __construct(MediaAttachmentRulesManager $mediaAttachmentRulesManager)
+    {
+        $this->mediaAttachmentRulesManager = $mediaAttachmentRulesManager;
+    }
 
     public function register()
     {
@@ -54,7 +59,7 @@ class AdminPage extends ControllerAbstract implements WPHookInterface
                 $manager = new FilterManager();
                 break;
             case 'media':
-                $manager = (new DI())->fromContainer('media.attachment.rules.manager');
+                $manager = $this->mediaAttachmentRulesManager;
                 break;
             default:
                 return;
@@ -80,7 +85,7 @@ class AdminPage extends ControllerAbstract implements WPHookInterface
             [
                 'shortcodes' => new ShortcodeTableClass(new ShortcodeManager()),
                 'filters' => new LocalizationRulesTableWidget(new FilterManager()),
-                'media' => new MediaAttachmentTableWidget((new DI())->fromContainer('media.attachment.rules.manager')),
+                'media' => new MediaAttachmentTableWidget($this->mediaAttachmentRulesManager),
             ]
         );
         $this->renderScript();

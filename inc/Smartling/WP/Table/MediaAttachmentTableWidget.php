@@ -63,7 +63,7 @@ class MediaAttachmentTableWidget extends \WP_List_Table
     public function get_columns()
     {
         return [
-            'block' => 'Block Name',
+            'block' => 'Gutenberg Block Name',
             'path' => 'JSON Path',
         ];
 
@@ -93,7 +93,7 @@ class MediaAttachmentTableWidget extends \WP_List_Table
                 'id' => null,
                 'block' => HtmlTagGeneratorHelper::tag('span', $rule['block'], [
                     'class' => 'nonmanaged',
-                    'title' => 'That shortcode is automatically discovered and processed by smartling-connector',
+                    'title' => 'That path is automatically discovered and processed by smartling-connector',
                 ]),
                 'path' => $rule['path'],
             ];

@@ -229,6 +229,8 @@ services:
 
   service.filter-ui:
     class: Smartling\Services\SmartlingFilterUiService
+    arguments:
+      - "@media.attachment.rules.manager"
 
   extension.loader:
     class: Smartling\Extensions\ExtensionLoader
