@@ -3,9 +3,8 @@
 namespace Smartling\Tuner;
 
 use Smartling\Helpers\GutenbergReplacementRule;
-use Smartling\WP\WPHookInterface;
 
-class MediaAttachmentRulesManager extends CustomizationManagerAbstract implements WPHookInterface
+class MediaAttachmentRulesManager extends CustomizationManagerAbstract
 {
     const STORAGE_KEY = 'CUSTOM_MEDIA_RULES';
     private $preconfiguredRules;
@@ -44,9 +43,5 @@ class MediaAttachmentRulesManager extends CustomizationManagerAbstract implement
         }
 
         return $result;
-    }
-
-    public function register()
-    {
     }
 }
