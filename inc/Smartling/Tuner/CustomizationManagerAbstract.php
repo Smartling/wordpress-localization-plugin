@@ -71,9 +71,9 @@ abstract class CustomizationManagerAbstract implements ManagerInterface, \Iterat
 
     /**
      * @param string $id
-     * @param array  $data
+     * @param array $data
      *
-     * @return mixed
+     * @return void
      */
     public function updateItem($id, array $data)
     {
@@ -83,7 +83,7 @@ abstract class CustomizationManagerAbstract implements ManagerInterface, \Iterat
     /**
      * @param string $id
      *
-     * @return mixed
+     * @return void
      */
     public function removeItem($id)
     {
@@ -155,9 +155,9 @@ abstract class CustomizationManagerAbstract implements ManagerInterface, \Iterat
     {
         if (isset($this[$offset])) {
             return $this->state[$offset];
-        } else {
-            throw new \InvalidArgumentException(vsprintf('Invalid index "%s" used', [$offset]));
         }
+
+        throw new \InvalidArgumentException(vsprintf('Invalid index "%s" used', [$offset]));
     }
 
     /**

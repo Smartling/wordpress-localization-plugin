@@ -8,16 +8,25 @@ use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
+use Smartling\Helpers\GutenbergReplacementRule;
 use Smartling\Helpers\RelativeLinkedAttachmentCoreHelper;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
+use Smartling\Tuner\MediaAttachmentRulesManager;
 
 class RelativeLinkedAttachmentCoreHelperTest extends TestCase
 {
+    private $mediaAttachmentRulesManager;
+
     protected function setUp()
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
+        $this->mediaAttachmentRulesManager = $this->getMock(MediaAttachmentRulesManager::class);
+        $this->mediaAttachmentRulesManager->method('getGutenbergReplacementRules')->willReturn([
+            new GutenbergReplacementRule('image', 'id'),
+            new GutenbergReplacementRule('media-text', 'mediaId'),
+        ]);
     }
 
     public function testProcessGutenbergBlock()
@@ -47,7 +56,8 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
 
         $x = $this->getMockBuilder(RelativeLinkedAttachmentCoreHelper::class)->setConstructorArgs([
             $core,
-            $acf
+            $acf,
+            $this->mediaAttachmentRulesManager,
         ])->setMethods(null)->getMock();
         $source = [<<<HTML
 <!-- wp:core/media-text {"mediaId":$sourceMediaId,"mediaLink":"http://test.com","mediaType":"image"} -->
@@ -113,7 +123,8 @@ HTML
             ->willReturn($submission);
         $x = $this->getMockBuilder(RelativeLinkedAttachmentCoreHelper::class)->setConstructorArgs([
             $core,
-            $acf
+            $acf,
+            $this->mediaAttachmentRulesManager,
         ])->setMethods(null)->getMock();
         $source = [$string];
         $meta = [];
@@ -168,7 +179,8 @@ HTML
 
         $x = $this->getMockBuilder(RelativeLinkedAttachmentCoreHelper::class)->setConstructorArgs([
             $core,
-            $acf
+            $acf,
+            $this->mediaAttachmentRulesManager
         ])->setMethods(null)->getMock();
 
         $source = [$string];

@@ -4,13 +4,20 @@ namespace Smartling\WP\Controller;
 
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Tuner\FilterManager;
+use Smartling\Tuner\MediaAttachmentRulesManager;
 use Smartling\Tuner\ShortcodeManager;
 use Smartling\WP\Table\LocalizationRulesTableWidget;
+use Smartling\WP\Table\MediaAttachmentTableWidget;
 use Smartling\WP\Table\ShortcodeTableClass;
 use Smartling\WP\WPHookInterface;
 
 class AdminPage extends ControllerAbstract implements WPHookInterface
 {
+    private $mediaAttachmentRulesManager;
+    public function __construct(MediaAttachmentRulesManager $mediaAttachmentRulesManager)
+    {
+        $this->mediaAttachmentRulesManager = $mediaAttachmentRulesManager;
+    }
 
     public function register()
     {
@@ -36,8 +43,8 @@ class AdminPage extends ControllerAbstract implements WPHookInterface
 
     private function processAction()
     {
-        $action = &$_REQUEST['action'];
-        $type = &$_REQUEST['type'];
+        $action = $_REQUEST['action'];
+        $type = $_REQUEST['type'];
 
         $manager = null;
         if ('delete' !== strtolower($action)) {
@@ -51,12 +58,15 @@ class AdminPage extends ControllerAbstract implements WPHookInterface
             case 'filter':
                 $manager = new FilterManager();
                 break;
+            case 'media':
+                $manager = $this->mediaAttachmentRulesManager;
+                break;
             default:
                 return;
         }
 
         if (array_key_exists('id', $_REQUEST)) {
-            $id = &$_REQUEST['id'];
+            $id = $_REQUEST['id'];
             $manager->loadData();
             if (isset($manager[$id])) {
                 unset($manager[$id]);
@@ -74,7 +84,8 @@ class AdminPage extends ControllerAbstract implements WPHookInterface
         $this->setViewData(
             [
                 'shortcodes' => new ShortcodeTableClass(new ShortcodeManager()),
-                'filters'    => new LocalizationRulesTableWidget(new FilterManager()),
+                'filters' => new LocalizationRulesTableWidget(new FilterManager()),
+                'media' => new MediaAttachmentTableWidget($this->mediaAttachmentRulesManager),
             ]
         );
         $this->renderScript();
