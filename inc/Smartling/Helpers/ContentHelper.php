@@ -123,12 +123,16 @@ class ContentHelper
 
     public function logSwitchBlog() {
         $backtrace = debug_backtrace();
-        foreach ($backtrace as $frame) {
+        foreach ($backtrace as $index => $frame) {
             if (array_key_exists('function', $frame) && array_key_exists('args', $frame)) {
                 $args = $frame['args'];
-                if ($frame['function'] === 'do_action' && $args[0] === 'switch_blog' && $this->isConnectorSwitch($backtrace)) {
+                if ($frame['function'] === 'do_action' && $args[0] === 'switch_blog' && !$this->isConnectorSwitch($backtrace)) {
                     $this->getLogger()->debug("Unexpected blog switch detected: " . json_encode($backtrace));
-                    $this->externalBlogSwitchFrames[] = $frame;
+                    if (array_key_exists($index + 1, $backtrace)) {
+                        $this->externalBlogSwitchFrames[] = $backtrace[$index + 1];
+                    } else {
+                        $this->externalBlogSwitchFrames[] = $frame;
+                    }
                     break;
                 }
             }
@@ -306,12 +310,23 @@ class ContentHelper
                     foreach ($this->externalBlogSwitchFrames as $frame) {
                         $message .= $this->getSwitchBlogString($frame) . "\n";
                     }
-                    throw new EntityNotFoundException($message);
+                    throw new EntityNotFoundException($message, $e->getCode(), $e);
                 }
             }
         }
 
-        $this->ensureRestoredBlogId();
+        try {
+            $this->ensureRestoredBlogId();
+        } catch (\LogicException $e) {
+            $message = $e->getMessage();
+            if (count($this->externalBlogSwitchFrames) > 0) {
+                $message = "Failed to restore blog. Detected blog change frames follow:\n";
+                foreach ($this->externalBlogSwitchFrames as $frame) {
+                    $message .= $this->getSwitchBlogString($frame) . "\n";
+                }
+            }
+            throw new \LogicException($message, $e->getCode(), $e);
+        }
 
         return $result;
     }
