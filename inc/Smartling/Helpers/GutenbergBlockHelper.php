@@ -10,7 +10,6 @@ use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 
 class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 {
-
     const BLOCK_NODE_NAME = 'gutenbergBlock';
     const CHUNK_NODE_NAME = 'contentChunk';
     const ATTRIBUTE_NODE_NAME = 'blockAttribute';
@@ -96,10 +95,10 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     }
 
     /**
-     * @param $string
+     * @param string $string
      * @return bool
      */
-    private function hasBlocks($string)
+    public function hasBlocks($string)
     {
         return 0 < (int)preg_match('/<!--\s+wp:/iu', $string);
     }
@@ -150,18 +149,15 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         }
 
         $flatAttributes = $this->getFieldsFilter()->flatternArray($block['attrs']);
-        $filteredAttributes = $this->processAttributes($block['blockName'], $flatAttributes);
 
-        if (0 < count($filteredAttributes)) {
-            foreach ($filteredAttributes as $attrName => $attrValue) {
-                $arrtNode = $this->createDomNode(
-                    static::ATTRIBUTE_NODE_NAME,
-                    ['name' => $attrName],
-                    $attrValue
-                );
-                $node->appendChild($arrtNode);
-            }
+        foreach ($this->processAttributes($block['blockName'], $flatAttributes) as $attrName => $attrValue) {
+            $node->appendChild($this->createDomNode(
+                static::ATTRIBUTE_NODE_NAME,
+                ['name' => $attrName],
+                $attrValue
+            ));
         }
+
         return $node;
     }
 
@@ -191,7 +187,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     /**
      * A wrapper for WP::gutenberg gutenberg_parse_blocks() function
      *
-     * @param $string
+     * @param string $string
      * @return array
      * @throws SmartlingGutenbergParserNotFoundException
      */
@@ -208,6 +204,49 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         throw new SmartlingGutenbergParserNotFoundException('No block parser found.');
     }
 
+    /**
+     * @param array $entityFields
+     * @return string[] entity fields with added blocks serialized
+     */
+    public function addPostContentBlocks(array $entityFields)
+    {
+        if (array_key_exists('post_content', $entityFields) && $this->hasBlocks($entityFields['post_content'])) {
+            try {
+                foreach ($this->getPostContentBlocks($entityFields['post_content']) as $index => $block) {
+                    /** @noinspection PhpParamsInspection serialize_block expects array for its parameter */
+                    $entityFields["post_content/blocks/$index/{$block['blockName']}"] = serialize_block($block);
+                }
+            } catch (SmartlingGutenbergParserNotFoundException $e) {
+                $this->getLogger()->warning('Block content found while getting translation fields, but no parser available');
+            }
+        }
+
+        return $entityFields;
+    }
+
+    /**
+     * @param string $string
+     * @return array[]
+     * @throws SmartlingGutenbergParserNotFoundException
+     */
+    public function getPostContentBlocks($string)
+    {
+        $blocks = $this->parseBlocks($string);
+
+        return array_values(array_filter($blocks, static function ($block) {
+            return array_key_exists('blockName', $block) && $block['blockName'] !== null;
+        }));
+    }
+
+    /**
+     * @param $string
+     * @return string
+     */
+    public function normalizeCoreBlocks($string)
+    {
+        // $string = preg_replace('~<!-- (/?)wp:core/([^ ]+)~', '<!-- $1wp:$2', $string);
+        return serialize_blocks($this->parseBlocks($string));
+    }
 
     /**
      * @param \DOMNode $node

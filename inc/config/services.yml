@@ -34,6 +34,14 @@ services:
       - [ "setSiteHelper", [ "@site.helper" ] ]
       - [ "setContentIoFactory", [ "@factory.contentIO" ] ]
 
+  helper.post.content:
+    class: Smartling\Helpers\PostContentHelper
+    arguments:
+      - "@helper.gutenberg"
+
+  helper.xml:
+    class: Smartling\Helpers\XmlHelper
+
   wrapper.sdk.api.smartling:
     class: Smartling\ApiWrapper
     arguments:
@@ -48,6 +56,9 @@ services:
 
   entrypoint:
     class: Smartling\Base\SmartlingCore
+    arguments:
+      - "@helper.post.content"
+      - "@helper.xml"
     calls:
       - [ "setSubmissionManager", [ "@manager.submission" ]]
       - [ "setSiteHelper", [ "@site.helper" ]]
@@ -281,8 +292,8 @@ services:
       - "@entity.helper"
       - "@manager.submission"
       - "@site.cache"
-    calls:
-    - [ "setContentHelper" , [ "@content.helper"]]
+      - "@content.helper"
+      - "@helper.gutenberg"
 
   live_notification.service:
     class: Smartling\WP\Controller\LiveNotificationController

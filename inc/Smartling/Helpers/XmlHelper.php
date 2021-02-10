@@ -113,10 +113,9 @@ class XmlHelper
         static::logMessage(vsprintf('Started creating XML for fields: %s', [base64_encode(var_export($source, true))]));
         $xml = self::setTranslationComments(self::initXml());
         $settings = self::getFieldProcessingParams();
-        $keySettings = &$settings['key'];
         $rootNode = $xml->createElement(self::XML_ROOT_NODE_NAME);
         foreach ($source as $name => $value) {
-            $rootNode->appendChild(self::rowToXMLNode($xml, $name, $value, $keySettings, $submission));
+            $rootNode->appendChild(self::rowToXMLNode($xml, $name, $value, $settings['key'], $submission));
         }
         $xml->appendChild($rootNode);
 

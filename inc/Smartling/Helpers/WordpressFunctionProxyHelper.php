@@ -29,6 +29,9 @@ class WordpressFunctionProxyHelper
         return get_post_meta($postId);
     }
 
+    /**
+     * @return mixed
+     */
     public function apply_filters()
     {
         return apply_filters(...func_get_args());
