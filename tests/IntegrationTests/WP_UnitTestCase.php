@@ -694,7 +694,7 @@ namespace Smartling\Tests\IntegrationTests {
             call_user_func(array($c, 'wpTearDownAfterClass'));
         }
 
-        function setUp()
+        function setUp(): void
         {
             set_time_limit(0);
 
@@ -732,7 +732,7 @@ namespace Smartling\Tests\IntegrationTests {
         /**
          * After a test method runs, reset any state in WordPress the test method might have changed.
          */
-        function tearDown()
+        function tearDown(): void
         {
             global $wpdb, $wp_query, $wp;
 

@@ -20,7 +20,7 @@ class AbstractJobTest extends TestCase
 
     private $submissionManager;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
         $this->submissionManager = $this->mockSubmissionManager(

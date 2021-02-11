@@ -17,14 +17,14 @@ use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 class AcfTypeDetectorTest extends TestCase
 {
     private $acfStores;
-    protected function setUp()
+    protected function setUp(): void
     {
         global $acf_stores;
         $this->acfStores = $acf_stores;
         WordpressFunctionsMockHelper::injectFunctionsMocks();
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         global $acf_stores;
         $acf_stores = $this->acfStores;

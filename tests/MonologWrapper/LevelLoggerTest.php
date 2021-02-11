@@ -28,7 +28,7 @@ class LevelLoggerTest extends TestCase {
   /**
    * {@inheritdoc}
    */
-  public function setUp() {
+  public function setUp(): void {
     $this->container = new ContainerBuilder();
     $this->loader = new YamlFileLoader($this->container, new FileLocator(__DIR__));
   }
@@ -36,7 +36,7 @@ class LevelLoggerTest extends TestCase {
   /**
    * {@inheritdoc}
    */
-  public function tearDown() {
+  public function tearDown(): void {
     MonologWrapper::clear();
   }
 

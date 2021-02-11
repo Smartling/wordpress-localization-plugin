@@ -13,7 +13,7 @@ class ProfileCreationTest extends SmartlingUnitTestCaseAbstract
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUp(): void
     {
         $this->cleanUpTables();
         $this->registerPostTypes();

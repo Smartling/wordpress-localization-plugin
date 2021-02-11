@@ -22,7 +22,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
 {
     private $mediaAttachmentRulesManager;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
         $this->mediaAttachmentRulesManager = $this->getMock(MediaAttachmentRulesManager::class);

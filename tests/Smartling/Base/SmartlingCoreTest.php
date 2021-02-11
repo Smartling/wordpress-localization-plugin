@@ -37,7 +37,7 @@ class SmartlingCoreTest extends TestCase
     use DbAlMock;
 
     private $core;
-    protected function setUp()
+    protected function setUp(): void
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
         $this->core = new SmartlingCore(new PostContentHelper(new GutenbergBlockHelper()), new XmlHelper());

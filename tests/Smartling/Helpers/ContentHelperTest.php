@@ -13,7 +13,7 @@ use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 
 class ContentHelperTest extends TestCase
 {
-    public function setUp() {
+    public function setUp(): void {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
     }
     /**

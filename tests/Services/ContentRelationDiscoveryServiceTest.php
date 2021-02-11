@@ -16,7 +16,7 @@ use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 
 class ContentRelationDiscoveryServiceTest extends TestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
     }

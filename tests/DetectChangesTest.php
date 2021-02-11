@@ -48,7 +48,7 @@ class DetectChangesTest extends TestCase
     /**
      * {@inheritDoc}
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $mock = $this->getMockBuilder('Smartling\Helpers\DetectChangesHelper')
             ->setMethods(null)

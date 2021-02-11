@@ -76,7 +76,7 @@ class SmartlingCoreUpload {
 
 class SmartlingCoreUploadTraitTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
     }
