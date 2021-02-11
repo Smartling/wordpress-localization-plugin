@@ -466,11 +466,7 @@ class SmartlingCoreTest extends TestCase
 
     public function testExceptionOnTargetPlaceholderCreationFail()
     {
-        $obj = $this->createMock(
-            SmartlingCore::class,
-            ['getFunctionProxyHelper'],
-            [new PostContentHelper(new GutenbergBlockHelper()), new XmlHelper()]
-        );
+        $obj = $this->createPartialMock(SmartlingCore::class, ['getFunctionProxyHelper', 'getLogger']);
 
         $submissionManager = $this->mockSubmissionManager(
             $this->mockDbAl(),
@@ -512,11 +508,9 @@ class SmartlingCoreTest extends TestCase
 
         $proxyMock->expects(self::once())->method('apply_filters')->willReturn($returnedSubmission);
         $obj->expects(self::once())->method('getFunctionProxyHelper')->willReturn($proxyMock);
-        $this->setExpectedException(
-            SmartlingTargetPlaceholderCreationFailedException::class,
-            "Failed creating target placeholder for submission id='5', source_blog_id='1', source_id='1', target_blog_id='1', target_id='0' with message: ''"
-        );
+        $this->expectException(SmartlingTargetPlaceholderCreationFailedException::class);
+        $this->expectExceptionMessage("Failed creating target placeholder for submission id='5', source_blog_id='1', source_id='1', target_blog_id='1', target_id='0' with message: ''");
 
-        $this->invokeMethod($obj, 'getXMLFiltered', [$submission]);
+        $obj->getXMLFiltered($submission);
     }
 }
