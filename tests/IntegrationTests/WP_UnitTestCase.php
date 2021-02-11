@@ -616,13 +616,16 @@ namespace {
 }
 
 namespace Smartling\Tests\IntegrationTests {
+
+    use PHPUnit\Framework\TestCase;
+
     /**
      * Defines a basic fixture to run multiple tests.
      * Resets the state of the WordPress installation before and after every test.
      * Includes utility functions and assertions useful for testing WordPress.
      * All WordPress unit tests should inherit from this class.
      */
-    class WP_UnitTestCase extends \PHPUnit_Framework_TestCase
+    class WP_UnitTestCase extends TestCase
     {
 
         protected static $hooks_saved = array();
@@ -661,7 +664,7 @@ namespace Smartling\Tests\IntegrationTests {
             }
         }
 
-        public static function setUpBeforeClass()
+        public static function setUpBeforeClass(): void
         {
             global $wpdb;
 
@@ -680,7 +683,7 @@ namespace Smartling\Tests\IntegrationTests {
             call_user_func(array($c, 'wpSetUpBeforeClass'), self::factory());
         }
 
-        public static function tearDownAfterClass()
+        public static function tearDownAfterClass(): void
         {
             parent::tearDownAfterClass();
 
