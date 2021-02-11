@@ -4,6 +4,7 @@ namespace Smartling\Tests\Queue;
 
 use PHPUnit\Framework\TestCase;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Exception\SmartlingDbException;
 use Smartling\Queue\Queue;
 use Smartling\Queue\QueueInterface;
 use Smartling\Tests\Traits\DbAlMock;
@@ -109,7 +110,7 @@ class QueueTest extends TestCase
      */
     public function testEnqueueException($queue, $value, $expectedQuery)
     {
-        $this->setExpectedException(\Smartling\Exception\SmartlingDbException::class);
+        $this->expectException(SmartlingDbException::class);
         $db = $this->getDbal();
         $db->expects(self::any())->method('completeTableName')->withAnyParameters()->willReturn(Queue::getTableName());
         $db->expects(self::any())->method('query')->with($expectedQuery)->willReturn(false);

@@ -318,7 +318,7 @@ class SmartlingCoreTest extends TestCase
 
     public function testFixSubmissionBatchUid()
     {
-        $this->setExpectedException(SmartlingDbException::class);
+        $this->expectException(SmartlingDbException::class);
         $obj = $this->core;
         $submission = new SubmissionEntity();
         $submission
@@ -356,7 +356,7 @@ class SmartlingCoreTest extends TestCase
 
     public function testFixSubmissionBatchUidWithApiWrapper()
     {
-        $this->setExpectedException(SmartlingApiException::class);
+        $this->expectException(SmartlingApiException::class);
         $obj = $this->core;
         $submission = new SubmissionEntity();
         $submission
