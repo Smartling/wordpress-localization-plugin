@@ -10,12 +10,9 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
  */
 class ConditionTest extends TestCase
 {
-
-	/**
-	 * @expectedException \InvalidArgumentException
-	 */
 	public function testConditionValidation()
 	{
+	    $this->expectException(\InvalidArgumentException::class);
 		$conditionType = ConditionBuilder::CONDITION_SIGN_EQ;
 
 		$field = 'foo';
