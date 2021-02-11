@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests\Traits;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use Smartling\Settings\SettingsManager;
 
 /**

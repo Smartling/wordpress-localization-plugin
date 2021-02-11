@@ -5,12 +5,14 @@ namespace Smartling\Tests;
 use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\DetectChangesHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 use Smartling\Tests\Traits\DummyLoggerMock;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 use Smartling\Tests\Traits\SettingsManagerMock;
 use Smartling\Tests\Traits\SubmissionEntityMock;
+use Smartling\Settings\ConfigurationProfileEntity;
 
 /**
  * Class DetectChangesTest
@@ -50,25 +52,20 @@ class DetectChangesTest extends TestCase
      */
     protected function setUp(): void
     {
-        $mock = $this->getMockBuilder('Smartling\Helpers\DetectChangesHelper')
-            ->setMethods(null)
-            ->getMock();
+        $mock = $this->createMock(DetectChangesHelper::class);
 
-        $profileMock = $this
-            ->getMockBuilder('Smartling\Settings\ConfigurationProfileEntity')
-            ->setMethods(null)
-            ->getMock();
-        $profileMock->expects(self::any())->method('getProjectId')->willReturn(1);
+        $profileMock = $this->createPartialMock(ConfigurationProfileEntity::class, ['getProjectId']);
+        $profileMock->method('getProjectId')->willReturn(1);
 
-        $mock->setSettingsManager($this->getSettingsManagerMock());
-        $mock->getSettingsManager()->expects(self::any())->method('getSingleSettingsProfile')
-            ->willReturn($profileMock);
+        $settingsManager = $this->createPartialMock(SettingsManager::class, ['getSingleSettingsProfile']);
+        $settingsManager->method('getSingleSettingsProfile')->willReturn($profileMock);
+
+        $mock->method('getSettingsManager')->willReturn($settingsManager);
 
         $this->setDetectChangesHelperMock($mock);
     }
 
     /**
-     * @covers       Smartling\Helpers\DetectChangesHelper::checkSubmissionHash()
      * @dataProvider checkSubmissionHashDataProvider
      *
      * @param array  $submissionFields
@@ -81,7 +78,6 @@ class DetectChangesTest extends TestCase
         WordpressFunctionsMockHelper::injectFunctionsMocks();
         $initialSubmission = SubmissionEntity::fromArray($submissionFields, $this->getLogger());
         $submission = SubmissionEntity::fromArray($submissionFields, $this->getLogger());
-
 
         $processedSubmission = $this->invokeMethod(
             $this->getDetectChangesHelperMock(),
