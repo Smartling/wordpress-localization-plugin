@@ -21,7 +21,6 @@ class FileUriHelperTest extends TestCase
     const FileUriClassFullName = 'Smartling\Helpers\FileUriHelper';
 
     /**
-     * @covers       Smartling\Helpers\FileUriHelper::preparePermalink
      * @dataProvider preparePermalinkDataProvider
      *
      * @param string           $string
@@ -44,16 +43,14 @@ class FileUriHelperTest extends TestCase
     }
 
     /**
-     * @covers       Smartling\Helpers\FileUriHelper::preparePermalink
      * @dataProvider preparePermalinkDataProviderInvalidParams
      *
      * @param string           $string
      * @param SubmissionEntity $entity
-     *
-     * @expectedException \InvalidArgumentException
      */
     public function testPreparePermalinkInvalidParams($string, $entity)
     {
+        $this->expectException(\InvalidArgumentException::class);
         $this->invokeStaticMethod(self::FileUriClassFullName, 'preparePermalink', [$string, $entity,]);
     }
 

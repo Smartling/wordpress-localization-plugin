@@ -44,7 +44,7 @@ trait InvokeMethodTrait
     /**
      * Invokes protected or private static method of given class.
      *
-     * @param Object $className
+     * @param Object|string $class
      *   Object with protected or private method to invoke.
      * @param string $methodName
      *   Name of the property to invoke.
@@ -54,9 +54,9 @@ trait InvokeMethodTrait
      * @return mixed
      *   Value invoked method will return or exception.
      */
-    protected function invokeStaticMethod($className, $methodName, array $parameters = [])
+    protected function invokeStaticMethod($class, string $methodName, array $parameters = [])
     {
-        $reflection = new \ReflectionClass($className);
+        $reflection = new \ReflectionClass($class);
         $method = $reflection->getMethod($methodName);
         $method->setAccessible(true);
 
