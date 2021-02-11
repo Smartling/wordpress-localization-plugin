@@ -2,13 +2,13 @@
 
 namespace Smartling\Tests\Jobs;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapperInterface;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\Helpers\QueryBuilder\TransactionManager;
 use Smartling\Jobs\LastModifiedCheckJob;
 use Smartling\Queue\Queue;
-use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
@@ -24,11 +24,6 @@ use Smartling\Tests\Traits\SiteHelperMock;
 use Smartling\Tests\Traits\SubmissionEntityMock;
 use Smartling\Tests\Traits\SubmissionManagerMock;
 
-/**
- * Class LastModifiedCheckJobTest
- * @package Jobs
- * @covers  \Smartling\Jobs\LastModifiedCheckJob
- */
 class LastModifiedCheckJobTest extends TestCase
 {
     use DummyLoggerMock;
@@ -43,157 +38,49 @@ class LastModifiedCheckJobTest extends TestCase
     use ApiWrapperMock;
 
     use InvokeMethodTrait;
-    /**
-     * @var SettingsManager||\PHPUnit_Framework_MockObject_MockObject
-     */
     private $settingsManager;
-
-    /**
-     * @var LastModifiedCheckJob|\PHPUnit_Framework_MockObject_MockObject
-     */
     private $lastModifiedWorker;
-
-    /**
-     * @var SubmissionManager|\PHPUnit_Framework_MockObject_MockObject
-     */
     private $submissionManager;
-
-    /**
-     * @var ApiWrapperInterface|\PHPUnit_Framework_MockObject_MockObject
-     */
     private $apiWrapper;
-
-    /**
-     * @var Queue|\PHPUnit_Framework_MockObject_MockObject
-     */
     private $queue;
 
-    /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|SubmissionManager
-     */
-    public function getSubmissionManager()
-    {
-        return $this->submissionManager;
-    }
-
-    /**
-     * @param \PHPUnit_Framework_MockObject_MockObject|SubmissionManager $submissionManager
-     */
-    public function setSubmissionManager($submissionManager)
-    {
-        $this->submissionManager = $submissionManager;
-    }
-
-    /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|Queue
-     */
-    public function getQueue()
-    {
-        return $this->queue;
-    }
-
-    /**
-     * @param \PHPUnit_Framework_MockObject_MockObject|Queue $queue
-     */
-    public function setQueue($queue)
-    {
-        $this->queue = $queue;
-    }
-
-    /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|ApiWrapperInterface
-     */
-    public function getApiWrapper()
-    {
-        return $this->apiWrapper;
-    }
-
-    /**
-     * @param \PHPUnit_Framework_MockObject_MockObject|ApiWrapperInterface $apiWrapper
-     */
-    public function setApiWrapper($apiWrapper)
-    {
-        $this->apiWrapper = $apiWrapper;
-    }
-
-    /**
-     * @return LastModifiedCheckJob
-     */
-    public function getLastModifiedWorker()
-    {
-        return $this->lastModifiedWorker;
-    }
-
-    /**
-     * @param LastModifiedCheckJob $lastModifiedWorker
-     */
-    public function setLastModifiedWorker($lastModifiedWorker)
-    {
-        $this->lastModifiedWorker = $lastModifiedWorker;
-    }
-
-    /**
-     * @return SettingsManager|\PHPUnit_Framework_MockObject_MockObject
-     */
-    public function getSettingsManager()
-    {
-        return $this->settingsManager;
-    }
-
-    /**
-     * @param SettingsManager $settingsManager
-     */
-    public function setSettingsManager($settingsManager)
-    {
-        $this->settingsManager = $settingsManager;
-    }
-
-
-    /**
-     * Sets up the fixture, for example, open a network connection.
-     * This method is called before a test is executed.
-     */
     protected function setUp(): void
     {
         $dbMock = $this->mockDbAl();
 
-        $this->setSubmissionManager(
-            $this->mockSubmissionManager(
-                $dbMock,
-                $this->mockEntityHelper($this->mockSiteHelper())
-            )
+        $this->submissionManager = $this->mockSubmissionManager(
+            $dbMock,
+            $this->mockEntityHelper($this->mockSiteHelper())
         );
 
-        $this->setSettingsManager($this->getSettingsManagerMock());
+        $this->settingsManager = $this->getSettingsManagerMock();
 
-        $this->setQueue($this->mockQueue());
+        $this->queue = $this->mockQueue();
 
-        $this->setApiWrapper($this->getApiWrapperMock());
+        $this->apiWrapper = $this->getApiWrapperMock();
 
-        $this->setLastModifiedWorker(
-            $this->getWorkerMock(
-                $this->getSubmissionManager(),
-                $this->getApiWrapper(),
-                $this->getQueue()
-            )
+        $this->lastModifiedWorker = $this->getWorkerMock(
+            $this->submissionManager,
+            $this->apiWrapper,
+            $this->queue
         );
     }
 
     /**
-     * @param SubmissionManager   $submissionManager
+     * @param SubmissionManager $submissionManager
      * @param ApiWrapperInterface $apiWrapper
-     * @param Queue               $queue
+     * @param Queue $queue
      *
-     * @return \PHPUnit_Framework_MockObject_MockObject|LastModifiedCheckJob
+     * @return MockObject|LastModifiedCheckJob
      */
     private function getWorkerMock(SubmissionManager $submissionManager, ApiWrapperInterface $apiWrapper, Queue $queue)
     {
         $transactionManager = $this->getMockBuilder(TransactionManager::class)
             ->setConstructorArgs([$this->mockDbAl()])
-            ->setMethods(['executeSelectForUpdate'])
+            ->onlyMethods(['executeSelectForUpdate'])
             ->getMock();
         $worker = $this->getMockBuilder(LastModifiedCheckJob::class)
-            ->setMethods(['prepareSubmissionList'])
+            ->onlyMethods(['prepareSubmissionList'])
             ->setConstructorArgs([$submissionManager, $transactionManager])
             ->getMock();
 
@@ -204,21 +91,20 @@ class LastModifiedCheckJobTest extends TestCase
     }
 
     /**
-     * @covers       \Smartling\Jobs\LastModifiedCheckJob::run()
      * @dataProvider runDataProvider
      *
      * @param array $groupedSubmissions
      * @param array $lastModifiedResponse
-     * @param int   $expectedStatusCheckRequests
+     * @param int $expectedStatusCheckRequests
      */
-    public function testRun(array $groupedSubmissions, array $lastModifiedResponse, $expectedStatusCheckRequests)
+    public function testRun(array $groupedSubmissions, array $lastModifiedResponse, int $expectedStatusCheckRequests)
     {
-        $worker = $this->getLastModifiedWorker();
+        $worker = $this->lastModifiedWorker;
 
         foreach ($groupedSubmissions as $index => $mockedResult) {
             $dequeueResult = $this->mockedResultToDequeueResult($groupedSubmissions);
 
-            $this->getQueue()
+            $this->queue
                 ->expects(self::at($index))
                 ->method('dequeue')
                 ->with(Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE)
@@ -234,19 +120,19 @@ class LastModifiedCheckJobTest extends TestCase
                     }
                     unset ($submissionArray);
 
-                    $this->getSubmissionManager()
+                    $this->submissionManager
                         ->method('findByIds')
                         ->with($dequeued)
                         ->willReturn($submissionList);
 
-                    $unserializedSubmissions = $this->getSubmissionManager()->findByIds($dequeued);
+                    $unserializedSubmissions = $this->submissionManager->findByIds($dequeued);
 
                     $worker
                         ->method('prepareSubmissionList')
                         ->with($unserializedSubmissions)
                         ->willReturn($this->emulatePrepareSubmissionList($unserializedSubmissions));
 
-                    $this->getApiWrapper()
+                    $this->apiWrapper
                         ->expects(self::once())
                         ->method('lastModified')
                         ->with(reset($unserializedSubmissions))
@@ -255,18 +141,18 @@ class LastModifiedCheckJobTest extends TestCase
             }
         }
 
-        $this->getApiWrapper()
+        $this->apiWrapper
             ->expects(self::exactly($expectedStatusCheckRequests))
             ->method('getStatusForAllLocales')
             ->withAnyParameters()
             ->will(self::returnArgument(0));
 
         // emulate Saving
-        $this->getSubmissionManager()
+        $this->submissionManager
             ->method('storeSubmissions')
             ->will(self::returnArgument(0));
 
-        $sm = $this->getSettingsManager();
+        $sm = $this->settingsManager;
         $sm->method('getSingleSettingsProfile')->willReturn(false);
 
         $worker->setSettingsManager($sm);
@@ -274,12 +160,8 @@ class LastModifiedCheckJobTest extends TestCase
         $worker->run();
     }
 
-    private function mockedResultToDequeueResult($mocked)
+    private function mockedResultToDequeueResult(array $mocked): array
     {
-        if (false === $mocked) {
-            return $mocked;
-        }
-
         $rebuiltArray = [];
 
         foreach ($mocked as $index => $mockedSet) {
@@ -302,7 +184,7 @@ class LastModifiedCheckJobTest extends TestCase
      *
      * @return array
      */
-    public function emulatePrepareSubmissionList($submissions)
+    public function emulatePrepareSubmissionList(array $submissions): array
     {
         $output = [];
 
@@ -314,10 +196,7 @@ class LastModifiedCheckJobTest extends TestCase
         return $output;
     }
 
-    /**
-     * Data Provider for testRun test
-     */
-    public function runDataProvider()
+    public function runDataProvider(): array
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
         return [
@@ -343,17 +222,15 @@ class LastModifiedCheckJobTest extends TestCase
     }
 
     /**
-     * @covers       \Smartling\Jobs\LastModifiedCheckJob::filterSubmissions()
      * @dataProvider filterSubmissionsDataProvider
-     *
      * @param array $lastModifiedResponse
      * @param array $submissions
      * @param array $expectedFilteredResult
      */
-    public function testFilterSubmissions($lastModifiedResponse, $submissions, $expectedFilteredResult)
+    public function testFilterSubmissions(array $lastModifiedResponse, array $submissions, array $expectedFilteredResult)
     {
         $actualResult = $this->invokeMethod(
-            $this->getLastModifiedWorker(),
+            $this->lastModifiedWorker,
             'filterSubmissions',
             [
                 $lastModifiedResponse,
@@ -367,7 +244,7 @@ class LastModifiedCheckJobTest extends TestCase
         );
     }
 
-    protected function serializeSubmissions(array $submissions)
+    protected function serializeSubmissions(array $submissions): array
     {
         $rebuild = [];
         foreach ($submissions as $key => $submission) {
@@ -377,10 +254,7 @@ class LastModifiedCheckJobTest extends TestCase
         return $rebuild;
     }
 
-    /**
-     * @return array
-     */
-    public function filterSubmissionsDataProvider()
+    public function filterSubmissionsDataProvider(): array
     {
         return [
             [
@@ -428,17 +302,14 @@ class LastModifiedCheckJobTest extends TestCase
     /**
      * @param array $inputData
      * @param bool  $expectedResult
-     *
-     * @covers       \Smartling\Jobs\LastModifiedCheckJob::validateSerializedPair()
      * @dataProvider validateSerializedPairDataProvider
      */
-    public function testValidateSerializedPair(array $inputData, $expectedResult)
+    public function testValidateSerializedPair(array $inputData, bool $expectedResult)
     {
-
         self::assertEquals(
             $expectedResult,
             $this->invokeMethod(
-                $this->getLastModifiedWorker(),
+                $this->lastModifiedWorker,
                 'validateSerializedPair',
                 [$inputData]
             ),
@@ -447,7 +318,7 @@ class LastModifiedCheckJobTest extends TestCase
         );
     }
 
-    public function validateSerializedPairDataProvider()
+    public function validateSerializedPairDataProvider(): array
     {
         return [
             [
@@ -495,14 +366,14 @@ class LastModifiedCheckJobTest extends TestCase
      * @param int $storeEntityCount
      * @dataProvider failLastModifiedDataProvider
      */
-    public function testFailLastModified(array $groupedSubmissions, $exceptionMessage, $storeEntityCount)
+    public function testFailLastModified(array $groupedSubmissions, string $exceptionMessage, int $storeEntityCount)
     {
-        $worker = $this->getLastModifiedWorker();
+        $worker = $this->lastModifiedWorker;
 
         foreach ($groupedSubmissions as $index => $mockedResult) {
             $dequeueResult = $this->mockedResultToDequeueResult($groupedSubmissions);
 
-            $this->getQueue()
+            $this->queue
                 ->expects(self::at($index))
                 ->method('dequeue')
                 ->with(Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE)
@@ -518,19 +389,19 @@ class LastModifiedCheckJobTest extends TestCase
                     }
                     unset ($submissionArray);
 
-                    $this->getSubmissionManager()
+                    $this->submissionManager
                         ->method('findByIds')
                         ->with($dequeued)
                         ->willReturn($submissionList);
 
-                    $unserializedSubmissions = $this->getSubmissionManager()->findByIds($dequeued);
+                    $unserializedSubmissions = $this->submissionManager->findByIds($dequeued);
 
                     $worker
                         ->method('prepareSubmissionList')
                         ->with($unserializedSubmissions)
                         ->willReturn($this->emulatePrepareSubmissionList($unserializedSubmissions));
 
-                    $this->getApiWrapper()
+                    $this->apiWrapper
                         ->expects(self::once())
                         ->method('lastModified')
                         ->with(reset($unserializedSubmissions))
@@ -539,19 +410,19 @@ class LastModifiedCheckJobTest extends TestCase
             }
         }
 
-        $this->getApiWrapper()
+        $this->apiWrapper
             ->expects(self::never())
             ->method('getStatusForAllLocales');
 
-        $this->getSubmissionManager()
+        $this->submissionManager
             ->expects(self::never())
             ->method('storeSubmissions');
 
-        $this->getSubmissionManager()
+        $this->submissionManager
             ->expects(self::exactly($storeEntityCount))
             ->method('storeEntity');
 
-        $sm = $this->getSettingsManager();
+        $sm = $this->settingsManager;
         $sm->method('getSingleSettingsProfile')->willReturn(false);
 
         $worker->setSettingsManager($sm);
@@ -559,7 +430,7 @@ class LastModifiedCheckJobTest extends TestCase
         $worker->run();
     }
 
-    public function failLastModifiedDataProvider()
+    public function failLastModifiedDataProvider(): array
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
         return [

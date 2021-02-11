@@ -6,32 +6,25 @@ use PHPUnit\Framework\TestCase;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 use Smartling\Tests\Traits\SubmissionEntityMock;
+use Smartling\Helpers\FileUriHelper;
 
-
-/**
- * Class FileUriHelperTest
- * Test class for \Smartling\Helpers\FileUriHelper.
- * @package Smartling\Tests
- */
 class FileUriHelperTest extends TestCase
 {
     use InvokeMethodTrait;
     use SubmissionEntityMock;
 
-    const FileUriClassFullName = 'Smartling\Helpers\FileUriHelper';
-
     /**
      * @dataProvider preparePermalinkDataProvider
      *
-     * @param string           $string
+     * @param mixed $string
      * @param SubmissionEntity $entity
-     * @param string           $expectedValue
+     * @param string $expectedValue
      */
-    public function testPreparePermalink($string, $entity, $expectedValue)
+    public function testPreparePermalink($string, SubmissionEntity $entity, string $expectedValue)
     {
         self::assertEquals(
             $this->invokeStaticMethod(
-                self::FileUriClassFullName,
+                FileUriHelper::class,
                 'preparePermalink',
                 [
                     $string,
@@ -45,32 +38,28 @@ class FileUriHelperTest extends TestCase
     /**
      * @dataProvider preparePermalinkDataProviderInvalidParams
      *
-     * @param string           $string
+     * @param mixed $string
      * @param SubmissionEntity $entity
      */
-    public function testPreparePermalinkInvalidParams($string, $entity)
+    public function testPreparePermalinkInvalidParams($string, ?SubmissionEntity $entity = null)
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->invokeStaticMethod(self::FileUriClassFullName, 'preparePermalink', [$string, $entity,]);
+        $this->expectException(\TypeError::class);
+        $this->invokeStaticMethod(FileUriHelper::class, 'preparePermalink', [$string, $entity,]);
     }
 
     protected function getPreparedSubmissionEntityMock($title, $type, $blogId, $contentId)
     {
         $submissionMock = $this->getSubmissionEntityMock();
 
-        $submissionMock->expects(self::any())->method('getSourceTitle')->with(false)->willReturn($title);
-        $submissionMock->expects(self::any())->method('getContentType')->willReturn($type);
-        $submissionMock->expects(self::any())->method('getSourceId')->willReturn($blogId);
-        $submissionMock->expects(self::any())->method('getSourceBlogId')->willReturn($contentId);
+        $submissionMock->method('getSourceTitle')->with(false)->willReturn($title);
+        $submissionMock->method('getContentType')->willReturn($type);
+        $submissionMock->method('getSourceId')->willReturn($blogId);
+        $submissionMock->method('getSourceBlogId')->willReturn($contentId);
 
         return $submissionMock;
     }
 
-    /**
-     * Data provider for testPreparePermalink method.
-     * @return array
-     */
-    public function preparePermalinkDataProvider()
+    public function preparePermalinkDataProvider(): array
     {
         return
             [
@@ -102,11 +91,7 @@ class FileUriHelperTest extends TestCase
             ];
     }
 
-    /**
-     * Data provider for testPreparePermalinkInvalidParams method.
-     * @return array
-     */
-    public function preparePermalinkDataProviderInvalidParams()
+    public function preparePermalinkDataProviderInvalidParams(): array
     {
         return [
             ['http://nothing.com/blog/my-source-title/', null,],

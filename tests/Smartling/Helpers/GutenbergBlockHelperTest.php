@@ -266,21 +266,16 @@ namespace {
 
 namespace Smartling\Tests\Smartling\Helpers {
 
-use PHPUnit\Framework\TestCase;
-    use Smartling\Extensions\Acf\AcfDynamicSupport;
-    use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
+    use PHPUnit\Framework\MockObject\MockObject;
+    use PHPUnit\Framework\TestCase;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
+use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 use Smartling\Tests\Traits\SettingsManagerMock;
 
-/**
- * Class GutenbergBlockHelperTest
- *
- * @package Smartling\Tests\Smartling\Helpers
- * @covers  \Smartling\Helpers\GutenbergBlockHelper
- */
 class GutenbergBlockHelperTest extends TestCase
 {
     use InvokeMethodTrait;
@@ -288,28 +283,20 @@ class GutenbergBlockHelperTest extends TestCase
 
     /**
      * @param array $methods
-     * @return \PHPUnit_Framework_MockObject_MockObject|GutenbergBlockHelper
+     * @return MockObject|GutenbergBlockHelper
      */
-    private function mockHelper($methods = ['postReceiveFiltering', 'preSendFiltering', 'processAttributes'])
+    private function mockHelper($methods = ['getLogger', 'postReceiveFiltering', 'preSendFiltering', 'processAttributes'])
     {
-        return $this->getMockBuilder(GutenbergBlockHelper::class)
-                    ->setMethods($methods)
-                    ->getMock();
+        return $this->createPartialMock(GutenbergBlockHelper::class, $methods);
     }
 
     public $helper;
 
-    /**
-     * @inheritdoc
-     */
     protected function setUp(): void
     {
         $this->helper = new GutenbergBlockHelper();
     }
 
-    /**
-     * @covers \Smartling\Helpers\GutenbergBlockHelper::registerFilters
-     */
     public function testRegisterFilters()
     {
         $result = $this->helper->registerFilters([]);
@@ -323,16 +310,15 @@ class GutenbergBlockHelperTest extends TestCase
     }
 
     /**
-     * @param $blockName
-     * @param $flatAttributes
-     * @param $postFilterMock
-     * @param $preFilterMock
+     * @param string $blockName
+     * @param array $flatAttributes
+     * @param array $postFilterMock
+     * @param array $preFilterMock
      * @dataProvider processAttributesDataProvider
-     * @covers       \Smartling\Helpers\GutenbergBlockHelper::processAttributes
      */
-    public function testProcessAttributes($blockName, $flatAttributes, $postFilterMock, $preFilterMock)
+    public function testProcessAttributes(?string $blockName, array $flatAttributes, array $postFilterMock, array $preFilterMock)
     {
-        $helper = $this->mockHelper(['postReceiveFiltering', 'preSendFiltering']);
+        $helper = $this->mockHelper(['getLogger', 'postReceiveFiltering', 'preSendFiltering']);
 
         $helper
             ->method('postReceiveFiltering')
@@ -350,10 +336,7 @@ class GutenbergBlockHelperTest extends TestCase
 
     }
 
-    /**
-     * @return array
-     */
-    public function processAttributesDataProvider()
+    public function processAttributesDataProvider(): array
     {
         return [
             'plain' => [
@@ -373,22 +356,16 @@ class GutenbergBlockHelperTest extends TestCase
     }
 
     /**
-     * @covers       \Smartling\Helpers\GutenbergBlockHelper::hasBlocks
      * @dataProvider hasBlocksDataProvider
      * @param string $sample
-     * @param bool   $expectedResult
-     * @throws \ReflectionException
+     * @param bool $expectedResult
      */
-    public function testHasBlocks($sample, $expectedResult)
+    public function testHasBlocks(string $sample, bool $expectedResult)
     {
-        $result = $this->invokeMethod($this->helper, 'hasBlocks', [$sample]);
-        self::assertEquals($expectedResult, $result);
+        self::assertEquals($expectedResult, $this->helper->hasBlocks($sample));
     }
 
-    /**
-     * @return array
-     */
-    public function hasBlocksDataProvider()
+    public function hasBlocksDataProvider(): array
     {
         return [
             'simple text' => ['lorem ipsum dolor', false],
@@ -397,10 +374,6 @@ class GutenbergBlockHelperTest extends TestCase
         ];
     }
 
-    /**
-     * @throws \ReflectionException
-     * @covers \Smartling\Helpers\GutenbergBlockHelper::packData
-     */
     public function testPackData()
     {
         $sample = ['foo' => 'bar'];
@@ -409,10 +382,6 @@ class GutenbergBlockHelperTest extends TestCase
         self::assertEquals($expected, $result);
     }
 
-    /**
-     * @throws \ReflectionException
-     * @covers \Smartling\Helpers\GutenbergBlockHelper::unpackData
-     */
     public function testUnpackData()
     {
         $sample = ['foo' => 'bar'];
@@ -421,9 +390,6 @@ class GutenbergBlockHelperTest extends TestCase
         self::assertEquals($sample, $result);
     }
 
-    /**
-     * @throws \ReflectionException
-     */
     public function testPackUnpack()
     {
         $sample = ['foo' => 'bar'];
@@ -444,13 +410,11 @@ class GutenbergBlockHelperTest extends TestCase
     }
 
     /**
-     * @param array  $block
+     * @param array $block
      * @param string $expected
-     * @throws \ReflectionException
      * @dataProvider placeBlockDataProvider
-     * @covers       \Smartling\Helpers\GutenbergBlockHelper::placeBlock
      */
-    public function testPlaceBlock($block, $expected)
+    public function testPlaceBlock(array $block, string $expected)
     {
         $helper = $this->mockHelper();
         $params = new TranslationStringFilterParameters();
@@ -467,10 +431,7 @@ class GutenbergBlockHelperTest extends TestCase
         self::assertEquals($expected, $xmlNodeRendered);
     }
 
-    /**
-     * @return array
-     */
-    public function placeBlockDataProvider()
+    public function placeBlockDataProvider(): array
     {
         return [
             'no nested' => [
@@ -524,15 +485,12 @@ class GutenbergBlockHelperTest extends TestCase
      * @param string $expected
      * @dataProvider renderGutenbergBlockDataProvider
      */
-    public function testRenderGutenbergBlock($blockName, array $attributes, array $chunks, $expected)
+    public function testRenderGutenbergBlock(string $blockName, array $attributes, array $chunks, string $expected)
     {
         self::assertEquals($expected, $this->helper->renderGutenbergBlock($blockName, $attributes, $chunks));
     }
 
-    /**
-     * @return array
-     */
-    public function renderGutenbergBlockDataProvider()
+    public function renderGutenbergBlockDataProvider(): array
     {
         return [
             'inline' => [
@@ -601,15 +559,13 @@ class GutenbergBlockHelperTest extends TestCase
     }
 
     /**
-     * @covers       \Smartling\Helpers\GutenbergBlockHelper::processTranslationAttributes
      * @dataProvider processTranslationAttributesDataSource
      * @param string $blockName
      * @param array  $originalAttributes
      * @param array  $translatedAttributes
      * @param array  $expected
-     * @throws \ReflectionException
      */
-    public function testProcessTranslationAttributes($blockName, $originalAttributes, $translatedAttributes, $expected)
+    public function testProcessTranslationAttributes(string $blockName, array $originalAttributes, array $translatedAttributes, array $expected)
     {
         $helper = $this->mockHelper();
 
@@ -633,10 +589,7 @@ class GutenbergBlockHelperTest extends TestCase
         self::assertEquals($expected, $result);
     }
 
-    /**
-     * @return array
-     */
-    public function processTranslationAttributesDataSource()
+    public function processTranslationAttributesDataSource(): array
     {
         return [
             'structured attributes' => [
@@ -651,9 +604,6 @@ class GutenbergBlockHelperTest extends TestCase
         ];
     }
 
-    /**
-     * @covers \Smartling\Helpers\GutenbergBlockHelper::renderTranslatedBlockNode
-     */
     public function testRenderTranslatedBlockNode()
     {
         $xmlPart = '<gutenbergBlock blockName="core/foo" originalAttributes="YToxOntzOjQ6ImRhdGEiO2E6Mzp7czo2OiJ0ZXh0X2EiO3M6NzoiVGl0bGUgMSI7czo2OiJ0ZXh0X2IiO3M6NzoiVGl0bGUgMiI7czo1OiJ0ZXh0cyI7YToyOntpOjA7czo1OiJsb3JlbSI7aToxO3M6NToiaXBzdW0iO319fQ=="><![CDATA[]]><contentChunk hash="d3d67cc32ac556aae106e606357f449e"><![CDATA[<p>Inner HTML</p>]]></contentChunk><blockAttribute name="data/text_a" hash="90bc6d3874182275bd4cd88cbd734fe9"><![CDATA[Title 1]]></blockAttribute><blockAttribute name="data/text_b" hash="e4bb56dda4ecb60c34ccb89fd50506df"><![CDATA[Title 2]]></blockAttribute><blockAttribute name="data/texts/0" hash="d2e16e6ef52a45b7468f1da56bba1953"><![CDATA[lorem]]></blockAttribute><blockAttribute name="data/texts/1" hash="e78f5438b48b39bcbdea61b73679449d"><![CDATA[ipsum]]></blockAttribute></gutenbergBlock>';
@@ -694,9 +644,6 @@ class GutenbergBlockHelperTest extends TestCase
         );
     }
 
-    /**
-     * @covers       \Smartling\Helpers\GutenbergBlockHelper::sortChildNodesContent
-     */
     public function testSortChildNodesContent()
     {
         $dom = new \DOMDocument('1.0', 'utf8');
@@ -725,7 +672,7 @@ class GutenbergBlockHelperTest extends TestCase
             'chunks' => ['chunk a', 'chunk b', 'chunk c'],
             'attributes' => ['attr_a' => 'attr a', 'attr_b' => 'attr b', 'attr_c' => 'attr c', 'attr_d' => 'attr d'],
         ];
-        $helper = $this->mockHelper(['postReceiveFiltering']);
+        $helper = $this->mockHelper(['getLogger', 'postReceiveFiltering']);
         $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock()));
         $helper
                ->method('postReceiveFiltering')
@@ -736,14 +683,13 @@ class GutenbergBlockHelperTest extends TestCase
     }
 
     /**
-     * @covers       \Smartling\Helpers\GutenbergBlockHelper::processString
      * @dataProvider processStringDataProvider
      * @param string $contentString
-     * @param int    $parseCount
-     * @param array  $parseResult
+     * @param int $parseCount
+     * @param array $parseResult
      * @param string $expectedString
      */
-    public function testProcessString($contentString, $parseCount, $parseResult, $expectedString)
+    public function testProcessString(string $contentString, int $parseCount, array $parseResult, string $expectedString)
     {
         $sourceString = vsprintf('<string name="entity/post_content"><![CDATA[%s]]></string>', [$contentString]);
         $dom = new \DOMDocument('1.0', 'uft8');
@@ -757,7 +703,7 @@ class GutenbergBlockHelperTest extends TestCase
         $params->setNode($node);
 
 
-        $helper = $this->mockHelper(['postReceiveFiltering', 'preSendFiltering', 'parseBlocks']);
+        $helper = $this->mockHelper(['getLogger', 'postReceiveFiltering', 'preSendFiltering', 'parseBlocks']);
 
         $helper
                ->method('postReceiveFiltering')
@@ -780,10 +726,7 @@ class GutenbergBlockHelperTest extends TestCase
         self::assertEquals($expectedString, $xml);
     }
 
-    /**
-     * @return array
-     */
-    public function processStringDataProvider()
+    public function processStringDataProvider(): array
     {
         return [
             'no blocks' => [
@@ -852,12 +795,11 @@ some par 2
     }
 
     /**
-     * @covers       \Smartling\Helpers\GutenbergBlockHelper::processTranslation
      * @dataProvider processTranslationDataProvider
      * @param string $inXML
      * @param string $expectedXML
      */
-    public function testProcessTranslation($inXML, $expectedXML)
+    public function testProcessTranslation(string $inXML, $expectedXML)
     {
 
         $dom = new \DOMDocument('1.0', 'uft8');
@@ -871,7 +813,7 @@ some par 2
         $params->setNode($node);
 
 
-        $helper = $this->mockHelper(['postReceiveFiltering', 'preSendFiltering']);
+        $helper = $this->mockHelper(['getLogger', 'postReceiveFiltering', 'preSendFiltering']);
 
         $helper
                ->method('postReceiveFiltering')

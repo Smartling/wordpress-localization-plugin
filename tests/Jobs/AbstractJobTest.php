@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests\Jobs;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\QueryBuilder\TransactionManager;
 use Smartling\Jobs\JobAbstract;
@@ -47,26 +48,23 @@ class AbstractJobTest extends TestCase
     {
         $exception = new \RuntimeException('test');
         $transactionManager = $this->getTransactionManagerWithException($exception);
+        $this->expectExceptionObject($exception);
 
         $x = $this->getJobAbstractMock($transactionManager);
 
-        try {
-            $x->runCronJob(JobAbstract::SOURCE_USER);
-            $this->fail('Should throw exception when source is user');
-        } catch (\Exception $e) {
-            $this->assertEquals($e, $exception);
-        }
+        $x->runCronJob(JobAbstract::SOURCE_USER);
+        $this->fail('Should throw exception when source is user');
     }
 
     /**
      * @param \Exception $e
-     * @return \PHPUnit_Framework_MockObject_MockObject|TransactionManager
+     * @return MockObject|TransactionManager
      */
     private function getTransactionManagerWithException(\Exception $e)
     {
         $transactionManager = $this->getMockBuilder(TransactionManager::class)
             ->setConstructorArgs([$this->mockDbAl()])
-            ->setMethods(['executeSelectForUpdate'])
+            ->onlyMethods(['executeSelectForUpdate'])
             ->getMock();
         $transactionManager->method('executeSelectForUpdate')->willThrowException($e);
 
@@ -75,7 +73,7 @@ class AbstractJobTest extends TestCase
 
     /**
      * @param TransactionManager $transactionManager
-     * @return \PHPUnit_Framework_MockObject_MockObject|JobAbstract
+     * @return MockObject|JobAbstract
      */
     private function getJobAbstractMock(TransactionManager $transactionManager)
     {
@@ -84,7 +82,7 @@ class AbstractJobTest extends TestCase
                 $this->submissionManager,
                 $transactionManager,
             ])
-            ->setMethods(['buildSelectQuery'])
+            ->onlyMethods(['buildSelectQuery'])
             ->getMockForAbstractClass();
         $x->method('buildSelectQuery')->willReturn("select 1");
 

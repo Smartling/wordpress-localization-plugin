@@ -6,6 +6,7 @@ use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingEntityAbstract;
+use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater;
 use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\StringHelper;
@@ -488,8 +489,8 @@ class SubmissionEntity extends SmartlingEntityAbstract
 
     /**
      * @param string $content_type
-     *
      * @return SubmissionEntity
+     * @throws SmartlingDirectRunRuntimeException
      */
     public function setContentType($content_type)
     {
@@ -518,8 +519,8 @@ class SubmissionEntity extends SmartlingEntityAbstract
      *
      * @param array           $array
      * @param LoggerInterface $logger
-     *
      * @return SubmissionEntity
+     * @throws SmartlingDirectRunRuntimeException
      */
     public static function fromArray(array $array, LoggerInterface $logger)
     {

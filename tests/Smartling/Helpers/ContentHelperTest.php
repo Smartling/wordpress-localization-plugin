@@ -22,11 +22,11 @@ class ContentHelperTest extends TestCase
      * @param int $otherBlogId
      * @param bool $exists
      */
-    public function testCheckEntityExists($currentBlogId, $otherBlogId, $exists)
+    public function testCheckEntityExists(int $currentBlogId, int $otherBlogId, bool $exists)
     {
-        $x = $this->getMockBuilder(ContentHelper::class)->setMethods(['getIoFactory', 'getSiteHelper'])->setConstructorArgs([new WordpressFunctionProxyHelper()])->getMock();
+        $x = $this->getMockBuilder(ContentHelper::class)->onlyMethods(['getIoFactory', 'getSiteHelper'])->setConstructorArgs([new WordpressFunctionProxyHelper()])->getMock();
 
-        $entity = $this->getMockBuilder(EntityAbstract::class)->setMethods(['get'])->getMockForAbstractClass();
+        $entity = $this->getMockBuilder(EntityAbstract::class)->onlyMethods(['get'])->getMockForAbstractClass();
         $entity->method('get')->willReturnSelf();
 
         $ioFactory = $this->createMock(ContentEntitiesIOFactory::class);
@@ -47,7 +47,8 @@ class ContentHelperTest extends TestCase
         self::assertEquals($exists, $x->checkEntityExists($otherBlogId, 'post', 3));
     }
 
-    public function providerCheckEntityExists() {
+    public function providerCheckEntityExists(): array
+    {
         return [
             [1, 2, true],
             [1, 2, false],

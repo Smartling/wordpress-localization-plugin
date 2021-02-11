@@ -14,11 +14,6 @@ use Smartling\Tests\Traits\SettingsManagerMock;
 use Smartling\Tests\Traits\SubmissionEntityMock;
 use Smartling\Settings\ConfigurationProfileEntity;
 
-/**
- * Class DetectChangesTest
- * @package Smartling\Tests
- * @covers  Smartling\Helpers\DetectChangesHelper
- */
 class DetectChangesTest extends TestCase
 {
     use DummyLoggerMock;
@@ -26,30 +21,8 @@ class DetectChangesTest extends TestCase
     use InvokeMethodTrait;
     use SettingsManagerMock;
 
-    /**
-     * @var DetectChangesHelper|\PHPUnit_Framework_MockObject_MockObject
-     */
     private $detectChangesHelperMock;
 
-    /**
-     * @return DetectChangesHelper|\PHPUnit_Framework_MockObject_MockObject
-     */
-    public function getDetectChangesHelperMock()
-    {
-        return $this->detectChangesHelperMock;
-    }
-
-    /**
-     * @param DetectChangesHelper|\PHPUnit_Framework_MockObject_MockObject $detectChangesHelperMock
-     */
-    public function setDetectChangesHelperMock($detectChangesHelperMock)
-    {
-        $this->detectChangesHelperMock = $detectChangesHelperMock;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     protected function setUp(): void
     {
         $mock = $this->createMock(DetectChangesHelper::class);
@@ -62,7 +35,7 @@ class DetectChangesTest extends TestCase
 
         $mock->method('getSettingsManager')->willReturn($settingsManager);
 
-        $this->setDetectChangesHelperMock($mock);
+        $this->detectChangesHelperMock = $mock;
     }
 
     /**
@@ -72,15 +45,14 @@ class DetectChangesTest extends TestCase
      * @param bool   $needStatusChange
      * @param string $newHash
      */
-    public function testCheckSubmissionHash(array $submissionFields, $needStatusChange, $newHash)
+    public function testCheckSubmissionHash(array $submissionFields, bool $needStatusChange, string $newHash)
     {
-        WordpressContentTypeHelper::$internalTypes = ['post' => 'Post'];
         WordpressFunctionsMockHelper::injectFunctionsMocks();
         $initialSubmission = SubmissionEntity::fromArray($submissionFields, $this->getLogger());
         $submission = SubmissionEntity::fromArray($submissionFields, $this->getLogger());
 
         $processedSubmission = $this->invokeMethod(
-            $this->getDetectChangesHelperMock(),
+            $this->detectChangesHelperMock,
             'checkSubmissionHash',
             [
                 $submission,
@@ -88,9 +60,6 @@ class DetectChangesTest extends TestCase
                 $newHash,
             ]
         );
-        /**
-         * @var SubmissionEntity $processedSubmission
-         */
 
         if ($initialSubmission->getSourceContentHash() === $newHash) {
             self::assertEquals(SubmissionEntity::FLAG_CONTENT_IS_UP_TO_DATE, $processedSubmission->getOutdated());
@@ -105,7 +74,7 @@ class DetectChangesTest extends TestCase
         }
     }
 
-    public function checkSubmissionHashDataProvider()
+    public function checkSubmissionHashDataProvider(): array
     {
         return [
             [

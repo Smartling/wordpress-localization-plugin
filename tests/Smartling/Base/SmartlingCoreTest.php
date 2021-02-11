@@ -5,6 +5,7 @@ namespace Smartling\Tests\Smartling\Base;
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapper;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
 use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\GutenbergBlockHelper;
@@ -27,7 +28,6 @@ use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 
 class SmartlingCoreTest extends TestCase
 {
-
     use InvokeMethodTrait;
     use DummyLoggerMock;
     use SettingsManagerMock;
@@ -57,21 +57,12 @@ class SmartlingCoreTest extends TestCase
         array $entity = [],
         array $meta = []
     ) {
-        $entityMock = $this
-            ->getMockBuilder(PostEntityStd::class)
-            ->setMethods(['toArray'])
-            ->getMock();
-
+        $entityMock = $this->createPartialMock(PostEntityStd::class, ['toArray']);
         $entityMock
             ->method('toArray')
             ->willReturn($entity);
 
-        $contentHelperMock = $this
-            ->getMockBuilder(ContentHelper::class)
-            ->setConstructorArgs([new WordpressFunctionProxyHelper()])
-            ->setMethods(['readTargetContent', 'readTargetMetadata'])
-            ->getMock();
-
+        $contentHelperMock = $this->createPartialMock(ContentHelper::class, ['readTargetContent', 'readTargetMetadata']);
         $contentHelperMock->method('readTargetMetadata')->willReturn($meta);
         $contentHelperMock->method('readTargetContent')->willReturn($entityMock);
 
@@ -90,8 +81,13 @@ class SmartlingCoreTest extends TestCase
         );
     }
 
-    public function readLockedTranslationFieldsBySubmissionDataProvider()
+    public function readLockedTranslationFieldsBySubmissionDataProvider(): array
     {
+        try {
+            SubmissionEntity::fromArray([], $this->getLogger());
+        } catch (SmartlingDirectRunRuntimeException $e) {
+            $this->markTestSkipped('Requires active wordpress');
+        }
         return [
             'test with new content' => [
                 [
@@ -445,11 +441,7 @@ class SmartlingCoreTest extends TestCase
 
         $obj->setSettingsManager($settingsManager);
 
-        $apiWrapperMock = $this->getMockBuilder(ApiWrapper::class)
-             ->setMethods(['retrieveBatchForBucketJob'])
-             ->disableOriginalConstructor()
-             ->getMock();
-
+        $apiWrapperMock = $this->createPartialMock(ApiWrapper::class, ['retrieveBatchForBucketJob']);
         $apiWrapperMock
             ->expects(self::once())
             ->method('retrieveBatchForBucketJob')
@@ -496,20 +488,12 @@ class SmartlingCoreTest extends TestCase
         $returnedSubmission = clone $submission;
         $returnedSubmission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
 
-        $proxyMock = $this->getMockBuilder(WordpressFunctionProxyHelper::class)
-             ->setMethods(
-                 [
-                     'apply_filters',
-                 ]
-             )
-             ->disableOriginalConstructor()
-             ->getMock();
-
-
+        $proxyMock = $this->createPartialMock(WordpressFunctionProxyHelper::class, ['apply_filters']);
         $proxyMock->expects(self::once())->method('apply_filters')->willReturn($returnedSubmission);
+
         $obj->expects(self::once())->method('getFunctionProxyHelper')->willReturn($proxyMock);
         $this->expectException(SmartlingTargetPlaceholderCreationFailedException::class);
-        $this->expectExceptionMessage("Failed creating target placeholder for submission id='5', source_blog_id='1', source_id='1', target_blog_id='1', target_id='0' with message: ''");
+        $this->expectExceptionMessage("Failed creating target placeholder for submission id='5', source_blog_id='1', source_id='1', target_blog_id='1', target_id='0' with message:");
 
         $obj->getXMLFiltered($submission);
     }

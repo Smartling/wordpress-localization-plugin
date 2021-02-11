@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests\Jobs;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
@@ -26,7 +27,7 @@ class UploadJobTest extends TestCase
      * @param ApiWrapperInterface $apiWrapper
      * @param SettingsManager $settingsManager
      * @param TransactionManager|null $transactionManager
-     * @return \PHPUnit_Framework_MockObject_MockObject|LastModifiedCheckJob
+     * @return MockObject|LastModifiedCheckJob
      */
     private function getWorkerMock(SubmissionManager $submissionManager,
                                    ApiWrapperInterface $apiWrapper,
@@ -36,13 +37,13 @@ class UploadJobTest extends TestCase
         if ($transactionManager === null) {
             $transactionManager = $this->getMockBuilder(TransactionManager::class)
                 ->setConstructorArgs([$this->mockDbAl()])
-                ->setMethods(['executeSelectForUpdate'])
+                ->onlyMethods(['executeSelectForUpdate'])
                 ->getMock();
         }
 
         return $this->getMockBuilder(UploadJob::class)
             ->setConstructorArgs([$submissionManager, 1200, $apiWrapper, $settingsManager, $transactionManager])
-            ->setMethods(null)
+            ->onlyMethods([])
             ->getMock();
     }
 
@@ -67,7 +68,7 @@ class UploadJobTest extends TestCase
                 $siteHelper,
                 $this->createMock(LocalizationPluginProxyInterface::class),
             ])
-            ->setMethods(['getActiveProfiles'])
+            ->onlyMethods(['getActiveProfiles'])
             ->getMock();
         $settingsManager->method('getActiveProfiles')->willReturn([$activeProfile]);
 
@@ -79,7 +80,7 @@ class UploadJobTest extends TestCase
                 10,
                 $entityHelper,
             ])
-            ->setMethods([
+            ->onlyMethods([
                 'find',
                 'findSubmissionsForUploadJob',
                 'storeSubmissions',
@@ -126,7 +127,7 @@ class UploadJobTest extends TestCase
                 $siteHelper,
                 $this->createMock(LocalizationPluginProxyInterface::class),
             ])
-            ->setMethods(['getActiveProfiles'])
+            ->onlyMethods(['getActiveProfiles'])
             ->getMock();
         $settingsManager->method('getActiveProfiles')->willReturn([$activeProfile]);
 
@@ -138,7 +139,7 @@ class UploadJobTest extends TestCase
                 10,
                 $entityHelper,
             ])
-            ->setMethods([
+            ->onlyMethods([
                 'find',
                 'findSubmissionsForUploadJob',
                 'storeSubmissions',
