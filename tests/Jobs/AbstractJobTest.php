@@ -40,6 +40,7 @@ class AbstractJobTest extends TestCase
         } catch (\Exception $e) {
             $this->fail('Should not throw exceptions when source is not user');
         }
+        $this->expectNotToPerformAssertions();
     }
 
     public function testRunCronJobUserSource()
