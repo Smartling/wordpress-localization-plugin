@@ -163,10 +163,16 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
 
     public function handleFormPost()
     {
+        $_pageLock = array_key_exists('lock_page', $_POST) ? 1 : 0;
+        $_lockedFields =
+            array_key_exists('lockField', $_POST) && is_array($_POST['lockField'])
+                ? array_keys($_POST['lockField'])
+                : [];
+
         $submission = $this->getSubmissionFromQuery();
         if (false !== $submission) {
-            $submission->setLockedFields(serialize(array_key_exists('lockField', $_POST) && is_array($_POST['lockField']) ? array_keys($_POST['lockField']) : []));
-            $submission->setIsLocked(array_key_exists('lock_page', $_POST) ? 1 : 0);
+            $submission->setLockedFields(serialize($_lockedFields));
+            $submission->setIsLocked($_pageLock);
             $this->getManager()->storeEntity($submission);
         }
     }
