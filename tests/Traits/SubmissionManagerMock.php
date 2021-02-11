@@ -23,7 +23,8 @@ trait SubmissionManagerMock
                     'findByIds',
                     'filterBrokenSubmissions',
                     'storeEntity',
-                    'setErrorMessage'
+                    'setErrorMessage',
+                    'storeSubmissions',
                 ]
             )
             ->setConstructorArgs([$dbal, 10, $entityHelper])
