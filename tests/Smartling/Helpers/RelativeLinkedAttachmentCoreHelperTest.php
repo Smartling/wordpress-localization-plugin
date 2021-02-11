@@ -8,9 +8,12 @@ use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
+use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\GutenbergReplacementRule;
+use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\RelativeLinkedAttachmentCoreHelper;
 use Smartling\Helpers\TranslationHelper;
+use Smartling\Helpers\XmlHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 use Smartling\Tuner\MediaAttachmentRulesManager;
@@ -50,7 +53,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
         $translationHelper = $this->getMock(TranslationHelper::class);
         $translationHelper->method('isRelatedSubmissionCreationNeeded')->willReturn(true);
 
-        $core = $this->getMock(SmartlingCore::class);
+        $core = $this->getCoreMock();
         $core->method('getTranslationHelper')->willReturn($translationHelper);
         $core->method('sendAttachmentForTranslation')->willReturn($submission);
 
@@ -116,7 +119,7 @@ HTML
         $translationHelper = $this->getMock(TranslationHelper::class);
         $translationHelper->method('isRelatedSubmissionCreationNeeded')->willReturn(true);
 
-        $core = $this->getMock(SmartlingCore::class);
+        $core = $this->getCoreMock();
         $core->method('getTranslationHelper')->willReturn($translationHelper);
         $core->expects(self::once())->method('sendAttachmentForTranslation')
             ->with($sourceBlogId, $targetBlogId, $sourceId, $batchUid)
@@ -173,7 +176,7 @@ HTML
         $translationHelper = $this->getMock(TranslationHelper::class);
         $translationHelper->method('isRelatedSubmissionCreationNeeded')->willReturn(true);
 
-        $core = $this->getMock(SmartlingCore::class);
+        $core = $this->getCoreMock();
         $core->method('getTranslationHelper')->willReturn($translationHelper);
         $core->expects(self::never())->method('sendAttachmentForTranslation');
 
@@ -205,5 +208,17 @@ HTML
                 262,
             ],
         ];
+    }
+
+    /**
+     * @return \PHPUnit_Framework_MockObject_MockObject|SmartlingCore
+     */
+    private function getCoreMock()
+    {
+        return $this->getMock(
+            SmartlingCore::class,
+            [],
+            [new PostContentHelper(new GutenbergBlockHelper()), new XmlHelper()]
+        );
     }
 }

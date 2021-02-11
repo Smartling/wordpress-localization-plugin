@@ -9,6 +9,8 @@ use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DecodedXml;
 use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Helpers\GutenbergBlockHelper;
+use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\XmlHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
@@ -108,7 +110,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
 
         $contentHelper->expects(self::never())->method('removeTargetMetadata');
         $contentHelper->expects(self::once())->method('writeTargetMetadata')->with($submission, $translatedFields);
-        self::assertEquals([], $x->applyXML($submission, ' ', $xmlHelper));
+        self::assertEquals([], $x->applyXML($submission, ' ', $xmlHelper, new PostContentHelper(new GutenbergBlockHelper())));
     }
 
     public function testApplyXmlCleanMetadata()
@@ -147,6 +149,6 @@ class SmartlingCoreUploadTraitTest extends TestCase
 
         $contentHelper->expects(self::once())->method('removeTargetMetadata');
         $contentHelper->expects(self::once())->method('writeTargetMetadata')->with($submission, ['sourceMetaField' => 'set', 'metaToTranslate' => '~Translated~', 'locked' => 'locked']);
-        self::assertEquals([], $x->applyXML($submission, ' ', $xmlHelper));
+        self::assertEquals([], $x->applyXML($submission, ' ', $xmlHelper, new PostContentHelper(new GutenbergBlockHelper())));
     }
 }

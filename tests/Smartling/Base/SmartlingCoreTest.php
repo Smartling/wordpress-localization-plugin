@@ -6,6 +6,10 @@ use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapper;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
+use Smartling\Exceptions\SmartlingApiException;
+use Smartling\Helpers\GutenbergBlockHelper;
+use Smartling\Helpers\PostContentHelper;
+use Smartling\Helpers\XmlHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
@@ -19,13 +23,8 @@ use Smartling\Tests\Traits\SubmissionManagerMock;
 use Smartling\Base\SmartlingCore;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\ContentHelper;
+use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 
-/**
- * Class SmartlingCoreTest
- *
- * @package Smartling\Tests\Smartling\Base
- * @covers  \Smartling\Base\SmartlingCore
- */
 class SmartlingCoreTest extends TestCase
 {
 
@@ -37,19 +36,14 @@ class SmartlingCoreTest extends TestCase
     use EntityHelperMock;
     use DbAlMock;
 
-    public function __construct($name = null, array $data = [], $dataName = '')
-    {
-        parent::__construct($name, $data, $dataName);
-        $this->setUp();
-    }
-
+    private $core;
     protected function setUp()
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
+        $this->core = new SmartlingCore(new PostContentHelper(new GutenbergBlockHelper()), new XmlHelper());
     }
 
     /**
-     * @covers       \Smartling\Base\SmartlingCore::readLockedTranslationFieldsBySubmission
      * @dataProvider readLockedTranslationFieldsBySubmissionDataProvider
      *
      * @param array            $expected
@@ -64,12 +58,11 @@ class SmartlingCoreTest extends TestCase
         array $meta = []
     ) {
         $entityMock = $this
-            ->getMockBuilder('Smartling\DbAl\WordpressContentEntities\PostEntityStd')
+            ->getMockBuilder(PostEntityStd::class)
             ->setMethods(['toArray'])
             ->getMock();
 
         $entityMock
-            ->expects(self::any())
             ->method('toArray')
             ->willReturn($entity);
 
@@ -79,10 +72,10 @@ class SmartlingCoreTest extends TestCase
             ->setMethods(['readTargetContent', 'readTargetMetadata'])
             ->getMock();
 
-        $contentHelperMock->expects(self::any())->method('readTargetMetadata')->willReturn($meta);
-        $contentHelperMock->expects(self::any())->method('readTargetContent')->willReturn($entityMock);
+        $contentHelperMock->method('readTargetMetadata')->willReturn($meta);
+        $contentHelperMock->method('readTargetContent')->willReturn($entityMock);
 
-        $obj = new \Smartling\Base\SmartlingCore();
+        $obj = $this->core;
         $obj->setContentHelper($contentHelperMock);
 
         self::assertEquals(
@@ -97,10 +90,8 @@ class SmartlingCoreTest extends TestCase
         );
     }
 
-
     public function readLockedTranslationFieldsBySubmissionDataProvider()
     {
-
         return [
             'test with new content' => [
                 [
@@ -325,13 +316,10 @@ class SmartlingCoreTest extends TestCase
         ];
     }
 
-    /**
-     * @covers \Smartling\Base\SmartlingCore::fixSubmissionBatchUid
-     * @expectedException Smartling\Exception\SmartlingDbException
-     */
     public function testFixSubmissionBatchUid()
     {
-        $obj = new \Smartling\Base\SmartlingCore();
+        $this->setExpectedException(SmartlingDbException::class);
+        $obj = $this->core;
         $submission = new SubmissionEntity();
         $submission
             ->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW)
@@ -353,30 +341,23 @@ class SmartlingCoreTest extends TestCase
         $obj->setSubmissionManager($submissionManager);
 
         $settingsManager
-            ->expects(self::any())
             ->method('findEntityByMainLocale')
             ->with($submission->getSourceBlogId())
             ->willReturn([]);
 
         $settingsManager
-            ->expects(self::any())
             ->method('getSingleSettingsProfile')
             ->with($submission->getSourceBlogId())
-            ->willReturnCallback(function () {
-                throw new SmartlingDbException('');
-            });
+            ->willThrowException(new SmartlingDbException(''));
 
         $obj->setSettingsManager($settingsManager);
         $this->invokeMethod($obj, 'fixSubmissionBatchUid', [$submission]);
     }
 
-    /**
-     * @covers \Smartling\Base\SmartlingCore::fixSubmissionBatchUid
-     * @expectedException Smartling\Exceptions\SmartlingApiException
-     */
     public function testFixSubmissionBatchUidWithApiWrapper()
     {
-        $obj = new \Smartling\Base\SmartlingCore();
+        $this->setExpectedException(SmartlingApiException::class);
+        $obj = $this->core;
         $submission = new SubmissionEntity();
         $submission
             ->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW)
@@ -405,13 +386,11 @@ class SmartlingCoreTest extends TestCase
         $obj->setSubmissionManager($submissionManager);
 
         $settingsManager
-            ->expects(self::any())
             ->method('findEntityByMainLocale')
             ->with($submission->getSourceBlogId())
             ->willReturn([$profile]);
 
         $settingsManager
-            ->expects(self::any())
             ->method('getSingleSettingsProfile')
             ->with($submission->getSourceBlogId())
             ->willReturn($profile);
@@ -424,13 +403,9 @@ class SmartlingCoreTest extends TestCase
         $this->invokeMethod($obj, 'fixSubmissionBatchUid', [$submission]);
     }
 
-
-    /**
-     * @covers \Smartling\Base\SmartlingCore::fixSubmissionBatchUid
-     */
     public function testFixSubmissionBatchUidWithApiWrapperAndBatchUid()
     {
-        $obj = new \Smartling\Base\SmartlingCore();
+        $obj = $this->core;
         $submission = new SubmissionEntity();
         $submission
             ->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW)
@@ -459,20 +434,18 @@ class SmartlingCoreTest extends TestCase
         $obj->setSubmissionManager($submissionManager);
 
         $settingsManager
-            ->expects(self::any())
             ->method('findEntityByMainLocale')
             ->with($submission->getSourceBlogId())
             ->willReturn([$profile]);
 
         $settingsManager
-            ->expects(self::any())
             ->method('getSingleSettingsProfile')
             ->with($submission->getSourceBlogId())
             ->willReturn($profile);
 
         $obj->setSettingsManager($settingsManager);
 
-        $apiWrapperMock = $this->getMockBuilder('Smartling\ApiWrapper')
+        $apiWrapperMock = $this->getMockBuilder(ApiWrapper::class)
              ->setMethods(['retrieveBatchForBucketJob'])
              ->disableOriginalConstructor()
              ->getMock();
@@ -493,13 +466,11 @@ class SmartlingCoreTest extends TestCase
 
     public function testExceptionOnTargetPlaceholderCreationFail()
     {
-        $obj = $this->getMockBuilder(SmartlingCore::class)
-                   ->setMethods(
-                       [
-                           'getFunctionProxyHelper',
-                       ]
-                   )
-                   ->getMock();
+        $obj = $this->getMock(
+            SmartlingCore::class,
+            ['getFunctionProxyHelper'],
+            [new PostContentHelper(new GutenbergBlockHelper()), new XmlHelper()]
+        );
 
         $submissionManager = $this->mockSubmissionManager(
             $this->mockDbAl(),
@@ -514,7 +485,7 @@ class SmartlingCoreTest extends TestCase
                 return $s;
             });
         
-        $obj->setSubmissionManager ($submissionManager);
+        $obj->setSubmissionManager($submissionManager);
 
         $submission = new SubmissionEntity();
         $submission

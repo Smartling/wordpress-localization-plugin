@@ -244,8 +244,11 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
      */
     public function normalizeCoreBlocks($string)
     {
-        // $string = preg_replace('~<!-- (/?)wp:core/([^ ]+)~', '<!-- $1wp:$2', $string);
-        return serialize_blocks($this->parseBlocks($string));
+        if (function_exists('serialize_blocks')) {
+            return \serialize_blocks($this->parseBlocks($string));
+        }
+
+        return $string;
     }
 
     /**

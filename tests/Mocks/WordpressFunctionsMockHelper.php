@@ -90,7 +90,7 @@ namespace {
                         break;
                     }
                 }
-
+                return $default;
             }
         }
 
