@@ -25,7 +25,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
     protected function setUp(): void
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
-        $this->mediaAttachmentRulesManager = $this->getMock(MediaAttachmentRulesManager::class);
+        $this->mediaAttachmentRulesManager = $this->createMock(MediaAttachmentRulesManager::class);
         $this->mediaAttachmentRulesManager->method('getGutenbergReplacementRules')->willReturn([
             new GutenbergReplacementRule('image', 'id'),
             new GutenbergReplacementRule('media-text', 'mediaId'),
@@ -46,11 +46,11 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
         $submission->setTargetBlogId($targetBlogId);
         $submission->setBatchUid($batchUid);
         $acf = $this->getMockBuilder(AcfDynamicSupport::class)
-            ->setConstructorArgs([$this->getMock(EntityHelper::class)])
+            ->setConstructorArgs([$this->createMock(EntityHelper::class)])
             ->getMock();
         $acf->method('getDefinitions')->willReturn([]);
 
-        $translationHelper = $this->getMock(TranslationHelper::class);
+        $translationHelper = $this->createMock(TranslationHelper::class);
         $translationHelper->method('isRelatedSubmissionCreationNeeded')->willReturn(true);
 
         $core = $this->getCoreMock();
@@ -74,7 +74,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
 <!-- /wp:core/image -->
 HTML
         ];
-        $x->processor(new AfterDeserializeContentEventParameters($source, $submission, $this->getMock(PostEntityStd::class), []));
+        $x->processor(new AfterDeserializeContentEventParameters($source, $submission, $this->createMock(PostEntityStd::class), []));
 
         self::assertEquals(
             <<<HTML
@@ -112,11 +112,11 @@ HTML
         $submission->setTargetBlogId($targetBlogId);
         $submission->setBatchUid($batchUid);
         $acf = $this->getMockBuilder(AcfDynamicSupport::class)
-            ->setConstructorArgs([$this->getMock(EntityHelper::class)])
+            ->setConstructorArgs([$this->createMock(EntityHelper::class)])
             ->getMock();
         $acf->method('getDefinitions')->willReturn($definitions);
 
-        $translationHelper = $this->getMock(TranslationHelper::class);
+        $translationHelper = $this->createMock(TranslationHelper::class);
         $translationHelper->method('isRelatedSubmissionCreationNeeded')->willReturn(true);
 
         $core = $this->getCoreMock();
@@ -132,7 +132,7 @@ HTML
         $source = [$string];
         $meta = [];
 
-        $content = $this->getMock(PostEntityStd::class);
+        $content = $this->createMock(PostEntityStd::class);
 
         $x->processor(new AfterDeserializeContentEventParameters($source, $submission, $content, $meta));
 
@@ -164,7 +164,7 @@ HTML
         $submission->setBatchUid($batchUid);
 
         $acf = $this->getMockBuilder(AcfDynamicSupport::class)
-            ->setConstructorArgs([$this->getMock(EntityHelper::class)])
+            ->setConstructorArgs([$this->createMock(EntityHelper::class)])
             ->getMock();
         $acf->method('getDefinitions')->willReturn(
             [
@@ -173,7 +173,7 @@ HTML
             ]
         );
 
-        $translationHelper = $this->getMock(TranslationHelper::class);
+        $translationHelper = $this->createMock(TranslationHelper::class);
         $translationHelper->method('isRelatedSubmissionCreationNeeded')->willReturn(true);
 
         $core = $this->getCoreMock();
@@ -188,7 +188,7 @@ HTML
 
         $source = [$string];
         $meta = [];
-        $content = $this->getMock(PostEntityStd::class);
+        $content = $this->createMock(PostEntityStd::class);
 
         $x->processor(new AfterDeserializeContentEventParameters($source, $submission, $content, $meta));
     }
@@ -215,7 +215,7 @@ HTML
      */
     private function getCoreMock()
     {
-        return $this->getMock(
+        return $this->createMock(
             SmartlingCore::class,
             [],
             [new PostContentHelper(new GutenbergBlockHelper()), new XmlHelper()]

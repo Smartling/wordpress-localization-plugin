@@ -50,8 +50,8 @@ class UploadJobTest extends TestCase
     {
         $batchUid = 'batchUid';
 
-        $entityHelper = $this->getMock(EntityHelper::class);
-        $siteHelper = $this->getMock(SiteHelper::class);
+        $entityHelper = $this->createMock(EntityHelper::class);
+        $siteHelper = $this->createMock(SiteHelper::class);
         $entityHelper->method('getSiteHelper')->willReturn($siteHelper);
 
         $activeProfile = new ConfigurationProfileEntity();
@@ -65,7 +65,7 @@ class UploadJobTest extends TestCase
                 $this->mockDbAl(),
                 10,
                 $siteHelper,
-                $this->getMock(LocalizationPluginProxyInterface::class),
+                $this->createMock(LocalizationPluginProxyInterface::class),
             ])
             ->setMethods(['getActiveProfiles'])
             ->getMock();
@@ -92,7 +92,7 @@ class UploadJobTest extends TestCase
         ]);
         $submissionManager->expects(self::once())->method('storeSubmissions')->with([$submission]);
 
-        $api = $this->getMock(ApiWrapperInterface::class);
+        $api = $this->createMock(ApiWrapperInterface::class);
         $api->method('retrieveBatchForBucketJob')->willReturn($batchUid);
 
         $x = $this->getWorkerMock($submissionManager, $api, $settingsManager);
@@ -105,8 +105,8 @@ class UploadJobTest extends TestCase
     {
         $batchUid = 'batchUid';
 
-        $entityHelper = $this->getMock(EntityHelper::class);
-        $siteHelper = $this->getMock(SiteHelper::class);
+        $entityHelper = $this->createMock(EntityHelper::class);
+        $siteHelper = $this->createMock(SiteHelper::class);
         $entityHelper->method('getSiteHelper')->willReturn($siteHelper);
 
         $activeProfile = new ConfigurationProfileEntity();
@@ -124,7 +124,7 @@ class UploadJobTest extends TestCase
                 $this->mockDbAl(),
                 10,
                 $siteHelper,
-                $this->getMock(LocalizationPluginProxyInterface::class),
+                $this->createMock(LocalizationPluginProxyInterface::class),
             ])
             ->setMethods(['getActiveProfiles'])
             ->getMock();
@@ -151,7 +151,7 @@ class UploadJobTest extends TestCase
         ]);
         $submissionManager->expects(self::never())->method('storeSubmissions');
 
-        $api = $this->getMock(ApiWrapperInterface::class);
+        $api = $this->createMock(ApiWrapperInterface::class);
         $api->method('retrieveBatchForBucketJob')->willReturn($batchUid);
 
         $x = $this->getWorkerMock($submissionManager, $api, $settingsManager);

@@ -466,7 +466,7 @@ class SmartlingCoreTest extends TestCase
 
     public function testExceptionOnTargetPlaceholderCreationFail()
     {
-        $obj = $this->getMock(
+        $obj = $this->createMock(
             SmartlingCore::class,
             ['getFunctionProxyHelper'],
             [new PostContentHelper(new GutenbergBlockHelper()), new XmlHelper()]

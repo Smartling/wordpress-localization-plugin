@@ -29,14 +29,14 @@ class ContentHelperTest extends TestCase
         $entity = $this->getMockBuilder(EntityAbstract::class)->setMethods(['get'])->getMockForAbstractClass();
         $entity->method('get')->willReturnSelf();
 
-        $ioFactory = $this->getMock(ContentEntitiesIOFactory::class);
+        $ioFactory = $this->createMock(ContentEntitiesIOFactory::class);
         if ($exists) {
             $ioFactory->method('getMapper')->willReturn($entity);
         } else {
             $ioFactory->method('getMapper')->willThrowException(new EntityNotFoundException());
         }
 
-        $siteHelper = $this->getMock(SiteHelper::class);
+        $siteHelper = $this->createMock(SiteHelper::class);
         $siteHelper->method('getCurrentBlogId')->willReturn($currentBlogId);
         $siteHelper->expects($currentBlogId === $otherBlogId ? self::never() : self::once())->method('switchBlogId')->with($otherBlogId);
         $siteHelper->expects($currentBlogId === $otherBlogId ? self::never() : self::once())->method('restoreBlogId');

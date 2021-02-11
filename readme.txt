@@ -60,7 +60,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 1.16.0 =
-* Minimum required PHP version is now 7.2!
+* Minimum required PHP version is now 7.2! The next plugin release will require PHP 7.4.
 * Added ability to lock translation for some of the Gutenberg blocks in post content. The lock will preserve translated blocks, unless there are changes to the parents' post structure of blocks, such as blocks reordering, or adding new blocks.
 
 = 1.15.7 =

@@ -102,7 +102,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $submissionManager->method('storeEntity')->willReturnArgument(0);
 
         $x = new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager);
-        $xmlHelper = $this->getMock(XmlHelper::class);
+        $xmlHelper = $this->createMock(XmlHelper::class);
         $xmlHelper->method('xmlDecode')->willReturn(new DecodedXml(
             ['meta' => $translatedFields],
             ['meta' => ['metaNotToTranslate' => 's:8:"Original"', 'metaToTranslate' => 'Original']]
@@ -141,7 +141,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $submissionManager->method('storeEntity')->willReturnArgument(0);
 
         $x = new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager);
-        $xmlHelper = $this->getMock(XmlHelper::class);
+        $xmlHelper = $this->createMock(XmlHelper::class);
         $xmlHelper->method('xmlDecode')->willReturn(new DecodedXml(
             ['meta' => ['metaToTranslate' => '~Translated~']],
             ['meta' => ['excludedField' => 'excluded', 'sourceMetaField' => 'set', 'metaToTranslate' => 'Original']]

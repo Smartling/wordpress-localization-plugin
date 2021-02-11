@@ -35,7 +35,7 @@ class ContentRelationDiscoveryServiceTest extends TestCase
         $settingsManager = $this->getMockBuilder(SettingsManager::class)->disableOriginalConstructor()->getMock();
         $settingsManager->method('getSingleSettingsProfile')->willReturn(new ConfigurationProfileEntity());
 
-        $siteHelper = $this->getMock(SiteHelper::class);
+        $siteHelper = $this->createMock(SiteHelper::class);
         $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
 
         $contentHelper = new ContentHelper();
@@ -91,7 +91,7 @@ class ContentRelationDiscoveryServiceTest extends TestCase
         $settingsManager = $this->getMockBuilder(SettingsManager::class)->disableOriginalConstructor()->getMock();
         $settingsManager->method('getSingleSettingsProfile')->willReturn(new ConfigurationProfileEntity());
 
-        $siteHelper = $this->getMock(SiteHelper::class);
+        $siteHelper = $this->createMock(SiteHelper::class);
         $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
 
         $contentHelper = new ContentHelper();

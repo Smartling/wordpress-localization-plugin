@@ -50,10 +50,10 @@ class AcfTypeDetectorTest extends TestCase
             'local-fields' => $fields,
         ];
 
-        $entityHelper = $this->getMock(EntityHelper::class);
+        $entityHelper = $this->createMock(EntityHelper::class);
         $settingsManager = $this->getMockBuilder(SettingsManager::class)->disableOriginalConstructor()->getMock();
         $settingsManager->method('getActiveProfiles')->willReturn([]);
-        $siteHelper = $this->getMock(SiteHelper::class);
+        $siteHelper = $this->createMock(SiteHelper::class);
         $siteHelper->method('listBlogs')->willReturn([]);
         $entityHelper->method('getSiteHelper')->willReturn($siteHelper);
         $entityHelper->method('getSettingsManager')->willReturn($settingsManager);
