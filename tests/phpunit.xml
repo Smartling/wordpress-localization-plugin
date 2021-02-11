@@ -27,7 +27,6 @@
     <logging>
         <log type="junit" target="phpunit-results.xml" logIncompleteSkipped="false"/>
         <log type="coverage-clover" target="phpunit-coverage.xml"/>
-        <!--<log type="testdox-text" target="php://stdout"/>-->
     </logging>
     <filter>
         <whitelist>
