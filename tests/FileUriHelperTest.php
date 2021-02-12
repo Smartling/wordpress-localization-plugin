@@ -43,7 +43,7 @@ class FileUriHelperTest extends TestCase
      */
     public function testPreparePermalinkInvalidParams($string, ?SubmissionEntity $entity = null)
     {
-        $this->expectException(\TypeError::class);
+        $this->expectException(\InvalidArgumentException::class);
         $this->invokeStaticMethod(FileUriHelper::class, 'preparePermalink', [$string, $entity,]);
     }
 
