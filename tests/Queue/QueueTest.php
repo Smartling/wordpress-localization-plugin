@@ -21,6 +21,7 @@ class QueueTest extends TestCase
 
     public function setUp(): void
     {
+        defined('ARRAY_A') || define('ARRAY_A', 'ARRAY_A');
         $this->dbal = $this->createMock(SmartlingToCMSDatabaseAccessWrapperInterface::class);
         $this->dbal->method('completeTableName')->willReturn(Queue::getTableName());
         $this->queue = new Queue();
@@ -126,7 +127,7 @@ class QueueTest extends TestCase
      */
     public function testDequeue(string $queue, string $expectedQuery)
     {
-        $this->dbal->expects(self::once())->method('fetch')->with($expectedQuery, "ARRAY_A")->willReturn([]);
+        $this->dbal->expects(self::once())->method('fetch')->with($expectedQuery, \ARRAY_A)->willReturn([]);
         $this->queue->setDbal($this->dbal);
         $this->queue->dequeue($queue);
     }
@@ -165,7 +166,7 @@ class QueueTest extends TestCase
      */
     public function testStats(string $expectedQuery)
     {
-        $this->dbal->expects(self::once())->method('fetch')->with($expectedQuery, "ARRAY_A")->willReturn([]);
+        $this->dbal->expects(self::once())->method('fetch')->with($expectedQuery, \ARRAY_A)->willReturn([]);
         $this->queue->setDbal($this->dbal);
         $this->queue->stats();
     }

@@ -38,7 +38,7 @@ class WordpressContentTypeHelper
         return $map;
     }
 
-    public static $internalTypes = ['post' => 'post'];
+    public static $internalTypes = [];
 
     /**
      * @return array

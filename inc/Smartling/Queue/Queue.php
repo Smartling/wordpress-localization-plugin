@@ -179,7 +179,7 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
                 'page'  => 1,
             ]);
 
-        $result = $this->getDbal()->fetch($query, "ARRAY_A");
+        $result = $this->getDbal()->fetch($query, \ARRAY_A);
 
         if (!is_array($result)) {
             $message = vsprintf('Error while getting element from queue: %s', [
@@ -299,7 +299,7 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
                 ['queue']
         );
 
-        $result = $this->getDbal()->fetch($query, "ARRAY_A");
+        $result = $this->getDbal()->fetch($query, \ARRAY_A);
         $output = [];
         foreach ($result as $row) {
             $output[$row['queue']] = (int)$row['num'];
