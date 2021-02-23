@@ -213,8 +213,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         if (array_key_exists('post_content', $entityFields) && $this->hasBlocks($entityFields['post_content'])) {
             try {
                 foreach ($this->getPostContentBlocks($entityFields['post_content']) as $index => $block) {
-                    /** @noinspection PhpParamsInspection serialize_block expects array for its parameter */
-                    $entityFields["post_content/blocks/$index/{$block['blockName']}"] = serialize_block($block);
+                    $entityFields["post_content/blocks/$index"] = serialize_block($block);
                 }
             } catch (SmartlingGutenbergParserNotFoundException $e) {
                 $this->getLogger()->warning('Block content found while getting translation fields, but no parser available');

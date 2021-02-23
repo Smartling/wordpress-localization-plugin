@@ -9,7 +9,7 @@ use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\WordpressUserHelper;
 
 /**
- * Class PostEntity
+ * @method setPostContent($string)
  * @property null|integer $ID
  * @property integer      $post_author
  * @property string       $post_date
