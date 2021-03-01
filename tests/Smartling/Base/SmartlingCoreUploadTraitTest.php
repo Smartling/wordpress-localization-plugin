@@ -28,12 +28,6 @@ class SmartlingCoreUpload {
     private $settingsManager;
     private $submissionManager;
 
-    /**
-     * @param ContentHelper $contentHelper
-     * @param FieldsFilterHelper $fieldsFilterHelper
-     * @param SettingsManager $settingsManager
-     * @param SubmissionManager $submissionManager
-     */
     public function __construct(ContentHelper $contentHelper, FieldsFilterHelper $fieldsFilterHelper, SettingsManager $settingsManager, SubmissionManager $submissionManager)
     {
         $this->contentHelper = $contentHelper;
@@ -42,7 +36,7 @@ class SmartlingCoreUpload {
         $this->submissionManager = $submissionManager;
     }
 
-    public function getLogger()
+    public function getLogger(): NullLogger
     {
         return new NullLogger();
     }
@@ -55,22 +49,22 @@ class SmartlingCoreUpload {
     {
     }
 
-    public function getContentHelper()
+    public function getContentHelper(): ContentHelper
     {
         return $this->contentHelper;
     }
 
-    public function getFieldsFilter()
+    public function getFieldsFilter(): FieldsFilterHelper
     {
         return $this->fieldsFilterHelper;
     }
 
-    public function getSettingsManager()
+    public function getSettingsManager(): SettingsManager
     {
         return $this->settingsManager;
     }
 
-    public function getSubmissionManager()
+    public function getSubmissionManager(): SubmissionManager
     {
         return $this->submissionManager;
     }
@@ -83,7 +77,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
      */
     private $resultEntity;
 
-    public function setUp()
+    public function setUp(): void
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
     }
@@ -109,7 +103,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $submissionManager->method('storeEntity')->willReturnArgument(0);
 
         $x = new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager);
-        $xmlHelper = $this->getMock(XmlHelper::class);
+        $xmlHelper = $this->createMock(XmlHelper::class);
         $xmlHelper->method('xmlDecode')->willReturn(new DecodedXml(
             ['meta' => $translatedFields],
             ['meta' => ['metaNotToTranslate' => 's:8:"Original"', 'metaToTranslate' => 'Original']]
@@ -131,7 +125,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $contentHelper->method('readTargetContent')->willReturn(new PostEntityStd());
         $contentHelper->method('readTargetMetadata')->willReturn(['locked' => 'locked', 'unlocked' => 'unlocked']);
 
-        $fieldsFilterHelper = $this->getMockBuilder(FieldsFilterHelper::class)->disableOriginalConstructor()->setMethods(['applyTranslatedValues', 'getLogger', 'processStringsAfterDecoding'])->getMock();
+        $fieldsFilterHelper = $this->createPartialMock(FieldsFilterHelper::class, ['applyTranslatedValues', 'getLogger', 'processStringsAfterDecoding']);
         $fieldsFilterHelper->method('processStringsAfterDecoding')->willReturnArgument(0);
         $fieldsFilterHelper->method('applyTranslatedValues')->willReturnArgument(2);
         $fieldsFilterHelper->method('getLogger')->willReturn(new NullLogger());
@@ -148,7 +142,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $submissionManager->method('storeEntity')->willReturnArgument(0);
 
         $x = new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager);
-        $xmlHelper = $this->getMock(XmlHelper::class);
+        $xmlHelper = $this->createMock(XmlHelper::class);
         $xmlHelper->method('xmlDecode')->willReturn(new DecodedXml(
             ['meta' => ['metaToTranslate' => '~Translated~']],
             ['meta' => ['excludedField' => 'excluded', 'sourceMetaField' => 'set', 'metaToTranslate' => 'Original']]

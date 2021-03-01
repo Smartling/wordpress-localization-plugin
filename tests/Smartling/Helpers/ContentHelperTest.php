@@ -13,7 +13,7 @@ use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 
 class ContentHelperTest extends TestCase
 {
-    public function setUp() {
+    public function setUp(): void {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
     }
     /**
@@ -22,21 +22,21 @@ class ContentHelperTest extends TestCase
      * @param int $otherBlogId
      * @param bool $exists
      */
-    public function testCheckEntityExists($currentBlogId, $otherBlogId, $exists)
+    public function testCheckEntityExists(int $currentBlogId, int $otherBlogId, bool $exists)
     {
-        $x = $this->getMockBuilder(ContentHelper::class)->setMethods(['getIoFactory', 'getSiteHelper'])->setConstructorArgs([new WordpressFunctionProxyHelper()])->getMock();
+        $x = $this->getMockBuilder(ContentHelper::class)->onlyMethods(['getIoFactory', 'getSiteHelper'])->setConstructorArgs([new WordpressFunctionProxyHelper()])->getMock();
 
-        $entity = $this->getMockBuilder(EntityAbstract::class)->setMethods(['get'])->getMockForAbstractClass();
+        $entity = $this->getMockBuilder(EntityAbstract::class)->onlyMethods(['get'])->getMockForAbstractClass();
         $entity->method('get')->willReturnSelf();
 
-        $ioFactory = $this->getMock(ContentEntitiesIOFactory::class);
+        $ioFactory = $this->createMock(ContentEntitiesIOFactory::class);
         if ($exists) {
             $ioFactory->method('getMapper')->willReturn($entity);
         } else {
             $ioFactory->method('getMapper')->willThrowException(new EntityNotFoundException());
         }
 
-        $siteHelper = $this->getMock(SiteHelper::class);
+        $siteHelper = $this->createMock(SiteHelper::class);
         $siteHelper->method('getCurrentBlogId')->willReturn($currentBlogId);
         $siteHelper->expects($currentBlogId === $otherBlogId ? self::never() : self::once())->method('switchBlogId')->with($otherBlogId);
         $siteHelper->expects($currentBlogId === $otherBlogId ? self::never() : self::once())->method('restoreBlogId');
@@ -47,7 +47,8 @@ class ContentHelperTest extends TestCase
         self::assertEquals($exists, $x->checkEntityExists($otherBlogId, 'post', 3));
     }
 
-    public function providerCheckEntityExists() {
+    public function providerCheckEntityExists(): array
+    {
         return [
             [1, 2, true],
             [1, 2, false],

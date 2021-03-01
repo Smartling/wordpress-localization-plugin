@@ -4,16 +4,9 @@ namespace Smartling\Tests\IntegrationTests\tests;
 
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 
-/**
- * Class ProfileCreationTest
- * @package Smartling\Tests\IntegrationTests\tests
- */
 class ProfileCreationTest extends SmartlingUnitTestCaseAbstract
 {
-    /**
-     * @inheritdoc
-     */
-    public function setUp()
+    public function setUp(): void
     {
         $this->cleanUpTables();
         $this->registerPostTypes();

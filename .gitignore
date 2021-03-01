@@ -1,7 +1,5 @@
 ### COMPOSER ###
-composer.*
-!composer.json
-!composer.phar
+composer
 
 inc/third-party/*
 

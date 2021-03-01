@@ -80,6 +80,13 @@ namespace {
             }
         }
 
+        if (!function_exists('add_site_option')) {
+            function add_site_option(string $option, $value ): bool
+            {
+                return true;
+            }
+        }
+
         if (!function_exists('get_site_option')) {
             function get_site_option($key, $default = null, $useCache = true)
             {

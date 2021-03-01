@@ -3,6 +3,7 @@
 namespace Smartling\Tests\Smartling\Settings;
 
 use PHPUnit\Framework\TestCase;
+use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\TargetLocale;
@@ -20,11 +21,10 @@ class SettingsManagerTest extends TestCase
 
     /**
      * @covers \Smartling\Settings\SettingsManager::getProfileTargetBlogIdsByMainBlogId
-     * @expectedException \Smartling\Exception\SmartlingDbException
      */
     public function testGetProfileTargetBlogIdsByMainBlogIdWithDbException()
     {
-
+        $this->expectException(SmartlingDbException::class);
         $mock = $this->getSettingsManagerMock();
 
         $mock
@@ -72,11 +72,11 @@ class SettingsManagerTest extends TestCase
 
     /**
      * @covers \Smartling\Settings\SettingsManager::getProfileTargetBlogIdsByMainBlogId
-     * @expectedException \Smartling\Exception\SmartlingConfigException
-     * @expectedExceptionMessage No active target locales found for profile id=5.
      */
     public function testGetProfileTargetBlogIdsByMainBlogIdWithConfigException()
     {
+        $this->expectException(SmartlingConfigException::class);
+        $this->expectExceptionMessage('No active target locales found for profile id=5');
         $mock = $this->getSettingsManagerMock();
         $profile = new ConfigurationProfileEntity();
 

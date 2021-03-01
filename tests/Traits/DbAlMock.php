@@ -2,30 +2,26 @@
 
 namespace Smartling\Tests\Traits;
 
-/**
- * Class DbAlMock
- * @package Traits
- */
+use PHPUnit\Framework\MockObject\MockObject;
+use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+
 trait DbAlMock
 {
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|\Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface
+     * @return MockObject|\Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface
      */
     private function mockDbAl()
     {
-        return $this->getMockBuilder('Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface')
-            ->setMethods(
-                [
-                    'needRawSqlLog',
-                    'query',
-                    'fetch',
-                    'escape',
-                    'completeTableName',
-                    'completeMultisiteTableName',
-                    'getLastInsertedId',
-                    'getLastErrorMessage',
-                ]
-            )
-            ->getMock();
+        defined('ARRAY_A') || define('ARRAY_A', 'ARRAY_A');
+        defined('OBJECT') || define('OBJECT', 'OBJECT');
+        return $this->createPartialMock(SmartlingToCMSDatabaseAccessWrapperInterface::class, [
+            'query',
+            'fetch',
+            'escape',
+            'completeTableName',
+            'completeMultisiteTableName',
+            'getLastInsertedId',
+            'getLastErrorMessage',
+        ]);
     }
 }

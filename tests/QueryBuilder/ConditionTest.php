@@ -5,17 +5,11 @@ use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 
-/**
- * Class ConditionTest
- */
 class ConditionTest extends TestCase
 {
-
-	/**
-	 * @expectedException \InvalidArgumentException
-	 */
 	public function testConditionValidation()
 	{
+	    $this->expectException(\InvalidArgumentException::class);
 		$conditionType = ConditionBuilder::CONDITION_SIGN_EQ;
 
 		$field = 'foo';
@@ -36,7 +30,7 @@ class ConditionTest extends TestCase
 		$condition = Condition::getCondition($conditionType, $field, [$value]);
 		$actualResult = $condition->__toString();
 
-		self::assertTrue($actualResult === $expectedResult);
+        self::assertSame($actualResult, $expectedResult);
 	}
 
 	public function testAutomaticValueEscapingSlash()
@@ -54,7 +48,7 @@ class ConditionTest extends TestCase
 		$condition = Condition::getCondition($conditionType, $field, [$value]);
 		$actualResult = $condition->__toString();
 
-		self::assertTrue($actualResult === $expectedResult);
+        self::assertSame($actualResult, $expectedResult);
 	}
 
 	public function testAutomaticValueEscapingSingleQuote()
@@ -72,7 +66,7 @@ class ConditionTest extends TestCase
 		$condition = Condition::getCondition($conditionType, $field, [$value]);
 		$actualResult = $condition->__toString();
 
-		self::assertTrue($actualResult === $expectedResult);
+        self::assertSame($actualResult, $expectedResult);
 	}
 
 	public function testAutomaticValueEscapingDoubleQuote()
@@ -90,7 +84,7 @@ class ConditionTest extends TestCase
 		$condition = Condition::getCondition($conditionType, $field, [$value]);
 		$actualResult = $condition->__toString();
 
-		self::assertTrue($actualResult === $expectedResult);
+        self::assertSame($actualResult, $expectedResult);
 	}
 
 	public function testMoreCondition()
@@ -106,7 +100,7 @@ class ConditionTest extends TestCase
 		$condition = Condition::getCondition($conditionType, $field, [$value]);
 		$actualResult = $condition->__toString();
 
-		self::assertTrue($actualResult === $expectedResult);
+        self::assertSame($actualResult, $expectedResult);
 	}
 
 	public function testMoreOrEqCondition()
@@ -122,7 +116,7 @@ class ConditionTest extends TestCase
 		$condition = Condition::getCondition($conditionType, $field, [$value]);
 		$actualResult = $condition->__toString();
 
-		self::assertTrue($actualResult === $expectedResult);
+        self::assertSame($actualResult, $expectedResult);
 	}
 
 	public function testLessCondition()
@@ -138,7 +132,7 @@ class ConditionTest extends TestCase
 		$condition = Condition::getCondition($conditionType, $field, [$value]);
 		$actualResult = $condition->__toString();
 
-		self::assertTrue($actualResult === $expectedResult);
+        self::assertSame($actualResult, $expectedResult);
 	}
 
 	public function testLessOrEqCondition()
@@ -154,7 +148,7 @@ class ConditionTest extends TestCase
 		$condition = Condition::getCondition($conditionType, $field, [$value]);
 		$actualResult = $condition->__toString();
 
-		self::assertTrue($actualResult === $expectedResult);
+        self::assertSame($actualResult, $expectedResult);
 	}
 
 	public function testNotEqCondition()
@@ -170,7 +164,7 @@ class ConditionTest extends TestCase
 		$condition = Condition::getCondition($conditionType, $field, [$value]);
 		$actualResult = $condition->__toString();
 
-		self::assertTrue($actualResult === $expectedResult);
+        self::assertSame($actualResult, $expectedResult);
 	}
 
 	public function testLikeCondition()
@@ -186,7 +180,7 @@ class ConditionTest extends TestCase
 		$condition = Condition::getCondition($conditionType, $field, [$value]);
 		$actualResult = $condition->__toString();
 
-		self::assertTrue($actualResult === $expectedResult);
+        self::assertSame($actualResult, $expectedResult);
 	}
 
 	public function testBetweenCondition()
@@ -204,7 +198,7 @@ class ConditionTest extends TestCase
 		$condition = Condition::getCondition($conditionType, $field, [$value, $anotherValue]);
 		$actualResult = $condition->__toString();
 
-		self::assertTrue($actualResult === $expectedResult);
+        self::assertSame($actualResult, $expectedResult);
 	}
 
 	public function testInCondition()
@@ -219,7 +213,7 @@ class ConditionTest extends TestCase
 
 		$condition = Condition::getCondition($conditionType, $field, $values);
 		$actualResult = $condition->__toString();
-		self::assertTrue($actualResult === $expectedResult);
+        self::assertSame($actualResult, $expectedResult);
 	}
 
 	public function testNotInCondition()
@@ -234,6 +228,6 @@ class ConditionTest extends TestCase
 
 		$condition = Condition::getCondition($conditionType, $field, $values);
 		$actualResult = $condition->__toString();
-		self::assertTrue($actualResult === $expectedResult);
+        self::assertSame($actualResult, $expectedResult);
 	}
 }

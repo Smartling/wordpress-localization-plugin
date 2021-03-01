@@ -2,11 +2,11 @@
 
 namespace Smartling\Tests\Services;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\SiteHelper;
-use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
@@ -16,7 +16,7 @@ use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 
 class ContentRelationDiscoveryServiceTest extends TestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
     }
@@ -35,15 +35,13 @@ class ContentRelationDiscoveryServiceTest extends TestCase
         $settingsManager = $this->getMockBuilder(SettingsManager::class)->disableOriginalConstructor()->getMock();
         $settingsManager->method('getSingleSettingsProfile')->willReturn(new ConfigurationProfileEntity());
 
-        $siteHelper = $this->getMock(SiteHelper::class);
+        $siteHelper = $this->createMock(SiteHelper::class);
         $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
 
         $contentHelper = new ContentHelper();
         $contentHelper->setSiteHelper($siteHelper);
 
-        $submission = $this->getMockBuilder(SubmissionEntity::class)
-            ->setMethods(['getFileUri', 'setBatchUid', 'setStatus'])
-            ->getMockForAbstractClass();
+        $submission = $this->createPartialMock(SubmissionEntity::class, ['getFileUri', 'setBatchUid', 'setStatus']);
         $submission->expects(self::once())->method('setBatchUid')->with($batchUid);
         $submission->expects(self::once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
 
@@ -91,15 +89,13 @@ class ContentRelationDiscoveryServiceTest extends TestCase
         $settingsManager = $this->getMockBuilder(SettingsManager::class)->disableOriginalConstructor()->getMock();
         $settingsManager->method('getSingleSettingsProfile')->willReturn(new ConfigurationProfileEntity());
 
-        $siteHelper = $this->getMock(SiteHelper::class);
+        $siteHelper = $this->createMock(SiteHelper::class);
         $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
 
         $contentHelper = new ContentHelper();
         $contentHelper->setSiteHelper($siteHelper);
 
-        $submission = $this->getMockBuilder(SubmissionEntity::class)
-            ->setMethods(['getFileUri', 'setBatchUid', 'setStatus'])
-            ->getMockForAbstractClass();
+        $submission = $this->createPartialMock(SubmissionEntity::class, ['getFileUri', 'setBatchUid', 'setStatus']);
         $submission->expects(self::exactly(count($sourceIds)))->method('setBatchUid')->with($batchUid);
         $submission->expects(self::exactly(count($sourceIds)))->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
 
@@ -146,7 +142,7 @@ class ContentRelationDiscoveryServiceTest extends TestCase
      * @param ContentHelper $contentHelper
      * @param SettingsManager $settingsManager
      * @param SubmissionManager $submissionManager
-     * @return \PHPUnit_Framework_MockObject_MockObject|ContentRelationsDiscoveryService
+     * @return MockObject|ContentRelationsDiscoveryService
      */
     private function getContentRelationDiscoveryService(
         ApiWrapper $apiWrapper,
@@ -154,15 +150,13 @@ class ContentRelationDiscoveryServiceTest extends TestCase
         SettingsManager $settingsManager,
         SubmissionManager $submissionManager
     ) {
-        $x = $this->getMockBuilder(ContentRelationsDiscoveryService::class)->disableOriginalConstructor()
-            ->setMethods([
-                'getApiWrapper',
-                'getContentHelper',
-                'getSettingsManager',
-                'getSubmissionManager',
-                'returnResponse',
-            ])
-            ->getMock();
+        $x = $this->createPartialMock(ContentRelationsDiscoveryService::class, [
+            'getApiWrapper',
+            'getContentHelper',
+            'getSettingsManager',
+            'getSubmissionManager',
+            'returnResponse',
+        ]);
         $x->method('getApiWrapper')->willReturn($apiWrapper);
         $x->method('getContentHelper')->willReturn($contentHelper);
         $x->method('getSettingsManager')->willReturn($settingsManager);

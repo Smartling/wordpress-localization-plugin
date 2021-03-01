@@ -2,20 +2,16 @@
 
 namespace Smartling\Tests\Traits;
 
-/**
- * Class QueueMock
- * @package Smartling\Tests\Traits
- */
+use PHPUnit\Framework\MockObject\MockObject;
+use Smartling\Queue\Queue;
+
 trait QueueMock
 {
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|Queue
+     * @return MockObject|Queue
      */
     private function mockQueue()
     {
-        return $this->getMockBuilder('Smartling\Queue\Queue')
-            ->setMethods(['enqueue','dequeue'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        return $this->createPartialMock(Queue::class, ['enqueue','dequeue']);
     }
 }

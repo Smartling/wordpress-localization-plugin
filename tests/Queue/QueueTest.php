@@ -4,118 +4,56 @@ namespace Smartling\Tests\Queue;
 
 use PHPUnit\Framework\TestCase;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Exception\SmartlingDbException;
 use Smartling\Queue\Queue;
-use Smartling\Queue\QueueInterface;
 use Smartling\Tests\Traits\DbAlMock;
 use Smartling\Tests\Traits\DummyLoggerMock;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 
-
-/**
- * Class QueueTest
- * Test class for \Smartling\Queue\Queue
- * @package Smartling\Tests\Queue
- * @covers  \Smartling\Queue\Queue
- */
 class QueueTest extends TestCase
 {
-
     use DbAlMock;
     use DummyLoggerMock;
     use InvokeMethodTrait;
 
-    //region Fields Definitions
-    /**
-     * @var QueueInterface|\PHPUnit_Framework_MockObject_MockObject
-     */
     private $queue;
-
-    /**
-     * @var SmartlingToCMSDatabaseAccessWrapperInterface|\PHPUnit_Framework_MockObject_MockObject
-     */
     private $dbal;
 
-    /**
-     * @return QueueInterface|\PHPUnit_Framework_MockObject_MockObject
-     */
-    public function getQueue()
+    public function setUp(): void
     {
-        return $this->queue;
+        defined('ARRAY_A') || define('ARRAY_A', 'ARRAY_A');
+        $this->dbal = $this->createMock(SmartlingToCMSDatabaseAccessWrapperInterface::class);
+        $this->dbal->method('completeTableName')->willReturn(Queue::getTableName());
+        $this->queue = new Queue();
     }
 
     /**
-     * @param QueueInterface|\PHPUnit_Framework_MockObject_MockObject $queue
-     */
-    public function setQueue($queue)
-    {
-        $this->queue = $queue;
-    }
-
-    /**
-     * @return SmartlingToCMSDatabaseAccessWrapperInterface|\PHPUnit_Framework_MockObject_MockObject
-     */
-    public function getDbal()
-    {
-        return $this->dbal;
-    }
-
-    /**
-     * @param SmartlingToCMSDatabaseAccessWrapperInterface|\PHPUnit_Framework_MockObject_MockObject $dbal
-     */
-    public function setDbal($dbal)
-    {
-        $this->dbal = $dbal;
-    }
-    //endregion
-
-    /**
-     * Sets up the fixture, for example, open a network connection.
-     * This method is called before a test is executed.
-     */
-    protected function setUp()
-    {
-        $this->setDbal($this->mockDbAl());
-
-        $queue = new Queue();
-
-        $queue->setDbal($this->getDbal());
-        $this->setQueue($queue);
-
-    }
-
-    /**
-     * @covers       \Smartling\Queue\Queue::enqueue()
      * @dataProvider enqueueDataProvider
-     *
      * @param string $queue
-     * @param string $value
+     * @param array $value
      * @param string $expectedQuery
      */
-    public function testEnqueue($queue, $value, $expectedQuery)
+    public function testEnqueue(string $queue, array $value, string $expectedQuery)
     {
-        $db = $this->getDbal();
-        $db->expects(self::any())->method('completeTableName')->withAnyParameters()->willReturn(Queue::getTableName());
-        $db->expects(self::any())->method('query')->with($expectedQuery);
-        $this->getQueue()->enqueue($value, $queue);
+        $this->dbal->expects(self::once())->method('query')->with($expectedQuery);
+
+        $this->queue->setDbal($this->dbal);
+        $this->queue->enqueue($value, $queue);
     }
 
     /**
-     * @covers       \Smartling\Queue\Queue::enqueue()
      * @dataProvider enqueueFailsDataProvider
-     *
      * @param string $queue
-     * @param string $value
+     * @param array $value
      * @param string $expectedQuery
      */
-    public function testEnqueueException($queue, $value, $expectedQuery)
+    public function testEnqueueException(string $queue, array $value, string $expectedQuery)
     {
-        $this->setExpectedException(\Smartling\Exception\SmartlingDbException::class);
-        $db = $this->getDbal();
-        $db->expects(self::any())->method('completeTableName')->withAnyParameters()->willReturn(Queue::getTableName());
-        $db->expects(self::any())->method('query')->with($expectedQuery)->willReturn(false);
-        $this->getQueue()->enqueue($value, $queue);
+        $this->expectException(SmartlingDbException::class);
+        $this->dbal->expects(self::once())->method('query')->with($expectedQuery)->willReturn(false);
+        $this->queue->setDbal($this->dbal);
+        $this->queue->enqueue($value, $queue);
     }
-
 
     /**
      * @param string $queueName
@@ -123,7 +61,7 @@ class QueueTest extends TestCase
      *
      * @return array
      */
-    private function generatePositiveEnqueueDataSet($queueName, $value)
+    private function generatePositiveEnqueueDataSet(string $queueName, $value): array
     {
         return
             [
@@ -139,12 +77,7 @@ class QueueTest extends TestCase
             ];
     }
 
-    /**
-     * @param string $queueName
-     *
-     * @return array
-     */
-    private function generatePositiveDequeueDataSet($queueName)
+    private function generatePositiveDequeueDataSet(string $queueName): array
     {
         return
             [
@@ -157,12 +90,7 @@ class QueueTest extends TestCase
             ];
     }
 
-    /**
-     * @param string $queueName
-     *
-     * @return array
-     */
-    private function generatePositivePurgeDataSet($queueName)
+    private function generatePositivePurgeDataSet(string $queueName): array
     {
         return
             [
@@ -176,7 +104,7 @@ class QueueTest extends TestCase
     }
 
 
-    public function enqueueFailsDataProvider()
+    public function enqueueFailsDataProvider(): array
     {
         return [
             $this->generatePositiveEnqueueDataSet('upload', [1]),
@@ -184,31 +112,27 @@ class QueueTest extends TestCase
         ];
     }
 
-    public function enqueueDataProvider()
+    public function enqueueDataProvider(): array
     {
         return [
             $this->generatePositiveEnqueueDataSet('upload', [1]),
             $this->generatePositiveEnqueueDataSet('upload', [1, 2, 3]),
-            $this->generatePositiveEnqueueDataSet('upload', [new \stdClass('f')]),
         ];
     }
 
     /**
-     * @covers       \Smartling\Queue\Queue::dequeue()
      * @dataProvider dequeueDataProvider
-     *
      * @param string $queue
      * @param string $expectedQuery
      */
-    public function testDequeue($queue, $expectedQuery)
+    public function testDequeue(string $queue, string $expectedQuery)
     {
-        $db = $this->getDbal();
-        $db->expects(self::any())->method('completeTableName')->withAnyParameters()->willReturn(Queue::getTableName());
-        $db->expects(self::any())->method('fetch')->with($expectedQuery, \ARRAY_A)->willReturn([]);
-        $this->getQueue()->dequeue($queue);
+        $this->dbal->expects(self::once())->method('fetch')->with($expectedQuery, \ARRAY_A)->willReturn([]);
+        $this->queue->setDbal($this->dbal);
+        $this->queue->dequeue($queue);
     }
 
-    public function dequeueDataProvider()
+    public function dequeueDataProvider(): array
     {
         return [
             $this->generatePositiveDequeueDataSet('upload'),
@@ -217,48 +141,37 @@ class QueueTest extends TestCase
     }
 
     /**
-     * @covers       \Smartling\Queue\Queue::purge()
      * @dataProvider purgeDataProvider
      *
      * @param string $queueName
      * @param string $expectedQuery
      */
-    public function testPurge($queueName, $expectedQuery)
+    public function testPurge(string $queueName, string $expectedQuery)
     {
-        $db = $this->getDbal();
-        $db->expects(self::any())->method('completeTableName')->withAnyParameters()->willReturn(Queue::getTableName());
-        $db->expects(self::any())->method('query')->with($expectedQuery);
-        $this->getQueue()->purge($queueName);
+        $this->dbal->expects(self::once())->method('query')->with($expectedQuery);
+        $this->queue->setDbal($this->dbal);
+        $this->queue->purge($queueName);
     }
 
-    public function purgeDataProvider()
+    public function purgeDataProvider(): array
     {
         return [
             $this->generatePositivePurgeDataSet('upload'),
-            $this->generatePositivePurgeDataSet('download'),
-            [
-                null,
-                vsprintf('DELETE FROM `%s`', [Queue::getTableName()]),
-            ],
         ];
     }
 
     /**
-     * @covers       \Smartling\Queue\Queue::stats()
      * @dataProvider statsDataProvider
-     *
      * @param string $expectedQuery
      */
-    public function testStats($expectedQuery)
+    public function testStats(string $expectedQuery)
     {
-        $db = $this->getDbal();
-        $db->expects(self::any())->method('completeTableName')->withAnyParameters()->willReturn(Queue::getTableName());
-        $db->expects(self::any())->method('fetch')->with($expectedQuery, \ARRAY_A)->willReturn([]);
-        $this->getQueue()->stats();
+        $this->dbal->expects(self::once())->method('fetch')->with($expectedQuery, \ARRAY_A)->willReturn([]);
+        $this->queue->setDbal($this->dbal);
+        $this->queue->stats();
     }
 
-
-    public function statsDataProvider()
+    public function statsDataProvider(): array
     {
         return [
             [

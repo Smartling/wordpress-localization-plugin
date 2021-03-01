@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests\Traits;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Submissions\SubmissionManager;
@@ -12,18 +13,19 @@ trait SubmissionManagerMock
      * @param SmartlingToCMSDatabaseAccessWrapperInterface $dbal
      * @param EntityHelper $entityHelper
      *
-     * @return \PHPUnit_Framework_MockObject_MockObject|SubmissionManager
+     * @return MockObject|SubmissionManager
      */
     private function mockSubmissionManager(SmartlingToCMSDatabaseAccessWrapperInterface $dbal, EntityHelper $entityHelper)
     {
         return $this->getMockBuilder(SubmissionManager::class)
-            ->setMethods(
+            ->onlyMethods(
                 [
                     'find',
                     'findByIds',
                     'filterBrokenSubmissions',
                     'storeEntity',
-                    'setErrorMessage'
+                    'setErrorMessage',
+                    'storeSubmissions',
                 ]
             )
             ->setConstructorArgs([$dbal, 10, $entityHelper])

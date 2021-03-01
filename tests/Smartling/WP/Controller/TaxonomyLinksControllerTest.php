@@ -44,12 +44,12 @@ namespace Smartling\Tests\Smartling\WP\Controller {
         {
             $x = new TaxonomyLinksController(
                 $this->getMockBuilder(PluginInfo::class)->disableOriginalConstructor()->getMock(),
-                $this->getMock(LocalizationPluginProxyInterface::class),
+                $this->createMock(LocalizationPluginProxyInterface::class),
                 $this->getSiteHelperMock(),
                 $this->getSubmissionManagerMock(),
                 $this->getWordpressMock(),
-                $this->getMock(EntityHelper::class),
-                $this->getMock(Cache::class)
+                $this->createMock(EntityHelper::class),
+                $this->createMock(Cache::class)
             );
 
             self::assertEquals([
@@ -90,7 +90,7 @@ namespace Smartling\Tests\Smartling\WP\Controller {
 
         private function getWordpressMock()
         {
-            $wordpress = $this->getMock(WordpressFunctionProxyHelper::class);
+            $wordpress = $this->createMock(WordpressFunctionProxyHelper::class);
             $wordpress->method('get_current_blog_id')->willReturn(1);
             $wordpress->method('get_terms')->willReturnOnConsecutiveCalls([
                 new \WP_Term($this->getTermObject(1, 'category 1')),
@@ -106,7 +106,7 @@ namespace Smartling\Tests\Smartling\WP\Controller {
 
         private function getSiteHelperMock()
         {
-            $siteHelper = $this->getMock(SiteHelper::class);
+            $siteHelper = $this->createMock(SiteHelper::class);
             $siteHelper->method('listBlogs')->willReturn([1, 2]);
             return $siteHelper;
         }

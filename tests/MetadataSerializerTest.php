@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\FieldsFilterHelper;
@@ -9,11 +10,6 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Traits\DummyLoggerMock;
 use Smartling\Tests\Traits\SettingsManagerMock;
 
-/**
- * Class MetadataSerializerTest
- * @package Smartling\Tests
- * @covers  \Smartling\Helpers\FieldsFilterHelper
- */
 class MetadataSerializerTest extends TestCase
 {
 
@@ -21,16 +17,6 @@ class MetadataSerializerTest extends TestCase
     use SettingsManagerMock;
 
     /**
-     * Sets up the fixture, for example, open a network connection.
-     * This method is called before a test is executed.
-     */
-    protected function setUp()
-    {
-    }
-
-
-    /**
-     * @covers       \Smartling\Helpers\FieldsFilterHelper::prepareSourceData()
      * @dataProvider prepareSourceDataDataProvider
      *
      * @param array $entityFields
@@ -43,7 +29,7 @@ class MetadataSerializerTest extends TestCase
         self::assertEquals($expectedResult, $actualResult);
     }
 
-    public function prepareSourceDataDataProvider()
+    public function prepareSourceDataDataProvider(): array
     {
         return [
             [
@@ -99,7 +85,6 @@ class MetadataSerializerTest extends TestCase
     }
 
     /**
-     * @covers       \Smartling\Helpers\FieldsFilterHelper::applyTranslatedValues()
      * @dataProvider applyTranslatedValuesDataProvider
      *
      * @param array $originalValues
@@ -140,7 +125,7 @@ class MetadataSerializerTest extends TestCase
         self::assertEquals($expectedResult, $actualResult);
     }
 
-    public function applyTranslatedValuesDataProvider()
+    public function applyTranslatedValuesDataProvider(): array
     {
         return [
             [
@@ -211,7 +196,7 @@ class MetadataSerializerTest extends TestCase
     }
 
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|AcfDynamicSupport
+     * @return MockObject|AcfDynamicSupport
      */
     private function getAcfDynamicSupportMock()
     {

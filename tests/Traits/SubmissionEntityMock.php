@@ -2,17 +2,14 @@
 
 namespace Smartling\Tests\Traits;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Class SubmissionEntityMock
- * @package Smartling\Tests\Traits
- */
 trait SubmissionEntityMock
 {
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|SubmissionEntity
+     * @return MockObject|SubmissionEntity
      */
     private function getSubmissionEntityMock()
     {
@@ -26,22 +23,10 @@ trait SubmissionEntityMock
                     'setAppliedDate', 'getApprovedStringCount', 'setApprovedStringCount',
                     'getCompletedStringCount', 'setCompletedStringCount', 'getCompletionPercentage',];
 
-        return $this->getMockBuilder('Smartling\Submissions\SubmissionEntity')
-            ->setMethods($methods)
-            ->disableOriginalConstructor()
-            ->getMock();
+        return $this->createPartialMock(SubmissionEntity::class, $methods);
     }
 
-    /**
-     * @param string         $fileUri
-     * @param string         $locale
-     * @param null|\DateTime $lastModified
-     * @param int            $completion
-     * @param int            $id
-     *
-     * @return array
-     */
-    private function getSerializedSubmission($fileUri, $locale, $lastModified = null, $completion = 0, $id = 1)
+    private function getSerializedSubmission(string $fileUri, string $locale, \DateTime $lastModified = null, int $completion = 0, int $id = 1): array
     {
         WordpressContentTypeHelper::$internalTypes = ['Post' => 'post'];
 

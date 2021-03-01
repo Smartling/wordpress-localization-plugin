@@ -45,10 +45,7 @@ class DetectChangesHelper
         $this->logger = MonologWrapper::getLogger(get_called_class());
     }
 
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
+    public function getLogger(): LoggerInterface
     {
         return $this->logger;
     }

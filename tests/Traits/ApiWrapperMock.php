@@ -2,32 +2,25 @@
 
 namespace Smartling\Tests\Traits;
 
+use PHPUnit\Framework\MockObject\MockObject;
+use Smartling\ApiWrapper;
 use Smartling\ApiWrapperInterface;
 
-/**
- * Class ApiWrapperMock
- * @package Smartling\Tests\Traits
- */
 trait ApiWrapperMock
 {
     /**
-     * @return ApiWrapperInterface|\PHPUnit_Framework_MockObject_MockObject
+     * @return ApiWrapperInterface|MockObject
      */
     private function getApiWrapperMock()
     {
-        return $this->getMockBuilder('Smartling\ApiWrapper')
-            ->setMethods(
-                [
-                    'downloadFile',
-                    'getStatus',
-                    'testConnection',
-                    'uploadContent',
-                    'getSupportedLocales',
-                    'lastModified',
-                    'getStatusForAllLocales',
-                ]
-            )
-            ->disableOriginalConstructor()
-            ->getMock();
+        return $this->createPartialMock(ApiWrapper::class, [
+            'downloadFile',
+            'getStatus',
+            'testConnection',
+            'uploadContent',
+            'getSupportedLocales',
+            'lastModified',
+            'getStatusForAllLocales',
+        ]);
     }
 }

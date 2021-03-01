@@ -3,7 +3,7 @@ Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 4.6
 Tested up to: 5.5
-Stable tag: 1.16.0
+Stable tag: 2.0.0
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -26,7 +26,7 @@ Integration Features
 = Minimum Requirements =
 * WordPress 4.6 or higher
 * Multisite mode enabled
-* PHP Version 5.6 or higher
+* PHP Version 7.2 or higher
 * PHP extensions:
  * `mbstring`
  * `curl`
@@ -59,7 +59,8 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
-= 1.16.0 =
+= 2.0.0 =
+* Minimum required PHP version is now 7.2! The next plugin release will require PHP 7.4.
 * Added ability to lock translation for some of the Gutenberg blocks in post content. The lock will preserve translated blocks, unless there are changes to the parents' post structure of blocks, such as blocks reordering, or adding new blocks.
 
 = 1.15.7 =

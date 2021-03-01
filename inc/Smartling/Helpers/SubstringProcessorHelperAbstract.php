@@ -156,10 +156,7 @@ abstract class SubstringProcessorHelperAbstract implements WPHookInterface
         $this->blockAttributes[$blockName][$attributeName][$originalHash] = $translatedString;
     }
 
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
+    public function getLogger(): LoggerInterface
     {
         return $this->logger;
     }

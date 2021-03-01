@@ -112,7 +112,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         }
     }
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->cleanUpTables();
