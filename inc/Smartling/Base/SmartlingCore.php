@@ -9,6 +9,8 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
+use Smartling\Helpers\PostContentHelper;
+use Smartling\Helpers\XmlHelper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
@@ -23,7 +25,10 @@ class SmartlingCore extends SmartlingCoreAbstract
     use SmartlingCoreExportApi;
     use CommonLogMessagesTrait;
 
-    public function __construct()
+    private $postContentHelper;
+    private $xmlHelper;
+
+    public function __construct(PostContentHelper $postContentHelper, XmlHelper $xmlHelper)
     {
         parent::__construct();
 
@@ -32,6 +37,10 @@ class SmartlingCore extends SmartlingCoreAbstract
         add_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, [$this, 'regenerateTargetThumbnailsBySubmission']);
         add_filter(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, [$this, 'prepareTargetContent']);
         add_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, [$this, 'syncAttachment']);
+        /** @noinspection UnusedConstructorDependenciesInspection used in \Smartling\Base\SmartlingCoreDownloadTrait::downloadTranslationBySubmission */
+        $this->postContentHelper = $postContentHelper;
+        /** @noinspection UnusedConstructorDependenciesInspection used in \Smartling\Base\SmartlingCoreDownloadTrait::downloadTranslationBySubmission */
+        $this->xmlHelper = $xmlHelper;
     }
 
     /**

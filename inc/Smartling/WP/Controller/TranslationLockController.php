@@ -2,38 +2,40 @@
 
 namespace Smartling\WP\Controller;
 
+use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\Cache;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\EntityHelper;
+use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\Table\TranslationLockTableWidget;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
 class TranslationLockController extends WPAbstract implements WPHookInterface
 {
-
-    /**
-     * @var ContentHelper
-     */
+    private $blockHelper;
     private $contentHelper;
 
-    /**
-     * @return ContentHelper
-     */
-    public function getContentHelper()
-    {
-        return $this->contentHelper;
-    }
-
-    /**
-     * @param ContentHelper $contentHelper
-     */
-    public function setContentHelper($contentHelper)
-    {
+    public function __construct(
+        LocalizationPluginProxyInterface $connector,
+        PluginInfo $pluginInfo,
+        EntityHelper $entityHelper,
+        SubmissionManager $manager,
+        Cache $cache,
+        ContentHelper $contentHelper,
+        GutenbergBlockHelper $blockHelper
+    ) {
+        parent::__construct($connector, $pluginInfo, $entityHelper, $manager, $cache);
+        $this->blockHelper = $blockHelper;
         $this->contentHelper = $contentHelper;
     }
 
@@ -49,11 +51,13 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
         }
     }
 
+    /**
+     * @param string $post_type
+     * @param \WP_Post $post
+     * @noinspection PhpUnusedParameterInspection
+     */
     public function boxRegister($post_type, $post)
     {
-        /**
-         * @var \WP_Post $post
-         */
         try {
             if (current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)
                 && $submission = $this->getSubmission($post->ID)) {
@@ -73,6 +77,10 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
 
     }
 
+    /**
+     * @param \WP_Post $post
+     * @throws SmartlingDirectRunRuntimeException
+     */
     public function boxRender($post)
     {
         try {
@@ -113,9 +121,9 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
     /**
      * @param $postId
      *
-     * @return mixed|SubmissionEntity
+     * @return SubmissionEntity
      * @throws SmartlingDbException
-     * @throws \Smartling\Exception\SmartlingDirectRunRuntimeException
+     * @throws SmartlingDirectRunRuntimeException
      */
     private function getSubmission($postId)
     {
@@ -128,16 +136,10 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
         );
 
         if (0 < count($submissions)) {
-            $submission = ArrayHelper::first($submissions);
-
-            /**
-             * @var SubmissionEntity $submission
-             */
-
-            return $submission;
-        } else {
-            throw new SmartlingDbException('No submission found');
+            return ArrayHelper::first($submissions);
         }
+
+        throw new SmartlingDbException('No submission found');
     }
 
     public function popupIFrame()
@@ -153,26 +155,25 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
             return;
         }
 
-        $this->handleFormPost();
+        if (0 < count($_POST)) {
+            $this->handleFormPost();
+        }
         $this->renderPage();
     }
 
     public function handleFormPost()
     {
-        if (0 < count($_POST)) {
-            $_pageLock = array_key_exists('lock_page', $_POST) ? 1 : 0;
-            $_lockedFields =
-                array_key_exists('lockField', $_POST) && is_array($_POST['lockField'])
-                    ? array_keys($_POST['lockField'])
-                    : [];
+        $_pageLock = array_key_exists('lock_page', $_POST) ? 1 : 0;
+        $_lockedFields =
+            array_key_exists('lockField', $_POST) && is_array($_POST['lockField'])
+                ? array_keys($_POST['lockField'])
+                : [];
 
-            $submission = $this->getSubmissionFromQuery();
-            if (false !== $submission) {
-                $submission->setLockedFields(serialize($_lockedFields));
-                $submission->setIsLocked($_pageLock);
-                $this->getManager()->storeEntity($submission);
-            }
-
+        $submission = $this->getSubmissionFromQuery();
+        if (false !== $submission) {
+            $submission->setLockedFields(serialize($_lockedFields));
+            $submission->setIsLocked($_pageLock);
+            $this->getManager()->storeEntity($submission);
         }
     }
 
@@ -181,30 +182,21 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
         echo "Sorry, you're not allowed to go here.";
     }
 
+    /**
+     * @param SubmissionEntity $submission
+     * @return array
+     */
     private function getTranslationFields(SubmissionEntity $submission)
     {
         $_fields = [];
-        foreach ($this->getContentHelper()->readTargetContent($submission)->toArray() as $k => $v) {
-            $_fields['entity/' . $k] = $v;
+        foreach ($this->blockHelper->addPostContentBlocks($this->contentHelper->readTargetContent($submission)->toArray()) as $k => $v) {
+            $_fields["entity/$k"] = $v;
         }
-        foreach ($this->getContentHelper()->readTargetMetadata($submission) as $k => $v) {
+        foreach ($this->contentHelper->readTargetMetadata($submission) as $k => $v) {
             $_fields['meta/' . $k] = $v;
         }
 
-        return $_fields;
-    }
-
-    /**
-     * @param SubmissionEntity $submission
-     * @return string[]
-     */
-    private function getLockedFields(SubmissionEntity $submission)
-    {
-        $_fields = [];
-        if (0 < strlen($submission->getLockedFields())) {
-            $_fields = maybe_unserialize($submission->getLockedFields());
-            $_fields = is_array($_fields) ? $_fields : [];
-        }
+        ksort($_fields);
 
         return $_fields;
     }
@@ -236,7 +228,7 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
 
         if (false !== $submission) {
             $fields = $this->getTranslationFields($submission);
-            $lockedFields = $this->getLockedFields($submission);
+            $lockedFields = $submission->getLockedFields();
             $data = [];
             foreach ($fields as $fielName => $fieldValue) {
                 $data[] = [

@@ -356,9 +356,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
 
     public function hasLocks()
     {
-        $fields = maybe_unserialize($this->getLockedFields());
-
-        return 1 === $this->getIsLocked() || (is_array($fields) && 0 < count($fields));
+        return 1 === $this->getIsLocked() || 0 < count($this->getLockedFields());
     }
 
     public function getStatusFlags()
@@ -850,11 +848,15 @@ class SubmissionEntity extends SmartlingEntityAbstract
     }
 
     /**
-     * @return string serialized array string
+     * @return string[]
      */
     public function getLockedFields()
     {
-        return $this->stateFields[static::FIELD_LOCKED_FIELDS];
+        $unserialized = maybe_unserialize($this->stateFields[static::FIELD_LOCKED_FIELDS]);
+        if (!is_array($unserialized)) {
+            $unserialized = [];
+        }
+        return $unserialized;
     }
 
     public function setLockedFields($lockFields)

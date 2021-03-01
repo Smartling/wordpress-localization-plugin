@@ -9,7 +9,7 @@ use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\WordpressUserHelper;
 
 /**
- * Class PostEntity
+ * @method setPostContent($string)
  * @property null|integer $ID
  * @property integer      $post_author
  * @property string       $post_date
@@ -69,9 +69,6 @@ class PostEntityStd extends EntityAbstract
         'comment_count',
     ];
 
-    /**
-     * @inheritdoc
-     */
     public function __construct($type = 'post', array $related = [])
     {
         parent::__construct();
@@ -319,7 +316,6 @@ class PostEntityStd extends EntityAbstract
         return (int)$res;
     }
 
-
     /**
      * @param int $limit
      * @param int $offset
@@ -460,12 +456,12 @@ class PostEntityStd extends EntityAbstract
 
     public function translationDrafted()
     {
-        $this->setPostStatus('draft');
+        $this->post_status = 'draft';
     }
 
     public function translationCompleted()
     {
-        $this->setPostStatus('publish');
+        $this->post_status = 'publish';
     }
 
     /**

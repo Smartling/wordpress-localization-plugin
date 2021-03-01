@@ -4,6 +4,7 @@ namespace Smartling\Base;
 
 use Exception;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
+use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\InvalidXMLException;
@@ -15,6 +16,7 @@ use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
+use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
@@ -25,17 +27,6 @@ use Smartling\WP\Controller\LiveNotificationController;
 
 trait SmartlingCoreUploadTrait
 {
-    /**
-     * @param $id
-     *
-     * @return void
-     * @throws \Smartling\Exception\SmartlingDbException
-     */
-    public function sendForTranslationBySubmissionId($id)
-    {
-        $this->sendForTranslationBySubmission($this->loadSubmissionEntityById($id));
-    }
-
     /**
      * @param SubmissionEntity $submission
      *
@@ -112,9 +103,6 @@ trait SmartlingCoreUploadTrait
              * Creating of target placeholder has failed
              */
             if (SubmissionEntity::SUBMISSION_STATUS_FAILED === $submission->getStatus()) {
-                /**
-                 * @var SubmissionEntity $submission
-                 */
                 $msg = vsprintf(
                     'Failed creating target placeholder for submission id=\'%s\', source_blog_id=\'%s\', source_id=\'%s\', target_blog_id=\'%s\', target_id=\'%s\' with message: \'%s\'',
                     [
@@ -166,13 +154,13 @@ trait SmartlingCoreUploadTrait
             $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent blog.');
             $this->handleBadBlogId($submission);
         } catch (NothingFoundForTranslationException $e) {
-            return '';
         } catch (Exception $e) {
             $this->getSubmissionManager()
                 ->setErrorMessage($submission, vsprintf('Error occurred: %s', [$e->getMessage()]));
             $this->getLogger()->error($e->getMessage());
             throw $e;
         }
+        return '';
     }
 
     /**
@@ -191,30 +179,24 @@ trait SmartlingCoreUploadTrait
         ];
 
         if (0 === (int)$submission->getTargetId()) {
-            /**
-             * there is still no translation or placeholder
-             */
+            $this->getLogger()->debug("There is still no translation or placeholder for submission id={$submission->getId()}");
             return $lockedData;
         }
 
-        $lockedFields = maybe_unserialize($submission->getLockedFields());
-        $lockedFields = (!is_array($lockedFields)) ? [] : $lockedFields;
-
-        $targetContent = $this->getContentHelper()->readTargetContent($submission)->toArray(false);
+        $targetContent = $this->getContentHelper()->readTargetContent($submission)->toArray();
         $targetMeta = $this->getContentHelper()->readTargetMetadata($submission);
 
         $this->getLogger()->debug(vsprintf('Got target metadata: %s.', [var_export($targetMeta, true)]));
 
-        foreach ($lockedFields as $lockedFieldName) {
-
-            if (preg_match('/^meta\//ius', $lockedFieldName)) {
-                $_fieldName = preg_replace('/^meta\//ius', '', $lockedFieldName);
+        foreach ($submission->getLockedFields() as $lockedFieldName) {
+            if (preg_match('/^meta\//iu', $lockedFieldName)) {
+                $_fieldName = preg_replace('/^meta\//iu', '', $lockedFieldName);
                 $this->getLogger()->debug(vsprintf('Got field \'%s\'', [$_fieldName]));
                 if (array_key_exists($_fieldName, $targetMeta)) {
                     $lockedData['meta'][$_fieldName] = $targetMeta[$_fieldName];
                 }
-            } elseif (preg_match('/^entity\//ius', $lockedFieldName)) {
-                $_fieldName = preg_replace('/^entity\//ius', '', $lockedFieldName);
+            } elseif (preg_match('/^entity\//iu', $lockedFieldName)) {
+                $_fieldName = preg_replace('/^entity\//iu', '', $lockedFieldName);
                 if (array_key_exists($_fieldName, $targetContent)) {
                     $lockedData['entity'][$_fieldName] = $targetContent[$_fieldName];
                 }
@@ -239,9 +221,10 @@ trait SmartlingCoreUploadTrait
      * @param SubmissionEntity $submission
      * @param string $xml
      * @param XmlHelper $xmlHelper
+     * @param PostContentHelper $postContentHelper
      * @return array
      */
-    public function applyXML(SubmissionEntity $submission, $xml, XmlHelper $xmlHelper)
+    public function applyXML(SubmissionEntity $submission, $xml, XmlHelper $xmlHelper, PostContentHelper $postContentHelper)
     {
         $messages = [];
 
@@ -266,13 +249,7 @@ trait SmartlingCoreUploadTrait
             $targetContent = $this->getContentHelper()->readTargetContent($submission);
             $params = new AfterDeserializeContentEventParameters($translation, $submission, $targetContent, $translation['meta']);
             do_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
-            if (array_key_exists('entity', $translation) && ArrayHelper::notEmpty($translation['entity'])) {
-                $translation['entity'] = self::arrayMergeIfKeyNotExists($lockedData['entity'], $translation['entity']);
-                $this->setValues($targetContent, $translation['entity']);
-            }
-            /**
-             * @var ConfigurationProfileEntity $configurationProfile
-             */
+            $this->applyBlockLevelLocks($targetContent, $translation, $submission, $postContentHelper, $lockedData['entity']);
             $configurationProfile = $this->getSettingsManager()
                 ->getSingleSettingsProfile($submission->getSourceBlogId());
 
@@ -371,7 +348,7 @@ trait SmartlingCoreUploadTrait
                         $filteredMetadata[$key] =
                             apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $key, $value, $submission);
                     } catch (\Exception $ex) {
-                        $this->getLogger()->gebug(
+                        $this->getLogger()->debug(
                             vsprintf(
                                 'An error occurred while processing field %s=\'%s\' of submission id=%s. Message: %s',
                                 [
@@ -390,20 +367,16 @@ trait SmartlingCoreUploadTrait
                 }
                 $diff = array_diff_assoc($sourceMetadata, $filteredMetadata);
                 if (0 < count($diff)) {
-
-                    foreach ($diff as $k => & $v) {
-                        $v = [
-                            'old_value' => $v,
-                            'new_value' => $filteredMetadata[$k],
+                    $diff = array_map(static function($value, $index) use ($filteredMetadata) {
+                        return [
+                            'old_value' => $value,
+                            'new_value' => $filteredMetadata[$index],
                         ];
-
-                    }
-
+                    }, $diff, array_keys($diff));
                     $this->getLogger()->debug(vsprintf('Updating metadata: %s', [var_export($diff, true)]));
 
                     $contentHelper->writeTargetMetadata($submission, $filteredMetadata);
                 }
-
             }
         } catch (Exception $e) {
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
@@ -707,7 +680,7 @@ trait SmartlingCoreUploadTrait
                 $submission->getFileUri();
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                 $submission = $this->getSubmissionManager()->storeEntity($submission);
-                $this->applyXML($submission, $xml, new XmlHelper());
+                $this->applyXML($submission, $xml, $this->xmlHelper, $this->postContentHelper);
 
                 LiveNotificationController::pushNotification(
                     $configurationProfile->getProjectId(),
@@ -802,13 +775,11 @@ trait SmartlingCoreUploadTrait
 
             // generate URI
             $submission->getFileUri();
+        } elseif (0 === $submission->getIsLocked()) {
+            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
         } else {
-            if (0 === $submission->getIsLocked()) {
-                $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-            } else {
-                $this->getLogger()
-                    ->debug(vsprintf('Requested re-upload of protected submission id=%s. Skipping.', [$submission->getId()]));
-            }
+            $this->getLogger()
+                ->debug(vsprintf('Requested re-upload of protected submission id=%s. Skipping.', [$submission->getId()]));
         }
 
         $isCloned = true === $clone ? 1 : 0;
@@ -826,5 +797,48 @@ trait SmartlingCoreUploadTrait
     private function removeExcludedFields(array $fields, ConfigurationProfileEntity $configurationProfile)
     {
         return $this->getFieldsFilter()->removeFields($fields, $configurationProfile->getFilterSkipArray(), $configurationProfile->getFilterFieldNameRegExp());
+    }
+
+    /**
+     * Modifies $targetContent
+     * @param EntityAbstract $targetContent
+     * @param array $translation
+     * @param SubmissionEntity $submission
+     * @param PostContentHelper $postContentHelper
+     * @param array $entity
+     */
+    private function applyBlockLevelLocks(EntityAbstract $targetContent, array $translation, SubmissionEntity $submission, PostContentHelper $postContentHelper, array $entity)
+    {
+        if (array_key_exists('entity', $translation) && ArrayHelper::notEmpty($translation['entity'])) {
+            $targetContentArray = $targetContent->toArray();
+            if (array_key_exists('post_content', $translation['entity']) && array_key_exists('post_content', $targetContentArray) && count($submission->getLockedFields()) > 0) {
+                $translation['entity']['post_content'] = $postContentHelper->applyTranslation($targetContentArray['post_content'], $translation['entity']['post_content'], $submission->getLockedFields());
+            }
+            $translation['entity'] = self::arrayMergeIfKeyNotExists($entity, $translation['entity']);
+            $this->setValues($targetContent, $translation['entity']);
+        }
+    }
+
+    /**
+     * Modifies $entity
+     * @param EntityAbstract $entity
+     * @param array $properties
+     */
+    private function setValues(EntityAbstract $entity, array $properties)
+    {
+        foreach ($properties as $propertyName => $propertyValue) {
+            if ($entity->{$propertyName} !== $propertyValue) {
+                $message = vsprintf(
+                    'Replacing field %s with value %s to value %s',
+                    [
+                        $propertyName,
+                        json_encode($entity->{$propertyName}, JSON_UNESCAPED_UNICODE),
+                        json_encode($propertyValue, JSON_UNESCAPED_UNICODE),
+                    ]
+                );
+                $this->getLogger()->debug($message);
+                $entity->{$propertyName} = $propertyValue;
+            }
+        }
     }
 }
