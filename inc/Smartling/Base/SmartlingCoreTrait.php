@@ -171,26 +171,4 @@ trait SmartlingCoreTrait
 
         return $submission;
     }
-
-    /**
-     * @param EntityAbstract $entity
-     * @param array          $properties
-     */
-    private function setValues(EntityAbstract $entity, array $properties)
-    {
-        foreach ($properties as $propertyName => $propertyValue) {
-            if ($entity->{$propertyName} != $propertyValue) {
-                $message = vsprintf(
-                    'Replacing field %s with value %s to value %s',
-                    [
-                        $propertyName,
-                        json_encode($entity->{$propertyName}, JSON_UNESCAPED_UNICODE),
-                        json_encode($propertyValue, JSON_UNESCAPED_UNICODE),
-                    ]
-                );
-                $this->getLogger()->debug($message);
-                $entity->{$propertyName} = $propertyValue;
-            }
-        }
-    }
 }

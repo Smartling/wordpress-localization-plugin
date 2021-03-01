@@ -33,7 +33,7 @@ class PostContentHelper
             $lockedField = preg_replace('~^entity/~', '', $lockedField);
             $placeholder = str_replace('%s', $lockedField, self::PLACEHOLDER_FORMAT);
             if (array_key_exists($lockedField, $originalBlocks) && array_key_exists($lockedField, $translatedBlocks)) {
-                $result = $this->replaceFirstMatch($placeholder, $originalBlocks[$lockedField], $result); // TODO replace with str_replace
+                $result = str_replace($placeholder, $originalBlocks[$lockedField], $result);
             }
         }
 

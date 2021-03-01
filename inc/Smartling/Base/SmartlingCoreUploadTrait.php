@@ -4,6 +4,7 @@ namespace Smartling\Base;
 
 use Exception;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
+use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\InvalidXMLException;
@@ -248,17 +249,7 @@ trait SmartlingCoreUploadTrait
             $targetContent = $this->getContentHelper()->readTargetContent($submission);
             $params = new AfterDeserializeContentEventParameters($translation, $submission, $targetContent, $translation['meta']);
             do_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
-            if (array_key_exists('entity', $translation) && ArrayHelper::notEmpty($translation['entity'])) {
-                $targetContentArray = $targetContent->toArray();
-                if (array_key_exists('post_content', $translation['entity']) && array_key_exists('post_content', $targetContentArray) && count($submission->getLockedFields()) > 0) {
-                    $translation['post_content'] = $postContentHelper->applyTranslation($targetContentArray['post_content'], $translation['entity']['post_content'], $submission->getLockedFields());
-                }
-                $translation['entity'] = self::arrayMergeIfKeyNotExists($lockedData['entity'], $translation['entity']);
-                $this->setValues($targetContent, $translation['entity']);
-            }
-            /**
-             * @var ConfigurationProfileEntity $configurationProfile
-             */
+            $this->applyBlockLevelLocks($targetContent, $translation, $submission, $postContentHelper, $lockedData['entity']);
             $configurationProfile = $this->getSettingsManager()
                 ->getSingleSettingsProfile($submission->getSourceBlogId());
 
@@ -806,5 +797,48 @@ trait SmartlingCoreUploadTrait
     private function removeExcludedFields(array $fields, ConfigurationProfileEntity $configurationProfile)
     {
         return $this->getFieldsFilter()->removeFields($fields, $configurationProfile->getFilterSkipArray(), $configurationProfile->getFilterFieldNameRegExp());
+    }
+
+    /**
+     * Modifies $targetContent
+     * @param EntityAbstract $targetContent
+     * @param array $translation
+     * @param SubmissionEntity $submission
+     * @param PostContentHelper $postContentHelper
+     * @param array $entity
+     */
+    private function applyBlockLevelLocks(EntityAbstract $targetContent, array $translation, SubmissionEntity $submission, PostContentHelper $postContentHelper, array $entity)
+    {
+        if (array_key_exists('entity', $translation) && ArrayHelper::notEmpty($translation['entity'])) {
+            $targetContentArray = $targetContent->toArray();
+            if (array_key_exists('post_content', $translation['entity']) && array_key_exists('post_content', $targetContentArray) && count($submission->getLockedFields()) > 0) {
+                $translation['entity']['post_content'] = $postContentHelper->applyTranslation($targetContentArray['post_content'], $translation['entity']['post_content'], $submission->getLockedFields());
+            }
+            $translation['entity'] = self::arrayMergeIfKeyNotExists($entity, $translation['entity']);
+            $this->setValues($targetContent, $translation['entity']);
+        }
+    }
+
+    /**
+     * Modifies $entity
+     * @param EntityAbstract $entity
+     * @param array $properties
+     */
+    private function setValues(EntityAbstract $entity, array $properties)
+    {
+        foreach ($properties as $propertyName => $propertyValue) {
+            if ($entity->{$propertyName} !== $propertyValue) {
+                $message = vsprintf(
+                    'Replacing field %s with value %s to value %s',
+                    [
+                        $propertyName,
+                        json_encode($entity->{$propertyName}, JSON_UNESCAPED_UNICODE),
+                        json_encode($propertyValue, JSON_UNESCAPED_UNICODE),
+                    ]
+                );
+                $this->getLogger()->debug($message);
+                $entity->{$propertyName} = $propertyValue;
+            }
+        }
     }
 }
