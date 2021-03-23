@@ -46,7 +46,7 @@ class FilterForm extends ControllerAbstract implements WPHookInterface
         $settings = &$_REQUEST['filter'];
 
         $data = [
-            'pattern'       => $settings['pattern'],
+            'pattern'       => stripslashes($settings['pattern']),
             'action'        => $settings['action'], //skip|copy|localize
             'serialization' => 'coma-separated',
             'value'         => 'reference',

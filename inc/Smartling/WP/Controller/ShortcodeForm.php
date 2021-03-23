@@ -45,7 +45,7 @@ class ShortcodeForm extends ControllerAbstract implements WPHookInterface
     {
         $settings = &$_REQUEST['shortcode'];
         $id = $settings['id'];
-        $name = $settings['name'];
+        $name = stripslashes($settings['name']);
         $manager = new ShortcodeManager();
         $manager->loadData();
         $data = [

@@ -47,8 +47,8 @@ class MediaRuleForm extends ControllerAbstract implements WPHookInterface
         $settings = $_REQUEST['media'];
 
         $data = [
-            'block' => $settings['block'],
-            'path' => $settings['path'],
+            'block' => stripslashes($settings['block']),
+            'path' => stripslashes($settings['path']),
         ];
 
         $id = $settings['id'];
