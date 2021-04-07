@@ -3,7 +3,6 @@
 namespace Smartling\Base;
 
 use Exception;
-use Smartling\ApiWrapper;
 use Smartling\ApiWrapperInterface;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
@@ -61,7 +60,9 @@ trait SmartlingCoreUploadTrait
         return new WordpressFunctionProxyHelper();
     }
 
-    /* Processes content by submission and returns only XML string for translation */
+    /**
+     * Processes content by submission and returns only XML string for translation
+     */
     public function getXMLFiltered(SubmissionEntity $submission): string
     {
         $this->getLogger()->debug(
@@ -705,7 +706,7 @@ trait SmartlingCoreUploadTrait
         }
     }
 
-    public function createForTranslation(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, ?int $targetEntity = null, bool $clone = false, string $batchUid = '', string $jobName = ''): SubmissionEntity
+    public function createForTranslation(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, JobInfo $jobInfo, bool $clone, ?int $targetEntity = null): SubmissionEntity
     {
         /**
          * @var SubmissionEntity $submission
@@ -730,7 +731,7 @@ trait SmartlingCoreUploadTrait
 
         $isCloned = true === $clone ? 1 : 0;
         $submission->setIsCloned($isCloned);
-        $submission->setJobInfo(new JobInfo($batchUid, $jobName));
+        $submission->setJobInfo($jobInfo);
 
         return $this->getSubmissionManager()->storeEntity($submission);
     }
@@ -740,7 +741,9 @@ trait SmartlingCoreUploadTrait
         return $this->getFieldsFilter()->removeFields($fields, $configurationProfile->getFilterSkipArray(), $configurationProfile->getFilterFieldNameRegExp());
     }
 
-    /* Modifies $targetContent */
+    /**
+     * Modifies $targetContent
+     */
     private function applyBlockLevelLocks(EntityAbstract $targetContent, array $translation, SubmissionEntity $submission, PostContentHelper $postContentHelper, array $entity): void
     {
         if (array_key_exists('entity', $translation) && ArrayHelper::notEmpty($translation['entity'])) {
@@ -753,7 +756,9 @@ trait SmartlingCoreUploadTrait
         }
     }
 
-    /* Modifies $entity */
+    /**
+     * Modifies $entity
+     */
     private function setValues(EntityAbstract $entity, array $properties): void
     {
         foreach ($properties as $propertyName => $propertyValue) {

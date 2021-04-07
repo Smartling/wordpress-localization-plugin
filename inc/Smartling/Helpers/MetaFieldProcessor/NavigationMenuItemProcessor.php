@@ -4,7 +4,6 @@ namespace Smartling\Helpers\MetaFieldProcessor;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
-use Smartling\JobInfo;
 use Smartling\Submissions\SubmissionEntity;
 
 class NavigationMenuItemProcessor extends ReferencedContentProcessor

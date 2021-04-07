@@ -15,6 +15,7 @@ use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
+use Smartling\JobInfo;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -339,7 +340,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
                     $type = $this->getContentTypeFilterValue();
                     $curBlogId = $this->getProfile()->getOriginalBlogId()->getBlogId();
                     foreach ($locales as $blogId => $blogName) {
-                        $submissionEntity = $ep->createForTranslation($type, $curBlogId, $id, (int)$blogId, null, $clone, $batchUid, $jobName);
+                        $submissionEntity = $ep->createForTranslation($type, $curBlogId, $id, (int)$blogId, new JobInfo($batchUid, $jobName), $clone);
 
                         $this->getLogger()
                             ->info(vsprintf(

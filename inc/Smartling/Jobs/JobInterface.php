@@ -2,10 +2,6 @@
 
 namespace Smartling\Jobs;
 
-/**
- * Interface JobInterface
- * @package Smartling\Jobs
- */
 interface JobInterface
 {
     /**
@@ -29,7 +25,7 @@ interface JobInterface
     public function getJobHookName();
 
     /**
-     * @return executes job
+     * @return void
      */
     public function run();
 }

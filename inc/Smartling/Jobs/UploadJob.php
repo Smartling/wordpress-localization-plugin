@@ -7,105 +7,48 @@ use Smartling\Base\ExportedAPI;
 use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\QueryBuilder\TransactionManager;
-use Smartling\JobInfo;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
-/**
- * Class UploadJob
- * @package Smartling\Jobs
- */
 class UploadJob extends JobAbstract
 {
+    public const JOB_HOOK_NAME = 'smartling-upload-task';
 
-    const JOB_HOOK_NAME = 'smartling-upload-task';
-
-    /**
-     * @var ApiWrapperInterface
-     */
     private $api;
-
-    /**
-     * @var SettingsManager
-     */
     private $settingsManager;
 
-    /**
-     * @return \Smartling\ApiWrapperInterface
-     */
-    public function getApi()
-    {
-        return $this->api;
-    }
-
-    /**
-     * @param \Smartling\ApiWrapperInterface $api
-     */
-    public function setApi($api)
-    {
-        $this->api = $api;
-    }
-
-    /**
-     * @return \Smartling\Settings\SettingsManager
-     */
-    public function getSettingsManager()
-    {
-        return $this->settingsManager;
-    }
-
-    /**
-     * @param \Smartling\Settings\SettingsManager $settingsManager
-     */
-    public function setSettingsManager($settingsManager)
-    {
-        $this->settingsManager = $settingsManager;
-    }
-
-    /**
-     * @param SubmissionManager $submissionManager
-     * @param int $workerTTL
-     * @param ApiWrapperInterface $api
-     * @param SettingsManager $settingsManager
-     * @param TransactionManager $transactionManager
-     */
     public function __construct(
         SubmissionManager $submissionManager,
-        $workerTTL,
+        int $workerTTL,
         ApiWrapperInterface $api,
         SettingsManager $settingsManager,
         TransactionManager $transactionManager
     ) {
         parent::__construct($submissionManager, $transactionManager, $workerTTL);
 
-        $this->setApi($api);
-        $this->setSettingsManager($settingsManager);
+        $this->api = $api;
+        $this->settingsManager = $settingsManager;
     }
 
-    /**
-     * @return string
-     */
-    public function getJobHookName()
+    public function getJobHookName(): string
     {
         return self::JOB_HOOK_NAME;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function run()
+    public function run(): void
     {
         $this->getLogger()->info('Started UploadJob.');
 
         $this->processUploadQueue();
 
-        $this->setBatchUidForItemsInUploadQueue();
+        $this->processDailyBucketJob();
 
         $this->getLogger()->info('Finished UploadJob.');
     }
 
-    private function processUploadQueue() {
+    private function processUploadQueue(): void
+    {
         do {
             $entities = $this->getSubmissionManager()->findSubmissionsForUploadJob();
 
@@ -117,9 +60,6 @@ class UploadJob extends JobAbstract
             $this->placeLockFlag();
 
             $entity = ArrayHelper::first($entities);
-            /**
-             * @var SubmissionEntity $entity
-             */
             $this->getLogger()->info(
                 vsprintf(
                     'Cron Job triggers content upload for submission id="%s" with status="%s" for entity="%s", blog="%s", id="%s", targetBlog="%s", locale="%s", batchUid="%s".',
@@ -141,9 +81,9 @@ class UploadJob extends JobAbstract
         } while (0 < count($entities));
     }
 
-    private function setBatchUidForItemsInUploadQueue() {
-        // Daily bucket job.
-        foreach ($this->getSettingsManager()->getActiveProfiles() as $activeProfile) {
+    private function processDailyBucketJob(): void
+    {
+        foreach ($this->settingsManager->getActiveProfiles() as $activeProfile) {
             if ($activeProfile->getUploadOnUpdate() === 0) {
                 $this->getLogger()->debug(sprintf(
                     "Skipping profile projectId: %s for daily bucket job processing",
@@ -166,7 +106,7 @@ class UploadJob extends JobAbstract
                 $this->getLogger()->info('Started dealing with daily bucket job.');
 
                 try {
-                    $jobInfo = $this->getApi()->retrieveJobInfoForDailyBucketJob($activeProfile, (bool) $activeProfile->getAutoAuthorize());
+                    $jobInfo = $this->api->retrieveJobInfoForDailyBucketJob($activeProfile, (bool) $activeProfile->getAutoAuthorize());
 
                     foreach ($entities as $entity) {
                         if ($jobInfo->getBatchUid() === '') {

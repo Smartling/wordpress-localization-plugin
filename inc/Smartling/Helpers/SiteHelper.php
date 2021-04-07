@@ -9,37 +9,20 @@ use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\MonologWrapper\MonologWrapper;
 
-/**
- * Class SiteHelper
- * Helps to manipulate with Sites and Blogs
- * @package Smartling\Helpers
- */
 class SiteHelper
 {
-    /**
-     * @var LoggerInterface
-     */
     private $logger;
 
-    /**
-     * @var int;
-     */
-    private $initialBlogId = 0;
+    private $initialBlogId;
 
-    /**
-     * @return int
-     */
-    public function getInitialBlogId()
+    public function getInitialBlogId(): int
     {
         return $this->initialBlogId;
     }
 
-    /**
-     * Instantiates SiteHelper object.
-     */
     public function __construct()
     {
-        $this->logger = MonologWrapper::getLogger(get_called_class());;
+        $this->logger = MonologWrapper::getLogger(get_called_class());
 
         $this->initialBlogId = $this->getCurrentBlogId();
     }
@@ -58,7 +41,7 @@ class SiteHelper
      * Fallback for direct run if Wordpress functionality is not reachable
      * @throws SmartlingDirectRunRuntimeException
      */
-    private function directRunDetectedFallback()
+    private function directRunDetectedFallback(): void
     {
         $message = 'Direct run detected. Required run as Wordpress plugin.';
 
@@ -67,7 +50,7 @@ class SiteHelper
         throw new SmartlingDirectRunRuntimeException($message);
     }
 
-    private function cacheSites()
+    private function cacheSites(): void
     {
         if (empty(static::$_siteCache)) {
             $sites = get_sites(['number' => 1000]);
@@ -83,7 +66,7 @@ class SiteHelper
      * @return int[]
      * @throws SmartlingDirectRunRuntimeException
      */
-    public function listSites()
+    public function listSites(): array
     {
         !function_exists('get_sites')
         && $this->directRunDetectedFallback();
@@ -100,7 +83,7 @@ class SiteHelper
      * @throws SmartlingDirectRunRuntimeException
      * @throws InvalidArgumentException
      */
-    public function listBlogs($siteId = 1)
+    public function listBlogs(int $siteId = 1): array
     {
         !function_exists('get_sites')
         && $this->directRunDetectedFallback();
@@ -109,16 +92,13 @@ class SiteHelper
 
         if (isset(static::$_siteCache[$siteId])) {
             return static::$_siteCache[$siteId];
-        } else {
-            $message = 'Invalid site_id value set.';
-            throw new \InvalidArgumentException($message);
         }
+
+        $message = 'Invalid site_id value set.';
+        throw new \InvalidArgumentException($message);
     }
 
-    /**
-     * @return array
-     */
-    public function listBlogIdsFlat()
+    public function listBlogIdsFlat(): array
     {
         $this->cacheSites();
 
@@ -129,55 +109,46 @@ class SiteHelper
      * @return integer
      * @throws SmartlingDirectRunRuntimeException
      */
-    public function getCurrentSiteId()
+    public function getCurrentSiteId(): int
     {
         if (function_exists('get_current_site')) {
             return get_current_site()->id;
-        } else {
-            $this->directRunDetectedFallback();
         }
+
+        $this->directRunDetectedFallback();
     }
 
     /**
-     * @return int
      * @throws SmartlingDirectRunRuntimeException
      */
-    public function getCurrentBlogId()
+    public function getCurrentBlogId(): int
     {
         if (function_exists('get_current_blog_id')) {
             return (int)get_current_blog_id();
-        } else {
-            $this->directRunDetectedFallback();
         }
+
+        $this->directRunDetectedFallback();
     }
 
     /**
-     * @return string
      * @throws SmartlingDirectRunRuntimeException
      */
-    public function getCurrentUserLogin()
+    public function getCurrentUserLogin(): ?string
     {
         if (function_exists('wp_get_current_user')) {
             $user = wp_get_current_user();
-            if ($user) {
-                return $user->user_login;
-            }
-
-            return null;
-        } else {
-            $this->directRunDetectedFallback();
+            return $user->user_login ?? null;
         }
+
+        $this->directRunDetectedFallback();
     }
 
     /**
-     * @param $blogId
-     *
      * @throws BlogNotFoundException
      * @throws SmartlingDirectRunRuntimeException
      */
-    public function switchBlogId($blogId)
+    public function switchBlogId(int $blogId): void
     {
-        $blogId = (int) $blogId;
         $this->cacheSites();
 
         if (!in_array($blogId, static::$_flatBlogIdCache, true)) {
@@ -192,10 +163,9 @@ class SiteHelper
         } else {
             $this->directRunDetectedFallback();
         }
-
     }
 
-    public function restoreBlogId()
+    public function restoreBlogId(): void
     {
         if (!function_exists('restore_current_blog') || !function_exists('ms_is_switched')) {
             $this->directRunDetectedFallback();
@@ -210,12 +180,9 @@ class SiteHelper
     }
 
     /**
-     * @param $blogId
-     *
-     * @return string
      * @throws BlogNotFoundException
      */
-    private function getBlogNameById($blogId)
+    private function getBlogNameById(int $blogId): string
     {
         $this->switchBlogId($blogId);
         $label = get_bloginfo('Name');
@@ -225,13 +192,9 @@ class SiteHelper
     }
 
     /**
-     * @param $localizationPluginProxyInterface
-     * @param $blogId
-     *
-     * @return string
      * @throws BlogNotFoundException
      */
-    public function getBlogLabelById($localizationPluginProxyInterface, $blogId)
+    public function getBlogLabelById(LocalizationPluginProxyInterface $localizationPluginProxyInterface, int $blogId): string
     {
         $locale = $localizationPluginProxyInterface->getBlogLocaleById($blogId);
 
@@ -239,28 +202,20 @@ class SiteHelper
             ? $this->getBlogNameById($blogId)
             : vsprintf('%s - %s', [$this->getBlogNameById($blogId), $locale])
         );
-
     }
 
-    /**
-     * Returns locale of current blog
-     *
-     * @param LocalizationPluginProxyInterface $localizationPlugin
-     *
-     * @return string
-     */
-    public function getCurrentBlogLocale(LocalizationPluginProxyInterface $localizationPlugin)
+    public function getCurrentBlogLocale(LocalizationPluginProxyInterface $localizationPlugin): string
     {
         return $localizationPlugin->getBlogLocaleById($this->getCurrentBlogId());
     }
 
-    public function getPostTypes()
+    public function getPostTypes(): array
     {
         return array_values(get_post_types('', 'names'));
 
     }
 
-    public function getTermTypes()
+    public function getTermTypes(): array
     {
         global $wp_taxonomies;
 
@@ -269,10 +224,8 @@ class SiteHelper
 
     /**
      * If current Blog Id differs from $blogId -> changes blog to ensure that blog id is set to $blogId
-     *
-     * @param $blogId
      */
-    public function resetBlog($blogId = null)
+    public function resetBlog(?int $blogId = null): void
     {
         if (null === $blogId) {
             $blogId = $this->getInitialBlogId();
@@ -286,10 +239,7 @@ class SiteHelper
         }
     }
 
-    /**
-     * @return LoggerInterface
-     */
-    protected function getLogger()
+    protected function getLogger(): LoggerInterface
     {
         return $this->logger;
     }

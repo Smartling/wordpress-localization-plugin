@@ -542,8 +542,9 @@ class SubmissionManager extends EntityManagerAbstract
 
     /**
      * Looks for submissions with status = 'New' AND (is_cloned = 1 or batch_uid <> '') AND is_locked = 0
+     * @return SubmissionEntity[]
      */
-    public function findSubmissionsForUploadJob()
+    public function findSubmissionsForUploadJob(): array
     {
         $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
 

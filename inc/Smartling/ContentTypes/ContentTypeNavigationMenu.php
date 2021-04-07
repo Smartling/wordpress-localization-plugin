@@ -7,23 +7,18 @@ use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDataReadException;
 use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
-use Smartling\JobInfo;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
 
-/**
- * Class ContentTypeNavigationMenu
- * @package Smartling\ContentTypes
- */
 class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
 {
     /**
      * The system name of Wordpress content type to make references safe.
      */
-    const WP_CONTENT_TYPE = 'nav_menu';
+    public const WP_CONTENT_TYPE = 'nav_menu';
 
     private $contentHelper;
     private $customMenuHelper;

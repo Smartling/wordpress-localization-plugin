@@ -8,19 +8,11 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Class AbsoluteLinkedAttachmentCoreHelper
- * @package Smartling\Helpers
- */
 class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHelper
 {
-    const PATTERN_LINK_GENERAL = '<a[^>]+>';
+    private const PATTERN_LINK_GENERAL = '<a[^>]+>';
 
-    /**
-     * @param string $url
-     * @return bool
-     */
-    private function isAbsoluteUrl($url)
+    private function isAbsoluteUrl(string $url): bool
     {
         $parsedUrl = parse_url($url);
 
@@ -29,11 +21,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
                && !StringHelper::isNullOrEmpty($parsedUrl['scheme']);
     }
 
-    /**
-     * @param string $url
-     * @return bool
-     */
-    private function isUrlThumbnail($url)
+    private function isUrlThumbnail(string $url): bool
     {
         return $this->fileLooksLikeThumbnail(pathinfo($this->urlToFile($url))['filename']);
     }
@@ -41,11 +29,9 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
     /**
      * Searches for $url in `guid` field in `posts` table
      *
-     * @param string $url
-     *
      * @return int|false
      */
-    private function lookForDirectGuidEntry($url)
+    private function lookForDirectGuidEntry(string $url)
     {
         $conditionBlock = ConditionBlock::getConditionBlock();
 
@@ -62,13 +48,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
         return $this->returnId($query);
     }
 
-    /**
-     * @param string           $originalUrl
-     * @param SubmissionEntity $submission
-     *
-     * @return string
-     */
-    private function generateTranslatedUrl($originalUrl, SubmissionEntity $submission)
+    private function generateTranslatedUrl(string $originalUrl, SubmissionEntity $submission): string
     {
         $result = $this->getCore()->getAttachmentAbsolutePathBySubmission($submission);
 
@@ -96,12 +76,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
         return $result;
     }
 
-    /**
-     * @param PairReplacerHelper $replacer
-     * @param string $path
-     * @return PairReplacerHelper
-     */
-    private function processContent(PairReplacerHelper $replacer, $path)
+    private function processContent(PairReplacerHelper $replacer, string $path): PairReplacerHelper
     {
         $result = $replacer;
         if (false !== $path && $this->isAbsoluteUrl($path)) {
@@ -128,11 +103,9 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
     }
 
     /**
-     * @param string $url
-     * @param int $blogId
      * @return bool|int
      */
-    public function getAttachmentIdByURL($url, $blogId)
+    public function getAttachmentIdByURL(string $url, int $blogId)
     {
         $result = false;
         if (false !== $url && $this->isAbsoluteUrl($url)) {
@@ -142,11 +115,9 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
     }
 
     /**
-     * @param string $string
-     * @param int    $blogId
-     * @return array
+     * @return int[]
      */
-    public function getImagesIdsFromString($string, $blogId)
+    public function getImagesIdsFromString(string $string, int $blogId): array
     {
         $ids = [];
 
@@ -174,9 +145,9 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
     /**
      * Recursively processes all found strings
      *
-     * @param $stringValue
+     * @param array|string $stringValue
      */
-    protected function processString(&$stringValue)
+    protected function processString(&$stringValue): void
     {
         $replacer = new PairReplacerHelper();
         if (is_array($stringValue)) {
@@ -204,17 +175,13 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
 
     /**
      * Converts wordpress attachment URL to file location (for source attachment)
-     *
-     * @param string $url
-     *
-     * @return string
      */
-    private function urlToFile($url)
+    private function urlToFile(string $url): string
     {
         return $this->urlToFileByBlogId($url, $this->getParams()->getSubmission()->getSourceBlogId());
     }
 
-    private function urlToFileByBlogId($url, $blogId)
+    private function urlToFileByBlogId(string $url, int $blogId): string
     {
         $parsedUrlPath = parse_url($url, PHP_URL_PATH);
         $sourceUploadInfo = $this->getCore()->getUploadFileInfo($blogId);
@@ -224,12 +191,8 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
 
     /**
      * Converts wordpress file location to URL (for translation)
-     *
-     * @param string $file
-     *
-     * @return string
      */
-    private function fileToUrl($file)
+    private function fileToUrl(string $file): string
     {
         $targetUploadInfo = $this->getCore()->getUploadFileInfo($this->getParams()->getSubmission()->getTargetBlogId());
 
@@ -265,11 +228,9 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
     }
 
     /**
-     * @param string $url
-     *
      * @return bool|int
      */
-    private function getAttachmentId($url)
+    private function getAttachmentId(string $url)
     {
         $localOriginalFile = $this->urlToFile($url);
         return $this->getPossibleAttachmentIdByLocalOriginalFile($localOriginalFile, $url);

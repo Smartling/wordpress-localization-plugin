@@ -6,9 +6,14 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 
+/**
+ * Class AdvancedCustomFieldsTest
+ * @package IntegrationTests\tests
+ */
 class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
 {
-    private function getMetadata($taxonomyId, $imageId = 0)
+
+    private function getMetadata($imageId = 0, $taxonomyId)
     {
         return [
             'text_field'                                                    => 'Clone Text Field',
@@ -59,14 +64,14 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
 
     private function createSourcePostWithMetadata($imageId, $taxonomy)
     {
-        return $this->createPostWithMeta('title', 'body', 'post', $this->getMetadata($taxonomy, $imageId));
+        return $this->createPostWithMeta('title', 'body', 'post', $this->getMetadata($imageId, $taxonomy));
     }
 
-    private function createTaxonomy($taxonomyName = 'Some taxonomy', $taxonomy = 'category')
+    private function createTaxonomy($taxonomyName = 'Some taxonomy', $taxonony = 'category')
     {
-        $_taxonomy = wp_insert_term($taxonomyName, $taxonomy);
+        $_taxonomy = wp_insert_term($taxonomyName, $taxonony);
 
-        return $_taxonomy['term_id'];
+        return $_taxonomy['term_id'];;
     }
 
     public function testAdvancedCustomFields()
@@ -76,13 +81,16 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         $postId = $this->createSourcePostWithMetadata($imageId, $taxonomyIds);
         $translationHelper = $this->getTranslationHelper();
 
+        /**
+         * @var SubmissionEntity $submission
+         */
         $submission = $translationHelper->prepareSubmission('post', 1, $postId, 2, true);
 
         /**
          * Check submission status
          */
-        $this->assertSame(SubmissionEntity::SUBMISSION_STATUS_NEW, $submission->getStatus());
-        $this->assertSame(1, $submission->getIsCloned());
+        $this->assertTrue(SubmissionEntity::SUBMISSION_STATUS_NEW === $submission->getStatus());
+        $this->assertTrue(1 === $submission->getIsCloned());
 
         $this->wpcli_exec('plugin', 'activate', 'acf-pro-test-definitions --network');
 
@@ -94,7 +102,7 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
                 'is_cloned'    => 1,
             ]);
 
-        $this->assertCount(1, $submissions);
+        $this->assertTrue(1 === count($submissions));
 
         $attachmentSubmission = ArrayHelper::first($submissions);
 
@@ -105,11 +113,11 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
                 'is_cloned'    => 1,
             ]);
 
-        $this->assertCount(1, $submissions);
+        $this->assertTrue(1 === count($submissions));
 
         $categorySubmission = ArrayHelper::first($submissions);
 
-        $expectedMetadata = $this->getMetadata($categorySubmission->getTargetId(), $attachmentSubmission->getTargetId());
+        $expectedMetadata = $this->getMetadata($attachmentSubmission->getTargetId(), $categorySubmission->getTargetId());
 
         $submissions = $this->getSubmissionManager()->find(
             [
@@ -117,7 +125,7 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
                 'is_cloned'    => 1,
             ]);
 
-        $this->assertCount(1, $submissions);
+        $this->assertTrue(1 === count($submissions));
 
         $postSubmission = ArrayHelper::first($submissions);
 
@@ -128,17 +136,18 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         }
 
         foreach ($expectedMetadata as $eKey => $eValue) {
-            self::assertArrayHasKey($eKey, $realMetadata);
+            self::assertTrue(array_key_exists($eKey, $realMetadata));
 
             if (is_array($eValue)) {
-                $eValue = array_map(static function ($e) {
+                $eValue = array_map(function ($e) {
                     return (string)$e;
                 }, $eValue);
             } else {
                 $eValue = (string)$eValue;
             }
-            self::assertSame(
-                $realMetadata[$eKey], $eValue, vsprintf('Expected: %s=>%s, real %s=>%s',
+            self::assertTrue(
+                $realMetadata[$eKey] === $eValue,
+                vsprintf('Expected: %s=>%s, real %s=>%s',
                          [
                              $eKey,
                              var_export($eValue, true),

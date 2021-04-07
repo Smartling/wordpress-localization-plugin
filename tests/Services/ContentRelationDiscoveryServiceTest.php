@@ -96,7 +96,7 @@ class ContentRelationDiscoveryServiceTest extends TestCase
         $contentHelper->setSiteHelper($siteHelper);
 
         $submission = $this->createPartialMock(SubmissionEntity::class, ['getFileUri', 'setBatchUid', 'setStatus']);
-        // $submission->expects(self::exactly(count($sourceIds)))->method('setBatchUid')->with($batchUid);
+        $submission->expects(self::exactly(count($sourceIds)))->method('setBatchUid')->with($batchUid);
         $submission->expects(self::exactly(count($sourceIds)))->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
 
         $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
