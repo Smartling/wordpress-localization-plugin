@@ -7,6 +7,7 @@ use Smartling\Base\ExportedAPI;
 use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\QueryBuilder\TransactionManager;
+use Smartling\JobInfo;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -165,10 +166,10 @@ class UploadJob extends JobAbstract
                 $this->getLogger()->info('Started dealing with daily bucket job.');
 
                 try {
-                    $batchUid = $this->getApi()->retrieveBatchForBucketJob($activeProfile, (bool) $activeProfile->getAutoAuthorize());
+                    $jobInfo = $this->getApi()->retrieveJobInfoForDailyBucketJob($activeProfile, (bool) $activeProfile->getAutoAuthorize());
 
                     foreach ($entities as $entity) {
-                        if (empty($batchUid)) {
+                        if ($jobInfo->getBatchUid() === '') {
                             $this->getLogger()->warning(
                                 vsprintf(
                                     'Cron Job failed to mark content for upload into daily bucket job for submission id="%s" with status="%s" for entity="%s", blog="%s", id="%s", targetBlog="%s", locale="%s", batchUid="%s".',
@@ -188,7 +189,7 @@ class UploadJob extends JobAbstract
                             continue;
                         }
 
-                        $entity->setBatchUid($batchUid);
+                        $entity->setJobInfo($jobInfo);
 
                         $this->getLogger()->info(
                             vsprintf(
@@ -210,6 +211,8 @@ class UploadJob extends JobAbstract
                     $this->getSubmissionManager()->storeSubmissions($entities);
                 } catch (SmartlingApiException $e) {
                     $this->getLogger()->error($e->formatErrors());
+                } catch (\Exception $e) {
+                    $this->getLogger()->error($e->getMessage());
                 }
 
                 $this->getLogger()->info('Finished dealing with daily bucket job.');

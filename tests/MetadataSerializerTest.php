@@ -114,7 +114,7 @@ class MetadataSerializerTest extends TestCase
                 'word_count'             => 5,
                 'status'                 => 'In Progress',
                 'is_locked'              => 0,
-                'last_modified'          => '2000-01-01',
+                'last_modified'          => new \DateTime('2000-01-01'),
                 'outdated'               => 0,
                 'last_error'             => '',
 

@@ -28,6 +28,9 @@ trait SubmissionEntityMock
 
     private function getSerializedSubmission(string $fileUri, string $locale, \DateTime $lastModified = null, int $completion = 0, int $id = 1): array
     {
+        if ($lastModified === null) {
+            $lastModified = new \DateTime();
+        }
         WordpressContentTypeHelper::$internalTypes = ['Post' => 'post'];
 
         return [
@@ -40,9 +43,9 @@ trait SubmissionEntityMock
             'file_uri'               => $fileUri,
             'target_locale'          => $locale,
             'target_blog_id'         => 2,
-            'target_id'              => null,
+            'target_id'              => 13,
             'submitter'              => '',
-            'submission_date'        => null,
+            'submission_date'        => '0000-00-00 00:00:00',
             'applied_date'           => null,
             'approved_string_count'  => $completion,
             'completed_string_count' => $completion,

@@ -9,74 +9,37 @@ use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Class ContentSerializationHelper
- * @package Smartling\Helpers
- */
 class ContentSerializationHelper
 {
-
-    /**
-     * @var LoggerInterface
-     */
     private $logger;
-
-    /**
-     * @var ContentHelper
-     */
     private $contentHelper;
-
-    /**
-     * @var FieldsFilterHelper
-     */
     private $fieldsFilter;
 
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
+    public function getLogger(): LoggerInterface
     {
         return $this->logger;
     }
 
-    /**
-     * @return ContentHelper
-     */
-    public function getContentHelper()
+    public function getContentHelper(): ContentHelper
     {
         return $this->contentHelper;
     }
 
-    /**
-     * @param ContentHelper $contentHelper
-     */
-    public function setContentHelper($contentHelper)
+    public function setContentHelper(ContentHelper $contentHelper): void
     {
         $this->contentHelper = $contentHelper;
     }
 
-    /**
-     * @return FieldsFilterHelper
-     */
-    public function getFieldsFilter()
+    public function getFieldsFilter(): FieldsFilterHelper
     {
         return $this->fieldsFilter;
     }
 
-    /**
-     * @param FieldsFilterHelper $fieldsFilter
-     */
-    public function setFieldsFilter($fieldsFilter)
+    public function setFieldsFilter(FieldsFilterHelper $fieldsFilter): void
     {
         $this->fieldsFilter = $fieldsFilter;
     }
 
-    /**
-     * ContentSerializationHelper constructor.
-     *
-     * @param ContentHelper      $contentHelper
-     * @param FieldsFilterHelper $fieldsFilter
-     */
     public function __construct(ContentHelper $contentHelper, FieldsFilterHelper $fieldsFilter)
     {
         $this->logger = MonologWrapper::getLogger(get_called_class());
@@ -84,7 +47,7 @@ class ContentSerializationHelper
         $this->setFieldsFilter($fieldsFilter);
     }
 
-    private function cleanUpFields(array $fields)
+    private function cleanUpFields(array $fields): array
     {
         $toRemove = [
             'entity' => [
@@ -115,12 +78,7 @@ class ContentSerializationHelper
         return $fields;
     }
 
-    /**
-     * @param SubmissionEntity $submission
-     *
-     * @return string
-     */
-    public function calculateHash(SubmissionEntity $submission)
+    public function calculateHash(SubmissionEntity $submission): string
     {
         $cache = RuntimeCacheHelper::getInstance();
         $key = implode(
@@ -145,16 +103,10 @@ class ContentSerializationHelper
         return $cached;
     }
 
-
-    /**
-     * @param SubmissionEntity $submission
-     *
-     * @return array
-     */
-    private function collectSubmissionSourceContent(SubmissionEntity $submission)
+    private function collectSubmissionSourceContent(SubmissionEntity $submission): array
     {
         $source = [
-            'entity' => $this->getContentHelper()->readSourceContent($submission)->toArray(false),
+            'entity' => $this->getContentHelper()->readSourceContent($submission)->toArray(),
             'meta'   => $this->getContentHelper()->readSourceMetadata($submission),
         ];
         $source['meta'] = $source['meta'] ? : [];
@@ -163,14 +115,9 @@ class ContentSerializationHelper
     }
 
     /**
-     * Sets filed processor rules depending on profile settings
-     *
-     * @param SettingsManager  $settingsManager
-     * @param SubmissionEntity $submission
-     *
-     * @throws \Smartling\Exception\SmartlingConfigException
+     * Sets field processor rules depending on profile settings
      */
-    public static function prepareFieldProcessorValues(SettingsManager $settingsManager, SubmissionEntity $submission)
+    public static function prepareFieldProcessorValues(SettingsManager $settingsManager, SubmissionEntity $submission): void
     {
         $profiles = $settingsManager->findEntityByMainLocale($submission->getSourceBlogId());
 

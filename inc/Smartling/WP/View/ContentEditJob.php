@@ -487,6 +487,7 @@ if ($post instanceof WP_Post) {
                             blogs: blogs.join(",")
                         };
                         btnLockWait();
+                        $('#error-messages').hide();
                         $.post(
                             ajaxurl + "?action=" + "smartling_upload_handler",
                             obj,

@@ -9,6 +9,7 @@ use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
+use Smartling\JobInfo;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Tuner\MediaAttachmentRulesManager;
 use Smartling\WP\WPHookInterface;
@@ -203,7 +204,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                                 $submission->getSourceBlogId(),
                                 $submission->getTargetBlogId(),
                                 $attachmentId,
-                                $submission->getBatchUid(),
+                                $submission->getJobInfo(),
                                 $submission->getIsCloned()
                             );
 
@@ -397,7 +398,8 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 
                     if (!empty($attachmentId) && is_numeric($attachmentId)) {
                         if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, (int)$attachmentId, $targetBlogId)) {
-                            $attachment = $this->getCore()->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, (int)$attachmentId, $submission->getBatchUid());
+                            $jobInfo = $submission->getJobInfo();
+                            $attachment = $this->getCore()->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, (int)$attachmentId, $submission->getJobInfo());
                             $result->addReplacementPair(new ReplacementPair((string)$attachmentId, (string)$attachment->getTargetId()));
                         } else {
                             $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
@@ -432,7 +434,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                 if (!empty($attachmentId) && is_numeric($attachmentId)) {
                     $dataType = gettype($attachmentId);
                     if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, (int)$attachmentId, $targetBlogId)) {
-                        $targetId = $this->getCore()->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, (int)$attachmentId, $submission->getBatchUid())->getTargetId();
+                        $targetId = $this->getCore()->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, (int)$attachmentId, $submission->getJobInfo())->getTargetId();
                         if ($dataType === 'string') {
                             $targetId = (string)$targetId;
                         }
@@ -468,7 +470,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                 $sourceBlogId = $submission->getSourceBlogId();
                 $targetBlogId = $submission->getTargetBlogId();
                 if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, $attachmentId, $targetBlogId)) {
-                    $attachmentSubmission = $this->getCore()->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, $attachmentId, $submission->getBatchUid(), $submission->getIsCloned());
+                    $attachmentSubmission = $this->getCore()->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, $attachmentId, $submission->getJobInfo(), $submission->getIsCloned());
                     $result->addReplacementPair(new ReplacementPair($path, $this->getCore()->getAttachmentRelativePathBySubmission($attachmentSubmission)));
                 } else {
                     $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");

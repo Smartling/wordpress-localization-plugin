@@ -6,6 +6,8 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapper;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\Exception\SmartlingDbException;
+use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
@@ -17,6 +19,7 @@ use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorAbstract;
 use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
 use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Helpers\StringHelper;
+use Smartling\JobInfo;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
@@ -313,14 +316,10 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
     }
 
     /**
-     * @param string $sourceBlogId
-     * @param array  $job
-     * @return string
-     * @throws \Smartling\Exception\SmartlingConfigException
-     * @throws \Smartling\Exception\SmartlingDbException
-     * @throws \Smartling\Exceptions\SmartlingApiException
+     * @throws SmartlingApiException
+     * @throws SmartlingDbException
      */
-    protected function getBatchUid($sourceBlogId, array $job)
+    protected function getBatchUid(int $sourceBlogId, array $job): string
     {
         return $this
             ->getApiWrapper()
@@ -339,14 +338,9 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             );
     }
 
-    /**
-     * @param string $batchUid
-     * @param array $contentIds
-     * @param string $contentType
-     * @param int $currentBlogId
-     * @param array $targetBlogIds
-     */
-    public function bulkUploadHandler($batchUid, array $contentIds, $contentType, $currentBlogId, array $targetBlogIds) {
+    /* This function only returns when testing, WP will stop execution after wp_send_json */
+    public function bulkUploadHandler(JobInfo $jobInfo, array $contentIds, string $contentType, int $currentBlogId, array $targetBlogIds): void
+    {
         foreach ($targetBlogIds as $targetBlogId) {
             $blogFields = [
                 SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
@@ -363,7 +357,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 } else {
                     $submission = ArrayHelper::first($existing);
                 }
-                $submission->setBatchUid($batchUid);
+                $submission->setJobInfo($jobInfo);
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission->getFileUri();
                 $this->getSubmissionManager()->storeEntity($submission);
@@ -394,7 +388,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
      * @var array|string $data
      * @return void
      */
-    public function createSubmissionsHandler($data = '')
+    public function createSubmissionsHandler($data = ''): void
     {
         if (!is_array($data)) {
             $data = $_POST;
@@ -402,12 +396,12 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         try {
             $contentType = $data['source']['contentType'];
             $curBlogId = $this->getContentHelper()->getSiteHelper()->getCurrentBlogId();
-            $batchUid  = $this->getBatchUid($curBlogId, $data['job']);
-
+            $jobInfo = new JobInfo($this->getBatchUid($curBlogId, $data['job']), $data['job']['name']);
             $targetBlogIds = explode(',', $data['targetBlogIds']);
 
             if (array_key_exists( 'ids', $data)) {
-                return $this->bulkUploadHandler($batchUid, $data['ids'], $contentType, $curBlogId, $targetBlogIds);
+                $this->bulkUploadHandler($jobInfo, $data['ids'], $contentType, $curBlogId, $targetBlogIds);
+                return;
             }
 
             foreach ($targetBlogIds as $targetBlogId) {
@@ -426,7 +420,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 
                 $sources = [];
 
-                if (array_key_exists($targetBlogId, $data['relations'])) {
+                if (array_key_exists('relations', $data) && is_array($data['relations']) && array_key_exists($targetBlogId, $data['relations'])) {
                     foreach ($data['relations'][$targetBlogId] as $sysType => $ids) {
                         foreach ($ids as $id) {
                             $sources[] = [
@@ -449,7 +443,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                      * @var SubmissionEntity $submission
                      */
                     $submission = ArrayHelper::first($result);
-                    $submission->setBatchUid($batchUid);
+                    $submission->setJobInfo($jobInfo);
                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                     $this->getSubmissionManager()->storeEntity($submission);
                 }
@@ -457,11 +451,10 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 /**
                  * Adding fields to template
                  */
-                $submissionTemplateArray = array_merge($submissionTemplateArray, [
-                    SubmissionEntity::FIELD_STATUS    => SubmissionEntity::SUBMISSION_STATUS_NEW,
-                    SubmissionEntity::FIELD_BATCH_UID => $batchUid,
-                    SubmissionEntity::FIELD_SUBMISSION_DATE => DateTimeHelper::nowAsString(),
-                ]);
+                $submissionTemplateArray[SubmissionEntity::FIELD_BATCH_UID] = $jobInfo->getBatchUid();
+                $submissionTemplateArray[SubmissionEntity::FIELD_JOB_NAME] = $jobInfo->getJobName();
+                $submissionTemplateArray[SubmissionEntity::FIELD_STATUS] = SubmissionEntity::SUBMISSION_STATUS_NEW;
+                $submissionTemplateArray[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::nowAsString();
 
                 foreach ($sources as $source) {
                     $submissionArray = array_merge($submissionTemplateArray, [

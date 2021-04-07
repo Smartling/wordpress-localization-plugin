@@ -7,6 +7,7 @@ use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDataReadException;
 use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
+use Smartling\JobInfo;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
@@ -91,12 +92,10 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
     /**
      * MUTATOR: alters $params->accumulator
      *
-     * @param ProcessRelatedContentParams $params
-     * @return void
      * @throws BlogNotFoundException
      * @throws SmartlingDataReadException
      */
-    public function gatherRelatedContent(ProcessRelatedContentParams $params)
+    public function gatherRelatedContent(ProcessRelatedContentParams $params): void
     {
         $accumulator = &$params->getAccumulator();
         $submission = $params->getSubmission();
@@ -123,7 +122,7 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
                     $sourceBlogId,
                     $menuItemEntity->getPK(),
                     $targetBlogId,
-                    $submission->getBatchUid(),
+                    $submission->getJobInfo(),
                     (1 === $submission->getIsCloned())
                 );
 
@@ -164,7 +163,7 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
                         $sourceBlogId,
                         $menuId,
                         $targetBlogId,
-                        $submission->getBatchUid(),
+                        $submission->getJobInfo(),
                         (1 === $submission->getIsCloned())
                     );
 

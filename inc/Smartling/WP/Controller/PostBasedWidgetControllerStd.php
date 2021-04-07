@@ -9,6 +9,7 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\JobInfo;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Queue\Queue;
 use Smartling\Submissions\SubmissionEntity;
@@ -271,12 +272,13 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
         if ($continue) {
             try {
+                $jobName = $data['job']['name'];
                 $batchUid = $this->getCore()->getApiWrapper()->retrieveBatch(
                     ArrayHelper::first($profiles),
                     $data['job']['id'],
                     'true' === $data['job']['authorize'],
                     [
-                        'name' => $data['job']['name'],
+                        'name' => $jobName,
                         'description' => $data['job']['description'],
                         'dueDate' => [
                             'date' => $data['job']['dueDate'],
@@ -313,15 +315,16 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                  */
                 foreach ($sourceIds as $sourceId) {
                     try {
+                        $jobInfo = new JobInfo($batchUid, $jobName);
                         if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId)) {
-                            $submission = $this->getCore()->getTranslationHelper()->tryPrepareRelatedContent($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId, $batchUid);
+                            $submission = $this->getCore()->getTranslationHelper()->tryPrepareRelatedContent($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId, $jobInfo);
                         } else {
-                            $submission = $this->getCore()->getTranslationHelper()->getExistingSubmissionOrCreateNew($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId, $batchUid);
+                            $submission = $this->getCore()->getTranslationHelper()->getExistingSubmissionOrCreateNew($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId, $jobInfo);
                         }
 
                         if (0 < $submission->getId()) {
                             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                            $submission->setBatchUid($batchUid);
+                            $submission->setJobInfo($jobInfo);
                             $submission = $this->getCore()->getSubmissionManager()->storeEntity($submission);
                         }
 
@@ -619,16 +622,17 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                     return;
                                 }
 
+                                $jobInfo = new JobInfo($batchUid, $data['jobName']);
                                 foreach ($locales as $blogId) {
                                     if ($translationHelper->isRelatedSubmissionCreationNeeded($this->servedContentType, $sourceBlog, $originalId, (int)$blogId)) {
-                                        $submission = $translationHelper->tryPrepareRelatedContent($this->servedContentType, $sourceBlog, $originalId, (int)$blogId, $batchUid);
+                                        $submission = $translationHelper->tryPrepareRelatedContent($this->servedContentType, $sourceBlog, $originalId, (int)$blogId, $jobInfo);
                                     } else {
-                                        $submission = $translationHelper->getExistingSubmissionOrCreateNew($this->servedContentType, $sourceBlog, $originalId, (int)$blogId, $batchUid);
+                                        $submission = $translationHelper->getExistingSubmissionOrCreateNew($this->servedContentType, $sourceBlog, $originalId, (int)$blogId, $jobInfo);
                                     }
 
                                     if (0 < $submission->getId()) {
                                         $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                                        $submission->setBatchUid($batchUid);
+                                        $submission->setJobInfo($jobInfo);
                                         $submission = $core->getSubmissionManager()->storeEntity($submission);
                                     }
 

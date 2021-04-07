@@ -85,6 +85,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
     public function testApplyXmlNoCleanMetadata()
     {
         $submission = new SubmissionEntity();
+        $submission->setContentType('content_type');
         $translatedFields = ['metaNotToTranslate' => 's:8:"Translated"', 'metaToTranslate' => '~Translated~'];
 
         $contentHelper = $this->getMockBuilder(ContentHelper::class)->disableOriginalConstructor()->getMock();
@@ -119,6 +120,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $submission = new SubmissionEntity();
         $submission->setLockedFields(['meta/locked']);
         $submission->setTargetId('1');
+        $submission->setContentType('content_type');
         $contentHelper = $this->getMockBuilder(ContentHelper::class)->disableOriginalConstructor()->getMock();
         $contentHelper->method('readSourceContent')->willReturnArgument(0);
         $contentHelper->method('readSourceMetadata')->willReturn([]);
@@ -214,6 +216,7 @@ HTML;
         $submission = new SubmissionEntity();
         $submission->setLockedFields(['entity/post_content/blocks/1']);
         $submission->setTargetId('1');
+        $submission->setContentType('content_type');
         $contentHelper = $this->getMockBuilder(ContentHelper::class)->disableOriginalConstructor()->getMock();
         $contentHelper->method('readSourceContent')->willReturnArgument(0);
         $contentHelper->method('readSourceMetadata')->willReturn([]);

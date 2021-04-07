@@ -13,6 +13,7 @@ use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressContentTypeHelper;
+use Smartling\JobInfo;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Jobs\UploadJob;
 use Smartling\Queue\Queue;
@@ -211,9 +212,10 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                                 return;
                             }
                             try {
+                                $jobName = $data['jobName'];
                                 $batchUid = $wrapper->retrieveBatch(ArrayHelper::first($profiles), $data['jobId'],
                                     'true' === $data['authorize'], [
-                                        'name' => $data['jobName'],
+                                        'name' => $jobName,
                                         'description' => $data['jobDescription'],
                                         'dueDate' => [
                                             'date' => $data['jobDueDate'],
@@ -233,16 +235,17 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                                     );
                                 return;
                             }
+                            $jobInfo = new JobInfo($batchUid, $jobName);
                             foreach ($locales as $blogId) {
                                 if ($translationHelper->isRelatedSubmissionCreationNeeded($this->getTaxonomy(), $sourceBlog, $originalId, (int)$blogId)) {
-                                    $submission = $translationHelper->tryPrepareRelatedContent($this->getTaxonomy(), $sourceBlog, $originalId, (int)$blogId, $batchUid);
+                                    $submission = $translationHelper->tryPrepareRelatedContent($this->getTaxonomy(), $sourceBlog, $originalId, (int)$blogId, $jobInfo);
                                 } else {
-                                    $submission = $translationHelper->getExistingSubmissionOrCreateNew($this->getTaxonomy(), $sourceBlog, $originalId, (int)$blogId, $batchUid);
+                                    $submission = $translationHelper->getExistingSubmissionOrCreateNew($this->getTaxonomy(), $sourceBlog, $originalId, (int)$blogId, $jobInfo);
                                 }
 
                                 if (0 < $submission->getId()) {
                                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                                    $submission->setBatchUid($batchUid);
+                                    $submission->setJobInfo($jobInfo);
                                     $submission = $core->getSubmissionManager()->storeEntity($submission);
                                 }
 

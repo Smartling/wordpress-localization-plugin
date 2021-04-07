@@ -688,10 +688,7 @@ class SubmissionManager extends EntityManagerAbstract
         return $query;
     }
 
-    /**
-     * @return array
-     */
-    public function getColumnsLabels()
+    public function getColumnsLabels(): array
     {
         return SubmissionEntity::getFieldLabels();
     }
@@ -819,24 +816,16 @@ class SubmissionManager extends EntityManagerAbstract
 
     /**
      * Loads from database or creates a new instance of SubmissionEntity
-     *
-     * @param string                           $contentType
-     * @param int                              $sourceBlog
-     * @param int                              $sourceEntity
-     * @param int                              $targetBlog
-     * @param LocalizationPluginProxyInterface $localizationProxy
-     * @param null|int                         $targetEntity
-     *
-     * @return SubmissionEntity
      */
     public function getSubmissionEntity(
-        $contentType,
-        $sourceBlog,
-        $sourceEntity,
-        $targetBlog,
+        string $contentType,
+        int $sourceBlog,
+        int $sourceEntity,
+        int $targetBlog,
         LocalizationPluginProxyInterface $localizationProxy,
-        $targetEntity = null
-    ) {
+        ?int $targetEntity = null
+    ): SubmissionEntity
+    {
         $params = [
             SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlog,
@@ -845,7 +834,7 @@ class SubmissionManager extends EntityManagerAbstract
         ];
 
         if (null !== $targetEntity) {
-            $params[SubmissionEntity::FIELD_TARGET_ID] = (int)$targetEntity;
+            $params[SubmissionEntity::FIELD_TARGET_ID] = $targetEntity;
         }
 
         $entities = $this->find($params);

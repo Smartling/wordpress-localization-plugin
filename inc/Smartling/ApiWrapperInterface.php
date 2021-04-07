@@ -93,14 +93,7 @@ interface ApiWrapperInterface
      */
     public function listJobs(ConfigurationProfileEntity $profile);
 
-    /**
-     * @param ConfigurationProfileEntity $profile
-     * @param array $params
-     *
-     * @return array
-     * @throws \Exception
-     */
-    public function createJob(ConfigurationProfileEntity $profile, array $params);
+    public function createJob(ConfigurationProfileEntity $profile, array $params): array;
 
     /**
      * @param ConfigurationProfileEntity $profile
@@ -160,14 +153,9 @@ interface ApiWrapperInterface
     public function setNotificationRecord(ConfigurationProfileEntity $profile, $space, $object, $record, $data = [], $ttl = 30);
 
     /**
-     * Returns batch uid for a daily bucket job.
-     *
-     * @param ConfigurationProfileEntity $profile
-     * @param bool $authorize
-     *
-     * @return string|null
+     * @throws SmartlingApiException
      */
-    public function retrieveBatchForBucketJob(ConfigurationProfileEntity $profile, $authorize);
+    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, bool $authorize): JobInfo;
 
     /**
      * @param \Exception $e

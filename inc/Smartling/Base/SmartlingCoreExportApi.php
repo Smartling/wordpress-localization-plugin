@@ -2,6 +2,7 @@
 
 namespace Smartling\Base;
 
+use Smartling\JobInfo;
 use Smartling\Submissions\SubmissionEntity;
 
 trait SmartlingCoreExportApi
@@ -26,23 +27,14 @@ trait SmartlingCoreExportApi
         return trim(str_replace($this->getUploadPathForSite($blogId), '', $foundRelativePath), '/');
     }
 
-    /**
-     * @param int    $sourceBlogId
-     * @param int    $targetBlogId
-     * @param int    $sourceId
-     * @param string $batchUid
-     * @param bool   $clone
-     *
-     * @return SubmissionEntity
-     */
-    public function sendAttachmentForTranslation($sourceBlogId, $targetBlogId, $sourceId, $batchUid, $clone = false)
+    public function sendAttachmentForTranslation(int $sourceBlogId, int $targetBlogId, int $sourceId, JobInfo $jobInfo, bool $clone = false): SubmissionEntity
     {
         return $this->getTranslationHelper()->tryPrepareRelatedContent(
             'attachment',
             $sourceBlogId,
             $sourceId,
             $targetBlogId,
-            $batchUid,
+            $jobInfo,
             $clone
         );
     }

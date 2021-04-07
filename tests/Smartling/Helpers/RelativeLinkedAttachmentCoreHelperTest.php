@@ -2,18 +2,17 @@
 
 namespace Smartling\Tests\Smartling\Helpers;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\Base\SmartlingCore;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
-use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\GutenbergReplacementRule;
-use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\RelativeLinkedAttachmentCoreHelper;
 use Smartling\Helpers\TranslationHelper;
-use Smartling\Helpers\XmlHelper;
+use Smartling\JobInfo;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 use Smartling\Tuner\MediaAttachmentRulesManager;
@@ -40,11 +39,12 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
         $targetBlogId = 2;
         $targetMediaId = 6;
         $submission = new SubmissionEntity();
+        $submission->setContentType('content_type');
         $submission->setSourceBlogId($sourceBlogId);
         $submission->setSourceId($sourceMediaId);
         $submission->setTargetId($targetMediaId);
         $submission->setTargetBlogId($targetBlogId);
-        $submission->setBatchUid($batchUid);
+        $submission->setJobInfo(new JobInfo($batchUid, ''));
         $acf = $this->getMockBuilder(AcfDynamicSupport::class)
             ->setConstructorArgs([$this->createMock(EntityHelper::class)])
             ->getMock();
@@ -61,7 +61,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
             $core,
             $acf,
             $this->mediaAttachmentRulesManager,
-        ])->setMethods(null)->getMock();
+        ])->onlyMethods([])->getMock();
         $source = [<<<HTML
 <!-- wp:core/media-text {"mediaId":$sourceMediaId,"mediaLink":"http://test.com","mediaType":"image"} -->
 <div class="wp-block-media-text alignwide is-stacked-on-mobile"><figure class="wp-block-media-text__media"><img src="http://example.com/image.jpg" alt="" class="wp-image-$sourceMediaId"/></figure><div class="wp-block-media-text__content"><!-- wp:core/paragraph {"placeholder":"Content…","fontSize":"large"} -->
@@ -94,23 +94,21 @@ HTML
     }
 
     /**
-     * @param string $string
-     * @param array $definitions
-     * @param int $sourceId
-     * @param int $targetId
      * @dataProvider processGutenbergBlockAcfProvider
      */
-    public function testProcessGutenbergBlockAcf($string, array $definitions, $sourceId, $targetId)
+    public function testProcessGutenbergBlockAcf(string $string, array $definitions, int $sourceId, int $targetId)
     {
         $batchUid = '';
         $sourceBlogId = 1;
         $targetBlogId = 2;
         $submission = new SubmissionEntity();
+        $submission->setContentType('content_type');
         $submission->setSourceBlogId($sourceBlogId);
         $submission->setSourceId($sourceId);
         $submission->setTargetId($targetId);
         $submission->setTargetBlogId($targetBlogId);
-        $submission->setBatchUid($batchUid);
+        $jobInfo = new JobInfo($batchUid, '');
+        $submission->setJobInfo($jobInfo);
         $acf = $this->getMockBuilder(AcfDynamicSupport::class)
             ->setConstructorArgs([$this->createMock(EntityHelper::class)])
             ->getMock();
@@ -122,13 +120,13 @@ HTML
         $core = $this->getCoreMock();
         $core->method('getTranslationHelper')->willReturn($translationHelper);
         $core->expects(self::once())->method('sendAttachmentForTranslation')
-            ->with($sourceBlogId, $targetBlogId, $sourceId, $batchUid)
+            ->with($sourceBlogId, $targetBlogId, $sourceId, $jobInfo)
             ->willReturn($submission);
         $x = $this->getMockBuilder(RelativeLinkedAttachmentCoreHelper::class)->setConstructorArgs([
             $core,
             $acf,
             $this->mediaAttachmentRulesManager,
-        ])->setMethods(null)->getMock();
+        ])->onlyMethods([])->getMock();
         $source = [$string];
         $meta = [];
 
@@ -184,7 +182,7 @@ HTML
             $core,
             $acf,
             $this->mediaAttachmentRulesManager
-        ])->setMethods(null)->getMock();
+        ])->onlyMethods([])->getMock();
 
         $source = [$string];
         $meta = [];
@@ -211,14 +209,10 @@ HTML
     }
 
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|SmartlingCore
+     * @return MockObject|SmartlingCore
      */
     private function getCoreMock()
     {
-        return $this->createMock(
-            SmartlingCore::class,
-            [],
-            [new PostContentHelper(new GutenbergBlockHelper()), new XmlHelper()]
-        );
+        return $this->createMock(SmartlingCore::class);
     }
 }

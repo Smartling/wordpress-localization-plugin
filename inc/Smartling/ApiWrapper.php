@@ -585,9 +585,9 @@ class ApiWrapper implements ApiWrapperInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @throws SmartlingApiException
      */
-    public function createJob(ConfigurationProfileEntity $profile, array $params)
+    public function createJob(ConfigurationProfileEntity $profile, array $params): array
     {
         $param = new CreateJobParameters();
 
@@ -725,18 +725,9 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
-    /**
-     * Returns batch uid for a daily bucket job.
-     *
-     * @param ConfigurationProfileEntity $profile
-     * @param                                                $authorize
-     *
-     * @return string|null
-     * @throws \Exception
-     */
-    public function retrieveBatchForBucketJob(ConfigurationProfileEntity $profile, $authorize)
+    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, bool $authorize): JobInfo
     {
-        $getName = function ($suffix = '') {
+        $getName = static function ($suffix = '') {
             $date = date('m/d/Y');
             $name = "Daily Bucket Job $date";
 
@@ -780,14 +771,12 @@ class ApiWrapper implements ApiWrapperInterface
             }
 
             if (empty($jobId)) {
-                $this->getLogger()->error("Queueing file upload into the bucket job failed: can't find/create job.");
-
-                return null;
+                throw new \RuntimeException('Queueing file upload into the bucket job failed: can\'t find/create job.');
             }
 
             $result = $this->createBatch($profile, $jobId, $authorize);
 
-            return $result['batchUid'];
+            return new JobInfo($result['batchUid'], $jobName);
         } catch (SmartlingApiException $e) {
             $this->getLogger()->error(vsprintf('Can\'t create batch for a daily job "%s". Error: %s', [
                 $jobName,
