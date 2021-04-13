@@ -22,7 +22,6 @@ trait SubmissionManagerMock
                 [
                     'find',
                     'findByIds',
-                    'filterBrokenSubmissions',
                     'storeEntity',
                     'setErrorMessage',
                     'storeSubmissions',

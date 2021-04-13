@@ -13,7 +13,7 @@ use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\TextHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressUserHelper;
-use Smartling\JobInfo;
+use Smartling\Jobs\JobInformationEntity;
 
 /**
  * Class SubmissionEntity
@@ -109,6 +109,13 @@ class SubmissionEntity extends SmartlingEntityAbstract
     public const FIELD_LOCKED_FIELDS = 'locked_fields';
     public const FIELD_JOB_NAME = 'job_name';
 
+    public const VIRTUAL_FIELD_JOB_LINK = 'job_link';
+
+    /**
+     * @var JobInformationEntity
+     */
+    private $jobInformation;
+
     public static function getFieldDefinitions(): array
     {
         return [
@@ -136,9 +143,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
             static::FIELD_LAST_MODIFIED => static::DB_TYPE_DATETIME,
             static::FIELD_OUTDATED => static::DB_TYPE_UINT_SWITCH,
             static::FIELD_LAST_ERROR => static::DB_TYPE_STRING_TEXT,
-            static::FIELD_BATCH_UID => static::DB_TYPE_STRING_64 . ' ' . static::DB_TYPE_DEFAULT_EMPTYSTRING,
             static::FIELD_LOCKED_FIELDS => 'TEXT NULL',
-            static::FIELD_JOB_NAME => static::DB_TYPE_STRING_STANDARD . ' ' . static::DB_TYPE_DEFAULT_EMPTYSTRING,
         ];
     }
 
@@ -159,7 +164,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
             static::FIELD_SOURCE_TITLE => __('Title'),
             static::FIELD_CONTENT_TYPE => __('Type'),
             static::FIELD_FILE_URI => __('Smartling File URI'),
-            static::FIELD_JOB_NAME => __('Smartling Job'),
+            static::VIRTUAL_FIELD_JOB_LINK => __('Smartling Job'),
             static::FIELD_TARGET_LOCALE => __('Locale'),
             static::FIELD_SUBMITTER => __('Submitter'),
             static::FIELD_SUBMISSION_DATE => __('Time Submitted'),
@@ -218,17 +223,8 @@ class SubmissionEntity extends SmartlingEntityAbstract
     {
         return [
             'progress' => $this->getCompletionPercentage() . '%',
+            self::VIRTUAL_FIELD_JOB_LINK => ':)',
         ];
-    }
-
-    public function getJobName(): string
-    {
-        return (string)$this->stateFields[static::FIELD_JOB_NAME];
-    }
-
-    public function setJobName(?string $jobName): void
-    {
-        $this->stateFields[static::FIELD_JOB_NAME] = $jobName;
     }
 
     public function getLastModified(): \DateTime
@@ -678,29 +674,27 @@ class SubmissionEntity extends SmartlingEntityAbstract
 
     public function clearJobInfo(): void
     {
-        $this->setBatchUid('');
-        $this->setJobName('');
+        $this->jobInformation = new JobInformationEntity('', '', '', '', $this->getId());
     }
 
-    public function getJobInfo(): JobInfo
+    public function getJobInfo(): JobInformationEntity
     {
-        return new JobInfo($this->getBatchUid(), $this->getJobName());
+        $result = clone $this->jobInformation;
+        $submissionId = $this->getId();
+        if ($submissionId !== null) {
+            $result = $result->setSubmissionId($submissionId);
+        }
+        return $result;
     }
 
-    public function setJobInfo(JobInfo $jobInfo): void
+    public function setJobInfo(JobInformationEntity $jobInfo): void
     {
-        $this->setBatchUid($jobInfo->getBatchUid());
-        $this->setJobName($jobInfo->getJobName());
+        $this->jobInformation = $jobInfo;
     }
 
     public function getBatchUid(): string
     {
-        return (string)$this->stateFields[static::FIELD_BATCH_UID];
-    }
-
-    public function setBatchUid(?string $batchUid): void
-    {
-        $this->stateFields[static::FIELD_BATCH_UID] = trim($batchUid);
+        return $this->jobInformation->getBatchUid();
     }
 
     /**

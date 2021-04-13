@@ -10,6 +10,7 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\SimpleStorageHelper;
+use Smartling\Jobs\JobInformationEntity;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -73,6 +74,11 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
 
     private function buildTableDefinitions()
     {
+        $this->tables[] = [
+            'columns' => JobInformationEntity::getFieldDefinitions(),
+            'indexes' => JobInformationEntity::getIndexes(),
+            'name' => JobInformationEntity::getTableName(),
+        ];
         // Submissions
         $this->tables[] = [
             'name'    => SubmissionEntity::getTableName(),
@@ -402,12 +408,8 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
 
     /**
      * Builds SQL query to create a table from definition array
-     *
-     * @param $tableDefinition
-     *
-     * @return string
      */
-    private function prepareSql(array $tableDefinition)
+    public function prepareSql(array $tableDefinition): string
     {
         $table = $this->getTableName($tableDefinition);
         $pk = $this->getPrimaryKey($tableDefinition);

@@ -6,6 +6,7 @@ use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\Exceptions\SmartlingApiException;
+use Smartling\Jobs\JobInformationEntity;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -155,7 +156,7 @@ interface ApiWrapperInterface
     /**
      * @throws SmartlingApiException
      */
-    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, bool $authorize): JobInfo;
+    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, bool $authorize): JobInformationEntity;
 
     /**
      * @param \Exception $e

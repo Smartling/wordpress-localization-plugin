@@ -78,12 +78,18 @@ services:
   factory.contentIO:
     class: Smartling\Processors\ContentEntitiesIOFactory
 
+  manager.job.information:
+    class: Smartling\Jobs\JobInformationManager
+    arguments:
+      - "@site.db"
+
   manager.submission:
     class: Smartling\Submissions\SubmissionManager
     arguments:
      - "@site.db"
      - "%submission.pagesize%"
      - "@entity.helper"
+     - "@manager.job.information"
 
   site.helper:
     class: Smartling\Helpers\SiteHelper

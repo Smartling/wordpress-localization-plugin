@@ -13,8 +13,8 @@ use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressContentTypeHelper;
-use Smartling\JobInfo;
 use Smartling\Jobs\DownloadTranslationJob;
+use Smartling\Jobs\JobInformationEntity;
 use Smartling\Jobs\UploadJob;
 use Smartling\Queue\Queue;
 use Smartling\Submissions\SubmissionEntity;
@@ -204,16 +204,16 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                     case 'Upload':
                         if (0 < count($locales)) {
                             $wrapper = $this->getCore()->getApiWrapper();
-                            $profiles = $this->getProfiles();
+                            $profile = ArrayHelper::first($this->getProfiles());
 
-                            if (empty($profiles)) {
+                            if (!$profile) {
                                 $this->getLogger()->error('No suitable configuration profile found.');
 
                                 return;
                             }
                             try {
                                 $jobName = $data['jobName'];
-                                $batchUid = $wrapper->retrieveBatch(ArrayHelper::first($profiles), $data['jobId'],
+                                $batchUid = $wrapper->retrieveBatch($profile, $data['jobId'],
                                     'true' === $data['authorize'], [
                                         'name' => $jobName,
                                         'description' => $data['jobDescription'],
@@ -235,7 +235,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                                     );
                                 return;
                             }
-                            $jobInfo = new JobInfo($batchUid, $jobName);
+                            $jobInfo = new JobInformationEntity($batchUid, $jobName, $data['jobId'], $profile->getProjectId());
                             foreach ($locales as $blogId) {
                                 if ($translationHelper->isRelatedSubmissionCreationNeeded($this->getTaxonomy(), $sourceBlog, $originalId, (int)$blogId)) {
                                     $submission = $translationHelper->tryPrepareRelatedContent($this->getTaxonomy(), $sourceBlog, $originalId, (int)$blogId, $jobInfo);

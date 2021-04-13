@@ -20,6 +20,7 @@ use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\FileHelper;
 use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\RuntimeCacheHelper;
+use Smartling\Jobs\JobInformationEntity;
 use Smartling\Jobs\JobsApi;
 use Smartling\Jobs\JobStatus;
 use Smartling\Jobs\Params\CreateJobParameters;
@@ -725,7 +726,7 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
-    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, bool $authorize): JobInfo
+    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, bool $authorize): JobInformationEntity
     {
         $getName = static function ($suffix = '') {
             $date = date('m/d/Y');
@@ -776,7 +777,7 @@ class ApiWrapper implements ApiWrapperInterface
 
             $result = $this->createBatch($profile, $jobId, $authorize);
 
-            return new JobInfo($result['batchUid'], $jobName);
+            return new JobInformationEntity($result['batchUid'], $jobName, $jobId, $profile->getProjectId());
         } catch (SmartlingApiException $e) {
             $this->getLogger()->error(vsprintf('Can\'t create batch for a daily job "%s". Error: %s', [
                 $jobName,

@@ -22,7 +22,7 @@ use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\XmlHelper;
-use Smartling\JobInfo;
+use Smartling\Jobs\JobInformationEntity;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\Controller\LiveNotificationController;
@@ -706,7 +706,7 @@ trait SmartlingCoreUploadTrait
         }
     }
 
-    public function createForTranslation(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, JobInfo $jobInfo, bool $clone, ?int $targetEntity = null): SubmissionEntity
+    public function createForTranslation(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, JobInformationEntity $jobInfo, bool $clone, ?int $targetEntity = null): SubmissionEntity
     {
         /**
          * @var SubmissionEntity $submission

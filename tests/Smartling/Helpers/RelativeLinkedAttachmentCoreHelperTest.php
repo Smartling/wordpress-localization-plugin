@@ -12,7 +12,7 @@ use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\GutenbergReplacementRule;
 use Smartling\Helpers\RelativeLinkedAttachmentCoreHelper;
 use Smartling\Helpers\TranslationHelper;
-use Smartling\JobInfo;
+use Smartling\Jobs\JobInformationEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 use Smartling\Tuner\MediaAttachmentRulesManager;
@@ -44,7 +44,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
         $submission->setSourceId($sourceMediaId);
         $submission->setTargetId($targetMediaId);
         $submission->setTargetBlogId($targetBlogId);
-        $submission->setJobInfo(new JobInfo($batchUid, ''));
+        $submission->setJobInfo(new JobInformationEntity($batchUid, '', '', ''));
         $acf = $this->getMockBuilder(AcfDynamicSupport::class)
             ->setConstructorArgs([$this->createMock(EntityHelper::class)])
             ->getMock();
@@ -107,7 +107,7 @@ HTML
         $submission->setSourceId($sourceId);
         $submission->setTargetId($targetId);
         $submission->setTargetBlogId($targetBlogId);
-        $jobInfo = new JobInfo($batchUid, '');
+        $jobInfo = new JobInformationEntity($batchUid, '', '', '');
         $submission->setJobInfo($jobInfo);
         $acf = $this->getMockBuilder(AcfDynamicSupport::class)
             ->setConstructorArgs([$this->createMock(EntityHelper::class)])
@@ -159,7 +159,7 @@ HTML
         $submission->setSourceId($sourceId);
         $submission->setTargetId($targetId);
         $submission->setTargetBlogId($targetBlogId);
-        $submission->setBatchUid($batchUid);
+        $submission->setJobInfo(new JobInformationEntity($batchUid, '', '', ''));
 
         $acf = $this->getMockBuilder(AcfDynamicSupport::class)
             ->setConstructorArgs([$this->createMock(EntityHelper::class)])

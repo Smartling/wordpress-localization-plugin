@@ -7,7 +7,6 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\TranslationHelper;
-use Smartling\JobInfo;
 use Smartling\Submissions\SubmissionEntity;
 
 class ReferencedContentProcessor extends MetaFieldProcessorAbstract

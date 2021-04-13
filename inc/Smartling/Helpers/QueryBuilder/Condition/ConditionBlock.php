@@ -2,21 +2,15 @@
 
 namespace Smartling\Helpers\QueryBuilder\Condition;
 
-/**
- * Class ConditionBlock
- *
- * @package Smartling\Helpers\QueryBuilder\Condition
- */
 class ConditionBlock
 {
-
     /**
-     * @var array of Condition
+     * @var Condition[]
      */
     private $conditions = [];
 
     /**
-     * @var array of ConditionBlock
+     * @var ConditionBlock[]
      */
     private $blocks = [];
 
@@ -25,12 +19,7 @@ class ConditionBlock
      */
     private $operator;
 
-    /**
-     * Constructor
-     *
-     * @param $conditionOperator
-     */
-    public function __construct($conditionOperator)
+    public function __construct(string $conditionOperator)
     {
         if (!$this->validateOperator($conditionOperator)) {
             throw new \InvalidArgumentException('Invalid operator');
@@ -39,12 +28,7 @@ class ConditionBlock
         $this->operator = vsprintf(' %s ', [$conditionOperator]);
     }
 
-    /**
-     * @param $operator
-     *
-     * @return bool
-     */
-    private function validateOperator($operator)
+    private function validateOperator(string $operator): bool
     {
         $validOperators = [
             ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR,
@@ -54,41 +38,29 @@ class ConditionBlock
         return in_array($operator, $validOperators, true);
     }
 
-    /**
-     * @param $conditionOperator
-     *
-     * @return ConditionBlock
-     */
     public static function getConditionBlock(
-        $conditionOperator = ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND
-    )
+        string $conditionOperator = ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND
+    ): ConditionBlock
     {
         return new self($conditionOperator);
     }
 
-    /**
-     * Adds condition in block
-     *
-     * @param Condition $condition
-     */
-    public function addCondition(Condition $condition)
+    public function addCondition(Condition $condition): void
     {
         $this->conditions[] = $condition;
     }
 
-    /**
-     * Adds conditionBlock in block
-     *
-     * @param ConditionBlock $block
-     */
-    public function addConditionBlock(ConditionBlock $block)
+    public function hasConditions(): bool
+    {
+        return count($this->conditions) > 0;
+    }
+
+    public function addConditionBlock(ConditionBlock $block): void
     {
         $this->blocks[] = $block;
     }
 
     /**
-     * renders block
-     *
      * @return string
      */
     public function __toString()

@@ -19,7 +19,7 @@ use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorAbstract;
 use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
 use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Helpers\StringHelper;
-use Smartling\JobInfo;
+use Smartling\Jobs\JobInformationEntity;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
@@ -338,8 +338,10 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             );
     }
 
-    /* This function only returns when testing, WP will stop execution after wp_send_json */
-    public function bulkUploadHandler(JobInfo $jobInfo, array $contentIds, string $contentType, int $currentBlogId, array $targetBlogIds): void
+    /**
+     * This function only returns when testing, WP will stop execution after wp_send_json
+     */
+    public function bulkUploadHandler(JobInformationEntity $jobInfo, array $contentIds, string $contentType, int $currentBlogId, array $targetBlogIds): void
     {
         foreach ($targetBlogIds as $targetBlogId) {
             $blogFields = [
@@ -396,7 +398,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         try {
             $contentType = $data['source']['contentType'];
             $curBlogId = $this->getContentHelper()->getSiteHelper()->getCurrentBlogId();
-            $jobInfo = new JobInfo($this->getBatchUid($curBlogId, $data['job']), $data['job']['name']);
+            $jobInfo = new JobInformationEntity($this->getBatchUid($curBlogId, $data['job']), $data['job']['name'], $data['job']['id'], $this->getSettingsManager()->getSingleSettingsProfile($curBlogId)->getProjectId());
             $targetBlogIds = explode(',', $data['targetBlogIds']);
 
             if (array_key_exists( 'ids', $data)) {
@@ -406,7 +408,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 
             foreach ($targetBlogIds as $targetBlogId) {
                 $submissionTemplateArray = [
-                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $this->getContentHelper()->getSiteHelper()->getCurrentBlogId(),
+                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $curBlogId,
                     SubmissionEntity::FIELD_TARGET_BLOG_ID => (int)$targetBlogId,
                 ];
 

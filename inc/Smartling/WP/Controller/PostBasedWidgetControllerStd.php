@@ -9,8 +9,8 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
-use Smartling\JobInfo;
 use Smartling\Jobs\DownloadTranslationJob;
+use Smartling\Jobs\JobInformationEntity;
 use Smartling\Queue\Queue;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPAbstract;
@@ -173,12 +173,12 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             }
         }
 
-        $profiles = $this->getProfiles();
+        $profile = ArrayHelper::first($this->getProfiles());
 
         /**
          * checking profiles
          */
-        if ($continue && empty($profiles)) {
+        if ($continue && !$profile) {
             $this->getLogger()->error(
                 vsprintf(
                     'Failed adding content to upload queue: %s for %s',
@@ -274,7 +274,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             try {
                 $jobName = $data['job']['name'];
                 $batchUid = $this->getCore()->getApiWrapper()->retrieveBatch(
-                    ArrayHelper::first($profiles),
+                    $profile,
                     $data['job']['id'],
                     'true' === $data['job']['authorize'],
                     [
@@ -315,7 +315,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                  */
                 foreach ($sourceIds as $sourceId) {
                     try {
-                        $jobInfo = new JobInfo($batchUid, $jobName);
+                        $jobInfo = new JobInformationEntity($batchUid, $jobName, $data['job']['id'], $profile->getProjectId());
                         if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId)) {
                             $submission = $this->getCore()->getTranslationHelper()->tryPrepareRelatedContent($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId, $jobInfo);
                         } else {
@@ -517,11 +517,10 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     }
 
     /**
-     * @param $post_id
-     *
-     * @return mixed
+     * @param mixed $post_id
+     * @return void
      */
-    public function save($post_id)
+    public function save($post_id): void
     {
         $this->getLogger()->debug("Usage: class='" . __CLASS__ . "', function='" . __FUNCTION__ . "'");
         remove_action('save_post', [$this, 'save']);
@@ -551,7 +550,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             $this->detectChange($sourceBlog, $originalId, $this->servedContentType);
 
             if (false === $this->runValidation($post_id)) {
-                return $post_id;
+                return;
             }
             $this->getLogger()->debug(vsprintf('Validation completed for \'%s\' id=%d',
                 [$this->servedContentType, $post_id]));
@@ -589,9 +588,9 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                             $this->getLogger()->debug('Upload case detected.');
                             if (0 < count($locales)) {
                                 $wrapper = $this->getCore()->getApiWrapper();
-                                $profiles = $this->getProfiles();
+                                $profile = ArrayHelper::first($this->getProfiles());
 
-                                if (empty($profiles)) {
+                                if (!$profile) {
                                     $this->getLogger()->error('No suitable configuration profile found.');
 
                                     return;
@@ -599,7 +598,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                 $this->getLogger()->debug(vsprintf('Retrieving batch for jobId=%s', [$data['jobId']]));
 
                                 try {
-                                    $batchUid = $wrapper->retrieveBatch(ArrayHelper::first($profiles), $data['jobId'],
+                                    $batchUid = $wrapper->retrieveBatch($profile, $data['jobId'],
                                         'true' === $data['authorize'], [
                                             'name' => $data['jobName'],
                                             'description' => $data['jobDescription'],
@@ -622,7 +621,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                     return;
                                 }
 
-                                $jobInfo = new JobInfo($batchUid, $data['jobName']);
+                                $jobInfo = new JobInformationEntity($batchUid, $data['jobName'], $data['jobId'], $profile->getProjectId());
                                 foreach ($locales as $blogId) {
                                     if ($translationHelper->isRelatedSubmissionCreationNeeded($this->servedContentType, $sourceBlog, $originalId, (int)$blogId)) {
                                         $submission = $translationHelper->tryPrepareRelatedContent($this->servedContentType, $sourceBlog, $originalId, (int)$blogId, $jobInfo);
@@ -646,7 +645,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                                 (int)$blogId,
                                                 $submission->getTargetLocale(),
                                                 $data['jobId'],
-                                                $submission->getBatchUid(),
+                                                $jobInfo->getBatchUid(),
                                             ]
                                         ));
                                 }

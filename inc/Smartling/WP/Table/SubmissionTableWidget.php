@@ -26,7 +26,6 @@ class SubmissionTableWidget extends SmartlingListTable
 {
     use CommonLogMessagesTrait;
 
-    const ACTION_UPLOAD   = 'send';
     private const ACTION_DOWNLOAD = 'download';
     private const ACTION_LOCK = 'lock';
     private const ACTION_UNLOCK = 'unlock';
@@ -116,12 +115,14 @@ class SubmissionTableWidget extends SmartlingListTable
         return $options;
     }
 
+    /**
+     * @param object $item
+     * @param string $column_name
+     * @return mixed
+     */
     public function column_default($item, $column_name)
     {
-        switch ($column_name) {
-            default:
-                return $item[$column_name];
-        }
+        return $item[$column_name];
     }
 
     /**
@@ -152,12 +153,9 @@ class SubmissionTableWidget extends SmartlingListTable
     public function get_columns(): array
     {
         $columns = $this->manager->getColumnsLabels();
-
         $columns['outdated'] = 'States';
 
-        $columns = array_merge(['bulkActionCb' => '<input type="checkbox" class="checkall" />'], $columns);
-
-        return $columns;
+        return array_merge(['bulkActionCb' => '<input type="checkbox" class="checkall" />'], $columns);
     }
 
     /**
@@ -376,6 +374,7 @@ class SubmissionTableWidget extends SmartlingListTable
 
         foreach ($data as $element) {
             $row = $element->toArray();
+            $jobInfo = $element->getJobInfo();
 
             $row[SubmissionEntity::FIELD_FILE_URI] = htmlentities($row[SubmissionEntity::FIELD_FILE_URI]);
             $row[SubmissionEntity::FIELD_SOURCE_TITLE] = htmlentities($row[SubmissionEntity::FIELD_SOURCE_TITLE]);
@@ -384,6 +383,7 @@ class SubmissionTableWidget extends SmartlingListTable
             $row[SubmissionEntity::FIELD_APPLIED_DATE] = '0000-00-00 00:00:00' === $row[SubmissionEntity::FIELD_APPLIED_DATE] ? __('Never')
                 : DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row[SubmissionEntity::FIELD_APPLIED_DATE]));
             $row[SubmissionEntity::FIELD_TARGET_LOCALE] = $siteHelper->getBlogLabelById($this->entityHelper->getConnector(), $row[SubmissionEntity::FIELD_TARGET_BLOG_ID]);
+            $row[SubmissionEntity::VIRTUAL_FIELD_JOB_LINK] = "<a href=\"https://dashboard.smartling.com/app/projects/{$jobInfo->getProjectUid()}/account-jobs/{$jobInfo->getProjectUid()}:{$jobInfo->getJobUid()}\">{$jobInfo->getJobName()}</a>";
 
             $flagBlockParts = [];
 

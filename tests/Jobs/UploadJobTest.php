@@ -9,7 +9,7 @@ use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\QueryBuilder\TransactionManager;
 use Smartling\Helpers\SiteHelper;
-use Smartling\JobInfo;
+use Smartling\Jobs\JobInformationEntity;
 use Smartling\Jobs\LastModifiedCheckJob;
 use Smartling\Jobs\UploadJob;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -95,7 +95,7 @@ class UploadJobTest extends TestCase
         $submissionManager->expects(self::once())->method('storeSubmissions')->with([$submission]);
 
         $api = $this->createMock(ApiWrapperInterface::class);
-        $api->method('retrieveJobInfoForDailyBucketJob')->willReturn(new JobInfo($batchUid, ''));
+        $api->method('retrieveJobInfoForDailyBucketJob')->willReturn(new JobInformationEntity($batchUid, '', '', ''));
 
         $x = $this->getWorkerMock($submissionManager, $api, $settingsManager);
         $x->run();
@@ -154,7 +154,7 @@ class UploadJobTest extends TestCase
         $submissionManager->expects(self::never())->method('storeSubmissions');
 
         $api = $this->createMock(ApiWrapperInterface::class);
-        $api->method('retrieveJobInfoForDailyBucketJob')->willReturn(new JobInfo($batchUid, ''));
+        $api->method('retrieveJobInfoForDailyBucketJob')->willReturn(new JobInformationEntity($batchUid, '', '', '', ''));
 
         $x = $this->getWorkerMock($submissionManager, $api, $settingsManager);
         $x->run();

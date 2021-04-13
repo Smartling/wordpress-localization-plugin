@@ -2,7 +2,8 @@
 
 namespace Smartling\DbAl\Migrations;
 
-use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\DbAl\DB;
+use Smartling\Jobs\JobInformationEntity;
 use Smartling\Submissions\SubmissionEntity;
 
 class Migration210406 implements SmartlingDbMigrationInterface
@@ -12,15 +13,31 @@ class Migration210406 implements SmartlingDbMigrationInterface
         return 210406;
     }
 
-    public function getQueries($tablePrefix = ''): array
+    public function getQueries($tablePrefix = 'wp_'): array
     {
+        $db = new DB();
         return [
+            ($db)->prepareSql([
+                'columns' => JobInformationEntity::getFieldDefinitions(),
+                'indexes' => JobInformationEntity::getIndexes(),
+                'name' => JobInformationEntity::getTableName(),
+            ]),
             sprintf(
-                'ALTER TABLE `%s%s` ADD COLUMN `job_name` %s',
+                'INSERT INTO %s%s (%s, %s) select %s, %s from %s%s',
+                $tablePrefix,
+                JobInformationEntity::getTableName(),
+                JobInformationEntity::FIELD_SUBMISSION_ID,
+                JobInformationEntity::FIELD_BATCH_UID,
+                SubmissionEntity::FIELD_ID,
+                SubmissionEntity::FIELD_BATCH_UID,
+                $tablePrefix,
+                SubmissionEntity::getTableName()
+            ),
+            sprintf(
+                'ALTER TABLE %s%s DROP %s',
                 $tablePrefix,
                 SubmissionEntity::getTableName(),
-                ConfigurationProfileEntity::DB_TYPE_STRING_STANDARD . ' ' .
-                    ConfigurationProfileEntity::DB_TYPE_DEFAULT_EMPTYSTRING
+                SubmissionEntity::FIELD_BATCH_UID
             ),
         ];
     }
