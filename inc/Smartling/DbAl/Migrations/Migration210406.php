@@ -33,12 +33,6 @@ class Migration210406 implements SmartlingDbMigrationInterface
                 $tablePrefix,
                 SubmissionEntity::getTableName()
             ),
-            sprintf(
-                'ALTER TABLE %s%s DROP %s',
-                $tablePrefix,
-                SubmissionEntity::getTableName(),
-                JobInformationEntity::FIELD_BATCH_UID
-            ),
         ];
     }
 }
