@@ -59,6 +59,10 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 2.1.0 =
+* Minimum required PHP version is now 7.4!
+* Added a link to the most recent job for submissions on Translation Progress screen
+
 = 2.0.1 =
 * Fixed extra slashes being added when using fine tuning forms
 
