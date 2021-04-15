@@ -14,11 +14,14 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressUserHelper;
+use Smartling\Jobs\JobInformationEntity;
 use Smartling\Jobs\JobInformationManager;
 
 class SubmissionManager extends EntityManagerAbstract
 {
     private $jobInformationManager;
+    private $jobsTableAlias = 'j';
+    private $submissionTableAlias = 's';
 
     public function getSubmissionStatusLabels(): array
     {
@@ -36,6 +39,11 @@ class SubmissionManager extends EntityManagerAbstract
         $proxy = $entityHelper->getConnector();
         parent::__construct($dbal, $pageSize, $siteHelper, $proxy);
         $this->jobInformationManager = $jobInformationManager;
+    }
+
+    public function getJobInformationManager(): JobInformationManager
+    {
+        return $this->jobInformationManager;
     }
 
     /**
@@ -99,11 +107,10 @@ class SubmissionManager extends EntityManagerAbstract
         int &$totalCount = 0
     ): array
     {
-
         $result = [];
 
         if ($this->isValidRequest($contentType, $sortOptions, $pageOptions)) {
-            [$totalCount, $result] = $this->getTotalCountAndResult($contentType, $status, $outdatedFlag, $sortOptions, $block->hasConditions() ? $block : null, $pageOptions);
+            [$totalCount, $result] = $this->getTotalCountAndResult($contentType, $status, $outdatedFlag, $sortOptions, count($block->getConditions()) > 0 ? $block : null, $pageOptions);
         }
 
         return $result;
@@ -158,7 +165,7 @@ class SubmissionManager extends EntityManagerAbstract
     public function searchByBatchUid(string $batchUid): array
     {
         $block = ConditionBlock::getConditionBlock();
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_BATCH_UID,
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, JobInformationEntity::FIELD_BATCH_UID,
             [$batchUid]));
         $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ,
             SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_NEW]));
@@ -186,7 +193,7 @@ class SubmissionManager extends EntityManagerAbstract
         return $obj;
     }
 
-    public function buildSelectQuery(array $where): ?string
+    public function buildSelectQuery(array $where): string
     {
         $whereOptions = ConditionBlock::getConditionBlock();
         foreach ($where as $key => $item) {
@@ -194,15 +201,7 @@ class SubmissionManager extends EntityManagerAbstract
             $whereOptions->addCondition($condition);
         }
 
-        $query = QueryBuilder::buildSelectQuery(
-            $this->getDbal()->completeTableName(SubmissionEntity::getTableName()),
-            array_keys(SubmissionEntity::getFieldDefinitions()),
-            $whereOptions,
-            []
-        );
-        $this->logQuery($query);
-
-        return $query;
+        return $this->buildJoinQuery($whereOptions);
     }
 
     public function buildCountQuery(?string $contentType, ?string $status, ?int $outdatedFlag, ConditionBlock $baseCondition = null): string
@@ -246,12 +245,7 @@ class SubmissionManager extends EntityManagerAbstract
             }
         }
 
-        $query = QueryBuilder::buildSelectQuery(
-            $this->getDbal()->completeTableName(SubmissionEntity::getTableName()),
-            [['COUNT(*)' => 'cnt']],
-            $whereOptions,
-            []
-        );
+        $query = $this->buildJoinCountQuery($whereOptions);
 
         $this->logQuery($query);
 
@@ -308,18 +302,12 @@ class SubmissionManager extends EntityManagerAbstract
         $blockAlt->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ,
             SubmissionEntity::FIELD_IS_CLONED, [1]));
         $blockAlt->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_NOT_EQ,
-            SubmissionEntity::FIELD_BATCH_UID, ['']));
+            JobInformationEntity::FIELD_BATCH_UID, ['']));
         $block->addConditionBlock($blockAlt);
 
         $pageOptions = ['limit' => 1, 'page' => 1];
 
-        $query = QueryBuilder::buildSelectQuery(
-            $this->getDbal()->completeTableName(SubmissionEntity::getTableName()),
-            array_keys(SubmissionEntity::getFieldDefinitions()),
-            $block,
-            [],
-            $pageOptions
-        );
+        $query = $this->buildJoinQuery($block, $pageOptions);
 
         return $this->fetchData($query);
     }
@@ -338,7 +326,7 @@ class SubmissionManager extends EntityManagerAbstract
         return $this->fetchData($query);
     }
 
-    private function buildQuery(
+    protected function buildQuery(
         ?string $contentType,
         ?string $status,
         ?int $outdatedFlag,
@@ -374,13 +362,7 @@ class SubmissionManager extends EntityManagerAbstract
             $whereOptions = $baseCondition;
         }
 
-        $query = QueryBuilder::buildSelectQuery(
-            $this->getDbal()->completeTableName(SubmissionEntity::getTableName()),
-            array_keys(SubmissionEntity::getFieldDefinitions()),
-            $whereOptions,
-            $sortOptions,
-            $pageOptions
-        );
+        $query = $this->buildJoinQuery($whereOptions, $pageOptions, $sortOptions);
 
         $this->logQuery($query);
 
@@ -594,6 +576,9 @@ class SubmissionManager extends EntityManagerAbstract
                     sprintf('Executing delete query for submission id=%d (sourceBlog=%d, sourceId=%d, targetBlog=%d, targetId=%d)', $submissionId, $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getTargetBlogId(), $submission->getTargetId())
                 );
                 $this->getDbal()->query($query);
+                $jobInfoCondition = ConditionBlock::getConditionBlock();
+                $jobInfoCondition->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, JobInformationEntity::FIELD_SUBMISSION_ID, [$submissionId]));
+                $this->getDbal()->query(QueryBuilder::buildDeleteQuery($this->getDbal()->completeTableName(JobInformationEntity::getTableName()), $jobInfoCondition));
             } else {
                 $this->getLogger()->debug(
                     vsprintf(
@@ -652,5 +637,76 @@ class SubmissionManager extends EntityManagerAbstract
         $totalCount = $this->getDbal()->fetch($this->buildCountQuery($contentType, $status, $outdatedFlag, $block));
 
         return [(int)$totalCount[0]->cnt, $this->fetchData($this->buildQuery($contentType, $status, $outdatedFlag, $sortOptions, $pageOptions, $block))];
+    }
+
+    private function buildJoinCountQuery(?ConditionBlock $whereOptions = null): string
+    {
+        $submissionsTable = $this->getDbal()->completeTableName(SubmissionEntity::getTableName());
+        $jobsTable = $this->getDbal()->completeTableName(JobInformationEntity::getTableName());
+        return QueryBuilder::addWhereGroupSortLimitForSubmissionsJoinQuery(
+            sprintf(
+                'SELECT COUNT(DISTINCT %1$s) AS cnt FROM %2$s INNER JOIN %3$s ON %1$s = %4$s ',
+                sprintf('%s.%s', $this->submissionTableAlias, SubmissionEntity::FIELD_ID),
+                "$submissionsTable AS $this->submissionTableAlias",
+                "$jobsTable AS $this->jobsTableAlias",
+                sprintf('%s.%s', $this->jobsTableAlias, JobInformationEntity::FIELD_SUBMISSION_ID)
+            ),
+            $this->getFields(),
+            $whereOptions
+        );
+    }
+
+    private function buildJoinQuery(?ConditionBlock $whereOptions = null, ?array $pageOptions = null, ?array $sortOptions = null): string
+    {
+        $orderBy = ['j.id' => 'DESC'];
+        if ($sortOptions !== null) {
+            $orderBy = array_merge($orderBy, $sortOptions);
+        }
+        $submissionFields = array_map(function (string $item) {
+            return "$this->submissionTableAlias.$item";
+        }, array_keys(SubmissionEntity::getFieldDefinitions()));
+        $jobInfoFields = array_map(function (string $item) {
+            return "$this->jobsTableAlias.$item";
+        }, array_filter(array_keys(JobInformationEntity::getFieldDefinitions()), static function (string $item) {
+            return $item !== 'id';
+        }));
+
+        // use last line (MAX(id)) from jobs table
+        $where = sprintf('(%s = (SELECT MAX(%s) FROM %s WHERE %s = %s))',
+            sprintf('%s.%s', $this->jobsTableAlias, JobInformationEntity::FIELD_ID),
+            JobInformationEntity::FIELD_ID,
+            $this->getDbal()->completeTableName(JobInformationEntity::getTableName()),
+            JobInformationEntity::FIELD_SUBMISSION_ID,
+            sprintf('%s.%s', $this->submissionTableAlias, SubmissionEntity::FIELD_ID)
+        );
+
+        return QueryBuilder::addWhereGroupSortLimitForSubmissionsJoinQuery(sprintf(
+            'SELECT %1$s FROM %2$s AS %3$s INNER JOIN %4$s AS %5$s ON %3$s.%6$s = %5$s.%7$s ',
+            implode(', ', array_merge($submissionFields, $jobInfoFields)),
+            $this->getDbal()->completeTableName(SubmissionEntity::getTableName()),
+            $this->submissionTableAlias,
+            $this->getDbal()->completeTableName(JobInformationEntity::getTableName()),
+            $this->jobsTableAlias,
+            SubmissionEntity::FIELD_ID,
+            JobInformationEntity::FIELD_SUBMISSION_ID
+        ),
+            $this->getFields(),
+            $whereOptions,
+            $where,
+            [sprintf('%s.%s', $this->submissionTableAlias, SubmissionEntity::FIELD_ID)],
+            $orderBy,
+            $pageOptions
+        );
+    }
+
+    /**
+     * The order is important, because we want to first use the columns from submissions
+     */
+    private function getFields(): array
+    {
+        return [
+            $this->submissionTableAlias => array_keys(SubmissionEntity::getFieldDefinitions()),
+            $this->jobsTableAlias => array_keys(JobInformationEntity::getFieldDefinitions()),
+        ];
     }
 }

@@ -528,7 +528,7 @@ if ($post instanceof WP_Post) {
                         e.stopPropagation();
                         e.preventDefault();
                         var jobId = $("#jobSelect").val();
-                        var jobName = $("input[name=\"jobName\"]").val();
+                        var jobName = $("#name-sm").val();
                         var jobDescription = $("textarea[name=\"description-sm\"]").val();
                         var jobDueDate = $("input[name=\"dueDate\"]").val();
 
@@ -590,6 +590,7 @@ if ($post instanceof WP_Post) {
                 $("#addToJob").on("click", function (e) {
                     e.stopPropagation();
                     e.preventDefault();
+                    jobSelectEl.trigger("change");
 
                     var url = `${ajaxurl}?action=smartling-create-submissions`;
 
@@ -603,7 +604,7 @@ if ($post instanceof WP_Post) {
                         source: currentContent,
                         job: {
                             id: $("#jobSelect").val(),
-                            name: $("input[name=\"jobName\"]").val(),
+                            name: $("#name-sm").val(),
                             description: $("textarea[name=\"description-sm\"]").val(),
                             dueDate: $("input[name=\"dueDate\"]").val(),
                             timeZone: timezone,

@@ -70,12 +70,9 @@ class SettingsManager extends EntityManagerAbstract
     }
 
     /**
-     * @param int $mainBlogId
-     *
-     * @return ConfigurationProfileEntity
      * @throws SmartlingDbException
      */
-    public function getSingleSettingsProfile($mainBlogId)
+    public function getSingleSettingsProfile(int $mainBlogId): ConfigurationProfileEntity
     {
         $possibleProfiles = $this->findEntityByMainLocale($mainBlogId);
 

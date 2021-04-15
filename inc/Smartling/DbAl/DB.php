@@ -168,10 +168,12 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
                 $queries = $migration->getQueries($prefix);
                 $stopMigrate = false;
                 foreach ($queries as $query) {
+                    echo "EXECUTING $query";
                     $this->logger->debug('Executing query: ' . $query);
                     $result = $this->getWpdb()->query($query);
                     if (false === $result) {
                         $this->logger->error('Error executing query: ' . $this->getWpdb()->last_error);
+                        echo "ERROR: " . $this->getWpdb()->last_error;
                         $stopMigrate = true;
                         break;
                     }
@@ -451,12 +453,7 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
         return $this->getWpdb()->_escape($string);
     }
 
-    /**
-     * @param string $tableName
-     *
-     * @return mixed
-     */
-    public function completeTableName($tableName)
+    public function completeTableName(string $tableName): string
     {
         return $this->getWpdb()->base_prefix . $tableName;
     }

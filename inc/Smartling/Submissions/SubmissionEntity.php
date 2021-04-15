@@ -105,7 +105,6 @@ class SubmissionEntity extends SmartlingEntityAbstract
     public const FIELD_LAST_MODIFIED = 'last_modified';
     public const FIELD_OUTDATED = 'outdated';
     public const FIELD_LAST_ERROR = 'last_error';
-    public const FIELD_BATCH_UID = 'batch_uid';
     public const FIELD_LOCKED_FIELDS = 'locked_fields';
     public const FIELD_JOB_NAME = 'job_name';
 
@@ -679,6 +678,9 @@ class SubmissionEntity extends SmartlingEntityAbstract
 
     public function getJobInfo(): JobInformationEntity
     {
+        if ($this->jobInformation === null) {
+            return new JobInformationEntity('', '', '', '', $this->id);
+        }
         $result = clone $this->jobInformation;
         $submissionId = $this->getId();
         if ($submissionId !== null) {
@@ -695,6 +697,15 @@ class SubmissionEntity extends SmartlingEntityAbstract
     public function getBatchUid(): string
     {
         return $this->jobInformation->getBatchUid();
+    }
+
+    /**
+     * Required for parent::fromArray
+     * @noinspection PhpUnused
+     * @noinspection UnknownInspectionInspection
+     */
+    public function setBatchUid(): void
+    {
     }
 
     /**

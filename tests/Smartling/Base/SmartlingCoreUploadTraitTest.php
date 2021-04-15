@@ -98,7 +98,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $fieldsFilterHelper->method('applyTranslatedValues')->willReturnArgument(2);
 
         $settingsManager = $this->getMockBuilder(SettingsManager::class)->disableOriginalConstructor()->getMock();
-        $settingsManager->method('getSingleSettingsProfile')->willReturn(new ConfigurationProfileEntity());
+        $settingsManager->method('getSingleSettingsProfile')->willReturn($this->createMock(ConfigurationProfileEntity::class));
 
         $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
         $submissionManager->method('storeEntity')->willReturnArgument(0);

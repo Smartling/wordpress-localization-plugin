@@ -364,12 +364,7 @@ class SmartlingCoreTest extends TestCase
             ->setTargetBlogId(1);
 
 
-        $profile = new ConfigurationProfileEntity();
-        $profile->setIsActive(true);
-        $profile->setProjectId('a');
-        $profile->setUserIdentifier('b');
-        $profile->setSecretKey('c');
-        $profile->setOriginalBlogId($submission->getSourceBlogId());
+        $profile = $this->createMock(ConfigurationProfileEntity::class);
 
         $settingsManager = $this->getSettingsManagerMock();
 
@@ -411,13 +406,7 @@ class SmartlingCoreTest extends TestCase
             ->setSourceId(1)
             ->setTargetBlogId(1);
 
-
-        $profile = new ConfigurationProfileEntity();
-        $profile->setIsActive(true);
-        $profile->setProjectId('a');
-        $profile->setUserIdentifier('b');
-        $profile->setSecretKey('c');
-        $profile->setOriginalBlogId($submission->getSourceBlogId());
+        $profile = $this->createMock(ConfigurationProfileEntity::class);
 
         $settingsManager = $this->getSettingsManagerMock();
 

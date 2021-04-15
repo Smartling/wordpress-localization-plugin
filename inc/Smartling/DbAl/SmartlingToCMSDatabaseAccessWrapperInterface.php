@@ -48,12 +48,7 @@ interface SmartlingToCMSDatabaseAccessWrapperInterface
      */
     function escape($string);
 
-    /**
-     * @param string $tableName
-     *
-     * @return mixed
-     */
-    function completeTableName($tableName);
+    public function completeTableName(string $tableName): string;
 
     /**
      * @param $tableName

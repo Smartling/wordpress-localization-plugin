@@ -125,7 +125,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
     /**
      * @var ConfigurationProfileEntity
      */
-    protected $profile = null;
+    protected $profile;
 
     /**
      * @param string $envVar
@@ -231,12 +231,9 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
     }
 
     /**
-     * @param $tag
-     *
-     * @return object
-     * @throws \Exception
+     * @return mixed
      */
-    protected function get($tag)
+    protected function get(string $tag)
     {
         return $this->getContainer()->get($tag);
     }
@@ -267,7 +264,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         $originalBlog->setBlogId(1);
         $originalBlog->setLabel('');
 
-        $profile->setOriginalBlogId($originalBlog);
+        $profile->setLocale($originalBlog);
         $profile->setAutoAuthorize(1);
         $profile->setRetrievalType('pseudo');
         $profile->setUploadOnUpdate(1);

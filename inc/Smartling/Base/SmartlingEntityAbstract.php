@@ -148,15 +148,10 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
     /**
      * Converts associative array to entity
      * array keys must match field names;
-     *
-     * @param array           $array
-     * @param LoggerInterface $logger
-     *
-     * @return SubmissionEntity
      */
     public static function fromArray(array $array, LoggerInterface $logger)
     {
-        $obj = static::getInstance($logger);
+        $obj = static::getInstance();
 
         foreach ($array as $field => $value) {
             $obj->$field = $value;

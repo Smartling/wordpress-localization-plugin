@@ -385,7 +385,7 @@ trait SmartlingCoreUploadTrait
             ];
 
             if ($submissionHasBatchUid) {
-                $params[SubmissionEntity::FIELD_BATCH_UID] = [$submission->getBatchUid()];
+                $params[JobInformationEntity::FIELD_BATCH_UID] = [$submission->getBatchUid()];
             }
 
             /**
@@ -480,7 +480,7 @@ trait SmartlingCoreUploadTrait
                     $this->getLogger()->error("Batch {$submission->getBatchUid()} is not suitable for adding files");
                     $submissions = $this->getSubmissionManager()->find([
                         SubmissionEntity::FIELD_STATUS => [SubmissionEntity::SUBMISSION_STATUS_NEW],
-                        SubmissionEntity::FIELD_BATCH_UID => [$submission->getBatchUid()],
+                        JobInformationEntity::FIELD_BATCH_UID => [$submission->getBatchUid()],
                     ]);
                     foreach ($submissions as $found) {
                         $found->clearJobInfo();
@@ -555,7 +555,7 @@ trait SmartlingCoreUploadTrait
 
             /** @var ApiWrapperInterface $apiWrapper */
             $apiWrapper = $this->getApiWrapper();
-            $jobInfo = $apiWrapper->retrieveJobInfoForDailyBucketJob($profile, (bool)$profile->getAutoAuthorize());
+            $jobInfo = $apiWrapper->retrieveJobInfoForDailyBucketJob($profile, $profile->getAutoAuthorize());
 
             $submission->setJobInfo($jobInfo);
             $submission = $this->getSubmissionManager()->storeEntity($submission);

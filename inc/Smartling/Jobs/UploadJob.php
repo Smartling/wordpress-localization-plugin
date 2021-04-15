@@ -94,10 +94,10 @@ class UploadJob extends JobAbstract
             $originalBlogId = $activeProfile->getOriginalBlogId()->getBlogId();
             $entities = $this->getSubmissionManager()->find(
                 [
-                    SubmissionEntity::FIELD_STATUS         => [SubmissionEntity::SUBMISSION_STATUS_NEW],
-                    SubmissionEntity::FIELD_IS_LOCKED      => 0,
-                    SubmissionEntity::FIELD_IS_CLONED      => 0,
-                    SubmissionEntity::FIELD_BATCH_UID      => '',
+                    SubmissionEntity::FIELD_STATUS => [SubmissionEntity::SUBMISSION_STATUS_NEW],
+                    SubmissionEntity::FIELD_IS_LOCKED => 0,
+                    SubmissionEntity::FIELD_IS_CLONED => 0,
+                    JobInformationEntity::FIELD_BATCH_UID => '',
                     SubmissionEntity::FIELD_SOURCE_BLOG_ID => $originalBlogId,
                 ]
             );
@@ -106,7 +106,7 @@ class UploadJob extends JobAbstract
                 $this->getLogger()->info('Started dealing with daily bucket job.');
 
                 try {
-                    $jobInfo = $this->api->retrieveJobInfoForDailyBucketJob($activeProfile, (bool) $activeProfile->getAutoAuthorize());
+                    $jobInfo = $this->api->retrieveJobInfoForDailyBucketJob($activeProfile, $activeProfile->getAutoAuthorize());
 
                     foreach ($entities as $entity) {
                         if ($jobInfo->getBatchUid() === '') {
@@ -159,6 +159,4 @@ class UploadJob extends JobAbstract
             }
         }
     }
-
-
 }

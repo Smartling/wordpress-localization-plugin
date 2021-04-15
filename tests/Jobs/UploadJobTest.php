@@ -10,6 +10,7 @@ use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\QueryBuilder\TransactionManager;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Jobs\JobInformationEntity;
+use Smartling\Jobs\JobInformationManager;
 use Smartling\Jobs\LastModifiedCheckJob;
 use Smartling\Jobs\UploadJob;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -28,7 +29,7 @@ class UploadJobTest extends TestCase
      * @param ApiWrapperInterface $apiWrapper
      * @param SettingsManager $settingsManager
      * @param TransactionManager|null $transactionManager
-     * @return MockObject|LastModifiedCheckJob
+     * @return MockObject|UploadJob
      */
     private function getWorkerMock(SubmissionManager $submissionManager,
                                    ApiWrapperInterface $apiWrapper,
@@ -56,11 +57,11 @@ class UploadJobTest extends TestCase
         $siteHelper = $this->createMock(SiteHelper::class);
         $entityHelper->method('getSiteHelper')->willReturn($siteHelper);
 
-        $activeProfile = new ConfigurationProfileEntity();
-        $activeProfile->setUploadOnUpdate(ConfigurationProfileEntity::UPLOAD_ON_CHANGE_AUTO);
+        $activeProfile = $this->createMock(ConfigurationProfileEntity::class);
+        $activeProfile->method('getUploadOnUpdate')->willReturn(ConfigurationProfileEntity::UPLOAD_ON_CHANGE_AUTO);
         $mainLocale = new Locale();
         $mainLocale->setBlogId(1);
-        $activeProfile->setOriginalBlogId($mainLocale);
+        $activeProfile->setLocale($mainLocale);
 
         $settingsManager = $this->getMockBuilder(SettingsManager::class)
             ->setConstructorArgs([
@@ -80,6 +81,7 @@ class UploadJobTest extends TestCase
                 $this->mockDbAl(),
                 10,
                 $entityHelper,
+                $this->createMock(JobInformationManager::class),
             ])
             ->onlyMethods([
                 'find',
@@ -111,15 +113,12 @@ class UploadJobTest extends TestCase
         $siteHelper = $this->createMock(SiteHelper::class);
         $entityHelper->method('getSiteHelper')->willReturn($siteHelper);
 
-        $activeProfile = new ConfigurationProfileEntity();
-        $activeProfile->setUploadOnUpdate(ConfigurationProfileEntity::UPLOAD_ON_CHANGE_MANUAL);
-
-        $inactiveProfile = new ConfigurationProfileEntity();
-        $inactiveProfile->setUploadOnUpdate(ConfigurationProfileEntity::UPLOAD_ON_CHANGE_AUTO);
+        $activeProfile = $this->createMock(ConfigurationProfileEntity::class);
+        $activeProfile->method('getUploadOnUpdate')->willReturn(ConfigurationProfileEntity::UPLOAD_ON_CHANGE_MANUAL);
 
         $mainLocale = new Locale();
         $mainLocale->setBlogId(1);
-        $activeProfile->setOriginalBlogId($mainLocale);
+        $activeProfile->setLocale($mainLocale);
 
         $settingsManager = $this->getMockBuilder(SettingsManager::class)
             ->setConstructorArgs([
@@ -139,6 +138,7 @@ class UploadJobTest extends TestCase
                 $this->mockDbAl(),
                 10,
                 $entityHelper,
+                $this->createMock(JobInformationManager::class),
             ])
             ->onlyMethods([
                 'find',
@@ -154,11 +154,8 @@ class UploadJobTest extends TestCase
         $submissionManager->expects(self::never())->method('storeSubmissions');
 
         $api = $this->createMock(ApiWrapperInterface::class);
-        $api->method('retrieveJobInfoForDailyBucketJob')->willReturn(new JobInformationEntity($batchUid, '', '', '', ''));
 
         $x = $this->getWorkerMock($submissionManager, $api, $settingsManager);
         $x->run();
-
-        $this->assertEquals('', $submission->getBatchUid());
     }
 }

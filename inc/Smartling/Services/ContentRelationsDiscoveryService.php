@@ -453,7 +453,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 /**
                  * Adding fields to template
                  */
-                $submissionTemplateArray[SubmissionEntity::FIELD_BATCH_UID] = $jobInfo->getBatchUid();
+                $submissionTemplateArray[JobInformationEntity::FIELD_BATCH_UID] = $jobInfo->getBatchUid();
                 $submissionTemplateArray[SubmissionEntity::FIELD_JOB_NAME] = $jobInfo->getJobName();
                 $submissionTemplateArray[SubmissionEntity::FIELD_STATUS] = SubmissionEntity::SUBMISSION_STATUS_NEW;
                 $submissionTemplateArray[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::nowAsString();

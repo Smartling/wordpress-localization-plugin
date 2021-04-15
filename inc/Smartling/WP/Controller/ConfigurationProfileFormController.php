@@ -247,7 +247,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
                      )
             );
 
-            $profile->setOriginalBlogId($locale);
+            $profile->setLocale($locale);
 
         }
 

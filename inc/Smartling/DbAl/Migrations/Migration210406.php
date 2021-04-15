@@ -29,7 +29,7 @@ class Migration210406 implements SmartlingDbMigrationInterface
                 JobInformationEntity::FIELD_SUBMISSION_ID,
                 JobInformationEntity::FIELD_BATCH_UID,
                 SubmissionEntity::FIELD_ID,
-                SubmissionEntity::FIELD_BATCH_UID,
+                JobInformationEntity::FIELD_BATCH_UID,
                 $tablePrefix,
                 SubmissionEntity::getTableName()
             ),
@@ -37,7 +37,7 @@ class Migration210406 implements SmartlingDbMigrationInterface
                 'ALTER TABLE %s%s DROP %s',
                 $tablePrefix,
                 SubmissionEntity::getTableName(),
-                SubmissionEntity::FIELD_BATCH_UID
+                JobInformationEntity::FIELD_BATCH_UID
             ),
         ];
     }

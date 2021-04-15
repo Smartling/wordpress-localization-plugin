@@ -3,15 +3,18 @@
 namespace Smartling\Jobs;
 
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Exception\EntityNotFoundException;
 use Smartling\Helpers\ArrayHelper;
 
 class JobInformationManager
 {
     private $db;
+    private $tableName;
 
     public function __construct(SmartlingToCMSDatabaseAccessWrapperInterface $db)
     {
         $this->db = $db;
+        $this->tableName = $db->completeTableName(JobInformationEntity::getTableName());
     }
 
     public function store(JobInformationEntity $jobInfo): JobInformationEntity
@@ -34,34 +37,46 @@ class JobInformationManager
         return $this->getById($this->db->getLastInsertedId());
     }
 
-    public function getById(int $id): JobInformationEntity {
+    public function getById(int $id): JobInformationEntity
+    {
         return $this->getOne($id, JobInformationEntity::FIELD_ID);
     }
 
-    public function getBySubmissionId(int $id): JobInformationEntity {
+    public function getBySubmissionId(int $id): JobInformationEntity
+    {
         return $this->getOne($id, JobInformationEntity::FIELD_SUBMISSION_ID);
     }
 
-    private function getOne(int $id, string $field): JobInformationEntity
+    public function getLastNotEmptyBySubmissionId(int $id): ?JobInformationEntity
+    {
+        try {
+            $result = $this->getOne(
+                $id,
+                JobInformationEntity::FIELD_SUBMISSION_ID,
+                sprintf('%s != ""', JobInformationEntity::FIELD_JOB_NAME)
+            );
+        } catch (EntityNotFoundException $e) {
+            return null;
+        }
+        return $result;
+    }
+
+    private function getOne(int $id, string $field, string $where = ''): JobInformationEntity
     {
         if (!array_key_exists($field, JobInformationEntity::getFieldDefinitions())) {
             throw new \InvalidArgumentException("Unable to get job information by field `$field`");
         }
         $result = $this->db->fetch(sprintf(
-            'SELECT %s, %s, %s, %s, %s, %s FROM %s WHERE %s=%d ORDER BY %s DESC LIMIT 1',
-            JobInformationEntity::FIELD_ID,
-            JobInformationEntity::FIELD_SUBMISSION_ID,
-            JobInformationEntity::FIELD_BATCH_UID,
-            JobInformationEntity::FIELD_JOB_NAME,
-            JobInformationEntity::FIELD_JOB_UID,
-            JobInformationEntity::FIELD_PROJECT_UID,
-            $this->db->completeTableName(JobInformationEntity::getTableName()),
+            'SELECT %s FROM %s WHERE %s=%d %s ORDER BY %s DESC LIMIT 1',
+            implode(', ', array_keys(JobInformationEntity::getFieldDefinitions())),
+            $this->tableName,
             $field,
             $id,
+            $where === '' ? '' : ' AND ' . $where,
             JobInformationEntity::FIELD_ID
         ), 'ARRAY_A');
-        if ($result === false) {
-            throw new \RuntimeException('Unable to get entity');
+        if (count($result) === 0) {
+            throw new EntityNotFoundException('Unable to get entity');
         }
         $result = ArrayHelper::first($result);
         return new JobInformationEntity(
