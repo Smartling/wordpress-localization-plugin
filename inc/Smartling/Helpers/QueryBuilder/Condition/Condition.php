@@ -6,9 +6,9 @@ use Smartling\Helpers\QueryBuilder\QueryBuilder;
 
 class Condition
 {
-    private $condition;
-    private $field;
-    private $values;
+    private string $condition;
+    private string $field;
+    private array $values;
 
     protected function __construct(string $condition, string $field, array $values, bool $escapeField = true)
     {

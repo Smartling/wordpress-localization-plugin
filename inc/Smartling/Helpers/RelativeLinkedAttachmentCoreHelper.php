@@ -24,15 +24,12 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 
     protected const PATTERN_THUMBNAIL_IDENTITY = '-\d+x\d+$';
 
-    private $acfDefinitions = [];
-    private $acfDynamicSupport;
-    private $gutenbergReplacementRules;
-
-    private $logger;
-
-    private $core;
-
-    private $params;
+    private array $acfDefinitions = [];
+    private AcfDynamicSupport $acfDynamicSupport;
+    private array $gutenbergReplacementRules;
+    private LoggerInterface $logger;
+    private SmartlingCore $core;
+    private AfterDeserializeContentEventParameters $params;
 
     public function getLogger(): LoggerInterface
     {

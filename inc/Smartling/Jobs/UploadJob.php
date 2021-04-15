@@ -15,8 +15,8 @@ class UploadJob extends JobAbstract
 {
     public const JOB_HOOK_NAME = 'smartling-upload-task';
 
-    private $api;
-    private $settingsManager;
+    private ApiWrapperInterface $api;
+    private SettingsManager $settingsManager;
 
     public function __construct(
         SubmissionManager $submissionManager,

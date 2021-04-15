@@ -11,9 +11,9 @@ use Smartling\Submissions\SubmissionEntity;
 
 class ContentSerializationHelper
 {
-    private $logger;
-    private $contentHelper;
-    private $fieldsFilter;
+    private LoggerInterface $logger;
+    private ContentHelper $contentHelper;
+    private FieldsFilterHelper $fieldsFilter;
 
     public function getLogger(): LoggerInterface
     {

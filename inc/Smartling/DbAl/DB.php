@@ -168,12 +168,10 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
                 $queries = $migration->getQueries($prefix);
                 $stopMigrate = false;
                 foreach ($queries as $query) {
-                    echo "EXECUTING $query";
                     $this->logger->debug('Executing query: ' . $query);
                     $result = $this->getWpdb()->query($query);
                     if (false === $result) {
                         $this->logger->error('Error executing query: ' . $this->getWpdb()->last_error);
-                        echo "ERROR: " . $this->getWpdb()->last_error;
                         $stopMigrate = true;
                         break;
                     }
@@ -441,14 +439,7 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
         return $sql;
     }
 
-    /**
-     * Escape string value
-     *
-     * @param string $string
-     *
-     * @return mixed
-     */
-    public function escape($string)
+    public function escape(string $string): string
     {
         return $this->getWpdb()->_escape($string);
     }
@@ -458,44 +449,27 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
         return $this->getWpdb()->base_prefix . $tableName;
     }
 
-    /**
-     * @param $tableName
-     *
-     * @return string
-     */
-    public function completeMultisiteTableName($tableName)
+    public function completeMultisiteTableName(string $tableName): string
     {
         return $this->getWpdb()->prefix . $tableName;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function query($query)
+    public function query(string $query)
     {
         return $this->wpdb->query($query);
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function fetch($query, $output = OBJECT)
+    public function fetch(string $query, string $output = OBJECT)
     {
         return $this->getWpdb()->get_results($query, $output);
     }
 
-    /**
-     * @return integer
-     */
-    public function getLastInsertedId()
+    public function getLastInsertedId(): int
     {
         return $this->wpdb->insert_id;
     }
 
-    /**
-     * @return string
-     */
-    public function getLastErrorMessage()
+    public function getLastErrorMessage(): string
     {
         return $this->getWpdb()->last_error;
     }

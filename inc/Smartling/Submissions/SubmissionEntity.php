@@ -73,7 +73,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
      */
     public const SUBMISSION_STATUS_CANCELLED = 'Cancelled';
 
-    public static $submissionStatuses = [
+    public static array $submissionStatuses = [
         self::SUBMISSION_STATUS_NEW,
         self::SUBMISSION_STATUS_IN_PROGRESS,
         self::SUBMISSION_STATUS_COMPLETED,
@@ -110,10 +110,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
 
     public const VIRTUAL_FIELD_JOB_LINK = 'job_link';
 
-    /**
-     * @var JobInformationEntity
-     */
-    private $jobInformation;
+    private $jobInformation; // Typing this property would cause \Error: must not be accessed before initialization
 
     public static function getFieldDefinitions(): array
     {
@@ -460,6 +457,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
      */
     public static function fromArray(array $array, LoggerInterface $logger): SubmissionEntity
     {
+        /** @var SubmissionEntity $obj */
         $obj = parent::fromArray($array, $logger);
 
         $obj->setContentType($obj->getContentType());

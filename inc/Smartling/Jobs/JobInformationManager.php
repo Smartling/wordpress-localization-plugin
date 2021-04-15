@@ -8,8 +8,8 @@ use Smartling\Helpers\ArrayHelper;
 
 class JobInformationManager
 {
-    private $db;
-    private $tableName;
+    private SmartlingToCMSDatabaseAccessWrapperInterface $db;
+    private string $tableName;
 
     public function __construct(SmartlingToCMSDatabaseAccessWrapperInterface $db)
     {

@@ -24,10 +24,8 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
 {
-
     protected function registerPostTypes()
     {
-
         if (!function_exists('create_initial_post_types')) {
             require_once ABSPATH . '/wp-includes/post.php';
             create_initial_post_types();
@@ -72,16 +70,11 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
                     ],
             ]);
         }
-
-
     }
 
     protected function ensureProfileExists()
     {
         if (false === $this->getProfileById(1)) {
-            /**
-             * @var ConfigurationProfileEntity $profile
-             */
             $profile = $this->createProfile();
 
             $this->getSettingsManager()->storeEntity($profile);
@@ -121,36 +114,20 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         GlobalSettingsManager::setHandleRelationsManually(0);
     }
 
+    protected ConfigurationProfileEntity $profile;
 
-    /**
-     * @var ConfigurationProfileEntity
-     */
-    protected $profile;
-
-    /**
-     * @param string $envVar
-     *
-     * @return string
-     */
-    private function getWPcliEnv($envVar = 'WPCLI')
+    private function getWPcliEnv(): string
     {
-        return getenv($envVar);
+        return getenv('WPCLI');
+    }
+
+    private function getWPInstallDirEnv(): string
+    {
+        return getenv('WP_INSTALL_DIR');
     }
 
     /**
-     * @param string $envVar
-     *
-     * @return string
-     */
-    private function getWPInstallDirEnv($envVar = 'WP_INSTALL_DIR')
-    {
-        return getenv($envVar);
-    }
-
-    /**
-     * @param \Smartling\Submissions\SubmissionEntity $submission
-     *
-     * @return bool|mixed
+     * @return bool|SubmissionEntity
      */
     protected function uploadDownload(SubmissionEntity $submission)
     {
@@ -160,13 +137,13 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         return $this->getSubmissionById($submission->getId());
     }
 
-    protected function editPost($edit = [])
+    protected function editPost(array $edit = []): void
     {
         wp_update_post($edit);
         self::flush_cache();
     }
 
-    protected function forceSubmissionDownload(SubmissionEntity $submission)
+    protected function forceSubmissionDownload(SubmissionEntity $submission): void
     {
         $queue = $this->get('queue.db');
         /**
@@ -176,12 +153,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         $this->executeDownload();
     }
 
-    /**
-     * @param string $command
-     * @param string $subCommand
-     * @param string $params
-     */
-    protected function wpcli_exec($command, $subCommand, $params)
+    protected function wpcli_exec(string $command, string $subCommand, string $params): void
     {
         shell_exec(
             vsprintf(
@@ -197,61 +169,49 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         );
     }
 
-    /**
-     * @return ContainerBuilder
-     * @throws \Smartling\Exception\SmartlingConfigException
-     */
-    protected function getContainer()
+    protected function getContainer(): ContainerBuilder
     {
         return Bootstrap::getContainer();
     }
 
-    /**
-     * @return SettingsManager
-     */
-    protected function getSettingsManager()
+    protected function getSettingsManager(): SettingsManager
     {
         return $this->get('manager.settings');
     }
 
-    /**
-     * @return SubmissionManager
-     */
-    protected function getSubmissionManager()
+    protected function getSubmissionManager(): SubmissionManager
     {
         return $this->get('manager.submission');
     }
 
-    /**
-     * @return TranslationHelper
-     */
-    protected function getTranslationHelper()
+    protected function getTranslationHelper(): TranslationHelper
     {
         return $this->get('translation.helper');
     }
 
     /**
      * @return mixed
+     * @noinspection PhpReturnDocTypeMismatchInspection
      */
     protected function get(string $tag)
     {
         return $this->getContainer()->get($tag);
     }
 
-    protected function param($tag)
+    /**
+     * @return mixed
+     */
+    protected function param(string $tag)
     {
         return $this->getContainer()->getParameter($tag);
     }
 
-    /**
-     * @return LoggerInterface
-     */
-    protected function getLogger()
+    protected function getLogger(): LoggerInterface
     {
         return MonologWrapper::getLogger(get_called_class());
     }
 
-    protected function createProfile()
+    protected function createProfile(): ConfigurationProfileEntity
     {
         $profile = new ConfigurationProfileEntity();
         $profile->setProfileName('testProfile');
@@ -302,12 +262,18 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         return $profile;
     }
 
-    protected function createAttachment($filename = 'canola.jpg')
+    /**
+     * @return int|\WP_Error
+     */
+    protected function createAttachment(string $filename = 'canola.jpg')
     {
         return $this->factory()->attachment->create_upload_object(DIR_TESTDATA . '/' . $filename);
     }
 
-    protected function createPost($post_type = 'post', $title = 'title', $content = 'content')
+    /**
+     * @return mixed
+     */
+    protected function createPost(string $post_type = 'post', string $title = 'title', string $content = 'content')
     {
         return $this->factory()->post->create_object(
             [
@@ -319,12 +285,12 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
             ]);
     }
 
-    private function runCronTask($task)
+    private function runCronTask(string $task): void
     {
         $this->wpcli_exec('cron', 'event', vsprintf('run %s', [$task]));
     }
 
-    protected function executeUpload()
+    protected function executeUpload(): void
     {
         /**
          * Should be executed twice.
@@ -335,50 +301,29 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         $this->runCronTask(UploadJob::JOB_HOOK_NAME);
     }
 
-    protected function executeDownload()
+    protected function executeDownload(): void
     {
-
         $this->runCronTask(DownloadTranslationJob::JOB_HOOK_NAME);
     }
 
-    /**
-     * @param string $contentType
-     * @param int    $sourceId
-     * @param int    $sourceBlogId
-     * @param int    $targetBlogId
-     *
-     * @return SubmissionEntity
-     */
-    protected function createSubmission($contentType, $sourceId, $sourceBlogId = 1, $targetBlogId = 2)
+    protected function createSubmission(string $contentType, int $sourceId, int $sourceBlogId = 1, int $targetBlogId = 2): SubmissionEntity
     {
-        $submission = $this->getTranslationHelper()
+        return $this->getTranslationHelper()
             ->prepareSubmission($contentType, $sourceBlogId, $sourceId, $targetBlogId);
-
-        return $submission;
     }
 
-    /**
-     * @return ContentHelper
-     */
-    protected function getContentHelper()
+    protected function getContentHelper(): ContentHelper
     {
-        /**
-         * @var ContentHelper $contentHelper
-         */
-        $contentHelper = $this->get('content.helper');
-
-        return $contentHelper;
+        return $this->get('content.helper');
     }
 
     /**
-     * @param $id
-     *
      * @return bool|ConfigurationProfileEntity
      */
-    public function getProfileById($id)
+    public function getProfileById(int $id)
     {
         $result = $this->getSettingsManager()->getEntityById($id);
-        if (0 < $this->count($result)) {
+        if (0 < count($result)) {
             return ArrayHelper::first($result);
         }
 
@@ -386,29 +331,19 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
     }
 
     /**
-     * @param $id
-     *
      * @return bool|SubmissionEntity
      */
-    public function getSubmissionById($id)
+    public function getSubmissionById(int $id)
     {
         $result = $this->getSubmissionManager()->getEntityById($id);
-        if (0 < $this->count($result)) {
+        if (0 < count($result)) {
             return ArrayHelper::first($result);
         }
 
         return false;
     }
 
-    /**
-     * @param string $title
-     * @param string $body
-     * @param string $post_type
-     * @param array  $meta
-     *
-     * @return int
-     */
-    protected function createPostWithMeta($title, $body, $post_type = 'post', array $meta)
+    protected function createPostWithMeta(string $title, string $body, string $post_type, array $meta): int
     {
         $template = [
             'post_title'   => $title,
@@ -418,20 +353,16 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
             'meta_input'   => $meta,
         ];
 
-        $postId = $this->factory()->post->create_object($template);
-
-        return $postId;
+        return $this->factory()->post->create_object($template);
     }
 
-    protected function createTerm($name, $taxonomy = 'category')
+    protected function createTerm(string $name, string $taxonomy = 'category'): int
     {
         $categoryResult = wp_insert_term($name, $taxonomy);
-        $categoryId = $categoryResult['term_id'];
-
-        return $categoryId;
+        return $categoryResult['term_id'];
     }
 
-    protected function addTaxonomyToPost($postId, $termId) {
+    protected function addTaxonomyToPost(int $postId, int $termId): void {
         global $wpdb;
         $queryTemplate = "REPLACE INTO `%sterm_relationships` VALUES('%s', '%s', 0)";
         $query = vsprintf($queryTemplate, [$wpdb->base_prefix, $postId, $termId]);

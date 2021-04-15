@@ -11,9 +11,8 @@ use Smartling\MonologWrapper\MonologWrapper;
 
 class SiteHelper
 {
-    private $logger;
-
-    private $initialBlogId;
+    private LoggerInterface $logger;
+    private int $initialBlogId;
 
     public function getInitialBlogId(): int
     {
@@ -30,12 +29,12 @@ class SiteHelper
     /**
      * @var int[][]
      */
-    protected static $_siteCache = [];
+    protected static array $_siteCache = [];
 
     /**
      * @var int[]
      */
-    protected static $_flatBlogIdCache = [];
+    protected static array $_flatBlogIdCache = [];
 
     /**
      * Fallback for direct run if Wordpress functionality is not reachable

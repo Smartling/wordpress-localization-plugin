@@ -248,7 +248,6 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
             );
 
             $profile->setLocale($locale);
-
         }
 
         if (array_key_exists('targetLocales', $settings)) {

@@ -16,7 +16,6 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
-use Smartling\Jobs\JobInformationEntity;
 use Smartling\Queue\Queue;
 use Smartling\Settings\Locale;
 use Smartling\Submissions\SubmissionEntity;
@@ -46,10 +45,10 @@ class SubmissionTableWidget extends SmartlingListTable
     private const SUBMISSION_CLONED_STATE = 'state_cloned';
     private const SUBMISSION_TARGET_LOCALE = 'target-locale';
 
-    private $logger;
-    private $manager;
-    private $entityHelper;
-    private $queue;
+    private LoggerInterface $logger;
+    private SubmissionManager $manager;
+    private EntityHelper $entityHelper;
+    private Queue $queue;
 
     public function getLogger(): LoggerInterface
     {
@@ -71,12 +70,12 @@ class SubmissionTableWidget extends SmartlingListTable
         $this->queue = $queue;
     }
 
-    private $_custom_controls_namespace = 'smartling-submissions-page';
+    private string $_custom_controls_namespace = 'smartling-submissions-page';
 
     /**
      * default values of custom form elements on page
      */
-    private $defaultValues = [
+    private array $defaultValues = [
         self::CONTENT_TYPE_SELECT_ELEMENT_NAME => 'any',
         self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME => null,
         self::SUBMISSION_OUTDATED_STATE => 'any',
@@ -85,7 +84,7 @@ class SubmissionTableWidget extends SmartlingListTable
         self::SUBMISSION_LOCKED_STATE => 'any',
     ];
 
-    private $_settings = ['singular' => 'submission', 'plural' => 'submissions', 'ajax' => false,];
+    private array $_settings = ['singular' => 'submission', 'plural' => 'submissions', 'ajax' => false,];
 
     public function __construct(SubmissionManager $manager, EntityHelper $entityHelper, Queue $queue)
     {

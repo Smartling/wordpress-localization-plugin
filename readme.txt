@@ -1,9 +1,9 @@
 === Smartling Connector ===
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
-Requires at least: 4.6
-Tested up to: 5.5
-Stable tag: 2.0.1
+Requires at least: 5.5
+Tested up to: 5.7
+Stable tag: 2.1.0
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.

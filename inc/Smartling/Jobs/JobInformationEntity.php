@@ -14,12 +14,12 @@ class JobInformationEntity implements SmartlingTableDefinitionInterface
     public const FIELD_PROJECT_UID = 'project_uid';
     public const FIELD_SUBMISSION_ID = 'submission_id';
 
-    private $batchUid;
-    private $id;
-    private $jobName;
-    private $jobUid;
-    private $projectUid;
-    private $submissionId;
+    private string $batchUid;
+    private ?int $id;
+    private string $jobName;
+    private string $jobUid;
+    private string $projectUid;
+    private ?int $submissionId;
 
     public function __construct(string $batchUid, string $jobName, string $jobUid, string $projectUid, int $submissionId = null, int $id = null)
     {

@@ -19,9 +19,9 @@ use Smartling\Jobs\JobInformationManager;
 
 class SubmissionManager extends EntityManagerAbstract
 {
-    private $jobInformationManager;
-    private $jobsTableAlias = 'j';
-    private $submissionTableAlias = 's';
+    private JobInformationManager $jobInformationManager;
+    private string $jobsTableAlias = 'j';
+    private string $submissionTableAlias = 's';
 
     public function getSubmissionStatusLabels(): array
     {
@@ -391,7 +391,7 @@ class SubmissionManager extends EntityManagerAbstract
      */
     public function storeEntity(SubmissionEntity $entity): SubmissionEntity
     {
-        $originalSubmission = json_encode($entity->toArray(false));
+        $originalSubmission = json_encode($entity->toArray(false), JSON_THROW_ON_ERROR);
         $this->getLogger()->debug(vsprintf('Starting saving submission: %s', [$originalSubmission]));
         $submissionId = $entity->id;
 

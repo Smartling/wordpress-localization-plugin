@@ -7,17 +7,12 @@ class ConditionBlock
     /**
      * @var Condition[]
      */
-    private $conditions = [];
-
+    private array $conditions = [];
     /**
      * @var ConditionBlock[]
      */
-    private $blocks = [];
-
-    /**
-     * @var string
-     */
-    private $operator;
+    private array $blocks = [];
+    private string $operator;
 
     public function __construct(string $conditionOperator)
     {

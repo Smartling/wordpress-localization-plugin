@@ -2,68 +2,30 @@
 
 namespace Smartling\DbAl;
 
-/**
- * Interface SmartlingToCMSDatabaseAccessWrapperInterface
- *
- * @package Smartling\DbAl
- */
 interface SmartlingToCMSDatabaseAccessWrapperInterface
 {
+    public const SORT_OPTION_ASC = 'ASC';
+    public const SORT_OPTION_DESC = 'DESC';
 
     /**
-     * the look of acs sort direction
-     */
-    const SORT_OPTION_ASC = 'ASC';
-
-    /**
-     * the look of desc sort direction
-     */
-    const SORT_OPTION_DESC = 'DESC';
-
-    /**
-     * Executes SQL query and returns the result
-     *
-     * @param $query
-     *
-     * @return mixed
-     */
-    function query($query);
-
-    /**
-     * Fetches data from database
-     *
      * @param string $query
-     * @param string $output \OBJECT || \ARRAY_A
-     *
      * @return mixed
      */
-    public function fetch($query, $output = OBJECT);
+    public function query(string $query);
 
     /**
-     * Escape string value
-     *
-     * @param string $string
-     *
+     * @param string $output \OBJECT || \ARRAY_A
      * @return mixed
      */
-    function escape($string);
+    public function fetch(string $query, string $output = OBJECT);
+
+    public function escape(string $string): string;
 
     public function completeTableName(string $tableName): string;
 
-    /**
-     * @param $tableName
-     *
-     * @return mixed
-     */
-    public function completeMultisiteTableName($tableName);
+    public function completeMultisiteTableName(string $tableName): string;
 
-    /**
-     * @return integer
-     */
-    function getLastInsertedId();
+    public function getLastInsertedId(): int;
 
-    /**
-     * @return string
-     */
-    function getLastErrorMessage();
+    public function getLastErrorMessage(): string;
 }
