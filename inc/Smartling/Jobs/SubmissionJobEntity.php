@@ -5,33 +5,23 @@ namespace Smartling\Jobs;
 use Smartling\Base\SmartlingEntityAbstract;
 use Smartling\SmartlingTableDefinitionInterface;
 
-class JobInformationEntity implements SmartlingTableDefinitionInterface
+class SubmissionJobEntity implements SmartlingTableDefinitionInterface
 {
     public const FIELD_CREATED = 'created';
     public const FIELD_ID = 'id';
-    public const FIELD_JOB_NAME = 'job_name';
-    public const FIELD_JOB_UID = 'job_uid';
+    public const FIELD_JOB_ID = 'job_id';
     public const FIELD_MODIFIED = 'modified';
-    public const FIELD_PROJECT_UID = 'project_uid';
+    public const FIELD_SUBMISSION_ID = 'submission_id';
 
-    private string $batchUid;
     private ?int $id;
-    private string $jobName;
-    private string $jobUid;
-    private string $projectUid;
+    private int $jobId;
+    private int $submissionId;
 
-    public function __construct(string $batchUid, string $jobName, string $jobUid, string $projectUid, int $id = null)
+    public function __construct(int $jobId, int $submissionId, int $id = null)
     {
-        $this->batchUid = $batchUid;
         $this->id = $id;
-        $this->jobName = $jobName;
-        $this->jobUid = $jobUid;
-        $this->projectUid = $projectUid;
-    }
-
-    public function getBatchUid(): string
-    {
-        return $this->batchUid;
+        $this->jobId = $jobId;
+        $this->submissionId = $submissionId;
     }
 
     public function getId(): ?int
@@ -39,19 +29,14 @@ class JobInformationEntity implements SmartlingTableDefinitionInterface
         return $this->id;
     }
 
-    public function getJobName(): string
+    public function getJobId(): int
     {
-        return $this->jobName;
+        return $this->jobId;
     }
 
-    public function getJobUid(): string
+    public function getSubmissionId(): int
     {
-        return $this->jobUid;
-    }
-
-    public function getProjectUid(): string
-    {
-        return $this->projectUid;
+        return $this->submissionId;
     }
 
     public static function getFieldLabels(): array
@@ -63,9 +48,8 @@ class JobInformationEntity implements SmartlingTableDefinitionInterface
     {
         return [
             self::FIELD_ID => SmartlingEntityAbstract::DB_TYPE_U_BIGINT . ' ' . SmartlingEntityAbstract::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
-            self::FIELD_JOB_NAME => SmartlingEntityAbstract::DB_TYPE_STRING_STANDARD . ' ' . SmartlingEntityAbstract::DB_TYPE_DEFAULT_EMPTYSTRING,
-            self::FIELD_JOB_UID => SmartlingEntityAbstract::DB_TYPE_STRING_64 . ' ' . SmartlingEntityAbstract::DB_TYPE_DEFAULT_EMPTYSTRING,
-            self::FIELD_PROJECT_UID => SmartlingEntityAbstract::DB_TYPE_STRING_64 . ' ' . SmartlingEntityAbstract::DB_TYPE_DEFAULT_EMPTYSTRING,
+            self::FIELD_JOB_ID => SmartlingEntityAbstract::DB_TYPE_U_BIGINT,
+            self::FIELD_SUBMISSION_ID => SmartlingEntityAbstract::DB_TYPE_U_BIGINT,
             self::FIELD_CREATED => SmartlingEntityAbstract::DB_TYPE_DATETIME,
             self::FIELD_MODIFIED => SmartlingEntityAbstract::DB_TYPE_DATETIME,
         ];
@@ -83,12 +67,16 @@ class JobInformationEntity implements SmartlingTableDefinitionInterface
                 'type' => 'primary',
                 'columns' => [self::FIELD_ID],
             ],
+            [
+                'type' => 'index',
+                'columns' => [self::FIELD_SUBMISSION_ID],
+            ],
         ];
     }
 
     public static function getTableName(): string
     {
-        return 'smartling_jobs';
+        return 'smartling_submissions_jobs';
     }
 
     public static function getFieldLabel($fieldName)

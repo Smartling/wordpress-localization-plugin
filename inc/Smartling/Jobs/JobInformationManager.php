@@ -20,18 +20,14 @@ class JobInformationManager
     public function store(JobInformationEntity $jobInfo): JobInformationEntity
     {
         $this->db->query(sprintf(
-            "INSERT INTO %s (%s, %s, %s, %s, %s) values (%d, '%s', '%s', '%s', '%s')",
+            "INSERT INTO %s (%s, %s, %s) values ('%s', '%s', '%s')",
             $this->db->completeTableName(JobInformationEntity::getTableName()),
-            JobInformationEntity::FIELD_SUBMISSION_ID,
-            JobInformationEntity::FIELD_BATCH_UID,
             JobInformationEntity::FIELD_JOB_NAME,
             JobInformationEntity::FIELD_JOB_UID,
             JobInformationEntity::FIELD_PROJECT_UID,
-            $jobInfo->getSubmissionId(),
-            $jobInfo->getBatchUid(),
             $jobInfo->getJobName(),
             $jobInfo->getJobUid(),
-            $jobInfo->getProjectUid()
+            $jobInfo->getProjectUid(),
         ));
 
         return $this->getById($this->db->getLastInsertedId());
@@ -40,11 +36,6 @@ class JobInformationManager
     public function getById(int $id): JobInformationEntity
     {
         return $this->getOne($id, JobInformationEntity::FIELD_ID);
-    }
-
-    public function getBySubmissionId(int $id): JobInformationEntity
-    {
-        return $this->getOne($id, JobInformationEntity::FIELD_SUBMISSION_ID);
     }
 
     public function getLastNotEmptyBySubmissionId(int $id): ?JobInformationEntity
@@ -80,11 +71,9 @@ class JobInformationManager
         }
         $result = ArrayHelper::first($result);
         return new JobInformationEntity(
-            $result[JobInformationEntity::FIELD_BATCH_UID],
             $result[JobInformationEntity::FIELD_JOB_NAME],
             $result[JobInformationEntity::FIELD_JOB_UID],
             $result[JobInformationEntity::FIELD_PROJECT_UID],
-            (int)$result[JobInformationEntity::FIELD_SUBMISSION_ID],
             (int)$result[JobInformationEntity::FIELD_ID]
         );
     }
