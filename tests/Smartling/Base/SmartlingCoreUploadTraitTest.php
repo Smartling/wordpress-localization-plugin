@@ -23,10 +23,10 @@ require __DIR__ . '/../../wordpressBlocks.php';
 class SmartlingCoreUpload {
     use SmartlingCoreUploadTrait;
 
-    private $contentHelper;
-    private $fieldsFilterHelper;
-    private $settingsManager;
-    private $submissionManager;
+    private ContentHelper $contentHelper;
+    private FieldsFilterHelper $fieldsFilterHelper;
+    private SettingsManager $settingsManager;
+    private SubmissionManager $submissionManager;
 
     public function __construct(ContentHelper $contentHelper, FieldsFilterHelper $fieldsFilterHelper, SettingsManager $settingsManager, SubmissionManager $submissionManager)
     {
@@ -72,10 +72,7 @@ class SmartlingCoreUpload {
 
 class SmartlingCoreUploadTraitTest extends TestCase
 {
-    /**
-     * @var PostEntityStd
-     */
-    private $resultEntity;
+    private PostEntityStd $resultEntity;
 
     public function setUp(): void
     {
@@ -84,7 +81,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
 
     public function testApplyXmlNoCleanMetadata()
     {
-        $submission = new SubmissionEntity();
+        $submission = $this->createMock(SubmissionEntity::class);
         $translatedFields = ['metaNotToTranslate' => 's:8:"Translated"', 'metaToTranslate' => '~Translated~'];
 
         $contentHelper = $this->getMockBuilder(ContentHelper::class)->disableOriginalConstructor()->getMock();
@@ -97,7 +94,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $fieldsFilterHelper->method('applyTranslatedValues')->willReturnArgument(2);
 
         $settingsManager = $this->getMockBuilder(SettingsManager::class)->disableOriginalConstructor()->getMock();
-        $settingsManager->method('getSingleSettingsProfile')->willReturn(new ConfigurationProfileEntity());
+        $settingsManager->method('getSingleSettingsProfile')->willReturn($this->createMock(ConfigurationProfileEntity::class));
 
         $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
         $submissionManager->method('storeEntity')->willReturnArgument(0);
@@ -116,9 +113,9 @@ class SmartlingCoreUploadTraitTest extends TestCase
 
     public function testApplyXmlCleanMetadata()
     {
-        $submission = new SubmissionEntity();
-        $submission->setLockedFields(['meta/locked']);
-        $submission->setTargetId('1');
+        $submission = $this->createMock(SubmissionEntity::class);
+        $submission->method('getLockedFields')->willReturn(['meta/locked']);
+        $submission->method('getTargetId')->willReturn(1 );
         $contentHelper = $this->getMockBuilder(ContentHelper::class)->disableOriginalConstructor()->getMock();
         $contentHelper->method('readSourceContent')->willReturnArgument(0);
         $contentHelper->method('readSourceMetadata')->willReturn([]);
@@ -211,9 +208,9 @@ HTML;
         $target = new PostEntityStd();
         $target->setPostContent($targetContent);
 
-        $submission = new SubmissionEntity();
-        $submission->setLockedFields(['entity/post_content/blocks/1']);
-        $submission->setTargetId('1');
+        $submission = $this->createMock(SubmissionEntity::class);
+        $submission->method('getLockedFields')->willReturn(['entity/post_content/blocks/1']);
+        $submission->method('getTargetId')->willReturn(1);
         $contentHelper = $this->getMockBuilder(ContentHelper::class)->disableOriginalConstructor()->getMock();
         $contentHelper->method('readSourceContent')->willReturnArgument(0);
         $contentHelper->method('readSourceMetadata')->willReturn([]);

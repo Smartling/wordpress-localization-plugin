@@ -1,15 +1,16 @@
 <?php
 
+use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\UiMessageHelper;
 use Smartling\WP\Table\SubmissionTableWidget;
+use Smartling\WP\WPAbstract;
 
 /**
  * @var WPAbstract $this
- * @var WPAbstract self
  */
 $data = $this->getViewData();
 ?>
-<?php if (!\Smartling\Helpers\DiagnosticsHelper::isBlocked()) : ?>
+<?php if (!DiagnosticsHelper::isBlocked()) : ?>
     <div class="wrap">
 
         <?php UiMessageHelper::displayMessages(); ?>

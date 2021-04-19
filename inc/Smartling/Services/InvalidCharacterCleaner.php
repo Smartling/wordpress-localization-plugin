@@ -15,7 +15,7 @@ class InvalidCharacterCleaner implements WPHookInterface
      * Registers wp hook handlers. Invoked by wordpress.
      * @return void
      */
-    public function register()
+    public function register(): void
     {
         add_action(ExportedAPI::EVENT_SMARTLING_BEFORE_SERIALIZE_CONTENT, [$this, 'cleanStrings']);
     }

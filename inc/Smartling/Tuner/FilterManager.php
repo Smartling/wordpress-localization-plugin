@@ -31,7 +31,7 @@ class FilterManager extends CustomizationManagerAbstract implements WPHookInterf
         return $items;
     }
 
-    public function register()
+    public function register(): void
     {
         add_filter('smartling_register_field_filter', [$this, 'injector']);
     }

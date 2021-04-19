@@ -5,31 +5,25 @@ namespace Smartling\Base;
 use Psr\Log\LoggerInterface;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\SmartlingTableDefinitionInterface;
-use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Class SmartlingEntityAbstract
- *
- * @package Smartling\Base
- */
 abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterface
 {
 
-    const DB_TYPE_INT_MODIFIER_AUTOINCREMENT = 'AUTO_INCREMENT';
-    const DB_TYPE_DEFAULT_ZERO               = 'DEFAULT \'0\'';
-    const DB_TYPE_DEFAULT_EMPTYSTRING        = 'DEFAULT \'\'';
+    public const DB_TYPE_INT_MODIFIER_AUTOINCREMENT = 'AUTO_INCREMENT';
+    public const DB_TYPE_DEFAULT_ZERO = 'DEFAULT \'0\'';
+    public const DB_TYPE_DEFAULT_EMPTYSTRING = 'DEFAULT \'\'';
 
-    const DB_TYPE_U_BIGINT        = 'INT(20) UNSIGNED NOT NULL'; // BIGINT alias of INT(20)
-    const DB_TYPE_DATETIME        = 'DATETIME NOT NULL DEFAULT \'0000-00-00 00:00:00\'';
-    const DB_TYPE_STRING_STANDARD = 'VARCHAR(255) NOT NULL';
-    const DB_TYPE_STRING_64       = 'VARCHAR(64) NOT NULL';
-    const DB_TYPE_STRING_SMALL    = 'VARCHAR(16) NOT NULL';
-    const DB_TYPE_UINT_SWITCH     = 'INT(1) UNSIGNED NOT NULL DEFAULT \'0\'';
-    const DB_TYPE_UINT_SWITCH_ON  = 'INT(1) UNSIGNED NOT NULL DEFAULT \'1\'';
+    public const DB_TYPE_U_BIGINT = 'INT(20) UNSIGNED NOT NULL'; // BIGINT alias of INT(20)
+    public const DB_TYPE_DATETIME = 'DATETIME NOT NULL DEFAULT \'0000-00-00 00:00:00\'';
+    public const DB_TYPE_STRING_STANDARD = 'VARCHAR(255) NOT NULL';
+    public const DB_TYPE_STRING_64 = 'VARCHAR(64) NOT NULL';
+    public const DB_TYPE_STRING_SMALL = 'VARCHAR(16) NOT NULL';
+    public const DB_TYPE_UINT_SWITCH = 'INT(1) UNSIGNED NOT NULL DEFAULT \'0\'';
+    public const DB_TYPE_UINT_SWITCH_ON = 'INT(1) UNSIGNED NOT NULL DEFAULT \'1\'';
 
-    const DB_TYPE_STRING_TEXT = 'TEXT NOT NULL DEFAULT \'\'';
+    public const DB_TYPE_STRING_TEXT = 'TEXT NOT NULL DEFAULT \'\'';
 
-    const DB_TYPE_HASH_MD5 = 'CHAR(32) NOT NULL';
+    public const DB_TYPE_HASH_MD5 = 'CHAR(32) NOT NULL';
     /**
      * @var array
      */
@@ -148,15 +142,10 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
     /**
      * Converts associative array to entity
      * array keys must match field names;
-     *
-     * @param array           $array
-     * @param LoggerInterface $logger
-     *
-     * @return SubmissionEntity
      */
     public static function fromArray(array $array, LoggerInterface $logger)
     {
-        $obj = static::getInstance($logger);
+        $obj = static::getInstance();
 
         foreach ($array as $field => $value) {
             $obj->$field = $value;

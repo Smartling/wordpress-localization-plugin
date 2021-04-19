@@ -199,7 +199,7 @@ class ConfigurationProfilesWidget extends \WP_List_Table
 
         $total = 0;
 
-        $data = $this->manager->getEntities([], null, $total, false);
+        $data = $this->manager->getEntities($total, false);
 
         $dataAsArray = [];
         $types = ConfigurationProfileEntity::getRetrievalTypes();

@@ -61,7 +61,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
      * Registers wp hook handlers. Invoked by wordpress.
      * @return void
      */
-    public function register()
+    public function register(): void
     {
         add_action('admin_enqueue_scripts', [$this, 'wp_enqueue']);
         add_action('admin_menu', [$this, 'menu']);

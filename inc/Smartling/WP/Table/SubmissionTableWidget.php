@@ -4,6 +4,7 @@ namespace Smartling\WP\Table;
 
 use Psr\Log\LoggerInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Exception\BlogNotFoundException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DateTimeHelper;
@@ -21,117 +22,70 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\Controller\SmartlingListTable;
 
-/**
- * Class SubmissionTableWidget
- * @package Smartling\WP\Table
- */
 class SubmissionTableWidget extends SmartlingListTable
 {
-
     use CommonLogMessagesTrait;
 
-    const ACTION_UPLOAD   = 'send';
-    const ACTION_DOWNLOAD = 'download';
-    const ACTION_LOCK     = 'lock';
-    const ACTION_UNLOCK   = 'unlock';
+    private const ACTION_DOWNLOAD = 'download';
+    private const ACTION_LOCK = 'lock';
+    private const ACTION_UNLOCK = 'unlock';
 
     /**
      * base name of Content-type filtering select
      */
-    const CONTENT_TYPE_SELECT_ELEMENT_NAME = 'content-type';
+    private const CONTENT_TYPE_SELECT_ELEMENT_NAME = 'content-type';
 
     /**
      * base name of status filtering select
      */
-    const SUBMISSION_STATUS_SELECT_ELEMENT_NAME = 'status';
+    private const SUBMISSION_STATUS_SELECT_ELEMENT_NAME = 'status';
 
+    private const SUBMISSION_OUTDATED_STATE = 'state_outdated';
+    private const SUBMISSION_LOCKED_STATE = 'state_locked';
+    private const SUBMISSION_CLONED_STATE = 'state_cloned';
+    private const SUBMISSION_TARGET_LOCALE = 'target-locale';
 
-    const SUBMISSION_OUTDATE_STATE = 'state_outdated';
+    private LoggerInterface $logger;
+    private SubmissionManager $manager;
+    private EntityHelper $entityHelper;
+    private Queue $queue;
 
-    const SUBMISSION_LOCKED_STATE = 'state_locked';
-
-    const SUBMISSION_CLONED_STATE = 'state_cloned';
-
-
-    const SUBMISSION_TARGET_LOCALE = 'target-locale';
-
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @var SubmissionManager $manager
-     */
-    private $manager;
-
-    /**
-     * @var EntityHelper
-     */
-    private $entityHelper;
-
-    /**
-     * @var Queue
-     */
-    private $queue;
-
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
+    public function getLogger(): LoggerInterface
     {
         return $this->logger;
     }
 
-    /**
-     * @param LoggerInterface $logger
-     */
-    private function setLogger($logger)
+    private function setLogger(LoggerInterface $logger): void
     {
         $this->logger = $logger;
     }
 
-    /**
-     * @return Queue
-     */
-    public function getQueue()
+    public function getQueue(): Queue
     {
         return $this->queue;
     }
 
-    /**
-     * @param mixed $queue
-     */
-    public function setQueue($queue)
+    public function setQueue(Queue $queue): void
     {
         $this->queue = $queue;
     }
 
-    /**
-     * @var string
-     */
-    private $_custom_controls_namespace = 'smartling-submissions-page';
+    private string $_custom_controls_namespace = 'smartling-submissions-page';
 
     /**
      * default values of custom form elements on page
-     * @var array
      */
-    private $defaultValues = [
-        self::CONTENT_TYPE_SELECT_ELEMENT_NAME      => 'any',
+    private array $defaultValues = [
+        self::CONTENT_TYPE_SELECT_ELEMENT_NAME => 'any',
         self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME => null,
-        self::SUBMISSION_OUTDATE_STATE              => 'any',
-        self::SUBMISSION_TARGET_LOCALE              => 'any',
-        self::SUBMISSION_CLONED_STATE               => 'any',
-        self::SUBMISSION_LOCKED_STATE               => 'any',
+        self::SUBMISSION_OUTDATED_STATE => 'any',
+        self::SUBMISSION_TARGET_LOCALE => 'any',
+        self::SUBMISSION_CLONED_STATE => 'any',
+        self::SUBMISSION_LOCKED_STATE => 'any',
     ];
 
-    private $_settings = ['singular' => 'submission', 'plural' => 'submissions', 'ajax' => false,];
+    private array $_settings = ['singular' => 'submission', 'plural' => 'submissions', 'ajax' => false,];
 
-    /**
-     * @param SubmissionManager $manager
-     * @param EntityHelper      $entityHelper
-     * @param Queue             $queue
-     */
     public function __construct(SubmissionManager $manager, EntityHelper $entityHelper, Queue $queue)
     {
         $this->setQueue($queue);
@@ -146,13 +100,7 @@ class SubmissionTableWidget extends SmartlingListTable
         parent::__construct($this->_settings);
     }
 
-    /**
-     * @param string $fieldNameKey
-     * @param string $orderDirectionKey
-     *
-     * @return array
-     */
-    public function getSortingOptions($fieldNameKey = 'orderby', $orderDirectionKey = 'order')
+    public function getSortingOptions(string $fieldNameKey = 'orderby', string $orderDirectionKey = 'order'): array
     {
         $options = [];
 
@@ -167,22 +115,22 @@ class SubmissionTableWidget extends SmartlingListTable
         return $options;
     }
 
+    /**
+     * @param object $item
+     * @param string $column_name
+     * @return mixed
+     */
     public function column_default($item, $column_name)
     {
-        switch ($column_name) {
-            default:
-                return $item[$column_name];
-        }
+        return $item[$column_name];
     }
 
     /**
      * Generates a checkbox for a row to add row to bulk actions
      *
      * @param array $item
-     *
-     * @return string
      */
-    public function column_cb($item)
+    public function column_cb($item): string
     {
         return HtmlTagGeneratorHelper::tag(
             'input',
@@ -197,24 +145,15 @@ class SubmissionTableWidget extends SmartlingListTable
         );
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function get_columns()
+    public function get_columns(): array
     {
         $columns = $this->manager->getColumnsLabels();
-
         $columns['outdated'] = 'States';
 
-        $columns = array_merge(['bulkActionCb' => '<input type="checkbox" class="checkall" />'], $columns);
-
-        return $columns;
+        return array_merge(['bulkActionCb' => '<input type="checkbox" class="checkall" />'], $columns);
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function get_sortable_columns()
+    public function get_sortable_columns(): array
     {
 
         $fields = $this->manager->getSortableFields();
@@ -228,24 +167,19 @@ class SubmissionTableWidget extends SmartlingListTable
         return $sortable_columns;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function get_bulk_actions()
+    public function get_bulk_actions(): array
     {
-        $actions = [
+        return [
             self::ACTION_DOWNLOAD => __('Enqueue for Download'),
             self::ACTION_LOCK     => __('Lock translation'),
             self::ACTION_UNLOCK   => __('Unlock translation'),
         ];
-
-        return $actions;
     }
 
     /**
-     * Handles actions for multiply objects
+     * Handles actions for multiple objects
      */
-    private function processBulkAction()
+    private function processBulkAction(): void
     {
         /**
          * @var int[] $submissionsIds
@@ -283,78 +217,54 @@ class SubmissionTableWidget extends SmartlingListTable
     /**
      * Handles actions
      */
-    private function processAction()
+    private function processAction(): void
     {
         try {
             $this->processBulkAction();
-        } catch (EntityNotFoundException $e) {
-            $msg = 'An error occurred, the database is corrupted. ' . $e->getMessage();
-            DiagnosticsHelper::addDiagnosticsMessage($msg);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             DiagnosticsHelper::addDiagnosticsMessage($e->getMessage());
         }
     }
 
-    /**
-     * @return string|null
-     */
-    private function getContentTypeFilterValue()
+    private function getContentTypeFilterValue(): ?string
     {
         $value = $this->getFormElementValue(self::CONTENT_TYPE_SELECT_ELEMENT_NAME, $this->defaultValues[self::CONTENT_TYPE_SELECT_ELEMENT_NAME]);
 
         return 'any' === $value ? null : $value;
     }
 
-    /**
-     * @return string|null
-     */
-    private function getStatusFilterValue()
+    private function getStatusFilterValue(): ?string
     {
         $value = $this->getFormElementValue(self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME, $this->defaultValues[self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME]);
 
         return 'any' === $value ? null : $value;
     }
 
-    /**
-     * @return int|null
-     */
-    private function getOutdatedFlagFilterValue()
+    private function getOutdatedFlagFilterValue(): ?int
     {
-        $value = $this->getFormElementValue(self::SUBMISSION_OUTDATE_STATE, $this->defaultValues[self::SUBMISSION_OUTDATE_STATE]);
+        $value = $this->getFormElementValue(self::SUBMISSION_OUTDATED_STATE, $this->defaultValues[self::SUBMISSION_OUTDATED_STATE]);
 
         return 'any' === $value ? null : (int)$value;
     }
 
-    /**
-     * @return int|null
-     */
-    private function getLockedFlagFilterValue()
+    private function getLockedFlagFilterValue(): ?string
     {
         return $this->getFormElementValue(self::SUBMISSION_LOCKED_STATE, $this->defaultValues[self::SUBMISSION_LOCKED_STATE]);
     }
 
-    /**
-     * @return int|null
-     */
-    private function getClonedFlagFilterValue()
+    private function getClonedFlagFilterValue(): ?string
     {
         return $this->getFormElementValue(self::SUBMISSION_CLONED_STATE, $this->defaultValues[self::SUBMISSION_CLONED_STATE]);
     }
 
-    /**
-     * @return int|null
-     */
-    private function getTargetLocaleFilterValue()
+    private function getTargetLocaleFilterValue(): ?int
     {
         $value = $this->getFormElementValue(self::SUBMISSION_TARGET_LOCALE, $this->defaultValues[self::SUBMISSION_TARGET_LOCALE]);
 
         return 'any' === $value ? null : (int)$value;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function prepare_items()
+    public function prepare_items(): void
     {
         $siteHelper = $this->entityHelper->getSiteHelper();
         $pageOptions = ['limit' => $this->manager->getPageSize(), 'page' => $this->get_pagenum(),];
@@ -372,7 +282,6 @@ class SubmissionTableWidget extends SmartlingListTable
         $clonedFlag = $this->getClonedFlagFilterValue();
         $targetLocale = $this->getTargetLocaleFilterValue();
         $searchText = $this->getFromSource('s', '');
-
 
         $block = ConditionBlock::getConditionBlock();
 
@@ -488,11 +397,9 @@ class SubmissionTableWidget extends SmartlingListTable
                 $shrinked = mb_substr($orig, 0, $file_uri_max_chars - 3, 'utf8') . '...';
 
                 $row[SubmissionEntity::FIELD_FILE_URI] = HtmlTagGeneratorHelper::tag('span', $shrinked, ['title' => $orig]);
-
             }
 
-
-            $row = array_merge(['bulkActionCb' => $this->column_cb($row)], $row);
+            $row['bulkActionCb'] = $this->column_cb($row);
 
             $dataAsArray[] = $row;
         }
@@ -504,10 +411,7 @@ class SubmissionTableWidget extends SmartlingListTable
                                     'total_pages' => ceil($total / $pageOptions['limit']),]);
     }
 
-    /**
-     * @return string
-     */
-    public function statusSelectRender()
+    public function statusSelectRender(): string
     {
         $controlName = 'status';
 
@@ -518,19 +422,19 @@ class SubmissionTableWidget extends SmartlingListTable
 
         $value = $this->getFormElementValue($controlName, $this->defaultValues[$controlName]);
 
-        $html = HtmlTagGeneratorHelper::tag('label', __('Status'), ['for' => $this->buildHtmlTagName($controlName),]) .
-                HtmlTagGeneratorHelper::tag('select', HtmlTagGeneratorHelper::renderSelectOptions($value, $statuses), ['id'   => $this->buildHtmlTagName($controlName),
-                                                                                                                       'name' => $this->buildHtmlTagName($controlName),]);
-
-        return $html;
+        return HtmlTagGeneratorHelper::tag('label', __('Status'), ['for' => $this->buildHtmlTagName($controlName),]) .
+            HtmlTagGeneratorHelper::tag(
+                'select',
+                HtmlTagGeneratorHelper::renderSelectOptions($value, $statuses), [
+                    'id' => $this->buildHtmlTagName($controlName),
+                    'name' => $this->buildHtmlTagName($controlName),
+                ]
+            );
     }
 
-    /**
-     * @return string
-     */
-    public function outdatedStateSelectRender()
+    public function outdatedStateSelectRender(): string
     {
-        $controlName = self::SUBMISSION_OUTDATE_STATE;
+        $controlName = self::SUBMISSION_OUTDATED_STATE;
 
         $states = [
             0 => __('Up to Date'),
@@ -542,17 +446,17 @@ class SubmissionTableWidget extends SmartlingListTable
 
         $value = $this->getFormElementValue($controlName, $this->defaultValues[$controlName]);
 
-        $html = HtmlTagGeneratorHelper::tag('label', __('Content Status'), ['for' => $this->buildHtmlTagName($controlName),]) .
-                HtmlTagGeneratorHelper::tag('select', HtmlTagGeneratorHelper::renderSelectOptions($value, $states), ['id'   => $this->buildHtmlTagName($controlName),
-                                                                                                                     'name' => $this->buildHtmlTagName($controlName),]);
-
-        return $html;
+        return HtmlTagGeneratorHelper::tag('label', __('Content Status'), ['for' => $this->buildHtmlTagName($controlName),]) .
+            HtmlTagGeneratorHelper::tag(
+                'select',
+                HtmlTagGeneratorHelper::renderSelectOptions($value, $states), [
+                'id' => $this->buildHtmlTagName($controlName),
+                'name' => $this->buildHtmlTagName($controlName),
+                ]
+            );
     }
 
-    /**
-     * @return string
-     */
-    public function lockedStateSelectRender()
+    public function lockedStateSelectRender(): string
     {
         $controlName = self::SUBMISSION_LOCKED_STATE;
 
@@ -566,17 +470,17 @@ class SubmissionTableWidget extends SmartlingListTable
 
         $value = $this->getFormElementValue($controlName, $this->defaultValues[$controlName]);
 
-        $html = HtmlTagGeneratorHelper::tag('label', __('Lock Status'), ['for' => $this->buildHtmlTagName($controlName),]) .
-                HtmlTagGeneratorHelper::tag('select', HtmlTagGeneratorHelper::renderSelectOptions($value, $states), ['id'   => $this->buildHtmlTagName($controlName),
-                                                                                                                     'name' => $this->buildHtmlTagName($controlName),]);
-
-        return $html;
+        return HtmlTagGeneratorHelper::tag('label', __('Lock Status'), ['for' => $this->buildHtmlTagName($controlName),]) .
+            HtmlTagGeneratorHelper::tag(
+                'select',
+                HtmlTagGeneratorHelper::renderSelectOptions($value, $states), [
+                    'id' => $this->buildHtmlTagName($controlName),
+                    'name' => $this->buildHtmlTagName($controlName),
+                ]
+            );
     }
 
-    /**
-     * @return string
-     */
-    public function clonedStateSelectRender()
+    public function clonedStateSelectRender(): string
     {
         $controlName = self::SUBMISSION_CLONED_STATE;
 
@@ -590,16 +494,19 @@ class SubmissionTableWidget extends SmartlingListTable
 
         $value = $this->getFormElementValue($controlName, $this->defaultValues[$controlName]);
 
-        $html = HtmlTagGeneratorHelper::tag('label', __('Clone Status'), ['for' => $this->buildHtmlTagName($controlName),]) .
-                HtmlTagGeneratorHelper::tag('select', HtmlTagGeneratorHelper::renderSelectOptions($value, $states), ['id'   => $this->buildHtmlTagName($controlName),
-                                                                                                                     'name' => $this->buildHtmlTagName($controlName),]);
-
-        return $html;
+        return HtmlTagGeneratorHelper::tag('label', __('Clone Status'), ['for' => $this->buildHtmlTagName($controlName),]) .
+            HtmlTagGeneratorHelper::tag(
+                'select',
+                HtmlTagGeneratorHelper::renderSelectOptions($value, $states), [
+                    'id' => $this->buildHtmlTagName($controlName),
+                    'name' => $this->buildHtmlTagName($controlName),
+                ]
+            );
     }
 
-    public function renderSearchBox()
+    public function renderSearchBox(): string
     {
-        $html = HtmlTagGeneratorHelper::tag('label', __('Search'), ['for' => 's'])
+        return HtmlTagGeneratorHelper::tag('label', __('Search'), ['for' => 's'])
                 . HtmlTagGeneratorHelper::tag(
                 'input',
                 '',
@@ -610,14 +517,9 @@ class SubmissionTableWidget extends SmartlingListTable
                     'placeholder' => __('Search text'),
                 ]
             );
-
-        return $html;
     }
 
-    /**
-     * @return string
-     */
-    public function targetLocaleSelectRender()
+    public function targetLocaleSelectRender(): string
     {
         $controlName = self::SUBMISSION_TARGET_LOCALE;
 
@@ -634,9 +536,6 @@ class SubmissionTableWidget extends SmartlingListTable
             }
         }
 
-        /**
-         * @var Locale[] $locales
-         */
         ArrayHelper::sortLocales($locales);
 
         $_locales = [
@@ -648,7 +547,7 @@ class SubmissionTableWidget extends SmartlingListTable
         }
 
         $value = $this->getFormElementValue($controlName, $this->defaultValues[$controlName]);
-        $html = HtmlTagGeneratorHelper::tag(
+        return HtmlTagGeneratorHelper::tag(
                 'label',
                 __('Target Site'),
                 ['for' => $this->buildHtmlTagName($controlName)]
@@ -657,15 +556,10 @@ class SubmissionTableWidget extends SmartlingListTable
                 HtmlTagGeneratorHelper::renderSelectOptions($value, $_locales),
                 ['id' => $this->buildHtmlTagName($controlName), 'name' => $this->buildHtmlTagName($controlName)]
             );
-
-        return $html;
     }
 
 
-    /**
-     * @return string
-     */
-    public function contentTypeSelectRender()
+    public function contentTypeSelectRender(): string
     {
         $controlName = 'content-type';
 
@@ -676,26 +570,21 @@ class SubmissionTableWidget extends SmartlingListTable
 
         $value = $this->getFormElementValue($controlName, $this->defaultValues[$controlName]);
 
-        $html = HtmlTagGeneratorHelper::tag('label', __('Type'), ['for' => $this->buildHtmlTagName($controlName),]) .
-                HtmlTagGeneratorHelper::tag('select', HtmlTagGeneratorHelper::renderSelectOptions($value, $types), ['id'   => $this->buildHtmlTagName($controlName),
-                                                                                                                    'name' => $this->buildHtmlTagName($controlName),]);
-
-        return $html;
+        return HtmlTagGeneratorHelper::tag('label', __('Type'), ['for' => $this->buildHtmlTagName($controlName),]) .
+            HtmlTagGeneratorHelper::tag(
+                'select',
+                HtmlTagGeneratorHelper::renderSelectOptions($value, $types), [
+                    'id' => $this->buildHtmlTagName($controlName),
+                    'name' => $this->buildHtmlTagName($controlName),
+                ]
+            );
     }
 
-    /**
-     * Renders button
-     *
-     * @param $label
-     *
-     * @return string
-     */
-    public function renderSubmitButton($label)
+    public function renderSubmitButton(string $label): string
     {
-        $id = $name = $this->buildHtmlTagName('go-and-filter');
+        $id = $this->buildHtmlTagName('go-and-filter');
 
         $options = ['id' => $id, 'name' => '', 'class' => 'button action',
-
         ];
 
         return HtmlTagGeneratorHelper::submitButton($label, $options);
@@ -709,7 +598,7 @@ class SubmissionTableWidget extends SmartlingListTable
      *
      * @return mixed
      */
-    private function getFormElementValue($name, $defaultValue)
+    private function getFormElementValue(string $name, $defaultValue)
     {
         return $this->getFromSource($this->buildHtmlTagName($name), $defaultValue);
     }
@@ -717,12 +606,8 @@ class SubmissionTableWidget extends SmartlingListTable
 
     /**
      * Builds unique name attribute value for HTML Form element tag
-     *
-     * @param string $name
-     *
-     * @return string
      */
-    private function buildHtmlTagName($name)
+    private function buildHtmlTagName(string $name): string
     {
         return $name;
     }

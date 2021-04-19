@@ -15,11 +15,6 @@ use Smartling\Tests\Traits\SettingsManagerMock;
 use Smartling\Tests\Traits\SiteHelperMock;
 use Smartling\Tests\Traits\SubmissionManagerMock;
 
-/**
- * Class DetectChangesHelperTest
- * @package Smartling\Tests\Smartling\Helpers
- * @covers  \Smartling\Helpers\DetectChangesHelper
- */
 class DetectChangesHelperTest extends TestCase
 {
     use InvokeMethodTrait;
@@ -29,9 +24,6 @@ class DetectChangesHelperTest extends TestCase
     use EntityHelperMock;
     use SiteHelperMock;
 
-    /**
-     * @covers \Smartling\Helpers\DetectChangesHelper::getSubmissions
-     */
     public function testGetSubmissionsWithExistingProfile()
     {
         $mock = $this->getSettingsManagerMock();
@@ -73,8 +65,7 @@ class DetectChangesHelperTest extends TestCase
                     SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
                     SubmissionEntity::SUBMISSION_STATUS_FAILED,
                 ]
-            ])
-            ->willReturn($profile);
+            ]);
 
         $helper = new DetectChangesHelper();
         $helper->setSettingsManager($mock);

@@ -7,24 +7,22 @@ use Smartling\Base\SmartlingEntityAbstract;
 use Smartling\WP\Controller\ConfigurationProfileFormController as Form;
 
 /**
- * Class ConfigurationProfileEntity
- * @package Smartling\Settings
+ * @property int|Locale original_blog_id
  */
 class ConfigurationProfileEntity extends SmartlingEntityAbstract
 {
+    private const REGEX_PROJECT_ID = '([0-9a-f]){9}';
 
-    const REGEX_PROJECT_ID = '([0-9a-f]){9}';
+    public const UPLOAD_ON_CHANGE_MANUAL = 0;
 
-    const UPLOAD_ON_CHANGE_MANUAL = 0;
+    public const UPLOAD_ON_CHANGE_AUTO = 1;
 
-    const UPLOAD_ON_CHANGE_AUTO = 1;
-
-    protected static function getInstance(LoggerInterface $logger)
+    protected static function getInstance(): ConfigurationProfileEntity
     {
-        return new static($logger);
+        return new static();
     }
 
-    public static function getRetrievalTypes()
+    public static function getRetrievalTypes(): array
     {
         return [
             'pseudo'    => __('Pseudo'),
@@ -32,10 +30,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         ];
     }
 
-    /**
-     * @return array
-     */
-    public static function getFieldLabels()
+    public static function getFieldLabels(): array
     {
         return [
             'id'                               => __('ID'),
@@ -53,10 +48,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         ];
     }
 
-    /**
-     * @return array
-     */
-    public static function getFieldDefinitions()
+    public static function getFieldDefinitions(): array
     {
         return [
             'id'                               => static::DB_TYPE_U_BIGINT . ' ' .
@@ -85,10 +77,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         ];
     }
 
-    /**
-     * @return array
-     */
-    public static function getSortableFields()
+    public static function getSortableFields(): array
     {
         return [
             'profile_name',
@@ -101,10 +90,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         ];
     }
 
-    /**
-     * @return array
-     */
-    public static function getIndexes()
+    public static function getIndexes(): array
     {
         return [
             [
@@ -118,59 +104,38 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         ];
     }
 
-    /**
-     * @return string
-     */
-    public static function getTableName()
+    public static function getTableName(): string
     {
         return 'smartling_configuration_profiles';
     }
 
 
-    /**
-     * @return int
-     */
-    public function getId()
+    public function getId(): int
     {
         return (int)$this->stateFields['id'];
     }
 
-    /**
-     * @param $id
-     */
-    public function setId($id)
+    public function setId(int $id): void
     {
-        $this->stateFields['id'] = (int)$id;
+        $this->stateFields['id'] = $id;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getProfileName()
+    public function getProfileName(): string
     {
         return $this->stateFields['profile_name'];
     }
 
-    /**
-     * @param $profileName
-     */
-    public function setProfileName($profileName)
+    public function setProfileName(string $profileName): void
     {
         $this->stateFields['profile_name'] = $profileName;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getProjectId()
+    public function getProjectId(): string
     {
         return $this->stateFields['project_id'];
     }
 
-    /**
-     * @param $projectId
-     */
-    public function setProjectId($projectId)
+    public function setProjectId(string $projectId): void
     {
         $this->stateFields['project_id'] = $projectId;
 
@@ -179,71 +144,74 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         }
     }
 
-    public function getUserIdentifier()
+    public function getUserIdentifier(): string
     {
         return $this->stateFields['user_identifier'];
     }
 
-    public function setUserIdentifier($user_identifier)
+    public function setUserIdentifier(string $user_identifier): void
     {
         $this->stateFields['user_identifier'] = $user_identifier;
     }
 
-    public function getSecretKey()
+    public function getSecretKey(): string
     {
         return $this->stateFields['secret_key'];
     }
 
-    public function setSecretKey($secret_key)
+    public function setSecretKey(string $secret_key): void
     {
         $this->stateFields['secret_key'] = $secret_key;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getIsActive()
+    public function getIsActive(): int
     {
         return $this->stateFields['is_active'];
     }
 
-    /**
-     * @param $isActive
-     */
-    public function setIsActive($isActive)
+    public function setIsActive(int $isActive): void
     {
-        $this->stateFields['is_active'] = (int)$isActive;
+        $this->stateFields['is_active'] = $isActive;
     }
 
-    /**
-     * @return Locale
-     */
-    public function getOriginalBlogId()
+    public function getOriginalBlogId(): Locale
     {
         return $this->stateFields['original_blog_id'];
     }
 
-    public function setOriginalBlogId($mainLocale)
+    public function setLocale(Locale $mainLocale): void
     {
         $this->stateFields['original_blog_id'] = $mainLocale;
     }
 
-    public function getAutoAuthorize()
+    /**
+     * Required for parent::fromArray
+     * @noinspection PhpUnused
+     * @noinspection UnknownInspectionInspection
+     */
+    public function setOriginalBlogId(int $blogId): void
+    {
+        $locale = new Locale();
+        $locale->setBlogId($blogId);
+        $this->setLocale($locale);
+    }
+
+    public function getAutoAuthorize(): bool
     {
         return $this->stateFields['auto_authorize'];
     }
 
-    public function setAutoAuthorize($autoAuthorize)
+    public function setAutoAuthorize(bool $autoAuthorize): void
     {
-        $this->stateFields['auto_authorize'] = (bool)$autoAuthorize;
+        $this->stateFields['auto_authorize'] = $autoAuthorize;
     }
 
-    public function getRetrievalType()
+    public function getRetrievalType(): string
     {
         return $this->stateFields['retrieval_type'];
     }
 
-    public function setRetrievalType($retrievalType)
+    public function setRetrievalType(string $retrievalType): void
     {
         if (array_key_exists($retrievalType, static::getRetrievalTypes())) {
             $this->stateFields['retrieval_type'] = $retrievalType;
@@ -256,7 +224,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
     /**
      * @return TargetLocale[]
      */
-    public function getTargetLocales()
+    public function getTargetLocales(): array
     {
         if (!array_key_exists('target_locales', $this->stateFields)) {
             $this->setTargetLocales([]);
@@ -265,149 +233,137 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         return $this->stateFields['target_locales'];
     }
 
-    public function setTargetLocales($targetLocales)
+    public function setTargetLocales(array $targetLocales): void
     {
         $this->stateFields['target_locales'] = $targetLocales;
     }
 
-    /**
-     * @return bool
-     */
-    public function getFilterFieldNameRegExp()
+    public function getFilterFieldNameRegExp(): bool
     {
         return $this->stateFields[Form::FILTER_FIELD_NAME_REGEXP] === '1';
     }
 
-    /**
-     * @param bool $value
-     */
-    public function setFilterFieldNameRegexp($value)
+    public function setFilterFieldNameRegexp(?bool $value): void
     {
         $this->stateFields[Form::FILTER_FIELD_NAME_REGEXP] = $value ? '1' : '0';
     }
 
-    /**
-     * @return string
-     */
-    public function getFilterSkip()
+    public function getFilterSkip(): string
     {
         return $this->stateFields['filter_skip'];
     }
 
-    /**
-     * @return array
-     */
-    public function getFilterSkipArray()
+    public function getFilterSkipArray(): array
     {
         return array_map('trim', explode(PHP_EOL, $this->getFilterSkip()));
     }
 
-    public function setFilterSkip($value)
+    public function setFilterSkip(string $value): void
     {
         $this->stateFields['filter_skip'] = $value;
     }
 
-    public function getFilterCopyByFieldName()
+    public function getFilterCopyByFieldName(): string
     {
         return $this->stateFields['filter_copy_by_field_name'];
     }
 
-    public function setFilterCopyByFieldName($value)
+    public function setFilterCopyByFieldName(string $value): void
     {
         $this->stateFields['filter_copy_by_field_name'] = $value;
     }
 
-    public function getFilterCopyByFieldValueRegex()
+    public function getFilterCopyByFieldValueRegex(): string
     {
         return $this->stateFields['filter_copy_by_field_value_regex'];
     }
 
-    public function setFilterCopyByFieldValueRegex($value)
+    public function setFilterCopyByFieldValueRegex(string $value): void
     {
         $this->stateFields['filter_copy_by_field_value_regex'] = $value;
     }
 
-    public function getFilterFlagSeo()
+    public function getFilterFlagSeo(): string
     {
         return $this->stateFields['filter_flag_seo'];
     }
 
-    public function setFilterFlagSeo($value)
+    public function setFilterFlagSeo(string $value): void
     {
         $this->stateFields['filter_flag_seo'] = $value;
     }
 
-    public function getUploadOnUpdate()
+    public function getUploadOnUpdate(): int
     {
-        return (int)$this->stateFields['upload_on_update'];
+        return $this->stateFields['upload_on_update'];
     }
 
-    public function setUploadOnUpdate($uploadOnUpdate)
+    public function setUploadOnUpdate(int $uploadOnUpdate): void
     {
-        $this->stateFields['upload_on_update'] = (int)$uploadOnUpdate;
+        $this->stateFields['upload_on_update'] = $uploadOnUpdate;
     }
 
-    public function setDownloadOnChange($downloadOnChange)
+    public function setDownloadOnChange(int $downloadOnChange): void
     {
-        $this->stateFields['download_on_change'] = (int)$downloadOnChange;
+        $this->stateFields['download_on_change'] = $downloadOnChange;
     }
 
-    public function getDownloadOnChange()
+    public function getDownloadOnChange(): int
     {
-        return (int)$this->stateFields['download_on_change'];
+        return $this->stateFields['download_on_change'];
     }
 
-    public function setCleanMetadataOnDownload($cleanMetadataOnDownload)
+    public function setCleanMetadataOnDownload(int $cleanMetadataOnDownload): void
     {
-        $this->stateFields['clean_metadata_on_download'] = (int)$cleanMetadataOnDownload;
+        $this->stateFields['clean_metadata_on_download'] = $cleanMetadataOnDownload;
     }
 
-    public function getCleanMetadataOnDownload()
+    public function getCleanMetadataOnDownload(): int
     {
-        return (int)$this->stateFields['clean_metadata_on_download'];
+        return $this->stateFields['clean_metadata_on_download'];
     }
 
-    public function getPublishCompleted()
+    public function getPublishCompleted(): int
     {
-        return (int)$this->stateFields['publish_completed'];
+        return $this->stateFields['publish_completed'];
     }
 
-    public function setPublishCompleted($publishCompleted)
+    public function setPublishCompleted(int $publishCompleted): void
     {
-        $this->stateFields['publish_completed'] = (int)$publishCompleted;
+        $this->stateFields['publish_completed'] = $publishCompleted;
     }
 
-    public function setCloneAttachment($cloneAttachment)
+    public function setCloneAttachment(?int $cloneAttachment): void
     {
         $this->stateFields['clone_attachment'] = (int)$cloneAttachment;
     }
 
-    public function getCloneAttachment()
+    public function getCloneAttachment(): int
     {
-        return (int)$this->stateFields['clone_attachment'];
+        return $this->stateFields['clone_attachment'];
     }
 
-    public function setAlwaysSyncImagesOnUpload($alwaysSyncImagesOnUpload)
+    public function setAlwaysSyncImagesOnUpload(int $alwaysSyncImagesOnUpload): void
     {
-        $this->stateFields['always_sync_images_on_upload'] = (int)$alwaysSyncImagesOnUpload;
+        $this->stateFields['always_sync_images_on_upload'] = $alwaysSyncImagesOnUpload;
     }
 
-    public function getAlwaysSyncImagesOnUpload()
+    public function getAlwaysSyncImagesOnUpload(): int
     {
-        return (int)$this->stateFields['always_sync_images_on_upload'];
+        return $this->stateFields['always_sync_images_on_upload'];
     }
 
-    public function getEnableNotifications()
+    public function getEnableNotifications(): int
     {
-        return (int)$this->stateFields['enable_notifications'];
+        return $this->stateFields['enable_notifications'];
     }
 
-    public function setEnableNotifications($enableNotifications)
+    public function setEnableNotifications(?int $enableNotifications): void
     {
         $this->stateFields['enable_notifications'] = (int)$enableNotifications;
     }
 
-    public function toArray($addVirtualColumns = true)
+    public function toArray($addVirtualColumns = true): array
     {
         $state = parent::toArray(false);
 
@@ -427,48 +383,30 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         return $state;
     }
 
-    public static function fromArray(array $array, LoggerInterface $logger)
+    public static function fromArray(array $array, LoggerInterface $logger): ConfigurationProfileEntity
     {
-
         if (!array_key_exists('target_locales', $array)) {
-            $array['target_locales'] = '';
+            $array['target_locales'] = [];
         }
-
-        /**
-         * @var ConfigurationProfileEntity $obj
-         */
-        $obj = parent::fromArray($array, $logger);
-
-        $locale = new Locale();
-        $locale->setBlogId($obj->getOriginalBlogId());
-
-        $obj->setOriginalBlogId($locale);
-
-        $unserializedTargetLocales = [];
-
-        $curLocales = $obj->getTargetLocales();
-
-        if (is_string($curLocales)) {
-            $decoded = json_decode($curLocales, true);
+        if (is_string($array['target_locales'])) {
+            $decoded = json_decode($array['target_locales'], true);
+            $array['target_locales'] = [];
 
             if (is_array($decoded)) {
                 foreach ($decoded as $targetLocaleArr) {
-                    $unserializedTargetLocales[] = TargetLocale::fromArray($targetLocaleArr);
+                    $array['target_locales'][] = TargetLocale::fromArray($targetLocaleArr);
                 }
-                $obj->setTargetLocales($unserializedTargetLocales);
-
-            } else {
-                $obj->setTargetLocales([]);
             }
         }
 
-        return $obj;
+        if (array_key_exists('original_blog_id', $array) && $array['original_blog_id'] instanceof Locale) {
+            $array['original_blog_id'] = $array['original_blog_id']->getBlogId();
+        }
+
+        return parent::fromArray($array, $logger);
     }
 
-    /**
-     * @return array
-     */
-    public function toArraySafe()
+    public function toArraySafe(): array
     {
         $struct = $this->toArray(false);
         unset($struct['secret_key']);

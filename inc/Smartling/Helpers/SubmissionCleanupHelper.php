@@ -150,7 +150,7 @@ class SubmissionCleanupHelper implements WPHookInterface
      * Registers wp hook handlers. Invoked by wordpress.
      * @return void
      */
-    public function register()
+    public function register(): void
     {
         add_action('before_delete_post', [$this, 'beforeDeletePostHandler']);
         add_action('pre_delete_term', [$this, 'preDeleteTermHandler'], 999, 2);

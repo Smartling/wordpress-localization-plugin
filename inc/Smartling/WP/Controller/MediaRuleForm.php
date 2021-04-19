@@ -9,7 +9,7 @@ use Smartling\WP\WPHookInterface;
 
 class MediaRuleForm extends ControllerAbstract implements WPHookInterface
 {
-    public function register()
+    public function register(): void
     {
         add_action('admin_menu', [$this, 'menu']);
         add_action('network_admin_menu', [$this, 'menu']);

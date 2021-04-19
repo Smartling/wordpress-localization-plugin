@@ -10,9 +10,6 @@ use Smartling\Submissions\SubmissionManager;
 trait SubmissionManagerMock
 {
     /**
-     * @param SmartlingToCMSDatabaseAccessWrapperInterface $dbal
-     * @param EntityHelper $entityHelper
-     *
      * @return MockObject|SubmissionManager
      */
     private function mockSubmissionManager(SmartlingToCMSDatabaseAccessWrapperInterface $dbal, EntityHelper $entityHelper)
@@ -22,7 +19,6 @@ trait SubmissionManagerMock
                 [
                     'find',
                     'findByIds',
-                    'filterBrokenSubmissions',
                     'storeEntity',
                     'setErrorMessage',
                     'storeSubmissions',

@@ -8,6 +8,7 @@ use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
 use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
 
+use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Processors\ContentEntitiesIOFactory;
@@ -93,7 +94,6 @@ class FileUriHelper
      * @param SubmissionEntity $submission
      *
      * @return string
-     * @throws \Exception
      * @throws BlogNotFoundException
      * @throws SmartlingInvalidFactoryArgumentException
      * @throws SmartlingDirectRunRuntimeException

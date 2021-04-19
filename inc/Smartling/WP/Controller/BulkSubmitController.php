@@ -19,7 +19,7 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
     /**
      * @inheritdoc
      */
-    public function register()
+    public function register(): void
     {
         if (!DiagnosticsHelper::isBlocked()) {
             add_action('admin_menu', [$this, 'menu']);

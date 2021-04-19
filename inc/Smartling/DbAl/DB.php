@@ -16,10 +16,6 @@ use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPInstallableInterface;
 
-/**
- * Class DB
- * @package Smartling\DbAl
- */
 class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableInterface
 {
 
@@ -73,24 +69,19 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
 
     private function buildTableDefinitions()
     {
-        // Submissions
-        $this->tables[] = [
-            'name'    => SubmissionEntity::getTableName(),
-            'columns' => SubmissionEntity::getFieldDefinitions(),
-            'indexes' => SubmissionEntity::getIndexes(),
+        $classes = [
+            ConfigurationProfileEntity::class,
+            Queue::class,
+            SubmissionEntity::class,
         ];
-        // Configuration profiles
-        $this->tables[] = [
-            'name'    => ConfigurationProfileEntity::getTableName(),
-            'columns' => ConfigurationProfileEntity::getFieldDefinitions(),
-            'indexes' => ConfigurationProfileEntity::getIndexes(),
-        ];
-        // Queue
-        $this->tables[] = [
-            'name'    => Queue::getTableName(),
-            'columns' => Queue::getFieldDefinitions(),
-            'indexes' => Queue::getIndexes(),
-        ];
+        foreach ($classes as $class) {
+            /** @noinspection PhpUndefinedMethodInspection */
+            $this->tables[] = [
+                'columns' => $class::getFieldDefinitions(),
+                'indexes' => $class::getIndexes(),
+                'name' => $class::getTableName(),
+            ];
+        }
     }
 
     /**
@@ -402,12 +393,8 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
 
     /**
      * Builds SQL query to create a table from definition array
-     *
-     * @param $tableDefinition
-     *
-     * @return string
      */
-    private function prepareSql(array $tableDefinition)
+    public function prepareSql(array $tableDefinition): string
     {
         $table = $this->getTableName($tableDefinition);
         $pk = $this->getPrimaryKey($tableDefinition);
@@ -437,66 +424,37 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
         return $sql;
     }
 
-    /**
-     * Escape string value
-     *
-     * @param string $string
-     *
-     * @return mixed
-     */
-    public function escape($string)
+    public function escape(string $string): string
     {
         return $this->getWpdb()->_escape($string);
     }
 
-    /**
-     * @param string $tableName
-     *
-     * @return mixed
-     */
-    public function completeTableName($tableName)
+    public function completeTableName(string $tableName): string
     {
         return $this->getWpdb()->base_prefix . $tableName;
     }
 
-    /**
-     * @param $tableName
-     *
-     * @return string
-     */
-    public function completeMultisiteTableName($tableName)
+    public function completeMultisiteTableName(string $tableName): string
     {
         return $this->getWpdb()->prefix . $tableName;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function query($query)
+    public function query(string $query)
     {
         return $this->wpdb->query($query);
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function fetch($query, $output = OBJECT)
+    public function fetch(string $query, string $output = OBJECT)
     {
         return $this->getWpdb()->get_results($query, $output);
     }
 
-    /**
-     * @return integer
-     */
-    public function getLastInsertedId()
+    public function getLastInsertedId(): int
     {
         return $this->wpdb->insert_id;
     }
 
-    /**
-     * @return string
-     */
-    public function getLastErrorMessage()
+    public function getLastErrorMessage(): string
     {
         return $this->getWpdb()->last_error;
     }

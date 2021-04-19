@@ -5,7 +5,13 @@ namespace Smartling\Tests\Services;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapper;
+use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\ContentHelper;
+use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Helpers\GutenbergBlockHelper;
+use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
+use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -28,20 +34,26 @@ class ContentRelationDiscoveryServiceTest extends TestCase
         $contentType = 'post';
         $targetBlogId = 2;
         $batchUid = 'batchUid';
+        $jobName = 'Job Name';
+        $jobUid = 'abcdef123456';
+        $projectUid = 'projectUid';
 
-        $apiWrapper = $this->getMockBuilder(ApiWrapper::class)->disableOriginalConstructor()->getMock();
+        $apiWrapper = $this->createMock(ApiWrapper::class);
         $apiWrapper->method('retrieveBatch')->willReturn($batchUid);
 
-        $settingsManager = $this->getMockBuilder(SettingsManager::class)->disableOriginalConstructor()->getMock();
-        $settingsManager->method('getSingleSettingsProfile')->willReturn(new ConfigurationProfileEntity());
+        $profile = $this->createMock(ConfigurationProfileEntity::class);
+        $profile->method('getProjectId')->willReturn($projectUid);
+
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
 
         $siteHelper = $this->createMock(SiteHelper::class);
         $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
 
-        $contentHelper = new ContentHelper();
-        $contentHelper->setSiteHelper($siteHelper);
+        $contentHelper = $this->createMock(ContentHelper::class);
+        $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
 
-        $submission = $this->createPartialMock(SubmissionEntity::class, ['getFileUri', 'setBatchUid', 'setStatus']);
+        $submission = $this->createMock(SubmissionEntity::class);
         $submission->expects(self::once())->method('setBatchUid')->with($batchUid);
         $submission->expects(self::once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
 
@@ -64,8 +76,8 @@ class ContentRelationDiscoveryServiceTest extends TestCase
             'source' => ['contentType' => $contentType, 'id' => [$sourceId]],
             'job' =>
                 [
-                    'id' => 'abcdef123456',
-                    'name' => '',
+                    'id' => $jobUid,
+                    'name' => $jobName,
                     'description' => '',
                     'dueDate' => '',
                     'timeZone' => 'Europe/Kiev',
@@ -82,20 +94,26 @@ class ContentRelationDiscoveryServiceTest extends TestCase
         $contentType = 'post';
         $targetBlogId = 2;
         $batchUid = 'batchUid';
+        $jobName = 'Job Name';
+        $jobUid = 'abcdef123456';
+        $projectUid = 'projectUid';
 
-        $apiWrapper = $this->getMockBuilder(ApiWrapper::class)->disableOriginalConstructor()->getMock();
+        $apiWrapper = $this->createMock(ApiWrapper::class);
         $apiWrapper->method('retrieveBatch')->willReturn($batchUid);
 
-        $settingsManager = $this->getMockBuilder(SettingsManager::class)->disableOriginalConstructor()->getMock();
-        $settingsManager->method('getSingleSettingsProfile')->willReturn(new ConfigurationProfileEntity());
+        $profile = $this->createMock(ConfigurationProfileEntity::class);
+        $profile->method('getProjectId')->willReturn($projectUid);
+
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
 
         $siteHelper = $this->createMock(SiteHelper::class);
         $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
 
-        $contentHelper = new ContentHelper();
-        $contentHelper->setSiteHelper($siteHelper);
+        $contentHelper = $this->createMock(ContentHelper::class);
+        $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
 
-        $submission = $this->createPartialMock(SubmissionEntity::class, ['getFileUri', 'setBatchUid', 'setStatus']);
+        $submission = $this->createMock(SubmissionEntity::class);
         $submission->expects(self::exactly(count($sourceIds)))->method('setBatchUid')->with($batchUid);
         $submission->expects(self::exactly(count($sourceIds)))->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
 
@@ -125,8 +143,8 @@ class ContentRelationDiscoveryServiceTest extends TestCase
             'source' => ['contentType' => $contentType, 'id' => [0]],
             'job' =>
                 [
-                    'id' => 'abcdef123456',
-                    'name' => '',
+                    'id' => $jobUid,
+                    'name' => $jobName,
                     'description' => '',
                     'dueDate' => '',
                     'timeZone' => 'Europe/Kiev',
@@ -138,10 +156,6 @@ class ContentRelationDiscoveryServiceTest extends TestCase
     }
 
     /**
-     * @param ApiWrapper $apiWrapper
-     * @param ContentHelper $contentHelper
-     * @param SettingsManager $settingsManager
-     * @param SubmissionManager $submissionManager
      * @return MockObject|ContentRelationsDiscoveryService
      */
     private function getContentRelationDiscoveryService(
@@ -150,18 +164,17 @@ class ContentRelationDiscoveryServiceTest extends TestCase
         SettingsManager $settingsManager,
         SubmissionManager $submissionManager
     ) {
-        $x = $this->createPartialMock(ContentRelationsDiscoveryService::class, [
-            'getApiWrapper',
-            'getContentHelper',
-            'getSettingsManager',
-            'getSubmissionManager',
-            'returnResponse',
-        ]);
-        $x->method('getApiWrapper')->willReturn($apiWrapper);
-        $x->method('getContentHelper')->willReturn($contentHelper);
-        $x->method('getSettingsManager')->willReturn($settingsManager);
-        $x->method('getSubmissionManager')->willReturn($submissionManager);
-
-        return $x;
+        return $this->getMockBuilder(ContentRelationsDiscoveryService::class)->setConstructorArgs([
+            $contentHelper,
+            $this->createMock(FieldsFilterHelper::class),
+            $this->createMock(MetaFieldProcessorManager::class),
+            $this->createMock(LocalizationPluginProxyInterface::class),
+            $this->createMock(AbsoluteLinkedAttachmentCoreHelper::class),
+            $this->createMock(ShortcodeHelper::class),
+            $this->createMock(GutenbergBlockHelper::class),
+            $submissionManager,
+            $apiWrapper,
+            $settingsManager,
+        ])->onlyMethods(['returnResponse'])->getMock();
     }
 }

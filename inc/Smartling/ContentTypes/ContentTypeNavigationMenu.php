@@ -13,16 +13,9 @@ use Smartling\Queue\Queue;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
 
-/**
- * Class ContentTypeNavigationMenu
- * @package Smartling\ContentTypes
- */
 class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
 {
-    /**
-     * The system name of Wordpress content type to make references safe.
-     */
-    const WP_CONTENT_TYPE = 'nav_menu';
+    public const WP_CONTENT_TYPE = 'nav_menu';
 
     private $contentHelper;
     private $customMenuHelper;
@@ -91,12 +84,10 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
     /**
      * MUTATOR: alters $params->accumulator
      *
-     * @param ProcessRelatedContentParams $params
-     * @return void
      * @throws BlogNotFoundException
      * @throws SmartlingDataReadException
      */
-    public function gatherRelatedContent(ProcessRelatedContentParams $params)
+    public function gatherRelatedContent(ProcessRelatedContentParams $params): void
     {
         $accumulator = &$params->getAccumulator();
         $submission = $params->getSubmission();

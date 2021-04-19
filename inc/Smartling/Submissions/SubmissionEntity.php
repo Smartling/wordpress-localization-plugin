@@ -41,42 +41,38 @@ use Smartling\Helpers\WordpressUserHelper;
  */
 class SubmissionEntity extends SmartlingEntityAbstract
 {
+    public const FLAG_CONTENT_IS_OUT_OF_DATE = 1;
 
-    const FLAG_CONTENT_IS_OUT_OF_DATE = 1;
+    public const FLAG_CONTENT_IS_UP_TO_DATE = 0;
 
-    const FLAG_CONTENT_IS_UP_TO_DATE = 0;
-
-    const DATETIME_FORMAT = 'Y-m-d H:i:s';
+    public const DATETIME_FORMAT = 'Y-m-d H:i:s';
 
     /**
      * Submission Status  'New'
      */
-    const SUBMISSION_STATUS_NEW = 'New';
+    public const SUBMISSION_STATUS_NEW = 'New';
 
     /**
      * Submission Status  'In Progress'
      */
-    const SUBMISSION_STATUS_IN_PROGRESS = 'In Progress';
+    public const SUBMISSION_STATUS_IN_PROGRESS = 'In Progress';
 
     /**
      * Submission Status  'Completed'
      */
-    const SUBMISSION_STATUS_COMPLETED = 'Completed';
+    public const SUBMISSION_STATUS_COMPLETED = 'Completed';
 
     /**
      * Submission Status  'Failed'
      */
-    const SUBMISSION_STATUS_FAILED = 'Failed';
+    public const SUBMISSION_STATUS_FAILED = 'Failed';
 
     /**
      * Submission Status 'Cancelled'
      */
-    const SUBMISSION_STATUS_CANCELLED = 'Cancelled';
+    public const SUBMISSION_STATUS_CANCELLED = 'Cancelled';
 
-    /**
-     * @var array Submission Statuses
-     */
-    public static $submissionStatuses = [
+    public static array $submissionStatuses = [
         self::SUBMISSION_STATUS_NEW,
         self::SUBMISSION_STATUS_IN_PROGRESS,
         self::SUBMISSION_STATUS_COMPLETED,
@@ -84,34 +80,34 @@ class SubmissionEntity extends SmartlingEntityAbstract
         self::SUBMISSION_STATUS_CANCELLED,
     ];
 
-    const FIELD_ID = 'id';
-    const FIELD_SOURCE_TITLE = 'source_title';
-    const FIELD_SOURCE_BLOG_ID = 'source_blog_id';
-    const FIELD_SOURCE_CONTENT_HASH = 'source_content_hash';
-    const FIELD_CONTENT_TYPE = 'content_type';
-    const FIELD_SOURCE_ID = 'source_id';
-    const FIELD_FILE_URI = 'file_uri';
-    const FIELD_TARGET_LOCALE = 'target_locale';
-    const FIELD_TARGET_BLOG_ID = 'target_blog_id';
-    const FIELD_TARGET_ID = 'target_id';
-    const FIELD_SUBMITTER = 'submitter';
-    const FIELD_SUBMISSION_DATE = 'submission_date';
-    const FIELD_APPLIED_DATE = 'applied_date';
-    const FIELD_APPROVED_STRING_COUNT = 'approved_string_count';
-    const FIELD_COMPLETED_STRING_COUNT = 'completed_string_count';
-    const FIELD_EXCLUDED_STRING_COUNT = 'excluded_string_count';
-    const FIELD_TOTAL_STRING_COUNT = 'total_string_count';
-    const FIELD_WORD_COUNT = 'word_count';
-    const FIELD_STATUS = 'status';
-    const FIELD_IS_LOCKED = 'is_locked';
-    const FIELD_IS_CLONED = 'is_cloned';
-    const FIELD_LAST_MODIFIED = 'last_modified';
-    const FIELD_OUTDATED = 'outdated';
-    const FIELD_LAST_ERROR = 'last_error';
-    const FIELD_BATCH_UID = 'batch_uid';
-    const FIELD_LOCKED_FIELDS = 'locked_fields';
+    public const FIELD_ID = 'id';
+    public const FIELD_SOURCE_TITLE = 'source_title';
+    public const FIELD_SOURCE_BLOG_ID = 'source_blog_id';
+    public const FIELD_SOURCE_CONTENT_HASH = 'source_content_hash';
+    public const FIELD_CONTENT_TYPE = 'content_type';
+    public const FIELD_SOURCE_ID = 'source_id';
+    public const FIELD_FILE_URI = 'file_uri';
+    public const FIELD_TARGET_LOCALE = 'target_locale';
+    public const FIELD_TARGET_BLOG_ID = 'target_blog_id';
+    public const FIELD_TARGET_ID = 'target_id';
+    public const FIELD_SUBMITTER = 'submitter';
+    public const FIELD_SUBMISSION_DATE = 'submission_date';
+    public const FIELD_APPLIED_DATE = 'applied_date';
+    public const FIELD_APPROVED_STRING_COUNT = 'approved_string_count';
+    public const FIELD_COMPLETED_STRING_COUNT = 'completed_string_count';
+    public const FIELD_EXCLUDED_STRING_COUNT = 'excluded_string_count';
+    public const FIELD_TOTAL_STRING_COUNT = 'total_string_count';
+    public const FIELD_WORD_COUNT = 'word_count';
+    public const FIELD_STATUS = 'status';
+    public const FIELD_IS_LOCKED = 'is_locked';
+    public const FIELD_IS_CLONED = 'is_cloned';
+    public const FIELD_LAST_MODIFIED = 'last_modified';
+    public const FIELD_OUTDATED = 'outdated';
+    public const FIELD_LAST_ERROR = 'last_error';
+    public const FIELD_BATCH_UID = 'batch_uid';
+    public const FIELD_LOCKED_FIELDS = 'locked_fields';
 
-    public static function getFieldDefinitions()
+    public static function getFieldDefinitions(): array
     {
         return [
             static::FIELD_ID => static::DB_TYPE_U_BIGINT . ' ' . static::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
@@ -143,10 +139,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
         ];
     }
 
-    /**
-     * @return array
-     */
-    public static function getSubmissionStatusLabels()
+    public static function getSubmissionStatusLabels(): array
     {
         return [
             static::SUBMISSION_STATUS_NEW => __(static::SUBMISSION_STATUS_NEW),
@@ -156,10 +149,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
         ];
     }
 
-    /**
-     * @return array
-     */
-    public static function getFieldLabels()
+    public static function getFieldLabels(): array
     {
         return [
             static::FIELD_ID => __('ID'),
@@ -177,12 +167,12 @@ class SubmissionEntity extends SmartlingEntityAbstract
         ];
     }
 
-    protected static function getInstance(LoggerInterface $logger)
+    protected static function getInstance(): SubmissionEntity
     {
-        return new static($logger);
+        return new static();
     }
 
-    public static function getSortableFields()
+    public static function getSortableFields(): array
     {
         return [
             static::FIELD_ID,
@@ -198,7 +188,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
         ];
     }
 
-    public static function getIndexes()
+    public static function getIndexes(): array
     {
         return [
             [
@@ -220,20 +210,14 @@ class SubmissionEntity extends SmartlingEntityAbstract
         ];
     }
 
-    /**
-     * @return array
-     */
-    protected function getVirtualFields()
+    protected function getVirtualFields(): array
     {
         return [
             'progress' => $this->getCompletionPercentage() . '%',
         ];
     }
 
-    /**
-     * @return \DateTime
-     */
-    public function getLastModified()
+    public function getLastModified(): \DateTime
     {
         $value = $this->stateFields[static::FIELD_LAST_MODIFIED];
 
@@ -247,9 +231,9 @@ class SubmissionEntity extends SmartlingEntityAbstract
     }
 
     /**
-     * @param \DateTime $dateTime
+     * @param string|\DateTime|null $dateTime
      */
-    public function setLastModified($dateTime)
+    public function setLastModified($dateTime): void
     {
         if ($dateTime instanceof \DateTime) {
             $this->stateFields[static::FIELD_LAST_MODIFIED] = $dateTime->format(static::DATETIME_FORMAT);
@@ -264,67 +248,52 @@ class SubmissionEntity extends SmartlingEntityAbstract
         }
     }
 
-    public function getOutdated()
+    public function getOutdated(): int
     {
         return (int)$this->stateFields[static::FIELD_OUTDATED];
     }
 
-    public function setOutdated($outdated)
+    public function setOutdated(?int $outdated): void
     {
-        $this->stateFields[static::FIELD_OUTDATED] = (int)$outdated;
+        $this->stateFields[static::FIELD_OUTDATED] = $outdated;
     }
 
-    public function getIsCloned()
+    public function getIsCloned(): int
     {
         return (int)$this->stateFields[static::FIELD_IS_CLONED];
     }
 
-    public function setIsCloned($isCloned)
+    public function setIsCloned(?int $isCloned): void
     {
-        $this->stateFields[static::FIELD_IS_CLONED] = (int)$isCloned;
+        $this->stateFields[static::FIELD_IS_CLONED] = $isCloned;
     }
 
-    /**
-     * @return int
-     */
-    public function getWordCount()
+    public function getWordCount(): int
     {
         return (int)$this->stateFields[static::FIELD_WORD_COUNT];
     }
 
-    /**
-     * @param int $word_count
-     */
-    public function setWordCount($word_count)
+    public function setWordCount(?int $word_count): void
     {
-        $this->stateFields[static::FIELD_WORD_COUNT] = (int)$word_count;
+        $this->stateFields[static::FIELD_WORD_COUNT] = $word_count;
     }
 
-    public function getIsLocked()
+    public function getIsLocked(): int
     {
         return (int)$this->stateFields[static::FIELD_IS_LOCKED];
     }
 
-    public function setIsLocked($is_locked)
+    public function setIsLocked(?int $is_locked): void
     {
-        $this->stateFields[static::FIELD_IS_LOCKED] = (int)$is_locked;
+        $this->stateFields[static::FIELD_IS_LOCKED] = $is_locked;
     }
 
-    /**
-     * @return string
-     */
-    public function getStatus()
+    public function getStatus(): string
     {
-        return $this->stateFields[static::FIELD_STATUS];
+        return (string)$this->stateFields[static::FIELD_STATUS];
     }
 
-    /**
-     * @param string $status
-     *
-     * @return SubmissionEntity
-     * @throws \InvalidArgumentException
-     */
-    public function setStatus($status)
+    public function setStatus(string $status): SubmissionEntity
     {
         if (in_array($status, static::$submissionStatuses, true)) {
             $this->stateFields[static::FIELD_STATUS] = $status;
@@ -355,12 +324,12 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return $this;
     }
 
-    public function hasLocks()
+    public function hasLocks(): bool
     {
         return 1 === $this->getIsLocked() || 0 < count($this->getLockedFields());
     }
 
-    public function getStatusFlags()
+    public function getStatusFlags(): array
     {
         $result = [];
         $template = 'dashicons dashicons-%s';
@@ -377,10 +346,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return $result;
     }
 
-    /**
-     * @return string
-     */
-    public function getStatusColor()
+    public function getStatusColor(): string
     {
         $statusColors = [
             static::SUBMISSION_STATUS_NEW => 'yellow',
@@ -392,30 +358,19 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return $statusColors[$this->getStatus()];
     }
 
-    /**
-     * @return int|null
-     */
-    public function getId()
+    public function getId(): ?int
     {
         return $this->stateFields[static::FIELD_ID];
     }
 
-    /**
-     * @param int $id
-     *
-     * @return SubmissionEntity
-     */
-    public function setId($id)
+    public function setId(?int $id): SubmissionEntity
     {
-        $this->stateFields[static::FIELD_ID] = null === $id ? $id : (int)$id;
+        $this->stateFields[static::FIELD_ID] = $id;
 
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getSourceTitle($withReplacement = true)
+    public function getSourceTitle(bool $withReplacement = true): string
     {
         $source_title = $this->stateFields[static::FIELD_SOURCE_TITLE];
 
@@ -424,67 +379,43 @@ class SubmissionEntity extends SmartlingEntityAbstract
                 : $source_title;
         }
 
-        return $source_title;
+        return (string)$source_title;
     }
 
-    /**
-     * @param string $source_title
-     *
-     * @return SubmissionEntity
-     */
-    public function setSourceTitle($source_title)
+    public function setSourceTitle(string $source_title): SubmissionEntity
     {
         $this->stateFields[static::FIELD_SOURCE_TITLE] = $source_title;
 
         return $this;
     }
 
-    /**
-     * @return int
-     */
-    public function getSourceBlogId()
+    public function getSourceBlogId(): int
     {
         return (int)$this->stateFields[static::FIELD_SOURCE_BLOG_ID];
     }
 
-    /**
-     * @param int $source_blog_id
-     *
-     * @return SubmissionEntity
-     */
-    public function setSourceBlogId($source_blog_id)
+    public function setSourceBlogId(int $source_blog_id): SubmissionEntity
     {
-        $this->stateFields[static::FIELD_SOURCE_BLOG_ID] = (int)$source_blog_id;
+        $this->stateFields[static::FIELD_SOURCE_BLOG_ID] = $source_blog_id;
 
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getSourceContentHash()
+    public function getSourceContentHash(): string
     {
-        return $this->stateFields[static::FIELD_SOURCE_CONTENT_HASH];
+        return (string)$this->stateFields[static::FIELD_SOURCE_CONTENT_HASH];
     }
 
-    /**
-     * @param string $source_content_hash
-     *
-     * @return SubmissionEntity
-     */
-    public function setSourceContentHash($source_content_hash)
+    public function setSourceContentHash(?string $source_content_hash): SubmissionEntity
     {
         $this->stateFields[static::FIELD_SOURCE_CONTENT_HASH] = $source_content_hash;
 
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getContentType()
+    public function getContentType(): string
     {
-        return $this->stateFields[static::FIELD_CONTENT_TYPE];
+        return (string)$this->stateFields[static::FIELD_CONTENT_TYPE];
     }
 
     /**
@@ -492,14 +423,13 @@ class SubmissionEntity extends SmartlingEntityAbstract
      * @return SubmissionEntity
      * @throws SmartlingDirectRunRuntimeException
      */
-    public function setContentType($content_type)
+    public function setContentType(string $content_type): SubmissionEntity
     {
         $reverseMap = WordpressContentTypeHelper::getReverseMap();
 
         if (array_key_exists($content_type, $reverseMap)) {
             $this->stateFields[static::FIELD_CONTENT_TYPE] = $reverseMap[$content_type];
         } else {
-
             $this->stateFields[static::FIELD_CONTENT_TYPE] = $content_type;
             $this->setLastError('Invalid Content Type');
             $this->setStatus(static::SUBMISSION_STATUS_FAILED);
@@ -517,45 +447,36 @@ class SubmissionEntity extends SmartlingEntityAbstract
      * Converts associative array to entity
      * array keys must match field names;
      *
-     * @param array           $array
-     * @param LoggerInterface $logger
-     * @return SubmissionEntity
      * @throws SmartlingDirectRunRuntimeException
      */
-    public static function fromArray(array $array, LoggerInterface $logger)
+    public static function fromArray(array $array, LoggerInterface $logger): SubmissionEntity
     {
         $obj = parent::fromArray($array, $logger);
+        if (!$obj instanceof self) {
+            throw new \RuntimeException(__CLASS__ . ' expected');
+        }
 
         $obj->setContentType($obj->getContentType());
 
         return $obj;
     }
 
-    /**
-     * @return string
-     */
-    public function getSourceId()
+    public function getSourceId(): int
     {
         return (int)$this->stateFields[static::FIELD_SOURCE_ID];
     }
 
-    /**
-     * @param string $source_id
-     *
-     * @return SubmissionEntity
-     */
-    public function setSourceId($source_id)
+    public function setSourceId(int $source_id): SubmissionEntity
     {
-        $this->stateFields[static::FIELD_SOURCE_ID] = (int)$source_id;
+        $this->stateFields[static::FIELD_SOURCE_ID] = $source_id;
 
         return $this;
     }
 
     /**
      * Will try to set file uri if it is currently empty
-     * @return string
      */
-    public function getFileUri()
+    public function getFileUri(): string
     {
         if (empty($this->stateFields[static::FIELD_FILE_URI])) {
 
@@ -581,225 +502,137 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return $this->stateFields[static::FIELD_FILE_URI];
     }
 
-    /**
-     * @return string
-     */
-    public function getStateFieldFileUri() {
+    public function getStateFieldFileUri(): string
+    {
         return (string)$this->stateFields[static::FIELD_FILE_URI];
     }
 
-    /**
-     * @param string $file_uri
-     *
-     * @return SubmissionEntity
-     */
-    protected function setFileUri($file_uri)
+    protected function setFileUri(?string $file_uri): SubmissionEntity
     {
         $this->stateFields[static::FIELD_FILE_URI] = $file_uri;
 
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getTargetLocale()
+    public function getTargetLocale(): string
     {
-        return $this->stateFields[static::FIELD_TARGET_LOCALE];
+        return (string)$this->stateFields[static::FIELD_TARGET_LOCALE];
     }
 
-    /**
-     * @param string $target_locale
-     *
-     * @return SubmissionEntity
-     */
-    public function setTargetLocale($target_locale)
+    public function setTargetLocale(string $target_locale): SubmissionEntity
     {
         $this->stateFields[static::FIELD_TARGET_LOCALE] = $target_locale;
 
         return $this;
     }
 
-    /**
-     * @return int
-     */
-    public function getTargetBlogId()
+    public function getTargetBlogId(): int
     {
         return (int)$this->stateFields[static::FIELD_TARGET_BLOG_ID];
     }
 
-    /**
-     * @param int $target_blog_id
-     *
-     * @return SubmissionEntity
-     */
-    public function setTargetBlogId($target_blog_id)
+    public function setTargetBlogId(int $target_blog_id): SubmissionEntity
     {
-        $this->stateFields[static::FIELD_TARGET_BLOG_ID] = (int)$target_blog_id;
+        $this->stateFields[static::FIELD_TARGET_BLOG_ID] = $target_blog_id;
 
         return $this;
     }
 
-    /**
-     * @return int
-     */
-    public function getTargetId()
+    public function getTargetId(): int
     {
         return (int)$this->stateFields[static::FIELD_TARGET_ID];
     }
 
-    /**
-     * @param string $target_id
-     *
-     * @return SubmissionEntity
-     */
-    public function setTargetId($target_id)
+    public function setTargetId(?int $target_id): SubmissionEntity
     {
         $this->stateFields[static::FIELD_TARGET_ID] = $target_id;
 
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getSubmitter()
+    public function getSubmitter(): string
     {
-        return $this->stateFields[static::FIELD_SUBMITTER];
+        return (string)$this->stateFields[static::FIELD_SUBMITTER];
     }
 
-    /**
-     * @param string $submitter
-     *
-     * @return SubmissionEntity
-     */
-    public function setSubmitter($submitter)
+    public function setSubmitter(string $submitter): SubmissionEntity
     {
         $this->stateFields[static::FIELD_SUBMITTER] = $submitter;
 
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getSubmissionDate()
+    public function getSubmissionDate(): string
     {
-        return $this->stateFields[static::FIELD_SUBMISSION_DATE];
+        return (string)$this->stateFields[static::FIELD_SUBMISSION_DATE];
     }
 
-    /**
-     * @param string $submission_date
-     *
-     * @return SubmissionEntity
-     */
-    public function setSubmissionDate($submission_date)
+    public function setSubmissionDate(string $submission_date): SubmissionEntity
     {
         $this->stateFields[static::FIELD_SUBMISSION_DATE] = $submission_date;
 
         return $this;
     }
 
-    /**
-     * @return null|string
-     */
-    public function getAppliedDate()
+    public function getAppliedDate(): ?string
     {
         return $this->stateFields[static::FIELD_APPLIED_DATE];
     }
 
-    /**
-     * @param null|string $applied_date
-     */
-    public function setAppliedDate($applied_date)
+    public function setAppliedDate(?string $applied_date): void
     {
         $this->stateFields[static::FIELD_APPLIED_DATE] = $applied_date;
     }
 
-    /**
-     * @return int
-     */
-    public function getApprovedStringCount()
+    public function getApprovedStringCount(): int
     {
         return (int)$this->stateFields[static::FIELD_APPROVED_STRING_COUNT];
     }
 
-    /**
-     * @param int $approved_string_count
-     *
-     * @return SubmissionEntity
-     */
-    public function setApprovedStringCount($approved_string_count)
+    public function setApprovedStringCount(int $approved_string_count): SubmissionEntity
     {
-        $this->stateFields[static::FIELD_APPROVED_STRING_COUNT] = (int)$approved_string_count;
+        $this->stateFields[static::FIELD_APPROVED_STRING_COUNT] = $approved_string_count;
 
         return $this;
     }
 
-    /**
-     * @return int
-     */
-    public function getCompletedStringCount()
+    public function getCompletedStringCount(): int
     {
         return (int)$this->stateFields[static::FIELD_COMPLETED_STRING_COUNT];
     }
 
-    /**
-     * @param int $completed_string_count
-     *
-     * @return SubmissionEntity
-     */
-    public function setCompletedStringCount($completed_string_count)
+    public function setCompletedStringCount(int $completed_string_count): SubmissionEntity
     {
-        $this->stateFields[static::FIELD_COMPLETED_STRING_COUNT] = (int)$completed_string_count;
+        $this->stateFields[static::FIELD_COMPLETED_STRING_COUNT] = $completed_string_count;
 
         return $this;
     }
 
-    /**
-     * @return int
-     */
-    public function getExcludedStringCount()
+    public function getExcludedStringCount(): int
     {
         return (int)$this->stateFields[static::FIELD_EXCLUDED_STRING_COUNT];
     }
 
-    /**
-     * @param $excludedStringsCount
-     *
-     * @return $this
-     */
-    public function setExcludedStringCount($excludedStringsCount)
+    public function setExcludedStringCount(?int $excludedStringsCount): SubmissionEntity
     {
-        $this->stateFields[static::FIELD_EXCLUDED_STRING_COUNT] = (int)$excludedStringsCount;
+        $this->stateFields[static::FIELD_EXCLUDED_STRING_COUNT] = $excludedStringsCount;
 
         return $this;
     }
 
-    /**
-     * @return int
-     */
-    public function getTotalStringCount()
+    public function getTotalStringCount(): int
     {
         return (int)$this->stateFields[static::FIELD_TOTAL_STRING_COUNT];
     }
 
-    /**
-     * @param $totalStringsCount
-     *
-     * @return $this
-     */
-    public function setTotalStringCount($totalStringsCount)
+    public function setTotalStringCount(?int $totalStringsCount): SubmissionEntity
     {
-        $this->stateFields[static::FIELD_TOTAL_STRING_COUNT] = (int)$totalStringsCount;
+        $this->stateFields[static::FIELD_TOTAL_STRING_COUNT] = $totalStringsCount;
 
         return $this;
     }
 
-    /**
-     * @return int
-     */
-    public function getCompletionPercentage()
+    public function getCompletionPercentage(): int
     {
         $percentage = 0;
 
@@ -822,28 +655,22 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return (int)($percentage * 100);
     }
 
-    /**
-     * @return string
-     */
-    public function getLastError()
+    public function getLastError(): string
     {
-        return $this->stateFields[static::FIELD_LAST_ERROR];
+        return (string)$this->stateFields[static::FIELD_LAST_ERROR];
     }
 
-    public function setLastError($message)
+    public function setLastError(string $message): void
     {
         $this->stateFields[static::FIELD_LAST_ERROR] = trim($message);
     }
 
-    /**
-     * @return string
-     */
-    public function getBatchUid()
+    public function getBatchUid(): string
     {
-        return $this->stateFields[static::FIELD_BATCH_UID];
+        return (string)$this->stateFields[static::FIELD_BATCH_UID];
     }
 
-    public function setBatchUid($batchUid)
+    public function setBatchUid($batchUid): void
     {
         $this->stateFields[static::FIELD_BATCH_UID] = trim($batchUid);
     }
@@ -851,7 +678,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
     /**
      * @return string[]
      */
-    public function getLockedFields()
+    public function getLockedFields(): array
     {
         $unserialized = maybe_unserialize($this->stateFields[static::FIELD_LOCKED_FIELDS]);
         if (!is_array($unserialized)) {
@@ -860,15 +687,15 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return $unserialized;
     }
 
-    public function setLockedFields($lockFields)
+    /**
+     * @param string|array $lockFields
+     */
+    public function setLockedFields($lockFields): void
     {
         $this->stateFields[static::FIELD_LOCKED_FIELDS] = $lockFields;
     }
 
-    /**
-     * @return string
-     */
-    public static function getTableName()
+    public static function getTableName(): string
     {
         return 'smartling_submissions';
     }

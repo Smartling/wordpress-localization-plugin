@@ -48,10 +48,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
 
     private $transactionManager;
 
-    /**
-     * @return string
-     */
-    public function getJobRunInterval()
+    public function getJobRunInterval(): string
     {
         return $this->jobRunInterval;
     }
@@ -145,7 +142,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         return in_array($this->getJobHookName(), $this->getInstalledCrons(), true);
     }
 
-    public function install()
+    public function install(): void
     {
         if (!$this->isJobHookInstalled()) {
             $this->getLogger()
@@ -154,10 +151,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         }
     }
 
-    /**
-     * uninstalls scheduled event
-     */
-    public function uninstall()
+    public function uninstall(): void
     {
         wp_clear_scheduled_hook($this->getJobHookName());
     }
@@ -303,7 +297,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
     /**
      * @inheritdoc
      */
-    public function register()
+    public function register(): void
     {
         $this->install();
         if (!DiagnosticsHelper::isBlocked()) {

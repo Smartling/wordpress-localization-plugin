@@ -152,10 +152,7 @@ class LastModifiedCheckJobTest extends TestCase
             ->method('storeSubmissions')
             ->will(self::returnArgument(0));
 
-        $sm = $this->settingsManager;
-        $sm->method('getSingleSettingsProfile')->willReturn(false);
-
-        $worker->setSettingsManager($sm);
+        $worker->setSettingsManager($this->settingsManager);
 
         $worker->run();
     }
@@ -422,10 +419,7 @@ class LastModifiedCheckJobTest extends TestCase
             ->expects(self::exactly($storeEntityCount))
             ->method('storeEntity');
 
-        $sm = $this->settingsManager;
-        $sm->method('getSingleSettingsProfile')->willReturn(false);
-
-        $worker->setSettingsManager($sm);
+        $worker->setSettingsManager($this->settingsManager);
 
         $worker->run();
     }

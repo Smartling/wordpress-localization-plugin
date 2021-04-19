@@ -8,19 +8,11 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Class AbsoluteLinkedAttachmentCoreHelper
- * @package Smartling\Helpers
- */
 class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHelper
 {
-    const PATTERN_LINK_GENERAL = '<a[^>]+>';
+    private const PATTERN_LINK_GENERAL = '<a[^>]+>';
 
-    /**
-     * @param string $url
-     * @return bool
-     */
-    private function isAbsoluteUrl($url)
+    private function isAbsoluteUrl(string $url): bool
     {
         $parsedUrl = parse_url($url);
 
@@ -29,23 +21,15 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
                && !StringHelper::isNullOrEmpty($parsedUrl['scheme']);
     }
 
-    /**
-     * @param string $url
-     * @return bool
-     */
-    private function isUrlThumbnail($url)
+    private function isUrlThumbnail(string $url): bool
     {
         return $this->fileLooksLikeThumbnail(pathinfo($this->urlToFile($url))['filename']);
     }
 
     /**
      * Searches for $url in `guid` field in `posts` table
-     *
-     * @param string $url
-     *
-     * @return int|false
      */
-    private function lookForDirectGuidEntry($url)
+    private function lookForDirectGuidEntry(string $url): ?int
     {
         $conditionBlock = ConditionBlock::getConditionBlock();
 
@@ -62,13 +46,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
         return $this->returnId($query);
     }
 
-    /**
-     * @param string           $originalUrl
-     * @param SubmissionEntity $submission
-     *
-     * @return string
-     */
-    private function generateTranslatedUrl($originalUrl, SubmissionEntity $submission)
+    private function generateTranslatedUrl(string $originalUrl, SubmissionEntity $submission): string
     {
         $result = $this->getCore()->getAttachmentAbsolutePathBySubmission($submission);
 
@@ -96,15 +74,10 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
         return $result;
     }
 
-    /**
-     * @param PairReplacerHelper $replacer
-     * @param string $path
-     * @return PairReplacerHelper
-     */
-    private function processContent(PairReplacerHelper $replacer, $path)
+    private function processContent(PairReplacerHelper $replacer, string $path): PairReplacerHelper
     {
         $result = $replacer;
-        if (false !== $path && $this->isAbsoluteUrl($path)) {
+        if ($this->isAbsoluteUrl($path)) {
             $attachmentId = $this->getAttachmentId($path);
             if (false !== $attachmentId) {
                 $submission = $this->getParams()->getSubmission();
@@ -127,26 +100,19 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
         return $result;
     }
 
-    /**
-     * @param string $url
-     * @param int $blogId
-     * @return bool|int
-     */
-    public function getAttachmentIdByURL($url, $blogId)
+    public function getAttachmentIdByURL(string $url, int $blogId): ?int
     {
-        $result = false;
-        if (false !== $url && $this->isAbsoluteUrl($url)) {
+        $result = null;
+        if ($this->isAbsoluteUrl($url)) {
             $result = $this->getAttachmentIdByBlogId($url, $blogId);
         }
         return $result;
     }
 
     /**
-     * @param string $string
-     * @param int    $blogId
-     * @return array
+     * @return int[]
      */
-    public function getImagesIdsFromString($string, $blogId)
+    public function getImagesIdsFromString(string $string, int $blogId): array
     {
         $ids = [];
 
@@ -154,8 +120,11 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
         if (0 < preg_match_all(StringHelper::buildPattern(static::PATTERN_IMAGE_GENERAL), $string, $matches)) {
             foreach ($matches[0] as $match) {
                 $path = $this->getAttributeFromTag($match, 'img', 'src');
-                if (false !== $attachmentId = $this->getAttachmentIdByURL($path, $blogId)) {
-                    $ids[] = $attachmentId;
+                if ($path !== null) {
+                    $attachmentId = $this->getAttachmentIdByURL($path, $blogId);
+                    if ($attachmentId !== null) {
+                        $ids[] = $attachmentId;
+                    }
                 }
             }
         }
@@ -174,13 +143,13 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
     /**
      * Recursively processes all found strings
      *
-     * @param $stringValue
+     * @param array|string $stringValue
      */
-    protected function processString(&$stringValue)
+    protected function processString(&$stringValue): void
     {
         $replacer = new PairReplacerHelper();
         if (is_array($stringValue)) {
-            foreach ($stringValue as $item => &$value) {
+            foreach ($stringValue as &$value) {
                 $this->processString($value);
             }
             unset($value);
@@ -189,13 +158,17 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
             if (0 < preg_match_all(StringHelper::buildPattern(static::PATTERN_IMAGE_GENERAL), $stringValue, $matches)) {
                 foreach ($matches[0] as $match) {
                     $path = $this->getAttributeFromTag($match, 'img', 'src');
-                    $replacer = $this->processContent($replacer, $path);
+                    if ($path !== null) {
+                        $replacer = $this->processContent($replacer, $path);
+                    }
                 }
             }
             if (0 < preg_match_all(StringHelper::buildPattern(self::PATTERN_LINK_GENERAL), $stringValue, $matches)) {
                 foreach ($matches[0] as $match) {
                     $path = $this->getAttributeFromTag($match, 'a', 'href');
-                    $replacer = $this->processContent($replacer, $path);
+                    if ($path !== null) {
+                        $replacer = $this->processContent($replacer, $path);
+                    }
                 }
             }
         }
@@ -204,17 +177,13 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
 
     /**
      * Converts wordpress attachment URL to file location (for source attachment)
-     *
-     * @param string $url
-     *
-     * @return string
      */
-    private function urlToFile($url)
+    private function urlToFile(string $url): string
     {
         return $this->urlToFileByBlogId($url, $this->getParams()->getSubmission()->getSourceBlogId());
     }
 
-    private function urlToFileByBlogId($url, $blogId)
+    private function urlToFileByBlogId(string $url, int $blogId): string
     {
         $parsedUrlPath = parse_url($url, PHP_URL_PATH);
         $sourceUploadInfo = $this->getCore()->getUploadFileInfo($blogId);
@@ -224,52 +193,43 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
 
     /**
      * Converts wordpress file location to URL (for translation)
-     *
-     * @param string $file
-     *
-     * @return string
      */
-    private function fileToUrl($file)
+    private function fileToUrl(string $file): string
     {
         $targetUploadInfo = $this->getCore()->getUploadFileInfo($this->getParams()->getSubmission()->getTargetBlogId());
 
         return str_replace($targetUploadInfo['basedir'], $targetUploadInfo['baseurl'], $file);
     }
 
-    private function getAttachmentIdByBlogId($url, $blogId)
+    private function getAttachmentIdByBlogId(string $url, int $blogId): ?int
     {
         $localOriginalFile = $this->urlToFileByBlogId($url, $blogId);
         return $this->getPossibleAttachmentIdByLocalOriginalFile($localOriginalFile, $url);
     }
 
-    private function getPossibleAttachmentIdByLocalOriginalFile($localOriginalFile, $url)
+    private function getPossibleAttachmentIdByLocalOriginalFile(string $localOriginalFile, string $url): ?int
     {
         if (true === FileHelper::testFile($localOriginalFile)) {
             $originalPathinfo = pathinfo($localOriginalFile);
             $possibleId = $this->lookForDirectGuidEntry($url);
-            if (false === $possibleId && $this->fileLooksLikeThumbnail($originalPathinfo['filename'])) {
+            if (null === $possibleId && $this->fileLooksLikeThumbnail($originalPathinfo['filename'])) {
                 $originalFilename = preg_replace(
                     StringHelper::buildPattern(static::PATTERN_THUMBNAIL_IDENTITY), '', $originalPathinfo['filename']
                 );
                 $possibleOriginalUrl = str_replace($originalPathinfo['filename'], $originalFilename, $url);
                 $possibleId = $this->lookForDirectGuidEntry($possibleOriginalUrl);
             }
-            if (false === $possibleId) {
+            if (null === $possibleId) {
                 $this->getLogger()->error(vsprintf('No \'attachment\' found for url=%s', [$url]));
             }
 
             return $possibleId;
         }
 
-        return false;
+        return null;
     }
 
-    /**
-     * @param string $url
-     *
-     * @return bool|int
-     */
-    private function getAttachmentId($url)
+    private function getAttachmentId(string $url): ?int
     {
         $localOriginalFile = $this->urlToFile($url);
         return $this->getPossibleAttachmentIdByLocalOriginalFile($localOriginalFile, $url);

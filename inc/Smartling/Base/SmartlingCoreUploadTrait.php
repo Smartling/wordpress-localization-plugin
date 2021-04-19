@@ -3,6 +3,8 @@
 namespace Smartling\Base;
 
 use Exception;
+use JetBrains\PhpStorm\ArrayShape;
+use Smartling\ApiWrapperInterface;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\BlogNotFoundException;
@@ -19,37 +21,29 @@ use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
+use Smartling\Helpers\TranslationHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\XmlHelper;
+use Smartling\Jobs\JobInformationEntity;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\Controller\LiveNotificationController;
 
 trait SmartlingCoreUploadTrait
 {
-    /**
-     * @param SubmissionEntity $submission
-     *
-     * @return SubmissionEntity
-     */
-    private function renewContentHash(SubmissionEntity $submission)
+    private function renewContentHash(SubmissionEntity $submission): SubmissionEntity
     {
         $content = $this->getContentHelper()->readSourceContent($submission);
         $newHash = $this->getContentSerializationHelper()->calculateHash($submission);
         $submission->setSourceContentHash($newHash);
         $submission->setOutdated(0);
         $submission->setSourceTitle($content->getTitle());
-        $submission = $this->getSubmissionManager()->storeEntity($submission);
 
-        return $submission;
+        return $this->getSubmissionManager()->storeEntity($submission);
     }
 
-    /**
-     * @param SubmissionEntity $submission
-     *
-     * @return array
-     */
-    private function readSourceContentWithMetadataAsArray(SubmissionEntity $submission)
+    #[ArrayShape(['entity' => [], 'meta' => []])]
+    private function readSourceContentWithMetadataAsArray(SubmissionEntity $submission): array
     {
         $source = [
             'entity' => $this->getContentHelper()->readSourceContent($submission)->toArray(),
@@ -63,18 +57,15 @@ trait SmartlingCoreUploadTrait
         return $source;
     }
 
-    protected function getFunctionProxyHelper() {
+    protected function getFunctionProxyHelper(): WordpressFunctionProxyHelper
+    {
         return new WordpressFunctionProxyHelper();
     }
 
     /**
      * Processes content by submission and returns only XML string for translation
-     *
-     * @param SubmissionEntity $submission
-     *
-     * @return string
      */
-    public function getXMLFiltered(SubmissionEntity $submission)
+    public function getXMLFiltered(SubmissionEntity $submission): string
     {
         $this->getLogger()->debug(
             vsprintf(
@@ -163,12 +154,8 @@ trait SmartlingCoreUploadTrait
         return '';
     }
 
-    /**
-     * @param SubmissionEntity $submission
-     *
-     * @return array
-     */
-    private function readLockedTranslationFieldsBySubmission(SubmissionEntity $submission)
+    #[ArrayShape(['entity' => 'string', 'meta' => 'string'])]
+    private function readLockedTranslationFieldsBySubmission(SubmissionEntity $submission): array
     {
         $this->getLogger()
             ->debug(vsprintf('Starting loading locked fields for submission id=%s', [$submission->getId()]));
@@ -178,7 +165,7 @@ trait SmartlingCoreUploadTrait
             'meta'   => [],
         ];
 
-        if (0 === (int)$submission->getTargetId()) {
+        if (0 === $submission->getTargetId()) {
             $this->getLogger()->debug("There is still no translation or placeholder for submission id={$submission->getId()}");
             return $lockedData;
         }
@@ -218,13 +205,9 @@ trait SmartlingCoreUploadTrait
     }
 
     /**
-     * @param SubmissionEntity $submission
-     * @param string $xml
-     * @param XmlHelper $xmlHelper
-     * @param PostContentHelper $postContentHelper
-     * @return array
+     * @return string[]
      */
-    public function applyXML(SubmissionEntity $submission, $xml, XmlHelper $xmlHelper, PostContentHelper $postContentHelper)
+    public function applyXML(SubmissionEntity $submission, string $xml, XmlHelper $xmlHelper, PostContentHelper $postContentHelper): array
     {
         $messages = [];
 
@@ -389,10 +372,7 @@ trait SmartlingCoreUploadTrait
         return $messages;
     }
 
-    /**
-     * @param SubmissionEntity $submission
-     */
-    public function bulkSubmit(SubmissionEntity $submission)
+    public function bulkSubmit(SubmissionEntity $submission): void
     {
         $submissionHasBatchUid = !StringHelper::isNullOrEmpty($submission->getBatchUid());
         try {
@@ -509,7 +489,6 @@ trait SmartlingCoreUploadTrait
                         SubmissionEntity::FIELD_BATCH_UID => [$submission->getBatchUid()],
                     ]);
                     foreach ($submissions as $found) {
-                        /** @var SubmissionEntity $found */
                         $found->setBatchUid('');
                         $found->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
                         $this->getLogger()->notice("Setting submission {$found->getId()} status to failed");
@@ -538,11 +517,7 @@ trait SmartlingCoreUploadTrait
         }
     }
 
-    /**
-     * @param string $batchUid
-     * @param int $sourceBlogId
-     */
-    private function executeBatchIfNoSubmissionsPending($batchUid, $sourceBlogId)
+    private function executeBatchIfNoSubmissionsPending(string $batchUid, int $sourceBlogId): void
     {
         $msg = vsprintf('Preparing to start batch "%s" execution...', [$batchUid]);
         $this->getLogger()->debug($msg);
@@ -563,12 +538,7 @@ trait SmartlingCoreUploadTrait
         }
     }
 
-    /**
-     * @param SubmissionEntity $submission
-     * @return SubmissionEntity
-     * @throws Exception
-     */
-    private function fixSubmissionBatchUid(SubmissionEntity $submission)
+    private function fixSubmissionBatchUid(SubmissionEntity $submission): SubmissionEntity
     {
         $submissionDump = base64_encode(serialize($submission->toArray(false)));
 
@@ -589,9 +559,9 @@ trait SmartlingCoreUploadTrait
                 ->getSettingsManager()
                 ->getSingleSettingsProfile($submission->getSourceBlogId());
 
-            $batchUid = $this
-                ->getApiWrapper()
-                ->retrieveBatchForBucketJob($profile, (bool)$profile->getAutoAuthorize());
+            /** @var ApiWrapperInterface $apiWrapper */
+            $apiWrapper = $this->getApiWrapper();
+            $batchUid = $apiWrapper->retrieveBatchForBucketJob($profile, $profile->getAutoAuthorize());
 
             $submission->setBatchUid($batchUid);
             $submission = $this->getSubmissionManager()->storeEntity($submission);
@@ -610,12 +580,7 @@ trait SmartlingCoreUploadTrait
         return $submission;
     }
 
-    /**
-     * @param SubmissionEntity $submission
-     *
-     * @return void
-     */
-    public function sendForTranslationBySubmission(SubmissionEntity $submission)
+    public function sendForTranslationBySubmission(SubmissionEntity $submission): void
     {
         if (1 === $submission->getIsLocked()) {
             $this->getLogger()
@@ -692,7 +657,6 @@ trait SmartlingCoreUploadTrait
                         $submission->getSourceBlogId(),
                     ])
                 );
-
             } else {
                 if (empty(trim($submission->getBatchUid()))) {
                     $submission = $this->fixSubmissionBatchUid($submission);
@@ -748,24 +712,14 @@ trait SmartlingCoreUploadTrait
         }
     }
 
-    /**
-     * @param string   $contentType
-     * @param int      $sourceBlog
-     * @param int      $sourceEntity
-     * @param int      $targetBlog
-     * @param int|null $targetEntity
-     * @param bool     $clone
-     * @param string   $batchUid
-     *
-     * @return bool
-     */
-    public function createForTranslation($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null, $clone = false, $batchUid = '')
+    public function createForTranslation(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, string $batchUid, bool $clone): SubmissionEntity
     {
         /**
-         * @var SubmissionEntity $submission
+         * @var TranslationHelper $translationHelper
          */
-        $submission = $this->getTranslationHelper()
-            ->prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity);
+        $translationHelper = $this->getTranslationHelper();
+        $submission = $translationHelper
+            ->prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog);
 
         $contentEntity = $this->getContentHelper()->readSourceContent($submission);
 
@@ -789,25 +743,15 @@ trait SmartlingCoreUploadTrait
         return $this->getSubmissionManager()->storeEntity($submission);
     }
 
-    /**
-     * @param array $fields
-     * @param ConfigurationProfileEntity $configurationProfile
-     * @return array
-     */
-    private function removeExcludedFields(array $fields, ConfigurationProfileEntity $configurationProfile)
+    private function removeExcludedFields(array $fields, ConfigurationProfileEntity $configurationProfile): array
     {
         return $this->getFieldsFilter()->removeFields($fields, $configurationProfile->getFilterSkipArray(), $configurationProfile->getFilterFieldNameRegExp());
     }
 
     /**
      * Modifies $targetContent
-     * @param EntityAbstract $targetContent
-     * @param array $translation
-     * @param SubmissionEntity $submission
-     * @param PostContentHelper $postContentHelper
-     * @param array $entity
      */
-    private function applyBlockLevelLocks(EntityAbstract $targetContent, array $translation, SubmissionEntity $submission, PostContentHelper $postContentHelper, array $entity)
+    private function applyBlockLevelLocks(EntityAbstract $targetContent, array $translation, SubmissionEntity $submission, PostContentHelper $postContentHelper, array $entity): void
     {
         if (array_key_exists('entity', $translation) && ArrayHelper::notEmpty($translation['entity'])) {
             $targetContentArray = $targetContent->toArray();
@@ -821,10 +765,8 @@ trait SmartlingCoreUploadTrait
 
     /**
      * Modifies $entity
-     * @param EntityAbstract $entity
-     * @param array $properties
      */
-    private function setValues(EntityAbstract $entity, array $properties)
+    private function setValues(EntityAbstract $entity, array $properties): void
     {
         foreach ($properties as $propertyName => $propertyValue) {
             if ($entity->{$propertyName} !== $propertyValue) {

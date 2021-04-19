@@ -2,34 +2,15 @@
 
 namespace Smartling\Jobs;
 
-/**
- * Interface JobInterface
- * @package Smartling\Jobs
- */
 interface JobInterface
 {
-    /**
-     * @return void
-     */
-    public function install();
+    public function install(): void;
 
-    /**
-     * @return void
-     */
-    public function uninstall();
+    public function uninstall(): void;
 
-    /**
-     * @return string
-     */
-    public function getJobRunInterval();
+    public function getJobRunInterval(): string;
 
-    /**
-     * @return string
-     */
-    public function getJobHookName();
+    public function getJobHookName(): string;
 
-    /**
-     * @return executes job
-     */
-    public function run();
+    public function run(): void;
 }

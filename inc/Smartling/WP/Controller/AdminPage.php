@@ -19,7 +19,7 @@ class AdminPage extends ControllerAbstract implements WPHookInterface
         $this->mediaAttachmentRulesManager = $mediaAttachmentRulesManager;
     }
 
-    public function register()
+    public function register(): void
     {
         add_action('admin_menu', [$this, 'menu']);
         add_action('network_admin_menu', [$this, 'menu']);
