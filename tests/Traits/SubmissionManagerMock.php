@@ -6,6 +6,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Jobs\JobInformationManager;
+use Smartling\Jobs\SubmissionJobManager;
 use Smartling\Submissions\SubmissionManager;
 
 trait SubmissionManagerMock
@@ -13,11 +14,8 @@ trait SubmissionManagerMock
     /**
      * @return MockObject|SubmissionManager
      */
-    private function mockSubmissionManager(SmartlingToCMSDatabaseAccessWrapperInterface $dbal, EntityHelper $entityHelper, JobInformationManager $jobInformationManager = null)
+    private function mockSubmissionManager(SmartlingToCMSDatabaseAccessWrapperInterface $dbal, EntityHelper $entityHelper)
     {
-        if ($jobInformationManager === null) {
-            $jobInformationManager = $this->createMock(JobInformationManager::class);
-        }
         return $this->getMockBuilder(SubmissionManager::class)
             ->onlyMethods(
                 [
@@ -28,7 +26,13 @@ trait SubmissionManagerMock
                     'storeSubmissions',
                 ]
             )
-            ->setConstructorArgs([$dbal, 10, $entityHelper, $jobInformationManager])
+            ->setConstructorArgs([
+                $dbal,
+                10,
+                $entityHelper,
+                $this->createMock(JobInformationManager::class),
+                $this->createMock(SubmissionJobManager::class)
+            ])
             ->getMock();
     }
 }

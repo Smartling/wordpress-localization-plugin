@@ -55,7 +55,7 @@ class ContentRelationDiscoveryServiceTest extends TestCase
         $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
 
         $submission = $this->createMock(SubmissionEntity::class);
-        $submission->expects($this->once())->method('setJobInfo')->with($this->equalTo(new JobInformationEntity($batchUid, $jobName, $jobUid, $projectUid)));
+        $submission->expects($this->once())->method('setJobInfo');
         $submission->expects(self::once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
 
         $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
@@ -115,7 +115,7 @@ class ContentRelationDiscoveryServiceTest extends TestCase
         $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
 
         $submission = $this->createMock(SubmissionEntity::class);
-        $submission->expects(self::exactly(count($sourceIds)))->method('setJobInfo')->with($this->equalTo(new JobInformationEntity($batchUid, $jobName, $jobUid, $projectUid)));
+        $submission->expects(self::exactly(count($sourceIds)))->method('setJobInfo');
         $submission->expects(self::exactly(count($sourceIds)))->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
 
         $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();

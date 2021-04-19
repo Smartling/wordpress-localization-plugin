@@ -683,24 +683,20 @@ class SubmissionEntity extends SmartlingEntityAbstract
 
     public function clearJobInfo(): void
     {
-        $this->jobInformation = new JobInformationEntity('', '', '');
+        $this->jobInformation = new JobInformationEntity('', '', '', '');
     }
 
     public function getJobInfo(): JobInformationEntity
     {
         if ($this->jobInformation === null) {
-            return new JobInformationEntity('', '', '');
+            return new JobInformationEntity('', '', '', '');
         }
-        $result = clone $this->jobInformation;
-        $submissionId = $this->getId();
-        if ($submissionId !== null) {
-            $result = $result->setSubmissionId($submissionId);
-        }
-        return $result;
+        return clone $this->jobInformation;
     }
 
     public function setJobInfo(JobInformationEntity $jobInfo): void
     {
+        $this->setBatchUid($jobInfo->getBatchUid());
         $this->jobInformation = $jobInfo;
     }
 

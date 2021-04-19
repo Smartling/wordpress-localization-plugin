@@ -9,6 +9,8 @@ use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\QueryBuilder\TransactionManager;
 use Smartling\Helpers\SiteHelper;
+use Smartling\Jobs\JobInformationEntity;
+use Smartling\Jobs\JobInformationManager;
 use Smartling\Jobs\UploadJob;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\Locale;
@@ -73,19 +75,7 @@ class UploadJobTest extends TestCase
 
         $submission = new SubmissionEntity();
 
-        $submissionManager = $this->getMockBuilder(SubmissionManager::class)
-            ->setConstructorArgs([
-                $this->mockDbAl(),
-                10,
-                $entityHelper,
-                $this->createMock(JobInformationManager::class),
-            ])
-            ->onlyMethods([
-                'find',
-                'findSubmissionsForUploadJob',
-                'storeSubmissions',
-            ])
-            ->getMock();
+        $submissionManager = $this->createMock(SubmissionManager::class);
 
         $submissionManager->method('findSubmissionsForUploadJob')->willReturn([]);
         $submissionManager->method('find')->willReturn([
@@ -130,20 +120,7 @@ class UploadJobTest extends TestCase
 
         $submission = new SubmissionEntity();
 
-        $submissionManager = $this->getMockBuilder(SubmissionManager::class)
-            ->setConstructorArgs([
-                $this->mockDbAl(),
-                10,
-                $entityHelper,
-                $this->createMock(JobInformationManager::class),
-            ])
-            ->onlyMethods([
-                'find',
-                'findSubmissionsForUploadJob',
-                'storeSubmissions',
-            ])
-            ->getMock();
-
+        $submissionManager = $this->createMock(SubmissionManager::class);
         $submissionManager->method('findSubmissionsForUploadJob')->willReturn([]);
         $submissionManager->method('find')->willReturn([
             $submission

@@ -78,7 +78,7 @@ class FieldsFilterHelper
         $output = [];
         foreach ($array as $key => $element) {
             $path = '' === $base ? $key : implode($divider, [$base, $key]);
-            $output = [$output, ...$this->processArrayElement($path, $element, $divider)];
+            $output = array_merge($output, $this->processArrayElement($path, $element, $divider));
         }
 
         return $output;
@@ -252,6 +252,7 @@ class FieldsFilterHelper
 
         $translatedValues = $this->prepareSourceData($translatedValues);
         $translatedValues = $this->flattenArray($translatedValues);
+
 
         $result = [];
 

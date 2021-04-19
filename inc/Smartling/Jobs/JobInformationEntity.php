@@ -15,23 +15,32 @@ class JobInformationEntity implements SmartlingTableDefinitionInterface
     public const FIELD_PROJECT_UID = 'project_uid';
 
     private string $batchUid;
+    private \DateTime $created;
     private ?int $id;
     private string $jobName;
     private string $jobUid;
+    private \DateTime $modified;
     private string $projectUid;
 
-    public function __construct(string $batchUid, string $jobName, string $jobUid, string $projectUid, int $id = null)
+    public function __construct(string $batchUid, string $jobName, string $jobUid, string $projectUid, int $id = null, ?\DateTime $created = null, ?\DateTime $modified = null)
     {
         $this->batchUid = $batchUid;
+        $this->created = $created ?? new \DateTime();
         $this->id = $id;
         $this->jobName = $jobName;
         $this->jobUid = $jobUid;
+        $this->modified = $modified ?? new \DateTime();
         $this->projectUid = $projectUid;
     }
 
     public function getBatchUid(): string
     {
         return $this->batchUid;
+    }
+
+    public function getCreated(): \DateTime
+    {
+        return $this->created;
     }
 
     public function getId(): ?int
@@ -47,6 +56,11 @@ class JobInformationEntity implements SmartlingTableDefinitionInterface
     public function getJobUid(): string
     {
         return $this->jobUid;
+    }
+
+    public function getModified(): \DateTime
+    {
+        return $this->modified;
     }
 
     public function getProjectUid(): string
@@ -83,6 +97,10 @@ class JobInformationEntity implements SmartlingTableDefinitionInterface
                 'type' => 'primary',
                 'columns' => [self::FIELD_ID],
             ],
+            [
+                'type' => 'unique',
+                'columns' => [self::FIELD_JOB_UID],
+            ]
         ];
     }
 

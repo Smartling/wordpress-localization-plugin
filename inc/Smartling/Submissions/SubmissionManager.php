@@ -14,12 +14,14 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressUserHelper;
-use Smartling\Jobs\JobInformationEntity;
 use Smartling\Jobs\JobInformationManager;
+use Smartling\Jobs\SubmissionJobEntity;
+use Smartling\Jobs\SubmissionJobManager;
 
 class SubmissionManager extends EntityManagerAbstract
 {
     private JobInformationManager $jobInformationManager;
+    private SubmissionJobManager $submissionJobManager;
 
     public function getSubmissionStatusLabels(): array
     {
@@ -31,17 +33,13 @@ class SubmissionManager extends EntityManagerAbstract
         return SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS;
     }
 
-    public function __construct(SmartlingToCMSDatabaseAccessWrapperInterface $dbal, int $pageSize, EntityHelper $entityHelper, JobInformationManager $jobInformationManager)
+    public function __construct(SmartlingToCMSDatabaseAccessWrapperInterface $dbal, int $pageSize, EntityHelper $entityHelper, JobInformationManager $jobInformationManager, SubmissionJobManager $submissionJobManager)
     {
         $siteHelper = $entityHelper->getSiteHelper();
         $proxy = $entityHelper->getConnector();
         parent::__construct($dbal, $pageSize, $siteHelper, $proxy);
         $this->jobInformationManager = $jobInformationManager;
-    }
-
-    public function getJobInformationManager(): JobInformationManager
-    {
-        return $this->jobInformationManager;
+        $this->submissionJobManager = $submissionJobManager;
     }
 
     /**
@@ -57,7 +55,12 @@ class SubmissionManager extends EntityManagerAbstract
     protected function dbResultToEntity(array $dbRow): SubmissionEntity
     {
         $result = SubmissionEntity::fromArray($dbRow, $this->getLogger());
-        $result->setJobInfo($this->jobInformationManager->getBySubmissionId($result->getId()));
+        if ($result->getId() !== null) {
+            $jobInfo = $this->jobInformationManager->getBySubmissionId($result->getId());
+            if ($jobInfo !== null) {
+                $result->setJobInfo($jobInfo);
+            }
+        }
 
         return $result;
     }
@@ -162,7 +165,7 @@ class SubmissionManager extends EntityManagerAbstract
     public function searchByBatchUid(string $batchUid): array
     {
         $block = ConditionBlock::getConditionBlock();
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_BATCH_UID, $batchUid));
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_BATCH_UID, [$batchUid]));
         $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ,
             SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_NEW]));
         $total = 0;
@@ -468,7 +471,10 @@ class SubmissionManager extends EntityManagerAbstract
             $entity = SubmissionEntity::fromArray($entityFields, $this->getLogger());
         }
 
-        $this->jobInformationManager->store($entity->getJobInfo());
+        if ($entity->getJobInfo()->getJobUid() !== '') { // TODO fix
+            $jobId = $this->jobInformationManager->store($entity->getJobInfo())->getId();
+            $this->submissionJobManager->store(new SubmissionJobEntity($jobId, $entity->getId()));
+        }
 
         $this->getLogger()->debug(
             vsprintf('Finished saving submission: %s. id=%s', [$originalSubmission, $entity->getId()])

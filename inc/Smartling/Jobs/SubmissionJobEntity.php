@@ -13,15 +13,24 @@ class SubmissionJobEntity implements SmartlingTableDefinitionInterface
     public const FIELD_MODIFIED = 'modified';
     public const FIELD_SUBMISSION_ID = 'submission_id';
 
+    private \DateTime $created;
     private ?int $id;
     private int $jobId;
+    private \DateTime $modified;
     private int $submissionId;
 
-    public function __construct(int $jobId, int $submissionId, int $id = null)
+    public function __construct(int $jobId, int $submissionId, int $id = null, ?\DateTime $created = null, ?\DateTime $modified = null)
     {
+        $this->created = $created ?? new \DateTime();
         $this->id = $id;
         $this->jobId = $jobId;
+        $this->modified = $modified ?? new \DateTime();
         $this->submissionId = $submissionId;
+    }
+
+    public function getCreated(): \DateTime
+    {
+        return $this->created;
     }
 
     public function getId(): ?int
@@ -32,6 +41,11 @@ class SubmissionJobEntity implements SmartlingTableDefinitionInterface
     public function getJobId(): int
     {
         return $this->jobId;
+    }
+
+    public function getModified(): \DateTime
+    {
+        return $this->modified;
     }
 
     public function getSubmissionId(): int
@@ -68,7 +82,7 @@ class SubmissionJobEntity implements SmartlingTableDefinitionInterface
                 'columns' => [self::FIELD_ID],
             ],
             [
-                'type' => 'index',
+                'type' => 'unique',
                 'columns' => [self::FIELD_SUBMISSION_ID],
             ],
         ];

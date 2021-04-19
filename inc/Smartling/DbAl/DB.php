@@ -69,23 +69,36 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
         return $this->wpdb;
     }
 
-    private function buildTableDefinitions()
+    private function buildTableDefinitions(): void
     {
-        $classes = [
-            ConfigurationProfileEntity::class,
-            JobInformationEntity::class,
-            Queue::class,
-            SubmissionEntity::class,
-            SubmissionJobEntity::class,
+        $this->tables[] = [
+            'columns' => JobInformationEntity::getFieldDefinitions(),
+            'indexes' => JobInformationEntity::getIndexes(),
+            'name' => JobInformationEntity::getTableName(),
         ];
-        foreach ($classes as $class) {
-            /** @noinspection PhpUndefinedMethodInspection */
-            $this->tables[] = [
-                'columns' => $class::getFieldDefinitions(),
-                'indexes' => $class::getIndexes(),
-                'name' => $class::getTableName(),
-            ];
-        }
+        // Submissions
+        $this->tables[] = [
+            'name'    => SubmissionEntity::getTableName(),
+            'columns' => SubmissionEntity::getFieldDefinitions(),
+            'indexes' => SubmissionEntity::getIndexes(),
+        ];
+        $this->tables[] = [
+            'columns' => SubmissionJobEntity::getFieldDefinitions(),
+            'indexes' => SubmissionJobEntity::getIndexes(),
+            'name' => SubmissionJobEntity::getTableName(),
+        ];
+        // Configuration profiles
+        $this->tables[] = [
+            'name'    => ConfigurationProfileEntity::getTableName(),
+            'columns' => ConfigurationProfileEntity::getFieldDefinitions(),
+            'indexes' => ConfigurationProfileEntity::getIndexes(),
+        ];
+        // Queue
+        $this->tables[] = [
+            'name'    => Queue::getTableName(),
+            'columns' => Queue::getFieldDefinitions(),
+            'indexes' => Queue::getIndexes(),
+        ];
     }
 
     /**
@@ -326,15 +339,15 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
         foreach ($tableDefinition['indexes'] as $indexDefinition) {
             if ($indexDefinition['type'] === 'primary') {
                 continue;
-            } else {
-                $_indexes[] = vsprintf(
-                    '%s (%s)',
-                    [
-                        strtoupper($indexDefinition['type']),
-                        '`' . implode('`, `', $indexDefinition['columns']) . '`',
-                    ]
-                );
             }
+
+            $_indexes[] = vsprintf(
+                '%s (%s)',
+                [
+                    strtoupper($indexDefinition['type']),
+                    '`' . implode('`, `', $indexDefinition['columns']) . '`',
+                ]
+            );
         }
 
         return implode(', ', $_indexes);

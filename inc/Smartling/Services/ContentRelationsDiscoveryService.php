@@ -186,6 +186,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
      *      'targetBlogIds' => '3,2',
      *      'relations'    => {{@see actionHandler }} relations response
      *  ]
+     * @var array|string $data
      */
     public function createSubmissionsHandler($data = ''): void
     {
@@ -196,7 +197,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             $contentType = $data['source']['contentType'];
             $curBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
             $batchUid = $this->getBatchUid($curBlogId, $data['job']);
-            $jobInfo = new JobInformationEntity($batchUid, $data['job']['name'], $data['job']['id'], $this->getSettingsManager()->getSingleSettingsProfile($curBlogId)->getProjectId());
+            $jobInfo = new JobInformationEntity($batchUid, $data['job']['name'], $data['job']['id'], $this->settingsManager->getSingleSettingsProfile($curBlogId)->getProjectId());
             $targetBlogIds = explode(',', $data['targetBlogIds']);
 
             if (array_key_exists('ids', $data)) {
@@ -392,7 +393,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 if (!is_string($chunk)) {
                     $chunkFields = $this->extractFieldsFromGutenbergBlock($blockNamePart,
                         $block['innerBlocks'][$pointer++]);
-                    $fields = [$fields, ...$chunkFields];
+                    $fields = array_merge($fields, $chunkFields);
                 }
             }
         }
@@ -424,7 +425,8 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
          */
         $extraFields = [];
         foreach ($fields as $fName => $fValue) {
-            $extraFields = [$extraFields, ...$this->fieldFilterHelper->flattenArray($this->extractFieldsFromShortcodes($fName, $fValue))];
+            $extraFields = array_merge($extraFields,
+                $this->fieldFilterHelper->flattenArray($this->extractFieldsFromShortcodes($fName, $fValue)));
         }
         $fields = array_merge($fields, $extraFields);
 
@@ -439,7 +441,10 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
              */
             $extraFields = [];
             foreach ($fields as $fName => $fValue) {
-                $extraFields = [$extraFields, ...$this->fieldFilterHelper->flattenArray($this->extractFieldsFromGutenbergBlock($fName, $fValue))];
+                $extraFields = array_merge(
+                    $extraFields,
+                    $this->fieldFilterHelper->flattenArray($this->extractFieldsFromGutenbergBlock($fName, $fValue))
+                );
             }
             $fields = array_merge($fields, $extraFields);
         } catch (Exception $e) {

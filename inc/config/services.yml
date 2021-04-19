@@ -82,6 +82,7 @@ services:
     class: Smartling\Jobs\JobInformationManager
     arguments:
       - "@site.db"
+      - "@manager.submission.job"
 
   manager.submission:
     class: Smartling\Submissions\SubmissionManager
@@ -90,6 +91,12 @@ services:
      - "%submission.pagesize%"
      - "@entity.helper"
      - "@manager.job.information"
+     - "@manager.submission.job"
+
+  manager.submission.job:
+    class: Smartling\Jobs\SubmissionJobManager
+    arguments:
+      - "@site.db"
 
   site.helper:
     class: Smartling\Helpers\SiteHelper
@@ -175,8 +182,8 @@ services:
       - "@entity.helper"
       - "@manager.submission"
       - "@site.cache"
-    calls:
-      - [ "setQueue", [ "@queue.db" ] ]
+      - "@queue.db"
+      - "@manager.job.information"
 
   wp.taxonomy.linker:
     class: Smartling\WP\Controller\TaxonomyLinksController

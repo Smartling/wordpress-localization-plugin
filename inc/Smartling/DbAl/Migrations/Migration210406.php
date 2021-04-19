@@ -15,17 +15,18 @@ class Migration210406 implements SmartlingDbMigrationInterface
 
     public function getQueries($tablePrefix = 'wp_'): array
     {
-        $classes = [JobInformationEntity::class, SubmissionJobEntity::class];
         $db = new DB();
-        $queries = [];
-        foreach ($classes as $class) {
-            /** @noinspection PhpUndefinedMethodInspection */
-            $queries[] = $db->prepareSql([
-                'columns' => $class::getFieldDefinitions(),
-                'indexes' => $class::getIndexes(),
-                'name' => $class::getTableName(),
-            ]);
-        }
-        return $queries;
+        return [
+            $db->prepareSql([
+                'columns' => JobInformationEntity::getFieldDefinitions(),
+                'indexes' => JobInformationEntity::getIndexes(),
+                'name' => JobInformationEntity::getTableName(),
+            ]),
+            $db->prepareSql([
+                'columns' => SubmissionJobEntity::getFieldDefinitions(),
+                'indexes' => SubmissionJobEntity::getIndexes(),
+                'name' => SubmissionJobEntity::getTableName(),
+            ]),
+        ];
     }
 }
