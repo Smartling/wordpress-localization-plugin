@@ -220,11 +220,11 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         $profile->setSecretKey(getenv('CRE_TOKEN_SECRET'));
         $profile->setIsActive(1);
 
-        $originalBlog = new Locale();
-        $originalBlog->setBlogId(1);
-        $originalBlog->setLabel('');
+        $locale = new Locale();
+        $locale->setBlogId(1);
+        $locale->setLabel('');
 
-        $profile->setLocale($originalBlog);
+        $profile->setLocale($locale);
         $profile->setAutoAuthorize(1);
         $profile->setRetrievalType('pseudo');
         $profile->setUploadOnUpdate(1);
@@ -317,30 +317,24 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         return $this->get('content.helper');
     }
 
-    /**
-     * @return bool|ConfigurationProfileEntity
-     */
-    public function getProfileById(int $id)
+    public function getProfileById(int $id): ?ConfigurationProfileEntity
     {
         $result = $this->getSettingsManager()->getEntityById($id);
         if (0 < count($result)) {
             return ArrayHelper::first($result);
         }
 
-        return false;
+        return null;
     }
 
-    /**
-     * @return bool|SubmissionEntity
-     */
-    public function getSubmissionById(int $id)
+    public function getSubmissionById(int $id): ?SubmissionEntity
     {
         $result = $this->getSubmissionManager()->getEntityById($id);
         if (0 < count($result)) {
             return ArrayHelper::first($result);
         }
 
-        return false;
+        return null;
     }
 
     protected function createPostWithMeta(string $title, string $body, string $post_type, array $meta): int

@@ -64,7 +64,7 @@ class SubmissionCollectorJob extends JobAbstract
         } while (0 < count($submissions));
     }
 
-    public function run()
+    public function run(): void
     {
         $this->getLogger()->info('Started Submission Collector Job.');
         $this->fixEmptyFileUriSubmissions();

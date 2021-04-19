@@ -196,7 +196,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             $contentType = $data['source']['contentType'];
             $curBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
             $batchUid = $this->getBatchUid($curBlogId, $data['job']);
-            $jobInfo = new JobInformationEntity($data['job']['name'], $data['job']['id'], $this->getSettingsManager()->getSingleSettingsProfile($curBlogId)->getProjectId());
+            $jobInfo = new JobInformationEntity($batchUid, $data['job']['name'], $data['job']['id'], $this->getSettingsManager()->getSingleSettingsProfile($curBlogId)->getProjectId());
             $targetBlogIds = explode(',', $data['targetBlogIds']);
 
             if (array_key_exists('ids', $data)) {
