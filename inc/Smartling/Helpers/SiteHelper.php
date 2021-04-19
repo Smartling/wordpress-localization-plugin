@@ -76,8 +76,6 @@ class SiteHelper
     }
 
     /**
-     * @param int $siteId
-     *
      * @return int[]
      * @throws SmartlingDirectRunRuntimeException
      * @throws InvalidArgumentException
@@ -105,7 +103,6 @@ class SiteHelper
     }
 
     /**
-     * @return integer
      * @throws SmartlingDirectRunRuntimeException
      */
     public function getCurrentSiteId(): int

@@ -3,6 +3,7 @@
 namespace Smartling;
 
 use DateTimeZone;
+use JetBrains\PhpStorm\ArrayShape;
 use Psr\Log\LoggerInterface;
 use Smartling\AuthApi\AuthTokenProvider;
 use Smartling\Batch\BatchApi;
@@ -588,6 +589,7 @@ class ApiWrapper implements ApiWrapperInterface
     /**
      * @throws SmartlingApiException
      */
+    #[ArrayShape(ApiWrapperInterface::CREATE_JOB_RESPONSE)]
     public function createJob(ConfigurationProfileEntity $profile, array $params): array
     {
         $param = new CreateJobParameters();
@@ -631,17 +633,13 @@ class ApiWrapper implements ApiWrapperInterface
     }
 
     /**
-     * @param ConfigurationProfileEntity $profile
-     * @param                                                $jobId
-     * @param bool                                           $authorize
-     *
-     * @return array
      * @throws SmartlingApiException
      */
-    public function createBatch(ConfigurationProfileEntity $profile, $jobId, $authorize = false)
+    #[ArrayShape(self::CREATE_BATCH_RESPONSE)]
+    public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, bool $authorize = false): array
     {
         $createBatchParameters = new CreateBatchParameters();
-        $createBatchParameters->setTranslationJobUid($jobId);
+        $createBatchParameters->setTranslationJobUid($jobUid);
         $createBatchParameters->setAuthorize($authorize);
 
         return $this->getBatchApi($profile)->createBatch($createBatchParameters);

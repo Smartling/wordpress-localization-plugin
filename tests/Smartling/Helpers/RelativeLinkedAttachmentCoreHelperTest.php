@@ -44,7 +44,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
         $submission->setSourceId($sourceMediaId);
         $submission->setTargetId($targetMediaId);
         $submission->setTargetBlogId($targetBlogId);
-        $submission->setJobInfo(new JobInformationEntity($batchUid, '', '', ''));
+        $submission->setJobInfo(new JobInformationEntity('', '', '', ''));
         $acf = $this->getMockBuilder(AcfDynamicSupport::class)
             ->setConstructorArgs([$this->createMock(EntityHelper::class)])
             ->getMock();
@@ -107,7 +107,7 @@ HTML
         $submission->setSourceId($sourceId);
         $submission->setTargetId($targetId);
         $submission->setTargetBlogId($targetBlogId);
-        $jobInfo = new JobInformationEntity($batchUid, '', '', '');
+        $jobInfo = new JobInformationEntity('', '', '', '');
         $submission->setJobInfo($jobInfo);
         $acf = $this->getMockBuilder(AcfDynamicSupport::class)
             ->setConstructorArgs([$this->createMock(EntityHelper::class)])
@@ -159,7 +159,7 @@ HTML
         $submission->setSourceId($sourceId);
         $submission->setTargetId($targetId);
         $submission->setTargetBlogId($targetBlogId);
-        $submission->setJobInfo(new JobInformationEntity($batchUid, '', '', ''));
+        $submission->setJobInfo(new JobInformationEntity('', '', '', ''));
 
         $acf = $this->getMockBuilder(AcfDynamicSupport::class)
             ->setConstructorArgs([$this->createMock(EntityHelper::class)])

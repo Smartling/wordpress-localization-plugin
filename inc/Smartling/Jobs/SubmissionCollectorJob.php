@@ -35,10 +35,7 @@ class SubmissionCollectorJob extends JobAbstract
 
     const JOB_HOOK_NAME = 'smartling-submission-collector-task';
 
-    /**
-     * @return string
-     */
-    public function getJobHookName()
+    public function getJobHookName(): string
     {
         return self::JOB_HOOK_NAME;
     }

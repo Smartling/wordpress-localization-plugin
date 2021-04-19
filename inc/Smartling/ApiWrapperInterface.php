@@ -2,6 +2,7 @@
 
 namespace Smartling;
 
+use JetBrains\PhpStorm\ArrayShape;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
@@ -10,12 +11,28 @@ use Smartling\Jobs\JobInformationEntity;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Interface ApiWrapperInterface
- * @package Smartling
- */
 interface ApiWrapperInterface
 {
+    public const CREATE_BATCH_RESPONSE = ['batchUid' => 'string'];
+    public const CREATE_JOB_RESPONSE = [
+        'translationJobUid' => 'string',
+        'jobName' => 'string',
+        'jobNumber' => 'string',
+        'targetLocaleIds' => 'string[]',
+        'callbackMethod' => 'string',
+        'callbackUrl' => 'string',
+        'createdByUserUid' => 'string',
+        'createdDate' => 'string',
+        'description' => 'string',
+        'dueDate' => 'string',
+        'firstCompletedDate' => 'string',
+        'jobStatus' => 'string',
+        'lastCompletedDate' => 'string',
+        'modifiedByUserUid' => 'string',
+        'modifiedDate' => 'string',
+        'referenceNumber' => 'string',
+        'customFields' => [],
+    ];
 
     /**
      * @param SubmissionEntity $entity
@@ -94,6 +111,10 @@ interface ApiWrapperInterface
      */
     public function listJobs(ConfigurationProfileEntity $profile);
 
+    /**
+     * @throws SmartlingApiException
+     */
+    #[ArrayShape(self::CREATE_JOB_RESPONSE)]
     public function createJob(ConfigurationProfileEntity $profile, array $params): array;
 
     /**
@@ -109,14 +130,10 @@ interface ApiWrapperInterface
     public function updateJob(ConfigurationProfileEntity $profile, $jobId, $name, $description, $dueDate);
 
     /**
-     * @param ConfigurationProfileEntity $profile
-     * @param                                                $jobId
-     * @param bool $authorize
-     *
-     * @return array
      * @throws SmartlingApiException
      */
-    public function createBatch(ConfigurationProfileEntity $profile, $jobId, $authorize = false);
+    #[ArrayShape(self::CREATE_BATCH_RESPONSE)]
+    public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, bool $authorize = false): array;
 
     /**
      * @param ConfigurationProfileEntity $profile

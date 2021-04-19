@@ -3,6 +3,7 @@
 namespace Smartling\Base;
 
 use Exception;
+use JetBrains\PhpStorm\ArrayShape;
 use Smartling\ApiWrapperInterface;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
@@ -20,6 +21,7 @@ use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
+use Smartling\Helpers\TranslationHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\XmlHelper;
 use Smartling\Jobs\JobInformationEntity;
@@ -36,11 +38,11 @@ trait SmartlingCoreUploadTrait
         $submission->setSourceContentHash($newHash);
         $submission->setOutdated(0);
         $submission->setSourceTitle($content->getTitle());
-        $submission = $this->getSubmissionManager()->storeEntity($submission);
 
-        return $submission;
+        return $this->getSubmissionManager()->storeEntity($submission);
     }
 
+    #[ArrayShape(['entity' => [], 'meta' => []])]
     private function readSourceContentWithMetadataAsArray(SubmissionEntity $submission): array
     {
         $source = [
@@ -127,7 +129,7 @@ trait SmartlingCoreUploadTrait
                     ]
                 );
                 $this->getLogger()->warning($message);
-                $submission->clearJobInfo();
+                $submission->setBatchUid('');
                 $submission = $this->getSubmissionManager()
                     ->setErrorMessage($submission, 'There is no original content for translation.');
 
@@ -152,6 +154,7 @@ trait SmartlingCoreUploadTrait
         return '';
     }
 
+    #[ArrayShape(['entity' => 'string', 'meta' => 'string'])]
     private function readLockedTranslationFieldsBySubmission(SubmissionEntity $submission): array
     {
         $this->getLogger()
@@ -201,6 +204,9 @@ trait SmartlingCoreUploadTrait
         return $translation;
     }
 
+    /**
+     * @return string[]
+     */
     public function applyXML(SubmissionEntity $submission, string $xml, XmlHelper $xmlHelper, PostContentHelper $postContentHelper): array
     {
         $messages = [];
@@ -385,7 +391,7 @@ trait SmartlingCoreUploadTrait
             ];
 
             if ($submissionHasBatchUid) {
-                $params[JobInformationEntity::FIELD_BATCH_UID] = [$submission->getBatchUid()];
+                $params[SubmissionEntity::FIELD_BATCH_UID] = [$submission->getBatchUid()];
             }
 
             /**
@@ -443,7 +449,7 @@ trait SmartlingCoreUploadTrait
                         ])
                     );
                     foreach ($submissions as $_submission) {
-                        $_submission->clearJobInfo();
+                        $_submission->setBatchUid('');
                         $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                     }
                 } else {
@@ -460,7 +466,7 @@ trait SmartlingCoreUploadTrait
                         ])
                     );
                     foreach ($submissions as $_submission) {
-                        $_submission->clearJobInfo();
+                        $_submission->setBatchUid('');
                         $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
                     }
                 }
@@ -480,10 +486,10 @@ trait SmartlingCoreUploadTrait
                     $this->getLogger()->error("Batch {$submission->getBatchUid()} is not suitable for adding files");
                     $submissions = $this->getSubmissionManager()->find([
                         SubmissionEntity::FIELD_STATUS => [SubmissionEntity::SUBMISSION_STATUS_NEW],
-                        JobInformationEntity::FIELD_BATCH_UID => [$submission->getBatchUid()],
+                        SubmissionEntity::FIELD_BATCH_UID => [$submission->getBatchUid()],
                     ]);
                     foreach ($submissions as $found) {
-                        $found->clearJobInfo();
+                        $found->setBatchUid('');
                         $found->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
                         $this->getLogger()->notice("Setting submission {$found->getId()} status to failed");
                     }
@@ -557,8 +563,9 @@ trait SmartlingCoreUploadTrait
             $apiWrapper = $this->getApiWrapper();
             $jobInfo = $apiWrapper->retrieveJobInfoForDailyBucketJob($profile, $profile->getAutoAuthorize());
 
-            $submission->setJobInfo($jobInfo);
+            $submission->setBatchUid($jobInfo->getBatchUid());
             $submission = $this->getSubmissionManager()->storeEntity($submission);
+            // TODO store job info
         } catch (\Exception $e) {
             $msg = vsprintf(
                 'Failed getting batchUid for submission \'%s\'. Message: %s',
@@ -706,13 +713,14 @@ trait SmartlingCoreUploadTrait
         }
     }
 
-    public function createForTranslation(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, JobInformationEntity $jobInfo, bool $clone, ?int $targetEntity = null): SubmissionEntity
+    public function createForTranslation(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, JobInformationEntity $jobInfo, bool $clone): SubmissionEntity
     {
         /**
-         * @var SubmissionEntity $submission
+         * @var TranslationHelper $translationHelper
          */
-        $submission = $this->getTranslationHelper()
-            ->prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity);
+        $translationHelper = $this->getTranslationHelper();
+        $submission = $translationHelper
+            ->prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog);
 
         $contentEntity = $this->getContentHelper()->readSourceContent($submission);
 
@@ -731,8 +739,9 @@ trait SmartlingCoreUploadTrait
 
         $isCloned = true === $clone ? 1 : 0;
         $submission->setIsCloned($isCloned);
-        $submission->setJobInfo($jobInfo);
+        $submission->setBatchUid($jobInfo->getBatchUid());
 
+        // TODO store job information
         return $this->getSubmissionManager()->storeEntity($submission);
     }
 

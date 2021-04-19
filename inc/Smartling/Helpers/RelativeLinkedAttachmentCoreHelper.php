@@ -77,7 +77,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 
         $fields = &$params->getTranslatedFields();
 
-        foreach ($fields as $name => &$value) {
+        foreach ($fields as &$value) {
             $this->processString($value);
         }
     }
@@ -93,7 +93,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         $matches = [];
 
         if (is_array($stringValue)) {
-            foreach ($stringValue as $item => &$value) {
+            foreach ($stringValue as &$value) {
                 $this->processString($value);
             }
             return;
@@ -123,18 +123,14 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     }
 
     /**
-     * Extracts src attribute from <img /> tag if possible, otherwise returns false.
-     *
-     * @param string $imgTagString
-     *
-     * @return bool|string
+     * Extracts src attribute from <img /> tag if possible, otherwise returns null.
      */
-    private function getSourcePathFromImgTag(string $imgTagString)
+    private function getSourcePathFromImgTag(string $imgTagString): ?string
     {
         return $this->getAttributeFromTag($imgTagString, 'img', 'src');
     }
 
-    private function tryProcessThumbnail(string $path): ?array
+    private function tryProcessThumbnail(string $path): ?ReplacementPair
     {
         $submission = $this->getParams()->getSubmission();
         $dir = $this->getCore()->getUploadFileInfo($submission->getSourceBlogId())['basedir'];
@@ -194,7 +190,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                             $targetThumbnailRelativePath = $targetThumbnailPathInfo['dirname'] . '/' .
                                 $sourceFilePathInfo['basename'];
 
-                            return ['from' => $path, 'to' => $targetThumbnailRelativePath];
+                            return new ReplacementPair($path, $targetThumbnailRelativePath);
                         }
 
                         $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
@@ -229,12 +225,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         return $url === $parts['path'];
     }
 
-    /**
-     * @param $relativePath
-     *
-     * @return bool|int
-     */
-    private function getAttachmentId($relativePath)
+    private function getAttachmentId(string $relativePath): ?int
     {
         return $this->returnId(vsprintf(
             "SELECT `post_id` as `id` FROM `%s` WHERE `meta_key` = '_wp_attached_file' AND `meta_value`='%s' LIMIT 1;",
@@ -245,14 +236,11 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         ));
     }
 
-    /**
-     * @return bool|int
-     */
-    protected function returnId(string $query)
+    protected function returnId(string $query): ?int
     {
         $data = RawDbQueryHelper::query($query);
 
-        $result = false;
+        $result = null;
 
         if (is_array($data) && 1 === count($data)) {
             $resultRow = ArrayHelper::first($data);
@@ -267,10 +255,8 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 
     /**
      * Extracts attribute from html tag string
-     *
-     * @return false|string
      */
-    protected function getAttributeFromTag(string $tagString, string $tagName, string $attribute)
+    protected function getAttributeFromTag(string $tagString, string $tagName, string $attribute): ?string
     {
         $dom = new DOMDocument();
         $state = libxml_use_internal_errors(true);
@@ -313,11 +299,12 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
             }
         }
         $images = $dom->getElementsByTagName($tagName);
-        $value = false;
+        $value = null;
         if (1 === $images->length) {
             /** @var \DOMNode $node */
             $node = $images->item(0);
-            if ($node->hasAttributes() && $value = $node->attributes->getNamedItem($attribute)) {
+            if ($node->hasAttributes()) {
+                $value = $node->attributes->getNamedItem($attribute);
                 if ($value instanceof \DOMAttr) {
                     $value = $value->nodeValue;
                 }
@@ -352,7 +339,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                             $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
                         }
                     } else {
-                        $this->getLogger()->warning("Can not send attachment as it has empty id acfFieldId=${value} acfFieldValue=\"${attachmentId}\"");
+                        $this->getLogger()->warning("Can not send attachment as it has empty id acfFieldId=$value acfFieldValue=\"$attachmentId\"");
                     }
                 }
             }
@@ -415,9 +402,8 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                 }
             } else {
                 $thumbnail = $this->tryProcessThumbnail($path);
-
                 if ($thumbnail !== null) {
-                    $result->addReplacementPair(new ReplacementPair($thumbnail['from'], $thumbnail['to']));
+                    $result->addReplacementPair($thumbnail);
                 }
             }
         }

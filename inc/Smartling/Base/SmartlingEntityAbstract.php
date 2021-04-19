@@ -5,13 +5,7 @@ namespace Smartling\Base;
 use Psr\Log\LoggerInterface;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\SmartlingTableDefinitionInterface;
-use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Class SmartlingEntityAbstract
- *
- * @package Smartling\Base
- */
 abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterface
 {
 

@@ -2,6 +2,7 @@
 
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\WP\Table\BulkSubmitTableWidget;
@@ -363,7 +364,7 @@ if ($post instanceof WP_Post) {
             });
 
             var loadRelations = function (contentType, contentId) {
-                var url = `${ajaxurl}?action=smartling-get-relations&id=${contentId}&content-type=${contentType}&targetBlogIds=${localeList}`;
+                var url = `${ajaxurl}?action=<?= ContentRelationsDiscoveryService::ACTION_NAME?>&id=${contentId}&content-type=${contentType}&targetBlogIds=${localeList}`;
 
                 $.get(url, function (data) {
                     if (data.response.data) {

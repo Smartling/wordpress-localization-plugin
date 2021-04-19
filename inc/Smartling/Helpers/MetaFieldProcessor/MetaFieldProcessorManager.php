@@ -251,7 +251,7 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
      * Registers wp hook handlers. Invoked by wordpress.
      * @return void
      */
-    public function register()
+    public function register(): void
     {
         add_filter(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, [$this, 'handlePostTranslationFields'], 10, 3);
         add_filter(ExportedAPI::FILTER_SMARTLING_METADATA_PROCESS_BEFORE_TRANSLATION, [$this,

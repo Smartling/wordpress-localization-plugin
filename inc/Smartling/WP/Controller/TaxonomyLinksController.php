@@ -59,7 +59,7 @@ class TaxonomyLinksController extends WPAbstract implements WPHookInterface
         wp_enqueue_style($this->getPluginInfo()->getName());
     }
 
-    public function register()
+    public function register(): void
     {
         add_action('admin_enqueue_scripts', [$this, 'wp_enqueue']);
         add_action('admin_menu', [$this, 'menu']);

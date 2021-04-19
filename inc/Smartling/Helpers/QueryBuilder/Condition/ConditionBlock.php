@@ -63,7 +63,7 @@ class ConditionBlock
 
     public function getOperator(): string
     {
-        return substr($this->operator, 1, -1);
+        return substr($this->operator, 1, -1); // remove spaces
     }
 
     public function addConditionBlock(ConditionBlock $block): void

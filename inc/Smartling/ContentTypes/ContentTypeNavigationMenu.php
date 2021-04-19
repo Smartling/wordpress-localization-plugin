@@ -15,9 +15,6 @@ use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
 
 class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
 {
-    /**
-     * The system name of Wordpress content type to make references safe.
-     */
     public const WP_CONTENT_TYPE = 'nav_menu';
 
     private $contentHelper;

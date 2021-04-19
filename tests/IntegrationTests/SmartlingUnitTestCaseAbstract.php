@@ -74,7 +74,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
 
     protected function ensureProfileExists()
     {
-        if (false === $this->getProfileById(1)) {
+        if (null === $this->getProfileById(1)) {
             $profile = $this->createProfile();
 
             $this->getSettingsManager()->storeEntity($profile);

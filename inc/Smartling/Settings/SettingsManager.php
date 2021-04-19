@@ -13,60 +13,44 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Class SettingsManager
- * @package Smartling\Settings
- */
 class SettingsManager extends EntityManagerAbstract
 {
     /**
-     * @param array $sortOptions
-     * @param null  $pageOptions
-     * @param int   $totalCount
-     * @param bool  $onlyActive
-     *
-     * @return array
+     * @return ConfigurationProfileEntity[]
      */
-    public function getEntities($sortOptions = [], $pageOptions = null, & $totalCount = 0, $onlyActive = false)
+    public function getEntities(int &$totalCount = 0, bool $onlyActive = false): array
     {
-        $validRequest = $this->validateRequest($sortOptions, $pageOptions);
-        $result = [];
-        if ($validRequest) {
-            $cb = null;
-            if (true === $onlyActive) {
-                $cb = ConditionBlock::getConditionBlock();
-                $cb->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'is_active', [1,]));
-            }
-            $dataQuery = $this->buildQuery($sortOptions, $pageOptions, $cb);
-            $countQuery = $this->buildCountQuery();
-            $tc = $this->getDbal()->fetch($countQuery);
-            if (1 === count($tc)) {
-                // extracting from result
-                $totalCount = (int)$tc[0]->cnt;
-            }
-            $result = $this->fetchData($dataQuery);
+        $cb = null;
+        if ($onlyActive) {
+            $cb = ConditionBlock::getConditionBlock();
+            $cb->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'is_active', [1,]));
+        }
+        $dataQuery = $this->buildQuery($cb);
+        $countQuery = $this->buildCountQuery();
+        $tc = $this->getDbal()->fetch($countQuery);
+        if (1 === count($tc)) {
+            // extracting from result
+            $totalCount = (int)$tc[0]->cnt;
         }
 
-        return $result;
+        return $this->fetchData($dataQuery);
     }
 
     /**
      * @return ConfigurationProfileEntity[]
      */
-    public function getActiveProfiles()
+    public function getActiveProfiles(): array
     {
         $cnt = 0;
 
-        return $this->getEntities([], null, $cnt, true);
+        return $this->getEntities($cnt, true);
     }
 
-    public function getSmartlingLocaleBySubmission(SubmissionEntity $submission)
+    public function getSmartlingLocaleBySubmission(SubmissionEntity $submission): string
     {
         $profile = $this->getSingleSettingsProfile($submission->getSourceBlogId());
 
-        $locale = $this->getSmartlingLocaleIdBySettingsProfile($profile, $submission->getTargetBlogId());
-
-        return $locale;
+        return $this->getSmartlingLocaleIdBySettingsProfile($profile, $submission->getTargetBlogId());
     }
 
     /**
@@ -86,12 +70,12 @@ class SettingsManager extends EntityManagerAbstract
     }
 
     /**
-     * @param $mainBlogId
-     * @return array
+     * @return int[]
      * @throws SmartlingDbException
      * @throws SmartlingConfigException
      */
-    public function getProfileTargetBlogIdsByMainBlogId($mainBlogId) {
+    public function getProfileTargetBlogIdsByMainBlogId(int $mainBlogId): array
+    {
         $profile = $this->getSingleSettingsProfile($mainBlogId);
 
         $targetBlogIds = [];
@@ -104,18 +88,12 @@ class SettingsManager extends EntityManagerAbstract
 
         if (0 < count($targetBlogIds)) {
             return $targetBlogIds;
-        } else {
-            throw new SmartlingConfigException(vsprintf('No active target locales found for profile id=%s.', [$profile->getId()]));
         }
+
+        throw new SmartlingConfigException(vsprintf('No active target locales found for profile id=%s.', [$profile->getId()]));
     }
 
-    /**
-     * @param ConfigurationProfileEntity $profile
-     * @param int                        $targetBlog
-     *
-     * @return string
-     */
-    public function getSmartlingLocaleIdBySettingsProfile(ConfigurationProfileEntity $profile, $targetBlog)
+    public function getSmartlingLocaleIdBySettingsProfile(ConfigurationProfileEntity $profile, int $targetBlog): string
     {
         $locale = '';
 
@@ -131,70 +109,69 @@ class SettingsManager extends EntityManagerAbstract
     }
 
     /**
-     * @param $projectId
-     *
-     * @return ConfigurationProfileEntity
      * @throws SmartlingConfigException
      */
-    public function getActiveProfileByProjectId($projectId)
+    public function getActiveProfileByProjectId(string $projectId): ConfigurationProfileEntity
     {
         $cond = ConditionBlock::getConditionBlock();
         $cond->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'project_id', [$projectId]));
         $cond->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'is_active', [1]));
-        $dataQuery = $this->buildQuery([], null, $cond);
+        $dataQuery = $this->buildQuery($cond);
         $result = $this->fetchData($dataQuery);
 
         if (0 < count($result)) {
             return ArrayHelper::first($result);
-        } else {
-            throw new SmartlingConfigException(vsprintf('No profile found for projectId="%s".', [$projectId]));
         }
+
+        throw new SmartlingConfigException(vsprintf('No profile found for projectId="%s".', [$projectId]));
     }
 
-    public function getEntityById($id)
+    /**
+     * @return ConfigurationProfileEntity[]
+     */
+    public function getEntityById(int $id): array
     {
         $cond = ConditionBlock::getConditionBlock();
         $cond->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'id', [$id]));
-        $dataQuery = $this->buildQuery([], null, $cond);
-        $result = $this->fetchData($dataQuery);
+        $dataQuery = $this->buildQuery($cond);
 
-        return $result;
+        return $this->fetchData($dataQuery);
     }
 
     protected function dbResultToEntity(array $dbRow)
     {
-        return ConfigurationProfileEntity::fromArray((array)$dbRow, $this->getLogger());
+        return ConfigurationProfileEntity::fromArray($dbRow, $this->getLogger());
     }
 
-    private function buildQuery($sortOptions, $pageOptions, ConditionBlock $whereOptions = null)
+    private function buildQuery(ConditionBlock $whereOptions = null): string
     {
         $query = QueryBuilder::buildSelectQuery($this->getDbal()
                                                     ->completeTableName(ConfigurationProfileEntity::getTableName()),
                                                 array_keys(ConfigurationProfileEntity::getFieldDefinitions()),
-                                                $whereOptions, $sortOptions, $pageOptions);
+                                                $whereOptions);
         $this->logQuery($query);
 
         return $query;
     }
 
-    public function buildCountQuery()
+    public function buildCountQuery(): string
     {
         $query = QueryBuilder::buildSelectQuery(
             $this->getDbal()->completeTableName(ConfigurationProfileEntity::getTableName()),
             [['COUNT(*)' => 'cnt']],
-            null,
-            [],
-            null
         );
         $this->logQuery($query);
 
         return $query;
     }
 
-    public function fetchData($query)
+    /**
+     * @return ConfigurationProfileEntity[]
+     */
+    public function fetchData($query): array
     {
         $data = parent::fetchData($query);
-        foreach ($data as & $result) {
+        foreach ($data as $result) {
             try {
                 $this->updateLabels($result);
             } catch (BlogNotFoundException $e) {
@@ -206,34 +183,21 @@ class SettingsManager extends EntityManagerAbstract
     }
 
     /**
-     * @param int $sourceBlogId
-     *
      * @return ConfigurationProfileEntity[]
      */
-    public function findEntityByMainLocale($sourceBlogId)
+    public function findEntityByMainLocale(int $sourceBlogId): array
     {
         $conditionBlock = ConditionBlock::getConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
         $conditionBlock->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'original_blog_id',
                                                               [$sourceBlogId]));
         $conditionBlock->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'is_active', [1]));
-        $result = $this->fetchData($this->buildQuery([], null, $conditionBlock));
 
-        return $result;
+        return $this->fetchData($this->buildQuery($conditionBlock));
     }
 
-    private function validateRequest($sortOptions, $pageOptions)
+    public function storeEntity(ConfigurationProfileEntity $entity): ConfigurationProfileEntity
     {
-        $fSortOptionsAreValid = QueryBuilder::validateSortOptions(array_keys(ConfigurationProfileEntity::getFieldDefinitions()),
-                                                                  $sortOptions);
-        $fPageOptionsValid = QueryBuilder::validatePageOptions($pageOptions);
-        $validRequest = $fPageOptionsValid && $fSortOptionsAreValid;
-
-        return ($validRequest === true);
-    }
-
-    public function storeEntity(ConfigurationProfileEntity $entity)
-    {
-        $originalProfile = json_encode($entity->toArray(false));
+        $originalProfile = json_encode($entity->toArray(false), JSON_THROW_ON_ERROR);
         $this->getLogger()->debug(vsprintf('Starting saving profile: %s', [$originalProfile]));
         $entityId = $entity->getId();
         $is_insert = in_array($entityId, [0, null], true);
@@ -271,12 +235,12 @@ class SettingsManager extends EntityManagerAbstract
         return $entity;
     }
 
-    public function createProfile(array $fields)
+    public function createProfile(array $fields): ConfigurationProfileEntity
     {
         return ConfigurationProfileEntity::fromArray($fields, $this->getLogger());
     }
 
-    protected function updateLabels(ConfigurationProfileEntity $entity)
+    protected function updateLabels(ConfigurationProfileEntity $entity): ConfigurationProfileEntity
     {
         $mainLocaleBlogId = $entity->getOriginalBlogId()->getBlogId();
         if (0 < $mainLocaleBlogId) {

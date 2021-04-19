@@ -97,7 +97,7 @@ class UploadJob extends JobAbstract
                     SubmissionEntity::FIELD_STATUS => [SubmissionEntity::SUBMISSION_STATUS_NEW],
                     SubmissionEntity::FIELD_IS_LOCKED => 0,
                     SubmissionEntity::FIELD_IS_CLONED => 0,
-                    JobInformationEntity::FIELD_BATCH_UID => '',
+                    SubmissionEntity::FIELD_BATCH_UID => '',
                     SubmissionEntity::FIELD_SOURCE_BLOG_ID => $originalBlogId,
                 ]
             );

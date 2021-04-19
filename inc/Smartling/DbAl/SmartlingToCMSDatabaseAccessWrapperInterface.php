@@ -9,13 +9,13 @@ interface SmartlingToCMSDatabaseAccessWrapperInterface
 
     /**
      * @param string $query
-     * @return mixed
+     * @return bool|int
      */
     public function query(string $query);
 
     /**
      * @param string $output \OBJECT || \ARRAY_A
-     * @return mixed
+     * @return array|null|object
      */
     public function fetch(string $query, string $output = OBJECT);
 

@@ -21,10 +21,6 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
-/**
- * Class TaxonomyWidgetController
- * @package Smartling\WP\Controller
- */
 class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
 {
 
@@ -73,10 +69,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
         return $this->core;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function register()
+    public function register(): void
     {
         if (!DiagnosticsHelper::isBlocked()) {
             // already running in scope of 'admin_init', so calling directly

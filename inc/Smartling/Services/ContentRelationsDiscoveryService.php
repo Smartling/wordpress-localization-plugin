@@ -4,7 +4,7 @@ namespace Smartling\Services;
 
 use Exception;
 use Psr\Log\LoggerInterface;
-use Smartling\ApiWrapper;
+use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exceptions\SmartlingApiException;
@@ -59,68 +59,23 @@ use Smartling\Submissions\SubmissionManager;
 class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 {
 
-    /**
-     * Action name
-     */
-    const ACTION_NAME = 'smartling-get-relations';
+    public const ACTION_NAME = 'smartling-get-relations';
 
-    const ACTION_NAME_CREATE_SUBMISSIONS = 'smartling-create-submissions';
+    private const ACTION_NAME_CREATE_SUBMISSIONS = 'smartling-create-submissions';
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    private LoggerInterface $logger;
+    private ContentHelper $contentHelper;
+    private FieldsFilterHelper $fieldFilterHelper;
+    private MetaFieldProcessorManager $metaFieldProcessorManager;
+    private AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper;
+    private ShortcodeHelper $shortcodeHelper;
+    private GutenbergBlockHelper $gutenbergBlockHelper;
+    private SubmissionManager $submissionManager;
+    private ApiWrapperInterface $apiWrapper;
+    private SettingsManager $settingsManager;
+    private LocalizationPluginProxyInterface $localizationPluginProxy;
 
-    /**
-     * @var ContentHelper
-     */
-    private $contentHelper;
-
-    /**
-     * @var FieldsFilterHelper
-     */
-    private $fieldFilterHelper;
-
-    /**
-     * @var MetaFieldProcessorManager
-     */
-    private $metaFieldProcessorManager;
-
-    /**
-     * @var AbsoluteLinkedAttachmentCoreHelper
-     */
-    private $absoluteLinkedAttachmentCoreHelper;
-
-    /**
-     * @var ShortcodeHelper
-     */
-    private $shortcodeHelper;
-
-    /**
-     * @var GutenbergBlockHelper
-     */
-    private $gutenbergBlockHelper;
-
-    /**
-     * @var SubmissionManager
-     */
-    private $submissionManager;
-
-    /**
-     * @var ApiWrapper
-     */
-    private $apiWrapper;
-
-    /**
-     * @var SettingsManager
-     */
-    private $settingsManager;
-    private $localizationPluginProxy;
-
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
+    public function getLogger(): LoggerInterface
     {
         if (!($this->logger instanceof LoggerInterface)) {
             $this->logger = MonologWrapper::getLogger(get_class($this));
@@ -128,163 +83,6 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         return $this->logger;
     }
 
-    /**
-     * @return ContentHelper
-     */
-    public function getContentHelper()
-    {
-        return $this->contentHelper;
-    }
-
-    /**
-     * @param ContentHelper $contentHelper
-     */
-    public function setContentHelper($contentHelper)
-    {
-        $this->contentHelper = $contentHelper;
-    }
-
-    /**
-     * @return FieldsFilterHelper
-     */
-    public function getFieldFilterHelper()
-    {
-        return $this->fieldFilterHelper;
-    }
-
-    /**
-     * @param FieldsFilterHelper $fieldFilterHelper
-     */
-    public function setFieldFilterHelper($fieldFilterHelper)
-    {
-        $this->fieldFilterHelper = $fieldFilterHelper;
-    }
-
-    /**
-     * @return MetaFieldProcessorManager
-     */
-    public function getMetaFieldProcessorManager()
-    {
-        return $this->metaFieldProcessorManager;
-    }
-
-    /**
-     * @param MetaFieldProcessorManager $metaFieldProcessorManager
-     */
-    public function setMetaFieldProcessorManager($metaFieldProcessorManager)
-    {
-        $this->metaFieldProcessorManager = $metaFieldProcessorManager;
-    }
-
-    /**
-     * @return AbsoluteLinkedAttachmentCoreHelper
-     */
-    public function getAbsoluteLinkedAttachmentCoreHelper()
-    {
-        return $this->absoluteLinkedAttachmentCoreHelper;
-    }
-
-    /**
-     * @param AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper
-     */
-    public function setAbsoluteLinkedAttachmentCoreHelper($absoluteLinkedAttachmentCoreHelper)
-    {
-        $this->absoluteLinkedAttachmentCoreHelper = $absoluteLinkedAttachmentCoreHelper;
-    }
-
-    /**
-     * @return ShortcodeHelper
-     */
-    public function getShortcodeHelper()
-    {
-        return $this->shortcodeHelper;
-    }
-
-    /**
-     * @param ShortcodeHelper $shortcodeHelper
-     */
-    public function setShortcodeHelper($shortcodeHelper)
-    {
-        $this->shortcodeHelper = $shortcodeHelper;
-    }
-
-    /**
-     * @return GutenbergBlockHelper
-     */
-    public function getGutenbergBlockHelper()
-    {
-        return $this->gutenbergBlockHelper;
-    }
-
-    /**
-     * @param GutenbergBlockHelper $gutenbergBlockHelper
-     */
-    public function setGutenbergBlockHelper($gutenbergBlockHelper)
-    {
-        $this->gutenbergBlockHelper = $gutenbergBlockHelper;
-    }
-
-    /**
-     * @return SubmissionManager
-     */
-    public function getSubmissionManager()
-    {
-        return $this->submissionManager;
-    }
-
-    /**
-     * @param SubmissionManager $submissionManager
-     */
-    public function setSubmissionManager($submissionManager)
-    {
-        $this->submissionManager = $submissionManager;
-    }
-
-    /**
-     * @return ApiWrapper
-     */
-    public function getApiWrapper()
-    {
-        return $this->apiWrapper;
-    }
-
-    /**
-     * @param ApiWrapper $apiWrapper
-     */
-    public function setApiWrapper($apiWrapper)
-    {
-        $this->apiWrapper = $apiWrapper;
-    }
-
-    /**
-     * @return SettingsManager
-     */
-    public function getSettingsManager()
-    {
-        return $this->settingsManager;
-    }
-
-    /**
-     * @param SettingsManager $settingsManager
-     */
-    public function setSettingsManager($settingsManager)
-    {
-        $this->settingsManager = $settingsManager;
-    }
-
-    /**
-     * ContentRelationDiscoveryService constructor.
-     * @param ContentHelper $contentHelper
-     * @param FieldsFilterHelper $fieldFilterHelper
-     * @param MetaFieldProcessorManager $fieldProcessorManager
-     * @param LocalizationPluginProxyInterface $localizationPluginProxy
-     * @param AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper
-     * @param ShortcodeHelper $shortcodeHelper
-     * @param GutenbergBlockHelper $blockHelper
-     * @param SubmissionManager $submissionManager
-     * @param ApiWrapper $apiWrapper
-     * @param SettingsManager $settingsManager
-     */
     public function __construct(
         ContentHelper $contentHelper,
         FieldsFilterHelper $fieldFilterHelper,
@@ -294,22 +92,23 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         ShortcodeHelper $shortcodeHelper,
         GutenbergBlockHelper $blockHelper,
         SubmissionManager $submissionManager,
-        ApiWrapper $apiWrapper,
+        ApiWrapperInterface $apiWrapper,
         SettingsManager $settingsManager
-    ) {
-        $this->setContentHelper($contentHelper);
-        $this->setFieldFilterHelper($fieldFilterHelper);
-        $this->setMetaFieldProcessorManager($fieldProcessorManager);
+    )
+    {
+        $this->absoluteLinkedAttachmentCoreHelper = $absoluteLinkedAttachmentCoreHelper;
+        $this->apiWrapper = $apiWrapper;
+        $this->contentHelper = $contentHelper;
+        $this->fieldFilterHelper = $fieldFilterHelper;
+        $this->gutenbergBlockHelper = $blockHelper;
         $this->localizationPluginProxy = $localizationPluginProxy;
-        $this->setAbsoluteLinkedAttachmentCoreHelper($absoluteLinkedAttachmentCoreHelper);
-        $this->setShortcodeHelper($shortcodeHelper);
-        $this->setGutenbergBlockHelper($blockHelper);
-        $this->setSubmissionManager($submissionManager);
-        $this->setApiWrapper($apiWrapper);
-        $this->setSettingsManager($settingsManager);
+        $this->metaFieldProcessorManager = $fieldProcessorManager;
+        $this->settingsManager = $settingsManager;
+        $this->shortcodeHelper = $shortcodeHelper;
+        $this->submissionManager = $submissionManager;
     }
 
-    public function register()
+    public function register(): void
     {
         parent::register();
         add_action('wp_ajax_' . static::ACTION_NAME_CREATE_SUBMISSIONS, [$this, 'createSubmissionsHandler']);
@@ -322,16 +121,16 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
     protected function getBatchUid(int $sourceBlogId, array $job): string
     {
         return $this
-            ->getApiWrapper()
+            ->apiWrapper
             ->retrieveBatch(
-                $this->getSettingsManager()->getSingleSettingsProfile($sourceBlogId),
+                $this->settingsManager->getSingleSettingsProfile($sourceBlogId),
                 $job['id'],
                 'true' === $job['authorize'],
                 [
-                    'name'        => $job['name'],
+                    'name' => $job['name'],
                     'description' => $job['description'],
-                    'dueDate'     => [
-                        'date'     => $job['dueDate'],
+                    'dueDate' => [
+                        'date' => $job['dueDate'],
                         'timezone' => $job['timeZone'],
                     ],
                 ]
@@ -349,20 +148,20 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
             ];
             foreach ($contentIds as $id) {
-                $existing = $this->getSubmissionManager()->find( array_merge($blogFields, [
+                $existing = $this->submissionManager->find(array_merge($blogFields, [
                     SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
-                    SubmissionEntity::FIELD_SOURCE_ID    => $id
+                    SubmissionEntity::FIELD_SOURCE_ID => $id
                 ]));
 
                 if (empty($existing)) {
-                    $submission = $this->getSubmissionManager()->getSubmissionEntity($contentType, $currentBlogId, $id, $targetBlogId, $this->localizationPluginProxy);
+                    $submission = $this->submissionManager->getSubmissionEntity($contentType, $currentBlogId, $id, $targetBlogId, $this->localizationPluginProxy);
                 } else {
                     $submission = ArrayHelper::first($existing);
                 }
                 $submission->setJobInfo($jobInfo);
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission->getFileUri();
-                $this->getSubmissionManager()->storeEntity($submission);
+                $this->submissionManager->storeEntity($submission);
             }
         }
         $this->returnResponse(['status' => 'SUCCESS']);
@@ -387,8 +186,6 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
      *      'targetBlogIds' => '3,2',
      *      'relations'    => {{@see actionHandler }} relations response
      *  ]
-     * @var array|string $data
-     * @return void
      */
     public function createSubmissionsHandler($data = ''): void
     {
@@ -397,11 +194,12 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         }
         try {
             $contentType = $data['source']['contentType'];
-            $curBlogId = $this->getContentHelper()->getSiteHelper()->getCurrentBlogId();
-            $jobInfo = new JobInformationEntity($this->getBatchUid($curBlogId, $data['job']), $data['job']['name'], $data['job']['id'], $this->getSettingsManager()->getSingleSettingsProfile($curBlogId)->getProjectId());
+            $curBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
+            $batchUid = $this->getBatchUid($curBlogId, $data['job']);
+            $jobInfo = new JobInformationEntity($data['job']['name'], $data['job']['id'], $this->getSettingsManager()->getSingleSettingsProfile($curBlogId)->getProjectId());
             $targetBlogIds = explode(',', $data['targetBlogIds']);
 
-            if (array_key_exists( 'ids', $data)) {
+            if (array_key_exists('ids', $data)) {
                 $this->bulkUploadHandler($jobInfo, $data['ids'], $contentType, $curBlogId, $targetBlogIds);
                 return;
             }
@@ -417,7 +215,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                  */
                 $searchParams = array_merge($submissionTemplateArray, [
                     SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
-                    SubmissionEntity::FIELD_SOURCE_ID    => ArrayHelper::first($data['source']['id']),
+                    SubmissionEntity::FIELD_SOURCE_ID => ArrayHelper::first($data['source']['id']),
                 ]);
 
                 $sources = [];
@@ -427,48 +225,44 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                         foreach ($ids as $id) {
                             $sources[] = [
                                 'type' => $sysType,
-                                'id'   => $id,
+                                'id' => $id,
                             ];
                         }
                     }
                 }
 
-                $result = $this->getSubmissionManager()->find($searchParams, 1);
+                $result = $this->submissionManager->find($searchParams, 1);
 
                 if (empty($result)) {
                     $sources[] = [
                         'type' => $contentType,
-                        'id'   => ArrayHelper::first($data['source']['id']),
+                        'id' => ArrayHelper::first($data['source']['id']),
                     ];
                 } else {
-                    /**
-                     * @var SubmissionEntity $submission
-                     */
                     $submission = ArrayHelper::first($result);
                     $submission->setJobInfo($jobInfo);
                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                    $this->getSubmissionManager()->storeEntity($submission);
+                    $this->submissionManager->storeEntity($submission);
                 }
 
                 /**
                  * Adding fields to template
                  */
-                $submissionTemplateArray[JobInformationEntity::FIELD_BATCH_UID] = $jobInfo->getBatchUid();
-                $submissionTemplateArray[SubmissionEntity::FIELD_JOB_NAME] = $jobInfo->getJobName();
+                $submissionTemplateArray[SubmissionEntity::FIELD_BATCH_UID] = $batchUid;
                 $submissionTemplateArray[SubmissionEntity::FIELD_STATUS] = SubmissionEntity::SUBMISSION_STATUS_NEW;
                 $submissionTemplateArray[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::nowAsString();
 
                 foreach ($sources as $source) {
                     $submissionArray = array_merge($submissionTemplateArray, [
                         SubmissionEntity::FIELD_CONTENT_TYPE => $source['type'],
-                        SubmissionEntity::FIELD_SOURCE_ID    => $source['id'],
+                        SubmissionEntity::FIELD_SOURCE_ID => $source['id'],
                     ]);
 
                     $submission = SubmissionEntity::fromArray($submissionArray, $this->getLogger());
 
                     // trigger generation of fileUri
                     $submission->getFileUri();
-                    $this->getSubmissionManager()->storeEntity($submission);
+                    $this->submissionManager->storeEntity($submission);
                 }
             }
 
@@ -478,35 +272,39 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         }
     }
 
-    public function getRequestSource()
+    public function getRequestSource(): array
     {
         return $_GET;
     }
 
-    public function getContentType()
+    public function getContentType(): string
     {
         return $this->getRequiredParam('content-type');
     }
 
-    public function getId()
+    public function getId(): int
     {
         return (int)$this->getRequiredParam('id');
     }
 
-    public function getTargetBlogIds()
+    /**
+     * @return int[]
+     */
+    public function getTargetBlogIds(): array
     {
         $blogs = explode(',', $this->getRequiredParam('targetBlogIds'));
 
-        array_walk($blogs, function ($el) {
+        array_walk($blogs, static function ($el) {
             return (int)$el;
         });
 
-        $blogs = array_unique($blogs);
-
-        return $blogs;
+        return array_unique($blogs);
     }
 
-    private function getTaxonomiesForContentType($contentType)
+    /**
+     * @return \WP_Taxonomy[]
+     */
+    private function getTaxonomiesForContentType(string $contentType): array
     {
         global $wp_taxonomies;
 
@@ -523,9 +321,9 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         return $relatedTaxonomies;
     }
 
-    private function getBackwardRelatedTaxonomies($contentId, $contentType)
+    private function getBackwardRelatedTaxonomies(int $contentId, string $contentType): array
     {
-        $detectedReferences   = [];
+        $detectedReferences = [];
         $relatedTaxonomyTypes = $this->getTaxonomiesForContentType($contentType);
 
         $terms = wp_get_object_terms($contentId, $relatedTaxonomyTypes);
@@ -539,34 +337,29 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         return $detectedReferences;
     }
 
-    private $shortcodeFields = [];
+    private array $shortcodeFields = [];
 
     /**
-     * @param array  $attributes
-     * @param string $content
-     * @param string $shortcodeName
+     * @see extractFieldsFromShortcodes();
+     * @noinspection PhpUnused
+     * @noinspection UnknownInspectionInspection
      */
-    public function shortcodeHandler(array $attributes, $content, $shortcodeName)
+    public function shortcodeHandler(array $attributes, string $content, string $shortcodeName): void
     {
         foreach ($attributes as $attributeName => $attributeValue) {
             $this->shortcodeFields[$shortcodeName . '/' . $attributeName][] = $attributeValue;
             if (!StringHelper::isNullOrEmpty($content)) {
-                $this->getShortcodeHelper()->renderString($content);
+                $this->shortcodeHelper->renderString($content);
             }
         }
     }
 
-    /**
-     * @param string $baseName
-     * @param string $string
-     * @return array
-     */
-    private function extractFieldsFromShortcodes($baseName, $string)
+    private function extractFieldsFromShortcodes(string $baseName, string $string): array
     {
-        $detectedShortcodes = $this->getShortcodeHelper()->getRegisteredShortcodes();
-        $this->getShortcodeHelper()->replaceShortcodeHandler($detectedShortcodes, 'shortcodeHandler', $this);
-        $this->getShortcodeHelper()->renderString($string);
-        $this->getShortcodeHelper()->restoreHandlers();
+        $detectedShortcodes = $this->shortcodeHelper->getRegisteredShortcodes();
+        $this->shortcodeHelper->replaceShortcodeHandler($detectedShortcodes, 'shortcodeHandler', $this);
+        $this->shortcodeHelper->renderString($string);
+        $this->shortcodeHelper->restoreHandlers();
         $fields = [];
         foreach ($this->shortcodeFields as $fName => $fValue) {
             $fields[$baseName . '/' . $fName] = $fValue;
@@ -576,14 +369,14 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         return $fields;
     }
 
-    private function extractFieldsFromGutenbergBlock($basename, $string)
+    private function extractFieldsFromGutenbergBlock(string $basename, string $string): array
     {
         $fields = [];
-        $blocks = $this->getGutenbergBlockHelper()->parseBlocks($string);
+        $blocks = $this->gutenbergBlockHelper->parseBlocks($string);
         foreach ($blocks as $index => $block) {
-            $pointer       = 0;
-            $blockNamePart = "{$basename}/{$block['blockName']}_{$index}";
-            $_fields       = $block['attrs'];
+            $pointer = 0;
+            $blockNamePart = "$basename/{$block['blockName']}_$index";
+            $_fields = $block['attrs'];
 
             /**
              * Extract regular attributes
@@ -599,40 +392,39 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 if (!is_string($chunk)) {
                     $chunkFields = $this->extractFieldsFromGutenbergBlock($blockNamePart,
                         $block['innerBlocks'][$pointer++]);
-                    $fields      = array_merge($fields, $chunkFields);
+                    $fields = [$fields, ...$chunkFields];
                 }
             }
         }
         return $fields;
     }
 
-    public function actionHandler()
+    public function actionHandler(): void
     {
-        $contentType   = $this->getContentType();
-        $id            = $this->getId();
-        $curBlogId     = $this->getContentHelper()->getSiteHelper()->getCurrentBlogId();
+        $contentType = $this->getContentType();
+        $id = $this->getId();
+        $curBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
         $targetBlogIds = $this->getTargetBlogIds();
 
-        if (!$this->getContentHelper()->checkEntityExists($curBlogId, $contentType, $id)) {
+        if (!$this->contentHelper->checkEntityExists($curBlogId, $contentType, $id)) {
             $this->returnError('content.not.found', 'Requested content is not found', 404);
         }
 
-        $ioWrapper = $this->getContentHelper()->getIoFactory()->getMapper($contentType);
+        $ioWrapper = $this->contentHelper->getIoFactory()->getMapper($contentType);
 
         $content = [
             'entity' => $ioWrapper->get($id)->toArray(),
             'meta' => $ioWrapper->get($id)->getMetadata(),
         ];
 
-        $fields = $this->getFieldFilterHelper()->flatternArray($content);
+        $fields = $this->fieldFilterHelper->flattenArray($content);
 
         /**
          * adding fields from shortcodes
          */
         $extraFields = [];
         foreach ($fields as $fName => $fValue) {
-            $extraFields = array_merge($extraFields,
-                $this->getFieldFilterHelper()->flatternArray($this->extractFieldsFromShortcodes($fName, $fValue)));
+            $extraFields = [$extraFields, ...$this->fieldFilterHelper->flattenArray($this->extractFieldsFromShortcodes($fName, $fValue))];
         }
         $fields = array_merge($fields, $extraFields);
 
@@ -640,16 +432,14 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             /**
              * check if gutenberg exists
              */
-            $this->getGutenbergBlockHelper()->loadExternalDependencies();
+            $this->gutenbergBlockHelper->loadExternalDependencies();
 
             /**
              * adding fields from blocks
              */
             $extraFields = [];
             foreach ($fields as $fName => $fValue) {
-                $extraFields = array_merge($extraFields,
-                    $this->getFieldFilterHelper()->flatternArray($this->extractFieldsFromGutenbergBlock($fName,
-                        $fValue)));
+                $extraFields = [$extraFields, ...$this->fieldFilterHelper->flattenArray($this->extractFieldsFromGutenbergBlock($fName, $fValue))];
             }
             $fields = array_merge($fields, $extraFields);
         } catch (Exception $e) {
@@ -668,7 +458,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         foreach ($fields as $fName => $fValue) {
             try {
                 $this->getLogger()->debug(vsprintf('Looking for processor for field \'%s\'', [$fName]));
-                $processor = $this->getMetaFieldProcessorManager()->getProcessor($fName);
+                $processor = $this->metaFieldProcessorManager->getProcessor($fName);
                 $this->getLogger()->debug(vsprintf('Detected processor \'%s\' for field \'%s\'',
                     [get_class($processor), $fName]));
                 /**
@@ -676,7 +466,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                  */
                 if ($processor instanceof DefaultMetaFieldProcessor) {
                     $this->getLogger()->debug(vsprintf('Trying to treat \'%s\' field as ACF', [$fName]));
-                    $acfTypeDetector = $this->getMetaFieldProcessorManager()->getAcfTypeDetector();
+                    $acfTypeDetector = $this->metaFieldProcessorManager->getAcfTypeDetector();
                     $processor = $acfTypeDetector->getProcessorByMetaFields($fName, $content['meta']);
                     if ($processor === false) {
                         $processor = $acfTypeDetector->getProcessorForGutenberg($fName, $fields);
@@ -695,8 +485,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                         $detectedReferences['attachment'] = [];
                     }
                     $detectedReferences['attachment'] = array_merge($detectedReferences['attachment'],
-                        $this->getAbsoluteLinkedAttachmentCoreHelper()->getImagesIdsFromString($fValue,
-                            $curBlogId));
+                        $this->absoluteLinkedAttachmentCoreHelper->getImagesIdsFromString($fValue, $curBlogId));
                     $detectedReferences['attachment'] = array_unique($detectedReferences['attachment']);
                 }
             } catch (Exception $e) {
@@ -745,7 +534,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         );
     }
 
-    protected function normalizeReferences(array $references)
+    protected function normalizeReferences(array $references): array
     {
         $result = [];
 
@@ -754,8 +543,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         }
 
         if (isset($references['MediaBasedProcessor'])) {
-            $result['attachment'] = array_merge((isset($result['attachment']) ? $result['attachment'] : []),
-                array_keys($references['MediaBasedProcessor']));
+            $result['attachment'] = array_merge(($result['attachment'] ?? []), array_keys($references['MediaBasedProcessor']));
         }
 
         if (isset($references['PostBasedProcessor'])) {

@@ -282,6 +282,8 @@ class BulkSubmitTableWidget extends SmartlingListTable
         $batchUid = '';
         $data = $this->getFromSource('bulk-submit-locales', []);
         $jobName = '';
+        $smartlingData = [];
+        $profile = $this->getProfile();
 
         if ($action === 'send') {
             $smartlingData = $this->getFromSource('smartling', []);
@@ -296,7 +298,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
             }
 
             $wrapper = Bootstrap::getContainer()->get('wrapper.sdk.api.smartling');
-            $profile = $this->getProfile();
 
             try {
                 $jobName = $smartlingData['jobName'];
@@ -483,7 +484,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
                 }
 
                 $row['updated'] = $updatedDate;
-                $row = array_merge(['bulkActionCb' => $this->column_cb($row)], $row);
+                $row = ['bulkActionCb' => $this->column_cb($row), ...$row];
                 $dataAsArray[] = $row;
             }
         }

@@ -1,51 +1,27 @@
 <?php
 namespace Smartling\Settings;
 
-/**
- * Class Locale
- *
- * @package Smartling\Settings
- */
 class Locale
 {
-    /**
-     * @var int
-     */
-    private $blogId;
+    private int $blogId;
+    private string $label;
 
-    /**
-     * @var string
-     */
-    private $label;
-
-    /**
-     * @return int
-     */
-    public function getBlogId()
+    public function getBlogId(): int
     {
         return $this->blogId;
     }
 
-    /**
-     * @param int $blogId
-     */
-    public function setBlogId($blogId)
+    public function setBlogId(int $blogId): void
     {
-        $this->blogId = (int)$blogId;
+        $this->blogId = $blogId;
     }
 
-    /**
-     * @return string
-     */
-    public function getLabel()
+    public function getLabel(): string
     {
         return $this->label;
     }
 
-    /**
-     * @param string $label
-     */
-    public function setLabel($label)
+    public function setLabel(string $label): void
     {
         $this->label = $label;
     }

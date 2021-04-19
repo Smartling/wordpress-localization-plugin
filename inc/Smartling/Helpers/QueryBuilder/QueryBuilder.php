@@ -2,11 +2,8 @@
 
 namespace Smartling\Helpers\QueryBuilder;
 
-use SebastianBergmann\CodeCoverage\TestFixture\C;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
-use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
-use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 
 /**
  * Helps to build CRUD SQL queries
@@ -133,48 +130,6 @@ class QueryBuilder
         $query .= static::buildLimitSubQuery($pageOptions);
 
         return $query;
-    }
-
-    public static function addWhereGroupSortLimitForSubmissionsJoinQuery(string $query, array $fields, ConditionBlock $conditionBlock = null, string $where = '', array $groupOptions = null, array $sortOptions = null, array $pageOptions = null): string
-    {
-        $whereAdded = false;
-        if ($conditionBlock !== null) {
-            $conditionBlock = static::addPrefixesForJoinQuery($conditionBlock, $fields);
-            $query .= ' WHERE ' . $conditionBlock;
-            $whereAdded = true;
-        }
-        if ($where !== '') {
-            if (!$whereAdded) {
-                $query .= ' WHERE ';
-            } else {
-                $query .= ' AND ';
-            }
-            $query .= $where;
-        }
-        $query .= static::buildGroupSubQuery($groupOptions, false);
-        $query .= static::buildSortSubQuery($sortOptions, false);
-        $query .= static::buildLimitSubQuery($pageOptions);
-
-        return $query;
-    }
-
-    private static function addPrefixesForJoinQuery(ConditionBlock $conditionBlock, array $fields): ConditionBlock {
-        $result = new ConditionBlock($conditionBlock->getOperator());
-        foreach ($conditionBlock->getBlocks() as $block) {
-            $result->addConditionBlock(static::addPrefixesForJoinQuery($block, $fields));
-        }
-        foreach ($conditionBlock->getConditions() as $condition) {
-            $field = substr($condition->getField(), 1, -1);
-            foreach ($fields as $table => $columns) {
-                if (in_array($field, $columns, true)) {
-                    $field = "$table.$field";
-                    break;
-                }
-            }
-            $result->addCondition(Condition::getCondition($condition->getOperand(), $field, $condition->getValues(), false));
-        }
-
-        return $result;
     }
 
     /**

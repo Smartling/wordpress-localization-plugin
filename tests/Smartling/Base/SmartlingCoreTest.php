@@ -431,7 +431,6 @@ class SmartlingCoreTest extends TestCase
 
         $obj->setSettingsManager($settingsManager);
 
-
         $apiWrapperMock = $this->createPartialMock(ApiWrapper::class, ['retrieveJobInfoForDailyBucketJob']);
         $apiWrapperMock
             ->expects(self::once())

@@ -129,8 +129,6 @@ class SubmissionTableWidget extends SmartlingListTable
      * Generates a checkbox for a row to add row to bulk actions
      *
      * @param array $item
-     *
-     * @return string
      */
     public function column_cb($item): string
     {
@@ -147,9 +145,6 @@ class SubmissionTableWidget extends SmartlingListTable
         );
     }
 
-    /**
-     * @inheritdoc
-     */
     public function get_columns(): array
     {
         $columns = $this->manager->getColumnsLabels();
@@ -158,9 +153,6 @@ class SubmissionTableWidget extends SmartlingListTable
         return array_merge(['bulkActionCb' => '<input type="checkbox" class="checkall" />'], $columns);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function get_sortable_columns(): array
     {
 
@@ -175,9 +167,6 @@ class SubmissionTableWidget extends SmartlingListTable
         return $sortable_columns;
     }
 
-    /**
-     * @inheritdoc
-     */
     public function get_bulk_actions(): array
     {
         return [
@@ -412,7 +401,6 @@ class SubmissionTableWidget extends SmartlingListTable
                 $row[SubmissionEntity::FIELD_FILE_URI] = HtmlTagGeneratorHelper::tag('span', $shrinked, ['title' => $orig]);
             }
 
-
             $row['bulkActionCb'] = $this->column_cb($row);
 
             $dataAsArray[] = $row;
@@ -437,8 +425,13 @@ class SubmissionTableWidget extends SmartlingListTable
         $value = $this->getFormElementValue($controlName, $this->defaultValues[$controlName]);
 
         return HtmlTagGeneratorHelper::tag('label', __('Status'), ['for' => $this->buildHtmlTagName($controlName),]) .
-                HtmlTagGeneratorHelper::tag('select', HtmlTagGeneratorHelper::renderSelectOptions($value, $statuses), ['id'   => $this->buildHtmlTagName($controlName),
-                                                                                                                       'name' => $this->buildHtmlTagName($controlName),]);
+            HtmlTagGeneratorHelper::tag(
+                'select',
+                HtmlTagGeneratorHelper::renderSelectOptions($value, $statuses), [
+                    'id' => $this->buildHtmlTagName($controlName),
+                    'name' => $this->buildHtmlTagName($controlName),
+                ]
+            );
     }
 
     public function outdatedStateSelectRender(): string
@@ -456,8 +449,13 @@ class SubmissionTableWidget extends SmartlingListTable
         $value = $this->getFormElementValue($controlName, $this->defaultValues[$controlName]);
 
         return HtmlTagGeneratorHelper::tag('label', __('Content Status'), ['for' => $this->buildHtmlTagName($controlName),]) .
-                HtmlTagGeneratorHelper::tag('select', HtmlTagGeneratorHelper::renderSelectOptions($value, $states), ['id'   => $this->buildHtmlTagName($controlName),
-                                                                                                                     'name' => $this->buildHtmlTagName($controlName),]);
+            HtmlTagGeneratorHelper::tag(
+                'select',
+                HtmlTagGeneratorHelper::renderSelectOptions($value, $states), [
+                'id' => $this->buildHtmlTagName($controlName),
+                'name' => $this->buildHtmlTagName($controlName),
+                ]
+            );
     }
 
     public function lockedStateSelectRender(): string
@@ -475,8 +473,13 @@ class SubmissionTableWidget extends SmartlingListTable
         $value = $this->getFormElementValue($controlName, $this->defaultValues[$controlName]);
 
         return HtmlTagGeneratorHelper::tag('label', __('Lock Status'), ['for' => $this->buildHtmlTagName($controlName),]) .
-                HtmlTagGeneratorHelper::tag('select', HtmlTagGeneratorHelper::renderSelectOptions($value, $states), ['id'   => $this->buildHtmlTagName($controlName),
-                                                                                                                     'name' => $this->buildHtmlTagName($controlName),]);
+            HtmlTagGeneratorHelper::tag(
+                'select',
+                HtmlTagGeneratorHelper::renderSelectOptions($value, $states), [
+                    'id' => $this->buildHtmlTagName($controlName),
+                    'name' => $this->buildHtmlTagName($controlName),
+                ]
+            );
     }
 
     public function clonedStateSelectRender(): string
@@ -494,8 +497,13 @@ class SubmissionTableWidget extends SmartlingListTable
         $value = $this->getFormElementValue($controlName, $this->defaultValues[$controlName]);
 
         return HtmlTagGeneratorHelper::tag('label', __('Clone Status'), ['for' => $this->buildHtmlTagName($controlName),]) .
-                HtmlTagGeneratorHelper::tag('select', HtmlTagGeneratorHelper::renderSelectOptions($value, $states), ['id'   => $this->buildHtmlTagName($controlName),
-                                                                                                                     'name' => $this->buildHtmlTagName($controlName),]);
+            HtmlTagGeneratorHelper::tag(
+                'select',
+                HtmlTagGeneratorHelper::renderSelectOptions($value, $states), [
+                    'id' => $this->buildHtmlTagName($controlName),
+                    'name' => $this->buildHtmlTagName($controlName),
+                ]
+            );
     }
 
     public function renderSearchBox(): string
@@ -565,8 +573,13 @@ class SubmissionTableWidget extends SmartlingListTable
         $value = $this->getFormElementValue($controlName, $this->defaultValues[$controlName]);
 
         return HtmlTagGeneratorHelper::tag('label', __('Type'), ['for' => $this->buildHtmlTagName($controlName),]) .
-                HtmlTagGeneratorHelper::tag('select', HtmlTagGeneratorHelper::renderSelectOptions($value, $types), ['id'   => $this->buildHtmlTagName($controlName),
-                                                                                                                    'name' => $this->buildHtmlTagName($controlName),]);
+            HtmlTagGeneratorHelper::tag(
+                'select',
+                HtmlTagGeneratorHelper::renderSelectOptions($value, $types), [
+                    'id' => $this->buildHtmlTagName($controlName),
+                    'name' => $this->buildHtmlTagName($controlName),
+                ]
+            );
     }
 
     public function renderSubmitButton(string $label): string
@@ -595,10 +608,6 @@ class SubmissionTableWidget extends SmartlingListTable
 
     /**
      * Builds unique name attribute value for HTML Form element tag
-     *
-     * @param string $name
-     *
-     * @return string
      */
     private function buildHtmlTagName(string $name): string
     {

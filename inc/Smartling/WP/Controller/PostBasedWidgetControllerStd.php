@@ -315,7 +315,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                  */
                 foreach ($sourceIds as $sourceId) {
                     try {
-                        $jobInfo = new JobInformationEntity($batchUid, $jobName, $data['job']['id'], $profile->getProjectId());
+                        $jobInfo = new JobInformationEntity($jobName, $data['job']['id'], $profile->getProjectId());
                         if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId)) {
                             $submission = $this->getCore()->getTranslationHelper()->tryPrepareRelatedContent($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId, $jobInfo);
                         } else {
@@ -363,10 +363,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
         wp_send_json($result);
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function register()
+    public function register(): void
     {
         if (!DiagnosticsHelper::isBlocked() && !$this->isMuted() && current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
             add_action('add_meta_boxes', [$this, 'box']);
@@ -518,7 +515,6 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
     /**
      * @param mixed $post_id
-     * @return void
      */
     public function save($post_id): void
     {
@@ -621,7 +617,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                     return;
                                 }
 
-                                $jobInfo = new JobInformationEntity($batchUid, $data['jobName'], $data['jobId'], $profile->getProjectId());
+                                $jobInfo = new JobInformationEntity($data['jobName'], $data['jobId'], $profile->getProjectId());
                                 foreach ($locales as $blogId) {
                                     if ($translationHelper->isRelatedSubmissionCreationNeeded($this->servedContentType, $sourceBlog, $originalId, (int)$blogId)) {
                                         $submission = $translationHelper->tryPrepareRelatedContent($this->servedContentType, $sourceBlog, $originalId, (int)$blogId, $jobInfo);
@@ -645,7 +641,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                                 (int)$blogId,
                                                 $submission->getTargetLocale(),
                                                 $data['jobId'],
-                                                $jobInfo->getBatchUid(),
+                                                $submission->getBatchUid(),
                                             ]
                                         ));
                                 }

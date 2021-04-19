@@ -43,7 +43,7 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
      * Registers wp hook handlers. Invoked by wordpress.
      * @return void
      */
-    public function register()
+    public function register(): void
     {
         if (!DiagnosticsHelper::isBlocked()) {
             add_action('add_meta_boxes', [$this, 'boxRegister'], 10, 2);

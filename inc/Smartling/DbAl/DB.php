@@ -11,16 +11,13 @@ use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Jobs\JobInformationEntity;
+use Smartling\Jobs\SubmissionJobEntity;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPInstallableInterface;
 
-/**
- * Class DB
- * @package Smartling\DbAl
- */
 class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableInterface
 {
 
@@ -74,29 +71,21 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
 
     private function buildTableDefinitions()
     {
-        $this->tables[] = [
-            'columns' => JobInformationEntity::getFieldDefinitions(),
-            'indexes' => JobInformationEntity::getIndexes(),
-            'name' => JobInformationEntity::getTableName(),
+        $classes = [
+            ConfigurationProfileEntity::class,
+            JobInformationEntity::class,
+            Queue::class,
+            SubmissionEntity::class,
+            SubmissionJobEntity::class,
         ];
-        // Submissions
-        $this->tables[] = [
-            'name'    => SubmissionEntity::getTableName(),
-            'columns' => SubmissionEntity::getFieldDefinitions(),
-            'indexes' => SubmissionEntity::getIndexes(),
-        ];
-        // Configuration profiles
-        $this->tables[] = [
-            'name'    => ConfigurationProfileEntity::getTableName(),
-            'columns' => ConfigurationProfileEntity::getFieldDefinitions(),
-            'indexes' => ConfigurationProfileEntity::getIndexes(),
-        ];
-        // Queue
-        $this->tables[] = [
-            'name'    => Queue::getTableName(),
-            'columns' => Queue::getFieldDefinitions(),
-            'indexes' => Queue::getIndexes(),
-        ];
+        foreach ($classes as $class) {
+            /** @noinspection PhpUndefinedMethodInspection */
+            $this->tables[] = [
+                'columns' => $class::getFieldDefinitions(),
+                'indexes' => $class::getIndexes(),
+                'name' => $class::getTableName(),
+            ];
+        }
     }
 
     /**

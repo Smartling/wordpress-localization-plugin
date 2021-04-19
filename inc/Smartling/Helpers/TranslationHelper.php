@@ -276,6 +276,7 @@ class TranslationHelper
             // add to upload queue
             $relatedSubmission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
             $relatedSubmission = $this->getSubmissionManager()->storeEntity($relatedSubmission);
+            // TODO save job information
         } else {
             $message = vsprintf(
                 'Skipping creation of translation placeholder for submission=%s, locale=%s.',

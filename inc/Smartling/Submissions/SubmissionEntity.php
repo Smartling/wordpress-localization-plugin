@@ -105,8 +105,8 @@ class SubmissionEntity extends SmartlingEntityAbstract
     public const FIELD_LAST_MODIFIED = 'last_modified';
     public const FIELD_OUTDATED = 'outdated';
     public const FIELD_LAST_ERROR = 'last_error';
+    public const FIELD_BATCH_UID = 'batch_uid';
     public const FIELD_LOCKED_FIELDS = 'locked_fields';
-    public const FIELD_JOB_NAME = 'job_name';
 
     public const VIRTUAL_FIELD_JOB_LINK = 'job_link';
 
@@ -139,6 +139,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
             static::FIELD_LAST_MODIFIED => static::DB_TYPE_DATETIME,
             static::FIELD_OUTDATED => static::DB_TYPE_UINT_SWITCH,
             static::FIELD_LAST_ERROR => static::DB_TYPE_STRING_TEXT,
+            static::FIELD_BATCH_UID => static::DB_TYPE_STRING_64 . ' ' . static::DB_TYPE_DEFAULT_EMPTYSTRING,
             static::FIELD_LOCKED_FIELDS => 'TEXT NULL',
         ];
     }
@@ -219,7 +220,6 @@ class SubmissionEntity extends SmartlingEntityAbstract
     {
         return [
             'progress' => $this->getCompletionPercentage() . '%',
-            self::VIRTUAL_FIELD_JOB_LINK => ':)',
         ];
     }
 
@@ -457,8 +457,10 @@ class SubmissionEntity extends SmartlingEntityAbstract
      */
     public static function fromArray(array $array, LoggerInterface $logger): SubmissionEntity
     {
-        /** @var SubmissionEntity $obj */
         $obj = parent::fromArray($array, $logger);
+        if (!$obj instanceof self) {
+            throw new \RuntimeException(__CLASS__ . ' expected');
+        }
 
         $obj->setContentType($obj->getContentType());
 
@@ -669,15 +671,25 @@ class SubmissionEntity extends SmartlingEntityAbstract
         $this->stateFields[static::FIELD_LAST_ERROR] = trim($message);
     }
 
+    public function getBatchUid(): string
+    {
+        return (string)$this->stateFields[static::FIELD_BATCH_UID];
+    }
+
+    public function setBatchUid($batchUid): void
+    {
+        $this->stateFields[static::FIELD_BATCH_UID] = trim($batchUid);
+    }
+
     public function clearJobInfo(): void
     {
-        $this->jobInformation = new JobInformationEntity('', '', '', '', $this->getId());
+        $this->jobInformation = new JobInformationEntity('', '', '');
     }
 
     public function getJobInfo(): JobInformationEntity
     {
         if ($this->jobInformation === null) {
-            return new JobInformationEntity('', '', '', '', $this->id);
+            return new JobInformationEntity('', '', '');
         }
         $result = clone $this->jobInformation;
         $submissionId = $this->getId();
@@ -690,20 +702,6 @@ class SubmissionEntity extends SmartlingEntityAbstract
     public function setJobInfo(JobInformationEntity $jobInfo): void
     {
         $this->jobInformation = $jobInfo;
-    }
-
-    public function getBatchUid(): string
-    {
-        return $this->jobInformation->getBatchUid();
-    }
-
-    /**
-     * Required for parent::fromArray
-     * @noinspection PhpUnused
-     * @noinspection UnknownInspectionInspection
-     */
-    public function setBatchUid(): void
-    {
     }
 
     /**
