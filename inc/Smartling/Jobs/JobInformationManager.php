@@ -39,7 +39,6 @@ class JobInformationManager
 
         $id = $this->db->getLastInsertedId();
         if ($id === 0) {
-            echo "0!";
             return $this->getByJobUid($jobInfo->getJobUid());
         }
 
@@ -98,7 +97,9 @@ class JobInformationManager
             $result[JobInformationEntity::FIELD_JOB_NAME],
             $result[JobInformationEntity::FIELD_JOB_UID],
             $result[JobInformationEntity::FIELD_PROJECT_UID],
-            (int)$result[JobInformationEntity::FIELD_ID]
+            (int)$result[JobInformationEntity::FIELD_ID],
+            DateTimeHelper::stringToDateTime($result[JobInformationEntity::FIELD_CREATED]),
+            DateTimeHelper::stringToDateTime($result[JobInformationEntity::FIELD_MODIFIED]),
         );
     }
 }

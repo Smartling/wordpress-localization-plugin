@@ -20,7 +20,6 @@ class SubmissionJobManager
 
     public function store(SubmissionJobEntity $submissionJobEntity): SubmissionJobEntity
     {
-        echo "SJE" . json_encode($submissionJobEntity, JSON_THROW_ON_ERROR);
         $this->db->query(sprintf(
             'INSERT INTO %1$s (%2$s, %3$s, %4$s, %5$s) values (%6$d, %7$d, \'%8$s\', \'%9$s\') ON DUPLICATE KEY UPDATE %3$s = %7$d, %5$s = \'%9$s\'',
             $this->db->completeTableName(SubmissionJobEntity::getTableName()),
@@ -34,24 +33,15 @@ class SubmissionJobManager
             DateTimeHelper::dateTimeToString($submissionJobEntity->getModified()),
         ));
 
-        echo json_encode(sprintf(
-            'INSERT INTO %1$s (%2$s, %3$s, %4$s, %5$s) values (%6$d, %7$d, \'%8$s\', \'%9$s\') ON DUPLICATE KEY UPDATE %3$s = %7$d, %5$s = \'%9$s\'',
-            $this->db->completeTableName(SubmissionJobEntity::getTableName()),
-            SubmissionJobEntity::FIELD_SUBMISSION_ID,
-            SubmissionJobEntity::FIELD_JOB_ID,
-            SubmissionJobEntity::FIELD_CREATED,
-            SubmissionJobEntity::FIELD_MODIFIED,
-            $submissionJobEntity->getSubmissionId(),
-            $submissionJobEntity->getJobId(),
-            DateTimeHelper::dateTimeToString($submissionJobEntity->getCreated()),
-            DateTimeHelper::dateTimeToString($submissionJobEntity->getModified()),
-        ), JSON_THROW_ON_ERROR);
-
-        $id = $this->db->getLastInsertedId();
-        echo $id;
-        echo $this->db->getLastErrorMessage();
-
-        return $this->getOne($this->db->getLastInsertedId(), SubmissionJobEntity::FIELD_ID);
+        try {
+            $id = $this->db->getLastInsertedId();
+            if ($id === 0) {
+                return $this->getOne($submissionJobEntity->getSubmissionId(), SubmissionJobEntity::FIELD_SUBMISSION_ID);
+            }
+            return $this->getOne($id, SubmissionJobEntity::FIELD_ID);
+        } catch (EntityNotFoundException $e) {
+            throw $e;
+        }
     }
 
     public function findJobIdBySubmissionId(int $id): ?int
@@ -78,7 +68,7 @@ class SubmissionJobManager
             $this->tableName,
             $field,
             $id,
-            JobInformationEntity::FIELD_ID
+            SubmissionJobEntity::FIELD_ID
         ), 'ARRAY_A');
         if (count($result) === 0) {
             throw new EntityNotFoundException('Unable to get entity');
