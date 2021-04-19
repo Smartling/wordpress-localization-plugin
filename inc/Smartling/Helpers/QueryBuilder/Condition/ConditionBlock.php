@@ -46,14 +46,6 @@ class ConditionBlock
     }
 
     /**
-     * @return ConditionBlock[]
-     */
-    public function getBlocks(): array
-    {
-        return $this->blocks;
-    }
-
-    /**
      * @return Condition[]
      */
     public function getConditions(): array
@@ -61,20 +53,12 @@ class ConditionBlock
         return $this->conditions;
     }
 
-    public function getOperator(): string
-    {
-        return substr($this->operator, 1, -1); // remove spaces
-    }
-
     public function addConditionBlock(ConditionBlock $block): void
     {
         $this->blocks[] = $block;
     }
 
-    /**
-     * @return string
-     */
-    public function __toString()
+    public function __toString(): string
     {
         $preRendered = [];
 

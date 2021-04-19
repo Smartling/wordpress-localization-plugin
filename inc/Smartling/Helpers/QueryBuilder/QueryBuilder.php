@@ -231,7 +231,7 @@ class QueryBuilder
     /**
      * @param array|null $sortOptions ['id' => 'desc']
      */
-    private static function buildSortSubQuery(?array $sortOptions, bool $escape = true): string
+    private static function buildSortSubQuery(?array $sortOptions): string
     {
         $part = '';
 
@@ -239,7 +239,7 @@ class QueryBuilder
             $preOptions = [];
 
             foreach ($sortOptions as $field => $value) {
-                $preOptions[] = $escape ? "`$field` $value" : "$field $value";
+                $preOptions[] = true ? "`$field` $value" : "$field $value";
             }
 
             $part .= vsprintf(' ORDER BY %s', [implode(' , ', $preOptions)]);
