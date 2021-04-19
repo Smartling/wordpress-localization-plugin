@@ -24,9 +24,9 @@ Integration Features
 == Installation ==
 
 = Minimum Requirements =
-* WordPress 4.6 or higher
+* WordPress 5.5 or higher
 * Multisite mode enabled
-* PHP Version 7.2 or higher
+* PHP Version 7.4 or higher
 * PHP extensions:
  * `mbstring`
  * `curl`
