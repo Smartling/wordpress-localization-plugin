@@ -67,18 +67,17 @@ class SubmissionJobManager
     /**
      * @throws EntityNotFoundException
      */
-    private function getOne(int $id, string $field, string $where = ''): SubmissionJobEntity
+    private function getOne(int $id, string $field): SubmissionJobEntity
     {
         if (!array_key_exists($field, SubmissionJobEntity::getFieldDefinitions())) {
             throw new \InvalidArgumentException("Unable to get entity by field `$field`");
         }
         $result = $this->db->fetch(sprintf(
-            'SELECT %s FROM %s WHERE %s = %d %s ORDER BY %s DESC LIMIT 1',
+            'SELECT %s FROM %s WHERE %s = %d ORDER BY %s DESC LIMIT 1',
             implode(', ', array_keys(SubmissionJobEntity::getFieldDefinitions())),
             $this->tableName,
             $field,
             $id,
-            $where === '' ? '' : ' AND ' . $where,
             JobInformationEntity::FIELD_ID
         ), 'ARRAY_A');
         if (count($result) === 0) {

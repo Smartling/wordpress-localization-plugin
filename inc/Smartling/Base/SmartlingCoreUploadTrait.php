@@ -561,11 +561,8 @@ trait SmartlingCoreUploadTrait
 
             /** @var ApiWrapperInterface $apiWrapper */
             $apiWrapper = $this->getApiWrapper();
-            $jobInfo = $apiWrapper->retrieveJobInfoForDailyBucketJob($profile, $profile->getAutoAuthorize());
-
-            $submission->setBatchUid($jobInfo->getBatchUid());
+            $submission->setJobInfo($apiWrapper->retrieveJobInfoForDailyBucketJob($profile, $profile->getAutoAuthorize()));
             $submission = $this->getSubmissionManager()->storeEntity($submission);
-            // TODO store job info
         } catch (\Exception $e) {
             $msg = vsprintf(
                 'Failed getting batchUid for submission \'%s\'. Message: %s',
@@ -739,9 +736,8 @@ trait SmartlingCoreUploadTrait
 
         $isCloned = true === $clone ? 1 : 0;
         $submission->setIsCloned($isCloned);
-        $submission->setBatchUid($jobInfo->getBatchUid());
+        $submission->setJobInfo($jobInfo);
 
-        // TODO store job information
         return $this->getSubmissionManager()->storeEntity($submission);
     }
 

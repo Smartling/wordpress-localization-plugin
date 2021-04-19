@@ -681,11 +681,6 @@ class SubmissionEntity extends SmartlingEntityAbstract
         $this->stateFields[static::FIELD_BATCH_UID] = trim($batchUid);
     }
 
-    public function clearJobInfo(): void
-    {
-        $this->jobInformation = new JobInformationEntity('', '', '', '');
-    }
-
     public function getJobInfo(): JobInformationEntity
     {
         if ($this->jobInformation === null) {
