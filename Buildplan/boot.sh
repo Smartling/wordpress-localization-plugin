@@ -32,14 +32,14 @@ chown -R mysql:mysql /var/lib/mysql && service mysql start
 cd "$LOCAL_GIT_DIR"
 $COMPOSER_BIN update
 
-# remove installev plugin dir and replace with dev dir
+# remove installer plugin dir and replace with dev dir
 rm -rf "$PLUGIN_DIR"
 ln -s "$LOCAL_GIT_DIR" "$PLUGIN_DIR"
 
 export AUTOLOADER="${PLUGIN_DIR}/inc/autoload.php"
+export PHP_IDE_CONFIG="serverName=Docker"
 export TEST_DATA_DIR="${PLUGIN_DIR}/tests/IntegrationTests/testdata"
 export TEST_CONFIG="$TEST_DATA_DIR/wp-tests-config.php"
-
 
 ln -s "${TEST_DATA_DIR}/acf-pro-test-definitions" "${WP_PLUGINS_DIR}/acf-pro-test-definitions"
 ln -s "${TEST_DATA_DIR}/exec-plugin" "${WP_PLUGINS_DIR}/exec-plugin"
