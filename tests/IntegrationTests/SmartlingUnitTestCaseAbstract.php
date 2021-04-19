@@ -10,6 +10,8 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Jobs\DownloadTranslationJob;
+use Smartling\Jobs\JobInformationEntity;
+use Smartling\Jobs\SubmissionJobEntity;
 use Smartling\Jobs\UploadJob;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
@@ -93,6 +95,8 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
             'smartling_configuration_profiles',
             'smartling_queue',
             'smartling_submissions',
+            JobInformationEntity::getTableName(),
+            SubmissionJobEntity::getTableName(),
         ];
 
         $tablePrefix = getenv('WP_DB_TABLE_PREFIX');
@@ -126,10 +130,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         return getenv('WP_INSTALL_DIR');
     }
 
-    /**
-     * @return bool|SubmissionEntity
-     */
-    protected function uploadDownload(SubmissionEntity $submission)
+    protected function uploadDownload(SubmissionEntity $submission): ?SubmissionEntity
     {
         $this->executeUpload();
         $this->forceSubmissionDownload($submission);

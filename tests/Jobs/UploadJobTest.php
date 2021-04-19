@@ -10,7 +10,6 @@ use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\QueryBuilder\TransactionManager;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Jobs\JobInformationEntity;
-use Smartling\Jobs\JobInformationManager;
 use Smartling\Jobs\UploadJob;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\Locale;

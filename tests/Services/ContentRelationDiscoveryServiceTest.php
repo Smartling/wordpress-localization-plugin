@@ -13,7 +13,6 @@ use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
 use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Helpers\SiteHelper;
-use Smartling\Jobs\JobInformationEntity;
 use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;

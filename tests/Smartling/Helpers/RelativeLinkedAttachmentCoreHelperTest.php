@@ -33,7 +33,6 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
 
     public function testProcessGutenbergBlock()
     {
-        $batchUid = '';
         $sourceBlogId = 1;
         $sourceMediaId = 5;
         $targetBlogId = 2;
@@ -98,7 +97,6 @@ HTML
      */
     public function testProcessGutenbergBlockAcf(string $string, array $definitions, int $sourceId, int $targetId)
     {
-        $batchUid = '';
         $sourceBlogId = 1;
         $targetBlogId = 2;
         $submission = new SubmissionEntity();
@@ -150,7 +148,6 @@ HTML
         $string = '<!-- wp:acf/testimonial {\"id\":\"block_5f1eb3f391cda\",\"name\":\"acf/testimonial\",\"data\":{\"media\":\"\",\"_media\":\"field_5eb1344b55a84\",\"description\":\"text\",\"_description\":\"field_5ef64590591dc\"},\"align\":\"\",\"mode\":\"edit\"} /-->';
         $sourceId = 0;
         $targetId = 262;
-        $batchUid = '';
         $sourceBlogId = 1;
         $targetBlogId = 2;
 
