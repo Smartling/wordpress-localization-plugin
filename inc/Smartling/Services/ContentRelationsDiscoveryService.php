@@ -58,12 +58,14 @@ use Smartling\Submissions\SubmissionManager;
  */
 class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 {
-
     public const ACTION_NAME = 'smartling-get-relations';
 
     private const ACTION_NAME_CREATE_SUBMISSIONS = 'smartling-create-submissions';
 
-    private LoggerInterface $logger;
+    /**
+     * @var LoggerInterface $logger
+     */
+    private $logger;
     private ContentHelper $contentHelper;
     private FieldsFilterHelper $fieldFilterHelper;
     private MetaFieldProcessorManager $metaFieldProcessorManager;
