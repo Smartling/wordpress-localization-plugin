@@ -12,7 +12,7 @@ use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\GutenbergReplacementRule;
 use Smartling\Helpers\RelativeLinkedAttachmentCoreHelper;
 use Smartling\Helpers\TranslationHelper;
-use Smartling\Jobs\JobInformationEntity;
+use Smartling\Jobs\JobInformationEntityWithBatchUid;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 use Smartling\Tuner\MediaAttachmentRulesManager;
@@ -43,7 +43,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
         $submission->setSourceId($sourceMediaId);
         $submission->setTargetId($targetMediaId);
         $submission->setTargetBlogId($targetBlogId);
-        $submission->setJobInfo(new JobInformationEntity('', '', '', ''));
+        $submission->setBatchUid('');
         $acf = $this->getMockBuilder(AcfDynamicSupport::class)
             ->setConstructorArgs([$this->createMock(EntityHelper::class)])
             ->getMock();
@@ -105,7 +105,8 @@ HTML
         $submission->setSourceId($sourceId);
         $submission->setTargetId($targetId);
         $submission->setTargetBlogId($targetBlogId);
-        $jobInfo = new JobInformationEntity('', '', '', '');
+        $jobInfo = new JobInformationEntityWithBatchUid('', '', '', '', 1, new \DateTime('2000-12-24 01:23:46'), new \DateTime('2001-12-24 02:34:45'));
+        $submission->setBatchUid('');
         $submission->setJobInfo($jobInfo);
         $acf = $this->getMockBuilder(AcfDynamicSupport::class)
             ->setConstructorArgs([$this->createMock(EntityHelper::class)])
@@ -118,7 +119,7 @@ HTML
         $core = $this->getCoreMock();
         $core->method('getTranslationHelper')->willReturn($translationHelper);
         $core->expects(self::once())->method('sendAttachmentForTranslation')
-            ->with($sourceBlogId, $targetBlogId, $sourceId, $jobInfo)
+            ->with($sourceBlogId, $targetBlogId, $sourceId)
             ->willReturn($submission);
         $x = $this->getMockBuilder(RelativeLinkedAttachmentCoreHelper::class)->setConstructorArgs([
             $core,
@@ -156,7 +157,7 @@ HTML
         $submission->setSourceId($sourceId);
         $submission->setTargetId($targetId);
         $submission->setTargetBlogId($targetBlogId);
-        $submission->setJobInfo(new JobInformationEntity('', '', '', ''));
+        $submission->setBatchUid('');
 
         $acf = $this->getMockBuilder(AcfDynamicSupport::class)
             ->setConstructorArgs([$this->createMock(EntityHelper::class)])

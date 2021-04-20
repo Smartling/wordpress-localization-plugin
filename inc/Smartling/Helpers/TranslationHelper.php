@@ -2,7 +2,7 @@
 
 namespace Smartling\Helpers;
 
-use Smartling\Jobs\JobInformationEntity;
+use Smartling\Jobs\JobInformationEntityWithBatchUid;
 use Smartling\Services\GlobalSettingsManager;
 use UnexpectedValueException;
 use Psr\Log\LoggerInterface;
@@ -234,7 +234,7 @@ class TranslationHelper
     /**
      * @throws SmartlingDataReadException
      */
-    public function getExistingSubmissionOrCreateNew(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId, JobInformationEntity $jobInfo): SubmissionEntity {
+    public function getExistingSubmissionOrCreateNew(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId, JobInformationEntityWithBatchUid $jobInfo): SubmissionEntity {
         $submission = $this->submissionManager->getSubmissionEntity($contentType, $sourceBlogId, $contentId, $targetBlogId, $this->getMutilangProxy());
         if ($submission->getTargetId() === 0) {
             $this->getLogger()->debug("Got submission with 0 target id");
@@ -246,7 +246,7 @@ class TranslationHelper
     /**
      * @throws SmartlingDataReadException
      */
-    public function tryPrepareRelatedContent(string $contentType, int $sourceBlog, int $sourceId, int $targetBlog, JobInformationEntity $jobInfo, bool $clone = false): SubmissionEntity
+    public function tryPrepareRelatedContent(string $contentType, int $sourceBlog, int $sourceId, int $targetBlog, JobInformationEntityWithBatchUid $jobInfo, bool $clone = false): SubmissionEntity
     {
         $relatedSubmission = $this->prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone);
 
@@ -264,7 +264,8 @@ class TranslationHelper
                 ]
             );
 
-            $relatedSubmission->setJobInfo($jobInfo);
+            $relatedSubmission->setBatchUid($jobInfo->getBatchUid());
+            $relatedSubmission->setJobInfo($jobInfo->getJobInformationEntity());
             $serialized = $relatedSubmission->toArray(false);
             if (null === $serialized[SubmissionEntity::FIELD_FILE_URI]) {
                 $relatedSubmission->getFileUri();

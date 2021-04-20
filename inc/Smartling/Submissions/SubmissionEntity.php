@@ -14,6 +14,7 @@ use Smartling\Helpers\TextHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressUserHelper;
 use Smartling\Jobs\JobInformationEntity;
+use Smartling\Jobs\JobInformationEntityWithBatchUid;
 
 /**
  * Class SubmissionEntity
@@ -684,14 +685,19 @@ class SubmissionEntity extends SmartlingEntityAbstract
     public function getJobInfo(): JobInformationEntity
     {
         if ($this->jobInformation === null) {
-            return new JobInformationEntity('', '', '', '');
+            return new JobInformationEntity('', '', '');
         }
         return clone $this->jobInformation;
     }
 
+    public function getJobInfoWithBatchUid(): JobInformationEntityWithBatchUid
+    {
+        $jobInfo = $this->getJobInfo();
+        return new JobInformationEntityWithBatchUid($this->getBatchUid(), $jobInfo->getJobName(), $jobInfo->getJobUid(), $jobInfo->getProjectUid());
+    }
+
     public function setJobInfo(JobInformationEntity $jobInfo): void
     {
-        $this->setBatchUid($jobInfo->getBatchUid());
         $this->jobInformation = $jobInfo;
     }
 

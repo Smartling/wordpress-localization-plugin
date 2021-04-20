@@ -11,6 +11,7 @@ use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Jobs\JobInformationEntity;
+use Smartling\Jobs\JobInformationEntityWithBatchUid;
 use Smartling\Queue\Queue;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPAbstract;
@@ -315,7 +316,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                  */
                 foreach ($sourceIds as $sourceId) {
                     try {
-                        $jobInfo = new JobInformationEntity($jobName, $data['job']['id'], $profile->getProjectId());
+                        $jobInfo = new JobInformationEntityWithBatchUid($batchUid, $jobName, $data['job']['id'], $profile->getProjectId());
                         if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId)) {
                             $submission = $this->getCore()->getTranslationHelper()->tryPrepareRelatedContent($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId, $jobInfo);
                         } else {
@@ -324,7 +325,8 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
                         if (0 < $submission->getId()) {
                             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                            $submission->setJobInfo($jobInfo);
+                            $submission->setBatchUid($jobInfo->getBatchUid());
+                            $submission->setJobInfo($jobInfo->getJobInformationEntity());
                             $submission = $this->getCore()->getSubmissionManager()->storeEntity($submission);
                         }
 
@@ -617,7 +619,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                     return;
                                 }
 
-                                $jobInfo = new JobInformationEntity($data['jobName'], $data['jobId'], $profile->getProjectId());
+                                $jobInfo = new JobInformationEntityWithBatchUid($batchUid, $data['jobName'], $data['jobId'], $profile->getProjectId());
                                 foreach ($locales as $blogId) {
                                     if ($translationHelper->isRelatedSubmissionCreationNeeded($this->servedContentType, $sourceBlog, $originalId, (int)$blogId)) {
                                         $submission = $translationHelper->tryPrepareRelatedContent($this->servedContentType, $sourceBlog, $originalId, (int)$blogId, $jobInfo);
@@ -627,7 +629,8 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
                                     if (0 < $submission->getId()) {
                                         $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                                        $submission->setJobInfo($jobInfo);
+                                        $submission->setBatchUid($jobInfo->getBatchUid());
+                                        $submission->setJobInfo($jobInfo->getJobInformationEntity());
                                         $submission = $core->getSubmissionManager()->storeEntity($submission);
                                     }
 

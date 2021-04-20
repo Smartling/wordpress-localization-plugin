@@ -7,6 +7,7 @@ use Smartling\ContentTypes\ConfigParsers\PostTypeConfigParser;
 use Smartling\Exception\SmartlingDataReadException;
 use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
 use Smartling\Helpers\StringHelper;
+use Smartling\Jobs\JobInformationEntityWithBatchUid;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\WP\Controller\PostBasedWidgetControllerStd;
 use Smartling\WP\Controller\ContentEditJobController;
@@ -126,7 +127,7 @@ class CustomPostType extends PostBasedContentTypeAbstract
                         $sourceBlogId,
                         $id,
                         $targetBlogId,
-                        $submission->getJobInfo(),
+                        $submission->getJobInfoWithBatchUid(),
                         (1 === $submission->getIsCloned())
                     );
                     $params->getAccumulator()[$params->getContentType()][] = $relatedSubmission->getTargetId();

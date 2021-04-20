@@ -114,7 +114,7 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
                     $sourceBlogId,
                     $menuItemEntity->getPK(),
                     $targetBlogId,
-                    $submission->getJobInfo(),
+                    $submission->getJobInfoWithBatchUid(),
                     (1 === $submission->getIsCloned())
                 );
 
@@ -155,7 +155,7 @@ class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
                         $sourceBlogId,
                         $menuId,
                         $targetBlogId,
-                        $submission->getJobInfo(),
+                        $submission->getJobInfoWithBatchUid(),
                         (1 === $submission->getIsCloned())
                     );
 

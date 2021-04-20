@@ -93,7 +93,6 @@ class JobInformationManager
         }
         $result = ArrayHelper::first($result);
         return new JobInformationEntity(
-            '',
             $result[JobInformationEntity::FIELD_JOB_NAME],
             $result[JobInformationEntity::FIELD_JOB_UID],
             $result[JobInformationEntity::FIELD_PROJECT_UID],

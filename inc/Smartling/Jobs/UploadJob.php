@@ -129,7 +129,8 @@ class UploadJob extends JobAbstract
                             continue;
                         }
 
-                        $entity->setJobInfo($jobInfo);
+                        $entity->setBatchUid($jobInfo->getBatchUid());
+                        $entity->setJobInfo($jobInfo->getJobInformationEntity());
 
                         $this->getLogger()->info(
                             vsprintf(

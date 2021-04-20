@@ -341,7 +341,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
                     $type = $this->getContentTypeFilterValue();
                     $curBlogId = $this->getProfile()->getOriginalBlogId()->getBlogId();
                     foreach ($locales as $blogId => $blogName) {
-                        $submissionEntity = $ep->createForTranslation($type, $curBlogId, $id, (int)$blogId, new JobInformationEntity($batchUid, $jobName, $smartlingData['jobId'], $profile->getProjectId()), $clone);
+                        $submissionEntity = $ep->createForTranslation($type, $curBlogId, $id, (int)$blogId, new JobInformationEntity($jobName, $smartlingData['jobId'], $profile->getProjectId()), $clone);
 
                         $this->getLogger()
                             ->info(vsprintf(

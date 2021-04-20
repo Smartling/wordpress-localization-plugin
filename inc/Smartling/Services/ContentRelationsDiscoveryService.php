@@ -19,7 +19,7 @@ use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorAbstract;
 use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
 use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Helpers\StringHelper;
-use Smartling\Jobs\JobInformationEntity;
+use Smartling\Jobs\JobInformationEntityWithBatchUid;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
@@ -140,7 +140,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
     /**
      * This function only returns when testing, WP will stop execution after wp_send_json
      */
-    public function bulkUploadHandler(JobInformationEntity $jobInfo, array $contentIds, string $contentType, int $currentBlogId, array $targetBlogIds): void
+    public function bulkUploadHandler(JobInformationEntityWithBatchUid $jobInfo, array $contentIds, string $contentType, int $currentBlogId, array $targetBlogIds): void
     {
         foreach ($targetBlogIds as $targetBlogId) {
             $blogFields = [
@@ -158,7 +158,8 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 } else {
                     $submission = ArrayHelper::first($existing);
                 }
-                $submission->setJobInfo($jobInfo);
+                $submission->setBatchUid($jobInfo->getBatchUid());
+                $submission->setJobInfo($jobInfo->getJobInformationEntity());
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission->getFileUri();
                 $this->submissionManager->storeEntity($submission);
@@ -197,7 +198,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             $contentType = $data['source']['contentType'];
             $curBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
             $batchUid = $this->getBatchUid($curBlogId, $data['job']);
-            $jobInfo = new JobInformationEntity($batchUid, $data['job']['name'], $data['job']['id'], $this->settingsManager->getSingleSettingsProfile($curBlogId)->getProjectId());
+            $jobInfo = new JobInformationEntityWithBatchUid($batchUid, $data['job']['name'], $data['job']['id'], $this->settingsManager->getSingleSettingsProfile($curBlogId)->getProjectId());
             $targetBlogIds = explode(',', $data['targetBlogIds']);
 
             if (array_key_exists('ids', $data)) {
@@ -241,7 +242,8 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                     ];
                 } else {
                     $submission = ArrayHelper::first($result);
-                    $submission->setJobInfo($jobInfo);
+                    $submission->setBatchUid($jobInfo->getBatchUid());
+                    $submission->setJobInfo($jobInfo->getJobInformationEntity());
                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                     $this->submissionManager->storeEntity($submission);
                 }
