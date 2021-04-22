@@ -8,7 +8,6 @@ use Smartling\SmartlingTableDefinitionInterface;
 
 abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterface
 {
-
     public const DB_TYPE_INT_MODIFIER_AUTOINCREMENT = 'AUTO_INCREMENT';
     public const DB_TYPE_DEFAULT_ZERO = 'DEFAULT \'0\'';
     public const DB_TYPE_DEFAULT_EMPTYSTRING = 'DEFAULT \'\'';

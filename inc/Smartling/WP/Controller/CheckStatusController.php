@@ -28,9 +28,6 @@ class CheckStatusController extends WPAbstract implements WPHookInterface
             ->getVersion(), false);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function register(): void
     {
         if (!DiagnosticsHelper::isBlocked() && current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {

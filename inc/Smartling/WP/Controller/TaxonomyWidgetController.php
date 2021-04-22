@@ -14,7 +14,6 @@ use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Jobs\DownloadTranslationJob;
-use Smartling\Jobs\JobInformationEntity;
 use Smartling\Jobs\JobInformationEntityWithBatchUid;
 use Smartling\Jobs\UploadJob;
 use Smartling\Queue\Queue;

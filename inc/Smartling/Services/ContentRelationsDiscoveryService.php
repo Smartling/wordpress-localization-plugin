@@ -62,10 +62,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 
     private const ACTION_NAME_CREATE_SUBMISSIONS = 'smartling-create-submissions';
 
-    /**
-     * @var LoggerInterface $logger
-     */
-    private $logger;
+    private LoggerInterface $logger;
     private ContentHelper $contentHelper;
     private FieldsFilterHelper $fieldFilterHelper;
     private MetaFieldProcessorManager $metaFieldProcessorManager;
@@ -79,9 +76,6 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 
     public function getLogger(): LoggerInterface
     {
-        if (!($this->logger instanceof LoggerInterface)) {
-            $this->logger = MonologWrapper::getLogger(get_class($this));
-        }
         return $this->logger;
     }
 
@@ -104,6 +98,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         $this->fieldFilterHelper = $fieldFilterHelper;
         $this->gutenbergBlockHelper = $blockHelper;
         $this->localizationPluginProxy = $localizationPluginProxy;
+        $this->logger = MonologWrapper::getLogger(static::class);
         $this->metaFieldProcessorManager = $fieldProcessorManager;
         $this->settingsManager = $settingsManager;
         $this->shortcodeHelper = $shortcodeHelper;

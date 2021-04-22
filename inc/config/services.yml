@@ -284,7 +284,6 @@ services:
     class: Smartling\Helpers\ContentSerializationHelper
     arguments:
     - "@content.helper"
-    - "@fields-filter.helper"
 
   acf.dynamic.support:
     class: Smartling\Extensions\Acf\AcfDynamicSupport

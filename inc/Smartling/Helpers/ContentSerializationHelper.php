@@ -13,38 +13,16 @@ class ContentSerializationHelper
 {
     private LoggerInterface $logger;
     private ContentHelper $contentHelper;
-    private FieldsFilterHelper $fieldsFilter;
 
     public function getLogger(): LoggerInterface
     {
         return $this->logger;
     }
 
-    public function getContentHelper(): ContentHelper
-    {
-        return $this->contentHelper;
-    }
-
-    public function setContentHelper(ContentHelper $contentHelper): void
-    {
-        $this->contentHelper = $contentHelper;
-    }
-
-    public function getFieldsFilter(): FieldsFilterHelper
-    {
-        return $this->fieldsFilter;
-    }
-
-    public function setFieldsFilter(FieldsFilterHelper $fieldsFilter): void
-    {
-        $this->fieldsFilter = $fieldsFilter;
-    }
-
-    public function __construct(ContentHelper $contentHelper, FieldsFilterHelper $fieldsFilter)
+    public function __construct(ContentHelper $contentHelper)
     {
         $this->logger = MonologWrapper::getLogger(get_called_class());
-        $this->setContentHelper($contentHelper);
-        $this->setFieldsFilter($fieldsFilter);
+        $this->contentHelper = $contentHelper;
     }
 
     private function cleanUpFields(array $fields): array
@@ -106,8 +84,8 @@ class ContentSerializationHelper
     private function collectSubmissionSourceContent(SubmissionEntity $submission): array
     {
         $source = [
-            'entity' => $this->getContentHelper()->readSourceContent($submission)->toArray(),
-            'meta'   => $this->getContentHelper()->readSourceMetadata($submission),
+            'entity' => $this->contentHelper->readSourceContent($submission)->toArray(),
+            'meta'   => $this->contentHelper->readSourceMetadata($submission),
         ];
         $source['meta'] = $source['meta'] ? : [];
 
@@ -133,9 +111,6 @@ class ContentSerializationHelper
         ];
 
         if (0 < count($profiles)) {
-            /**
-             * @var ConfigurationProfileEntity $profile
-             */
             $profile = ArrayHelper::first($profiles);
 
             $filter['ignore'] = $profile->getFilterSkipArray();

@@ -54,7 +54,7 @@ class ContentRelationDiscoveryServiceTest extends TestCase
         $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
 
         $submission = $this->createMock(SubmissionEntity::class);
-        $submission->expects($this->once())->method('setBatchUid')->with($batchUid);
+        $submission->expects(self::once())->method('setBatchUid')->with($batchUid);
         $submission->expects(self::once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
 
         $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();

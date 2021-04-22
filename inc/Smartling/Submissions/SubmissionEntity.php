@@ -49,29 +49,10 @@ class SubmissionEntity extends SmartlingEntityAbstract
 
     public const DATETIME_FORMAT = 'Y-m-d H:i:s';
 
-    /**
-     * Submission Status  'New'
-     */
     public const SUBMISSION_STATUS_NEW = 'New';
-
-    /**
-     * Submission Status  'In Progress'
-     */
     public const SUBMISSION_STATUS_IN_PROGRESS = 'In Progress';
-
-    /**
-     * Submission Status  'Completed'
-     */
     public const SUBMISSION_STATUS_COMPLETED = 'Completed';
-
-    /**
-     * Submission Status  'Failed'
-     */
     public const SUBMISSION_STATUS_FAILED = 'Failed';
-
-    /**
-     * Submission Status 'Cancelled'
-     */
     public const SUBMISSION_STATUS_CANCELLED = 'Cancelled';
 
     public static array $submissionStatuses = [
@@ -111,7 +92,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
 
     public const VIRTUAL_FIELD_JOB_LINK = 'job_link';
 
-    private $jobInformation; // Typing this property would cause \Error: must not be accessed before initialization
+    private ?JobInformationEntity $jobInformation = null;
 
     public static function getFieldDefinitions(): array
     {

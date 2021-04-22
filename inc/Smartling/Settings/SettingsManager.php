@@ -211,10 +211,8 @@ class SettingsManager extends EntityManagerAbstract
         } else {
             // update
             $conditionBlock = ConditionBlock::getConditionBlock();
-            $conditionBlock->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'id',
-                [$entityId]));
-            $storeQuery = QueryBuilder::buildUpdateQuery($configurationsTableName, $fields, $conditionBlock,
-                                                         ['limit' => 1]);
+            $conditionBlock->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'id', [$entityId]));
+            $storeQuery = QueryBuilder::buildUpdateQuery($configurationsTableName, $fields, $conditionBlock, ['limit' => 1]);
         }
 
         $this->getLogger()->debug(vsprintf('Saving profile: %s', [$storeQuery]));
@@ -240,6 +238,9 @@ class SettingsManager extends EntityManagerAbstract
         return ConfigurationProfileEntity::fromArray($fields, $this->getLogger());
     }
 
+    /**
+     * @throws BlogNotFoundException
+     */
     protected function updateLabels(ConfigurationProfileEntity $entity): ConfigurationProfileEntity
     {
         $mainLocaleBlogId = $entity->getOriginalBlogId()->getBlogId();

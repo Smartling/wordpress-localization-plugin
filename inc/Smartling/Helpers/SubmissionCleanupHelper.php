@@ -148,7 +148,6 @@ class SubmissionCleanupHelper implements WPHookInterface
 
     /**
      * Registers wp hook handlers. Invoked by wordpress.
-     * @return void
      */
     public function register(): void
     {

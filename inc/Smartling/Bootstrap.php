@@ -407,9 +407,6 @@ class Bootstrap
 
     protected function testPluginSetup()
     {
-        /**
-         * @var SettingsManager $sm
-         */
         $sm = static::getContainer()->get('manager.settings');
 
         $total = 0;

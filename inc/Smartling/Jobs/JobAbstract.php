@@ -294,9 +294,6 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         }
     }
 
-    /**
-     * @inheritdoc
-     */
     public function register(): void
     {
         $this->install();

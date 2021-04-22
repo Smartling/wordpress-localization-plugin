@@ -10,7 +10,6 @@ use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Jobs\DownloadTranslationJob;
-use Smartling\Jobs\JobInformationEntity;
 use Smartling\Jobs\JobInformationEntityWithBatchUid;
 use Smartling\Queue\Queue;
 use Smartling\Submissions\SubmissionEntity;

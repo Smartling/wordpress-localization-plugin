@@ -239,7 +239,7 @@ class QueryBuilder
             $preOptions = [];
 
             foreach ($sortOptions as $field => $value) {
-                $preOptions[] = true ? "`$field` $value" : "$field $value";
+                $preOptions[] = "`$field` $value";
             }
 
             $part .= vsprintf(' ORDER BY %s', [implode(' , ', $preOptions)]);
@@ -249,9 +249,9 @@ class QueryBuilder
     }
 
     /**
-     * @param string[] $groupOptions
+     * @param string[]|null $groupOptions
      */
-    private static function buildGroupSubQuery(?array $groupOptions, bool $escape = true): string
+    private static function buildGroupSubQuery(?array $groupOptions): string
     {
         $part = '';
 
@@ -262,7 +262,7 @@ class QueryBuilder
         $parts = [];
 
         foreach ($groupOptions as $element) {
-            $parts[] = $escape ? static::escapeName($element) : $element;
+            $parts[] = static::escapeName($element);
         }
 
         $part = implode(', ', $parts);

@@ -7,7 +7,6 @@ use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\Exceptions\SmartlingApiException;
-use Smartling\Jobs\JobInformationEntity;
 use Smartling\Jobs\JobInformationEntityWithBatchUid;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;

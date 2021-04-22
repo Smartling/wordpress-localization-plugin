@@ -2,7 +2,6 @@
 
 namespace Smartling\Base;
 
-use Smartling\Jobs\JobInformationEntity;
 use Smartling\Jobs\JobInformationEntityWithBatchUid;
 use Smartling\Submissions\SubmissionEntity;
 

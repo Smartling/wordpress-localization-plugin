@@ -120,7 +120,7 @@ class SiteHelper
     public function getCurrentBlogId(): int
     {
         if (function_exists('get_current_blog_id')) {
-            return (int)get_current_blog_id();
+            return get_current_blog_id();
         }
 
         $this->directRunDetectedFallback();

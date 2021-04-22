@@ -21,7 +21,6 @@ use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\FileHelper;
 use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\RuntimeCacheHelper;
-use Smartling\Jobs\JobInformationEntity;
 use Smartling\Jobs\JobInformationEntityWithBatchUid;
 use Smartling\Jobs\JobsApi;
 use Smartling\Jobs\JobStatus;
