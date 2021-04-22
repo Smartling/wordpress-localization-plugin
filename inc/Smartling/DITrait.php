@@ -7,7 +7,6 @@ use Smartling\Base\ExportedAPI;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\LogContextMixinHelper;
-use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Services\GlobalSettingsManager;
 use Symfony\Component\Config\FileLocator;
@@ -198,7 +197,6 @@ trait DITrait
     protected function fromContainer($id, $isParam = false)
     {
         $container = self::getContainer();
-        $content = null;
 
         if ($isParam) {
             $content = $container->getParameter($id);

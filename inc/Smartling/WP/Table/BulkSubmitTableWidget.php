@@ -394,10 +394,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
         return $value;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function prepare_items()
+    public function prepare_items(): void
     {
         $pageOptions = [
             'limit' => $this->manager->getPageSize(),
@@ -414,9 +411,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
         $contentTypeFilterValue = $this->getContentTypeFilterValue();
         $sortOptions = $this->getSortingOptions();
 
-        /**
-         * @var SmartlingCore $core
-         */
         $core = Bootstrap::getContainer()->get('entrypoint');
 
         $io = $core->getContentIoFactory()->getMapper($contentTypeFilterValue);
@@ -431,13 +425,11 @@ class BulkSubmitTableWidget extends SmartlingListTable
             $searchString
         );
 
-
         $total = $io->getTotal();
 
         $dataAsArray = [];
         if ($data) {
             foreach ($data as $item) {
-
                 $row = $item->toBulkSubmitScreenRow();
 
                 $entities = [];
@@ -473,8 +465,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
                     $row['title'] = HtmlTagGeneratorHelper::tag('span', $shrinked, ['title' => $orig]);
                 }
 
-                //$row['title']  = $this->applyRowActions( $row );
-
                 $updatedDate = '';
                 if (!StringHelper::isNullOrEmpty($row['updated'])) {
                     $dt = DateTimeHelper::stringToDateTime($row['updated']);
@@ -489,7 +479,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
             }
         }
 
-
         $this->items = $dataAsArray;
 
         $this->set_pagination_args([
@@ -501,7 +490,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
 
     private function getFilteredAllowedTypes()
     {
-
         $types = $this->getActiveContentTypes($this->entityHelper->getSiteHelper(), 'bulkSubmit');
 
         $restrictedTypes = WordpressContentTypeHelper::getTypesRestrictedToBulkSubmit();

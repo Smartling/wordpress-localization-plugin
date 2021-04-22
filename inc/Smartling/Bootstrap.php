@@ -8,6 +8,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\ContentTypes\AutoDiscover\PostTypes;
 use Smartling\ContentTypes\AutoDiscover\Taxonomies;
+use Smartling\ContentTypes\ContentTypeCustomizer;
 use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\ContentTypes\ContentTypeWidget;
@@ -23,17 +24,11 @@ use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Services\GlobalSettingsManager;
-use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPInstallableInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
-/**
- * Class Bootstrap
- * @package Smartling
- */
 class Bootstrap
 {
-
     use DebugTrait;
     use DITrait;
 
@@ -67,15 +62,14 @@ class Bootstrap
      */
     public static function getLogger()
     {
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $object = MonologWrapper::getLogger(get_called_class());
 
         if ($object instanceof LoggerInterface) {
             return $object;
-        } else {
-            $message = 'Something went wrong with initialization of DI Container and logger cannot be retrieved.';
-            throw new SmartlingBootException($message);
         }
+
+        $message = 'Something went wrong with initialization of DI Container and logger cannot be retrieved.';
+        throw new SmartlingBootException($message);
     }
 
     public static function getCurrentVersion()
@@ -424,20 +418,19 @@ class Bootstrap
         }
     }
 
-    /**
-     * @param ContainerBuilder $di
-     */
-    private function initializeBuildInContentTypes(ContainerBuilder $di)
+    private function initializeBuiltInContentTypes(ContainerBuilder $di): void
     {
+        ContentTypeCustomizer::register($di);
+
         ContentTypeWidget::register($di);
 
         ContentTypeNavigationMenuItem::register($di);
         ContentTypeNavigationMenu::register($di);
 
-        $handlers = [
-            'taxonomies' => (new Taxonomies($di)),
-            'posts'      => (new PostTypes($di)),
-        ];
+        // register taxonomies
+        new Taxonomies($di);
+        // register post types
+        new PostTypes($di);
 
         $action = defined('DOING_CRON') && true === DOING_CRON ? 'wp_loaded' : 'admin_init';
 
@@ -529,15 +522,14 @@ class Bootstrap
         }, 999);
     }
 
-    public function initializeContentTypes()
+    public function initializeContentTypes(): void
     {
-        $this->initializeBuildInContentTypes(static::getContainer());
+        $this->initializeBuiltInContentTypes(static::getContainer());
         do_action(ExportedAPI::ACTION_SMARTLING_REGISTER_CONTENT_TYPE, static::getContainer());
     }
 
-    public function run()
+    public function run(): void
     {
-
         $this->initRoles();
     }
 }

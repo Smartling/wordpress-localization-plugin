@@ -84,14 +84,6 @@ class WidgetEntity extends VirtualEntityAbstract
     }
 
     /**
-     * @return array;
-     */
-    public function getMetadata()
-    {
-        return [];
-    }
-
-    /**
      * @return string
      */
     public function getTitle()
@@ -120,15 +112,6 @@ class WidgetEntity extends VirtualEntityAbstract
         }
 
         $this->entityNotFound('theme_widget', $guid);
-    }
-
-    /**
-     * @param string $tagName
-     * @param string $tagValue
-     * @param bool   $unique
-     */
-    public function setMetaTag($tagName, $tagValue, $unique = true)
-    {
     }
 
     protected function buildMap()
@@ -245,22 +228,6 @@ class WidgetEntity extends VirtualEntityAbstract
         $widgetHelper->write();
 
         return $widgetHelper->getPk();
-    }
-
-    /**
-     * @return array
-     */
-    protected function getNonCloneableFields()
-    {
-        return [$this->getPrimaryFieldName()];
-    }
-
-    /**
-     * @return string
-     */
-    public function getPrimaryFieldName()
-    {
-        return 'id';
     }
 
     /**

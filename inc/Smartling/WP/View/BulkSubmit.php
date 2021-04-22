@@ -1,12 +1,11 @@
 <?php
 
-use Smartling\Settings\TargetLocale;
-use Smartling\WP\Table\BulkSubmitTableWidget;
+use Smartling\Helpers\ArrayHelper;
+use Smartling\WP\Controller\BulkSubmitController;
 use Smartling\WP\WPAbstract;
 
 /**
- * @var WPAbstract $this
- * @var WPAbstract self
+ * @var BulkSubmitController $this
  */
 $data = $this->getViewData();
 
@@ -21,15 +20,11 @@ $data = $this->getViewData();
             padding-left: 18px;
         }
     </style>
-    <h2><?= get_admin_page_title(); ?></h2>
+    <h2><?= get_admin_page_title() ?></h2>
 
     <div class="display-errors"></div>
     <?php
-
     $bulkSubmitTable = $data;
-    /**
-     * @var BulkSubmitTableWidget $submissionsTable
-     */
     $bulkSubmitTable->prepare_items();
     ?>
 
@@ -37,10 +32,18 @@ $data = $this->getViewData();
         <tr>
             <td>
                 <form id="bulk-submit-type-filter" method="get">
-                    <input type="hidden" name="page" value="<?= $_REQUEST['page']; ?>"/>
-                    <?= $bulkSubmitTable->contentTypeSelectRender(); ?>
-                    <?= $bulkSubmitTable->titleFilterRender(); ?>
-                    <?= $bulkSubmitTable->renderSubmitButton(__('Apply Filter')); ?>
+                    <input type="hidden" name="page" value="<?= $_REQUEST['page'] ?>"/>
+                    <?php
+/**
+ * The below input ensures we have $wp_customize at bootstrap, it is required, even though it's usage is far from obvious
+ * @see \_wp_customize_include
+ * @see \Smartling\DbAl\WordpressContentEntities\CustomizerEntity::getList
+ */
+?>
+                    <input type="hidden" name="wp_customize" value="on" />
+                    <?= $bulkSubmitTable->contentTypeSelectRender() ?>
+                    <?= $bulkSubmitTable->titleFilterRender() ?>
+                    <?= $bulkSubmitTable->renderSubmitButton(__('Apply Filter')) ?>
                 </form>
             </td>
         </tr>
@@ -73,24 +76,17 @@ $data = $this->getViewData();
                             <table>
                                 <tr>
                                     <td>
-                                        <h3><?= __('Clone into next languages:'); ?></h3>
+                                        <h3><?= __('Clone into next languages:') ?></h3>
                                         <div>
-                                            <?= WPAbstract::checkUncheckBlock(); ?>
+                                            <?= WPAbstract::checkUncheckBlock() ?>
                                         </div>
                                         <?php
-                                        /**
-                                         * @var BulkSubmitTableWidget $data
-                                         */
-
                                         $locales = $data->getProfile()
                                             ->getTargetLocales();
 
-                                        \Smartling\Helpers\ArrayHelper::sortLocales($locales);
+                                        ArrayHelper::sortLocales($locales);
 
                                         foreach ($locales as $locale) {
-                                            /**
-                                             * @var TargetLocale $locale
-                                             */
                                             if (!$locale->isEnabled()) {
                                                 continue;
                                             }
@@ -101,14 +97,14 @@ $data = $this->getViewData();
                                                     $locale->getBlogId(),
                                                     $locale->getLabel(),
                                                     false
-                                                ); ?>
+                                                ) ?>
                                             </p>
                                         <?php } ?>
                                     </td>
                                 </tr>
                             </table>
                             <div class="clone-button">
-                                <?= WPAbstract::bulkSubmitCloneButton(); ?>
+                                <?= WPAbstract::bulkSubmitCloneButton() ?>
                             </div>
 
                         </div>
@@ -116,15 +112,15 @@ $data = $this->getViewData();
                 </div>
             </div>
             <input type="hidden" name="content-type" id="ct" value=""/>
-            <input type="hidden" name="page" value="<?= $_REQUEST['page']; ?>"/>
+            <input type="hidden" name="page" value="<?= $_REQUEST['page'] ?>"/>
             <input type="hidden" id="action" name="action" value="clone"/>
     </form>
 
     <script>
         (function ($) {
-            $(document).ready(function () {
+            $(document).on('ready', function () {
                 $('div#action-tabs span').on('click', function () {
-                    var $selector = $(this).attr('data-action');
+                    const $selector = $(this).attr('data-action');
                     $('div#action-tabs span').removeClass('active');
                     $(this).addClass('active');
                     $('div.tab').addClass('hidden');
@@ -133,6 +129,4 @@ $data = $this->getViewData();
             });
         })(jQuery);
     </script>
-
-    </form>
 </div>
