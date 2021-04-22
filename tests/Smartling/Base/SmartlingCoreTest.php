@@ -11,7 +11,7 @@ use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\XmlHelper;
-use Smartling\Jobs\JobInformationEntityWithBatchUid;
+use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
@@ -437,8 +437,7 @@ class SmartlingCoreTest extends TestCase
             ->expects(self::once())
             ->method('retrieveJobInfoForDailyBucketJob')
             ->with($profile, false)
-            ->willReturn(new JobInformationEntityWithBatchUid($batchUid,'jobName', '', ''));
-
+            ->willReturn(new JobEntityWithBatchUid($batchUid,'jobName', '', ''));
 
         $obj->setApiWrapper($apiWrapperMock);
 

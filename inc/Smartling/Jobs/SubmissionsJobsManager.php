@@ -7,7 +7,7 @@ use Smartling\Exception\EntityNotFoundException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DateTimeHelper;
 
-class SubmissionJobManager
+class SubmissionsJobsManager
 {
     private SmartlingToCMSDatabaseAccessWrapperInterface $db;
     private string $tableName;
@@ -18,30 +18,37 @@ class SubmissionJobManager
         $this->tableName = $db->completeTableName(SubmissionJobEntity::getTableName());
     }
 
+    public function deleteBySubmissionId(int $id): void {
+        $this->db->queryPrepared("DELETE FROM $this->tableName WHERE " . SubmissionJobEntity::FIELD_SUBMISSION_ID . " = %d", $id);
+    }
+
     public function store(SubmissionJobEntity $submissionJobEntity): SubmissionJobEntity
     {
-        $this->db->query(sprintf(
-            'INSERT INTO %1$s (%2$s, %3$s, %4$s, %5$s) values (%6$d, %7$d, \'%8$s\', \'%9$s\') ON DUPLICATE KEY UPDATE %3$s = %7$d, %5$s = \'%9$s\'',
-            $this->db->completeTableName(SubmissionJobEntity::getTableName()),
-            SubmissionJobEntity::FIELD_SUBMISSION_ID,
-            SubmissionJobEntity::FIELD_JOB_ID,
-            SubmissionJobEntity::FIELD_CREATED,
-            SubmissionJobEntity::FIELD_MODIFIED,
+        $submissionId = SubmissionJobEntity::FIELD_SUBMISSION_ID;
+        $jobId = SubmissionJobEntity::FIELD_JOB_ID;
+        $created = SubmissionJobEntity::FIELD_CREATED;
+        $modified = SubmissionJobEntity::FIELD_MODIFIED;
+        $sql = <<<SQL
+INSERT INTO $this->tableName ($submissionId, $jobId, $created, $modified)
+    VALUES (%d, %d, %s, %s)
+    ON DUPLICATE KEY UPDATE $jobId = %d, $modified = %s
+SQL;
+
+        $this->db->queryPrepared(
+            $sql,
             $submissionJobEntity->getSubmissionId(),
             $submissionJobEntity->getJobId(),
             DateTimeHelper::dateTimeToString($submissionJobEntity->getCreated()),
             DateTimeHelper::dateTimeToString($submissionJobEntity->getModified()),
-        ));
+            $submissionJobEntity->getJobId(),
+            DateTimeHelper::dateTimeToString($submissionJobEntity->getModified()),
+        );
 
-        try {
-            $id = $this->db->getLastInsertedId();
-            if ($id === 0) {
-                return $this->getOne($submissionJobEntity->getSubmissionId(), SubmissionJobEntity::FIELD_SUBMISSION_ID);
-            }
-            return $this->getOne($id, SubmissionJobEntity::FIELD_ID);
-        } catch (EntityNotFoundException $e) {
-            throw $e;
+        $id = $this->db->getLastInsertedId();
+        if ($id === 0) {
+            return $this->getOne($submissionJobEntity->getSubmissionId(), SubmissionJobEntity::FIELD_SUBMISSION_ID);
         }
+        return $this->getOne($id, SubmissionJobEntity::FIELD_ID);
     }
 
     public function findJobIdBySubmissionId(int $id): ?int
@@ -62,14 +69,12 @@ class SubmissionJobManager
         if (!array_key_exists($field, SubmissionJobEntity::getFieldDefinitions())) {
             throw new \InvalidArgumentException("Unable to get entity by field `$field`");
         }
-        $result = $this->db->fetch(sprintf(
-            'SELECT %s FROM %s WHERE %s = %d ORDER BY %s DESC LIMIT 1',
-            implode(', ', array_keys(SubmissionJobEntity::getFieldDefinitions())),
-            $this->tableName,
-            $field,
+        $fields = implode(', ', array_keys(SubmissionJobEntity::getFieldDefinitions()));
+        $fieldId = SubmissionJobEntity::FIELD_ID;
+        $result = $this->db->fetchPrepared(
+            "SELECT $fields FROM {$this->tableName} WHERE $field = %d ORDER BY $fieldId DESC LIMIT 1",
             $id,
-            SubmissionJobEntity::FIELD_ID
-        ), 'ARRAY_A');
+        );
         if (count($result) === 0) {
             throw new EntityNotFoundException('Unable to get entity');
         }

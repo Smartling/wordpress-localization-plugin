@@ -10,7 +10,7 @@ use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Jobs\DownloadTranslationJob;
-use Smartling\Jobs\JobInformationEntityWithBatchUid;
+use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Queue\Queue;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPAbstract;
@@ -315,7 +315,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                  */
                 foreach ($sourceIds as $sourceId) {
                     try {
-                        $jobInfo = new JobInformationEntityWithBatchUid($batchUid, $jobName, $data['job']['id'], $profile->getProjectId());
+                        $jobInfo = new JobEntityWithBatchUid($batchUid, $jobName, $data['job']['id'], $profile->getProjectId());
                         if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId)) {
                             $submission = $this->getCore()->getTranslationHelper()->tryPrepareRelatedContent($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId, $jobInfo);
                         } else {
@@ -618,7 +618,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                     return;
                                 }
 
-                                $jobInfo = new JobInformationEntityWithBatchUid($batchUid, $data['jobName'], $data['jobId'], $profile->getProjectId());
+                                $jobInfo = new JobEntityWithBatchUid($batchUid, $data['jobName'], $data['jobId'], $profile->getProjectId());
                                 foreach ($locales as $blogId) {
                                     if ($translationHelper->isRelatedSubmissionCreationNeeded($this->servedContentType, $sourceBlog, $originalId, (int)$blogId)) {
                                         $submission = $translationHelper->tryPrepareRelatedContent($this->servedContentType, $sourceBlog, $originalId, (int)$blogId, $jobInfo);

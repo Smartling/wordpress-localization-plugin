@@ -8,16 +8,22 @@ interface SmartlingToCMSDatabaseAccessWrapperInterface
     public const SORT_OPTION_DESC = 'DESC';
 
     /**
-     * @param string $query
      * @return bool|int
      */
     public function query(string $query);
+
+    /**
+     * @return bool|int
+     */
+    public function queryPrepared(string $query, ...$args);
 
     /**
      * @param string $output \OBJECT || \ARRAY_A
      * @return array|null|object
      */
     public function fetch(string $query, string $output = OBJECT);
+
+    public function fetchPrepared(string $query, ...$args): array;
 
     public function escape(string $string): string;
 
@@ -28,4 +34,6 @@ interface SmartlingToCMSDatabaseAccessWrapperInterface
     public function getLastInsertedId(): int;
 
     public function getLastErrorMessage(): string;
+
+    public function prepare(string $query, ...$args): string;
 }

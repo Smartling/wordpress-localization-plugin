@@ -13,8 +13,8 @@ use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\TextHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressUserHelper;
-use Smartling\Jobs\JobInformationEntity;
-use Smartling\Jobs\JobInformationEntityWithBatchUid;
+use Smartling\Jobs\JobEntity;
+use Smartling\Jobs\JobEntityWithBatchUid;
 
 /**
  * Class SubmissionEntity
@@ -92,7 +92,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
 
     public const VIRTUAL_FIELD_JOB_LINK = 'job_link';
 
-    private ?JobInformationEntity $jobInformation = null;
+    private ?JobEntity $jobInformation = null;
 
     public static function getFieldDefinitions(): array
     {
@@ -663,21 +663,18 @@ class SubmissionEntity extends SmartlingEntityAbstract
         $this->stateFields[static::FIELD_BATCH_UID] = trim($batchUid);
     }
 
-    public function getJobInfo(): JobInformationEntity
+    public function getJobInfo(): JobEntity
     {
-        if ($this->jobInformation === null) {
-            return new JobInformationEntity('', '', '');
-        }
-        return clone $this->jobInformation;
+        return $this->jobInformation ?? JobEntity::EMPTY();
     }
 
-    public function getJobInfoWithBatchUid(): JobInformationEntityWithBatchUid
+    public function getJobInfoWithBatchUid(): JobEntityWithBatchUid
     {
         $jobInfo = $this->getJobInfo();
-        return new JobInformationEntityWithBatchUid($this->getBatchUid(), $jobInfo->getJobName(), $jobInfo->getJobUid(), $jobInfo->getProjectUid());
+        return new JobEntityWithBatchUid($this->getBatchUid(), $jobInfo->getJobName(), $jobInfo->getJobUid(), $jobInfo->getProjectUid());
     }
 
-    public function setJobInfo(JobInformationEntity $jobInfo): void
+    public function setJobInfo(JobEntity $jobInfo): void
     {
         $this->jobInformation = $jobInfo;
     }

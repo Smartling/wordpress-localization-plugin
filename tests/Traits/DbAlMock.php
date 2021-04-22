@@ -14,14 +14,6 @@ trait DbAlMock
     {
         defined('ARRAY_A') || define('ARRAY_A', 'ARRAY_A');
         defined('OBJECT') || define('OBJECT', 'OBJECT');
-        return $this->createPartialMock(SmartlingToCMSDatabaseAccessWrapperInterface::class, [
-            'query',
-            'fetch',
-            'escape',
-            'completeTableName',
-            'completeMultisiteTableName',
-            'getLastInsertedId',
-            'getLastErrorMessage',
-        ]);
+        return $this->createMock(SmartlingToCMSDatabaseAccessWrapperInterface::class);
     }
 }

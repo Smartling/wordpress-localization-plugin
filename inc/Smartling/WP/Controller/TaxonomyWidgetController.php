@@ -14,7 +14,7 @@ use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Jobs\DownloadTranslationJob;
-use Smartling\Jobs\JobInformationEntityWithBatchUid;
+use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Jobs\UploadJob;
 use Smartling\Queue\Queue;
 use Smartling\Submissions\SubmissionEntity;
@@ -228,7 +228,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                                     );
                                 return;
                             }
-                            $jobInfo = new JobInformationEntityWithBatchUid($batchUid, $jobName, $data['jobId'], $profile->getProjectId());
+                            $jobInfo = new JobEntityWithBatchUid($batchUid, $jobName, $data['jobId'], $profile->getProjectId());
                             foreach ($locales as $blogId) {
                                 if ($translationHelper->isRelatedSubmissionCreationNeeded($this->getTaxonomy(), $sourceBlog, $originalId, (int)$blogId)) {
                                     $submission = $translationHelper->tryPrepareRelatedContent($this->getTaxonomy(), $sourceBlog, $originalId, (int)$blogId, $jobInfo);
