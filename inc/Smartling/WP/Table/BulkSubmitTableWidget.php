@@ -484,7 +484,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
                 }
 
                 $row['updated'] = $updatedDate;
-                $row = ['bulkActionCb' => $this->column_cb($row), ...$row];
+                $row = array_merge(['bulkActionCb' => $this->column_cb($row)], $row);
                 $dataAsArray[] = $row;
             }
         }
