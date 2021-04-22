@@ -169,8 +169,7 @@ services:
       - "@entity.helper"
       - "@manager.submission"
       - "@site.cache"
-    calls:
-      - [ "setQueue", [ "@queue.db" ] ]
+      - "@queue.db"
 
   wp.taxonomy.linker:
     class: Smartling\WP\Controller\TaxonomyLinksController

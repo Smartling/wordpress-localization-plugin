@@ -55,21 +55,6 @@ class SubmissionTableWidget extends SmartlingListTable
         return $this->logger;
     }
 
-    private function setLogger(LoggerInterface $logger): void
-    {
-        $this->logger = $logger;
-    }
-
-    public function getQueue(): Queue
-    {
-        return $this->queue;
-    }
-
-    public function setQueue(Queue $queue): void
-    {
-        $this->queue = $queue;
-    }
-
     private string $_custom_controls_namespace = 'smartling-submissions-page';
 
     /**
@@ -88,14 +73,14 @@ class SubmissionTableWidget extends SmartlingListTable
 
     public function __construct(SubmissionManager $manager, EntityHelper $entityHelper, Queue $queue)
     {
-        $this->setQueue($queue);
+        $this->queue = $queue;
         $this->manager = $manager;
         $this->setSource($_REQUEST);
         $this->entityHelper = $entityHelper;
 
         $this->defaultValues[self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME] = $manager->getDefaultSubmissionStatus();
 
-        $this->setLogger($entityHelper->getLogger());
+        $this->logger = $entityHelper->getLogger();
 
         parent::__construct($this->_settings);
     }
@@ -192,7 +177,7 @@ class SubmissionTableWidget extends SmartlingListTable
                 switch ($this->current_action()) {
                     case self::ACTION_DOWNLOAD:
                         foreach ($submissions as $submission) {
-                            $this->getQueue()->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
+                            $this->queue->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
                         }
                         break;
                     case self::ACTION_LOCK:

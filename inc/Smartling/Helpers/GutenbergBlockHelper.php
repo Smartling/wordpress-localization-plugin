@@ -40,7 +40,6 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     /**
      * Registers wp hook handlers. Invoked by wordpress.
      *
-     * @return void
      * @throws SmartlingConfigException
      */
     public function register(): void

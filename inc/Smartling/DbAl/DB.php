@@ -67,21 +67,26 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
         return $this->wpdb;
     }
 
-    private function buildTableDefinitions()
+    private function buildTableDefinitions(): void
     {
-        $classes = [
-            ConfigurationProfileEntity::class,
-            Queue::class,
-            SubmissionEntity::class,
+        // Submissions
+        $this->tables[] = [
+            'name'    => SubmissionEntity::getTableName(),
+            'columns' => SubmissionEntity::getFieldDefinitions(),
+            'indexes' => SubmissionEntity::getIndexes(),
         ];
-        foreach ($classes as $class) {
-            /** @noinspection PhpUndefinedMethodInspection */
-            $this->tables[] = [
-                'columns' => $class::getFieldDefinitions(),
-                'indexes' => $class::getIndexes(),
-                'name' => $class::getTableName(),
-            ];
-        }
+        // Configuration profiles
+        $this->tables[] = [
+            'name'    => ConfigurationProfileEntity::getTableName(),
+            'columns' => ConfigurationProfileEntity::getFieldDefinitions(),
+            'indexes' => ConfigurationProfileEntity::getIndexes(),
+        ];
+        // Queue
+        $this->tables[] = [
+            'name'    => Queue::getTableName(),
+            'columns' => Queue::getFieldDefinitions(),
+            'indexes' => Queue::getIndexes(),
+        ];
     }
 
     /**
@@ -322,15 +327,15 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
         foreach ($tableDefinition['indexes'] as $indexDefinition) {
             if ($indexDefinition['type'] === 'primary') {
                 continue;
-            } else {
-                $_indexes[] = vsprintf(
-                    '%s (%s)',
-                    [
-                        strtoupper($indexDefinition['type']),
-                        '`' . implode('`, `', $indexDefinition['columns']) . '`',
-                    ]
-                );
             }
+
+            $_indexes[] = vsprintf(
+                '%s (%s)',
+                [
+                    strtoupper($indexDefinition['type']),
+                    '`' . implode('`, `', $indexDefinition['columns']) . '`',
+                ]
+            );
         }
 
         return implode(', ', $_indexes);

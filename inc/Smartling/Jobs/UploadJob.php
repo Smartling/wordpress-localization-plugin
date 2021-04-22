@@ -106,7 +106,7 @@ class UploadJob extends JobAbstract
                 $this->getLogger()->info('Started dealing with daily bucket job.');
 
                 try {
-                    $batchUid = $this->api->retrieveBatchForBucketJob($activeProfile, (bool) $activeProfile->getAutoAuthorize());
+                    $batchUid = $this->api->retrieveBatchForBucketJob($activeProfile, $activeProfile->getAutoAuthorize());
 
                     foreach ($entities as $entity) {
                         if (empty($batchUid)) {

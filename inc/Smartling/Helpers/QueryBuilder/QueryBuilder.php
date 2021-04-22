@@ -229,22 +229,17 @@ class QueryBuilder
     }
 
     /**
-     * @param $sortOptions
-     *
-     * @return string
+     * @param array|null $sortOptions ['id' => 'desc']
      */
-    private static function buildSortSubQuery(array  $sortOptions)
+    private static function buildSortSubQuery(?array $sortOptions): string
     {
         $part = '';
 
         if (!empty($sortOptions)) {
             $preOptions = [];
 
-            foreach ($sortOptions as $filed => $value) {
-                $preOptions[] = vsprintf('`%s` %s', [
-                    $filed,
-                    $value,
-                ]);
+            foreach ($sortOptions as $field => $value) {
+                $preOptions[] = "`$field` $value";
             }
 
             $part .= vsprintf(' ORDER BY %s', [implode(' , ', $preOptions)]);
@@ -254,11 +249,9 @@ class QueryBuilder
     }
 
     /**
-     * @param array $groupOptions
-     *
-     * @return string
+     * @param string[]|null $groupOptions
      */
-    private static function buildGroupSubQuery($groupOptions)
+    private static function buildGroupSubQuery(?array $groupOptions): string
     {
         $part = '';
 

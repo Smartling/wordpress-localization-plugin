@@ -3,7 +3,7 @@ Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 5.5
 Tested up to: 5.7
-Stable tag: 2.1.0
+Stable tag: 2.0.1
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -24,9 +24,9 @@ Integration Features
 == Installation ==
 
 = Minimum Requirements =
-* WordPress 4.6 or higher
+* WordPress 5.5 or higher
 * Multisite mode enabled
-* PHP Version 7.2 or higher
+* PHP Version 7.4 or higher
 * PHP extensions:
  * `mbstring`
  * `curl`

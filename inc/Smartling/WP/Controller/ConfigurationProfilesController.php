@@ -59,7 +59,6 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
 
     /**
      * Registers wp hook handlers. Invoked by wordpress.
-     * @return void
      */
     public function register(): void
     {

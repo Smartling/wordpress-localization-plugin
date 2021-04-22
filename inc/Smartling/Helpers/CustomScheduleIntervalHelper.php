@@ -13,9 +13,6 @@ class CustomScheduleIntervalHelper implements WPHookInterface
 
     private static $intervals = [];
 
-    /**
-     * @inheritdoc
-     */
     public function register(): void
     {
         add_filter('cron_schedules', [$this, 'updateSchedules']);

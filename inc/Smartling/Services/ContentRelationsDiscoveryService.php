@@ -57,7 +57,6 @@ use Smartling\Submissions\SubmissionManager;
  */
 class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 {
-
     public const ACTION_NAME = 'smartling-get-relations';
 
     private const ACTION_NAME_CREATE_SUBMISSIONS = 'smartling-create-submissions';
@@ -76,9 +75,6 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 
     public function getLogger(): LoggerInterface
     {
-        if (!($this->logger instanceof LoggerInterface)) {
-            $this->logger = MonologWrapper::getLogger(get_class($this));
-        }
         return $this->logger;
     }
 
@@ -101,6 +97,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         $this->fieldFilterHelper = $fieldFilterHelper;
         $this->gutenbergBlockHelper = $blockHelper;
         $this->localizationPluginProxy = $localizationPluginProxy;
+        $this->logger = MonologWrapper::getLogger(static::class);
         $this->metaFieldProcessorManager = $fieldProcessorManager;
         $this->settingsManager = $settingsManager;
         $this->shortcodeHelper = $shortcodeHelper;
@@ -185,7 +182,6 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
      *      'targetBlogIds' => '3,2',
      *      'relations'    => {{@see actionHandler }} relations response
      *  ]
-     * @return void
      * @var array|string $data
      */
     public function createSubmissionsHandler($data = ''): void
@@ -392,7 +388,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 if (!is_string($chunk)) {
                     $chunkFields = $this->extractFieldsFromGutenbergBlock($blockNamePart,
                         $block['innerBlocks'][$pointer++]);
-                    $fields = [$fields, ...$chunkFields];
+                    $fields = array_merge($fields, $chunkFields);
                 }
             }
         }
@@ -424,7 +420,8 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
          */
         $extraFields = [];
         foreach ($fields as $fName => $fValue) {
-            $extraFields = [$extraFields, ...$this->fieldFilterHelper->flattenArray($this->extractFieldsFromShortcodes($fName, $fValue))];
+            $extraFields = array_merge($extraFields,
+                $this->fieldFilterHelper->flattenArray($this->extractFieldsFromShortcodes($fName, $fValue)));
         }
         $fields = array_merge($fields, $extraFields);
 
@@ -439,7 +436,10 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
              */
             $extraFields = [];
             foreach ($fields as $fName => $fValue) {
-                $extraFields = [$extraFields, ...$this->fieldFilterHelper->flattenArray($this->extractFieldsFromGutenbergBlock($fName, $fValue))];
+                $extraFields = array_merge(
+                    $extraFields,
+                    $this->fieldFilterHelper->flattenArray($this->extractFieldsFromGutenbergBlock($fName, $fValue))
+                );
             }
             $fields = array_merge($fields, $extraFields);
         } catch (Exception $e) {

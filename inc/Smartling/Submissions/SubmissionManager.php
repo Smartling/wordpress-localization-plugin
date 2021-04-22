@@ -192,8 +192,6 @@ class SubmissionManager extends EntityManagerAbstract
             $this->getDbal()->completeTableName(SubmissionEntity::getTableName()),
             array_keys(SubmissionEntity::getFieldDefinitions()),
             $whereOptions,
-            [],
-            null
         );
         $this->logQuery($query);
 

@@ -41,7 +41,6 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
 
     /**
      * Registers wp hook handlers. Invoked by wordpress.
-     * @return void
      */
     public function register(): void
     {
