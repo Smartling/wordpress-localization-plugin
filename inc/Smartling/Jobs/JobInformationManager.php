@@ -89,7 +89,7 @@ class JobInformationManager
             JobInformationEntity::FIELD_ID
         ), 'ARRAY_A');
         if (count($result) === 0) {
-            throw new EntityNotFoundException('Unable to get entity');
+            throw new EntityNotFoundException("Unable to get entity by `$field` = $value");
         }
         $result = ArrayHelper::first($result);
         return new JobInformationEntity(
