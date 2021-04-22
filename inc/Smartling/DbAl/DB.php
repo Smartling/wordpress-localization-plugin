@@ -491,7 +491,7 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
         return $this->getWpdb()->last_error;
     }
 
-    public function prepare(string $query, ...$args): string
+    private function prepare(string $query, ...$args): string
     {
         return $this->wpdb->prepare($query, ...$args);
     }

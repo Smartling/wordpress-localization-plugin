@@ -76,7 +76,7 @@ SQL;
             $id,
         );
         if (count($result) === 0) {
-            throw new EntityNotFoundException('Unable to get entity');
+            throw new EntityNotFoundException("Unable to get entity where `$field` = $id");
         }
         $result = ArrayHelper::first($result);
         return new SubmissionJobEntity(

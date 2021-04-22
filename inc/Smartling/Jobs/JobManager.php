@@ -22,20 +22,26 @@ class JobManager
 
     public function store(JobEntity $jobInfo): JobEntity
     {
-        $this->db->query(sprintf(
-            'INSERT INTO %1$s (%2$s, %3$s, %4$s, %5$s, %6$s) values (\'%7$s\', \'%8$s\', \'%9$s\', \'%10$s\', \'%11$s\') ON DUPLICATE KEY UPDATE %2$s = \'%7$s\', %6$s = \'%11$s\'',
-            $this->db->completeTableName(JobEntity::getTableName()),
-            JobEntity::FIELD_JOB_NAME,
-            JobEntity::FIELD_JOB_UID,
-            JobEntity::FIELD_PROJECT_UID,
-            JobEntity::FIELD_CREATED,
-            JobEntity::FIELD_MODIFIED,
-            $this->db->escape($jobInfo->getJobName()),
-            $this->db->escape($jobInfo->getJobUid()),
-            $this->db->escape($jobInfo->getProjectUid()),
+        $jobName = JobEntity::FIELD_JOB_NAME;
+        $jobUid = JobEntity::FIELD_JOB_UID;
+        $projectUid = JobEntity::FIELD_PROJECT_UID;
+        $created = JobEntity::FIELD_CREATED;
+        $modified = JobEntity::FIELD_MODIFIED;
+        $sql = <<<SQL
+INSERT INTO $this->tableName ($jobName, $jobUid, $projectUid, $created, $modified)
+    VALUES (%s, %s, %s, %s, %s)
+    ON DUPLICATE KEY UPDATE $jobName = %s, $modified = %s
+SQL;
+        $this->db->queryPrepared(
+            $sql,
+            $jobInfo->getJobName(),
+            $jobInfo->getJobUid(),
+            $jobInfo->getProjectUid(),
             DateTimeHelper::dateTimeToString($jobInfo->getCreated()),
             DateTimeHelper::dateTimeToString($jobInfo->getModified()),
-        ));
+            $jobInfo->getJobName(),
+            DateTimeHelper::dateTimeToString($jobInfo->getModified()),
+        );
 
         $id = $this->db->getLastInsertedId();
         if ($id === 0) {
@@ -80,16 +86,14 @@ class JobManager
         if (!array_key_exists($field, JobEntity::getFieldDefinitions())) {
             throw new \InvalidArgumentException("Unable to get job information by field `$field`");
         }
-        $result = $this->db->fetch(sprintf(
-            'SELECT %s FROM %s WHERE %s = \'%s\' ORDER BY %s DESC LIMIT 1',
-            implode(', ', array_keys(JobEntity::getFieldDefinitions())),
-            $this->tableName,
-            $field,
-            $this->db->escape($value),
-            JobEntity::FIELD_ID
-        ), 'ARRAY_A');
+        $fields = implode(', ', array_keys(JobEntity::getFieldDefinitions()));
+        $fieldId = JobEntity::FIELD_ID;
+        $result = $this->db->fetchPrepared(
+            "SELECT $fields FROM $this->tableName WHERE $field = %s ORDER BY $fieldId DESC LIMIT 1",
+            $value,
+        );
         if (count($result) === 0) {
-            throw new EntityNotFoundException("Unable to get entity by `$field` = $value");
+            throw new EntityNotFoundException("Unable to get entity where `$field` = $value");
         }
         $result = ArrayHelper::first($result);
         return new JobEntity(
