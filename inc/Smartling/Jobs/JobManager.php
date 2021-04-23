@@ -93,7 +93,7 @@ SQL;
             $value,
         );
         if (count($result) === 0) {
-            throw new EntityNotFoundException("Unable to get entity where `$field` = $value");
+            throw new EntityNotFoundException("Unable to get entity where \"$field\"=$value");
         }
         $result = ArrayHelper::first($result);
         return new JobEntity(
