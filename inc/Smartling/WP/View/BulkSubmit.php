@@ -2,10 +2,12 @@
 
 use Smartling\Helpers\ArrayHelper;
 use Smartling\WP\Controller\BulkSubmitController;
+use Smartling\WP\Table\BulkSubmitTableWidget;
 use Smartling\WP\WPAbstract;
 
 /**
  * @var BulkSubmitController $this
+ * @var BulkSubmitTableWidget $data
  */
 $data = $this->getViewData();
 

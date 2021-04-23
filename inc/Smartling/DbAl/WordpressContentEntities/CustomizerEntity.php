@@ -44,8 +44,10 @@ class CustomizerEntity extends VirtualEntityAbstract
         $result = [];
         global $wp_customize;
         foreach ($wp_customize->controls() as $control) {
-            // we only want the WP_Customize_Control, not it's descendants
-            if (get_class($control) !== \WP_Customize_Control::class) {
+            if (get_class($control) !== \WP_Customize_Control::class
+                || (string)$control->value() === ''
+                || preg_match('/^\d+$/', $control->value())
+            ) {
                 continue;
             }
             $result[] = ['id' => $control->id, 'title' => $control->value()];

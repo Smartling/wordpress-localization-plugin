@@ -420,9 +420,9 @@ class Bootstrap
 
     private function initializeBuiltInContentTypes(ContainerBuilder $di): void
     {
-        ContentTypeCustomizer::register($di);
-
         ContentTypeWidget::register($di);
+
+        ContentTypeCustomizer::register($di);
 
         ContentTypeNavigationMenuItem::register($di);
         ContentTypeNavigationMenu::register($di);

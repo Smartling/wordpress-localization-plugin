@@ -65,9 +65,4 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
             $this->view($table);
         }
     }
-
-    public function getViewData(): BulkSubmitTableWidget
-    {
-        return parent::getViewData();
-    }
 }

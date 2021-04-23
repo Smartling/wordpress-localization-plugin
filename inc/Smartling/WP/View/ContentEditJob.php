@@ -625,7 +625,7 @@ if ($post instanceof WP_Post) {
                         data.ids = [];
                         $("input.bulkaction[type=checkbox]:checked").each(function () {
                             var parts = $(this).attr("id").split("-");
-                            data.ids.push(parseInt(parts.shift()));
+                            data.ids.push(parts.shift());
                             data.source.contentType = parts.join("-");
                         });
                     }
