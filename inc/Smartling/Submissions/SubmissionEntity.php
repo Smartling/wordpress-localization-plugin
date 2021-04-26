@@ -507,7 +507,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return (string)$this->stateFields[static::FIELD_TARGET_LOCALE];
     }
 
-    public function setTargetLocale(string $target_locale): SubmissionEntity
+    public function setTargetLocale(?string $target_locale): SubmissionEntity
     {
         $this->stateFields[static::FIELD_TARGET_LOCALE] = $target_locale;
 
