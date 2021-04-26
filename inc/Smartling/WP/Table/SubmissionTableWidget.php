@@ -16,7 +16,7 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
-use Smartling\Jobs\JobInformationManager;
+use Smartling\Jobs\JobManager;
 use Smartling\Queue\Queue;
 use Smartling\Settings\Locale;
 use Smartling\Submissions\SubmissionEntity;
@@ -50,7 +50,7 @@ class SubmissionTableWidget extends SmartlingListTable
     private SubmissionManager $submissionManager;
     private EntityHelper $entityHelper;
     private Queue $queue;
-    private JobInformationManager $jobInformationManager;
+    private JobManager $jobInformationManager;
 
     public function getLogger(): LoggerInterface
     {
@@ -73,7 +73,7 @@ class SubmissionTableWidget extends SmartlingListTable
 
     private array $_settings = ['singular' => 'submission', 'plural' => 'submissions', 'ajax' => false,];
 
-    public function __construct(SubmissionManager $manager, EntityHelper $entityHelper, Queue $queue, JobInformationManager $jobInformationManager)
+    public function __construct(SubmissionManager $manager, EntityHelper $entityHelper, Queue $queue, JobManager $jobInformationManager)
     {
         $this->queue = $queue;
         $this->submissionManager = $manager;

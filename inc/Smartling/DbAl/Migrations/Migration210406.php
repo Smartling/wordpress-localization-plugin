@@ -3,7 +3,7 @@
 namespace Smartling\DbAl\Migrations;
 
 use Smartling\DbAl\DB;
-use Smartling\Jobs\JobInformationEntity;
+use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\SubmissionJobEntity;
 
 class Migration210406 implements SmartlingDbMigrationInterface
@@ -18,9 +18,9 @@ class Migration210406 implements SmartlingDbMigrationInterface
         $db = new DB();
         return [
             $db->prepareSql([
-                'columns' => JobInformationEntity::getFieldDefinitions(),
-                'indexes' => JobInformationEntity::getIndexes(),
-                'name' => JobInformationEntity::getTableName(),
+                'columns' => JobEntity::getFieldDefinitions(),
+                'indexes' => JobEntity::getIndexes(),
+                'name' => JobEntity::getTableName(),
             ]),
             $db->prepareSql([
                 'columns' => SubmissionJobEntity::getFieldDefinitions(),

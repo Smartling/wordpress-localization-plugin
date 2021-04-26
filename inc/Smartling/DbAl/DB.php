@@ -10,7 +10,7 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\SimpleStorageHelper;
-use Smartling\Jobs\JobInformationEntity;
+use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\SubmissionJobEntity;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
@@ -72,9 +72,9 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
     private function buildTableDefinitions(): void
     {
         $this->tables[] = [
-            'columns' => JobInformationEntity::getFieldDefinitions(),
-            'indexes' => JobInformationEntity::getIndexes(),
-            'name' => JobInformationEntity::getTableName(),
+            'columns' => JobEntity::getFieldDefinitions(),
+            'indexes' => JobEntity::getIndexes(),
+            'name' => JobEntity::getTableName(),
         ];
         // Submissions
         $this->tables[] = [
@@ -461,9 +461,24 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
         return $this->wpdb->query($query);
     }
 
+    public function queryPrepared(string $query, ...$args)
+    {
+        return $this->wpdb->query($this->prepare($query, ...$args));
+    }
+
     public function fetch(string $query, string $output = OBJECT)
     {
         return $this->getWpdb()->get_results($query, $output);
+    }
+
+    public function fetchPrepared(string $query, ...$args): array
+    {
+        $result = $this->fetch($this->prepare($query, ...$args), ARRAY_A);
+        if (!is_array($result)) {
+            return [];
+        }
+
+        return $result;
     }
 
     public function getLastInsertedId(): int
@@ -474,5 +489,10 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
     public function getLastErrorMessage(): string
     {
         return $this->getWpdb()->last_error;
+    }
+
+    private function prepare(string $query, ...$args): string
+    {
+        return $this->wpdb->prepare($query, ...$args);
     }
 }

@@ -5,8 +5,8 @@ namespace Smartling\Tests\Traits;
 use PHPUnit\Framework\MockObject\MockObject;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Helpers\EntityHelper;
-use Smartling\Jobs\JobInformationManager;
-use Smartling\Jobs\SubmissionJobManager;
+use Smartling\Jobs\JobManager;
+use Smartling\Jobs\SubmissionsJobsManager;
 use Smartling\Submissions\SubmissionManager;
 
 trait SubmissionManagerMock
@@ -30,8 +30,8 @@ trait SubmissionManagerMock
                 $dbal,
                 10,
                 $entityHelper,
-                $this->createMock(JobInformationManager::class),
-                $this->createMock(SubmissionJobManager::class)
+                $this->createMock(JobManager::class),
+                $this->createMock(SubmissionsJobsManager::class)
             ])
             ->getMock();
     }

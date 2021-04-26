@@ -5,7 +5,7 @@ namespace Smartling\Jobs;
 use Smartling\Base\SmartlingEntityAbstract;
 use Smartling\SmartlingTableDefinitionInterface;
 
-class JobInformationEntity implements SmartlingTableDefinitionInterface
+class JobEntity implements SmartlingTableDefinitionInterface
 {
     public const FIELD_CREATED = 'created';
     public const FIELD_ID = 'id';
@@ -107,5 +107,10 @@ class JobInformationEntity implements SmartlingTableDefinitionInterface
         $labels = self::getFieldLabels();
 
         return array_key_exists($fieldName, $labels) ? $labels[$fieldName] : $fieldName;
+    }
+
+    public static function empty(): self
+    {
+        return new JobEntity('', '', '');
     }
 }

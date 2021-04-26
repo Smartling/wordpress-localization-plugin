@@ -12,7 +12,7 @@ use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\GutenbergReplacementRule;
 use Smartling\Helpers\RelativeLinkedAttachmentCoreHelper;
 use Smartling\Helpers\TranslationHelper;
-use Smartling\Jobs\JobInformationEntityWithBatchUid;
+use Smartling\Jobs\JobEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 use Smartling\Tuner\MediaAttachmentRulesManager;
@@ -105,7 +105,7 @@ HTML
         $submission->setSourceId($sourceId);
         $submission->setTargetId($targetId);
         $submission->setTargetBlogId($targetBlogId);
-        $jobInfo = new JobInformationEntityWithBatchUid('', '', '', '', 1, new \DateTime('2000-12-24 01:23:46'), new \DateTime('2001-12-24 02:34:45'));
+        $jobInfo = new JobEntity('', '', '', 1, new \DateTime('2000-12-24 01:23:46'), new \DateTime('2001-12-24 02:34:45'));
         $submission->setBatchUid('');
         $submission->setJobInfo($jobInfo);
         $acf = $this->getMockBuilder(AcfDynamicSupport::class)

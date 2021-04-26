@@ -78,11 +78,11 @@ services:
   factory.contentIO:
     class: Smartling\Processors\ContentEntitiesIOFactory
 
-  manager.job.information:
-    class: Smartling\Jobs\JobInformationManager
+  manager.job:
+    class: Smartling\Jobs\JobManager
     arguments:
       - "@site.db"
-      - "@manager.submission.job"
+      - "@manager.submissions.jobs"
 
   manager.submission:
     class: Smartling\Submissions\SubmissionManager
@@ -90,11 +90,11 @@ services:
      - "@site.db"
      - "%submission.pagesize%"
      - "@entity.helper"
-     - "@manager.job.information"
-     - "@manager.submission.job"
+     - "@manager.job"
+     - "@manager.submissions.jobs"
 
-  manager.submission.job:
-    class: Smartling\Jobs\SubmissionJobManager
+  manager.submissions.jobs:
+    class: Smartling\Jobs\SubmissionsJobsManager
     arguments:
       - "@site.db"
 
@@ -183,7 +183,7 @@ services:
       - "@manager.submission"
       - "@site.cache"
       - "@queue.db"
-      - "@manager.job.information"
+      - "@manager.job"
 
   wp.taxonomy.linker:
     class: Smartling\WP\Controller\TaxonomyLinksController

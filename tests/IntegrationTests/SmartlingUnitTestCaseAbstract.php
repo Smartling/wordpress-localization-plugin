@@ -10,7 +10,7 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Jobs\DownloadTranslationJob;
-use Smartling\Jobs\JobInformationEntity;
+use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\SubmissionJobEntity;
 use Smartling\Jobs\UploadJob;
 use Smartling\MonologWrapper\MonologWrapper;
@@ -95,7 +95,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
             'smartling_configuration_profiles',
             'smartling_queue',
             'smartling_submissions',
-            JobInformationEntity::getTableName(),
+            JobEntity::getTableName(),
             SubmissionJobEntity::getTableName(),
         ];
 

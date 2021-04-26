@@ -2,7 +2,7 @@
 
 namespace Smartling\Helpers;
 
-use Smartling\Jobs\JobInformationEntityWithBatchUid;
+use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Services\GlobalSettingsManager;
 use UnexpectedValueException;
 use Psr\Log\LoggerInterface;
@@ -234,7 +234,7 @@ class TranslationHelper
     /**
      * @throws SmartlingDataReadException
      */
-    public function getExistingSubmissionOrCreateNew(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId, JobInformationEntityWithBatchUid $jobInfo): SubmissionEntity {
+    public function getExistingSubmissionOrCreateNew(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId, JobEntityWithBatchUid $jobInfo): SubmissionEntity {
         $submission = $this->submissionManager->getSubmissionEntity($contentType, $sourceBlogId, $contentId, $targetBlogId, $this->getMutilangProxy());
         if ($submission->getTargetId() === 0) {
             $this->getLogger()->debug("Got submission with 0 target id");
@@ -246,7 +246,7 @@ class TranslationHelper
     /**
      * @throws SmartlingDataReadException
      */
-    public function tryPrepareRelatedContent(string $contentType, int $sourceBlog, int $sourceId, int $targetBlog, JobInformationEntityWithBatchUid $jobInfo, bool $clone = false): SubmissionEntity
+    public function tryPrepareRelatedContent(string $contentType, int $sourceBlog, int $sourceId, int $targetBlog, JobEntityWithBatchUid $jobInfo, bool $clone = false): SubmissionEntity
     {
         $relatedSubmission = $this->prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone);
 

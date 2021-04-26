@@ -2,16 +2,15 @@
 
 namespace Smartling\Jobs;
 
-class JobInformationEntityWithBatchUid extends JobInformationEntity
+class JobEntityWithBatchUid
 {
     private string $batchUid;
-    private parent $jobInfo;
+    private JobEntity $jobInfo;
 
     public function __construct(string $batchUid, string $jobName, string $jobUid, string $projectUid, ?int $id = null, ?\DateTime $created = null, ?\DateTime $modified = null)
     {
-        parent::__construct($jobName, $jobUid, $projectUid, $id, $created, $modified);
+        $this->jobInfo = new JobEntity($jobName, $jobUid, $projectUid, $id, $created, $modified);
         $this->batchUid = $batchUid;
-        $this->jobInfo = new parent($jobName, $jobUid, $projectUid, $id, $created, $modified);
     }
 
     public function getBatchUid(): string
@@ -19,7 +18,7 @@ class JobInformationEntityWithBatchUid extends JobInformationEntity
         return $this->batchUid;
     }
 
-    public function getJobInformationEntity(): parent
+    public function getJobInformationEntity(): JobEntity
     {
         return $this->jobInfo;
     }
