@@ -11,6 +11,7 @@ use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\XmlHelper;
+use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
@@ -396,6 +397,7 @@ class SmartlingCoreTest extends TestCase
 
     public function testFixSubmissionBatchUidWithApiWrapperAndBatchUid()
     {
+        $batchUid = 'testtest';
         $obj = $this->core;
         $submission = new SubmissionEntity();
         $submission
@@ -430,19 +432,18 @@ class SmartlingCoreTest extends TestCase
 
         $obj->setSettingsManager($settingsManager);
 
-        $apiWrapperMock = $this->createPartialMock(ApiWrapper::class, ['retrieveBatchForBucketJob']);
+        $apiWrapperMock = $this->createPartialMock(ApiWrapper::class, ['retrieveJobInfoForDailyBucketJob']);
         $apiWrapperMock
             ->expects(self::once())
-            ->method('retrieveBatchForBucketJob')
+            ->method('retrieveJobInfoForDailyBucketJob')
             ->with($profile, false)
-            ->willReturn('testtest');
-
+            ->willReturn(new JobEntityWithBatchUid($batchUid,'jobName', '', ''));
 
         $obj->setApiWrapper($apiWrapperMock);
 
         $result = $this->invokeMethod($obj, 'fixSubmissionBatchUid', [$submission]);
 
-        self::assertEquals('testtest', $result->getBatchUid());
+        self::assertEquals($batchUid, $result->getBatchUid());
     }
 
     public function testExceptionOnTargetPlaceholderCreationFail()

@@ -12,6 +12,7 @@ use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\GutenbergReplacementRule;
 use Smartling\Helpers\RelativeLinkedAttachmentCoreHelper;
 use Smartling\Helpers\TranslationHelper;
+use Smartling\Jobs\JobEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 use Smartling\Tuner\MediaAttachmentRulesManager;
@@ -32,7 +33,6 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
 
     public function testProcessGutenbergBlock()
     {
-        $batchUid = '';
         $sourceBlogId = 1;
         $sourceMediaId = 5;
         $targetBlogId = 2;
@@ -43,7 +43,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
         $submission->setSourceId($sourceMediaId);
         $submission->setTargetId($targetMediaId);
         $submission->setTargetBlogId($targetBlogId);
-        $submission->setBatchUid($batchUid);
+        $submission->setBatchUid('');
         $acf = $this->getMockBuilder(AcfDynamicSupport::class)
             ->setConstructorArgs([$this->createMock(EntityHelper::class)])
             ->getMock();
@@ -97,7 +97,6 @@ HTML
      */
     public function testProcessGutenbergBlockAcf(string $string, array $definitions, int $sourceId, int $targetId)
     {
-        $batchUid = '';
         $sourceBlogId = 1;
         $targetBlogId = 2;
         $submission = new SubmissionEntity();
@@ -106,7 +105,9 @@ HTML
         $submission->setSourceId($sourceId);
         $submission->setTargetId($targetId);
         $submission->setTargetBlogId($targetBlogId);
-        $submission->setBatchUid($batchUid);
+        $jobInfo = new JobEntity('', '', '', 1, new \DateTime('2000-12-24 01:23:46'), new \DateTime('2001-12-24 02:34:45'));
+        $submission->setBatchUid('');
+        $submission->setJobInfo($jobInfo);
         $acf = $this->getMockBuilder(AcfDynamicSupport::class)
             ->setConstructorArgs([$this->createMock(EntityHelper::class)])
             ->getMock();
@@ -118,7 +119,7 @@ HTML
         $core = $this->getCoreMock();
         $core->method('getTranslationHelper')->willReturn($translationHelper);
         $core->expects(self::once())->method('sendAttachmentForTranslation')
-            ->with($sourceBlogId, $targetBlogId, $sourceId, $batchUid)
+            ->with($sourceBlogId, $targetBlogId, $sourceId)
             ->willReturn($submission);
         $x = $this->getMockBuilder(RelativeLinkedAttachmentCoreHelper::class)->setConstructorArgs([
             $core,
@@ -148,7 +149,6 @@ HTML
         $string = '<!-- wp:acf/testimonial {\"id\":\"block_5f1eb3f391cda\",\"name\":\"acf/testimonial\",\"data\":{\"media\":\"\",\"_media\":\"field_5eb1344b55a84\",\"description\":\"text\",\"_description\":\"field_5ef64590591dc\"},\"align\":\"\",\"mode\":\"edit\"} /-->';
         $sourceId = 0;
         $targetId = 262;
-        $batchUid = '';
         $sourceBlogId = 1;
         $targetBlogId = 2;
 
@@ -157,7 +157,7 @@ HTML
         $submission->setSourceId($sourceId);
         $submission->setTargetId($targetId);
         $submission->setTargetBlogId($targetBlogId);
-        $submission->setBatchUid($batchUid);
+        $submission->setBatchUid('');
 
         $acf = $this->getMockBuilder(AcfDynamicSupport::class)
             ->setConstructorArgs([$this->createMock(EntityHelper::class)])

@@ -9,6 +9,7 @@ use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\QueryBuilder\TransactionManager;
 use Smartling\Helpers\SiteHelper;
+use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Jobs\UploadJob;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\Locale;
@@ -73,18 +74,7 @@ class UploadJobTest extends TestCase
 
         $submission = new SubmissionEntity();
 
-        $submissionManager = $this->getMockBuilder(SubmissionManager::class)
-            ->setConstructorArgs([
-                $this->mockDbAl(),
-                10,
-                $entityHelper,
-            ])
-            ->onlyMethods([
-                'find',
-                'findSubmissionsForUploadJob',
-                'storeSubmissions',
-            ])
-            ->getMock();
+        $submissionManager = $this->createMock(SubmissionManager::class);
 
         $submissionManager->method('findSubmissionsForUploadJob')->willReturn([]);
         $submissionManager->method('find')->willReturn([
@@ -93,7 +83,7 @@ class UploadJobTest extends TestCase
         $submissionManager->expects(self::once())->method('storeSubmissions')->with([$submission]);
 
         $api = $this->createMock(ApiWrapperInterface::class);
-        $api->method('retrieveBatchForBucketJob')->willReturn($batchUid);
+        $api->method('retrieveJobInfoForDailyBucketJob')->willReturn(new JobEntityWithBatchUid($batchUid, '', '', ''));
 
         $x = $this->getWorkerMock($submissionManager, $api, $settingsManager);
         $x->run();
@@ -129,19 +119,7 @@ class UploadJobTest extends TestCase
 
         $submission = new SubmissionEntity();
 
-        $submissionManager = $this->getMockBuilder(SubmissionManager::class)
-            ->setConstructorArgs([
-                $this->mockDbAl(),
-                10,
-                $entityHelper,
-            ])
-            ->onlyMethods([
-                'find',
-                'findSubmissionsForUploadJob',
-                'storeSubmissions',
-            ])
-            ->getMock();
-
+        $submissionManager = $this->createMock(SubmissionManager::class);
         $submissionManager->method('findSubmissionsForUploadJob')->willReturn([]);
         $submissionManager->method('find')->willReturn([
             $submission
@@ -149,7 +127,7 @@ class UploadJobTest extends TestCase
         $submissionManager->expects(self::never())->method('storeSubmissions');
 
         $api = $this->createMock(ApiWrapperInterface::class);
-        $api->method('retrieveBatchForBucketJob')->willReturn($batchUid);
+        $api->method('retrieveJobInfoForDailyBucketJob')->willReturn(new JobEntityWithBatchUid($batchUid, '', '', ''));
 
         $x = $this->getWorkerMock($submissionManager, $api, $settingsManager);
         $x->run();

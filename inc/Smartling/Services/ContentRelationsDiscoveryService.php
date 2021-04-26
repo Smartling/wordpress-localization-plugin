@@ -19,6 +19,7 @@ use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorAbstract;
 use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
 use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Helpers\StringHelper;
+use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
@@ -136,7 +137,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
     /**
      * This function only returns when testing, WP will stop execution after wp_send_json
      */
-    public function bulkUploadHandler(string $batchUid, array $contentIds, string $contentType, int $currentBlogId, array $targetBlogIds): void
+    public function bulkUploadHandler(JobEntityWithBatchUid $jobInfo, array $contentIds, string $contentType, int $currentBlogId, array $targetBlogIds): void
     {
         foreach ($targetBlogIds as $targetBlogId) {
             $blogFields = [
@@ -154,7 +155,8 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 } else {
                     $submission = ArrayHelper::first($existing);
                 }
-                $submission->setBatchUid($batchUid);
+                $submission->setBatchUid($jobInfo->getBatchUid());
+                $submission->setJobInfo($jobInfo->getJobInformationEntity());
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission->getFileUri();
                 $this->submissionManager->storeEntity($submission);
@@ -193,10 +195,11 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             $contentType = $data['source']['contentType'];
             $curBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
             $batchUid = $this->getBatchUid($curBlogId, $data['job']);
+            $jobInfo = new JobEntityWithBatchUid($batchUid, $data['job']['name'], $data['job']['id'], $this->settingsManager->getSingleSettingsProfile($curBlogId)->getProjectId());
             $targetBlogIds = explode(',', $data['targetBlogIds']);
 
             if (array_key_exists('ids', $data)) {
-                $this->bulkUploadHandler($batchUid, $data['ids'], $contentType, $curBlogId, $targetBlogIds);
+                $this->bulkUploadHandler($jobInfo, $data['ids'], $contentType, $curBlogId, $targetBlogIds);
                 return;
             }
 
@@ -236,7 +239,8 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                     ];
                 } else {
                     $submission = ArrayHelper::first($result);
-                    $submission->setBatchUid($batchUid);
+                    $submission->setBatchUid($jobInfo->getBatchUid());
+                    $submission->setJobInfo($jobInfo->getJobInformationEntity());
                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                     $this->submissionManager->storeEntity($submission);
                 }

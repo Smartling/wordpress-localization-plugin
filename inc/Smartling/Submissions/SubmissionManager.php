@@ -14,9 +14,15 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressUserHelper;
+use Smartling\Jobs\JobManager;
+use Smartling\Jobs\SubmissionJobEntity;
+use Smartling\Jobs\SubmissionsJobsManager;
 
 class SubmissionManager extends EntityManagerAbstract
 {
+    private JobManager $jobManager;
+    private SubmissionsJobsManager $submissionsJobsManager;
+
     public function getSubmissionStatusLabels(): array
     {
         return SubmissionEntity::getSubmissionStatusLabels();
@@ -27,11 +33,13 @@ class SubmissionManager extends EntityManagerAbstract
         return SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS;
     }
 
-    public function __construct(SmartlingToCMSDatabaseAccessWrapperInterface $dbal, int $pageSize, EntityHelper $entityHelper)
+    public function __construct(SmartlingToCMSDatabaseAccessWrapperInterface $dbal, int $pageSize, EntityHelper $entityHelper, JobManager $jobManager, SubmissionsJobsManager $submissionsJobsManager)
     {
         $siteHelper = $entityHelper->getSiteHelper();
         $proxy = $entityHelper->getConnector();
         parent::__construct($dbal, $pageSize, $siteHelper, $proxy);
+        $this->jobManager = $jobManager;
+        $this->submissionsJobsManager = $submissionsJobsManager;
     }
 
     /**
@@ -46,7 +54,15 @@ class SubmissionManager extends EntityManagerAbstract
 
     protected function dbResultToEntity(array $dbRow): SubmissionEntity
     {
-        return SubmissionEntity::fromArray($dbRow, $this->getLogger());
+        $result = SubmissionEntity::fromArray($dbRow, $this->getLogger());
+        if ($result->getId() !== null) {
+            $jobInfo = $this->jobManager->getBySubmissionId($result->getId());
+            if ($jobInfo !== null) {
+                $result->setJobInfo($jobInfo);
+            }
+        }
+
+        return $result;
     }
 
     private function isValidRequest(?string $contentType, array $sortOptions, ?array $pageOptions): bool
@@ -94,10 +110,8 @@ class SubmissionManager extends EntityManagerAbstract
     {
         $result = [];
 
-        $block = ((string)ConditionBlock::getConditionBlock() === (string)$block) ? null : $block;
-
         if ($this->isValidRequest($contentType, $sortOptions, $pageOptions)) {
-            [$totalCount, $result] = $this->getTotalCountAndResult($contentType, $status, $outdatedFlag, $sortOptions, $block, $pageOptions);
+            [$totalCount, $result] = $this->getTotalCountAndResult($contentType, $status, $outdatedFlag, $sortOptions, count($block->getConditions()) > 0 ? $block : null, $pageOptions);
         }
 
         return $result;
@@ -150,10 +164,8 @@ class SubmissionManager extends EntityManagerAbstract
 
     public function searchByBatchUid(string $batchUid): array
     {
-        $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_BATCH_UID,
-            [$batchUid]);
         $block = ConditionBlock::getConditionBlock();
-        $block->addCondition($condition);
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_BATCH_UID, [$batchUid]));
         $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ,
             SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_NEW]));
         $total = 0;
@@ -458,6 +470,12 @@ class SubmissionManager extends EntityManagerAbstract
             // update reference to entity
             $entity = SubmissionEntity::fromArray($entityFields, $this->getLogger());
         }
+
+        if ($entity->getJobInfo()->getJobUid() !== '') {
+            $jobId = $this->jobManager->store($entity->getJobInfo())->getId();
+            $this->submissionsJobsManager->store(new SubmissionJobEntity($jobId, $entity->getId()));
+        }
+
         $this->getLogger()->debug(
             vsprintf('Finished saving submission: %s. id=%s', [$originalSubmission, $entity->getId()])
         );
@@ -583,6 +601,7 @@ class SubmissionManager extends EntityManagerAbstract
                     sprintf('Executing delete query for submission id=%d (sourceBlog=%d, sourceId=%d, targetBlog=%d, targetId=%d)', $submissionId, $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getTargetBlogId(), $submission->getTargetId())
                 );
                 $this->getDbal()->query($query);
+                $this->submissionsJobsManager->deleteBySubmissionId($submissionId);
             } else {
                 $this->getLogger()->debug(
                     vsprintf(

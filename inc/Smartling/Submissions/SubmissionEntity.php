@@ -13,6 +13,8 @@ use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\TextHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressUserHelper;
+use Smartling\Jobs\JobEntity;
+use Smartling\Jobs\JobEntityWithBatchUid;
 
 /**
  * Class SubmissionEntity
@@ -88,6 +90,10 @@ class SubmissionEntity extends SmartlingEntityAbstract
     public const FIELD_BATCH_UID = 'batch_uid';
     public const FIELD_LOCKED_FIELDS = 'locked_fields';
 
+    public const VIRTUAL_FIELD_JOB_LINK = 'job_link';
+
+    private ?JobEntity $jobInformation = null;
+
     public static function getFieldDefinitions(): array
     {
         return [
@@ -137,6 +143,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
             static::FIELD_SOURCE_TITLE => __('Title'),
             static::FIELD_CONTENT_TYPE => __('Type'),
             static::FIELD_FILE_URI => __('Smartling File URI'),
+            static::VIRTUAL_FIELD_JOB_LINK => __('Smartling Job'),
             static::FIELD_TARGET_LOCALE => __('Locale'),
             static::FIELD_SUBMITTER => __('Submitter'),
             static::FIELD_SUBMISSION_DATE => __('Time Submitted'),
@@ -500,7 +507,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return (string)$this->stateFields[static::FIELD_TARGET_LOCALE];
     }
 
-    public function setTargetLocale(string $target_locale): SubmissionEntity
+    public function setTargetLocale(?string $target_locale): SubmissionEntity
     {
         $this->stateFields[static::FIELD_TARGET_LOCALE] = $target_locale;
 
@@ -654,6 +661,22 @@ class SubmissionEntity extends SmartlingEntityAbstract
     public function setBatchUid($batchUid): void
     {
         $this->stateFields[static::FIELD_BATCH_UID] = trim($batchUid);
+    }
+
+    public function getJobInfo(): JobEntity
+    {
+        return $this->jobInformation ?? JobEntity::EMPTY();
+    }
+
+    public function getJobInfoWithBatchUid(): JobEntityWithBatchUid
+    {
+        $jobInfo = $this->getJobInfo();
+        return new JobEntityWithBatchUid($this->getBatchUid(), $jobInfo->getJobName(), $jobInfo->getJobUid(), $jobInfo->getProjectUid());
+    }
+
+    public function setJobInfo(JobEntity $jobInfo): void
+    {
+        $this->jobInformation = $jobInfo;
     }
 
     /**

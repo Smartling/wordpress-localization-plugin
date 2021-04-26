@@ -15,6 +15,7 @@ use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
+use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -280,6 +281,9 @@ class BulkSubmitTableWidget extends SmartlingListTable
         $locales = [];
         $batchUid = '';
         $data = $this->getFromSource('bulk-submit-locales', []);
+        $jobName = '';
+        $smartlingData = [];
+        $profile = $this->getProfile();
 
         if ($action === 'send') {
             $smartlingData = $this->getFromSource('smartling', []);
@@ -294,12 +298,12 @@ class BulkSubmitTableWidget extends SmartlingListTable
             }
 
             $wrapper = Bootstrap::getContainer()->get('wrapper.sdk.api.smartling');
-            $profile = $this->getProfile();
 
             try {
+                $jobName = $smartlingData['jobName'];
                 $batchUid = $wrapper->retrieveBatch($profile, $smartlingData['jobId'],
                     'true' === $smartlingData['authorize'], [
-                        'name' => $smartlingData['jobName'],
+                        'name' => $jobName,
                         'description' => $smartlingData['jobDescription'],
                         'dueDate' => [
                             'date' => $smartlingData['jobDueDate'],
@@ -337,7 +341,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
                     $type = $this->getContentTypeFilterValue();
                     $curBlogId = $this->getProfile()->getOriginalBlogId()->getBlogId();
                     foreach ($locales as $blogId => $blogName) {
-                        $submissionEntity = $ep->createForTranslation($type, $curBlogId, $id, (int)$blogId, $batchUid, $clone);
+                        $submissionEntity = $ep->createForTranslation($type, $curBlogId, $id, (int)$blogId, new JobEntityWithBatchUid($batchUid,$jobName, $smartlingData['jobId'], $profile->getProjectId()), $clone);
 
                         $this->getLogger()
                             ->info(vsprintf(

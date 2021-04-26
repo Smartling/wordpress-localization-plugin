@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests\IntegrationTests\tests;
 
+use Smartling\Jobs\JobEntity;
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 
 class SubmissionCreationTest extends SmartlingUnitTestCaseAbstract
@@ -16,11 +17,18 @@ class SubmissionCreationTest extends SmartlingUnitTestCaseAbstract
 
     public function testUpdateSubmission()
     {
+        $batchUid = '12345';
         $postId = $this->createPost();
         $submission = $this->createSubmission('post', $postId);
         $submission = $this->getSubmissionManager()->storeEntity($submission);
-        $submission->setBatchUid('12345');
+        $submission->setBatchUid($batchUid);
+        $submission->setJobInfo(new JobEntity('jobName', 'jobUid', 'projectUid'));
         $submission = $this->getSubmissionManager()->storeEntity($submission);
-        self::assertEquals('12345', $submission->getBatchUid());
+        self::assertEquals($batchUid, $submission->getBatchUid());
+        $jobInfo = $submission->getJobInfoWithBatchUid();
+        $this->assertEquals('jobName', $jobInfo->getJobInformationEntity()->getJobName());
+        $this->assertEquals('jobUid', $jobInfo->getJobInformationEntity()->getJobUid());
+        $this->assertEquals('projectUid', $jobInfo->getJobInformationEntity()->getProjectUid());
+        $this->assertEquals($batchUid, $jobInfo->getBatchUid());
     }
 }

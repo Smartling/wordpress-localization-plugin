@@ -78,12 +78,25 @@ services:
   factory.contentIO:
     class: Smartling\Processors\ContentEntitiesIOFactory
 
+  manager.job:
+    class: Smartling\Jobs\JobManager
+    arguments:
+      - "@site.db"
+      - "@manager.submissions.jobs"
+
   manager.submission:
     class: Smartling\Submissions\SubmissionManager
     arguments:
      - "@site.db"
      - "%submission.pagesize%"
      - "@entity.helper"
+     - "@manager.job"
+     - "@manager.submissions.jobs"
+
+  manager.submissions.jobs:
+    class: Smartling\Jobs\SubmissionsJobsManager
+    arguments:
+      - "@site.db"
 
   site.helper:
     class: Smartling\Helpers\SiteHelper
@@ -170,6 +183,7 @@ services:
       - "@manager.submission"
       - "@site.cache"
       - "@queue.db"
+      - "@manager.job"
 
   wp.taxonomy.linker:
     class: Smartling\WP\Controller\TaxonomyLinksController
@@ -270,7 +284,6 @@ services:
     class: Smartling\Helpers\ContentSerializationHelper
     arguments:
     - "@content.helper"
-    - "@fields-filter.helper"
 
   acf.dynamic.support:
     class: Smartling\Extensions\Acf\AcfDynamicSupport

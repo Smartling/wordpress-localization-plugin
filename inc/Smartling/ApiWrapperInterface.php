@@ -7,7 +7,7 @@ use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\Exceptions\SmartlingApiException;
-use Smartling\Jobs\JobInformationEntity;
+use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -173,7 +173,7 @@ interface ApiWrapperInterface
     /**
      * @throws SmartlingApiException
      */
-    public function retrieveBatchForBucketJob(ConfigurationProfileEntity $profile, bool $authorize): string;
+    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, bool $authorize): JobEntityWithBatchUid;
 
     /**
      * @param \Exception $e

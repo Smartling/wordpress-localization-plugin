@@ -45,6 +45,14 @@ class ConditionBlock
         $this->conditions[] = $condition;
     }
 
+    /**
+     * @return Condition[]
+     */
+    public function getConditions(): array
+    {
+        return $this->conditions;
+    }
+
     public function addConditionBlock(ConditionBlock $block): void
     {
         $this->blocks[] = $block;

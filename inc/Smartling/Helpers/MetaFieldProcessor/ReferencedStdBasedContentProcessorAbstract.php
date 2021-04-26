@@ -94,7 +94,7 @@ abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProce
                         $sourceBlogId,
                         $value,
                         $targetBlogId,
-                        $submission->getBatchUid(),
+                        $submission->getJobInfoWithBatchUid(),
                         (1 === $submission->getIsCloned())
                     )->getTargetId();
                 }

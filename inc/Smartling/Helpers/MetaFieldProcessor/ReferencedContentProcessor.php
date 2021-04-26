@@ -109,7 +109,7 @@ class ReferencedContentProcessor extends MetaFieldProcessorAbstract
                     $sourceBlogId,
                     $value,
                     $targetBlogId,
-                    $submission->getBatchUid(),
+                    $submission->getJobInfoWithBatchUid(),
                     (1 === $submission->getIsCloned())
                 )->getTargetId();
             }

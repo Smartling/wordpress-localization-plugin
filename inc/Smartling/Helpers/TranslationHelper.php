@@ -2,6 +2,7 @@
 
 namespace Smartling\Helpers;
 
+use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Services\GlobalSettingsManager;
 use UnexpectedValueException;
 use Psr\Log\LoggerInterface;
@@ -233,11 +234,11 @@ class TranslationHelper
     /**
      * @throws SmartlingDataReadException
      */
-    public function getExistingSubmissionOrCreateNew(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId, string $batchUid): SubmissionEntity {
+    public function getExistingSubmissionOrCreateNew(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId, JobEntityWithBatchUid $jobInfo): SubmissionEntity {
         $submission = $this->submissionManager->getSubmissionEntity($contentType, $sourceBlogId, $contentId, $targetBlogId, $this->getMutilangProxy());
         if ($submission->getTargetId() === 0) {
             $this->getLogger()->debug("Got submission with 0 target id");
-            $submission = $this->tryPrepareRelatedContent($contentType, $sourceBlogId, $contentId, $targetBlogId, $batchUid);
+            $submission = $this->tryPrepareRelatedContent($contentType, $sourceBlogId, $contentId, $targetBlogId, $jobInfo);
         }
         return $submission;
     }
@@ -245,7 +246,7 @@ class TranslationHelper
     /**
      * @throws SmartlingDataReadException
      */
-    public function tryPrepareRelatedContent(string $contentType, int $sourceBlog, int $sourceId, int $targetBlog, string $batchUid, bool $clone = false): SubmissionEntity
+    public function tryPrepareRelatedContent(string $contentType, int $sourceBlog, int $sourceId, int $targetBlog, JobEntityWithBatchUid $jobInfo, bool $clone = false): SubmissionEntity
     {
         $relatedSubmission = $this->prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone);
 
@@ -263,7 +264,8 @@ class TranslationHelper
                 ]
             );
 
-            $relatedSubmission->setBatchUid($batchUid);
+            $relatedSubmission->setBatchUid($jobInfo->getBatchUid());
+            $relatedSubmission->setJobInfo($jobInfo->getJobInformationEntity());
             $serialized = $relatedSubmission->toArray(false);
             if (null === $serialized[SubmissionEntity::FIELD_FILE_URI]) {
                 $relatedSubmission->getFileUri();

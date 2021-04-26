@@ -24,7 +24,7 @@ use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\XmlHelper;
-use Smartling\Jobs\JobInformationEntity;
+use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\Controller\LiveNotificationController;
@@ -561,9 +561,10 @@ trait SmartlingCoreUploadTrait
 
             /** @var ApiWrapperInterface $apiWrapper */
             $apiWrapper = $this->getApiWrapper();
-            $batchUid = $apiWrapper->retrieveBatchForBucketJob($profile, $profile->getAutoAuthorize());
+            $jobInfo = $apiWrapper->retrieveJobInfoForDailyBucketJob($profile, $profile->getAutoAuthorize());
 
-            $submission->setBatchUid($batchUid);
+            $submission->setBatchUid($jobInfo->getBatchUid());
+            $submission->setJobInfo($jobInfo->getJobInformationEntity());
             $submission = $this->getSubmissionManager()->storeEntity($submission);
         } catch (\Exception $e) {
             $msg = vsprintf(
@@ -712,7 +713,7 @@ trait SmartlingCoreUploadTrait
         }
     }
 
-    public function createForTranslation(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, string $batchUid, bool $clone): SubmissionEntity
+    public function createForTranslation(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, JobEntityWithBatchUid $jobInfo, bool $clone): SubmissionEntity
     {
         /**
          * @var TranslationHelper $translationHelper
@@ -738,7 +739,8 @@ trait SmartlingCoreUploadTrait
 
         $isCloned = true === $clone ? 1 : 0;
         $submission->setIsCloned($isCloned);
-        $submission->setBatchUid($batchUid);
+        $submission->setBatchUid($jobInfo->getBatchUid());
+        $submission->setJobInfo($jobInfo->getJobInformationEntity());
 
         return $this->getSubmissionManager()->storeEntity($submission);
     }

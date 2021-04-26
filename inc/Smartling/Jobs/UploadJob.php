@@ -106,10 +106,10 @@ class UploadJob extends JobAbstract
                 $this->getLogger()->info('Started dealing with daily bucket job.');
 
                 try {
-                    $batchUid = $this->api->retrieveBatchForBucketJob($activeProfile, $activeProfile->getAutoAuthorize());
+                    $jobInfo = $this->api->retrieveJobInfoForDailyBucketJob($activeProfile, $activeProfile->getAutoAuthorize());
 
                     foreach ($entities as $entity) {
-                        if (empty($batchUid)) {
+                        if ($jobInfo->getBatchUid() === '') {
                             $this->getLogger()->warning(
                                 vsprintf(
                                     'Cron Job failed to mark content for upload into daily bucket job for submission id="%s" with status="%s" for entity="%s", blog="%s", id="%s", targetBlog="%s", locale="%s", batchUid="%s".',
@@ -129,7 +129,8 @@ class UploadJob extends JobAbstract
                             continue;
                         }
 
-                        $entity->setBatchUid($batchUid);
+                        $entity->setBatchUid($jobInfo->getBatchUid());
+                        $entity->setJobInfo($jobInfo->getJobInformationEntity());
 
                         $this->getLogger()->info(
                             vsprintf(

@@ -16,6 +16,7 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
+use Smartling\Jobs\JobManager;
 use Smartling\Queue\Queue;
 use Smartling\Settings\Locale;
 use Smartling\Submissions\SubmissionEntity;
@@ -46,9 +47,10 @@ class SubmissionTableWidget extends SmartlingListTable
     private const SUBMISSION_TARGET_LOCALE = 'target-locale';
 
     private LoggerInterface $logger;
-    private SubmissionManager $manager;
+    private SubmissionManager $submissionManager;
     private EntityHelper $entityHelper;
     private Queue $queue;
+    private JobManager $jobInformationManager;
 
     public function getLogger(): LoggerInterface
     {
@@ -71,10 +73,10 @@ class SubmissionTableWidget extends SmartlingListTable
 
     private array $_settings = ['singular' => 'submission', 'plural' => 'submissions', 'ajax' => false,];
 
-    public function __construct(SubmissionManager $manager, EntityHelper $entityHelper, Queue $queue)
+    public function __construct(SubmissionManager $manager, EntityHelper $entityHelper, Queue $queue, JobManager $jobInformationManager)
     {
         $this->queue = $queue;
-        $this->manager = $manager;
+        $this->submissionManager = $manager;
         $this->setSource($_REQUEST);
         $this->entityHelper = $entityHelper;
 
@@ -83,6 +85,7 @@ class SubmissionTableWidget extends SmartlingListTable
         $this->logger = $entityHelper->getLogger();
 
         parent::__construct($this->_settings);
+        $this->jobInformationManager = $jobInformationManager;
     }
 
     public function getSortingOptions(string $fieldNameKey = 'orderby', string $orderDirectionKey = 'order'): array
@@ -132,7 +135,7 @@ class SubmissionTableWidget extends SmartlingListTable
 
     public function get_columns(): array
     {
-        $columns = $this->manager->getColumnsLabels();
+        $columns = $this->submissionManager->getColumnsLabels();
         $columns['outdated'] = 'States';
 
         return array_merge(['bulkActionCb' => '<input type="checkbox" class="checkall" />'], $columns);
@@ -141,7 +144,7 @@ class SubmissionTableWidget extends SmartlingListTable
     public function get_sortable_columns(): array
     {
 
-        $fields = $this->manager->getSortableFields();
+        $fields = $this->submissionManager->getSortableFields();
 
         $sortable_columns = [];
 
@@ -172,7 +175,7 @@ class SubmissionTableWidget extends SmartlingListTable
         $submissionsIds = $this->getFormElementValue('submission', []);
 
         if (is_array($submissionsIds) && 0 < count($submissionsIds)) {
-            $submissions = $this->manager->findByIds($submissionsIds);
+            $submissions = $this->submissionManager->findByIds($submissionsIds);
             if (0 < count($submissions)) {
                 switch ($this->current_action()) {
                     case self::ACTION_DOWNLOAD:
@@ -183,13 +186,13 @@ class SubmissionTableWidget extends SmartlingListTable
                     case self::ACTION_LOCK:
                         foreach ($submissions as $submission) {
                             $submission->setIsLocked(1);
-                            $this->manager->storeEntity($submission);
+                            $this->submissionManager->storeEntity($submission);
                         }
                         break;
                     case self::ACTION_UNLOCK:
                         foreach ($submissions as $submission) {
                             $submission->setIsLocked(0);
-                            $this->manager->storeEntity($submission);
+                            $this->submissionManager->storeEntity($submission);
                         }
                         break;
                     default:
@@ -252,7 +255,7 @@ class SubmissionTableWidget extends SmartlingListTable
     public function prepare_items(): void
     {
         $siteHelper = $this->entityHelper->getSiteHelper();
-        $pageOptions = ['limit' => $this->manager->getPageSize(), 'page' => $this->get_pagenum(),];
+        $pageOptions = ['limit' => $this->submissionManager->getPageSize(), 'page' => $this->get_pagenum(),];
 
         $this->_column_headers = [$this->get_columns(), ['id'], $this->get_sortable_columns(),];
 
@@ -328,7 +331,7 @@ class SubmissionTableWidget extends SmartlingListTable
             $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_CLONED, [(int)$clonedFlag]));
         }
 
-        $data = $this->manager->searchByCondition(
+        $data = $this->submissionManager->searchByCondition(
             $block,
             $contentTypeFilterValue,
             $statusFilterValue,
@@ -344,6 +347,7 @@ class SubmissionTableWidget extends SmartlingListTable
 
         foreach ($data as $element) {
             $row = $element->toArray();
+            $jobInfo = $this->jobInformationManager->getBySubmissionId($element->getId());
 
             $row[SubmissionEntity::FIELD_FILE_URI] = htmlentities($row[SubmissionEntity::FIELD_FILE_URI]);
             $row[SubmissionEntity::FIELD_SOURCE_TITLE] = htmlentities($row[SubmissionEntity::FIELD_SOURCE_TITLE]);
@@ -352,6 +356,7 @@ class SubmissionTableWidget extends SmartlingListTable
             $row[SubmissionEntity::FIELD_APPLIED_DATE] = '0000-00-00 00:00:00' === $row[SubmissionEntity::FIELD_APPLIED_DATE] ? __('Never')
                 : DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row[SubmissionEntity::FIELD_APPLIED_DATE]));
             $row[SubmissionEntity::FIELD_TARGET_LOCALE] = $siteHelper->getBlogLabelById($this->entityHelper->getConnector(), $row[SubmissionEntity::FIELD_TARGET_BLOG_ID]);
+            $row[SubmissionEntity::VIRTUAL_FIELD_JOB_LINK] = $jobInfo === null ? '' : "<a href=\"https://dashboard.smartling.com/app/projects/{$jobInfo->getProjectUid()}/account-jobs/{$jobInfo->getProjectUid()}:{$jobInfo->getJobUid()}\">{$jobInfo->getJobName()}</a>";
 
             $flagBlockParts = [];
 
@@ -400,7 +405,7 @@ class SubmissionTableWidget extends SmartlingListTable
     {
         $controlName = 'status';
 
-        $statuses = $this->manager->getSubmissionStatusLabels();
+        $statuses = $this->submissionManager->getSubmissionStatusLabels();
 
         // add 'Any' to turn off filter
         $statuses = array_merge(['any' => __('Any')], $statuses);
