@@ -21,10 +21,8 @@ class SmartlingFilterUiService implements WPHookInterface
 
     /**
      * Registers wp hook handlers. Invoked by wordpress.
-     *
-     * @return void
      */
-    public function register()
+    public function register(): void
     {
         if (1 === (int)GlobalSettingsManager::getFilterUiVisible()) {
             (new ShortcodeManager())->register();

@@ -20,10 +20,6 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
-/**
- * Class TaxonomyWidgetController
- * @package Smartling\WP\Controller
- */
 class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
 {
 
@@ -72,10 +68,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
         return $this->core;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function register()
+    public function register(): void
     {
         if (!DiagnosticsHelper::isBlocked()) {
             // already running in scope of 'admin_init', so calling directly
@@ -203,15 +196,15 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                     case 'Upload':
                         if (0 < count($locales)) {
                             $wrapper = $this->getCore()->getApiWrapper();
-                            $profiles = $this->getProfiles();
+                            $profile = ArrayHelper::first($this->getProfiles());
 
-                            if (empty($profiles)) {
+                            if (!$profile) {
                                 $this->getLogger()->error('No suitable configuration profile found.');
 
                                 return;
                             }
                             try {
-                                $batchUid = $wrapper->retrieveBatch(ArrayHelper::first($profiles), $data['jobId'],
+                                $batchUid = $wrapper->retrieveBatch($profile, $data['jobId'],
                                     'true' === $data['authorize'], [
                                         'name' => $data['jobName'],
                                         'description' => $data['jobDescription'],

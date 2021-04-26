@@ -35,18 +35,12 @@ class DownloadTranslationJob extends JobAbstract
         $this->queue = $queue;
     }
 
-    /**
-     * @return string
-     */
-    public function getJobHookName()
+    public function getJobHookName(): string
     {
         return self::JOB_HOOK_NAME;
     }
 
-    /**
-     * @return void
-     */
-    public function run()
+    public function run(): void
     {
         $this->getLogger()->info('Started Translation Download Job.');
 

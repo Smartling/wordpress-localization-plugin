@@ -42,7 +42,7 @@ trait SubmissionEntityMock
             'target_blog_id'         => 2,
             'target_id'              => null,
             'submitter'              => '',
-            'submission_date'        => null,
+            'submission_date'        => '0000-00-00 00:00:00',
             'applied_date'           => null,
             'approved_string_count'  => $completion,
             'completed_string_count' => $completion,

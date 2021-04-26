@@ -281,9 +281,8 @@ class BulkSubmitTableWidget extends SmartlingListTable
         $batchUid = '';
         $data = $this->getFromSource('bulk-submit-locales', []);
 
-        if ($action == 'send') {
+        if ($action === 'send') {
             $smartlingData = $this->getFromSource('smartling', []);
-
             if (empty($smartlingData)) {
                 return;
             }
@@ -329,22 +328,16 @@ class BulkSubmitTableWidget extends SmartlingListTable
                 }
             }
 
-            /**
-             * @var SmartlingCore $ep
-             */
             $ep = Bootstrap::getContainer()->get('entrypoint');
 
             if (is_array($submissions) && count($locales) > 0) {
-                $clone = 'clone' === $action ? true : false;
+                $clone = 'clone' === $action;
                 foreach ($submissions as $submission) {
-                    list($id, $type) = explode('-', $submission);
+                    [$id] = explode('-', $submission);
                     $type = $this->getContentTypeFilterValue();
                     $curBlogId = $this->getProfile()->getOriginalBlogId()->getBlogId();
                     foreach ($locales as $blogId => $blogName) {
-                        /**
-                         * @var SubmissionEntity $submissionEntity
-                         */
-                        $submissionEntity = $ep->createForTranslation($type, $curBlogId, $id, (int)$blogId, null, $clone, $batchUid);
+                        $submissionEntity = $ep->createForTranslation($type, $curBlogId, $id, (int)$blogId, $batchUid, $clone);
 
                         $this->getLogger()
                             ->info(vsprintf(

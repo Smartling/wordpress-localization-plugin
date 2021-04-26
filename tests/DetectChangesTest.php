@@ -27,8 +27,7 @@ class DetectChangesTest extends TestCase
     {
         $mock = $this->createMock(DetectChangesHelper::class);
 
-        $profileMock = $this->createPartialMock(ConfigurationProfileEntity::class, ['getProjectId']);
-        $profileMock->method('getProjectId')->willReturn(1);
+        $profileMock = $this->createMock(ConfigurationProfileEntity::class);
 
         $settingsManager = $this->createPartialMock(SettingsManager::class, ['getSingleSettingsProfile']);
         $settingsManager->method('getSingleSettingsProfile')->willReturn($profileMock);

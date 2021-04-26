@@ -31,7 +31,7 @@ class ShortcodeManager extends CustomizationManagerAbstract implements WPHookInt
         return array_merge($items, $shortcodes);
     }
 
-    public function register()
+    public function register(): void
     {
         add_filter('smartling_inject_shortcode', [$this, 'injector']);
     }

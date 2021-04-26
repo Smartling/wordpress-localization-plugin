@@ -9,7 +9,6 @@ use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\StringHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\Locale;
-use Smartling\Settings\SettingsManager;
 use Smartling\Settings\TargetLocale;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -33,7 +32,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
         }
     }
 
-    public function register()
+    public function register(): void
     {
         add_action('admin_enqueue_scripts', [$this, 'wp_enqueue']);
         add_action('admin_menu', [$this, 'menu']);
@@ -54,14 +53,8 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
         ];
 
         $wrapper = Bootstrap::getContainer()->get('wrapper.sdk.api.smartling');
-        /**
-         * @var ApiWrapper $wrapper
-         */
 
         $settingsManager = Bootstrap::getContainer()->get('manager.settings');
-        /**
-         * @var SettingsManager $settingsManager
-         */
 
         if (StringHelper::isNullOrEmpty($data['tokenSecret']) && 0 < (int)$data['profileId']) {
             $_profiles = $settingsManager->getEntityById((int)$data['profileId']);
@@ -247,8 +240,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
                      )
             );
 
-            $profile->setOriginalBlogId($locale);
-
+            $profile->setLocale($locale);
         }
 
         if (array_key_exists('targetLocales', $settings)) {

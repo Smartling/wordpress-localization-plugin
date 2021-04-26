@@ -101,9 +101,8 @@ class BlogRemovalHandler implements WPHookInterface
 
     /**
      * Registers wp hook handlers. Invoked by wordpress.
-     * @return void
      */
-    public function register()
+    public function register(): void
     {
         add_action('delete_blog', [$this, 'blogRemovalHandler']);
     }

@@ -40,10 +40,9 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     /**
      * Registers wp hook handlers. Invoked by wordpress.
      *
-     * @return void
      * @throws SmartlingConfigException
      */
-    public function register()
+    public function register(): void
     {
         $handlers = [
             ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING => 'processString',
@@ -148,7 +147,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             $node->appendChild($part);
         }
 
-        $flatAttributes = $this->getFieldsFilter()->flatternArray($block['attrs']);
+        $flatAttributes = $this->getFieldsFilter()->flattenArray($block['attrs']);
 
         foreach ($this->processAttributes($block['blockName'], $flatAttributes) as $attrName => $attrValue) {
             $node->appendChild($this->createDomNode(
@@ -306,7 +305,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         $processedAttributes = $originalAttributes;
 
         if (0 < count($originalAttributes)) {
-            $flatAttributes = $this->getFieldsFilter()->flatternArray($originalAttributes);
+            $flatAttributes = $this->getFieldsFilter()->flattenArray($originalAttributes);
             $attr = static::maskAttributes($blockName, $flatAttributes);
             $attr = $this->postReceiveFiltering($attr);
             $attr = static::unmaskAttributes($blockName, $attr);

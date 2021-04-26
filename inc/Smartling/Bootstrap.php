@@ -407,13 +407,10 @@ class Bootstrap
 
     protected function testPluginSetup()
     {
-        /**
-         * @var SettingsManager $sm
-         */
         $sm = static::getContainer()->get('manager.settings');
 
         $total = 0;
-        $profiles = $sm->getEntities([], null, $total, true);
+        $profiles = $sm->getEntities($total, true);
 
         if (0 === count($profiles)) {
             $mainMessage = 'No active smartling configuration profiles found. Please create at least one on '

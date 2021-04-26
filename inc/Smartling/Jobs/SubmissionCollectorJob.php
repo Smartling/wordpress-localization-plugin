@@ -35,10 +35,7 @@ class SubmissionCollectorJob extends JobAbstract
 
     const JOB_HOOK_NAME = 'smartling-submission-collector-task';
 
-    /**
-     * @return string
-     */
-    public function getJobHookName()
+    public function getJobHookName(): string
     {
         return self::JOB_HOOK_NAME;
     }
@@ -67,7 +64,7 @@ class SubmissionCollectorJob extends JobAbstract
         } while (0 < count($submissions));
     }
 
-    public function run()
+    public function run(): void
     {
         $this->getLogger()->info('Started Submission Collector Job.');
         $this->fixEmptyFileUriSubmissions();

@@ -172,12 +172,12 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             }
         }
 
-        $profiles = $this->getProfiles();
+        $profile = ArrayHelper::first($this->getProfiles());
 
         /**
          * checking profiles
          */
-        if ($continue && empty($profiles)) {
+        if ($continue && !$profile) {
             $this->getLogger()->error(
                 vsprintf(
                     'Failed adding content to upload queue: %s for %s',
@@ -271,12 +271,13 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
         if ($continue) {
             try {
+                $jobName = $data['job']['name'];
                 $batchUid = $this->getCore()->getApiWrapper()->retrieveBatch(
-                    ArrayHelper::first($profiles),
+                    $profile,
                     $data['job']['id'],
                     'true' === $data['job']['authorize'],
                     [
-                        'name' => $data['job']['name'],
+                        'name' => $jobName,
                         'description' => $data['job']['description'],
                         'dueDate' => [
                             'date' => $data['job']['dueDate'],
@@ -360,10 +361,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
         wp_send_json($result);
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function register()
+    public function register(): void
     {
         if (!DiagnosticsHelper::isBlocked() && !$this->isMuted() && current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
             add_action('add_meta_boxes', [$this, 'box']);
@@ -514,11 +512,9 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     }
 
     /**
-     * @param $post_id
-     *
-     * @return mixed
+     * @param mixed $post_id
      */
-    public function save($post_id)
+    public function save($post_id): void
     {
         $this->getLogger()->debug("Usage: class='" . __CLASS__ . "', function='" . __FUNCTION__ . "'");
         remove_action('save_post', [$this, 'save']);
@@ -548,7 +544,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             $this->detectChange($sourceBlog, $originalId, $this->servedContentType);
 
             if (false === $this->runValidation($post_id)) {
-                return $post_id;
+                return;
             }
             $this->getLogger()->debug(vsprintf('Validation completed for \'%s\' id=%d',
                 [$this->servedContentType, $post_id]));
@@ -586,9 +582,9 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                             $this->getLogger()->debug('Upload case detected.');
                             if (0 < count($locales)) {
                                 $wrapper = $this->getCore()->getApiWrapper();
-                                $profiles = $this->getProfiles();
+                                $profile = ArrayHelper::first($this->getProfiles());
 
-                                if (empty($profiles)) {
+                                if (!$profile) {
                                     $this->getLogger()->error('No suitable configuration profile found.');
 
                                     return;
@@ -596,7 +592,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                 $this->getLogger()->debug(vsprintf('Retrieving batch for jobId=%s', [$data['jobId']]));
 
                                 try {
-                                    $batchUid = $wrapper->retrieveBatch(ArrayHelper::first($profiles), $data['jobId'],
+                                    $batchUid = $wrapper->retrieveBatch($profile, $data['jobId'],
                                         'true' === $data['authorize'], [
                                             'name' => $data['jobName'],
                                             'description' => $data['jobDescription'],

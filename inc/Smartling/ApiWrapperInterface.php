@@ -2,19 +2,37 @@
 
 namespace Smartling;
 
+use JetBrains\PhpStorm\ArrayShape;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\Exceptions\SmartlingApiException;
+use Smartling\Jobs\JobInformationEntity;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Interface ApiWrapperInterface
- * @package Smartling
- */
 interface ApiWrapperInterface
 {
+    public const CREATE_BATCH_RESPONSE = ['batchUid' => 'string'];
+    public const CREATE_JOB_RESPONSE = [
+        'translationJobUid' => 'string',
+        'jobName' => 'string',
+        'jobNumber' => 'string',
+        'targetLocaleIds' => 'string[]',
+        'callbackMethod' => 'string',
+        'callbackUrl' => 'string',
+        'createdByUserUid' => 'string',
+        'createdDate' => 'string',
+        'description' => 'string',
+        'dueDate' => 'string',
+        'firstCompletedDate' => 'string',
+        'jobStatus' => 'string',
+        'lastCompletedDate' => 'string',
+        'modifiedByUserUid' => 'string',
+        'modifiedDate' => 'string',
+        'referenceNumber' => 'string',
+        'customFields' => [],
+    ];
 
     /**
      * @param SubmissionEntity $entity
@@ -94,13 +112,10 @@ interface ApiWrapperInterface
     public function listJobs(ConfigurationProfileEntity $profile);
 
     /**
-     * @param ConfigurationProfileEntity $profile
-     * @param array $params
-     *
-     * @return array
-     * @throws \Exception
+     * @throws SmartlingApiException
      */
-    public function createJob(ConfigurationProfileEntity $profile, array $params);
+    #[ArrayShape(self::CREATE_JOB_RESPONSE)]
+    public function createJob(ConfigurationProfileEntity $profile, array $params): array;
 
     /**
      * @param ConfigurationProfileEntity $profile
@@ -115,14 +130,10 @@ interface ApiWrapperInterface
     public function updateJob(ConfigurationProfileEntity $profile, $jobId, $name, $description, $dueDate);
 
     /**
-     * @param ConfigurationProfileEntity $profile
-     * @param                                                $jobId
-     * @param bool $authorize
-     *
-     * @return array
      * @throws SmartlingApiException
      */
-    public function createBatch(ConfigurationProfileEntity $profile, $jobId, $authorize = false);
+    #[ArrayShape(self::CREATE_BATCH_RESPONSE)]
+    public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, bool $authorize = false): array;
 
     /**
      * @param ConfigurationProfileEntity $profile
@@ -160,14 +171,9 @@ interface ApiWrapperInterface
     public function setNotificationRecord(ConfigurationProfileEntity $profile, $space, $object, $record, $data = [], $ttl = 30);
 
     /**
-     * Returns batch uid for a daily bucket job.
-     *
-     * @param ConfigurationProfileEntity $profile
-     * @param bool $authorize
-     *
-     * @return string|null
+     * @throws SmartlingApiException
      */
-    public function retrieveBatchForBucketJob(ConfigurationProfileEntity $profile, $authorize);
+    public function retrieveBatchForBucketJob(ConfigurationProfileEntity $profile, bool $authorize): string;
 
     /**
      * @param \Exception $e

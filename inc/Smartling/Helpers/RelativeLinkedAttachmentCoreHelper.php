@@ -15,62 +15,38 @@ use Smartling\WP\WPHookInterface;
 
 class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 {
-    const ACF_GUTENBERG_BLOCK = '<!-- wp:acf/.+ ({.+}) /-->';
-    const CORE_GUTENBERG_BLOCK = '<!-- wp:core/(.+) ({.+}) -->';
+    private const ACF_GUTENBERG_BLOCK = '<!-- wp:acf/.+ ({.+}) /-->';
+    private const CORE_GUTENBERG_BLOCK = '<!-- wp:core/(.+) ({.+}) -->';
     /**
      * RegEx to catch images from the string
      */
-    const PATTERN_IMAGE_GENERAL = '<img[^>]+>';
+    protected const PATTERN_IMAGE_GENERAL = '<img[^>]+>';
 
-    const PATTERN_THUMBNAIL_IDENTITY = '-\d+x\d+$';
+    protected const PATTERN_THUMBNAIL_IDENTITY = '-\d+x\d+$';
 
-    private $acfDefinitions = [];
-    private $acfDynamicSupport;
-    private $gutenbergReplacementRules;
+    private array $acfDefinitions = [];
+    private AcfDynamicSupport $acfDynamicSupport;
+    private array $gutenbergReplacementRules;
+    private LoggerInterface $logger;
+    private SmartlingCore $core;
+    private AfterDeserializeContentEventParameters $params;
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @var SmartlingCore
-     */
-    private $core;
-
-    /**
-     * @var AfterDeserializeContentEventParameters
-     */
-    private $params;
-
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
+    public function getLogger(): LoggerInterface
     {
         return $this->logger;
     }
 
-    /**
-     * @return SmartlingCore
-     */
-    public function getCore()
+    public function getCore(): SmartlingCore
     {
         return $this->core;
     }
 
-    /**
-     * @return AfterDeserializeContentEventParameters
-     */
-    public function getParams()
+    public function getParams(): AfterDeserializeContentEventParameters
     {
         return $this->params;
     }
 
-    /**
-     * @param AfterDeserializeContentEventParameters $params
-     */
-    private function setParams(AfterDeserializeContentEventParameters $params)
+    private function setParams(AfterDeserializeContentEventParameters $params): void
     {
         $this->params = $params;
     }
@@ -83,17 +59,15 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         $this->gutenbergReplacementRules = $mediaAttachmentRulesManager->getGutenbergReplacementRules();
     }
 
-    public function register()
+    public function register(): void
     {
         add_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, [$this, 'processor']);
     }
 
     /**
-     * ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT event handler
-     *
-     * @param AfterDeserializeContentEventParameters $params
+     * Alters $params->translatedFields
      */
-    public function processor(AfterDeserializeContentEventParameters $params)
+    public function processor(AfterDeserializeContentEventParameters $params): void
     {
         $this->setParams($params);
         if (count($this->acfDefinitions) === 0) {
@@ -103,7 +77,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 
         $fields = &$params->getTranslatedFields();
 
-        foreach ($fields as $name => &$value) {
+        foreach ($fields as &$value) {
             $this->processString($value);
         }
     }
@@ -113,13 +87,13 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
      *
      * @param string|array $stringValue
      */
-    protected function processString(&$stringValue)
+    protected function processString(&$stringValue): void
     {
         $replacer = new PairReplacerHelper();
         $matches = [];
 
         if (is_array($stringValue)) {
-            foreach ($stringValue as $item => &$value) {
+            foreach ($stringValue as &$value) {
                 $this->processString($value);
             }
             return;
@@ -149,22 +123,14 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     }
 
     /**
-     * Extracts src attribute from <img /> tag if possible, otherwise returns false.
-     *
-     * @param string $imgTagString
-     *
-     * @return bool
+     * Extracts src attribute from <img /> tag if possible, otherwise returns null.
      */
-    private function getSourcePathFromImgTag($imgTagString)
+    private function getSourcePathFromImgTag(string $imgTagString): ?string
     {
         return $this->getAttributeFromTag($imgTagString, 'img', 'src');
     }
 
-    /**
-     * @param string $path
-     * @return array|null
-     */
-    private function tryProcessThumbnail($path)
+    private function tryProcessThumbnail(string $path): ?ReplacementPair
     {
         $submission = $this->getParams()->getSubmission();
         $dir = $this->getCore()->getUploadFileInfo($submission->getSourceBlogId())['basedir'];
@@ -224,7 +190,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                             $targetThumbnailRelativePath = $targetThumbnailPathInfo['dirname'] . '/' .
                                 $sourceFilePathInfo['basename'];
 
-                            return ['from' => $path, 'to' => $targetThumbnailRelativePath];
+                            return new ReplacementPair($path, $targetThumbnailRelativePath);
                         }
 
                         $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
@@ -245,38 +211,21 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         return null;
     }
 
-    /**
-     * @param string $path
-     *
-     * @return bool
-     */
-    protected function fileLooksLikeThumbnail($path)
+    protected function fileLooksLikeThumbnail(string $path): bool
     {
         $pattern = StringHelper::buildPattern('.+' . self::PATTERN_THUMBNAIL_IDENTITY);
 
         return preg_match($pattern, $path) > 0;
     }
 
-    /**
-     * Checks if given URL is relative
-     *
-     * @param string $url
-     *
-     * @return bool
-     */
-    private function isRelativeUrl($url)
+    private function isRelativeUrl(string $url): bool
     {
         $parts = parse_url($url);
 
         return $url === $parts['path'];
     }
 
-    /**
-     * @param $relativePath
-     *
-     * @return bool|int
-     */
-    private function getAttachmentId($relativePath)
+    private function getAttachmentId(string $relativePath): ?int
     {
         return $this->returnId(vsprintf(
             "SELECT `post_id` as `id` FROM `%s` WHERE `meta_key` = '_wp_attached_file' AND `meta_value`='%s' LIMIT 1;",
@@ -287,15 +236,11 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         ));
     }
 
-    /**
-     * @param string $query
-     * @return bool|int
-     */
-    protected function returnId($query)
+    protected function returnId(string $query): ?int
     {
         $data = RawDbQueryHelper::query($query);
 
-        $result = false;
+        $result = null;
 
         if (is_array($data) && 1 === count($data)) {
             $resultRow = ArrayHelper::first($data);
@@ -310,14 +255,8 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 
     /**
      * Extracts attribute from html tag string
-     *
-     * @param string $tagString
-     * @param string $tagName
-     * @param string $attribute
-     *
-     * @return false|string
      */
-    protected function getAttributeFromTag($tagString, $tagName, $attribute)
+    protected function getAttributeFromTag(string $tagString, string $tagName, string $attribute): ?string
     {
         $dom = new DOMDocument();
         $state = libxml_use_internal_errors(true);
@@ -360,11 +299,12 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
             }
         }
         $images = $dom->getElementsByTagName($tagName);
-        $value = false;
+        $value = null;
         if (1 === $images->length) {
             /** @var \DOMNode $node */
             $node = $images->item(0);
-            if ($node->hasAttributes() && $value = $node->attributes->getNamedItem($attribute)) {
+            if ($node->hasAttributes()) {
+                $value = $node->attributes->getNamedItem($attribute);
                 if ($value instanceof \DOMAttr) {
                     $value = $value->nodeValue;
                 }
@@ -374,11 +314,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         return $value;
     }
 
-    /**
-     * @param string $block
-     * @return PairReplacerHelper
-     */
-    private function getReplacerForAcfGutenbergBlock($block)
+    private function getReplacerForAcfGutenbergBlock(string $block): PairReplacerHelper
     {
         $result = new PairReplacerHelper();
         $submission = $this->getParams()->getSubmission();
@@ -403,7 +339,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                             $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
                         }
                     } else {
-                        $this->getLogger()->warning("Can not send attachment as it has empty id acfFieldId=${value} acfFieldValue=\"${attachmentId}\"");
+                        $this->getLogger()->warning("Can not send attachment as it has empty id acfFieldId=$value acfFieldValue=\"$attachmentId\"");
                     }
                 }
             }
@@ -411,12 +347,8 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         return $result;
     }
 
-    /**
-     * @param string $type
-     * @param string $content
-     * @return ReplacementInfo|null
-     */
-    private function processGutenbergBlock($type, $content) {
+    private function processGutenbergBlock(string $type, string $content): ?ReplacementInfo
+    {
         $submission = $this->getParams()->getSubmission();
         $sourceBlogId = $submission->getSourceBlogId();
         $targetBlogId = $submission->getTargetBlogId();
@@ -451,12 +383,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         return null;
     }
 
-    /**
-     * @param string $tag
-     * @param PairReplacerHelper $replacer
-     * @return PairReplacerHelper
-     */
-    private function getReplacerForImgTag($tag, PairReplacerHelper $replacer)
+    private function getReplacerForImgTag(string $tag, PairReplacerHelper $replacer): PairReplacerHelper
     {
         $result = $replacer;
         $path = $this->getSourcePathFromImgTag($tag);
@@ -475,9 +402,8 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                 }
             } else {
                 $thumbnail = $this->tryProcessThumbnail($path);
-
                 if ($thumbnail !== null) {
-                    $result->addReplacementPair(new ReplacementPair($thumbnail['from'], $thumbnail['to']));
+                    $result->addReplacementPair($thumbnail);
                 }
             }
         }

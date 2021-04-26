@@ -3,6 +3,7 @@
 namespace Smartling;
 
 use DateTimeZone;
+use JetBrains\PhpStorm\ArrayShape;
 use Psr\Log\LoggerInterface;
 use Smartling\AuthApi\AuthTokenProvider;
 use Smartling\Batch\BatchApi;
@@ -20,6 +21,7 @@ use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\FileHelper;
 use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\RuntimeCacheHelper;
+use Smartling\Jobs\JobInformationEntity;
 use Smartling\Jobs\JobsApi;
 use Smartling\Jobs\JobStatus;
 use Smartling\Jobs\Params\CreateJobParameters;
@@ -585,9 +587,10 @@ class ApiWrapper implements ApiWrapperInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @throws SmartlingApiException
      */
-    public function createJob(ConfigurationProfileEntity $profile, array $params)
+    #[ArrayShape(ApiWrapperInterface::CREATE_JOB_RESPONSE)]
+    public function createJob(ConfigurationProfileEntity $profile, array $params): array
     {
         $param = new CreateJobParameters();
 
@@ -630,17 +633,13 @@ class ApiWrapper implements ApiWrapperInterface
     }
 
     /**
-     * @param ConfigurationProfileEntity $profile
-     * @param                                                $jobId
-     * @param bool                                           $authorize
-     *
-     * @return array
      * @throws SmartlingApiException
      */
-    public function createBatch(ConfigurationProfileEntity $profile, $jobId, $authorize = false)
+    #[ArrayShape(self::CREATE_BATCH_RESPONSE)]
+    public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, bool $authorize = false): array
     {
         $createBatchParameters = new CreateBatchParameters();
-        $createBatchParameters->setTranslationJobUid($jobId);
+        $createBatchParameters->setTranslationJobUid($jobUid);
         $createBatchParameters->setAuthorize($authorize);
 
         return $this->getBatchApi($profile)->createBatch($createBatchParameters);
@@ -725,18 +724,9 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
-    /**
-     * Returns batch uid for a daily bucket job.
-     *
-     * @param ConfigurationProfileEntity $profile
-     * @param                                                $authorize
-     *
-     * @return string|null
-     * @throws \Exception
-     */
-    public function retrieveBatchForBucketJob(ConfigurationProfileEntity $profile, $authorize)
+    public function retrieveBatchForBucketJob(ConfigurationProfileEntity $profile, bool $authorize): string
     {
-        $getName = function ($suffix = '') {
+        $getName = static function ($suffix = '') {
             $date = date('m/d/Y');
             $name = "Daily Bucket Job $date";
 
@@ -780,9 +770,7 @@ class ApiWrapper implements ApiWrapperInterface
             }
 
             if (empty($jobId)) {
-                $this->getLogger()->error("Queueing file upload into the bucket job failed: can't find/create job.");
-
-                return null;
+                throw new \RuntimeException('Queueing file upload into the bucket job failed: can\'t find/create job.');
             }
 
             $result = $this->createBatch($profile, $jobId, $authorize);

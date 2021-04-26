@@ -28,10 +28,7 @@ class CheckStatusController extends WPAbstract implements WPHookInterface
             ->getVersion(), false);
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function register()
+    public function register(): void
     {
         if (!DiagnosticsHelper::isBlocked() && current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
             add_action('wp_ajax_ajax_submissions_update_status', [$this, 'ajaxHandler']);

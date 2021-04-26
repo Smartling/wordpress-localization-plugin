@@ -24,10 +24,7 @@ class i18n implements WPHookInterface
         $this->pluginInfo = $pluginInfo;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function register()
+    public function register(): void
     {
         load_plugin_textdomain(
             $this->pluginInfo->getDomain(),

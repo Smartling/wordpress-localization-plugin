@@ -73,15 +73,12 @@ class LastModifiedCheckJob extends JobAbstract
 
     const JOB_HOOK_NAME = 'smartling-last-modified-check-task';
 
-    /**
-     * @return string
-     */
-    public function getJobHookName()
+    public function getJobHookName(): string
     {
         return self::JOB_HOOK_NAME;
     }
 
-    public function run()
+    public function run(): void
     {
         $this->getLogger()->info('Started Last-Modified Check Job.');
 

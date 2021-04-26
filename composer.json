@@ -5,7 +5,7 @@
   "description": "",
   "type": "wordpress-plugin",
   "require": {
-    "php": ">=7.2",
+    "php": ">=7.4",
     "monolog/monolog": "~1",
     "symfony/dependency-injection": "~2.8",
     "symfony/config": "~2.8",

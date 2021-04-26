@@ -73,14 +73,7 @@ class FieldsFilterHelper
         $this->setSettingsManager($settingsManager);
     }
 
-    /**
-     * @param array  $array
-     * @param string $base
-     * @param string $divider
-     *
-     * @return array
-     */
-    public function flatternArray(array $array, $base = '', $divider = self::ARRAY_DIVIDER)
+    public function flattenArray(array $array, string $base = '', string $divider = self::ARRAY_DIVIDER): array
     {
         $output = [];
         foreach ($array as $key => $element) {
@@ -129,7 +122,7 @@ class FieldsFilterHelper
         $result = [];
         switch ($valueType) {
             case 'array':
-                $result = $this->flatternArray($elementValue, $currentPath, $divider);
+                $result = $this->flattenArray($elementValue, $currentPath, $divider);
                 break;
             case 'NULL':
             case 'boolean':
@@ -190,7 +183,7 @@ class FieldsFilterHelper
         $profile = $settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
 
         $data = $this->prepareSourceData($data);
-        $data = $this->flatternArray($data);
+        $data = $this->flattenArray($data);
 
         $settings = self::getFieldProcessingParams();
         $data = $this->removeFields($data, $settings['ignore'], $profile->getFilterFieldNameRegExp());
@@ -214,7 +207,7 @@ class FieldsFilterHelper
         if ($strategy === self::FILTER_STRATEGY_UPLOAD && !GlobalSettingsManager::isAcfDisabled()) {
             $data = $this->acfDynamicSupport->removePreTranslationFields($data);
         }
-        $data = $this->flatternArray($data);
+        $data = $this->flattenArray($data);
 
         $settings = self::getFieldProcessingParams();
         $removeAsRegExp = $profile->getFilterFieldNameRegExp();
@@ -255,10 +248,10 @@ class FieldsFilterHelper
     public function applyTranslatedValues(SubmissionEntity $submission, array $originalValues, array $translatedValues, $applyFilters = true)
     {
         $originalValues = $this->prepareSourceData($originalValues);
-        $originalValues = $this->flatternArray($originalValues);
+        $originalValues = $this->flattenArray($originalValues);
 
         $translatedValues = $this->prepareSourceData($translatedValues);
-        $translatedValues = $this->flatternArray($translatedValues);
+        $translatedValues = $this->flattenArray($translatedValues);
 
 
         $result = [];

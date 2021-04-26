@@ -64,10 +64,7 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
     }
 
 
-    /**
-     * @inheritdoc
-     */
-    public function register()
+    public function register(): void
     {
         //add_action('admin_post_smartling_run_cron', [$this, 'runCron']);
     }

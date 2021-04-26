@@ -2,6 +2,7 @@
 
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\WP\Table\BulkSubmitTableWidget;
@@ -363,7 +364,7 @@ if ($post instanceof WP_Post) {
             });
 
             var loadRelations = function (contentType, contentId) {
-                var url = `${ajaxurl}?action=smartling-get-relations&id=${contentId}&content-type=${contentType}&targetBlogIds=${localeList}`;
+                var url = `${ajaxurl}?action=<?= ContentRelationsDiscoveryService::ACTION_NAME?>&id=${contentId}&content-type=${contentType}&targetBlogIds=${localeList}`;
 
                 $.get(url, function (data) {
                     if (data.response.data) {
@@ -487,6 +488,7 @@ if ($post instanceof WP_Post) {
                             blogs: blogs.join(",")
                         };
                         btnLockWait();
+                        $('#error-messages').hide();
                         $.post(
                             ajaxurl + "?action=" + "smartling_upload_handler",
                             obj,
@@ -527,7 +529,7 @@ if ($post instanceof WP_Post) {
                         e.stopPropagation();
                         e.preventDefault();
                         var jobId = $("#jobSelect").val();
-                        var jobName = $("input[name=\"jobName\"]").val();
+                        var jobName = $("#name-sm").val();
                         var jobDescription = $("textarea[name=\"description-sm\"]").val();
                         var jobDueDate = $("input[name=\"dueDate\"]").val();
 
@@ -589,6 +591,7 @@ if ($post instanceof WP_Post) {
                 $("#addToJob").on("click", function (e) {
                     e.stopPropagation();
                     e.preventDefault();
+                    jobSelectEl.trigger("change");
 
                     var url = `${ajaxurl}?action=smartling-create-submissions`;
 
@@ -602,7 +605,7 @@ if ($post instanceof WP_Post) {
                         source: currentContent,
                         job: {
                             id: $("#jobSelect").val(),
-                            name: $("input[name=\"jobName\"]").val(),
+                            name: $("#name-sm").val(),
                             description: $("textarea[name=\"description-sm\"]").val(),
                             dueDate: $("input[name=\"dueDate\"]").val(),
                             timeZone: timezone,

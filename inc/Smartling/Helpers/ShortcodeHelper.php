@@ -72,16 +72,13 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     {
         global $shortcode_tags;
 
-        /** @noinspection OnlyWritesOnParameterInspection */
         $shortcode_tags = $assignments;
     }
 
     /**
      * Registers wp hook handlers. Invoked by wordpress.
-     *
-     * @return void
      */
-    public function register()
+    public function register(): void
     {
         add_filter(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING, [$this, 'processString'], 5);
         add_filter(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING_RECEIVED, [$this, 'processTranslation'], 99);

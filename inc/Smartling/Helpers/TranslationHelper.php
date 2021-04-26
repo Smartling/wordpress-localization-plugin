@@ -2,7 +2,6 @@
 
 namespace Smartling\Helpers;
 
-use Smartling\Exception\SmartlingManualRelationsHandlingSubmissionCreationForbiddenException;
 use Smartling\Services\GlobalSettingsManager;
 use UnexpectedValueException;
 use Psr\Log\LoggerInterface;
@@ -160,16 +159,7 @@ class TranslationHelper
         }
     }
 
-    /**
-     * @param string   $contentType
-     * @param int      $sourceBlog
-     * @param mixed    $sourceEntity
-     * @param int      $targetBlog
-     * @param int|null $targetEntity
-     *
-     * @return SubmissionEntity
-     */
-    public function prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null)
+    public function prepareSubmissionEntity(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, ?int $targetEntity = null): SubmissionEntity
     {
         $this->validateBlogs($sourceBlog, $targetBlog);
 
@@ -184,18 +174,11 @@ class TranslationHelper
     }
 
     /**
-     * @param string $contentType
-     * @param int $sourceBlog
-     * @param int $sourceId
-     * @param int $targetBlog
-     * @param bool $clone
-     * @return SubmissionEntity
      * @throws SmartlingDataReadException
-     * @throws SmartlingManualRelationsHandlingSubmissionCreationForbiddenException
      */
-    public function prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone = false)
+    public function prepareSubmission(string $contentType, int $sourceBlog, int $sourceId, int $targetBlog, bool $clone = false): SubmissionEntity
     {
-        if (0 === (int)$sourceId) {
+        if (0 === $sourceId) {
             throw new \InvalidArgumentException('Source id cannot be 0.');
         }
         $submission = $this->prepareSubmissionEntity(
@@ -220,12 +203,9 @@ class TranslationHelper
     }
 
     /**
-     * @param SubmissionEntity $submission
-     *
-     * @return SubmissionEntity
      * @throws SmartlingDataReadException
      */
-    public function reloadSubmission(SubmissionEntity $submission)
+    public function reloadSubmission(SubmissionEntity $submission): SubmissionEntity
     {
         $submissionsList = $this->getSubmissionManager()->getEntityById($submission->getId());
         if (is_array($submissionsList)) {
@@ -251,15 +231,9 @@ class TranslationHelper
     }
 
     /**
-     * @param string $contentType
-     * @param int $sourceBlogId
-     * @param int $contentId
-     * @param int $targetBlogId
-     * @param string $batchUid
-     * @return SubmissionEntity
      * @throws SmartlingDataReadException
      */
-    public function getExistingSubmissionOrCreateNew($contentType, $sourceBlogId, $contentId, $targetBlogId, $batchUid) {
+    public function getExistingSubmissionOrCreateNew(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId, string $batchUid): SubmissionEntity {
         $submission = $this->submissionManager->getSubmissionEntity($contentType, $sourceBlogId, $contentId, $targetBlogId, $this->getMutilangProxy());
         if ($submission->getTargetId() === 0) {
             $this->getLogger()->debug("Got submission with 0 target id");
@@ -269,16 +243,9 @@ class TranslationHelper
     }
 
     /**
-     * @param string $contentType
-     * @param int $sourceBlog
-     * @param int $sourceId
-     * @param int $targetBlog
-     * @param string $batchUid
-     * @param bool $clone
-     * @return SubmissionEntity
      * @throws SmartlingDataReadException
      */
-    public function tryPrepareRelatedContent($contentType, $sourceBlog, $sourceId, $targetBlog, $batchUid, $clone = false)
+    public function tryPrepareRelatedContent(string $contentType, int $sourceBlog, int $sourceId, int $targetBlog, string $batchUid, bool $clone = false): SubmissionEntity
     {
         $relatedSubmission = $this->prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone);
 

@@ -75,10 +75,7 @@ class EntityHelper
         $this->connector = $connector;
     }
 
-    /**
-     * @return SiteHelper
-     */
-    public function getSiteHelper()
+    public function getSiteHelper(): SiteHelper
     {
         return $this->siteHelper;
     }

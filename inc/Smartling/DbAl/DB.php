@@ -16,10 +16,6 @@ use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPInstallableInterface;
 
-/**
- * Class DB
- * @package Smartling\DbAl
- */
 class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableInterface
 {
 
@@ -71,7 +67,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
         return $this->wpdb;
     }
 
-    private function buildTableDefinitions()
+    private function buildTableDefinitions(): void
     {
         // Submissions
         $this->tables[] = [
@@ -331,15 +327,15 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
         foreach ($tableDefinition['indexes'] as $indexDefinition) {
             if ($indexDefinition['type'] === 'primary') {
                 continue;
-            } else {
-                $_indexes[] = vsprintf(
-                    '%s (%s)',
-                    [
-                        strtoupper($indexDefinition['type']),
-                        '`' . implode('`, `', $indexDefinition['columns']) . '`',
-                    ]
-                );
             }
+
+            $_indexes[] = vsprintf(
+                '%s (%s)',
+                [
+                    strtoupper($indexDefinition['type']),
+                    '`' . implode('`, `', $indexDefinition['columns']) . '`',
+                ]
+            );
         }
 
         return implode(', ', $_indexes);
@@ -402,12 +398,8 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
 
     /**
      * Builds SQL query to create a table from definition array
-     *
-     * @param $tableDefinition
-     *
-     * @return string
      */
-    private function prepareSql(array $tableDefinition)
+    public function prepareSql(array $tableDefinition): string
     {
         $table = $this->getTableName($tableDefinition);
         $pk = $this->getPrimaryKey($tableDefinition);
@@ -437,66 +429,37 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
         return $sql;
     }
 
-    /**
-     * Escape string value
-     *
-     * @param string $string
-     *
-     * @return mixed
-     */
-    public function escape($string)
+    public function escape(string $string): string
     {
         return $this->getWpdb()->_escape($string);
     }
 
-    /**
-     * @param string $tableName
-     *
-     * @return mixed
-     */
-    public function completeTableName($tableName)
+    public function completeTableName(string $tableName): string
     {
         return $this->getWpdb()->base_prefix . $tableName;
     }
 
-    /**
-     * @param $tableName
-     *
-     * @return string
-     */
-    public function completeMultisiteTableName($tableName)
+    public function completeMultisiteTableName(string $tableName): string
     {
         return $this->getWpdb()->prefix . $tableName;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function query($query)
+    public function query(string $query)
     {
         return $this->wpdb->query($query);
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function fetch($query, $output = OBJECT)
+    public function fetch(string $query, string $output = OBJECT)
     {
         return $this->getWpdb()->get_results($query, $output);
     }
 
-    /**
-     * @return integer
-     */
-    public function getLastInsertedId()
+    public function getLastInsertedId(): int
     {
         return $this->wpdb->insert_id;
     }
 
-    /**
-     * @return string
-     */
-    public function getLastErrorMessage()
+    public function getLastErrorMessage(): string
     {
         return $this->getWpdb()->last_error;
     }

@@ -21,10 +21,7 @@ class RuntimeCacheHelper
      */
     private $storage = [];
 
-    /**
-     * @return RuntimeCacheHelper
-     */
-    public static function getInstance()
+    public static function getInstance(): RuntimeCacheHelper
     {
         if (null === self::$instance) {
             self::$instance = new self();
