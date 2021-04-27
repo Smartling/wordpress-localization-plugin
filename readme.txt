@@ -3,7 +3,7 @@ Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 5.5
 Tested up to: 5.7
-Stable tag: 2.1.0
+Stable tag: 2.2.0
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -59,10 +59,12 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 2.2.0 =
+* Added possibility to submit strings from theme customizer on Bulk Submit screen
+
 = 2.1.0 =
 * Minimum required PHP version is now 7.4!
 * Added a link to the most recent job for submissions on Translation Progress screen
-* Added possibility to submit text from theme customizer on Bulk Submit screen
 
 = 2.0.1 =
 * Fixed extra slashes being added when using fine tuning forms

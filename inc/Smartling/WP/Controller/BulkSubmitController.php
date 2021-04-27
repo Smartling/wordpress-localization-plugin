@@ -19,7 +19,7 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
         }
     }
 
-    public function wp_enqueue(): void
+    public function wp_enqueue()
     {
         $resPath = $this->getPluginInfo()->getUrl();
         $jsPath = $resPath . 'js/';
@@ -33,7 +33,7 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
         }
     }
 
-    public function menu(): void
+    public function menu()
     {
         add_submenu_page(
             'smartling-submissions-page',
@@ -48,7 +48,7 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
         );
     }
 
-    public function renderPage(): void
+    public function renderPage()
     {
         $currentBlogId = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
         $applicableProfiles = $this->getEntityHelper()->getSettingsManager()->findEntityByMainLocale($currentBlogId);
