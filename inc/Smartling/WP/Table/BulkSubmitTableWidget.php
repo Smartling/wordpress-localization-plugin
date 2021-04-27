@@ -4,7 +4,6 @@ namespace Smartling\WP\Table;
 
 use DateTime;
 use Psr\Log\LoggerInterface;
-use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Helpers\ArrayHelper;
@@ -260,22 +259,16 @@ class BulkSubmitTableWidget extends SmartlingListTable
         return $sortable_columns;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function get_bulk_actions()
+    public function get_bulk_actions(): array
     {
         return [];
     }
 
     /**
-     * Handles actions for multiply objects
+     * Handles actions for multiple objects
      */
-    private function processBulkAction()
+    private function processBulkAction(): void
     {
-        /**
-         * @var array $submissions
-         */
         $action = $this->getFromSource('action', 'send');
         $submissions = $this->getFormElementValue('submission', []);
         $locales = [];
@@ -360,10 +353,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
         }
     }
 
-    /**
-     * Handles actions
-     */
-    private function processAction()
+    private function processAction(): void
     {
         $this->processBulkAction();
     }
@@ -474,7 +464,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
                 }
 
                 $row['updated'] = $updatedDate;
-                $row = array_merge(['bulkActionCb' => $this->column_cb($row)], $row);
+                $row['bulkActionCb'] = $this->column_cb($row);
                 $dataAsArray[] = $row;
             }
         }

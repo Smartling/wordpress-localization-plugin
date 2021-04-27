@@ -287,13 +287,7 @@ class ContentHelper
         return $metadata;
     }
 
-    /**
-     * @param SubmissionEntity $submission
-     * @param EntityAbstract   $entity
-     *
-     * @return EntityAbstract
-     */
-    public function writeTargetContent(SubmissionEntity $submission, EntityAbstract $entity)
+    public function writeTargetContent(SubmissionEntity $submission, EntityAbstract $entity): int
     {
         $wrapper = $this->getWrapper($submission->getContentType());
 
@@ -328,6 +322,9 @@ class ContentHelper
             throw new \LogicException($message, $e->getCode(), $e);
         }
 
+        if ($result instanceof EntityAbstract) {
+            return $result->getPK();
+        }
         return $result;
     }
 

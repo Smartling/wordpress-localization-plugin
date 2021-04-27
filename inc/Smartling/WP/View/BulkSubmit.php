@@ -114,6 +114,7 @@ $data = $this->getViewData();
                 </div>
             </div>
             <input type="hidden" name="content-type" id="ct" value=""/>
+            <input type="hidden" name="wp_customize" value="on"/>
             <input type="hidden" name="page" value="<?= $_REQUEST['page'] ?>"/>
             <input type="hidden" id="action" name="action" value="clone"/>
     </form>

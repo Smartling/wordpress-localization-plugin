@@ -7,6 +7,8 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class ContentTypeCustomizer extends ContentTypeVirtual
 {
+    public const CONTENT_TYPE = 'customizer';
+
     public function __construct(ContainerBuilder $di)
     {
         parent::__construct($di);
@@ -18,7 +20,7 @@ class ContentTypeCustomizer extends ContentTypeVirtual
 
     public function getSystemName(): string
     {
-        return 'customizer';
+        return self::CONTENT_TYPE;
     }
 
     public function getLabel(): string
@@ -56,8 +58,8 @@ class ContentTypeCustomizer extends ContentTypeVirtual
     public function getVisibility(): array
     {
         return [
-            'submissionBoard' => false,
-            'bulkSubmit'      => true,
+            'submissionBoard' => true,
+            'bulkSubmit' => true,
         ];
     }
 

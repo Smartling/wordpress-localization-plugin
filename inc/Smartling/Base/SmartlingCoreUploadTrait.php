@@ -7,6 +7,7 @@ use JetBrains\PhpStorm\ArrayShape;
 use Smartling\ApiWrapperInterface;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
+use Smartling\DbAl\WordpressContentEntities\PropertySettableInterface;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\InvalidXMLException;
@@ -232,7 +233,7 @@ trait SmartlingCoreUploadTrait
             $targetContent = $this->getContentHelper()->readTargetContent($submission);
             $params = new AfterDeserializeContentEventParameters($translation, $submission, $targetContent, $translation['meta']);
             do_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
-            $this->applyBlockLevelLocks($targetContent, $translation, $submission, $postContentHelper, $lockedData['entity']);
+            $targetContent = $this->applyBlockLevelLocks($targetContent, $translation, $submission, $postContentHelper, $lockedData['entity']);
             $configurationProfile = $this->getSettingsManager()
                 ->getSingleSettingsProfile($submission->getSourceBlogId());
 
@@ -753,7 +754,7 @@ trait SmartlingCoreUploadTrait
     /**
      * Modifies $targetContent
      */
-    private function applyBlockLevelLocks(EntityAbstract $targetContent, array $translation, SubmissionEntity $submission, PostContentHelper $postContentHelper, array $entity): void
+    private function applyBlockLevelLocks(EntityAbstract $targetContent, array $translation, SubmissionEntity $submission, PostContentHelper $postContentHelper, array $entity): EntityAbstract
     {
         if (array_key_exists('entity', $translation) && ArrayHelper::notEmpty($translation['entity'])) {
             $targetContentArray = $targetContent->toArray();
@@ -761,14 +762,16 @@ trait SmartlingCoreUploadTrait
                 $translation['entity']['post_content'] = $postContentHelper->applyTranslation($targetContentArray['post_content'], $translation['entity']['post_content'], $submission->getLockedFields());
             }
             $translation['entity'] = self::arrayMergeIfKeyNotExists($entity, $translation['entity']);
-            $this->setValues($targetContent, $translation['entity']);
+            $targetContent = $this->setValues($targetContent, $translation['entity']);
         }
+
+        return $targetContent;
     }
 
     /**
      * Modifies $entity
      */
-    private function setValues(EntityAbstract $entity, array $properties): void
+    private function setValues(EntityAbstract $entity, array $properties): EntityAbstract
     {
         foreach ($properties as $propertyName => $propertyValue) {
             if ($entity->{$propertyName} !== $propertyValue) {
@@ -781,8 +784,14 @@ trait SmartlingCoreUploadTrait
                     ]
                 );
                 $this->getLogger()->debug($message);
-                $entity->{$propertyName} = $propertyValue;
+                if ($entity instanceof PropertySettableInterface) {
+                    $entity->setProperty($propertyName, $propertyValue);
+                } else {
+                    $entity->{$propertyName} = $propertyValue;
+                }
             }
         }
+
+        return $entity;
     }
 }

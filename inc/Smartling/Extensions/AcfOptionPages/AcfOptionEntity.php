@@ -73,14 +73,6 @@ class AcfOptionEntity extends VirtualEntityAbstract
     }
 
     /**
-     * @return array;
-     */
-    public function getMetadata()
-    {
-        return [];
-    }
-
-    /**
      * @return mixed
      */
     public function getTitle()
@@ -97,15 +89,6 @@ class AcfOptionEntity extends VirtualEntityAbstract
         }
 
         return $this->resultToEntity($this->map[$guid]->toArray());
-    }
-
-    /**
-     * @param string $tagName
-     * @param string $tagValue
-     * @param bool   $unique
-     */
-    public function setMetaTag($tagName, $tagValue, $unique = true)
-    {
     }
 
     private function getOptionNames()
@@ -191,22 +174,6 @@ class AcfOptionEntity extends VirtualEntityAbstract
         return $acfOptionHelper->getPk();
     }
 
-    /**
-     * @return array
-     */
-    protected function getNonCloneableFields()
-    {
-        return [$this->getPrimaryFieldName()];
-    }
-
-    /**
-     * @return string
-     */
-    public function getPrimaryFieldName()
-    {
-        return 'id';
-    }
-
     public function toArray($skipNameField = true)
     {
         $state = parent::toArray();
@@ -233,6 +200,5 @@ class AcfOptionEntity extends VirtualEntityAbstract
             'locales' => null,
             'updated' => null,
         ];
-
     }
 }

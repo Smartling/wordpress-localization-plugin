@@ -5,6 +5,8 @@ namespace Smartling\Services;
 use Exception;
 use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
+use Smartling\Base\ExportedAPI;
+use Smartling\ContentTypes\ContentTypeCustomizer;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exceptions\SmartlingApiException;
@@ -60,7 +62,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 {
     public const ACTION_NAME = 'smartling-get-relations';
 
-    private const ACTION_NAME_CREATE_SUBMISSIONS = 'smartling-create-submissions';
+    public const ACTION_NAME_CREATE_SUBMISSIONS = 'smartling-create-submissions';
 
     private LoggerInterface $logger;
     private ContentHelper $contentHelper;
@@ -160,6 +162,9 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission->getFileUri();
                 $this->submissionManager->storeEntity($submission);
+                if ($submission->getContentType() === ContentTypeCustomizer::CONTENT_TYPE) {
+                    do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $submission);
+                }
             }
         }
         $this->returnResponse(['status' => 'SUCCESS']);

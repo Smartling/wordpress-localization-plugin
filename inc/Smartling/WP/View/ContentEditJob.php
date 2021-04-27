@@ -593,7 +593,7 @@ if ($post instanceof WP_Post) {
                     e.preventDefault();
                     jobSelectEl.trigger("change");
 
-                    var url = `${ajaxurl}?action=smartling-create-submissions`;
+                    var url = `${ajaxurl}?action=<?= ContentRelationsDiscoveryService::ACTION_NAME_CREATE_SUBMISSIONS?>`;
 
                     var blogIds = [];
 
@@ -622,6 +622,7 @@ if ($post instanceof WP_Post) {
                     }
 
                     if (isBulkSubmitPage) {
+                        data['wp_customize'] = 'on';
                         data.ids = [];
                         $("input.bulkaction[type=checkbox]:checked").each(function () {
                             var parts = $(this).attr("id").split("-");
@@ -657,8 +658,6 @@ if ($post instanceof WP_Post) {
                                     case "FAIL":
                                         wp.data.dispatch("core/notices").createErrorNotice(message);
                                         break;
-                                    default:
-                                        console.log(data);
                                 }
                             }
                         };
