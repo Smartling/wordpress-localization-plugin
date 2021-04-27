@@ -60,6 +60,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 2.2.0 =
+* Added possibility to set assets to Draft status after translations are downloaded
 
 = 2.1.0 =
 * Minimum required PHP version is now 7.4!
