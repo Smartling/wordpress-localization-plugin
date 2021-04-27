@@ -45,12 +45,9 @@ class ConditionBlock
         $this->conditions[] = $condition;
     }
 
-    /**
-     * @return Condition[]
-     */
-    public function getConditions(): array
+    public function isEmpty(): bool
     {
-        return $this->conditions;
+        return count($this->conditions) > 0 || count($this->blocks) > 0;
     }
 
     public function addConditionBlock(ConditionBlock $block): void

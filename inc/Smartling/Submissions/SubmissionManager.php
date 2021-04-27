@@ -111,7 +111,7 @@ class SubmissionManager extends EntityManagerAbstract
         $result = [];
 
         if ($this->isValidRequest($contentType, $sortOptions, $pageOptions)) {
-            [$totalCount, $result] = $this->getTotalCountAndResult($contentType, $status, $outdatedFlag, $sortOptions, count($block->getConditions()) > 0 ? $block : null, $pageOptions);
+            [$totalCount, $result] = $this->getTotalCountAndResult($contentType, $status, $outdatedFlag, $sortOptions, $block->isEmpty() ? $block : null, $pageOptions);
         }
 
         return $result;
