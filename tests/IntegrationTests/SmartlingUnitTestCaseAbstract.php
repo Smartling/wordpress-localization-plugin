@@ -229,7 +229,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         $profile->setAutoAuthorize(1);
         $profile->setRetrievalType('pseudo');
         $profile->setUploadOnUpdate(1);
-        $profile->setPublishCompleted(0);
+        $profile->setChangeAssetStatusOnCompletedTranslation(0);
         $profile->setDownloadOnChange(0);
         $profile->setCleanMetadataOnDownload(0);
         $profile->setAlwaysSyncImagesOnUpload(0);

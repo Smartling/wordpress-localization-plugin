@@ -254,7 +254,8 @@ trait SmartlingCoreUploadTrait
                     )
                 );
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
-                if (1 === $configurationProfile->getPublishCompleted()) {
+                $onCompletedTranslation = $configurationProfile->getChangeAssetStatusOnCompletedTranslation();
+                if (ConfigurationProfileEntity::ASSET_STATUS_TRANSLATION_COMPLETED_NO_CHANGE !== $onCompletedTranslation) {
                     $this->getLogger()->debug(
                         vsprintf(
                             'Submission id=%s (blog=%s, item=%s, content-type=%s) setting status %s for translation. Profile snapshot: %s',
@@ -268,7 +269,16 @@ trait SmartlingCoreUploadTrait
                             ]
                         )
                     );
-                    $targetContent->translationCompleted();
+                    switch ($onCompletedTranslation) {
+                        case ConfigurationProfileEntity::ASSET_STATUS_TRANSLATION_COMPLETED_PUBLISH:
+                            $targetContent->translationCompleted();
+                            break;
+                        case ConfigurationProfileEntity::ASSET_STATUS_TRANSLATION_COMPLETED_DRAFT:
+                            $targetContent->translationDrafted();
+                            break;
+                        default:
+                            throw new \RuntimeException('Unexpected value for profile setting regarding asset status on translation completion');
+                    }
                 }
                 $submission->setAppliedDate(DateTimeHelper::nowAsString());
             }

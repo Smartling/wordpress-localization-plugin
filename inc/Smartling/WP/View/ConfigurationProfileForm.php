@@ -1,33 +1,28 @@
 <?php
-/**
- * @var PluginInfo $pluginInfo
- */
 
+use Smartling\Exception\BlogNotFoundException;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
-use Smartling\Helpers\PluginInfo;
+use Smartling\Helpers\Parsers\IntegerParser;
+use Smartling\Helpers\StringHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\WP\Controller\ConfigurationProfileFormController;
 use Smartling\WP\WPAbstract;
 
 /**
- * @var WPAbstract $this
- * @var WPAbstract self
+ * @var ConfigurationProfileFormController $this
+ * @var SettingsManager $settingsManager
  */
-$data = $this->getViewData();
+$settingsManager = $this->getViewData();
 
 $pluginInfo = $this->getPluginInfo();
 $domain = $pluginInfo->getDomain();
 
-/**
- * @var SettingsManager $settingsManager
- */
-$settingsManager = $data;
-
 $profileId = 0;
 
 if (array_key_exists('profile', $_GET)) {
-    \Smartling\Helpers\Parsers\IntegerParser::tryParseString($_GET['profile'], $profileId);
+    IntegerParser::tryParseString($_GET['profile'], $profileId);
 }
 
 $defaultFilter = Smartling\Bootstrap::getContainer()->getParameter('field.processor.default');
@@ -35,59 +30,56 @@ $defaultFilter = Smartling\Bootstrap::getContainer()->getParameter('field.proces
 ?>
 <script>
     (function ($) {
-        $(document).ready(function () {
-            var queryProxy = {
+        $(function () {
+            const queryProxy = {
                 baseEndpoint: '<?= admin_url('admin-ajax.php') ?>?action=smartling_test_connection',
                 getProjectLocales: function (params, success) {
                     $.post(this.baseEndpoint, params, function (response) {
-                        var cb = success;
-                        cb(response);
+                        success(response);
                     });
                 },
             };
-            var mkblockTag = function (tag, content, attributes) {
+            const mkblockTag = function (tag, content, attributes) {
                 if (undefined === attributes) {
                     attributes = {};
                 }
                 if (undefined === content) {
                     content = '';
                 }
-                var attributesPart = '';
-                for (var v in attributes) {
+                let attributesPart = '';
+                for (const v in attributes) {
                     if (attributes.hasOwnProperty(v)) {
                         attributesPart += ' ' + v + '="' + attributes[v] + '"';
                     }
                 }
                 return '<' + tag + attributesPart + '>' + content + '</' + tag + '>';
             };
-            var mkTag = function (tag, attributes) {
+            const mkTag = function (tag, attributes) {
                 if (undefined === attributes) {
                     attributes = {};
                 }
-                var attributesPart = '';
-                for (var v in attributes) {
+                let attributesPart = '';
+                for (const v in attributes) {
                     if (attributes.hasOwnProperty(v)) {
                         attributesPart += ' ' + v + '="' + attributes[v] + '"';
                     }
                 }
                 return '<' + tag + attributesPart + '/>';
             };
-            var getSelect = function (selectName, options, value) {
-                var opts = [];
-                for (var e in options) {
+            const getSelect = function (selectName, options, value) {
+                const opts = [];
+                for (let e in options) {
                     if (options.hasOwnProperty(e)) {
-                        var attributes = {
+                        const attributes = {
                             value: e,
                         }
                         if (value === e) {
                             attributes.selected = 'selected';
                         }
-                        _option = mkblockTag('option', options[e], attributes);
-                        opts.push(_option);
+                        opts.push(mkblockTag('option', options[e], attributes));
                     }
                 }
                 return mkblockTag('select', opts.join(''), {name: selectName});
-                ;
             };
 
             $('#testConnection').on('click', function (e) {
@@ -100,36 +92,35 @@ $defaultFilter = Smartling\Bootstrap::getContainer()->getParameter('field.proces
                     userIdent: $('#userIdentifier').val(),
                     tokenSecret: $('#secretKey').val()
                 }, function (r) {
+                    let i;
                     if (200 === r.status && undefined !== r.locales) {
 
-                        var inputs = $('#target-locale-block input[type=text]');
-                        for (var i = 0; i < inputs.length; i++) {
-                            var el = inputs[i];
-                            var _name = $(el).attr('name');
-                            var _value = $(el).val();
-                            var select = getSelect(_name, r.locales, _value);
-                            var place = $(el).parent();
+                        const inputs = $('#target-locale-block input[type=text]');
+                        for (i = 0; i < inputs.length; i++) {
+                            const el = inputs[i];
+                            const _name = $(el).attr('name');
+                            const _value = $(el).val();
+                            const select = getSelect(_name, r.locales, _value);
+                            const place = $(el).parent();
                             place.html(select);
                         }
+
                         alert('Test successful.');
-
                     } else {
-
-                        var selects = $('#target-locale-block select');
+                        const selects = $('#target-locale-block select');
                         if (0 < selects.length) {
-                            for (var i = 0; i < selects.length; i++) {
-                                var el = selects[i];
-                                var _name = $(el).attr('name');
-                                var _value = $(el).val();
-                                var input = mkTag('input', {type: 'text', name: _name, value: _value});
-                                var place = $(el).parent();
+                            for (i = 0; i < selects.length; i++) {
+                                const el = selects[i];
+                                const _name = $(el).attr('name');
+                                const _value = $(el).val();
+                                const input = mkTag('input', {type: 'text', name: _name, value: _value});
+                                const place = $(el).parent();
                                 place.html(input);
                             }
                         }
 
                         alert('Test failed.');
                     }
-
                 });
                 return false;
             });
@@ -154,29 +145,31 @@ if (0 === $profileId) {
 } else {
     $profiles = $pluginInfo->getSettingsManager()->getEntityById($profileId);
 
-    /**
-     * @var ConfigurationProfileEntity $profile
-     */
-    $profile = \Smartling\Helpers\ArrayHelper::first($profiles);
+    $profile = ArrayHelper::first($profiles);
 
     ?>
     <script>
         (function ($) {
-            $(document).ready(function () {
-                var getButton = function (selector, action, text) {
+            $(function () {
+                const getButton = function (selector, action, text) {
                     return '<button class="filter-' + selector + '" data-action="' + action + '">' + text + '</button>';
                 };
 
                 /* update UI */
-                var ignoreActionBlock = '<br/>' + getButton('ignore', 'reset', '<?= __('Reset value'); ?>') + '&nbsp;' + getButton('ignore', 'undo', '<?= __('Undo changes'); ?>');
-                var copyByNameActionBlock = '<br/>' + getButton('copy-name', 'reset', '<?= __('Reset value'); ?>') + '&nbsp;' + getButton('copy-name', 'undo', '<?= __('Undo changes'); ?>');
-                var copyByValueActionBlock = '<br/>' + getButton('copy-value', 'reset', '<?= __('Reset value'); ?>') + '&nbsp;' + getButton('copy-value', 'undo', '<?= __('Undo changes'); ?>');
-                var seoActionBlock = '<br/>' + getButton('seo', 'reset', '<?= __('Reset value'); ?>') + '&nbsp;' + getButton('seo', 'undo', '<?= __('Undo changes'); ?>');
+                const ignoreActionBlock = '<br/>' + getButton('ignore', 'reset', '<?= __('Reset value') ?>') + '&nbsp;' + getButton('ignore', 'undo', '<?= __('Undo changes') ?>');
+                const copyByNameActionBlock = '<br/>' + getButton('copy-name', 'reset', '<?= __('Reset value') ?>') + '&nbsp;' + getButton('copy-name', 'undo', '<?= __('Undo changes') ?>');
+                const copyByValueActionBlock = '<br/>' + getButton('copy-value', 'reset', '<?= __('Reset value') ?>') + '&nbsp;' + getButton('copy-value', 'undo', '<?= __('Undo changes') ?>');
+                const seoActionBlock = '<br/>' + getButton('seo', 'reset', '<?= __('Reset value') ?>') + '&nbsp;' + getButton('seo', 'undo', '<?= __('Undo changes') ?>');
 
-                $('#filter-skip').after(ignoreActionBlock);
-                $('#filter-copy-by-name').after(copyByNameActionBlock);
-                $('#filter-copy-by-value').after(copyByValueActionBlock);
-                $('#filter-set-flag-seo').after(seoActionBlock);
+                const filterSkip = $('#filter-skip');
+                const filterCopyByName = $('#filter-copy-by-name');
+                const filterCopyByValue = $('#filter-copy-by-value');
+                const filterSetFlagSeo = $('#filter-set-flag-seo');
+
+                filterSkip.after(ignoreActionBlock);
+                filterCopyByName.after(copyByNameActionBlock);
+                filterCopyByValue.after(copyByValueActionBlock);
+                filterSetFlagSeo.after(seoActionBlock);
 
                 /* add handlers */
                 $('.filter-ignore').on('click', function (e) {
@@ -185,10 +178,10 @@ if (0 === $profileId) {
 
                     switch ($(this).attr('data-action')) {
                         case 'undo':
-                            $('#filter-skip').val(<?= json_encode($profile->getFilterSkip()); ?>);
+                            filterSkip.val(<?= json_encode($profile->getFilterSkip(), JSON_THROW_ON_ERROR) ?>);
                             break;
                         case 'reset':
-                            $('#filter-skip').val(<?= json_encode(implode(PHP_EOL, $defaultFilter['ignore'])); ?>);
+                            filterSkip.val(<?= json_encode(implode(PHP_EOL, $defaultFilter['ignore']), JSON_THROW_ON_ERROR) ?>);
                             break;
                         default:
                             throw {
@@ -203,10 +196,10 @@ if (0 === $profileId) {
 
                     switch ($(this).attr('data-action')) {
                         case 'undo':
-                            $('#filter-copy-by-name').val(<?= json_encode($profile->getFilterCopyByFieldName()); ?>);
+                            filterCopyByName.val(<?= json_encode($profile->getFilterCopyByFieldName(), JSON_THROW_ON_ERROR) ?>);
                             break;
                         case 'reset':
-                            $('#filter-copy-by-name').val(<?= json_encode(implode(PHP_EOL, $defaultFilter['copy']['name'])); ?>);
+                            filterCopyByName.val(<?= json_encode(implode(PHP_EOL, $defaultFilter['copy']['name']), JSON_THROW_ON_ERROR) ?>);
                             break;
                         default:
                             throw {
@@ -221,10 +214,10 @@ if (0 === $profileId) {
 
                     switch ($(this).attr('data-action')) {
                         case 'undo':
-                            $('#filter-copy-by-value').val(<?= json_encode($profile->getFilterCopyByFieldValueRegex()); ?>);
+                            filterCopyByValue.val(<?= json_encode($profile->getFilterCopyByFieldValueRegex(), JSON_THROW_ON_ERROR) ?>);
                             break;
                         case 'reset':
-                            $('#filter-copy-by-value').val(<?= json_encode(implode(PHP_EOL, $defaultFilter['copy']['regexp'])); ?>);
+                            filterCopyByValue.val(<?= json_encode(implode(PHP_EOL, $defaultFilter['copy']['regexp']), JSON_THROW_ON_ERROR) ?>);
                             break;
                         default:
                             throw {
@@ -239,10 +232,10 @@ if (0 === $profileId) {
 
                     switch ($(this).attr('data-action')) {
                         case 'undo':
-                            $('#filter-set-flag-seo').val(<?= json_encode($profile->getFilterFlagSeo()); ?>);
+                            filterSetFlagSeo.val(<?= json_encode($profile->getFilterFlagSeo(), JSON_THROW_ON_ERROR) ?>);
                             break;
                         case 'reset':
-                            $('#filter-set-flag-seo').val(<?= json_encode(implode(PHP_EOL, $defaultFilter['key']['seo'])); ?>);
+                            filterSetFlagSeo.val(<?= json_encode(implode(PHP_EOL, $defaultFilter['key']['seo']), JSON_THROW_ON_ERROR) ?>);
                             break;
                         default:
                             throw {
@@ -259,18 +252,18 @@ if (0 === $profileId) {
 
 <div class="wrap">
     <h2><?= __(get_admin_page_title(), $domain) ?></h2>
-    <form id="smartling-configuration-profile-form" action="<?= get_site_url(); ?>/wp-admin/admin-post.php" method="POST">
+    <form id="smartling-configuration-profile-form" action="<?= get_admin_url(null, 'admin-post.php') ?>" method="POST">
         <?= HtmlTagGeneratorHelper::tag('input', '', [
             'type'  => 'hidden',
             'name'  => 'action',
             'value' => 'smartling_configuration_profile_save',
-        ]); ?>
+        ]) ?>
 
         <?= HtmlTagGeneratorHelper::tag('input', '', [
             'type'  => 'hidden',
             'name'  => 'smartling_settings[id]',
             'value' => $profile->getId(),
-        ]); ?>
+        ]) ?>
 
         <?php wp_nonce_field('smartling_connector_settings', 'smartling_connector_nonce'); ?>
         <?php wp_referer_field(); ?>
@@ -282,7 +275,7 @@ if (0 === $profileId) {
             <tr>
                 <th scope="row">
                     <label for="profileName">
-                        <?= __(ConfigurationProfileEntity::getFieldLabel('profile_name'), $domain); ?>
+                        <?= __(ConfigurationProfileEntity::getFieldLabel('profile_name'), $domain) ?>
                     </label>
                 </th>
                 <td>
@@ -304,7 +297,7 @@ if (0 === $profileId) {
             <tr>
                 <th scope="row">
                     <label for="is_active">
-                        <?= ConfigurationProfileEntity::getFieldLabel('is_active'); ?>
+                        <?= ConfigurationProfileEntity::getFieldLabel('is_active') ?>
                     </label>
                 </th>
                 <td>
@@ -322,7 +315,7 @@ if (0 === $profileId) {
                             'id'   => 'is_active',
                             'name' => 'smartling_settings[active]',
                         ]
-                    );
+                    )
                     ?>
                 </td>
             </tr>
@@ -351,7 +344,7 @@ if (0 === $profileId) {
                             'data-msg-maxlength'  => __('Project ID is 9 chars length.', $domain),
                             'value' => $profile->getProjectId(),
                         ]
-                    );
+                    )
                     ?>
                 </td>
             </tr>
@@ -375,7 +368,7 @@ if (0 === $profileId) {
                             'data-msg'    => __('User Identifier should be set', $domain),
                             'value'       => $profile->getUserIdentifier(),
                         ]
-                    );
+                    )
                     ?>
                 </td>
             </tr>
@@ -396,7 +389,7 @@ if (0 === $profileId) {
 
                     ];
 
-                    if (\Smartling\Helpers\StringHelper::isNullOrEmpty($key)) {
+                    if (StringHelper::isNullOrEmpty($key)) {
                         $tokenOptions['required'] = 'required';
                         $tokenOptions['placeholder'] = __('Set the Token Secret', $domain);
                         $tokenOptions['data-msg'] = __('Token Secret should be set', $domain);
@@ -405,7 +398,7 @@ if (0 === $profileId) {
                     }
 
                     ?>
-                    <?= HtmlTagGeneratorHelper::tag('input', '', $tokenOptions); ?>
+                    <?= HtmlTagGeneratorHelper::tag('input', '', $tokenOptions) ?>
                     <input type="button" id="testConnection" value="Test Connection"/>
                     <br>
                     <?php if ($key): ?>
@@ -443,7 +436,7 @@ if (0 === $profileId) {
                             ['name'     => 'smartling_settings[defaultLocale]',
                              'required' => 'required',
                              'id'       => 'default-locales-new',]
-                        ); ?>
+                        ) ?>
                     <?php else: ?>
                         <p>
                             <?= __('Site source language is: ', $domain) ?>
@@ -461,14 +454,14 @@ if (0 === $profileId) {
                             ),
                             ['name' => 'smartling_settings[defaultLocale]',
                              'id'   => 'default-locales',]
-                        ); ?>
+                        ) ?>
                     <?php endif; ?>
                 </td>
             </tr>
             <tr>
                 <th scope="row"><?= __('Target Locales', $domain) ?></th>
                 <td>
-                    <?= WPAbstract::checkUncheckBlock(); ?>
+                    <?= WPAbstract::checkUncheckBlock() ?>
                     <table id="target-locale-block">
                         <?php
                         $targetLocales = $profile->getTargetLocales();
@@ -493,7 +486,7 @@ if (0 === $profileId) {
 
                             <tr>
                                 <?= WPAbstract::settingsPageTsargetLocaleCheckbox($profile, $label, $blogId,
-                                                                                  $smartlingLocale, $enabled); ?>
+                                                                                  $smartlingLocale, $enabled) ?>
                             </tr>
                             <?php
                         }
@@ -507,11 +500,11 @@ if (0 === $profileId) {
                         <p>
                             <?= __("<strong>Warning!</strong>
 Updates to these settings will change how content is handled during the translation process.<br>
-Contact Technical Support or your Customer Success Manager before modifying these settings.<br>", $domain); ?>
+Contact Technical Support or your Customer Success Manager before modifying these settings.<br>", $domain) ?>
                         </p>
                         <p>
                             <a href="javascript:void(0)"
-                               class="toggleExpert"><strong><?= __('Show Expert Settings', $domain); ?></strong></a>
+                               class="toggleExpert"><strong><?= __('Show Expert Settings', $domain) ?></strong></a>
                         </p>
                     </div>
                 </td>
@@ -533,7 +526,7 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                              1 => __('Automatically', $domain),]
 
                         ),
-                        ['name' => 'smartling_settings[uploadOnUpdate]']);
+                        ['name' => 'smartling_settings[uploadOnUpdate]'])
 
                     ?>
                     <br/>
@@ -554,7 +547,7 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                              1 => __('Enabled', $domain),]
 
                         ),
-                        ['name' => 'smartling_settings[always_sync_images_on_upload]']);
+                        ['name' => 'smartling_settings[always_sync_images_on_upload]'])
 
                     ?>
                     <br/>
@@ -575,7 +568,7 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                              1 => __('Enabled', $domain),]
 
                         ),
-                        ['name' => 'smartling_settings[enable_notifications]']);
+                        ['name' => 'smartling_settings[enable_notifications]'])
 
                     ?>
                     <br/>
@@ -585,7 +578,7 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                 </td>
             </tr>
             <tr class="toggleExpert hidden">
-                <th scope="row"><?= __('Clone attachments'); ?></th>
+                <th scope="row"><?= __('Clone attachments') ?></th>
                 <td>
                     <?=
                     HtmlTagGeneratorHelper::tag(
@@ -598,7 +591,7 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                             ]
                         ),
                         ['name' => 'smartling_settings[cloneAttachment]']
-                    );
+                    )
                     ?>
                     <br/>
                     <small>
@@ -607,18 +600,16 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                 </td>
             </tr>
             <tr class="toggleExpert hidden">
-                <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('auto_authorize'); ?></th>
+                <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('auto_authorize') ?></th>
                 <td>
                     <label class="radio-label">
-                        <p>
                             <?php
                             $option = $profile->getAutoAuthorize();
                             $checked = $option === true ? 'checked="checked"' : '';
                             ?>
                             <input type="checkbox"
-                                   name="smartling_settings[autoAuthorize]" <?= $checked; ?> / >
+                                   name="smartling_settings[autoAuthorize]" <?= $checked ?> / >
                             <?= __('Auto authorize job', $domain) ?>
-                        </p>
                     </label>
                 </td>
             </tr>
@@ -637,7 +628,7 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                             $profile->getRetrievalType(),
                             ConfigurationProfileEntity::getRetrievalTypes()
                         ),
-                        ['name' => 'smartling_settings[retrievalType]']);
+                        ['name' => 'smartling_settings[retrievalType]'])
 
                     ?>
                     <br/>
@@ -658,25 +649,25 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                                 1 => __('Progress Changes', $domain),
                             ]
                         ),
-                        ['name' => 'smartling_settings[download_on_change]']);
+                        ['name' => 'smartling_settings[download_on_change]'])
                     ?>
                 </td>
             </tr>
             <tr class="toggleExpert hidden">
-                <th scope="row"><?= __('Publish completed translation',$domain) ?></th>
+                <th scope="row"><?= __('Change asset status on completed translation', $domain) ?></th>
                 <td>
-                    <p>If enabled, status <strong>publish</strong> is set for posts after download if translation is completed.</p>
                     <?=
                     HtmlTagGeneratorHelper::tag(
                         'select',
                         HtmlTagGeneratorHelper::renderSelectOptions(
-                            $profile->getPublishCompleted(),
+                            $profile->getChangeAssetStatusOnCompletedTranslation(),
                             [
-                                0 => __('No', $domain),
-                                1 => __('Yes', $domain),
+                                ConfigurationProfileEntity::ASSET_STATUS_TRANSLATION_COMPLETED_NO_CHANGE => __('No change', $domain),
+                                ConfigurationProfileEntity::ASSET_STATUS_TRANSLATION_COMPLETED_PUBLISH => __('Publish', $domain),
+                                ConfigurationProfileEntity::ASSET_STATUS_TRANSLATION_COMPLETED_DRAFT => __('Draft', $domain),
                             ]
                         ),
-                        ['name' => 'smartling_settings[publish_completed]']);
+                        ['name' => 'smartling_settings[publish_completed]'])
                     ?>
                 </td>
             </tr>
@@ -694,7 +685,7 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                                 1 => __('Enabled', $domain),
                             ]
                         ),
-                        ['name' => 'smartling_settings[clean_metadata_on_download]']);
+                        ['name' => 'smartling_settings[clean_metadata_on_download]'])
                     ?>
                 </td>
             </tr>
@@ -729,22 +720,22 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                                 '1' => __('RegExp', $domain),
                             ]
                         ),
-                        ['name' => 'smartling_settings[' . ConfigurationProfileFormController::FILTER_FIELD_NAME_REGEXP . ']']);
+                        ['name' => 'smartling_settings[' . ConfigurationProfileFormController::FILTER_FIELD_NAME_REGEXP . ']'])
                     ?>
                 </td>
             </tr>
 
             <tr class="toggleExpert hidden">
-                <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_skip'); ?></th>
+                <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_skip') ?></th>
                 <td>
                     <p>Fields listed here will be excluded
                         and not carried over during translation.</p>
                     <textarea id="filter-skip" wrap="off" cols="45" rows="5" class="nowrap"
-                              name="smartling_settings[filter_skip]"><?= trim($profile->getFilterSkip()); ?></textarea>
+                              name="smartling_settings[filter_skip]"><?= trim($profile->getFilterSkip()) ?></textarea>
                 </td>
             </tr>
             <tr class="toggleExpert hidden">
-                <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_copy_by_field_name'); ?></th>
+                <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_copy_by_field_name') ?></th>
                 <td>
                     <p>Fields listed here will be excluded from translation
                         and copied over from the source content.</p>
@@ -754,7 +745,7 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                 </td>
             </tr>
             <tr class="toggleExpert hidden">
-                <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_copy_by_field_value_regex'); ?></th>
+                <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_copy_by_field_value_regex') ?></th>
                 <td>
                     <p>Regular expressions listed here will identify field names to exclude from translation and be
                         copied over from the source content.<br>
@@ -766,11 +757,11 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                         </small>
                     </p>
                     <textarea id="filter-copy-by-value" wrap="off" cols="45" rows="5" class="nowrap"
-                              name="smartling_settings[filter_copy_by_field_value_regex]"><?= trim($profile->getFilterCopyByFieldValueRegex()); ?></textarea>
+                              name="smartling_settings[filter_copy_by_field_value_regex]"><?= trim($profile->getFilterCopyByFieldValueRegex()) ?></textarea>
                 </td>
             </tr>
             <tr class="toggleExpert hidden">
-                <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_flag_seo'); ?></th>
+                <th scope="row"><?= ConfigurationProfileEntity::getFieldLabel('filter_flag_seo') ?></th>
                 <td>
                     <p>Fields listed here will be identified with a special ‘SEO’ key during translation.<br>
                         <small>Hints:<br>
@@ -781,7 +772,7 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                         </small>
                     </p>
                     <textarea id="filter-set-flag-seo" wrap="off" cols="45" rows="5" class="nowrap"
-                              name="smartling_settings[filter_flag_seo]"><?= trim($profile->getFilterFlagSeo()); ?></textarea>
+                              name="smartling_settings[filter_flag_seo]"><?= trim($profile->getFilterFlagSeo()) ?></textarea>
                 </td>
             </tr>
             </tbody>
