@@ -47,7 +47,7 @@ class ConditionBlock
 
     public function isEmpty(): bool
     {
-        return count($this->conditions) > 0 || count($this->blocks) > 0;
+        return count($this->conditions) === 0 && count($this->blocks) === 0;
     }
 
     public function addConditionBlock(ConditionBlock $block): void
