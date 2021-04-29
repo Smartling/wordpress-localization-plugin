@@ -660,11 +660,11 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                     HtmlTagGeneratorHelper::tag(
                         'select',
                         HtmlTagGeneratorHelper::renderSelectOptions(
-                            $profile->getChangeAssetStatusOnCompletedTranslation(),
+                            $profile->getTranslationPublishingMode(),
                             [
-                                ConfigurationProfileEntity::ASSET_STATUS_TRANSLATION_COMPLETED_NO_CHANGE => __('No change', $domain),
-                                ConfigurationProfileEntity::ASSET_STATUS_TRANSLATION_COMPLETED_PUBLISH => __('Publish', $domain),
-                                ConfigurationProfileEntity::ASSET_STATUS_TRANSLATION_COMPLETED_DRAFT => __('Draft', $domain),
+                                ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_NO_CHANGE => __('No change', $domain),
+                                ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_PUBLISH => __('Publish', $domain),
+                                ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_DRAFT => __('Draft', $domain),
                             ]
                         ),
                         ['name' => 'smartling_settings[publish_completed]'])

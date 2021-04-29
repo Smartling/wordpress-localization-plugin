@@ -17,9 +17,9 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public const UPLOAD_ON_CHANGE_AUTO = 1;
 
-    public const ASSET_STATUS_TRANSLATION_COMPLETED_NO_CHANGE = 0;
-    public const ASSET_STATUS_TRANSLATION_COMPLETED_PUBLISH = 1;
-    public const ASSET_STATUS_TRANSLATION_COMPLETED_DRAFT = 2;
+    public const TRANSLATION_PUBLISHING_MODE_NO_CHANGE = 0;
+    public const TRANSLATION_PUBLISHING_MODE_PUBLISH = 1;
+    public const TRANSLATION_PUBLISHING_MODE_DRAFT = 2;
 
     protected static function getInstance(): ConfigurationProfileEntity
     {
@@ -327,7 +327,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         return $this->stateFields['clean_metadata_on_download'];
     }
 
-    public function getChangeAssetStatusOnCompletedTranslation(): int
+    public function getTranslationPublishingMode(): int
     {
         return $this->stateFields['publish_completed'];
     }
@@ -392,7 +392,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
                 $serializedTargetLocales[] = $targetLocale->toArray();
             }
         }
-        $state['target_locales'] = json_encode($serializedTargetLocales, JSON_THROW_ON_ERROR);
+        $state['target_locales'] = json_encode($serializedTargetLocales);
 
         return $state;
     }
@@ -403,7 +403,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
             $array['target_locales'] = [];
         }
         if (is_string($array['target_locales'])) {
-            $decoded = json_decode($array['target_locales'], true, 512, JSON_THROW_ON_ERROR);
+            $decoded = json_decode($array['target_locales'], true, 512);
             $array['target_locales'] = [];
 
             if (is_array($decoded)) {

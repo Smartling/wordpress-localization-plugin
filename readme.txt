@@ -60,7 +60,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 2.2.0 =
-* Added possibility to set assets to Draft status after completed translations are downloaded
+* Added more publish options for delivering translated posts. Now you can choose what post status to choose after delivering: don't change existing status; set to 'draft'; set to 'published'
 
 = 2.1.0 =
 * Minimum required PHP version is now 7.4!

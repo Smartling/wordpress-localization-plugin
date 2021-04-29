@@ -26,7 +26,7 @@ class ChangeStatusOnTranslationTest extends SmartlingUnitTestCaseAbstract
     public function testDraftAfterPublish()
     {
         $profile = $this->settingsManager->getSingleSettingsProfile($this->sourceBlogId);
-        $profile->setChangeAssetStatusOnCompletedTranslation(ConfigurationProfileEntity::ASSET_STATUS_TRANSLATION_COMPLETED_PUBLISH);
+        $profile->setChangeAssetStatusOnCompletedTranslation(ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_PUBLISH);
         $this->settingsManager->storeEntity($profile);
 
         $this->assertEquals('publish', $this->createPostAndUploadDownload()->post_status);
@@ -41,7 +41,7 @@ class ChangeStatusOnTranslationTest extends SmartlingUnitTestCaseAbstract
         $this->assertCount(1, $submissions);
 
         $submission = ArrayHelper::first($submissions);
-        $profile->setChangeAssetStatusOnCompletedTranslation(ConfigurationProfileEntity::ASSET_STATUS_TRANSLATION_COMPLETED_DRAFT);
+        $profile->setChangeAssetStatusOnCompletedTranslation(ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_DRAFT);
         $this->settingsManager->storeEntity($profile);
 
         $this->uploadDownload($submission);
@@ -53,7 +53,7 @@ class ChangeStatusOnTranslationTest extends SmartlingUnitTestCaseAbstract
     public function testDraft()
     {
         $profile = $this->settingsManager->getSingleSettingsProfile($this->sourceBlogId);
-        $profile->setChangeAssetStatusOnCompletedTranslation(ConfigurationProfileEntity::ASSET_STATUS_TRANSLATION_COMPLETED_DRAFT);
+        $profile->setChangeAssetStatusOnCompletedTranslation(ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_DRAFT);
         $this->settingsManager->storeEntity($profile);
 
         $this->assertEquals('draft', $this->createPostAndUploadDownload()->post_status);

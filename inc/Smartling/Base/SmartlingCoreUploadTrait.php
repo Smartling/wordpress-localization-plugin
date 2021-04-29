@@ -254,30 +254,29 @@ trait SmartlingCoreUploadTrait
                     )
                 );
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
-                $onCompletedTranslation = $configurationProfile->getChangeAssetStatusOnCompletedTranslation();
-                if (ConfigurationProfileEntity::ASSET_STATUS_TRANSLATION_COMPLETED_NO_CHANGE !== $onCompletedTranslation) {
+                $translationPublishingMode = $configurationProfile->getTranslationPublishingMode();
+                if (ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_NO_CHANGE !== $translationPublishingMode) {
                     $this->getLogger()->debug(
                         vsprintf(
-                            'Submission id=%s (blog=%s, item=%s, content-type=%s) setting status %s for translation. Profile snapshot: %s',
+                            'Submission id=%s (blog=%s, item=%s, content-type=%s) setting status %s for translation',
                             [
                                 $submission->getId(),
                                 $submission->getSourceBlogId(),
                                 $submission->getSourceId(),
                                 $submission->getContentType(),
-                                'publish',
-                                base64_encode(serialize($configurationProfile->toArray(false))),
+                                $translationPublishingMode === ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_PUBLISH ? 'publish' : 'draft',
                             ]
                         )
                     );
-                    switch ($onCompletedTranslation) {
-                        case ConfigurationProfileEntity::ASSET_STATUS_TRANSLATION_COMPLETED_PUBLISH:
+                    switch ($translationPublishingMode) {
+                        case ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_PUBLISH:
                             $targetContent->translationCompleted();
                             break;
-                        case ConfigurationProfileEntity::ASSET_STATUS_TRANSLATION_COMPLETED_DRAFT:
+                        case ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_DRAFT:
                             $targetContent->translationDrafted();
                             break;
                         default:
-                            throw new \RuntimeException('Unexpected value for profile setting regarding asset status on translation completion');
+                            throw new \RuntimeException("Unexpected value $translationPublishingMode in profile setting \"translation publishing mode\"");
                     }
                 }
                 $submission->setAppliedDate(DateTimeHelper::nowAsString());
