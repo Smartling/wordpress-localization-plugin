@@ -662,9 +662,9 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                         HtmlTagGeneratorHelper::renderSelectOptions(
                             $profile->getTranslationPublishingMode(),
                             [
-                                ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_NO_CHANGE => __('No change', $domain),
-                                ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_PUBLISH => __('Publish', $domain),
-                                ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_DRAFT => __('Draft', $domain),
+                                ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_NO_CHANGE => __('Don\'t change status', $domain),
+                                ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_PUBLISH => __('Always publish', $domain),
+                                ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_DRAFT => __('Always draft', $domain),
                             ]
                         ),
                         ['name' => 'smartling_settings[publish_completed]'])
