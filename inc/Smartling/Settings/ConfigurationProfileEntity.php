@@ -17,6 +17,10 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public const UPLOAD_ON_CHANGE_AUTO = 1;
 
+    public const TRANSLATION_PUBLISHING_MODE_NO_CHANGE = 0;
+    public const TRANSLATION_PUBLISHING_MODE_PUBLISH = 1;
+    public const TRANSLATION_PUBLISHING_MODE_DRAFT = 2;
+
     protected static function getInstance(): ConfigurationProfileEntity
     {
         return new static();
@@ -323,11 +327,21 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         return $this->stateFields['clean_metadata_on_download'];
     }
 
-    public function getPublishCompleted(): int
+    public function getTranslationPublishingMode(): int
     {
         return $this->stateFields['publish_completed'];
     }
 
+    public function setChangeAssetStatusOnCompletedTranslation(int $status): void
+    {
+        $this->stateFields['publish_completed'] = $status;
+    }
+
+    /**
+     * Alias for $this->setChangeAssetStatusOnCompletedTranslation, required for EntityAbstract::fromArray();
+     * @noinspection PhpUnused
+     * @noinspection UnknownInspectionInspection
+     */
     public function setPublishCompleted(int $publishCompleted): void
     {
         $this->stateFields['publish_completed'] = $publishCompleted;
@@ -389,7 +403,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
             $array['target_locales'] = [];
         }
         if (is_string($array['target_locales'])) {
-            $decoded = json_decode($array['target_locales'], true);
+            $decoded = json_decode($array['target_locales'], true, 512);
             $array['target_locales'] = [];
 
             if (is_array($decoded)) {

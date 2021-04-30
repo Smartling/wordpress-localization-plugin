@@ -15,9 +15,9 @@ use Smartling\WP\WPHookInterface;
 
 class ConfigurationProfileFormController extends WPAbstract implements WPHookInterface
 {
-    const FILTER_FIELD_NAME_REGEXP = 'filter_field_name_regexp';
+    public const FILTER_FIELD_NAME_REGEXP = 'filter_field_name_regexp';
 
-    public function wp_enqueue()
+    public function wp_enqueue(): void
     {
         $resPath = $this->getPluginInfo()->getUrl();
         $jsPath = $resPath . 'js/';
@@ -44,7 +44,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
         }
     }
 
-    public function initTestConnectionEndpoint()
+    public function initTestConnectionEndpoint(): void
     {
         $data =& $_POST;
 
@@ -60,9 +60,6 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
             $_profiles = $settingsManager->getEntityById((int)$data['profileId']);
             if (0 < count($_profiles)) {
                 $_profile = ArrayHelper::first($_profiles);
-                /**
-                 * @var ConfigurationProfileEntity $_profile
-                 */
                 $data['tokenSecret'] = $_profile->getSecretKey();
             }
         }
@@ -93,7 +90,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
         wp_send_json($result);
     }
 
-    public function menu()
+    public function menu(): void
     {
         add_submenu_page(
             'smartling_configuration_profile_list',
@@ -109,17 +106,15 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
     }
 
 
-    public function edit()
+    public function edit(): void
     {
         $this->view($this->getEntityHelper()
                          ->getSettingsManager());
     }
 
-    public function save()
+    public function save(): void
     {
         $settings = &$_REQUEST['smartling_settings'];
-
-        $newSecretKey = &$settings['secretKey'];
 
         $profileId = (int)($settings['id'] ? : 0);
 
@@ -130,17 +125,12 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
             $profile = $settingsManager->createProfile([]);
         } else {
             $profiles = $settingsManager->getEntityById($profileId);
-
-            /**
-             * @var ConfigurationProfileEntity $profile
-             */
             $profile = ArrayHelper::first($profiles);
         }
 
         if (array_key_exists('profileName', $settings)) {
             $profile->setProfileName($settings['profileName']);
         }
-
 
         if (array_key_exists('active', $settings)) {
             $profile->setIsActive($settings['active']);
@@ -161,7 +151,6 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
         ) {
             $profile->setSecretKey($settings['secretKey']);
         }
-
 
         if (array_key_exists('retrievalType', $settings)) {
             $profile->setRetrievalType($settings['retrievalType']);
@@ -188,15 +177,11 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
         }
 
         if (array_key_exists('publish_completed', $settings)) {
-            $profile->setPublishCompleted($settings['publish_completed']);
+            $profile->setChangeAssetStatusOnCompletedTranslation($settings['publish_completed']);
         }
 
         if (array_key_exists('clean_metadata_on_download', $settings)) {
             $profile->setCleanMetadataOnDownload($settings['clean_metadata_on_download']);
-        }
-
-        if (array_key_exists('callbackUrl', $settings)) {
-            $profile->setCallBackUrl($settings['callbackUrl'] === 'on');
         }
 
         if (array_key_exists('autoAuthorize', $settings)) {
@@ -269,6 +254,6 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 
         $settingsManager->storeEntity($profile);
 
-        wp_redirect(get_site_url() . '/wp-admin/admin.php?page=smartling_configuration_profile_list');
+        wp_redirect(get_admin_url(null, 'admin.php?page=smartling_configuration_profile_list'));
     }
 }
