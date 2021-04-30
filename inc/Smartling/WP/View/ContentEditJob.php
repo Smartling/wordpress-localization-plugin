@@ -591,7 +591,6 @@ if ($post instanceof WP_Post) {
                 $("#addToJob").on("click", function (e) {
                     e.stopPropagation();
                     e.preventDefault();
-                    jobSelectEl.trigger("change");
 
                     var url = `${ajaxurl}?action=smartling-create-submissions`;
 
@@ -605,7 +604,7 @@ if ($post instanceof WP_Post) {
                         source: currentContent,
                         job: {
                             id: $("#jobSelect").val(),
-                            name: $("#name-sm").val(),
+                            name: $("option[value=" + jobSelectEl.val() + "]").html(),
                             description: $("textarea[name=\"description-sm\"]").val(),
                             dueDate: $("input[name=\"dueDate\"]").val(),
                             timeZone: timezone,
