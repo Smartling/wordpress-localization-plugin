@@ -340,18 +340,17 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
     private array $shortcodeFields = [];
 
     /**
-     * @param mixed $attributes
      * @see extractFieldsFromShortcodes();
      * @noinspection PhpUnused
      * @noinspection UnknownInspectionInspection
      */
-    public function shortcodeHandler($attributes, string $content, string $shortcodeName): void
+    public function shortcodeHandler(array $attributes, string $content, string $shortcodeName): void
     {
-        if (!is_array($attributes)) {
-            return;
-        }
         foreach ($attributes as $attributeName => $attributeValue) {
             $this->shortcodeFields[$shortcodeName . '/' . $attributeName][] = $attributeValue;
+            if (!StringHelper::isNullOrEmpty($content)) {
+                $this->shortcodeHelper->renderString($content);
+            }
         }
     }
 
@@ -375,11 +374,26 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         $fields = [];
         $blocks = $this->gutenbergBlockHelper->parseBlocks($string);
         foreach ($blocks as $index => $block) {
+            $pointer = 0;
             $blockNamePart = "$basename/{$block['blockName']}_$index";
             $_fields = $block['attrs'];
 
+            /**
+             * Extract regular attributes
+             */
             foreach ($_fields as $fName => $fValue) {
                 $fields[$blockNamePart . '/' . $fName] = $fValue;
+            }
+
+            /**
+             * get nested content attributes
+             */
+            foreach ($block['innerContent'] as $chunk) {
+                if (!is_string($chunk)) {
+                    $chunkFields = $this->extractFieldsFromGutenbergBlock($blockNamePart,
+                        $block['innerBlocks'][$pointer++]);
+                    $fields = array_merge($fields, $chunkFields);
+                }
             }
         }
         return $fields;
@@ -507,7 +521,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             foreach ($detectedReferences as $contentType => $ids) {
                 if (in_array($contentType, $registeredTypes, true) || in_array($contentType, $taxonomies, true)) {
                     foreach ($ids as $id) {
-                        if ($id !== null && !$this->submissionManager->submissionExists($contentType, $curBlogId, $id, $targetBlogId)) {
+                        if (!$this->submissionManager->submissionExists($contentType, $curBlogId, $id, $targetBlogId)) {
                             $responseData['missingTranslatedReferences'][$targetBlogId][$contentType][] = $id;
                         }
                     }
