@@ -314,7 +314,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getDownloadOnChange(): int
     {
-        return $this->stateFields['download_on_change'];
+        return (int)$this->stateFields['download_on_change'];
     }
 
     public function setCleanMetadataOnDownload(int $cleanMetadataOnDownload): void
@@ -324,12 +324,12 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getCleanMetadataOnDownload(): int
     {
-        return $this->stateFields['clean_metadata_on_download'];
+        return (int)$this->stateFields['clean_metadata_on_download'];
     }
 
     public function getTranslationPublishingMode(): int
     {
-        return $this->stateFields['publish_completed'];
+        return (int)$this->stateFields['publish_completed'];
     }
 
     public function setChangeAssetStatusOnCompletedTranslation(int $status): void
@@ -354,7 +354,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getCloneAttachment(): int
     {
-        return $this->stateFields['clone_attachment'];
+        return (int)$this->stateFields['clone_attachment'];
     }
 
     public function setAlwaysSyncImagesOnUpload(int $alwaysSyncImagesOnUpload): void
@@ -364,12 +364,12 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getAlwaysSyncImagesOnUpload(): int
     {
-        return $this->stateFields['always_sync_images_on_upload'];
+        return (int)$this->stateFields['always_sync_images_on_upload'];
     }
 
     public function getEnableNotifications(): int
     {
-        return $this->stateFields['enable_notifications'];
+        return (int)$this->stateFields['enable_notifications'];
     }
 
     public function setEnableNotifications(?int $enableNotifications): void
