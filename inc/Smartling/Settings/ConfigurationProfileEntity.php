@@ -126,7 +126,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getProfileName(): string
     {
-        return $this->stateFields['profile_name'];
+        return (string)$this->stateFields['profile_name'];
     }
 
     public function setProfileName(string $profileName): void
@@ -136,7 +136,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getProjectId(): string
     {
-        return $this->stateFields['project_id'];
+        return (string)$this->stateFields['project_id'];
     }
 
     public function setProjectId(string $projectId): void
@@ -150,7 +150,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getUserIdentifier(): string
     {
-        return $this->stateFields['user_identifier'];
+        return (string)$this->stateFields['user_identifier'];
     }
 
     public function setUserIdentifier(string $user_identifier): void
@@ -160,7 +160,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getSecretKey(): string
     {
-        return $this->stateFields['secret_key'];
+        return (string)$this->stateFields['secret_key'];
     }
 
     public function setSecretKey(string $secret_key): void
@@ -170,7 +170,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getIsActive(): int
     {
-        return $this->stateFields['is_active'];
+        return (int)$this->stateFields['is_active'];
     }
 
     public function setIsActive(int $isActive): void
@@ -180,7 +180,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getOriginalBlogId(): Locale
     {
-        return $this->stateFields['original_blog_id'];
+        return $this->stateFields['original_blog_id'] ?? new Locale();
     }
 
     public function setLocale(Locale $mainLocale): void
