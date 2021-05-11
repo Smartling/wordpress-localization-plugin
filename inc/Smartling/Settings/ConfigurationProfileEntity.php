@@ -126,7 +126,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getProfileName(): string
     {
-        return $this->stateFields['profile_name'];
+        return (string)$this->stateFields['profile_name'];
     }
 
     public function setProfileName(string $profileName): void
@@ -136,7 +136,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getProjectId(): string
     {
-        return $this->stateFields['project_id'];
+        return (string)$this->stateFields['project_id'];
     }
 
     public function setProjectId(string $projectId): void
@@ -150,7 +150,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getUserIdentifier(): string
     {
-        return $this->stateFields['user_identifier'];
+        return (string)$this->stateFields['user_identifier'];
     }
 
     public function setUserIdentifier(string $user_identifier): void
@@ -160,7 +160,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getSecretKey(): string
     {
-        return $this->stateFields['secret_key'];
+        return (string)$this->stateFields['secret_key'];
     }
 
     public function setSecretKey(string $secret_key): void
@@ -170,7 +170,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getIsActive(): int
     {
-        return $this->stateFields['is_active'];
+        return (int)$this->stateFields['is_active'];
     }
 
     public function setIsActive(int $isActive): void
@@ -180,7 +180,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getOriginalBlogId(): Locale
     {
-        return $this->stateFields['original_blog_id'];
+        return $this->stateFields['original_blog_id'] ?? new Locale();
     }
 
     public function setLocale(Locale $mainLocale): void
@@ -314,7 +314,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getDownloadOnChange(): int
     {
-        return $this->stateFields['download_on_change'];
+        return (int)$this->stateFields['download_on_change'];
     }
 
     public function setCleanMetadataOnDownload(int $cleanMetadataOnDownload): void
@@ -324,12 +324,12 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getCleanMetadataOnDownload(): int
     {
-        return $this->stateFields['clean_metadata_on_download'];
+        return (int)$this->stateFields['clean_metadata_on_download'];
     }
 
     public function getTranslationPublishingMode(): int
     {
-        return $this->stateFields['publish_completed'];
+        return (int)$this->stateFields['publish_completed'];
     }
 
     public function setChangeAssetStatusOnCompletedTranslation(int $status): void
@@ -354,7 +354,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getCloneAttachment(): int
     {
-        return $this->stateFields['clone_attachment'];
+        return (int)$this->stateFields['clone_attachment'];
     }
 
     public function setAlwaysSyncImagesOnUpload(int $alwaysSyncImagesOnUpload): void
@@ -364,12 +364,12 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public function getAlwaysSyncImagesOnUpload(): int
     {
-        return $this->stateFields['always_sync_images_on_upload'];
+        return (int)$this->stateFields['always_sync_images_on_upload'];
     }
 
     public function getEnableNotifications(): int
     {
-        return $this->stateFields['enable_notifications'];
+        return (int)$this->stateFields['enable_notifications'];
     }
 
     public function setEnableNotifications(?int $enableNotifications): void

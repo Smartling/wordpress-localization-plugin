@@ -3,8 +3,8 @@ namespace Smartling\Settings;
 
 class Locale
 {
-    private int $blogId;
-    private string $label;
+    private int $blogId = 0;
+    private string $label = '';
 
     public function getBlogId(): int
     {
