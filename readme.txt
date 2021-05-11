@@ -60,7 +60,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 2.2.1 =
-* Fix critical wordpress error on new profile creation
+* Fixed critical wordpress error on new profile creation
 
 = 2.2.0 =
 * Added more publish options for delivering translated posts. Now you can choose what post status to set after delivering: don't change existing status; set to `draft`; set to `published`
