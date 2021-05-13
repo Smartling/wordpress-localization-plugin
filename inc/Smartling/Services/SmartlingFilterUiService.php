@@ -2,6 +2,7 @@
 
 namespace Smartling\Services;
 
+use Smartling\Replacers\ReplacerFactory;
 use Smartling\Tuner\FilterManager;
 use Smartling\Tuner\MediaAttachmentRulesManager;
 use Smartling\Tuner\ShortcodeManager;
@@ -13,15 +14,15 @@ use Smartling\WP\WPHookInterface;
 
 class SmartlingFilterUiService implements WPHookInterface
 {
-    private $mediaAttachmentRulesManager;
-    public function __construct(MediaAttachmentRulesManager $mediaAttachmentRulesManager)
+    private MediaAttachmentRulesManager $mediaAttachmentRulesManager;
+    private ReplacerFactory $replacerFactory;
+
+    public function __construct(MediaAttachmentRulesManager $mediaAttachmentRulesManager, ReplacerFactory $replacerFactory)
     {
         $this->mediaAttachmentRulesManager = $mediaAttachmentRulesManager;
+        $this->replacerFactory = $replacerFactory;
     }
 
-    /**
-     * Registers wp hook handlers. Invoked by wordpress.
-     */
     public function register(): void
     {
         if (1 === (int)GlobalSettingsManager::getFilterUiVisible()) {
@@ -30,10 +31,10 @@ class SmartlingFilterUiService implements WPHookInterface
 
             // Enabling page and forms
             add_action('smartling_register_service', function () {
-                (new AdminPage($this->mediaAttachmentRulesManager))->register();
+                (new AdminPage($this->mediaAttachmentRulesManager, $this->replacerFactory))->register();
                 (new ShortcodeForm())->register();
                 (new FilterForm())->register();
-                (new MediaRuleForm())->register();
+                (new MediaRuleForm($this->mediaAttachmentRulesManager, $this->replacerFactory))->register();
             });
         }
     }

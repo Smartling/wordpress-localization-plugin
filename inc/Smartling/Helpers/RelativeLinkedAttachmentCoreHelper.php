@@ -10,13 +10,11 @@ use Smartling\Base\SmartlingCore;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\MonologWrapper\MonologWrapper;
-use Smartling\Tuner\MediaAttachmentRulesManager;
 use Smartling\WP\WPHookInterface;
 
 class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 {
     private const ACF_GUTENBERG_BLOCK = '<!-- wp:acf/.+ ({.+}) /-->';
-    private const CORE_GUTENBERG_BLOCK = '<!-- wp:core/(.+) ({.+}) -->';
     /**
      * RegEx to catch images from the string
      */
@@ -26,19 +24,13 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 
     private array $acfDefinitions = [];
     private AcfDynamicSupport $acfDynamicSupport;
-    private array $gutenbergReplacementRules;
     private LoggerInterface $logger;
-    private SmartlingCore $core;
+    protected SmartlingCore $core;
     private AfterDeserializeContentEventParameters $params;
 
     public function getLogger(): LoggerInterface
     {
         return $this->logger;
-    }
-
-    public function getCore(): SmartlingCore
-    {
-        return $this->core;
     }
 
     public function getParams(): AfterDeserializeContentEventParameters
@@ -51,12 +43,11 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         $this->params = $params;
     }
 
-    public function __construct(SmartlingCore $core, AcfDynamicSupport $acfDynamicSupport, MediaAttachmentRulesManager $mediaAttachmentRulesManager)
+    public function __construct(SmartlingCore $core, AcfDynamicSupport $acfDynamicSupport)
     {
         $this->acfDynamicSupport = $acfDynamicSupport;
         $this->core = $core;
         $this->logger = MonologWrapper::getLogger(static::class);
-        $this->gutenbergReplacementRules = $mediaAttachmentRulesManager->getGutenbergReplacementRules();
     }
 
     public function register(): void
@@ -100,18 +91,10 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         }
 
         if (0 < preg_match_all(self::ACF_GUTENBERG_BLOCK, $stringValue, $matches)) {
+            // ACF has it's own processing because we know how it works with attachments
+            // TODO move to GutenbergBlockHelper
             foreach ($matches[1] as $match) {
                 $stringValue = $this->getReplacerForAcfGutenbergBlock($match)->processString($stringValue);
-            }
-        }
-
-        if (0 < preg_match_all(self::CORE_GUTENBERG_BLOCK, $stringValue, $matches)) {
-            foreach ($matches[1] as $key => $_) {
-                $info = $this->processGutenbergBlock($matches[1][$key], $matches[2][$key]);
-                if ($info !== null) {
-                    $stringValue = str_replace("<!-- wp:core/{$matches[1][$key]} {$matches[2][$key]} -->", "<!-- wp:{$matches[1][$key]} {$info->getReplacement()} -->", $stringValue);
-                    $replacer->addReplacementPair(new ReplacementPair("wp-image-{$info->getSourceId()}", "wp-image-{$info->getTargetId()}"));
-                }
             }
         }
 
@@ -133,9 +116,9 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     private function tryProcessThumbnail(string $path): ?ReplacementPair
     {
         $submission = $this->getParams()->getSubmission();
-        $dir = $this->getCore()->getUploadFileInfo($submission->getSourceBlogId())['basedir'];
+        $dir = $this->core->getUploadFileInfo($submission->getSourceBlogId())['basedir'];
 
-        $fullFileName = $dir . DIRECTORY_SEPARATOR . $this->getCore()->getFullyRelateAttachmentPath($submission, $path);
+        $fullFileName = $dir . DIRECTORY_SEPARATOR . $this->core->getFullyRelateAttachmentPath($submission, $path);
 
         if (FileHelper::testFile($fullFileName)) {
             $sourceFilePathInfo = pathinfo($fullFileName);
@@ -159,13 +142,13 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                     $attachmentId = $this->getAttachmentId($relativePathOfOriginalFile);
 
                     if (false !== $attachmentId) {
-                        if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded(
+                        if ($this->core->getTranslationHelper()->isRelatedSubmissionCreationNeeded(
                             'attachment',
                             $submission->getSourceBlogId(),
                             $attachmentId,
                             $submission->getTargetBlogId())
                         ) {
-                            $attachmentSubmission = $this->getCore()->sendAttachmentForTranslation(
+                            $attachmentSubmission = $this->core->sendAttachmentForTranslation(
                                 $submission->getSourceBlogId(),
                                 $submission->getTargetBlogId(),
                                 $attachmentId,
@@ -173,7 +156,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                                 $submission->getIsCloned()
                             );
 
-                            $targetUploadInfo = $this->getCore()->getUploadFileInfo($submission->getTargetBlogId());
+                            $targetUploadInfo = $this->core->getUploadFileInfo($submission->getTargetBlogId());
 
                             $fullTargetFileName = $targetUploadInfo['basedir'] . DIRECTORY_SEPARATOR .
                                 $sourceFilePathInfo['filename'] . '.' . $sourceFilePathInfo['extension'];
@@ -182,7 +165,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                                 $this->getLogger()->warning("Unknown error occurred while copying thumbnail from $fullFileName to $fullTargetFileName.");
                             }
 
-                            $targetFileRelativePath = $this->getCore()
+                            $targetFileRelativePath = $this->core
                                 ->getAttachmentRelativePathBySubmission($attachmentSubmission);
 
                             $targetThumbnailPathInfo = pathinfo($targetFileRelativePath);
@@ -231,7 +214,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
             "SELECT `post_id` as `id` FROM `%s` WHERE `meta_key` = '_wp_attached_file' AND `meta_value`='%s' LIMIT 1;",
             [
                 RawDbQueryHelper::getTableName('postmeta'),
-                $this->getCore()->getFullyRelateAttachmentPath($this->getParams()->getSubmission(), $relativePath),
+                $this->core->getFullyRelateAttachmentPath($this->getParams()->getSubmission(), $relativePath),
             ]
         ));
     }
@@ -321,7 +304,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         $sourceBlogId = $submission->getSourceBlogId();
         $targetBlogId = $submission->getTargetBlogId();
 
-        $acfData = json_decode(stripslashes($block), true);
+        $acfData = json_decode(stripslashes($block), true, 512, JSON_THROW_ON_ERROR);
         if (array_key_exists('data', $acfData)) {
             foreach ($acfData['data'] as $key => $value) {
                 if (array_key_exists($value, $this->acfDefinitions)
@@ -332,8 +315,8 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                     $attachmentId = $acfData['data'][substr($key, 1)];
 
                     if (!empty($attachmentId) && is_numeric($attachmentId)) {
-                        if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, (int)$attachmentId, $targetBlogId)) {
-                            $attachment = $this->getCore()->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, (int)$attachmentId, $submission->getJobInfoWithBatchUid());
+                        if ($this->core->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, (int)$attachmentId, $targetBlogId)) {
+                            $attachment = $this->core->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, (int)$attachmentId, $submission->getJobInfoWithBatchUid());
                             $result->addReplacementPair(new ReplacementPair((string)$attachmentId, (string)$attachment->getTargetId()));
                         } else {
                             $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
@@ -347,42 +330,6 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         return $result;
     }
 
-    private function processGutenbergBlock(string $type, string $content): ?ReplacementInfo
-    {
-        $submission = $this->getParams()->getSubmission();
-        $sourceBlogId = $submission->getSourceBlogId();
-        $targetBlogId = $submission->getTargetBlogId();
-        foreach ($this->gutenbergReplacementRules as $rule) {
-            if ($rule->getType() === $type) {
-                $data = json_decode($content, true);
-                if (!is_array($data) || !array_key_exists($rule->getProperty(), $data)) {
-                    $this->getLogger()->warning("Unable to find property {$rule->getProperty()} in $type $content");
-                    return null;
-                }
-                $attachmentId = $data[$rule->getProperty()];
-
-                if (!empty($attachmentId) && is_numeric($attachmentId)) {
-                    $dataType = gettype($attachmentId);
-                    if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, (int)$attachmentId, $targetBlogId)) {
-                        $targetId = $this->getCore()->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, (int)$attachmentId, $submission->getJobInfoWithBatchUid())->getTargetId();
-                        if ($dataType === 'string') {
-                            $targetId = (string)$targetId;
-                        }
-                        $data[$rule->getProperty()] = $targetId;
-
-                        return new ReplacementInfo(json_encode($data, JSON_UNESCAPED_UNICODE), $attachmentId, $targetId);
-                    }
-                    $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
-                } else {
-                    $this->getLogger()->warning("$type has invalid property {$rule->getProperty()}: {$data[$rule->getProperty()]}");
-                }
-                break;
-            }
-        }
-
-        return null;
-    }
-
     private function getReplacerForImgTag(string $tag, PairReplacerHelper $replacer): PairReplacerHelper
     {
         $result = $replacer;
@@ -394,9 +341,9 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                 $submission = $this->getParams()->getSubmission();
                 $sourceBlogId = $submission->getSourceBlogId();
                 $targetBlogId = $submission->getTargetBlogId();
-                if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, $attachmentId, $targetBlogId)) {
-                    $attachmentSubmission = $this->getCore()->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, $attachmentId, $submission->getJobInfoWithBatchUid(), $submission->getIsCloned());
-                    $result->addReplacementPair(new ReplacementPair($path, $this->getCore()->getAttachmentRelativePathBySubmission($attachmentSubmission)));
+                if ($this->core->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, $attachmentId, $targetBlogId)) {
+                    $attachmentSubmission = $this->core->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, $attachmentId, $submission->getJobInfoWithBatchUid(), $submission->getIsCloned());
+                    $result->addReplacementPair(new ReplacementPair($path, $this->core->getAttachmentRelativePathBySubmission($attachmentSubmission)));
                 } else {
                     $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
                 }

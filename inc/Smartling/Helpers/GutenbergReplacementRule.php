@@ -4,38 +4,29 @@ namespace Smartling\Helpers;
 
 class GutenbergReplacementRule
 {
-    private $property;
-    private $type;
+    private string $blockType;
+    private string $propertyPath;
+    private string $replacerId;
 
-    /**
-     * @param string $type
-     * @param string $property
-     */
-    public function __construct($type, $property)
+    public function __construct(string $blockType, string $propertyPath, string $replacerId)
     {
-        if (!is_string($property)) {
-            throw new \InvalidArgumentException('Property expected to be string');
-        }
-        if (!is_string($type)) {
-            throw new \InvalidArgumentException('Type expected to be string');
-        }
-        $this->property = $property;
-        $this->type = $type;
+        $this->blockType = $blockType;
+        $this->propertyPath = $propertyPath;
+        $this->replacerId = $replacerId;
     }
 
-    /**
-     * @return string
-     */
-    public function getProperty()
+    public function getBlockType(): string
     {
-        return $this->property;
+        return $this->blockType;
     }
 
-    /**
-     * @return string
-     */
-    public function getType()
+    public function getPropertyPath(): string
     {
-        return $this->type;
+        return $this->propertyPath;
+    }
+
+    public function getReplacerId(): string
+    {
+        return $this->replacerId;
     }
 }

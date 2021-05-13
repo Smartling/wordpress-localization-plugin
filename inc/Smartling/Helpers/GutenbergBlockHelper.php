@@ -2,23 +2,35 @@
 
 namespace Smartling\Helpers;
 
+use JetBrains\PhpStorm\ArrayShape;
 use Smartling\Base\ExportedAPI;
+use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingGutenbergNotFoundException;
 use Smartling\Exception\SmartlingGutenbergParserNotFoundException;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
+use Smartling\Models\GutenbergBlock;
+use Smartling\Replacers\ReplacerFactory;
+use Smartling\Submissions\SubmissionEntity;
+use Smartling\Tuner\MediaAttachmentRulesManager;
 
 class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 {
-    const BLOCK_NODE_NAME = 'gutenbergBlock';
-    const CHUNK_NODE_NAME = 'contentChunk';
-    const ATTRIBUTE_NODE_NAME = 'blockAttribute';
+    protected const BLOCK_NODE_NAME = 'gutenbergBlock';
+    protected const CHUNK_NODE_NAME = 'contentChunk';
+    protected const ATTRIBUTE_NODE_NAME = 'blockAttribute';
 
-    /**
-     * @param array $definitions
-     * @return array
-     */
-    public function registerFilters(array $definitions)
+    private MediaAttachmentRulesManager $rulesManager;
+    private ReplacerFactory $replacerFactory;
+
+    public function __construct(MediaAttachmentRulesManager $rulesManager, ReplacerFactory $replacerFactory)
+    {
+        parent::__construct();
+        $this->replacerFactory = $replacerFactory;
+        $this->rulesManager = $rulesManager;
+    }
+
+    public function registerFilters(array $definitions): array
     {
         $copyList = [
             '^type$',
@@ -37,11 +49,6 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $definitions;
     }
 
-    /**
-     * Registers wp hook handlers. Invoked by wordpress.
-     *
-     * @throws SmartlingConfigException
-     */
     public function register(): void
     {
         $handlers = [
@@ -56,7 +63,6 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             foreach ($handlers as $hook => $handler) {
                 add_filter($hook, [$this, $handler]);
             }
-
         } catch (SmartlingGutenbergNotFoundException $e) {
             $this->getLogger()->notice($e->getMessage());
         } catch (SmartlingConfigException $e) {
@@ -65,12 +71,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         }
     }
 
-    /**
-     * @param string $blockName
-     * @param array  $flatAttributes
-     * @return array
-     */
-    public function processAttributes($blockName, array $flatAttributes)
+    public function processAttributes(string $blockName, array $flatAttributes): array
     {
         $attributes = [];
 
@@ -93,63 +94,47 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $attributes;
     }
 
-    /**
-     * @param string $string
-     * @return bool
-     */
-    public function hasBlocks($string)
+    public function hasBlocks(string $string): bool
     {
         return 0 < (int)preg_match('/<!--\s+wp:/iu', $string);
     }
 
-    /**
-     * @param array $data
-     * @return string
-     */
-    private function packData(array $data)
+    private function packData(array $data): string
     {
         return base64_encode(serialize($data));
     }
 
-    /**
-     * @param $data
-     * @return mixed
-     */
-    private function unpackData($data)
+    private function unpackData(string $data): array
     {
         return unserialize(base64_decode($data));
     }
 
-    /**
-     * @param array $block
-     * @return \DOMElement
-     */
-    private function placeBlock(array $block)
+    private function placeBlock(GutenbergBlock $block): \DOMElement
     {
         $indexPointer = 0;
 
         $node = $this->createDomNode(
             static::BLOCK_NODE_NAME,
             [
-                'blockName' => $block['blockName'],
-                'originalAttributes' => $this->packData($block['attrs']),
+                'blockName' => $block->getBlockName(),
+                'originalAttributes' => $this->packData($block->getAttributes()),
             ],
             ''
         );
 
-        foreach ($block['innerContent'] as $chunk) {
+        foreach ($block->getInnerContent() as $chunk) {
             $part = null;
             if (is_string($chunk)) {
                 $part = $this->createDomNode(static::CHUNK_NODE_NAME, [], $chunk);
             } else {
-                $part = $this->placeBlock($block['innerBlocks'][$indexPointer++]);
+                $part = $this->placeBlock($block->getInnerBlocks()[$indexPointer++]);
             }
             $node->appendChild($part);
         }
 
-        $flatAttributes = $this->getFieldsFilter()->flattenArray($block['attrs']);
+        $flatAttributes = $this->getFieldsFilter()->flattenArray($block->getAttributes());
 
-        foreach ($this->processAttributes($block['blockName'], $flatAttributes) as $attrName => $attrValue) {
+        foreach ($this->processAttributes($block->getBlockName(), $flatAttributes) as $attrName => $attrValue) {
             $node->appendChild($this->createDomNode(
                 static::ATTRIBUTE_NODE_NAME,
                 ['name' => $attrName],
@@ -160,14 +145,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $node;
     }
 
-    /**
-     * Filter handler
-     *
-     * @param TranslationStringFilterParameters $params
-     *
-     * @return TranslationStringFilterParameters
-     */
-    public function processString(TranslationStringFilterParameters $params)
+    public function processString(TranslationStringFilterParameters $params): TranslationStringFilterParameters
     {
         $this->setParams($params);
         $string = static::getCdata($params->getNode());
@@ -186,28 +164,29 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     /**
      * A wrapper for WP::gutenberg gutenberg_parse_blocks() function
      *
-     * @param string $string
-     * @return array
+     * @return GutenbergBlock[]
      * @throws SmartlingGutenbergParserNotFoundException
      */
     public function parseBlocks($string)
     {
         if (function_exists('\parse_blocks')) {
-            return \parse_blocks($string);
+            $blocks = \parse_blocks($string);
+        } elseif (function_exists('\gutenberg_parse_blocks')) {
+            /** @noinspection PhpUndefinedFunctionInspection */
+            $blocks = \gutenberg_parse_blocks($string);
+        } else {
+            throw new SmartlingGutenbergParserNotFoundException('No block parser found.');
         }
 
-        if (function_exists('\gutenberg_parse_blocks')) {
-            return \gutenberg_parse_blocks($string);
-        }
-
-        throw new SmartlingGutenbergParserNotFoundException('No block parser found.');
+        return array_map(static function($block) {
+            return GutenbergBlock::fromArray($block);
+        }, $blocks);
     }
 
     /**
-     * @param array $entityFields
      * @return string[] entity fields with added blocks serialized
      */
-    public function addPostContentBlocks(array $entityFields)
+    public function addPostContentBlocks(array $entityFields): array
     {
         if (array_key_exists('post_content', $entityFields) && $this->hasBlocks($entityFields['post_content'])) {
             try {
@@ -223,37 +202,31 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     }
 
     /**
-     * @param string $string
      * @return array[]
      * @throws SmartlingGutenbergParserNotFoundException
      */
-    public function getPostContentBlocks($string)
+    public function getPostContentBlocks(string $string): array
     {
         $blocks = $this->parseBlocks($string);
 
         return array_values(array_filter($blocks, static function ($block) {
-            return array_key_exists('blockName', $block) && $block['blockName'] !== null;
+            return $block->getBlockName() !== '';
         }));
     }
 
-    /**
-     * @param $string
-     * @return string
-     */
-    public function normalizeCoreBlocks($string)
+    public function normalizeCoreBlocks(string $string): string
     {
         if (function_exists('serialize_blocks')) {
-            return \serialize_blocks($this->parseBlocks($string));
+            return \serialize_blocks(array_map(static function($block) {
+                return $block->toArray();
+            }, $this->parseBlocks($string)));
         }
 
         return $string;
     }
 
-    /**
-     * @param \DOMNode $node
-     * @return array
-     */
-    public function sortChildNodesContent(\DOMNode $node)
+    #[ArrayShape(['attributes' => 'array', 'chunks' => 'array'])]
+    public function sortChildNodesContent(\DOMNode $node, SubmissionEntity $submission): array
     {
         $chunks = [];
         $attrs = [];
@@ -266,7 +239,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 
             switch ($childNode->nodeName) {
                 case static::BLOCK_NODE_NAME :
-                    $chunks[] = $this->renderTranslatedBlockNode($childNode);
+                    $chunks[] = $this->renderTranslatedBlockNode($childNode, $submission);
                     break;
                 case static::CHUNK_NODE_NAME :
                     $chunks[] = $childNode->nodeValue;
@@ -294,13 +267,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         ];
     }
 
-    /**
-     * @param string $blockName
-     * @param array  $originalAttributes
-     * @param array  $translatedAttributes
-     * @return array
-     */
-    private function processTranslationAttributes($blockName, $originalAttributes, $translatedAttributes)
+    private function processTranslationAttributes(SubmissionEntity $submission, string $blockName, array $originalAttributes, array $translatedAttributes): array
     {
         $processedAttributes = $originalAttributes;
 
@@ -310,37 +277,27 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             $attr = $this->postReceiveFiltering($attr);
             $attr = static::unmaskAttributes($blockName, $attr);
             $filteredAttributes = array_merge($flatAttributes, $attr, $translatedAttributes);
-            $processedAttributes = $this->getFieldsFilter()->structurizeArray($filteredAttributes);
+            $processedAttributes = $this->getFieldsFilter()->structurizeArray($this->applyDownloadRules($submission, $blockName, $filteredAttributes));
         }
 
         return $this->fixAttributeTypes($originalAttributes, $processedAttributes);
     }
 
-    /**
-     * @param \DOMElement $node
-     * @return string
-     */
-    public function renderTranslatedBlockNode(\DOMElement $node)
+    public function renderTranslatedBlockNode(\DOMElement $node, SubmissionEntity $submission): string
     {
         $blockName = $node->getAttribute('blockName');
         $blockName = '' === $blockName ? null : $blockName;
         $originalAttributes = $this->unpackData($node->getAttribute('originalAttributes'));
-        $sortedResult = $this->sortChildNodesContent($node);
+        $sortedResult = $this->sortChildNodesContent($node, $submission);
         // simple plain blocks
         if (null === $blockName) {
             return implode('\n', $sortedResult['chunks']);
         }
-        $attributes = $this->processTranslationAttributes($blockName, $originalAttributes, $sortedResult['attributes']);
+        $attributes = $this->processTranslationAttributes($submission, $blockName, $originalAttributes, $sortedResult['attributes']);
         return $this->renderGutenbergBlock($blockName, $attributes, $sortedResult['chunks']);
     }
 
-    /**
-     * @param string $name
-     * @param array $attrs
-     * @param array $chunks
-     * @return string
-     */
-    public function renderGutenbergBlock($name, array $attrs = [], array $chunks = [])
+    public function renderGutenbergBlock(string $name, array $attrs = [], array $chunks = []): string
     {
         $isJson = $this->isJson($attrs);
         if ($isJson) {
@@ -361,14 +318,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $result;
     }
 
-    /**
-     * Filter handler
-     *
-     * @param TranslationStringFilterParameters $params
-     *
-     * @return TranslationStringFilterParameters
-     */
-    public function processTranslation(TranslationStringFilterParameters $params)
+    public function processTranslation(TranslationStringFilterParameters $params): TranslationStringFilterParameters
     {
         $this->setParams($params);
         $node = $this->getNode();
@@ -381,7 +331,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
                  * @var \DOMElement $child
                  */
                 if (static::BLOCK_NODE_NAME === $child->nodeName) {
-                    $string .= $this->renderTranslatedBlockNode($child);
+                    $string .= $this->renderTranslatedBlockNode($child, $params->getSubmission());
                 }
             }
 
@@ -400,7 +350,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
      * @throws SmartlingGutenbergNotFoundException
      * @throws SmartlingConfigException
      */
-    public function loadExternalDependencies()
+    public function loadExternalDependencies(): void
     {
         if (!defined('ABSPATH')) {
             throw new SmartlingConfigException("Execution requires declared ABSPATH const.");
@@ -413,7 +363,6 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 
 
         foreach ($paths as $path) {
-            //$this->getLogger()->debug(vsprintf('Trying to get block class from file: %s', [$path]));
             if (file_exists($path) && is_readable($path)) {
                 /** @noinspection PhpIncludeInspection */
                 require_once $path;
@@ -424,12 +373,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         throw new SmartlingGutenbergNotFoundException("Gutenberg class not found. Disabling GutenbergSupport.");
     }
 
-    /**
-     * @param array $originalAttributes
-     * @param array $translatedAttributes
-     * @return array
-     */
-    private function fixAttributeTypes(array $originalAttributes, array $translatedAttributes)
+    private function fixAttributeTypes(array $originalAttributes, array $translatedAttributes): array
     {
         foreach ($translatedAttributes as $key => $value) {
             if (array_key_exists($key, $originalAttributes)) {
@@ -440,11 +384,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $translatedAttributes;
     }
 
-    /**
-     * @param array $attrs
-     * @return bool
-     */
-    private function isJson(array $attrs)
+    private function isJson(array $attrs): bool
     {
         foreach ($attrs as $attr) {
             try {
@@ -457,5 +397,22 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             }
         }
         return false;
+    }
+
+    private function applyDownloadRules(SubmissionEntity $submission, string $blockName, array $attributes): array
+    {
+        foreach ($attributes as $attribute => $value) {
+            foreach ($this->rulesManager->getGutenbergReplacementRules($blockName, $attribute) as $rule) {
+                try {
+                    $replacer = $this->replacerFactory->getReplacer($rule->getReplacerId());
+                } catch (EntityNotFoundException $e) {
+                    $this->getLogger()->warning("Replacer not found while processing blockName=\"$blockName\", attribute=\"$attribute\", submissionId=\"{$submission->getId()}\", replacerId=\"{$rule->getReplacerId()}\", skipping");
+                    continue;
+                }
+                $attributes[$attribute] = $replacer->processOnDownload($submission, $value);
+            }
+        }
+
+        return $attributes;
     }
 }

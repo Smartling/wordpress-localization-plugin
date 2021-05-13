@@ -246,7 +246,7 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
-                        <th><label for="loggingPath">Enable Shortcode &amp; Filter extension</label></th>
+                        <th><label for="loggingPath">Enable Fine Tuning</label></th>
                         <td>
                             <?=
                             HtmlTagGeneratorHelper::tag(

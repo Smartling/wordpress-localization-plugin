@@ -16,105 +16,32 @@ use Smartling\Submissions\SubmissionManager;
 
 class TranslationHelper
 {
+    private LocalizationPluginProxyInterface $multilangProxy;
+    private LoggerInterface $logger;
+    private SiteHelper $siteHelper;
+    private SubmissionManager $submissionManager;
 
-    /**
-     * @var LocalizationPluginProxyInterface
-     */
-    private $mutilangProxy;
-
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @var SubmissionManager
-     */
-    private $submissionManager;
-
-    /**
-     * @var SiteHelper
-     */
-    private $siteHelper;
-
-    /**
-     * TranslationHelper constructor.
-     */
-    public function __construct() {
+    public function __construct(LocalizationPluginProxyInterface $proxy, SiteHelper $siteHelper, SubmissionManager $submissionManager) {
         $this->logger = MonologWrapper::getLogger(get_called_class());
-    }
-
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
-    {
-        return $this->logger;
-    }
-
-    /**
-     * @return SubmissionManager
-     */
-    public function getSubmissionManager()
-    {
-        return $this->submissionManager;
-    }
-
-    /**
-     * @param SubmissionManager $submissionManager
-     */
-    public function setSubmissionManager($submissionManager)
-    {
+        $this->multilangProxy = $proxy;
+        $this->siteHelper = $siteHelper;
         $this->submissionManager = $submissionManager;
     }
 
     /**
-     * @return LocalizationPluginProxyInterface
+     * @throws UnexpectedValueException
      */
-    public function getMutilangProxy()
+    private function validateBlogs(int $sourceBlogId, int $targetBlogId): void
     {
-        return $this->mutilangProxy;
-    }
+        $blogs = $this->siteHelper->listBlogIdsFlat();
 
-    /**
-     * @param LocalizationPluginProxyInterface $mutilangProxy
-     */
-    public function setMutilangProxy($mutilangProxy)
-    {
-        $this->mutilangProxy = $mutilangProxy;
-    }
-
-    /**
-     * @return SiteHelper
-     */
-    public function getSiteHelper()
-    {
-        return $this->siteHelper;
-    }
-
-    /**
-     * @param SiteHelper $siteHelper
-     */
-    public function setSiteHelper($siteHelper)
-    {
-        $this->siteHelper = $siteHelper;
-    }
-
-    /**
-     * @param $sourceBlogId
-     * @param $targetBlogId
-     */
-    private function validateBlogs($sourceBlogId, $targetBlogId) {
-
-        $blogs = $this->getSiteHelper()->listBlogIdsFlat();
-
-        if (!in_array((int) $sourceBlogId, $blogs, true)) {
+        if (!in_array($sourceBlogId, $blogs, true)) {
             $exception = new UnexpectedValueException(
                 vsprintf('Unexpected value: sourceBlogId must be one of [%s], %s got',
-                    [implode(', ',$blogs),$sourceBlogId])
+                    [implode(', ',$blogs), $sourceBlogId])
             );
 
-            $this->getLogger()->warning(
+            $this->logger->warning(
                 vsprintf(
                     'Trying to get/create submission with invalid sourceBlogId, trace:\n\n%s\nRequest dump:\n%s',
                     [
@@ -126,13 +53,13 @@ class TranslationHelper
             throw $exception;
         }
 
-        if (!in_array((int) $targetBlogId, $blogs, true)) {
+        if (!in_array($targetBlogId, $blogs, true)) {
             $exception = new UnexpectedValueException(
                 vsprintf('Unexpected value: targetBlogId must be one of [%s], %s got',
                     [implode(', ', $blogs), $targetBlogId])
             );
 
-            $this->getLogger()->warning(
+            $this->logger->warning(
                 vsprintf(
                     'Trying to get/create submission with invalid targetBlogId, trace:\n\n%s\nRequest dump:\n%s',
                     [
@@ -144,10 +71,10 @@ class TranslationHelper
             throw $exception;
         }
 
-        if (((int) $sourceBlogId) === ((int) $targetBlogId)) {
+        if ($sourceBlogId === $targetBlogId) {
             $exception = new UnexpectedValueException('Unexpected value: sourceBlogId cannot be same as targetBlogId');
 
-            $this->getLogger()->warning(
+            $this->logger->warning(
                 vsprintf(
                     'Trying to get/create submission with same sourceBlogId and targetBlogId, trace:\n\n%s\nRequest dump:\n%s',
                     [
@@ -164,12 +91,12 @@ class TranslationHelper
     {
         $this->validateBlogs($sourceBlog, $targetBlog);
 
-        return $this->getSubmissionManager()->getSubmissionEntity(
+        return $this->submissionManager->getSubmissionEntity(
             $contentType,
             $sourceBlog,
             $sourceEntity,
             $targetBlog,
-            $this->getMutilangProxy(),
+            $this->multilangProxy,
             $targetEntity
         );
     }
@@ -191,13 +118,13 @@ class TranslationHelper
 
         if (0 === (int)$submission->getId()) {
             if (GlobalSettingsManager::isHandleRelationsManually()) {
-                $this->getLogger()->debug(sprintf('Created submission %s %d despite manual relations handling). Backtrace: %s', $submission->getContentType(), $submission->getSourceId(), json_encode(debug_backtrace())));
+                $this->logger->debug(sprintf('Created submission %s %d despite manual relations handling). Backtrace: %s', $submission->getContentType(), $submission->getSourceId(), json_encode(debug_backtrace())));
             }
 
             if (true === $clone) {
                 $submission->setIsCloned(1);
             }
-            $submission = $this->getSubmissionManager()->storeEntity($submission);
+            $submission = $this->submissionManager->storeEntity($submission);
         }
 
         return $this->reloadSubmission($submission);
@@ -208,7 +135,7 @@ class TranslationHelper
      */
     public function reloadSubmission(SubmissionEntity $submission): SubmissionEntity
     {
-        $submissionsList = $this->getSubmissionManager()->getEntityById($submission->getId());
+        $submissionsList = $this->submissionManager->getEntityById($submission->getId());
         if (is_array($submissionsList)) {
             return ArrayHelper::first($submissionsList);
         }
@@ -219,14 +146,7 @@ class TranslationHelper
         throw new SmartlingDataReadException($message);
     }
 
-    /**
-     * @param string $contentType
-     * @param int $sourceBlogId
-     * @param int $contentId
-     * @param int $targetBlogId
-     * @return bool
-     */
-    public function isRelatedSubmissionCreationNeeded($contentType, $sourceBlogId, $contentId, $targetBlogId) {
+    public function isRelatedSubmissionCreationNeeded(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId): bool {
         return !GlobalSettingsManager::isHandleRelationsManually() ||
             $this->submissionManager->submissionExistsNoLastError($contentType, $sourceBlogId, $contentId, $targetBlogId);
     }
@@ -235,9 +155,9 @@ class TranslationHelper
      * @throws SmartlingDataReadException
      */
     public function getExistingSubmissionOrCreateNew(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId, JobEntityWithBatchUid $jobInfo): SubmissionEntity {
-        $submission = $this->submissionManager->getSubmissionEntity($contentType, $sourceBlogId, $contentId, $targetBlogId, $this->getMutilangProxy());
+        $submission = $this->submissionManager->getSubmissionEntity($contentType, $sourceBlogId, $contentId, $targetBlogId, $this->multilangProxy);
         if ($submission->getTargetId() === 0) {
-            $this->getLogger()->debug("Got submission with 0 target id");
+            $this->logger->debug("Got submission with 0 target id");
             $submission = $this->tryPrepareRelatedContent($contentType, $sourceBlogId, $contentId, $targetBlogId, $jobInfo);
         }
         return $submission;
@@ -270,13 +190,13 @@ class TranslationHelper
             if (null === $serialized[SubmissionEntity::FIELD_FILE_URI]) {
                 $relatedSubmission->getFileUri();
             }
-            $relatedSubmission = $this->getSubmissionManager()->storeEntity($relatedSubmission);
+            $relatedSubmission = $this->submissionManager->storeEntity($relatedSubmission);
             // try to create target entity
             $relatedSubmission = apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $relatedSubmission);
 
             // add to upload queue
             $relatedSubmission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-            $relatedSubmission = $this->getSubmissionManager()->storeEntity($relatedSubmission);
+            $relatedSubmission = $this->submissionManager->storeEntity($relatedSubmission);
         } else {
             $message = vsprintf(
                 'Skipping creation of translation placeholder for submission=%s, locale=%s.',
@@ -287,7 +207,7 @@ class TranslationHelper
             );
         }
 
-        $this->getLogger()->debug($message);
+        $this->logger->debug($message);
 
         return $this->reloadSubmission($relatedSubmission);
     }

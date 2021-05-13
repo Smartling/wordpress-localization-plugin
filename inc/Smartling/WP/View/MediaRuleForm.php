@@ -1,6 +1,6 @@
 <?php
 use Smartling\Helpers\HtmlTagGeneratorHelper;
-use Smartling\Tuner\MediaAttachmentRulesManager;
+use Smartling\WP\Controller\MediaRuleForm;
 
 ?>
 <style>
@@ -9,17 +9,17 @@ use Smartling\Tuner\MediaAttachmentRulesManager;
     }
 </style>
 <div class="wrap">
-    <h2><?= get_admin_page_title(); ?></h2>
+    <h2><?= get_admin_page_title() ?></h2>
     <?php
-    $data = $this->getViewData();
     /**
-     * @var MediaAttachmentRulesManager $manager
+     * @var MediaRuleForm $this
      */
-    $manager = $data['manager'];
+    $manager = $this->mediaAttachmentRulesManager;
 
     $id = '';
     $block = '';
     $path = '';
+    $replacerId = '';
 
     if (array_key_exists('id', $_GET)) {
         $id = $_GET['id'];
@@ -30,6 +30,7 @@ use Smartling\Tuner\MediaAttachmentRulesManager;
         if (isset($manager[$id])) {
             $block = $manager[$id]['block'];
             $path = $manager[$id]['path'];
+            $replacerId = $manager[$id]['replacerId'];
         }
     }
     ?>
@@ -38,14 +39,14 @@ use Smartling\Tuner\MediaAttachmentRulesManager;
         <?= HtmlTagGeneratorHelper::tag('input', '', [
             'type' => 'hidden',
             'name' => 'action',
-            'value' => 'smartling_customization_tuning_media_form_save',
-        ]); ?>
+            'value' => MediaRuleForm::ACTION_SAVE,
+        ]) ?>
 
         <?= HtmlTagGeneratorHelper::tag('input', '', [
             'type'  => 'hidden',
             'name'  => 'media[id]',
             'value' => $id,
-        ]); ?>
+        ]) ?>
 
         <h3><?= __('Media rule') ?></h3>
         <table class="form-table">
@@ -84,6 +85,28 @@ use Smartling\Tuner\MediaAttachmentRulesManager;
                         'required' => 'required',
                         'value' => htmlentities($path),
                     ])?>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <label for="replacerType">
+                        <?= __('Replacer type')?>
+                    </label>
+                </th>
+                <td>
+                    <?=
+                    HtmlTagGeneratorHelper::tag(
+                        'select',
+                        HtmlTagGeneratorHelper::renderSelectOptions(
+                            $replacerId,
+                            $this->replacerFactory->getListForUi(),
+                        ),
+                        [
+                            'id' => 'replacerType',
+                            'name' => 'media[replacerType]',
+                        ],
+                    )
+                    ?>
                 </td>
             </tr>
             </tbody>
