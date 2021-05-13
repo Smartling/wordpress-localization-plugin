@@ -62,6 +62,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 = 2.3.0 =
 * Added ability to use all registered post types for references in Gutenberg blocks
 
+= 2.2.1 =
+* Fixed critical wordpress error on new profile creation
+
 = 2.2.0 =
 * Added more publish options for delivering translated posts. Now you can choose what post status to set after delivering: don't change existing status; set to `draft`; set to `published`
 
