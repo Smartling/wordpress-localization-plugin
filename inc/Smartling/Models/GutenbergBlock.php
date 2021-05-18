@@ -4,13 +4,16 @@ namespace Smartling\Models;
 
 class GutenbergBlock
 {
-    private string $blockName;
+    private ?string $blockName; // null for non-Gutenberg blocks. This happens when WP serializes/unserializes content
     private array $attributes;
     private array $innerBlocks;
     private string $innerHtml;
     private array $innerContent;
 
-    public function __construct(string $blockName, array $attributes, array $innerBlocks, string $innerHtml, array $innerContent)
+    /**
+     * @param GutenbergBlock[] $innerBlocks
+     */
+    public function __construct(?string $blockName, array $attributes, array $innerBlocks, string $innerHtml, array $innerContent)
     {
         $this->blockName = $blockName;
         $this->attributes = $attributes;
@@ -19,7 +22,7 @@ class GutenbergBlock
         $this->innerContent = $innerContent;
     }
 
-    public function getBlockName(): string
+    public function getBlockName(): ?string
     {
         return $this->blockName;
     }
@@ -59,7 +62,7 @@ class GutenbergBlock
             }, $array['innerBlocks']);
         }
         return new GutenbergBlock(
-            $array['blockName'] ?? '',
+            $array['blockName'],
             $array['attrs'] ?? [],
             $innerBlocks,
             $array['innerHTML'] ?? '',
@@ -69,6 +72,14 @@ class GutenbergBlock
 
     public function toArray(): array
     {
-        return ['blockName' => $this->blockName, 'attrs' => $this->attributes, 'innerBlocks' => $this->innerBlocks, 'innerHTML' => $this->innerHtml, 'innerContent' => $this->innerContent];
+        return [
+            'blockName' => $this->blockName,
+            'attrs' => $this->attributes,
+            'innerBlocks' => array_map(static function ($block) {
+                return $block->toArray();
+            }, $this->innerBlocks),
+            'innerHTML' => $this->innerHtml,
+            'innerContent' => $this->innerContent,
+        ];
     }
 }

@@ -42,33 +42,41 @@ namespace Smartling\Tests\Smartling\Helpers {
 
     use PHPUnit\Framework\MockObject\MockObject;
     use PHPUnit\Framework\TestCase;
-use Smartling\Extensions\Acf\AcfDynamicSupport;
-use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
-use Smartling\Helpers\FieldsFilterHelper;
-use Smartling\Helpers\GutenbergBlockHelper;
-use Smartling\Submissions\SubmissionEntity;
-use Smartling\Tests\Traits\InvokeMethodTrait;
-use Smartling\Tests\Traits\SettingsManagerMock;
+    use Smartling\Extensions\Acf\AcfDynamicSupport;
+    use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
+    use Smartling\Helpers\FieldsFilterHelper;
+    use Smartling\Helpers\GutenbergBlockHelper;
+    use Smartling\Models\GutenbergBlock;
+    use Smartling\Replacers\ReplacerFactory;
+    use Smartling\Submissions\SubmissionEntity;
+    use Smartling\Tests\Traits\InvokeMethodTrait;
+    use Smartling\Tests\Traits\SettingsManagerMock;
+    use Smartling\Tuner\MediaAttachmentRulesManager;
 
-class GutenbergBlockHelperTest extends TestCase
+    class GutenbergBlockHelperTest extends TestCase
 {
     use InvokeMethodTrait;
     use SettingsManagerMock;
 
     /**
-     * @param array $methods
      * @return MockObject|GutenbergBlockHelper
      */
-    private function mockHelper($methods = ['getLogger', 'postReceiveFiltering', 'preSendFiltering', 'processAttributes'])
+    private function mockHelper(array $methods = ['getLogger', 'postReceiveFiltering', 'preSendFiltering', 'processAttributes'])
     {
-        return $this->createPartialMock(GutenbergBlockHelper::class, $methods);
+        return $this->getMockBuilder(GutenbergBlockHelper::class)
+            ->setConstructorArgs([
+                $this->createMock(MediaAttachmentRulesManager::class),
+                $this->createMock(ReplacerFactory::class),
+            ])
+            ->onlyMethods($methods)
+            ->getMock();
     }
 
-    public $helper;
+    public GutenbergBlockHelper $helper;
 
     protected function setUp(): void
     {
-        $this->helper = new GutenbergBlockHelper();
+        $this->helper = new GutenbergBlockHelper($this->createMock(MediaAttachmentRulesManager::class), $this->createMock(ReplacerFactory::class));
     }
 
     public function testAddPostContentBlocksWithBlocks()
@@ -89,7 +97,7 @@ HTML
 HTML
         ,
         ];
-        $x = new GutenbergBlockHelper();
+        $x = $this->getHelper();
         $postContent = $blocks[0] . '<p>Wee, I\'m not a part of Gutenberg!</p>' . $blocks[1];
         $result = $x->addPostContentBlocks(['post_content' => $postContent]);
         $this->assertCount(3, $result);
@@ -100,7 +108,7 @@ HTML
 
     public function testAddPostContentBlocksWithNoBlocks()
     {
-        $x = new GutenbergBlockHelper();
+        $x = $this->getHelper();
         $postContent = '<!-- An html comment --><p>Some content</p><!-- Another comment -->';
         $result = $x->addPostContentBlocks(['post_content' => $postContent]);
         $this->assertCount(1, $result);
@@ -120,10 +128,6 @@ HTML
     }
 
     /**
-     * @param string $blockName
-     * @param array $flatAttributes
-     * @param array $postFilterMock
-     * @param array $preFilterMock
      * @dataProvider processAttributesDataProvider
      */
     public function testProcessAttributes(?string $blockName, array $flatAttributes, array $postFilterMock, array $preFilterMock)
@@ -236,7 +240,7 @@ HTML
                ->method('processAttributes')
                ->willReturnArgument(1);
 
-        $result = $this->invokeMethod($helper, 'placeBlock', [$block]);
+        $result = $this->invokeMethod($helper, 'placeBlock', [GutenbergBlock::fromArray($block)]);
         $xmlNodeRendered = $params->getDom()->saveXML($result);
         self::assertEquals($expected, $xmlNodeRendered);
     }
@@ -390,6 +394,7 @@ HTML
             $helper,
             'processTranslationAttributes',
             [
+                $this->createMock(SubmissionEntity::class),
                 $blockName,
                 $originalAttributes,
                 $translatedAttributes,
@@ -432,8 +437,7 @@ HTML
                ->method('postReceiveFiltering')
                ->willReturnArgument(0);
 
-
-        $result = $helper->renderTranslatedBlockNode($node);
+        $result = $helper->renderTranslatedBlockNode($node, $this->createMock(SubmissionEntity::class));
         self::assertEquals($expectedBlock, $result);
     }
 
@@ -450,7 +454,7 @@ HTML
 
         self::assertEquals(
             '<!-- wp:core/foo ' . json_encode($blockData) . ' /-->',
-            $helper->renderTranslatedBlockNode($node)
+            $helper->renderTranslatedBlockNode($node, $this->createMock(SubmissionEntity::class)),
         );
     }
 
@@ -488,7 +492,7 @@ HTML
                ->method('postReceiveFiltering')
                ->willReturnArgument(0);
 
-        $result = $helper->sortChildNodesContent($node);
+        $result = $helper->sortChildNodesContent($node, $this->createMock(SubmissionEntity::class));
         self::assertEquals($expected, $result);
     }
 
@@ -501,6 +505,9 @@ HTML
      */
     public function testProcessString(string $contentString, int $parseCount, array $parseResult, string $expectedString)
     {
+        $parseResult = array_map(static function ($block) {
+            return GutenbergBlock::fromArray($block);
+        }, $parseResult);
         $sourceString = vsprintf('<string name="entity/post_content"><![CDATA[%s]]></string>', [$contentString]);
         $dom = new \DOMDocument('1.0', 'uft8');
         $dom->loadXML($sourceString);
@@ -642,7 +649,7 @@ some par 2
     }
 
     /**
-     * @return AcfDynamicSupport|\PHPUnit_Framework_MockObject_MockObject
+     * @return AcfDynamicSupport|MockObject
      */
     private function getAcfDynamicSupportMock()
     {
@@ -677,6 +684,17 @@ some par 2
 <!-- /wp:core/paragraph -->]]></string>',
             ],
         ];
+    }
+
+    private function getHelper($rulesManager = null, $replacerFactory = null)
+    {
+        if ($rulesManager === null) {
+            $rulesManager = $this->createMock(MediaAttachmentRulesManager::class);
+        }
+        if ($replacerFactory === null) {
+            $replacerFactory = $this->createMock(ReplacerFactory::class);
+        }
+        return new GutenbergBlockHelper($rulesManager, $replacerFactory);
     }
 }
 }

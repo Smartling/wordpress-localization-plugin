@@ -16,11 +16,11 @@
     </php>
     <testsuites>
         <testsuite name="smartling-connector WordPress plugin test">
-            <directory suffix="Test.php" phpVersion="5.5.0" phpVersionOperator=">=">./</directory>
+            <directory suffix="Test.php" phpVersion="7.4.0" phpVersionOperator=">=">./</directory>
             <exclude>./IntegrationTests</exclude>
         </testsuite>
         <testsuite name="smartling-connector WordPress integration test">
-            <directory suffix="Test.php" phpVersion="5.5.0" phpVersionOperator=">=">./IntegrationTests/tests</directory>
+            <directory suffix="Test.php" phpVersion="7.4.0" phpVersionOperator=">=">./IntegrationTests/tests</directory>
         </testsuite>
     </testsuites>
     <logging>

@@ -9,7 +9,6 @@ use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
-use Smartling\Helpers\GutenbergReplacementRule;
 use Smartling\Helpers\RelativeLinkedAttachmentCoreHelper;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Jobs\JobEntity;
@@ -25,71 +24,6 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
         $this->mediaAttachmentRulesManager = $this->createMock(MediaAttachmentRulesManager::class);
-        $this->mediaAttachmentRulesManager->method('getGutenbergReplacementRules')->willReturn([
-            new GutenbergReplacementRule('image', 'id'),
-            new GutenbergReplacementRule('media-text', 'mediaId'),
-        ]);
-    }
-
-    public function testProcessGutenbergBlock()
-    {
-        $sourceBlogId = 1;
-        $sourceMediaId = 5;
-        $targetBlogId = 2;
-        $targetMediaId = 6;
-        $submission = new SubmissionEntity();
-        $submission->setContentType('content_type');
-        $submission->setSourceBlogId($sourceBlogId);
-        $submission->setSourceId($sourceMediaId);
-        $submission->setTargetId($targetMediaId);
-        $submission->setTargetBlogId($targetBlogId);
-        $submission->setBatchUid('');
-        $acf = $this->getMockBuilder(AcfDynamicSupport::class)
-            ->setConstructorArgs([$this->createMock(EntityHelper::class)])
-            ->getMock();
-        $acf->method('getDefinitions')->willReturn([]);
-
-        $translationHelper = $this->createMock(TranslationHelper::class);
-        $translationHelper->method('isRelatedSubmissionCreationNeeded')->willReturn(true);
-
-        $core = $this->getCoreMock();
-        $core->method('getTranslationHelper')->willReturn($translationHelper);
-        $core->method('sendAttachmentForTranslation')->willReturn($submission);
-
-        $x = $this->getMockBuilder(RelativeLinkedAttachmentCoreHelper::class)->setConstructorArgs([
-            $core,
-            $acf,
-            $this->mediaAttachmentRulesManager,
-        ])->onlyMethods([])->getMock();
-        $source = [<<<HTML
-<!-- wp:core/media-text {"mediaId":$sourceMediaId,"mediaLink":"http://test.com","mediaType":"image"} -->
-<div class="wp-block-media-text alignwide is-stacked-on-mobile"><figure class="wp-block-media-text__media"><img src="http://example.com/image.jpg" alt="" class="wp-image-$sourceMediaId"/></figure><div class="wp-block-media-text__content"><!-- wp:core/paragraph {"placeholder":"Content…","fontSize":"large"} -->
-<p class="has-large-font-size">Some text and wp-image-$sourceMediaId that should NOT be replaced</p>
-<!-- /wp:core/paragraph --></div></div>
-<!-- /wp:core/media-text -->
-
-<!-- wp:core/image {"id":$sourceMediaId,"sizeSlug":"large"} -->
-<figure class="wp-block-image size-large"><img src="http://example.com/image.jpg" alt="" class="wp-image-$sourceMediaId"/></figure>
-<!-- /wp:core/image -->
-HTML
-        ];
-        $x->processor(new AfterDeserializeContentEventParameters($source, $submission, $this->createMock(PostEntityStd::class), []));
-
-        self::assertEquals(
-            <<<HTML
-<!-- wp:media-text {"mediaId":$targetMediaId,"mediaLink":"http:\/\/test.com","mediaType":"image"} -->
-<div class="wp-block-media-text alignwide is-stacked-on-mobile"><figure class="wp-block-media-text__media"><img src="http://example.com/image.jpg" alt="" class="wp-image-$targetMediaId"/></figure><div class="wp-block-media-text__content"><!-- wp:core/paragraph {"placeholder":"Content…","fontSize":"large"} -->
-<p class="has-large-font-size">Some text and wp-image-$sourceMediaId that should NOT be replaced</p>
-<!-- /wp:core/paragraph --></div></div>
-<!-- /wp:core/media-text -->
-
-<!-- wp:image {"id":$targetMediaId,"sizeSlug":"large"} -->
-<figure class="wp-block-image size-large"><img src="http://example.com/image.jpg" alt="" class="wp-image-$targetMediaId"/></figure>
-<!-- /wp:core/image -->
-HTML
-            ,
-            $source[0]
-        );
     }
 
     /**

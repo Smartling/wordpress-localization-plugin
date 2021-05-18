@@ -4,20 +4,17 @@ namespace Smartling\Replacers;
 
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\EntityNotFoundException;
-use Smartling\Helpers\TranslationHelper;
 use Smartling\Submissions\SubmissionManager;
 
 class ReplacerFactory
 {
     private LocalizationPluginProxyInterface $localizationProxy;
     private SubmissionManager $submissionManager;
-    private TranslationHelper $translationHelper;
 
-    public function __construct(LocalizationPluginProxyInterface $localizationProxy, SubmissionManager $submissionManager, TranslationHelper $translationHelper)
+    public function __construct(LocalizationPluginProxyInterface $localizationProxy, SubmissionManager $submissionManager)
     {
         $this->localizationProxy = $localizationProxy;
         $this->submissionManager = $submissionManager;
-        $this->translationHelper = $translationHelper;
     }
 
     /**
@@ -27,7 +24,7 @@ class ReplacerFactory
     {
         $parts = explode('|', $id);
         if ($parts[0] === 'related') {
-            return new ContentIdReplacer($this->localizationProxy, $this->submissionManager, $this->translationHelper, $parts[1]);
+            return new ContentIdReplacer($this->localizationProxy, $this->submissionManager, $parts[1]);
         }
 
         throw new EntityNotFoundException("Unable to get replacer for $id");

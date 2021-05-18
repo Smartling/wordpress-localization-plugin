@@ -19,7 +19,6 @@ services:
     arguments:
       - "@multilang.proxy"
       - "@manager.submission"
-      - "@translation.helper"
 
   smartling.helper.relative-image-path-support:
     class: Smartling\Helpers\RelativeLinkedAttachmentCoreHelper

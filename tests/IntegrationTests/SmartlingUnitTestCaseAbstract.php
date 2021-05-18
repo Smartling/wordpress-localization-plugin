@@ -8,6 +8,8 @@ use Smartling\ContentTypes\CustomPostType;
 use Smartling\ContentTypes\CustomTaxonomyType;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
+use Smartling\Helpers\GutenbergBlockHelper;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Jobs\JobEntity;
@@ -22,6 +24,7 @@ use Smartling\Settings\SettingsManager;
 use Smartling\Settings\TargetLocale;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\Tuner\MediaAttachmentRulesManager;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
@@ -188,6 +191,21 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
     protected function getTranslationHelper(): TranslationHelper
     {
         return $this->get('translation.helper');
+    }
+
+    protected function getSiteHelper(): SiteHelper
+    {
+        return $this->get('site.helper');
+    }
+
+    protected function getRulesManager(): MediaAttachmentRulesManager
+    {
+        return $this->get('media.attachment.rules.manager');
+    }
+
+    protected function getGutenbergBlockHelper(): GutenbergBlockHelper
+    {
+        return $this->get('helper.gutenberg');
     }
 
     /**
@@ -362,5 +380,15 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         $queryTemplate = "REPLACE INTO `%sterm_relationships` VALUES('%s', '%s', 0)";
         $query = vsprintf($queryTemplate, [$wpdb->base_prefix, $postId, $termId]);
         $wpdb->query($query);
+    }
+
+    protected function getTargetPost(SiteHelper $siteHelper, SubmissionEntity $submission): \WP_Post
+    {
+        $siteHelper->switchBlogId($submission->getTargetBlogId());
+        wp_cache_delete($submission->getTargetId(), 'posts');
+        $post = get_post($submission->getTargetId());
+        $siteHelper->restoreBlogId();
+
+        return $post;
     }
 }

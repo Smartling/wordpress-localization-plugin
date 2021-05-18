@@ -79,7 +79,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
         $result = $replacer;
         if ($this->isAbsoluteUrl($path)) {
             $attachmentId = $this->getAttachmentId($path);
-            if (false !== $attachmentId) {
+            if (null !== $attachmentId) {
                 $submission = $this->getParams()->getSubmission();
                 $sourceBlogId = $submission->getSourceBlogId();
                 $targetBlogId = $submission->getTargetBlogId();

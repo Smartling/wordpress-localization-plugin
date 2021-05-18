@@ -13,10 +13,4 @@ interface ReplacerInterface
      * @return mixed
      */
     public function processOnDownload(SubmissionEntity $submission, $value);
-
-    /**
-     * @param mixed $value
-     * @return mixed
-     */
-    public function processOnUpload(SubmissionEntity $submission, $value);
 }
