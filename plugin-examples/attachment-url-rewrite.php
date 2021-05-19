@@ -40,24 +40,25 @@ add_action('plugins_loaded', static function () {
 function replaceProperties(GutenbergBlock $block, array $attributes, SiteHelper $siteHelper, int $targetBlogId): GutenbergBlock
 {
     $blockAttributes = $block->getAttributes();
+    $innerBlocks = [];
 
     foreach ($blockAttributes as $blockAttribute => $value) {
         if (array_key_exists($blockAttribute, $attributes)) {
             $searchKey = $attributes[$blockAttribute];
             if (array_key_exists($searchKey, $blockAttributes)) {
-                $siteHelper->switchBlogId($targetBlogId);
-                $post = get_post($blockAttributes[$searchKey]);
+                $post = $siteHelper->inBlog($targetBlogId, static function ($postId) {
+                    return get_post($postId);
+                }, $blockAttributes[$searchKey]);
                 if ($post !== null) {
                     $blockAttributes[$blockAttribute] = $post->guid;
                 }
-                $siteHelper->restoreBlogId();
             }
         }
     }
 
-    foreach ($block->getInnerBlocks() as &$innerBlock) {
-        $innerBlock = replaceProperties($innerBlock, $attributes, $siteHelper, $targetBlogId);
+    foreach ($block->getInnerBlocks() as $innerBlock) {
+        $innerBlocks[] = replaceProperties($innerBlock, $attributes, $siteHelper, $targetBlogId);
     }
 
-    return $block;
+    return new GutenbergBlock($block->getBlockName(), $blockAttributes, $innerBlocks, $block->getInnerHtml(), $block->getInnerContent());
 }

@@ -176,6 +176,21 @@ class SiteHelper
     }
 
     /**
+     * @return mixed function result
+     * @throws BlogNotFoundException
+     * @throws SmartlingDirectRunRuntimeException
+     */
+    public function inBlog(int $blogId, callable $function, ...$args)
+    {
+        $this->switchBlogId($blogId);
+        try {
+            return $function(...$args);
+        } finally {
+            $this->restoreBlogId();
+        }
+    }
+
+    /**
      * @throws BlogNotFoundException
      */
     private function getBlogNameById(int $blogId): string
