@@ -25,6 +25,7 @@ use Smartling\Helpers\TranslationHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\XmlHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
+use Smartling\Replacers\ContentIdReplacer;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\Controller\LiveNotificationController;
@@ -293,6 +294,10 @@ trait SmartlingCoreUploadTrait
                     }
                 }
                 $metaFields = self::arrayMergeIfKeyNotExists($lockedData['meta'], $metaFields);
+                if (array_key_exists('meta', $original)) {
+                    $metaFields = $this->fixMetadata($submission, $original['meta'], $metaFields);
+                }
+
                 $this->getContentHelper()->writeTargetMetadata($submission, $metaFields);
                 do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $submission);
             }
@@ -793,5 +798,25 @@ trait SmartlingCoreUploadTrait
                 $entity->{$propertyName} = $propertyValue;
             }
         }
+    }
+
+    private function fixMetadata(SubmissionEntity $submission, array $originalMetadata, array $translatedMetadata): array
+    {
+        $result = $translatedMetadata;
+        if (array_key_exists('_menu_item_type', $originalMetadata) &&
+            array_key_exists('_menu_item_object', $originalMetadata) &&
+            array_key_exists('_menu_item_object_id', $originalMetadata) &&
+            $submission->getTargetId() !== 0 &&
+            $submission->getContentType() === ContentTypeNavigationMenuItem::WP_CONTENT_TYPE &&
+            in_array($originalMetadata['_menu_item_type'], ['taxonomy', 'post_type'], true)
+        ) {
+            $result['_menu_item_object_id'] = (new ContentIdReplacer(
+                $this->getMultilangProxy(),
+                $this->getSubmissionManager(),
+                $originalMetadata['_menu_item_object'],
+            ))->processOnDownload($submission, $originalMetadata['_menu_item_object_id']);
+        }
+
+        return $result;
     }
 }
