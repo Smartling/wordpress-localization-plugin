@@ -180,11 +180,11 @@ class SiteHelper
      * @throws BlogNotFoundException
      * @throws SmartlingDirectRunRuntimeException
      */
-    public function inBlog(int $blogId, callable $function, ...$args)
+    public function withBlog(int $blogId, callable $function)
     {
         $this->switchBlogId($blogId);
         try {
-            return $function(...$args);
+            return $function();
         } finally {
             $this->restoreBlogId();
         }

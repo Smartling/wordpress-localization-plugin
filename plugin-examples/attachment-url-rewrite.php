@@ -44,7 +44,7 @@ add_action('plugins_loaded', static function () {
  * For example,
  * <!-- wp:sf/example {"backgroundMediaId":57,"backgroundMediaUrl":""} --> <!-- /wp:sf/example -->
  * would get replaced to
- * <!-- wp:sf/example {"backgroundMediaId":57,"backgroundMediaUrl":"guidOfPost57InTargetBlog"} --> <!-- /wp:sf/example -->
+ * <!-- wp:sf/example {"backgroundMediaId":57,"backgroundMediaUrl":"https://fr.example.com/post-57"} --> <!-- /wp:sf/example -->
  */
 function replaceProperties(GutenbergBlock $block, array $attributes, SiteHelper $siteHelper, int $targetBlogId): GutenbergBlock
 {
@@ -55,11 +55,12 @@ function replaceProperties(GutenbergBlock $block, array $attributes, SiteHelper 
         if (array_key_exists($blockAttribute, $attributes)) {
             $searchKey = $attributes[$blockAttribute];
             if (array_key_exists($searchKey, $blockAttributes)) {
-                $post = $siteHelper->inBlog($targetBlogId, static function ($postId) {
+                $postId = $blockAttributes[$searchKey];
+                $post = $siteHelper->withBlog($targetBlogId, static function () use ($postId) {
                     return get_post($postId);
-                }, $blockAttributes[$searchKey]);
-                if ($post !== null) {
-                    $blockAttributes[$blockAttribute] = $post->guid;
+                });
+                if ($post instanceof WP_Post) {
+                    $blockAttributes[$blockAttribute] = get_permalink($post);
                 }
             }
         }
