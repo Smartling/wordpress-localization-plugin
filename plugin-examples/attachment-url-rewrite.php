@@ -42,9 +42,9 @@ add_action('plugins_loaded', static function () {
 
 /**
  * For example,
- * <!-- wp:sf/example {"backgroundMediaId":57,"backgroundMediaUrl":""} --> <!-- /wp:sf/fourup-blade-layout-one -->
+ * <!-- wp:sf/example {"backgroundMediaId":57,"backgroundMediaUrl":""} --> <!-- /wp:sf/example -->
  * would get replaced to
- * <!-- wp:sf/example {"backgroundMediaId":57,"backgroundMediaUrl":"guidOfPost57InTargetBlog"} --> <!-- /wp:sf/fourup-blade-layout-one -->
+ * <!-- wp:sf/example {"backgroundMediaId":57,"backgroundMediaUrl":"guidOfPost57InTargetBlog"} --> <!-- /wp:sf/example -->
  */
 function replaceProperties(GutenbergBlock $block, array $attributes, SiteHelper $siteHelper, int $targetBlogId): GutenbergBlock
 {
