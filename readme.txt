@@ -61,6 +61,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 = 2.3.0 =
 * Added ability to use all registered post types for references in Gutenberg blocks
+* Fixed menu translation when menu items consisted of post types or taxonomies
 
 = 2.2.1 =
 * Fixed critical wordpress error on new profile creation
