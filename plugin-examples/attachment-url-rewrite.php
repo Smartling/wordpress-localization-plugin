@@ -7,13 +7,14 @@
  * Version: 1.0
  */
 
+use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Models\GutenbergBlock;
 
 add_action('plugins_loaded', static function () {
-    add_action('smartling_after_deserialize_content', static function (AfterDeserializeContentEventParameters $params) {
+    add_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, static function (AfterDeserializeContentEventParameters $params) {
         // This code will be executed every time when WP Connector applies translated content for every locale
 
         $gutenbergBlockHelper = Bootstrap::getContainer()->get('helper.gutenberg');
@@ -25,7 +26,9 @@ add_action('plugins_loaded', static function () {
                 return;
             }
 
+            // Inside a block, replace properties in keys, using post ids from values
             $attributes = ['backgroundMediaUrl' => 'backgroundMediaId'];
+
             $blocks = [];
             foreach ($gutenbergBlockHelper->parseBlocks($value) as $block) {
                 $blocks[] = replaceProperties($block, $attributes, $siteHelper, $submission->getTargetBlogId())->toArray();
@@ -37,6 +40,12 @@ add_action('plugins_loaded', static function () {
     });
 });
 
+/**
+ * For example,
+ * <!-- wp:sf/example {"backgroundMediaId":57,"backgroundMediaUrl":""} --> <!-- /wp:sf/fourup-blade-layout-one -->
+ * would get replaced to
+ * <!-- wp:sf/example {"backgroundMediaId":57,"backgroundMediaUrl":"guidOfPost57InTargetBlog"} --> <!-- /wp:sf/fourup-blade-layout-one -->
+ */
 function replaceProperties(GutenbergBlock $block, array $attributes, SiteHelper $siteHelper, int $targetBlogId): GutenbergBlock
 {
     $blockAttributes = $block->getAttributes();
