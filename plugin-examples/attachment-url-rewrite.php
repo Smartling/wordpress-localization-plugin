@@ -7,7 +7,6 @@
  * Version: 1.0
  */
 
-use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\SiteHelper;
