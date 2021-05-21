@@ -14,7 +14,7 @@ use Smartling\Helpers\SiteHelper;
 use Smartling\Models\GutenbergBlock;
 
 add_action('plugins_loaded', static function () {
-    add_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, static function (AfterDeserializeContentEventParameters $params) {
+    add_action('smartling_after_deserialize_content', static function (AfterDeserializeContentEventParameters $params) {
         // This code will be executed every time when WP Connector applies translated content for every locale
 
         $gutenbergBlockHelper = Bootstrap::getContainer()->get('helper.gutenberg');
