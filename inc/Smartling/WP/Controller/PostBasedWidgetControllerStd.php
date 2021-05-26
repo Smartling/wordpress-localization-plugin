@@ -153,7 +153,6 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
     public function ajaxUploadHandler()
     {
-        $this->getLogger()->debug("Usage: class='" . __CLASS__ . "', function='" . __FUNCTION__ . "'");
         $result = [];
 
         $data = &$_POST;
