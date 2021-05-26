@@ -12,11 +12,13 @@ use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\XmlHelper;
+use Smartling\Replacers\ReplacerFactory;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
+use Smartling\Tuner\MediaAttachmentRulesManager;
 
 require __DIR__ . '/../../wordpressBlocks.php';
 
@@ -247,6 +249,10 @@ HTML;
 
     private function assertSuccessApplyXml(SmartlingCoreUpload $smartlingCoreUpload, SubmissionEntity $submission, XmlHelper $xmlHelper)
     {
-        self::assertEquals([], $smartlingCoreUpload->applyXML($submission, ' ', $xmlHelper, new PostContentHelper(new GutenbergBlockHelper())));
+        $postContentHelper = new PostContentHelper(new GutenbergBlockHelper(
+            $this->createMock(MediaAttachmentRulesManager::class),
+            $this->createMock(ReplacerFactory::class),
+        ));
+        self::assertEquals([], $smartlingCoreUpload->applyXML($submission, ' ', $xmlHelper, $postContentHelper));
     }
 }

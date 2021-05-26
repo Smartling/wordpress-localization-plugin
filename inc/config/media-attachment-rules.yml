@@ -1,4 +1,19 @@
 parameters:
   known.attachment.rules: #built-in wordpress
-      - 'image/id'
-      - 'media-text/mediaId'
+    - "@image.id.related.attachment"
+    - "@media-text.media-id.related.attachment"
+
+services:
+  image.id.related.attachment:
+    class: Smartling\Helpers\GutenbergReplacementRule
+    arguments:
+      - "core/image"
+      - "id"
+      - "related|attachment"
+
+  media-text.media-id.related.attachment:
+    class: Smartling\Helpers\GutenbergReplacementRule
+    arguments:
+      - "core/media-text"
+      - "mediaId"
+      - "related|attachment"

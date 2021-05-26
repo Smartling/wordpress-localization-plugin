@@ -4,43 +4,33 @@ namespace Smartling\Helpers;
 
 class ReplacementInfo
 {
-    private $replacement;
-    private $sourceId;
-    private $targetId;
+    private string $result;
+    private array $replacementPairs;
 
     /**
-     * @param string $replacement
-     * @param int|string $sourceId
-     * @param int|string $targetId
+     * @param ReplacementPair[] $replacementPairs
      */
-    public function __construct($replacement, $sourceId, $targetId)
+    public function __construct(string $resultString, array $replacementPairs)
     {
-        $this->replacement = $replacement;
-        $this->sourceId = $sourceId;
-        $this->targetId = $targetId;
+        foreach ($replacementPairs as $replacementPair) {
+            if (!$replacementPair instanceof ReplacementPair) {
+                throw new \InvalidArgumentException('ReplacementPairs expected');
+            }
+        }
+        $this->replacementPairs = $replacementPairs;
+        $this->result = $resultString;
+    }
+
+    public function getResult(): string
+    {
+        return $this->result;
     }
 
     /**
-     * @return string
+     * @return ReplacementPair[]
      */
-    public function getReplacement()
+    public function getReplacementPairs(): array
     {
-        return $this->replacement;
-    }
-
-    /**
-     * @return int|string
-     */
-    public function getSourceId()
-    {
-        return $this->sourceId;
-    }
-
-    /**
-     * @return int|string
-     */
-    public function getTargetId()
-    {
-        return $this->targetId;
+        return $this->replacementPairs;
     }
 }

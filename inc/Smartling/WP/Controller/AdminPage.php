@@ -3,6 +3,7 @@
 namespace Smartling\WP\Controller;
 
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\Replacers\ReplacerFactory;
 use Smartling\Tuner\FilterManager;
 use Smartling\Tuner\MediaAttachmentRulesManager;
 use Smartling\Tuner\ShortcodeManager;
@@ -13,10 +14,13 @@ use Smartling\WP\WPHookInterface;
 
 class AdminPage extends ControllerAbstract implements WPHookInterface
 {
-    private $mediaAttachmentRulesManager;
-    public function __construct(MediaAttachmentRulesManager $mediaAttachmentRulesManager)
+    private MediaAttachmentRulesManager $mediaAttachmentRulesManager;
+    private ReplacerFactory $replacerFactory;
+
+    public function __construct(MediaAttachmentRulesManager $mediaAttachmentRulesManager, ReplacerFactory $replacerFactory)
     {
         $this->mediaAttachmentRulesManager = $mediaAttachmentRulesManager;
+        $this->replacerFactory = $replacerFactory;
     }
 
     public function register(): void
@@ -85,7 +89,7 @@ class AdminPage extends ControllerAbstract implements WPHookInterface
             [
                 'shortcodes' => new ShortcodeTableClass(new ShortcodeManager()),
                 'filters' => new LocalizationRulesTableWidget(new FilterManager()),
-                'media' => new MediaAttachmentTableWidget($this->mediaAttachmentRulesManager),
+                'media' => new MediaAttachmentTableWidget($this->mediaAttachmentRulesManager, $this->replacerFactory),
             ]
         );
         $this->renderScript();

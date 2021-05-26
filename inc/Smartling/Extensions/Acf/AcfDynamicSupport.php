@@ -14,10 +14,6 @@ use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\ConfigurationProfileEntity;
 
-/**
- * Class AcfAutoSetup
- * @package Smartling\ACF
- */
 class AcfDynamicSupport
 {
     /**
@@ -41,10 +37,7 @@ class AcfDynamicSupport
         'translate' => [],
     ];
 
-    /**
-     * @return array
-     */
-    public function getDefinitions()
+    public function getDefinitions(): array
     {
         return $this->definitions;
     }

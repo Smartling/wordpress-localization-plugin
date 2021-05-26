@@ -2,22 +2,27 @@
 
 namespace Smartling\WP\Table;
 
+use Smartling\Exception\EntityNotFoundException;
+use Smartling\Helpers\GutenbergReplacementRule;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Replacers\ReplacerFactory;
 use Smartling\Tuner\MediaAttachmentRulesManager;
 
 class MediaAttachmentTableWidget extends \WP_List_Table
 {
-    private $manager;
+    private MediaAttachmentRulesManager $manager;
+    private ReplacerFactory $factory;
 
-    private $_settings = [
+    private array $_settings = [
         'singular' => 'media',
         'plural' => 'media',
         'ajax' => false,
     ];
 
-    public function __construct(MediaAttachmentRulesManager $manager)
+    public function __construct(MediaAttachmentRulesManager $manager, ReplacerFactory $replacerFactory)
     {
         parent::__construct($this->_settings);
+        $this->factory = $replacerFactory;
         $this->manager = $manager;
     }
 
@@ -32,27 +37,21 @@ class MediaAttachmentTableWidget extends \WP_List_Table
         return $item[$column_name];
     }
 
-    /**
-     * @param string $item
-     * @param string $id
-     *
-     * @return string
-     */
-    public function applyRowActions($item, $id)
+    public function applyRowActions(string $item, string $id): string
     {
         $actions = [
             'edit'   => HtmlTagGeneratorHelper::tag(
                 'a',
                 __('Edit'),
                 [
-                    'href' => "?page=smartling_customization_tuning_media_form&action=edit&id={$id}",
+                    'href' => "?page=smartling_customization_tuning_media_form&action=edit&id=$id",
                 ]
             ),
             'delete' => HtmlTagGeneratorHelper::tag(
                 'a',
                 __('Delete'),
                 [
-                    'href' => "?page=smartling_customization_tuning&action=delete&type=media&id={$id}"
+                    'href' => "?page=smartling_customization_tuning&action=delete&type=media&id=$id"
                 ]
             ),
         ];
@@ -60,52 +59,61 @@ class MediaAttachmentTableWidget extends \WP_List_Table
         return implode(' ', [esc_html__($item), $this->row_actions($actions)]);
     }
 
-    public function get_columns()
+    public function get_columns(): array
     {
         return [
             'block' => 'Gutenberg Block Name',
             'path' => 'JSON Path',
+            'replacerId' => 'Replacer Type',
         ];
 
     }
 
-    public function renderNewButton()
+    public function renderNewButton(): string
     {
         $options = [
-            'id'    => $this->buildHtmlTagName('createNew'),
-            'name'  => '',
             'class' => 'button action',
-            'type'  => 'submit',
+            'type' => 'submit',
             'value' => __('Add Media Rule'),
         ];
 
         return HtmlTagGeneratorHelper::tag('input', '', $options);
     }
 
-    public function prepare_items()
+    public function prepare_items(): void
     {
         $this->_column_headers = [$this->get_columns(), [], []];
         $this->manager->loadData();
         $data = [];
 
         foreach ($this->manager->getPreconfiguredRules() as $rule) {
-            $data[] = [
-                'id' => null,
-                'block' => HtmlTagGeneratorHelper::tag('span', $rule['block'], [
-                    'class' => 'nonmanaged',
-                    'title' => 'That path is automatically discovered and processed by smartling-connector',
-                ]),
-                'path' => $rule['path'],
-            ];
+            $data[] = $this->toArray($rule);
         }
 
         foreach ($this->manager->listItems() as $id => $element) {
-            $row = $element;
-            $row['id'] = $id;
-            $row['block'] = $this->applyRowActions($row['block'], $id);
-            $data[] = $row;
+            $data[] = $this->toArray($element, $id, true);
         }
 
         $this->items = $data;
+    }
+
+    private function toArray(GutenbergReplacementRule $rule, ?string $id = null, bool $managed = false): array
+    {
+        try {
+            $replacerId = $this->factory->getReplacer($rule->getReplacerId())->getLabel();
+        } catch (EntityNotFoundException $e) {
+            $replacerId = "<b>Invalid</b>: {$rule->getReplacerId()}";
+        }
+        return [
+            'id' => $id,
+            'block' => $managed ?
+                $this->applyRowActions($rule->getBlockType(), $id) :
+                HtmlTagGeneratorHelper::tag('span', $rule->getBlockType(), [
+                    'class' => 'nonmanaged',
+                    'title' => 'That path is automatically discovered and processed by smartling-connector',
+                ]),
+            'path' => $rule->getPropertyPath(),
+            'replacerId' => $replacerId,
+        ];
     }
 }

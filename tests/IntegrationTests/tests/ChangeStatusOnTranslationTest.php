@@ -20,7 +20,7 @@ class ChangeStatusOnTranslationTest extends SmartlingUnitTestCaseAbstract
     {
         parent::__construct($name, $data, $dataName);
         $this->settingsManager = $this->getSettingsManager();
-        $this->siteHelper = $this->getTranslationHelper()->getSiteHelper();
+        $this->siteHelper = $this->getSiteHelper();
     }
 
     public function testDraftAfterPublish()
@@ -46,7 +46,7 @@ class ChangeStatusOnTranslationTest extends SmartlingUnitTestCaseAbstract
 
         $this->uploadDownload($submission);
 
-        $post = $this->getTargetPost($submission);
+        $post = $this->getTargetPost($this->siteHelper, $submission);
         $this->assertEquals('draft', $post->post_status);
     }
 
@@ -82,16 +82,6 @@ class ChangeStatusOnTranslationTest extends SmartlingUnitTestCaseAbstract
 
         $submission = ArrayHelper::first($submissions);
 
-        return $this->getTargetPost($submission);
-    }
-
-    private function getTargetPost(SubmissionEntity $submission): \WP_Post
-    {
-        $this->siteHelper->switchBlogId($submission->getTargetBlogId());
-        wp_cache_delete($submission->getTargetId(), 'posts');
-        $post = get_post($submission->getTargetId());
-        $this->siteHelper->restoreBlogId();
-
-        return $post;
+        return $this->getTargetPost($this->siteHelper, $submission);
     }
 }

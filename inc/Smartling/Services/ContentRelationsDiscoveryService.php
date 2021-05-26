@@ -6,6 +6,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
@@ -20,10 +21,14 @@ use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
 use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
+use Smartling\Models\GutenbergBlock;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Replacers\ContentIdReplacer;
+use Smartling\Replacers\ReplacerFactory;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\Tuner\MediaAttachmentRulesManager;
 
 /**
  *
@@ -65,7 +70,9 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
     private LoggerInterface $logger;
     private ContentHelper $contentHelper;
     private FieldsFilterHelper $fieldFilterHelper;
+    private MediaAttachmentRulesManager $mediaAttachmentRulesManager;
     private MetaFieldProcessorManager $metaFieldProcessorManager;
+    private ReplacerFactory $replacerFactory;
     private AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper;
     private ShortcodeHelper $shortcodeHelper;
     private GutenbergBlockHelper $gutenbergBlockHelper;
@@ -89,6 +96,8 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         GutenbergBlockHelper $blockHelper,
         SubmissionManager $submissionManager,
         ApiWrapperInterface $apiWrapper,
+        MediaAttachmentRulesManager $mediaAttachmentRulesManager,
+        ReplacerFactory $replacerFactory,
         SettingsManager $settingsManager
     )
     {
@@ -99,7 +108,9 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         $this->gutenbergBlockHelper = $blockHelper;
         $this->localizationPluginProxy = $localizationPluginProxy;
         $this->logger = MonologWrapper::getLogger(static::class);
+        $this->mediaAttachmentRulesManager = $mediaAttachmentRulesManager;
         $this->metaFieldProcessorManager = $fieldProcessorManager;
+        $this->replacerFactory = $replacerFactory;
         $this->settingsManager = $settingsManager;
         $this->shortcodeHelper = $shortcodeHelper;
         $this->submissionManager = $submissionManager;
@@ -371,37 +382,67 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 
     private function extractFieldsFromGutenbergBlock(string $basename, string $string): array
     {
-        $fields = [];
+        $result = [];
         $blocks = $this->gutenbergBlockHelper->parseBlocks($string);
         foreach ($blocks as $index => $block) {
-            $pointer = 0;
-            $blockNamePart = "$basename/{$block['blockName']}_$index";
-            $_fields = $block['attrs'];
+            $result = $this->addFlattenedBlock($result, $block, $basename, $index);
+        }
+        return $result;
+    }
 
-            /**
-             * Extract regular attributes
-             */
-            foreach ($_fields as $fName => $fValue) {
-                $fields[$blockNamePart . '/' . $fName] = $fValue;
-            }
+    private function addFlattenedBlock(array $array, GutenbergBlock $block, string $baseName, int $index): array
+    {
+        $innerIndex = 0;
+        $blockNamePart = "$baseName/{$block->getBlockName()}_$index";
+        $attributes = $block->getAttributes();
 
-            /**
-             * get nested content attributes
-             */
-            foreach ($block['innerContent'] as $chunk) {
-                if (!is_string($chunk)) {
-                    $chunkFields = $this->extractFieldsFromGutenbergBlock($blockNamePart,
-                        $block['innerBlocks'][$pointer++]);
-                    $fields = array_merge($fields, $chunkFields);
+        foreach ($attributes as $field => $value) {
+            $array[$blockNamePart . '/' . $field] = $value;
+        }
+        foreach ($block->getInnerBlocks() as $innerBlock) {
+            $array = $this->addFlattenedBlock($array, $innerBlock, $blockNamePart, $innerIndex++);
+        }
+
+        return $array;
+    }
+
+    private function getPostContentReferences(string $content): array
+    {
+        $result = [];
+        foreach ($this->gutenbergBlockHelper->parseBlocks($content) as $block) {
+            $result = $this->addPostContentReferences($result, $block);
+        }
+
+        $result = array_unique($result);
+
+        return ['PostBasedProcessor' => array_combine($result, $result)] ;
+    }
+
+    private function addPostContentReferences(array $array, GutenbergBlock $block): array
+    {
+        foreach ($block->getAttributes() as $attribute => $value) {
+            foreach ($this->mediaAttachmentRulesManager->getGutenbergReplacementRules($block->getBlockName(), $attribute) as $rule) {
+                try {
+                    $replacer = $this->replacerFactory->getReplacer($rule->getReplacerId());
+                } catch (EntityNotFoundException $e) {
+                    continue;
+                }
+                if ($replacer instanceof ContentIdReplacer && is_numeric($value)) {
+                    $array[] = $value;
                 }
             }
         }
-        return $fields;
+        foreach ($block->getInnerBlocks() as $innerBlock) {
+            $array = $this->addPostContentReferences($array, $innerBlock);
+        }
+
+        return $array;
     }
 
     public function actionHandler(): void
     {
         $contentType = $this->getContentType();
+        $detectedReferences = ['attachment' => []];
         $id = $this->getId();
         $curBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
         $targetBlogIds = $this->getTargetBlogIds();
@@ -457,8 +498,6 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             );
         }
 
-        $detectedReferences = ['attachment' => []];
-
         foreach ($fields as $fName => $fValue) {
             try {
                 $this->getLogger()->debug(vsprintf('Looking for processor for field \'%s\'', [$fName]));
@@ -485,9 +524,6 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 
                     $detectedReferences[$shortProcessorName][$fValue][] = $fName;
                 } else {
-                    if (!isset($detectedReferences['attachment'])) {
-                        $detectedReferences['attachment'] = [];
-                    }
                     $detectedReferences['attachment'] = array_merge($detectedReferences['attachment'],
                         $this->absoluteLinkedAttachmentCoreHelper->getImagesIdsFromString($fValue, $curBlogId));
                     $detectedReferences['attachment'] = array_unique($detectedReferences['attachment']);
@@ -508,6 +544,10 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         }
 
         $detectedReferences['taxonomies'] = $this->getBackwardRelatedTaxonomies($id, $contentType);
+
+        if (array_key_exists('post_content', $content['entity'])) {
+            $detectedReferences = array_merge($detectedReferences, $this->getPostContentReferences($content['entity']['post_content']));
+        }
 
         $detectedReferences = $this->normalizeReferences($detectedReferences);
 

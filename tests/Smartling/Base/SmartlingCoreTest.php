@@ -12,6 +12,7 @@ use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\XmlHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
+use Smartling\Replacers\ReplacerFactory;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
@@ -26,6 +27,7 @@ use Smartling\Base\SmartlingCore;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
+use Smartling\Tuner\MediaAttachmentRulesManager;
 
 class SmartlingCoreTest extends TestCase
 {
@@ -37,11 +39,19 @@ class SmartlingCoreTest extends TestCase
     use EntityHelperMock;
     use DbAlMock;
 
-    private $core;
+    private SmartlingCore $core;
     protected function setUp(): void
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
-        $this->core = new SmartlingCore(new PostContentHelper(new GutenbergBlockHelper()), new XmlHelper());
+        $this->core = new SmartlingCore(
+            new PostContentHelper(
+                new GutenbergBlockHelper(
+                    $this->createMock(MediaAttachmentRulesManager::class),
+                    $this->createMock(ReplacerFactory::class)
+                )
+            ),
+            new XmlHelper(),
+        );
     }
 
     /**

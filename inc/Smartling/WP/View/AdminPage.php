@@ -53,7 +53,7 @@ use Smartling\WP\Table\ShortcodeTableClass;
         <?php $filterTable->display(); ?>
     </form>
 
-    <h3>Custom media attachment rules</h3>
+    <h3>Gutenberg block rules</h3>
 
     <form id="media-rules-table-list" method="get">
         <?= $mediaTable->renderNewButton()?>

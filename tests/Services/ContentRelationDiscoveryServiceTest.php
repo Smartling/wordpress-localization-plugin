@@ -13,12 +13,14 @@ use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
 use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Helpers\SiteHelper;
+use Smartling\Replacers\ReplacerFactory;
 use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
+use Smartling\Tuner\MediaAttachmentRulesManager;
 
 class ContentRelationDiscoveryServiceTest extends TestCase
 {
@@ -174,6 +176,8 @@ class ContentRelationDiscoveryServiceTest extends TestCase
             $this->createMock(GutenbergBlockHelper::class),
             $submissionManager,
             $apiWrapper,
+            $this->createMock(MediaAttachmentRulesManager::class),
+            $this->createMock(ReplacerFactory::class),
             $settingsManager,
         ])->onlyMethods(['returnResponse'])->getMock();
     }

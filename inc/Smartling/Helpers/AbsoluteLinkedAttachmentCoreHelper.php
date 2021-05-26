@@ -48,7 +48,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
 
     private function generateTranslatedUrl(string $originalUrl, SubmissionEntity $submission): string
     {
-        $result = $this->getCore()->getAttachmentAbsolutePathBySubmission($submission);
+        $result = $this->core->getAttachmentAbsolutePathBySubmission($submission);
 
         if ($this->isUrlThumbnail($originalUrl)) {
 
@@ -79,12 +79,12 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
         $result = $replacer;
         if ($this->isAbsoluteUrl($path)) {
             $attachmentId = $this->getAttachmentId($path);
-            if (false !== $attachmentId) {
+            if (null !== $attachmentId) {
                 $submission = $this->getParams()->getSubmission();
                 $sourceBlogId = $submission->getSourceBlogId();
                 $targetBlogId = $submission->getTargetBlogId();
-                if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, (int)$attachmentId, $targetBlogId)) {
-                    $attachmentSubmission = $this->getCore()->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, $attachmentId, $submission->getJobInfoWithBatchUid(), $submission->getIsCloned());
+                if ($this->core->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, (int)$attachmentId, $targetBlogId)) {
+                    $attachmentSubmission = $this->core->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, $attachmentId, $submission->getJobInfoWithBatchUid(), $submission->getIsCloned());
 
                     $newPath = $this->generateTranslatedUrl($path, $attachmentSubmission);
                     $replacer->addReplacementPair(new ReplacementPair($path, $newPath));
@@ -186,8 +186,8 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
     private function urlToFileByBlogId(string $url, int $blogId): string
     {
         $parsedUrlPath = parse_url($url, PHP_URL_PATH);
-        $sourceUploadInfo = $this->getCore()->getUploadFileInfo($blogId);
-        $relativePath = $this->getCore()->getFullyRelateAttachmentPathByBlogId($blogId, $parsedUrlPath);
+        $sourceUploadInfo = $this->core->getUploadFileInfo($blogId);
+        $relativePath = $this->core->getFullyRelateAttachmentPathByBlogId($blogId, $parsedUrlPath);
         return $sourceUploadInfo['basedir'] . DIRECTORY_SEPARATOR . $relativePath;
     }
 
@@ -196,7 +196,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
      */
     private function fileToUrl(string $file): string
     {
-        $targetUploadInfo = $this->getCore()->getUploadFileInfo($this->getParams()->getSubmission()->getTargetBlogId());
+        $targetUploadInfo = $this->core->getUploadFileInfo($this->getParams()->getSubmission()->getTargetBlogId());
 
         return str_replace($targetUploadInfo['basedir'], $targetUploadInfo['baseurl'], $file);
     }

@@ -14,19 +14,22 @@ services:
     arguments:
       - "%known.attachment.rules%"
 
+  factory.replacer:
+    class: Smartling\Replacers\ReplacerFactory
+    arguments:
+      - "@manager.submission"
+
   smartling.helper.relative-image-path-support:
     class: Smartling\Helpers\RelativeLinkedAttachmentCoreHelper
     arguments:
       - "@entrypoint"
       - "@acf.dynamic.support"
-      - "@media.attachment.rules.manager"
 
   smartling.helper.absolute-image-path-support:
       class: Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper
       arguments:
         - "@entrypoint"
         - "@acf.dynamic.support"
-        - "@media.attachment.rules.manager"
 
   helper.customMenu:
     class: Smartling\Helpers\CustomMenuContentTypeHelper
@@ -225,6 +228,9 @@ services:
 
   helper.gutenberg:
     class: Smartling\Helpers\GutenbergBlockHelper
+    arguments:
+      - "@media.attachment.rules.manager"
+      - "@factory.replacer"
     calls:
       - [ "setFieldsFilter", [ "@fields-filter.helper" ]]
 
@@ -255,6 +261,7 @@ services:
     class: Smartling\Services\SmartlingFilterUiService
     arguments:
       - "@media.attachment.rules.manager"
+      - "@factory.replacer"
 
   extension.loader:
     class: Smartling\Extensions\ExtensionLoader
@@ -263,10 +270,10 @@ services:
 
   translation.helper:
     class: Smartling\Helpers\TranslationHelper
-    calls:
-      - [ "setMutilangProxy", [ "@multilang.proxy" ]]
-      - [ "setSubmissionManager", [ "@manager.submission" ]]
-      - [ "setSiteHelper", [ "@site.helper" ]]
+    arguments:
+      - "@multilang.proxy"
+      - "@site.helper"
+      - "@manager.submission"
 
   content.helper:
     class: Smartling\Helpers\ContentHelper
@@ -327,4 +334,6 @@ services:
       - "@helper.gutenberg"
       - "@manager.submission"
       - "@wrapper.sdk.api.smartling"
+      - "@media.attachment.rules.manager"
+      - "@factory.replacer"
       - "@manager.settings"
