@@ -2,31 +2,26 @@
 
 namespace Smartling\Replacers;
 
-use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Psr\Log\LoggerInterface;
+use Smartling\Helpers\ArrayHelper;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
 class ContentIdReplacer implements ReplacerInterface
 {
-    private string $contentType;
-    private LocalizationPluginProxyInterface $localizationProxy;
+    private LoggerInterface $logger;
     private SubmissionManager $submissionManager;
 
-    public function __construct(LocalizationPluginProxyInterface $localizationProxy, SubmissionManager $submissionManager, string $contentType)
+    public function __construct(SubmissionManager $submissionManager)
     {
-        $this->contentType = $contentType;
-        $this->localizationProxy = $localizationProxy;
+        $this->logger = MonologWrapper::getLogger();
         $this->submissionManager = $submissionManager;
-    }
-
-    public function getContentType(): string
-    {
-        return $this->contentType;
     }
 
     public function getLabel(): string
     {
-        return "Related: $this->contentType";
+        return "Related: Post based content";
     }
 
     /**
@@ -37,8 +32,22 @@ class ContentIdReplacer implements ReplacerInterface
     {
         $sourceBlogId = $submission->getSourceBlogId();
         $targetBlogId = $submission->getTargetBlogId();
+        $relatedSubmissions = $this->submissionManager->find([
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+            SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+            SubmissionEntity::FIELD_SOURCE_ID => $value,
+        ]);
+        if (count($relatedSubmissions) === 0) {
+            $this->logger->debug("No related submissions found while trying to replace content id for submissionId=\"{$submission->getId()}\", skipping");
+            return $value;
+        }
 
-        $targetId = $this->submissionManager->getSubmissionEntity($this->contentType, $sourceBlogId, (int)$value, $targetBlogId, $this->localizationProxy)->getTargetId();
+        if (count($relatedSubmissions) > 1) {
+            $this->logger->warning("More than a single submission found while trying to replace content id for submissionId=\"{$submission->getId()}\", skipping");
+            return $value;
+        }
+
+        $targetId = ArrayHelper::first($relatedSubmissions)->getTargetId();
         if ($targetId !== 0) {
             settype($targetId, gettype($value));
             return $targetId;

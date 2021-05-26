@@ -17,7 +17,6 @@ services:
   factory.replacer:
     class: Smartling\Replacers\ReplacerFactory
     arguments:
-      - "@multilang.proxy"
       - "@manager.submission"
 
   smartling.helper.relative-image-path-support:

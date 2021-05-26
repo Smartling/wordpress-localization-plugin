@@ -413,11 +413,9 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             $result = $this->addPostContentReferences($result, $block);
         }
 
-        foreach ($result as $contentType => $ids) {
-            $result[$contentType] = array_unique($ids);
-        }
+        $result = array_unique($result);
 
-        return $result;
+        return ['PostBasedProcessor' => array_combine($result, $result)] ;
     }
 
     private function addPostContentReferences(array $array, GutenbergBlock $block): array
@@ -430,11 +428,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                     continue;
                 }
                 if ($replacer instanceof ContentIdReplacer && is_numeric($value)) {
-                    $contentType = $replacer->getContentType();
-                    if (!array_key_exists($contentType, $array)) {
-                        $array[$contentType] = [];
-                    }
-                    $array[$contentType][] = $value;
+                    $array[] = $value;
                 }
             }
         }
@@ -551,15 +545,15 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 
         $detectedReferences['taxonomies'] = $this->getBackwardRelatedTaxonomies($id, $contentType);
 
+        if (array_key_exists('post_content', $content['entity'])) {
+            $detectedReferences = array_merge($detectedReferences, $this->getPostContentReferences($content['entity']['post_content']));
+        }
+
         $detectedReferences = $this->normalizeReferences($detectedReferences);
 
         $responseData = [
             'originalReferences' => $detectedReferences,
         ];
-
-        if (array_key_exists('post_content', $content['entity'])) {
-            $detectedReferences = array_merge($detectedReferences, $this->getPostContentReferences($content['entity']['post_content']));
-        }
 
         $registeredTypes = get_post_types();
         $taxonomies = $this->contentHelper->getSiteHelper()->getTermTypes();

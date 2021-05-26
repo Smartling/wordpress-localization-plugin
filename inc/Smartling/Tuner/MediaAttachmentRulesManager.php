@@ -72,7 +72,7 @@ class MediaAttachmentRulesManager extends CustomizationManagerAbstract
         return [
             'blockType' => $item['block'],
             'propertyPath' => $item['path'],
-            'replacerId' => $item['replacerId'] ?? 'related|attachment'
+            'replacerId' => $item['replacerId'] ?? 'related|postbased'
         ];
     }
 }
