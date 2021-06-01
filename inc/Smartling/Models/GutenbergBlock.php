@@ -40,6 +40,14 @@ class GutenbergBlock
         return $this->innerBlocks;
     }
 
+    public function withInnerBlock(GutenbergBlock $block, int $index): self
+    {
+        $result = clone $this;
+        $result->innerBlocks[$index] = $block;
+
+        return $result;
+    }
+
     public function getInnerHtml(): string
     {
         return $this->innerHtml;

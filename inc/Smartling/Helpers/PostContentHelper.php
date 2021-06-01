@@ -2,57 +2,48 @@
 
 namespace Smartling\Helpers;
 
+use Smartling\Models\GutenbergBlock;
+
 class PostContentHelper
 {
-    private $blockHelper;
-    const PLACEHOLDER_FORMAT = '$RPH$%s$RPH$';
+    private GutenbergBlockHelper $blockHelper;
 
     public function __construct(GutenbergBlockHelper $blockHelper)
     {
         $this->blockHelper = $blockHelper;
     }
 
-    /**
-     * @param string $original
-     * @param string $translated
-     * @param array $lockedFields
-     * @return string
-     */
-    public function applyTranslation($original, $translated, array $lockedFields)
+    public function applyTranslation(string $original, string $translated, array $lockedFields): string
     {
-        $result = $this->blockHelper->normalizeCoreBlocks($translated);
-        $originalBlocks = $this->blockHelper->addPostContentBlocks(['post_content' => $original]);
-        $translatedBlocks = $this->blockHelper->addPostContentBlocks(['post_content' => $translated]);
-        unset ($originalBlocks['post_content'], $translatedBlocks['post_content']);
-
-        foreach ($translatedBlocks as $index => $block) {
-            $result = $this->replaceFirstMatch($block, str_replace('%s', $index, self::PLACEHOLDER_FORMAT), $result);
-        }
+        $result = '';
+        $originalBlocks = $this->blockHelper->parseBlocks($original);
+        $translatedBlocks = $this->blockHelper->parseBlocks($translated);
 
         foreach ($lockedFields as $lockedField) {
-            $lockedField = preg_replace('~^entity/~', '', $lockedField);
-            $placeholder = str_replace('%s', $lockedField, self::PLACEHOLDER_FORMAT);
-            if (array_key_exists($lockedField, $originalBlocks) && array_key_exists($lockedField, $translatedBlocks)) {
-                $result = str_replace($placeholder, $originalBlocks[$lockedField], $result);
+            $lockedField = preg_replace('~^entity/post_content/blocks/~', '', $lockedField);
+            $parts = explode('/', $lockedField);
+            $index = array_shift($parts);
+            if (count($parts) > 0) {
+                $translatedBlocks[$index] = $this->applyLockedField($parts, $originalBlocks[$index], $translatedBlocks[$index]);
+            } else {
+                $translatedBlocks[$index] = $originalBlocks[$index];
             }
         }
 
-        $placeholders = [];
-        preg_match_all('~\$RPH\$([^$]+)\$RPH\$~', $result, $placeholders);
-        foreach ($placeholders[0] as $index => $placeholder) {
-            $result = str_replace($placeholder, $translatedBlocks[$placeholders[1][$index]], $result);
+        foreach ($translatedBlocks as $block) {
+            $result .= serialize_block($block->toArray());
         }
 
         return $result;
     }
 
-    private function replaceFirstMatch($search, $replace, $subject)
+    private function applyLockedField(array $pathParts, GutenbergBlock $originalBlock, GutenbergBlock $translatedBlock): GutenbergBlock
     {
-        $pos = strpos($subject, $search);
-        if ($pos === false) {
-            return $subject;
+        $index = array_shift($pathParts);
+        while (count($pathParts) > 0) {
+            $this->applyLockedField($pathParts, $originalBlock->getInnerBlocks()[$index], $translatedBlock->getInnerBlocks()[$index]);
         }
 
-        return substr_replace($subject, $replace, $pos, strlen($search));
+        return $translatedBlock->withInnerBlock($originalBlock->getInnerBlocks()[$index], $index);
     }
 }
