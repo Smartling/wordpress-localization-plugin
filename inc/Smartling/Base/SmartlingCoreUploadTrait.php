@@ -810,13 +810,34 @@ trait SmartlingCoreUploadTrait
             $submission->getContentType() === ContentTypeNavigationMenuItem::WP_CONTENT_TYPE &&
             in_array($originalMetadata['_menu_item_type'], ['taxonomy', 'post_type'], true)
         ) {
-            $result['_menu_item_object_id'] = (new ContentIdReplacer(
-                $this->getMultilangProxy(),
-                $this->getSubmissionManager(),
-                $originalMetadata['_menu_item_object'],
-            ))->processOnDownload($submission, $originalMetadata['_menu_item_object_id']);
+            $result['_menu_item_object_id'] = (new ContentIdReplacer($this->getSubmissionManager()))
+                ->processOnDownload($submission, $originalMetadata['_menu_item_object_id']);
         }
 
         return $result;
+    }
+
+    private function getXml(SubmissionEntity $submission): string
+    {
+        $source = $this->readSourceContentWithMetadataAsArray($submission);
+
+        $params = new BeforeSerializeContentEventParameters(
+            $source,
+            $submission,
+            $this->getContentHelper()->readSourceContent($submission),
+            $source['meta'],
+        );
+
+        do_action(ExportedAPI::EVENT_SMARTLING_BEFORE_SERIALIZE_CONTENT, $params);
+
+        $this->prepareFieldProcessorValues($submission);
+        $filteredValues = $this->getFieldsFilter()->processStringsBeforeEncoding($submission, $params->getPreparedFields());
+
+        if (0 === count($filteredValues)) {
+            $this->getLogger()->debug("Submission id=\"{$submission->getId()}\" has nothing to translate.");
+            return '';
+        }
+
+        return XmlHelper::xmlEncode($filteredValues, $submission, $params->getPreparedFields());
     }
 }

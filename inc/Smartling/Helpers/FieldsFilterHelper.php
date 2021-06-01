@@ -2,6 +2,7 @@
 
 namespace Smartling\Helpers;
 
+use JetBrains\PhpStorm\ExpectedValues;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
@@ -191,14 +192,12 @@ class FieldsFilterHelper
         return $data;
     }
 
-    /**
-     * @param SubmissionEntity $submission
-     * @param array $data
-     * @param string $strategy self::FILTER_STRATEGY_UPLOAD or self::FILTER_STRATEGY_DOWNLOAD
-     *
-     * @return mixed
-     */
-    public function processStringsBeforeEncoding(SubmissionEntity $submission, array $data, $strategy = self::FILTER_STRATEGY_UPLOAD)
+    public function processStringsBeforeEncoding(
+        SubmissionEntity $submission,
+        array $data,
+        #[ExpectedValues([self::FILTER_STRATEGY_UPLOAD, self::FILTER_STRATEGY_DOWNLOAD])]
+        string $strategy = self::FILTER_STRATEGY_UPLOAD
+    ): array
     {
         $settingsManager = $this->getSettingsManager();
         ContentSerializationHelper::prepareFieldProcessorValues($settingsManager, $submission);
@@ -422,12 +421,7 @@ class FieldsFilterHelper
         return $result;
     }
 
-    /**
-     * @param $array
-     *
-     * @return array
-     */
-    public function removeEmptyFields(array $array)
+    public function removeEmptyFields(array $array): array
     {
         $rebuild = [];
         foreach ($array as $key => $value) {
