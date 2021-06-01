@@ -2,17 +2,13 @@
 
 namespace Smartling\Base;
 
-use Smartling\Helpers\XmlHelper;
+use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\Controller\LiveNotificationController;
 
-/**
- * Class SmartlingCoreDownloadTrait
- * @package Smartling\Base
- */
 trait SmartlingCoreDownloadTrait
 {
-    public function downloadTranslationBySubmission(SubmissionEntity $entity)
+    public function downloadTranslationBySubmission(SubmissionEntity $entity): void
     {
         $this->getLogger()->debug(vsprintf('Preparing to download submission id = \'%s\'.', [$entity->getId()]));
         if (1 === $entity->getIsLocked()) {
@@ -92,6 +88,15 @@ trait SmartlingCoreDownloadTrait
                 ])
             );
         } catch (\Exception $e) {
+            if ($e instanceof SmartlingFileDownloadException) {
+                $xml = $this->getXML($entity);
+
+                if ($xml === '') {
+                    $this->getLogger()->info("Detected empty xml for submissionId={$entity->getId()}, applying");
+                    $this->applyXML($entity, $xml, $this->xmlHelper, $this->postContentHelper);
+                    return;
+                }
+            }
             LiveNotificationController::pushNotification(
                 $this
                     ->getSettingsManager()
@@ -112,7 +117,6 @@ trait SmartlingCoreDownloadTrait
             );
             $this->getLogger()->error($msg);
         }
-
     }
 
     public function downloadTranslationBySubmissionId($id)

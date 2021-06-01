@@ -106,6 +106,7 @@ class XmlHelper
      * @param SubmissionEntity $submission
      * @param array            $originalContent
      *
+     * TODO: refactor this and SmartlingCoreTrait::prepareFieldProcessorValues to get rid of self::getFieldProcessingParams() in favour of sending them as an argument
      * @return string
      */
     public static function xmlEncode(array $source, SubmissionEntity $submission, array $originalContent = [])
