@@ -2,6 +2,7 @@
 
 namespace Smartling\Helpers;
 
+use JetBrains\PhpStorm\ExpectedValues;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
@@ -191,10 +192,12 @@ class FieldsFilterHelper
         return $data;
     }
 
-    /**
-     * @param string $strategy self::FILTER_STRATEGY_UPLOAD or self::FILTER_STRATEGY_DOWNLOAD
-     */
-    public function processStringsBeforeEncoding(SubmissionEntity $submission, array $data, string $strategy = self::FILTER_STRATEGY_UPLOAD): array
+    public function processStringsBeforeEncoding(
+        SubmissionEntity $submission,
+        array $data,
+        #[ExpectedValues([self::FILTER_STRATEGY_UPLOAD, self::FILTER_STRATEGY_DOWNLOAD])]
+        string $strategy = self::FILTER_STRATEGY_UPLOAD
+    ): array
     {
         $settingsManager = $this->getSettingsManager();
         ContentSerializationHelper::prepareFieldProcessorValues($settingsManager, $submission);
