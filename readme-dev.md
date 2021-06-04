@@ -19,9 +19,9 @@ with CRE_PROJECT_ID, CRE_USER_IDENTIFIER and CRE_TOKEN_SECRET taken from Smartli
 
 Starting about 2020-06, there is a WordPress database error while executing tests, regarding a table 'wp.wp_2_yoast_indexable' that doesn't exist, but [yoast devs say it doesn't have any negative impact](https://wordpress.org/support/topic/wordpress-database-error-table-12/).
 
-#Dev changelog
+# Dev changelog
 ## Function changes from 1.5.7 to 2.4.0
-###inc/Smartling/ApiWrapper.php
+### inc/Smartling/ApiWrapper.php
 `- public function createJob(ConfigurationProfileEntity $profile, array $params)`
 
 `+ public function createJob(ConfigurationProfileEntity $profile, array $params): array`
@@ -34,7 +34,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, bool $authorize): JobEntityWithBatchUid`
 
-###inc/Smartling/ApiWrapperInterface.php
+### inc/Smartling/ApiWrapperInterface.php
 `- public function createJob(ConfigurationProfileEntity $profile, array $params);`
 
 `+ public function createJob(ConfigurationProfileEntity $profile, array $params): array;`
@@ -47,27 +47,27 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, bool $authorize): JobEntityWithBatchUid;`
 
-###inc/Smartling/Base/SmartlingCore.php
+### inc/Smartling/Base/SmartlingCore.php
 `- public function __construct()`
 
 `+ public function __construct(PostContentHelper $postContentHelper, XmlHelper $xmlHelper)`
 
-###inc/Smartling/Base/SmartlingCoreAbstract.php
+### inc/Smartling/Base/SmartlingCoreAbstract.php
 `- public function getLogger()`
 
 `+ public function getLogger(): LoggerInterface`
 
-###inc/Smartling/Base/SmartlingCoreDownloadTrait.php
+### inc/Smartling/Base/SmartlingCoreDownloadTrait.php
 `- public function downloadTranslationBySubmission(SubmissionEntity $entity)`
 
 `+ public function downloadTranslationBySubmission(SubmissionEntity $entity): void`
 
-###inc/Smartling/Base/SmartlingCoreExportApi.php
+### inc/Smartling/Base/SmartlingCoreExportApi.php
 `- public function sendAttachmentForTranslation($sourceBlogId, $targetBlogId, $sourceId, $batchUid, $clone = false)`
 
 `+ public function sendAttachmentForTranslation(int $sourceBlogId, int $targetBlogId, int $sourceId, JobEntityWithBatchUid $jobInfo, bool $clone = false): SubmissionEntity`
 
-###inc/Smartling/Base/SmartlingCoreUploadTrait.php
+### inc/Smartling/Base/SmartlingCoreUploadTrait.php
 `- public function sendForTranslationBySubmissionId($id)`
 
 `- public function getXMLFiltered(SubmissionEntity $submission)`
@@ -90,12 +90,12 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function createForTranslation(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, JobEntityWithBatchUid $jobInfo, bool $clone): SubmissionEntity`
 
-###inc/Smartling/ContentTypes/ContentTypeNavigationMenu.php
+### inc/Smartling/ContentTypes/ContentTypeNavigationMenu.php
 `- public function gatherRelatedContent(ProcessRelatedContentParams $params)`
 
 `+ public function gatherRelatedContent(ProcessRelatedContentParams $params): void`
 
-###inc/Smartling/DbAl/DB.php
+### inc/Smartling/DbAl/DB.php
 `+ public function prepareSql(array $tableDefinition): string`
 
 `- public function escape($string)`
@@ -130,7 +130,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function getLastErrorMessage(): string`
 
-###inc/Smartling/DbAl/SmartlingToCMSDatabaseAccessWrapperInterface.php
+### inc/Smartling/DbAl/SmartlingToCMSDatabaseAccessWrapperInterface.php
 `+ public function query(string $query);`
 
 `+ public function queryPrepared(string $query, ...$args);`
@@ -153,12 +153,12 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function getLastErrorMessage(): string;`
 
-###inc/Smartling/Extensions/Acf/AcfDynamicSupport.php
+### inc/Smartling/Extensions/Acf/AcfDynamicSupport.php
 `- public function getDefinitions()`
 
 `+ public function getDefinitions(): array`
 
-###inc/Smartling/Helpers/AbsoluteLinkedAttachmentCoreHelper.php
+### inc/Smartling/Helpers/AbsoluteLinkedAttachmentCoreHelper.php
 `- public function getAttachmentIdByURL($url, $blogId)`
 
 `+ public function getAttachmentIdByURL(string $url, int $blogId): ?int`
@@ -167,7 +167,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function getImagesIdsFromString(string $string, int $blogId): array`
 
-###inc/Smartling/Helpers/ContentSerializationHelper.php
+### inc/Smartling/Helpers/ContentSerializationHelper.php
 `- public function getLogger()`
 
 `+ public function getLogger(): LoggerInterface`
@@ -188,22 +188,22 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function calculateHash(SubmissionEntity $submission): string`
 
-###inc/Smartling/Helpers/CustomScheduleIntervalHelper.php
+### inc/Smartling/Helpers/CustomScheduleIntervalHelper.php
 `- public function register()`
 
 `+ public function register(): void`
 
-###inc/Smartling/Helpers/DetectChangesHelper.php
+### inc/Smartling/Helpers/DetectChangesHelper.php
 `- public function getLogger()`
 
 `+ public function getLogger(): LoggerInterface`
 
-###inc/Smartling/Helpers/EntityHelper.php
+### inc/Smartling/Helpers/EntityHelper.php
 `- public function getSiteHelper()`
 
 `+ public function getSiteHelper(): SiteHelper`
 
-###inc/Smartling/Helpers/FieldsFilterHelper.php
+### inc/Smartling/Helpers/FieldsFilterHelper.php
 `- public function flatternArray(array $array, $base = '', $divider = self::ARRAY_DIVIDER)`
 
 `+ public function flattenArray(array $array, string $base = '', string $divider = self::ARRAY_DIVIDER): array`
@@ -216,7 +216,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function removeEmptyFields(array $array): array`
 
-###inc/Smartling/Helpers/GutenbergBlockHelper.php
+### inc/Smartling/Helpers/GutenbergBlockHelper.php
 `- public function registerFilters(array $definitions)`
 
 `+ public function __construct(MediaAttachmentRulesManager $rulesManager, ReplacerFactory $replacerFactory)`
@@ -261,7 +261,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function loadExternalDependencies(): void`
 
-###inc/Smartling/Helpers/GutenbergReplacementRule.php
+### inc/Smartling/Helpers/GutenbergReplacementRule.php
 `- public function __construct($type, $property)`
 
 `+ public function __construct(string $blockType, string $propertyPath, string $replacerId)`
@@ -276,17 +276,17 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function getReplacerId(): string`
 
-###inc/Smartling/Helpers/MetaFieldProcessor/MetaFieldProcessorManager.php
+### inc/Smartling/Helpers/MetaFieldProcessor/MetaFieldProcessorManager.php
 `- public function register()`
 
 `+ public function register(): void`
 
-###inc/Smartling/Helpers/QueryBuilder/Condition/Condition.php
+### inc/Smartling/Helpers/QueryBuilder/Condition/Condition.php
 `- public function __toString()`
 
 `+ public function __toString(): string`
 
-###inc/Smartling/Helpers/QueryBuilder/Condition/ConditionBlock.php
+### inc/Smartling/Helpers/QueryBuilder/Condition/ConditionBlock.php
 `- public function __construct($conditionOperator)`
 
 `+ public function __construct(string $conditionOperator)`
@@ -305,7 +305,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function __toString(): string`
 
-###inc/Smartling/Helpers/RelativeLinkedAttachmentCoreHelper.php
+### inc/Smartling/Helpers/RelativeLinkedAttachmentCoreHelper.php
 `- public function getLogger()`
 
 `+ public function getLogger(): LoggerInterface`
@@ -328,7 +328,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function processor(AfterDeserializeContentEventParameters $params): void`
 
-###inc/Smartling/Helpers/ReplacementInfo.php
+### inc/Smartling/Helpers/ReplacementInfo.php
 `- public function __construct($replacement, $sourceId, $targetId)`
 
 `+ public function __construct(string $resultString, array $replacementPairs)`
@@ -343,7 +343,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function getReplacementPairs(): array`
 
-###inc/Smartling/Helpers/ReplacementPair.php
+### inc/Smartling/Helpers/ReplacementPair.php
 `- public function __construct($from, $to)`
 
 `+ public function __construct(string $from, string $to)`
@@ -356,12 +356,12 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function getTo(): string`
 
-###inc/Smartling/Helpers/ShortcodeHelper.php
+### inc/Smartling/Helpers/ShortcodeHelper.php
 `- public function register()`
 
 `+ public function register(): void`
 
-###inc/Smartling/Helpers/SiteHelper.php
+### inc/Smartling/Helpers/SiteHelper.php
 `- public function getInitialBlogId()`
 
 `+ public function getInitialBlogId(): int`
@@ -420,17 +420,17 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function resetBlog(?int $blogId = null): void`
 
-###inc/Smartling/Helpers/SubmissionCleanupHelper.php
+### inc/Smartling/Helpers/SubmissionCleanupHelper.php
 `- public function register()`
 
 `+ public function register(): void`
 
-###inc/Smartling/Helpers/SubstringProcessorHelperAbstract.php
+### inc/Smartling/Helpers/SubstringProcessorHelperAbstract.php
 `- public function getLogger()`
 
 `+ public function getLogger(): LoggerInterface`
 
-###inc/Smartling/Helpers/TranslationHelper.php
+### inc/Smartling/Helpers/TranslationHelper.php
 `- public function __construct() {`
 
 `+ public function __construct(LocalizationPluginProxyInterface $proxy, SiteHelper $siteHelper, SubmissionManager $submissionManager) {`
@@ -473,7 +473,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function tryPrepareRelatedContent(string $contentType, int $sourceBlog, int $sourceId, int $targetBlog, JobEntityWithBatchUid $jobInfo, bool $clone = false): SubmissionEntity`
 
-###inc/Smartling/Jobs/DownloadTranslationJob.php
+### inc/Smartling/Jobs/DownloadTranslationJob.php
 `- public function getJobHookName()`
 
 `+ public function getJobHookName(): string`
@@ -482,7 +482,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function run(): void`
 
-###inc/Smartling/Jobs/JobAbstract.php
+### inc/Smartling/Jobs/JobAbstract.php
 `- public function getJobRunInterval()`
 
 `+ public function getJobRunInterval(): string`
@@ -499,7 +499,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function register(): void`
 
-###inc/Smartling/Jobs/JobInterface.php
+### inc/Smartling/Jobs/JobInterface.php
 `- public function install();`
 
 `+ public function install(): void;`
@@ -520,7 +520,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function run(): void;`
 
-###inc/Smartling/Jobs/LastModifiedCheckJob.php
+### inc/Smartling/Jobs/LastModifiedCheckJob.php
 `- public function getJobHookName()`
 
 `+ public function getJobHookName(): string`
@@ -529,7 +529,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function run(): void`
 
-###inc/Smartling/Jobs/SubmissionCollectorJob.php
+### inc/Smartling/Jobs/SubmissionCollectorJob.php
 `- public function getJobHookName()`
 
 `+ public function getJobHookName(): string`
@@ -538,7 +538,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function run(): void`
 
-###inc/Smartling/Jobs/UploadJob.php
+### inc/Smartling/Jobs/UploadJob.php
 `- public function getApi()`
 
 `- public function setApi($api)`
@@ -555,7 +555,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function run(): void`
 
-###inc/Smartling/Services/BaseAjaxServiceAbstract.php
+### inc/Smartling/Services/BaseAjaxServiceAbstract.php
 `- public function register()`
 
 `+ public function register(): void`
@@ -584,12 +584,12 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function returnSuccess($data, $responseCode = 200): void`
 
-###inc/Smartling/Services/BlogRemovalHandler.php
+### inc/Smartling/Services/BlogRemovalHandler.php
 `- public function register()`
 
 `+ public function register(): void`
 
-###inc/Smartling/Services/ContentRelationsDiscoveryService.php
+### inc/Smartling/Services/ContentRelationsDiscoveryService.php
 `- public function getLogger()`
 
 `+ public function getLogger(): LoggerInterface`
@@ -666,12 +666,12 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function actionHandler(): void`
 
-###inc/Smartling/Services/InvalidCharacterCleaner.php
+### inc/Smartling/Services/InvalidCharacterCleaner.php
 `- public function register()`
 
 `+ public function register(): void`
 
-###inc/Smartling/Services/SmartlingFilterUiService.php
+### inc/Smartling/Services/SmartlingFilterUiService.php
 `- public function __construct(MediaAttachmentRulesManager $mediaAttachmentRulesManager)`
 
 `+ public function __construct(MediaAttachmentRulesManager $mediaAttachmentRulesManager, ReplacerFactory $replacerFactory)`
@@ -680,7 +680,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function register(): void`
 
-###inc/Smartling/Settings/ConfigurationProfileEntity.php
+### inc/Smartling/Settings/ConfigurationProfileEntity.php
 `- public function getId()`
 
 `+ public function getId(): int`
@@ -873,7 +873,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function toArraySafe(): array`
 
-###inc/Smartling/Settings/Locale.php
+### inc/Smartling/Settings/Locale.php
 `- public function getBlogId()`
 
 `+ public function getBlogId(): int`
@@ -890,7 +890,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function setLabel(string $label): void`
 
-###inc/Smartling/Settings/SettingsManager.php
+### inc/Smartling/Settings/SettingsManager.php
 `- public function getEntities($sortOptions = [], $pageOptions = null, & $totalCount = 0, $onlyActive = false)`
 
 `+ public function getEntities(int &$totalCount = 0, bool $onlyActive = false): array`
@@ -943,7 +943,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function createProfile(array $fields): ConfigurationProfileEntity`
 
-###inc/Smartling/Submissions/SubmissionEntity.php
+### inc/Smartling/Submissions/SubmissionEntity.php
 `- public function getLastModified()`
 
 `+ public function getLastModified(): \DateTime`
@@ -1174,7 +1174,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function setLockedFields($lockFields): void`
 
-###inc/Smartling/Submissions/SubmissionManager.php
+### inc/Smartling/Submissions/SubmissionManager.php
 `- public function getSubmissionStatusLabels()`
 
 `- public function getSubmissionStatuses()`
@@ -1277,12 +1277,12 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function setErrorMessage(SubmissionEntity $submission, string $message): SubmissionEntity`
 
-###inc/Smartling/Tuner/FilterManager.php
+### inc/Smartling/Tuner/FilterManager.php
 `- public function register()`
 
 `+ public function register(): void`
 
-###inc/Smartling/Tuner/MediaAttachmentRulesManager.php
+### inc/Smartling/Tuner/MediaAttachmentRulesManager.php
 `- public function getPreconfiguredRules() {`
 
 `+ public function getPreconfiguredRules(): array {`
@@ -1293,12 +1293,12 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function listItems(): array`
 
-###inc/Smartling/Tuner/ShortcodeManager.php
+### inc/Smartling/Tuner/ShortcodeManager.php
 `- public function register()`
 
 `+ public function register(): void`
 
-###inc/Smartling/WP/Controller/AdminPage.php
+### inc/Smartling/WP/Controller/AdminPage.php
 `- public function __construct(MediaAttachmentRulesManager $mediaAttachmentRulesManager)`
 
 `+ public function __construct(MediaAttachmentRulesManager $mediaAttachmentRulesManager, ReplacerFactory $replacerFactory)`
@@ -1307,17 +1307,17 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function register(): void`
 
-###inc/Smartling/WP/Controller/BulkSubmitController.php
+### inc/Smartling/WP/Controller/BulkSubmitController.php
 `- public function register()`
 
 `+ public function register(): void`
 
-###inc/Smartling/WP/Controller/CheckStatusController.php
+### inc/Smartling/WP/Controller/CheckStatusController.php
 `- public function register()`
 
 `+ public function register(): void`
 
-###inc/Smartling/WP/Controller/ConfigurationProfileFormController.php
+### inc/Smartling/WP/Controller/ConfigurationProfileFormController.php
 `- public function wp_enqueue()`
 
 `+ public function wp_enqueue(): void`
@@ -1342,28 +1342,28 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function save(): void`
 
-###inc/Smartling/WP/Controller/ConfigurationProfilesController.php
+### inc/Smartling/WP/Controller/ConfigurationProfilesController.php
 `- public function register()`
 
 `+ public function register(): void`
 
-###inc/Smartling/WP/Controller/ConfigurationProfilesWidget.php
-###inc/Smartling/WP/Controller/ContentEditJobController.php
+### inc/Smartling/WP/Controller/ConfigurationProfilesWidget.php
+### inc/Smartling/WP/Controller/ContentEditJobController.php
 `- public function register()`
 
 `+ public function register(): void`
 
-###inc/Smartling/WP/Controller/FilterForm.php
+### inc/Smartling/WP/Controller/FilterForm.php
 `- public function register()`
 
 `+ public function register(): void`
 
-###inc/Smartling/WP/Controller/LiveNotificationController.php
+### inc/Smartling/WP/Controller/LiveNotificationController.php
 `- public function register()`
 
 `+ public function register(): void`
 
-###inc/Smartling/WP/Controller/MediaRuleForm.php
+### inc/Smartling/WP/Controller/MediaRuleForm.php
 `- public function register()`
 
 `+ public function __construct(MediaAttachmentRulesManager $mediaAttachmentRulesManager, ReplacerFactory $replacerFactory)`
@@ -1382,7 +1382,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function save(): void`
 
-###inc/Smartling/WP/Controller/PostBasedWidgetControllerStd.php
+### inc/Smartling/WP/Controller/PostBasedWidgetControllerStd.php
 `- public function register()`
 
 `+ public function register(): void`
@@ -1391,12 +1391,12 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function save($post_id): void`
 
-###inc/Smartling/WP/Controller/ShortcodeForm.php
+### inc/Smartling/WP/Controller/ShortcodeForm.php
 `- public function register()`
 
 `+ public function register(): void`
 
-###inc/Smartling/WP/Controller/SubmissionsPageController.php
+### inc/Smartling/WP/Controller/SubmissionsPageController.php
 `- public function getQueue()`
 
 `- public function setQueue($queue)`
@@ -1415,17 +1415,17 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function renderPage(): void`
 
-###inc/Smartling/WP/Controller/TaxonomyLinksController.php
+### inc/Smartling/WP/Controller/TaxonomyLinksController.php
 `- public function register()`
 
 `+ public function register(): void`
 
-###inc/Smartling/WP/Controller/TaxonomyWidgetController.php
+### inc/Smartling/WP/Controller/TaxonomyWidgetController.php
 `- public function register()`
 
 `+ public function register(): void`
 
-###inc/Smartling/WP/Controller/TranslationLockController.php
+### inc/Smartling/WP/Controller/TranslationLockController.php
 `- public function getContentHelper()`
 
 `- public function setContentHelper($contentHelper)`
@@ -1436,7 +1436,7 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function register(): void`
 
-###inc/Smartling/WP/Table/MediaAttachmentTableWidget.php
+### inc/Smartling/WP/Table/MediaAttachmentTableWidget.php
 `- public function __construct(MediaAttachmentRulesManager $manager)`
 
 `+ public function __construct(MediaAttachmentRulesManager $manager, ReplacerFactory $replacerFactory)`
@@ -1457,12 +1457,12 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function prepare_items(): void`
 
-###inc/Smartling/WP/Table/QueueManagerTableWidget.php
+### inc/Smartling/WP/Table/QueueManagerTableWidget.php
 `- public function register()`
 
 `+ public function register(): void`
 
-###inc/Smartling/WP/Table/SubmissionTableWidget.php
+### inc/Smartling/WP/Table/SubmissionTableWidget.php
 `- public function getLogger()`
 
 `+ public function getLogger(): LoggerInterface`
@@ -1531,12 +1531,12 @@ Starting about 2020-06, there is a WordPress database error while executing test
 
 `+ public function renderSubmitButton(string $label): string`
 
-###inc/Smartling/WP/WPHookInterface.php
+### inc/Smartling/WP/WPHookInterface.php
 `- public function register();`
 
 `+ public function register(): void;`
 
-###inc/Smartling/WP/i18n.php
+### inc/Smartling/WP/i18n.php
 `- public function register()`
 
 `+ public function register(): void`
