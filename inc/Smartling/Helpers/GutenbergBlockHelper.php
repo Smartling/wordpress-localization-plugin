@@ -191,11 +191,21 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         if (array_key_exists('post_content', $entityFields) && $this->hasBlocks($entityFields['post_content'])) {
             try {
                 foreach ($this->getPostContentBlocks($entityFields['post_content']) as $index => $block) {
-                    $entityFields["post_content/blocks/$index"] = serialize_block($block->toArray());
+                    $entityFields = $this->addBlock($entityFields, "post_content/blocks/$index", $block);
                 }
             } catch (SmartlingGutenbergParserNotFoundException $e) {
                 $this->getLogger()->warning('Block content found while getting translation fields, but no parser available');
             }
+        }
+
+        return $entityFields;
+    }
+
+    private function addBlock(array $entityFields, string $baseKey, GutenbergBlock $block): array
+    {
+        $entityFields[$baseKey] = serialize_block($block->toArray());
+        foreach ($block->getInnerBlocks() as $index => $innerBlock) {
+            $entityFields = $this->addBlock($entityFields, "$baseKey/$index", $innerBlock);
         }
 
         return $entityFields;
@@ -207,22 +217,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
      */
     public function getPostContentBlocks(string $string): array
     {
-        $blocks = $this->parseBlocks($string);
-
-        return array_values(array_filter($blocks, static function ($block) {
-            return $block->getBlockName() !== null;
-        }));
-    }
-
-    public function normalizeCoreBlocks(string $string): string
-    {
-        if (function_exists('serialize_blocks')) {
-            return \serialize_blocks(array_map(static function($block) {
-                return $block->toArray();
-            }, $this->parseBlocks($string)));
-        }
-
-        return $string;
+        return $this->parseBlocks($string);
     }
 
     #[ArrayShape(['attributes' => 'array', 'chunks' => 'array'])]

@@ -100,10 +100,10 @@ HTML
         $x = $this->getHelper();
         $postContent = $blocks[0] . '<p>Wee, I\'m not a part of Gutenberg!</p>' . $blocks[1];
         $result = $x->addPostContentBlocks(['post_content' => $postContent]);
-        $this->assertCount(3, $result);
+        $this->assertCount(5, $result);
         $this->assertEquals($postContent, $result['post_content'], 'Content should not change');
         $this->assertStringStartsWith('<!-- wp:media-text', $result['post_content/blocks/0']);
-        $this->assertEquals($blocks[1], $result['post_content/blocks/1']);
+        $this->assertEquals($blocks[1], $result['post_content/blocks/2']);
     }
 
     public function testAddPostContentBlocksWithNoBlocks()

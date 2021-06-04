@@ -2,57 +2,66 @@
 
 namespace Smartling\Helpers;
 
+use Psr\Log\LoggerInterface;
+use Smartling\Models\GutenbergBlock;
+use Smartling\MonologWrapper\MonologWrapper;
+
 class PostContentHelper
 {
-    private $blockHelper;
-    const PLACEHOLDER_FORMAT = '$RPH$%s$RPH$';
+    private GutenbergBlockHelper $blockHelper;
+    private LoggerInterface $logger;
 
     public function __construct(GutenbergBlockHelper $blockHelper)
     {
         $this->blockHelper = $blockHelper;
+        $this->logger = MonologWrapper::getLogger();
     }
 
-    /**
-     * @param string $original
-     * @param string $translated
-     * @param array $lockedFields
-     * @return string
-     */
-    public function applyTranslation($original, $translated, array $lockedFields)
+    public function applyTranslation(string $original, string $translated, array $lockedFields): string
     {
-        $result = $this->blockHelper->normalizeCoreBlocks($translated);
-        $originalBlocks = $this->blockHelper->addPostContentBlocks(['post_content' => $original]);
-        $translatedBlocks = $this->blockHelper->addPostContentBlocks(['post_content' => $translated]);
-        unset ($originalBlocks['post_content'], $translatedBlocks['post_content']);
-
-        foreach ($translatedBlocks as $index => $block) {
-            $result = $this->replaceFirstMatch($block, str_replace('%s', $index, self::PLACEHOLDER_FORMAT), $result);
-        }
+        $result = '';
+        $originalBlocks = $this->blockHelper->parseBlocks($original);
+        $translatedBlocks = $this->blockHelper->parseBlocks($translated);
 
         foreach ($lockedFields as $lockedField) {
-            $lockedField = preg_replace('~^entity/~', '', $lockedField);
-            $placeholder = str_replace('%s', $lockedField, self::PLACEHOLDER_FORMAT);
-            if (array_key_exists($lockedField, $originalBlocks) && array_key_exists($lockedField, $translatedBlocks)) {
-                $result = str_replace($placeholder, $originalBlocks[$lockedField], $result);
+            $count = 0;
+            $lockedField = preg_replace('~^entity/post_content/blocks/~', '', $lockedField, -1, $count);
+            if ($count === 1) {
+                $parts = explode('/', $lockedField);
+                $index = array_shift($parts);
+                if (!array_key_exists($index, $originalBlocks)) {
+                    $this->logger->notice("Unable to get content for locked Gutenberg block $lockedField, skipping lock");
+                    continue;
+                }
+                if (count($parts) > 0) {
+                    $translatedBlocks[$index] = $this->applyLockedField($parts, $originalBlocks[$index], $translatedBlocks[$index]);
+                } else {
+                    $translatedBlocks[$index] = $originalBlocks[$index];
+                }
             }
         }
 
-        $placeholders = [];
-        preg_match_all('~\$RPH\$([^$]+)\$RPH\$~', $result, $placeholders);
-        foreach ($placeholders[0] as $index => $placeholder) {
-            $result = str_replace($placeholder, $translatedBlocks[$placeholders[1][$index]], $result);
+        foreach ($translatedBlocks as $block) {
+            $result .= serialize_block($block->toArray());
         }
 
         return $result;
     }
 
-    private function replaceFirstMatch($search, $replace, $subject)
+    private function applyLockedField(array $pathParts, GutenbergBlock $originalBlock, GutenbergBlock $translatedBlock): GutenbergBlock
     {
-        $pos = strpos($subject, $search);
-        if ($pos === false) {
-            return $subject;
+        $index = array_shift($pathParts);
+        $originalInnerBlocks = $originalBlock->getInnerBlocks();
+        if (!array_key_exists($index, $originalInnerBlocks)) {
+            $this->logger->notice("Unable to get content for locked Gutenberg block " .
+                implode('/', array_merge($pathParts, [$index])) .
+                ", skipping lock");
+            return $translatedBlock;
+        }
+        while (count($pathParts) > 0) {
+            $this->applyLockedField($pathParts, $originalInnerBlocks[$index], $translatedBlock->getInnerBlocks()[$index]);
         }
 
-        return substr_replace($subject, $replace, $pos, strlen($search));
+        return $translatedBlock->withInnerBlock($originalInnerBlocks[$index], $index);
     }
 }

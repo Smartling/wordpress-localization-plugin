@@ -2,39 +2,19 @@
 
 namespace Smartling\Helpers;
 
-/**
- * Class StringHelper
- *
- * @package Smartling\Helpers
- */
 class StringHelper
 {
+    private const EMPTY_STRING = '';
 
     /**
-     * Empty string constant
+     * @param mixed $string
      */
-    const EMPTY_STRING = '';
-
-    /**
-     * Checks if string is false null of empty
-     *
-     * @param $string
-     *
-     * @return bool
-     */
-    public static function isNullOrEmpty($string)
+    public static function isNullOrEmpty($string): bool
     {
         return in_array($string, [false, null, self::EMPTY_STRING], true);
     }
 
-    /**
-     * @param string $pattern
-     * @param string $borders
-     * @param string $modifiers
-     *
-     * @return string
-     */
-    public static function buildPattern($pattern, $borders = '/', $modifiers = 'ius')
+    public static function buildPattern(string $pattern, string $borders = '/', string $modifiers = 'ius'): string
     {
         return vsprintf(
             '%s%s%s%s',
@@ -47,33 +27,22 @@ class StringHelper
         );
     }
 
-    /**
-     * @param string $string
-     * @param int    $maxLength
-     * @param string $encoding
-     * @param bool   $applyHtmlEncoding
-     * @param string $wrapperTag
-     *
-     * @return string
-     */
-    public static function safeHtmlStringShrink($string, $maxLength = 50, $encoding = 'utf8', $applyHtmlEncoding = true, $wrapperTag = 'span')
+    public static function safeHtmlStringShrink(string $string, int $maxLength = 50, string $encoding = 'utf8', bool $applyHtmlEncoding = true, string $wrapperTag = 'span'): string
     {
+        if (true === $applyHtmlEncoding) {
+            $string = htmlentities($string);
+        }
+
         if (mb_strlen($string, $encoding) > $maxLength) {
-            $orig = $string;
+            $shrinked = mb_substr($string, 0, $maxLength - 3, $encoding) . '...';
 
-            if (true === $applyHtmlEncoding) {
-                $orig = htmlentities($orig);
-            }
-
-            $shrinked = mb_substr($orig, 0, $maxLength - 3, $encoding) . '...';
-
-            $string = HtmlTagGeneratorHelper::tag($wrapperTag, $shrinked, ['title' => $orig]);
+            $string = HtmlTagGeneratorHelper::tag($wrapperTag, $shrinked, ['title' => $string]);
         }
 
         return $string;
     }
 
-    public static function safeStringShrink($string, $maxLength = 50, $encoding = 'utf8', $applyHtmlEncoding = true)
+    public static function safeStringShrink(string $string, int $maxLength = 50, string $encoding = 'utf8', bool $applyHtmlEncoding = true): string
     {
         if (mb_strlen($string, $encoding) > $maxLength) {
             $orig = $string;
@@ -87,5 +56,4 @@ class StringHelper
 
         return $string;
     }
-
 }
