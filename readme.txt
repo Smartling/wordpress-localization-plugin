@@ -61,7 +61,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 2.4.1 =
-* Fixed an issue with downloads
+* Fixed an issue with downloads when the post has links to images that are not attachments
 
 = 2.4.0 =
 * Added ability to lock inner Gutenberg blocks
