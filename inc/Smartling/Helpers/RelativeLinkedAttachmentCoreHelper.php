@@ -335,9 +335,9 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         $result = $replacer;
         $path = $this->getSourcePathFromImgTag($tag);
 
-        if (false !== $path && $this->isRelativeUrl($path)) {
+        if (null !== $path && $this->isRelativeUrl($path)) {
             $attachmentId = $this->getAttachmentId($path);
-            if (false !== $attachmentId) {
+            if (null !== $attachmentId) {
                 $submission = $this->getParams()->getSubmission();
                 $sourceBlogId = $submission->getSourceBlogId();
                 $targetBlogId = $submission->getTargetBlogId();
