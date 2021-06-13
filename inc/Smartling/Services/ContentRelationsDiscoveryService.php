@@ -561,7 +561,10 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             foreach ($detectedReferences as $contentType => $ids) {
                 if (in_array($contentType, $registeredTypes, true) || in_array($contentType, $taxonomies, true)) {
                     foreach ($ids as $id) {
-                        if (!$this->submissionManager->submissionExists($contentType, $curBlogId, $id, $targetBlogId)) {
+                        // TODO: find out when a null id gets added to the list, this should not happen
+                        if ($id === null) {
+                            $this->getLogger()->notice("Null id passed when processing detected references contentType=\"$contentType\"");
+                        } elseif (!$this->submissionManager->submissionExists($contentType, $curBlogId, $id, $targetBlogId)) {
                             $responseData['missingTranslatedReferences'][$targetBlogId][$contentType][] = $id;
                         }
                     }
