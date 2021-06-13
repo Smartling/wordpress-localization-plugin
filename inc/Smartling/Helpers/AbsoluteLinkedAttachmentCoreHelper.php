@@ -131,7 +131,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
         if (0 < preg_match_all(StringHelper::buildPattern(self::PATTERN_LINK_GENERAL), $string, $matches)) {
             foreach ($matches[0] as $match) {
                 $path = $this->getAttributeFromTag($match, 'a', 'href');
-                if (false !== $attachmentId = $this->getAttachmentIdByURL($path, $blogId)) {
+                if (null !== $attachmentId = $this->getAttachmentIdByURL($path, $blogId)) {
                     $ids[] = $attachmentId;
                 }
             }
