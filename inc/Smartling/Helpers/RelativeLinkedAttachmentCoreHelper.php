@@ -141,7 +141,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 
                     $attachmentId = $this->getAttachmentId($relativePathOfOriginalFile);
 
-                    if (false !== $attachmentId) {
+                    if (null !== $attachmentId) {
                         if ($this->core->getTranslationHelper()->isRelatedSubmissionCreationNeeded(
                             'attachment',
                             $submission->getSourceBlogId(),
