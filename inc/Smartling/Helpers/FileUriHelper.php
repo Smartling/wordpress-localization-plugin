@@ -2,6 +2,7 @@
 namespace Smartling\Helpers;
 
 use InvalidArgumentException;
+use LogicException;
 use Smartling\Bootstrap;
 
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
@@ -13,42 +14,17 @@ use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
-use Symfony\Component\DependencyInjection\Exception\LogicException;
 
-/**
- * Class FileUriHelper
- * @package Smartling\Helpers
- */
 class FileUriHelper
 {
-
-    /**
-     * @param $submission
-     *
-     * @throws InvalidArgumentException
-     */
-    private static function checkSubmission($submission)
+    private static function checkSubmission(SubmissionEntity $submission): void
     {
-        if (!($submission instanceof SubmissionEntity)) {
-            throw new InvalidArgumentException('Expected SubmissionEntity');
-        }
-
         if (StringHelper::isNullOrEmpty($submission->getSourceTitle(false))) {
             $submission->setSourceTitle('UNTITLED');
-            //throw new InvalidArgumentException('sourceTitle cannot be empty.');
         }
     }
 
-    /**
-     * @param string           $string
-     *
-     * @param SubmissionEntity $entity
-     *
-     * @return string
-     *
-     * @throws InvalidArgumentException
-     */
-    private static function preparePermalink($string, $entity)
+    private static function preparePermalink(string $string, SubmissionEntity $entity): string
     {
         self::checkSubmission($entity);
         $fallBack = rtrim($entity->getSourceTitle(false), '/');
@@ -58,34 +34,23 @@ class FileUriHelper
                 $path = rtrim($pathinfo['path'], '/');
                 if (StringHelper::isNullOrEmpty($path)) {
                     return $fallBack;
-                } else {
-                    return $path;
                 }
-            } else {
-                return $fallBack;
+
+                return $path;
             }
-        } else {
-            return $fallBack;
         }
+
+        return $fallBack;
     }
 
-
-    /**
-     * @return SiteHelper
-     */
-    private static function getSiteHelper()
+    private static function getSiteHelper(): SiteHelper
     {
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         return Bootstrap::getContainer()
                         ->get('site.helper');
     }
 
-    /**
-     * @return ContentEntitiesIOFactory
-     */
-    private static function getIoFactory()
+    private static function getIoFactory(): ContentEntitiesIOFactory
     {
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         return Bootstrap::getContainer()
                         ->get('factory.contentIO');
     }
@@ -100,7 +65,7 @@ class FileUriHelper
      * @throws InvalidArgumentException
      * @throws LogicException
      */
-    public static function generateFileUri(SubmissionEntity $submission)
+    public static function generateFileUri(SubmissionEntity $submission): string
     {
         $ioFactory = self::getIoFactory();
         $siteHelper = self::getSiteHelper();

@@ -23,6 +23,11 @@ with `CRE_PROJECT_ID`, `CRE_USER_IDENTIFIER` and `CRE_TOKEN_SECRET` taken from S
 Starting about 2020-06, there is a WordPress database error while executing tests, regarding a table `wp.wp_2_yoast_indexable` that doesn't exist, but [yoast devs say it doesn't have any negative impact](https://wordpress.org/support/topic/wordpress-database-error-table-12/).
 
 # Dev changelog
+## Function changes from 2.4.2 to 2.4.3
+### inc/Smartling/Helpers/FileUriHelper.php
+`- public static function generateFileUri(SubmissionEntity $submission)`
+
+`+ public static function generateFileUri(SubmissionEntity $submission): string`
 ## Function changes from 1.5.7 to 2.4.0
 ### inc/Smartling/ApiWrapper.php
 `- public function createJob(ConfigurationProfileEntity $profile, array $params)`
