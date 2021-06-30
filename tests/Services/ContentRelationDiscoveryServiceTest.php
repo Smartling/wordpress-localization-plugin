@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests\Services;
 
+use AspectMock\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapper;
@@ -154,6 +155,61 @@ class ContentRelationDiscoveryServiceTest extends TestCase
                 ],
             'targetBlogIds' => $targetBlogId,
             'ids' => $sourceIds,
+        ]);
+    }
+
+    public function testJobInfoGetsStoredOnNewSubmissions() {
+        $sourceBlogId = 1;
+        $sourceId = 48;
+        $contentType = 'post';
+        $targetBlogId = 2;
+        $batchUid = 'batchUid';
+        $jobName = 'Job Name';
+        $jobUid = 'abcdef123456';
+        $projectUid = 'projectUid';
+
+        $apiWrapper = $this->createMock(ApiWrapper::class);
+        $apiWrapper->method('retrieveBatch')->willReturn($batchUid);
+
+        $profile = $this->createMock(ConfigurationProfileEntity::class);
+        $profile->method('getProjectId')->willReturn($projectUid);
+
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+
+        $siteHelper = $this->createMock(SiteHelper::class);
+        $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
+
+        $contentHelper = $this->createMock(ContentHelper::class);
+        $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
+
+        $submission = $this->createMock(SubmissionEntity::class);
+        $submission->expects(self::once())->method('setBatchUid')->with($batchUid);
+        $submission->expects(self::once())->method('setJobInfo');
+
+        $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
+        $submissionManager->method('find')->willReturn([]);
+        test::double(SubmissionEntity::class, ['fromArray' => $submission]);
+
+        $submissionManager->expects(self::once())->method('storeEntity')->with($submission);
+
+        $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
+
+        $x->expects(self::once())->method('returnResponse')->with(['status' => 'SUCCESS']);
+
+        $x->createSubmissionsHandler([
+            'source' => ['contentType' => $contentType, 'id' => [$sourceId]],
+            'job' =>
+                [
+                    'id' => $jobUid,
+                    'name' => $jobName,
+                    'description' => '',
+                    'dueDate' => '',
+                    'timeZone' => 'Europe/Kiev',
+                    'authorize' => 'true',
+                ],
+            'targetBlogIds' => $targetBlogId,
+            'relations' => [],
         ]);
     }
 
