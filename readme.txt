@@ -4,7 +4,7 @@ Tags: translation, localization, localisation, translate, multilingual, smartlin
 Requires at least: 5.5
 Tested up to: 5.7
 Requires PHP: 7.4
-Stable tag: 2.4.2
+Stable tag: 2.4.3
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -60,6 +60,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 2.4.3 =
+* Fixed an issue where job links were not displayed when first sending content for translation
+
 = 2.4.2 =
 * Fixed an issue where image attachments in ACF blocks do not get uploaded
 

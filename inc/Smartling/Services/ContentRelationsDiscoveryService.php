@@ -250,10 +250,8 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                     ];
                 } else {
                     $submission = ArrayHelper::first($result);
-                    $submission->setBatchUid($jobInfo->getBatchUid());
-                    $submission->setJobInfo($jobInfo->getJobInformationEntity());
                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                    $this->submissionManager->storeEntity($submission);
+                    $this->storeWithJobInfo($submission, $jobInfo);
                 }
 
                 /**
@@ -273,7 +271,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 
                     // trigger generation of fileUri
                     $submission->getFileUri();
-                    $this->submissionManager->storeEntity($submission);
+                    $this->storeWithJobInfo($submission, $jobInfo);
                 }
             }
 
@@ -624,5 +622,12 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         }
 
         return $result;
+    }
+
+    private function storeWithJobInfo(SubmissionEntity $submission, JobEntityWithBatchUid $jobInfo): void
+    {
+        $submission->setBatchUid($jobInfo->getBatchUid());
+        $submission->setJobInfo($jobInfo->getJobInformationEntity());
+        $this->submissionManager->storeEntity($submission);
     }
 }
