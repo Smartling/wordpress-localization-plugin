@@ -26,11 +26,5 @@ if ( file_exists( $composerAutoLoadScriptFile ) && is_readable( $composerAutoLoa
 		), 1 );
 }
 
-$kernel = \AspectMock\Kernel::getInstance();
-$kernel->init([
-    'cacheDir' => __DIR__ . '/../aopcache',
-    'debug' => true,
-    'excludePaths' => [__DIR__ . '/third-party'],
-    'includePaths' => [__DIR__],
-]);
-$kernel->loadFile(__DIR__ . '/Smartling/Submissions/SubmissionEntity.php');
+
+

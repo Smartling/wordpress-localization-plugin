@@ -16,7 +16,6 @@
     "ext-json": "*"
   },
   "require-dev": {
-    "codeception/aspect-mock": "~3",
     "phpunit/phpunit": "~8"
   },
   "config": {
