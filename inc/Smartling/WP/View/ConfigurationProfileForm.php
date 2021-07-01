@@ -402,7 +402,7 @@ if (0 === $profileId) {
                     <input type="button" id="testConnection" value="Test Connection"/>
                     <br>
                     <?php if ($key): ?>
-                        <small><?= __('Current Key', $domain) ?>: <?= substr($key, 0, -10) . '**********' ?></small>
+                        <small><?= __('Current Key', $domain) ?>: <?= substr(htmlspecialchars($key), 0, -10) . '**********' ?></small>
                     <?php endif; ?>
                 </td>
             </tr>
