@@ -414,6 +414,7 @@ class SubmissionManager extends EntityManagerAbstract
     public function storeEntity(SubmissionEntity $entity): SubmissionEntity
     {
         $originalSubmission = json_encode($entity->toArray(false), JSON_THROW_ON_ERROR);
+        $jobInfo = $entity->getJobInfo();
         $this->getLogger()->debug(vsprintf('Starting saving submission: %s', [$originalSubmission]));
         $submissionId = $entity->id;
 
@@ -471,7 +472,7 @@ class SubmissionManager extends EntityManagerAbstract
             $entity = SubmissionEntity::fromArray($entityFields, $this->getLogger());
         }
 
-        if ($entity->getJobInfo()->getJobUid() !== '') {
+        if ($jobInfo->getJobUid() !== '') {
             $jobId = $this->jobManager->store($entity->getJobInfo())->getId();
             $this->submissionsJobsManager->store(new SubmissionJobEntity($jobId, $entity->getId()));
         }
