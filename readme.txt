@@ -61,7 +61,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 2.4.3 =
-* Fixed an issue where job links were not displayed when first sending content for translation
+* Fixed an issue when job links were not displayed on `Translation Progress` after submitting content for translation for the first time
 
 = 2.4.2 =
 * Fixed an issue where image attachments in ACF blocks do not get uploaded
