@@ -1,6 +1,9 @@
 <?php
 
 namespace {
+    if (!defined('OBJECT')) {
+        define('OBJECT', 'OBJECT');
+    }
     if (!function_exists('apply_filters')) {
         /** @noinspection PhpUnusedParameterInspection */
         function apply_filters($a, $b) {
@@ -16,14 +19,20 @@ namespace Smartling\Tests\Services {
     use Smartling\ApiWrapper;
     use Smartling\Bootstrap;
     use Smartling\DbAl\LocalizationPluginProxyInterface;
+    use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
     use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
     use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
     use Smartling\Helpers\ContentHelper;
+    use Smartling\Helpers\EntityHelper;
     use Smartling\Helpers\FieldsFilterHelper;
     use Smartling\Helpers\GutenbergBlockHelper;
     use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
     use Smartling\Helpers\ShortcodeHelper;
     use Smartling\Helpers\SiteHelper;
+    use Smartling\Jobs\JobEntity;
+    use Smartling\Jobs\JobManager;
+    use Smartling\Jobs\SubmissionJobEntity;
+    use Smartling\Jobs\SubmissionsJobsManager;
     use Smartling\Processors\ContentEntitiesIOFactory;
     use Smartling\Replacers\ReplacerFactory;
     use Smartling\Services\ContentRelationsDiscoveryService;
@@ -184,6 +193,7 @@ namespace Smartling\Tests\Services {
             $jobName = 'Job Name';
             $jobUid = 'abcdef123456';
             $projectUid = 'projectUid';
+            $createdJobId = 3;
 
             $apiWrapper = $this->createMock(ApiWrapper::class);
             $apiWrapper->method('retrieveBatch')->willReturn($batchUid);
@@ -200,14 +210,29 @@ namespace Smartling\Tests\Services {
             $contentHelper = $this->createMock(ContentHelper::class);
             $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
 
-            $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
-            $submissionManager->method('find')->willReturn([]);
-
-            $submissionManager->expects(self::once())->method('storeEntity')->willReturnCallback(function (SubmissionEntity $submission) use ($batchUid, $jobName): SubmissionEntity {
-                $this->assertEquals($batchUid, $submission->getJobInfoWithBatchUid()->getBatchUid());
-                $this->assertEquals($jobName, $submission->getJobInfo()->getJobName());
-                return $submission;
+            $submissionsJobsManager = $this->createMock(SubmissionsJobsManager::class);
+            $submissionsJobsManager->expects($this->once())->method('store')->willReturnCallback(function (SubmissionJobEntity $submissionJobEntity) use ($createdJobId) {
+                $this->assertEquals($createdJobId, $submissionJobEntity->getJobId());
+                return $submissionJobEntity;
             });
+
+            $jobManager = $this->createMock(JobManager::class);
+            $jobManager->expects($this->once())->method('store')->willReturnCallback(function(JobEntity $jobInfo) use ($createdJobId, $jobName, $jobUid, $projectUid) {
+                $this->assertEquals($jobName, $jobInfo->getJobName());
+                $this->assertEquals($jobUid, $jobInfo->getJobUid());
+                $this->assertEquals($projectUid, $jobInfo->getProjectUid());
+
+                return new JobEntity($jobName, $jobUid, $projectUid, $createdJobId);
+            });
+
+            $submissionManager = $this->getMockBuilder(SubmissionManager::class)->setConstructorArgs([
+                $this->getMockForAbstractClass(SmartlingToCMSDatabaseAccessWrapperInterface::class),
+                20,
+                $this->createMock(EntityHelper::class),
+                $jobManager,
+                $submissionsJobsManager,
+            ])->onlyMethods(['find'])->getMock();
+            $submissionManager->method('find')->willReturn([]);
 
             $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
 
