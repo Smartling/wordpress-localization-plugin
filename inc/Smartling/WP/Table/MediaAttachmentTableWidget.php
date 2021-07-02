@@ -112,7 +112,7 @@ class MediaAttachmentTableWidget extends \WP_List_Table
                     'class' => 'nonmanaged',
                     'title' => 'That path is automatically discovered and processed by smartling-connector',
                 ]),
-            'path' => $rule->getPropertyPath(),
+            'path' => htmlspecialchars($rule->getPropertyPath()),
             'replacerId' => $replacerId,
         ];
     }

@@ -201,12 +201,21 @@ class ConfigurationProfilesWidget extends \WP_List_Table
 
         $data = $this->manager->getEntities($total, false);
 
+        $skipEscapeKeys = [
+            'profile_name', // $this->applyRowActions does escaping
+            'target_locales', // JSON
+        ];
         $dataAsArray = [];
         $types = ConfigurationProfileEntity::getRetrievalTypes();
         foreach ($data as $element) {
 
             $row = $element->toArray();
 
+            foreach ($row as $key => $value) {
+                if (is_string($value) && !in_array($key, $skipEscapeKeys, true)) {
+                    $row[$key] = htmlspecialchars($value);
+                }
+            }
             $row['profile_name'] = $this->applyRowActions($row);
             $row['is_active'] = 0 < $row['is_active'] ? __('Yes') : __('No');
             $row['auto_authorize'] = 0 < $row['auto_authorize'] ? __('Yes') : __('No');
