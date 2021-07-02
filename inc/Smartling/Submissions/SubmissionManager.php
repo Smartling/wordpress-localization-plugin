@@ -473,7 +473,7 @@ class SubmissionManager extends EntityManagerAbstract
         }
 
         if ($jobInfo->getJobUid() !== '') {
-            $jobId = $this->jobManager->store($entity->getJobInfo())->getId();
+            $jobId = $this->jobManager->store($jobInfo)->getId();
             $this->submissionsJobsManager->store(new SubmissionJobEntity($jobId, $entity->getId()));
         }
 
