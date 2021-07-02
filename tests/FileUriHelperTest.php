@@ -35,18 +35,6 @@ class FileUriHelperTest extends TestCase
         );
     }
 
-    /**
-     * @dataProvider preparePermalinkDataProviderInvalidParams
-     *
-     * @param mixed $string
-     * @param SubmissionEntity $entity
-     */
-    public function testPreparePermalinkInvalidParams($string, ?SubmissionEntity $entity = null)
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->invokeStaticMethod(FileUriHelper::class, 'preparePermalink', [$string, $entity,]);
-    }
-
     protected function getPreparedSubmissionEntityMock($title, $type, $blogId, $contentId)
     {
         $submissionMock = $this->getSubmissionEntityMock();
@@ -89,12 +77,5 @@ class FileUriHelperTest extends TestCase
                     'My Source Title',
                 ],
             ];
-    }
-
-    public function preparePermalinkDataProviderInvalidParams(): array
-    {
-        return [
-            ['http://nothing.com/blog/my-source-title/', null,],
-        ];
     }
 }

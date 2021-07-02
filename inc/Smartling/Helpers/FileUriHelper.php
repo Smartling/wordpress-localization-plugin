@@ -24,7 +24,12 @@ class FileUriHelper
         }
     }
 
-    private static function preparePermalink(string $string, SubmissionEntity $entity): string
+    /**
+     * @param mixed $string
+     * @param SubmissionEntity $entity
+     * @return string
+     */
+    private static function preparePermalink($string, SubmissionEntity $entity): string
     {
         self::checkSubmission($entity);
         $fallBack = rtrim($entity->getSourceTitle(false), '/');
