@@ -60,6 +60,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 2.4.4 =
+* Added escaping to HTML output to prevent xss injections
+
 = 2.4.3 =
 * Fixed an issue when job links were not displayed on `Translation Progress` after submitting content for translation for the first time
 
