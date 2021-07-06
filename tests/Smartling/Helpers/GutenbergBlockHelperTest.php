@@ -346,29 +346,35 @@ HTML
                     'mode' => 'auto',
                 ],
                 [],
-                '<!-- wp:acf/sticky-cta {"id":"block_5e46fa29a5a8e","name":"acf\/sticky-cta",' .
-                '"data":{"copy":"Pronto para reservar seu próximo evento?","cta_copy":"Obter uma cotação"' .
-                ',"cta_url":"https:\/\/www.test.com\/somePath","sticky_behavior":"bottom"},' .
-                '"align":"","mode":"auto"} /-->'
+                '<!-- wp:acf/sticky-cta {\"id\":\"block_5e46fa29a5a8e\",\"name\":\"acf\\\/sticky-cta\",' .
+                '\"data\":{\"copy\":\"Pronto para reservar seu próximo evento?\",\"cta_copy\":\"Obter uma cotação\"' .
+                ',\"cta_url\":\"https:\\\/\\\/www.test.com\\\/somePath\",\"sticky_behavior\":\"bottom\"},' .
+                '\"align\":\"\",\"mode\":\"auto\"} /-->'
             ],
             'emojis' => [
                 'acf/test',
                 ['data' => ['copy' => 'Test 𝒞 and 😂, 絵文字, 👩‍🦽, ⚛️.']],
                 [],
-                '<!-- wp:acf/test {"data":{"copy":"Test 𝒞 and 😂, 絵文字, 👩‍🦽, ⚛️."}} /-->'
+                '<!-- wp:acf/test {\"data\":{\"copy\":\"Test 𝒞 and 😂, 絵文字, 👩‍🦽, ⚛️.\"}} /-->'
             ],
             'pre-encoded' => [
                 'acf/test',
                 ['data' => ['copy' => "Pronto para reservar seu pr\\u00f3ximo evento?"]],
                 [],
-                '<!-- wp:acf/test {"data":{"copy":"Pronto para reservar seu pr\\\\u00f3ximo evento?"}} /-->'
+                '<!-- wp:acf/test {\"data\":{\"copy\":\"Pronto para reservar seu pr\\\\\\\\u00f3ximo evento?\"}} /-->'
             ],
             'quotes as html entities' => [
                 'wework-blocks/geo-location',
                 ['showList' => '[{&quot;value&quot;:&quot;united-states&quot;,&quot;label&quot;:&quot;United States&quot;}]'],
                 [],
                 '<!-- wp:wework-blocks/geo-location {\"showList\":\"[{\\\\\\"value\\\\\\":\\\\\\"united-states\\\\\\",\\\\\\"label\\\\\\":\\\\\\"United States\\\\\\"}]\"} /-->',
-            ]
+            ],
+            'nested attributes' => [
+                'acf/image-text-wrap',
+                ['data' => ['content' => '[caption id=\u0022attachment_3000029563\u0022]\n\nText', '_content' => 'More text']],
+                [],
+                '<!-- wp:acf/image-text-wrap {\"data\":{\"content\":\"[caption id=\\\\\\\u0022attachment_3000029563\\\\\\\u0022]\\\\\\\n\\\\\\\nText\",\"_content\":\"More text\"}} /-->',
+            ],
         ];
     }
 
