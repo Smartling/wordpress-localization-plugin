@@ -349,14 +349,15 @@ class SubmissionTableWidget extends SmartlingListTable
             $row = $element->toArray();
             $jobInfo = $this->jobInformationManager->getBySubmissionId($element->getId());
 
-            $row[SubmissionEntity::FIELD_FILE_URI] = htmlentities($row[SubmissionEntity::FIELD_FILE_URI]);
+            $fileName = htmlentities($row[SubmissionEntity::FIELD_FILE_URI]);
+            $row[SubmissionEntity::FIELD_FILE_URI] = $fileName;
             $row[SubmissionEntity::FIELD_SOURCE_TITLE] = htmlentities($row[SubmissionEntity::FIELD_SOURCE_TITLE]);
             $row[SubmissionEntity::FIELD_CONTENT_TYPE] = WordpressContentTypeHelper::getLocalizedContentType($row[SubmissionEntity::FIELD_CONTENT_TYPE]);
             $row[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row[SubmissionEntity::FIELD_SUBMISSION_DATE]));
             $row[SubmissionEntity::FIELD_APPLIED_DATE] = '0000-00-00 00:00:00' === $row[SubmissionEntity::FIELD_APPLIED_DATE] ? __('Never')
                 : DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row[SubmissionEntity::FIELD_APPLIED_DATE]));
             $row[SubmissionEntity::FIELD_TARGET_LOCALE] = $siteHelper->getBlogLabelById($this->entityHelper->getConnector(), $row[SubmissionEntity::FIELD_TARGET_BLOG_ID]);
-            $row[SubmissionEntity::VIRTUAL_FIELD_JOB_LINK] = $jobInfo === null ? '' : "<a href=\"https://dashboard.smartling.com/app/projects/{$jobInfo->getProjectUid()}/account-jobs/{$jobInfo->getProjectUid()}:{$jobInfo->getJobUid()}\">{$jobInfo->getJobName()}</a>";
+            $row[SubmissionEntity::VIRTUAL_FIELD_JOB_LINK] = $jobInfo === null ? '' : "<a href=\"https://dashboard.smartling.com/app/projects/{$jobInfo->getProjectUid()}/account-jobs/?filename=$fileName\">{$jobInfo->getJobName()}</a>";
 
             $flagBlockParts = [];
 
