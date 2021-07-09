@@ -61,7 +61,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 2.4.6 =
-* Fix escaping in nested Gutenberg block attributes
+* Fixed delivery of Gutenberg blocks where attributes have nested objects. Before appropriate escaping was done only for attributes on the top level only
 
 = 2.4.5 =
 * Improve job link in translations progress
