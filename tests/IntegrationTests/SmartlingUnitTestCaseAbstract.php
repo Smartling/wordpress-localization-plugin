@@ -123,12 +123,12 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
 
     protected ConfigurationProfileEntity $profile;
 
-    private function getWPcliEnv(): string
+    private static function getWPcliEnv(): string
     {
         return getenv('WPCLI');
     }
 
-    private function getWPInstallDirEnv(): string
+    private static function getWPInstallDirEnv(): string
     {
         return getenv('WP_INSTALL_DIR');
     }
@@ -171,6 +171,11 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
                 ]
             )
         );
+    }
+
+    protected static function wpCliExec(string $command, string $subCommand, string $parameters): void
+    {
+        shell_exec(sprintf('%s %s %s %s --path=%s', self::getWPcliEnv(), $command, $subCommand, $parameters, self::getWPInstallDirEnv()));
     }
 
     protected function getContainer(): ContainerBuilder
