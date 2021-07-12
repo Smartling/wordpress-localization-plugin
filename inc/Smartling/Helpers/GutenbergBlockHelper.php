@@ -296,7 +296,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     {
         $isJson = $this->isJson($attrs);
         if ($isJson) {
-            array_walk($attrs, static function (&$value) {
+            array_walk_recursive($attrs, static function (&$value) {
                 $value = str_replace('&quot;', '"', $value);
             });
         }
@@ -383,6 +383,9 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     {
         foreach ($attrs as $attr) {
             try {
+                if (is_array($attr)) {
+                    return true;
+                }
                 $parsed = is_string($attr) ? json_decode(str_replace('&quot;', '"', $attr), true) : null;
             } catch (\Exception $e) {
                 $parsed = null;

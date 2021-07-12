@@ -346,29 +346,35 @@ HTML
                     'mode' => 'auto',
                 ],
                 [],
-                '<!-- wp:acf/sticky-cta {"id":"block_5e46fa29a5a8e","name":"acf\/sticky-cta",' .
-                '"data":{"copy":"Pronto para reservar seu próximo evento?","cta_copy":"Obter uma cotação"' .
-                ',"cta_url":"https:\/\/www.test.com\/somePath","sticky_behavior":"bottom"},' .
-                '"align":"","mode":"auto"} /-->'
+                '<!-- wp:acf/sticky-cta {\"id\":\"block_5e46fa29a5a8e\",\"name\":\"acf\\\/sticky-cta\",' .
+                '\"data\":{\"copy\":\"Pronto para reservar seu próximo evento?\",\"cta_copy\":\"Obter uma cotação\"' .
+                ',\"cta_url\":\"https:\\\/\\\/www.test.com\\\/somePath\",\"sticky_behavior\":\"bottom\"},' .
+                '\"align\":\"\",\"mode\":\"auto\"} /-->'
             ],
             'emojis' => [
                 'acf/test',
                 ['data' => ['copy' => 'Test 𝒞 and 😂, 絵文字, 👩‍🦽, ⚛️.']],
                 [],
-                '<!-- wp:acf/test {"data":{"copy":"Test 𝒞 and 😂, 絵文字, 👩‍🦽, ⚛️."}} /-->'
+                '<!-- wp:acf/test {\"data\":{\"copy\":\"Test 𝒞 and 😂, 絵文字, 👩‍🦽, ⚛️.\"}} /-->'
             ],
             'pre-encoded' => [
                 'acf/test',
                 ['data' => ['copy' => "Pronto para reservar seu pr\\u00f3ximo evento?"]],
                 [],
-                '<!-- wp:acf/test {"data":{"copy":"Pronto para reservar seu pr\\\\u00f3ximo evento?"}} /-->'
+                '<!-- wp:acf/test {\"data\":{\"copy\":\"Pronto para reservar seu pr\\\\\\\\u00f3ximo evento?\"}} /-->'
             ],
             'quotes as html entities' => [
                 'wework-blocks/geo-location',
                 ['showList' => '[{&quot;value&quot;:&quot;united-states&quot;,&quot;label&quot;:&quot;United States&quot;}]'],
                 [],
                 '<!-- wp:wework-blocks/geo-location {\"showList\":\"[{\\\\\\"value\\\\\\":\\\\\\"united-states\\\\\\",\\\\\\"label\\\\\\":\\\\\\"United States\\\\\\"}]\"} /-->',
-            ]
+            ],
+            'nested attributes' => [
+                'acf/image-text-wrap',
+                ['data' => ['content' => '[caption id=\u0022attachment_3000029563\u0022]\n\nText', '_content' => 'More text']],
+                [],
+                '<!-- wp:acf/image-text-wrap {\"data\":{\"content\":\"[caption id=\\\\\\\u0022attachment_3000029563\\\\\\\u0022]\\\\\\\n\\\\\\\nText\",\"_content\":\"More text\"}} /-->',
+            ],
         ];
     }
 
@@ -422,7 +428,7 @@ HTML
     public function testRenderTranslatedBlockNode()
     {
         $xmlPart = '<gutenbergBlock blockName="core/foo" originalAttributes="YToxOntzOjQ6ImRhdGEiO2E6Mzp7czo2OiJ0ZXh0X2EiO3M6NzoiVGl0bGUgMSI7czo2OiJ0ZXh0X2IiO3M6NzoiVGl0bGUgMiI7czo1OiJ0ZXh0cyI7YToyOntpOjA7czo1OiJsb3JlbSI7aToxO3M6NToiaXBzdW0iO319fQ=="><![CDATA[]]><contentChunk hash="d3d67cc32ac556aae106e606357f449e"><![CDATA[<p>Inner HTML</p>]]></contentChunk><blockAttribute name="data/text_a" hash="90bc6d3874182275bd4cd88cbd734fe9"><![CDATA[Title 1]]></blockAttribute><blockAttribute name="data/text_b" hash="e4bb56dda4ecb60c34ccb89fd50506df"><![CDATA[Title 2]]></blockAttribute><blockAttribute name="data/texts/0" hash="d2e16e6ef52a45b7468f1da56bba1953"><![CDATA[lorem]]></blockAttribute><blockAttribute name="data/texts/1" hash="e78f5438b48b39bcbdea61b73679449d"><![CDATA[ipsum]]></blockAttribute></gutenbergBlock>';
-        $expectedBlock = '<!-- wp:core/foo {"data":{"text_a":"Title 1","text_b":"Title 2","texts":["lorem","ipsum"]}} --><p>Inner HTML</p><!-- /wp:core/foo -->';
+        $expectedBlock = '<!-- wp:core/foo {\"data\":{\"text_a\":\"Title 1\",\"text_b\":\"Title 2\",\"texts\":[\"lorem\",\"ipsum\"]}} --><p>Inner HTML</p><!-- /wp:core/foo -->';
 
         $dom = new \DOMDocument('1.0', 'utf8');
         $dom->loadXML($xmlPart);
