@@ -79,6 +79,7 @@ namespace Smartling\Tests\Services {
             $submission = $this->createMock(SubmissionEntity::class);
             $submission->expects(self::once())->method('setBatchUid')->with($batchUid);
             $submission->expects(self::once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
+            $submission->expects(self::never())->method('setSourceTitle');
 
             $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
 
@@ -117,6 +118,7 @@ namespace Smartling\Tests\Services {
             $sourceIds = [48, 49];
             $contentType = 'post';
             $targetBlogId = 2;
+            $titlePrefix = 'postTitle';
             $batchUid = 'batchUid';
             $jobName = 'Job Name';
             $jobUid = 'abcdef123456';
@@ -137,9 +139,14 @@ namespace Smartling\Tests\Services {
             $contentHelper = $this->createMock(ContentHelper::class);
             $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
 
+            $expectedTitles = array_map(static function ($id) use ($titlePrefix) {
+                return [$titlePrefix . $id];
+            }, $sourceIds);
+
             $submission = $this->createMock(SubmissionEntity::class);
             $submission->expects(self::exactly(count($sourceIds)))->method('setBatchUid')->with($batchUid);
             $submission->expects(self::exactly(count($sourceIds)))->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
+            $submission->expects(self::exactly(count($sourceIds)))->method('setSourceTitle')->withConsecutive(...$expectedTitles);
 
             $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
 
@@ -162,6 +169,9 @@ namespace Smartling\Tests\Services {
             $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
 
             $x->expects(self::once())->method('returnResponse')->with(['status' => 'SUCCESS']);
+            $x->expects(self::exactly(count($sourceIds)))->method('getPostTitle')->willReturnCallback(static function ($id) use ($titlePrefix) {
+                return $titlePrefix . $id;
+            });
 
             $x->createSubmissionsHandler([
                 'source' => ['contentType' => $contentType, 'id' => [0]],
@@ -278,7 +288,7 @@ namespace Smartling\Tests\Services {
                 $this->createMock(MediaAttachmentRulesManager::class),
                 $this->createMock(ReplacerFactory::class),
                 $settingsManager,
-            ])->onlyMethods(['returnResponse'])->getMock();
+            ])->onlyMethods(['getPostTitle', 'returnResponse'])->getMock();
         }
     }
 }

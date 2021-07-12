@@ -170,6 +170,10 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 $submission->setJobInfo($jobInfo->getJobInformationEntity());
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission->getFileUri();
+                $title = $this->getPostTitle($id);
+                if ($title !== '') {
+                    $submission->setSourceTitle($title);
+                }
                 $this->submissionManager->storeEntity($submission);
             }
         }
@@ -223,9 +227,10 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 /**
                  * Submission for original content may already exist
                  */
+                $contentId = ArrayHelper::first($data['source']['id']);
                 $searchParams = array_merge($submissionTemplateArray, [
                     SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
-                    SubmissionEntity::FIELD_SOURCE_ID => ArrayHelper::first($data['source']['id']),
+                    SubmissionEntity::FIELD_SOURCE_ID => $contentId,
                 ]);
 
                 $sources = [];
@@ -246,7 +251,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 if (empty($result)) {
                     $sources[] = [
                         'type' => $contentType,
-                        'id' => ArrayHelper::first($data['source']['id']),
+                        'id' => $contentId,
                     ];
                 } else {
                     $submission = ArrayHelper::first($result);
@@ -268,6 +273,10 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                     ]);
 
                     $submission = SubmissionEntity::fromArray($submissionArray, $this->getLogger());
+                    $title = $this->getPostTitle($contentId);
+                    if ($title !== '') {
+                        $submission->setSourceTitle($title);
+                    }
 
                     // trigger generation of fileUri
                     $submission->getFileUri();
@@ -629,5 +638,14 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         $submission->setBatchUid($jobInfo->getBatchUid());
         $submission->setJobInfo($jobInfo->getJobInformationEntity());
         $this->submissionManager->storeEntity($submission);
+    }
+
+    public function getPostTitle(int $id): string
+    {
+        $post = get_post($id);
+        if ($post instanceof \WP_Post) {
+            return $post->post_title;
+        }
+        return '';
     }
 }
