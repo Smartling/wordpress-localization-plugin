@@ -304,28 +304,32 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         $sourceBlogId = $submission->getSourceBlogId();
         $targetBlogId = $submission->getTargetBlogId();
 
-        $acfData = json_decode(stripslashes($block), true, 512, JSON_THROW_ON_ERROR);
-        if (array_key_exists('data', $acfData)) {
-            foreach ($acfData['data'] as $key => $value) {
-                if (array_key_exists($value, $this->acfDefinitions)
-                    && array_key_exists('type', $this->acfDefinitions[$value])
-                    && $this->acfDefinitions[$value]['type'] === 'image'
-                    && strpos($key, '_') === 0
-                    && array_key_exists(substr($key, 1), $acfData['data'])) {
-                    $attachmentId = $acfData['data'][substr($key, 1)];
+        try {
+            $acfData = json_decode(stripslashes($block), true, 512, JSON_THROW_ON_ERROR);
+            if (array_key_exists('data', $acfData)) {
+                foreach ($acfData['data'] as $key => $value) {
+                    if (array_key_exists($value, $this->acfDefinitions)
+                        && array_key_exists('type', $this->acfDefinitions[$value])
+                        && $this->acfDefinitions[$value]['type'] === 'image'
+                        && strpos($key, '_') === 0
+                        && array_key_exists(substr($key, 1), $acfData['data'])) {
+                        $attachmentId = $acfData['data'][substr($key, 1)];
 
-                    if (!empty($attachmentId) && is_numeric($attachmentId)) {
-                        if ($this->core->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, (int)$attachmentId, $targetBlogId)) {
-                            $attachment = $this->core->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, (int)$attachmentId, $submission->getJobInfoWithBatchUid());
-                            $result->addReplacementPair(new ReplacementPair((string)$attachmentId, (string)$attachment->getTargetId()));
+                        if (!empty($attachmentId) && is_numeric($attachmentId)) {
+                            if ($this->core->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, (int)$attachmentId, $targetBlogId)) {
+                                $attachment = $this->core->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, (int)$attachmentId, $submission->getJobInfoWithBatchUid());
+                                $result->addReplacementPair(new ReplacementPair((string)$attachmentId, (string)$attachment->getTargetId()));
+                            } else {
+                                $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
+                            }
                         } else {
-                            $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
+                            $this->getLogger()->warning("Can not send attachment as it has empty id acfFieldId=$value acfFieldValue=\"$attachmentId\"");
                         }
-                    } else {
-                        $this->getLogger()->warning("Can not send attachment as it has empty id acfFieldId=$value acfFieldValue=\"$attachmentId\"");
                     }
                 }
             }
+        } catch (\Exception $e) {
+            $this->getLogger()->debug("Failed to decode block $block, skipping id replacements");
         }
         return $result;
     }
