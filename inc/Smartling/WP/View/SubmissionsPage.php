@@ -38,7 +38,6 @@ $data = $this->getViewData();
         <table width="100%">
             <tr>
                 <td style="text-align: left;">
-                    <p>
                     <form id="submissions-filter" method="get">
                         <input type="hidden" name="page" value="<?= $_REQUEST['page']; ?>"/>
                         <?= $submissionsTable->contentTypeSelectRender(); ?>
@@ -50,7 +49,6 @@ $data = $this->getViewData();
                         <?= $submissionsTable->renderSearchBox(); ?>
                         <?= $submissionsTable->renderSubmitButton(__('Apply Filter')); ?>
                     </form>
-                    </p>
                 </td>
             </tr>
         </table>

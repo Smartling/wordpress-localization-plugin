@@ -20,7 +20,7 @@ class SubmissionManagerTest extends TestCase
         parent::setUp();
         defined('OBJECT') || define('OBJECT', 'OBJECT');
         $this->db = $this->createMock(SmartlingToCMSDatabaseAccessWrapperInterface::class);
-        $this->db->method('completeTableName')->willReturn('wp_posts');
+        $this->db->method('completeTableName')->willReturnCallback(function ($tableName) {return 'wp_' . $tableName;});
         $this->result = new \stdClass();
         $this->result->cnt = 0;
         $this->subject = $this->createPartialMock(SubmissionManager::class, ['fetchData', 'getDbal', 'getLogger']);
@@ -31,7 +31,7 @@ class SubmissionManagerTest extends TestCase
     public function testSearch_EmptyConditionBlock()
     {
         $db = clone $this->db;
-        $db->expects($this->once())->method('fetch')->with('SELECT COUNT(*) AS `cnt` FROM `wp_posts`')->willReturn([$this->result]);
+        $db->expects($this->once())->method('fetch')->with("SELECT COUNT(DISTINCT s.id) AS cnt\n     FROM wp_smartling_submissions AS s\n        LEFT JOIN wp_smartling_submissions_jobs AS sj ON s.id = sj.submission_id\n        LEFT JOIN wp_smartling_jobs AS j ON sj.job_id = j.id ")->willReturn([$this->result]);
 
         $x = clone $this->subject;
         $x->method('getDbal')->willReturn($db);
@@ -42,7 +42,7 @@ class SubmissionManagerTest extends TestCase
     public function testSearch_ConditionBlockWithConditions()
     {
         $db = clone $this->db;
-        $db->expects($this->once())->method('fetch')->with('SELECT COUNT(*) AS `cnt` FROM `wp_posts` WHERE ( ( `post_status` = \'draft\' ) )')->willReturn([$this->result]);
+        $db->expects($this->once())->method('fetch')->with("SELECT COUNT(DISTINCT s.id) AS cnt\n     FROM wp_smartling_submissions AS s\n        LEFT JOIN wp_smartling_submissions_jobs AS sj ON s.id = sj.submission_id\n        LEFT JOIN wp_smartling_jobs AS j ON sj.job_id = j.id  WHERE ( ( post_status = 'draft' ) )")->willReturn([$this->result]);
 
         $x = clone $this->subject;
         $x->method('getDbal')->willReturn($db);
@@ -55,7 +55,7 @@ class SubmissionManagerTest extends TestCase
     public function testSearch_ConditionBlockWithBlocks()
     {
         $db = clone $this->db;
-        $db->expects($this->once())->method('fetch')->with('SELECT COUNT(*) AS `cnt` FROM `wp_posts` WHERE ( ( ( `post_status` = \'draft\' ) ) )')->willReturn([$this->result]);
+        $db->expects($this->once())->method('fetch')->with("SELECT COUNT(DISTINCT s.id) AS cnt\n     FROM wp_smartling_submissions AS s\n        LEFT JOIN wp_smartling_submissions_jobs AS sj ON s.id = sj.submission_id\n        LEFT JOIN wp_smartling_jobs AS j ON sj.job_id = j.id  WHERE ( ( ( post_status = 'draft' ) ) )")->willReturn([$this->result]);
 
         $x = clone $this->subject;
         $x->method('getDbal')->willReturn($db);
@@ -70,7 +70,7 @@ class SubmissionManagerTest extends TestCase
     public function testSearch_ConditionBlockWithBlocksAndConditions()
     {
         $db = clone $this->db;
-        $db->expects($this->once())->method('fetch')->with('SELECT COUNT(*) AS `cnt` FROM `wp_posts` WHERE ( ( `guid` = \'\' AND ( `post_status` = \'draft\' ) ) )')->willReturn([$this->result]);
+        $db->expects($this->once())->method('fetch')->with("SELECT COUNT(DISTINCT s.id) AS cnt\n     FROM wp_smartling_submissions AS s\n        LEFT JOIN wp_smartling_submissions_jobs AS sj ON s.id = sj.submission_id\n        LEFT JOIN wp_smartling_jobs AS j ON sj.job_id = j.id  WHERE ( ( guid = '' AND ( post_status = 'draft' ) ) )")->willReturn([$this->result]);
 
         $x = clone $this->subject;
         $x->method('getDbal')->willReturn($db);
