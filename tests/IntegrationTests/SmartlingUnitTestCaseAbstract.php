@@ -108,7 +108,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
 
         foreach ($tableList as $tableName) {
             $query = vsprintf($template, [$tablePrefix, $tableName]);
-            $this->wpcli_exec('db', 'query', vsprintf('%s', [$query]));
+            self::wpCliExec('db', 'query', vsprintf('%s', [$query]));
         }
     }
 
@@ -155,22 +155,6 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
          */
         $queue->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
         $this->executeDownload();
-    }
-
-    protected function wpcli_exec(string $command, string $subCommand, string $params): void
-    {
-        shell_exec(
-            vsprintf(
-                '%s %s %s %s --path=%s',
-                [
-                    $this->getWPcliEnv(),
-                    $command,
-                    $subCommand,
-                    $params,
-                    $this->getWPInstallDirEnv(),
-                ]
-            )
-        );
     }
 
     protected static function wpCliExec(string $command, string $subCommand, string $parameters): void
@@ -311,7 +295,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
 
     private function runCronTask(string $task): void
     {
-        $this->wpcli_exec('cron', 'event', vsprintf('run %s', [$task]));
+        self::wpCliExec('cron', 'event', vsprintf('run %s', [$task]));
     }
 
     protected function executeUpload(): void
