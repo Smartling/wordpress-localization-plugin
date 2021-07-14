@@ -108,7 +108,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
 
         foreach ($tableList as $tableName) {
             $query = vsprintf($template, [$tablePrefix, $tableName]);
-            $this->wpcli_exec('db', 'query', vsprintf('%s', [$query]));
+            self::wpCliExec('db', 'query', vsprintf('%s', [$query]));
         }
     }
 
@@ -123,12 +123,12 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
 
     protected ConfigurationProfileEntity $profile;
 
-    private function getWPcliEnv(): string
+    private static function getWPcliEnv(): string
     {
         return getenv('WPCLI');
     }
 
-    private function getWPInstallDirEnv(): string
+    private static function getWPInstallDirEnv(): string
     {
         return getenv('WP_INSTALL_DIR');
     }
@@ -157,20 +157,9 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         $this->executeDownload();
     }
 
-    protected function wpcli_exec(string $command, string $subCommand, string $params): void
+    protected static function wpCliExec(string $command, string $subCommand, string $parameters): void
     {
-        shell_exec(
-            vsprintf(
-                '%s %s %s %s --path=%s',
-                [
-                    $this->getWPcliEnv(),
-                    $command,
-                    $subCommand,
-                    $params,
-                    $this->getWPInstallDirEnv(),
-                ]
-            )
-        );
+        shell_exec(sprintf('%s %s %s %s --path=%s', self::getWPcliEnv(), $command, $subCommand, $parameters, self::getWPInstallDirEnv()));
     }
 
     protected function getContainer(): ContainerBuilder
@@ -306,7 +295,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
 
     private function runCronTask(string $task): void
     {
-        $this->wpcli_exec('cron', 'event', vsprintf('run %s', [$task]));
+        self::wpCliExec('cron', 'event', vsprintf('run %s', [$task]));
     }
 
     protected function executeUpload(): void

@@ -8,7 +8,6 @@ use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 
 class SubmissionCleanupTest extends SmartlingUnitTestCaseAbstract
 {
-
     /**
      * @return SubmissionEntity
      */
@@ -65,27 +64,27 @@ class SubmissionCleanupTest extends SmartlingUnitTestCaseAbstract
 
     public function testRemovedOriginalContent()
     {
-        $this->wpcli_exec('plugin', 'activate', 'exec-plugin --network');
+        self::wpCliExec('plugin', 'activate', 'exec-plugin --network');
 
         $submission = $this->makePreparations();
         $this->prepareTempFile($submission);
 
-        $this->wpcli_exec('cron', 'event', 'run exec_plugin_execute_hook');
+        self::wpCliExec('cron', 'event', 'run exec_plugin_execute_hook');
         $this->checkSubmissionIsCancelled();
 
-        $this->wpcli_exec('plugin', 'deactivate', 'exec-plugin --network');
+        self::wpCliExec('plugin', 'deactivate', 'exec-plugin --network');
     }
 
     public function testRemovedTranslatedContent()
     {
-        $this->wpcli_exec('plugin', 'activate', 'exec-plugin --network');
+        self::wpCliExec('plugin', 'activate', 'exec-plugin --network');
 
         $submission = $this->makePreparations();
         $this->prepareTempFile($submission);
 
-        $this->wpcli_exec('cron', 'event', 'run exec_plugin_execute_hook');
+        self::wpCliExec('cron', 'event', 'run exec_plugin_execute_hook');
         $this->checkSubmissionIsCancelled();
 
-        $this->wpcli_exec('plugin', 'deactivate', 'exec-plugin --network');
+        self::wpCliExec('plugin', 'deactivate', 'exec-plugin --network');
     }
 }
