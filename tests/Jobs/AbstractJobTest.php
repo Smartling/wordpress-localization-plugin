@@ -6,6 +6,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\QueryBuilder\TransactionManager;
 use Smartling\Jobs\JobAbstract;
+use Smartling\Submissions\SubmissionManager;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 use Smartling\Tests\Traits\DbAlMock;
 use Smartling\Tests\Traits\EntityHelperMock;
@@ -19,7 +20,8 @@ class AbstractJobTest extends TestCase
     use SiteHelperMock;
     use SubmissionManagerMock;
 
-    private $submissionManager;
+    private SubmissionManager $submissionManager;
+    private $wpdb;
 
     protected function setUp(): void
     {
@@ -28,6 +30,14 @@ class AbstractJobTest extends TestCase
             $this->mockDbAl(),
             $this->mockEntityHelper($this->mockSiteHelper())
         );
+        global $wpdb;
+        $this->wpdb = $wpdb;
+    }
+
+    protected function tearDown(): void
+    {
+        global $wpdb;
+        $wpdb = $this->wpdb;
     }
 
     public function testRunCronJobUnknownSource()
@@ -54,6 +64,23 @@ class AbstractJobTest extends TestCase
 
         $x->runCronJob(JobAbstract::SOURCE_USER);
         $this->fail('Should throw exception when source is user');
+    }
+
+    public function testBuildSelectQuery()
+    {
+        global $wpdb;
+        $wpdb = new \stdClass();
+        $wpdb->base_prefix = 'wp_';
+        $x = $this->getMockBuilder(JobAbstract::class)
+            ->setConstructorArgs([
+                $this->submissionManager,
+                $this->createMock(TransactionManager::class),
+            ])
+            ->getMockForAbstractClass();
+        $this->assertEquals(
+            "SELECT `meta_value` AS `ts` FROM `wp_sitemeta` WHERE ( `meta_key` = 'smartling_cron_flag_' )",
+            $x->buildSelectQuery(),
+        );
     }
 
     /**
