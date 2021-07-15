@@ -19,3 +19,8 @@ tests/IntegrationTests/src
 
 #IDE
 .idea
+
+build/node_modules
+build/.cache
+js/smartling-connector.js
+js/smartling-connector.js.map

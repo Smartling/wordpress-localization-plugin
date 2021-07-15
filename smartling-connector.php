@@ -70,9 +70,14 @@ if (defined('SMARTLING_DEBUG') || is_admin() || (defined('DOING_CRON') && true =
             Smartling\Bootstrap::$pluginVersion = $pluginData['Version'];
             $bootstrap = new Smartling\Bootstrap();
             add_action('plugins_loaded', array($bootstrap, 'load',), 99);
+            add_action('enqueue_block_editor_assets', 'ebea');
             register_activation_hook(__FILE__, array($bootstrap, 'activate',));
             register_deactivation_hook(__FILE__, array($bootstrap, 'deactivate',));
             register_uninstall_hook(__FILE__, array('Smartling\Bootstrap', 'uninstall'));
         }
+    }
+
+    function ebea() {
+        wp_enqueue_script('smartling-block-locking', esc_url(plugins_url('/js/smartling-connector.js?ts=' . time(), __FILE__)), ['wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor'], get_file_data(__FILE__, ['Version' => 'Version'])['Version'], true); // TODO remove timestamp, move this to somewhere appropriate
     }
 }
