@@ -32,6 +32,9 @@ class AcfTypeDetectorTest extends TestCase
     public function testGetProcessorForGutenberg()
     {
         global $acf_stores;
+        if (!class_exists('ACF_Data')) {
+            $this->markTestSkipped('No ACF data found. This is ok when running tests with no ACF plugin or no wordpress loaded. The test will work when running as part of integration suite.');
+        }
         $groups = $this->createPartialMock('ACF_Data', ['get_data']);
         $groups->method('get_data')->willReturn([]);
         $fields = $this->createPartialMock('ACF_Data', ['get_data']);

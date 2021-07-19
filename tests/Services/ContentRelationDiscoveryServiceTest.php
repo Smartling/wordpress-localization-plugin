@@ -248,6 +248,9 @@ namespace Smartling\Tests\Services {
 
             $x->expects(self::once())->method('returnResponse')->with(['status' => 'SUCCESS']);
 
+            if (function_exists('switch_to_blog')) {
+                switch_to_blog(1);
+            }
             $x->createSubmissionsHandler([
                 'source' => ['contentType' => $contentType, 'id' => [$sourceId]],
                 'job' =>
