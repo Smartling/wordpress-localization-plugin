@@ -424,9 +424,10 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                 $eh = $this->getEntityHelper();
                 $currentBlogId = $eh->getSiteHelper()->getCurrentBlogId();
                 $profile = $eh->getSettingsManager()->findEntityByMainLocale($currentBlogId);
+                $submissionManager = $this->getManager();
 
                 if (0 < count($profile)) {
-                    $submissions = $this->getManager()
+                    $submissions = $submissionManager
                                         ->find([
                                             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
                                             SubmissionEntity::FIELD_SOURCE_ID => $post->ID,
@@ -439,11 +440,18 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                             'profile' => ArrayHelper::first($profile),
                         ]
                     );
+                    wp_enqueue_script('smartling-block-locking',
+                        $this->getPluginInfo()->getUrl() . 'js/smartling-block-locking.js',
+                        ['wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor'],
+                        $this->getPluginInfo()->getVersion(),
+                        true,
+                    );
                 } else {
+                    if (count($submissionManager->find([SubmissionEntity::FIELD_TARGET_ID => $post->ID], 1)) > 0) {
+                        wp_enqueue_script('smartling-block-sidebar', $this->getPluginInfo()->getUrl() . 'js/smartling-block-sidebar.js', ['wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor'], $this->getPluginInfo()->getVersion(), true);
+                    }
                     echo '<p>' . __('No suitable configuration profile found.') . '</p>';
                 }
-
-
             } catch (SmartlingDbException $e) {
                 $message = 'Failed to search for the original post. No source post found for blog %s, post %s. Hiding widget';
                 $this->getLogger()

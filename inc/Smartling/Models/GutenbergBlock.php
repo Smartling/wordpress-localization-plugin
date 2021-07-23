@@ -2,6 +2,8 @@
 
 namespace Smartling\Models;
 
+use Smartling\Helpers\PostContentHelper;
+
 class GutenbergBlock
 {
     private ?string $blockName; // null for non-Gutenberg blocks. This happens when WP serializes/unserializes content
@@ -30,6 +32,11 @@ class GutenbergBlock
     public function getAttributes(): array
     {
         return $this->attributes;
+    }
+
+    public function getSmartlingLockId(): ?string
+    {
+        return $this->attributes[PostContentHelper::SMARTLING_LOCK_ID] ?? null;
     }
 
     /**

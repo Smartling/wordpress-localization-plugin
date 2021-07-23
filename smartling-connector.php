@@ -7,7 +7,7 @@
  * Plugin Name:       Smartling Connector
  * Plugin URI:        https://www.smartling.com/products/automate/integrations/wordpress/
  * Description:       Integrate your Wordpress site with Smartling to upload your content and download translations.
- * Version:           2.4.6
+ * Version:           2.4.7
  * Author:            Smartling
  * Author URI:        https://www.smartling.com
  * License:           GPL-2.0+
@@ -70,14 +70,9 @@ if (defined('SMARTLING_DEBUG') || is_admin() || (defined('DOING_CRON') && true =
             Smartling\Bootstrap::$pluginVersion = $pluginData['Version'];
             $bootstrap = new Smartling\Bootstrap();
             add_action('plugins_loaded', array($bootstrap, 'load',), 99);
-            add_action('enqueue_block_editor_assets', 'ebea');
             register_activation_hook(__FILE__, array($bootstrap, 'activate',));
             register_deactivation_hook(__FILE__, array($bootstrap, 'deactivate',));
             register_uninstall_hook(__FILE__, array('Smartling\Bootstrap', 'uninstall'));
         }
-    }
-
-    function ebea() {
-        wp_enqueue_script('smartling-block-locking', esc_url(plugins_url('/js/smartling-connector.js?ts=' . time(), __FILE__)), ['wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor'], get_file_data(__FILE__, ['Version' => 'Version'])['Version'], true); // TODO remove timestamp, move this to somewhere appropriate
     }
 }

@@ -22,5 +22,7 @@ tests/IntegrationTests/src
 
 build/node_modules
 build/.cache
-js/smartling-connector.js
-js/smartling-connector.js.map
+js/smartling-block-locking.js
+js/smartling-block-locking.js.map
+js/smartling-block-sidebar.js
+js/smartling-block-sidebar.js.map
