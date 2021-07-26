@@ -10,20 +10,32 @@ class Condition
     private string $field;
     private array $values;
 
-    protected function __construct(string $condition, string $field, array $values)
+    protected function __construct(string $condition, string $field, array $values, bool $escapeField = true)
     {
         $this->condition = $condition;
-        $this->field = QueryBuilder::escapeName($field);
+        $this->field = $escapeField ? QueryBuilder::escapeName($field) : $field;
         $this->values = QueryBuilder::escapeValues($values);
     }
 
-    public static function getCondition(string $condition, string $field, array $values): Condition
+    public static function getCondition(string $condition, string $field, array $values, bool $escapeField = true): Condition
     {
-        return new self($condition, $field, $values);
+        return new self($condition, $field, $values, $escapeField);
     }
 
     public function __toString(): string
     {
         return ConditionBuilder::buildBlock($this->condition, array_merge([$this->field], $this->values));
+    }
+
+    public function getOperand(): string {
+        return $this->condition;
+    }
+
+    public function getField(): string {
+        return $this->field;
+    }
+
+    public function getValues(): array {
+        return $this->values;
     }
 }

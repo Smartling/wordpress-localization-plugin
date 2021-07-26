@@ -50,6 +50,27 @@ class ConditionBlock
         return count($this->conditions) === 0 && count($this->blocks) === 0;
     }
 
+    /**
+     * @return ConditionBlock[]
+     */
+    public function getBlocks(): array
+    {
+        return $this->blocks;
+    }
+
+    /**
+     * @return Condition[]
+     */
+    public function getConditions(): array
+    {
+        return $this->conditions;
+    }
+
+    public function getOperator(): string
+    {
+        return trim($this->operator);
+    }
+
     public function addConditionBlock(ConditionBlock $block): void
     {
         $this->blocks[] = $block;

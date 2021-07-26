@@ -14,6 +14,7 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressUserHelper;
+use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\JobManager;
 use Smartling\Jobs\SubmissionJobEntity;
 use Smartling\Jobs\SubmissionsJobsManager;
@@ -22,6 +23,9 @@ class SubmissionManager extends EntityManagerAbstract
 {
     private JobManager $jobManager;
     private SubmissionsJobsManager $submissionsJobsManager;
+    private string $jobsTableAlias = 'j';
+    private string $submissionTableAlias = 's';
+    private string $submissionJobTableAlias = 'sj';
 
     public function getSubmissionStatusLabels(): array
     {
@@ -200,12 +204,7 @@ class SubmissionManager extends EntityManagerAbstract
             $whereOptions->addCondition($condition);
         }
 
-        $query = QueryBuilder::buildSelectQuery(
-            $this->getDbal()->completeTableName(SubmissionEntity::getTableName()),
-            array_keys(SubmissionEntity::getFieldDefinitions()),
-            $whereOptions,
-        );
-        $this->logQuery($query);
+        $query = $this->buildJoinQuery($whereOptions);
 
         return $query;
     }
@@ -251,13 +250,7 @@ class SubmissionManager extends EntityManagerAbstract
             }
         }
 
-        $query = QueryBuilder::buildSelectQuery(
-            $this->getDbal()->completeTableName(SubmissionEntity::getTableName()),
-            [['COUNT(*)' => 'cnt']],
-            $whereOptions,
-        );
-
-        $this->logQuery($query);
+        $query = $this->buildJoinCountQuery($whereOptions);
 
         return $query;
     }
@@ -378,15 +371,7 @@ class SubmissionManager extends EntityManagerAbstract
             $whereOptions = $baseCondition;
         }
 
-        $query = QueryBuilder::buildSelectQuery(
-            $this->getDbal()->completeTableName(SubmissionEntity::getTableName()),
-            array_keys(SubmissionEntity::getFieldDefinitions()),
-            $whereOptions,
-            $sortOptions,
-            $pageOptions,
-        );
-
-        $this->logQuery($query);
+        $query = $this->buildJoinQuery($whereOptions, $pageOptions, $sortOptions);
 
         return $query;
     }
@@ -660,6 +645,70 @@ class SubmissionManager extends EntityManagerAbstract
     {
         $totalCount = $this->getDbal()->fetch($this->buildCountQuery($contentType, $status, $outdatedFlag, $block));
 
-        return [(int)$totalCount[0]->cnt, $this->fetchData($this->buildQuery($contentType, $status, $outdatedFlag, $sortOptions, $pageOptions, $block))];
+        return [
+            (int)$totalCount[0]->cnt,
+            $this->fetchData($this->buildQuery($contentType, $status, $outdatedFlag, $sortOptions, $pageOptions, $block)),
+        ];
+    }
+
+    private function buildJoinCountQuery(?ConditionBlock $whereOptions = null): string
+    {
+        $submissionIdFieldAliased = "$this->submissionTableAlias." . SubmissionEntity::FIELD_ID;
+
+        return QueryBuilder::addWhereOrderLimitForJoinQuery(
+            "SELECT COUNT(DISTINCT $submissionIdFieldAliased) AS cnt\n {$this->getAliasedFromTables()}",
+            $this->getFields(),
+            $whereOptions,
+        );
+    }
+
+    private function getAliasedFromTables(): string
+    {
+        $jobsIdFieldAliased = "$this->jobsTableAlias." . JobEntity::FIELD_ID;
+        $jobsTable = $this->getDbal()->completeTableName(JobEntity::getTableName());
+        $submissionIdFieldAliased = "$this->submissionTableAlias." . SubmissionEntity::FIELD_ID;
+        $submissionsJobsJobIdFieldAliased = "$this->submissionJobTableAlias." . SubmissionJobEntity::FIELD_JOB_ID;
+        $submissionsJobsSubmissionIdFieldAliased = "$this->submissionJobTableAlias." . SubmissionJobEntity::FIELD_SUBMISSION_ID;
+        $submissionsJobsTable = $this->getDbal()->completeTableName(SubmissionJobEntity::getTableName());
+        $submissionsTable = $this->getDbal()->completeTableName(SubmissionEntity::getTableName());
+
+        return <<<SQL
+    FROM $submissionsTable AS $this->submissionTableAlias
+        LEFT JOIN $submissionsJobsTable AS $this->submissionJobTableAlias ON $submissionIdFieldAliased = $submissionsJobsSubmissionIdFieldAliased
+        LEFT JOIN $jobsTable AS $this->jobsTableAlias ON $submissionsJobsJobIdFieldAliased = $jobsIdFieldAliased 
+SQL;
+    }
+
+    private function buildJoinQuery(?ConditionBlock $whereOptions = null, ?array $pageOptions = null, ?array $sortOptions = null): string
+    {
+        $submissionFields = array_map(function (string $item) {
+            return "$this->submissionTableAlias.$item";
+        }, array_keys(SubmissionEntity::getFieldDefinitions()));
+        $jobFields = array_map(function (string $item) {
+            return "$this->jobsTableAlias.$item";
+        }, array_filter(array_keys(JobEntity::getFieldDefinitions()), static function (string $item) {
+            return $item !== 'id';
+        }));
+
+        $fields = implode(', ', array_merge($submissionFields, $jobFields)); // order important, use submission fields first
+
+        return QueryBuilder::addWhereOrderLimitForJoinQuery(
+            "SELECT $fields {$this->getAliasedFromTables()}",
+            $this->getFields(),
+            $whereOptions,
+            $sortOptions,
+            $pageOptions,
+        );
+    }
+
+    /**
+     * The order is important, because we want to first use the columns from submissions
+     */
+    private function getFields(): array
+    {
+        return [
+            $this->submissionTableAlias => array_keys(SubmissionEntity::getFieldDefinitions()),
+            $this->jobsTableAlias => array_keys(JobEntity::getFieldDefinitions()),
+        ];
     }
 }

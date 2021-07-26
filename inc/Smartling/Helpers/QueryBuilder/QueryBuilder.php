@@ -3,14 +3,9 @@
 namespace Smartling\Helpers\QueryBuilder;
 
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 
-/**
- * Helps to build CRUD SQL queries
- * Class QueryBuilder
- *
- * @package Smartling\Helpers
- */
 class QueryBuilder
 {
     /**
@@ -132,6 +127,37 @@ class QueryBuilder
         return $query;
     }
 
+    public static function addWhereOrderLimitForJoinQuery(string $query, array $fields, ConditionBlock $conditionBlock = null, array $sortOptions = null, array $pageOptions = null): string
+    {
+        if ($conditionBlock !== null) {
+            $conditionBlock = static::addPrefixesForJoinQuery($conditionBlock, $fields);
+            $query .= ' WHERE ' . $conditionBlock;
+        }
+        $query .= static::buildSortSubQuery($sortOptions, false);
+        $query .= static::buildLimitSubQuery($pageOptions);
+
+        return $query;
+    }
+
+    private static function addPrefixesForJoinQuery(ConditionBlock $conditionBlock, array $fields): ConditionBlock {
+        $result = new ConditionBlock($conditionBlock->getOperator());
+        foreach ($conditionBlock->getBlocks() as $block) {
+            $result->addConditionBlock(static::addPrefixesForJoinQuery($block, $fields));
+        }
+        foreach ($conditionBlock->getConditions() as $condition) {
+            $field = substr($condition->getField(), 1, -1);
+            foreach ($fields as $table => $columns) {
+                if (in_array($field, $columns, true)) {
+                    $field = "$table.$field";
+                    break;
+                }
+            }
+            $result->addCondition(Condition::getCondition($condition->getOperand(), $field, $condition->getValues(), false));
+        }
+
+        return $result;
+    }
+
     /**
      * @param                $tableName
      * @param ConditionBlock $conditions
@@ -231,7 +257,7 @@ class QueryBuilder
     /**
      * @param array|null $sortOptions ['id' => 'desc']
      */
-    private static function buildSortSubQuery(?array $sortOptions): string
+    private static function buildSortSubQuery(?array $sortOptions, bool $escape = true): string
     {
         $part = '';
 
@@ -239,7 +265,7 @@ class QueryBuilder
             $preOptions = [];
 
             foreach ($sortOptions as $field => $value) {
-                $preOptions[] = "`$field` $value";
+                $preOptions[] = $escape ? "`$field` $value" : "$field $value";
             }
 
             $part .= vsprintf(' ORDER BY %s', [implode(' , ', $preOptions)]);
@@ -251,7 +277,7 @@ class QueryBuilder
     /**
      * @param string[]|null $groupOptions
      */
-    private static function buildGroupSubQuery(?array $groupOptions): string
+    private static function buildGroupSubQuery(?array $groupOptions, bool $escape = true): string
     {
         $part = '';
 
@@ -262,7 +288,7 @@ class QueryBuilder
         $parts = [];
 
         foreach ($groupOptions as $element) {
-            $parts[] = static::escapeName($element);
+            $parts[] = $escape ? static::escapeName($element) : $element;
         }
 
         $part = implode(', ', $parts);

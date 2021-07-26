@@ -102,11 +102,16 @@ class MultilingualPressConnector extends LocalizationPluginAbstract
     }
 
     /**
-     * @inheritdoc
+     * @param SiteHelper $helper
+     * @param array $ml_plugin_statuses
+     * @param wpdb $wpdb
+     * @noinspection PhpMissingParamTypeInspection wpdb used for testing
      */
-    public function __construct(SiteHelper $helper, array $ml_plugin_statuses)
+    public function __construct(SiteHelper $helper, array $ml_plugin_statuses, $wpdb = null)
     {
-        global $wpdb;
+        if ($wpdb === null) {
+            global $wpdb;
+        }
         $this->wpdb = $wpdb;
         parent::__construct($helper, $ml_plugin_statuses);
     }

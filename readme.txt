@@ -4,7 +4,7 @@ Tags: translation, localization, localisation, translate, multilingual, smartlin
 Requires at least: 5.5
 Tested up to: 5.7
 Requires PHP: 7.4
-Stable tag: 2.4.6
+Stable tag: 2.4.7
 License: GPLv2 or later
 
 Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
@@ -60,8 +60,11 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
-= 2.4.7 =
+= 2.4.8 =
 * Add locking for Gutenberg blocks in the Gutenberg visual editor. Previous location based method for locking is now obsolete, please re-lock the required blocks in the visual editor, as the support for location-based locking will be disabled in a future release.
+
+= 2.4.7 =
+* Added job name search to search field in `Translation Progress`
 
 = 2.4.6 =
 * Fixed delivery of Gutenberg blocks where attributes have nested objects. Before appropriate escaping was done only for attributes on the top level only

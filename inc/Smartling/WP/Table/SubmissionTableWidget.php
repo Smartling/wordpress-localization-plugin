@@ -16,6 +16,7 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
+use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\JobManager;
 use Smartling\Queue\Queue;
 use Smartling\Settings\Locale;
@@ -280,7 +281,7 @@ class SubmissionTableWidget extends SmartlingListTable
             $searchBlock = ConditionBlock::getConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR);
 
             $searchFields = [
-                SubmissionEntity::FIELD_SOURCE_TITLE,
+                JobEntity::FIELD_JOB_NAME,
                 SubmissionEntity::FIELD_SOURCE_TITLE,
                 SubmissionEntity::FIELD_FILE_URI,
             ];
@@ -303,7 +304,6 @@ class SubmissionTableWidget extends SmartlingListTable
         }
 
         if ('any' !== $lockedFlag) {
-
             $lockConditionTotal = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_LOCKED, [(int)$lockedFlag]);
 
             if (1 === (int)$lockedFlag) {
@@ -347,7 +347,7 @@ class SubmissionTableWidget extends SmartlingListTable
 
         foreach ($data as $element) {
             $row = $element->toArray();
-            $jobInfo = $this->jobInformationManager->getBySubmissionId($element->getId());
+            $jobInfo = $element->getJobInfo();
 
             $fileName = htmlentities($row[SubmissionEntity::FIELD_FILE_URI]);
             $row[SubmissionEntity::FIELD_FILE_URI] = $fileName;
@@ -357,7 +357,7 @@ class SubmissionTableWidget extends SmartlingListTable
             $row[SubmissionEntity::FIELD_APPLIED_DATE] = '0000-00-00 00:00:00' === $row[SubmissionEntity::FIELD_APPLIED_DATE] ? __('Never')
                 : DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row[SubmissionEntity::FIELD_APPLIED_DATE]));
             $row[SubmissionEntity::FIELD_TARGET_LOCALE] = $siteHelper->getBlogLabelById($this->entityHelper->getConnector(), $row[SubmissionEntity::FIELD_TARGET_BLOG_ID]);
-            $row[SubmissionEntity::VIRTUAL_FIELD_JOB_LINK] = $jobInfo === null ? '' : "<a href=\"https://dashboard.smartling.com/app/projects/{$jobInfo->getProjectUid()}/account-jobs/?filename=$fileName\">{$jobInfo->getJobName()}</a>";
+            $row[SubmissionEntity::VIRTUAL_FIELD_JOB_LINK] = $jobInfo->getJobName() === '' ? '' : "<a href=\"https://dashboard.smartling.com/app/projects/{$jobInfo->getProjectUid()}/account-jobs/?filename=$fileName\">{$jobInfo->getJobName()}</a>";
 
             $flagBlockParts = [];
 
