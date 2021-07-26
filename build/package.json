@@ -1,0 +1,25 @@
+{
+	"name": "smartling-connector",
+	"version": "0.0.1",
+	"description": "Build assets for Smartling connector",
+	"scripts": {
+		"start": "parcel watch --no-hmr assets/js/smartling-block-locking.js assets/js/smartling-block-sidebar.js -d ../js",
+		"build": "parcel build assets/js/smartling-block-locking.js assets/js/smartling-block-sidebar.js -d ../js",
+		"lint": "eslint assets/js"
+	},
+	"author": "Smartling",
+	"dependencies": {
+	},
+	"devDependencies": {
+		"babel-core": "^6.26.3",
+		"babel-eslint": "^10.0.1",
+		"babel-plugin-transform-react-jsx": "^6.24.1",
+		"eslint": "^5.16.0",
+		"eslint-config-wordpress": "^2.0.0",
+		"eslint-plugin-jest": "^22.5.1",
+		"eslint-plugin-jsx-a11y": "^6.2.1",
+		"eslint-plugin-react": "^7.13.0",
+		"parcel-bundler": "^1.12.3"
+	},
+	"private": true
+}

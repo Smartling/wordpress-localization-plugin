@@ -406,6 +406,161 @@ HTML;
         self::assertEquals($expectedContent, $this->resultEntity->post_content);
     }
 
+    public function testApplyXmlLockedBlocksById()
+    {
+        $originalContent = <<<HTML
+<!-- wp:paragraph {"placeholder":"First paragraph","fontSize":"large","smartlingLockId":"1"} -->
+<p class="has-large-font-size">First paragraph</p>
+<!-- /wp:paragraph -->
+<p>Not a Gutenberg block</p>
+<!-- wp:folder {"id":13,"smartlingLockId":"2"} -->
+<!-- wp:post {"content":"Original first post content","smartlingLockId":"21"} /-->
+<!-- wp:post {"content":"Original second post content","smartlingLockId":"22"} /-->
+<!-- wp:post {"content":"Original third post content","smartlingLockId":"23"} /-->
+<p class="has-large-font-size">First folder</p>
+<!-- /wp:folder -->
+<p>Other non-Gutenberg content</p>
+<!-- wp:paragraph {"placeholder":"Second paragraph","fontSize":"large","smartlingLockId":"3"} -->
+<p class="has-large-font-size">Second paragraph</p>
+<!-- /wp:paragraph -->
+<!-- wp:folder {"id":5,"smartlingLockId":"4"} -->
+<!-- wp:post {"content":"Original fourth post content","smartlingLockId":"41"} /-->
+<!-- wp:post {"content":"Original fifth post content","smartlingLockId":"42"} /-->
+<!-- wp:post {"content":"Original sixth post content","smartlingLockId":"43"} /-->
+<p>Second folder</p>
+<!-- /wp:folder -->
+<!-- wp:folder {"id":7,"smartlingLockId":"5"} -->
+<!-- wp:post {"content":"Original seventh post content","smartlingLockId":"51"} /-->
+<!-- wp:post {"content":"Original eighth post content","smartlingLockId":"52"} /-->
+<!-- wp:post {"content":"Original ninth post content","smartlingLockId":"53"} /-->
+<p>Third folder</p>
+<!-- /wp:folder -->
+HTML;
+        $translatedContent = <<<HTML
+<!-- wp:paragraph {"placeholder":"Translated first paragraph","fontSize":"large","smartlingLockId":"1"} -->
+<p class="has-large-font-size">Translated first paragraph</p>
+<!-- /wp:paragraph -->
+<p>Translated not Gutenberg block</p>
+<!-- wp:folder {"id":3,"smartlingLockId":"2"} -->
+<!-- wp:post {"content":"Translated first post content","smartlingLockId":"21"} /-->
+<!-- wp:post {"content":"Translated second post content","smartlingLockId":"22"} /-->
+<!-- wp:post {"content":"Translated third post content","smartlingLockId":"23"} /-->
+<p class="has-large-font-size">Translated folder contents</p>
+<!-- /wp:folder -->
+<p>Translated other non-Gutenberg content</p>
+<!-- wp:paragraph {"placeholder":"Translated second paragraph","fontSize":"large","smartlingLockId":"3"} -->
+<p class="has-large-font-size">Translated second paragraph</p>
+<!-- /wp:paragraph -->
+<!-- wp:folder {"id":5,"smartlingLockId":"4"} -->
+<!-- wp:post {"content":"Translated fourth post content","smartlingLockId":"41"} /-->
+<!-- wp:post {"content":"Translated fifth post content","smartlingLockId":"42"} /-->
+<!-- wp:post {"content":"Translated sixth post content","smartlingLockId":"43"} /-->
+<p>Translated second folder contents</p>
+<!-- /wp:folder -->
+<!-- wp:folder {"id":7,"smartlingLockId":"5"} -->
+<!-- wp:post {"content":"Translated seventh post content","smartlingLockId":"51"} /-->
+<!-- wp:post {"content":"Translated eighth post content","smartlingLockId":"52"} /-->
+<!-- wp:post {"content":"Translated ninth post content","smartlingLockId":"53"} /-->
+<p>Translated third folder contents</p>
+<!-- /wp:folder -->
+HTML;
+        $targetContent = <<<HTML
+<!-- wp:paragraph {"placeholder":"Translated first paragraph with changes (not locked)","fontSize":"large","smartlingLockId":"1"} -->
+<p class="has-large-font-size">Translated first paragraph with changes (not locked)</p>
+<!-- /wp:paragraph -->
+<p>Translated not Gutenberg block with changes (impossible to lock)</p>
+<!-- wp:folder {"id":3,"smartlingLockId":"2"} -->
+<!-- wp:post {"content":"Translated first post content with changes (not locked)","smartlingLockId":"21"} /-->
+<!-- wp:post {"content":"Translated second post content with changes (not locked)","smartlingLockId":"22"} /-->
+<!-- wp:post {"content":"Translated third post content with changes (not locked)","smartlingLockId":"23"} /-->
+<p class="has-large-font-size">Translated folder contents with changes (not locked)</p>
+<!-- /wp:folder -->
+<p>Translated other non-Gutenberg content with changes (impossible to lock)</p>
+<!-- wp:paragraph {"placeholder":"Translated second paragraph (locked)","fontSize":"large","smartlingLocked":true,"smartlingLockId":"3"} -->
+<p class="has-large-font-size">Translated second paragraph (locked)</p>
+<!-- /wp:paragraph -->
+<!-- wp:folder {"id":5,"smartlingLocked":true,"smartlingLockId":"4"} -->
+<!-- wp:post {"content":"Translated fourth post content with changes (parent locked)","smartlingLockId":"41"} /-->
+<!-- wp:post {"content":"Translated fifth post content with changes (parent locked)","smartlingLockId":"42"} /-->
+<!-- wp:post {"content":"Translated sixth post content with changes (parent locked)","smartlingLockId":"43"} /-->
+<p>Translated second folder contents with changes (locked)</p>
+<!-- /wp:folder -->
+<!-- wp:folder {"id":7,"smartlingLockId":"5"} -->
+<!-- wp:post {"content":"Translated seventh post content with changes (not locked)","smartlingLockId":"51"} /-->
+<!-- wp:post {"content":"Translated eighth post content with changes (locked)","smartlingLocked":true,"smartlingLockId":"52"} /-->
+<!-- wp:post {"content":"Translated ninth post content with changes (not locked),"smartlingLockId":"53""} /-->
+<p>Translated third folder contents with changes (not locked)</p>
+<!-- /wp:folder -->
+HTML;
+        $expectedContent = <<<HTML
+<!-- wp:paragraph {"placeholder":"Translated first paragraph","fontSize":"large","smartlingLockId":"1"} -->
+<p class="has-large-font-size">Translated first paragraph</p>
+<!-- /wp:paragraph -->
+<p>Translated not Gutenberg block</p>
+<!-- wp:folder {"id":3,"smartlingLockId":"2"} -->
+<!-- wp:post {"content":"Translated first post content","smartlingLockId":"21"} /-->
+<!-- wp:post {"content":"Translated second post content","smartlingLockId":"22"} /-->
+<!-- wp:post {"content":"Translated third post content","smartlingLockId":"23"} /-->
+<p class="has-large-font-size">Translated folder contents</p>
+<!-- /wp:folder -->
+<p>Translated other non-Gutenberg content</p>
+<!-- wp:paragraph {"placeholder":"Translated second paragraph (locked)","fontSize":"large","smartlingLocked":true,"smartlingLockId":"3"} -->
+<p class="has-large-font-size">Translated second paragraph (locked)</p>
+<!-- /wp:paragraph -->
+<!-- wp:folder {"id":5,"smartlingLocked":true,"smartlingLockId":"4"} -->
+<!-- wp:post {"content":"Translated fourth post content with changes (parent locked)","smartlingLockId":"41"} /-->
+<!-- wp:post {"content":"Translated fifth post content with changes (parent locked)","smartlingLockId":"42"} /-->
+<!-- wp:post {"content":"Translated sixth post content with changes (parent locked)","smartlingLockId":"43"} /-->
+<p>Translated second folder contents with changes (locked)</p>
+<!-- /wp:folder -->
+<!-- wp:folder {"id":7,"smartlingLockId":"5"} -->
+<!-- wp:post {"content":"Translated seventh post content","smartlingLockId":"51"} /-->
+<!-- wp:post {"content":"Translated eighth post content with changes (locked)","smartlingLocked":true,"smartlingLockId":"52"} /-->
+<!-- wp:post {"content":"Translated ninth post content","smartlingLockId":"53"} /-->
+<p>Translated third folder contents</p>
+<!-- /wp:folder -->
+HTML;
+
+        $target = new PostEntityStd();
+        $target->setPostContent($targetContent);
+
+        $submission = $this->createMock(SubmissionEntity::class);
+        $submission->method('getLockedFields')->willReturn([]);
+        $submission->method('getTargetId')->willReturn(1);
+        $contentHelper = $this->getMockBuilder(ContentHelper::class)->disableOriginalConstructor()->getMock();
+        $contentHelper->method('readSourceContent')->willReturnArgument(0);
+        $contentHelper->method('readSourceMetadata')->willReturn([]);
+        $contentHelper->method('readTargetContent')->willReturn($target);
+        $contentHelper->method('readTargetMetadata')->willReturn([]);
+
+        $fieldsFilterHelper = $this->createPartialMock(FieldsFilterHelper::class, ['applyTranslatedValues', 'getLogger', 'processStringsAfterDecoding']);
+        $fieldsFilterHelper->method('processStringsAfterDecoding')->willReturnArgument(0);
+        $fieldsFilterHelper->method('applyTranslatedValues')->willReturnArgument(2);
+        $fieldsFilterHelper->method('getLogger')->willReturn(new NullLogger());
+
+        $profile = $this->getMockBuilder(ConfigurationProfileEntity::class)->disableOriginalConstructor()->getMock();
+
+        $settingsManager = $this->getMockBuilder(SettingsManager::class)->disableOriginalConstructor()->getMock();
+        $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+
+        $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
+        $submissionManager->method('storeEntity')->willReturnArgument(0);
+
+        $x = new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager);
+        $xmlHelper = $this->createMock(XmlHelper::class);
+        $xmlHelper->method('xmlDecode')->willReturn(new DecodedXml(
+            ['entity' => ['post_content' => $translatedContent]],
+            ['entity' => ['post_content' => $originalContent]]
+        ));
+
+        $contentHelper->expects(self::once())->method('writeTargetContent')->willReturnCallback(function (SubmissionEntity $submission, PostEntityStd $entity) {
+            $this->resultEntity = $entity;
+        });
+
+        $this->assertSuccessApplyXml($x, $submission, $xmlHelper);
+        self::assertEquals($expectedContent, $this->resultEntity->post_content);
+    }
+
     private function assertSuccessApplyXml(SmartlingCoreUpload $smartlingCoreUpload, SubmissionEntity $submission, XmlHelper $xmlHelper)
     {
         $postContentHelper = new PostContentHelper(new GutenbergBlockHelper(

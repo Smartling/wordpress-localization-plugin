@@ -2,7 +2,7 @@
 ## Testing
 There is a Dockerfile that can be used to create an image to run unit and integration tests.
 ### Build
-```
+```shell
 docker build --rm --tag="wordpress-localization-plugin" -f "Buildplan/Dockerfile" --build-arg ACFPRO_KEY="" --build-arg WP_VERSION="latest" --build-arg ACF_PRO_VERSION="latest" --build-arg GITHUB_OAUTH_TOKEN="" .
 ```
 
@@ -14,13 +14,21 @@ docker build --rm --tag="wordpress-localization-plugin" -f "Buildplan/Dockerfile
 
 ### Run
 
-```
+```shell
 docker run --rm -it -w /plugin-dir -v /path/to/wordpress-localization-plugin:/plugin-dir -e MYSQL_HOST="localhost" -e CRE_PROJECT_ID= -e CRE_USER_IDENTIFIER= -e CRE_TOKEN_SECRET= wordpress-localization-plugin:latest
 ```
 
 with `CRE_PROJECT_ID`, `CRE_USER_IDENTIFIER` and `CRE_TOKEN_SECRET` taken from Smartling dashboard.
 
 Starting about 2020-06, there is a WordPress database error while executing tests, regarding a table `wp.wp_2_yoast_indexable` that doesn't exist, but [yoast devs say it doesn't have any negative impact](https://wordpress.org/support/topic/wordpress-database-error-table-12/).
+
+## Releasing
+```shell
+cd build && npm run build && cd ..
+svn commit -m 'Update to v x.y.z' --username smartling
+svn copy https://plugins.svn.wordpress.org/smartling-connector/trunk https://plugins.svn.wordpress.org/smartling-connector/tags/x.y.z -m 'Tagging new version x.y.z'
+```
+
 
 # Dev changelog
 ## Function changes from 2.4.2 to 2.4.3
