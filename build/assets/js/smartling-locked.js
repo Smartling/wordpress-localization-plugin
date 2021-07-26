@@ -37,7 +37,7 @@ const sidebarWithLockingCheckbox = createHigherOrderComponent((BlockEdit) => {
                 <InspectorControls>
                     <PanelBody
                         title={__('Smartling lock')}
-                        initialOpen={false}
+                        initialOpen={true}
                     >
                         <CheckboxControl
                             label={__('Locked')}
@@ -47,6 +47,7 @@ const sidebarWithLockingCheckbox = createHigherOrderComponent((BlockEdit) => {
                                 newAttributes[LOCKED] = value;
                                 props.setAttributes(newAttributes);
                             }}
+                            help={props.attributes[LOCKED] ? 'Content will not change on translation' : 'Content will change on translation'}
                         />
                     </PanelBody>
                 </InspectorControls>

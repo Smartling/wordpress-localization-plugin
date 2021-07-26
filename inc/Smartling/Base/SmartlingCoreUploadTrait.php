@@ -772,10 +772,10 @@ trait SmartlingCoreUploadTrait
         if (array_key_exists('entity', $translation) && ArrayHelper::notEmpty($translation['entity'])) {
             $targetContentArray = $targetContent->toArray();
             if (array_key_exists('post_content', $translation['entity']) && array_key_exists('post_content', $targetContentArray)) {
-                $lockedBlocks = $postContentHelper->getLockedBlockPaths($targetContentArray['post_content']);
+                $lockedBlocks = $postContentHelper->getLockedBlockPathsFromContentString($targetContentArray['post_content']);
                 if (count($lockedBlocks) > 0) {
                     $translation['entity']['post_content'] = $postContentHelper->applyTranslationsWithLockedBlocks($targetContentArray['post_content'], $translation['entity']['post_content'], $lockedBlocks);
-                } elseif (count($submission->getLockedFields())) { // TODO remove after deprecation period
+                } elseif (count($submission->getLockedFields()) > 0) { // TODO remove after deprecation period
                     $translation['entity']['post_content'] = $postContentHelper->applyTranslation($targetContentArray['post_content'], $translation['entity']['post_content'], $submission->getLockedFields());
                 }
             }

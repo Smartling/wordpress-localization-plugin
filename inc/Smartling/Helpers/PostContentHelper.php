@@ -113,9 +113,9 @@ class PostContentHelper
     /**
      * @return string[]
      */
-    public function getLockedBlockPaths(string $content): array
+    public function getLockedBlockPathsFromContentString(string $content): array
     {
-        return $this->_getLockedBlockPaths($this->blockHelper->parseBlocks($content));
+        return $this->getLockedBlockPathsFromBlocksArray($this->blockHelper->parseBlocks($content));
     }
 
     /**
@@ -123,11 +123,11 @@ class PostContentHelper
      * @param string $prefix
      * @return string[]
      */
-    private function _getLockedBlockPaths(array $blocks, string $prefix = ''): array
+    private function getLockedBlockPathsFromBlocksArray(array $blocks, string $prefix = ''): array
     {
         $result = [];
         foreach ($blocks as $block) {
-            foreach ($this->_getLockedBlockPaths($block->getInnerBlocks(), "$prefix{$block->getSmartlingLockId()}/") as $lockedBlock) {
+            foreach ($this->getLockedBlockPathsFromBlocksArray($block->getInnerBlocks(), "$prefix{$block->getSmartlingLockId()}/") as $lockedBlock) {
                 $result[] = $lockedBlock;
             }
             $attributes = $block->getAttributes();

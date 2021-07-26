@@ -440,7 +440,8 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                             'profile' => ArrayHelper::first($profile),
                         ]
                     );
-                    wp_enqueue_script('smartling-block-locking',
+                    wp_enqueue_script(
+                        'smartling-block-locking',
                         $this->getPluginInfo()->getUrl() . 'js/smartling-block-locking.js',
                         ['wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor'],
                         $this->getPluginInfo()->getVersion(),
@@ -448,7 +449,13 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                     );
                 } else {
                     if (count($submissionManager->find([SubmissionEntity::FIELD_TARGET_ID => $post->ID], 1)) > 0) {
-                        wp_enqueue_script('smartling-block-sidebar', $this->getPluginInfo()->getUrl() . 'js/smartling-block-sidebar.js', ['wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor'], $this->getPluginInfo()->getVersion(), true);
+                        wp_enqueue_script(
+                            'smartling-block-sidebar',
+                            $this->getPluginInfo()->getUrl() . 'js/smartling-block-sidebar.js',
+                            ['wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor'],
+                            $this->getPluginInfo()->getVersion(),
+                            true
+                        );
                     }
                     echo '<p>' . __('No suitable configuration profile found.') . '</p>';
                 }
