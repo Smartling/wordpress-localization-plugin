@@ -251,6 +251,27 @@ class GlobalSettingsManager
         }
     }
 
+    public const SMARTLING_FRONTEND_GENERATE_LOCK_IDS = 'smartling_frontend_generate_lock_ids';
+
+    public static function isGenerateLockIdsFrontendDefault(): bool
+    {
+        return false;
+    }
+
+    public static function isGenerateLockIdsFrontend(): bool
+    {
+        return SimpleStorageHelper::get(static::SMARTLING_FRONTEND_GENERATE_LOCK_IDS, static::isGenerateLockIdsFrontendDefault()) === "1";
+    }
+
+    public static function setGenerateLockIdsFrontend(bool $value): void
+    {
+        if ($value === static::isGenerateLockIdsFrontendDefault()) {
+            SimpleStorageHelper::drop(static::SMARTLING_FRONTEND_GENERATE_LOCK_IDS);
+        } else {
+            SimpleStorageHelper::set(static::SMARTLING_FRONTEND_GENERATE_LOCK_IDS, $value);
+        }
+    }
+
     const SMARTLING_RELATED_CHECKBOX_STATE = 'smartling_related_checkbox_state';
     const SMARTLING_RELATED_CHECKBOX_STATE_DEFAULT = 1;
 

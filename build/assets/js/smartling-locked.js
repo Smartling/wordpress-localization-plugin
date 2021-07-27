@@ -2,26 +2,10 @@ const {createHigherOrderComponent} = wp.compose;
 const {Fragment} = wp.element;
 const {InspectorControls} = wp.editor;
 const {PanelBody, CheckboxControl} = wp.components;
-const {addFilter} = wp.hooks;
 const {__} = wp.i18n;
 
 const LOCKED = 'smartlingLocked';
 const LOCK_ID_ATTRIBUTE = 'smartlingLockId';
-
-const addLockAttributes = (settings) => {
-    if (settings.attributes) {
-        settings.attributes[LOCKED] = {
-            type: 'boolean',
-        }
-        settings.attributes[LOCK_ID_ATTRIBUTE] = {
-            type: 'string',
-        }
-    }
-
-    return settings;
-};
-
-addFilter('blocks.registerBlockType', 'smartling/attribute/lockAttributes', addLockAttributes);
 
 const sidebarWithLockingCheckbox = createHigherOrderComponent((BlockEdit) => {
     return (props) => {
@@ -47,7 +31,7 @@ const sidebarWithLockingCheckbox = createHigherOrderComponent((BlockEdit) => {
                                 newAttributes[LOCKED] = value;
                                 props.setAttributes(newAttributes);
                             }}
-                            help={props.attributes[LOCKED] ? 'Content will not change on translation' : 'Content will change on translation'}
+                            help={props.attributes[LOCKED] ? __('Content will not change on translation') : __('Content will change on translation')}
                         />
                     </PanelBody>
                 </InspectorControls>
@@ -56,4 +40,4 @@ const sidebarWithLockingCheckbox = createHigherOrderComponent((BlockEdit) => {
     };
 }, 'sidebarWithLockingCheckbox');
 
-addFilter('editor.BlockEdit', 'smartling/with-locking-attributes', sidebarWithLockingCheckbox);
+wp.hooks.addFilter('editor.BlockEdit', 'smartling/with-locking-attributes', sidebarWithLockingCheckbox);

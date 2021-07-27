@@ -12,6 +12,7 @@ use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Queue\Queue;
+use Smartling\Services\GlobalSettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -440,13 +441,15 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                             'profile' => ArrayHelper::first($profile),
                         ]
                     );
-                    wp_enqueue_script(
-                        'smartling-block-locking',
-                        $this->getPluginInfo()->getUrl() . 'js/smartling-block-locking.js',
-                        ['wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor'],
-                        $this->getPluginInfo()->getVersion(),
-                        true,
-                    );
+                    if (GlobalSettingsManager::isGenerateLockIdsFrontend()) {
+                        wp_enqueue_script(
+                            'smartling-block-locking',
+                            $this->getPluginInfo()->getUrl() . 'js/smartling-block-locking.js',
+                            ['wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor'],
+                            $this->getPluginInfo()->getVersion(),
+                            true,
+                        );
+                    }
                 } else {
                     if (count($submissionManager->find([SubmissionEntity::FIELD_TARGET_ID => $post->ID], 1)) > 0) {
                         wp_enqueue_script(

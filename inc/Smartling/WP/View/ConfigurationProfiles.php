@@ -202,6 +202,28 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
+                        <th><label for="<?= GlobalSettingsManager::SMARTLING_FRONTEND_GENERATE_LOCK_IDS ?>">Generate lock ids on editing content</label></th>
+                        <td>
+                            <?=
+                            HtmlTagGeneratorHelper::tag(
+                                'select',
+                                HtmlTagGeneratorHelper::renderSelectOptions(
+                                    GlobalSettingsManager::isGenerateLockIdsFrontend() ? 1 : 0,
+                                    [
+                                        0 => 'Disabled',
+                                        1 => 'Enabled',
+                                    ]),
+                                [
+                                    'id' => GlobalSettingsManager::SMARTLING_FRONTEND_GENERATE_LOCK_IDS,
+                                    'name' => GlobalSettingsManager::SMARTLING_FRONTEND_GENERATE_LOCK_IDS,
+                                ]
+                            );
+                            ?>
+                            <br /><a href="javascript:void(0)" id="resetGenerateLockIds" data-default="<?= GlobalSettingsManager::isGenerateLockIdsFrontendDefault() ?>">reset to defaults</a>
+                            <br /><?= __('Automatically generate smartlingLockId attribute for Gutenberg blocks when saving content')?><br/>
+                        </td>
+                    </tr>
+                    <tr>
                         <th><label for="handleRelationsManually">Handle relations</label></th>
                         <td>
                             <?=
@@ -224,7 +246,7 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
-                        <th><label for="<?= GlobalSettingsManager::RELATED_CHECKBOX_STATE ?> >">
+                        <th><label for="<?= GlobalSettingsManager::RELATED_CHECKBOX_STATE ?>">
                                 Upload widget send related content for translation checkbox default state
                             </label></th>
                         <td>

@@ -29,6 +29,7 @@
                     'disableDBLookup': $('#disableDBLookup').val(),
                     'disableACF': $('#disableACF').val(),
                     'loggingCustomization': $('#loggingCustomization').val(),
+                    'smartling_frontend_generate_lock_ids': $('#smartling_frontend_generate_lock_ids').val(),
                     'handleRelationsManually': $('#handleRelationsManually').val(),
                     'related_checkbox_state': $('#related_checkbox_state').val(),
                     'enableFilterUI': $('#enableFilterUI').val()
