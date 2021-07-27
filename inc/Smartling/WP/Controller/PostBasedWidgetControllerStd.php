@@ -441,7 +441,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                             'profile' => ArrayHelper::first($profile),
                         ]
                     );
-                    if (GlobalSettingsManager::isGenerateLockIdsFrontend()) {
+                    if (GlobalSettingsManager::isGenerateLockIdsEnabled()) {
                         wp_enqueue_script(
                             'smartling-block-locking',
                             $this->getPluginInfo()->getUrl() . 'js/smartling-block-locking.js',

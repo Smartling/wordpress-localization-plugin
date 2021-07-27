@@ -202,13 +202,13 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
-                        <th><label for="<?= GlobalSettingsManager::SMARTLING_FRONTEND_GENERATE_LOCK_IDS ?>">Generate lock ids on editing content</label></th>
+                        <th><label for="<?= GlobalSettingsManager::SMARTLING_FRONTEND_GENERATE_LOCK_IDS ?>"><?= __('Generate lock ids on editing content')?></label></th>
                         <td>
                             <?=
                             HtmlTagGeneratorHelper::tag(
                                 'select',
                                 HtmlTagGeneratorHelper::renderSelectOptions(
-                                    GlobalSettingsManager::isGenerateLockIdsFrontend() ? 1 : 0,
+                                    GlobalSettingsManager::isGenerateLockIdsEnabled() ? 1 : 0,
                                     [
                                         0 => 'Disabled',
                                         1 => 'Enabled',
@@ -219,7 +219,7 @@ $data = $this->getViewData();
                                 ]
                             );
                             ?>
-                            <br /><a href="javascript:void(0)" id="resetGenerateLockIds" data-default="<?= GlobalSettingsManager::isGenerateLockIdsFrontendDefault() ?>">reset to defaults</a>
+                            <br /><a href="javascript:void(0)" id="resetGenerateLockIds" data-default="<?= GlobalSettingsManager::isGenerateLockIdsFrontendDefault() ?>"><?= __('reset to defaults')?></a>
                             <br /><?= __('Automatically generate smartlingLockId attribute for Gutenberg blocks when saving content')?><br/>
                         </td>
                     </tr>

@@ -225,7 +225,7 @@ class Bootstrap
         GlobalSettingsManager::setPageSize($pageSize);
         GlobalSettingsManager::setLoggingCustomization($data['loggingCustomization']);
         GlobalSettingsManager::setHandleRelationsManually((int)$data['handleRelationsManually']);
-        GlobalSettingsManager::setGenerateLockIdsFrontend($data['handleRelationsManually'] === "1");
+        GlobalSettingsManager::setGenerateLockIdsFrontend($data[GlobalSettingsManager::SMARTLING_FRONTEND_GENERATE_LOCK_IDS] === "1");
         GlobalSettingsManager::setRelatedContentCheckboxState((int)$data[GlobalSettingsManager::RELATED_CHECKBOX_STATE]);
         GlobalSettingsManager::setFilterUiVisible((int) $data['enableFilterUI']);
 
