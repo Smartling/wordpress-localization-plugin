@@ -219,7 +219,7 @@ $data = $this->getViewData();
                                 ]
                             );
                             ?>
-                            <br /><a href="javascript:void(0)" id="resetGenerateLockIds" data-default="<?= GlobalSettingsManager::isGenerateLockIdsFrontendDefault() ?>"><?= __('reset to defaults')?></a>
+                            <br /><a href="javascript:void(0)" id="resetGenerateLockIds" data-default="<?= GlobalSettingsManager::SMARTLING_GENERATE_LOCK_IDS_DEFAULT ?>"><?= __('reset to defaults')?></a>
                             <br /><?= __('Automatically generate smartlingLockId attribute for Gutenberg blocks when saving content')?><br/>
                         </td>
                     </tr>

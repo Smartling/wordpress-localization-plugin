@@ -252,20 +252,16 @@ class GlobalSettingsManager
     }
 
     public const SMARTLING_FRONTEND_GENERATE_LOCK_IDS = 'smartling_frontend_generate_lock_ids';
+    public const SMARTLING_GENERATE_LOCK_IDS_DEFAULT = "0";
 
-    public static function isGenerateLockIdsFrontendDefault(): bool
+    public static function isGenerateLockIdsEnabled(): bool
     {
-        return false;
+        return SimpleStorageHelper::get(static::SMARTLING_FRONTEND_GENERATE_LOCK_IDS, static::SMARTLING_GENERATE_LOCK_IDS_DEFAULT) === "1";
     }
 
-    public static function isGenerateLockIdsFrontend(): bool
+    public static function setGenerateLockIdsFrontend(string $value): void
     {
-        return SimpleStorageHelper::get(static::SMARTLING_FRONTEND_GENERATE_LOCK_IDS, static::isGenerateLockIdsFrontendDefault()) === "1";
-    }
-
-    public static function setGenerateLockIdsFrontend(bool $value): void
-    {
-        if ($value === static::isGenerateLockIdsFrontendDefault()) {
+        if ($value === static::SMARTLING_GENERATE_LOCK_IDS_DEFAULT) {
             SimpleStorageHelper::drop(static::SMARTLING_FRONTEND_GENERATE_LOCK_IDS);
         } else {
             SimpleStorageHelper::set(static::SMARTLING_FRONTEND_GENERATE_LOCK_IDS, $value);
