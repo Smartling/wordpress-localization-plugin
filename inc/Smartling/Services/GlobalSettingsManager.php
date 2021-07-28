@@ -6,20 +6,22 @@ use Smartling\Bootstrap;
 use Smartling\Helpers\SimpleStorageHelper;
 use Symfony\Component\Yaml\Parser;
 
+/**
+ * Class GlobalSettingsManager
+ * @package Smartling\Services
+ */
 class GlobalSettingsManager
 {
     /**
      * Disable on-boot self-diagnostics (not recommended)
      */
-    private const SELF_CHECK_IDENTIFIER = 'smartling_static_check_disabled';
-    /**
-     * Last state of include related items checkbox in post edit widget
-     */
-    public const RELATED_CHECKBOX_STATE = 'related_checkbox_state';
+    const SELF_CHECK_IDENTIFIER         = 'smartling_static_check_disabled';
+    const SELF_CHECK_IDENTIFIER_DEFAULT = 0;
+    const RELATED_CHECKBOX_STATE = 'related_checkbox_state';
 
-    public static function getSkipSelfCheckDefault(): int
+    public static function getSkipSelfCheckDefault()
     {
-        return 0;
+        return static::SELF_CHECK_IDENTIFIER_DEFAULT;
     }
 
     public static function getSkipSelfCheck()
@@ -27,7 +29,7 @@ class GlobalSettingsManager
         return SimpleStorageHelper::get(static::SELF_CHECK_IDENTIFIER, static::getSkipSelfCheckDefault());
     }
 
-    public static function setSkipSelfCheck($value): void
+    public static function setSkipSelfCheck($value)
     {
         SimpleStorageHelper::set(static::SELF_CHECK_IDENTIFIER, $value);
 
@@ -39,11 +41,12 @@ class GlobalSettingsManager
     /**
      * Disable logging (not recommended)
      */
-    private const DISABLE_LOGGING = 'smartling_disable_logging';
+    const DISABLE_LOGGING         = 'smartling_disable_logging';
+    const DISABLE_LOGGING_DEFAULT = 0;
 
-    public static function getDisableLoggingDefault(): int
+    public static function getDisableLoggingDefault()
     {
-        return 0;
+        return static::DISABLE_LOGGING_DEFAULT;
     }
 
     public static function getDisableLogging()
@@ -51,7 +54,7 @@ class GlobalSettingsManager
         return SimpleStorageHelper::get(static::DISABLE_LOGGING, static::getDisableLoggingDefault());
     }
 
-    public static function setDisableLogging($value): void
+    public static function setDisableLogging($value)
     {
         SimpleStorageHelper::set(static::DISABLE_LOGGING, $value);
 
@@ -63,11 +66,12 @@ class GlobalSettingsManager
     /**
      * Disable built-in ACF-Pro plugin support
      */
-    private const DISABLE_ACF = 'smartling_disable_acf';
+    const DISABLE_ACF         = 'smartling_disable_acf';
+    const DISABLE_ACF_DEFAULT = 0;
 
-    public static function getDisableACFDefault(): int
+    public static function getDisableACFDefault()
     {
-        return 0;
+        return static::DISABLE_ACF_DEFAULT;
     }
 
     public static function getDisableACF()
@@ -75,7 +79,7 @@ class GlobalSettingsManager
         return SimpleStorageHelper::get(static::DISABLE_ACF, static::getDisableACFDefault());
     }
 
-    public static function setDisableACF($value): void
+    public static function setDisableACF($value)
     {
         SimpleStorageHelper::set(static::DISABLE_ACF, $value);
 
@@ -84,7 +88,10 @@ class GlobalSettingsManager
         }
     }
 
-    public static function isAcfDisabled(): bool
+    /**
+     * @return boolean
+     */
+    public static function isAcfDisabled()
     {
         return 1 === (int)self::getDisableACF();
     }
@@ -92,11 +99,12 @@ class GlobalSettingsManager
     /**
      * Disable built-in ACF-Pro Database definitions lookup support (not recommended)
      */
-    private const DISABLE_ACF_DB_LOOKUP = 'smartling_disable_db_lookup';
+    const DISABLE_ACF_DB_LOOKUP         = 'smartling_disable_db_lookup';
+    const DISABLE_ACF_DB_LOOKUP_DEFAULT = 0;
 
-    public static function getDisableAcfDbLookupDefault(): int
+    public static function getDisableAcfDbLookupDefault()
     {
-        return 0;
+        return static::DISABLE_ACF_DB_LOOKUP_DEFAULT;
     }
 
     public static function getDisableAcfDbLookup()
@@ -104,7 +112,7 @@ class GlobalSettingsManager
         return SimpleStorageHelper::get(static::DISABLE_ACF_DB_LOOKUP, static::getDisableAcfDbLookupDefault());
     }
 
-    public static function setDisableAcfDbLookup($value): void
+    public static function setDisableAcfDbLookup($value)
     {
         SimpleStorageHelper::set(static::DISABLE_ACF_DB_LOOKUP, $value);
 
@@ -116,9 +124,9 @@ class GlobalSettingsManager
     /**
      * Log file name customization
      */
-    private const SMARTLING_CUSTOM_LOG_FILE = 'smartling_log_file';
+    const SMARTLING_CUSTOM_LOG_FILE = 'smartling_log_file';
 
-    public static function getLogFileSpecDefault(): string
+    public static function getLogFileSpecDefault()
     {
         return Bootstrap::getLogFileName(false, true);
     }
@@ -128,7 +136,7 @@ class GlobalSettingsManager
         return SimpleStorageHelper::get(static::SMARTLING_CUSTOM_LOG_FILE, static::getLogFileSpecDefault());
     }
 
-    public static function setLogFileSpec($value): void
+    public static function setLogFileSpec($value)
     {
         SimpleStorageHelper::set(static::SMARTLING_CUSTOM_LOG_FILE, $value);
 
@@ -140,7 +148,7 @@ class GlobalSettingsManager
     /**
      * Logging configuration customization
      */
-    private const LOGGING_CUSTOMIZATION = 'smartling_logging_customization';
+    const LOGGING_CUSTOMIZATION = 'smartling_logging_customization';
 
     public static function getLoggingCustomizationDefault()
     {
@@ -164,7 +172,7 @@ class GlobalSettingsManager
         return $data;
     }
 
-    public static function setLoggingCustomization($value): void
+    public static function setLoggingCustomization($value)
     {
         $parsedData = static::parseYamlData($value);
 
@@ -187,7 +195,7 @@ class GlobalSettingsManager
     /**
      * UI settings Table View Page Size, default = 20 (configured via yaml file)
      */
-    private const SMARTLING_CUSTOM_PAGE_SIZE = 'smartling_ui_page_size';
+    const SMARTLING_CUSTOM_PAGE_SIZE = 'smartling_ui_page_size';
 
     public static function getPageSizeDefault()
     {
@@ -199,7 +207,7 @@ class GlobalSettingsManager
         return SimpleStorageHelper::get(static::SMARTLING_CUSTOM_PAGE_SIZE, static::getPageSizeDefault());
     }
 
-    public static function setPageSize($value): void
+    public static function setPageSize($value)
     {
         SimpleStorageHelper::set(static::SMARTLING_CUSTOM_PAGE_SIZE, $value);
 
@@ -213,11 +221,12 @@ class GlobalSettingsManager
         return Bootstrap::getContainer()->getParameter('submission.pagesize');
     }
 
-    private const SMARTLING_HANDLE_RELATIONS_MANUALLY = 'smartling_handle_relations_manually';
+    const SMARTLING_HANDLE_RELATIONS_MANUALLY = 'smartling_handle_relations_manually';
+    const SMARTLING_HANDLE_RELATIONS_MANUALLY_DEFAULT = 1;
 
-    public static function getHandleRelationsManuallyDefault(): int
+    public static function getHandleRelationsManuallyDefault()
     {
-        return 1;
+        return static::SMARTLING_HANDLE_RELATIONS_MANUALLY_DEFAULT;
     }
 
     public static function getHandleRelationsManually()
@@ -225,12 +234,15 @@ class GlobalSettingsManager
         return SimpleStorageHelper::get(static::SMARTLING_HANDLE_RELATIONS_MANUALLY, static::getHandleRelationsManuallyDefault());
     }
 
-    public static function isHandleRelationsManually(): bool
+    /**
+     * @return boolean
+     */
+    public static function isHandleRelationsManually()
     {
         return 1 === (int)self::getHandleRelationsManually();
     }
 
-    public static function setHandleRelationsManually(int $value): void
+    public static function setHandleRelationsManually($value)
     {
         SimpleStorageHelper::set(static::SMARTLING_HANDLE_RELATIONS_MANUALLY, $value);
 
@@ -246,7 +258,7 @@ class GlobalSettingsManager
         return false;
     }
 
-    public static function isGenerateLockIdsEnabled(): bool
+    public static function isGenerateLockIdsFrontend(): bool
     {
         return SimpleStorageHelper::get(static::SMARTLING_FRONTEND_GENERATE_LOCK_IDS, static::isGenerateLockIdsFrontendDefault()) === "1";
     }
@@ -260,11 +272,15 @@ class GlobalSettingsManager
         }
     }
 
-    private const SMARTLING_RELATED_CHECKBOX_STATE = 'smartling_related_checkbox_state';
+    const SMARTLING_RELATED_CHECKBOX_STATE = 'smartling_related_checkbox_state';
+    const SMARTLING_RELATED_CHECKBOX_STATE_DEFAULT = 1;
 
-    public static function getRelatedContentCheckboxDefault(): int
+    /**
+     * @return int
+     */
+    public static function getRelatedContentCheckboxDefault()
     {
-        return 1;
+        return static::SMARTLING_RELATED_CHECKBOX_STATE_DEFAULT;
     }
 
     /**
@@ -278,12 +294,18 @@ class GlobalSettingsManager
         );
     }
 
-    public static function isRelatedContentCheckboxChecked(): bool
+    /**
+     * @return boolean
+     */
+    public static function isRelatedContentCheckboxChecked()
     {
         return 1 === (int)self::getRelatedContentCheckboxState();
     }
 
-    public static function setRelatedContentCheckboxState(int $value): void
+    /**
+     * @param int $value
+     */
+    public static function setRelatedContentCheckboxState($value)
     {
         SimpleStorageHelper::set(static::SMARTLING_RELATED_CHECKBOX_STATE, $value);
 
@@ -292,18 +314,21 @@ class GlobalSettingsManager
         }
     }
 
-    private const SMARTLING_FILTER_UI_VISIBLE = 'smartling_filter_ui_visible';
+    const SMARTLING_FILTER_UI_VISIBLE         = 'smartling_filter_ui_visible';
+    const SMARTLING_FILTER_UI_VISIBLE_DEFAULT = 0;
 
     public static function getFilterUiVisible()
     {
-        return SimpleStorageHelper::get(static::SMARTLING_FILTER_UI_VISIBLE, 0);
+        return SimpleStorageHelper::get(static::SMARTLING_FILTER_UI_VISIBLE, static::SMARTLING_FILTER_UI_VISIBLE_DEFAULT);
     }
 
-    public static function setFilterUiVisible($value): void
+    public static function setFilterUiVisible($value)
     {
         SimpleStorageHelper::set(static::SMARTLING_FILTER_UI_VISIBLE, $value);
 
-        if (0 === (int)$value) {SimpleStorageHelper::drop(static::SMARTLING_FILTER_UI_VISIBLE);
+        if (static::SMARTLING_FILTER_UI_VISIBLE_DEFAULT === (int)$value) {SimpleStorageHelper::drop(static::SMARTLING_FILTER_UI_VISIBLE);
         }
     }
+
 }
+
