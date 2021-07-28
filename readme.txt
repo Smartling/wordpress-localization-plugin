@@ -62,6 +62,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 = 2.4.9 =
 * Added expert setting to disable automatic generation of Gutenberg blocks locking ids (defaults to OFF)
+* Fixed critical wordpress error when cloning from Bulk Submit page
 
 = 2.4.8 =
 * Add locking for Gutenberg blocks in the Gutenberg visual editor based on block ids. Block ids will be generated randomly for all Gutenberg blocks on saving content. After new content is sent for translation and downloaded, a new sidebar block "Smartling lock" will become available for blocks with generated ids. Previous location based method for locking is now obsolete, please re-lock the required blocks in the visual editor, as the support for location-based locking will be disabled in a future release.
