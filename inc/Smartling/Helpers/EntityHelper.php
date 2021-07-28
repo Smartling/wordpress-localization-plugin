@@ -88,10 +88,7 @@ class EntityHelper
         $this->siteHelper = $siteHelper;
     }
 
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
+    public function getLogger(): LoggerInterface
     {
         return $this->logger;
     }
