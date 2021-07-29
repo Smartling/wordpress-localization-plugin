@@ -25,6 +25,15 @@ namespace {
             return $a;
         }
     }
+
+    if (!function_exists('convert_to_screen')) {
+        function convert_to_screen($a)
+        {
+            $r = new \stdClass();
+            $r->id = $a;
+            return $r;
+        }
+    }
 }
 
 namespace Smartling\Tests\Smartling\WP\Table {
@@ -74,6 +83,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 $this->assertEquals('', $jobInfo->getJobName());
                 $this->assertEquals('', $jobInfo->getJobUid());
                 $this->assertEquals($projectUid, $jobInfo->getProjectUid());
+                $this->assertTrue($clone);
                 return new SubmissionEntity();
             });
 
