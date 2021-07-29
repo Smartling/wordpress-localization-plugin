@@ -61,75 +61,38 @@ class BulkSubmitTableWidget extends SmartlingListTable
         'ajax'     => false,
     ];
 
-    /**
-     * @var SubmissionManager $manager
-     */
-    private $manager;
+    private ConfigurationProfileEntity $profile;
+    private EntityHelper $entityHelper;
+    private LoggerInterface $logger;
+    private PluginInfo $pluginInfo;
+    private SmartlingCore $core;
+    private SubmissionManager $manager;
 
-    /**
-     * @var EntityHelper
-     */
-    private $entityHelper;
-
-    /**
-     * @var PluginInfo
-     */
-    private $pluginInfo;
-
-    /**
-     * @var ConfigurationProfileEntity
-     */
-    private $profile;
-
-    /**
-     * @return ConfigurationProfileEntity
-     */
-    public function getProfile()
+    public function getProfile(): ConfigurationProfileEntity
     {
         return $this->profile;
     }
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
+    public function getLogger(): LoggerInterface
     {
         return $this->logger;
     }
 
-    /**
-     * @param LoggerInterface $logger
-     */
-    private function setLogger($logger)
-    {
-        $this->logger = $logger;
-    }
-
-    /**
-     * @param SubmissionManager          $manager
-     * @param PluginInfo                 $pluginInfo
-     * @param EntityHelper               $entityHelper
-     * @param ConfigurationProfileEntity $profile
-     */
     public function __construct(
+        SmartlingCore $core,
         SubmissionManager $manager,
         PluginInfo $pluginInfo,
         EntityHelper $entityHelper,
         ConfigurationProfileEntity $profile
     )
     {
+        $this->core = $core;
         $this->manager = $manager;
         $this->setSource($_REQUEST);
         $this->pluginInfo = $pluginInfo;
         $this->entityHelper = $entityHelper;
         $this->profile = $profile;
-
-        $this->setLogger($entityHelper->getLogger());
+        $this->logger = $entityHelper->getLogger();
 
         /*
          * Set default content type to first known
@@ -332,8 +295,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
                 }
             }
 
-            $ep = Bootstrap::getContainer()->get('entrypoint');
-
             if (is_array($submissions) && count($locales) > 0) {
                 $clone = 'clone' === $action;
                 foreach ($submissions as $submission) {
@@ -341,7 +302,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
                     $type = $this->getContentTypeFilterValue();
                     $curBlogId = $this->getProfile()->getOriginalBlogId()->getBlogId();
                     foreach ($locales as $blogId => $blogName) {
-                        $submissionEntity = $ep->createForTranslation($type, $curBlogId, $id, (int)$blogId, new JobEntityWithBatchUid($batchUid,$jobName, $smartlingData['jobId'], $profile->getProjectId()), $clone);
+                        $submissionEntity = $this->core->createForTranslation($type, $curBlogId, $id, (int)$blogId, new JobEntityWithBatchUid($batchUid, $jobName, $clone ? '' : $smartlingData['jobId'], $profile->getProjectId()), $clone);
 
                         $this->getLogger()
                             ->info(vsprintf(
@@ -414,12 +375,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
         $contentTypeFilterValue = $this->getContentTypeFilterValue();
         $sortOptions = $this->getSortingOptions();
 
-        /**
-         * @var SmartlingCore $core
-         */
-        $core = Bootstrap::getContainer()->get('entrypoint');
-
-        $io = $core->getContentIoFactory()->getMapper($contentTypeFilterValue);
+        $io = $this->core->getContentIoFactory()->getMapper($contentTypeFilterValue);
 
         $searchString = $this->getTitleSearchTextFilterValue();
 
