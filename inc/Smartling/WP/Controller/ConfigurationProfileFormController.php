@@ -7,7 +7,6 @@ use Smartling\Exception\BlogNotFoundException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\StringHelper;
-use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\Locale;
 use Smartling\Settings\TargetLocale;
 use Smartling\WP\WPAbstract;
@@ -16,6 +15,7 @@ use Smartling\WP\WPHookInterface;
 class ConfigurationProfileFormController extends WPAbstract implements WPHookInterface
 {
     public const FILTER_FIELD_NAME_REGEXP = 'filter_field_name_regexp';
+    public const ERROR_TARGET_LOCALES = 'tl';
 
     public function wp_enqueue(): void
     {
@@ -228,6 +228,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
             $profile->setLocale($locale);
         }
 
+        $usedTargetLocales = [];
         if (array_key_exists('targetLocales', $settings)) {
             $locales = [];
 
@@ -241,7 +242,11 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
                                                                     ->getConnector(),
                                                 $blogId));
                     $tLocale->setEnabled(array_key_exists('enabled', $settings) && 'on' === $settings['enabled']);
-                    $tLocale->setSmartlingLocale(array_key_exists('target', $settings) ? $settings['target'] : -1);
+                    $smartlingLocale = array_key_exists('target', $settings) ? $settings['target'] : -1;
+                    $tLocale->setSmartlingLocale($smartlingLocale);
+                    if ($smartlingLocale !== -1) {
+                        $usedTargetLocales[] = $smartlingLocale;
+                    }
 
                     $locales[] = $tLocale;
                 } catch (BlogNotFoundException $e) {
@@ -252,8 +257,21 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
             $profile->setTargetLocales($locales);
         }
 
-        $settingsManager->storeEntity($profile);
+        if ($this->validateTargetLocales($usedTargetLocales)) {
+            $settingsManager->storeEntity($profile);
+            wp_redirect(get_admin_url(null, 'admin.php?page=smartling_configuration_profile_list'));
+        } elseif ($profile->getId() > 0) {
+            wp_redirect(get_admin_url(null, 'admin.php?page=smartling_configuration_profile_setup&error=' . self::ERROR_TARGET_LOCALES . '&action=edit&profile=' . $profile->getId()));
+        }
+    }
 
-        wp_redirect(get_admin_url(null, 'admin.php?page=smartling_configuration_profile_list'));
+    private function validateTargetLocales(array $targetLocales): bool {
+        $values = array_count_values($targetLocales);
+        foreach ($values as $value) {
+            if ($value > 1) {
+                return false;
+            }
+        }
+        return true;
     }
 }
