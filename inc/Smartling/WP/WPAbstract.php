@@ -465,8 +465,7 @@ class WPAbstract
         $parts = [
             HtmlTagGeneratorHelper::tag('td', implode('', $parts), ['style' => 'display:table-cell;']),
         ];
-        $parts[] = HtmlTagGeneratorHelper::tag('td', $sLocale, ['style' => 'display:table-cell;']);
-
+        $parts[] = HtmlTagGeneratorHelper::tag('td', $sLocale, ['style' => 'display:table-cell', 'class' => 'targetLocaleSelectCell']);
 
         return implode('', $parts);
     }

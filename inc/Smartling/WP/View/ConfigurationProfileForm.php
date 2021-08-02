@@ -25,6 +25,13 @@ if (array_key_exists('profile', $_GET)) {
     IntegerParser::tryParseString($_GET['profile'], $profileId);
 }
 
+const ERROR_TARGET_LOCALES_MESSAGE = 'Profile not saved: locale mappings must be unique for each blog';
+
+if (array_key_exists('error', $_GET) && $_GET['error'] === ConfigurationProfileFormController::ERROR_TARGET_LOCALES) {
+    $message = __(ERROR_TARGET_LOCALES_MESSAGE, $domain);
+    echo "<div class=\"notice notice-error is-dismissible\"><p>$message</p></div>";
+}
+
 $defaultFilter = Smartling\Bootstrap::getContainer()->getParameter('field.processor.default');
 
 ?>
@@ -777,7 +784,23 @@ Contact Technical Support or your Customer Success Manager before modifying thes
             </tr>
             </tbody>
         </table>
+        <div class="notice-error" id="errorDiv" style="display: none"></div>
         <?php submit_button(); ?>
-
     </form>
+    <script>
+        document.getElementById('smartling-configuration-profile-form').addEventListener('submit', function(event) {
+            const errorDiv = document.getElementById('errorDiv');
+            errorDiv.style.display = 'none';
+            const usedSmartlingLocales = {};
+            for (const element of document.querySelectorAll('.targetLocaleSelectCell select')) {
+                if (usedSmartlingLocales.hasOwnProperty(element.value)) {
+                    event.preventDefault();
+                    errorDiv.innerText = '<?= ERROR_TARGET_LOCALES_MESSAGE?>' + '. ' + element.value + ' is being used more than once.';
+                    errorDiv.style.display = 'block';
+                    break;
+                }
+                usedSmartlingLocales[element.value] = true;
+            }
+        });
+    </script>
 </div>
