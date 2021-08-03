@@ -60,6 +60,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 2.4.11 =
+* Fixed Gutenberg block level locking frontend not working with WordPress 5.7 and above
+
 = 2.4.10 =
 * Added validation to language mappings in profile configuration to prevent undefined behaviour when a single Smartling locale was mapped to multiple target blogs
 

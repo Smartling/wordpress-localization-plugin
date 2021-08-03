@@ -49,6 +49,13 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
             $this->getPluginInfo()->getVersion(),
             false
         );
+        wp_enqueue_script(
+            $this->getPluginInfo()->getName() . 'settings-admin-footer',
+            $this->getPluginInfo()->getUrl() . 'js/smartling-connector-admin-footer.js',
+            [],
+            $this->getPluginInfo()->getVersion(),
+            true
+        );
         wp_register_style(
             $this->getPluginInfo()->getName(),
             $this->getPluginInfo()->getUrl() . 'css/smartling-connector-admin.css', [],
