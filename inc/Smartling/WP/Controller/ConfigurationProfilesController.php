@@ -51,7 +51,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
         );
         wp_enqueue_script(
             $this->getPluginInfo()->getName() . 'settings-admin-footer',
-            $this->getPluginInfo()->getUrl() . 'js/smartling-connector-admin-footer.js',
+            $this->getPluginInfo()->getUrl() . 'js/smartling-connector-gutenberg-lock-attributes.js',
             [],
             $this->getPluginInfo()->getVersion(),
             true
