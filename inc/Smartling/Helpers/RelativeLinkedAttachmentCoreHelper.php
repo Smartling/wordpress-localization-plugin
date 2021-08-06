@@ -10,6 +10,8 @@ use Smartling\Base\SmartlingCore;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\WPHookInterface;
 
 class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
@@ -20,6 +22,8 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
      */
     protected const PATTERN_IMAGE_GENERAL = '<img[^>]+>';
 
+    private const PATTERN_LINK_GENERAL = '<a[^>]+>';
+
     protected const PATTERN_THUMBNAIL_IDENTITY = '-\d+x\d+$';
 
     private array $acfDefinitions = [];
@@ -27,6 +31,8 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     private LoggerInterface $logger;
     protected SmartlingCore $core;
     private AfterDeserializeContentEventParameters $params;
+    private SubmissionManager $submissionManager;
+    private WordpressFunctionProxyHelper $wordpressProxy;
 
     public function getLogger(): LoggerInterface
     {
@@ -43,11 +49,13 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         $this->params = $params;
     }
 
-    public function __construct(SmartlingCore $core, AcfDynamicSupport $acfDynamicSupport)
+    public function __construct(SmartlingCore $core, AcfDynamicSupport $acfDynamicSupport, SubmissionManager $submissionManager, WordpressFunctionProxyHelper $wordpressProxy)
     {
         $this->acfDynamicSupport = $acfDynamicSupport;
         $this->core = $core;
         $this->logger = MonologWrapper::getLogger(static::class);
+        $this->submissionManager = $submissionManager;
+        $this->wordpressProxy = $wordpressProxy;
     }
 
     public function register(): void
@@ -103,15 +111,17 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                 $stringValue = $this->getReplacerForImgTag($match, $replacer)->processString($stringValue);
             }
         }
+
+        if (0 < preg_match_all(StringHelper::buildPattern(self::PATTERN_LINK_GENERAL), $stringValue, $matches)) {
+            foreach ($matches[0] as $match) {
+                $stringValue = $this->getReplacerForAnchorTag($match, $replacer)->processString($stringValue);
+            }
+        }
     }
 
     /**
      * Extracts src attribute from <img /> tag if possible, otherwise returns null.
      */
-    private function getSourcePathFromImgTag(string $imgTagString): ?string
-    {
-        return $this->getAttributeFromTag($imgTagString, 'img', 'src');
-    }
 
     private function tryProcessThumbnail(string $path): ?ReplacementPair
     {
@@ -337,7 +347,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     private function getReplacerForImgTag(string $tag, PairReplacerHelper $replacer): PairReplacerHelper
     {
         $result = $replacer;
-        $path = $this->getSourcePathFromImgTag($tag);
+        $path = $this->getAttributeFromTag($tag, 'img', 'src');
 
         if (null !== $path && $this->isRelativeUrl($path)) {
             $attachmentId = $this->getAttachmentId($path);
@@ -358,6 +368,31 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                 }
             }
         }
+        return $result;
+    }
+
+    private function getReplacerForAnchorTag(string $tag, PairReplacerHelper $replacer): PairReplacerHelper
+    {
+        $result = $replacer;
+        $href = $this->getAttributeFromTag($tag, 'a', 'href');
+
+        if (null !== $href) {
+            $sourcePostId = $this->wordpressProxy->url_to_postid($href);
+            if (0 !== $sourcePostId) {
+                $targetBlogId = $this->getParams()->getSubmission()->getTargetBlogId();
+                $submission = ArrayHelper::first($this->submissionManager->find([
+                    SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+                    SubmissionEntity::FIELD_SOURCE_ID => $sourcePostId
+                ]));
+                if ($submission !== false) {
+                    $url = parse_url($this->wordpressProxy->get_blog_permalink($targetBlogId, $submission->getTargetId()), PHP_URL_PATH);
+                    if (is_string($url)) {
+                        $result->addReplacementPair(new ReplacementPair($href, $url));
+                    }
+                }
+            }
+        }
+
         return $result;
     }
 }

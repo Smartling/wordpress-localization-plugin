@@ -24,12 +24,16 @@ services:
     arguments:
       - "@entrypoint"
       - "@acf.dynamic.support"
+      - "@manager.submission"
+      - "@wp.proxy"
 
   smartling.helper.absolute-image-path-support:
       class: Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper
       arguments:
         - "@entrypoint"
         - "@acf.dynamic.support"
+        - "@manager.submission"
+        - "@wp.proxy"
 
   helper.customMenu:
     class: Smartling\Helpers\CustomMenuContentTypeHelper
