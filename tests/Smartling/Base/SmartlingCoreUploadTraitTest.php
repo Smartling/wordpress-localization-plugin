@@ -486,7 +486,7 @@ HTML;
 <p>Translated second folder contents with changes (locked)</p>
 <!-- /wp:folder -->
 <!-- wp:folder {"id":7,"smartlingLockId":"5"} -->
-<!-- wp:post {"content":"Translated seventh post content with changes (not locked)","smartlingLockId":"51"} /-->
+<!-- wp:post {"content":"Translated seventh post content with changes (not locked)","smartlingLocked":false,"smartlingLockId":"51"} /-->
 <!-- wp:post {"content":"Translated eighth post content with changes (locked)","smartlingLocked":true,"smartlingLockId":"52"} /-->
 <!-- wp:post {"content":"Translated ninth post content with changes (not locked),"smartlingLockId":"53""} /-->
 <p>Translated third folder contents with changes (not locked)</p>

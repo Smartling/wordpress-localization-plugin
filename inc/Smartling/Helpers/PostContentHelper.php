@@ -131,7 +131,9 @@ class PostContentHelper
                 $result[] = $lockedBlock;
             }
             $attributes = $block->getAttributes();
-            if (array_key_exists(self::SMARTLING_LOCKED, $attributes) && array_key_exists(self::SMARTLING_LOCK_ID, $attributes)) {
+            if (array_key_exists(self::SMARTLING_LOCKED, $attributes) &&
+                array_key_exists(self::SMARTLING_LOCK_ID, $attributes) &&
+                $attributes[self::SMARTLING_LOCKED] === true) {
                 $result[] = $prefix . $attributes[self::SMARTLING_LOCK_ID];
             }
         }

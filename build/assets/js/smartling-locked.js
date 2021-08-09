@@ -1,7 +1,7 @@
 const {createHigherOrderComponent} = wp.compose;
 const {Fragment} = wp.element;
 const {InspectorControls} = wp.editor;
-const {PanelBody, CheckboxControl} = wp.components;
+const {PanelBody, ToggleControl} = wp.components;
 const {__} = wp.i18n;
 
 const LOCKED = 'smartlingLocked';
@@ -23,7 +23,7 @@ const sidebarWithLockingCheckbox = createHigherOrderComponent((BlockEdit) => {
                         title={__('Smartling lock')}
                         initialOpen={true}
                     >
-                        <CheckboxControl
+                        <ToggleControl
                             label={__('Locked')}
                             checked={props.attributes[LOCKED]}
                             onChange={(value) => {
@@ -31,7 +31,7 @@ const sidebarWithLockingCheckbox = createHigherOrderComponent((BlockEdit) => {
                                 newAttributes[LOCKED] = value;
                                 props.setAttributes(newAttributes);
                             }}
-                            help={props.attributes[LOCKED] ? __('Content will not change on translation') : __('Content will change on translation')}
+                            help={props.attributes[LOCKED] ? __('Block will not get changed on translation') : __('Block will get changed on translation')}
                         />
                     </PanelBody>
                 </InspectorControls>
