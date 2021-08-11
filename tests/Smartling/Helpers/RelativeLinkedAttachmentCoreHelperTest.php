@@ -56,7 +56,6 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
         $x = $this->getMockBuilder(RelativeLinkedAttachmentCoreHelper::class)->setConstructorArgs([
             $core,
             $acf,
-            $this->mediaAttachmentRulesManager,
             $this->createMock(SubmissionManager::class),
             $this->createMock(WordpressFunctionProxyHelper::class),
         ])->onlyMethods([])->getMock();
@@ -109,7 +108,6 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
         $x = $this->getMockBuilder(RelativeLinkedAttachmentCoreHelper::class)->setConstructorArgs([
             $core,
             $acf,
-            $this->mediaAttachmentRulesManager,
             $this->createMock(SubmissionManager::class),
             $this->createMock(WordpressFunctionProxyHelper::class),
         ])->onlyMethods([])->getMock();
