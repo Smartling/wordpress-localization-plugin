@@ -60,6 +60,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 2.4.13
+* Fixed misconfiguration
+
 = 2.4.12
 * Gutenberg block level locking ids now created on every visual editor operation instead of on saving content
 * Added replacing of relative links in A tags to other post based content
