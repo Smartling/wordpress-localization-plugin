@@ -3,42 +3,75 @@
 namespace Smartling\DbAl;
 
 use Mlp_Content_Relations;
-use Mlp_Content_Relations_Interface;
 use Mlp_Site_Relations;
 use Mlp_Site_Relations_Interface;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
-use Smartling\Helpers\SiteHelper;
+use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
 use wpdb;
 
-class MultilingualPressConnector extends LocalizationPluginAbstract
+class MultilingualPress2Connector extends MultilingualPressAbstract
 {
-    const MULTILINGUAL_PRESS_PRO_SITE_OPTION_KEY_NAME = 'inpsyde_multilingual';
+    use LoggerSafeTrait;
 
-    const ML_SITE_LINK_TABLE_NAME = 'mlp_site_relations';
+    public const MULTILINGUAL_PRESS_PRO_SITE_OPTION_KEY_NAME = 'inpsyde_multilingual';
 
-    const ML_CONTENT_LINK_TABLE_NAME = 'multilingual_linked';
-    const UNKNOWN_LOCALE = '';
+    private const ML_SITE_LINK_TABLE_NAME = 'mlp_site_relations';
+    private const ML_CONTENT_LINK_TABLE_NAME = 'multilingual_linked';
+    private const UNKNOWN_LOCALE = '';
 
     /**
      * @var wpdb
      */
     private $wpdb;
 
+    protected static array $_blogLocalesCache = [];
+
     /**
-     * @var array
+     * @param wpdb $wpdb
+     * @noinspection PhpMissingParamTypeInspection wpdb used for testing
      */
-    protected static $_blogLocalesCache = [];
+    public function __construct($wpdb = null)
+    {
+        if ($wpdb === null) {
+            global $wpdb;
+        }
+        $this->wpdb = $wpdb;
+    }
+
+    public function addHooks(): void
+    {
+        $data = SimpleStorageHelper::get('state_modules', false);
+        $advTranslatorKey = 'class-Mlp_Advanced_Translator';
+        if (is_array($data) && array_key_exists($advTranslatorKey, $data) && 'off' !== $data[$advTranslatorKey]) {
+            $msg = '<strong>Advanced Translator</strong> feature of Multilingual Press plugin is currently turned on.<br/>
+ Please turn it off to use Smartling-connector plugin. <br/> Use <a href="' . get_site_url() .
+                '/wp-admin/network/settings.php?page=mlp"><strong>this link</strong></a> to visit Multilingual Press network settings page.';
+            $this->getLogger()->critical('Boot :: ' . $msg);
+            DiagnosticsHelper::addDiagnosticsMessage($msg, true);
+        }
+
+        add_filter('wpmu_new_blog', function () {
+            // ignore basedOn value by setting it to 0
+            $_POST['blog']['basedon'] = 0;
+        }, 9);
+
+        add_filter('mlp_after_new_blog_fields', function () {
+            // remove basedOn select element from UI
+            echo '<script>(function($){$($(\'#mlp-base-site-id\').parents(\'tr\')).remove();})(jQuery);</script>';
+        }, 99);
+    }
 
     /**
      * @throws \Exception
      */
-    private function cacheLocales()
+    private function cacheLocales(): void
     {
         if (empty(static::$_blogLocalesCache)) {
             $rawValue = get_site_option(self::MULTILINGUAL_PRESS_PRO_SITE_OPTION_KEY_NAME, false, false);
@@ -63,28 +96,7 @@ class MultilingualPressConnector extends LocalizationPluginAbstract
         }
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function getLocales()
-    {
-        if (!function_exists('get_site_option')) {
-            $this->directRunFallback('Direct run detected. Required run as Wordpress plugin.');
-        }
-        $this->cacheLocales();
-
-        $locales = [];
-        foreach (static::$_blogLocalesCache as $blogId => $blogLocale) {
-            $locales[$blogId] = $blogLocale['text'];
-        }
-
-        return $locales;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getBlogLocaleById($blogId)
+    public function getBlogLocaleById(int $blogId): string
     {
         if (!function_exists('get_site_option')) {
             $this->directRunFallback('Direct run detected. Required run as Wordpress plugin.');
@@ -101,27 +113,9 @@ class MultilingualPressConnector extends LocalizationPluginAbstract
         return $locale['lang'];
     }
 
-    /**
-     * @param SiteHelper $helper
-     * @param array $ml_plugin_statuses
-     * @param wpdb $wpdb
-     * @noinspection PhpMissingParamTypeInspection wpdb used for testing
-     */
-    public function __construct(SiteHelper $helper, array $ml_plugin_statuses, $wpdb = null)
+    private function initSiteRelationsSubsystem(): ?Mlp_Site_Relations_Interface
     {
-        if ($wpdb === null) {
-            global $wpdb;
-        }
-        $this->wpdb = $wpdb;
-        parent::__construct($helper, $ml_plugin_statuses);
-    }
-
-    /**
-     * @return Mlp_Site_Relations_Interface|null
-     */
-    private function initSiteRelationsSubsystem()
-    {
-        if ($this->isMultilingualPluginActive()) {
+        if ($this->isActive()) {
             try {
                 return new Mlp_Site_Relations($this->wpdb, self::ML_SITE_LINK_TABLE_NAME);
             } catch (\Exception $e) {
@@ -132,6 +126,9 @@ class MultilingualPressConnector extends LocalizationPluginAbstract
         return null;
     }
 
+    /**
+     * @return \Mlp_Db_Table_Name|string
+     */
     private function getContentLinkTable()
     {
         $tableName = $this->wpdb->base_prefix . self::ML_CONTENT_LINK_TABLE_NAME;
@@ -151,12 +148,9 @@ class MultilingualPressConnector extends LocalizationPluginAbstract
         return $tableName;
     }
 
-    /**
-     * @return Mlp_Content_Relations|null
-     */
-    private function initContentRelationSubsystem()
+    private function initContentRelationSubsystem(): ?Mlp_Content_Relations
     {
-        if ($this->isMultilingualPluginActive()) {
+        if ($this->isActive()) {
             try {
                 return new Mlp_Content_Relations(
                     $this->wpdb,
@@ -172,36 +166,13 @@ class MultilingualPressConnector extends LocalizationPluginAbstract
     }
 
     /**
-     * @inheritdoc
-     */
-    public function getLinkedBlogIdsByBlogId($blogId)
-    {
-        $relations = $this->initSiteRelationsSubsystem();
-
-        try {
-            $relatedSites = $relations === null ? [] : $relations->get_related_sites($blogId);
-        } catch (\Exception $e) {
-            $this->getLogger()->debug('Failed to get related sites: ' . $e->getMessage());
-            $relatedSites = [];
-        }
-
-        $result = [];
-
-        foreach ($relatedSites as $site) {
-            $result[] = (int)$site;
-        }
-
-        return $result;
-    }
-
-    /**
      * Converts representation of wordpress content types to multilingual content types
      *
      * @param string $contentType
      *
      * @return string
      */
-    private function convertType($contentType)
+    private function convertType(string $contentType): string
     {
         $contentType = $contentType === 'page'
             ? 'post'
@@ -214,25 +185,7 @@ class MultilingualPressConnector extends LocalizationPluginAbstract
         return $contentType;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function getLinkedObjects($sourceBlogId, $sourceContentId, $contentType)
-    {
-        $relations = $this->initContentRelationSubsystem();
-
-        try {
-            return $relations === null ? [] : $relations->get_relations($sourceBlogId, $sourceContentId, $this->convertType($contentType));
-        } catch (\Exception $e) {
-            $this->getLogger()->debug('Failed to get relations: ' . $e->getMessage());
-            return [];
-        }
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function linkObjects(SubmissionEntity $submission)
+    public function linkObjects(SubmissionEntity $submission): bool
     {
         $relations = $this->initContentRelationSubsystem();
 
@@ -251,10 +204,7 @@ class MultilingualPressConnector extends LocalizationPluginAbstract
         }
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function unlinkObjects(SubmissionEntity $submission)
+    public function unlinkObjects(SubmissionEntity $submission): bool
     {
         $relations = $this->initContentRelationSubsystem();
 
@@ -272,7 +222,7 @@ class MultilingualPressConnector extends LocalizationPluginAbstract
         }
     }
 
-    private function isMultilingualPluginActive()
+    public function isActive(): bool
     {
         $expectedClasses = ['Mlp_Helpers', 'Mlp_Content_Relations', 'Mlp_Site_Relations'];
         foreach ($expectedClasses as $class) {
@@ -283,28 +233,7 @@ class MultilingualPressConnector extends LocalizationPluginAbstract
         return true;
     }
 
-    /**
-     * @param int $blogId
-     *
-     * @return string
-     */
-    public function getBlogLanguageById($blogId)
-    {
-        $result = '';
-        if ($this->isMultilingualPluginActive()) {
-            $result = \Mlp_Helpers::get_blog_language($blogId);
-        } else {
-            $message = 'Seems like Multilingual Press plugin is not installed and/or activated. Cannot read blog locale.';
-            $this->getLogger()->debug($message);
-        }
-
-        return $result;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getBlogNameByLocale($locale)
+    public function getBlogNameByLocale(string $locale): string
     {
         $tableName = 'mlp_languages';
         $condition = ConditionBlock::getConditionBlock();
@@ -325,7 +254,7 @@ class MultilingualPressConnector extends LocalizationPluginAbstract
             $condition,
             [],
             [
-                'page'  => 1,
+                'page' => 1,
                 'limit' => 1,
             ]
         );

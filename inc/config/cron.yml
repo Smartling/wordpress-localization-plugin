@@ -29,6 +29,7 @@ services:
       - "@wrapper.sdk.api.smartling"
       - "@manager.settings"
       - "@cron.transaction.manager"
+      - "@localization.plugin.proxy.collection"
     calls:
       - [ "setJobRunInterval", [ %cron.interval.upload% ] ]
 

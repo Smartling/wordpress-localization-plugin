@@ -8,14 +8,8 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\SettingsManager;
 
-/**
- * Class EntityHelper
- *
- * @package Smartling\Helpers
- */
 class EntityHelper
 {
-
     /**
      * @var PluginInfo
      */
@@ -99,77 +93,5 @@ class EntityHelper
     public function getSettingsManager()
     {
         return $this->getPluginInfo()->getSettingsManager();
-    }
-
-    /**
-     * Returns id of original content linked to given or throws the exception
-     *
-     * @param int    $id
-     * @param string $type
-     *
-     * @return int
-     * @throws SmartlingDbException
-     */
-    public function getOriginalContentId($id, $type = 'post')
-    {
-
-        $curBlog = $this->getSiteHelper()
-                        ->getCurrentBlogId();
-        $defBlog = $this->getSettingsManager()
-                        ->getLocales()
-                        ->getDefaultBlog();
-
-        if ($curBlog === $defBlog) {
-            //TODO mb some collision
-            return $id;
-        }
-
-        $linkedObjects = $this->getConnector()
-                              ->getLinkedObjects($curBlog, $id, $type);
-
-        foreach ($linkedObjects as $blogId => $contentId) {
-            if ($blogId === $defBlog) {
-                return $contentId;
-            }
-        }
-
-        $message = vsprintf('For given content-type: \'%s\' id:%s in blog %s link to original content id not found',
-            [
-                $type,
-                $id,
-                $curBlog,
-            ]);
-
-        $this->getLogger()
-             ->error($message);
-
-        throw new SmartlingDbException ($message);
-    }
-
-    /**
-     * @param int    $id
-     * @param string $type
-     *
-     * @return int
-     * @throws \Exception not found original
-     */
-    public function getTarget($id, $targetBlog, $type = 'post')
-    {
-        if ($this->getSiteHelper()
-                 ->getCurrentBlogId() === $targetBlog
-        ) {
-            return $id;
-        }
-
-        $linked = $this->getConnector()
-                       ->getLinkedObjects($this->getSiteHelper()
-                                               ->getCurrentBlogId(), $id, $type);
-        foreach ($linked as $key => $item) {
-            if ($key === $targetBlog) {
-                return $item;
-            }
-        }
-
-        return null;
     }
 }

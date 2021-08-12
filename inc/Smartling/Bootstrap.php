@@ -3,7 +3,6 @@
 namespace Smartling;
 
 use Exception;
-use Monolog\Logger;
 use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\ContentTypes\AutoDiscover\PostTypes;
@@ -13,6 +12,10 @@ use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\ContentTypes\ContentTypeWidget;
 use Smartling\ContentTypes\CustomPostType;
 use Smartling\ContentTypes\CustomTaxonomyType;
+use Smartling\DbAl\DummyLocalizationPlugin;
+use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\DbAl\MultilingualPress2Connector;
+use Smartling\DbAl\MultilingualPress3Connector;
 use Smartling\Exception\SmartlingBootException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\DiagnosticsHelper;
@@ -23,20 +26,24 @@ use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Services\GlobalSettingsManager;
+use Smartling\Services\LocalizationPluginProxyCollection;
 use Smartling\WP\WPInstallableInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Smartling\Helpers\UiMessageHelper;
+use function Inpsyde\MultilingualPress\resolve;
 
-/**
- * Class Bootstrap
- * @package Smartling
- */
 class Bootstrap
 {
 
     use DebugTrait;
     use DITrait;
 
-    public static $pluginVersion = 'undefined';
+    /**
+     * @var LoggerInterface
+     */
+    private static $loggerInstance;
+
+    public static string $pluginVersion = 'undefined';
 
     public function __construct()
     {
@@ -56,25 +63,18 @@ class Bootstrap
     }
 
     /**
-     * @var LoggerInterface|Logger
-     */
-    private static $loggerInstance = null;
-
-    /**
-     * @return LoggerInterface
      * @throws SmartlingBootException
      */
-    public static function getLogger()
+    public static function getLogger(): LoggerInterface
     {
-        /** @noinspection ExceptionsAnnotatingAndHandlingInspection */
         $object = MonologWrapper::getLogger(get_called_class());
 
         if ($object instanceof LoggerInterface) {
             return $object;
-        } else {
-            $message = 'Something went wrong with initialization of DI Container and logger cannot be retrieved.';
-            throw new SmartlingBootException($message);
         }
+
+        $message = 'Something went wrong with initialization of DI Container and logger cannot be retrieved.';
+        throw new SmartlingBootException($message);
     }
 
     public static function getCurrentVersion()
@@ -83,7 +83,7 @@ class Bootstrap
     }
 
 
-    private static function setCoreParameters(ContainerBuilder $container)
+    private static function setCoreParameters(ContainerBuilder $container): void
     {
         // plugin dir (to use in config file)
         $container->setParameter('plugin.dir', SMARTLING_PLUGIN_DIR);
@@ -98,7 +98,7 @@ class Bootstrap
         $container->setParameter('plugin.url', $pluginUrl);
     }
 
-    public function activate()
+    public function activate(): void
     {
         $hooks = $this->fromContainer('hooks.installable', true);
         foreach ($hooks as $hook) {
@@ -109,7 +109,7 @@ class Bootstrap
         }
     }
 
-    public function deactivate()
+    public function deactivate(): void
     {
         $hooks = $this->fromContainer('hooks.installable', true);
         foreach ($hooks as $hook) {
@@ -120,7 +120,7 @@ class Bootstrap
         }
     }
 
-    public static function uninstall()
+    public static function uninstall(): void
     {
         $hooks = static::getContainer()->getParameter('hooks.installable');
         foreach ($hooks as $hook) {
@@ -131,7 +131,7 @@ class Bootstrap
         }
     }
 
-    public function registerHooks()
+    public function registerHooks(): void
     {
         /**
          * @var StartupRegisterManager $manager
@@ -144,7 +144,7 @@ class Bootstrap
     /**
      * The initial entry point tor plugins_loaded hook
      */
-    public function load()
+    public function load(): void
     {
         register_shutdown_function([$this, 'shutdownHandler']);
 
@@ -158,11 +158,11 @@ class Bootstrap
         }
 
         try {
-                $this->test();
-                $this->initializeContentTypes();
-                $this->registerHooks();
-                $this->run();
-
+            $this->setMultiLanguageProxy($this->fromContainer('localization.plugin.proxy.collection'));
+            $this->test();
+            $this->initializeContentTypes();
+            $this->registerHooks();
+            $this->run();
         } catch (Exception $e) {
             $message = "Unhandled exception caught. Disabling plugin.\n";
             $message .= "Message: '" . $e->getMessage() . "'\n";
@@ -179,7 +179,7 @@ class Bootstrap
     /**
      * Add smartling capabilities to 'administrator' role by default
      */
-    private function initRoles()
+    private function initRoles(): void
     {
         $role = get_role('administrator');
 
@@ -188,30 +188,18 @@ class Bootstrap
                 $role->add_cap($capability, true);
             }
         } else {
-            $siteHelper = static::getContainer()->get('site.helper');
             /**
              * @var SiteHelper $siteHelper
              */
+            $siteHelper = static::getContainer()->get('site.helper');
             $msg = vsprintf('\'administrator\' role doesn\'t exists in site id=%s', [$siteHelper->getCurrentBlogId()]);
             static::getLogger()->warning($msg);
         }
     }
 
-    public function detectInstalledMultilangPlugins()
+    public function updateGlobalExpertSettings (): void
     {
-        $mlPluginsStatuses = [
-            'multilingual-press-pro' => false,
-        ];
-
-        if (class_exists('Mlp_Load_Controller', false)) {
-            $mlPluginsStatuses['multilingual-press-pro'] = true;
-        }
-
-        static::getContainer()->setParameter('multilang_plugins', $mlPluginsStatuses);
-    }
-
-    public function updateGlobalExpertSettings () {
-        $data =& $_POST['params'];
+        $data = $_POST['params'];
 
         $rawPageSize = (int)$data['pageSize'];
 
@@ -234,13 +222,9 @@ class Bootstrap
 
     /**
      * Tests if current Wordpress Configuration can work with Smartling Plugin
-     * @return void
      */
-    protected function test()
+    private function test(): void
     {
-        $this->detectInstalledMultilangPlugins();
-        $this->testThirdPartyPluginsRequirements();
-
         $phpExtensions = [
             'curl',
             'mbstring',
@@ -263,16 +247,18 @@ class Bootstrap
             $this->testUpdates();
         }
 
-        add_action('admin_notices', ['Smartling\Helpers\UiMessageHelper', 'displayMessages']);
+        add_action('admin_notices', [UiMessageHelper::class, 'displayMessages']);
     }
 
-    protected function testTimeLimit($recommended = 300)
+    protected function testTimeLimit(int $recommended = 300): void
     {
         $timeLimit = ini_get('max_execution_time');
 
         if (0 !== (int)$timeLimit && $recommended >= $timeLimit) {
-            $mainMessage = vsprintf('<strong>Smartling-connector</strong> configuration is not optimal.<br /><strong>max_execution_time</strong> is highly recommended to be set at least %s. Current value is %s', [$recommended,
-                                                                                                                                                                                                                     $timeLimit]);
+            $mainMessage = vsprintf(
+                '<strong>Smartling-connector</strong> configuration is not optimal.<br /><strong>max_execution_time</strong> is highly recommended to be set at least %s. Current value is %s',
+                [$recommended, $timeLimit]
+            );
 
             static::$loggerInstance->warning($mainMessage);
 
@@ -280,7 +266,7 @@ class Bootstrap
         }
     }
 
-    protected function testCronSetup()
+    protected function testCronSetup(): void
     {
         if (!defined('DISABLE_WP_CRON') || true !== DISABLE_WP_CRON) {
             $logMessage = 'Cron doesn\'t seem to be configured.';
@@ -292,9 +278,9 @@ class Bootstrap
         }
     }
 
-    protected function testMinimalWordpressVersion()
+    protected function testMinimalWordpressVersion(): void
     {
-        $minVersion = '4.6';
+        $minVersion = '5.5';
         if (version_compare(get_bloginfo('version'), $minVersion, '<')) {
             $msg = vsprintf('Wordpress has to be at least version %s to run smartlnig connector plugin. Please upgrade Your Wordpress installation.', [$minVersion]);
             static::getLogger()->critical('Boot :: ' . $msg);
@@ -302,52 +288,15 @@ class Bootstrap
         }
     }
 
-    protected function testThirdPartyPluginsRequirements()
+    private function setMultiLanguageProxy(LocalizationPluginProxyCollection $connectorPlugins): void
     {
-        /**
-         * @var array $data
-         */
-        $data = static::getContainer()->getParameter('multilang_plugins');
-
-        $blockWork = true;
-
-        foreach ($data as $value) {
-            // there is at least one plugin that can be used
-            if (true === $value) {
-                $blockWork = false;
-                break;
-            }
-        }
-
-        if (true === $blockWork) {
-            // replace localization plugin proxy with dummy class
-
-            Bootstrap::getContainer()->register('multilang.proxy', 'Smartling\DbAl\DummyLocalizationPlugin');
-
-        } else {
-            $data = SimpleStorageHelper::get('state_modules', false);
-            $advTranslatorKey = 'class-Mlp_Advanced_Translator';
-            if (is_array($data) && array_key_exists($advTranslatorKey, $data) && 'off' !== $data[$advTranslatorKey]) {
-                $msg = '<strong>Advanced Translator</strong> feature of Multilingual Press plugin is currently turned on.<br/>
- Please turn it off to use Smartling-connector plugin. <br/> Use <a href="' . get_site_url() .
-                       '/wp-admin/network/settings.php?page=mlp"><strong>this link</strong></a> to visit Multilingual Press network settings page.';
-                static::getLogger()->critical('Boot :: ' . $msg);
-                DiagnosticsHelper::addDiagnosticsMessage($msg, true);
-            }
-
-            add_filter('wpmu_new_blog', function () {
-                // ignore basedOn value by setting it to 0
-                $_POST['blog']['basedon'] = 0;
-            }, 9);
-
-            add_filter('mlp_after_new_blog_fields', function () {
-                // remove basedOn select element from UI
-                echo '<script>(function($){$($(\'#mlp-base-site-id\').parents(\'tr\')).remove();})(jQuery);</script>';
-            }, 99);
-        }
+        $containerBuilder = self::getContainer();
+        $plugin = $connectorPlugins->getActivePlugin();
+        $containerBuilder->register('multilang.proxy', get_class($plugin));
+        $plugin->addHooks();
     }
 
-    protected function testPhpExtension($extension)
+    protected function testPhpExtension(string $extension): void
     {
         if (!extension_loaded($extension)) {
             $mainMessage = $extension . ' php extension is required to run the plugin is not installed or enabled.';
@@ -358,7 +307,7 @@ class Bootstrap
         }
     }
 
-    protected function testUpdates()
+    protected function testUpdates(): void
     {
         $staticSlug = $this->fromContainer('plugin.name', true);
         $cur_version = static::$pluginVersion;
@@ -405,7 +354,7 @@ class Bootstrap
         }
     }
 
-    protected function testPluginSetup()
+    protected function testPluginSetup(): void
     {
         $sm = static::getContainer()->get('manager.settings');
 
@@ -424,20 +373,15 @@ class Bootstrap
         }
     }
 
-    /**
-     * @param ContainerBuilder $di
-     */
-    private function initializeBuildInContentTypes(ContainerBuilder $di)
+    private function initializeBuildInContentTypes(ContainerBuilder $di): void
     {
         ContentTypeWidget::register($di);
 
         ContentTypeNavigationMenuItem::register($di);
         ContentTypeNavigationMenu::register($di);
 
-        $handlers = [
-            'taxonomies' => (new Taxonomies($di)),
-            'posts'      => (new PostTypes($di)),
-        ];
+        (new Taxonomies($di->getParameter('ignoredTypes')['taxonomies'] ?? []))->registerHookHandler();
+        (new PostTypes($di->getParameter('ignoredTypes')['posts'] ?? []))->registerHookHandler();
 
         $action = defined('DOING_CRON') && true === DOING_CRON ? 'wp_loaded' : 'admin_init';
 
@@ -453,8 +397,7 @@ class Bootstrap
                 }
             });
 
-            add_action($action, function () {
-
+            add_action($action, static function () {
                 /**
                  * Initializing ACF and ACF Option Pages support.
                  */
@@ -465,8 +408,7 @@ class Bootstrap
          * Post types and taxonomies are registered on 'init' hook, but this code is executed on 'plugins_loaded' hook,
          * so we need to postpone dynamic handlers execution
          */
-        add_action($action, function () use ($di) {
-
+        add_action($action, static function () use ($di) {
             // registering taxonomies first.
             $dynTermDefinitions = [];
             $dynTermDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY, $dynTermDefinitions);
@@ -529,15 +471,14 @@ class Bootstrap
         }, 999);
     }
 
-    public function initializeContentTypes()
+    public function initializeContentTypes(): void
     {
         $this->initializeBuildInContentTypes(static::getContainer());
         do_action(ExportedAPI::ACTION_SMARTLING_REGISTER_CONTENT_TYPE, static::getContainer());
     }
 
-    public function run()
+    public function run(): void
     {
-
         $this->initRoles();
     }
 }
