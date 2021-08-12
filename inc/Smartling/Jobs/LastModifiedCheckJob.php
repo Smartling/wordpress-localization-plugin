@@ -130,6 +130,28 @@ class LastModifiedCheckJob extends JobAbstract
             }
         }
 
+        if (count($filteredSubmissions) < count($submissions)) {
+            $submissionIds = array_reduce($submissions, static function (array $carry, SubmissionEntity $submission) {
+                $carry[] = $submission->getId();
+                return $carry;
+            }, []);
+            $filteredIds = array_reduce($filteredSubmissions, static function (array $carry, SubmissionEntity $submission) {
+                $carry[] = $submission->getId();
+                return $carry;
+            }, []);
+            $failIds = array_diff($submissionIds, $filteredIds);
+            $failSubmissions = array_reduce($submissions, static function (array $carry, SubmissionEntity $submission) use ($failIds) {
+                if (in_array($submission->getId(), $failIds, true)) {
+                    $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+                    $submission->setLastError('Locale not present in last modified response');
+                    $carry[] = $submission;
+                }
+                return $carry;
+            }, []);
+
+            $this->getSubmissionManager()->storeSubmissions($failSubmissions);
+        }
+
         return $filteredSubmissions;
     }
 
@@ -211,8 +233,8 @@ class LastModifiedCheckJob extends JobAbstract
             /**
              * @var array $serializedPair
              */
-            foreach ($serializedPair as $fileUri => $serializedSubmissions) {
-                $submissionList = $this->getSubmissionManager()->findByIds($serializedSubmissions);
+            foreach ($serializedPair as $fileUri => $submissionIds) {
+                $submissionList = $this->getSubmissionManager()->findByIds($submissionIds);
 
                 try {
                     $submissions = $this->processFileUriSet($submissionList);

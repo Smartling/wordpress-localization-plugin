@@ -482,4 +482,48 @@ class LastModifiedCheckJobTest extends TestCase
             ],
         ];
     }
+
+    public function testLocaleMismatch()
+    {
+        $submission1 = $this->createMock(SubmissionEntity::class);
+        $submission1->method('getId')->willReturn(3);
+        $submission1->expects($this->never())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+        $submission2 = $this->createMock(SubmissionEntity::class);
+        $submission2->method('getId')->willReturn(5);
+        $submission2->method('getStatus')->willReturn(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS, SubmissionEntity::SUBMISSION_STATUS_FAILED);
+        $submission2->expects($this->once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+        $submissions = [
+            $submission1,
+            $submission2,
+        ];
+        $worker = $this->lastModifiedWorker;
+        $worker->method('prepareSubmissionList')->willReturn([
+            'fr-FR' => $submission1,
+            'ja-JP' => $submission2,
+        ]);
+        $this->queue->method('dequeue')->willReturn(['/file/uri' => [3, 5]], false);
+        $this->submissionManager->method('findByIds')->willReturn($submissions);
+        $this->apiWrapper->method('lastModified')->willReturn(['fr-FR' => new \DateTime()]);
+
+        $this->submissionManager->expects($this->at(1))->method('storeSubmissions')->willReturnCallback(function (array $submissions) use ($submission2) {
+            // assert storing failed submission
+            $this->assertCount(1, $submissions);
+            $this->assertArrayHasKey(0, $submissions);
+            $submission = $submissions[0];
+            $this->assertInstanceOf(SubmissionEntity::class, $submission);
+            $this->assertEquals($submission2->getId(), $submission->getId());
+            $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_FAILED, $submission->getStatus());
+            return $submissions;
+        });
+        $this->submissionManager->expects($this->at(2))->method('storeSubmissions')->willReturnCallback(function (array $submissions) use ($submission1) {
+            // assert storing not failed submission
+            $this->assertCount(1, $submissions);
+            $this->assertArrayHasKey('fr-FR', $submissions);
+            $submission = $submissions['fr-FR'];
+            $this->assertInstanceOf(SubmissionEntity::class, $submission);
+            $this->assertEquals($submission1->getId(), $submission->getId());
+            return [];
+        });
+        $worker->run();
+    }
 }
