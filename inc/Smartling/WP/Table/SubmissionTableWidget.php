@@ -17,8 +17,8 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Jobs\JobEntity;
-use Smartling\Jobs\JobManager;
 use Smartling\Queue\Queue;
+use Smartling\Queue\QueueInterface;
 use Smartling\Settings\Locale;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -28,6 +28,7 @@ class SubmissionTableWidget extends SmartlingListTable
 {
     use CommonLogMessagesTrait;
 
+    private const ACTION_CHECK_STATUS = 'checkStatus';
     private const ACTION_DOWNLOAD = 'download';
     private const ACTION_LOCK = 'lock';
     private const ACTION_UNLOCK = 'unlock';
@@ -51,7 +52,6 @@ class SubmissionTableWidget extends SmartlingListTable
     private SubmissionManager $submissionManager;
     private EntityHelper $entityHelper;
     private Queue $queue;
-    private JobManager $jobInformationManager;
 
     public function getLogger(): LoggerInterface
     {
@@ -74,7 +74,7 @@ class SubmissionTableWidget extends SmartlingListTable
 
     private array $_settings = ['singular' => 'submission', 'plural' => 'submissions', 'ajax' => false,];
 
-    public function __construct(SubmissionManager $manager, EntityHelper $entityHelper, Queue $queue, JobManager $jobInformationManager)
+    public function __construct(SubmissionManager $manager, EntityHelper $entityHelper, Queue $queue)
     {
         $this->queue = $queue;
         $this->submissionManager = $manager;
@@ -86,7 +86,6 @@ class SubmissionTableWidget extends SmartlingListTable
         $this->logger = $entityHelper->getLogger();
 
         parent::__construct($this->_settings);
-        $this->jobInformationManager = $jobInformationManager;
     }
 
     public function getSortingOptions(string $fieldNameKey = 'orderby', string $orderDirectionKey = 'order'): array
@@ -159,9 +158,10 @@ class SubmissionTableWidget extends SmartlingListTable
     public function get_bulk_actions(): array
     {
         return [
+            self::ACTION_CHECK_STATUS => __('Enqueue for Forced Status Check'),
             self::ACTION_DOWNLOAD => __('Enqueue for Download'),
-            self::ACTION_LOCK     => __('Lock translation'),
-            self::ACTION_UNLOCK   => __('Unlock translation'),
+            self::ACTION_LOCK => __('Lock translation'),
+            self::ACTION_UNLOCK => __('Unlock translation'),
         ];
     }
 
@@ -170,18 +170,24 @@ class SubmissionTableWidget extends SmartlingListTable
      */
     private function processBulkAction(): void
     {
-        /**
-         * @var int[] $submissionsIds
-         */
-        $submissionsIds = $this->getFormElementValue('submission', []);
+        $submissionsIds = array_map(static function ($value) {
+            return (int)$value;
+        }, $this->getFormElementValue('submission', []));
 
         if (is_array($submissionsIds) && 0 < count($submissionsIds)) {
             $submissions = $this->submissionManager->findByIds($submissionsIds);
             if (0 < count($submissions)) {
                 switch ($this->current_action()) {
+                    case self::ACTION_CHECK_STATUS:
+                        foreach ($submissions as $submission) {
+                            $submission->setLastModified($submission->getSubmissionDate());
+                            $this->submissionManager->storeEntity($submission);
+                            $this->queue->enqueue([$submission->getFileUri() => [$submission->getId()]], QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE);
+                        }
+                        break;
                     case self::ACTION_DOWNLOAD:
                         foreach ($submissions as $submission) {
-                            $this->queue->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
+                            $this->queue->enqueue([$submission->getId()], QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE);
                         }
                         break;
                     case self::ACTION_LOCK:
