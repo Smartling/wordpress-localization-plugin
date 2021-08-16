@@ -6,6 +6,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingConfigException;
+use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Extensions\AcfOptionPages\ContentTypeAcfOption;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\EntityHelper;
@@ -101,9 +102,9 @@ class AcfDynamicSupport
     }
 
     /**
-     * @return array
+     * @throws SmartlingDirectRunRuntimeException
      */
-    private function getBlogs()
+    private function getBlogs(): array
     {
         return $this->getSiteHelper()->listBlogs();
     }
@@ -117,9 +118,9 @@ class AcfDynamicSupport
     }
 
     /**
-     * @return array
+     * @throws SmartlingDirectRunRuntimeException
      */
-    private function getBlogListForSearch()
+    private function getBlogListForSearch(): array
     {
         $blogs    = $this->getBlogs();
         $profiles = $this->getActiveProfiles();
@@ -142,7 +143,10 @@ class AcfDynamicSupport
         return $blogsToSearch;
     }
 
-    private function getDatabaseDefinitions()
+    /**
+     * @throws SmartlingDirectRunRuntimeException
+     */
+    private function getDatabaseDefinitions(): array
     {
         $defs = [];
         $this->getLogger()->debug('Looking for ACF definitions in the database');
@@ -456,7 +460,7 @@ class AcfDynamicSupport
         }
     }
 
-    private function tryRegisterACF()
+    private function tryRegisterACF(): void
     {
         $this->getLogger()->debug('Checking if ACF presents...');
         if (true === $this->checkAcfTypes()) {
@@ -473,7 +477,14 @@ class AcfDynamicSupport
                 DiagnosticsHelper::addDiagnosticsMessage(implode('<br/>', $msg));
                 $this->getLogger()->notice('Automatic ACF support is disabled.');
             } else {
-                $dbDefinitions = $this->getDatabaseDefinitions();
+                try {
+                    $dbDefinitions = $this->getDatabaseDefinitions();
+                } catch (SmartlingDirectRunRuntimeException $e) {
+                    $dbDefinitions = [];
+                    DiagnosticsHelper::addDiagnosticsMessage(
+                        'Failed to get ACF definitions from database. Please ensure that WordPress network is set up properly'
+                    );
+                }
 
                 if (false === $this->verifyDefinitions($localDefinitions, $dbDefinitions)) {
                     $url = admin_url('edit.php?post_type=acf-field-group&page=acf-tools');
