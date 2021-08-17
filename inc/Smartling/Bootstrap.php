@@ -12,16 +12,11 @@ use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\ContentTypes\ContentTypeWidget;
 use Smartling\ContentTypes\CustomPostType;
 use Smartling\ContentTypes\CustomTaxonomyType;
-use Smartling\DbAl\DummyLocalizationPlugin;
-use Smartling\DbAl\LocalizationPluginProxyInterface;
-use Smartling\DbAl\MultilingualPress2Connector;
-use Smartling\DbAl\MultilingualPress3Connector;
 use Smartling\Exception\SmartlingBootException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\MetaFieldProcessor\CustomFieldFilterHandler;
 use Smartling\Helpers\SchedulerHelper;
-use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\MonologWrapper\MonologWrapper;
@@ -30,11 +25,9 @@ use Smartling\Services\LocalizationPluginProxyCollection;
 use Smartling\WP\WPInstallableInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Smartling\Helpers\UiMessageHelper;
-use function Inpsyde\MultilingualPress\resolve;
 
 class Bootstrap
 {
-
     use DebugTrait;
     use DITrait;
 
