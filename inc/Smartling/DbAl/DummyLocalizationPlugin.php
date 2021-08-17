@@ -12,11 +12,6 @@ class DummyLocalizationPlugin implements LocalizationPluginProxyInterface
     {
     }
 
-    public function getLogger(): LoggerInterface
-    {
-        return MonologWrapper::getLogger(__CLASS__);
-    }
-
     public function getBlogLocaleById(int $blogId): string
     {
         return '';
