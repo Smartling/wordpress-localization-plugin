@@ -33,10 +33,6 @@ svn copy https://plugins.svn.wordpress.org/smartling-connector/trunk https://plu
 # Dev changelog
 ## Function signature changes in 2.5.0
 ### inc/Smartling/Bootstrap/Bootstrap.php
-`- public static function getLogger()`
-
-`+ public static function getLogger(): LoggerInterface`
-
 `- public function activate()`
 
 `+ public function activate(): void`
@@ -45,13 +41,7 @@ svn copy https://plugins.svn.wordpress.org/smartling-connector/trunk https://plu
 
 `+ public function deactivate(): void`
 
-`- public static function uninstall()`
-
-`+ public static function uninstall(): void`
-
 `- public function registerHooks()`
-
-`+ public static function registerHooks(): void`
 
 `- public function load()`
 
@@ -59,11 +49,13 @@ svn copy https://plugins.svn.wordpress.org/smartling-connector/trunk https://plu
 
 `- public function detectInstalledMultilangPlugins()`
 
-`- public static function updateGlobalExpertSettings()`
+`- public function updateGlobalExpertSettings()`
 
-`+ public static function updateGlobalExpertSettings(): void`
+`+ public function updateGlobalExpertSettings(): void`
 
 `- public function initializeContentTypes()`
+
+`- public function run()`
 
 ### inc/Smartling/ContentTypes/AutoDiscover/PostTypes.php
 `- public function __construct(ContainerBuilder $di)`
@@ -76,11 +68,16 @@ svn copy https://plugins.svn.wordpress.org/smartling-connector/trunk https://plu
 
 `- public function getLogger()`
 
-`- public function setLogger()`
-
 `- public function getIgnoredTypes()`
 
 `- public function setIgnoredTypes($ignoredTypes)`
+
+`- public function setLogger($logger)`
+
+`- public function hookHandler($postType)`
+
+`+ public function hookHandler($postType): void`
+
 ### inc/Smartling/ContentTypes/AutoDiscover/Taxonomies.php
 `- public function __construct(ContainerBuilder $di)`
 
@@ -92,36 +89,45 @@ svn copy https://plugins.svn.wordpress.org/smartling-connector/trunk https://plu
 
 `- public function getLogger()`
 
-`- public function setLogger()`
-
 `- public function getIgnoredTypes()`
 
 `- public function setIgnoredTypes($ignoredTypes)`
 
+`- public function setLogger($logger)`
+
+`- public function hookHandler($postType)`
+
+`+ public function hookHandler($postType): void`
+
+### inc/Smartling/DbAl/LocalizationPluginAbstract.php
+Removed, any classes extending it should implement LocalizationPluginProxyInterface instead
+
 ### inc/Smartling/DbAl/LocalizationPluginProxyInterface.php
-`- public function getLogger()`
+`- public function getLogger();`
 
-`- public function getLocales()`
+`- public function getLocales();`
 
-`- public function getBlogLocaleById($blogId)`
+`- public function getBlogLocaleById($blogId);`
 
-`+ public function getBlogLocaleById(int $blogId): string`
+`+ public function getBlogLocaleById(int $blogId): string;`
 
-`- public function getLinkedBlogIdsByBlogId($blogId)`
+`- public function getLinkedBlogIdsByBlogId($blogId);`
 
-`- public function linkObjects(SubmissionEntity $submission)`
+`- public function linkObjects(SubmissionEntity $submission);`
 
-`+ public function linkObjects(SubmissionEntity $submission): bool`
+`+ public function linkObjects(SubmissionEntity $submission): bool;`
 
-`- public function unlinkObjects(SubmissionEntity $submission)`
+`- public function getLinkedObjects($sourceBlogId, $sourceContentId, $contentType);`
 
-`+ public function unlinkObjects(SubmissionEntity $submission): bool`
+`- public function unlinkObjects(SubmissionEntity $submission);`
 
-`- public function getBlogLanguageById($blogId)`
+`+ public function unlinkObjects(SubmissionEntity $submission): bool;`
 
-`- public function getBlogNameByLocale($locale)`
+`- public function getBlogLanguageById($blogId);`
 
-`+ public function getBlogNameByLocale(string $locale): string`
+`- public function getBlogNameByLocale($locale);`
+
+`+ public function getBlogNameByLocale(string $locale): string;`
 
 ### inc/Smartling/Helpers/EntityHelper.php
 `- public function getOriginalContentId($id, $type = 'post')`
