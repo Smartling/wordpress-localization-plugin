@@ -155,7 +155,7 @@ class Bootstrap
             $this->test();
             $this->initializeContentTypes();
             $this->registerHooks();
-            $this->run();
+            $this->initRoles();
         } catch (Exception $e) {
             $message = "Unhandled exception caught. Disabling plugin.\n";
             $message .= "Message: '" . $e->getMessage() . "'\n";
@@ -190,7 +190,7 @@ class Bootstrap
         }
     }
 
-    public function updateGlobalExpertSettings (): void
+    public function updateGlobalExpertSettings(): void
     {
         $data = $_POST['params'];
 
@@ -468,10 +468,5 @@ class Bootstrap
     {
         $this->initializeBuildInContentTypes(static::getContainer());
         do_action(ExportedAPI::ACTION_SMARTLING_REGISTER_CONTENT_TYPE, static::getContainer());
-    }
-
-    private function run(): void
-    {
-        $this->initRoles();
     }
 }

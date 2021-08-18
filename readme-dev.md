@@ -66,67 +66,67 @@ svn copy https://plugins.svn.wordpress.org/smartling-connector/trunk https://plu
 `- public function initializeContentTypes()`
 
 ### inc/Smartling/ContentTypes/AutoDiscover/PostTypes.php
-`-    public function __construct(ContainerBuilder $di)`
+`- public function __construct(ContainerBuilder $di)`
 
-`+    public function __construct(array $ignoredTypes)`
+`+ public function __construct(array $ignoredTypes)`
 
-`-    public function getDi()`
+`- public function getDi()`
 
 `- public function setDi($di)`
 
-`-    public function getLogger()`
+`- public function getLogger()`
 
-`-    public function setLogger()`
+`- public function setLogger()`
 
-`-    public function getIgnoredTypes()`
+`- public function getIgnoredTypes()`
 
-`-    public function setIgnoredTypes($ignoredTypes)`
+`- public function setIgnoredTypes($ignoredTypes)`
 ### inc/Smartling/ContentTypes/AutoDiscover/Taxonomies.php
-`-    public function __construct(ContainerBuilder $di)`
+`- public function __construct(ContainerBuilder $di)`
 
-`+    public function __construct(array $ignoredTypes)`
+`+ public function __construct(array $ignoredTypes)`
 
-`-    public function getDi()`
+`- public function getDi()`
 
 `- public function setDi($di)`
 
-`-    public function getLogger()`
+`- public function getLogger()`
 
-`-    public function setLogger()`
+`- public function setLogger()`
 
-`-    public function getIgnoredTypes()`
+`- public function getIgnoredTypes()`
 
-`-    public function setIgnoredTypes($ignoredTypes)`
+`- public function setIgnoredTypes($ignoredTypes)`
 
 ### inc/Smartling/DbAl/LocalizationPluginProxyInterface.php
-`-    public function getLogger()`
+`- public function getLogger()`
 
-`-    public function getLocales()`
+`- public function getLocales()`
 
-`-    public function getBlogLocaleById($blogId)`
+`- public function getBlogLocaleById($blogId)`
 
-`+    public function getBlogLocaleById(int $blogId): string`
+`+ public function getBlogLocaleById(int $blogId): string`
 
-`-    public function getLinkedBlogIdsByBlogId($blogId)`
+`- public function getLinkedBlogIdsByBlogId($blogId)`
 
-`-    public function linkObjects(SubmissionEntity $submission)`
+`- public function linkObjects(SubmissionEntity $submission)`
 
-`+    public function linkObjects(SubmissionEntity $submission): bool`
+`+ public function linkObjects(SubmissionEntity $submission): bool`
 
-`-    public function unlinkObjects(SubmissionEntity $submission)`
+`- public function unlinkObjects(SubmissionEntity $submission)`
 
-`+    public function unlinkObjects(SubmissionEntity $submission): bool`
+`+ public function unlinkObjects(SubmissionEntity $submission): bool`
 
-`-    public function getBlogLanguageById($blogId)`
+`- public function getBlogLanguageById($blogId)`
 
-`-    public function getBlogNameByLocale($locale)`
+`- public function getBlogNameByLocale($locale)`
 
-`+    public function getBlogNameByLocale(string $locale): string`
+`+ public function getBlogNameByLocale(string $locale): string`
 
 ### inc/Smartling/Helpers/EntityHelper.php
-`-    public function getOriginalContentId($id, $type = 'post')`
+`- public function getOriginalContentId($id, $type = 'post')`
 
-`-    public function getTarget($id, $targetBlog, $type = 'post')`
+`- public function getTarget($id, $targetBlog, $type = 'post')`
 
 ## Function signature changes in 2.4.3
 ### inc/Smartling/Helpers/FileUriHelper.php
