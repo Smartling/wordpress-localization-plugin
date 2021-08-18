@@ -5,18 +5,15 @@ namespace Smartling\DbAl;
 use Mlp_Content_Relations;
 use Mlp_Site_Relations;
 use Mlp_Site_Relations_Interface;
+use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\LoggerSafeTrait;
-use Smartling\Helpers\QueryBuilder\Condition\Condition;
-use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
-use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
-use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
 use wpdb;
 
-class MultilingualPress2Connector extends MultilingualPressAbstract
+class MultilingualPress2Connector extends MultilingualPressConnector implements LocalizationPluginProxyInterface
 {
     use LoggerSafeTrait;
 
@@ -31,7 +28,7 @@ class MultilingualPress2Connector extends MultilingualPressAbstract
      */
     private $wpdb;
 
-    protected static array $_blogLocalesCache = [];
+    private array $blogLocalesCache = [];
 
     /**
      * @param wpdb $wpdb
@@ -50,9 +47,10 @@ class MultilingualPress2Connector extends MultilingualPressAbstract
         $data = SimpleStorageHelper::get('state_modules', false);
         $advTranslatorKey = 'class-Mlp_Advanced_Translator';
         if (is_array($data) && array_key_exists($advTranslatorKey, $data) && 'off' !== $data[$advTranslatorKey]) {
-            $msg = '<strong>Advanced Translator</strong> feature of Multilingual Press plugin is currently turned on.<br/>
- Please turn it off to use Smartling-connector plugin. <br/> Use <a href="' . get_site_url() .
-                '/wp-admin/network/settings.php?page=mlp"><strong>this link</strong></a> to visit Multilingual Press network settings page.';
+            $msg = '<strong>Advanced Translator</strong> feature of Multilingual Press plugin is currently turned on.' .
+                '<br/>Please turn it off to use Smartling-connector plugin. <br/> Use <a href="' . get_site_url() .
+                '/wp-admin/network/settings.php?page=mlp"><strong>this link</strong></a> to visit Multilingual Press ' .
+                'network settings page.';
             $this->getLogger()->critical('Boot :: ' . $msg);
             DiagnosticsHelper::addDiagnosticsMessage($msg, true);
         }
@@ -73,7 +71,10 @@ class MultilingualPress2Connector extends MultilingualPressAbstract
      */
     private function cacheLocales(): void
     {
-        if (empty(static::$_blogLocalesCache)) {
+        if (!function_exists('get_site_option')) {
+            throw new SmartlingDirectRunRuntimeException('Direct run detected. Required run as Wordpress plugin.');
+        }
+        if (empty($this->blogLocalesCache)) {
             $rawValue = get_site_option(self::MULTILINGUAL_PRESS_PRO_SITE_OPTION_KEY_NAME, false, false);
 
             if (false === $rawValue) {
@@ -90,7 +91,7 @@ class MultilingualPress2Connector extends MultilingualPressAbstract
                     } else {
                         $temp['lang'] = self::UNKNOWN_LOCALE;
                     }
-                    static::$_blogLocalesCache[$blogId] = $temp;
+                    $this->blogLocalesCache[$blogId] = $temp;
                 }
             }
         }
@@ -98,14 +99,10 @@ class MultilingualPress2Connector extends MultilingualPressAbstract
 
     public function getBlogLocaleById(int $blogId): string
     {
-        if (!function_exists('get_site_option')) {
-            $this->directRunFallback('Direct run detected. Required run as Wordpress plugin.');
-        }
-
         $this->cacheLocales();
 
-        if (array_key_exists($blogId, static::$_blogLocalesCache)) {
-            $locale = static::$_blogLocalesCache[$blogId];
+        if (array_key_exists($blogId, $this->blogLocalesCache)) {
+            $locale = $this->blogLocalesCache[$blogId];
         } else {
             $locale = ['lang' => self::UNKNOWN_LOCALE];
         }
@@ -235,31 +232,6 @@ class MultilingualPress2Connector extends MultilingualPressAbstract
 
     public function getBlogNameByLocale(string $locale): string
     {
-        $tableName = 'mlp_languages';
-        $condition = ConditionBlock::getConditionBlock();
-        $condition->addCondition(
-            Condition::getCondition(
-                ConditionBuilder::CONDITION_SIGN_EQ,
-                'wp_locale',
-                [
-                    $locale,
-                ]
-            )
-        );
-        $query = QueryBuilder::buildSelectQuery(
-            $this->wpdb->base_prefix . $tableName,
-            [
-                'english_name',
-            ],
-            $condition,
-            [],
-            [
-                'page' => 1,
-                'limit' => 1,
-            ]
-        );
-        $r = $this->wpdb->get_results($query, ARRAY_A);
-
-        return 1 === count($r) ? $r[0]['english_name'] : $locale;
+        return $this->getEnglishNameFromMlpLanguagesTable($locale, 'wp_locale', $this->wpdb);
     }
 }

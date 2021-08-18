@@ -124,7 +124,7 @@ class Bootstrap
         }
     }
 
-    public function registerHooks(): void
+    private function registerHooks(): void
     {
         /**
          * @var StartupRegisterManager $manager
@@ -243,7 +243,7 @@ class Bootstrap
         add_action('admin_notices', [UiMessageHelper::class, 'displayMessages']);
     }
 
-    protected function testTimeLimit(int $recommended = 300): void
+    private function testTimeLimit(int $recommended = 300): void
     {
         $timeLimit = ini_get('max_execution_time');
 
@@ -259,7 +259,7 @@ class Bootstrap
         }
     }
 
-    protected function testCronSetup(): void
+    private function testCronSetup(): void
     {
         if (!defined('DISABLE_WP_CRON') || true !== DISABLE_WP_CRON) {
             $logMessage = 'Cron doesn\'t seem to be configured.';
@@ -271,7 +271,7 @@ class Bootstrap
         }
     }
 
-    protected function testMinimalWordpressVersion(): void
+    private function testMinimalWordpressVersion(): void
     {
         $minVersion = '5.5';
         if (version_compare(get_bloginfo('version'), $minVersion, '<')) {
@@ -289,7 +289,7 @@ class Bootstrap
         $plugin->addHooks();
     }
 
-    protected function testPhpExtension(string $extension): void
+    private function testPhpExtension(string $extension): void
     {
         if (!extension_loaded($extension)) {
             $mainMessage = $extension . ' php extension is required to run the plugin is not installed or enabled.';
@@ -300,7 +300,7 @@ class Bootstrap
         }
     }
 
-    protected function testUpdates(): void
+    private function testUpdates(): void
     {
         $staticSlug = $this->fromContainer('plugin.name', true);
         $cur_version = static::$pluginVersion;
@@ -347,7 +347,7 @@ class Bootstrap
         }
     }
 
-    protected function testPluginSetup(): void
+    private function testPluginSetup(): void
     {
         $sm = static::getContainer()->get('manager.settings');
 
@@ -464,13 +464,13 @@ class Bootstrap
         }, 999);
     }
 
-    public function initializeContentTypes(): void
+    private function initializeContentTypes(): void
     {
         $this->initializeBuildInContentTypes(static::getContainer());
         do_action(ExportedAPI::ACTION_SMARTLING_REGISTER_CONTENT_TYPE, static::getContainer());
     }
 
-    public function run(): void
+    private function run(): void
     {
         $this->initRoles();
     }
