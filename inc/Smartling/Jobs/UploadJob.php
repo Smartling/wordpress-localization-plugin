@@ -4,11 +4,9 @@ namespace Smartling\Jobs;
 
 use Smartling\ApiWrapperInterface;
 use Smartling\Base\ExportedAPI;
-use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\QueryBuilder\TransactionManager;
-use Smartling\Services\LocalizationPluginProxyCollection;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -18,7 +16,6 @@ class UploadJob extends JobAbstract
     public const JOB_HOOK_NAME = 'smartling-upload-task';
 
     private ApiWrapperInterface $api;
-    private LocalizationPluginProxyInterface $localizationPlugin;
     private SettingsManager $settingsManager;
 
     public function __construct(
@@ -26,13 +23,11 @@ class UploadJob extends JobAbstract
         int $workerTTL,
         ApiWrapperInterface $api,
         SettingsManager $settingsManager,
-        TransactionManager $transactionManager,
-        LocalizationPluginProxyCollection $localizationPluginProxyCollection
+        TransactionManager $transactionManager
     ) {
         parent::__construct($submissionManager, $transactionManager, $workerTTL);
 
         $this->api = $api;
-        $this->localizationPlugin = $localizationPluginProxyCollection->getActivePlugin();
         $this->settingsManager = $settingsManager;
     }
 
@@ -82,7 +77,6 @@ class UploadJob extends JobAbstract
             );
 
             do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $entity);
-
             $this->placeLockFlag(true);
         } while (0 < count($entities));
     }
