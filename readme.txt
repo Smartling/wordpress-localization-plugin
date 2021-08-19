@@ -4,14 +4,16 @@ Tags: translation, localization, localisation, translate, multilingual, smartlin
 Requires at least: 5.5
 Tested up to: 5.7
 Requires PHP: 7.4
-Stable tag: 2.4.15
+Stable tag: 2.4.14
 License: GPLv2 or later
 
-Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
+Translate content in WordPress quickly and seamlessly with Smartling, the industry-leading Translation Management System.
 
 == Description ==
 
-The Smartling Connector extends the WordPress interface for seamless management of the translation process, all while leveraging the tools contained in Smartling’s Global Fluency Platform. Easily installed with minimal developer support, the combination of WordPress and Smartling provides users with a powerful technology solution to manage the translation and localization process with full visibility and control across the entire organization.
+The Smartling Connector facilitates the translation of WordPress content within Smartling.
+Easily installed with minimal developer support, the combination of WordPress and Smartling provides users with a powerful technology solution to manage the translation and localization process with full visibility and control across the entire organization.
+Translations are requested from within WordPress, and translated content is automatically returned to your WordPress environment.
 
 Integration Features
 
@@ -60,16 +62,13 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
-= 2.4.15 =
-* Fix fatal error when plugin is activated before creating a network
-
-= 2.4.14 =
+= 2.4.14
 * Visual changes in the locking sidebar
 
-= 2.4.13 =
+= 2.4.13
 * Fixed misconfiguration
 
-= 2.4.12 =
+= 2.4.12
 * Gutenberg block level locking ids now created on every visual editor operation instead of on saving content
 * Added replacing of relative links in A tags to other post based content
 
