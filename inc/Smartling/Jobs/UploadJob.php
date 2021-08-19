@@ -82,7 +82,7 @@ class UploadJob extends JobAbstract
             );
 
             do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $entity);
-            $this->localizationPlugin->linkObjects($entity);
+
             $this->placeLockFlag(true);
         } while (0 < count($entities));
     }

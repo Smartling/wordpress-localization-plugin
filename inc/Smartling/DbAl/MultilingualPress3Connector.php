@@ -4,6 +4,7 @@ namespace Smartling\DbAl;
 
 use Inpsyde\MultilingualPress\Core\Admin\SiteSettingsRepository;
 use Inpsyde\MultilingualPress\Framework\Api\ContentRelations;
+use Smartling\Base\ExportedAPI;
 use Smartling\Submissions\SubmissionEntity;
 use function Inpsyde\MultilingualPress\resolve;
 
@@ -11,6 +12,7 @@ class MultilingualPress3Connector extends MultilingualPressConnector implements 
 {
     public function addHooks(): void
     {
+        add_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, [$this, 'linkObjects']);
     }
 
     public function getBlogLocaleById(int $blogId): string
