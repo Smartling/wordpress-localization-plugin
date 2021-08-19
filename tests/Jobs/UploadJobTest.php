@@ -11,7 +11,6 @@ use Smartling\Helpers\QueryBuilder\TransactionManager;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Jobs\UploadJob;
-use Smartling\Services\LocalizationPluginProxyCollection;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\Locale;
 use Smartling\Settings\SettingsManager;
@@ -33,8 +32,7 @@ class UploadJobTest extends TestCase
     private function getWorkerMock(SubmissionManager $submissionManager,
                                    ApiWrapperInterface $apiWrapper,
                                    SettingsManager $settingsManager,
-                                   TransactionManager $transactionManager = null,
-                                   LocalizationPluginProxyCollection $pluginCollection = null
+                                   TransactionManager $transactionManager = null
     ) {
         if ($transactionManager === null) {
             $transactionManager = $this->getMockBuilder(TransactionManager::class)
@@ -42,12 +40,9 @@ class UploadJobTest extends TestCase
                 ->onlyMethods(['executeSelectForUpdate'])
                 ->getMock();
         }
-        if ($pluginCollection === null) {
-            $pluginCollection = $this->createMock(LocalizationPluginProxyCollection::class);
-        }
 
         return $this->getMockBuilder(UploadJob::class)
-            ->setConstructorArgs([$submissionManager, 1200, $apiWrapper, $settingsManager, $transactionManager, $pluginCollection])
+            ->setConstructorArgs([$submissionManager, 1200, $apiWrapper, $settingsManager, $transactionManager])
             ->onlyMethods([])
             ->getMock();
     }
