@@ -430,7 +430,9 @@ class AcfDynamicSupport
                 } catch (SmartlingDirectRunRuntimeException $e) {
                     $dbDefinitions = [];
                     DiagnosticsHelper::addDiagnosticsMessage(
-                        'Failed to get ACF definitions from database. Please ensure that WordPress network is set up properly'
+                        'Failed to get ACF definitions from database.' .
+                        'Please ensure that WordPress network is set up properly.<br>' .
+                        "Exception message: {$e->getMessage()}"
                     );
                 }
 
