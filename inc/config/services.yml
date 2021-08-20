@@ -1,7 +1,4 @@
 parameters:
-  multilang_plugins:
-    "multilingual-press-pro": false
-
   submission.pagesize.default: 20
   submission.pagesize: 20
 
@@ -139,12 +136,20 @@ services:
         - "%plugin.domain%"
         - "@manager.settings"
         - "%plugin.upload%"
+  localization.plugin.proxy.collection:
+    class: Smartling\Services\LocalizationPluginProxyCollection
+    calls:
+      - [ "addConnector", ["@multilingualpress3.connector"]]
+      - [ "addConnector", ["@multilingualpress2.connector"]]
 
-  multilang.proxy:
-    class: Smartling\DbAl\MultilingualPressConnector
-    arguments:
-      - "@site.helper"
-      - "%multilang_plugins%"
+  multilang.proxy: # changed at Bootstrap
+    class: Smartling\DbAl\DummyLocalizationPlugin
+
+  multilingualpress2.connector:
+    class: Smartling\DbAl\MultilingualPress2Connector
+
+  multilingualpress3.connector:
+    class: Smartling\DbAl\MultilingualPress3Connector
 
   entity.helper:
     class: Smartling\Helpers\EntityHelper

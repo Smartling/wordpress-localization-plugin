@@ -31,12 +31,115 @@ svn copy https://plugins.svn.wordpress.org/smartling-connector/trunk https://plu
 
 
 # Dev changelog
-## Function changes from 2.4.2 to 2.4.3
+## Function signature changes in 2.5.0
+### inc/Smartling/Bootstrap/Bootstrap.php
+`- public function activate()`
+
+`+ public function activate(): void`
+
+`- public function deactivate()`
+
+`+ public function deactivate(): void`
+
+`- public function registerHooks()`
+
+`- public function load()`
+
+`+ public function load(): void`
+
+`- public function detectInstalledMultilangPlugins()`
+
+`- public function updateGlobalExpertSettings()`
+
+`+ public function updateGlobalExpertSettings(): void`
+
+`- public function initializeContentTypes()`
+
+`- public function run()`
+
+### inc/Smartling/ContentTypes/AutoDiscover/PostTypes.php
+`- public function __construct(ContainerBuilder $di)`
+
+`+ public function __construct(array $ignoredTypes)`
+
+`- public function getDi()`
+
+`- public function setDi($di)`
+
+`- public function getLogger()`
+
+`- public function getIgnoredTypes()`
+
+`- public function setIgnoredTypes($ignoredTypes)`
+
+`- public function setLogger($logger)`
+
+`- public function hookHandler($postType)`
+
+`+ public function hookHandler($postType): void`
+
+### inc/Smartling/ContentTypes/AutoDiscover/Taxonomies.php
+`- public function __construct(ContainerBuilder $di)`
+
+`+ public function __construct(array $ignoredTypes)`
+
+`- public function getDi()`
+
+`- public function setDi($di)`
+
+`- public function getLogger()`
+
+`- public function getIgnoredTypes()`
+
+`- public function setIgnoredTypes($ignoredTypes)`
+
+`- public function setLogger($logger)`
+
+`- public function hookHandler($postType)`
+
+`+ public function hookHandler($postType): void`
+
+### inc/Smartling/DbAl/LocalizationPluginAbstract.php
+Removed, any classes extending it should implement LocalizationPluginProxyInterface instead
+
+### inc/Smartling/DbAl/LocalizationPluginProxyInterface.php
+`- public function getLogger();`
+
+`- public function getLocales();`
+
+`- public function getBlogLocaleById($blogId);`
+
+`+ public function getBlogLocaleById(int $blogId): string;`
+
+`- public function getLinkedBlogIdsByBlogId($blogId);`
+
+`- public function linkObjects(SubmissionEntity $submission);`
+
+`+ public function linkObjects(SubmissionEntity $submission): bool;`
+
+`- public function getLinkedObjects($sourceBlogId, $sourceContentId, $contentType);`
+
+`- public function unlinkObjects(SubmissionEntity $submission);`
+
+`+ public function unlinkObjects(SubmissionEntity $submission): bool;`
+
+`- public function getBlogLanguageById($blogId);`
+
+`- public function getBlogNameByLocale($locale);`
+
+`+ public function getBlogNameByLocale(string $locale): string;`
+
+### inc/Smartling/Helpers/EntityHelper.php
+`- public function getOriginalContentId($id, $type = 'post')`
+
+`- public function getTarget($id, $targetBlog, $type = 'post')`
+
+## Function signature changes in 2.4.3
 ### inc/Smartling/Helpers/FileUriHelper.php
 `- public static function generateFileUri(SubmissionEntity $submission)`
 
 `+ public static function generateFileUri(SubmissionEntity $submission): string`
-## Function changes from 1.5.7 to 2.4.0
+## Function signature changes from 1.5.7 to 2.4.0
 ### inc/Smartling/ApiWrapper.php
 `- public function createJob(ConfigurationProfileEntity $profile, array $params)`
 

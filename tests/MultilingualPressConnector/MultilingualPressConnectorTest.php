@@ -3,8 +3,7 @@
 namespace Smartling\Tests\MultilingualPressConnector;
 
 use PHPUnit\Framework\TestCase;
-use Smartling\DbAl\MultilingualPressConnector;
-use Smartling\Helpers\SiteHelper;
+use Smartling\DbAl\MultilingualPress2Connector;
 
 class MultilingualPressConnectorTest extends TestCase
 {
@@ -21,7 +20,7 @@ class MultilingualPressConnectorTest extends TestCase
         $db->base_prefix = 'wp_';
         /** @noinspection MockingMethodsCorrectnessInspection added with addMethods */
         $db->expects($this->once())->method('get_results')->with($expected)->willReturn([]);
-        $x = new MultilingualPressConnector($this->createStub(SiteHelper::class), [], $db);
+        $x = new MultilingualPress2Connector($db);
         $x->getBlogNameByLocale('test');
     }
 }
