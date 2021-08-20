@@ -15,5 +15,4 @@ namespace PHPSTORM_META {
     exitPoint(\Smartling\DbAl\WordpressContentEntities\EntityAbstract::entityNotFound());
     exitPoint(\wp_send_json());
     exitPoint(\wp_send_json_error());
-    exitPoint(\Smartling\Helpers\SiteHelper::directRunDetectedFallback());
 }

@@ -292,11 +292,11 @@ class Bootstrap
         }
     }
 
-    protected function testMinimalWordpressVersion()
+    protected function testMinimalWordpressVersion(): void
     {
-        $minVersion = '4.6';
+        $minVersion = '5.5';
         if (version_compare(get_bloginfo('version'), $minVersion, '<')) {
-            $msg = vsprintf('Wordpress has to be at least version %s to run smartlnig connector plugin. Please upgrade Your Wordpress installation.', [$minVersion]);
+            $msg = vsprintf('Wordpress has to be at least version %s to run smartling connector plugin. Please upgrade Your Wordpress installation.', [$minVersion]);
             static::getLogger()->critical('Boot :: ' . $msg);
             DiagnosticsHelper::addDiagnosticsMessage($msg, true);
         }
