@@ -210,12 +210,10 @@ class SiteHelper
      */
     public function getBlogLabelById(LocalizationPluginProxyInterface $localizationPluginProxyInterface, int $blogId): string
     {
+        $blogName = $this->getBlogNameById($blogId);
         $locale = $localizationPluginProxyInterface->getBlogLocaleById($blogId);
 
-        return ((StringHelper::isNullOrEmpty($locale))
-            ? $this->getBlogNameById($blogId)
-            : vsprintf('%s - %s', [$this->getBlogNameById($blogId), $locale])
-        );
+        return StringHelper::isNullOrEmpty($locale) ? $blogName : "$blogName - $locale";
     }
 
     public function getCurrentBlogLocale(LocalizationPluginProxyInterface $localizationPlugin): string
