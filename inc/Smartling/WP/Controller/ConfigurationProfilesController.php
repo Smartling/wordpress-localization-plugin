@@ -54,7 +54,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
             $this->getPluginInfo()->getUrl() . 'js/smartling-connector-gutenberg-lock-attributes.js',
             [],
             $this->getPluginInfo()->getVersion(),
-            true
+            false
         );
         wp_register_style(
             $this->getPluginInfo()->getName(),
