@@ -7,11 +7,13 @@ Requires PHP: 7.4
 Stable tag: 2.5.0
 License: GPLv2 or later
 
-Translate content in WordPress quickly and easily with Smartling’s Global Fluency Platform.
+Translate content in WordPress quickly and seamlessly with Smartling, the industry-leading Translation Management System.
 
 == Description ==
 
-The Smartling Connector extends the WordPress interface for seamless management of the translation process, all while leveraging the tools contained in Smartling’s Global Fluency Platform. Easily installed with minimal developer support, the combination of WordPress and Smartling provides users with a powerful technology solution to manage the translation and localization process with full visibility and control across the entire organization.
+The Smartling Connector facilitates the translation of WordPress content within Smartling.
+Easily installed with minimal developer support, the combination of WordPress and Smartling provides users with a powerful technology solution to manage the translation and localization process with full visibility and control across the entire organization.
+Translations are requested from within WordPress, and translated content is automatically returned to your WordPress environment.
 
 Integration Features
 
