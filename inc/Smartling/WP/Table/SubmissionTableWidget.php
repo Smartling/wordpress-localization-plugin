@@ -356,7 +356,12 @@ class SubmissionTableWidget extends SmartlingListTable
             $row[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row[SubmissionEntity::FIELD_SUBMISSION_DATE]));
             $row[SubmissionEntity::FIELD_APPLIED_DATE] = '0000-00-00 00:00:00' === $row[SubmissionEntity::FIELD_APPLIED_DATE] ? __('Never')
                 : DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row[SubmissionEntity::FIELD_APPLIED_DATE]));
-            $row[SubmissionEntity::FIELD_TARGET_LOCALE] = $siteHelper->getBlogLabelById($this->entityHelper->getConnector(), $row[SubmissionEntity::FIELD_TARGET_BLOG_ID]);
+            try {
+                $blogLabel = $siteHelper->getBlogLabelById($this->entityHelper->getConnector(), $row[SubmissionEntity::FIELD_TARGET_BLOG_ID]);
+            } catch (BlogNotFoundException $e) {
+                $blogLabel = "*blog id {$row[SubmissionEntity::FIELD_TARGET_BLOG_ID]} not found*";
+            }
+            $row[SubmissionEntity::FIELD_TARGET_LOCALE] = $blogLabel;
             $row[SubmissionEntity::VIRTUAL_FIELD_JOB_LINK] = $jobInfo->getJobName() === '' ? '' : "<a href=\"https://dashboard.smartling.com/app/projects/{$jobInfo->getProjectUid()}/account-jobs/?filename=$fileName\">{$jobInfo->getJobName()}</a>";
 
             $flagBlockParts = [];
