@@ -3,8 +3,8 @@
 	"version": "0.0.1",
 	"description": "Build assets for Smartling connector",
 	"scripts": {
-		"start": "parcel watch --no-hmr assets/js/smartling-block-locking.js assets/js/smartling-block-sidebar.js -d ../js",
-		"build": "parcel build assets/js/smartling-block-locking.js assets/js/smartling-block-sidebar.js -d ../js",
+		"start": "parcel watch --no-hmr assets/js/smartling-block-sidebar.js -d ../js",
+		"build": "parcel build assets/js/smartling-block-sidebar.js -d ../js",
 		"lint": "eslint assets/js"
 	},
 	"author": "Smartling",
