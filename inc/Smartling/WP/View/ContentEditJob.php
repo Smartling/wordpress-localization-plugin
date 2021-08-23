@@ -42,11 +42,12 @@ $needWrapper = ($tag instanceof WP_Term);
                 <div id="placeholder"><span class="loader"></span> Please wait...</div>
                 <div id="tab-existing" class="tab-content hidden">
                     <div id="job-tabs">
-                        <span class="active" data-action="new">New Job</span><span
-                                data-action="existing">Existing Job</span>
+                        <span class="active" data-action="new">New Job</span>
+                        <span data-action="existing">Existing Job</span>
+                        <span data-action="clone">Clone</span>
                     </div>
                     <table>
-                        <tr id="jobList" class="hidden">
+                        <tr id="jobList" class="hidden hideWhenCloning">
                             <th>
                                 <label for="jobSelect">Existing jobs</label>
                             </th>
@@ -54,19 +55,19 @@ $needWrapper = ($tag instanceof WP_Term);
                                 <select id="jobSelect"></select>
                             </td>
                         </tr>
-                        <tr>
+                        <tr class="hideWhenCloning">
                             <th><label for="name-sm">Name</label></th>
                             <td><input id="name-sm" name="jobName" type="text"/></td>
                         </tr>
-                        <tr>
+                        <tr class="hideWhenCloning">
                             <th><label for="description-sm">Description</label</th>
                             <td><textarea id="description-sm" name="description-sm"></textarea></td>
                         </tr>
-                        <tr>
+                        <tr class="hideWhenCloning">
                             <th><label for="dueDate">Due Date</label</th>
                             <td><input type="text" id="dueDate" name="dueDate"/></td>
                         </tr>
-                        <tr>
+                        <tr class="hideWhenCloning">
                             <th><label for="cbAuthorize">Authorize Job</label</th>
                             <td><input type="checkbox" class="authorize" id="cbAuthorize"
                                        name="cbAuthorize" <?= $profile->getAutoAuthorize() ? 'checked="checked"' : '' ?>/>
@@ -119,20 +120,31 @@ $needWrapper = ($tag instanceof WP_Term);
                         </tr>
                         <?php if (!$isBulkSubmitPage && GlobalSettingsManager::isHandleRelationsManually()) { ?>
                             <tr>
-                                <th>Extra upload options</th>
+                                <th>Related content depth</th>
                                 <td>
-                                    <label for="skipRelations">Skip all related content and send <strong>only</strong>
-                                        current content</label>
-                                    <?= HtmlTagGeneratorHelper::tag('input', '', [
-                                            'id' => 'skipRelations',
-                                            'type' => 'checkbox',
-                                            'checked' => GlobalSettingsManager::isRelatedContentCheckboxChecked(),
-                                        ])?>
+                                    <?= HtmlTagGeneratorHelper::tag(
+                                        'select',
+                                        HtmlTagGeneratorHelper::renderSelectOptions(
+                                            0,
+                                            [
+                                                0 => 'Send no related content',
+                                                1 => 'Send children of this page',
+                                                2 => 'Send children of this page and their children',
+                                            ]
+                                        ),
+                                        [
+                                            'id' => 'cloneDepth',
+                                            'name' => 'cloneDepth',
+                                        ],
+                                    )?>
                                 </td>
                             </tr>
-                            <tr id="relationsInfo">
+                            <tr id="relationsInfo" class="hidden">
                                 <th>New content to be uploaded:</th>
-                                <td id="relatedContent">
+                                <td>
+                                    <label><input type="checkbox" id="selectAllRelated" disabled /> Select all related</label>
+                                    <hr>
+                                    <div id="relatedContent"></div>
                                 </td>
                             </tr>
 
@@ -148,6 +160,7 @@ $needWrapper = ($tag instanceof WP_Term);
                                 <button class="button button-primary hidden" id="addToJob"
                                         title="Add content into your chosen job">Add to selected Job
                                 </button>
+                                <button class="button button-primary hidden" id="cloneButton">Clone</button>
                             </th>
                         </tr>
                         <input type="hidden" id="timezone-sm" name="timezone-sm" value="UTC"/>
@@ -334,12 +347,24 @@ if ($post instanceof WP_Post) {
                 var $action = $(this).attr("data-action");
                 $("div#job-tabs span").removeClass("active");
                 $(this).addClass("active");
+                const hideWhenCloning = $('.hideWhenCloning');
+                const cloneButton = $('#cloneButton');
                 switch ($action) {
                     case "new":
                         Helper.ui.createJobForm.show();
+                        hideWhenCloning.show();
+                        cloneButton.removeClass('hidden');
+                        break;
+                    case "clone":
+                        Helper.ui.createJobForm.hide();
+                        hideWhenCloning.hide();
+                        $("#" + this.btnAdd).addClass(this.cls);
+                        cloneButton.removeClass('hidden');
                         break;
                     case "existing":
                         Helper.ui.createJobForm.hide();
+                        hideWhenCloning.show();
+                        cloneButton.removeClass('hidden');
                         break;
                     default:
                 }
@@ -363,51 +388,41 @@ if ($post instanceof WP_Post) {
                 minDate: 0
             });
 
-            var loadRelations = function (contentType, contentId) {
-                var url = `${ajaxurl}?action=<?= ContentRelationsDiscoveryService::ACTION_NAME?>&id=${contentId}&content-type=${contentType}&targetBlogIds=${localeList}`;
-
-                $.get(url, function (data) {
-                    if (data.response.data) {
-                        window.relationsInfo = data.response.data;
-                        recalculateRelations();
-                    }
-                });
+            const loadRelations = function (contentType, contentId) {
             };
 
             if (handleRelationsManually && !isBulkSubmitPage) {
-                $("#skipRelations").on("change", function () {
-                    if ($(this).is(":checked")) {
-                        $("#relationsInfo").addClass("hidden");
-                    } else {
-                        $("#relationsInfo").removeClass("hidden");
+                $("#cloneDepth").on("change", function () {
+                    const cloneDepth = $('#cloneDepth').val();
+                    const relationsInfoElement = $('#relationsInfo');
+                    const relatedContent = $('#relatedContent');
+                    relationsInfoElement.addClass("hidden");
+                    switch (cloneDepth) {
+                        case "0":
+                            relatedContent.html('');
+                            break;
+                        case "1":
+                            relatedContent.html('<label><input type="checkbox">post name="related post 1" id=17</label>')
+                            relatedContent.append('<label><input type="checkbox">post name="related post 2" id=21</label>')
+                            relatedContent.append('<label><input type="checkbox">post name="related post 3" id=27</label>')
+                            break;
+                        case "2":
+                            relatedContent.html('<label><input type="checkbox">post name="related post 1" id=17</label>')
+                            relatedContent.append('<label><input type="checkbox">attachment name="/featured-image-1" id=18</label>')
+                            relatedContent.append('<label><input type="checkbox">post name="related post 2" id=21</label>')
+                            relatedContent.append('<label><input type="checkbox">attachment name="/featured-image-2" id=22</label>')
+                            relatedContent.append('<label><input type="checkbox">post name="related post 3" id=27</label>')
+                            relatedContent.append('<label><input type="checkbox">attachment name="/featured-image-3" id=28</label>')
+                            relatedContent.append('<label><input type="checkbox">attachment name="/in-post-image" id=11</label>')
+                            relatedContent.append('<label><input type="checkbox">category name="news" id=8</label>')
+                            break;
+                    }
+                    if (relatedContent.html() !== '') {
+                        relationsInfoElement.removeClass('hidden');
                     }
                 });
 
-                var recalculateRelations = function () {
-                    $("#relatedContent").html("");
-                    var relations = [];
-                    var missingRelations = window.relationsInfo.missingTranslatedReferences;
-                    var buildRelationsHint = function (relations) {
-                        var html = "";
-                        for (var type in relations) {
-                            html += `${type} (${relations[type]}) </br>`;
-                        }
-                        return html;
-                    };
-                    $(".job-wizard input.mcheck[type=checkbox]:checked").each(function () {
-                        var blogId = this.dataset.blogId;
-                        if (missingRelations && Object.prototype.hasOwnProperty.call(missingRelations, blogId)) {
-                            for (var sysType in missingRelations[blogId]) {
-                                var sysCount = missingRelations[blogId][sysType].length;
-                                if (Object.prototype.hasOwnProperty.call(relations, sysType)) {
-                                    relations[sysType] += sysCount;
-                                } else {
-                                    relations[sysType] = sysCount;
-                                }
-                                $("#relatedContent").html(buildRelationsHint(relations));
-                            }
-                        }
-                    });
+                const recalculateRelations = function () {
                 };
                 loadRelations(currentContent.contentType, currentContent.id, localeList);
                 $(".job-wizard input.mcheck").on("click", recalculateRelations);
