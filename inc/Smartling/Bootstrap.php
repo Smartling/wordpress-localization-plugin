@@ -390,11 +390,11 @@ class Bootstrap
                 }
             });
 
-            add_action($action, static function () {
+            add_action($action, function () {
                 /**
                  * Initializing ACF and ACF Option Pages support.
                  */
-                (new AcfDynamicSupport(static::fromContainer('entity.helper')))->run();
+                (new AcfDynamicSupport($this->fromContainer('entity.helper')))->run();
             });
         }
         /**

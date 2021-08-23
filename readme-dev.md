@@ -1,4 +1,9 @@
 # Notes for developers
+## Building frontend assets
+```shell
+cd build && npm run build
+```
+
 ## Testing
 There is a Dockerfile that can be used to create an image to run unit and integration tests.
 ### Build
@@ -28,7 +33,6 @@ cd build && npm run build && cd ..
 svn commit -m 'Update to v x.y.z' --username smartling
 svn copy https://plugins.svn.wordpress.org/smartling-connector/trunk https://plugins.svn.wordpress.org/smartling-connector/tags/x.y.z -m 'Tagging new version x.y.z'
 ```
-
 
 # Dev changelog
 ## Function signature changes in 2.5.0
