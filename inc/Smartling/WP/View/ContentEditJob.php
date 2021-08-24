@@ -353,18 +353,18 @@ if ($post instanceof WP_Post) {
                     case "new":
                         Helper.ui.createJobForm.show();
                         hideWhenCloning.show();
-                        cloneButton.removeClass('hidden');
+                        cloneButton.addClass('hidden');
                         break;
                     case "clone":
                         Helper.ui.createJobForm.hide();
                         hideWhenCloning.hide();
-                        $("#" + this.btnAdd).addClass(this.cls);
+                        $('#addToJob').addClass('hidden');
                         cloneButton.removeClass('hidden');
                         break;
                     case "existing":
                         Helper.ui.createJobForm.hide();
                         hideWhenCloning.show();
-                        cloneButton.removeClass('hidden');
+                        cloneButton.addClass('hidden');
                         break;
                     default:
                 }
@@ -402,19 +402,20 @@ if ($post instanceof WP_Post) {
                             relatedContent.html('');
                             break;
                         case "1":
-                            relatedContent.html('<label><input type="checkbox">post name="related post 1" id=17</label>')
-                            relatedContent.append('<label><input type="checkbox">post name="related post 2" id=21</label>')
-                            relatedContent.append('<label><input type="checkbox">post name="related post 3" id=27</label>')
+                            relatedContent.html('<label class="level-1"><input type="checkbox">post name="related post 1" id=17</label>')
+                            relatedContent.append('<label class="level-1"><input type="checkbox">post name="related post 2" id=21</label>')
+                            relatedContent.append('<label class="level-1"><input type="checkbox">post name="related post 3" id=27</label>')
                             break;
                         case "2":
-                            relatedContent.html('<label><input type="checkbox">post name="related post 1" id=17</label>')
-                            relatedContent.append('<label><input type="checkbox">attachment name="/featured-image-1" id=18</label>')
-                            relatedContent.append('<label><input type="checkbox">post name="related post 2" id=21</label>')
-                            relatedContent.append('<label><input type="checkbox">attachment name="/featured-image-2" id=22</label>')
-                            relatedContent.append('<label><input type="checkbox">post name="related post 3" id=27</label>')
-                            relatedContent.append('<label><input type="checkbox">attachment name="/featured-image-3" id=28</label>')
-                            relatedContent.append('<label><input type="checkbox">attachment name="/in-post-image" id=11</label>')
-                            relatedContent.append('<label><input type="checkbox">category name="news" id=8</label>')
+                            relatedContent.html('<label class="level-1"><input type="checkbox">post name="related post 1" id=17</label>')
+                            relatedContent.append('<label class="level-2"><input type="checkbox">attachment name="/featured-image-1" id=18</label>')
+                            relatedContent.append('<label class="level-1"><input type="checkbox">post name="related post 2" id=21</label>')
+                            relatedContent.append('<label class="level-2"><input type="checkbox">attachment name="/in-post-image" id=11</label>')
+                            relatedContent.append('<label class="level-2"><input type="checkbox">attachment name="/featured-image-2" id=22</label>')
+                            relatedContent.append('<label class="level-1"><input type="checkbox">post name="related post 3" id=27</label>')
+                            relatedContent.append('<label class="level-2"><input type="checkbox">attachment name="/featured-image-3" id=28</label>')
+                            relatedContent.append('<label class="level-2"><input type="checkbox">attachment name="/in-post-image" id=11</label>')
+                            relatedContent.append('<label class="level-2"><input type="checkbox">category name="news" id=8</label>')
                             break;
                     }
                     if (relatedContent.html() !== '') {

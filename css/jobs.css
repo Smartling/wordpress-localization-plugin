@@ -120,6 +120,11 @@ p.locale-list {
 
 #relatedContent label {
     display: block;
+    margin-bottom: 3px;
+}
+
+#relatedContent .level-2 {
+    margin-left: 1em;
 }
 
 #relationsInfo th {
