@@ -241,10 +241,11 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
                                             ->getBlogLabelById($this->getEntityHelper()
                                                                     ->getConnector(),
                                                 $blogId));
-                    $tLocale->setEnabled(array_key_exists('enabled', $settings) && 'on' === $settings['enabled']);
+                    $enabled = 'on' === $settings['enabled'];
+                    $tLocale->setEnabled(array_key_exists('enabled', $settings) && $enabled);
                     $smartlingLocale = array_key_exists('target', $settings) ? $settings['target'] : -1;
                     $tLocale->setSmartlingLocale($smartlingLocale);
-                    if ($smartlingLocale !== -1) {
+                    if ($smartlingLocale !== -1 && $enabled) {
                         $usedTargetLocales[] = $smartlingLocale;
                     }
 
