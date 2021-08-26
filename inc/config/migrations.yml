@@ -59,6 +59,9 @@ services:
   migration.210406:
     class: Smartling\DbAl\Migrations\Migration210406
 
+  migration.210825:
+    class: Smartling\DbAl\Migrations\Migration210825
+
   manager.db.migrations:
     class: Smartling\DbAl\Migrations\DbMigrationManager
     calls:
@@ -82,3 +85,4 @@ services:
       - [ "registerMigration", [ "@migration.181002" ]]
       - [ "registerMigration", [ "@migration.200528" ]]
       - [ "registerMigration", [ "@migration.210406" ]]
+      - [ "registerMigration", [ "@migration.210825" ]]
