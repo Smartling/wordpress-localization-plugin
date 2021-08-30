@@ -28,8 +28,10 @@ $needWrapper = ($tag instanceof WP_Term);
 ?>
 
 <script>
-    var handleRelationsManually = <?= GlobalSettingsManager::isHandleRelationsManually() ? 'true' : 'false' ?>;
-    var isBulkSubmitPage = <?= $isBulkSubmitPage ? 'true' : 'false'?>;
+    const handleRelationsManually = <?= GlobalSettingsManager::isHandleRelationsManually() ? 'true' : 'false' ?>;
+    const isBulkSubmitPage = <?= $isBulkSubmitPage ? 'true' : 'false'?>;
+    let l1Relations = {missingTranslatedReferences: {}, originalReferences: {}};
+    let l2Relations = {missingTranslatedReferences: {}, originalReferences: {}};
 </script>
 
 <?php if ($needWrapper) : ?>
@@ -44,7 +46,7 @@ $needWrapper = ($tag instanceof WP_Term);
                     <div id="job-tabs">
                         <span class="active" data-action="new">New Job</span>
                         <span data-action="existing">Existing Job</span>
-                        <span data-action="clone">Clone</span>
+                        <?= $isBulkSubmitPage ? '' : '<span data-action="clone">Clone</span>'?>
                     </div>
                     <table>
                         <tr id="jobList" class="hidden hideWhenCloning">
@@ -129,7 +131,7 @@ $needWrapper = ($tag instanceof WP_Term);
                                             [
                                                 0 => 'Send no related content',
                                                 1 => 'Send children of this page',
-                                                2 => 'Send children of this page and their children',
+                                                2 => 'Send children and grandchildren of this page',
                                             ]
                                         ),
                                         [
@@ -139,19 +141,15 @@ $needWrapper = ($tag instanceof WP_Term);
                                     )?>
                                 </td>
                             </tr>
-                            <tr id="relationsInfo" class="hidden">
+                            <tr id="relationsInfo">
                                 <th>New content to be uploaded:</th>
-                                <td>
-                                    <label><input type="checkbox" id="selectAllRelated" disabled /> Select all related</label>
-                                    <hr>
-                                    <div id="relatedContent"></div>
+                                <td id="relatedContent">
                                 </td>
                             </tr>
 
                         <?php } ?>
                         <tr>
                             <th class="center" colspan="2">
-
                                 <div id="error-messages"></div>
                                 <div id="loader-image" class="hidden"><span class="loader"></span></div>
                                 <button class="button button-primary" id="createJob"
@@ -344,12 +342,11 @@ if ($post instanceof WP_Post) {
         $(document).ready(function () {
             // emulate tabs
             $("div#job-tabs span").on("click", function () {
-                var $action = $(this).attr("data-action");
                 $("div#job-tabs span").removeClass("active");
                 $(this).addClass("active");
                 const hideWhenCloning = $('.hideWhenCloning');
                 const cloneButton = $('#cloneButton');
-                switch ($action) {
+                switch ($(this).attr("data-action")) {
                     case "new":
                         Helper.ui.createJobForm.show();
                         hideWhenCloning.show();
@@ -388,46 +385,104 @@ if ($post instanceof WP_Post) {
                 minDate: 0
             });
 
-            const loadRelations = function (contentType, contentId) {
+            const mergeRelations = function mergeRelations(a, b) {
+                const result = JSON.parse(JSON.stringify(a));
+                for (const blogId in b) {
+                    if (!result.hasOwnProperty(blogId)) {
+                        result[blogId] = {};
+                    }
+                    for (const type in b[blogId]) {
+                        if (!result[blogId].hasOwnProperty(type)) {
+                            result[blogId][type] = [];
+                        }
+                        result[blogId][type] = result[blogId][type].concat(b[blogId][type]).filter((value, index, self) => self.indexOf(value) === index);
+                    }
+                }
+
+                return result;
+            }
+
+            const recalculateRelations = function recalculateRelations() {
+                $("#relatedContent").html("");
+                const relations = {};
+                let missingRelations = {};
+                const cloneDepth = $('#cloneDepth').val();
+                switch (cloneDepth) {
+                    case "0":
+                        return;
+                    case "1":
+                        missingRelations = l1Relations.missingTranslatedReferences;
+                        break;
+                    case "2":
+                        missingRelations = mergeRelations(l1Relations.missingTranslatedReferences, l2Relations.missingTranslatedReferences);
+                        break;
+                    default:
+                        console.error(`Unsupported clone depth value: ${cloneDepth}`);
+                }
+                const buildRelationsHint = function (relations) {
+                    let html = "";
+                    for (const type in relations) {
+                        html += `${type} (${relations[type]}) </br>`;
+                    }
+                    return html;
+                };
+                $(".job-wizard input.mcheck[type=checkbox]:checked").each(function () {
+                    const blogId = this.dataset.blogId;
+                    if (missingRelations && missingRelations.hasOwnProperty(blogId)) {
+                        for (const sysType in missingRelations[blogId]) {
+                            let sysCount = missingRelations[blogId][sysType].length;
+                            if (relations.hasOwnProperty(sysType)) {
+                                relations[sysType] += sysCount;
+                            } else {
+                                relations[sysType] = sysCount;
+                            }
+                            $("#relatedContent").html(buildRelationsHint(relations));
+                        }
+                    }
+                });
+            };
+
+            const loadRelations = function loadRelations(contentType, contentId, level = 1) {
+                const url = `${ajaxurl}?action=<?= ContentRelationsDiscoveryService::ACTION_NAME?>&id=${contentId}&content-type=${contentType}&targetBlogIds=${localeList}`;
+
+                $.get(url, function loadData(data) {
+                    if (data.response.data) {
+                        switch (level) {
+                            case 1:
+                                l1Relations = data.response.data;
+                                for (const relatedType in l1Relations.originalReferences) {
+                                    for (const relatedId of l1Relations.originalReferences[relatedType]) {
+                                        loadRelations(relatedType, relatedId, level + 1);
+                                    }
+                                }
+                                window.relationsInfo = data.response.data;
+                                break;
+                            case 2:
+                                const originalReferences = data.response.data.originalReferences;
+                                for (const relatedType in originalReferences) {
+                                    for (const relatedId of originalReferences[relatedType]) {
+                                        if (!l2Relations.originalReferences.hasOwnProperty(relatedType)) {
+                                            l2Relations.originalReferences[relatedType] = [];
+                                        }
+                                        l2Relations.originalReferences[relatedType] = l2Relations.originalReferences[relatedType].concat(originalReferences[relatedType]);
+                                    }
+                                    l2Relations.missingTranslatedReferences = mergeRelations(
+                                        l2Relations.missingTranslatedReferences,
+                                        data.response.data.missingTranslatedReferences,
+                                    );
+                                }
+                                break;
+                        }
+
+                        recalculateRelations();
+                    }
+                });
             };
 
             if (handleRelationsManually && !isBulkSubmitPage) {
-                $("#cloneDepth").on("change", function () {
-                    const cloneDepth = $('#cloneDepth').val();
-                    const relationsInfoElement = $('#relationsInfo');
-                    const relatedContent = $('#relatedContent');
-                    relationsInfoElement.addClass("hidden");
-                    switch (cloneDepth) {
-                        case "0":
-                            relatedContent.html('');
-                            break;
-                        case "1":
-                            relatedContent.html('<label class="level-1"><input type="checkbox">post name="related post 1" id=17</label>')
-                            relatedContent.append('<label class="level-1"><input type="checkbox">post name="related post 2" id=21</label>')
-                            relatedContent.append('<label class="level-1"><input type="checkbox">post name="related post 3" id=27</label>')
-                            break;
-                        case "2":
-                            relatedContent.html('<label class="level-1"><input type="checkbox">post name="related post 1" id=17</label>')
-                            relatedContent.append('<label class="level-2"><input type="checkbox">attachment name="/featured-image-1" id=18</label>')
-                            relatedContent.append('<label class="level-1"><input type="checkbox">post name="related post 2" id=21</label>')
-                            relatedContent.append('<label class="level-2"><input type="checkbox">attachment name="/in-post-image" id=11</label>')
-                            relatedContent.append('<label class="level-2"><input type="checkbox">attachment name="/featured-image-2" id=22</label>')
-                            relatedContent.append('<label class="level-1"><input type="checkbox">post name="related post 3" id=27</label>')
-                            relatedContent.append('<label class="level-2"><input type="checkbox">attachment name="/featured-image-3" id=28</label>')
-                            relatedContent.append('<label class="level-2"><input type="checkbox">attachment name="/in-post-image" id=11</label>')
-                            relatedContent.append('<label class="level-2"><input type="checkbox">category name="news" id=8</label>')
-                            break;
-                    }
-                    if (relatedContent.html() !== '') {
-                        relationsInfoElement.removeClass('hidden');
-                    }
-                });
-
-                const recalculateRelations = function () {
-                };
-                loadRelations(currentContent.contentType, currentContent.id, localeList);
-                $(".job-wizard input.mcheck").on("click", recalculateRelations);
-                $(".job-wizard a").on("click", recalculateRelations);
+                loadRelations(currentContent.contentType, currentContent.id);
+                $('.job-wizard input.mcheck, .job-wizard a').on('click', recalculateRelations);
+                $('#cloneDepth').on('change', recalculateRelations);
             }
             var hasProp = function (obj, prop) {
                 return Object.prototype.hasOwnProperty.call(obj, prop);
@@ -604,7 +659,7 @@ if ($post instanceof WP_Post) {
                     });
                 }
             } else { // handle relations manually
-                $("#addToJob").on("click", function (e) {
+                $("#addToJob, #cloneButton").on("click", function (e) {
                     e.stopPropagation();
                     e.preventDefault();
 
@@ -621,19 +676,24 @@ if ($post instanceof WP_Post) {
                         job: {
                             id: $("#jobSelect").val(),
                             name: $("option[value=" + jobSelectEl.val() + "]").html(),
+                            relations: [],
                             description: $("textarea[name=\"description-sm\"]").val(),
                             dueDate: $("input[name=\"dueDate\"]").val(),
                             timeZone: timezone,
                             authorize: ($("div.job-wizard input[type=checkbox].authorize:checked").length > 0)
                         },
-                        skipRelationsCheckboxState: $('#skipRelations').is(':checked'),
                         targetBlogIds: blogIds.join(","),
                     };
 
-                    if ($("#skipRelations").is(":checked") || isBulkSubmitPage) {
-                        data["relations"] = [];
-                    } else {
-                        data.relations = window.relationsInfo.missingTranslatedReferences;
+                    if (!isBulkSubmitPage) {
+                        switch ($('#cloneDepth').val()) {
+                            case "1":
+                                data.relations = l1Relations.missingTranslatedReferences;
+                                break;
+                            case "2":
+                                data.relations = mergeRelations(l1Relations.missingTranslatedReferences, l2Relations.missingTranslatedReferences);
+                                break;
+                        }
                     }
 
                     if (isBulkSubmitPage) {
