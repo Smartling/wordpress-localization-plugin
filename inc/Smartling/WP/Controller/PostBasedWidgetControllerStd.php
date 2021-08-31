@@ -451,16 +451,19 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                         );
                     }
                 } else {
-                    if (count($submissionManager->find([SubmissionEntity::FIELD_TARGET_ID => $post->ID], 1)) > 0) {
-                        wp_enqueue_script(
-                            'smartling-block-sidebar',
-                            $this->getPluginInfo()->getUrl() . 'js/smartling-block-sidebar.js',
-                            ['wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor'],
-                            $this->getPluginInfo()->getVersion(),
-                            true
-                        );
-                    }
                     echo '<p>' . __('No suitable configuration profile found.') . '</p>';
+                }
+                if (count($submissionManager->find([
+                    SubmissionEntity::FIELD_TARGET_BLOG_ID => $currentBlogId,
+                    SubmissionEntity::FIELD_TARGET_ID => $post->ID,
+                    ], 1)) > 0) {
+                    wp_enqueue_script(
+                        'smartling-block-sidebar',
+                        $this->getPluginInfo()->getUrl() . 'js/smartling-block-sidebar.js',
+                        ['wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor'],
+                        $this->getPluginInfo()->getVersion(),
+                        true
+                    );
                 }
             } catch (SmartlingDbException $e) {
                 $message = 'Failed to search for the original post. No source post found for blog %s, post %s. Hiding widget';

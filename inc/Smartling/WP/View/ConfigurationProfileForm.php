@@ -788,18 +788,24 @@ Contact Technical Support or your Customer Success Manager before modifying thes
         <?php submit_button(); ?>
     </form>
     <script>
-        document.getElementById('smartling-configuration-profile-form').addEventListener('submit', function(event) {
+        document.getElementById('smartling-configuration-profile-form').addEventListener('submit', function submitForm(event) {
             const errorDiv = document.getElementById('errorDiv');
             errorDiv.style.display = 'none';
             const usedSmartlingLocales = {};
             for (const element of document.querySelectorAll('.targetLocaleSelectCell select')) {
-                if (usedSmartlingLocales.hasOwnProperty(element.value)) {
-                    event.preventDefault();
-                    errorDiv.innerText = '<?= ERROR_TARGET_LOCALES_MESSAGE?>' + '. ' + element.value + ' is being used more than once.';
-                    errorDiv.style.display = 'block';
-                    break;
+                const input = document.querySelector(
+                    `input.mcheck[name="smartling_settings[targetLocales][${element.name.match(/\[(\d+)]/)[1]}][enabled]"]`
+                );
+
+                if (input && input.checked) {
+                    if (usedSmartlingLocales.hasOwnProperty(element.value)) {
+                        event.preventDefault();
+                        errorDiv.innerText = `<?= ERROR_TARGET_LOCALES_MESSAGE?>. ${element.value} is being used more than once.`;
+                        errorDiv.style.display = 'block';
+                        break;
+                    }
+                    usedSmartlingLocales[element.value] = true;
                 }
-                usedSmartlingLocales[element.value] = true;
             }
         });
     </script>
