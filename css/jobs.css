@@ -90,6 +90,8 @@ div.tab-content table, div.tab-panel {
     border: 1px solid darkgray;
 }
 
+
+
 .clone-button {
     text-align: right;
 }
@@ -116,17 +118,4 @@ div.tab-content table, div.tab-panel {
 
 p.locale-list {
     margin: 3px;
-}
-
-#relatedContent label {
-    display: block;
-    margin-bottom: 3px;
-}
-
-#relatedContent .level-2 {
-    margin-left: 1em;
-}
-
-#relationsInfo th {
-    vertical-align: top;
 }
