@@ -11,7 +11,7 @@ namespace {
         }
     }
     if (!function_exists('wp_get_nav_menu_items')) {
-        function wp_get_nav_menu_items($menu) {
+        function wp_get_nav_menu_items($menu, $args) {
             if ($menu === 161) {
                 $result = [];
                 foreach ([162, 163, 164] as $menuItemId) {

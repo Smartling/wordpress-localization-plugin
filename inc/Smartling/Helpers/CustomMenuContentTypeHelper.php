@@ -2,121 +2,56 @@
 
 namespace Smartling\Helpers;
 
-use Psr\Log\LoggerInterface;
 use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Exception\BlogNotFoundException;
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Class CustomMenuContentTypeHelper
- * @package Smartling\Helpers
- */
 class CustomMenuContentTypeHelper
 {
+    use LoggerSafeTrait;
 
     /**
      * Wordpress meta_key name for nav_menu_item content type.
      */
-    const META_KEY_MENU_ITEM_PARENT = '_menu_item_menu_item_parent';
+    public const META_KEY_MENU_ITEM_PARENT = '_menu_item_menu_item_parent';
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    private ContentEntitiesIOFactory $contentIoFactory;
+    private SiteHelper $siteHelper;
 
-    /**
-     * @var ContentEntitiesIOFactory
-     */
-    private $contentIoFactory;
-
-    /**
-     * @var SiteHelper
-     */
-    private $siteHelper;
-
-    public function __construct() {
-        $this->logger = MonologWrapper::getLogger(get_called_class());
-    }
-
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
-    {
-        return $this->logger;
-    }
-
-    /**
-     * @return ContentEntitiesIOFactory
-     */
-    public function getContentIoFactory()
-    {
-        return $this->contentIoFactory;
-    }
-
-    /**
-     * @param ContentEntitiesIOFactory $contentIoFactory
-     */
-    public function setContentIoFactory($contentIoFactory)
+    public function __construct(ContentEntitiesIOFactory $contentIoFactory, SiteHelper $siteHelper)
     {
         $this->contentIoFactory = $contentIoFactory;
+        $this->siteHelper = $siteHelper; 
     }
 
     /**
-     * @return SiteHelper
-     */
-    public function getSiteHelper()
-    {
-        return $this->siteHelper;
-    }
-
-    /**
-     * @param SiteHelper $siteHelper
-     */
-    public function setSiteHelper($siteHelper)
-    {
-        $this->siteHelper = $siteHelper;
-    }
-
-    /**
-     * @param int   $menuId
-     * @param int   $blogId
      * @param int[] $items
-     *
      * @throws BlogNotFoundException
      */
-    public function assignMenuItemsToMenu($menuId, $blogId, $items)
+    public function assignMenuItemsToMenu(int $menuId, int $blogId, array $items): void
     {
-        $needBlogChange = $blogId !== $this->getSiteHelper()->getCurrentBlogId();
-        try {
-            if ($needBlogChange) {
-                $this->getSiteHelper()->switchBlogId($blogId);
-            }
+        $needBlogChange = $blogId !== $this->siteHelper->getCurrentBlogId();
+        if ($needBlogChange) {
+            $this->siteHelper->switchBlogId($blogId);
+        }
 
-            foreach ($items as $item) {
-                wp_set_object_terms($item, [(int)$menuId], ContentTypeNavigationMenu::WP_CONTENT_TYPE);
-            }
+        foreach ($items as $item) {
+            wp_set_object_terms($item, [$menuId], ContentTypeNavigationMenu::WP_CONTENT_TYPE);
+        }
 
-            if ($needBlogChange) {
-                $this->getSiteHelper()->restoreBlogId();
-            }
-        } catch (BlogNotFoundException $e) {
-            throw $e;
+        if ($needBlogChange) {
+            $this->siteHelper->restoreBlogId();
         }
     }
 
     /**
-     * @param int $menuId
-     * @param int $blogId
-     *
      * @return PostEntityStd[]
      * @throws BlogNotFoundException
      */
-    public function getMenuItems($menuId, $blogId)
+    public function getMenuItems(int $menuId, int $blogId): array
     {
         $options = [
             'order'                  => 'ASC',
@@ -129,53 +64,46 @@ class CustomMenuContentTypeHelper
             'update_post_term_cache' => false,
         ];
 
-        $needBlogSwitch = $this->getSiteHelper()->getCurrentBlogId() !== $blogId;
+        $needBlogSwitch = $this->siteHelper->getCurrentBlogId() !== $blogId;
 
         $ids = [];
 
-        try {
-            if ($needBlogSwitch) {
-                $this->getSiteHelper()->switchBlogId($blogId);
-            }
+        if ($needBlogSwitch) {
+            $this->siteHelper->switchBlogId($blogId);
+        }
 
-            $items = wp_get_nav_menu_items($menuId, $options);
+        $items = wp_get_nav_menu_items($menuId, $options);
 
-            $mapper = $this->getContentIoFactory()->getMapper(ContentTypeNavigationMenuItem::WP_CONTENT_TYPE);
-            foreach ($items as $item) {
-                $m = clone $mapper;
-                $ids[] = $m->get((int)$item->ID);
-            }
+        $mapper = $this->contentIoFactory->getMapper(ContentTypeNavigationMenuItem::WP_CONTENT_TYPE);
+        foreach ($items as $item) {
+            $m = clone $mapper;
+            $ids[] = $m->get((int)$item->ID);
+        }
 
-            if ($needBlogSwitch) {
-                $this->getSiteHelper()->restoreBlogId();
-            }
-        } catch (BlogNotFoundException $e) {
-            throw $e;
+        if ($needBlogSwitch) {
+            $this->siteHelper->restoreBlogId();
         }
 
         return $ids;
     }
 
     /**
-     * @param SubmissionEntity $submission
-     * @param string           $taxonomy
-     *
      * @return \WP_Term[]
      */
-    public function getTerms($submission, $taxonomy)
+    public function getTerms(SubmissionEntity $submission, string $taxonomy): array
     {
-        $needBlogSwitch = $submission->getSourceBlogId() !== $this->getSiteHelper()->getCurrentBlogId();
+        $needBlogSwitch = $submission->getSourceBlogId() !== $this->siteHelper->getCurrentBlogId();
         $terms = [];
 
         try {
             if ($needBlogSwitch) {
-                $this->getSiteHelper()->switchBlogId($submission->getSourceBlogId());
+                $this->siteHelper->switchBlogId($submission->getSourceBlogId());
             }
 
             $terms = wp_get_object_terms($submission->getSourceId(), $taxonomy);
 
             if ($needBlogSwitch) {
-                $this->getSiteHelper()->restoreBlogId();
+                $this->siteHelper->restoreBlogId();
             }
         } catch (BlogNotFoundException $e) {
             $this->getLogger()->warning(vsprintf('Cannot get terms in missing blog.', []));
@@ -183,6 +111,4 @@ class CustomMenuContentTypeHelper
 
         return is_array($terms) ? $terms : [];
     }
-
-
 }
