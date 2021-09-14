@@ -346,4 +346,3 @@ services:
       - "@media.attachment.rules.manager"
       - "@factory.replacer"
       - "@manager.settings"
-      - "@helper.customMenu"

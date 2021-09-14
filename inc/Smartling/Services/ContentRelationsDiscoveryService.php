@@ -5,17 +5,13 @@ namespace Smartling\Services;
 use Exception;
 use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
-use Smartling\ContentTypes\ContentTypeNavigationMenu;
-use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
-use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
-use Smartling\Helpers\CustomMenuContentTypeHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
@@ -84,7 +80,6 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
     private ApiWrapperInterface $apiWrapper;
     private SettingsManager $settingsManager;
     private LocalizationPluginProxyInterface $localizationPluginProxy;
-    private CustomMenuContentTypeHelper $menuHelper;
 
     public function getLogger(): LoggerInterface
     {
@@ -103,8 +98,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         ApiWrapperInterface $apiWrapper,
         MediaAttachmentRulesManager $mediaAttachmentRulesManager,
         ReplacerFactory $replacerFactory,
-        SettingsManager $settingsManager,
-        CustomMenuContentTypeHelper $menuHelper
+        SettingsManager $settingsManager
     )
     {
         $this->absoluteLinkedAttachmentCoreHelper = $absoluteLinkedAttachmentCoreHelper;
@@ -120,7 +114,6 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         $this->settingsManager = $settingsManager;
         $this->shortcodeHelper = $shortcodeHelper;
         $this->submissionManager = $submissionManager;
-        $this->menuHelper = $menuHelper;
     }
 
     public function register(): void
@@ -182,14 +175,6 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                     $submission->setSourceTitle($title);
                 }
                 $this->submissionManager->storeEntity($submission);
-                if ($submission->getContentType() === ContentTypeNavigationMenu::WP_CONTENT_TYPE) {
-                    $menuItems = $this->menuHelper->getMenuItems($submission->getSourceId(), $submission->getSourceBlogId());
-                    $menuItemIds = array_reduce($menuItems, static function ($carry, PostEntityStd $item) {
-                        $carry[] = $item->ID;
-                        return $carry;
-                    }, []);
-                    $this->bulkUploadHandler($jobInfo, $menuItemIds, ContentTypeNavigationMenuItem::WP_CONTENT_TYPE, $currentBlogId, [$targetBlogId]);
-                }
             }
         }
         $this->returnResponse(['status' => 'SUCCESS']);
