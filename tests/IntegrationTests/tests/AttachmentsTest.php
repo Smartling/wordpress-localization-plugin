@@ -2,12 +2,10 @@
 
 namespace IntegrationTests\tests;
 
-use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
-use Smartling\Tuner\MediaAttachmentRulesManager;
 
 class AttachmentsTest extends SmartlingUnitTestCaseAbstract
 {
