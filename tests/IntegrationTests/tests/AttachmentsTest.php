@@ -25,8 +25,7 @@ class AttachmentsTest extends SmartlingUnitTestCaseAbstract
 
     public function testAnchors()
     {
-        $content = '<a href="https://example.com">A link</a>';
-        $postId = $this->createPost('post', "Anchor test post", $content);
+        $postId = $this->createPost('post', "Anchor test post", '<a href="https://example.com">A link</a>');
 
         $submission = $this->translationHelper->prepareSubmission('post', $this->sourceBlogId, $postId, $this->targetBlogId);
         $submission->getFileUri();
