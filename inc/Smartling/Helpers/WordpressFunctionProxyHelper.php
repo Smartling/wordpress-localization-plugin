@@ -64,7 +64,7 @@ class WordpressFunctionProxyHelper
 
     public function url_to_postid(string $url): int
     {
-        return (int)$this->url_to_postid($url);
+        return (int)url_to_postid($url);
     }
 
     public function wp_send_json()
