@@ -122,16 +122,16 @@ $needWrapper = ($tag instanceof WP_Term);
                         </tr>
                         <?php if (!$isBulkSubmitPage && GlobalSettingsManager::isHandleRelationsManually()) { ?>
                             <tr>
-                                <th>Related content depth</th>
+                                <th>Related content</th>
                                 <td>
                                     <?= HtmlTagGeneratorHelper::tag(
                                         'select',
                                         HtmlTagGeneratorHelper::renderSelectOptions(
                                             0,
                                             [
-                                                0 => 'Send no related content',
-                                                1 => 'Send children of this page',
-                                                2 => 'Send children and grandchildren of this page',
+                                                0 => 'Don\'t send  related content',
+                                                1 => 'Send related content one level deep',
+                                                2 => 'Send related content two levels deep',
                                             ]
                                         ),
                                         [
