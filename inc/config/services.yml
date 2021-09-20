@@ -34,9 +34,9 @@ services:
 
   helper.customMenu:
     class: Smartling\Helpers\CustomMenuContentTypeHelper
-    calls:
-      - [ "setSiteHelper", [ "@site.helper" ] ]
-      - [ "setContentIoFactory", [ "@factory.contentIO" ] ]
+    arguments:
+      - "@factory.contentIO"
+      - "@site.helper"
 
   helper.post.content:
     class: Smartling\Helpers\PostContentHelper
@@ -346,3 +346,4 @@ services:
       - "@media.attachment.rules.manager"
       - "@factory.replacer"
       - "@manager.settings"
+      - "@helper.customMenu"
