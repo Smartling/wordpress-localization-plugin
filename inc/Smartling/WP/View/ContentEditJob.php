@@ -672,6 +672,7 @@ if ($post instanceof WP_Post) {
                     });
 
                     var data = {
+                        formAction: e.target.id === 'cloneButton' ? 'clone' : 'upload',
                         source: currentContent,
                         job: {
                             id: $("#jobSelect").val(),
