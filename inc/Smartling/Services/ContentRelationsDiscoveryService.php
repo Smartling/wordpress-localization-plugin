@@ -195,6 +195,59 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         $this->returnResponse(['status' => 'SUCCESS']);
     }
 
+    public function clone(array $data): void
+    {
+        $contentId = ArrayHelper::first($data['source']['id']);
+        $contentType = $data['source']['contentType'];
+        $sourceBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
+        $targetBlogIds = explode(',', $data['targetBlogIds']);
+        $submissionArray = [
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+        ];
+        $submissions = [];
+
+        foreach ($targetBlogIds as $targetBlogId) {
+            $sources = [
+                [
+                    'id' => $contentId,
+                    'type' => $contentType,
+                ],
+            ];
+            $submissionArray[SubmissionEntity::FIELD_TARGET_BLOG_ID] = $targetBlogId;
+            if ($this->hasRelations($data, (int)$targetBlogId)) {
+                foreach ($data['relations'][$targetBlogId] as $type => $ids) {
+                    foreach ($ids as $id) {
+                        $sources[] = [
+                            'id' => $id,
+                            'type' => $type,
+                        ];
+                    }
+                }
+            }
+            foreach ($sources as $source) {
+                $submissionArray[SubmissionEntity::FIELD_CONTENT_TYPE] = $source['type'];
+                $submissionArray[SubmissionEntity::FIELD_SOURCE_ID] = (int)$source['id'];
+                $existing = ArrayHelper::first($this->submissionManager->find($submissionArray));
+                if ($existing instanceof SubmissionEntity) {
+                    $submission = $existing;
+                    $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+                } else {
+                    $submissionArray[SubmissionEntity::FIELD_STATUS] = SubmissionEntity::SUBMISSION_STATUS_NEW;
+                    $submissionArray[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::nowAsString();
+                    $submission = SubmissionEntity::fromArray($submissionArray, $this->getLogger());
+                    $title = $this->getPostTitle($submission->getSourceId());
+                    if ($title !== '') {
+                        $submission->setSourceTitle($title);
+                    }
+                    $submission->getFileUri();
+                }
+                $submission->setIsCloned(1);
+                $submissions[] = $submission;
+            }
+        }
+        $this->submissionManager->storeSubmissions($submissions);
+    }
+
     public function createSubmissions(array $data): void
     {
         $contentType = $data['source']['contentType'];
@@ -225,7 +278,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
 
             $sources = [];
 
-            if (array_key_exists('relations', $data) && is_array($data['relations']) && array_key_exists($targetBlogId, $data['relations'])) {
+            if ($this->hasRelations($data, (int)$targetBlogId)) {
                 foreach ($data['relations'][$targetBlogId] as $sysType => $ids) {
                     foreach ($ids as $id) {
                         $sources[] = [
@@ -263,7 +316,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 ]);
 
                 $submission = SubmissionEntity::fromArray($submissionArray, $this->getLogger());
-                $title = $this->getPostTitle($contentId);
+                $title = $this->getPostTitle($submission->getSourceId());
                 if ($title !== '') {
                     $submission->setSourceTitle($title);
                 }
@@ -298,7 +351,11 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
     public function createSubmissionsHandler(): void
     {
         try {
-            $this->createSubmissions($_POST);
+            if ($_POST['formAction'] === 'clone') {
+                $this->clone($_POST);
+            } else {
+                $this->createSubmissions($_POST);
+            }
             $this->returnResponse(['status' => 'SUCCESS']);
         } catch (Exception $e) {
             $this->returnError('content.submission.failed', $e->getMessage());
@@ -662,5 +719,10 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             return $post->post_title;
         }
         return '';
+    }
+
+    private function hasRelations(array $data, int $targetBlogId): bool
+    {
+        return array_key_exists('relations', $data) && is_array($data['relations']) && array_key_exists($targetBlogId, $data['relations']);
     }
 }

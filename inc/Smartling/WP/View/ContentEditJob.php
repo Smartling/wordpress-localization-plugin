@@ -662,6 +662,7 @@ if ($post instanceof WP_Post) {
                 $("#addToJob, #cloneButton").on("click", function (e) {
                     e.stopPropagation();
                     e.preventDefault();
+                    $('#error-messages').hide();
 
                     var url = `${ajaxurl}?action=smartling-create-submissions`;
 
