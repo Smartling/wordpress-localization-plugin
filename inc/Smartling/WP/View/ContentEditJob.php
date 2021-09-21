@@ -28,8 +28,10 @@ $needWrapper = ($tag instanceof WP_Term);
 ?>
 
 <script>
-    var handleRelationsManually = <?= GlobalSettingsManager::isHandleRelationsManually() ? 'true' : 'false' ?>;
-    var isBulkSubmitPage = <?= $isBulkSubmitPage ? 'true' : 'false'?>;
+    const handleRelationsManually = <?= GlobalSettingsManager::isHandleRelationsManually() ? 'true' : 'false' ?>;
+    const isBulkSubmitPage = <?= $isBulkSubmitPage ? 'true' : 'false'?>;
+    let l1Relations = {missingTranslatedReferences: {}, originalReferences: {}};
+    let l2Relations = {missingTranslatedReferences: {}, originalReferences: {}};
 </script>
 
 <?php if ($needWrapper) : ?>
@@ -42,11 +44,12 @@ $needWrapper = ($tag instanceof WP_Term);
                 <div id="placeholder"><span class="loader"></span> Please wait...</div>
                 <div id="tab-existing" class="tab-content hidden">
                     <div id="job-tabs">
-                        <span class="active" data-action="new">New Job</span><span
-                                data-action="existing">Existing Job</span>
+                        <span class="active" data-action="new">New Job</span>
+                        <span data-action="existing">Existing Job</span>
+                        <?= $isBulkSubmitPage ? '' : '<span data-action="clone">Clone</span>'?>
                     </div>
                     <table>
-                        <tr id="jobList" class="hidden">
+                        <tr id="jobList" class="hidden hideWhenCloning">
                             <th>
                                 <label for="jobSelect">Existing jobs</label>
                             </th>
@@ -54,19 +57,19 @@ $needWrapper = ($tag instanceof WP_Term);
                                 <select id="jobSelect"></select>
                             </td>
                         </tr>
-                        <tr>
+                        <tr class="hideWhenCloning">
                             <th><label for="name-sm">Name</label></th>
                             <td><input id="name-sm" name="jobName" type="text"/></td>
                         </tr>
-                        <tr>
+                        <tr class="hideWhenCloning">
                             <th><label for="description-sm">Description</label</th>
                             <td><textarea id="description-sm" name="description-sm"></textarea></td>
                         </tr>
-                        <tr>
+                        <tr class="hideWhenCloning">
                             <th><label for="dueDate">Due Date</label</th>
                             <td><input type="text" id="dueDate" name="dueDate"/></td>
                         </tr>
-                        <tr>
+                        <tr class="hideWhenCloning">
                             <th><label for="cbAuthorize">Authorize Job</label</th>
                             <td><input type="checkbox" class="authorize" id="cbAuthorize"
                                        name="cbAuthorize" <?= $profile->getAutoAuthorize() ? 'checked="checked"' : '' ?>/>
@@ -119,15 +122,23 @@ $needWrapper = ($tag instanceof WP_Term);
                         </tr>
                         <?php if (!$isBulkSubmitPage && GlobalSettingsManager::isHandleRelationsManually()) { ?>
                             <tr>
-                                <th>Extra upload options</th>
+                                <th>Related content</th>
                                 <td>
-                                    <label for="skipRelations">Skip all related content and send <strong>only</strong>
-                                        current content</label>
-                                    <?= HtmlTagGeneratorHelper::tag('input', '', [
-                                            'id' => 'skipRelations',
-                                            'type' => 'checkbox',
-                                            'checked' => GlobalSettingsManager::isRelatedContentCheckboxChecked(),
-                                        ])?>
+                                    <?= HtmlTagGeneratorHelper::tag(
+                                        'select',
+                                        HtmlTagGeneratorHelper::renderSelectOptions(
+                                            0,
+                                            [
+                                                0 => 'Don\'t send  related content',
+                                                1 => 'Send related content one level deep',
+                                                2 => 'Send related content two levels deep',
+                                            ]
+                                        ),
+                                        [
+                                            'id' => 'cloneDepth',
+                                            'name' => 'cloneDepth',
+                                        ],
+                                    )?>
                                 </td>
                             </tr>
                             <tr id="relationsInfo">
@@ -139,7 +150,6 @@ $needWrapper = ($tag instanceof WP_Term);
                         <?php } ?>
                         <tr>
                             <th class="center" colspan="2">
-
                                 <div id="error-messages"></div>
                                 <div id="loader-image" class="hidden"><span class="loader"></span></div>
                                 <button class="button button-primary" id="createJob"
@@ -148,6 +158,7 @@ $needWrapper = ($tag instanceof WP_Term);
                                 <button class="button button-primary hidden" id="addToJob"
                                         title="Add content into your chosen job">Add to selected Job
                                 </button>
+                                <button class="button button-primary hidden" id="cloneButton">Clone</button>
                             </th>
                         </tr>
                         <input type="hidden" id="timezone-sm" name="timezone-sm" value="UTC"/>
@@ -331,15 +342,26 @@ if ($post instanceof WP_Post) {
         $(document).ready(function () {
             // emulate tabs
             $("div#job-tabs span").on("click", function () {
-                var $action = $(this).attr("data-action");
                 $("div#job-tabs span").removeClass("active");
                 $(this).addClass("active");
-                switch ($action) {
+                const hideWhenCloning = $('.hideWhenCloning');
+                const cloneButton = $('#cloneButton');
+                switch ($(this).attr("data-action")) {
                     case "new":
                         Helper.ui.createJobForm.show();
+                        hideWhenCloning.show();
+                        cloneButton.addClass('hidden');
+                        break;
+                    case "clone":
+                        Helper.ui.createJobForm.hide();
+                        hideWhenCloning.hide();
+                        $('#addToJob').addClass('hidden');
+                        cloneButton.removeClass('hidden');
                         break;
                     case "existing":
                         Helper.ui.createJobForm.hide();
+                        hideWhenCloning.show();
+                        cloneButton.addClass('hidden');
                         break;
                     default:
                 }
@@ -363,55 +385,104 @@ if ($post instanceof WP_Post) {
                 minDate: 0
             });
 
-            var loadRelations = function (contentType, contentId) {
-                var url = `${ajaxurl}?action=<?= ContentRelationsDiscoveryService::ACTION_NAME?>&id=${contentId}&content-type=${contentType}&targetBlogIds=${localeList}`;
+            const mergeRelations = function mergeRelations(a, b) {
+                const result = JSON.parse(JSON.stringify(a));
+                for (const blogId in b) {
+                    if (!result.hasOwnProperty(blogId)) {
+                        result[blogId] = {};
+                    }
+                    for (const type in b[blogId]) {
+                        if (!result[blogId].hasOwnProperty(type)) {
+                            result[blogId][type] = [];
+                        }
+                        result[blogId][type] = result[blogId][type].concat(b[blogId][type]).filter((value, index, self) => self.indexOf(value) === index);
+                    }
+                }
 
-                $.get(url, function (data) {
+                return result;
+            }
+
+            const recalculateRelations = function recalculateRelations() {
+                $("#relatedContent").html("");
+                const relations = {};
+                let missingRelations = {};
+                const cloneDepth = $('#cloneDepth').val();
+                switch (cloneDepth) {
+                    case "0":
+                        return;
+                    case "1":
+                        missingRelations = l1Relations.missingTranslatedReferences;
+                        break;
+                    case "2":
+                        missingRelations = mergeRelations(l1Relations.missingTranslatedReferences, l2Relations.missingTranslatedReferences);
+                        break;
+                    default:
+                        console.error(`Unsupported clone depth value: ${cloneDepth}`);
+                }
+                const buildRelationsHint = function (relations) {
+                    let html = "";
+                    for (const type in relations) {
+                        html += `${type} (${relations[type]}) </br>`;
+                    }
+                    return html;
+                };
+                $(".job-wizard input.mcheck[type=checkbox]:checked").each(function () {
+                    const blogId = this.dataset.blogId;
+                    if (missingRelations && missingRelations.hasOwnProperty(blogId)) {
+                        for (const sysType in missingRelations[blogId]) {
+                            let sysCount = missingRelations[blogId][sysType].length;
+                            if (relations.hasOwnProperty(sysType)) {
+                                relations[sysType] += sysCount;
+                            } else {
+                                relations[sysType] = sysCount;
+                            }
+                            $("#relatedContent").html(buildRelationsHint(relations));
+                        }
+                    }
+                });
+            };
+
+            const loadRelations = function loadRelations(contentType, contentId, level = 1) {
+                const url = `${ajaxurl}?action=<?= ContentRelationsDiscoveryService::ACTION_NAME?>&id=${contentId}&content-type=${contentType}&targetBlogIds=${localeList}`;
+
+                $.get(url, function loadData(data) {
                     if (data.response.data) {
-                        window.relationsInfo = data.response.data;
+                        switch (level) {
+                            case 1:
+                                l1Relations = data.response.data;
+                                for (const relatedType in l1Relations.originalReferences) {
+                                    for (const relatedId of l1Relations.originalReferences[relatedType]) {
+                                        loadRelations(relatedType, relatedId, level + 1);
+                                    }
+                                }
+                                window.relationsInfo = data.response.data;
+                                break;
+                            case 2:
+                                const originalReferences = data.response.data.originalReferences;
+                                for (const relatedType in originalReferences) {
+                                    for (const relatedId of originalReferences[relatedType]) {
+                                        if (!l2Relations.originalReferences.hasOwnProperty(relatedType)) {
+                                            l2Relations.originalReferences[relatedType] = [];
+                                        }
+                                        l2Relations.originalReferences[relatedType] = l2Relations.originalReferences[relatedType].concat(originalReferences[relatedType]);
+                                    }
+                                    l2Relations.missingTranslatedReferences = mergeRelations(
+                                        l2Relations.missingTranslatedReferences,
+                                        data.response.data.missingTranslatedReferences,
+                                    );
+                                }
+                                break;
+                        }
+
                         recalculateRelations();
                     }
                 });
             };
 
             if (handleRelationsManually && !isBulkSubmitPage) {
-                $("#skipRelations").on("change", function () {
-                    if ($(this).is(":checked")) {
-                        $("#relationsInfo").addClass("hidden");
-                    } else {
-                        $("#relationsInfo").removeClass("hidden");
-                    }
-                });
-
-                var recalculateRelations = function () {
-                    $("#relatedContent").html("");
-                    var relations = [];
-                    var missingRelations = window.relationsInfo.missingTranslatedReferences;
-                    var buildRelationsHint = function (relations) {
-                        var html = "";
-                        for (var type in relations) {
-                            html += `${type} (${relations[type]}) </br>`;
-                        }
-                        return html;
-                    };
-                    $(".job-wizard input.mcheck[type=checkbox]:checked").each(function () {
-                        var blogId = this.dataset.blogId;
-                        if (missingRelations && Object.prototype.hasOwnProperty.call(missingRelations, blogId)) {
-                            for (var sysType in missingRelations[blogId]) {
-                                var sysCount = missingRelations[blogId][sysType].length;
-                                if (Object.prototype.hasOwnProperty.call(relations, sysType)) {
-                                    relations[sysType] += sysCount;
-                                } else {
-                                    relations[sysType] = sysCount;
-                                }
-                                $("#relatedContent").html(buildRelationsHint(relations));
-                            }
-                        }
-                    });
-                };
-                loadRelations(currentContent.contentType, currentContent.id, localeList);
-                $(".job-wizard input.mcheck").on("click", recalculateRelations);
-                $(".job-wizard a").on("click", recalculateRelations);
+                loadRelations(currentContent.contentType, currentContent.id);
+                $('.job-wizard input.mcheck, .job-wizard a').on('click', recalculateRelations);
+                $('#cloneDepth').on('change', recalculateRelations);
             }
             var hasProp = function (obj, prop) {
                 return Object.prototype.hasOwnProperty.call(obj, prop);
@@ -588,9 +659,10 @@ if ($post instanceof WP_Post) {
                     });
                 }
             } else { // handle relations manually
-                $("#addToJob").on("click", function (e) {
+                $("#addToJob, #cloneButton").on("click", function (e) {
                     e.stopPropagation();
                     e.preventDefault();
+                    $('#error-messages').hide();
 
                     var url = `${ajaxurl}?action=smartling-create-submissions`;
 
@@ -601,23 +673,29 @@ if ($post instanceof WP_Post) {
                     });
 
                     var data = {
+                        formAction: e.target.id === 'cloneButton' ? 'clone' : 'upload',
                         source: currentContent,
                         job: {
                             id: $("#jobSelect").val(),
                             name: $("option[value=" + jobSelectEl.val() + "]").html(),
+                            relations: [],
                             description: $("textarea[name=\"description-sm\"]").val(),
                             dueDate: $("input[name=\"dueDate\"]").val(),
                             timeZone: timezone,
                             authorize: ($("div.job-wizard input[type=checkbox].authorize:checked").length > 0)
                         },
-                        skipRelationsCheckboxState: $('#skipRelations').is(':checked'),
                         targetBlogIds: blogIds.join(","),
                     };
 
-                    if ($("#skipRelations").is(":checked") || isBulkSubmitPage) {
-                        data["relations"] = [];
-                    } else {
-                        data.relations = window.relationsInfo.missingTranslatedReferences;
+                    if (!isBulkSubmitPage) {
+                        switch ($('#cloneDepth').val()) {
+                            case "1":
+                                data.relations = l1Relations.missingTranslatedReferences;
+                                break;
+                            case "2":
+                                data.relations = mergeRelations(l1Relations.missingTranslatedReferences, l2Relations.missingTranslatedReferences);
+                                break;
+                        }
                     }
 
                     if (isBulkSubmitPage) {

@@ -18,11 +18,16 @@ namespace Smartling\Tests\Services {
     use PHPUnit\Framework\TestCase;
     use Smartling\ApiWrapper;
     use Smartling\Bootstrap;
+    use Smartling\ContentTypes\ContentTypeNavigationMenu;
+    use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
     use Smartling\DbAl\LocalizationPluginProxyInterface;
     use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+    use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
+    use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
     use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
     use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
     use Smartling\Helpers\ContentHelper;
+    use Smartling\Helpers\CustomMenuContentTypeHelper;
     use Smartling\Helpers\EntityHelper;
     use Smartling\Helpers\FieldsFilterHelper;
     use Smartling\Helpers\GutenbergBlockHelper;
@@ -30,6 +35,7 @@ namespace Smartling\Tests\Services {
     use Smartling\Helpers\ShortcodeHelper;
     use Smartling\Helpers\SiteHelper;
     use Smartling\Jobs\JobEntity;
+    use Smartling\Jobs\JobEntityWithBatchUid;
     use Smartling\Jobs\JobManager;
     use Smartling\Jobs\SubmissionJobEntity;
     use Smartling\Jobs\SubmissionsJobsManager;
@@ -94,9 +100,7 @@ namespace Smartling\Tests\Services {
 
             $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
 
-            $x->expects(self::once())->method('returnResponse')->with(['status' => 'SUCCESS']);
-
-            $x->createSubmissionsHandler([
+            $x->createSubmissions([
                 'source' => ['contentType' => $contentType, 'id' => [$sourceId]],
                 'job' =>
                     [
@@ -168,12 +172,11 @@ namespace Smartling\Tests\Services {
 
             $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
 
-            $x->expects(self::once())->method('returnResponse')->with(['status' => 'SUCCESS']);
             $x->expects(self::exactly(count($sourceIds)))->method('getPostTitle')->willReturnCallback(static function ($id) use ($titlePrefix) {
                 return $titlePrefix . $id;
             });
 
-            $x->createSubmissionsHandler([
+            $x->createSubmissions([
                 'source' => ['contentType' => $contentType, 'id' => [0]],
                 'job' =>
                     [
@@ -187,6 +190,111 @@ namespace Smartling\Tests\Services {
                 'targetBlogIds' => $targetBlogId,
                 'ids' => $sourceIds,
             ]);
+        }
+
+        public function testExistingMenuItemsGetSubmittedOnExistingMenuBulkSubmit()
+        {
+            $sourceBlogId = 1;
+            $sourceIds = [161];
+            $contentType = ContentTypeNavigationMenu::WP_CONTENT_TYPE;
+            $targetBlogId = [2];
+            $batchUid = 'batchUid';
+            $jobName = 'Job Name';
+            $jobUid = 'abcdef123456';
+            $projectUid = 'projectUid';
+            $menuSubmission = $this->createMock(SubmissionEntity::class);
+            $menuSubmission->method('getContentType')->willReturn(ContentTypeNavigationMenu::WP_CONTENT_TYPE);
+            $menuSubmission->method('getSourceId')->willReturn($sourceIds[0]);
+            $menuSubmission->expects($this->once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
+            $menuSubmission->expects($this->once())->method('setBatchUid')->with($batchUid);
+            /**
+             * @var SubmissionEntity[]|MockObject[] $menuItemSubmissions
+             */
+            $menuItemSubmissions = [];
+            $menuItemPosts = [];
+            $unsavedSubmissionIds = $sourceIds;
+            foreach ([162, 163, 164] as $menuItemId) {
+                $menuItemSubmission = $this->createMock(SubmissionEntity::class);
+                $menuItemSubmission->method('getContentType')->willReturn(ContentTypeNavigationMenuItem::WP_CONTENT_TYPE);
+                $menuItemSubmission->method('getSourceId')->willReturn($menuItemId);
+                $menuItemSubmission->expects($this->once())->method('setBatchUid')->with($batchUid);
+                $menuItemSubmission->expects($this->once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
+                $menuItemSubmissions[] = $menuItemSubmission;
+                $post = new \stdClass();
+                $post->ID = $menuItemId;
+                $menuItemPosts[] = $post;
+                $unsavedSubmissionIds[] = $menuItemId;
+            }
+
+            $this->assertCount(4, $unsavedSubmissionIds);
+            $apiWrapper = $this->createMock(ApiWrapper::class);
+            $apiWrapper->method('retrieveBatch')->willReturn($batchUid);
+
+            $profile = $this->createMock(ConfigurationProfileEntity::class);
+            $profile->method('getProjectId')->willReturn($projectUid);
+
+            $settingsManager = $this->createMock(SettingsManager::class);
+            $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+
+            $siteHelper = $this->createMock(SiteHelper::class);
+            $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
+
+            $contentHelper = $this->createMock(ContentHelper::class);
+            $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
+
+            $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
+            $submissionManager->method('find')->willReturnCallback(function ($params) use ($menuSubmission, $menuItemSubmissions): array {
+                switch ($params[SubmissionEntity::FIELD_CONTENT_TYPE]) {
+                    case ContentTypeNavigationMenu::WP_CONTENT_TYPE:
+                        return [$menuSubmission];
+                    case ContentTypeNavigationMenuItem::WP_CONTENT_TYPE:
+                        foreach ($menuItemSubmissions as $submission) {
+                            if ($submission->getSourceId() === $params[SubmissionEntity::FIELD_SOURCE_ID]) {
+                                return [$submission];
+                            }
+                        }
+                        return $menuItemSubmissions;
+                    default:
+                        return [];
+                }
+            });
+            $submissionManager->method('storeEntity')->willReturnCallback(function (SubmissionEntity $submission) use (&$unsavedSubmissionIds) {
+                $unsavedSubmissionIds = array_filter($unsavedSubmissionIds, static function ($item) use ($submission) {
+                    return $item !== $submission->getSourceId();
+                });
+                return $submission;
+            });
+
+            $mapper = $this->createMock(EntityAbstract::class);
+            $mapper->method('get')->willReturnCallback(function ($guid) {
+                $result = new PostEntityStd();
+                $result->ID = $guid;
+                return $result;
+            });
+            $contentIoFactory = $this->createMock(ContentEntitiesIOFactory::class);
+            $contentIoFactory->method('getMapper')->willReturn($mapper);
+
+            $customMenuContentTypeHelper = $this->createMock(CustomMenuContentTypeHelper::class);
+            $customMenuContentTypeHelper->method('getMenuItems')->willReturn($menuItemPosts);
+
+            $x = new ContentRelationsDiscoveryService(
+                $contentHelper,
+                $this->createMock(FieldsFilterHelper::class),
+                $this->createMock(MetaFieldProcessorManager::class),
+                $this->createMock(LocalizationPluginProxyInterface::class),
+                $this->createMock(AbsoluteLinkedAttachmentCoreHelper::class),
+                $this->createMock(ShortcodeHelper::class),
+                $this->createMock(GutenbergBlockHelper::class),
+                $submissionManager,
+                $apiWrapper,
+                $this->createMock(MediaAttachmentRulesManager::class),
+                $this->createMock(ReplacerFactory::class),
+                $settingsManager,
+                $customMenuContentTypeHelper,
+            );
+
+            $x->bulkUpload(new JobEntityWithBatchUid($batchUid, $jobName, $jobUid, $projectUid), $sourceIds, $contentType, $sourceBlogId, $targetBlogId);
+            $this->assertCount(0, $unsavedSubmissionIds);
         }
 
         public function testJobInfoGetsStoredOnNewSubmissions()
@@ -246,12 +354,10 @@ namespace Smartling\Tests\Services {
 
             $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
 
-            $x->expects(self::once())->method('returnResponse')->with(['status' => 'SUCCESS']);
-
             if (function_exists('switch_to_blog')) {
                 switch_to_blog(1);
             }
-            $x->createSubmissionsHandler([
+            $x->createSubmissions([
                 'source' => ['contentType' => $contentType, 'id' => [$sourceId]],
                 'job' =>
                     [
@@ -291,6 +397,7 @@ namespace Smartling\Tests\Services {
                 $this->createMock(MediaAttachmentRulesManager::class),
                 $this->createMock(ReplacerFactory::class),
                 $settingsManager,
+                $this->createMock(CustomMenuContentTypeHelper::class),
             ])->onlyMethods(['getPostTitle', 'returnResponse'])->getMock();
         }
     }
