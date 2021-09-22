@@ -2,36 +2,28 @@
 
 namespace Smartling\Jobs;
 
+use Smartling\ApiWrapperInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\ArrayHelper;
-use Smartling\Queue\Queue;
+use Smartling\Queue\QueueInterface;
+use Smartling\Settings\SettingsManager;
+use Smartling\Submissions\SubmissionManager;
 
-/**
- * Class DownloadTranslationJob
- * @package Smartling\Jobs
- */
 class DownloadTranslationJob extends JobAbstract
 {
-    const JOB_HOOK_NAME = 'smartling-download-task';
+    public const JOB_HOOK_NAME = 'smartling-download-task';
 
-    /**
-     * @var Queue
-     */
-    private $queue;
+    private QueueInterface $queue;
 
-    /**
-     * @return Queue
-     */
-    public function getQueue()
-    {
-        return $this->queue;
-    }
-
-    /**
-     * @param Queue $queue
-     */
-    public function setQueue($queue)
-    {
+    public function __construct(
+        ApiWrapperInterface $api,
+        SettingsManager $settingsManager,
+        SubmissionManager $submissionManager,
+        string $jobRunInterval,
+        int $workerTTL,
+        QueueInterface $queue
+    ) {
+        parent::__construct($api, $settingsManager, $submissionManager, $jobRunInterval, $workerTTL);
         $this->queue = $queue;
     }
 
@@ -49,11 +41,11 @@ class DownloadTranslationJob extends JobAbstract
         $this->getLogger()->info('Finished Translation Download Job.');
     }
 
-    private function processDownloadQueue()
+    private function processDownloadQueue(): void
     {
-        while (false !== ($submissionId = $this->getQueue()->dequeue(Queue::QUEUE_NAME_DOWNLOAD_QUEUE))) {
+        while (false !== ($submissionId = $this->queue->dequeue(QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE))) {
             $submissionId = ArrayHelper::first($submissionId);
-            $result = $this->getSubmissionManager()->find(['id' => $submissionId]);
+            $result = $this->submissionManager->find(['id' => $submissionId]);
 
             if (0 < count($result)) {
                 $entity = ArrayHelper::first($result);

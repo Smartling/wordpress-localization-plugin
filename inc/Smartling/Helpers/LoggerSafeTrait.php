@@ -7,7 +7,7 @@ use Psr\Log\NullLogger;
 use Smartling\MonologWrapper\MonologWrapper;
 
 trait LoggerSafeTrait {
-    private LoggerInterface $logger;
+    private $logger;
 
     public function getLogger(): LoggerInterface {
         if ($this->logger === null) {

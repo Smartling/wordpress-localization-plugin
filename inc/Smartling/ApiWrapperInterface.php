@@ -35,6 +35,21 @@ interface ApiWrapperInterface
     ];
 
     /**
+     * @throws SmartlingApiException
+     */
+    public function acquireLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime;
+
+    /**
+     * @throws SmartlingApiException
+     */
+    public function renewLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime;
+
+    /**
+     * @throws SmartlingApiException
+     */
+    public function releaseLock(ConfigurationProfileEntity $profile, string $key): void;
+
+    /**
      * @param SubmissionEntity $entity
      *
      * @return string
