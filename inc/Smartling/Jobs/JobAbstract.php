@@ -84,6 +84,9 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         return 'smartling_cron_flag_' . $this->getJobHookName();
     }
 
+    /**
+     * @throws SmartlingApiException
+     */
     public function placeLockFlag(bool $renew = false): void
     {
         $profile = ArrayHelper::first($this->settingsManager->getActiveProfiles());
@@ -160,6 +163,12 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
     {
         try {
             $this->placeLockFlag();
+        } catch (SmartlingApiException $e) {
+            $errorMessage = $e->getErrors()[0]['message'] ?? $e->getMessage();
+            $this->getLogger()->debug("Failed to place lock flag: $errorMessage");
+            return;
+        }
+        try {
             $this->run();
         } catch (\Exception $exception) {
             $this->getLogger()->warning(vsprintf(

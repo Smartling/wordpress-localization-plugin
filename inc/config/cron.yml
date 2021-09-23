@@ -3,7 +3,7 @@ parameters:
   cron.interval.group.submission: "3h"
   cron.interval.last-modified-check: "5m"
   cron.interval.download: "5m"
-  cron.job.default_ttl: 1200
+  cron.job.default_ttl: 60
 services:
   custom.scheduler.interval.helper:
     class: Smartling\Helpers\CustomScheduleIntervalHelper
