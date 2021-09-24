@@ -63,7 +63,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 2.7.0 =
-* Switched from database to external service locking for cron jobs
+* Switched from database to external service locking for cron jobs. It avoids the issue when hosting doesn't allow SQL `SELECT ... FOR UPDATE`
 
 = 2.6.0 =
 * Added two levels deep cloning/translation to post widget
