@@ -48,7 +48,10 @@ class AbstractJobTest extends TestCase
 
     public function testRunCronJobUnknownSource()
     {
-        $x = $this->getJobAbstractMock($this->createMock(ApiWrapperInterface::class));
+        $exception = new \RuntimeException('test');
+        $api = $this->createMock(ApiWrapperInterface::class);
+        $api->method('acquireLock')->willThrowException($exception);
+        $x = $this->getJobAbstractMock($api);
 
         try {
             $x->runCronJob();
