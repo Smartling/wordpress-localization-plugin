@@ -3,7 +3,8 @@ parameters:
   cron.interval.group.submission: "3h"
   cron.interval.last-modified-check: "5m"
   cron.interval.download: "5m"
-  cron.job.default_ttl: 60
+  cron.job.default_ttl: 180
+
 services:
   custom.scheduler.interval.helper:
     class: Smartling\Helpers\CustomScheduleIntervalHelper
@@ -38,7 +39,6 @@ services:
       - "%cron.interval.group.submission%"
       - "%cron.job.default_ttl%"
       - "@queue.db"
-
 
   #
   # Cron that checks submissions in statuses 'In Progress' and 'Completed'
