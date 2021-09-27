@@ -6,9 +6,10 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapperInterface;
 use Smartling\Exception\SmartlingNetworkException;
-use Smartling\Helpers\QueryBuilder\TransactionManager;
 use Smartling\Jobs\LastModifiedCheckJob;
 use Smartling\Queue\Queue;
+use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
@@ -53,7 +54,10 @@ class LastModifiedCheckJobTest extends TestCase
             $this->mockEntityHelper($this->mockSiteHelper())
         );
 
-        $this->settingsManager = $this->getSettingsManagerMock();
+        $profile = $this->createMock(ConfigurationProfileEntity::class);
+
+        $this->settingsManager = $this->createMock(SettingsManager::class);
+        $this->settingsManager->method('getActiveProfiles')->willReturn([$profile]);
 
         $this->queue = $this->mockQueue();
 
@@ -75,17 +79,10 @@ class LastModifiedCheckJobTest extends TestCase
      */
     private function getWorkerMock(SubmissionManager $submissionManager, ApiWrapperInterface $apiWrapper, Queue $queue)
     {
-        $transactionManager = $this->getMockBuilder(TransactionManager::class)
-            ->setConstructorArgs([$this->mockDbAl()])
-            ->onlyMethods(['executeSelectForUpdate'])
-            ->getMock();
         $worker = $this->getMockBuilder(LastModifiedCheckJob::class)
             ->onlyMethods(['prepareSubmissionList'])
-            ->setConstructorArgs([$submissionManager, $transactionManager])
+            ->setConstructorArgs([$apiWrapper, $this->settingsManager, $submissionManager, '20m', 1200, $queue])
             ->getMock();
-
-        $worker->setApiWrapper($apiWrapper);
-        $worker->setQueue($queue);
 
         return $worker;
     }
@@ -151,8 +148,6 @@ class LastModifiedCheckJobTest extends TestCase
         $this->submissionManager
             ->method('storeSubmissions')
             ->will(self::returnArgument(0));
-
-        $worker->setSettingsManager($this->settingsManager);
 
         $worker->run();
     }
@@ -418,8 +413,6 @@ class LastModifiedCheckJobTest extends TestCase
         $this->submissionManager
             ->expects(self::exactly($storeEntityCount))
             ->method('storeEntity');
-
-        $worker->setSettingsManager($this->settingsManager);
 
         $worker->run();
     }

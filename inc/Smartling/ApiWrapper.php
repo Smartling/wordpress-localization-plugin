@@ -8,6 +8,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\AuthApi\AuthTokenProvider;
 use Smartling\Batch\BatchApi;
 use Smartling\Batch\Params\CreateBatchParameters;
+use Smartling\DistributedLockService\DistributedLockServiceApi;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
@@ -177,6 +178,24 @@ class ApiWrapper implements ApiWrapperInterface
         }
 
         return $authProvider;
+    }
+
+    public function acquireLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime
+    {
+        return DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())
+            ->acquireLock($key, $ttlSeconds);
+    }
+
+    public function renewLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime
+    {
+        return DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())
+            ->renewLock($key, $ttlSeconds);
+    }
+
+    public function releaseLock(ConfigurationProfileEntity $profile, string $key): void
+    {
+        DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())
+            ->releaseLock($key);
     }
 
     /**

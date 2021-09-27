@@ -3,7 +3,8 @@ parameters:
   cron.interval.group.submission: "3h"
   cron.interval.last-modified-check: "5m"
   cron.interval.download: "5m"
-  cron.job.default_ttl: 1200
+  cron.job.default_ttl: 180
+
 services:
   custom.scheduler.interval.helper:
     class: Smartling\Helpers\CustomScheduleIntervalHelper
@@ -13,24 +14,17 @@ services:
       - [ "registerInterval", [ "10m", 600, "Every 10 minutes" ] ]
       - [ "registerInterval", [ "15m", 900, "Every 15 minutes" ] ]
 
-  cron.transaction.manager:
-    class: Smartling\Helpers\QueryBuilder\TransactionManager
-    arguments:
-      - "@site.db"
-
   #
   # Cron worker that sends submissions with status New to Smartling
   #
   cron.worker.upload:
     class: Smartling\Jobs\UploadJob
     arguments:
-      - "@manager.submission"
-      - "%cron.job.default_ttl%"
       - "@wrapper.sdk.api.smartling"
       - "@manager.settings"
-      - "@cron.transaction.manager"
-    calls:
-      - [ "setJobRunInterval", [ %cron.interval.upload% ] ]
+      - "@manager.submission"
+      - "%cron.interval.upload%"
+      - "%cron.job.default_ttl%"
 
   #
   # Cron collects info about submissions in statuses 'In Progress' and 'Completed'
@@ -39,13 +33,12 @@ services:
   cron.worker.submission-collector:
     class: Smartling\Jobs\SubmissionCollectorJob
     arguments:
+      - "@wrapper.sdk.api.smartling"
+      - "@manager.settings"
       - "@manager.submission"
-      - "@cron.transaction.manager"
+      - "%cron.interval.group.submission%"
       - "%cron.job.default_ttl%"
-    calls:
-      - [ "setJobRunInterval", [ %cron.interval.group.submission% ] ]
-      - [ "setQueue", [ "@queue.db" ]]
-
+      - "@queue.db"
 
   #
   # Cron that checks submissions in statuses 'In Progress' and 'Completed'
@@ -54,14 +47,12 @@ services:
   cron.worker.last-modified-check:
     class: Smartling\Jobs\LastModifiedCheckJob
     arguments:
+      - "@wrapper.sdk.api.smartling"
+      - "@manager.settings"
       - "@manager.submission"
-      - "@cron.transaction.manager"
+      - "%cron.interval.last-modified-check%"
       - "%cron.job.default_ttl%"
-    calls:
-      - [ "setJobRunInterval", [ %cron.interval.last-modified-check% ] ]
-      - [ "setApiWrapper", [ "@wrapper.sdk.api.smartling" ]]
-      - [ "setSettingsManager", [ "@manager.settings" ]]
-      - [ "setQueue", [ "@queue.db" ]]
+      - "@queue.db"
 
   #
   # Cron that checks submissions in statuses 'In Progress' and 'Completed'
@@ -70,9 +61,9 @@ services:
   cron.worker.download:
     class: Smartling\Jobs\DownloadTranslationJob
     arguments:
+      - "@wrapper.sdk.api.smartling"
+      - "@manager.settings"
       - "@manager.submission"
-      - "@cron.transaction.manager"
+      - "%cron.interval.download%"
       - "%cron.job.default_ttl%"
-    calls:
-      - [ "setJobRunInterval", [ %cron.interval.download% ] ]
-      - [ "setQueue", [ "@queue.db" ]]
+      - "@queue.db"

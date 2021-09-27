@@ -10,6 +10,7 @@ use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Jobs\DownloadTranslationJob;
+use Smartling\Jobs\JobAbstract;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Queue\Queue;
 use Smartling\Services\GlobalSettingsManager;
@@ -132,7 +133,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             }
             $result = [];
             try {
-                do_action(DownloadTranslationJob::JOB_HOOK_NAME, DownloadTranslationJob::SOURCE_USER);
+                do_action(DownloadTranslationJob::JOB_HOOK_NAME, JobAbstract::SOURCE_USER);
                 $result['status'] = self::RESPONSE_AJAX_STATUS_SUCCESS;
             } catch (\Exception $e) {
                 $result['status'] = self::RESPONSE_AJAX_STATUS_FAIL;

@@ -14,6 +14,9 @@ trait ApiWrapperMock
     private function getApiWrapperMock()
     {
         return $this->createPartialMock(ApiWrapper::class, [
+            'acquireLock',
+            'releaseLock',
+            'renewLock',
             'downloadFile',
             'getStatus',
             'testConnection',

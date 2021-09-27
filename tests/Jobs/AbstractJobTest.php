@@ -4,8 +4,10 @@ namespace Smartling\Tests\Jobs;
 
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Smartling\Helpers\QueryBuilder\TransactionManager;
+use Smartling\ApiWrapperInterface;
 use Smartling\Jobs\JobAbstract;
+use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 use Smartling\Tests\Traits\DbAlMock;
@@ -20,7 +22,9 @@ class AbstractJobTest extends TestCase
     use SiteHelperMock;
     use SubmissionManagerMock;
 
+    private ConfigurationProfileEntity $profile;
     private SubmissionManager $submissionManager;
+    private string $projectId = 'testProjectId';
     private $wpdb;
 
     protected function setUp(): void
@@ -30,6 +34,8 @@ class AbstractJobTest extends TestCase
             $this->mockDbAl(),
             $this->mockEntityHelper($this->mockSiteHelper())
         );
+        $this->profile = $this->createMock(ConfigurationProfileEntity::class);
+        $this->profile->method('getProjectId')->willReturn($this->projectId);
         global $wpdb;
         $this->wpdb = $wpdb;
     }
@@ -42,8 +48,10 @@ class AbstractJobTest extends TestCase
 
     public function testRunCronJobUnknownSource()
     {
-        $transactionManager = $this->getTransactionManagerWithException(new \RuntimeException('test'));
-        $x = $this->getJobAbstractMock($transactionManager);
+        $exception = new \RuntimeException('test');
+        $api = $this->createMock(ApiWrapperInterface::class);
+        $api->method('acquireLock')->willThrowException($exception);
+        $x = $this->getJobAbstractMock($api);
 
         try {
             $x->runCronJob();
@@ -57,62 +65,32 @@ class AbstractJobTest extends TestCase
     public function testRunCronJobUserSource()
     {
         $exception = new \RuntimeException('test');
-        $transactionManager = $this->getTransactionManagerWithException($exception);
+        $api = $this->createMock(ApiWrapperInterface::class);
+        $api->method('acquireLock')->willThrowException($exception);
         $this->expectExceptionObject($exception);
 
-        $x = $this->getJobAbstractMock($transactionManager);
+        $x = $this->getJobAbstractMock($api);
 
         $x->runCronJob(JobAbstract::SOURCE_USER);
         $this->fail('Should throw exception when source is user');
     }
 
-    public function testBuildSelectQuery()
-    {
-        global $wpdb;
-        $wpdb = new \stdClass();
-        $wpdb->base_prefix = 'wp_';
-        $x = $this->getMockBuilder(JobAbstract::class)
-            ->setConstructorArgs([
-                $this->submissionManager,
-                $this->createMock(TransactionManager::class),
-            ])
-            ->getMockForAbstractClass();
-        $this->assertEquals(
-            "SELECT `meta_value` AS `ts` FROM `wp_sitemeta` WHERE ( `meta_key` = 'smartling_cron_flag_' )",
-            $x->buildSelectQuery(),
-        );
-    }
-
     /**
-     * @param \Exception $e
-     * @return MockObject|TransactionManager
-     */
-    private function getTransactionManagerWithException(\Exception $e)
-    {
-        $transactionManager = $this->getMockBuilder(TransactionManager::class)
-            ->setConstructorArgs([$this->mockDbAl()])
-            ->onlyMethods(['executeSelectForUpdate'])
-            ->getMock();
-        $transactionManager->method('executeSelectForUpdate')->willThrowException($e);
-
-        return $transactionManager;
-    }
-
-    /**
-     * @param TransactionManager $transactionManager
      * @return MockObject|JobAbstract
      */
-    private function getJobAbstractMock(TransactionManager $transactionManager)
+    private function getJobAbstractMock(ApiWrapperInterface $api)
     {
-        $x = $this->getMockBuilder(JobAbstract::class)
-            ->setConstructorArgs([
-                $this->submissionManager,
-                $transactionManager,
-            ])
-            ->onlyMethods(['buildSelectQuery'])
-            ->getMockForAbstractClass();
-        $x->method('buildSelectQuery')->willReturn("select 1");
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->method('getActiveProfiles')->willReturn([$this->profile]);
 
-        return $x;
+        return $this->getMockBuilder(JobAbstract::class)
+            ->setConstructorArgs([
+                $api,
+                $settingsManager,
+                $this->submissionManager,
+                '5m',
+                180,
+            ])
+            ->getMockForAbstractClass();
     }
 }
