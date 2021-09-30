@@ -44,6 +44,11 @@ interface ExportedAPI
     const EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT = 'smartling_after_deserialize_content';
 
     /**
+     * Action that prepares submission for upload and creates target placeholders
+     */
+    public const ACTION_SMARTLING_PREPARE_SUBMISSION_UPLOAD = 'smartling_prepare_submission_upload';
+
+    /**
      * Action that sends given SubmissionEntity to smartling for translation
      */
     const ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION = 'smartling_send_for_translation';
