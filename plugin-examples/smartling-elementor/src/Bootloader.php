@@ -2,39 +2,24 @@
 
 namespace KPS3\Smartling\Elementor;
 
-use Smartling\Bootstrap;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
-class Bootloader
-{
+class Bootloader {
     private ContainerBuilder $di;
-
 
     public function __construct(ContainerBuilder $di)
     {
         $this->di = $di;
     }
 
-    private static function checkFunction(string $functionName, bool $strict = false, string $message = ''): bool
-    {
-        $result = function_exists($functionName);
-        if (false === $result && true === $strict) {
-            throw new \Exception($message);
-        } else {
-            return $result;
-        }
-    }
-
-    /**
-     * Displays error message for diagnostics
-     */
     private static function displayErrorMessage(string $messageText = ''): void
     {
-        if (self::checkFunction('add_action', true, 'This code cannot run outside of wordpress.')) {
-            add_action('all_admin_notices', static function () use ($messageText) {
-                echo vsprintf('<div class="error"><p>%s</p></div>', array($messageText));
-            });
+        if (!function_exists('add_action')) {
+            throw new \RuntimeException('This code cannot run outside of WordPress');
         }
+        add_action('all_admin_notices', static function () use ($messageText) {
+            echo "<div class=\"error\"><p>$messageText</p></div>";
+        });
     }
 
     private static function getPluginMeta(string $pluginFile, string $metaName): string
@@ -49,48 +34,52 @@ class Bootloader
         return self::getPluginMeta($pluginFile, 'Plugin Name');
     }
 
-    private static function checkConnectorVersion(string $minVersion, string $maxVersion): bool
+    private static function versionInRange(string $version, string $minVersion, string $maxVersion): bool
     {
-        $realVersion = Bootstrap::$pluginVersion;
         $maxVersionParts = explode('.', $maxVersion);
-        $realVersionParts = explode('.', $realVersion);
+        $versionParts = explode('.', $version);
         $potentiallyNotSupported = false;
         foreach ($maxVersionParts as $index => $part) {
-            if (!array_key_exists($index, $realVersionParts)) {
+            if (!array_key_exists($index, $versionParts)) {
                 return false; // misconfiguration
             }
-            if ($realVersionParts[$index] > $part && $potentiallyNotSupported) {
+            if ($versionParts[$index] > $part && $potentiallyNotSupported) {
                 return false; // not supported
             }
 
-            $potentiallyNotSupported = $realVersionParts[$index] === $part;
+            $potentiallyNotSupported = $versionParts[$index] === $part;
         }
 
-        return version_compare($realVersion, $minVersion, '>=');
+        return version_compare($version, $minVersion, '>=');
     }
 
     public static function boot(string $pluginFile, ContainerBuilder $di): void
     {
-        [$minVersion, $maxVersion] = explode('-', self::getPluginMeta($pluginFile, 'SupportedConnectorVersions'));
-        if (false === self::checkConnectorVersion($minVersion, $maxVersion)) {
-            self::displayErrorMessage(
-                vsprintf(
-                    '<strong>%s</strong> extension plugin requires <strong>%s</strong> plugin version at least <strong>%s</strong> and at most <strong>%s</strong>.',
-                    [self::getPluginName($pluginFile), 'Smartling Connector',
-                     $minVersion,
-                     $maxVersion]
-                )
-            );
-        } else {
-            require_once __DIR__ . DIRECTORY_SEPARATOR . 'ElementorDataSerializer.php';
-            require_once __DIR__ . DIRECTORY_SEPARATOR . 'ElementorFilter.php';
-            require_once __DIR__ . DIRECTORY_SEPARATOR . 'ElementorProcessor.php';
-            require_once __DIR__ . DIRECTORY_SEPARATOR . 'ElementorFieldsFilterHelper.php';
-            require_once __DIR__ . DIRECTORY_SEPARATOR . 'ElementorAutoSetup.php';
-            (new static($di))->run();
+        $activePlugins = get_option('active_plugins');
+        $allPlugins = get_plugins();
+        $currentPluginName = self::getPluginName($pluginFile);
+        foreach (
+            [
+                'Elementor' => 'SupportedElementorVersions',
+                'Smartling Connector' => 'SupportedSmartlingConnectorVersions',
+            ] as $pluginName => $metaName) {
+            if (!in_array($pluginName, $activePlugins, true)) {
+                self::displayErrorMessage("<strong>$currentPluginName</strong> extension plugin requires active <strong>$pluginName</strong>");
+                return;
+            }
+            [$minVersion, $maxVersion] = explode('-', self::getPluginMeta($pluginFile, $metaName));
+            if (!self::versionInRange($allPlugins[$pluginName]['Version'] ?? '0', $minVersion, $maxVersion)) {
+                self::displayErrorMessage("<strong>$currentPluginName</strong> extension plugin requires <strong>$pluginName</strong> plugin version at least <strong>$minVersion</strong> and at most <strong>$maxVersion</strong>");
+                return;
+            }
         }
 
-
+        require_once __DIR__ . DIRECTORY_SEPARATOR . 'ElementorDataSerializer.php';
+        require_once __DIR__ . DIRECTORY_SEPARATOR . 'ElementorFilter.php';
+        require_once __DIR__ . DIRECTORY_SEPARATOR . 'ElementorProcessor.php';
+        require_once __DIR__ . DIRECTORY_SEPARATOR . 'ElementorFieldsFilterHelper.php';
+        require_once __DIR__ . DIRECTORY_SEPARATOR . 'ElementorAutoSetup.php';
+        (new static($di))->run();
     }
 
     public function run(): void

@@ -9,10 +9,11 @@ use KPS3\Smartling\Elementor\Bootloader;
  * @wordpress-plugin
  * Plugin Name: Elementor localization
  * Description: Extend Smartling Connector functionality to support elementor. Initial development by KPS, maintained by Smartling
- * SupportedConnectorVersions: 2.6-2.7
+ * SupportedSmartlingConnectorVersions: 2.6-2.7
+ * SupportedElementorVersions: 3.4-3.4
  */
 
-if ( ! class_exists(Bootloader::class)) {
+if (!class_exists(Bootloader::class)) {
     require_once plugin_dir_path(__FILE__) . 'src/Bootloader.php';
 }
 
@@ -25,7 +26,7 @@ if ((defined('DOING_CRON') && true === DOING_CRON) || is_admin()) {
     });
 }
 
-if ( ! is_callable('smartling_elementor_json_string')) {
+if (!is_callable('smartling_elementor_json_string')) {
     function smartling_elementor_json_string($value)
     {
         if (is_array($value)) {
