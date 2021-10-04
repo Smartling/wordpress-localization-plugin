@@ -4,11 +4,8 @@ namespace KPS3\Smartling\Elementor;
 
 use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\FieldsFilterHelper;
-use Smartling\Submissions\SubmissionEntity;
 
 class ElementorFilter implements RunnableInterface {
-    /** @var SubmissionEntity */
-    protected static $submission;
     protected array $items = [];
 
     public static array $allowKeys = array(
@@ -149,16 +146,16 @@ class ElementorFilter implements RunnableInterface {
 
     public function run(): void
     {
-        add_filter('smartling_register_field_filter', [$this, 'filterSetup'], 1);
+        add_filter(ExportedAPI::FILTER_SMARTLING_REGISTER_FIELD_FILTER, [$this, 'filterSetup'], 1);
 
-        add_filter(ExportedAPI::FILTER_SMARTLING_METADATA_PROCESS_BEFORE_TRANSLATION, [
-            $this,
-            'filterElementorData',
-        ], 10, 4);
+        add_filter(ExportedAPI::FILTER_SMARTLING_METADATA_PROCESS_BEFORE_TRANSLATION, [$this, 'filterElementorData', ], 10, 4);
     }
 
     /**
-     * @see FieldsFilterHelper::passFieldProcessorsBeforeSendFilters(), arguments important
+     * @see FieldsFilterHelper::passFieldProcessorsBeforeSendFilters()
+     * @noinspection PhpUnusedParameterInspection arguments important
+     * @param mixed $stringValue
+     * @return mixed
      */
     public function filterElementorData($submission, $stringName, $stringValue, $data)
     {
@@ -171,7 +168,7 @@ class ElementorFilter implements RunnableInterface {
             $this->items = [];
 
             $data = json_decode($stringValue, true, 512, JSON_THROW_ON_ERROR);
-            $this->extractElementorData($data, '');
+            $this->extractElementorData($data);
             $this->items = array_filter($this->items);
 
             return $this->items;
@@ -180,7 +177,7 @@ class ElementorFilter implements RunnableInterface {
         return $stringValue;
     }
 
-    protected function extractElementorData(&$data, $prefix = ''): void
+    protected function extractElementorData($data, $prefix = ''): void
     {
         foreach ($data as $components) {
             $myPrefix = $prefix . $components['id'];
@@ -195,7 +192,7 @@ class ElementorFilter implements RunnableInterface {
                     if (is_array($setting)) {
                         foreach ($setting as $optionID => $option) {
                             if (is_array($option)) {
-                                $options = array_filter($option, function ($k) {
+                                $options = array_filter($option, static function ($k) {
                                     return $k[0] !== '_';
                                 }, ARRAY_FILTER_USE_KEY);
 

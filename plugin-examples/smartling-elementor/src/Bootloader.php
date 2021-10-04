@@ -5,6 +5,10 @@ namespace KPS3\Smartling\Elementor;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class Bootloader {
+    private const PLUGIN_NAME = 'Plugin Name';
+    private const SUPPORTED_ELEMENTOR_VERSIONS = 'SupportedElementorVersions';
+    private const SUPPORTED_SMARTLING_CONNECTOR_VERSIONS = 'SupportedSmartlingConnectorVersions';
+
     private ContainerBuilder $di;
 
     public function __construct(ContainerBuilder $di)
@@ -31,7 +35,7 @@ class Bootloader {
 
     private static function getPluginName(string $pluginFile): string
     {
-        return self::getPluginMeta($pluginFile, 'Plugin Name');
+        return self::getPluginMeta($pluginFile, self::PLUGIN_NAME);
     }
 
     private static function versionInRange(string $version, string $minVersion, string $maxVersion): bool
@@ -60,8 +64,8 @@ class Bootloader {
         $currentPluginName = self::getPluginName($pluginFile);
         foreach (
             [
-                'Elementor' => 'SupportedElementorVersions',
-                'Smartling Connector' => 'SupportedSmartlingConnectorVersions',
+                'Elementor' => self::SUPPORTED_ELEMENTOR_VERSIONS,
+                'Smartling Connector' => self::SUPPORTED_SMARTLING_CONNECTOR_VERSIONS,
             ] as $pluginName => $metaName) {
             if (!in_array($pluginName, $activePlugins, true)) {
                 self::displayErrorMessage("<strong>$currentPluginName</strong> extension plugin requires active <strong>$pluginName</strong>");

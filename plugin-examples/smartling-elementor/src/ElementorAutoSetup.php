@@ -5,16 +5,9 @@ namespace KPS3\Smartling\Elementor;
 use Smartling\Helpers\Serializers\SerializationManager;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
-class ElementorAutoSetup implements RunnableInterface {
+class ElementorAutoSetup {
     public static function register(ContainerBuilder $di): void
     {
-        $obj = new static();
-
-        $action = is_admin() ? 'admin_init' : 'init';
-        add_action($action, static function () use ($obj) {
-            $obj->run();
-        }, 99);
-
         /**
          * Add the Elementor Data Serializer to the serializers
          */
@@ -25,9 +18,5 @@ class ElementorAutoSetup implements RunnableInterface {
         $di->set('fields-filter.helper', new ElementorFieldsFilterHelper($di->get('manager.settings'), $di->get('acf.dynamic.support')));
         ElementorFilter::register();
         ElementorProcessor::register();
-    }
-
-    public function run(): void
-    {
     }
 }

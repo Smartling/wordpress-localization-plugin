@@ -3,10 +3,12 @@
 use Smartling\Bootstrap;
 use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\FieldsFilterHelper;
-use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Submissions\SubmissionEntity;
 
 class ElementorFieldsFilterHelper extends FieldsFilterHelper {
+
+    use LoggerSafeTrait;
 
     private static function getFieldProcessingParams()
     {
@@ -34,7 +36,7 @@ class ElementorFieldsFilterHelper extends FieldsFilterHelper {
 
         $data = $this->passConnectionProfileFilters($data, $strategy, false);
 
-        MonologWrapper::getLogger(static::class)->info(print_r($data, true));
+        $this->getLogger()->info(print_r($data, true));
 
         return $data;
     }
