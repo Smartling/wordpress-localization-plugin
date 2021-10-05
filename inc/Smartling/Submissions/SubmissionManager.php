@@ -287,26 +287,15 @@ class SubmissionManager extends EntityManagerAbstract
 
 
     /**
-     * Looks for submissions with status = 'New' AND (is_cloned = 1 or batch_uid <> '') AND is_locked = 0
-     * @return SubmissionEntity[]
+     * Looks for submissions with status = 'New' AND batch_uid <> '' AND is_locked = 0
+     * @return SubmissionEntity[] with a single item or empty array
      */
     public function findSubmissionsForUploadJob(): array
     {
         $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
-
-        $blockBase = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
-        $blockBase->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ,
-            SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_NEW]));
-        $blockBase->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ,
-            SubmissionEntity::FIELD_IS_LOCKED, [0]));
-        $block->addConditionBlock($blockBase);
-
-        $blockAlt = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR);
-        $blockAlt->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ,
-            SubmissionEntity::FIELD_IS_CLONED, [1]));
-        $blockAlt->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_NOT_EQ,
-            SubmissionEntity::FIELD_BATCH_UID, ['']));
-        $block->addConditionBlock($blockAlt);
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_NEW]));
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_LOCKED, [0]));
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_NOT_EQ, SubmissionEntity::FIELD_BATCH_UID, ['']));
 
         $pageOptions = ['limit' => 1, 'page' => 1];
 
@@ -321,6 +310,18 @@ class SubmissionManager extends EntityManagerAbstract
         return $this->fetchData($query);
     }
 
+    public function findSubmissionsForCloning(): array
+    {
+        $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_NEW]));
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_CLONED, [1]));
+
+        return $this->fetchData(QueryBuilder::buildSelectQuery(
+            $this->getDbal()->completeTableName(SubmissionEntity::getTableName()),
+            array_keys(SubmissionEntity::getFieldDefinitions()),
+            $block
+        ));
+    }
     /**
      * @param int[] $ids
      * @return SubmissionEntity[]

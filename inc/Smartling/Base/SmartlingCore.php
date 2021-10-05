@@ -32,15 +32,20 @@ class SmartlingCore extends SmartlingCoreAbstract
     {
         parent::__construct();
 
+        add_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, [$this, 'cloneContent']);
+        add_action(ExportedAPI::ACTION_SMARTLING_PREPARE_SUBMISSION_UPLOAD, [$this, 'prepareUpload']);
         add_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, [$this, 'sendForTranslationBySubmission']);
         add_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, [$this, 'downloadTranslationBySubmission',]);
         add_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, [$this, 'regenerateTargetThumbnailsBySubmission']);
         add_filter(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, [$this, 'prepareTargetContent']);
         add_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, [$this, 'syncAttachment']);
-        /** @noinspection UnusedConstructorDependenciesInspection used in \Smartling\Base\SmartlingCoreDownloadTrait::downloadTranslationBySubmission */
         $this->postContentHelper = $postContentHelper;
-        /** @noinspection UnusedConstructorDependenciesInspection used in \Smartling\Base\SmartlingCoreDownloadTrait::downloadTranslationBySubmission */
         $this->xmlHelper = $xmlHelper;
+    }
+
+    public function cloneContent(SubmissionEntity $submission): void
+    {
+        $this->applyXML($submission, $this->getXMLFiltered($submission), $this->xmlHelper, $this->postContentHelper);
     }
 
     /**
