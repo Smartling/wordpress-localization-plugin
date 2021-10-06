@@ -3,6 +3,7 @@
 namespace Smartling\Tuner;
 
 use Smartling\Helpers\GutenbergReplacementRule;
+use Smartling\Replacers\ReplacerFactory;
 
 class MediaAttachmentRulesManager extends CustomizationManagerAbstract
 {
@@ -72,7 +73,7 @@ class MediaAttachmentRulesManager extends CustomizationManagerAbstract
         return [
             'blockType' => $item['block'],
             'propertyPath' => $item['path'],
-            'replacerId' => $item['replacerId'] ?? 'related|postbased'
+            'replacerId' => $item['replacerId'] ?? ReplacerFactory::RELATED_POSTBASED
         ];
     }
 }

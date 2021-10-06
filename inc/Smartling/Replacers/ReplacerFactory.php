@@ -7,6 +7,7 @@ use Smartling\Submissions\SubmissionManager;
 
 class ReplacerFactory
 {
+    public const RELATED_POSTBASED = 'related|postbased';
     private SubmissionManager $submissionManager;
 
     public function __construct(SubmissionManager $submissionManager)
@@ -30,7 +31,7 @@ class ReplacerFactory
     public function getListForUi(): array
     {
         return ['Related' =>
-            ['related|postbased' => 'Related: Post based content'],
+            [self::RELATED_POSTBASED => 'Related: Post based content'],
         ];
     }
 }
