@@ -2,7 +2,6 @@
 
 namespace Smartling\Base;
 
-use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\Cache;
@@ -17,6 +16,7 @@ use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Queue\QueueInterface;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 /**
  * Class SmartlingCoreAbstract

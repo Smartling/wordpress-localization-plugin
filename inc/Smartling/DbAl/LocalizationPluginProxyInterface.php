@@ -2,8 +2,6 @@
 
 namespace Smartling\DbAl;
 
-use Psr\Log\LoggerInterface;
-use Smartling\Helpers\SiteHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 interface LocalizationPluginProxyInterface

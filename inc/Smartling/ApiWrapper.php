@@ -4,42 +4,38 @@ namespace Smartling;
 
 use DateTimeZone;
 use JetBrains\PhpStorm\ArrayShape;
-use Psr\Log\LoggerInterface;
-use Smartling\AuthApi\AuthTokenProvider;
-use Smartling\Batch\BatchApi;
-use Smartling\Batch\Params\CreateBatchParameters;
-use Smartling\DistributedLockService\DistributedLockServiceApi;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
-use Smartling\Exceptions\SmartlingApiException;
-use Smartling\File\FileApi;
-use Smartling\File\Params\DownloadFileParameters;
-use Smartling\File\Params\UploadFileParameters;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\FileHelper;
 use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\RuntimeCacheHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
-use Smartling\Jobs\JobsApi;
-use Smartling\Jobs\JobStatus;
-use Smartling\Jobs\Params\CreateJobParameters;
-use Smartling\Jobs\Params\ListJobsParameters;
-use Smartling\Jobs\Params\UpdateJobParameters;
 use Smartling\MonologWrapper\MonologWrapper;
-use Smartling\ProgressTracker\Params\RecordParameters;
-use Smartling\ProgressTracker\ProgressTrackerApi;
-use Smartling\Project\ProjectApi;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
+use Smartling\Vendor\Smartling\AuthApi\AuthTokenProvider;
+use Smartling\Vendor\Smartling\Batch\BatchApi;
+use Smartling\Vendor\Smartling\Batch\Params\CreateBatchParameters;
+use Smartling\Vendor\Smartling\DistributedLockService\DistributedLockServiceApi;
+use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
+use Smartling\Vendor\Smartling\File\FileApi;
+use Smartling\Vendor\Smartling\File\Params\DownloadFileParameters;
+use Smartling\Vendor\Smartling\File\Params\UploadFileParameters;
+use Smartling\Vendor\Smartling\Jobs\JobsApi;
+use Smartling\Vendor\Smartling\Jobs\JobStatus;
+use Smartling\Vendor\Smartling\Jobs\Params\CreateJobParameters;
+use Smartling\Vendor\Smartling\Jobs\Params\ListJobsParameters;
+use Smartling\Vendor\Smartling\Jobs\Params\UpdateJobParameters;
+use Smartling\Vendor\Smartling\ProgressTracker\Params\RecordParameters;
+use Smartling\Vendor\Smartling\ProgressTracker\ProgressTrackerApi;
+use Smartling\Vendor\Smartling\Project\ProjectApi;
 
-/**
- * Class ApiWrapper
- * @package Smartling
- */
 class ApiWrapper implements ApiWrapperInterface
 {
 

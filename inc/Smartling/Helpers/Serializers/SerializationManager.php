@@ -2,8 +2,6 @@
 
 namespace Smartling\Helpers\Serializers;
 
-use Psr\Log\LoggerInterface;
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Processors\SmartlingFactoryAbstract;
 
 /**

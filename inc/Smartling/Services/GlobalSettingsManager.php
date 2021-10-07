@@ -4,7 +4,7 @@ namespace Smartling\Services;
 
 use Smartling\Bootstrap;
 use Smartling\Helpers\SimpleStorageHelper;
-use Symfony\Component\Yaml\Parser;
+use Smartling\Vendor\Symfony\Component\Yaml\Parser;
 
 /**
  * Class GlobalSettingsManager

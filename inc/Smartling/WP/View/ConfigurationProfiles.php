@@ -4,7 +4,7 @@ use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Services\GlobalSettingsManager;
 use Smartling\WP\Controller\ConfigurationProfilesWidget;
 use Smartling\WP\Table\QueueManagerTableWidget;
-use Symfony\Component\Yaml\Yaml;
+use Smartling\Vendor\Symfony\Component\Yaml\Yaml;
 
 /**
  * @var WPAbstract $this

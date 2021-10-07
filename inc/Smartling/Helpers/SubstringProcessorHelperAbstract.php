@@ -2,10 +2,10 @@
 
 namespace Smartling\Helpers;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\WPHookInterface;
 
 abstract class SubstringProcessorHelperAbstract implements WPHookInterface

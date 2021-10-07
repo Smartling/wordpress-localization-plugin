@@ -2,14 +2,13 @@
 
 namespace Smartling\Helpers;
 
-use Psr\Log\LoggerInterface;
-use Smartling\Base\ExportedAPI;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\Controller\LiveNotificationController;
 
 /**

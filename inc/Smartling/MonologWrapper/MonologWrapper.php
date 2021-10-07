@@ -2,9 +2,9 @@
 
 namespace Smartling\MonologWrapper;
 
-use Monolog\Logger;
 use Smartling\MonologWrapper\Logger\DevNullLogger;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Smartling\Vendor\Monolog\Logger;
+use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
  * Class MonologWrapper

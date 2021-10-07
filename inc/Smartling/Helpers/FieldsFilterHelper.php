@@ -3,7 +3,6 @@
 namespace Smartling\Helpers;
 
 use JetBrains\PhpStorm\ExpectedValues;
-use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
@@ -11,6 +10,7 @@ use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 /**
  * Filtering goes in 3 steps.

@@ -4,6 +4,14 @@
 cd build && npm run build
 ```
 
+## Dealing with scoped dependencies
+For now, scoping is handled with ilab/namespacer
+```shell
+namespacer --composer ./composer.json --package smartling-connector --namespace "Smartling\Vendor" inc
+```
+generates scoped files that are actually used in the plugin.
+This step needs to be done after changing composer dependencies.
+
 ## Testing
 There is a Dockerfile that can be used to create an image to run unit and integration tests.
 ### Build

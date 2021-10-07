@@ -2,9 +2,9 @@
 
 namespace Smartling\Helpers\MetaFieldProcessor;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 /**
  * Class MetaFieldProcessorAbstract

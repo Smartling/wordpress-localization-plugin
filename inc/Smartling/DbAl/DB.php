@@ -2,7 +2,6 @@
 
 namespace Smartling\DbAl;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
 use Smartling\DbAl\Migrations\DbMigrationManager;
 use Smartling\DbAl\Migrations\SmartlingDbMigrationInterface;
@@ -16,6 +15,7 @@ use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\WPInstallableInterface;
 
 class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableInterface

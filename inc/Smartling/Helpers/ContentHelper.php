@@ -3,7 +3,6 @@
 namespace Smartling\Helpers;
 
 use Exception;
-use Psr\Log\LoggerInterface;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
@@ -12,6 +11,7 @@ use Smartling\Exception\EntityNotFoundException;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 /**
  * A Small wrapper to read/write Registered entities and metadata by submission

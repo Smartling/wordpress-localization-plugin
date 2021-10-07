@@ -3,9 +3,9 @@
 namespace Smartling\Base;
 
 use GuzzleHttp\Client;
-use Monolog\Handler\AbstractHandler;
-use Monolog\Logger;
 use Smartling\Helpers\LogContextMixinHelper;
+use Smartling\Vendor\Monolog\Handler\AbstractHandler;
+use Smartling\Vendor\Monolog\Logger;
 
 class SmartlingLogHandler extends AbstractHandler
 {

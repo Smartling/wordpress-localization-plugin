@@ -2,9 +2,7 @@
 
 namespace Smartling\ContentTypes;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Processors\SmartlingFactoryAbstract;
 
 /**

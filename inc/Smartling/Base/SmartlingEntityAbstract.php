@@ -2,9 +2,9 @@
 
 namespace Smartling\Base;
 
-use Psr\Log\LoggerInterface;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\SmartlingTableDefinitionInterface;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterface
 {

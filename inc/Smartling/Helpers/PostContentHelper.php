@@ -2,9 +2,9 @@
 
 namespace Smartling\Helpers;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Models\GutenbergBlock;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 class PostContentHelper
 {

@@ -2,9 +2,9 @@
 
 namespace Smartling\Helpers;
 
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
+use Smartling\Vendor\Psr\Log\NullLogger;
 
 trait LoggerSafeTrait {
     private ?LoggerInterface $logger = null;
