@@ -11,7 +11,7 @@ use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
-use Smartling\Jobs\JobStatus;
+use Smartling\Vendor\Smartling\Jobs\JobStatus;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 

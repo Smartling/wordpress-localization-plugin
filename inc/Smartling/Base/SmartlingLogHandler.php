@@ -2,8 +2,8 @@
 
 namespace Smartling\Base;
 
-use GuzzleHttp\Client;
 use Smartling\Helpers\LogContextMixinHelper;
+use Smartling\Vendor\GuzzleHttp\Client;
 use Smartling\Vendor\Monolog\Handler\AbstractHandler;
 use Smartling\Vendor\Monolog\Logger;
 

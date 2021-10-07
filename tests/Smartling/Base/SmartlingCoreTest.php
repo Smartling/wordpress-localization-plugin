@@ -7,7 +7,6 @@ use Smartling\ApiWrapper;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
-use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\XmlHelper;
@@ -28,6 +27,7 @@ use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Tuner\MediaAttachmentRulesManager;
+use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 
 class SmartlingCoreTest extends TestCase
 {

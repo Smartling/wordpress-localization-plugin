@@ -25,7 +25,7 @@ use Smartling\Settings\TargetLocale;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tuner\MediaAttachmentRulesManager;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
 abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
 {
