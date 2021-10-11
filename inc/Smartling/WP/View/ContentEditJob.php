@@ -386,6 +386,8 @@ if ($post instanceof WP_Post) {
             });
 
             const mergeRelations = function mergeRelations(a, b) {
+                a = a || {};
+                b = b || {};
                 const result = JSON.parse(JSON.stringify(a));
                 for (const blogId in b) {
                     if (!result.hasOwnProperty(blogId)) {
@@ -398,6 +400,8 @@ if ($post instanceof WP_Post) {
                         result[blogId][type] = result[blogId][type].concat(b[blogId][type]).filter((value, index, self) => self.indexOf(value) === index);
                     }
                 }
+
+                console.log(result);
 
                 return result;
             }
