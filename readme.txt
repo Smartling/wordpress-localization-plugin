@@ -64,6 +64,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 = 2.8.0 =
 * Scoped dependencies to prevent conflicts with other installed versions of GuzzleHttp and Symfony libraries
+* Fixed content not being added to upload from post widget
 
 = 2.7.1 =
 * Fixed relations not changed in target blog when cloning
