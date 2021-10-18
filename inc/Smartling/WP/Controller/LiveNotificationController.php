@@ -16,12 +16,7 @@ class LiveNotificationController implements WPHookInterface
 {
     use LoggerSafeTrait;
 
-    private const FIREBASE_CDN_PATH = 'https://www.gstatic.com/firebasejs';
-    private const FIREBASE_LIB_VERSION = '5.2.0';
-
     private const DELETE_NOTIFICATION_ACTION_NAME = 'smartling_delete_live_notification';
-
-    private array $firebaseLibs = ['app', 'auth', 'database'];
 
     private const FIREBASE_SPACE_ID = 'wordpress-connector';
     private const FIREBASE_OBJECT_ID = 'notifications';
@@ -43,8 +38,9 @@ class LiveNotificationController implements WPHookInterface
 
     public function injectFirebaseLibs(): void
     {
-        foreach ($this->firebaseLibs as $lib) {
-            $scriptFile = vsprintf('%s/%s/firebase-%s.js', [self::FIREBASE_CDN_PATH, self::FIREBASE_LIB_VERSION, $lib]);
+        $jsPath = $this->pluginInfo->getUrl() . 'js/firebase/firebase-';
+        foreach (['app', 'auth', 'database'] as $lib) {
+            $scriptFile = $jsPath . $lib;
             wp_enqueue_script($scriptFile, $scriptFile);
         }
     }
