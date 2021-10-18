@@ -2,178 +2,48 @@
 
 namespace Smartling\WP\Controller;
 
-use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginInfo;
-use Smartling\MonologWrapper\MonologWrapper;
-use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPHookInterface;
 
-/**
- * Class LiveNotificationController
- * @package Smartling\WP\Controller
- */
 class LiveNotificationController implements WPHookInterface
 {
-    const FIREBASE_CDN_PATH = 'https://www.gstatic.com/firebasejs';
+    use LoggerSafeTrait;
 
-    const FIREBASE_LIB_VERSION = '5.2.0';
+    private const FIREBASE_CDN_PATH = 'https://www.gstatic.com/firebasejs';
+    private const FIREBASE_LIB_VERSION = '5.2.0';
 
-    const DELETE_NOTIFICATION_ACTION_NAME = 'smartling_delete_live_notification';
+    private const DELETE_NOTIFICATION_ACTION_NAME = 'smartling_delete_live_notification';
 
-    private static $firebaseLibs = ['app', 'auth', 'database'];
+    private array $firebaseLibs = ['app', 'auth', 'database'];
 
-    const FIREBASE_SPACE_ID = 'wordpress-connector';
+    private const FIREBASE_SPACE_ID = 'wordpress-connector';
+    private const FIREBASE_OBJECT_ID = 'notifications';
 
-    const FIREBASE_OBJECT_ID = 'notifications';
+    private const CONFIG_CACHE_KEY = 'progress_tracker_config_cache_key';
+    private const CONFIG_CACHE_TIME_SEC = 3600;
 
-    const CONFIG_CACHE_KEY = 'progress_tracker_config_cache_key';
+    private const UI_NOTIFICATION_IDENTIFIER_CLASS = 'smartling-notification-wrapper';
+    private const UI_NOTIFICATION_IDENTIFIER_CLASS_GENERAL = 'smartling-notification-wrapper-general';
 
-    const CONFIG_CACHE_TIME_SEC = 3600;
+    public const SEVERITY_WARNING = 'notification-warning';
+    public const SEVERITY_SUCCESS = 'notification-success';
+    public const SEVERITY_ERROR = 'notification-error';
 
-    const UI_NOTIFICATION_IDENTIFIER_CLASS = 'smartling-notification-wrapper';
+    private ApiWrapperInterface $apiWrapper;
+    private SettingsManager $settingsManager;
+    private Cache $cache;
+    private PluginInfo $pluginInfo;
 
-    const UI_NOTIFICATION_IDENTIFIER_CLASS_GENERAL = 'smartling-notification-wrapper-general';
-
-    const SEVERITY_WARNING = 'notification-warning';
-
-    const SEVERITY_SUCCESS = 'notification-success';
-
-    const SEVERITY_ERROR = 'notification-error';
-
-    /**
-     * @var ApiWrapperInterface
-     */
-    private $apiWrapper;
-
-    /**
-     * @var SettingsManager
-     */
-    private $settingsManager;
-
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @var Cache
-     */
-    private $cache;
-
-    /**
-     * @var PluginInfo
-     */
-    private $pluginInfo;
-
-    /**
-     * @return ApiWrapperInterface
-     */
-    public function getApiWrapper()
+    public function injectFirebaseLibs(): void
     {
-        return $this->apiWrapper;
-    }
-
-    /**
-     * @param ApiWrapperInterface $apiWrapper
-     *
-     * @return LiveNotificationController
-     */
-    public function setApiWrapper($apiWrapper)
-    {
-        $this->apiWrapper = $apiWrapper;
-
-        return $this;
-    }
-
-    /**
-     * @return SettingsManager
-     */
-    public function getSettingsManager()
-    {
-        return $this->settingsManager;
-    }
-
-    /**
-     * @param SettingsManager $settingsManager
-     *
-     * @return LiveNotificationController
-     */
-    public function setSettingsManager($settingsManager)
-    {
-        $this->settingsManager = $settingsManager;
-
-        return $this;
-    }
-
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
-    {
-        return $this->logger;
-    }
-
-    /**
-     * @param LoggerInterface $logger
-     *
-     * @return LiveNotificationController
-     */
-    public function setLogger($logger)
-    {
-        $this->logger = $logger;
-
-        return $this;
-    }
-
-    /**
-     * @return Cache
-     */
-    public function getCache()
-    {
-        return $this->cache;
-    }
-
-    /**
-     * @param Cache $cache
-     *
-     * @return LiveNotificationController
-     */
-    public function setCache($cache)
-    {
-        $this->cache = $cache;
-
-        return $this;
-    }
-
-    /**
-     * @return PluginInfo
-     */
-    public function getPluginInfo()
-    {
-        return $this->pluginInfo;
-    }
-
-    /**
-     * @param PluginInfo $pluginInfo
-     *
-     * @return LiveNotificationController
-     */
-    public function setPluginInfo($pluginInfo)
-    {
-        $this->pluginInfo = $pluginInfo;
-
-        return $this;
-    }
-
-    public function injectFirebaseLibs()
-    {
-        foreach (static::$firebaseLibs as $lib) {
+        foreach ($this->firebaseLibs as $lib) {
             $scriptFile = vsprintf('%s/%s/firebase-%s.js', [self::FIREBASE_CDN_PATH, self::FIREBASE_LIB_VERSION, $lib]);
             wp_enqueue_script($scriptFile, $scriptFile);
         }
@@ -181,32 +51,24 @@ class LiveNotificationController implements WPHookInterface
 
     public function __construct(ApiWrapperInterface $apiWrapper, SettingsManager $settingsManager, Cache $cache, PluginInfo $pluginInfo)
     {
-        $this
-            ->setApiWrapper($apiWrapper)
-            ->setSettingsManager($settingsManager)
-            ->setCache($cache)
-            ->setPluginInfo($pluginInfo)
-            ->setLogger(MonologWrapper::getLogger(__CLASS__));
+        $this->apiWrapper = $apiWrapper;
+        $this->settingsManager = $settingsManager;
+        $this->cache = $cache;
+        $this->pluginInfo = $pluginInfo;
     }
 
-    /**
-     * @return array
-     */
-    public function getAvailableConfigs()
+    public function getAvailableConfigs(): array
     {
-        $configs = $this->getCache()->get(static::CONFIG_CACHE_KEY);
+        $configs = $this->cache->get(static::CONFIG_CACHE_KEY);
 
         if (false === $configs) {
             $configs = [];
 
-            $profiles = $this->getSettingsManager()->getActiveProfiles();
+            $profiles = $this->settingsManager->getActiveProfiles();
             foreach ($profiles as $profile) {
-                /**
-                 * @var ConfigurationProfileEntity $profile
-                 */
                 try {
                     if (1 === $profile->getEnableNotifications()) {
-                        $token = $this->getApiWrapper()->getProgressToken($profile);
+                        $token = $this->apiWrapper->getProgressToken($profile);
                         $configs[$profile->getProjectId()] = $token;
                     }
                 } catch (\Exception $e) {
@@ -214,15 +76,15 @@ class LiveNotificationController implements WPHookInterface
                 }
             }
 
-            $this->getCache()->set(static::CONFIG_CACHE_KEY, $configs, static::CONFIG_CACHE_TIME_SEC);
+            $this->cache->set(static::CONFIG_CACHE_KEY, $configs, static::CONFIG_CACHE_TIME_SEC);
         }
 
         return $configs;
     }
 
-    public function placeJsConfig()
+    public function placeJsConfig(): void
     {
-        $configs = \json_encode(array_values($this->getAvailableConfigs()), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $configs = \json_encode(array_values($this->getAvailableConfigs()), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
         $deleteEndpoint = vsprintf(
             '%s?action=%s',
@@ -232,34 +94,29 @@ class LiveNotificationController implements WPHookInterface
             ]
         );
 
-        $firebaseIds = \json_encode(
-            [
-                'space_id'  => self::FIREBASE_SPACE_ID,
-                'object_id' => self::FIREBASE_OBJECT_ID,
-            ],
-            JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE
-        );
+        $firebaseIds = \json_encode([
+            'space_id' => self::FIREBASE_SPACE_ID,
+            'object_id' => self::FIREBASE_OBJECT_ID,
+        ], JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
         $wrapperClassName = static::UI_NOTIFICATION_IDENTIFIER_CLASS;
         $wrapperClassNameGeneral = static::UI_NOTIFICATION_IDENTIFIER_CLASS_GENERAL;
 
-        $script = <<<EOF
+        echo <<<EOF
 <script>
-    var firebaseConfig = {$configs};
-    var deleteNotificationEndpoint = "{$deleteEndpoint}";
-    var firebaseIds = {$firebaseIds};
-    var notificationClassName = "{$wrapperClassName}";
-    var notificationClassNameGeneral = "{$wrapperClassNameGeneral}";
+    var firebaseConfig = $configs;
+    var deleteNotificationEndpoint = "$deleteEndpoint";
+    var firebaseIds = $firebaseIds;
+    var notificationClassName = "$wrapperClassName";
+    var notificationClassNameGeneral = "$wrapperClassNameGeneral";
 </script>
 EOF;
-
-        echo $script;
     }
 
 
-    public function deleteNotificationAjaxHandler()
+    public function deleteNotificationAjaxHandler(): void
     {
-        $data = &$_POST;
+        $data = $_POST;
 
         $projectId = $data['project_id'];
         $spaceId = $data['space_id'];
@@ -267,8 +124,8 @@ EOF;
         $recordId = $data['record_id'];
 
         try {
-            $profile = $this->getSettingsManager()->getActiveProfileByProjectId($projectId);
-            $this->getApiWrapper()->deleteNotificationRecord($profile, $spaceId, $objectId, $recordId);
+            $profile = $this->settingsManager->getActiveProfileByProjectId($projectId);
+            $this->apiWrapper->deleteNotificationRecord($profile, $spaceId, $objectId, $recordId);
             $result = [
                 'code' => 'success',
             ];
@@ -281,16 +138,15 @@ EOF;
         wp_send_json($result);
     }
 
-    public function placeRecordId($submissionEntity)
+    public function placeRecordId($submissionEntity): void
     {
         if ($submissionEntity instanceof SubmissionEntity) {
             $recordId = static::getContentId($submissionEntity);
-            $script = <<<EOF
+            echo <<<EOF
 <script>
-    var recordId="{$recordId}";
+    var recordId="$recordId";
 </script>
 EOF;
-            echo $script;
         }
     }
 
@@ -310,12 +166,12 @@ EOF;
              */
             add_action('admin_enqueue_scripts', [$this, 'injectFirebaseLibs']);
 
-            $pluginInfo = $this->getPluginInfo();
+            $pluginInfo = $this->pluginInfo;
 
             /**
              * injecting progress-tracker.js
              */
-            add_action('admin_enqueue_scripts', function () use ($pluginInfo) {
+            add_action('admin_enqueue_scripts', static function () use ($pluginInfo) {
                 $scriptFileName = vsprintf(
                     '%sjs/%s',
                     [
@@ -348,7 +204,7 @@ EOF;
         }
     }
 
-    public function adminMenuHandler(\WP_Admin_Bar $menuBar)
+    public function adminMenuHandler(\WP_Admin_Bar $menuBar): void
     {
         $menuBar
             ->add_menu([
@@ -362,12 +218,7 @@ EOF;
             );
     }
 
-    /**
-     * @param SubmissionEntity $submissionEntity
-     *
-     * @return string
-     */
-    public static function getContentId(SubmissionEntity $submissionEntity)
+    public static function getContentId(SubmissionEntity $submissionEntity): string
     {
         return md5(
             serialize(
@@ -380,14 +231,13 @@ EOF;
         );
     }
 
-    public static function pushNotification($projectId, $contentId, $severity, $message)
+    public static function pushNotification(string $projectId, string $contentId, string $severity, string $message): void
     {
         do_action(ExportedAPI::ACTION_SMARTLING_PUSH_LIVE_NOTIFICATION,
-
                   [
-                      'projectId'  => $projectId,
+                      'projectId' => $projectId,
                       'content_id' => $contentId,
-                      'message'    => [
+                      'message' => [
                           'severity' => $severity,
                           'message'  => $message,
                       ],
@@ -396,15 +246,15 @@ EOF;
         );
     }
 
-    public function pushNotificationHandler($params)
+    public function pushNotificationHandler($params): void
     {
         $projectId = $params['projectId'];
         $contentId = $params['content_id'];
         $message = $params['message'];
         try {
-            $profile = $this->getSettingsManager()->getActiveProfileByProjectId($projectId);
+            $profile = $this->settingsManager->getActiveProfileByProjectId($projectId);
 
-            $this->getApiWrapper()->setNotificationRecord(
+            $this->apiWrapper->setNotificationRecord(
                 $profile,
                 static::FIREBASE_SPACE_ID,
                 static::FIREBASE_OBJECT_ID,
