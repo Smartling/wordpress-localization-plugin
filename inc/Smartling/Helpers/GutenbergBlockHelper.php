@@ -221,7 +221,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     }
 
     #[ArrayShape(['attributes' => 'array', 'chunks' => 'array'])]
-    public function sortChildNodesContent(\DOMNode $node, SubmissionEntity $submission): array
+    public function sortChildNodesContent(\DOMNode $node, SubmissionEntity $submission, int $level = 0): array
     {
         $chunks = [];
         $attrs = [];
@@ -234,7 +234,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 
             switch ($childNode->nodeName) {
                 case static::BLOCK_NODE_NAME :
-                    $chunks[] = $this->renderTranslatedBlockNode($childNode, $submission);
+                    $chunks[] = $this->renderTranslatedBlockNode($childNode, $submission, $level);
                     break;
                 case static::CHUNK_NODE_NAME :
                     $chunks[] = $childNode->nodeValue;
@@ -278,24 +278,24 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $this->fixAttributeTypes($originalAttributes, $processedAttributes);
     }
 
-    public function renderTranslatedBlockNode(\DOMElement $node, SubmissionEntity $submission): string
+    public function renderTranslatedBlockNode(\DOMElement $node, SubmissionEntity $submission, int $level = 0): string
     {
         $blockName = $node->getAttribute('blockName');
         $blockName = '' === $blockName ? null : $blockName;
         $originalAttributes = $this->unpackData($node->getAttribute('originalAttributes'));
-        $sortedResult = $this->sortChildNodesContent($node, $submission);
+        $sortedResult = $this->sortChildNodesContent($node, $submission, $level + 1);
         // simple plain blocks
         if (null === $blockName) {
             return implode('\n', $sortedResult['chunks']);
         }
         $attributes = $this->processTranslationAttributes($submission, $blockName, $originalAttributes, $sortedResult['attributes']);
-        return $this->renderGutenbergBlock($blockName, $attributes, $sortedResult['chunks']);
+        return $this->renderGutenbergBlock($blockName, $attributes, $sortedResult['chunks'], $level);
     }
 
-    public function renderGutenbergBlock(string $name, array $attrs = [], array $chunks = []): string
+    public function renderGutenbergBlock(string $name, array $attrs = [], array $chunks = [], int $level = 0): string
     {
-        $isJson = $this->isJson($attrs);
-        if ($isJson) {
+        $needsQuotes = $this->isJson($attrs);
+        if ($needsQuotes && $level === 0) {
             array_walk_recursive($attrs, static function (&$value) {
                 $value = str_replace('&quot;', '"', $value);
             });
@@ -306,7 +306,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             ? vsprintf('<!-- wp:%s%s -->%s<!-- /wp:%s -->', [$name, $attributes, $content, $name])
             : vsprintf('<!-- wp:%s%s /-->', [$name, $attributes]);
 
-        if ($isJson || (function_exists('acf_has_block_type') && acf_has_block_type($name))) {
+        if ($level === 0 && ($needsQuotes || (function_exists('acf_has_block_type') && acf_has_block_type($name)))) {
             $result = addslashes($result);
         }
 
@@ -359,7 +359,6 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 
         foreach ($paths as $path) {
             if (file_exists($path) && is_readable($path)) {
-                /** @noinspection PhpIncludeInspection */
                 require_once $path;
                 return;
             }
