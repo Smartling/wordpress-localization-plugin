@@ -454,7 +454,7 @@ HTML
                ->method('postReceiveFiltering')
                ->willReturnArgument(0);
 
-        $result = $helper->renderTranslatedBlockNode($node, $this->createMock(SubmissionEntity::class));
+        $result = $helper->renderTranslatedBlockNode($node, $this->createMock(SubmissionEntity::class), 0);
         self::assertEquals($expectedBlock, $result);
     }
 
@@ -471,7 +471,7 @@ HTML
 
         self::assertEquals(
             '<!-- wp:core/foo ' . json_encode($blockData) . ' /-->',
-            $helper->renderTranslatedBlockNode($node, $this->createMock(SubmissionEntity::class)),
+            $helper->renderTranslatedBlockNode($node, $this->createMock(SubmissionEntity::class), 0),
         );
     }
 
@@ -509,7 +509,7 @@ HTML
                ->method('postReceiveFiltering')
                ->willReturnArgument(0);
 
-        $result = $helper->sortChildNodesContent($node, $this->createMock(SubmissionEntity::class));
+        $result = $helper->sortChildNodesContent($node, $this->createMock(SubmissionEntity::class), 0);
         self::assertEquals($expected, $result);
     }
 

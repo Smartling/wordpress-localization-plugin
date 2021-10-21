@@ -221,7 +221,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     }
 
     #[ArrayShape(['attributes' => 'array', 'chunks' => 'array'])]
-    public function sortChildNodesContent(\DOMNode $node, SubmissionEntity $submission, int $level = 0): array
+    public function sortChildNodesContent(\DOMNode $node, SubmissionEntity $submission, int $level): array
     {
         $chunks = [];
         $attrs = [];
@@ -278,7 +278,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $this->fixAttributeTypes($originalAttributes, $processedAttributes);
     }
 
-    public function renderTranslatedBlockNode(\DOMElement $node, SubmissionEntity $submission, int $level = 0): string
+    public function renderTranslatedBlockNode(\DOMElement $node, SubmissionEntity $submission, int $level): string
     {
         $blockName = $node->getAttribute('blockName');
         $blockName = '' === $blockName ? null : $blockName;
@@ -292,7 +292,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $this->renderGutenbergBlock($blockName, $attributes, $sortedResult['chunks'], $level);
     }
 
-    public function renderGutenbergBlock(string $name, array $attrs = [], array $chunks = [], int $level = 0): string
+    public function renderGutenbergBlock(string $name, array $attrs, array $chunks, int $level): string
     {
         $needsQuotes = $this->isJson($attrs);
         if ($needsQuotes && $level === 0) {
@@ -326,7 +326,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
                  * @var \DOMElement $child
                  */
                 if (static::BLOCK_NODE_NAME === $child->nodeName) {
-                    $string .= $this->renderTranslatedBlockNode($child, $params->getSubmission());
+                    $string .= $this->renderTranslatedBlockNode($child, $params->getSubmission(), 0);
                 }
             }
 
