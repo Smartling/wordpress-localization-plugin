@@ -162,6 +162,8 @@ class XmlHelper
      */
     private static function prepareXPath($xmlString)
     {
+        self::preventLoadingExternalEntities();
+
         $xml = self::initXml();
         $result = @$xml->loadXML($xmlString);
         if (false === $result) {
@@ -169,6 +171,14 @@ class XmlHelper
         }
 
         return new DOMXPath($xml);
+    }
+
+    private static function preventLoadingExternalEntities(): void
+    {
+        // libxml_disable_entity_loader is deprecated in php8, using a null loader instead
+        libxml_set_external_entity_loader(static function () {
+            return null;
+        });
     }
 
     /**
