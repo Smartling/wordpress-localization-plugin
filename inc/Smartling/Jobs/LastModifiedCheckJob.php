@@ -38,7 +38,8 @@ class LastModifiedCheckJob extends JobAbstract
     {
         $this->getLogger()->info('Started Last-Modified Check Job.');
 
-        $this->lastModifiedCheck();
+        $this->lastModifiedCheck(QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE, false);
+        $this->lastModifiedCheck(QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE, true);
 
         $this->getLogger()->info('Finished Last-Modified Check Job.');
     }
@@ -47,7 +48,7 @@ class LastModifiedCheckJob extends JobAbstract
      * @param SubmissionEntity[] $submissions
      * @return SubmissionEntity[]
      */
-    protected function filterSubmissions(array $lastModifiedResponse, array $submissions): array
+    protected function filterSubmissions(array $lastModifiedResponse, array $submissions, bool $failMissing): array
     {
         $filteredSubmissions = [];
         foreach ($lastModifiedResponse as $smartlingLocaleId => $lastModifiedDateTime) {
@@ -70,8 +71,20 @@ class LastModifiedCheckJob extends JobAbstract
                     // without this fix
                     $filteredSubmissions[$smartlingLocaleId] = $submission;
                 }
-                $this->placeLockFlag(true);
+                unset($submissions[$smartlingLocaleId]);
             }
+        }
+        if ($failMissing) {
+            foreach ($submissions as $submission) {
+                $submission->setLastModified(new \DateTime());
+                $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+                $message = 'File submitted for locales ' .
+                    implode(', ', array_keys($lastModifiedResponse)) . '. This submission is for locale ' .
+                    $this->getSmartlingLocaleIdBySubmission($submission);
+                $submission->setLastError($message);
+                $this->getLogger()->notice($message);
+            }
+            $this->submissionManager->storeSubmissions(array_values($submissions));
         }
 
         return $filteredSubmissions;
@@ -81,7 +94,7 @@ class LastModifiedCheckJob extends JobAbstract
      * @param SubmissionEntity[] $submissions
      * @return SubmissionEntity[]
      */
-    protected function processFileUriSet(array $submissions): array
+    protected function processFileUriSet(array $submissions, bool $failMissing): array
     {
         if (ArrayHelper::notEmpty($submissions)) {
             $submission = ArrayHelper::first($submissions);
@@ -96,7 +109,8 @@ class LastModifiedCheckJob extends JobAbstract
                 throw $e;
             }
             $submissions = $this->prepareSubmissionList($submissions);
-            $submissions = $this->filterSubmissions($lastModified, $submissions);
+            $submissions = $this->filterSubmissions($lastModified, $submissions, $failMissing);
+            $this->placeLockFlag(true);
         }
 
         return $submissions;
@@ -136,9 +150,9 @@ class LastModifiedCheckJob extends JobAbstract
     /**
      * Checks changes in last-modified field and triggers statusCheck by fileUri if lastModified has changed.
      */
-    private function lastModifiedCheck(): void
+    private function lastModifiedCheck(string $queueName, bool $failMissing): void
     {
-        while (false !== ($serializedPair = $this->queue->dequeue(QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE))) {
+        while (false !== ($serializedPair = $this->queue->dequeue($queueName))) {
             if (false === $this->validateSerializedPair($serializedPair)) {
                 $this->getLogger()->warning(vsprintf('Got unexpected data from queue : \'%s\'. Skipping', [
                     var_export($serializedPair, true),
@@ -149,7 +163,7 @@ class LastModifiedCheckJob extends JobAbstract
                 $submissionList = $this->submissionManager->findByIds($serializedSubmissions);
 
                 try {
-                    $submissions = $this->processFileUriSet($submissionList);
+                    $submissions = $this->processFileUriSet($submissionList, $failMissing);
                 } catch (SmartlingNetworkException $e) {
                     $this->getLogger()
                         ->error(
@@ -248,7 +262,7 @@ class LastModifiedCheckJob extends JobAbstract
      * @param SubmissionEntity $submission
      * @return string
      */
-    private function getSmartlingLocaleIdBySubmission(SubmissionEntity $submission): string
+    public function getSmartlingLocaleIdBySubmission(SubmissionEntity $submission): string
     {
         return $this->settingsManager
             ->getSmartlingLocaleIdBySettingsProfile(

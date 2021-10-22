@@ -8,6 +8,7 @@ use Smartling\ApiWrapperInterface;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\Jobs\LastModifiedCheckJob;
 use Smartling\Queue\Queue;
+use Smartling\Queue\QueueInterface;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
@@ -44,6 +45,7 @@ class LastModifiedCheckJobTest extends TestCase
     private $submissionManager;
     private $apiWrapper;
     private $queue;
+    private string $modifiedDateTimeString = '2016-01-10 00:00:00';
 
     protected function setUp(): void
     {
@@ -79,12 +81,10 @@ class LastModifiedCheckJobTest extends TestCase
      */
     private function getWorkerMock(SubmissionManager $submissionManager, ApiWrapperInterface $apiWrapper, Queue $queue)
     {
-        $worker = $this->getMockBuilder(LastModifiedCheckJob::class)
-            ->onlyMethods(['prepareSubmissionList'])
+        return $this->getMockBuilder(LastModifiedCheckJob::class)
+            ->onlyMethods(['prepareSubmissionList', 'getSmartlingLocaleIdBySubmission'])
             ->setConstructorArgs([$apiWrapper, $this->settingsManager, $submissionManager, '20m', 1200, $queue])
             ->getMock();
-
-        return $worker;
     }
 
     /**
@@ -137,6 +137,12 @@ class LastModifiedCheckJobTest extends TestCase
                 }
             }
         }
+
+        $this->queue
+            ->expects(self::at(count($groupedSubmissions)))
+            ->method('dequeue')
+            ->with(QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE)
+            ->willReturn(false);
 
         $this->apiWrapper
             ->expects(self::exactly($expectedStatusCheckRequests))
@@ -197,16 +203,16 @@ class LastModifiedCheckJobTest extends TestCase
                     [
                         'FileA' =>
                             [
-                                $this->getSerializedSubmission('FileA', 'LangA', $this->mkDateTime('2016-01-10 00:00:00')),
-                                $this->getSerializedSubmission('FileA', 'LangB', $this->mkDateTime('2016-01-10 00:00:00')),
+                                $this->getSerializedSubmission('FileA', 'LangA', $this->mkDateTime($this->modifiedDateTimeString)),
+                                $this->getSerializedSubmission('FileA', 'LangB', $this->mkDateTime($this->modifiedDateTimeString)),
                             ],
 
                     ],
                     false,
                 ],
                 [
-                    'LangA' => $this->mkDateTime('2016-01-10 00:00:00'),
-                    'LangB' => $this->mkDateTime('2016-01-10 00:00:00'),
+                    'LangA' => $this->mkDateTime($this->modifiedDateTimeString),
+                    'LangB' => $this->mkDateTime($this->modifiedDateTimeString),
                 ],
                 0,
             ],
@@ -227,6 +233,7 @@ class LastModifiedCheckJobTest extends TestCase
             [
                 $lastModifiedResponse,
                 $submissions,
+                false,
             ]
         );
 
@@ -402,6 +409,12 @@ class LastModifiedCheckJobTest extends TestCase
             }
         }
 
+        $this->queue
+            ->expects(self::at(count($groupedSubmissions)))
+            ->method('dequeue')
+            ->with(QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE)
+            ->willReturn(false);
+
         $this->apiWrapper
             ->expects(self::never())
             ->method('getStatusForAllLocales');
@@ -426,8 +439,8 @@ class LastModifiedCheckJobTest extends TestCase
                     [
                         'FileA' =>
                             [
-                                $this->getSerializedSubmission('FileA', 'LangA', $this->mkDateTime('2016-01-10 00:00:00')),
-                                $this->getSerializedSubmission('FileA', 'LangB', $this->mkDateTime('2016-01-10 00:00:00')),
+                                $this->getSerializedSubmission('FileA', 'LangA', $this->mkDateTime($this->modifiedDateTimeString)),
+                                $this->getSerializedSubmission('FileA', 'LangB', $this->mkDateTime($this->modifiedDateTimeString)),
                             ],
 
                     ],
@@ -452,8 +465,8 @@ class LastModifiedCheckJobTest extends TestCase
                     [
                         'FileA' =>
                             [
-                                $this->getSerializedSubmission('FileA', 'LangA', $this->mkDateTime('2016-01-10 00:00:00')),
-                                $this->getSerializedSubmission('FileA', 'LangB', $this->mkDateTime('2016-01-10 00:00:00')),
+                                $this->getSerializedSubmission('FileA', 'LangA', $this->mkDateTime($this->modifiedDateTimeString)),
+                                $this->getSerializedSubmission('FileA', 'LangB', $this->mkDateTime($this->modifiedDateTimeString)),
                             ],
 
                     ],
@@ -474,5 +487,58 @@ class LastModifiedCheckJobTest extends TestCase
                 0, // Don't store failed status on submission
             ],
         ];
+    }
+
+    public function testFailManual()
+    {
+        $submissions = [[
+            'TestFile' => [
+                $this->getSerializedSubmission('TestFile', 'TestLocaleA', $this->mkDateTime($this->modifiedDateTimeString)),
+                $this->getSerializedSubmission('TestFile', 'TestLocaleB', $this->mkDateTime($this->modifiedDateTimeString)),
+            ]
+        ]];
+        $this->apiWrapper->method('lastModified')->willReturn([
+            'TestLocaleA' => $this->mkDateTime($this->modifiedDateTimeString),
+            'TestLocaleB' => $this->mkDateTime($this->modifiedDateTimeString),
+        ]);
+
+        $missingSubmission = $this->createMock(SubmissionEntity::class);
+        $missingSubmission->method('getTargetLocale')->willReturn('MissingLocale');
+        $this->lastModifiedWorker->method('getSmartlingLocaleIdBySubmission')->willReturn($missingSubmission->getTargetLocale());
+
+        $this->queue->expects($this->at(0))->method('dequeue')->willReturn(false);
+        foreach ($submissions as $index => $result) {
+            $dequeueResult = $this->mockedResultToDequeueResult($submissions);
+            $this->queue->expects($this->at($index + 1))->method('dequeue')
+                ->with(QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE)
+                ->willReturn($dequeueResult[$index]);
+            if (is_array($result)) {
+                foreach ($result as $fileUri => $submissionList) {
+                    $dequeued = $dequeueResult[$index][$fileUri];
+
+                    foreach ($submissionList as &$submissionArray) {
+                        $submissionArray = SubmissionEntity::fromArray($submissionArray, $this->getLogger());
+                    }
+                    unset ($submissionArray);
+                    $submissionList[] = $missingSubmission;
+
+                    $this->submissionManager->method('findByIds')->with($dequeued)->willReturn($submissionList);
+
+                    $foundSubmissions = $this->submissionManager->findByIds($dequeued);
+
+                    $this->lastModifiedWorker->method('prepareSubmissionList')->with($foundSubmissions)->willReturn($this->emulatePrepareSubmissionList($foundSubmissions));
+                }
+            }
+        }
+        $this->queue->expects($this->at($index + 2))->method('dequeue')
+            ->with(QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE)
+            ->willReturn(false);
+
+        $missingSubmission->expects($this->once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+        $missingSubmission->expects($this->once())->method('setLastError')->with('File submitted for locales TestLocaleA, TestLocaleB. This submission is for locale ' . $missingSubmission->getTargetLocale());
+        
+        $this->submissionManager->expects($this->at(1))->method('storeSubmissions')->with([$missingSubmission]);
+
+        $this->lastModifiedWorker->run();
     }
 }

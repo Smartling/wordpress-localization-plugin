@@ -8,6 +8,7 @@ use Smartling\Jobs\LastModifiedCheckJob;
 use Smartling\Jobs\SubmissionCollectorJob;
 use Smartling\Jobs\UploadJob;
 use Smartling\Queue\Queue;
+use Smartling\Queue\QueueInterface;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\Controller\ConfigurationProfilesController;
 use Smartling\WP\Controller\SmartlingListTable;
@@ -270,12 +271,47 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
             ],
         ];
 
+        if (($curStats[QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE] ?? 0) > 0) {
+            $queueName = QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE;
+            $data[] = [
+                'cron_name' => __('Manual Check Status'),
+                'run_cron' => sprintf(
+                    '%s (%s submissions waiting)',
+                    HtmlTagGeneratorHelper::tag(
+                        'a',
+                        __('Process'),
+                        [
+                            'href' => sprintf(
+                                '%s?action=cnq&_c_action=%s&argument=%s',
+                                admin_url('admin-post.php'),
+                                ConfigurationProfilesController::ACTION_QUEUE_FORCE,
+                                LastModifiedCheckJob::JOB_HOOK_NAME,
+                            ),
+                            'class' => 'ajaxcall',
+                        ]
+                    ),
+                    $curStats[$queueName],
+                ),
+                'queue_name' => $queueName,
+                'queue_purge' => HtmlTagGeneratorHelper::tag(
+                    'a',
+                    __('Purge'),
+                    [
+                        'href' => sprintf(
+                            admin_url('admin-post.php') . '?action=cnq&_c_action=%s&argument=%s',
+                            ConfigurationProfilesController::ACTION_QUEUE_PURGE,
+                            $queueName,
+                        ),
+                        'class' => 'ajaxcall',
+                    ]
+                ),
+            ];
+        }
+
         $columns = $this->get_columns();
         $hidden = array();
         $sortable = array();
         $this->_column_headers = array($columns, $hidden, $sortable);
         $this->items = $data;
     }
-
-
 }

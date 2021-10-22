@@ -182,7 +182,7 @@ class SubmissionTableWidget extends SmartlingListTable
                         foreach ($submissions as $submission) {
                             $submission->setLastModified($submission->getSubmissionDate());
                             $this->submissionManager->storeEntity($submission);
-                            $this->queue->enqueue([$submission->getFileUri() => [$submission->getId()]], QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE);
+                            $this->queue->enqueue([$submission->getFileUri() => [$submission->getId()]], QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE);
                         }
                         break;
                     case self::ACTION_DOWNLOAD:
