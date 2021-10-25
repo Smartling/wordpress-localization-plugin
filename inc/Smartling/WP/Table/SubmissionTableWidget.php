@@ -28,6 +28,7 @@ class SubmissionTableWidget extends SmartlingListTable
 {
     use CommonLogMessagesTrait;
 
+    private const ACTION_CHECK_STATUS = 'checkStatus';
     private const ACTION_DOWNLOAD = 'download';
     private const ACTION_LOCK = 'lock';
     private const ACTION_UNLOCK = 'unlock';
@@ -159,9 +160,10 @@ class SubmissionTableWidget extends SmartlingListTable
     public function get_bulk_actions(): array
     {
         return [
+            self::ACTION_CHECK_STATUS => __('Enqueue for Forced Status Check'),
             self::ACTION_DOWNLOAD => __('Enqueue for Download'),
-            self::ACTION_LOCK     => __('Lock translation'),
-            self::ACTION_UNLOCK   => __('Unlock translation'),
+            self::ACTION_LOCK => __('Lock translation'),
+            self::ACTION_UNLOCK => __('Unlock translation'),
         ];
     }
 
@@ -170,18 +172,24 @@ class SubmissionTableWidget extends SmartlingListTable
      */
     private function processBulkAction(): void
     {
-        /**
-         * @var int[] $submissionsIds
-         */
-        $submissionsIds = $this->getFormElementValue('submission', []);
+        $submissionsIds = array_map(static function ($value) {
+            return (int)$value;
+        }, $this->getFormElementValue('submission', []));
 
         if (is_array($submissionsIds) && 0 < count($submissionsIds)) {
             $submissions = $this->submissionManager->findByIds($submissionsIds);
             if (0 < count($submissions)) {
                 switch ($this->current_action()) {
+                    case self::ACTION_CHECK_STATUS:
+                        foreach ($submissions as $submission) {
+                            $submission->setLastModified($submission->getSubmissionDate());
+                            $this->submissionManager->storeEntity($submission);
+                            $this->queue->enqueue([$submission->getFileUri() => [$submission->getId()]], QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE);
+                        }
+                        break;
                     case self::ACTION_DOWNLOAD:
                         foreach ($submissions as $submission) {
-                            $this->queue->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
+                            $this->queue->enqueue([$submission->getId()], QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE);
                         }
                         break;
                     case self::ACTION_LOCK:
