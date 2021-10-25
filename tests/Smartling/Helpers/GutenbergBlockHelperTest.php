@@ -293,19 +293,17 @@ HTML
     }
 
     /**
-     * @param string $blockName
-     * @param array  $attributes
-     * @param array  $chunks
-     * @param string $expected
      * @dataProvider renderGutenbergBlockDataProvider
      */
-    public function testRenderGutenbergBlock(string $blockName, array $attributes, array $chunks, string $expected)
+    public function testRenderGutenbergBlock(string $blockName, array $attributes, array $chunks, string $expected, int $level = 0)
     {
-        self::assertEquals($expected, $this->helper->renderGutenbergBlock($blockName, $attributes, $chunks));
+        self::assertEquals($expected, $this->helper->renderGutenbergBlock($blockName, $attributes, $chunks, $level));
     }
 
     public function renderGutenbergBlockDataProvider(): array
     {
+        $blockForNestedTest = json_decode('{"id":"block_5fe115ebd752d","name":"acf\/offset-impact","data":{"content":"<img class=\"alignnone size-medium wp-image-3000025130\" src=\"https:\/\/example.com\/ideas\/wp-content\/uploads\/sites\/4\/2020\/12\/GettyImages-1179050298_twitter-800x450.jpg\" alt=\"\" width=\"800\" height=\"450\" \/>","_content":"field_5d64117a9210b","media":"3000025132","_media":"field_5d64118f9210c","add_video_url":"","_add_video_url":"field_5eb3d3092a4ca"},"align":"","mode":"auto","wpClassName":"wp-block-acf-offset-impact"}', true);
+
         return [
             'inline' => [
                 'inline',
@@ -375,6 +373,19 @@ HTML
                 [],
                 '<!-- wp:acf/image-text-wrap {\"data\":{\"content\":\"[caption id=\\\\\\\u0022attachment_3000029563\\\\\\\u0022]\\\\\\\n\\\\\\\nText\",\"_content\":\"More text\"}} /-->',
             ],
+            'root block' => [
+                'acf/offset-impact',
+                $blockForNestedTest,
+                [],
+                '<!-- wp:acf/offset-impact {\"id\":\"block_5fe115ebd752d\",\"name\":\"acf\\\\/offset-impact\",\"data\":{\"content\":\"<img class=\\\\\"alignnone size-medium wp-image-3000025130\\\\\" src=\\\\\"https:\\\\/\\\\/example.com\\\\/ideas\\\\/wp-content\\\\/uploads\\\\/sites\\\\/4\\\\/2020\\\\/12\\\\/GettyImages-1179050298_twitter-800x450.jpg\\\\\" alt=\\\\\"\\\\\" width=\\\\\"800\\\\\" height=\\\\\"450\\\\\" \\\\/>\",\"_content\":\"field_5d64117a9210b\",\"media\":\"3000025132\",\"_media\":\"field_5d64118f9210c\",\"add_video_url\":\"\",\"_add_video_url\":\"field_5eb3d3092a4ca\"},\"align\":\"\",\"mode\":\"auto\",\"wpClassName\":\"wp-block-acf-offset-impact\"} /-->',
+            ],
+            'nested block' => [
+                'acf/offset-impact',
+                $blockForNestedTest,
+                [],
+                '<!-- wp:acf/offset-impact {"id":"block_5fe115ebd752d","name":"acf\/offset-impact","data":{"content":"<img class=\"alignnone size-medium wp-image-3000025130\" src=\"https:\/\/example.com\/ideas\/wp-content\/uploads\/sites\/4\/2020\/12\/GettyImages-1179050298_twitter-800x450.jpg\" alt=\"\" width=\"800\" height=\"450\" \/>","_content":"field_5d64117a9210b","media":"3000025132","_media":"field_5d64118f9210c","add_video_url":"","_add_video_url":"field_5eb3d3092a4ca"},"align":"","mode":"auto","wpClassName":"wp-block-acf-offset-impact"} /-->',
+                1,
+            ],
         ];
     }
 
@@ -443,7 +454,7 @@ HTML
                ->method('postReceiveFiltering')
                ->willReturnArgument(0);
 
-        $result = $helper->renderTranslatedBlockNode($node, $this->createMock(SubmissionEntity::class));
+        $result = $helper->renderTranslatedBlockNode($node, $this->createMock(SubmissionEntity::class), 0);
         self::assertEquals($expectedBlock, $result);
     }
 
@@ -460,7 +471,7 @@ HTML
 
         self::assertEquals(
             '<!-- wp:core/foo ' . json_encode($blockData) . ' /-->',
-            $helper->renderTranslatedBlockNode($node, $this->createMock(SubmissionEntity::class)),
+            $helper->renderTranslatedBlockNode($node, $this->createMock(SubmissionEntity::class), 0),
         );
     }
 
@@ -498,7 +509,7 @@ HTML
                ->method('postReceiveFiltering')
                ->willReturnArgument(0);
 
-        $result = $helper->sortChildNodesContent($node, $this->createMock(SubmissionEntity::class));
+        $result = $helper->sortChildNodesContent($node, $this->createMock(SubmissionEntity::class), 0);
         self::assertEquals($expected, $result);
     }
 

@@ -8,6 +8,7 @@ use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingGutenbergNotFoundException;
 use Smartling\Exception\SmartlingGutenbergParserNotFoundException;
+use Smartling\Exception\SmartlingNotSupportedContentException;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\Models\GutenbergBlock;
 use Smartling\Replacers\ReplacerFactory;
@@ -19,6 +20,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     protected const BLOCK_NODE_NAME = 'gutenbergBlock';
     protected const CHUNK_NODE_NAME = 'contentChunk';
     protected const ATTRIBUTE_NODE_NAME = 'blockAttribute';
+    private const MAX_NODE_DEPTH = 10;
 
     private MediaAttachmentRulesManager $rulesManager;
     private ReplacerFactory $replacerFactory;
@@ -221,8 +223,11 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     }
 
     #[ArrayShape(['attributes' => 'array', 'chunks' => 'array'])]
-    public function sortChildNodesContent(\DOMNode $node, SubmissionEntity $submission): array
+    public function sortChildNodesContent(\DOMNode $node, SubmissionEntity $submission, int $depth): array
     {
+        if ($depth > self::MAX_NODE_DEPTH) {
+            throw new SmartlingNotSupportedContentException('Maximum child node nesting depth (' . self::MAX_NODE_DEPTH . ') exceeded');
+        }
         $chunks = [];
         $attrs = [];
         $nodesToRemove = [];
@@ -234,7 +239,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 
             switch ($childNode->nodeName) {
                 case static::BLOCK_NODE_NAME :
-                    $chunks[] = $this->renderTranslatedBlockNode($childNode, $submission);
+                    $chunks[] = $this->renderTranslatedBlockNode($childNode, $submission, $depth);
                     break;
                 case static::CHUNK_NODE_NAME :
                     $chunks[] = $childNode->nodeValue;
@@ -278,24 +283,27 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $this->fixAttributeTypes($originalAttributes, $processedAttributes);
     }
 
-    public function renderTranslatedBlockNode(\DOMElement $node, SubmissionEntity $submission): string
+    public function renderTranslatedBlockNode(\DOMElement $node, SubmissionEntity $submission, int $depth): string
     {
         $blockName = $node->getAttribute('blockName');
         $blockName = '' === $blockName ? null : $blockName;
         $originalAttributes = $this->unpackData($node->getAttribute('originalAttributes'));
-        $sortedResult = $this->sortChildNodesContent($node, $submission);
+        $sortedResult = $this->sortChildNodesContent($node, $submission, $depth + 1);
         // simple plain blocks
         if (null === $blockName) {
             return implode('\n', $sortedResult['chunks']);
         }
         $attributes = $this->processTranslationAttributes($submission, $blockName, $originalAttributes, $sortedResult['attributes']);
-        return $this->renderGutenbergBlock($blockName, $attributes, $sortedResult['chunks']);
+        return $this->renderGutenbergBlock($blockName, $attributes, $sortedResult['chunks'], $depth);
     }
 
-    public function renderGutenbergBlock(string $name, array $attrs = [], array $chunks = []): string
+    public function renderGutenbergBlock(string $name, array $attrs, array $chunks, int $depth): string
     {
-        $isJson = $this->isJson($attrs);
-        if ($isJson) {
+        /* Some user content might have JSON with \u0022 to escape quotes.
+        After processing XML \u0022 turns into &quot;, which is correct for general content.
+        To properly encode the quotes in JSON again we replace &quot; with " */
+        $needsQuotes = $this->isJson($attrs);
+        if ($needsQuotes && $depth === 0) {
             array_walk_recursive($attrs, static function (&$value) {
                 $value = str_replace('&quot;', '"', $value);
             });
@@ -306,7 +314,8 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             ? vsprintf('<!-- wp:%s%s -->%s<!-- /wp:%s -->', [$name, $attributes, $content, $name])
             : vsprintf('<!-- wp:%s%s /-->', [$name, $attributes]);
 
-        if ($isJson || (function_exists('acf_has_block_type') && acf_has_block_type($name))) {
+        // Only apply slashes for root depth: ACF blocks and blocks that we have previously replaced quotes in
+        if ($depth === 0 && ($needsQuotes || (function_exists('acf_has_block_type') && acf_has_block_type($name)))) {
             $result = addslashes($result);
         }
 
@@ -326,7 +335,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
                  * @var \DOMElement $child
                  */
                 if (static::BLOCK_NODE_NAME === $child->nodeName) {
-                    $string .= $this->renderTranslatedBlockNode($child, $params->getSubmission());
+                    $string .= $this->renderTranslatedBlockNode($child, $params->getSubmission(), 0);
                 }
             }
 
@@ -359,7 +368,6 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 
         foreach ($paths as $path) {
             if (file_exists($path) && is_readable($path)) {
-                /** @noinspection PhpIncludeInspection */
                 require_once $path;
                 return;
             }
