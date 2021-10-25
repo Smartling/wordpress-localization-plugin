@@ -2,8 +2,8 @@
 
 namespace Smartling\Settings;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Base\SmartlingEntityAbstract;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\Controller\ConfigurationProfileFormController as Form;
 
 /**

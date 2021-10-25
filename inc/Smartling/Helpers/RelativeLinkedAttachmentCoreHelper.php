@@ -4,7 +4,6 @@ namespace Smartling\Helpers;
 
 use DOMDocument;
 use LibXMLError;
-use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
@@ -12,6 +11,7 @@ use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\WPHookInterface;
 
 class RelativeLinkedAttachmentCoreHelper implements WPHookInterface

@@ -4,7 +4,7 @@ namespace Smartling\Helpers\MetaFieldProcessor;
 
 use Smartling\ContentTypes\ConfigParsers\FieldFilterConfigParser;
 use Smartling\MonologWrapper\MonologWrapper;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class CustomFieldFilterHandler
 {

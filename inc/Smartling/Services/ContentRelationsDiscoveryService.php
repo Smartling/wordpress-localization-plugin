@@ -3,7 +3,6 @@
 namespace Smartling\Services;
 
 use Exception;
-use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
 use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
@@ -32,6 +31,7 @@ use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tuner\MediaAttachmentRulesManager;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 /**
  *

@@ -38,7 +38,7 @@ services:
       - "%logger.formatter.allow_multiline%"
 
   fileLoggerHandlerStandard:
-    class: Monolog\Handler\StreamHandler
+    class: Smartling\Vendor\Monolog\Handler\StreamHandler
     arguments:
       - "%logger.filehandler.standard.filename%"
       - "%logger.filehandler.standard.loglevel%"

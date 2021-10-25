@@ -2,11 +2,10 @@
 
 namespace Smartling\DbAl;
 
-use Psr\Log\LoggerInterface;
-use Smartling\Bootstrap;
 use Smartling\Helpers\SiteHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Services\GlobalSettingsManager;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 /**
  * Class EntityManagerAbstract

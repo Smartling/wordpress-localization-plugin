@@ -13,10 +13,9 @@ realpath( pathinfo( __FILE__, PATHINFO_DIRNAME ) . DIRECTORY_SEPARATOR . '..' . 
  * Generates an \Exception if composer autoload file not found.
  */
 $composerAutoLoadScriptFile
-	= SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . 'inc' . DIRECTORY_SEPARATOR . 'third-party' . DIRECTORY_SEPARATOR . 'autoload.php';
+	= SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . 'inc' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'autoload.php';
 
 if ( file_exists( $composerAutoLoadScriptFile ) && is_readable( $composerAutoLoadScriptFile ) ) {
-	/** @noinspection PhpIncludeInspection */
 	require_once $composerAutoLoadScriptFile;
 } else {
 	throw new \Exception(
@@ -25,6 +24,3 @@ if ( file_exists( $composerAutoLoadScriptFile ) && is_readable( $composerAutoLoa
 			array ( $composerAutoLoadScriptFile )
 		), 1 );
 }
-
-
-

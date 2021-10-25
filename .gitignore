@@ -1,6 +1,7 @@
 ### COMPOSER ###
 composer
 
+inc/lib
 inc/third-party/*
 
 #do not keep logs

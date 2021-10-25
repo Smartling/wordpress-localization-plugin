@@ -2,8 +2,8 @@
 
 namespace Smartling\Base;
 
-use Monolog\Formatter\LineFormatter;
 use Smartling\Helpers\LogContextMixinHelper;
+use Smartling\Vendor\Monolog\Formatter\LineFormatter;
 
 /**
  * Class CustomLogLineFormatter

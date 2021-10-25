@@ -2,8 +2,8 @@
 
 namespace Smartling\Tests\Traits;
 
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
+use Smartling\Vendor\Psr\Log\NullLogger;
 
 /**
  * Class DummyLoggerMock

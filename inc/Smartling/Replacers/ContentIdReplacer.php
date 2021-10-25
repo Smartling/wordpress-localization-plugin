@@ -2,11 +2,11 @@
 
 namespace Smartling\Replacers;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 class ContentIdReplacer implements ReplacerInterface
 {

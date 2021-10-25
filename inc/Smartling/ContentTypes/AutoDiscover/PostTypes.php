@@ -2,9 +2,6 @@
 
 namespace Smartling\ContentTypes\AutoDiscover;
 
-use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
-
 class PostTypes
 {
     private array $ignoredTypes;

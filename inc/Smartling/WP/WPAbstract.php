@@ -2,7 +2,6 @@
 
 namespace Smartling\WP;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
@@ -16,6 +15,7 @@ use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 class WPAbstract
 {

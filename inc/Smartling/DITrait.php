@@ -2,17 +2,19 @@
 
 namespace Smartling;
 
-use Monolog\Handler\NullHandler;
 use Smartling\Base\ExportedAPI;
+use Smartling\Base\SmartlingLogHandler;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\LogContextMixinHelper;
-use Smartling\Helpers\SimpleStorageHelper;
+use Smartling\MonologWrapper\Logger\LevelLogger;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Services\GlobalSettingsManager;
-use Symfony\Component\Config\FileLocator;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
+use Smartling\Vendor\Monolog\Handler\BufferHandler;
+use Smartling\Vendor\Monolog\Handler\NullHandler;
+use Smartling\Vendor\Symfony\Component\Config\FileLocator;
+use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
+use Smartling\Vendor\Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
 trait DITrait
 {
@@ -77,10 +79,10 @@ trait DITrait
 
     private static function registerCloudLogExtension(ContainerBuilder $di)
     {
-        $defSmartling = $di->register('smartlingLogFileHandler','\Smartling\Base\SmartlingLogHandler')
+        $defSmartling = $di->register('smartlingLogFileHandler', SmartlingLogHandler::class)
             ->addArgument('https://api.smartling.com/updates/status');
 
-        $defBuffer = $di->register('bufferHandler', '\Monolog\Handler\BufferHandler')
+        $defBuffer = $di->register('bufferHandler', BufferHandler::class)
             ->addArgument($defSmartling)
             ->addArgument(1000)
             ->addArgument('DEBUG')
@@ -88,7 +90,7 @@ trait DITrait
             ->addArgument(true);
 
         foreach ($di->getDefinitions() as $serviceId => $serviceDefinition) {
-            if ($serviceDefinition->getClass() === 'Smartling\MonologWrapper\Logger\LevelLogger') {
+            if ($serviceDefinition->getClass() === LevelLogger::class) {
                 $serviceDefinition->addMethodCall('pushHandler',[$defBuffer]);
             }
         };

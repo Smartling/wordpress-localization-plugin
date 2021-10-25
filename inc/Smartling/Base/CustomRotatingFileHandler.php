@@ -2,9 +2,9 @@
 
 namespace Smartling\Base;
 
-use Monolog\Handler\RotatingFileHandler;
 use Smartling\Bootstrap;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Vendor\Monolog\Handler\RotatingFileHandler;
 
 /**
  * Class CustomRotatingFileHandler

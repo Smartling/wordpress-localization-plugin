@@ -2,10 +2,9 @@
 
 namespace Smartling\Processors;
 
-use Psr\Log\LoggerInterface;
-use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 /**
  * Class SmartlingFactoryAbstract

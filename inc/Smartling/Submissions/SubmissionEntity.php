@@ -3,7 +3,6 @@
 namespace Smartling\Submissions;
 
 use InvalidArgumentException;
-use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingEntityAbstract;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
@@ -15,6 +14,7 @@ use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressUserHelper;
 use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\JobEntityWithBatchUid;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 /**
  * Class SubmissionEntity

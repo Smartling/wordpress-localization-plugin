@@ -4,7 +4,7 @@ namespace Smartling\ContentTypes;
 
 use Smartling\ContentTypes\ConfigParsers\ConfigParserInterface;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
  * Class CustomTypeTrait

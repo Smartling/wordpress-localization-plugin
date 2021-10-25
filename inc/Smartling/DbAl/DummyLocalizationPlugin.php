@@ -2,8 +2,6 @@
 
 namespace Smartling\DbAl;
 
-use Psr\Log\LoggerInterface;
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 
 class DummyLocalizationPlugin implements LocalizationPluginProxyInterface

@@ -2,7 +2,6 @@
 
 namespace Smartling\Helpers\MetaFieldProcessor;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Submissions\SubmissionEntity;

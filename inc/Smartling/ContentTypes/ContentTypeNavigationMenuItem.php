@@ -3,7 +3,7 @@
 namespace Smartling\ContentTypes;
 
 use Smartling\Helpers\CustomMenuContentTypeHelper;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
  * Class ContentTypeNavigationMenuItem

@@ -2,7 +2,6 @@
 
 namespace Smartling\WP\Table;
 
-use Psr\Log\LoggerInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Helpers\ArrayHelper;
@@ -22,6 +21,7 @@ use Smartling\Queue\Queue;
 use Smartling\Settings\Locale;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\Controller\SmartlingListTable;
 
 class SubmissionTableWidget extends SmartlingListTable

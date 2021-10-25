@@ -4,7 +4,7 @@ namespace Smartling\Extensions\AcfOptionPages;
 
 use Smartling\ContentTypes\ContentTypeAbstract;
 use Smartling\ContentTypes\ContentTypeManager;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
  * Class ContentTypeAcfOption

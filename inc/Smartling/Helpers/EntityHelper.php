@@ -2,11 +2,10 @@
 
 namespace Smartling\Helpers;
 
-use Psr\Log\LoggerInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
-use Smartling\Exception\SmartlingDbException;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\SettingsManager;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 class EntityHelper
 {

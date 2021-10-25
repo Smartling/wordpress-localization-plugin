@@ -2,12 +2,11 @@
 
 namespace Smartling\Helpers;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
 use Smartling\MonologWrapper\MonologWrapper;
-use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 class ContentSerializationHelper
 {

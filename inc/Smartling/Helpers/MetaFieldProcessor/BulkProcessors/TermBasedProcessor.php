@@ -4,7 +4,7 @@ namespace Smartling\Helpers\MetaFieldProcessor\BulkProcessors;
 
 use Smartling\Helpers\MetaFieldProcessor\ReferencedTermBasedContentProcessor;
 use Smartling\Submissions\SubmissionEntity;
-use Symfony\Component\Config\Definition\Exception\Exception;
+use Smartling\Vendor\Symfony\Component\Config\Definition\Exception\Exception;
 
 class TermBasedProcessor extends ReferencedTermBasedContentProcessor
 {

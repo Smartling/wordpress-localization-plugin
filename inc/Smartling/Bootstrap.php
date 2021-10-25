@@ -3,7 +3,6 @@
 namespace Smartling;
 
 use Exception;
-use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\ContentTypes\AutoDiscover\PostTypes;
 use Smartling\ContentTypes\AutoDiscover\Taxonomies;
@@ -19,12 +18,13 @@ use Smartling\Helpers\MetaFieldProcessor\CustomFieldFilterHandler;
 use Smartling\Helpers\SchedulerHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\Helpers\UiMessageHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Services\GlobalSettingsManager;
 use Smartling\Services\LocalizationPluginProxyCollection;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
+use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 use Smartling\WP\WPInstallableInterface;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Smartling\Helpers\UiMessageHelper;
 
 class Bootstrap
 {

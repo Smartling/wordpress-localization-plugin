@@ -3,11 +3,11 @@
 namespace Smartling\Helpers;
 
 use InvalidArgumentException;
-use Psr\Log\LoggerInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 class SiteHelper
 {

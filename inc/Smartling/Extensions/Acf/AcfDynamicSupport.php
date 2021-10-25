@@ -2,7 +2,6 @@
 
 namespace Smartling\Extensions\Acf;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingConfigException;
@@ -14,6 +13,7 @@ use Smartling\Helpers\SiteHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 class AcfDynamicSupport
 {

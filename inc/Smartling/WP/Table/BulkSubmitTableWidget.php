@@ -3,7 +3,6 @@
 namespace Smartling\WP\Table;
 
 use DateTime;
-use Psr\Log\LoggerInterface;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
@@ -19,6 +18,7 @@ use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\Controller\SmartlingListTable;
 
 
