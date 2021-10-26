@@ -18,6 +18,7 @@ use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\JobManager;
 use Smartling\Queue\Queue;
+use Smartling\Queue\QueueInterface;
 use Smartling\Settings\Locale;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;

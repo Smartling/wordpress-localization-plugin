@@ -10,7 +10,6 @@ use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\WPHookInterface;
 
 class LiveNotificationController implements WPHookInterface
