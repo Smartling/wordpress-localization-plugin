@@ -370,7 +370,7 @@ class SubmissionTableWidget extends SmartlingListTable
                 $blogLabel = "*blog id {$row[SubmissionEntity::FIELD_TARGET_BLOG_ID]} not found*";
             }
             $row[SubmissionEntity::FIELD_TARGET_LOCALE] = $blogLabel;
-            $row[SubmissionEntity::VIRTUAL_FIELD_JOB_LINK] = $jobInfo->getJobName() === '' ? '' : "<a href=\"https://dashboard.smartling.com/app/projects/{$jobInfo->getProjectUid()}/account-jobs/?filename=$fileName\">{$jobInfo->getJobName()}</a>";
+            $row[SubmissionEntity::VIRTUAL_FIELD_JOB_LINK] = $jobInfo->getJobName() === '' ? '' : "<a href=\"https://dashboard.smartling.com/app/projects/{$jobInfo->getProjectUid()}/account-jobs/?filename=$fileName\">" . esc_html($jobInfo->getJobName()) . '</a>';
 
             $flagBlockParts = [];
 
