@@ -8,58 +8,42 @@ use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 
 class SubmissionCleanupTest extends SmartlingUnitTestCaseAbstract
 {
-    /**
-     * @return SubmissionEntity
-     */
-    private function makePreparations()
+    private int $targetBlogId = 2;
+    private string $testFile = '/test.php';
+
+    private function makePreparations(): SubmissionEntity
     {
         $postId = $this->createPost();
         $translationHelper = $this->getTranslationHelper();
-        /**
-         * @var SubmissionEntity $submission
-         */
-        $submission = $translationHelper->prepareSubmission('post', 1, $postId, 2, true);
+        $submission = $translationHelper->prepareSubmission('post', 1, $postId, $this->targetBlogId, true);
 
         /**
          * Check submission status
          */
-        $this->assertTrue(SubmissionEntity::SUBMISSION_STATUS_NEW === $submission->getStatus());
-        $this->assertTrue(1 === $submission->getIsCloned());
+        $this->assertSame(SubmissionEntity::SUBMISSION_STATUS_NEW, $submission->getStatus());
+        $this->assertSame(1, $submission->getIsCloned());
         $this->executeUpload();
         $submissions = $this->getSubmissionManager()->find(
             [
                 'content_type' => 'post',
                 'is_cloned'    => 1,
             ]);
-        $this->assertTrue(1 === count($submissions));
+        $this->assertCount(1, $submissions);
 
         return reset($submissions);
     }
 
-    private function checkSubmissionIsCancelled()
+    private function assertNoSubmissions()
     {
-        $submissions = $this->getSubmissionManager()->find(
-            [
-                'content_type' => 'post',
-                'is_cloned'    => 1,
-                'status'       => SubmissionEntity::SUBMISSION_STATUS_CANCELLED,
-            ]);
-        $this->assertTrue(1 === count($submissions));
+        $this->assertCount(0, $this->getSubmissionManager()->find([
+            'content_type' => 'post',
+            'is_cloned' => 1,
+        ]));
     }
 
-    private function prepareTempFile(SubmissionEntity $submission)
+    private function prepareTempFile(int $submissionId)
     {
-        file_put_contents(
-            DIR_TESTDATA . '/test.php',
-            vsprintf(
-                '<?php wp_delete_post(%s, true);',
-                [
-                    $submission->getSourceId(),
-                ]
-            )
-        );
 
-        SimpleStorageHelper::set('execFile', DIR_TESTDATA . '/test.php');
     }
 
     public function testRemovedOriginalContent()
@@ -67,10 +51,15 @@ class SubmissionCleanupTest extends SmartlingUnitTestCaseAbstract
         self::wpCliExec('plugin', 'activate', 'exec-plugin --network');
 
         $submission = $this->makePreparations();
-        $this->prepareTempFile($submission);
+        file_put_contents(
+            DIR_TESTDATA . $this->testFile,
+            "<?php wp_delete_post({$submission->getSourceId()}, true);",
+        );
+
+        SimpleStorageHelper::set('execFile', DIR_TESTDATA . $this->testFile);
 
         self::wpCliExec('cron', 'event', 'run exec_plugin_execute_hook');
-        $this->checkSubmissionIsCancelled();
+        $this->assertNoSubmissions();
 
         self::wpCliExec('plugin', 'deactivate', 'exec-plugin --network');
     }
@@ -80,10 +69,15 @@ class SubmissionCleanupTest extends SmartlingUnitTestCaseAbstract
         self::wpCliExec('plugin', 'activate', 'exec-plugin --network');
 
         $submission = $this->makePreparations();
-        $this->prepareTempFile($submission);
+        file_put_contents(
+            DIR_TESTDATA . $this->testFile,
+            "<?php switch_to_blog($this->targetBlogId); wp_delete_post({$submission->getTargetId()}, true);",
+        );
+
+        SimpleStorageHelper::set('execFile', DIR_TESTDATA . $this->testFile);
 
         self::wpCliExec('cron', 'event', 'run exec_plugin_execute_hook');
-        $this->checkSubmissionIsCancelled();
+        $this->assertNoSubmissions();
 
         self::wpCliExec('plugin', 'deactivate', 'exec-plugin --network');
     }
