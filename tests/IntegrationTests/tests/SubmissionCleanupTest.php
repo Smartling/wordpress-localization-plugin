@@ -41,11 +41,6 @@ class SubmissionCleanupTest extends SmartlingUnitTestCaseAbstract
         ]));
     }
 
-    private function prepareTempFile(int $submissionId)
-    {
-
-    }
-
     public function testRemovedOriginalContent()
     {
         self::wpCliExec('plugin', 'activate', 'exec-plugin --network');
