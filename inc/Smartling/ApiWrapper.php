@@ -178,20 +178,37 @@ class ApiWrapper implements ApiWrapperInterface
 
     public function acquireLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime
     {
-        return DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())
-            ->acquireLock($key, $ttlSeconds);
+        try {
+            return DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())
+                ->acquireLock($key, $ttlSeconds);
+        } catch (\Throwable $e) {
+            echo $e->getMessage();
+            file_put_contents('/tmp/lastError', $e->getMessage());
+            return new \DateTime();
+        }
     }
 
     public function renewLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime
     {
-        return DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())
-            ->renewLock($key, $ttlSeconds);
+        try {
+            return DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())
+                ->renewLock($key, $ttlSeconds);
+        } catch (\Throwable $e) {
+            echo $e->getMessage();
+            file_put_contents('/tmp/lastError', $e->getMessage());
+            return new \DateTime();
+        }
     }
 
     public function releaseLock(ConfigurationProfileEntity $profile, string $key): void
     {
-        DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())
-            ->releaseLock($key);
+        try {
+            DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())
+                ->releaseLock($key);
+        } catch (\Throwable $e) {
+            echo $e->getMessage();
+            file_put_contents('/tmp/lastError', $e->getMessage());
+        }
     }
 
     /**

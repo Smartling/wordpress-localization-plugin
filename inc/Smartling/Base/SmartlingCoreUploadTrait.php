@@ -551,7 +551,7 @@ trait SmartlingCoreUploadTrait
         $msg = vsprintf('Preparing to start batch "%s" execution...', [$batchUid]);
         $this->getLogger()->debug($msg);
         try {
-            $submissions = $this->getSubmissionManager()->searchByBatchUid($batchUid);
+            $submissions = $this->getSubmissionManager()->searchNewByBatchUid($batchUid);
 
             if (0 === count($submissions)) {
                 $profile = $this->getSettingsManager()->getSingleSettingsProfile($sourceBlogId);

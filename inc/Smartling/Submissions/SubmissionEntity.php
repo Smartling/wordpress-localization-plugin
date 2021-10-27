@@ -54,6 +54,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
     public const SUBMISSION_STATUS_COMPLETED = 'Completed';
     public const SUBMISSION_STATUS_FAILED = 'Failed';
     public const SUBMISSION_STATUS_CANCELLED = 'Cancelled';
+    public const SUBMISSION_STATUS_DELETED = 'Deleted';
 
     public static array $submissionStatuses = [
         self::SUBMISSION_STATUS_NEW,
@@ -61,6 +62,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
         self::SUBMISSION_STATUS_COMPLETED,
         self::SUBMISSION_STATUS_FAILED,
         self::SUBMISSION_STATUS_CANCELLED,
+        self::SUBMISSION_STATUS_DELETED,
     ];
 
     public const FIELD_ID = 'id';
@@ -490,6 +492,9 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return $this->stateFields[static::FIELD_FILE_URI];
     }
 
+    /**
+     * Just get file URI
+     */
     public function getStateFieldFileUri(): string
     {
         return (string)$this->stateFields[static::FIELD_FILE_URI];

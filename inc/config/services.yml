@@ -219,12 +219,11 @@ services:
 
   service.submission-cleanup:
     class: Smartling\Helpers\SubmissionCleanupHelper
-    calls:
-      - [ "setApiWrapper", [ "@wrapper.sdk.api.smartling" ] ]
-      - [ "setSiteHelper" , [ "@site.helper" ] ]
-      - [ "setSubmissionManager", [ "@manager.submission" ] ]
-      - [ "setIoWrapper", [ "@factory.contentIO" ] ]
-      - [ "setMultilangProxy", [ "@multilang.proxy" ]]
+    arguments:
+      - "@wrapper.sdk.api.smartling"
+      - "@site.helper"
+      - "@manager.submission"
+      - "@multilang.proxy"
 
   wp.bulkSubmit:
     class: Smartling\WP\Controller\BulkSubmitController
@@ -259,9 +258,9 @@ services:
 
   service.side-removal-handler:
     class: Smartling\Services\BlogRemovalHandler
-    calls:
-      - [ "setApiWrapper", [ "@wrapper.sdk.api.smartling" ] ]
-      - [ "setSubmissionManager", [ "@manager.submission" ] ]
+    arguments:
+      - "@service.submission-cleanup"
+      - "@manager.submission"
 
   service.invalid-character-cleaner:
     class: Smartling\Services\InvalidCharacterCleaner

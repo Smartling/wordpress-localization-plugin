@@ -135,9 +135,9 @@ class TranslationHelper
      */
     public function reloadSubmission(SubmissionEntity $submission): SubmissionEntity
     {
-        $submissionsList = $this->submissionManager->getEntityById($submission->getId());
-        if (is_array($submissionsList)) {
-            return ArrayHelper::first($submissionsList);
+        $found = $this->submissionManager->getEntityById($submission->getId());
+        if ($found !== null) {
+            return $found;
         }
         $message = vsprintf(
             'Error while reloading submission. Nothing returned from database. Original Submission: %s',

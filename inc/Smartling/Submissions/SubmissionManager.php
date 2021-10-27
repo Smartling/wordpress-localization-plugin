@@ -100,6 +100,7 @@ class SubmissionManager extends EntityManagerAbstract
     }
 
     /**
+     * Deleted submissions ARE NOT excluded
      * @return SubmissionEntity[]
      */
     public function searchByCondition(
@@ -165,8 +166,7 @@ class SubmissionManager extends EntityManagerAbstract
         );
     }
 
-
-    public function searchByBatchUid(string $batchUid): array
+    public function searchNewByBatchUid(string $batchUid): array
     {
         $block = ConditionBlock::getConditionBlock();
         $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_BATCH_UID, [$batchUid]));
@@ -177,36 +177,9 @@ class SubmissionManager extends EntityManagerAbstract
         return $this->searchByCondition($block, null, null, null, [], null, $total);
     }
 
-    /**
-     * Gets SubmissionEntity from database by primary key
-     * alias to getEntities
-     *
-     * @return null|SubmissionEntity[]
-     */
-    public function getEntityById(int $id): ?array
+    public function getEntityById(int $id): ?SubmissionEntity
     {
-        $query = $this->buildSelectQuery([SubmissionEntity::FIELD_ID => $id]);
-
-        $obj = $this->fetchData($query);
-
-        if (is_array($obj) && empty($obj)) {
-            $obj = null;
-        }
-
-        return $obj;
-    }
-
-    public function buildSelectQuery(array $where): string
-    {
-        $whereOptions = ConditionBlock::getConditionBlock();
-        foreach ($where as $key => $item) {
-            $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, $key, [$item]);
-            $whereOptions->addCondition($condition);
-        }
-
-        $query = $this->buildJoinQuery($whereOptions);
-
-        return $query;
+        return $this->find([SubmissionEntity::FIELD_ID => $id])[0] ?? null;
     }
 
     public function buildCountQuery(?string $contentType, ?string $status, ?int $outdatedFlag, ConditionBlock $baseCondition = null): string
@@ -250,17 +223,11 @@ class SubmissionManager extends EntityManagerAbstract
             }
         }
 
-        $query = $this->buildJoinCountQuery($whereOptions);
-
-        return $query;
+        return $this->buildJoinCountQuery($whereOptions);
     }
 
     /**
-     * Search submission by params
-     *
-     * @param array $params
      * @param int $limit (if 0 - unlimited)
-     *
      * @return SubmissionEntity[]
      */
     public function find(array $params = [], int $limit = 0): array
@@ -277,6 +244,7 @@ class SubmissionManager extends EntityManagerAbstract
             $block->addCondition($condition);
         }
 
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_NOT_EQ, SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_DELETED]));
 
         $pageOptions = 0 === $limit ? null : ['limit' => $limit, 'page' => 1];
 
@@ -284,7 +252,6 @@ class SubmissionManager extends EntityManagerAbstract
 
         return $this->fetchData($query);
     }
-
 
     /**
      * Looks for submissions with status = 'New' AND batch_uid <> '' AND is_locked = 0
@@ -329,8 +296,8 @@ class SubmissionManager extends EntityManagerAbstract
     public function findByIds(array $ids): array
     {
         $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
-        $condition = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_IN, SubmissionEntity::FIELD_ID, $ids);
-        $block->addCondition($condition);
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_IN, SubmissionEntity::FIELD_ID, $ids));
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_NOT_EQ, SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_DELETED]));
         $query = $this->buildQuery(null, null, null, [], null, $block);
 
         return $this->fetchData($query);
@@ -372,9 +339,7 @@ class SubmissionManager extends EntityManagerAbstract
             $whereOptions = $baseCondition;
         }
 
-        $query = $this->buildJoinQuery($whereOptions, $pageOptions, $sortOptions);
-
-        return $query;
+        return $this->buildJoinQuery($whereOptions, $pageOptions, $sortOptions);
     }
 
     public function getColumnsLabels(): array
