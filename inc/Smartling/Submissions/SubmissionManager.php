@@ -19,6 +19,9 @@ use Smartling\Jobs\JobManager;
 use Smartling\Jobs\SubmissionJobEntity;
 use Smartling\Jobs\SubmissionsJobsManager;
 
+/**
+ * Excludes submissions in DELETED status by default
+ */
 class SubmissionManager extends EntityManagerAbstract
 {
     private JobManager $jobManager;
