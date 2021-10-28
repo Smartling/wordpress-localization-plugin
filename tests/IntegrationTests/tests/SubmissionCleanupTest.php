@@ -2,89 +2,49 @@
 
 namespace Smartling\Tests\IntegrationTests\tests;
 
-use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 
 class SubmissionCleanupTest extends SmartlingUnitTestCaseAbstract
 {
-    /**
-     * @return SubmissionEntity
-     */
-    private function makePreparations()
+    private int $targetBlogId = 2;
+
+    private function prepareSubmissionAndUpload(): SubmissionEntity
     {
         $postId = $this->createPost();
-        $translationHelper = $this->getTranslationHelper();
-        /**
-         * @var SubmissionEntity $submission
-         */
-        $submission = $translationHelper->prepareSubmission('post', 1, $postId, 2, true);
-
-        /**
-         * Check submission status
-         */
-        $this->assertTrue(SubmissionEntity::SUBMISSION_STATUS_NEW === $submission->getStatus());
-        $this->assertTrue(1 === $submission->getIsCloned());
+        $submission = $this->getTranslationHelper()->prepareSubmission('post', 1, $postId, $this->targetBlogId, true);
+        $this->assertSame(SubmissionEntity::SUBMISSION_STATUS_NEW, $submission->getStatus());
+        $this->assertSame(1, $submission->getIsCloned());
         $this->executeUpload();
-        $submissions = $this->getSubmissionManager()->find(
-            [
-                'content_type' => 'post',
-                'is_cloned'    => 1,
-            ]);
-        $this->assertTrue(1 === count($submissions));
+        $submissions = $this->getSubmissionManager()->find([
+            'content_type' => 'post',
+            'is_cloned'    => 1,
+        ]);
+        $this->assertCount(1, $submissions);
 
         return reset($submissions);
     }
 
-    private function checkSubmissionIsCancelled()
+    private function assertNoSubmissions()
     {
-        $submissions = $this->getSubmissionManager()->find(
-            [
-                'content_type' => 'post',
-                'is_cloned'    => 1,
-                'status'       => SubmissionEntity::SUBMISSION_STATUS_CANCELLED,
-            ]);
-        $this->assertTrue(1 === count($submissions));
-    }
-
-    private function prepareTempFile(SubmissionEntity $submission)
-    {
-        file_put_contents(
-            DIR_TESTDATA . '/test.php',
-            vsprintf(
-                '<?php wp_delete_post(%s, true);',
-                [
-                    $submission->getSourceId(),
-                ]
-            )
-        );
-
-        SimpleStorageHelper::set('execFile', DIR_TESTDATA . '/test.php');
+        $this->assertCount(0, $this->getSubmissionManager()->find([
+            'content_type' => 'post',
+            'is_cloned' => 1,
+        ]));
     }
 
     public function testRemovedOriginalContent()
     {
-        self::wpCliExec('plugin', 'activate', 'exec-plugin --network');
-
-        $submission = $this->makePreparations();
-        $this->prepareTempFile($submission);
-
-        self::wpCliExec('cron', 'event', 'run exec_plugin_execute_hook');
-        $this->checkSubmissionIsCancelled();
-
-        self::wpCliExec('plugin', 'deactivate', 'exec-plugin --network');
+        $submission = $this->prepareSubmissionAndUpload();
+        wp_delete_post($submission->getSourceId(), true);
+        $this->assertNoSubmissions();
     }
 
     public function testRemovedTranslatedContent()
     {
-        self::wpCliExec('plugin', 'activate', 'exec-plugin --network');
-
-        $submission = $this->makePreparations();
-        $this->prepareTempFile($submission);
-
-        self::wpCliExec('cron', 'event', 'run exec_plugin_execute_hook');
-        $this->checkSubmissionIsCancelled();
-
-        self::wpCliExec('plugin', 'deactivate', 'exec-plugin --network');
+        $submission = $this->prepareSubmissionAndUpload();
+        switch_to_blog($this->targetBlogId);
+        wp_delete_post($submission->getTargetId(), true);
+        $this->assertNoSubmissions();
     }
 }

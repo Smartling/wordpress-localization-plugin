@@ -248,20 +248,13 @@ class SubmissionCleanupHelper implements WPHookInterface
         if (0 < count($submissions)) {
             $this->getLogger()->debug(vsprintf('Found %d submissions', [count($submissions)]));
             foreach ($submissions as $submission) {
-                $this->cancelSubmission($submission);
+                $this->unlinkContent($submission);
+                $this->getSubmissionManager()->delete($submission);
             }
         } else {
             $this->getLogger()
                 ->debug(vsprintf('No submissions found for search params: %s', [var_export($searchParams, true)]));
         }
-    }
-
-    private function cancelSubmission(SubmissionEntity $submission)
-    {
-        $this->unlinkContent($submission);
-        $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_CANCELLED);
-        $submission->setTargetId(0);
-        $submission = $this->getSubmissionManager()->storeEntity($submission);
     }
 
     /**
