@@ -88,4 +88,37 @@ HTML;
         }
         $this->assertEquals("\n<p>[Ñ~ót á ~Gúté~ñbé~rg bl~óck]</p>", $blocks[1]->getInnerHtml(), 'Expected non-Gutenberg block to be translated');
     }
+
+    public function testCoreImageClassTranslation()
+    {
+        $attachmentSourceId = $this->createAttachment();
+        $content = <<<HTML
+<!-- wp:image {"id":$attachmentSourceId,"sizeSlug":"large"} -->
+<figure class="wp-block-image size-large"><img src="http://example.com/wp-content/uploads/2021/11/imageClass.png" alt="" class="wp-image-$attachmentSourceId"/></figure>
+<!-- /wp:image -->
+HTML;
+        $postId = $this->createPost('post', "Image Class Translation", $content);
+        $attachment = $this->translationHelper->prepareSubmission('attachment', $this->sourceBlogId, $attachmentSourceId, $this->targetBlogId);
+        $post = $this->translationHelper->prepareSubmission('post', $this->sourceBlogId, $postId, $this->targetBlogId);
+        $submissions = [$attachment, $post];
+        foreach ($submissions as $submission) {
+            $submission->getFileUri();
+            $this->submissionManager->storeEntity($submission);
+        }
+        $this->executeUpload();
+        $this->forceSubmissionDownload($submissions[0]);
+        $this->forceSubmissionDownload($submissions[1]);
+        foreach ($submissions as &$submission) {
+            $submission = $this->translationHelper->reloadSubmission($submission);
+        }
+        unset($submission);
+        $attachmentTargetId = $submissions[0]->getTargetId();
+        $expectedContent = <<<HTML
+<!-- wp:core/image {"id":$attachmentTargetId,"sizeSlug":"[l~árgé]"} -->
+<figure class="wp-block-image size-large"><img src="http://example.com/wp-content/uploads/2021/11/imageClass.png" alt="" class="wp-image-$attachmentTargetId" /></figure>
+<!-- /wp:core/image -->
+HTML;
+        $this->assertNotEquals($attachmentSourceId, $attachmentTargetId);
+        $this->assertEquals($expectedContent, $this->getTargetPost($this->siteHelper, $submissions[1])->post_content);
+    }
 }
