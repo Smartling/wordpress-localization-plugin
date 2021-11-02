@@ -283,6 +283,19 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $this->fixAttributeTypes($originalAttributes, $processedAttributes);
     }
 
+    private function processTranslationChunks(string $blockName, array $originalAttributes, array $translatedAttributes, array $chunks): array
+    {
+        $result = [];
+        if ($blockName === 'core/image') {
+            foreach ($chunks as $chunk) {
+                $result[] = preg_replace("/<img(.+)class=\"wp-image-{$originalAttributes['id']}\"/", "<img\$1class=\"wp-image-{$translatedAttributes['id']}\"", $chunk);
+            }
+        } else {
+            return $chunks;
+        }
+        return $result;
+    }
+
     public function renderTranslatedBlockNode(\DOMElement $node, SubmissionEntity $submission, int $depth): string
     {
         $blockName = $node->getAttribute('blockName');
@@ -294,7 +307,8 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             return implode('\n', $sortedResult['chunks']);
         }
         $attributes = $this->processTranslationAttributes($submission, $blockName, $originalAttributes, $sortedResult['attributes']);
-        return $this->renderGutenbergBlock($blockName, $attributes, $sortedResult['chunks'], $depth);
+        $chunks = $this->processTranslationChunks($blockName, $originalAttributes, $attributes, $sortedResult['chunks']);
+        return $this->renderGutenbergBlock($blockName, $attributes, $chunks, $depth);
     }
 
     public function renderGutenbergBlock(string $name, array $attrs, array $chunks, int $depth): string
