@@ -307,8 +307,13 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             return implode('\n', $sortedResult['chunks']);
         }
         $attributes = $this->processTranslationAttributes($submission, $blockName, $originalAttributes, $sortedResult['attributes']);
-        $chunks = $this->processTranslationChunks($blockName, $originalAttributes, $attributes, $sortedResult['chunks']);
-        return $this->renderGutenbergBlock($blockName, $attributes, $chunks, $depth);
+
+        return $this->renderGutenbergBlock(
+            $blockName,
+            $attributes,
+            $this->processTranslationChunks($blockName, $originalAttributes, $attributes, $sortedResult['chunks']),
+            $depth,
+        );
     }
 
     public function renderGutenbergBlock(string $name, array $attrs, array $chunks, int $depth): string
