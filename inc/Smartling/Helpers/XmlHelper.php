@@ -10,11 +10,18 @@ use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
 use Smartling\Exception\InvalidXMLException;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
+use Smartling\Helpers\Serializers\SerializerInterface;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 
 class XmlHelper
 {
+    private SerializerInterface $serializer;
+
+    public function __construct(SerializerInterface $serializer)
+    {
+        $this->serializer = $serializer;
+    }
 
     /**
      * @return mixed
@@ -86,30 +93,20 @@ class XmlHelper
         return $document;
     }
 
-
-    private static function encodeSource($source, $stringLength = 120)
+    private function encodeSource(array $source): string
     {
-        return "\n" . implode("\n", str_split(base64_encode(serialize($source)), $stringLength)) . "\n";
+        return "\n" . implode("\n", str_split($this->serializer->serialize($source), 120)) . "\n";
+    }
+
+    private function decodeSource(string $source): array
+    {
+        return $this->serializer->unserialize($source);
     }
 
     /**
-     * @param string $source
-     * @return array
-     */
-    private static function decodeSource($source)
-    {
-        return unserialize(base64_decode($source));
-    }
-
-    /**
-     * @param array            $source
-     * @param SubmissionEntity $submission
-     * @param array            $originalContent
-     *
      * TODO: refactor this and SmartlingCoreTrait::prepareFieldProcessorValues to get rid of self::getFieldProcessingParams() in favour of sending them as an argument
-     * @return string
      */
-    public static function xmlEncode(array $source, SubmissionEntity $submission, array $originalContent = [])
+    public function xmlEncode(array $source, SubmissionEntity $submission, array $originalContent = []): string
     {
         static::logMessage(vsprintf('Started creating XML for fields: %s', [base64_encode(var_export($source, true))]));
         $xml = self::setTranslationComments(self::initXml());
@@ -120,15 +117,15 @@ class XmlHelper
         }
         $xml->appendChild($rootNode);
 
-        static::addSource($rootNode, $xml, $originalContent);
+        $this->addSource($rootNode, $xml, $originalContent);
 
         return $xml->saveXML();
     }
 
-    private static function addSource(\DOMNode $root, \DOMDocument $xml, $content)
+    private function addSource(\DOMNode $root, \DOMDocument $xml, $content): void
     {
         $node = $xml->createElement(self::XML_SOURCE_NODE_NAME);
-        $node->appendChild(new DOMCdataSection(self::encodeSource($content)));
+        $node->appendChild(new DOMCdataSection($this->encodeSource($content)));
         $root->appendChild($node);
     }
 
@@ -181,13 +178,7 @@ class XmlHelper
         });
     }
 
-    /**
-     * @param string $content
-     * @param SubmissionEntity $submission
-     *
-     * @return DecodedXml
-     */
-    public function xmlDecode($content, SubmissionEntity $submission)
+    public function xmlDecode(string $content, SubmissionEntity $submission): DecodedXml
     {
         if ($content === '') {
             static::logMessage('Skipped XML decoding: empty content');
@@ -195,7 +186,7 @@ class XmlHelper
         }
         static::logMessage(vsprintf('Starting XML file decoding : %s', [base64_encode(var_export($content, true))]));
         $xpath = self::prepareXPath($content);
-        return new DecodedXml(self::getFields($xpath, $submission), self::getSource($xpath));
+        return new DecodedXml(self::getFields($xpath, $submission), $this->getSource($xpath));
     }
 
     /**
@@ -248,16 +239,12 @@ class XmlHelper
         return $fields;
     }
 
-    /**
-     * @param DOMXPath $xPath
-     * @return array
-     */
-    private static function getSource(DOMXPath $xPath)
+    private function getSource(DOMXPath $xPath): array
     {
         $query = $xPath->query('/' . self::XML_ROOT_NODE_NAME . '/' . self::XML_SOURCE_NODE_NAME);
         if ($query->length > 0) {
             try {
-                return self::decodeSource($query[0]->nodeValue);
+                return $this->decodeSource($query[0]->nodeValue);
             } catch (\Exception $e) {
                 self::logMessage("Failed to decode source: " . $e->getMessage());
             }

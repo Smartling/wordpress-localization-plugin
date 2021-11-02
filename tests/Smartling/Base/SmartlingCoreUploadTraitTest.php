@@ -11,6 +11,7 @@ use Smartling\Helpers\DecodedXml;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
+use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
 use Smartling\Helpers\XmlHelper;
 use Smartling\Replacers\ReplacerFactory;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -566,6 +567,7 @@ HTML;
         $postContentHelper = new PostContentHelper(new GutenbergBlockHelper(
             $this->createMock(MediaAttachmentRulesManager::class),
             $this->createMock(ReplacerFactory::class),
+            new SerializerJsonWithFallback(),
         ));
         self::assertEquals([], $smartlingCoreUpload->applyXML($submission, ' ', $xmlHelper, $postContentHelper));
     }

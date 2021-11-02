@@ -13,6 +13,9 @@ services:
       - [ "setDelimiter", [ "%coma%" ] ]
       - [ "setType", [ "coma-separated" ] ]
 
+  serializer.json:
+    class: Smartling\Helpers\Serializers\SerializerJsonWithFallback
+
   manager.serializer:
     class: Smartling\Helpers\Serializers\SerializationManager
     calls:

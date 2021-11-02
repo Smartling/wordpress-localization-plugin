@@ -153,7 +153,7 @@ trait SmartlingCoreUploadTrait
             }
 
             $this->prepareFieldProcessorValues($submission);
-            return XmlHelper::xmlEncode($filteredValues, $submission, $source);
+            return $this->xmlHelper->xmlEncode($filteredValues, $submission, $source);
         } catch (EntityNotFoundException $e) {
             $this->getLogger()->error($e->getMessage());
             $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent content.');
@@ -858,6 +858,6 @@ trait SmartlingCoreUploadTrait
             return '';
         }
 
-        return XmlHelper::xmlEncode($filteredValues, $submission, $params->getPreparedFields());
+        return $this->xmlHelper->xmlEncode($filteredValues, $submission, $params->getPreparedFields());
     }
 }

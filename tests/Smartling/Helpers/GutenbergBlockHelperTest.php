@@ -46,6 +46,7 @@ namespace Smartling\Tests\Smartling\Helpers {
     use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
     use Smartling\Helpers\FieldsFilterHelper;
     use Smartling\Helpers\GutenbergBlockHelper;
+    use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
     use Smartling\Models\GutenbergBlock;
     use Smartling\Replacers\ReplacerFactory;
     use Smartling\Submissions\SubmissionEntity;
@@ -67,6 +68,7 @@ namespace Smartling\Tests\Smartling\Helpers {
             ->setConstructorArgs([
                 $this->createMock(MediaAttachmentRulesManager::class),
                 $this->createMock(ReplacerFactory::class),
+                new SerializerJsonWithFallback(),
             ])
             ->onlyMethods($methods)
             ->getMock();
@@ -76,7 +78,11 @@ namespace Smartling\Tests\Smartling\Helpers {
 
     protected function setUp(): void
     {
-        $this->helper = new GutenbergBlockHelper($this->createMock(MediaAttachmentRulesManager::class), $this->createMock(ReplacerFactory::class));
+        $this->helper = new GutenbergBlockHelper(
+            $this->createMock(MediaAttachmentRulesManager::class),
+            $this->createMock(ReplacerFactory::class),
+            new SerializerJsonWithFallback(),
+        );
     }
 
     public function testAddPostContentBlocksWithBlocks()
@@ -188,22 +194,6 @@ HTML
         ];
     }
 
-    public function testPackData()
-    {
-        $sample = ['foo' => 'bar'];
-        $expected = base64_encode(serialize($sample));
-        $result = $this->invokeMethod($this->helper, 'packData', [$sample]);
-        self::assertEquals($expected, $result);
-    }
-
-    public function testUnpackData()
-    {
-        $sample = ['foo' => 'bar'];
-        $source = base64_encode(serialize($sample));
-        $result = $this->invokeMethod($this->helper, 'unpackData', [$source]);
-        self::assertEquals($sample, $result);
-    }
-
     public function testPackUnpack()
     {
         $sample = ['foo' => 'bar'];
@@ -260,7 +250,7 @@ HTML
                         'chunk c',
                     ],
                 ],
-                '<gutenbergBlock blockName="test" originalAttributes="YToxOntzOjM6ImZvbyI7czozOiJiYXIiO30="><![CDATA[]]><contentChunk><![CDATA[chunk a]]></contentChunk><contentChunk><![CDATA[chunk b]]></contentChunk><contentChunk><![CDATA[chunk c]]></contentChunk><blockAttribute name="foo"><![CDATA[bar]]></blockAttribute></gutenbergBlock>',
+                '<gutenbergBlock blockName="test" originalAttributes="eyJmb28iOiJiYXIifQ=="><![CDATA[]]><contentChunk><![CDATA[chunk a]]></contentChunk><contentChunk><![CDATA[chunk b]]></contentChunk><contentChunk><![CDATA[chunk c]]></contentChunk><blockAttribute name="foo"><![CDATA[bar]]></blockAttribute></gutenbergBlock>',
             ],
             'nested block' => [
                 [
@@ -287,7 +277,7 @@ HTML
                         'chunk c',
                     ],
                 ],
-                '<gutenbergBlock blockName="test" originalAttributes="YToxOntzOjM6ImZvbyI7czozOiJiYXIiO30="><![CDATA[]]><contentChunk><![CDATA[chunk a]]></contentChunk><gutenbergBlock blockName="test1" originalAttributes="YToxOntzOjM6ImJhciI7czozOiJmb28iO30="><![CDATA[]]><contentChunk><![CDATA[chunk d]]></contentChunk><contentChunk><![CDATA[chunk e]]></contentChunk><contentChunk><![CDATA[chunk f]]></contentChunk><blockAttribute name="bar"><![CDATA[foo]]></blockAttribute></gutenbergBlock><contentChunk><![CDATA[chunk c]]></contentChunk><blockAttribute name="foo"><![CDATA[bar]]></blockAttribute></gutenbergBlock>',
+                '<gutenbergBlock blockName="test" originalAttributes="eyJmb28iOiJiYXIifQ=="><![CDATA[]]><contentChunk><![CDATA[chunk a]]></contentChunk><gutenbergBlock blockName="test1" originalAttributes="eyJiYXIiOiJmb28ifQ=="><![CDATA[]]><contentChunk><![CDATA[chunk d]]></contentChunk><contentChunk><![CDATA[chunk e]]></contentChunk><contentChunk><![CDATA[chunk f]]></contentChunk><blockAttribute name="bar"><![CDATA[foo]]></blockAttribute></gutenbergBlock><contentChunk><![CDATA[chunk c]]></contentChunk><blockAttribute name="foo"><![CDATA[bar]]></blockAttribute></gutenbergBlock>',
             ],
         ];
     }
@@ -617,10 +607,10 @@ some par 2
                         ],
                     ],
                 ],
-                '<string name="entity/post_content"><gutenbergBlock blockName="core/paragraph" originalAttributes="YTowOnt9"><![CDATA[]]><contentChunk><![CDATA[
+                '<string name="entity/post_content"><gutenbergBlock blockName="core/paragraph" originalAttributes="e30="><![CDATA[]]><contentChunk><![CDATA[
 some par 1
 
-]]></contentChunk></gutenbergBlock><gutenbergBlock blockName="" originalAttributes="YTowOnt9"><![CDATA[]]><contentChunk><![CDATA[ ]]></contentChunk></gutenbergBlock><gutenbergBlock blockName="core/paragraph" originalAttributes="YTowOnt9"><![CDATA[]]><contentChunk><![CDATA[
+]]></contentChunk></gutenbergBlock><gutenbergBlock blockName="" originalAttributes="e30="><![CDATA[]]><contentChunk><![CDATA[ ]]></contentChunk></gutenbergBlock><gutenbergBlock blockName="core/paragraph" originalAttributes="e30="><![CDATA[]]><contentChunk><![CDATA[
 some par 2
 
 ]]></contentChunk></gutenbergBlock><![CDATA[]]></string>',
@@ -711,7 +701,7 @@ some par 2
         if ($replacerFactory === null) {
             $replacerFactory = $this->createMock(ReplacerFactory::class);
         }
-        return new GutenbergBlockHelper($rulesManager, $replacerFactory);
+        return new GutenbergBlockHelper($rulesManager, $replacerFactory, new SerializerJsonWithFallback());
     }
 }
 }

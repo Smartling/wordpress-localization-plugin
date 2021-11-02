@@ -9,6 +9,7 @@ use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
+use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
 use Smartling\Helpers\XmlHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Replacers\ReplacerFactory;
@@ -47,10 +48,11 @@ class SmartlingCoreTest extends TestCase
             new PostContentHelper(
                 new GutenbergBlockHelper(
                     $this->createMock(MediaAttachmentRulesManager::class),
-                    $this->createMock(ReplacerFactory::class)
+                    $this->createMock(ReplacerFactory::class),
+                    new SerializerJsonWithFallback(),
                 )
             ),
-            new XmlHelper(),
+            new XmlHelper(new SerializerJsonWithFallback()),
         );
     }
 

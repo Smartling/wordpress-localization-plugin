@@ -45,6 +45,8 @@ services:
 
   helper.xml:
     class: Smartling\Helpers\XmlHelper
+    arguments:
+      - "@serializer.json"
 
   wrapper.sdk.api.smartling:
     class: Smartling\ApiWrapper
@@ -239,6 +241,7 @@ services:
     arguments:
       - "@media.attachment.rules.manager"
       - "@factory.replacer"
+      - "@serializer.json"
     calls:
       - [ "setFieldsFilter", [ "@fields-filter.helper" ]]
 
