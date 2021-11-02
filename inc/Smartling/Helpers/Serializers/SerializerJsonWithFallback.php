@@ -18,6 +18,7 @@ class SerializerJsonWithFallback implements SerializerInterface {
         try {
             return json_decode(base64_decode($string), true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
+            // not JSON, try with php built in unserialize()
             return unserialize(base64_decode($string));
         }
     }
