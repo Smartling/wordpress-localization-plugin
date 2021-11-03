@@ -16,7 +16,6 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Jobs\JobEntity;
-use Smartling\Jobs\JobManager;
 use Smartling\Queue\Queue;
 use Smartling\Queue\QueueInterface;
 use Smartling\Settings\Locale;
@@ -53,7 +52,6 @@ class SubmissionTableWidget extends SmartlingListTable
     private SubmissionManager $submissionManager;
     private EntityHelper $entityHelper;
     private Queue $queue;
-    private JobManager $jobInformationManager;
 
     public function getLogger(): LoggerInterface
     {
@@ -76,7 +74,7 @@ class SubmissionTableWidget extends SmartlingListTable
 
     private array $_settings = ['singular' => 'submission', 'plural' => 'submissions', 'ajax' => false,];
 
-    public function __construct(SubmissionManager $manager, EntityHelper $entityHelper, Queue $queue, JobManager $jobInformationManager)
+    public function __construct(SubmissionManager $manager, EntityHelper $entityHelper, Queue $queue)
     {
         $this->queue = $queue;
         $this->submissionManager = $manager;
@@ -88,7 +86,6 @@ class SubmissionTableWidget extends SmartlingListTable
         $this->logger = $entityHelper->getLogger();
 
         parent::__construct($this->_settings);
-        $this->jobInformationManager = $jobInformationManager;
     }
 
     public function getSortingOptions(string $fieldNameKey = 'orderby', string $orderDirectionKey = 'order'): array
@@ -371,7 +368,7 @@ class SubmissionTableWidget extends SmartlingListTable
                 $blogLabel = "*blog id {$row[SubmissionEntity::FIELD_TARGET_BLOG_ID]} not found*";
             }
             $row[SubmissionEntity::FIELD_TARGET_LOCALE] = $blogLabel;
-            $row[SubmissionEntity::VIRTUAL_FIELD_JOB_LINK] = $jobInfo->getJobName() === '' ? '' : "<a href=\"https://dashboard.smartling.com/app/projects/{$jobInfo->getProjectUid()}/account-jobs/?filename=$fileName\">{$jobInfo->getJobName()}</a>";
+            $row[SubmissionEntity::VIRTUAL_FIELD_JOB_LINK] = $jobInfo->getJobName() === '' ? '' : "<a href=\"https://dashboard.smartling.com/app/projects/{$jobInfo->getProjectUid()}/account-jobs/?filename=$fileName\">" . esc_html($jobInfo->getJobName()) . '</a>';
 
             $flagBlockParts = [];
 

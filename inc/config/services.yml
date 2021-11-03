@@ -195,7 +195,6 @@ services:
       - "@manager.submission"
       - "@site.cache"
       - "@queue.db"
-      - "@manager.job"
 
   wp.taxonomy.linker:
     class: Smartling\WP\Controller\TaxonomyLinksController

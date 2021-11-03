@@ -119,7 +119,8 @@ class SubmissionCleanupHelper implements WPHookInterface
         if (0 < count($submissions)) {
             $this->getLogger()->debug(vsprintf('Found %d submissions', [count($submissions)]));
             foreach ($submissions as $submission) {
-                $this->deleteSubmission($submission);
+                $this->unlinkContent($submission);
+                $this->submissionManager->delete($submission);
             }
         } else {
             $this->getLogger()
@@ -127,19 +128,10 @@ class SubmissionCleanupHelper implements WPHookInterface
         }
     }
 
-    public function deleteSubmission(SubmissionEntity $submission): void
-    {
-        $this->unlinkContent($submission);
-        $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_DELETED);
-        $submission->setLastModified(new \DateTime());
-        $this->submissionManager->storeEntity($submission);
-        if ('' !== $submission->getStateFieldFileUri() && 0 === $this->submissionManager->find([SubmissionEntity::FIELD_FILE_URI => $submission->getFileUri()])) {
-            $this->getLogger()->debug("File {$submission->getFileUri()} is not in use and will be deleted");
-            $this->apiWrapper->deleteFile($submission);
-        }
-    }
-
-    private function unlinkContent(SubmissionEntity $submission): void
+    /**
+     * @param SubmissionEntity $submission
+     */
+    private function unlinkContent(SubmissionEntity $submission)
     {
         $result = false;
         $this->getLogger()->debug(
