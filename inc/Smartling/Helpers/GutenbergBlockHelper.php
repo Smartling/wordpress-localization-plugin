@@ -288,7 +288,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         $result = [];
         if ($blockName === 'core/image') {
             foreach ($chunks as $chunk) {
-                $result[] = preg_replace("/<img(.+)class=\"wp-image-{$originalAttributes['id']}\"/", "<img\$1class=\"wp-image-{$translatedAttributes['id']}\"", $chunk);
+                $result[] = preg_replace("/<img(.+)? class=\"([^\"]+)?wp-image-{$originalAttributes['id']}([^\"]+)?\"/", "<img\$1 class=\"\$2wp-image-{$translatedAttributes['id']}\$3\"", $chunk);
             }
         } else {
             return $chunks;
