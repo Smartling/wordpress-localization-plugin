@@ -10,6 +10,7 @@ use Smartling\Exception\SmartlingGutenbergNotFoundException;
 use Smartling\Exception\SmartlingGutenbergParserNotFoundException;
 use Smartling\Exception\SmartlingNotSupportedContentException;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
+use Smartling\Helpers\Serializers\SerializerInterface;
 use Smartling\Models\GutenbergBlock;
 use Smartling\Replacers\ReplacerFactory;
 use Smartling\Submissions\SubmissionEntity;
@@ -24,12 +25,14 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 
     private MediaAttachmentRulesManager $rulesManager;
     private ReplacerFactory $replacerFactory;
+    private SerializerInterface $serializer;
 
-    public function __construct(MediaAttachmentRulesManager $rulesManager, ReplacerFactory $replacerFactory)
+    public function __construct(MediaAttachmentRulesManager $rulesManager, ReplacerFactory $replacerFactory, SerializerInterface $serializer)
     {
         parent::__construct();
         $this->replacerFactory = $replacerFactory;
         $this->rulesManager = $rulesManager;
+        $this->serializer = $serializer;
     }
 
     public function registerFilters(array $definitions): array
@@ -103,12 +106,12 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 
     private function packData(array $data): string
     {
-        return base64_encode(serialize($data));
+        return $this->serializer->serialize($data);
     }
 
     private function unpackData(string $data): array
     {
-        return unserialize(base64_decode($data));
+        return $this->serializer->unserialize($data);
     }
 
     private function placeBlock(GutenbergBlock $block): \DOMElement
