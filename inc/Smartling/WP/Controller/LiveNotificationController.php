@@ -40,7 +40,7 @@ class LiveNotificationController implements WPHookInterface
     {
         $jsPath = $this->pluginInfo->getUrl() . 'js/firebase/firebase-';
         foreach (['app', 'auth', 'database'] as $lib) {
-            $scriptFile = $jsPath . $lib;
+            $scriptFile = $jsPath . $lib . '.js';
             wp_enqueue_script($scriptFile, $scriptFile);
         }
     }
