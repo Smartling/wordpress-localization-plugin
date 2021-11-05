@@ -152,8 +152,9 @@ class SubmissionCleanupHelper implements WPHookInterface
     public function register(): void
     {
         add_action('before_delete_post', [$this, 'beforeDeletePostHandler']);
-        add_action('pre_delete_term', [$this, 'preDeleteTermHandler'], 999, 2);
         add_action('delete_attachment', [$this, 'deleteAttachmentHandler'], 10, 2);
+        add_action('delete_widget', [$this, 'deleteAttachmentHandler']);
+        add_action('pre_delete_term', [$this, 'preDeleteTermHandler'], 999, 2);
     }
 
     /**
@@ -194,6 +195,14 @@ class SubmissionCleanupHelper implements WPHookInterface
         $currentBlogId = $this->siteHelper->getCurrentBlogId();
         $this->getLogger()->debug("Attachment id=$postId type=$postType in blogId=$currentBlogId is going to be deleted");
         $this->lookForSubmissions($postType, $currentBlogId, (int)$postId);
+    }
+
+    public function deleteWidgetHandler($widgetId): void
+    {
+        $currentBlogId = $this->getSiteHelper()->getCurrentBlogId();
+        $postType = get_post($widgetId)->post_type;
+        $this->getLogger()->debug("Widget id=$widgetId type=$postType in blogId=$currentBlogId is going to be deleted");
+        $this->lookForSubmissions($postType, $currentBlogId, $widgetId);
     }
 
     /**
