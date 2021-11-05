@@ -153,7 +153,7 @@ class SubmissionCleanupHelper implements WPHookInterface
     {
         add_action('before_delete_post', [$this, 'beforeDeletePostHandler']);
         add_action('delete_attachment', [$this, 'deleteAttachmentHandler'], 10, 2);
-        add_action('delete_widget', [$this, 'deleteAttachmentHandler']);
+        add_action('delete_widget', [$this, 'deleteWidgetHandler']);
         add_action('pre_delete_term', [$this, 'preDeleteTermHandler'], 999, 2);
     }
 
