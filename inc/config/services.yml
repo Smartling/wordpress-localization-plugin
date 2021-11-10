@@ -11,6 +11,9 @@ services:
     arguments:
       - "%known.attachment.rules%"
 
+  persistent.notices.manager:
+    class: Smartling\Helpers\AdminNoticesHelper
+
   factory.replacer:
     class: Smartling\Replacers\ReplacerFactory
     arguments:
@@ -176,6 +179,7 @@ services:
       - "@entity.helper"
       - "@manager.submission"
       - "@site.cache"
+      - "@manager.settings"
     calls:
       - [ "setQueue", [ "@queue.db" ]]
 

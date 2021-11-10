@@ -14,6 +14,7 @@ $data = $this->getViewData();
 ?>
 <div class="wrap">
     <h2><?= get_admin_page_title(); ?></h2>
+    <?php settings_errors()?>
     <?php
     $configurationProfilesTable = $data['profilesTable'];
     /**
