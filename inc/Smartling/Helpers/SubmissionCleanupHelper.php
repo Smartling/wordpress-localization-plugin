@@ -176,7 +176,7 @@ class SubmissionCleanupHelper implements WPHookInterface
                 $post_type = get_post($postId)->post_type;
             }
 
-            $this->lookForSubmissions($post_type, $currentBlogId, (int)$postId);
+            $this->deleteSubmissions($post_type, $currentBlogId, (int)$postId);
         } catch (EntityNotFoundException $e) {
             $this->getLogger()->warning($e->getMessage());
         }
@@ -194,7 +194,7 @@ class SubmissionCleanupHelper implements WPHookInterface
         $postType = $post->post_type ?? 'attachment';
         $currentBlogId = $this->siteHelper->getCurrentBlogId();
         $this->getLogger()->debug("Attachment id=$postId type=$postType in blogId=$currentBlogId is going to be deleted");
-        $this->lookForSubmissions($postType, $currentBlogId, (int)$postId);
+        $this->deleteSubmissions($postType, $currentBlogId, (int)$postId);
     }
 
     public function deleteWidgetHandler($widgetId): void
@@ -202,7 +202,7 @@ class SubmissionCleanupHelper implements WPHookInterface
         $currentBlogId = $this->getSiteHelper()->getCurrentBlogId();
         $postType = get_post($widgetId)->post_type;
         $this->getLogger()->debug("Widget id=$widgetId type=$postType in blogId=$currentBlogId is going to be deleted");
-        $this->lookForSubmissions($postType, $currentBlogId, $widgetId);
+        $this->deleteSubmissions($postType, $currentBlogId, $widgetId);
     }
 
     /**
@@ -225,18 +225,13 @@ class SubmissionCleanupHelper implements WPHookInterface
         );
 
         try {
-            $this->lookForSubmissions($taxonomy, $currentBlogId, (int)$term);
+            $this->deleteSubmissions($taxonomy, $currentBlogId, (int)$term);
         } catch (\Exception $e) {
             $this->getLogger()->warning($e->getMessage());
         }
     }
 
-    /**
-     * @param string $contentType
-     * @param int    $blogId
-     * @param int    $contentId
-     */
-    private function lookForSubmissions($contentType, $blogId, $contentId)
+    private function deleteSubmissions(string $contentType, int $blogId, int $contentId): void
     {
 
         // try treat as translation
