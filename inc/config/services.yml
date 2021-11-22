@@ -179,7 +179,6 @@ services:
       - "@entity.helper"
       - "@manager.submission"
       - "@site.cache"
-      - "@manager.settings"
     calls:
       - [ "setQueue", [ "@queue.db" ]]
 

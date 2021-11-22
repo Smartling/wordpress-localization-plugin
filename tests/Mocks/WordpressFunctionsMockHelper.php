@@ -146,7 +146,7 @@ namespace {
         }
 
         if (!function_exists('wp_insert_post')) {
-            function wp_insert_post(array $fields, $returnError)
+            function wp_insert_post(array $fields, $returnError = false)
             {
                 return $fields['ID'] ? : 2;
             }

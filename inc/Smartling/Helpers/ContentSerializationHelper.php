@@ -24,9 +24,9 @@ class ContentSerializationHelper
         $this->contentHelper = $contentHelper;
     }
 
-    private function cleanUpFields(array $fields): array
+    public function getRemoveFields(): array
     {
-        $toRemove = [
+        return [
             'entity' => [
                 'hash',
                 'post_author',
@@ -36,15 +36,18 @@ class ContentSerializationHelper
                 'post_modified',
                 'post_modified_gmt',
             ],
-            'meta'   => [
+            'meta' => [
                 '_edit_lock',
                 '_edit_last',
                 '_encloseme',
                 '_pingme',
             ],
         ];
+    }
 
-        foreach ($toRemove as $part => $keys) {
+    private function cleanUpFields(array $fields): array
+    {
+        foreach ($this->getRemoveFields() as $part => $keys) {
             foreach ($keys as $key) {
                 if (array_key_exists($part, $fields) && array_key_exists($key, $fields[$part])) {
                     unset($fields[$part][$key]);
