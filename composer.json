@@ -5,6 +5,7 @@
   "description": "",
   "type": "wordpress-plugin",
   "require": {
+    "jralph/retry": "^2.0",
     "php": ">=7.4",
     "monolog/monolog": "~1",
     "symfony/dependency-injection": "~2.8",
