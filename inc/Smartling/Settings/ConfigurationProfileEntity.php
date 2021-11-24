@@ -13,6 +13,8 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 {
     private const REGEX_PROJECT_ID = '([0-9a-f]){9}';
 
+    public const RETRIEVAL_TYPE_PSEUDO = 'pseudo';
+
     public const UPLOAD_ON_CHANGE_MANUAL = 0;
 
     public const UPLOAD_ON_CHANGE_AUTO = 1;
@@ -29,7 +31,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
     public static function getRetrievalTypes(): array
     {
         return [
-            'pseudo'    => __('Pseudo'),
+            self::RETRIEVAL_TYPE_PSEUDO => __('Pseudo'),
             'published' => __('Published'),
         ];
     }

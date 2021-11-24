@@ -23,7 +23,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
     use LoggerSafeTrait;
 
     public const SOURCE_USER = 'user';
-    private const LOCK_RETRY_ATTEMPTS = 2;
+    private const LOCK_RETRY_ATTEMPTS = 3;
     private const LOCK_RETRY_WAIT_SECONDS = 1;
 
     protected ApiWrapperInterface $api;
@@ -242,10 +242,13 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
                 }
                 if ($error instanceof SmartlingApiException) {
                     $topError = ArrayHelper::first($error->getErrors());
-                    if ($topError['key'] ?? '' === 'lock.not.acquired') {
-                        $this->getLogger()->debug( 'Failed to acquire lock');
-                        return !$ignoreLockNotAcquired;
-                    }
+					switch ($topError['key']) {
+						case 'lock.not.acquired':
+							$this->getLogger()->debug( 'No lock');
+							return !$ignoreLockNotAcquired;
+						case 'resource.locked':
+							return false;
+					}
                 }
                 return true;
              })

@@ -7,11 +7,17 @@ use Smartling\WP\WPHookInterface;
 
 abstract class BaseAjaxServiceAbstract implements WPHookInterface
 {
-
     /**
      * Action name
      */
     const ACTION_NAME = 'service-id';
+
+    protected array $requestData;
+
+    public function __construct(array $requestData)
+    {
+        $this->requestData = $requestData;
+    }
 
     /**
      * Registers wp hook handlers. Invoked by wordpress.
@@ -23,18 +29,13 @@ abstract class BaseAjaxServiceAbstract implements WPHookInterface
         add_action('wp_ajax_' . static::ACTION_NAME, [$this, 'actionHandler']);
     }
 
-    public function getRequestSource(): array
-    {
-        return $_REQUEST;
-    }
-
     /**
      * @param mixed $defaultValue
      * @return mixed
      */
     public function getRequestVariable(string $varName, $defaultValue = null)
     {
-        $vars = $this->getRequestSource();
+        $vars = $this->requestData;
 
         return array_key_exists($varName, $vars) ? $vars[$varName] : $defaultValue;
     }

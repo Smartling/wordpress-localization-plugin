@@ -9,7 +9,6 @@ use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingDbException;
-use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
@@ -32,6 +31,7 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tuner\MediaAttachmentRulesManager;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
+use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 
 /**
  *
@@ -106,6 +106,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         CustomMenuContentTypeHelper $menuHelper
     )
     {
+        parent::__construct($_GET);
         $this->absoluteLinkedAttachmentCoreHelper = $absoluteLinkedAttachmentCoreHelper;
         $this->apiWrapper = $apiWrapper;
         $this->contentHelper = $contentHelper;
@@ -362,11 +363,6 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         }
     }
 
-    public function getRequestSource(): array
-    {
-        return $_GET;
-    }
-
     public function getContentType(): string
     {
         return $this->getRequiredParam('content-type');
@@ -518,8 +514,14 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         return $array;
     }
 
-    public function actionHandler(): void
+    /**
+     * @return void|array
+     */
+    public function actionHandler(array $data = null)
     {
+        if ($data !== null) {
+            $this->requestData = $data;
+        }
         $contentType = $this->getContentType();
         $detectedReferences = ['attachment' => []];
         $id = $this->getId();
@@ -571,7 +573,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 vsprintf(
                     'Gutenberg not detected, skipping search for references in Gutenberg blocks for request %s',
                     [
-                        var_export($this->getRequestSource(), true),
+                        var_export($this->requestData, true),
                     ]
                 )
             );
@@ -653,11 +655,15 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             }
         }
 
-        $this->returnSuccess(
-            [
-                'data' => $responseData,
-            ]
-        );
+        if ($data === null) {
+            $this->returnSuccess(
+                [
+                    'data' => $responseData,
+                ]
+            );
+        }
+
+        return $responseData;
     }
 
     protected function normalizeReferences(array $references): array

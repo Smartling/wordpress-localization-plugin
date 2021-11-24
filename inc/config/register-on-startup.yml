@@ -13,6 +13,7 @@ services:
       - [ "addService", [ "@wp.checkStatus" ]]
       - [ "addService", [ "@wp.submissions" ]]
       - [ "addService", [ "@wp.taxonomy.linker" ]]
+      - [ "addService", [ "@wp.test.run" ]]
       - [ "addService", [ "@wp.bulkSubmit" ]]
       - [ "addService", [ "@wp.settings" ]]
       - [ "addService", [ "@wp.settings.edit" ]]
