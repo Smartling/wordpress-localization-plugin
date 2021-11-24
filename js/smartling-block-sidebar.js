@@ -30,7 +30,7 @@ wp.hooks.addFilter('editor.BlockEdit', 'smartling/with-locking-attributes', wp.c
                                 onChange: function (value) {
                                     props.setAttributes({smartlingLocked: value})
                                 },
-                                help: props.attributes[LOCKED] ? wp.i18n.__('Block will not get changed on translation') : wp.i18n.__('Block will get changed on translation')
+                                help: wp.i18n.__(props.attributes[LOCKED] ? 'Block will not get changed on translation' : 'Block will get changed on translation')
                             }
                         )
                     )
