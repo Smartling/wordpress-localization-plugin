@@ -4,7 +4,7 @@
 cd build && npm run build
 ```
 
-## Dealing with scoped dependencies [(why)](https://bestofphp.com/repo/TypistTech-imposter-php-cms#why)
+## Dealing with scoped dependencies
 For now, scoping is handled with ilab/namespacer
 ```shell
 namespacer --composer ./composer.json --package smartling-connector --namespace "Smartling\Vendor" inc
