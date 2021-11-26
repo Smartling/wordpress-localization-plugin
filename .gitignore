@@ -20,8 +20,3 @@ tests/IntegrationTests/src
 
 #IDE
 .idea
-
-build/node_modules
-build/.cache
-js/smartling-block-sidebar.js
-js/smartling-block-sidebar.js.map
