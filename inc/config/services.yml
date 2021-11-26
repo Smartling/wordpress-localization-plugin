@@ -62,6 +62,10 @@ services:
     calls:
       - ["setDbal", ["@site.db"]]
 
+  content.relations.handler:
+    class: Smartling\Services\ContentRelationsHandler
+    arguments:
+      - "@service.relations-discovery"
 
   entrypoint:
     class: Smartling\Base\SmartlingCore

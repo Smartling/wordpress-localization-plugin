@@ -9,6 +9,7 @@ use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
@@ -33,43 +34,8 @@ use Smartling\Tuner\MediaAttachmentRulesManager;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 
-/**
- *
- * ajax service that discovers related items.
- * usage: GET /wp-admin/admin-ajax.php?action=smartling-get-relations&id=48&content-type=post&targetBlogIds=2,3,4,5
- *
- * Response Example:
- *
- * {
- *  "status":"SUCCESS",
- *  "response":{
- *      "data":{
- *          "originalReferences":{
- *              "attachment":[244,232,26,231],
- *              "post":[1],
- *              "page":[2],
- *              "post_tag":[13,14],
- *              "category":[1]
- *          },
- *          "missingTranslatedReferences":{
- *              "2":{"attachment":[244,232,231]},
- *              "3":{"attachment":[244,232,26,231]},
- *              "4":{"attachment":[244,232,26,231],"post":[1],"post_tag":[13,14]},
- *              "5":{"attachment":[244,232,26,231],"post_tag":[13,14]}
- *          }
- *      }
- *  }
- * }
- *
- *
- * blogId is discovered from current active blog via Wordpress Multisite API
- */
-class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
+class ContentRelationsDiscoveryService
 {
-    public const ACTION_NAME = 'smartling-get-relations';
-
-    private const ACTION_NAME_CREATE_SUBMISSIONS = 'smartling-create-submissions';
-
     private LoggerInterface $logger;
     private ContentHelper $contentHelper;
     private FieldsFilterHelper $fieldFilterHelper;
@@ -106,7 +72,6 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         CustomMenuContentTypeHelper $menuHelper
     )
     {
-        parent::__construct($_GET);
         $this->absoluteLinkedAttachmentCoreHelper = $absoluteLinkedAttachmentCoreHelper;
         $this->apiWrapper = $apiWrapper;
         $this->contentHelper = $contentHelper;
@@ -121,12 +86,6 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         $this->shortcodeHelper = $shortcodeHelper;
         $this->submissionManager = $submissionManager;
         $this->menuHelper = $menuHelper;
-    }
-
-    public function register(): void
-    {
-        parent::register();
-        add_action('wp_ajax_' . static::ACTION_NAME_CREATE_SUBMISSIONS, [$this, 'createSubmissionsHandler']);
     }
 
     /**
@@ -188,12 +147,6 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 }
             }
         }
-    }
-
-    public function bulkUploadHandler(JobEntityWithBatchUid $jobInfo, array $contentIds, string $contentType, int $currentBlogId, array $targetBlogIds): void
-    {
-        $this->bulkUpload($jobInfo, $contentIds, $contentType, $currentBlogId, $targetBlogIds);
-        $this->returnResponse(['status' => 'SUCCESS']);
     }
 
     public function clone(array $data): void
@@ -258,7 +211,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         $targetBlogIds = explode(',', $data['targetBlogIds']);
 
         if (array_key_exists('ids', $data)) {
-            $this->bulkUploadHandler($jobInfo, $data['ids'], $contentType, $curBlogId, $targetBlogIds);
+            $this->bulkUpload($jobInfo, $data['ids'], $contentType, $curBlogId, $targetBlogIds);
             return;
         }
 
@@ -330,64 +283,6 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
     }
 
     /**
-     * Handler for POST request that creates submissions for main content and selected relations
-     *
-     * Request Example:
-     *
-     *  [
-     *      'source'       => ['contentType' => 'post', 'id' => [0 => '48']],
-     *      'job'          =>
-     *      [
-     *          'id'          => 'abcdef123456',
-     *          'name'        => '',
-     *          'description' => '',
-     *          'dueDate'     => '',
-     *          'timeZone'    => 'Europe/Kiev',
-     *          'authorize'   => 'true',
-     *      ],
-     *      'targetBlogIds' => '3,2',
-     *      'relations'    => {{@see actionHandler }} relations response
-     *  ]
-     */
-    public function createSubmissionsHandler(): void
-    {
-        try {
-            if ($_POST['formAction'] === 'clone') {
-                $this->clone($_POST);
-            } else {
-                $this->createSubmissions($_POST);
-            }
-            $this->returnResponse(['status' => 'SUCCESS']);
-        } catch (Exception $e) {
-            $this->returnError('content.submission.failed', $e->getMessage());
-        }
-    }
-
-    public function getContentType(): string
-    {
-        return $this->getRequiredParam('content-type');
-    }
-
-    public function getId(): int
-    {
-        return (int)$this->getRequiredParam('id');
-    }
-
-    /**
-     * @return int[]
-     */
-    public function getTargetBlogIds(): array
-    {
-        $blogs = explode(',', $this->getRequiredParam('targetBlogIds'));
-
-        array_walk($blogs, static function ($el) {
-            return (int)$el;
-        });
-
-        return array_unique($blogs);
-    }
-
-    /**
      * @return \WP_Taxonomy[]
      */
     private function getTaxonomiesForContentType(string $contentType): array
@@ -428,7 +323,6 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
     /**
      * @see extractFieldsFromShortcodes();
      * @noinspection PhpUnused
-     * @noinspection UnknownInspectionInspection
      */
     public function shortcodeHandler(array $attributes, string $content, string $shortcodeName): void
     {
@@ -515,21 +409,15 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
     }
 
     /**
-     * @return void|array
+     * @param int[] $targetBlogIds
      */
-    public function actionHandler(array $data = null)
+    public function getRelations(string $contentType, int $id, array $targetBlogIds): array
     {
-        if ($data !== null) {
-            $this->requestData = $data;
-        }
-        $contentType = $this->getContentType();
         $detectedReferences = ['attachment' => []];
-        $id = $this->getId();
         $curBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
-        $targetBlogIds = $this->getTargetBlogIds();
 
         if (!$this->contentHelper->checkEntityExists($curBlogId, $contentType, $id)) {
-            $this->returnError('content.not.found', 'Requested content is not found', 404);
+            throw new SmartlingHumanReadableException('Requested content is not found', 'content.not.found', 404);
         }
 
         $ioWrapper = $this->contentHelper->getIoFactory()->getMapper($contentType);
@@ -569,14 +457,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             }
             $fields = array_merge($fields, $extraFields);
         } catch (Exception $e) {
-            $this->getLogger()->info(
-                vsprintf(
-                    'Gutenberg not detected, skipping search for references in Gutenberg blocks for request %s',
-                    [
-                        var_export($this->requestData, true),
-                    ]
-                )
-            );
+            $this->getLogger()->info("Gutenberg not detected, skipping search for references in Gutenberg blocks for request contentType=\"$contentType\", contentId=\"$id\"");
         }
 
         foreach ($fields as $fName => $fValue) {
@@ -639,28 +520,20 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         $registeredTypes = get_post_types();
         $taxonomies = $this->contentHelper->getSiteHelper()->getTermTypes();
         foreach ($targetBlogIds as $targetBlogId) {
-            foreach ($detectedReferences as $contentType => $ids) {
-                if (in_array($contentType, $registeredTypes, true) || in_array($contentType, $taxonomies, true)) {
-                    foreach ($ids as $id) {
+            foreach ($detectedReferences as $detectedContentType => $ids) {
+                if (in_array($detectedContentType, $registeredTypes, true) || in_array($detectedContentType, $taxonomies, true)) {
+                    foreach ($ids as $detectedId) {
                         // TODO: find out when a null id gets added to the list, this should not happen
-                        if ($id === null) {
-                            $this->getLogger()->notice("Null id passed when processing detected references contentType=\"$contentType\"");
-                        } elseif (!$this->submissionManager->submissionExists($contentType, $curBlogId, $id, $targetBlogId)) {
-                            $responseData['missingTranslatedReferences'][$targetBlogId][$contentType][] = $id;
+                        if ($detectedId === null) {
+                            $this->getLogger()->notice("Null id passed when processing detected references detectedContentType=\"$detectedContentType\"");
+                        } elseif (!$this->submissionManager->submissionExists($detectedContentType, $curBlogId, $detectedId, $targetBlogId)) {
+                            $responseData['missingTranslatedReferences'][$targetBlogId][$detectedContentType][] = $detectedId;
                         }
                     }
                 } else {
-                    $this->getLogger()->debug("Excluded $contentType from related submissions");
+                    $this->getLogger()->debug("Excluded $detectedContentType from related submissions");
                 }
             }
-        }
-
-        if ($data === null) {
-            $this->returnSuccess(
-                [
-                    'data' => $responseData,
-                ]
-            );
         }
 
         return $responseData;

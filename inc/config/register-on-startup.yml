@@ -27,5 +27,5 @@ services:
       - [ "addService", [ "@service.invalid-character-cleaner" ]]
       - [ "addService", [ "@wp.translation.lock" ]]
       - [ "addService", [ "@live_notification.service" ]]
-      - [ "addService", [ "@service.relations-discovery"]]
+      - [ "addService", [ "@content.relations.handler"]]
       - [ "addService", [ "@service.filter-ui" ]]
