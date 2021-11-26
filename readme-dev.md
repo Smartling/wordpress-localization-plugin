@@ -1,9 +1,4 @@
 # Notes for developers
-## Building frontend assets
-```shell
-cd build && npm run build
-```
-
 ## Dealing with scoped dependencies
 For now, scoping is handled with ilab/namespacer
 ```shell
