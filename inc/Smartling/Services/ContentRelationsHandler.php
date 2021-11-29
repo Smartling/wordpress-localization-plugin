@@ -59,12 +59,6 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
         add_action('wp_ajax_' . static::ACTION_NAME_CREATE_SUBMISSIONS, [$this, 'createSubmissionsHandler']);
     }
 
-    public function bulkUploadHandler(JobEntityWithBatchUid $jobInfo, array $contentIds, string $contentType, int $currentBlogId, array $targetBlogIds): void
-    {
-        $this->service->bulkUpload($jobInfo, $contentIds, $contentType, $currentBlogId, $targetBlogIds);
-        $this->returnResponse(['status' => 'SUCCESS']);
-    }
-
     /**
      * Handler for POST request that creates submissions for main content and selected relations
      *

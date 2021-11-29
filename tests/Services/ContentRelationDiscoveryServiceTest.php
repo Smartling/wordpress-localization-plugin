@@ -398,7 +398,7 @@ namespace Smartling\Tests\Services {
                 $this->createMock(ReplacerFactory::class),
                 $settingsManager,
                 $this->createMock(CustomMenuContentTypeHelper::class),
-            ])->onlyMethods(['getPostTitle', 'returnResponse'])->getMock();
+            ])->onlyMethods(['getPostTitle'])->getMock();
         }
     }
 }
