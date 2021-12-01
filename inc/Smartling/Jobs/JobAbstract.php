@@ -8,6 +8,7 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\OptionHelper;
+use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
@@ -22,8 +23,10 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
 {
     use LoggerSafeTrait;
 
+    public const LAST_FINISH_SUFFIX = '-last-run';
     public const SOURCE_USER = 'user';
-    private const LOCK_RETRY_ATTEMPTS = 2;
+
+    private const LOCK_RETRY_ATTEMPTS = 3;
     private const LOCK_RETRY_WAIT_SECONDS = 1;
 
     protected ApiWrapperInterface $api;
@@ -219,6 +222,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
                 $errorMessage = $e->getErrors()[0]['message'] ?? $e->getMessage();
                 $this->getLogger()->debug("Failed to remove lock for {$this->getJobHookName()}: $errorMessage");
             }
+            SimpleStorageHelper::set($this->getJobHookName() . self::LAST_FINISH_SUFFIX, time());
         }
     }
 

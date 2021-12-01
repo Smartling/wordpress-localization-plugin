@@ -1,15 +1,20 @@
 <?php
 
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Models\TestRunViewData;
 use Smartling\WP\Controller\TestRunController;
 
 /**
  * @var TestRunController $this
+ * @var TestRunViewData $viewData
  */
-$blogs = $this->getViewData()['blogs'];
+$viewData = $this->getViewData();
 ?>
 <h1>Test run</h1> <!--needed for admin notices-->
 <p>Send all posts and pages and their related content one level deep for pseudo translation, and check the result for known issues. After a test run completes you should check it too, to see any issues that were not detected. Expected result after a test run is that all text and media content gets translated.</p>
+<?php
+if ($viewData->getTestBlogId() === null) {
+?>
 <form id="testRunForm">
     <input type="hidden" id="sourceBlogId" name="sourceBlogId" value="<?= get_current_blog_id()?>">
     <table class="form-table" style="width: 50%">
@@ -17,7 +22,7 @@ $blogs = $this->getViewData()['blogs'];
             <th><label for="taxonomy">Target blog</label></th>
             <td><?= HtmlTagGeneratorHelper::tag(
                     'select',
-                    HtmlTagGeneratorHelper::renderSelectOptions(null, $blogs),
+                    HtmlTagGeneratorHelper::renderSelectOptions(null, $viewData->getBlogs()),
                     ['id' => 'targetBlogId', 'name' => 'targetBlogId']
                 )?>
             </td>
@@ -59,3 +64,39 @@ $blogs = $this->getViewData()['blogs'];
         button.prop('disable', false);
     });
 </script>
+<?php
+} else {
+    if ($viewData->getUploadCronLastFinishTime() < time() - $viewData->getUploadCronIntervalSeconds() * 2) {
+        echo '<h2>Warning: last time upload job finished was ' . ($viewData->getUploadCronLastFinishTime() - time()) . 'seconds ago. Please verify cron jobs are set up properly in your WordPress installation</h2>';
+    }
+?>
+<table>
+    <tr>
+        <th>Status</th>
+        <th>Count</th>
+    </tr>
+    <tr>
+        <td>New</td>
+        <td><?= $viewData->getNew()?></td>
+    </tr>
+    <tr>
+        <td>In progress</td>
+        <td><?= $viewData->getInProgress()?></td>
+    </tr>
+    <tr>
+        <td>Completed</td>
+        <td><?= $viewData->getCompleted()?></td>
+    </tr>
+    <tr>
+        <td>Failed</td>
+        <td><?= $viewData->getFailed()?></td>
+    </tr>
+</table>
+<?php
+if ($viewData->getNew() === 0) {
+?>
+<p>Test run is in progress.</p>
+<?php
+}
+}
+?>

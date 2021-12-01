@@ -13,14 +13,17 @@ use Smartling\Exception\InvalidXMLException;
 use Smartling\Exception\NothingFoundForTranslationException;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
+use Smartling\Exception\SmartlingTestRunCheckFailedException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
 use Smartling\Helpers\PostContentHelper;
+use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
+use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\XmlHelper;
@@ -29,6 +32,7 @@ use Smartling\Replacers\ContentIdReplacer;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\Controller\LiveNotificationController;
+use Smartling\WP\Controller\TestRunController;
 
 trait SmartlingCoreUploadTrait
 {
@@ -316,6 +320,9 @@ trait SmartlingCoreUploadTrait
                 $this->getContentHelper()->writeTargetMetadata($submission, $metaFields);
                 do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $submission);
             }
+            if (TestRunHelper::isTestRunBlog($submission->getTargetBlogId())) {
+                $this->testRunHelper->checkDownloadedSubmission($submission);
+            }
             $submission = $this->getSubmissionManager()->storeEntity($submission);
 
             $this->prepareRelatedSubmissions($submission);
@@ -390,6 +397,10 @@ trait SmartlingCoreUploadTrait
                     $contentHelper->writeTargetMetadata($submission, $filteredMetadata);
                 }
             }
+        } catch (SmartlingTestRunCheckFailedException $e) {
+            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+            $submission->setLastError($e->getMessage());
+            $this->getSubmissionManager()->storeEntity($submission);
         } catch (Exception $e) {
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
             $submission->setLastError($e->getMessage());
