@@ -83,7 +83,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
                 $submission = $this->getParams()->getSubmission();
                 $sourceBlogId = $submission->getSourceBlogId();
                 $targetBlogId = $submission->getTargetBlogId();
-                if ($this->core->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, (int)$attachmentId, $targetBlogId)) {
+                if ($this->core->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, $attachmentId, $targetBlogId)) {
                     $attachmentSubmission = $this->core->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, $attachmentId, $submission->getJobInfoWithBatchUid(), $submission->getIsCloned());
 
                     $newPath = $this->generateTranslatedUrl($path, $attachmentSubmission);
@@ -119,21 +119,24 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
         $matches = [];
         if (0 < preg_match_all(StringHelper::buildPattern(static::PATTERN_IMAGE_GENERAL), $string, $matches)) {
             foreach ($matches[0] as $match) {
-                $path = $this->getAttributeFromTag($match, 'img', 'src');
-                if ($path !== null) {
-                    $attachmentId = $this->getAttachmentIdByURL($path, $blogId);
-                    if ($attachmentId !== null) {
-                        $ids[] = $attachmentId;
-                    }
-                }
+                $ids = $this->addAttachmentId($ids, $match, 'img', 'src', $blogId);
             }
         }
         if (0 < preg_match_all(StringHelper::buildPattern(self::PATTERN_LINK_GENERAL), $string, $matches)) {
             foreach ($matches[0] as $match) {
-                $path = $this->getAttributeFromTag($match, 'a', 'href');
-                if (false !== $attachmentId = $this->getAttachmentIdByURL($path, $blogId)) {
-                    $ids[] = $attachmentId;
-                }
+                $ids = $this->addAttachmentId($ids, $match, 'a', 'href', $blogId);
+            }
+        }
+
+        return $ids;
+    }
+
+    private function addAttachmentId(array $ids, string $tagString, string $tagName, string $attribute, int $blogId): array {
+        $path = $this->getAttributeFromTag($tagString, $tagName, $attribute);
+        if ($path !== null) {
+            $attachmentId = $this->getAttachmentIdByURL($path, $blogId);
+            if ($attachmentId !== null) {
+                $ids[] = $attachmentId;
             }
         }
 
@@ -220,7 +223,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
                 $possibleId = $this->lookForDirectGuidEntry($possibleOriginalUrl);
             }
             if (null === $possibleId) {
-                $this->getLogger()->error(vsprintf('No \'attachment\' found for url=%s', [$url]));
+                $this->getLogger()->info(vsprintf('No \'attachment\' found for url=%s', [$url]));
             }
 
             return $possibleId;

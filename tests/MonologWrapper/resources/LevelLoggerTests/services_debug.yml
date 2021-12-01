@@ -1,6 +1,6 @@
 services:
   handler:
-    class: Monolog\Handler\NullHandler
+    class: Smartling\Vendor\Monolog\Handler\NullHandler
 
   logger.default:
     class: Smartling\MonologWrapper\Logger\LevelLogger

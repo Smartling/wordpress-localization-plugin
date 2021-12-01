@@ -7,7 +7,6 @@ use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\EntityHelper;
-use Smartling\Helpers\QueryBuilder\TransactionManager;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Jobs\UploadJob;
@@ -23,26 +22,14 @@ class UploadJobTest extends TestCase
     use DbAlMock;
 
     /**
-     * @param SubmissionManager $submissionManager
-     * @param ApiWrapperInterface $apiWrapper
-     * @param SettingsManager $settingsManager
-     * @param TransactionManager|null $transactionManager
      * @return MockObject|UploadJob
      */
     private function getWorkerMock(SubmissionManager $submissionManager,
                                    ApiWrapperInterface $apiWrapper,
-                                   SettingsManager $settingsManager,
-                                   TransactionManager $transactionManager = null
+                                   SettingsManager $settingsManager
     ) {
-        if ($transactionManager === null) {
-            $transactionManager = $this->getMockBuilder(TransactionManager::class)
-                ->setConstructorArgs([$this->mockDbAl()])
-                ->onlyMethods(['executeSelectForUpdate'])
-                ->getMock();
-        }
-
         return $this->getMockBuilder(UploadJob::class)
-            ->setConstructorArgs([$submissionManager, 1200, $apiWrapper, $settingsManager, $transactionManager])
+            ->setConstructorArgs([$apiWrapper, $settingsManager, $submissionManager, '5m', 1200])
             ->onlyMethods([])
             ->getMock();
     }

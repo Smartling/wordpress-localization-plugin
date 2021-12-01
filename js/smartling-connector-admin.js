@@ -329,3 +329,7 @@ function admin_notice(message, type) {
         div.parentNode.removeChild(div);
     });
 }
+
+jQuery(() => {
+    addSmartlingGutenbergLockAttributes();
+});

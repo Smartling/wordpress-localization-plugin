@@ -63,8 +63,52 @@ trait SmartlingCoreUploadTrait
         return new WordpressFunctionProxyHelper();
     }
 
+    public function prepareUpload(SubmissionEntity $submission): SubmissionEntity
+    {
+        return $this->renewContentHash(
+            $this->createTargetContent(
+                $this->setFileUriIfNullId($submission)
+            )
+        );
+    }
+
+    private function setFileUriIfNullId(SubmissionEntity $submission): SubmissionEntity
+    {
+        if (null === $submission->getId()) {
+            // generate URI
+            $submission->getFileUri();
+            $submission = $this->getSubmissionManager()->storeEntity($submission);
+        }
+
+        return $submission;
+    }
+
+    private function createTargetContent(SubmissionEntity $submission): SubmissionEntity
+    {
+        $submission = $this->getFunctionProxyHelper()->apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $submission);
+
+        if (SubmissionEntity::SUBMISSION_STATUS_FAILED === $submission->getStatus()) {
+            $msg = vsprintf(
+                'Failed creating target placeholder for submission id=\'%s\', source_blog_id=\'%s\', source_id=\'%s\', target_blog_id=\'%s\', target_id=\'%s\' with message: \'%s\'',
+                [
+                    $submission->getId(),
+                    $submission->getSourceBlogId(),
+                    $submission->getSourceId(),
+                    $submission->getTargetBlogId(),
+                    $submission->getTargetId(),
+                    $submission->getLastError(),
+                ]
+            );
+            $this->getLogger()->error($msg);
+            throw new SmartlingTargetPlaceholderCreationFailedException($msg);
+        }
+
+        return $submission;
+    }
+
     /**
-     * Processes content by submission and returns only XML string for translation
+     * Prepare submission for upload and return XML string for translation
+     * @see prepareUpload
      */
     public function getXMLFiltered(SubmissionEntity $submission): string
     {
@@ -81,36 +125,7 @@ trait SmartlingCoreUploadTrait
         );
 
         try {
-            if (null === $submission->getId()) {
-                // generate URI
-                $submission->getFileUri();
-                $submission = $this->getSubmissionManager()->storeEntity($submission);
-            }
-
-            $submission = $this
-                ->getFunctionProxyHelper()
-                ->apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $submission);
-
-            /**
-             * Creating of target placeholder has failed
-             */
-            if (SubmissionEntity::SUBMISSION_STATUS_FAILED === $submission->getStatus()) {
-                $msg = vsprintf(
-                    'Failed creating target placeholder for submission id=\'%s\', source_blog_id=\'%s\', source_id=\'%s\', target_blog_id=\'%s\', target_id=\'%s\' with message: \'%s\'',
-                    [
-                        $submission->getId(),
-                        $submission->getSourceBlogId(),
-                        $submission->getSourceId(),
-                        $submission->getTargetBlogId(),
-                        $submission->getTargetId(),
-                        $submission->getLastError(),
-                    ]
-                );
-                $this->getLogger()->error($msg);
-                throw new SmartlingTargetPlaceholderCreationFailedException($msg);
-            }
-
-            $submission = $this->renewContentHash($submission);
+            $submission = $this->prepareUpload($submission);
 
             $source = $this->readSourceContentWithMetadataAsArray($submission);
 
@@ -138,7 +153,7 @@ trait SmartlingCoreUploadTrait
             }
 
             $this->prepareFieldProcessorValues($submission);
-            return XmlHelper::xmlEncode($filteredValues, $submission, $source);
+            return $this->xmlHelper->xmlEncode($filteredValues, $submission, $source);
         } catch (EntityNotFoundException $e) {
             $this->getLogger()->error($e->getMessage());
             $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent content.');
@@ -771,8 +786,13 @@ trait SmartlingCoreUploadTrait
     {
         if (array_key_exists('entity', $translation) && ArrayHelper::notEmpty($translation['entity'])) {
             $targetContentArray = $targetContent->toArray();
-            if (array_key_exists('post_content', $translation['entity']) && array_key_exists('post_content', $targetContentArray) && count($submission->getLockedFields()) > 0) {
-                $translation['entity']['post_content'] = $postContentHelper->applyTranslation($targetContentArray['post_content'], $translation['entity']['post_content'], $submission->getLockedFields());
+            if (array_key_exists('post_content', $translation['entity']) && array_key_exists('post_content', $targetContentArray)) {
+                $lockedBlocks = $postContentHelper->getLockedBlockPathsFromContentString($targetContentArray['post_content']);
+                if (count($lockedBlocks) > 0) {
+                    $translation['entity']['post_content'] = $postContentHelper->applyTranslationsWithLockedBlocks($targetContentArray['post_content'], $translation['entity']['post_content'], $lockedBlocks);
+                } elseif (count($submission->getLockedFields()) > 0) { // TODO remove after deprecation period
+                    $translation['entity']['post_content'] = $postContentHelper->applyTranslation($targetContentArray['post_content'], $translation['entity']['post_content'], $submission->getLockedFields());
+                }
             }
             $translation['entity'] = self::arrayMergeIfKeyNotExists($entity, $translation['entity']);
             $this->setValues($targetContent, $translation['entity']);
@@ -838,6 +858,6 @@ trait SmartlingCoreUploadTrait
             return '';
         }
 
-        return XmlHelper::xmlEncode($filteredValues, $submission, $params->getPreparedFields());
+        return $this->xmlHelper->xmlEncode($filteredValues, $submission, $params->getPreparedFields());
     }
 }

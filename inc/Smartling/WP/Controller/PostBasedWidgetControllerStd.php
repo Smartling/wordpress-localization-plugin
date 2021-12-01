@@ -10,8 +10,10 @@ use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Jobs\DownloadTranslationJob;
+use Smartling\Jobs\JobAbstract;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Queue\Queue;
+use Smartling\Services\GlobalSettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -131,7 +133,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             }
             $result = [];
             try {
-                do_action(DownloadTranslationJob::JOB_HOOK_NAME, DownloadTranslationJob::SOURCE_USER);
+                do_action(DownloadTranslationJob::JOB_HOOK_NAME, JobAbstract::SOURCE_USER);
                 $result['status'] = self::RESPONSE_AJAX_STATUS_SUCCESS;
             } catch (\Exception $e) {
                 $result['status'] = self::RESPONSE_AJAX_STATUS_FAIL;
@@ -424,9 +426,10 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                 $eh = $this->getEntityHelper();
                 $currentBlogId = $eh->getSiteHelper()->getCurrentBlogId();
                 $profile = $eh->getSettingsManager()->findEntityByMainLocale($currentBlogId);
+                $submissionManager = $this->getManager();
 
                 if (0 < count($profile)) {
-                    $submissions = $this->getManager()
+                    $submissions = $submissionManager
                                         ->find([
                                             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
                                             SubmissionEntity::FIELD_SOURCE_ID => $post->ID,
@@ -439,11 +442,30 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                             'profile' => ArrayHelper::first($profile),
                         ]
                     );
+                    if (GlobalSettingsManager::isGenerateLockIdsEnabled()) {
+                        wp_enqueue_script(
+                            'smartling-block-locking',
+                            $this->getPluginInfo()->getUrl() . 'js/smartling-block-locking.js',
+                            ['wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor'],
+                            $this->getPluginInfo()->getVersion(),
+                            true,
+                        );
+                    }
                 } else {
                     echo '<p>' . __('No suitable configuration profile found.') . '</p>';
                 }
-
-
+                if (count($submissionManager->find([
+                    SubmissionEntity::FIELD_TARGET_BLOG_ID => $currentBlogId,
+                    SubmissionEntity::FIELD_TARGET_ID => $post->ID,
+                    ], 1)) > 0) {
+                    wp_enqueue_script(
+                        'smartling-block-sidebar',
+                        $this->getPluginInfo()->getUrl() . 'js/smartling-block-sidebar.js',
+                        ['wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor'],
+                        $this->getPluginInfo()->getVersion(),
+                        true
+                    );
+                }
             } catch (SmartlingDbException $e) {
                 $message = 'Failed to search for the original post. No source post found for blog %s, post %s. Hiding widget';
                 $this->getLogger()

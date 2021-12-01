@@ -3,11 +3,11 @@
 namespace Smartling\Helpers;
 
 use InvalidArgumentException;
-use Psr\Log\LoggerInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 class SiteHelper
 {
@@ -40,9 +40,12 @@ class SiteHelper
      * Fallback for direct run if Wordpress functionality is not reachable
      * @throws SmartlingDirectRunRuntimeException
      */
-    private function directRunDetectedFallback(): void
+    private function directRunDetectedFallback(string $requiredFunction = ''): void
     {
         $message = 'Direct run detected. Required run as Wordpress plugin.';
+        if ($requiredFunction !== '') {
+            $message = "Required WordPress function ($requiredFunction) was not loaded.";
+        }
 
         $this->getLogger()->error($message);
 
@@ -83,7 +86,7 @@ class SiteHelper
     public function listBlogs(int $siteId = 1): array
     {
         !function_exists('get_sites')
-        && $this->directRunDetectedFallback();
+        && $this->directRunDetectedFallback('get_sites');
 
         $this->cacheSites();
 
@@ -207,12 +210,10 @@ class SiteHelper
      */
     public function getBlogLabelById(LocalizationPluginProxyInterface $localizationPluginProxyInterface, int $blogId): string
     {
+        $blogName = $this->getBlogNameById($blogId);
         $locale = $localizationPluginProxyInterface->getBlogLocaleById($blogId);
 
-        return ((StringHelper::isNullOrEmpty($locale))
-            ? $this->getBlogNameById($blogId)
-            : vsprintf('%s - %s', [$this->getBlogNameById($blogId), $locale])
-        );
+        return StringHelper::isNullOrEmpty($locale) ? $blogName : "$blogName - $locale";
     }
 
     public function getCurrentBlogLocale(LocalizationPluginProxyInterface $localizationPlugin): string

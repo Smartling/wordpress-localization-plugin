@@ -3,6 +3,7 @@
 namespace Smartling\ContentTypes;
 
 use Smartling\Base\ExportedAPI;
+use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
 use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDataReadException;
@@ -10,8 +11,7 @@ use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
+use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
 {

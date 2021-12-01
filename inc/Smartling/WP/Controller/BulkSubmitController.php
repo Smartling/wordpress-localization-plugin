@@ -1,6 +1,7 @@
 <?php
 namespace Smartling\WP\Controller;
 
+use Smartling\Bootstrap;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
@@ -57,6 +58,7 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
         } else {
             $profile = ArrayHelper::first($applicableProfiles);
             $table = new BulkSubmitTableWidget(
+                Bootstrap::getContainer()->get('entrypoint'),
                 $this->getManager(),
                 $this->getPluginInfo(),
                 $this->getEntityHelper(),

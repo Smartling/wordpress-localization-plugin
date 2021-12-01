@@ -2,12 +2,12 @@
 
 namespace Smartling\DbAl\WordpressContentEntities;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Base\LoggerTrait;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 /**
  * Class EntityAbstract

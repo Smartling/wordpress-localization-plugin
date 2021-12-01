@@ -47,9 +47,24 @@ class WordpressFunctionProxyHelper
         return delete_term_meta(...func_get_args());
     }
 
+    /**
+     * @param int $blogId
+     * @param int $postId
+     * @return mixed
+     */
+    public function get_blog_permalink(int $blogId, int $postId)
+    {
+        return get_blog_permalink(...func_get_args());
+    }
+
     public function get_terms()
     {
         return get_terms(...func_get_args());
+    }
+
+    public function url_to_postid(string $url): int
+    {
+        return (int)url_to_postid($url);
     }
 
     public function wp_send_json()

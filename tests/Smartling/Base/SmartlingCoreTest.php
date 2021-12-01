@@ -7,9 +7,9 @@ use Smartling\ApiWrapper;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
-use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
+use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
 use Smartling\Helpers\XmlHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Replacers\ReplacerFactory;
@@ -28,6 +28,7 @@ use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Tuner\MediaAttachmentRulesManager;
+use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 
 class SmartlingCoreTest extends TestCase
 {
@@ -47,10 +48,11 @@ class SmartlingCoreTest extends TestCase
             new PostContentHelper(
                 new GutenbergBlockHelper(
                     $this->createMock(MediaAttachmentRulesManager::class),
-                    $this->createMock(ReplacerFactory::class)
+                    $this->createMock(ReplacerFactory::class),
+                    new SerializerJsonWithFallback(),
                 )
             ),
-            new XmlHelper(),
+            new XmlHelper(new SerializerJsonWithFallback()),
         );
     }
 

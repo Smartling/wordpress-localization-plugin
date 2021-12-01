@@ -19,9 +19,15 @@ class QueueTest extends TestCase
     private $queue;
     private $dbal;
 
+    public static function setUpBeforeClass(): void
+    {
+        parent::setUpBeforeClass();
+        defined('ARRAY_A') || define('ARRAY_A', 'ARRAY_A');
+        defined('OBJECT') || define('OBJECT', 'OBJECT');
+    }
+
     public function setUp(): void
     {
-        defined('ARRAY_A') || define('ARRAY_A', 'ARRAY_A');
         $this->dbal = $this->createMock(SmartlingToCMSDatabaseAccessWrapperInterface::class);
         $this->dbal->method('completeTableName')->willReturn(Queue::getTableName());
         $this->queue = new Queue();
@@ -118,6 +124,25 @@ class QueueTest extends TestCase
             $this->generatePositiveEnqueueDataSet('upload', [1]),
             $this->generatePositiveEnqueueDataSet('upload', [1, 2, 3]),
         ];
+    }
+
+    public function testDeleteQuery()
+    {
+        $x = new Queue();
+        $tableName = $x::getTableName();
+        $queueName = 'test';
+        $itemId = 1313;
+        $payload = ['status' => 'OK'];
+        $db = $this->createMock(SmartlingToCMSDatabaseAccessWrapperInterface::class);
+        $db->method('completeTableName')->willReturnArgument(0);
+        $db->expects($this->once())->method('fetch')
+            ->with("SELECT `id`, `queue`, `payload` FROM `$tableName` WHERE ( `queue` = '$queueName' ) LIMIT 0,1")
+            ->willReturn([['id' => $itemId, 'payload' => json_encode($payload, JSON_THROW_ON_ERROR)]]);
+        $db->expects($this->once())->method('query')
+            ->with("DELETE FROM `smartling_queue` WHERE ( `queue` = '$queueName' AND `id` = '$itemId' ) LIMIT 1");
+        $x->setDbal($db);
+
+        $x->dequeue($queueName);
     }
 
     /**

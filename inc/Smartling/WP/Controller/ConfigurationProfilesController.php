@@ -3,7 +3,9 @@
 namespace Smartling\WP\Controller;
 
 use Smartling\Bootstrap;
+use Smartling\Helpers\AdminNoticesHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\Jobs\JobAbstract;
 use Smartling\Queue\Queue;
 use Smartling\WP\Table\QueueManagerTableWidget;
 use Smartling\WP\WPAbstract;
@@ -46,6 +48,13 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
         wp_enqueue_script(
             $this->getPluginInfo()->getName() . 'settings',
             $this->getPluginInfo()->getUrl() . 'js/smartling-connector-admin.js', ['jquery'],
+            $this->getPluginInfo()->getVersion(),
+            false
+        );
+        wp_enqueue_script(
+            $this->getPluginInfo()->getName() . 'settings-admin-footer',
+            $this->getPluginInfo()->getUrl() . 'js/smartling-connector-gutenberg-lock-attributes.js',
+            [],
             $this->getPluginInfo()->getVersion(),
             false
         );
@@ -127,17 +136,20 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
                     break;
                 case self::ACTION_QUEUE_FORCE:
                     try {
-                        do_action($argument);
+                        do_action($argument, JobAbstract::SOURCE_USER);
                         $response['status'] = [
                             'code'    => 200,
                             'message' => 'Ok',
                         ];
+                        $message = "$argument started";
+                        AdminNoticesHelper::addSuccess($message);
                     } catch (\Exception $e) {
                         $response['status'] = [
                             'code'    => 500,
                             'message' => 'Internal Server Error',
                         ];
                         $response['messages'][] = $e->getMessage();
+                        AdminNoticesHelper::addError($e->getMessage());
                     }
                     break;
                 default:
@@ -152,8 +164,6 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
         }
 
         wp_send_json($response);
-
-
     }
 
 

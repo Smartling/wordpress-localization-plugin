@@ -4,12 +4,14 @@ namespace Smartling\Helpers;
 
 use DOMDocument;
 use LibXMLError;
-use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\WPHookInterface;
 
 class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
@@ -20,6 +22,8 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
      */
     protected const PATTERN_IMAGE_GENERAL = '<img[^>]+>';
 
+    private const PATTERN_LINK_GENERAL = '<a[^>]+>';
+
     protected const PATTERN_THUMBNAIL_IDENTITY = '-\d+x\d+$';
 
     private array $acfDefinitions = [];
@@ -27,6 +31,8 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     private LoggerInterface $logger;
     protected SmartlingCore $core;
     private AfterDeserializeContentEventParameters $params;
+    private SubmissionManager $submissionManager;
+    private WordpressFunctionProxyHelper $wordpressProxy;
 
     public function getLogger(): LoggerInterface
     {
@@ -43,11 +49,13 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         $this->params = $params;
     }
 
-    public function __construct(SmartlingCore $core, AcfDynamicSupport $acfDynamicSupport)
+    public function __construct(SmartlingCore $core, AcfDynamicSupport $acfDynamicSupport, SubmissionManager $submissionManager, WordpressFunctionProxyHelper $wordpressProxy)
     {
         $this->acfDynamicSupport = $acfDynamicSupport;
         $this->core = $core;
         $this->logger = MonologWrapper::getLogger(static::class);
+        $this->submissionManager = $submissionManager;
+        $this->wordpressProxy = $wordpressProxy;
     }
 
     public function register(): void
@@ -103,15 +111,17 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                 $stringValue = $this->getReplacerForImgTag($match, $replacer)->processString($stringValue);
             }
         }
+
+        if (0 < preg_match_all(StringHelper::buildPattern(self::PATTERN_LINK_GENERAL), $stringValue, $matches)) {
+            foreach ($matches[0] as $match) {
+                $stringValue = $this->getReplacerForAnchorTag($match, $replacer)->processString($stringValue);
+            }
+        }
     }
 
     /**
      * Extracts src attribute from <img /> tag if possible, otherwise returns null.
      */
-    private function getSourcePathFromImgTag(string $imgTagString): ?string
-    {
-        return $this->getAttributeFromTag($imgTagString, 'img', 'src');
-    }
 
     private function tryProcessThumbnail(string $path): ?ReplacementPair
     {
@@ -141,7 +151,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 
                     $attachmentId = $this->getAttachmentId($relativePathOfOriginalFile);
 
-                    if (false !== $attachmentId) {
+                    if (null !== $attachmentId) {
                         if ($this->core->getTranslationHelper()->isRelatedSubmissionCreationNeeded(
                             'attachment',
                             $submission->getSourceBlogId(),
@@ -304,28 +314,32 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         $sourceBlogId = $submission->getSourceBlogId();
         $targetBlogId = $submission->getTargetBlogId();
 
-        $acfData = json_decode(stripslashes($block), true, 512, JSON_THROW_ON_ERROR);
-        if (array_key_exists('data', $acfData)) {
-            foreach ($acfData['data'] as $key => $value) {
-                if (array_key_exists($value, $this->acfDefinitions)
-                    && array_key_exists('type', $this->acfDefinitions[$value])
-                    && $this->acfDefinitions[$value]['type'] === 'image'
-                    && strpos($key, '_') === 0
-                    && array_key_exists(substr($key, 1), $acfData['data'])) {
-                    $attachmentId = $acfData['data'][substr($key, 1)];
+        try {
+            $acfData = json_decode(stripslashes($block), true, 512, JSON_THROW_ON_ERROR);
+            if (array_key_exists('data', $acfData)) {
+                foreach ($acfData['data'] as $key => $value) {
+                    if (array_key_exists($value, $this->acfDefinitions)
+                        && array_key_exists('type', $this->acfDefinitions[$value])
+                        && $this->acfDefinitions[$value]['type'] === 'image'
+                        && strpos($key, '_') === 0
+                        && array_key_exists(substr($key, 1), $acfData['data'])) {
+                        $attachmentId = $acfData['data'][substr($key, 1)];
 
-                    if (!empty($attachmentId) && is_numeric($attachmentId)) {
-                        if ($this->core->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, (int)$attachmentId, $targetBlogId)) {
-                            $attachment = $this->core->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, (int)$attachmentId, $submission->getJobInfoWithBatchUid());
-                            $result->addReplacementPair(new ReplacementPair((string)$attachmentId, (string)$attachment->getTargetId()));
+                        if (!empty($attachmentId) && is_numeric($attachmentId)) {
+                            if ($this->core->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, (int)$attachmentId, $targetBlogId)) {
+                                $attachment = $this->core->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, (int)$attachmentId, $submission->getJobInfoWithBatchUid());
+                                $result->addReplacementPair(new ReplacementPair((string)$attachmentId, (string)$attachment->getTargetId()));
+                            } else {
+                                $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
+                            }
                         } else {
-                            $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
+                            $this->getLogger()->warning("Can not send attachment as it has empty id acfFieldId=$value acfFieldValue=\"$attachmentId\"");
                         }
-                    } else {
-                        $this->getLogger()->warning("Can not send attachment as it has empty id acfFieldId=$value acfFieldValue=\"$attachmentId\"");
                     }
                 }
             }
+        } catch (\Exception $e) {
+            $this->getLogger()->debug("Failed to decode block $block, skipping id replacements");
         }
         return $result;
     }
@@ -333,11 +347,11 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     private function getReplacerForImgTag(string $tag, PairReplacerHelper $replacer): PairReplacerHelper
     {
         $result = $replacer;
-        $path = $this->getSourcePathFromImgTag($tag);
+        $path = $this->getAttributeFromTag($tag, 'img', 'src');
 
-        if (false !== $path && $this->isRelativeUrl($path)) {
+        if (null !== $path && $this->isRelativeUrl($path)) {
             $attachmentId = $this->getAttachmentId($path);
-            if (false !== $attachmentId) {
+            if (null !== $attachmentId) {
                 $submission = $this->getParams()->getSubmission();
                 $sourceBlogId = $submission->getSourceBlogId();
                 $targetBlogId = $submission->getTargetBlogId();
@@ -354,6 +368,31 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                 }
             }
         }
+        return $result;
+    }
+
+    private function getReplacerForAnchorTag(string $tag, PairReplacerHelper $replacer): PairReplacerHelper
+    {
+        $result = $replacer;
+        $href = $this->getAttributeFromTag($tag, 'a', 'href');
+
+        if (null !== $href) {
+            $sourcePostId = $this->wordpressProxy->url_to_postid($href);
+            if (0 !== $sourcePostId) {
+                $targetBlogId = $this->getParams()->getSubmission()->getTargetBlogId();
+                $submission = ArrayHelper::first($this->submissionManager->find([
+                    SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+                    SubmissionEntity::FIELD_SOURCE_ID => $sourcePostId
+                ]));
+                if ($submission !== false) {
+                    $url = parse_url($this->wordpressProxy->get_blog_permalink($targetBlogId, $submission->getTargetId()), PHP_URL_PATH);
+                    if (is_string($url)) {
+                        $result->addReplacementPair(new ReplacementPair($href, $url));
+                    }
+                }
+            }
+        }
+
         return $result;
     }
 }

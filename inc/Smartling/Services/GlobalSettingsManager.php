@@ -4,7 +4,7 @@ namespace Smartling\Services;
 
 use Smartling\Bootstrap;
 use Smartling\Helpers\SimpleStorageHelper;
-use Symfony\Component\Yaml\Parser;
+use Smartling\Vendor\Symfony\Component\Yaml\Parser;
 
 /**
  * Class GlobalSettingsManager
@@ -248,6 +248,23 @@ class GlobalSettingsManager
 
         if (static::getHandleRelationsManuallyDefault() === (int)$value) {
             SimpleStorageHelper::drop(static::SMARTLING_HANDLE_RELATIONS_MANUALLY);
+        }
+    }
+
+    public const SMARTLING_FRONTEND_GENERATE_LOCK_IDS = 'smartling_frontend_generate_lock_ids';
+    public const SMARTLING_GENERATE_LOCK_IDS_DEFAULT = "0";
+
+    public static function isGenerateLockIdsEnabled(): bool
+    {
+        return SimpleStorageHelper::get(static::SMARTLING_FRONTEND_GENERATE_LOCK_IDS, static::SMARTLING_GENERATE_LOCK_IDS_DEFAULT) === "1";
+    }
+
+    public static function setGenerateLockIdsFrontend(string $value): void
+    {
+        if ($value === static::SMARTLING_GENERATE_LOCK_IDS_DEFAULT) {
+            SimpleStorageHelper::drop(static::SMARTLING_FRONTEND_GENERATE_LOCK_IDS);
+        } else {
+            SimpleStorageHelper::set(static::SMARTLING_FRONTEND_GENERATE_LOCK_IDS, $value);
         }
     }
 

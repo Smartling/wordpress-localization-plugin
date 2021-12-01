@@ -2,7 +2,7 @@
 
 namespace Smartling\ContentTypes;
 
-use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
  * Interface ContentTypeInterface

@@ -8,6 +8,7 @@ services:
       - [ "addService", [ "@cron.worker.submission-collector" ]]
       - [ "addService", [ "@cron.worker.last-modified-check" ]]
       - [ "addService", [ "@cron.worker.download" ]]
+      - [ "addService", [ "@persistent.notices.manager"]]
       - [ "addService", [ "@wp.i18n" ]]
       - [ "addService", [ "@wp.checkStatus" ]]
       - [ "addService", [ "@wp.submissions" ]]

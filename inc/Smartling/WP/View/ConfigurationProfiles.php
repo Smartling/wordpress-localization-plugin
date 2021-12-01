@@ -4,7 +4,7 @@ use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Services\GlobalSettingsManager;
 use Smartling\WP\Controller\ConfigurationProfilesWidget;
 use Smartling\WP\Table\QueueManagerTableWidget;
-use Symfony\Component\Yaml\Yaml;
+use Smartling\Vendor\Symfony\Component\Yaml\Yaml;
 
 /**
  * @var WPAbstract $this
@@ -14,6 +14,7 @@ $data = $this->getViewData();
 ?>
 <div class="wrap">
     <h2><?= get_admin_page_title(); ?></h2>
+    <?php settings_errors()?>
     <?php
     $configurationProfilesTable = $data['profilesTable'];
     /**
@@ -202,6 +203,28 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
+                        <th><label for="<?= GlobalSettingsManager::SMARTLING_FRONTEND_GENERATE_LOCK_IDS ?>"><?= __('Generate lock ids on editing content')?></label></th>
+                        <td>
+                            <?=
+                            HtmlTagGeneratorHelper::tag(
+                                'select',
+                                HtmlTagGeneratorHelper::renderSelectOptions(
+                                    GlobalSettingsManager::isGenerateLockIdsEnabled() ? 1 : 0,
+                                    [
+                                        0 => 'Disabled',
+                                        1 => 'Enabled',
+                                    ]),
+                                [
+                                    'id' => GlobalSettingsManager::SMARTLING_FRONTEND_GENERATE_LOCK_IDS,
+                                    'name' => GlobalSettingsManager::SMARTLING_FRONTEND_GENERATE_LOCK_IDS,
+                                ]
+                            );
+                            ?>
+                            <br /><a href="javascript:void(0)" id="resetGenerateLockIds" data-default="<?= GlobalSettingsManager::SMARTLING_GENERATE_LOCK_IDS_DEFAULT ?>"><?= __('reset to defaults')?></a>
+                            <br /><?= __('Automatically generate smartlingLockId attribute for Gutenberg blocks when saving content')?><br/>
+                        </td>
+                    </tr>
+                    <tr>
                         <th><label for="handleRelationsManually">Handle relations</label></th>
                         <td>
                             <?=
@@ -224,7 +247,7 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
-                        <th><label for="<?= GlobalSettingsManager::RELATED_CHECKBOX_STATE ?> >">
+                        <th><label for="<?= GlobalSettingsManager::RELATED_CHECKBOX_STATE ?>">
                                 Upload widget send related content for translation checkbox default state
                             </label></th>
                         <td>

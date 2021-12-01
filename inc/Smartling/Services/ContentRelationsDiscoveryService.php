@@ -3,8 +3,9 @@
 namespace Smartling\Services;
 
 use Exception;
-use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
+use Smartling\ContentTypes\ContentTypeNavigationMenu;
+use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingDbException;
@@ -12,6 +13,7 @@ use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
+use Smartling\Helpers\CustomMenuContentTypeHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
@@ -29,6 +31,7 @@ use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tuner\MediaAttachmentRulesManager;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 /**
  *
@@ -80,6 +83,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
     private ApiWrapperInterface $apiWrapper;
     private SettingsManager $settingsManager;
     private LocalizationPluginProxyInterface $localizationPluginProxy;
+    private CustomMenuContentTypeHelper $menuHelper;
 
     public function getLogger(): LoggerInterface
     {
@@ -98,7 +102,8 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         ApiWrapperInterface $apiWrapper,
         MediaAttachmentRulesManager $mediaAttachmentRulesManager,
         ReplacerFactory $replacerFactory,
-        SettingsManager $settingsManager
+        SettingsManager $settingsManager,
+        CustomMenuContentTypeHelper $menuHelper
     )
     {
         $this->absoluteLinkedAttachmentCoreHelper = $absoluteLinkedAttachmentCoreHelper;
@@ -114,6 +119,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         $this->settingsManager = $settingsManager;
         $this->shortcodeHelper = $shortcodeHelper;
         $this->submissionManager = $submissionManager;
+        $this->menuHelper = $menuHelper;
     }
 
     public function register(): void
@@ -145,10 +151,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             );
     }
 
-    /**
-     * This function only returns when testing, WP will stop execution after wp_send_json
-     */
-    public function bulkUploadHandler(JobEntityWithBatchUid $jobInfo, array $contentIds, string $contentType, int $currentBlogId, array $targetBlogIds): void
+    public function bulkUpload(JobEntityWithBatchUid $jobInfo, array $contentIds, string $contentType, int $currentBlogId, array $targetBlogIds): void
     {
         foreach ($targetBlogIds as $targetBlogId) {
             $blogFields = [
@@ -158,7 +161,7 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             foreach ($contentIds as $id) {
                 $existing = $this->submissionManager->find(array_merge($blogFields, [
                     SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
-                    SubmissionEntity::FIELD_SOURCE_ID => $id
+                    SubmissionEntity::FIELD_SOURCE_ID => $id,
                 ]));
 
                 if (empty($existing)) {
@@ -170,10 +173,159 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
                 $submission->setJobInfo($jobInfo->getJobInformationEntity());
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission->getFileUri();
+                $title = $this->getPostTitle($id);
+                if ($title !== '') {
+                    $submission->setSourceTitle($title);
+                }
                 $this->submissionManager->storeEntity($submission);
+                if ($submission->getContentType() === ContentTypeNavigationMenu::WP_CONTENT_TYPE) {
+                    $menuItemIds = array_reduce($this->menuHelper->getMenuItems($submission->getSourceId(), $submission->getSourceBlogId()), static function ($carry, $item) {
+                        $carry[] = $item->ID;
+                        return $carry;
+                    }, []);
+                    $this->bulkUpload($jobInfo, $menuItemIds, ContentTypeNavigationMenuItem::WP_CONTENT_TYPE, $currentBlogId, [$targetBlogId]);
+                }
             }
         }
+    }
+
+    public function bulkUploadHandler(JobEntityWithBatchUid $jobInfo, array $contentIds, string $contentType, int $currentBlogId, array $targetBlogIds): void
+    {
+        $this->bulkUpload($jobInfo, $contentIds, $contentType, $currentBlogId, $targetBlogIds);
         $this->returnResponse(['status' => 'SUCCESS']);
+    }
+
+    public function clone(array $data): void
+    {
+        $contentId = ArrayHelper::first($data['source']['id']);
+        $contentType = $data['source']['contentType'];
+        $sourceBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
+        $targetBlogIds = explode(',', $data['targetBlogIds']);
+        $submissionArray = [
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+        ];
+        $submissions = [];
+
+        foreach ($targetBlogIds as $targetBlogId) {
+            $sources = [
+                [
+                    'id' => $contentId,
+                    'type' => $contentType,
+                ],
+            ];
+            $submissionArray[SubmissionEntity::FIELD_TARGET_BLOG_ID] = $targetBlogId;
+            if ($this->hasRelations($data, (int)$targetBlogId)) {
+                foreach ($data['relations'][$targetBlogId] as $type => $ids) {
+                    foreach ($ids as $id) {
+                        $sources[] = [
+                            'id' => $id,
+                            'type' => $type,
+                        ];
+                    }
+                }
+            }
+            foreach ($sources as $source) {
+                $submissionArray[SubmissionEntity::FIELD_CONTENT_TYPE] = $source['type'];
+                $submissionArray[SubmissionEntity::FIELD_SOURCE_ID] = (int)$source['id'];
+                $existing = ArrayHelper::first($this->submissionManager->find($submissionArray));
+                if ($existing instanceof SubmissionEntity) {
+                    $submission = $existing;
+                    $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+                } else {
+                    $submissionArray[SubmissionEntity::FIELD_STATUS] = SubmissionEntity::SUBMISSION_STATUS_NEW;
+                    $submissionArray[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::nowAsString();
+                    $submission = SubmissionEntity::fromArray($submissionArray, $this->getLogger());
+                    $title = $this->getPostTitle($submission->getSourceId());
+                    if ($title !== '') {
+                        $submission->setSourceTitle($title);
+                    }
+                    $submission->getFileUri();
+                }
+                $submission->setIsCloned(1);
+                $submissions[] = $submission;
+            }
+        }
+        $this->submissionManager->storeSubmissions($submissions);
+    }
+
+    public function createSubmissions(array $data): void
+    {
+        $contentType = $data['source']['contentType'];
+        $curBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
+        $batchUid = $this->getBatchUid($curBlogId, $data['job']);
+        $jobInfo = new JobEntityWithBatchUid($batchUid, $data['job']['name'], $data['job']['id'], $this->settingsManager->getSingleSettingsProfile($curBlogId)->getProjectId());
+        $targetBlogIds = explode(',', $data['targetBlogIds']);
+
+        if (array_key_exists('ids', $data)) {
+            $this->bulkUploadHandler($jobInfo, $data['ids'], $contentType, $curBlogId, $targetBlogIds);
+            return;
+        }
+
+        foreach ($targetBlogIds as $targetBlogId) {
+            $submissionTemplateArray = [
+                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $curBlogId,
+                SubmissionEntity::FIELD_TARGET_BLOG_ID => (int)$targetBlogId,
+            ];
+
+            /**
+             * Submission for original content may already exist
+             */
+            $contentId = ArrayHelper::first($data['source']['id']);
+            $searchParams = array_merge($submissionTemplateArray, [
+                SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
+                SubmissionEntity::FIELD_SOURCE_ID => $contentId,
+            ]);
+
+            $sources = [];
+
+            if ($this->hasRelations($data, (int)$targetBlogId)) {
+                foreach ($data['relations'][$targetBlogId] as $sysType => $ids) {
+                    foreach ($ids as $id) {
+                        $sources[] = [
+                            'type' => $sysType,
+                            'id' => $id,
+                        ];
+                    }
+                }
+            }
+
+            $result = $this->submissionManager->find($searchParams, 1);
+
+            if (empty($result)) {
+                $sources[] = [
+                    'type' => $contentType,
+                    'id' => $contentId,
+                ];
+            } else {
+                $submission = ArrayHelper::first($result);
+                $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+                $this->storeWithJobInfo($submission, $jobInfo);
+            }
+
+            /**
+             * Adding fields to template
+             */
+            $submissionTemplateArray[SubmissionEntity::FIELD_BATCH_UID] = $batchUid;
+            $submissionTemplateArray[SubmissionEntity::FIELD_STATUS] = SubmissionEntity::SUBMISSION_STATUS_NEW;
+            $submissionTemplateArray[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::nowAsString();
+
+            foreach ($sources as $source) {
+                $submissionArray = array_merge($submissionTemplateArray, [
+                    SubmissionEntity::FIELD_CONTENT_TYPE => $source['type'],
+                    SubmissionEntity::FIELD_SOURCE_ID => $source['id'],
+                ]);
+
+                $submission = SubmissionEntity::fromArray($submissionArray, $this->getLogger());
+                $title = $this->getPostTitle($submission->getSourceId());
+                if ($title !== '') {
+                    $submission->setSourceTitle($title);
+                }
+
+                // trigger generation of fileUri
+                $submission->getFileUri();
+                $this->storeWithJobInfo($submission, $jobInfo);
+            }
+        }
     }
 
     /**
@@ -195,88 +347,15 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
      *      'targetBlogIds' => '3,2',
      *      'relations'    => {{@see actionHandler }} relations response
      *  ]
-     * @var array|string $data
      */
-    public function createSubmissionsHandler($data = ''): void
+    public function createSubmissionsHandler(): void
     {
-        if (!is_array($data)) {
-            $data = $_POST;
-        }
         try {
-            $contentType = $data['source']['contentType'];
-            $curBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
-            $batchUid = $this->getBatchUid($curBlogId, $data['job']);
-            $jobInfo = new JobEntityWithBatchUid($batchUid, $data['job']['name'], $data['job']['id'], $this->settingsManager->getSingleSettingsProfile($curBlogId)->getProjectId());
-            $targetBlogIds = explode(',', $data['targetBlogIds']);
-
-            if (array_key_exists('ids', $data)) {
-                $this->bulkUploadHandler($jobInfo, $data['ids'], $contentType, $curBlogId, $targetBlogIds);
-                return;
+            if ($_POST['formAction'] === 'clone') {
+                $this->clone($_POST);
+            } else {
+                $this->createSubmissions($_POST);
             }
-
-            foreach ($targetBlogIds as $targetBlogId) {
-                $submissionTemplateArray = [
-                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $curBlogId,
-                    SubmissionEntity::FIELD_TARGET_BLOG_ID => (int)$targetBlogId,
-                ];
-
-                /**
-                 * Submission for original content may already exist
-                 */
-                $searchParams = array_merge($submissionTemplateArray, [
-                    SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
-                    SubmissionEntity::FIELD_SOURCE_ID => ArrayHelper::first($data['source']['id']),
-                ]);
-
-                $sources = [];
-
-                if (array_key_exists('relations', $data) && is_array($data['relations']) && array_key_exists($targetBlogId, $data['relations'])) {
-                    foreach ($data['relations'][$targetBlogId] as $sysType => $ids) {
-                        foreach ($ids as $id) {
-                            $sources[] = [
-                                'type' => $sysType,
-                                'id' => $id,
-                            ];
-                        }
-                    }
-                }
-
-                $result = $this->submissionManager->find($searchParams, 1);
-
-                if (empty($result)) {
-                    $sources[] = [
-                        'type' => $contentType,
-                        'id' => ArrayHelper::first($data['source']['id']),
-                    ];
-                } else {
-                    $submission = ArrayHelper::first($result);
-                    $submission->setBatchUid($jobInfo->getBatchUid());
-                    $submission->setJobInfo($jobInfo->getJobInformationEntity());
-                    $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                    $this->submissionManager->storeEntity($submission);
-                }
-
-                /**
-                 * Adding fields to template
-                 */
-                $submissionTemplateArray[SubmissionEntity::FIELD_BATCH_UID] = $batchUid;
-                $submissionTemplateArray[SubmissionEntity::FIELD_STATUS] = SubmissionEntity::SUBMISSION_STATUS_NEW;
-                $submissionTemplateArray[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::nowAsString();
-
-                foreach ($sources as $source) {
-                    $submissionArray = array_merge($submissionTemplateArray, [
-                        SubmissionEntity::FIELD_CONTENT_TYPE => $source['type'],
-                        SubmissionEntity::FIELD_SOURCE_ID => $source['id'],
-                    ]);
-
-                    $submission = SubmissionEntity::fromArray($submissionArray, $this->getLogger());
-
-                    // trigger generation of fileUri
-                    $submission->getFileUri();
-                    $this->submissionManager->storeEntity($submission);
-                }
-            }
-
             $this->returnResponse(['status' => 'SUCCESS']);
         } catch (Exception $e) {
             $this->returnError('content.submission.failed', $e->getMessage());
@@ -561,7 +640,10 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
             foreach ($detectedReferences as $contentType => $ids) {
                 if (in_array($contentType, $registeredTypes, true) || in_array($contentType, $taxonomies, true)) {
                     foreach ($ids as $id) {
-                        if (!$this->submissionManager->submissionExists($contentType, $curBlogId, $id, $targetBlogId)) {
+                        // TODO: find out when a null id gets added to the list, this should not happen
+                        if ($id === null) {
+                            $this->getLogger()->notice("Null id passed when processing detected references contentType=\"$contentType\"");
+                        } elseif (!$this->submissionManager->submissionExists($contentType, $curBlogId, $id, $targetBlogId)) {
                             $responseData['missingTranslatedReferences'][$targetBlogId][$contentType][] = $id;
                         }
                     }
@@ -621,5 +703,26 @@ class ContentRelationsDiscoveryService extends BaseAjaxServiceAbstract
         }
 
         return $result;
+    }
+
+    private function storeWithJobInfo(SubmissionEntity $submission, JobEntityWithBatchUid $jobInfo): void
+    {
+        $submission->setBatchUid($jobInfo->getBatchUid());
+        $submission->setJobInfo($jobInfo->getJobInformationEntity());
+        $this->submissionManager->storeEntity($submission);
+    }
+
+    public function getPostTitle(int $id): string
+    {
+        $post = get_post($id);
+        if ($post instanceof \WP_Post) {
+            return $post->post_title;
+        }
+        return '';
+    }
+
+    private function hasRelations(array $data, int $targetBlogId): bool
+    {
+        return array_key_exists('relations', $data) && is_array($data['relations']) && array_key_exists($targetBlogId, $data['relations']);
     }
 }

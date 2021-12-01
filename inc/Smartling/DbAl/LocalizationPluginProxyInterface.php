@@ -2,81 +2,22 @@
 
 namespace Smartling\DbAl;
 
-use Psr\Log\LoggerInterface;
-use Smartling\Helpers\SiteHelper;
 use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Interface LocalizationPluginProxyInterface
- * @package Smartling\DbAl
- */
 interface LocalizationPluginProxyInterface
 {
-
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger();
+    public function addHooks(): void;
 
     /**
      * Retrieves locale from site option
-     * @return array
      */
-    public function getLocales();
+    public function getBlogLocaleById(int $blogId): string;
 
-    /**
-     * Retrieves locale from site option
-     *
-     * @param integer $blogId
-     *
-     * @return string
-     */
-    public function getBlogLocaleById($blogId);
+    public function isActive(): bool;
 
-    /**
-     * Retrieves blog ids linked to given blog
-     *
-     * @param integer $blogId
-     *
-     * @return array
-     */
-    public function getLinkedBlogIdsByBlogId($blogId);
+    public function linkObjects(SubmissionEntity $submission): bool;
 
-    /**
-     * Returns linked content
-     *
-     * @param int    $sourceBlogId
-     * @param int    $sourceContentId
-     * @param string $contentType
-     *
-     * @return array
-     * ( <blog_id> => <content_id> )
-     */
-    public function getLinkedObjects($sourceBlogId, $sourceContentId, $contentType);
+    public function unlinkObjects(SubmissionEntity $submission): bool;
 
-    /**
-     * @param SubmissionEntity $submission
-     *
-     * @return bool
-     */
-    public function linkObjects(SubmissionEntity $submission);
-
-    /**
-     * @param SubmissionEntity $submission
-     *
-     * @return bool
-     */
-    public function unlinkObjects(SubmissionEntity $submission);
-
-    /**
-     * @return string
-     */
-    public function getBlogLanguageById($blogId);
-
-    /**
-     * @param string $locale
-     *
-     * @return string mixed
-     */
-    public function getBlogNameByLocale($locale);
+    public function getBlogNameByLocale(string $locale): string;
 }

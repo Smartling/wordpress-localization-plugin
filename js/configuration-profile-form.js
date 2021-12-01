@@ -1,25 +1,25 @@
 (function ($) {
     'use strict';
 
-    $(document).ready(function () {
-        if ($('#change-default-locale').length > 0) {
-            $('#change-default-locale').on('click', function (e) {
+    $(() => {
+
+        const changeDefaultLocale = $('#change-default-locale');
+        if (changeDefaultLocale.length > 0) {
+            changeDefaultLocale.on('click', function (e) {
                 e.preventDefault();
                 $('#default-locales').slideToggle('fast');
             });
             $('#smartling-configuration-profile-form').validate()
         }
-        ;
-        $('a.toggleExpert').on('click', function (e) {
+        $('a.toggleExpert').on('click', function () {
             $('.toggleExpert').removeClass('hidden');
             $('a.toggleExpert').addClass('hidden');
         });
 
-
         $('a.saveExpertSkip').on('click', function (e) {
             e.stopPropagation();
             e.preventDefault();
-            var data = {
+            const data = {
                 'action': 'smartling_expert_global_settings_update',
                 'params': {
                     'selfCheckDisabled': $('#selfCheckDisabled').val(),
@@ -29,13 +29,14 @@
                     'disableDBLookup': $('#disableDBLookup').val(),
                     'disableACF': $('#disableACF').val(),
                     'loggingCustomization': $('#loggingCustomization').val(),
+                    'smartling_frontend_generate_lock_ids': $('#smartling_frontend_generate_lock_ids').val(),
                     'handleRelationsManually': $('#handleRelationsManually').val(),
                     'related_checkbox_state': $('#related_checkbox_state').val(),
                     'enableFilterUI': $('#enableFilterUI').val()
                 }
             };
 
-            $.post($(this).attr('actionUrl'), data, function (response) {
+            $.post($(this).attr('actionUrl'), data, function () {
                 location.reload();
             });
         });
@@ -44,7 +45,7 @@
             e.stopPropagation();
             e.preventDefault();
 
-            $('#loggingPath').attr('value',($(this).attr('data-path')));
+            $('#loggingPath').val($(this).attr('data-path'));
 
         });
 
@@ -52,19 +53,31 @@
             e.stopPropagation();
             e.preventDefault();
 
-            $('#loggingCustomization').text($('#defaultLoggingCustomizations').text());
+            $('#loggingCustomization').val($('#defaultLoggingCustomizations').text());
         });
 
         $('#resetPageSize').on('click', function (e) {
             e.stopPropagation();
             e.preventDefault();
-            $('#pageSize').attr('value', ($(this).attr('data-default')));
+            $('#pageSize').val($(this).attr('data-default'));
         });
 
         $('#resetHandleRelationsManually').on('click', function (e) {
             e.stopPropagation();
             e.preventDefault();
-            $('#handleRelationsManually').attr('value', ($(this).attr('data-default')));
+            $('#handleRelationsManually').val($(this).attr('data-default'));
+        });
+
+        $('#resetGenerateLockIds').on('click', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            $('#smartling_frontend_generate_lock_ids').val($(this).attr('data-default'));
+        });
+
+        $('#resetRelatedContentCheckbox').on('click', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            $('#related_checkbox_state').val($(this).attr('data-default'));
         });
     });
 })(jQuery);

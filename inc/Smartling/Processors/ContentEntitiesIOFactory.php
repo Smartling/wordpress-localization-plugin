@@ -2,11 +2,9 @@
 
 namespace Smartling\Processors;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
-use Smartling\MonologWrapper\MonologWrapper;
 
 /**
  * Class ContentEntitiesIOFactory

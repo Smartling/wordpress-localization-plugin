@@ -4,9 +4,9 @@ namespace Smartling\Tests\MonologWrapper;
 
 use PHPUnit\Framework\TestCase;
 use Smartling\MonologWrapper\MonologWrapper;
-use Symfony\Component\Config\FileLocator;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
+use Smartling\Vendor\Symfony\Component\Config\FileLocator;
+use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
+use Smartling\Vendor\Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Smartling\MonologWrapper\Logger\DevNullLogger;
 use Smartling\MonologWrapper\Logger\LevelLogger;
 use Smartling\Tests\MonologWrapper\Examples\Example1;

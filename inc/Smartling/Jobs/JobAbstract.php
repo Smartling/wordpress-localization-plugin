@@ -2,129 +2,51 @@
 
 namespace Smartling\Jobs;
 
-use Psr\Log\LoggerInterface;
-use Smartling\Bootstrap;
-use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\ApiWrapperInterface;
+use Smartling\Exception\EntityNotFoundException;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\OptionHelper;
-use Smartling\Helpers\QueryBuilder\Condition\Condition;
-use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
-use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
-use Smartling\Helpers\QueryBuilder\QueryBuilder;
-use Smartling\Helpers\QueryBuilder\TransactionManager;
-use Smartling\Helpers\SimpleStorageHelper;
-use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\Vendor\Jralph\Retry\Command;
+use Smartling\Vendor\Jralph\Retry\Retry;
+use Smartling\Vendor\Jralph\Retry\RetryException;
+use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 use Smartling\WP\WPHookInterface;
 use Smartling\WP\WPInstallableInterface;
 
 abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallableInterface
 {
-    const SOURCE_USER = 'user';
-    /**
-     * The default TTL for workers in seconds (5 minutes)
-     */
-    const WORKER_DEFAULT_TTL = 300;
+    use LoggerSafeTrait;
 
-    /**
-     * @var int
-     */
-    private $workerTTL = 0;
+    public const SOURCE_USER = 'user';
+    private const LOCK_RETRY_ATTEMPTS = 2;
+    private const LOCK_RETRY_WAIT_SECONDS = 1;
 
-    /**
-     * @var string
-     */
-    private $jobRunInterval = '';
+    protected ApiWrapperInterface $api;
+    protected string $jobRunInterval;
+    protected SettingsManager $settingsManager;
+    protected SubmissionManager $submissionManager;
+    protected int $workerTTL;
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @var SubmissionManager
-     */
-    private $submissionManager;
-
-    private $transactionManager;
-
-    public function getJobRunInterval(): string
-    {
-        return $this->jobRunInterval;
-    }
-
-    /**
-     * @param int $jobRunInterval
-     */
-    public function setJobRunInterval($jobRunInterval)
-    {
-        $this->jobRunInterval = $jobRunInterval;
-    }
-
-    /**
-     * @return LoggerInterface
-     */
-    protected function getLogger()
-    {
-        return $this->logger;
-    }
-
-    /**
-     * @return SubmissionManager
-     */
-    protected function getSubmissionManager()
-    {
-        return $this->submissionManager;
-    }
-
-    /**
-     * @param SubmissionManager $submissionManager
-     */
-    protected function setSubmissionManager($submissionManager)
-    {
-        $this->submissionManager = $submissionManager;
-    }
-
-    /**
-     * @return int
-     */
-    public function getWorkerTTL()
-    {
-        if (0 === $this->workerTTL) {
-            $this->setWorkerTTL(self::WORKER_DEFAULT_TTL);
-        }
-
-        return $this->workerTTL;
-    }
-
-    /**
-     * @param int $value
-     */
-    public function setWorkerTTL($value)
-    {
-        $this->workerTTL = $value;
-    }
-
-
-    /**
-     * JobAbstract constructor.
-     *
-     * @param SubmissionManager $submissionManager
-     * @param TransactionManager $transactionManager
-     * @param int $workerTTL
-     */
     public function __construct(
+        ApiWrapperInterface $api,
+        SettingsManager $settingsManager,
         SubmissionManager $submissionManager,
-        TransactionManager $transactionManager,
-        $workerTTL = self::WORKER_DEFAULT_TTL
+        string $jobRunInterval,
+        int $workerTTL
     ) {
-        $this->logger = MonologWrapper::getLogger(get_called_class());
-        $this->setSubmissionManager($submissionManager);
-        $this->setWorkerTTL($workerTTL);
-        $this->transactionManager = $transactionManager;
+        $this->api = $api;
+        $this->jobRunInterval = $jobRunInterval;
+        $this->settingsManager = $settingsManager;
+        $this->submissionManager = $submissionManager;
+        $this->workerTTL = $workerTTL;
     }
 
-    private function getInstalledCrons()
+    private function getInstalledCrons(): array
     {
         $val = OptionHelper::get('cron', []);
         $keys = [];
@@ -137,7 +59,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         return $keys;
     }
 
-    private function isJobHookInstalled()
+    private function isJobHookInstalled(): bool
     {
         return in_array($this->getJobHookName(), $this->getInstalledCrons(), true);
     }
@@ -147,7 +69,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         if (!$this->isJobHookInstalled()) {
             $this->getLogger()
                 ->warning(vsprintf('The \'%s\' cron hook isn\'t installed. Installing...', [$this->getJobHookName()]));
-            wp_schedule_event(time(), $this->getJobRunInterval(), $this->getJobHookName());
+            wp_schedule_event(time(), $this->jobRunInterval, $this->getJobHookName());
         }
     }
 
@@ -156,28 +78,30 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         wp_clear_scheduled_hook($this->getJobHookName());
     }
 
-    public function activate()
+    public function activate(): void
     {
         $this->install();
     }
 
-    public function deactivate()
+    public function deactivate(): void
     {
         $this->uninstall();
     }
 
-    protected function getCronFlagName()
+    protected function getCronFlagName(): string
     {
-        return 'smartling_cron_flag_' . $this->getJobHookName();
+        return 'wordpress_smartling_cron_flag_' . $this->getJobHookName();
     }
 
     /**
-     * @param bool $renew
+     * @throws EntityNotFoundException
+     * @throws SmartlingApiException
      */
-    public function placeLockFlag($renew = false)
+    public function placeLockFlag(bool $renew = false): void
     {
+        $profile = $this->getActiveProfile();
         $flagName = $this->getCronFlagName();
-        $newFlagValue = time() + $this->getWorkerTTL();
+        $newFlagValue = time() + $this->workerTTL;
 
         if (true === $renew) {
             $msgTemplate = 'Renewing flag \'%s\' for cron job \'%s\' with value \'%s\' (TTL=%s)';
@@ -191,15 +115,28 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
                 $flagName,
                 $this->getJobHookName(),
                 $newFlagValue,
-                $this->getWorkerTTL(),
+                $this->workerTTL,
             ]
         ));
 
-        SimpleStorageHelper::set($flagName, $newFlagValue);
+        if ($renew) {
+            $this->lockWithRetry(function () use ($flagName, $profile) {
+                $this->api->renewLock($profile, $flagName, $this->workerTTL);
+            });
+        } else {
+            $this->lockWithRetry(function () use ($flagName, $profile) {
+                $this->api->acquireLock($profile, $flagName, $this->workerTTL);
+            });
+        }
     }
 
-    public function dropLockFlag()
+    /**
+     * @throws EntityNotFoundException
+     * @throws SmartlingApiException
+     */
+    public function dropLockFlag(): void
     {
+        $profile = $this->getActiveProfile();
         $flagName = $this->getCronFlagName();
         $this->getLogger()->debug(
             vsprintf(
@@ -210,88 +147,109 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
                 ]
             )
         );
-        SimpleStorageHelper::drop($this->getCronFlagName());
+        $this->lockWithRetry(function () use ($flagName, $profile) {
+            $this->api->releaseLock($profile, $flagName);
+        }, true);
     }
 
-    /**
-     * @param string $source
-     */
-    public function runCronJob($source = '')
+    public function runCronJob(string $source = ''): void
     {
         $this->getLogger()->debug(
             vsprintf(
                 'Checking if allowed to run \'%s\' cron (TTL=%s)',
                 [
                     $this->getJobHookName(),
-                    $this->getWorkerTTL(),
+                    $this->workerTTL,
                 ]
             )
         );
 
-        $this->tryRunJob($source);
-    }
-
-    /**
-     * @param string $source
-     */
-    private function tryRunJob($source)
-    {
-        $this->transactionManager->setAutocommit(0);
-        $allowedToRun = false;
-        $exception = null;
-        $message = null;
         try {
-            $this->transactionManager->transactionStart();
-            $result = $this->transactionManager->executeSelectForUpdate($this->buildSelectQuery());
-            if (null !== $result) {
-                $currentTS = time();
-                $flagTS = (0 < count($result)) ? (int)$result[0]['ts'] : 0;
-
-                $this->getLogger()->debug(
-                    vsprintf(
-                        'Checking flag \'%s\' for cron job \'%s\'. Stored value=\'%s\'',
-                        [
-                            $this->getCronFlagName(),
-                            $this->getJobHookName(),
-                            $flagTS,
-                        ]
-                    )
-                );
-                $allowedToRun = $currentTS > $flagTS;
-                if ($allowedToRun) {
-                    $this->placeLockFlag();
+            $message = $this->tryRunJob();
+        } catch (RetryException $e) {
+            if ($source === self::SOURCE_USER) {
+                if (preg_match('~1/' . self::LOCK_RETRY_ATTEMPTS . '\)$~', $e->getMessage())) {
+                    // lock set, no retries
+                    throw new \RuntimeException($this->getCronFlagName() . ' already running');
+                } elseif ($e->getPrevious() !== null) {
+                    throw new \RuntimeException($e->getPrevious()->getMessage());
                 } else {
-                    $message = vsprintf(
-                        'Cron \'%s\' is not allowed to run. TTL=%s has not expired yet. Expecting TTL expiration in %s seconds.',
-                        [
-                            $this->getJobHookName(),
-                            $this->getWorkerTTL(),
-                            $flagTS - time(),
-                        ]
-                    );
-                    $this->getLogger()->debug($message);
+                    throw new \RuntimeException('Unable to start ' . $this->getCronFlagName() . ' at this time, please retry');
                 }
             }
-        } catch (\Exception $exception) {
-            $this->getLogger()->warn(vsprintf(
-                'Cron job %s execution failed: %s',
-                [$this->getJobHookName(), $exception->getMessage()])
-            );
-            $message = $exception->getMessage();
-        } finally {
-            $this->transactionManager->transactionCommit();
-            $this->transactionManager->setAutocommit(1);
-            if ($allowedToRun) {
-                $this->run();
-                $this->dropLockFlag();
-            } elseif ($source === self::SOURCE_USER && $message !== null) {
-                if ($exception !== null) {
-                    throw $exception;
-                }
-
-                throw new \RuntimeException($message);
+        } catch (\Throwable $e) {
+            $errorClass = get_class($e);
+            $this->getLogger()->error("Caught class=\"$errorClass\", code=\"{$e->getCode()}\", message=\"{$e->getMessage()}\", trace: {$e->getTraceAsString()}");
+            if ($source === self::SOURCE_USER) {
+                throw new \RuntimeException($e->getMessage());
             }
         }
+        if ($source === self::SOURCE_USER && $message !== '') {
+            throw new \RuntimeException($message);
+        }
+    }
+
+    private function tryRunJob(): string
+    {
+        try {
+            $this->placeLockFlag();
+        } catch (EntityNotFoundException $e) {
+            $message = "No active profiles, skipping {$this->getJobHookName()} run";
+            $this->getLogger()->debug($message);
+            return $message;
+        } catch (SmartlingApiException $e) {
+            $errorMessage = $e->getErrors()[0]['message'] ?? $e->getMessage();
+            $message = "Failed to place lock flag for {$this->getJobHookName()}: $errorMessage";
+            $this->getLogger()->debug($message);
+            return $message;
+        }
+        try {
+            $this->run();
+            return '';
+        } catch (\Exception $exception) {
+            $message = "Cron job {$this->getJobHookName()} execution failed: {$exception->getMessage()}";
+            $this->getLogger()->warning($message);
+            return $message;
+        } finally {
+            try {
+                $this->dropLockFlag();
+            } catch (EntityNotFoundException $e) {
+                $this->getLogger()->debug('No active profiles when trying to drop lock flag for ' . $this->getJobHookName());
+            } catch (SmartlingApiException $e) {
+                $errorMessage = $e->getErrors()[0]['message'] ?? $e->getMessage();
+                $this->getLogger()->debug("Failed to remove lock for {$this->getJobHookName()}: $errorMessage");
+            }
+        }
+    }
+
+    private function getActiveProfile(): ConfigurationProfileEntity
+    {
+        $profile = ArrayHelper::first($this->settingsManager->getActiveProfiles());
+        if ($profile === false) {
+            throw new EntityNotFoundException('No active profiles');
+        }
+        return $profile;
+    }
+
+    private function lockWithRetry(callable $command, $ignoreLockNotAcquired = false): void
+    {
+        (new Retry(new Command($command)))
+            ->attempts(self::LOCK_RETRY_ATTEMPTS)
+            ->wait(self::LOCK_RETRY_WAIT_SECONDS)
+            ->onlyIf(function ($attempt, $error) use ($ignoreLockNotAcquired) {
+                if ($error === null) {
+                    return false;
+                }
+                if ($error instanceof SmartlingApiException) {
+                    $topError = ArrayHelper::first($error->getErrors());
+                    if ($topError['key'] ?? '' === 'lock.not.acquired') {
+                        $this->getLogger()->debug( 'Failed to acquire lock');
+                        return !$ignoreLockNotAcquired;
+                    }
+                }
+                return true;
+             })
+            ->run();
     }
 
     public function register(): void
@@ -300,27 +258,5 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         if (!DiagnosticsHelper::isBlocked()) {
             add_action($this->getJobHookName(), [$this, 'runCronJob']);
         }
-    }
-
-    /**
-     * @return string
-     */
-    public function buildSelectQuery()
-    {
-        $block = ConditionBlock::getConditionBlock();
-        $block->addCondition(
-            Condition::getCondition(
-                ConditionBuilder::CONDITION_SIGN_EQ,
-                'meta_key',
-                [$this->getCronFlagName()]
-            )
-        );
-        return QueryBuilder::buildSelectQuery(
-            Bootstrap::getContainer()->get('site.db')->completeTableName('sitemeta'),
-            [
-                ['meta_value' => 'ts'],
-            ],
-            $block
-        );
     }
 }

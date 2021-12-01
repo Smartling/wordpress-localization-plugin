@@ -1,7 +1,6 @@
 <?php
 namespace Smartling\Helpers;
 
-use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\EntityNotFoundException;
@@ -9,6 +8,7 @@ use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\WPHookInterface;
 
 /**
@@ -152,6 +152,8 @@ class SubmissionCleanupHelper implements WPHookInterface
     public function register(): void
     {
         add_action('before_delete_post', [$this, 'beforeDeletePostHandler']);
+        add_action('delete_attachment', [$this, 'deleteAttachmentHandler'], 10, 2);
+        add_action('delete_widget', [$this, 'deleteWidgetHandler']);
         add_action('pre_delete_term', [$this, 'preDeleteTermHandler'], 999, 2);
     }
 
@@ -174,12 +176,33 @@ class SubmissionCleanupHelper implements WPHookInterface
                 $post_type = get_post($postId)->post_type;
             }
 
-            $this->lookForSubmissions($post_type, $currentBlogId, (int)$postId);
+            $this->deleteSubmissions($post_type, $currentBlogId, (int)$postId);
         } catch (EntityNotFoundException $e) {
             $this->getLogger()->warning($e->getMessage());
         }
 
         add_action('before_delete_post', [$this, 'beforeDeletePostHandler']);
+    }
+
+    /**
+     * @param int $postId
+     * @param \WP_Post $post
+     * @noinspection PhpMissingParamTypeInspection called by WordPress, not sure if typed
+     */
+    public function deleteAttachmentHandler($postId, $post): void
+    {
+        $postType = $post->post_type ?? 'attachment';
+        $currentBlogId = $this->siteHelper->getCurrentBlogId();
+        $this->getLogger()->debug("Attachment id=$postId type=$postType in blogId=$currentBlogId is going to be deleted");
+        $this->deleteSubmissions($postType, $currentBlogId, (int)$postId);
+    }
+
+    public function deleteWidgetHandler($widgetId): void
+    {
+        $currentBlogId = $this->getSiteHelper()->getCurrentBlogId();
+        $postType = get_post($widgetId)->post_type;
+        $this->getLogger()->debug("Widget id=$widgetId type=$postType in blogId=$currentBlogId is going to be deleted");
+        $this->deleteSubmissions($postType, $currentBlogId, $widgetId);
     }
 
     /**
@@ -202,18 +225,13 @@ class SubmissionCleanupHelper implements WPHookInterface
         );
 
         try {
-            $this->lookForSubmissions($taxonomy, $currentBlogId, (int)$term);
+            $this->deleteSubmissions($taxonomy, $currentBlogId, (int)$term);
         } catch (\Exception $e) {
             $this->getLogger()->warning($e->getMessage());
         }
     }
 
-    /**
-     * @param string $contentType
-     * @param int    $blogId
-     * @param int    $contentId
-     */
-    private function lookForSubmissions($contentType, $blogId, $contentId)
+    private function deleteSubmissions(string $contentType, int $blogId, int $contentId): void
     {
 
         // try treat as translation
@@ -248,20 +266,13 @@ class SubmissionCleanupHelper implements WPHookInterface
         if (0 < count($submissions)) {
             $this->getLogger()->debug(vsprintf('Found %d submissions', [count($submissions)]));
             foreach ($submissions as $submission) {
-                $this->cancelSubmission($submission);
+                $this->unlinkContent($submission);
+                $this->getSubmissionManager()->delete($submission);
             }
         } else {
             $this->getLogger()
                 ->debug(vsprintf('No submissions found for search params: %s', [var_export($searchParams, true)]));
         }
-    }
-
-    private function cancelSubmission(SubmissionEntity $submission)
-    {
-        $this->unlinkContent($submission);
-        $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_CANCELLED);
-        $submission->setTargetId(0);
-        $submission = $this->getSubmissionManager()->storeEntity($submission);
     }
 
     /**

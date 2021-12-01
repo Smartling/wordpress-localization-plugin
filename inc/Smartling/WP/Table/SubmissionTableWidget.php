@@ -2,7 +2,6 @@
 
 namespace Smartling\WP\Table;
 
-use Psr\Log\LoggerInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Helpers\ArrayHelper;
@@ -16,17 +15,20 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
-use Smartling\Jobs\JobManager;
+use Smartling\Jobs\JobEntity;
 use Smartling\Queue\Queue;
+use Smartling\Queue\QueueInterface;
 use Smartling\Settings\Locale;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\Controller\SmartlingListTable;
 
 class SubmissionTableWidget extends SmartlingListTable
 {
     use CommonLogMessagesTrait;
 
+    private const ACTION_CHECK_STATUS = 'checkStatus';
     private const ACTION_DOWNLOAD = 'download';
     private const ACTION_LOCK = 'lock';
     private const ACTION_UNLOCK = 'unlock';
@@ -50,7 +52,6 @@ class SubmissionTableWidget extends SmartlingListTable
     private SubmissionManager $submissionManager;
     private EntityHelper $entityHelper;
     private Queue $queue;
-    private JobManager $jobInformationManager;
 
     public function getLogger(): LoggerInterface
     {
@@ -73,7 +74,7 @@ class SubmissionTableWidget extends SmartlingListTable
 
     private array $_settings = ['singular' => 'submission', 'plural' => 'submissions', 'ajax' => false,];
 
-    public function __construct(SubmissionManager $manager, EntityHelper $entityHelper, Queue $queue, JobManager $jobInformationManager)
+    public function __construct(SubmissionManager $manager, EntityHelper $entityHelper, Queue $queue)
     {
         $this->queue = $queue;
         $this->submissionManager = $manager;
@@ -85,7 +86,6 @@ class SubmissionTableWidget extends SmartlingListTable
         $this->logger = $entityHelper->getLogger();
 
         parent::__construct($this->_settings);
-        $this->jobInformationManager = $jobInformationManager;
     }
 
     public function getSortingOptions(string $fieldNameKey = 'orderby', string $orderDirectionKey = 'order'): array
@@ -158,9 +158,10 @@ class SubmissionTableWidget extends SmartlingListTable
     public function get_bulk_actions(): array
     {
         return [
+            self::ACTION_CHECK_STATUS => __('Enqueue for Forced Status Check'),
             self::ACTION_DOWNLOAD => __('Enqueue for Download'),
-            self::ACTION_LOCK     => __('Lock translation'),
-            self::ACTION_UNLOCK   => __('Unlock translation'),
+            self::ACTION_LOCK => __('Lock translation'),
+            self::ACTION_UNLOCK => __('Unlock translation'),
         ];
     }
 
@@ -169,18 +170,24 @@ class SubmissionTableWidget extends SmartlingListTable
      */
     private function processBulkAction(): void
     {
-        /**
-         * @var int[] $submissionsIds
-         */
-        $submissionsIds = $this->getFormElementValue('submission', []);
+        $submissionsIds = array_map(static function ($value) {
+            return (int)$value;
+        }, $this->getFormElementValue('submission', []));
 
         if (is_array($submissionsIds) && 0 < count($submissionsIds)) {
             $submissions = $this->submissionManager->findByIds($submissionsIds);
             if (0 < count($submissions)) {
                 switch ($this->current_action()) {
+                    case self::ACTION_CHECK_STATUS:
+                        foreach ($submissions as $submission) {
+                            $submission->setLastModified($submission->getSubmissionDate());
+                            $this->submissionManager->storeEntity($submission);
+                            $this->queue->enqueue([$submission->getFileUri() => [$submission->getId()]], QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE);
+                        }
+                        break;
                     case self::ACTION_DOWNLOAD:
                         foreach ($submissions as $submission) {
-                            $this->queue->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
+                            $this->queue->enqueue([$submission->getId()], QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE);
                         }
                         break;
                     case self::ACTION_LOCK:
@@ -280,7 +287,7 @@ class SubmissionTableWidget extends SmartlingListTable
             $searchBlock = ConditionBlock::getConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR);
 
             $searchFields = [
-                SubmissionEntity::FIELD_SOURCE_TITLE,
+                JobEntity::FIELD_JOB_NAME,
                 SubmissionEntity::FIELD_SOURCE_TITLE,
                 SubmissionEntity::FIELD_FILE_URI,
             ];
@@ -303,7 +310,6 @@ class SubmissionTableWidget extends SmartlingListTable
         }
 
         if ('any' !== $lockedFlag) {
-
             $lockConditionTotal = Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_LOCKED, [(int)$lockedFlag]);
 
             if (1 === (int)$lockedFlag) {
@@ -347,16 +353,22 @@ class SubmissionTableWidget extends SmartlingListTable
 
         foreach ($data as $element) {
             $row = $element->toArray();
-            $jobInfo = $this->jobInformationManager->getBySubmissionId($element->getId());
+            $jobInfo = $element->getJobInfo();
 
-            $row[SubmissionEntity::FIELD_FILE_URI] = htmlentities($row[SubmissionEntity::FIELD_FILE_URI]);
+            $fileName = htmlentities($row[SubmissionEntity::FIELD_FILE_URI]);
+            $row[SubmissionEntity::FIELD_FILE_URI] = $fileName;
             $row[SubmissionEntity::FIELD_SOURCE_TITLE] = htmlentities($row[SubmissionEntity::FIELD_SOURCE_TITLE]);
             $row[SubmissionEntity::FIELD_CONTENT_TYPE] = WordpressContentTypeHelper::getLocalizedContentType($row[SubmissionEntity::FIELD_CONTENT_TYPE]);
             $row[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row[SubmissionEntity::FIELD_SUBMISSION_DATE]));
             $row[SubmissionEntity::FIELD_APPLIED_DATE] = '0000-00-00 00:00:00' === $row[SubmissionEntity::FIELD_APPLIED_DATE] ? __('Never')
                 : DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row[SubmissionEntity::FIELD_APPLIED_DATE]));
-            $row[SubmissionEntity::FIELD_TARGET_LOCALE] = $siteHelper->getBlogLabelById($this->entityHelper->getConnector(), $row[SubmissionEntity::FIELD_TARGET_BLOG_ID]);
-            $row[SubmissionEntity::VIRTUAL_FIELD_JOB_LINK] = $jobInfo === null ? '' : "<a href=\"https://dashboard.smartling.com/app/projects/{$jobInfo->getProjectUid()}/account-jobs/{$jobInfo->getProjectUid()}:{$jobInfo->getJobUid()}\">{$jobInfo->getJobName()}</a>";
+            try {
+                $blogLabel = $siteHelper->getBlogLabelById($this->entityHelper->getConnector(), $row[SubmissionEntity::FIELD_TARGET_BLOG_ID]);
+            } catch (BlogNotFoundException $e) {
+                $blogLabel = "*blog id {$row[SubmissionEntity::FIELD_TARGET_BLOG_ID]} not found*";
+            }
+            $row[SubmissionEntity::FIELD_TARGET_LOCALE] = $blogLabel;
+            $row[SubmissionEntity::VIRTUAL_FIELD_JOB_LINK] = $jobInfo->getJobName() === '' ? '' : "<a href=\"https://dashboard.smartling.com/app/projects/{$jobInfo->getProjectUid()}/account-jobs/?filename=$fileName\">" . esc_html($jobInfo->getJobName()) . '</a>';
 
             $flagBlockParts = [];
 

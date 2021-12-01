@@ -3,8 +3,8 @@
 namespace Smartling\MonologWrapper\Logger;
 
 use InvalidArgumentException;
-use Monolog\Logger;
-use Psr\Log\LogLevel;
+use Smartling\Vendor\Monolog\Logger;
+use Smartling\Vendor\Psr\Log\LogLevel;
 
 /**
  * Class LevelLogger

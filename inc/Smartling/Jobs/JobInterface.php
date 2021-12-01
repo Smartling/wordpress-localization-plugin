@@ -8,8 +8,6 @@ interface JobInterface
 
     public function uninstall(): void;
 
-    public function getJobRunInterval(): string;
-
     public function getJobHookName(): string;
 
     public function run(): void;

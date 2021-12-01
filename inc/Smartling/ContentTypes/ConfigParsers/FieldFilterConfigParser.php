@@ -11,7 +11,7 @@ use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorInterface;
 use Smartling\Helpers\MetaFieldProcessor\SkipFieldProcessor;
 use Smartling\Helpers\Serializers\SerializerInterface;
 use Smartling\MonologWrapper\MonologWrapper;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
  * Class FieldFilterConfigParser

@@ -2,34 +2,14 @@
 
 namespace Smartling\Jobs;
 
-use Smartling\ApiWrapperInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\ArrayHelper;
-use Smartling\Helpers\QueryBuilder\TransactionManager;
-use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\Submissions\SubmissionManager;
 
 class UploadJob extends JobAbstract
 {
     public const JOB_HOOK_NAME = 'smartling-upload-task';
-
-    private ApiWrapperInterface $api;
-    private SettingsManager $settingsManager;
-
-    public function __construct(
-        SubmissionManager $submissionManager,
-        int $workerTTL,
-        ApiWrapperInterface $api,
-        SettingsManager $settingsManager,
-        TransactionManager $transactionManager
-    ) {
-        parent::__construct($submissionManager, $transactionManager, $workerTTL);
-
-        $this->api = $api;
-        $this->settingsManager = $settingsManager;
-    }
 
     public function getJobHookName(): string
     {
@@ -42,6 +22,8 @@ class UploadJob extends JobAbstract
 
         $this->processUploadQueue();
 
+        $this->processCloning();
+
         $this->processDailyBucketJob();
 
         $this->getLogger()->info('Finished UploadJob.');
@@ -50,14 +32,11 @@ class UploadJob extends JobAbstract
     private function processUploadQueue(): void
     {
         do {
-            $entities = $this->getSubmissionManager()->findSubmissionsForUploadJob();
+            $entities = $this->submissionManager->findSubmissionsForUploadJob();
 
             if (0 === count($entities)) {
                 break;
             }
-
-            // refreshing the lock flag value
-            $this->placeLockFlag();
 
             $entity = ArrayHelper::first($entities);
             $this->getLogger()->info(
@@ -81,6 +60,18 @@ class UploadJob extends JobAbstract
         } while (0 < count($entities));
     }
 
+    private function processCloning(): void
+    {
+        $submissions = $this->submissionManager->findSubmissionsForCloning();
+        foreach ($submissions as $submission) {
+            do_action(ExportedAPI::ACTION_SMARTLING_PREPARE_SUBMISSION_UPLOAD, $submission);
+        }
+        // needs to be in a separate loop to have all relations when cloning
+        foreach ($submissions as $submission) {
+            do_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $submission);
+        }
+    }
+
     private function processDailyBucketJob(): void
     {
         foreach ($this->settingsManager->getActiveProfiles() as $activeProfile) {
@@ -92,7 +83,7 @@ class UploadJob extends JobAbstract
                 continue;
             }
             $originalBlogId = $activeProfile->getOriginalBlogId()->getBlogId();
-            $entities = $this->getSubmissionManager()->find(
+            $entities = $this->submissionManager->find(
                 [
                     SubmissionEntity::FIELD_STATUS => [SubmissionEntity::SUBMISSION_STATUS_NEW],
                     SubmissionEntity::FIELD_IS_LOCKED => 0,
@@ -149,7 +140,7 @@ class UploadJob extends JobAbstract
                         );
                     }
 
-                    $this->getSubmissionManager()->storeSubmissions($entities);
+                    $this->submissionManager->storeSubmissions($entities);
                 } catch (SmartlingApiException $e) {
                     $this->getLogger()->error($e->formatErrors());
                 } catch (\Exception $e) {

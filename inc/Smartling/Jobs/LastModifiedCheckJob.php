@@ -5,73 +5,29 @@ namespace Smartling\Jobs;
 use Smartling\ApiWrapperInterface;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\Helpers\ArrayHelper;
-use Smartling\Queue\Queue;
+use Smartling\Queue\QueueInterface;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 
-/**
- * Class LastModifiedCheckJob
- * @package Smartling\Jobs
- */
 class LastModifiedCheckJob extends JobAbstract
 {
-    /**
-     * @var ApiWrapperInterface
-     */
-    private $apiWrapper;
+    public const JOB_HOOK_NAME = 'smartling-last-modified-check-task';
 
-    /**
-     * @var SettingsManager
-     */
-    private $settingsManager;
+    private QueueInterface $queue;
 
-    /**
-     * @var Queue
-     */
-    private $queue;
-
-    /**
-     * @param ApiWrapperInterface $apiWrapper
-     */
-    public function setApiWrapper($apiWrapper)
-    {
-        $this->apiWrapper = $apiWrapper;
-    }
-
-    /**
-     * @return SettingsManager
-     */
-    public function getSettingsManager()
-    {
-        return $this->settingsManager;
-    }
-
-    /**
-     * @param SettingsManager $settingsManager
-     */
-    public function setSettingsManager($settingsManager)
-    {
-        $this->settingsManager = $settingsManager;
-    }
-
-    /**
-     * @return Queue
-     */
-    public function getQueue()
-    {
-        return $this->queue;
-    }
-
-    /**
-     * @param Queue $queue
-     */
-    public function setQueue($queue)
-    {
+    public function __construct(
+        ApiWrapperInterface $api,
+        SettingsManager $settingsManager,
+        SubmissionManager $submissionManager,
+        string $jobRunInterval,
+        int $workerTTL,
+        QueueInterface $queue
+    ) {
+        parent::__construct($api, $settingsManager, $submissionManager, $jobRunInterval, $workerTTL);
         $this->queue = $queue;
     }
-
-    const JOB_HOOK_NAME = 'smartling-last-modified-check-task';
 
     public function getJobHookName(): string
     {
@@ -82,34 +38,23 @@ class LastModifiedCheckJob extends JobAbstract
     {
         $this->getLogger()->info('Started Last-Modified Check Job.');
 
-        $this->lastModifiedCheck();
+        $this->lastModifiedCheck(QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE, false);
+        $this->lastModifiedCheck(QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE, true);
 
         $this->getLogger()->info('Finished Last-Modified Check Job.');
     }
 
     /**
-     * Gets serialized pair from queue
-     * @return array|false
-     */
-    protected function getSerializedPair()
-    {
-        return $this->getQueue()->dequeue(Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE);
-    }
-
-    /**
-     * @param array              $lastModifiedResponse
      * @param SubmissionEntity[] $submissions
-     *
      * @return SubmissionEntity[]
      */
-    protected function filterSubmissions(array $lastModifiedResponse, array $submissions)
+    protected function filterSubmissions(array $lastModifiedResponse, array $submissions, bool $failMissing): array
     {
         $filteredSubmissions = [];
         foreach ($lastModifiedResponse as $smartlingLocaleId => $lastModifiedDateTime) {
             if (array_key_exists($smartlingLocaleId, $submissions)) {
                 /**
-                 * @var \DateTime        $lastModifiedDateTime
-                 * @var SubmissionEntity $submission
+                 * @var \DateTime $lastModifiedDateTime
                  */
                 $submission = $submissions[$smartlingLocaleId];
                 $submissionLastModifiedTimestamp = $submission->getLastModified()->getTimestamp();
@@ -122,12 +67,24 @@ class LastModifiedCheckJob extends JobAbstract
                 ) {
                     // We need this statement for the case, when something went wrong, and
                     // submission appeared in a situation with Progress == 100% and Status == "In progress"
-                    // We need to download such submission at some point. But it won'd happen
+                    // We need to download such submission at some point. But it won't happen
                     // without this fix
                     $filteredSubmissions[$smartlingLocaleId] = $submission;
                 }
-                $this->placeLockFlag(true);
+                unset($submissions[$smartlingLocaleId]);
             }
+        }
+        if ($failMissing) {
+            foreach ($submissions as $submission) {
+                $submission->setLastModified(new \DateTime());
+                $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+                $message = 'File submitted for locales ' .
+                    implode(', ', array_keys($lastModifiedResponse)) . '. This submission is for locale ' .
+                    $this->getSmartlingLocaleIdBySubmission($submission);
+                $submission->setLastError($message);
+                $this->getLogger()->notice($message);
+            }
+            $this->submissionManager->storeSubmissions(array_values($submissions));
         }
 
         return $filteredSubmissions;
@@ -135,25 +92,25 @@ class LastModifiedCheckJob extends JobAbstract
 
     /**
      * @param SubmissionEntity[] $submissions
-     *
      * @return SubmissionEntity[]
      */
-    protected function processFileUriSet(array $submissions)
+    protected function processFileUriSet(array $submissions, bool $failMissing): array
     {
         if (ArrayHelper::notEmpty($submissions)) {
             $submission = ArrayHelper::first($submissions);
             try {
-                $lastModified = $this->apiWrapper->lastModified($submission);
+                $lastModified = $this->api->lastModified($submission);
             } catch (SmartlingNetworkException $e) {
-                if ($this->apiWrapper->isUnrecoverable($e)) {
+                if ($this->api->isUnrecoverable($e)) {
                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
-                    $this->getSubmissionManager()->storeEntity($submission);
+                    $this->submissionManager->storeEntity($submission);
                     $this->getLogger()->warning("Marking submission {$submission->getId()} failed because of an unrecoverable error in ApiWrapper::lastModified response");
                 }
                 throw $e;
             }
             $submissions = $this->prepareSubmissionList($submissions);
-            $submissions = $this->filterSubmissions($lastModified, $submissions);
+            $submissions = $this->filterSubmissions($lastModified, $submissions, $failMissing);
+            $this->placeLockFlag(true);
         }
 
         return $submissions;
@@ -161,24 +118,18 @@ class LastModifiedCheckJob extends JobAbstract
 
     /**
      * @param SubmissionEntity[] $submissions
-     *
      * @return SubmissionEntity[]
      */
-    protected function storeSubmissions(array $submissions)
+    protected function storeSubmissions(array $submissions): array
     {
-        if (0 < count($submissions)) {
-            $submissions = $this->getSubmissionManager()->storeSubmissions($submissions);
-        }
-
-        return $submissions;
+        return $this->submissionManager->storeSubmissions($submissions);
     }
 
     /**
      * @param array $serializedPair
-     *
      * @return bool
      */
-    private function validateSerializedPair(array $serializedPair)
+    private function validateSerializedPair(array $serializedPair): bool
     {
         $result = false;
         if (1 === count($serializedPair)) {
@@ -199,23 +150,20 @@ class LastModifiedCheckJob extends JobAbstract
     /**
      * Checks changes in last-modified field and triggers statusCheck by fileUri if lastModified has changed.
      */
-    private function lastModifiedCheck()
+    private function lastModifiedCheck(string $queueName, bool $failMissing): void
     {
-        while (false !== ($serializedPair = $this->getSerializedPair())) {
+        while (false !== ($serializedPair = $this->queue->dequeue($queueName))) {
             if (false === $this->validateSerializedPair($serializedPair)) {
                 $this->getLogger()->warning(vsprintf('Got unexpected data from queue : \'%s\'. Skipping', [
                     var_export($serializedPair, true),
                 ]));
                 continue;
             }
-            /**
-             * @var array $serializedPair
-             */
-            foreach ($serializedPair as $fileUri => $serializedSubmissions) {
-                $submissionList = $this->getSubmissionManager()->findByIds($serializedSubmissions);
+            foreach ($serializedPair as $serializedSubmissions) {
+                $submissionList = $this->submissionManager->findByIds($serializedSubmissions);
 
                 try {
-                    $submissions = $this->processFileUriSet($submissionList);
+                    $submissions = $this->processFileUriSet($submissionList, $failMissing);
                 } catch (SmartlingNetworkException $e) {
                     $this->getLogger()
                         ->error(
@@ -251,33 +199,32 @@ class LastModifiedCheckJob extends JobAbstract
     /**
      * @param SubmissionEntity[] $submissions
      */
-    protected function processDownloadOnChange(array $submissions)
+    protected function processDownloadOnChange(array $submissions): void
     {
         foreach ($submissions as $submission) {
-            $profile = $this->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
+            $profile = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
 
             if (($profile instanceof ConfigurationProfileEntity) && 1 === $profile->getDownloadOnChange()) {
                 $this->getLogger()
                     ->debug(vsprintf('Adding submission %s to Download queue as it was changed.', [$submission->getId()]));
-                $this->getQueue()->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
+                $this->queue->enqueue([$submission->getId()], QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE);
             }
         }
     }
 
     /**
      * @param SubmissionEntity[] $submissions
-     *
      * @throws SmartlingNetworkException
      */
-    public function statusCheck(array $submissions)
+    public function statusCheck(array $submissions): void
     {
         $this->getLogger()->debug(vsprintf('Processing status check for %d submissions.', [count($submissions)]));
 
         $submissions = $this->prepareSubmissionList($submissions);
 
-        $statusCheckResult = $this->apiWrapper->getStatusForAllLocales($submissions);
+        $statusCheckResult = $this->api->getStatusForAllLocales($submissions);
 
-        $submissions = $this->getSubmissionManager()->storeSubmissions($statusCheckResult);
+        $submissions = $this->submissionManager->storeSubmissions($statusCheckResult);
 
         foreach ($submissions as $submission) {
             $this->checkEntityForDownload($submission);
@@ -289,7 +236,7 @@ class LastModifiedCheckJob extends JobAbstract
     /**
      * @param SubmissionEntity $entity
      */
-    public function checkEntityForDownload(SubmissionEntity $entity)
+    public function checkEntityForDownload(SubmissionEntity $entity): void
     {
         if (100 === $entity->getCompletionPercentage() && 1 !== $entity->getIsCloned()) {
 
@@ -307,34 +254,28 @@ class LastModifiedCheckJob extends JobAbstract
 
             $this->getLogger()->info($message);
 
-            $this->getQueue()->enqueue([$entity->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
+            $this->queue->enqueue([$entity->getId()], QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE);
         }
     }
 
     /**
      * @param SubmissionEntity $submission
-     *
      * @return string
      */
-    private function getSmartlingLocaleIdBySubmission(SubmissionEntity $submission)
+    public function getSmartlingLocaleIdBySubmission(SubmissionEntity $submission): string
     {
-        $settingsManager = $this->getSettingsManager();
-
-        $locale = $settingsManager
+        return $this->settingsManager
             ->getSmartlingLocaleIdBySettingsProfile(
-                $settingsManager->getSingleSettingsProfile($submission->getSourceBlogId()),
+                $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId()),
                 $submission->getTargetBlogId()
             );
-
-        return $locale;
     }
 
     /**
      * @param SubmissionEntity[] $submissionList
-     *
      * @return array
      */
-    public function prepareSubmissionList(array $submissionList)
+    public function prepareSubmissionList(array $submissionList): array
     {
         $output = [];
 

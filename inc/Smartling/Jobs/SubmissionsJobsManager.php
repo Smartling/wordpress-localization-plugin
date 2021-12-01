@@ -72,7 +72,7 @@ SQL;
         $fields = implode(', ', array_keys(SubmissionJobEntity::getFieldDefinitions()));
         $fieldId = SubmissionJobEntity::FIELD_ID;
         $result = $this->db->fetchPrepared(
-            "SELECT $fields FROM {$this->tableName} WHERE $field = %d ORDER BY $fieldId DESC LIMIT 1",
+            "SELECT $fields FROM $this->tableName WHERE $field = %d ORDER BY $fieldId DESC LIMIT 1",
             $id,
         );
         if (count($result) === 0) {

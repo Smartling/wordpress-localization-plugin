@@ -2,10 +2,10 @@
 
 namespace Smartling\Extensions\Acf;
 
-use Psr\Log\LoggerInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingConfigException;
+use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Extensions\AcfOptionPages\ContentTypeAcfOption;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\EntityHelper;
@@ -13,24 +13,20 @@ use Smartling\Helpers\SiteHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 class AcfDynamicSupport
 {
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    private LoggerInterface $logger;
 
-    public static $acfReverseDefinitionAction = [];
+    public static array $acfReverseDefinitionAction = [];
 
-    /**
-     * @var EntityHelper
-     */
-    private $entityHelper;
+    private EntityHelper $entityHelper;
+    private SiteHelper $siteHelper;
 
-    private $definitions = [];
+    private array $definitions = [];
 
-    private $rules = [
+    private array $rules = [
         'skip'      => [],
         'copy'      => [],
         'localize'  => [],
@@ -42,36 +38,9 @@ class AcfDynamicSupport
         return $this->definitions;
     }
 
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
+    public function getLogger(): LoggerInterface
     {
         return $this->logger;
-    }
-
-    /**
-     * @return EntityHelper
-     */
-    public function getEntityHelper()
-    {
-        return $this->entityHelper;
-    }
-
-    /**
-     * @param EntityHelper $entityHelper
-     */
-    public function setEntityHelper($entityHelper)
-    {
-        $this->entityHelper = $entityHelper;
-    }
-
-    /**
-     * @return SiteHelper
-     */
-    public function getSiteHelper()
-    {
-        return $this->getEntityHelper()->getSiteHelper();
     }
 
     /**
@@ -89,37 +58,33 @@ class AcfDynamicSupport
         }
     }
 
-    /**
-     * AcfDynamicSupport constructor.
-     *
-     * @param EntityHelper $entityHelper
-     */
     public function __construct(EntityHelper $entityHelper)
     {
         $this->logger = MonologWrapper::getLogger(get_class($this));
-        $this->setEntityHelper($entityHelper);
+        $this->entityHelper = $entityHelper;
+        $this->siteHelper = $entityHelper->getSiteHelper();
     }
 
     /**
-     * @return array
+     * @throws SmartlingDirectRunRuntimeException
      */
-    private function getBlogs()
+    private function getBlogs(): array
     {
-        return $this->getSiteHelper()->listBlogs();
+        return $this->siteHelper->listBlogs();
     }
 
     /**
      * @return ConfigurationProfileEntity[]
      */
-    private function getActiveProfiles()
+    private function getActiveProfiles(): array
     {
-        return $this->getEntityHelper()->getSettingsManager()->getActiveProfiles();
+        return $this->entityHelper->getSettingsManager()->getActiveProfiles();
     }
 
     /**
-     * @return array
+     * @throws SmartlingDirectRunRuntimeException
      */
-    private function getBlogListForSearch()
+    private function getBlogListForSearch(): array
     {
         $blogs    = $this->getBlogs();
         $profiles = $this->getActiveProfiles();
@@ -142,7 +107,10 @@ class AcfDynamicSupport
         return $blogsToSearch;
     }
 
-    private function getDatabaseDefinitions()
+    /**
+     * @throws SmartlingDirectRunRuntimeException
+     */
+    private function getDatabaseDefinitions(): array
     {
         $defs = [];
         $this->getLogger()->debug('Looking for ACF definitions in the database');
@@ -151,7 +119,7 @@ class AcfDynamicSupport
             $this->getLogger()->debug(vsprintf('Collecting ACF definitions for blog = \'%s\'...', [$blog]));
             try {
                 $this->getLogger()->debug(vsprintf('Looking for profiles for blog %s', [$blog]));
-                $applicableProfiles = $this->getEntityHelper()->getSettingsManager()->findEntityByMainLocale($blog);
+                $applicableProfiles = $this->entityHelper->getSettingsManager()->findEntityByMainLocale($blog);
                 if (0 === count($applicableProfiles)) {
                     $this->getLogger()->debug(vsprintf('No suitable profile found for this blog %s', [$blog]));
                 } else {
@@ -163,7 +131,7 @@ class AcfDynamicSupport
                                 'active'      => 1,
                             ];
                             $fields          = $this->getFieldsByGroup($blog, [$groupKey => $group]);
-                            if (0 < count($fields) && false !== $fields) {
+                            if (0 < count($fields)) {
                                 foreach ($fields as $fieldKey => $field) {
                                     $defs[$fieldKey] = [
                                         'global_type' => 'field',
@@ -188,13 +156,13 @@ class AcfDynamicSupport
         return $defs;
     }
 
-    protected function getGroups($blogId)
+    protected function getGroups($blogId): array
     {
         $dbGroups   = [];
-        $needChange = $this->getSiteHelper()->getCurrentBlogId() !== $blogId;
+        $needChange = $this->siteHelper->getCurrentBlogId() !== $blogId;
         try {
             if ($needChange) {
-                $this->getSiteHelper()->switchBlogId($blogId);
+                $this->siteHelper->switchBlogId($blogId);
             }
             $dbGroups = $this->rawReadGroups();
         } catch (\Exception $e) {
@@ -203,7 +171,7 @@ class AcfDynamicSupport
             );
         } finally {
             if ($needChange) {
-                $this->getSiteHelper()->restoreBlogId();
+                $this->siteHelper->restoreBlogId();
             }
         }
 
@@ -212,9 +180,8 @@ class AcfDynamicSupport
 
     /**
      * Reads the list of groups from database
-     * @return array
      */
-    private function rawReadGroups()
+    private function rawReadGroups(): array
     {
         $posts = (new \WP_Query(
             [
@@ -236,7 +203,7 @@ class AcfDynamicSupport
         return $groups;
     }
 
-    private function rawReadFields($parentId, $parentKey)
+    private function rawReadFields($parentId, $parentKey): array
     {
         $posts = (new \WP_Query(
             [
@@ -265,13 +232,13 @@ class AcfDynamicSupport
         return $fields;
     }
 
-    protected function getFieldsByGroup($blogId, $group)
+    protected function getFieldsByGroup($blogId, $group): array
     {
         $dbFields   = [];
-        $needChange = $this->getSiteHelper()->getCurrentBlogId() !== $blogId;
+        $needChange = $this->siteHelper->getCurrentBlogId() !== $blogId;
         try {
             if ($needChange) {
-                $this->getSiteHelper()->switchBlogId($blogId);
+                $this->siteHelper->switchBlogId($blogId);
             }
             $keys   = array_keys($group);
             $key    = reset($keys);
@@ -286,14 +253,14 @@ class AcfDynamicSupport
             );
         } finally {
             if ($needChange) {
-                $this->getSiteHelper()->restoreBlogId();
+                $this->siteHelper->restoreBlogId();
             }
         }
 
         return $dbFields;
     }
 
-    protected function extractGroupsDefinitions(array $groups)
+    protected function extractGroupsDefinitions(array $groups): array
     {
         $defs = [];
         foreach ($groups as $group) {
@@ -303,11 +270,10 @@ class AcfDynamicSupport
             ];
         }
 
-
         return $defs;
     }
 
-    protected function extractFieldDefinitions(array $fields)
+    protected function extractFieldDefinitions(array $fields): array
     {
         $defs = [];
 
@@ -322,7 +288,6 @@ class AcfDynamicSupport
             if ('clone' === $field['type']) {
                 $defs[$field['key']]['clone'] = $field['clone'];
             }
-
         }
 
         return $defs;
@@ -330,9 +295,8 @@ class AcfDynamicSupport
 
     /**
      * Get local definitions for ACF Pro ver < 5.7.12
-     * @return array
      */
-    private function getLocalDefinitionsOld()
+    private function getLocalDefinitionsOld(): array
     {
         $acf  = null;
         $defs = [];
@@ -347,9 +311,6 @@ class AcfDynamicSupport
 
         if (array_key_exists('local', $acf)) {
             if ($acf['local'] instanceof \acf_local) {
-                /**
-                 * @var \acf_local $local
-                 */
                 $local = $acf['local'];
 
                 $defs = array_merge($defs, $this->extractGroupsDefinitions($local->groups));
@@ -361,7 +322,7 @@ class AcfDynamicSupport
         return $defs;
     }
 
-    protected function validateAcfStores()
+    protected function validateAcfStores(): bool
     {
         global $acf_stores;
 
@@ -374,11 +335,9 @@ class AcfDynamicSupport
 
     /**
      * Get local definitions for ACF Pro ver 5.7.12+
-     * @return array
      */
-    private function getLocalDefinitionsNew()
+    private function getLocalDefinitionsNew(): array
     {
-
         $defs = [];
 
         if ($this->validateAcfStores()) {
@@ -396,9 +355,8 @@ class AcfDynamicSupport
 
     /**
      * Reads local (PHP and JSON) ACF Definitions
-     * @return array
      */
-    private function getLocalDefinitions()
+    private function getLocalDefinitions(): array
     {
         $defs = $this->getLocalDefinitionsOld();
 
@@ -409,13 +367,7 @@ class AcfDynamicSupport
         return $defs;
     }
 
-    /**
-     * @param array $localDefinitions
-     * @param array $dbDefinitions
-     *
-     * @return bool
-     */
-    private function verifyDefinitions(array $localDefinitions, array $dbDefinitions)
+    private function verifyDefinitions(array $localDefinitions, array $dbDefinitions): bool
     {
         foreach ($dbDefinitions as $key => $definition) {
             if (!array_key_exists($key, $localDefinitions)) {
@@ -438,7 +390,7 @@ class AcfDynamicSupport
         return true;
     }
 
-    private function tryRegisterACFOptions()
+    private function tryRegisterACFOptions(): void
     {
         $this->getLogger()->debug('Checking if ACF Option Pages presents...');
 
@@ -456,7 +408,7 @@ class AcfDynamicSupport
         }
     }
 
-    private function tryRegisterACF()
+    private function tryRegisterACF(): void
     {
         $this->getLogger()->debug('Checking if ACF presents...');
         if (true === $this->checkAcfTypes()) {
@@ -473,7 +425,16 @@ class AcfDynamicSupport
                 DiagnosticsHelper::addDiagnosticsMessage(implode('<br/>', $msg));
                 $this->getLogger()->notice('Automatic ACF support is disabled.');
             } else {
-                $dbDefinitions = $this->getDatabaseDefinitions();
+                try {
+                    $dbDefinitions = $this->getDatabaseDefinitions();
+                } catch (SmartlingDirectRunRuntimeException $e) {
+                    $dbDefinitions = [];
+                    DiagnosticsHelper::addDiagnosticsMessage(
+                        'Failed to get ACF definitions from database.' .
+                        'Please ensure that WordPress network is set up properly.<br>' .
+                        "Exception message: {$e->getMessage()}"
+                    );
+                }
 
                 if (false === $this->verifyDefinitions($localDefinitions, $dbDefinitions)) {
                     $url = admin_url('edit.php?post_type=acf-field-group&page=acf-tools');
@@ -496,13 +457,13 @@ class AcfDynamicSupport
         }
     }
 
-    public function run()
+    public function run(): void
     {
         $this->tryRegisterACFOptions();
         $this->tryRegisterACF();
     }
 
-    private function prepareFilters()
+    private function prepareFilters(): void
     {
         $rules = [];
 
@@ -543,7 +504,7 @@ class AcfDynamicSupport
         return array_key_exists($key, $def) && array_key_exists('type', $def[$key]) ? $def[$key]['type'] : false;
     }
 
-    private function getReferencedTypeByKey($key)
+    private function getReferencedTypeByKey($key): string
     {
         $type = $this->getFieldTypeByKey($key);
 
@@ -569,11 +530,7 @@ class AcfDynamicSupport
         return $value;
     }
 
-    /**
-     * @param array $data
-     * @return array
-     */
-    public function removePreTranslationFields(array $data)
+    public function removePreTranslationFields(array $data): array
     {
         if (!array_key_exists('meta', $data)) {
             return $data;
@@ -593,7 +550,7 @@ class AcfDynamicSupport
         return $data;
     }
 
-    private function buildRules()
+    private function buildRules(): void
     {
         foreach ($this->definitions as $id => $definition) {
             if ('group' === $definition['global_type']) {
@@ -648,18 +605,12 @@ class AcfDynamicSupport
         }
     }
 
-    /**
-     * @return array
-     */
-    private function getPostTypes()
+    private function getPostTypes(): array
     {
         return array_keys(get_post_types());
     }
 
-    /**
-     * @return bool
-     */
-    private function checkAcfTypes()
+    private function checkAcfTypes(): bool
     {
         $postTypes = $this->getPostTypes();
 
@@ -668,9 +619,8 @@ class AcfDynamicSupport
 
     /**
      * Checks if acf_option_page exists
-     * @return bool
      */
-    private function checkOptionPages()
+    private function checkOptionPages(): bool
     {
         return in_array('acf_option_page', $this->getPostTypes(), true);
     }

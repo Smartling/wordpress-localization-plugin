@@ -46,6 +46,7 @@ namespace Smartling\Tests\Smartling\Helpers {
     use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
     use Smartling\Helpers\FieldsFilterHelper;
     use Smartling\Helpers\GutenbergBlockHelper;
+    use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
     use Smartling\Models\GutenbergBlock;
     use Smartling\Replacers\ReplacerFactory;
     use Smartling\Submissions\SubmissionEntity;
@@ -67,6 +68,7 @@ namespace Smartling\Tests\Smartling\Helpers {
             ->setConstructorArgs([
                 $this->createMock(MediaAttachmentRulesManager::class),
                 $this->createMock(ReplacerFactory::class),
+                new SerializerJsonWithFallback(),
             ])
             ->onlyMethods($methods)
             ->getMock();
@@ -76,7 +78,11 @@ namespace Smartling\Tests\Smartling\Helpers {
 
     protected function setUp(): void
     {
-        $this->helper = new GutenbergBlockHelper($this->createMock(MediaAttachmentRulesManager::class), $this->createMock(ReplacerFactory::class));
+        $this->helper = new GutenbergBlockHelper(
+            $this->createMock(MediaAttachmentRulesManager::class),
+            $this->createMock(ReplacerFactory::class),
+            new SerializerJsonWithFallback(),
+        );
     }
 
     public function testAddPostContentBlocksWithBlocks()
@@ -100,10 +106,10 @@ HTML
         $x = $this->getHelper();
         $postContent = $blocks[0] . '<p>Wee, I\'m not a part of Gutenberg!</p>' . $blocks[1];
         $result = $x->addPostContentBlocks(['post_content' => $postContent]);
-        $this->assertCount(3, $result);
+        $this->assertCount(5, $result);
         $this->assertEquals($postContent, $result['post_content'], 'Content should not change');
         $this->assertStringStartsWith('<!-- wp:media-text', $result['post_content/blocks/0']);
-        $this->assertEquals($blocks[1], $result['post_content/blocks/1']);
+        $this->assertEquals($blocks[1], $result['post_content/blocks/2']);
     }
 
     public function testAddPostContentBlocksWithNoBlocks()
@@ -188,22 +194,6 @@ HTML
         ];
     }
 
-    public function testPackData()
-    {
-        $sample = ['foo' => 'bar'];
-        $expected = base64_encode(serialize($sample));
-        $result = $this->invokeMethod($this->helper, 'packData', [$sample]);
-        self::assertEquals($expected, $result);
-    }
-
-    public function testUnpackData()
-    {
-        $sample = ['foo' => 'bar'];
-        $source = base64_encode(serialize($sample));
-        $result = $this->invokeMethod($this->helper, 'unpackData', [$source]);
-        self::assertEquals($sample, $result);
-    }
-
     public function testPackUnpack()
     {
         $sample = ['foo' => 'bar'];
@@ -260,7 +250,7 @@ HTML
                         'chunk c',
                     ],
                 ],
-                '<gutenbergBlock blockName="test" originalAttributes="YToxOntzOjM6ImZvbyI7czozOiJiYXIiO30="><![CDATA[]]><contentChunk><![CDATA[chunk a]]></contentChunk><contentChunk><![CDATA[chunk b]]></contentChunk><contentChunk><![CDATA[chunk c]]></contentChunk><blockAttribute name="foo"><![CDATA[bar]]></blockAttribute></gutenbergBlock>',
+                '<gutenbergBlock blockName="test" originalAttributes="eyJmb28iOiJiYXIifQ=="><![CDATA[]]><contentChunk><![CDATA[chunk a]]></contentChunk><contentChunk><![CDATA[chunk b]]></contentChunk><contentChunk><![CDATA[chunk c]]></contentChunk><blockAttribute name="foo"><![CDATA[bar]]></blockAttribute></gutenbergBlock>',
             ],
             'nested block' => [
                 [
@@ -287,25 +277,23 @@ HTML
                         'chunk c',
                     ],
                 ],
-                '<gutenbergBlock blockName="test" originalAttributes="YToxOntzOjM6ImZvbyI7czozOiJiYXIiO30="><![CDATA[]]><contentChunk><![CDATA[chunk a]]></contentChunk><gutenbergBlock blockName="test1" originalAttributes="YToxOntzOjM6ImJhciI7czozOiJmb28iO30="><![CDATA[]]><contentChunk><![CDATA[chunk d]]></contentChunk><contentChunk><![CDATA[chunk e]]></contentChunk><contentChunk><![CDATA[chunk f]]></contentChunk><blockAttribute name="bar"><![CDATA[foo]]></blockAttribute></gutenbergBlock><contentChunk><![CDATA[chunk c]]></contentChunk><blockAttribute name="foo"><![CDATA[bar]]></blockAttribute></gutenbergBlock>',
+                '<gutenbergBlock blockName="test" originalAttributes="eyJmb28iOiJiYXIifQ=="><![CDATA[]]><contentChunk><![CDATA[chunk a]]></contentChunk><gutenbergBlock blockName="test1" originalAttributes="eyJiYXIiOiJmb28ifQ=="><![CDATA[]]><contentChunk><![CDATA[chunk d]]></contentChunk><contentChunk><![CDATA[chunk e]]></contentChunk><contentChunk><![CDATA[chunk f]]></contentChunk><blockAttribute name="bar"><![CDATA[foo]]></blockAttribute></gutenbergBlock><contentChunk><![CDATA[chunk c]]></contentChunk><blockAttribute name="foo"><![CDATA[bar]]></blockAttribute></gutenbergBlock>',
             ],
         ];
     }
 
     /**
-     * @param string $blockName
-     * @param array  $attributes
-     * @param array  $chunks
-     * @param string $expected
      * @dataProvider renderGutenbergBlockDataProvider
      */
-    public function testRenderGutenbergBlock(string $blockName, array $attributes, array $chunks, string $expected)
+    public function testRenderGutenbergBlock(string $blockName, array $attributes, array $chunks, string $expected, int $level = 0)
     {
-        self::assertEquals($expected, $this->helper->renderGutenbergBlock($blockName, $attributes, $chunks));
+        self::assertEquals($expected, $this->helper->renderGutenbergBlock($blockName, $attributes, $chunks, $level));
     }
 
     public function renderGutenbergBlockDataProvider(): array
     {
+        $blockForNestedTest = json_decode('{"id":"block_5fe115ebd752d","name":"acf\/offset-impact","data":{"content":"<img class=\"alignnone size-medium wp-image-3000025130\" src=\"https:\/\/example.com\/ideas\/wp-content\/uploads\/sites\/4\/2020\/12\/GettyImages-1179050298_twitter-800x450.jpg\" alt=\"\" width=\"800\" height=\"450\" \/>","_content":"field_5d64117a9210b","media":"3000025132","_media":"field_5d64118f9210c","add_video_url":"","_add_video_url":"field_5eb3d3092a4ca"},"align":"","mode":"auto","wpClassName":"wp-block-acf-offset-impact"}', true);
+
         return [
             'inline' => [
                 'inline',
@@ -346,29 +334,48 @@ HTML
                     'mode' => 'auto',
                 ],
                 [],
-                '<!-- wp:acf/sticky-cta {"id":"block_5e46fa29a5a8e","name":"acf\/sticky-cta",' .
-                '"data":{"copy":"Pronto para reservar seu próximo evento?","cta_copy":"Obter uma cotação"' .
-                ',"cta_url":"https:\/\/www.test.com\/somePath","sticky_behavior":"bottom"},' .
-                '"align":"","mode":"auto"} /-->'
+                '<!-- wp:acf/sticky-cta {\"id\":\"block_5e46fa29a5a8e\",\"name\":\"acf\\\/sticky-cta\",' .
+                '\"data\":{\"copy\":\"Pronto para reservar seu próximo evento?\",\"cta_copy\":\"Obter uma cotação\"' .
+                ',\"cta_url\":\"https:\\\/\\\/www.test.com\\\/somePath\",\"sticky_behavior\":\"bottom\"},' .
+                '\"align\":\"\",\"mode\":\"auto\"} /-->'
             ],
             'emojis' => [
                 'acf/test',
                 ['data' => ['copy' => 'Test 𝒞 and 😂, 絵文字, 👩‍🦽, ⚛️.']],
                 [],
-                '<!-- wp:acf/test {"data":{"copy":"Test 𝒞 and 😂, 絵文字, 👩‍🦽, ⚛️."}} /-->'
+                '<!-- wp:acf/test {\"data\":{\"copy\":\"Test 𝒞 and 😂, 絵文字, 👩‍🦽, ⚛️.\"}} /-->'
             ],
             'pre-encoded' => [
                 'acf/test',
                 ['data' => ['copy' => "Pronto para reservar seu pr\\u00f3ximo evento?"]],
                 [],
-                '<!-- wp:acf/test {"data":{"copy":"Pronto para reservar seu pr\\\\u00f3ximo evento?"}} /-->'
+                '<!-- wp:acf/test {\"data\":{\"copy\":\"Pronto para reservar seu pr\\\\\\\\u00f3ximo evento?\"}} /-->'
             ],
             'quotes as html entities' => [
                 'wework-blocks/geo-location',
                 ['showList' => '[{&quot;value&quot;:&quot;united-states&quot;,&quot;label&quot;:&quot;United States&quot;}]'],
                 [],
                 '<!-- wp:wework-blocks/geo-location {\"showList\":\"[{\\\\\\"value\\\\\\":\\\\\\"united-states\\\\\\",\\\\\\"label\\\\\\":\\\\\\"United States\\\\\\"}]\"} /-->',
-            ]
+            ],
+            'nested attributes' => [
+                'acf/image-text-wrap',
+                ['data' => ['content' => '[caption id=\u0022attachment_3000029563\u0022]\n\nText', '_content' => 'More text']],
+                [],
+                '<!-- wp:acf/image-text-wrap {\"data\":{\"content\":\"[caption id=\\\\\\\u0022attachment_3000029563\\\\\\\u0022]\\\\\\\n\\\\\\\nText\",\"_content\":\"More text\"}} /-->',
+            ],
+            'root block' => [
+                'acf/offset-impact',
+                $blockForNestedTest,
+                [],
+                '<!-- wp:acf/offset-impact {\"id\":\"block_5fe115ebd752d\",\"name\":\"acf\\\\/offset-impact\",\"data\":{\"content\":\"<img class=\\\\\"alignnone size-medium wp-image-3000025130\\\\\" src=\\\\\"https:\\\\/\\\\/example.com\\\\/ideas\\\\/wp-content\\\\/uploads\\\\/sites\\\\/4\\\\/2020\\\\/12\\\\/GettyImages-1179050298_twitter-800x450.jpg\\\\\" alt=\\\\\"\\\\\" width=\\\\\"800\\\\\" height=\\\\\"450\\\\\" \\\\/>\",\"_content\":\"field_5d64117a9210b\",\"media\":\"3000025132\",\"_media\":\"field_5d64118f9210c\",\"add_video_url\":\"\",\"_add_video_url\":\"field_5eb3d3092a4ca\"},\"align\":\"\",\"mode\":\"auto\",\"wpClassName\":\"wp-block-acf-offset-impact\"} /-->',
+            ],
+            'nested block' => [
+                'acf/offset-impact',
+                $blockForNestedTest,
+                [],
+                '<!-- wp:acf/offset-impact {"id":"block_5fe115ebd752d","name":"acf\/offset-impact","data":{"content":"<img class=\"alignnone size-medium wp-image-3000025130\" src=\"https:\/\/example.com\/ideas\/wp-content\/uploads\/sites\/4\/2020\/12\/GettyImages-1179050298_twitter-800x450.jpg\" alt=\"\" width=\"800\" height=\"450\" \/>","_content":"field_5d64117a9210b","media":"3000025132","_media":"field_5d64118f9210c","add_video_url":"","_add_video_url":"field_5eb3d3092a4ca"},"align":"","mode":"auto","wpClassName":"wp-block-acf-offset-impact"} /-->',
+                1,
+            ],
         ];
     }
 
@@ -422,7 +429,7 @@ HTML
     public function testRenderTranslatedBlockNode()
     {
         $xmlPart = '<gutenbergBlock blockName="core/foo" originalAttributes="YToxOntzOjQ6ImRhdGEiO2E6Mzp7czo2OiJ0ZXh0X2EiO3M6NzoiVGl0bGUgMSI7czo2OiJ0ZXh0X2IiO3M6NzoiVGl0bGUgMiI7czo1OiJ0ZXh0cyI7YToyOntpOjA7czo1OiJsb3JlbSI7aToxO3M6NToiaXBzdW0iO319fQ=="><![CDATA[]]><contentChunk hash="d3d67cc32ac556aae106e606357f449e"><![CDATA[<p>Inner HTML</p>]]></contentChunk><blockAttribute name="data/text_a" hash="90bc6d3874182275bd4cd88cbd734fe9"><![CDATA[Title 1]]></blockAttribute><blockAttribute name="data/text_b" hash="e4bb56dda4ecb60c34ccb89fd50506df"><![CDATA[Title 2]]></blockAttribute><blockAttribute name="data/texts/0" hash="d2e16e6ef52a45b7468f1da56bba1953"><![CDATA[lorem]]></blockAttribute><blockAttribute name="data/texts/1" hash="e78f5438b48b39bcbdea61b73679449d"><![CDATA[ipsum]]></blockAttribute></gutenbergBlock>';
-        $expectedBlock = '<!-- wp:core/foo {"data":{"text_a":"Title 1","text_b":"Title 2","texts":["lorem","ipsum"]}} --><p>Inner HTML</p><!-- /wp:core/foo -->';
+        $expectedBlock = '<!-- wp:core/foo {\"data\":{\"text_a\":\"Title 1\",\"text_b\":\"Title 2\",\"texts\":[\"lorem\",\"ipsum\"]}} --><p>Inner HTML</p><!-- /wp:core/foo -->';
 
         $dom = new \DOMDocument('1.0', 'utf8');
         $dom->loadXML($xmlPart);
@@ -437,7 +444,7 @@ HTML
                ->method('postReceiveFiltering')
                ->willReturnArgument(0);
 
-        $result = $helper->renderTranslatedBlockNode($node, $this->createMock(SubmissionEntity::class));
+        $result = $helper->renderTranslatedBlockNode($node, $this->createMock(SubmissionEntity::class), 0);
         self::assertEquals($expectedBlock, $result);
     }
 
@@ -454,7 +461,7 @@ HTML
 
         self::assertEquals(
             '<!-- wp:core/foo ' . json_encode($blockData) . ' /-->',
-            $helper->renderTranslatedBlockNode($node, $this->createMock(SubmissionEntity::class)),
+            $helper->renderTranslatedBlockNode($node, $this->createMock(SubmissionEntity::class), 0),
         );
     }
 
@@ -492,7 +499,7 @@ HTML
                ->method('postReceiveFiltering')
                ->willReturnArgument(0);
 
-        $result = $helper->sortChildNodesContent($node, $this->createMock(SubmissionEntity::class));
+        $result = $helper->sortChildNodesContent($node, $this->createMock(SubmissionEntity::class), 0);
         self::assertEquals($expected, $result);
     }
 
@@ -600,10 +607,10 @@ some par 2
                         ],
                     ],
                 ],
-                '<string name="entity/post_content"><gutenbergBlock blockName="core/paragraph" originalAttributes="YTowOnt9"><![CDATA[]]><contentChunk><![CDATA[
+                '<string name="entity/post_content"><gutenbergBlock blockName="core/paragraph" originalAttributes="e30="><![CDATA[]]><contentChunk><![CDATA[
 some par 1
 
-]]></contentChunk></gutenbergBlock><gutenbergBlock blockName="" originalAttributes="YTowOnt9"><![CDATA[]]><contentChunk><![CDATA[ ]]></contentChunk></gutenbergBlock><gutenbergBlock blockName="core/paragraph" originalAttributes="YTowOnt9"><![CDATA[]]><contentChunk><![CDATA[
+]]></contentChunk></gutenbergBlock><gutenbergBlock blockName="" originalAttributes="e30="><![CDATA[]]><contentChunk><![CDATA[ ]]></contentChunk></gutenbergBlock><gutenbergBlock blockName="core/paragraph" originalAttributes="e30="><![CDATA[]]><contentChunk><![CDATA[
 some par 2
 
 ]]></contentChunk></gutenbergBlock><![CDATA[]]></string>',
@@ -694,7 +701,7 @@ some par 2
         if ($replacerFactory === null) {
             $replacerFactory = $this->createMock(ReplacerFactory::class);
         }
-        return new GutenbergBlockHelper($rulesManager, $replacerFactory);
+        return new GutenbergBlockHelper($rulesManager, $replacerFactory, new SerializerJsonWithFallback());
     }
 }
 }

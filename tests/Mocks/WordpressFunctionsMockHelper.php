@@ -1,7 +1,7 @@
 <?php
 namespace {
 
-    use Smartling\DbAl\MultilingualPressConnector;
+    use Smartling\DbAl\MultilingualPress2Connector;
 
     function injectMocks()
     {
@@ -91,7 +91,7 @@ namespace {
             function get_site_option($key, $default = null, $useCache = true)
             {
                 switch ($key) {
-                    case MultilingualPressConnector::MULTILINGUAL_PRESS_PRO_SITE_OPTION_KEY_NAME: {
+                    case MultilingualPress2Connector::MULTILINGUAL_PRESS_PRO_SITE_OPTION_KEY_NAME: {
                         return [1 => ['text' => '', 'lang' => 'en_US',], 2 => ['text' => '', 'lang' => 'es_ES',],
                                 3 => ['text' => '', 'lang' => 'fr_FR',], 4 => ['text' => '', 'lang' => 'ru_RU',],];
                         break;
@@ -146,7 +146,7 @@ namespace {
         }
 
         if (!function_exists('wp_insert_post')) {
-            function wp_insert_post(array $fields, $returnError)
+            function wp_insert_post(array $fields, $returnError = false)
             {
                 return $fields['ID'] ? : 2;
             }

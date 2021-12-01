@@ -2,9 +2,10 @@
 
 namespace Smartling\MonologWrapper;
 
-use Monolog\Logger;
 use Smartling\MonologWrapper\Logger\DevNullLogger;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Smartling\MonologWrapper\Logger\LevelLogger;
+use Smartling\Vendor\Monolog\Logger;
+use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
  * Class MonologWrapper
@@ -39,8 +40,8 @@ class MonologWrapper
         foreach ($container->getDefinitions() as $serviceId => $serviceDefinition) {
             if (in_array($serviceDefinition->getClass(),
                          [
-                             'Smartling\MonologWrapper\Logger\DevNullLogger',
-                             'Smartling\MonologWrapper\Logger\LevelLogger'
+                             DevNullLogger::class,
+                             LevelLogger::class,
                          ],
                 true)) {
                 $service = $container->get($serviceId);
