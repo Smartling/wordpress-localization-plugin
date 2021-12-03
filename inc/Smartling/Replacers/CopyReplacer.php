@@ -25,8 +25,8 @@ class CopyReplacer implements ReplacerInterface
      * @param mixed $value
      * @return mixed
      */
-    public function processOnUpload(SubmissionEntity $submission, $value)
+    public function processOnUpload($value, ?SubmissionEntity $submission = null): string
     {
-        return;
+        return '';
     }
 }

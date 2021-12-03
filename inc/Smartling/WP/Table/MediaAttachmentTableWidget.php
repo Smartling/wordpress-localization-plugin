@@ -62,9 +62,9 @@ class MediaAttachmentTableWidget extends \WP_List_Table
     public function get_columns(): array
     {
         return [
-            'block' => 'Gutenberg Block Name',
-            'path' => 'JSON Path',
-            'replacerId' => 'Replacer Type',
+            'block' => 'Gutenberg Block Name regex (delimiter is #)',
+            'path' => 'JSON Path regex (delimiter is #)',
+            'replacerId' => 'Rule',
         ];
 
     }
@@ -74,7 +74,7 @@ class MediaAttachmentTableWidget extends \WP_List_Table
         $options = [
             'class' => 'button action',
             'type' => 'submit',
-            'value' => __('Add Media Rule'),
+            'value' => __('Add block rule'),
         ];
 
         return HtmlTagGeneratorHelper::tag('input', '', $options);

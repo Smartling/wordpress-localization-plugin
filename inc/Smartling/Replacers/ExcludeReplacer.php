@@ -22,7 +22,8 @@ class ExcludeReplacer implements ReplacerInterface
     /**
      * @param mixed $value
      */
-    public function processOnUpload(SubmissionEntity $submission, $value): void
+    public function processOnUpload($value, ?SubmissionEntity $submission = null): string
     {
+        return '';
     }
 }
