@@ -39,7 +39,7 @@ use Smartling\Vendor\Smartling\Project\ProjectApi;
 
 class ApiWrapper implements ApiWrapperInterface
 {
-    private const ALLOW_OUTDATED_HEADERS = ['X-SL-UseSecondaryDB' => 'true'];
+    private const ADDITIONAL_HEADERS = ['X-SL-UseSecondaryDB' => 'true'];
     /**
      * @var SettingsManager
      */
@@ -438,7 +438,7 @@ class ApiWrapper implements ApiWrapperInterface
     {
         $submission = ArrayHelper::first($submissions);
         if (!$submission instanceof SubmissionEntity) {
-            throw new \InvalidArgumentException('Submissions should be an array of ' . SubmissionEntity::class);
+            throw new \InvalidArgumentException('$submissions should be an array of ' . SubmissionEntity::class);
         }
         try {
             $data = $this->getFileApi($this->getConfigurationProfile($submission), true)
@@ -854,11 +854,11 @@ class ApiWrapper implements ApiWrapperInterface
         return strpos($e->getMessage(), 'file.not.found') !== false;
     }
 
-    private function getFileApi(ConfigurationProfileEntity $profile, $allowOutdated = false): FileApi
+    private function getFileApi(ConfigurationProfileEntity $profile, $withAdditionalHeaders = false): FileApi
     {
         $auth = $this->getAuthProvider($profile);
         $projectId = $profile->getProjectId();
 
-        return $allowOutdated ? new FileApiExtended($auth, $projectId, self::ALLOW_OUTDATED_HEADERS) : FileApi::create($auth, $projectId, $this->logger);
+        return $withAdditionalHeaders ? new FileApiExtended($auth, $projectId, self::ADDITIONAL_HEADERS) : FileApi::create($auth, $projectId, $this->logger);
     }
 }
