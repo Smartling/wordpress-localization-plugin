@@ -35,6 +35,9 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         $this->serializer = $serializer;
     }
 
+    /**
+     * @see register()
+     */
     public function registerFilters(array $definitions): array
     {
         $copyList = [
@@ -76,6 +79,20 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         }
     }
 
+    public function replacePreTranslateBlockContent(GutenbergBlock $block): GutenbergBlock
+    {
+        foreach ($block->getInnerBlocks() as $index => $innerBlock) {
+            $block = $block->withInnerBlock($this->replacePreTranslateBlockContent($innerBlock), $index);
+        }
+        foreach ($block->getAttributes() as $attribute => $value) {
+            foreach ($this->rulesManager->getGutenbergReplacementRules($block->getBlockName(), $attribute) as $rule) {
+                $block = $block->withAttribute($block, $attribute, $this->replacerFactory->getReplacer($rule->getReplacerId())->processOnUpload($value));
+            }
+        }
+
+        return $block;
+    }
+
     public function processAttributes(?string $blockName, array $flatAttributes): array
     {
         $attributes = [];
@@ -89,7 +106,6 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 
             $this->getLogger()->debug(vsprintf('Pre filtered block \'%s\' attributes \'%s\'',
                 [$blockName, $ve_attributes]));
-            $this->postReceiveFiltering($flatAttributes);
             $attributes = $this->preSendFiltering($flatAttributes);
             $this->getLogger()->debug(vsprintf('Post filtered block \'%s\' attributes \'%s\'',
                 [$blockName, $ve_attributes]));
@@ -150,6 +166,9 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $node;
     }
 
+    /**
+     * @see register()
+     */
     public function processString(TranslationStringFilterParameters $params): TranslationStringFilterParameters
     {
         $this->setParams($params);
@@ -280,7 +299,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             $attr = $this->postReceiveFiltering($attr);
             $attr = static::unmaskAttributes($blockName, $attr);
             $filteredAttributes = array_merge($flatAttributes, $attr, $translatedAttributes);
-            $processedAttributes = $this->getFieldsFilter()->structurizeArray($this->applyDownloadRules($submission, $blockName, $filteredAttributes));
+            $processedAttributes = $this->getFieldsFilter()->structurizeArray($this->applyDownloadRules($submission, $blockName, $originalAttributes, $filteredAttributes));
         }
 
         return $this->fixAttributeTypes($originalAttributes, $processedAttributes);
@@ -344,6 +363,9 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $result;
     }
 
+    /**
+     * @see register()
+     */
     public function processTranslation(TranslationStringFilterParameters $params): TranslationStringFilterParameters
     {
         $this->setParams($params);
@@ -427,9 +449,9 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return false;
     }
 
-    private function applyDownloadRules(SubmissionEntity $submission, string $blockName, array $attributes): array
+    private function applyDownloadRules(SubmissionEntity $submission, string $blockName, array $originalAttributes, array $translatedAttributes): array
     {
-        foreach ($attributes as $attribute => $value) {
+        foreach ($translatedAttributes as $attribute => $value) {
             foreach ($this->rulesManager->getGutenbergReplacementRules($blockName, $attribute) as $rule) {
                 try {
                     $replacer = $this->replacerFactory->getReplacer($rule->getReplacerId());
@@ -437,10 +459,11 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
                     $this->getLogger()->warning("Replacer not found while processing blockName=\"$blockName\", attribute=\"$attribute\", submissionId=\"{$submission->getId()}\", replacerId=\"{$rule->getReplacerId()}\", skipping");
                     continue;
                 }
-                $attributes[$attribute] = $replacer->processOnDownload($submission, $value);
+                $translatedAttributes[$attribute] = $replacer->processOnDownload($submission, $originalAttributes[$attribute] ?? '', $value);
+
             }
         }
 
-        return $attributes;
+        return $translatedAttributes;
     }
 }
