@@ -245,6 +245,7 @@ services:
       - "@media.attachment.rules.manager"
       - "@factory.replacer"
       - "@serializer.json"
+      - "@wp.proxy"
     calls:
       - [ "setFieldsFilter", [ "@fields-filter.helper" ]]
 

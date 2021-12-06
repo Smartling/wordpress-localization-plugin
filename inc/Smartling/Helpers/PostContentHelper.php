@@ -20,7 +20,7 @@ class PostContentHelper
         $this->logger = MonologWrapper::getLogger();
     }
 
-    public function applyTranslation(string $original, string $translated, array $lockedFields): string
+    public function applyBlockLevelLocks(string $original, string $translated, array $lockedFields): string
     {
         $result = '';
         $originalBlocks = $this->blockHelper->parseBlocks($original);
@@ -108,6 +108,11 @@ class PostContentHelper
         }
 
         return null;
+    }
+
+    public function replacePostTranslate(string $original, string $translated): string
+    {
+        return $this->blockHelper->replacePostTranslateBlockContent($original, $translated);
     }
 
     /**

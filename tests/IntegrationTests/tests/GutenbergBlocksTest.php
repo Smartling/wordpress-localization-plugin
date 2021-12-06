@@ -89,6 +89,54 @@ HTML;
         $this->assertEquals("\n<p>[Ñ~ót á ~Gúté~ñbé~rg bl~óck]</p>", $blocks[1]->getInnerHtml(), 'Expected non-Gutenberg block to be translated');
     }
 
+    public function testCopyAndExclude()
+    {
+        $content = <<<HTML
+<!-- wp:si/block {"otherAttribute":"otherValue","copyAttribute":"copyValue","excludeAttribute":"excludeValue"} -->
+<!-- wp:si/nested {"copyAttribute":"ca2"} -->
+<p>Nested 1 content</p>
+<!-- /wp:si/nested -->
+<!-- wp:si/nested {"excludeAttribute":"ca3"} -->
+<p>Nested 2 content</p>
+<!-- /wp:si/nested -->
+<!-- /wp:si/block -->
+HTML;
+        $expected = <<<HTML
+<!-- wp:si/block {"otherAttribute":"[ó~thé~rVá~lúé]","copyAttribute":"copyValue","excludeAttribute":null} -->
+<!-- wp:si/nested {"copyAttribute":"[c~á2]"} -->
+<p>[Ñ~ést~éd 1 c~óñt~éñt]</p>
+<!-- /wp:si/nested -->
+<!-- wp:si/nested {"excludeAttribute":"[c~á3]"} -->
+<p>[Ñ~ést~éd 2 c~óñt~éñt]</p>
+<!-- /wp:si/nested -->
+<!-- /wp:si/block -->
+HTML;
+        $this->rulesManager->offsetSet('copy', [
+            'block' => 'si/block',
+            'path' => 'copy',
+            'replacerId' => 'copy',
+        ]);
+        $this->rulesManager->offsetSet('exclude', [
+            'block' => 'si/block',
+            'path' => 'exclude',
+            'replacerId' => 'exclude',
+        ]);
+        $this->rulesManager->saveData();
+        $postId = $this->createPost('post', 'main title', $content);
+        $submission = $this->translationHelper->prepareSubmission('post', $this->sourceBlogId, $postId, $this->targetBlogId);
+        $submission->getFileUri();
+        $this->submissionManager->storeEntity($submission);
+        $this->executeUpload();
+        $this->forceSubmissionDownload($submission);
+        $submission = $this->translationHelper->reloadSubmission($submission);
+
+        // cleanup
+        $this->rulesManager->offsetUnset('copy');
+        $this->rulesManager->offsetUnset('exclude');
+        $this->rulesManager->saveData();
+        $this->assertEquals($expected, $this->getTargetPost($this->siteHelper, $submission)->post_content);
+    }
+
     public function testCoreImageClassTranslation()
     {
         $attachmentSourceId = $this->createAttachment();

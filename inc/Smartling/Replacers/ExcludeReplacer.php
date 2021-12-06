@@ -14,9 +14,11 @@ class ExcludeReplacer implements ReplacerInterface
     /**
      * @param mixed $originalValue
      * @param mixed $translatedValue
+     * @return null
      */
-    public function processOnDownload(SubmissionEntity $submission, $originalValue, $translatedValue): void
+    public function processOnDownload($originalValue, $translatedValue, ?SubmissionEntity $submission)
     {
+        return null;
     }
 
     /**

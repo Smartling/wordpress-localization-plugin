@@ -13,7 +13,7 @@ interface ReplacerInterface
      * @param mixed $translatedValue
      * @return mixed
      */
-    public function processOnDownload(SubmissionEntity $submission, $originalValue, $translatedValue);
+    public function processOnDownload($originalValue, $translatedValue, ?SubmissionEntity $submission);
 
     /**
      * @param mixed $value

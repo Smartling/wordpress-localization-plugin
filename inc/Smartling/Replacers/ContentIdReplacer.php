@@ -30,8 +30,11 @@ class ContentIdReplacer implements ReplacerInterface
      *
      * @return mixed
      */
-    public function processOnDownload(SubmissionEntity $submission, $originalValue, $translatedValue)
+    public function processOnDownload($originalValue, $translatedValue, ?SubmissionEntity $submission)
     {
+        if ($submission === null) {
+            throw new \InvalidArgumentException('Submission must not be null');
+        }
         $sourceBlogId = $submission->getSourceBlogId();
         $targetBlogId = $submission->getTargetBlogId();
         $relatedSubmissions = $this->submissionManager->find([
