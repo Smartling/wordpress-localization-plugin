@@ -102,7 +102,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         }
         $result = '';
         $originalBlocks = $this->parseBlocks($original);
-        $translatedBlocks = $this->parseBlocks($translated);
+        $translatedBlocks = $this->parseBlocks(stripslashes($translated));
         if (count($originalBlocks) !== count($translatedBlocks)) {
             $this->getLogger()->notice('Counts of blocks differ between original and translated, skipping replacing of post translate block content');
             return $translated;
@@ -120,7 +120,11 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         }
         foreach ($translated->getAttributes() as $attribute => $value) {
             foreach ($this->rulesManager->getGutenbergReplacementRules($translated->getBlockName(), $attribute) as $rule) {
-                $value = $this->replacerFactory->getReplacer($rule->getReplacerId())->processOnDownload($original->getAttributes()[$attribute] ?? '', $value, null);
+                try {
+                    $value = $this->replacerFactory->getReplacer($rule->getReplacerId())->processOnDownload($original->getAttributes()[$attribute] ?? '', $value, null);
+                } catch (\InvalidArgumentException $e) {
+                    // do nothing, $value is preserved
+                }
             }
             $translated = $translated->withAttribute($translated, $attribute, $value);
         }
@@ -399,6 +403,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 
     /**
      * @see register()
+     * @noinspection PhpUnused
      */
     public function processTranslation(TranslationStringFilterParameters $params): TranslationStringFilterParameters
     {

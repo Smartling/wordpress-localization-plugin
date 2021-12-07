@@ -249,7 +249,7 @@ trait SmartlingCoreUploadTrait
             $params = new AfterDeserializeContentEventParameters($translation, $submission, $targetContent, $translation['meta']);
             do_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
             $translation = $this->processPostContentBlocks($targetContent, $original, $translation, $submission, $postContentHelper, $lockedData['entity']);
-            $this->setValues($targetContent, $translation);
+            $this->setValues($targetContent, $translation['entity'] ?? []);
             $configurationProfile = $this->getSettingsManager()
                 ->getSingleSettingsProfile($submission->getSourceBlogId());
 
@@ -780,7 +780,7 @@ trait SmartlingCoreUploadTrait
         return $this->getFieldsFilter()->removeFields($fields, $configurationProfile->getFilterSkipArray(), $configurationProfile->getFilterFieldNameRegExp());
     }
 
-    private function processPostContentBlocks(EntityAbstract $targetContent, array $original, array $translation, SubmissionEntity $submission, PostContentHelper $postContentHelper, array $lockedData): array
+    private function processPostContentBlocks(EntityAbstract $targetContent, array $original, array $translation, SubmissionEntity $submission, PostContentHelper $postContentHelper, array $lockedEntityFields): array
     {
         if (array_key_exists('entity', $translation) && ArrayHelper::notEmpty($translation['entity'])) {
             $targetContentArray = $targetContent->toArray();
@@ -792,7 +792,7 @@ trait SmartlingCoreUploadTrait
                     $postContentHelper
                 );
             }
-            return self::arrayMergeIfKeyNotExists($lockedData, $translation['entity']);
+            $translation['entity'] = self::arrayMergeIfKeyNotExists($lockedEntityFields, $translation['entity']);
         }
 
         return $translation;
