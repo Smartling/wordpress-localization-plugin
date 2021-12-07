@@ -34,8 +34,8 @@ class AdminPage extends ControllerAbstract implements WPHookInterface
     {
         add_submenu_page(
             'smartling-submissions-page',
-            'Shortcodes and Field filters tuning',
-            'Fine Tune',
+            'Gutenberg blocks, Shortcodes and Field filters tuning',
+            'Fine-Tune',
             SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP,
             'smartling_customization_tuning',
             [
