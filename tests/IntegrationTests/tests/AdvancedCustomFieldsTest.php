@@ -183,9 +183,12 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         $this->assertNotEquals($imageId, $attachmentSubmission->getTargetId(), 'Attachment id expected to change after translation');
         $this->assertEquals(
             sprintf(
-            '<!-- wp:acf/custom-image {"id":"","name":"[á~cf\/c~ústó~m-ím~ágé]","data":{"mediaId":"%d","_mediaId":"%s"}} /-->',
-                $attachmentSubmission->getTargetId(),
-                $acfImageFieldId,
+            '<!-- wp:acf/custom-image %s /-->',
+                json_encode([
+                    'id' => '',
+                    'name' => '[á~cf/c~ústó~m-ím~ágé]',
+                    'data' => ['mediaId' => (string)$attachmentSubmission->getTargetId(), '_mediaId' => $acfImageFieldId],
+                ]),
             ),
             $targetPost->post_content,
         );

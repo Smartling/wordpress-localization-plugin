@@ -102,11 +102,11 @@ HTML;
 <!-- /wp:si/block -->
 HTML;
         $expected = <<<HTML
-<!-- wp:si/block {"otherAttribute":"[ó~thé~rVá~lúé]","copyAttribute":"copyValue","excludeAttribute":null} -->
-<!-- wp:si/nested {"copyAttribute":"[c~á2]"} -->
+<!-- wp:si/block {"otherAttribute":"[\u00f3~th\u00e9~rV\u00e1~l\u00fa\u00e9]","copyAttribute":"copyValue","excludeAttribute":null} -->
+<!-- wp:si/nested {"copyAttribute":"[c~\u00e12]"} -->
 <p>[Ñ~ést~éd 1 c~óñt~éñt]</p>
 <!-- /wp:si/nested -->
-<!-- wp:si/nested {"excludeAttribute":"[c~á3]"} -->
+<!-- wp:si/nested {"excludeAttribute":"[c~\u00e13]"} -->
 <p>[Ñ~ést~éd 2 c~óñt~éñt]</p>
 <!-- /wp:si/nested -->
 <!-- /wp:si/block -->
@@ -168,15 +168,15 @@ HTML;
         unset($submission);
         $attachmentTargetId = $submissions[0]->getTargetId();
         $expectedContent = <<<HTML
-<!-- wp:core/image {"id":$attachmentTargetId,"sizeSlug":"[l~árgé]"} -->
+<!-- wp:image {"id":$attachmentTargetId,"sizeSlug":"[l~\u00e1rg\u00e9]"} -->
 <figure class="wp-block-image size-large"><img src="http://example.com/wp-content/uploads/2021/11/imageClass.png" alt="" class="wp-image-$attachmentTargetId" /></figure>
-<!-- /wp:core/image -->
-<!-- wp:core/image {"id":$attachmentTargetId,"sizeSlug":"[l~árgé]"} -->
+<!-- /wp:image -->
+<!-- wp:image {"id":$attachmentTargetId,"sizeSlug":"[l~\u00e1rg\u00e9]"} -->
 <figure class="wp-block-image size-large"><img class="wp-image-$attachmentTargetId" src="http://example.com/wp-content/uploads/2021/11/imageClass.png" alt="" /></figure>
-<!-- /wp:core/image -->
-<!-- wp:core/image {"id":$attachmentTargetId,"sizeSlug":"[l~árgé]"} -->
+<!-- /wp:image -->
+<!-- wp:image {"id":$attachmentTargetId,"sizeSlug":"[l~\u00e1rg\u00e9]"} -->
 <figure class="wp-block-image size-large"><img src="http://example.com/wp-content/uploads/2021/11/imageClass.png" alt="" class="irrelevant wp-image-$attachmentTargetId someOtherClass" /></figure>
-<!-- /wp:core/image -->
+<!-- /wp:image -->
 HTML;
         $this->assertNotEquals($attachmentSourceId, $attachmentTargetId);
         $this->assertEquals($expectedContent, $this->getTargetPost($this->siteHelper, $submissions[1])->post_content);
