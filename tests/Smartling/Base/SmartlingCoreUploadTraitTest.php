@@ -33,7 +33,7 @@ class SmartlingCoreUpload {
     private SettingsManager $settingsManager;
     private SubmissionManager $submissionManager;
 
-    public function __construct(ContentHelper $contentHelper, FieldsFilterHelper $fieldsFilterHelper,  SettingsManager $settingsManager, SubmissionManager $submissionManager)
+    public function __construct(ContentHelper $contentHelper, FieldsFilterHelper $fieldsFilterHelper, SettingsManager $settingsManager, SubmissionManager $submissionManager)
     {
         $this->contentHelper = $contentHelper;
         $this->fieldsFilterHelper = $fieldsFilterHelper;
