@@ -47,6 +47,17 @@ class GutenbergBlock
         return $this->innerBlocks;
     }
 
+    /**
+     * @param mixed $value
+     */
+    public function withAttribute(GutenbergBlock $block, string $attribute, $value): self
+    {
+        $result = clone $this;
+        $result->attributes[$attribute] = $value;
+
+        return $result;
+    }
+
     public function withInnerBlock(GutenbergBlock $block, int $index): self
     {
         $result = clone $this;

@@ -47,6 +47,7 @@ namespace Smartling\Tests\Smartling\Helpers {
     use Smartling\Helpers\FieldsFilterHelper;
     use Smartling\Helpers\GutenbergBlockHelper;
     use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
+    use Smartling\Helpers\WordpressFunctionProxyHelper;
     use Smartling\Models\GutenbergBlock;
     use Smartling\Replacers\ReplacerFactory;
     use Smartling\Submissions\SubmissionEntity;
@@ -69,6 +70,7 @@ namespace Smartling\Tests\Smartling\Helpers {
                 $this->createMock(MediaAttachmentRulesManager::class),
                 $this->createMock(ReplacerFactory::class),
                 new SerializerJsonWithFallback(),
+                $this->createMock(WordpressFunctionProxyHelper::class),
             ])
             ->onlyMethods($methods)
             ->getMock();
@@ -82,6 +84,7 @@ namespace Smartling\Tests\Smartling\Helpers {
             $this->createMock(MediaAttachmentRulesManager::class),
             $this->createMock(ReplacerFactory::class),
             new SerializerJsonWithFallback(),
+            $this->createMock(WordpressFunctionProxyHelper::class),
         );
     }
 
@@ -701,7 +704,7 @@ some par 2
         if ($replacerFactory === null) {
             $replacerFactory = $this->createMock(ReplacerFactory::class);
         }
-        return new GutenbergBlockHelper($rulesManager, $replacerFactory, new SerializerJsonWithFallback());
+        return new GutenbergBlockHelper($rulesManager, $replacerFactory, new SerializerJsonWithFallback(), $this->createMock(WordpressFunctionProxyHelper::class));
     }
 }
 }

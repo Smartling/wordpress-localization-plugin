@@ -269,7 +269,7 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
-                        <th><label for="loggingPath">Enable Fine Tuning</label></th>
+                        <th><label for="loggingPath">Enable Fine-Tuning</label></th>
                         <td>
                             <?=
                             HtmlTagGeneratorHelper::tag(

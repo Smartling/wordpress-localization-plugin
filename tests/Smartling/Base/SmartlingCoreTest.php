@@ -50,6 +50,7 @@ class SmartlingCoreTest extends TestCase
                     $this->createMock(MediaAttachmentRulesManager::class),
                     $this->createMock(ReplacerFactory::class),
                     new SerializerJsonWithFallback(),
+                    $this->createMock(WordpressFunctionProxyHelper::class),
                 )
             ),
             new XmlHelper(new SerializerJsonWithFallback()),
