@@ -252,7 +252,8 @@ trait SmartlingCoreUploadTrait
             $targetContent = $this->getContentHelper()->readTargetContent($submission);
             $params = new AfterDeserializeContentEventParameters($translation, $submission, $targetContent, $translation['meta']);
             do_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
-            $this->applyBlockLevelLocks($targetContent, $translation, $submission, $postContentHelper, $lockedData['entity']);
+            $translation = $this->processPostContentBlocks($targetContent, $original, $translation, $submission, $postContentHelper, $lockedData['entity']);
+            $this->setValues($targetContent, $translation['entity'] ?? []);
             $configurationProfile = $this->getSettingsManager()
                 ->getSingleSettingsProfile($submission->getSourceBlogId());
 
@@ -790,24 +791,35 @@ trait SmartlingCoreUploadTrait
         return $this->getFieldsFilter()->removeFields($fields, $configurationProfile->getFilterSkipArray(), $configurationProfile->getFilterFieldNameRegExp());
     }
 
-    /**
-     * Modifies $targetContent
-     */
-    private function applyBlockLevelLocks(EntityAbstract $targetContent, array $translation, SubmissionEntity $submission, PostContentHelper $postContentHelper, array $entity): void
+    private function processPostContentBlocks(EntityAbstract $targetContent, array $original, array $translation, SubmissionEntity $submission, PostContentHelper $postContentHelper, array $lockedEntityFields): array
     {
         if (array_key_exists('entity', $translation) && ArrayHelper::notEmpty($translation['entity'])) {
             $targetContentArray = $targetContent->toArray();
             if (array_key_exists('post_content', $translation['entity']) && array_key_exists('post_content', $targetContentArray)) {
-                $lockedBlocks = $postContentHelper->getLockedBlockPathsFromContentString($targetContentArray['post_content']);
-                if (count($lockedBlocks) > 0) {
-                    $translation['entity']['post_content'] = $postContentHelper->applyTranslationsWithLockedBlocks($targetContentArray['post_content'], $translation['entity']['post_content'], $lockedBlocks);
-                } elseif (count($submission->getLockedFields()) > 0) { // TODO remove after deprecation period
-                    $translation['entity']['post_content'] = $postContentHelper->applyTranslation($targetContentArray['post_content'], $translation['entity']['post_content'], $submission->getLockedFields());
-                }
+                $translation['entity']['post_content'] = $this->applyBlockLevelLocks(
+                    $targetContentArray,
+                    $postContentHelper->replacePostTranslate($original['entity']['post_content'] ?? '', $translation['entity']['post_content']),
+                    $submission,
+                    $postContentHelper
+                );
             }
-            $translation['entity'] = self::arrayMergeIfKeyNotExists($entity, $translation['entity']);
-            $this->setValues($targetContent, $translation['entity']);
+            $translation['entity'] = self::arrayMergeIfKeyNotExists($lockedEntityFields, $translation['entity']);
         }
+
+        return $translation;
+    }
+
+    private function applyBlockLevelLocks(array $targetContent, string $translatedContent, SubmissionEntity $submission, PostContentHelper $postContentHelper): string
+    {
+        $lockedBlocks = $postContentHelper->getLockedBlockPathsFromContentString($targetContent['post_content']);
+        if (count($lockedBlocks) > 0) {
+            return $postContentHelper->applyTranslationsWithLockedBlocks($targetContent['post_content'], $translatedContent, $lockedBlocks);
+        }
+
+        if (count($submission->getLockedFields()) > 0) { // TODO remove after deprecation period
+            return $postContentHelper->applyBlockLevelLocks($targetContent['post_content'], $translatedContent, $submission->getLockedFields());
+        }
+        return $translatedContent;
     }
 
     /**
@@ -842,7 +854,7 @@ trait SmartlingCoreUploadTrait
             in_array($originalMetadata['_menu_item_type'], ['taxonomy', 'post_type'], true)
         ) {
             $result['_menu_item_object_id'] = (new ContentIdReplacer($this->getSubmissionManager()))
-                ->processOnDownload($submission, $originalMetadata['_menu_item_object_id']);
+                ->processOnDownload($originalMetadata['_menu_item_object_id'], $originalMetadata['_menu_item_object_id'], $submission); // two originalMetadata here is not a typo, translated id is discarded
         }
 
         return $result;

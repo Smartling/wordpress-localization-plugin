@@ -62,6 +62,15 @@ class WordpressFunctionProxyHelper
         return get_terms(...func_get_args());
     }
 
+    /**
+     * @param array|\WP_Block_Parser_Block $block
+     * @return string
+     */
+    public function serialize_block($block): string
+    {
+        return serialize_block($block);
+    }
+
     public function url_to_postid(string $url): int
     {
         return (int)url_to_postid($url);

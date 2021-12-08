@@ -89,6 +89,54 @@ HTML;
         $this->assertEquals("\n<p>[Ñ~ót á ~Gúté~ñbé~rg bl~óck]</p>", $blocks[1]->getInnerHtml(), 'Expected non-Gutenberg block to be translated');
     }
 
+    public function testCopyAndExclude()
+    {
+        $content = <<<HTML
+<!-- wp:si/block {"otherAttribute":"otherValue","copyAttribute":"copyValue","excludeAttribute":"excludeValue"} -->
+<!-- wp:si/nested {"copyAttribute":"ca2"} -->
+<p>Nested 1 content</p>
+<!-- /wp:si/nested -->
+<!-- wp:si/nested {"excludeAttribute":"ca3"} -->
+<p>Nested 2 content</p>
+<!-- /wp:si/nested -->
+<!-- /wp:si/block -->
+HTML;
+        $expected = <<<HTML
+<!-- wp:si/block {"otherAttribute":"[\u00f3~th\u00e9~rV\u00e1~l\u00fa\u00e9]","copyAttribute":"copyValue","excludeAttribute":null} -->
+<!-- wp:si/nested {"copyAttribute":"[c~\u00e12]"} -->
+<p>[Ñ~ést~éd 1 c~óñt~éñt]</p>
+<!-- /wp:si/nested -->
+<!-- wp:si/nested {"excludeAttribute":"[c~\u00e13]"} -->
+<p>[Ñ~ést~éd 2 c~óñt~éñt]</p>
+<!-- /wp:si/nested -->
+<!-- /wp:si/block -->
+HTML;
+        $this->rulesManager->offsetSet('copy', [
+            'block' => 'si/block',
+            'path' => 'copy',
+            'replacerId' => 'copy',
+        ]);
+        $this->rulesManager->offsetSet('exclude', [
+            'block' => 'si/block',
+            'path' => 'exclude',
+            'replacerId' => 'exclude',
+        ]);
+        $this->rulesManager->saveData();
+        $postId = $this->createPost('post', 'main title', $content);
+        $submission = $this->translationHelper->prepareSubmission('post', $this->sourceBlogId, $postId, $this->targetBlogId);
+        $submission->getFileUri();
+        $this->submissionManager->storeEntity($submission);
+        $this->executeUpload();
+        $this->forceSubmissionDownload($submission);
+        $submission = $this->translationHelper->reloadSubmission($submission);
+
+        // cleanup
+        $this->rulesManager->offsetUnset('copy');
+        $this->rulesManager->offsetUnset('exclude');
+        $this->rulesManager->saveData();
+        $this->assertEquals($expected, $this->getTargetPost($this->siteHelper, $submission)->post_content);
+    }
+
     public function testCoreImageClassTranslation()
     {
         $attachmentSourceId = $this->createAttachment();
@@ -120,15 +168,15 @@ HTML;
         unset($submission);
         $attachmentTargetId = $submissions[0]->getTargetId();
         $expectedContent = <<<HTML
-<!-- wp:core/image {"id":$attachmentTargetId,"sizeSlug":"[l~árgé]"} -->
+<!-- wp:image {"id":$attachmentTargetId,"sizeSlug":"[l~\u00e1rg\u00e9]"} -->
 <figure class="wp-block-image size-large"><img src="http://example.com/wp-content/uploads/2021/11/imageClass.png" alt="" class="wp-image-$attachmentTargetId" /></figure>
-<!-- /wp:core/image -->
-<!-- wp:core/image {"id":$attachmentTargetId,"sizeSlug":"[l~árgé]"} -->
+<!-- /wp:image -->
+<!-- wp:image {"id":$attachmentTargetId,"sizeSlug":"[l~\u00e1rg\u00e9]"} -->
 <figure class="wp-block-image size-large"><img class="wp-image-$attachmentTargetId" src="http://example.com/wp-content/uploads/2021/11/imageClass.png" alt="" /></figure>
-<!-- /wp:core/image -->
-<!-- wp:core/image {"id":$attachmentTargetId,"sizeSlug":"[l~árgé]"} -->
+<!-- /wp:image -->
+<!-- wp:image {"id":$attachmentTargetId,"sizeSlug":"[l~\u00e1rg\u00e9]"} -->
 <figure class="wp-block-image size-large"><img src="http://example.com/wp-content/uploads/2021/11/imageClass.png" alt="" class="irrelevant wp-image-$attachmentTargetId someOtherClass" /></figure>
-<!-- /wp:core/image -->
+<!-- /wp:image -->
 HTML;
         $this->assertNotEquals($attachmentSourceId, $attachmentTargetId);
         $this->assertEquals($expectedContent, $this->getTargetPost($this->siteHelper, $submissions[1])->post_content);

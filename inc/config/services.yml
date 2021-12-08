@@ -263,6 +263,7 @@ services:
       - "@media.attachment.rules.manager"
       - "@factory.replacer"
       - "@serializer.json"
+      - "@wp.proxy"
     calls:
       - [ "setFieldsFilter", [ "@fields-filter.helper" ]]
 
@@ -274,11 +275,18 @@ services:
   default.meta-field-processor:
     class: Smartling\Helpers\MetaFieldProcessor\DefaultMetaFieldProcessor
 
+  post.content.processor:
+    class: Smartling\Helpers\MetaFieldProcessor\PostContentProcessor
+    arguments:
+      - "@helper.gutenberg"
+      - "@wp.proxy"
+
   meta-field.processor.manager:
     class: Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager
     calls:
       - [ "setDefaultHandler", [ "@default.meta-field-processor" ] ]
       - [ "setAcfTypeDetector", [ "@acf.type.detector" ] ]
+      - [ "registerProcessor", ["@post.content.processor"]]
 
   service.side-removal-handler:
     class: Smartling\Services\BlogRemovalHandler

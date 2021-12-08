@@ -4,6 +4,7 @@ namespace Smartling;
 
 use DateTimeZone;
 use JetBrains\PhpStorm\ArrayShape;
+use Smartling\API\FileApiExtended;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
@@ -39,7 +40,7 @@ use Smartling\Vendor\Smartling\Project\ProjectApi;
 
 class ApiWrapper implements ApiWrapperInterface
 {
-
+    private const ADDITIONAL_HEADERS = ['X-SL-UseSecondaryDB' => 'true'];
     /**
      * @var SettingsManager
      */
@@ -207,11 +208,7 @@ class ApiWrapper implements ApiWrapperInterface
         try {
             $profile = $this->getConfigurationProfile($entity);
 
-            $api = FileApi::create(
-                $this->getAuthProvider($profile),
-                $profile->getProjectId(),
-                $this->getLogger()
-            );
+            $api = $this->getFileApi($profile);
 
             $this->getLogger()
                 ->info(vsprintf(
@@ -265,25 +262,13 @@ class ApiWrapper implements ApiWrapperInterface
     }
 
     /**
-     * @param SubmissionEntity $entity
-     *
-     * @return SubmissionEntity
      * @throws SmartlingNetworkException
      */
-    public function getStatus(SubmissionEntity $entity)
+    public function getStatus(SubmissionEntity $entity): SubmissionEntity
     {
         try {
-            $locale = $this->getSmartlingLocaleBySubmission($entity);
-
-            $profile = $this->getConfigurationProfile($entity);
-
-            $api = FileApi::create(
-                $this->getAuthProvider($profile),
-                $profile->getProjectId(),
-                $this->getLogger()
-            );
-
-            $data = $api->getStatus($entity->getFileUri(), $locale);
+            $data = $this->getFileApi($this->getConfigurationProfile($entity), true)
+                ->getStatus($entity->getFileUri(), $this->getSmartlingLocaleBySubmission($entity));
 
             $entity = $this
                 ->setTranslationStatusToEntity($entity,
@@ -296,11 +281,9 @@ class ApiWrapper implements ApiWrapperInterface
             $entity->setWordCount($data['totalWordCount']);
 
             return $entity;
-
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
             throw new SmartlingNetworkException($e->getMessage());
-
         }
     }
 
@@ -313,11 +296,7 @@ class ApiWrapper implements ApiWrapperInterface
     public function testConnection(ConfigurationProfileEntity $profile)
     {
         try {
-            $api = FileApi::create(
-                $this->getAuthProvider($profile),
-                $profile->getProjectId(),
-                $this->getLogger()
-            );
+            $api = $this->getFileApi($profile);
 
             $api->getList();
 
@@ -433,36 +412,22 @@ class ApiWrapper implements ApiWrapperInterface
     }
 
     /**
-     * @param SubmissionEntity $submission
-     *
-     * @return array mixed
      * @throws SmartlingNetworkException
      */
-    public function lastModified(SubmissionEntity $submission)
+    public function lastModified(SubmissionEntity $submission): array
     {
+        $output = [];
         try {
-            $profile = $this->getConfigurationProfile($submission);
-
-            $api = FileApi::create(
-                $this->getAuthProvider($profile),
-                $profile->getProjectId(),
-                $this->getLogger()
-            );
-
-            $data = $api->lastModified($submission->getFileUri());
-
-            $output = [];
-
-            foreach ($data['items'] as $descriptor) {
+            foreach ($this->getFileApi($this->getConfigurationProfile($submission), true)
+                ->lastModified($submission->getFileUri())['items'] as $descriptor) {
                 $output[$descriptor['localeId']] = $descriptor['lastModified'];
             }
-
-            return $output;
-
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
             throw new SmartlingNetworkException($e->getMessage());
         }
+
+        return $output;
     }
 
     /**
@@ -471,22 +436,15 @@ class ApiWrapper implements ApiWrapperInterface
      * @return Submissions\SubmissionEntity[]
      * @throws SmartlingNetworkException
      */
-    public function getStatusForAllLocales(array $submissions)
+    public function getStatusForAllLocales(array $submissions): array
     {
+        $submission = ArrayHelper::first($submissions);
+        if (!$submission instanceof SubmissionEntity) {
+            throw new \InvalidArgumentException('$submissions should be an array of ' . SubmissionEntity::class);
+        }
         try {
-            /**
-             * @var SubmissionEntity $submission
-             */
-            $submission = ArrayHelper::first($submissions);
-            $profile = $this->getConfigurationProfile($submission);
-
-            $api = FileApi::create(
-                $this->getAuthProvider($profile),
-                $profile->getProjectId(),
-                $this->getLogger()
-            );
-
-            $data = $api->getStatusForAllLocales($submission->getFileUri());
+            $data = $this->getFileApi($this->getConfigurationProfile($submission), true)
+                ->getStatusForAllLocales($submission->getFileUri());
 
             $totalWordCount = $data['totalWordCount'];
 
@@ -514,29 +472,24 @@ class ApiWrapper implements ApiWrapperInterface
                     $newProgress = $submissions[$localeId]->getCompletionPercentage(); // current progress value 0..100
 
                     if (100 === $newProgress && 100 === $currentProgress) {
-                        /* nothing to do, removing from array to skip useless download */
                         $submissions[$localeId]->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
                     }
 
                     if (100 > $newProgress && 100 === $currentProgress) {
-                        /* just move from Completed to In Progress */
                         $submissions[$localeId]->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                     }
 
                     if (100 === $newProgress && 100 > $currentProgress) {
-                        /* just move from Completed to In Progress */
                         $submissions[$localeId]->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
                     }
 
                     if (100 > $newProgress && 100 > $currentProgress) {
-                        /* just move from Completed to In Progress */
                         $submissions[$localeId]->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                     }
                 }
             }
 
             return $submissions;
-
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
             throw new SmartlingNetworkException($e->getMessage());
@@ -550,11 +503,7 @@ class ApiWrapper implements ApiWrapperInterface
     {
         try {
             $profile = $this->getConfigurationProfile($submission);
-            $api = FileApi::create(
-                $this->getAuthProvider($profile),
-                $profile->getProjectId(),
-                $this->getLogger()
-            );
+            $api = $this->getFileApi($profile);
             $api->deleteFile($submission->getFileUri());
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
@@ -905,5 +854,13 @@ class ApiWrapper implements ApiWrapperInterface
      */
     public function isUnrecoverable(\Exception $e) {
         return strpos($e->getMessage(), 'file.not.found') !== false;
+    }
+
+    private function getFileApi(ConfigurationProfileEntity $profile, $withAdditionalHeaders = false): FileApi
+    {
+        $auth = $this->getAuthProvider($profile);
+        $projectId = $profile->getProjectId();
+
+        return $withAdditionalHeaders ? new FileApiExtended($auth, $projectId, self::ADDITIONAL_HEADERS) : FileApi::create($auth, $projectId, $this->logger);
     }
 }

@@ -48,7 +48,7 @@ use Smartling\WP\Controller\MediaRuleForm;
             'value' => $id,
         ]) ?>
 
-        <h3><?= __('Media rule') ?></h3>
+        <h3><?= __('Gutenberg block rule') ?></h3>
         <table class="form-table">
             <tbody>
             <tr>
@@ -80,8 +80,8 @@ use Smartling\WP\Controller\MediaRuleForm;
                         'type' => 'text',
                         'id' => 'path',
                         'name' => 'media[path]',
-                        'placeholder' => __('JSON path to media id'),
-                        'data-msg' => __('Please specify JSON path to media id'),
+                        'placeholder' => __('Attribute JSON path'),
+                        'data-msg' => __('Please specify JSON path'),
                         'required' => 'required',
                         'value' => htmlentities($path),
                     ])?>
@@ -90,7 +90,7 @@ use Smartling\WP\Controller\MediaRuleForm;
             <tr>
                 <th scope="row">
                     <label for="replacerType">
-                        <?= __('Replacer type')?>
+                        <?= __('Processor type')?>
                     </label>
                 </th>
                 <td>

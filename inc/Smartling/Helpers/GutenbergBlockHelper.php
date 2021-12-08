@@ -26,15 +26,20 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     private MediaAttachmentRulesManager $rulesManager;
     private ReplacerFactory $replacerFactory;
     private SerializerInterface $serializer;
+    private WordpressFunctionProxyHelper $wpProxy;
 
-    public function __construct(MediaAttachmentRulesManager $rulesManager, ReplacerFactory $replacerFactory, SerializerInterface $serializer)
+    public function __construct(MediaAttachmentRulesManager $rulesManager, ReplacerFactory $replacerFactory, SerializerInterface $serializer, WordpressFunctionProxyHelper $wpProxy)
     {
         parent::__construct();
         $this->replacerFactory = $replacerFactory;
         $this->rulesManager = $rulesManager;
         $this->serializer = $serializer;
+        $this->wpProxy = $wpProxy;
     }
 
+    /**
+     * @see register()
+     */
     public function registerFilters(array $definitions): array
     {
         $copyList = [
@@ -76,6 +81,56 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         }
     }
 
+    public function replacePreTranslateBlockContent(GutenbergBlock $block): GutenbergBlock
+    {
+        foreach ($block->getInnerBlocks() as $index => $innerBlock) {
+            $block = $block->withInnerBlock($this->replacePreTranslateBlockContent($innerBlock), $index);
+        }
+        foreach ($block->getAttributes() as $attribute => $value) {
+            foreach ($this->rulesManager->getGutenbergReplacementRules($block->getBlockName(), $attribute) as $rule) {
+                $block = $block->withAttribute($block, $attribute, $this->replacerFactory->getReplacer($rule->getReplacerId())->processOnUpload($value));
+            }
+        }
+
+        return $block;
+    }
+
+    public function replacePostTranslateBlockContent(string $original, string $translated): string
+    {
+        if (!$this->hasBlocks($translated)) {
+            return $translated;
+        }
+        $result = '';
+        $originalBlocks = $this->parseBlocks($original);
+        $translatedBlocks = $this->parseBlocks(stripslashes($translated));
+        if (count($originalBlocks) !== count($translatedBlocks)) {
+            $this->getLogger()->notice('Counts of blocks differ between original and translated, skipping replacing of post translate block content');
+            return $translated;
+        }
+        foreach ($translatedBlocks as $index => $block) {
+            $result .= $this->wpProxy->serialize_block($this->applyPostTranslationReplacers($originalBlocks[$index], $block)->toArray());
+        }
+        return addslashes($result);
+    }
+
+    private function applyPostTranslationReplacers(GutenbergBlock $original, GutenbergBlock $translated): GutenbergBlock
+    {
+        foreach ($translated->getInnerBlocks() as $index => $innerBlock) {
+            $translated = $translated->withInnerBlock($this->applyPostTranslationReplacers($original->getInnerBlocks()[$index], $innerBlock), $index);
+        }
+        foreach ($translated->getAttributes() as $attribute => $value) {
+            foreach ($this->rulesManager->getGutenbergReplacementRules($translated->getBlockName(), $attribute) as $rule) {
+                try {
+                    $value = $this->replacerFactory->getReplacer($rule->getReplacerId())->processOnDownload($original->getAttributes()[$attribute] ?? '', $value, null);
+                } catch (\InvalidArgumentException $e) {
+                    // do nothing, $value is preserved
+                }
+            }
+            $translated = $translated->withAttribute($translated, $attribute, $value);
+        }
+        return $translated;
+    }
+
     public function processAttributes(?string $blockName, array $flatAttributes): array
     {
         $attributes = [];
@@ -89,7 +144,6 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 
             $this->getLogger()->debug(vsprintf('Pre filtered block \'%s\' attributes \'%s\'',
                 [$blockName, $ve_attributes]));
-            $this->postReceiveFiltering($flatAttributes);
             $attributes = $this->preSendFiltering($flatAttributes);
             $this->getLogger()->debug(vsprintf('Post filtered block \'%s\' attributes \'%s\'',
                 [$blockName, $ve_attributes]));
@@ -150,6 +204,9 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $node;
     }
 
+    /**
+     * @see register()
+     */
     public function processString(TranslationStringFilterParameters $params): TranslationStringFilterParameters
     {
         $this->setParams($params);
@@ -280,7 +337,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             $attr = $this->postReceiveFiltering($attr);
             $attr = static::unmaskAttributes($blockName, $attr);
             $filteredAttributes = array_merge($flatAttributes, $attr, $translatedAttributes);
-            $processedAttributes = $this->getFieldsFilter()->structurizeArray($this->applyDownloadRules($submission, $blockName, $filteredAttributes));
+            $processedAttributes = $this->getFieldsFilter()->structurizeArray($this->applyDownloadRules($blockName, $originalAttributes, $filteredAttributes, $submission));
         }
 
         return $this->fixAttributeTypes($originalAttributes, $processedAttributes);
@@ -344,6 +401,10 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $result;
     }
 
+    /**
+     * @see register()
+     * @noinspection PhpUnused
+     */
     public function processTranslation(TranslationStringFilterParameters $params): TranslationStringFilterParameters
     {
         $this->setParams($params);
@@ -427,20 +488,21 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return false;
     }
 
-    private function applyDownloadRules(SubmissionEntity $submission, string $blockName, array $attributes): array
+    public function applyDownloadRules(string $blockName, array $originalAttributes, array $translatedAttributes, ?SubmissionEntity $submission): array
     {
-        foreach ($attributes as $attribute => $value) {
+        foreach ($translatedAttributes as $attribute => $value) {
             foreach ($this->rulesManager->getGutenbergReplacementRules($blockName, $attribute) as $rule) {
                 try {
                     $replacer = $this->replacerFactory->getReplacer($rule->getReplacerId());
                 } catch (EntityNotFoundException $e) {
-                    $this->getLogger()->warning("Replacer not found while processing blockName=\"$blockName\", attribute=\"$attribute\", submissionId=\"{$submission->getId()}\", replacerId=\"{$rule->getReplacerId()}\", skipping");
+                    $submissionId = $submission === null ? 'null' : $submission->getId();
+                    $this->getLogger()->warning("Replacer not found while processing blockName=\"$blockName\", attribute=\"$attribute\", submissionId=\"$submissionId\", replacerId=\"{$rule->getReplacerId()}\", skipping");
                     continue;
                 }
-                $attributes[$attribute] = $replacer->processOnDownload($submission, $value);
+                $translatedAttributes[$attribute] = $replacer->processOnDownload($originalAttributes[$attribute] ?? '', $value, $submission);
             }
         }
 
-        return $attributes;
+        return $translatedAttributes;
     }
 }
