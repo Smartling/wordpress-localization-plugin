@@ -10,6 +10,7 @@ use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
+use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\XmlHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Replacers\ReplacerFactory;
@@ -54,6 +55,7 @@ class SmartlingCoreTest extends TestCase
                 )
             ),
             new XmlHelper(new SerializerJsonWithFallback()),
+            $this->createMock(TestRunHelper::class),
         );
     }
 

@@ -435,12 +435,18 @@ trait SmartlingCoreUploadTrait
                 $params[SubmissionEntity::FIELD_BATCH_UID] = [$submission->getBatchUid()];
             }
 
+            $locales = [];
+
+            if (TestRunHelper::isTestRunBlog($submission->getTargetBlogId())) {
+                $params[SubmissionEntity::FIELD_TARGET_BLOG_ID][] = $submission->getTargetBlogId();
+            }
+
             /**
              * Looking for other locales to pass filters and create placeholders.
              */
             $submissions = $this->getSubmissionManager()->find($params);
 
-            $locales = [];
+
 
             foreach ($submissions as $_submission) {
                 /**
@@ -631,9 +637,6 @@ trait SmartlingCoreUploadTrait
             return;
         }
 
-        /**
-         * @var ConfigurationProfileEntity $configurationProfile
-         */
         $configurationProfile = $this->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
 
         // Mark attachment submission as "Cloned" if there is "Clone attachment"

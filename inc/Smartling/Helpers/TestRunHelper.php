@@ -18,9 +18,9 @@ class TestRunHelper
         $this->gutenbergBlockHelper = $gutenbergBlockHelper;
     }
 
-    public static function isTestRunBlog($id): bool
+    public static function isTestRunBlog(int $id): bool
     {
-        return $id === SimpleStorageHelper::get(TestRunController::TEST_RUN_BLOG_ID_SETTING_NAME);
+        return $id === (int)SimpleStorageHelper::get(TestRunController::TEST_RUN_BLOG_ID_SETTING_NAME);
     }
 
     public function checkDownloadedSubmission(SubmissionEntity $submission): void

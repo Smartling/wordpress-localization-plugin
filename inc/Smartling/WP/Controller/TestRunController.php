@@ -6,6 +6,7 @@ use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Helpers\AdminNoticesHelper;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\PluginInfo;
@@ -31,7 +32,7 @@ use Smartling\WP\WPHookInterface;
 class TestRunController extends WPAbstract implements WPHookInterface
 {
     private const TEST_RUN_JOB_NAME = 'Test Run Job';
-    public const TEST_RUN_BLOG_ID_SETTING_NAME = 'TestRunBlogId';
+    public const TEST_RUN_BLOG_ID_SETTING_NAME = 'smartling_TestRunBlogId';
 
     protected LocalizationPluginProxyInterface $localizationPluginProxy;
     protected SiteHelper $siteHelper;
@@ -52,8 +53,7 @@ class TestRunController extends WPAbstract implements WPHookInterface
         ApiWrapperInterface $apiWrapper,
         SettingsManager $settingsManager,
         string $uploadCronInterval
-    )
-    {
+    ) {
         parent::__construct($localizationPluginProxy, $pluginInfo, $entityHelper, $submissionManager, $cache);
         $this->apiWrapper = $apiWrapper;
         $this->contentRelationDiscoveryService = $contentRelationDiscoveryService;
@@ -61,11 +61,10 @@ class TestRunController extends WPAbstract implements WPHookInterface
         $this->settingsManager = $settingsManager;
         $this->siteHelper = $siteHelper;
         $this->submissionManager = $submissionManager;
-        $cronIntervalUnit = $uploadCronInterval[strlen($uploadCronInterval) - 1];
-        if ($cronIntervalUnit !== 'm') {
-            throw new SmartlingConfigException('Upload job cron interval must be specified in minutes (e. g. 5m)');
+        if (!preg_match('~^\d+m$~', $uploadCronInterval)) {
+            throw new SmartlingConfigException('Upload job cron interval must be specified in minutes (e. g. 5m), with no extra symbols');
         }
-        $this->uploadCronInterval = substr($uploadCronInterval, -1) * 60;
+        $this->uploadCronInterval = ((int)substr($uploadCronInterval, 0, - 1)) * 60;
     }
 
     public function buildViewData(): TestRunViewData
@@ -74,12 +73,16 @@ class TestRunController extends WPAbstract implements WPHookInterface
         $testBlogId = SimpleStorageHelper::get(self::TEST_RUN_BLOG_ID_SETTING_NAME);
         $new = $inProgress = $completed = $failed = 0;
         if ($testBlogId !== null) {
+            $testBlogId = (int)$testBlogId;
             $condition = ConditionBlock::getConditionBlock();
             $condition->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_TARGET_BLOG_ID, [$testBlogId]));
-            $new = $wpdb->get_results($this->submissionManager->buildCountQuery(null, SubmissionEntity::SUBMISSION_STATUS_NEW, null, $condition), ARRAY_A)['cnt'];
-            $inProgress = $wpdb->get_results($this->submissionManager->buildCountQuery(null, SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS, null, $condition), ARRAY_A)['cnt'];
-            $completed = $wpdb->get_results($this->submissionManager->buildCountQuery(null, SubmissionEntity::SUBMISSION_STATUS_COMPLETED, null, $condition), ARRAY_A)['cnt'];
-            $failed = $wpdb->get_results($this->submissionManager->buildCountQuery(null, SubmissionEntity::SUBMISSION_STATUS_FAILED, null, $condition), ARRAY_A)['cnt'];
+            $new = (int)$wpdb->get_row($this->submissionManager->buildCountQuery(null, SubmissionEntity::SUBMISSION_STATUS_NEW, null, $condition), ARRAY_A)['cnt'];
+            $inProgress = (int)$wpdb->get_row($this->submissionManager->buildCountQuery(null, SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS, null, $condition), ARRAY_A)['cnt'];
+            $completed = (int)$wpdb->get_row($this->submissionManager->buildCountQuery(null, SubmissionEntity::SUBMISSION_STATUS_COMPLETED, null, $condition), ARRAY_A)['cnt'];
+            $failed = (int)$wpdb->get_row($this->submissionManager->buildCountQuery(null, SubmissionEntity::SUBMISSION_STATUS_FAILED, null, $condition), ARRAY_A)['cnt'];
+        }
+        if ($new + $inProgress + $completed + $failed === 0 && $testBlogId !== null) {
+            AdminNoticesHelper::addWarning('A target blog for test run was selected, but no submissions were added. Please retry test run after adding posts and pages to the source blog');
         }
 
         return new TestRunViewData(
@@ -114,7 +117,8 @@ class TestRunController extends WPAbstract implements WPHookInterface
     {
         add_action('admin_enqueue_scripts', [$this, 'wp_enqueue']);
         add_action('admin_menu', [$this, 'menu']);
-        add_action('wp_ajax_smartling_test_run', [$this, 'testRun']);
+        add_action('wp_ajax_smartling_test_run', [$this, 'testRunWrap']);
+        add_action('wp_ajax_smartling_test_clean', [$this, 'testClean']);
     }
 
     public function menu(): void
@@ -145,12 +149,28 @@ class TestRunController extends WPAbstract implements WPHookInterface
         $blogs = [];
         $currentBlogId = $this->siteHelper->getCurrentBlogId();
         foreach ($this->siteHelper->listBlogs($this->siteHelper->getCurrentSiteId()) as $blogId) {
-            if ($currentBlogId !== $blogId) {
+            if ($currentBlogId !== $blogId && count($this->submissionManager->find([SubmissionEntity::FIELD_TARGET_BLOG_ID => $blogId])) === 0) {
                 $blogs[$blogId] = $this->siteHelper->getBlogLabelById($this->localizationPluginProxy, $blogId);
             }
         }
 
         return $blogs;
+    }
+
+    public function testClean(): void
+    {
+        foreach ($this->submissionManager->find([SubmissionEntity::FIELD_TARGET_BLOG_ID => SimpleStorageHelper::get(self::TEST_RUN_BLOG_ID_SETTING_NAME)]) as $submission) {
+            $this->submissionManager->delete($submission);
+        }
+    }
+
+    public function testRunWrap($data): void
+    {
+        try {
+            $this->testRun($data);
+        } catch (\Throwable $e) {
+            wp_send_json_error($e->getMessage());
+        }
     }
 
     public function testRun($data): void
@@ -164,7 +184,7 @@ class TestRunController extends WPAbstract implements WPHookInterface
         try {
             $profile = $this->settingsManager->getSingleSettingsProfile((int)$data['sourceBlogId']);
         } catch (SmartlingDbException $e) {
-            wp_send_json_error(['message' => 'Unable to get active profile for blogId=' . $data['sourceBlogId']]);
+            wp_send_json_error('Unable to get active profile for blogId=' . $data['sourceBlogId']);
         }
         $targetBlogId = (int)$data['targetBlogId'];
         SimpleStorageHelper::set(self::TEST_RUN_BLOG_ID_SETTING_NAME, $targetBlogId);
@@ -172,7 +192,7 @@ class TestRunController extends WPAbstract implements WPHookInterface
         try {
             $job = $this->getJob($profile);
         } catch (\Exception $e) {
-            wp_send_json_error(['message' => $e->getMessage()]);
+            wp_send_json_error($e->getMessage());
         }
 
         $postsAndPages = get_posts([
@@ -182,7 +202,7 @@ class TestRunController extends WPAbstract implements WPHookInterface
 
         foreach ($postsAndPages as $post) {
             if (!$post instanceof \WP_Post) {
-                wp_send_json_error(['message' => 'Unable to get posts']);
+                wp_send_json_error('Unable to get posts');
             }
             $relations = $this->contentRelationDiscoveryService->getRelations($post->post_type, $post->ID, [$targetBlogId]);
 
@@ -201,11 +221,11 @@ class TestRunController extends WPAbstract implements WPHookInterface
                         'authorize' => 'true',
                     ],
                 'targetBlogIds' => $targetBlogId,
-                'relations' => $relations,
+                'relations' => $relations->getMissingReferences(),
             ]);
         }
 
-        wp_send_json_success(['posts' => count($postsAndPages)]);
+        wp_send_json_success('Test run started');
     }
 
     private function getJob(ConfigurationProfileEntity $profile): JobEntity

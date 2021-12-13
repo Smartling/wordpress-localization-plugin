@@ -10,6 +10,7 @@ use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingHumanReadableException;
+use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
@@ -23,6 +24,7 @@ use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
 use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
+use Smartling\Models\DetectedRelations;
 use Smartling\Models\GutenbergBlock;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Replacers\ContentIdReplacer;
@@ -276,8 +278,12 @@ class ContentRelationsDiscoveryService
                 }
 
                 // trigger generation of fileUri
-                $submission->getFileUri();
-                $this->storeWithJobInfo($submission, $jobInfo);
+                try {
+                    $submission->getFileUri();
+                    $this->storeWithJobInfo($submission, $jobInfo);
+                } catch (SmartlingInvalidFactoryArgumentException $e) {
+                    $this->getLogger()->info("Skipping submission because no mapper was found: contentType={$submission->getContentType()} sourceBlogId={$submission->getSourceBlogId()}, sourceId={$submission->getSourceId()}, targetBlogId={$submission->getTargetBlogId()}");
+                }
             }
         }
     }
@@ -411,7 +417,7 @@ class ContentRelationsDiscoveryService
     /**
      * @param int[] $targetBlogIds
      */
-    public function getRelations(string $contentType, int $id, array $targetBlogIds): array
+    public function getRelations(string $contentType, int $id, array $targetBlogIds): DetectedRelations
     {
         $detectedReferences = ['attachment' => []];
         $curBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
@@ -513,9 +519,7 @@ class ContentRelationsDiscoveryService
 
         $detectedReferences = $this->normalizeReferences($detectedReferences);
 
-        $responseData = [
-            'originalReferences' => $detectedReferences,
-        ];
+        $responseData = new DetectedRelations($detectedReferences);
 
         $registeredTypes = get_post_types();
         $taxonomies = $this->contentHelper->getSiteHelper()->getTermTypes();
@@ -527,7 +531,7 @@ class ContentRelationsDiscoveryService
                         if ($detectedId === null) {
                             $this->getLogger()->notice("Null id passed when processing detected references detectedContentType=\"$detectedContentType\"");
                         } elseif (!$this->submissionManager->submissionExists($detectedContentType, $curBlogId, $detectedId, $targetBlogId)) {
-                            $responseData['missingTranslatedReferences'][$targetBlogId][$detectedContentType][] = $detectedId;
+                            $responseData->addMissingReference($targetBlogId, $detectedContentType, $detectedId);
                         }
                     }
                 } else {

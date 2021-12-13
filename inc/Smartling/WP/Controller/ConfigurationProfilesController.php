@@ -11,16 +11,13 @@ use Smartling\WP\Table\QueueManagerTableWidget;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
-/**
- * Class ConfigurationProfilesController
- * @package Smartling\WP\Controller
- */
 class ConfigurationProfilesController extends WPAbstract implements WPHookInterface
 {
 
-    const ACTION_QUEUE_PURGE = 'queue_purge';
+    public const ACTION_QUEUE_PURGE = 'queue_purge';
+    public const ACTION_QUEUE_FORCE = 'queue_force';
 
-    const ACTION_QUEUE_FORCE = 'queue_force';
+    public const MENU_SLUG = 'smartling_configuration_profile_list';
 
     /**
      * @var Queue
@@ -174,7 +171,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
             'Configuration profiles',
             'Settings',
             SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP,
-            'smartling_configuration_profile_list',
+            self::MENU_SLUG,
             [
                 $this,
                 'listProfiles',
@@ -220,7 +217,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
             unlink($fullFilename);
         }
 
-        wp_redirect(get_site_url() . '/wp-admin/admin.php?page=smartling_configuration_profile_list');
+        wp_redirect(get_site_url() . '/wp-admin/admin.php?page=' . self::MENU_SLUG);
     }
 
     public function downloadLog()

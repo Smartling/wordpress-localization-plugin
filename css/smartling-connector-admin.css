@@ -437,3 +437,18 @@ span.circle {
     position: relative !important;
 }
 
+.smartling-border-table {
+    border-collapse: collapse;
+}
+
+.smartling-border-table, .smartling-border-table td, .smartling-border-table th {
+    border: 1px solid #000;
+}
+
+.smartling-border-table td, .smartling-border-table th {
+    padding: 0 1ex;
+}
+
+.smartling-border-table .numeric {
+    text-align: right;
+}

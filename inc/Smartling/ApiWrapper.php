@@ -145,7 +145,7 @@ class ApiWrapper implements ApiWrapperInterface
      */
     private function getConfigurationProfile(SubmissionEntity $submission): ConfigurationProfileEntity
     {
-        $profile = $this->getSettings()->getSingleSettingsProfile($submission->getTargetBlogId());
+        $profile = $this->getSettings()->getSingleSettingsProfile($submission->getSourceBlogId());
         if (TestRunHelper::isTestRunBlog($submission->getTargetBlogId())) {
             $profile->setRetrievalType(ConfigurationProfileEntity::RETRIEVAL_TYPE_PSEUDO);
         }
