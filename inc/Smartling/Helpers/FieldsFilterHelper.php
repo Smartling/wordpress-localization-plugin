@@ -387,7 +387,7 @@ class FieldsFilterHelper
         }
 
         array_walk($remove, static function ($item) {
-            return preg_quote($item, '#');
+            return preg_replace('~([^\\\\])#~', '\1\#', $item);
         });
 
         $pattern = '#/(' . implode('|', $remove) . ')$#us';
@@ -411,7 +411,7 @@ class FieldsFilterHelper
 
         foreach ($fields as $key => $value) {
             foreach ($remove as $regex) {
-                $regex = preg_quote($regex, '/');
+                $regex = preg_replace('~([^\\\\])#~', '\1\#', $regex);
                 $parts = explode('/', $key);
                 $userPart = array_pop($parts);
                 if (0 !== preg_match("/$regex/", $userPart)) {
@@ -447,7 +447,7 @@ class FieldsFilterHelper
         $rebuild = [];
         foreach ($array as $key => $value) {
             foreach ($list as $item) {
-                $item = preg_quote($item, '/');
+                $item = preg_replace('~([^\\\\])#~', '\1\#', $item);
                 if (preg_match("/$item/us", $value)) {
                     $debugMessage = vsprintf('Removed field by value: filedName:\'%s\' fieldValue:\'%s\' filter:\'%s\'.',
                                              [$key, $value, $item]);

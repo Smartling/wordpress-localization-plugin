@@ -34,12 +34,12 @@ class MediaAttachmentRulesManager extends CustomizationManagerAbstract
         $rules = array_merge($this->preconfiguredRules, $this->listItems());
         if ($blockType !== null) {
             $rules = array_filter($rules, static function ($item) use ($blockType) {
-                return preg_match('#' . preg_quote($item->getBlockType(), '#') . '#', $blockType) === 1;
+                return preg_match('#' . preg_replace('~([^\\\\])#~', '\1\#', $item->getBlockType()) . '#', $blockType) === 1;
             });
         }
         if ($attribute !== null) {
             $rules = array_filter($rules, static function ($item) use ($attribute) {
-                return preg_match('#' . preg_quote($item->getPropertyPath(), '#') . '#', $attribute) === 1;
+                return preg_match('#' . preg_replace('~([^\\\\])#~', '\1\#', $item->getPropertyPath()) . '#', $attribute) === 1;
             });
         }
 
