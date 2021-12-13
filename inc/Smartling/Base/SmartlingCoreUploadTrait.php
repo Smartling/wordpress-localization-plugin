@@ -20,7 +20,6 @@ use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
 use Smartling\Helpers\PostContentHelper;
-use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\TestRunHelper;
@@ -32,7 +31,6 @@ use Smartling\Replacers\ContentIdReplacer;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\Controller\LiveNotificationController;
-use Smartling\WP\Controller\TestRunController;
 
 trait SmartlingCoreUploadTrait
 {
@@ -435,8 +433,6 @@ trait SmartlingCoreUploadTrait
                 $params[SubmissionEntity::FIELD_BATCH_UID] = [$submission->getBatchUid()];
             }
 
-            $locales = [];
-
             if (TestRunHelper::isTestRunBlog($submission->getTargetBlogId())) {
                 $params[SubmissionEntity::FIELD_TARGET_BLOG_ID][] = $submission->getTargetBlogId();
             }
@@ -446,7 +442,7 @@ trait SmartlingCoreUploadTrait
              */
             $submissions = $this->getSubmissionManager()->find($params);
 
-
+            $locales = [];
 
             foreach ($submissions as $_submission) {
                 /**

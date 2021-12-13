@@ -436,7 +436,7 @@ class AcfDynamicSupport
                     );
                 }
 
-                if (false && false === $this->verifyDefinitions($localDefinitions, $dbDefinitions)) {
+                if (false === $this->verifyDefinitions($localDefinitions, $dbDefinitions)) {
                     $url = admin_url('edit.php?post_type=acf-field-group&page=acf-tools');
                     $msg = [
                         'ACF Configuration has been changed.',
