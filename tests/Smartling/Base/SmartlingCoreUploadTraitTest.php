@@ -12,6 +12,7 @@ use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\XmlHelper;
 use Smartling\Replacers\ReplacerFactory;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -28,6 +29,7 @@ class SmartlingCoreUpload {
 
     private ContentHelper $contentHelper;
     private FieldsFilterHelper $fieldsFilterHelper;
+    private GutenbergBlockHelper $blockHelper;
     private SettingsManager $settingsManager;
     private SubmissionManager $submissionManager;
 
@@ -568,6 +570,7 @@ HTML;
             $this->createMock(MediaAttachmentRulesManager::class),
             $this->createMock(ReplacerFactory::class),
             new SerializerJsonWithFallback(),
+            $this->createMock(WordpressFunctionProxyHelper::class),
         ));
         self::assertEquals([], $smartlingCoreUpload->applyXML($submission, ' ', $xmlHelper, $postContentHelper));
     }

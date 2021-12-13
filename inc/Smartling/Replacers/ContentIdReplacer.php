@@ -25,34 +25,48 @@ class ContentIdReplacer implements ReplacerInterface
     }
 
     /**
-     * @param mixed $value
+     * @param mixed $originalValue
+     * @param mixed $translatedValue
+     *
      * @return mixed
      */
-    public function processOnDownload(SubmissionEntity $submission, $value)
+    public function processOnDownload($originalValue, $translatedValue, ?SubmissionEntity $submission)
     {
+        if ($submission === null) {
+            throw new \InvalidArgumentException('Submission must not be null');
+        }
         $sourceBlogId = $submission->getSourceBlogId();
         $targetBlogId = $submission->getTargetBlogId();
         $relatedSubmissions = $this->submissionManager->find([
             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
             SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
-            SubmissionEntity::FIELD_SOURCE_ID => $value,
+            SubmissionEntity::FIELD_SOURCE_ID => $translatedValue,
         ]);
         if (count($relatedSubmissions) === 0) {
             $this->logger->debug("No related submissions found while trying to replace content id for submissionId=\"{$submission->getId()}\", skipping");
-            return $value;
+            return $translatedValue;
         }
 
         if (count($relatedSubmissions) > 1) {
             $this->logger->warning("More than a single submission found while trying to replace content id for submissionId=\"{$submission->getId()}\", skipping");
-            return $value;
+            return $translatedValue;
         }
 
         $targetId = ArrayHelper::first($relatedSubmissions)->getTargetId();
         if ($targetId !== 0) {
-            settype($targetId, gettype($value));
+            settype($targetId, gettype($translatedValue));
             return $targetId;
         }
 
+        return $translatedValue;
+    }
+
+    /**
+     * @param mixed $value
+     * @return mixed
+     */
+    public function processOnUpload($value, ?SubmissionEntity $submission = null)
+    {
         return $value;
     }
 }
