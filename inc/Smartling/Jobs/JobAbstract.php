@@ -25,7 +25,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
 
     public const LAST_FINISH_SUFFIX = '-last-run';
     public const SOURCE_USER = 'user';
-    private const LOCK_RETRY_ATTEMPTS = 4;
+    private const LOCK_RETRY_ATTEMPTS = 2;
     private const LOCK_RETRY_WAIT_SECONDS = 1;
 
     protected ApiWrapperInterface $api;
