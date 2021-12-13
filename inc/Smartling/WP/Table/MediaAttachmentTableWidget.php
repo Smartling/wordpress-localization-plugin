@@ -62,8 +62,8 @@ class MediaAttachmentTableWidget extends \WP_List_Table
     public function get_columns(): array
     {
         return [
-            'block' => 'Gutenberg Block Name regex (delimiter is #)',
-            'path' => 'JSON Path regex (delimiter is #)',
+            'block' => 'Gutenberg Block Name regex',
+            'path' => 'JSON Path regex',
             'replacerId' => 'Rule',
         ];
 
