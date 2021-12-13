@@ -375,7 +375,7 @@ class FieldsFilterHelper
      * @param bool $removeAsRegExp
      * @return string[]
      */
-    public function removeFields(array $fields, array $remove, bool $removeAsRegExp): array
+    public function removeFields(array $fields, array $remove, $removeAsRegExp)
     {
         $result = [];
         if ([] === $remove) {
@@ -386,11 +386,7 @@ class FieldsFilterHelper
             return $this->removeFieldsRegExp($fields, $remove);
         }
 
-        array_walk($remove, static function ($item) {
-            return preg_replace('~([^\\\\])#~', '\1\#', $item);
-        });
-
-        $pattern = '#/(' . implode('|', $remove) . ')$#us';
+        $pattern = '#\/(' . implode('|', $remove) . ')$#us';
 
         foreach ($fields as $key => $value) {
             if (1 === preg_match($pattern, $key)) {
@@ -405,13 +401,11 @@ class FieldsFilterHelper
         return $result;
     }
 
-    private function removeFieldsRegExp(array $fields, array $remove): array
-    {
+    private function removeFieldsRegExp(array $fields, array $remove) {
         $result = [];
 
         foreach ($fields as $key => $value) {
             foreach ($remove as $regex) {
-                $regex = preg_replace('~([^\\\\])#~', '\1\#', $regex);
                 $parts = explode('/', $key);
                 $userPart = array_pop($parts);
                 if (0 !== preg_match("/$regex/", $userPart)) {
@@ -442,13 +436,18 @@ class FieldsFilterHelper
         return $rebuild;
     }
 
-    public function removeValuesByRegExp(array $array, array $list): array
+    /**
+     * @param $array
+     * @param $list
+     *
+     * @return array
+     */
+    public function removeValuesByRegExp($array, $list)
     {
         $rebuild = [];
         foreach ($array as $key => $value) {
             foreach ($list as $item) {
-                $item = preg_replace('~([^\\\\])#~', '\1\#', $item);
-                if (preg_match("/$item/us", $value)) {
+                if (preg_match("/{$item}/us", $value)) {
                     $debugMessage = vsprintf('Removed field by value: filedName:\'%s\' fieldValue:\'%s\' filter:\'%s\'.',
                                              [$key, $value, $item]);
                     $this->getLogger()->debug($debugMessage);
