@@ -117,8 +117,7 @@ class TestRunController extends WPAbstract implements WPHookInterface
     {
         add_action('admin_enqueue_scripts', [$this, 'wp_enqueue']);
         add_action('admin_menu', [$this, 'menu']);
-        add_action('wp_ajax_smartling_test_run', [$this, 'testRunWrap']);
-        add_action('wp_ajax_smartling_test_clean', [$this, 'testClean']);
+        add_action('wp_ajax_smartling_test_run', [$this, 'testRun']);
     }
 
     public function menu(): void
@@ -155,22 +154,6 @@ class TestRunController extends WPAbstract implements WPHookInterface
         }
 
         return $blogs;
-    }
-
-    public function testClean(): void
-    {
-        foreach ($this->submissionManager->find([SubmissionEntity::FIELD_TARGET_BLOG_ID => SimpleStorageHelper::get(self::TEST_RUN_BLOG_ID_SETTING_NAME)]) as $submission) {
-            $this->submissionManager->delete($submission);
-        }
-    }
-
-    public function testRunWrap($data): void
-    {
-        try {
-            $this->testRun($data);
-        } catch (\Throwable $e) {
-            wp_send_json_error($e->getMessage());
-        }
     }
 
     public function testRun($data): void
