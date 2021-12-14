@@ -51,7 +51,10 @@ class SettingsManager extends EntityManagerAbstract
     {
         $profile = $this->getSingleSettingsProfile($submission->getSourceBlogId());
         if (TestRunHelper::isTestRunBlog($submission->getTargetBlogId())) {
-            return $profile->getTargetLocales()[0]->getSmartlingLocale();
+            if (count($profile->getTargetLocales()) === 0) {
+                throw new SmartlingConfigException('Profile ' . $profile->getProfileName() . ' (' . $profile->getProjectId() . ') is expected to have at least one target locale for test run');
+            }
+            return ArrayHelper::first($profile->getTargetLocales())->getSmartlingLocale();
         }
 
         return $this->getSmartlingLocaleIdBySettingsProfile($profile, $submission->getTargetBlogId());

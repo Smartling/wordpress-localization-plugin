@@ -16,6 +16,7 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\Helpers\TestRunHelper;
 use Smartling\Jobs\JobAbstract;
 use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\UploadJob;
@@ -32,7 +33,6 @@ use Smartling\WP\WPHookInterface;
 class TestRunController extends WPAbstract implements WPHookInterface
 {
     private const TEST_RUN_JOB_NAME = 'Test Run Job';
-    public const TEST_RUN_BLOG_ID_SETTING_NAME = 'smartling_TestRunBlogId';
 
     protected LocalizationPluginProxyInterface $localizationPluginProxy;
     protected SiteHelper $siteHelper;
@@ -70,7 +70,7 @@ class TestRunController extends WPAbstract implements WPHookInterface
     public function buildViewData(): TestRunViewData
     {
         global $wpdb;
-        $testBlogId = SimpleStorageHelper::get(self::TEST_RUN_BLOG_ID_SETTING_NAME);
+        $testBlogId = SimpleStorageHelper::get(TestRunHelper::TEST_RUN_BLOG_ID_SETTING_NAME);
         $new = $inProgress = $completed = $failed = 0;
         if ($testBlogId !== null) {
             $testBlogId = (int)$testBlogId;
@@ -137,7 +137,7 @@ class TestRunController extends WPAbstract implements WPHookInterface
         $viewData = $this->buildViewData();
         if ($viewData->getNew() + $viewData->getInProgress() + $viewData->getCompleted() + $viewData->getFailed() === 0) {
             $this->getLogger()->notice('A blog was selected for test run, but no entries uploaded, clearing test run blog');
-            SimpleStorageHelper::drop(self::TEST_RUN_BLOG_ID_SETTING_NAME);
+            SimpleStorageHelper::drop(TestRunHelper::TEST_RUN_BLOG_ID_SETTING_NAME);
             $viewData = $this->buildViewData();
         }
         $this->view($viewData);
@@ -170,7 +170,7 @@ class TestRunController extends WPAbstract implements WPHookInterface
             wp_send_json_error('Unable to get active profile for blogId=' . $data['sourceBlogId']);
         }
         $targetBlogId = (int)$data['targetBlogId'];
-        SimpleStorageHelper::set(self::TEST_RUN_BLOG_ID_SETTING_NAME, $targetBlogId);
+        SimpleStorageHelper::set(TestRunHelper::TEST_RUN_BLOG_ID_SETTING_NAME, $targetBlogId);
 
         try {
             $job = $this->getJob($profile);

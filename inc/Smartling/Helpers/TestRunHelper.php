@@ -5,10 +5,10 @@ namespace Smartling\Helpers;
 use Smartling\Exception\SmartlingTestRunCheckFailedException;
 use Smartling\Models\GutenbergBlock;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\WP\Controller\TestRunController;
 
 class TestRunHelper
 {
+    public const TEST_RUN_BLOG_ID_SETTING_NAME = 'smartling_TestRunBlogId';
     private SiteHelper $siteHelper;
     private GutenbergBlockHelper $gutenbergBlockHelper;
 
@@ -20,7 +20,7 @@ class TestRunHelper
 
     public static function isTestRunBlog(int $id): bool
     {
-        return $id === (int)SimpleStorageHelper::get(TestRunController::TEST_RUN_BLOG_ID_SETTING_NAME);
+        return $id === (int)SimpleStorageHelper::get(self::TEST_RUN_BLOG_ID_SETTING_NAME);
     }
 
     public function checkDownloadedSubmission(SubmissionEntity $submission): void
