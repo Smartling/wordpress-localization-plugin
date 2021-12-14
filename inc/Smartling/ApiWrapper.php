@@ -307,11 +307,9 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
-    private function getSmartlingLocaleBySubmission(SubmissionEntity $entity)
+    private function getSmartlingLocaleBySubmission(SubmissionEntity $entity): string
     {
-        $profile = $this->getSettings()->getSingleSettingsProfile($entity->getSourceBlogId());
-
-        return $this->getSettings()->getSmartlingLocaleIdBySettingsProfile($profile, $entity->getTargetBlogId());
+        return $this->getSettings()->getSmartlingLocaleBySubmission($entity);
     }
 
     /**

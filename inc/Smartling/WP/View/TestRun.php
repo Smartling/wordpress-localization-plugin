@@ -99,7 +99,7 @@ if ($viewData->getTestBlogId() === null) {
 </table>
 <?php
 if ($viewData->getNew() + $viewData->getInProgress() === 0) {
-    echo '<p>Test run is has completed. You should now review the translated blog to check if English strings everywhere are replaced with pseudo translations.</p>';
+    echo '<p>Test run is has completed. You should now review the translated blog to check if strings everywhere are replaced with pseudo translations.</p>';
 } else {
     echo '<p>Test run is in progress. When there are no pending submissions, you should review the translated blog.';
 }
