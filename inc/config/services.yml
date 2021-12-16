@@ -62,6 +62,10 @@ services:
     calls:
       - ["setDbal", ["@site.db"]]
 
+  content.relations.handler:
+    class: Smartling\Services\ContentRelationsHandler
+    arguments:
+      - "@service.relations-discovery"
 
   entrypoint:
     class: Smartling\Base\SmartlingCore
@@ -141,6 +145,7 @@ services:
         - "%plugin.domain%"
         - "@manager.settings"
         - "%plugin.upload%"
+
   localization.plugin.proxy.collection:
     class: Smartling\Services\LocalizationPluginProxyCollection
     calls:
@@ -211,6 +216,19 @@ services:
       - "@wp.proxy"
       - "@entity.helper"
       - "@site.cache"
+
+  wp.test.run:
+    class: Smartling\WP\Controller\TestRunController
+    arguments:
+      - "@plugin.info"
+      - "@multilang.proxy"
+      - "@site.helper"
+      - "@manager.submission"
+      - "@entity.helper"
+      - "@site.cache"
+      - "@service.relations-discovery"
+      - "@wrapper.sdk.api.smartling"
+      - "@manager.settings"
 
   wp.checkStatus:
       class: Smartling\WP\Controller\CheckStatusController
