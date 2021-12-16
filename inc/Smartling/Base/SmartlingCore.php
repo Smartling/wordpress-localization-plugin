@@ -10,6 +10,7 @@ use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
 use Smartling\Helpers\PostContentHelper;
+use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\XmlHelper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -26,9 +27,10 @@ class SmartlingCore extends SmartlingCoreAbstract
     use CommonLogMessagesTrait;
 
     private $postContentHelper;
+    private TestRunHelper $testRunHelper;
     private $xmlHelper;
 
-    public function __construct(PostContentHelper $postContentHelper, XmlHelper $xmlHelper)
+    public function __construct(PostContentHelper $postContentHelper, XmlHelper $xmlHelper, TestRunHelper $testRunHelper)
     {
         parent::__construct();
 
@@ -40,6 +42,9 @@ class SmartlingCore extends SmartlingCoreAbstract
         add_filter(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, [$this, 'prepareTargetContent']);
         add_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, [$this, 'syncAttachment']);
         $this->postContentHelper = $postContentHelper;
+        /** @noinspection UnusedConstructorDependenciesInspection */
+        /** @see SmartlingCoreUploadTrait::applyXML() */
+        $this->testRunHelper = $testRunHelper;
         $this->xmlHelper = $xmlHelper;
     }
 

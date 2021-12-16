@@ -15,6 +15,7 @@ use Smartling\Vendor\Monolog\Handler\NullHandler;
 use Smartling\Vendor\Symfony\Component\Config\FileLocator;
 use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 use Smartling\Vendor\Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
+use Smartling\WP\Controller\ConfigurationProfilesController;
 
 trait DITrait
 {
@@ -158,7 +159,7 @@ trait DITrait
                         '<strong>Warning!</strong>',
                         vsprintf('It is not possible to write runtime logs into a file <strong>%s</strong>.', [Bootstrap::getLogFileName()]),
                         'It\'s highly important to have a log file in case of troubleshooting issues with translations.',
-                        vsprintf('Please review <a href="%s">logger configuration</a> and fix it.', [admin_url('admin.php?page=smartling_configuration_profile_list')]),
+                        vsprintf('Please review <a href="%s">logger configuration</a> and fix it.', [admin_url('admin.php?page=' . ConfigurationProfilesController::MENU_SLUG)]),
                     ];
                     DiagnosticsHelper::addDiagnosticsMessage(implode('<br/>', $msg));
                 });

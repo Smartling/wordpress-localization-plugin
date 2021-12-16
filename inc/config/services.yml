@@ -72,6 +72,7 @@ services:
     arguments:
       - "@helper.post.content"
       - "@helper.xml"
+      - "@test.run.helper"
     calls:
       - [ "setSubmissionManager", [ "@manager.submission" ]]
       - [ "setSiteHelper", [ "@site.helper" ]]
@@ -86,7 +87,6 @@ services:
       - [ "setTranslationHelper", [ "@translation.helper" ]]
       - [ "setFieldsFilter", [ "@fields-filter.helper" ] ]
       - [ "setContentSerializationHelper", [ "@content-serialization.helper" ] ]
-
 
   factory.contentIO:
     class: Smartling\Processors\ContentEntitiesIOFactory
@@ -168,6 +168,12 @@ services:
       - [ "setConnector", [ "@multilang.proxy" ]]
       - [ "setSiteHelper", [ "@site.helper" ]]
 
+  test.run.helper:
+    class: Smartling\Helpers\TestRunHelper
+    arguments:
+      - "@site.helper"
+      - "@helper.gutenberg"
+
   wp.proxy:
     class: Smartling\Helpers\WordpressFunctionProxyHelper
 
@@ -229,6 +235,7 @@ services:
       - "@service.relations-discovery"
       - "@wrapper.sdk.api.smartling"
       - "@manager.settings"
+      - "%cron.interval.upload%"
 
   wp.checkStatus:
       class: Smartling\WP\Controller\CheckStatusController

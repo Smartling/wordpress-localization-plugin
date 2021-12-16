@@ -14,6 +14,7 @@ use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\FileHelper;
 use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\RuntimeCacheHelper;
+use Smartling\Helpers\TestRunHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -140,14 +141,15 @@ class ApiWrapper implements ApiWrapperInterface
     }
 
     /**
-     * @param SubmissionEntity $submission
-     *
-     * @return ConfigurationProfileEntity
      * @throws SmartlingDbException
      */
-    private function getConfigurationProfile(SubmissionEntity $submission)
+    private function getConfigurationProfile(SubmissionEntity $submission): ConfigurationProfileEntity
     {
         $profile = $this->getSettings()->getSingleSettingsProfile($submission->getSourceBlogId());
+        if (TestRunHelper::isTestRunBlog($submission->getTargetBlogId())) {
+            $profile->setRetrievalType(ConfigurationProfileEntity::RETRIEVAL_TYPE_PSEUDO);
+        }
+
         LogContextMixinHelper::addToContext('projectId', $profile->getProjectId());
 
         return $profile;
@@ -305,11 +307,9 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
-    private function getSmartlingLocaleBySubmission(SubmissionEntity $entity)
+    private function getSmartlingLocaleBySubmission(SubmissionEntity $entity): string
     {
-        $profile = $this->getSettings()->getSingleSettingsProfile($entity->getSourceBlogId());
-
-        return $this->getSettings()->getSmartlingLocaleIdBySettingsProfile($profile, $entity->getTargetBlogId());
+        return $this->getSettings()->getSmartlingLocaleBySubmission($entity);
     }
 
     /**

@@ -11,6 +11,7 @@ use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
+use Smartling\Helpers\TestRunHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 class SettingsManager extends EntityManagerAbstract
@@ -49,6 +50,12 @@ class SettingsManager extends EntityManagerAbstract
     public function getSmartlingLocaleBySubmission(SubmissionEntity $submission): string
     {
         $profile = $this->getSingleSettingsProfile($submission->getSourceBlogId());
+        if (TestRunHelper::isTestRunBlog($submission->getTargetBlogId())) {
+            if (count($profile->getTargetLocales()) === 0) {
+                throw new SmartlingConfigException('Profile ' . $profile->getProfileName() . ' (' . $profile->getProjectId() . ') is expected to have at least one target locale for test run');
+            }
+            return ArrayHelper::first($profile->getTargetLocales())->getSmartlingLocale();
+        }
 
         return $this->getSmartlingLocaleIdBySettingsProfile($profile, $submission->getTargetBlogId());
     }

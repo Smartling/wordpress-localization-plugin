@@ -98,7 +98,7 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
         $data = $_GET;
         $data['targetBlogIds'] = $this->convertTargetBlogIds($data['targetBlogIds']);
         try {
-            $this->returnSuccess(['data' => $this->service->getRelations($_GET['content-type'], (int)$_GET['id'], $this->convertTargetBlogIds($_GET['targetBlogIds']))]);
+            $this->returnSuccess(['data' => $this->service->getRelations($data['content-type'], (int)$data['id'], $data['targetBlogIds'])->toArray()]);
         } catch (SmartlingHumanReadableException $e) {
             $this->returnError($e->getKey(), $e->getMessage(), $e->getResponseCode());
         } catch (Exception $e) {

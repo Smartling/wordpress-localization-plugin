@@ -5,6 +5,7 @@ namespace Smartling\Base;
 use Smartling\Bootstrap;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Vendor\Monolog\Handler\RotatingFileHandler;
+use Smartling\WP\Controller\ConfigurationProfilesController;
 
 /**
  * Class CustomRotatingFileHandler
@@ -33,7 +34,7 @@ class CustomRotatingFileHandler extends RotatingFileHandler
                         vsprintf('An error occurred while writing a log file: <strong>%s</strong>.', [Bootstrap::getLogFileName()]),
                         vsprintf('Message: %s', [$e->getMessage()]),
                         'It\'s highly important to have a log file in case of troubleshooting issues with translations.',
-                        vsprintf('Please review <a href="%s">logger configuration</a> and fix it.', [admin_url('admin.php?page=smartling_configuration_profile_list')]),
+                        vsprintf('Please review <a href="%s">logger configuration</a> and fix it.', [admin_url('admin.php?page=' . ConfigurationProfilesController::MENU_SLUG)]),
                     ];
                     DiagnosticsHelper::addDiagnosticsMessage(implode('<br/>', $msg));
                 }, 99);

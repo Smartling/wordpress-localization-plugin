@@ -12,6 +12,7 @@ use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
+use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\XmlHelper;
 use Smartling\Replacers\ReplacerFactory;
@@ -32,13 +33,15 @@ class SmartlingCoreUpload {
     private GutenbergBlockHelper $blockHelper;
     private SettingsManager $settingsManager;
     private SubmissionManager $submissionManager;
+    private TestRunHelper $testRunHelper;
 
-    public function __construct(ContentHelper $contentHelper, FieldsFilterHelper $fieldsFilterHelper, SettingsManager $settingsManager, SubmissionManager $submissionManager)
+    public function __construct(ContentHelper $contentHelper, FieldsFilterHelper $fieldsFilterHelper, SettingsManager $settingsManager, SubmissionManager $submissionManager, TestRunHelper $testRunHelper)
     {
         $this->contentHelper = $contentHelper;
         $this->fieldsFilterHelper = $fieldsFilterHelper;
         $this->settingsManager = $settingsManager;
         $this->submissionManager = $submissionManager;
+        $this->testRunHelper = $testRunHelper;
     }
 
     public function getLogger(): NullLogger
@@ -104,7 +107,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
         $submissionManager->method('storeEntity')->willReturnArgument(0);
 
-        $x = new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager);
+        $x = new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager, $this->createMock(TestRunHelper::class));
         $xmlHelper = $this->createMock(XmlHelper::class);
         $xmlHelper->method('xmlDecode')->willReturn(new DecodedXml(
             ['meta' => $translatedFields],
@@ -143,7 +146,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
         $submissionManager->method('storeEntity')->willReturnArgument(0);
 
-        $x = new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager);
+        $x = new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager, $this->createMock(TestRunHelper::class));
         $xmlHelper = $this->createMock(XmlHelper::class);
         $xmlHelper->method('xmlDecode')->willReturn(new DecodedXml(
             ['meta' => ['metaToTranslate' => '~Translated~']],
@@ -235,7 +238,7 @@ HTML;
         $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
         $submissionManager->method('storeEntity')->willReturnArgument(0);
 
-        $x = new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager);
+        $x = new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager, $this->createMock(TestRunHelper::class));
         $xmlHelper = $this->createMock(XmlHelper::class);
         $xmlHelper->method('xmlDecode')->willReturn(new DecodedXml(
             ['entity' => ['post_content' => $translatedContent]],
@@ -394,7 +397,7 @@ HTML;
         $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
         $submissionManager->method('storeEntity')->willReturnArgument(0);
 
-        $x = new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager);
+        $x = new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager, $this->createMock(TestRunHelper::class));
         $xmlHelper = $this->createMock(XmlHelper::class);
         $xmlHelper->method('xmlDecode')->willReturn(new DecodedXml(
             ['entity' => ['post_content' => $translatedContent]],
@@ -549,7 +552,7 @@ HTML;
         $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
         $submissionManager->method('storeEntity')->willReturnArgument(0);
 
-        $x = new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager);
+        $x = new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager, $this->createMock(TestRunHelper::class));
         $xmlHelper = $this->createMock(XmlHelper::class);
         $xmlHelper->method('xmlDecode')->willReturn(new DecodedXml(
             ['entity' => ['post_content' => $translatedContent]],

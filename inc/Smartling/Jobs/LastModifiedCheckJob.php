@@ -5,6 +5,7 @@ namespace Smartling\Jobs;
 use Smartling\ApiWrapperInterface;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\TestRunHelper;
 use Smartling\Queue\QueueInterface;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
@@ -160,7 +161,7 @@ class LastModifiedCheckJob extends JobAbstract
                 continue;
             }
             foreach ($serializedPair as $serializedSubmissions) {
-                $submissionList = $this->submissionManager->findByIds($serializedSubmissions);
+                $submissionList = $this->processTestRun($this->submissionManager->findByIds($serializedSubmissions));
 
                 try {
                     $submissions = $this->processFileUriSet($submissionList, $failMissing);
@@ -210,6 +211,25 @@ class LastModifiedCheckJob extends JobAbstract
                 $this->queue->enqueue([$submission->getId()], QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE);
             }
         }
+    }
+
+    /**
+     * @param SubmissionEntity[] $submissions
+     *
+     * @return SubmissionEntity[]
+     */
+    private function processTestRun(array $submissions): array
+    {
+        $result = [];
+        foreach ($submissions as $submission) {
+            if ($submission->getStatus() === SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS && TestRunHelper::isTestRunBlog($submission->getTargetBlogId())) {
+                $this->queue->enqueue([$submission->getId()], QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE);
+            } else {
+                $result[] = $submission;
+            }
+        }
+
+        return $result;
     }
 
     /**

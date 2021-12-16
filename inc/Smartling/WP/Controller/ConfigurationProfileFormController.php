@@ -93,7 +93,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
     public function menu(): void
     {
         add_submenu_page(
-            'smartling_configuration_profile_list',
+            ConfigurationProfilesController::MENU_SLUG,
             'Profile setup',
             'Configuration Profile Setup',
             SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP,
@@ -260,7 +260,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 
         if ($this->validateTargetLocales($usedTargetLocales)) {
             $settingsManager->storeEntity($profile);
-            wp_redirect(get_admin_url(null, 'admin.php?page=smartling_configuration_profile_list'));
+            wp_redirect(get_admin_url(null, 'admin.php?page=' . ConfigurationProfilesController::MENU_SLUG));
         } elseif ($profile->getId() > 0) {
             wp_redirect(get_admin_url(null, 'admin.php?page=smartling_configuration_profile_setup&error=' . self::ERROR_TARGET_LOCALES . '&action=edit&profile=' . $profile->getId()));
         }
