@@ -181,9 +181,22 @@ class ContentRelationsDiscoveryService
                 }
             }
             foreach ($sources as $source) {
-                $submissionArray[SubmissionEntity::FIELD_CONTENT_TYPE] = $source['type'];
                 $submissionArray[SubmissionEntity::FIELD_SOURCE_ID] = (int)$source['id'];
-                $existing = ArrayHelper::first($this->submissionManager->find($submissionArray));
+                $found = $this->submissionManager->find($submissionArray);
+                if (count($found) > 1) {
+                    $types = array_reduce($found, static function (array $carry, SubmissionEntity $submission) {
+                        $carry[] = $submission->getContentType();
+                        return $carry;
+                    }, []);
+                    $this->getLogger()->notice(sprintf(
+                        'Multiple submissions found for sourceBlogId=%d, sourceId=%d, targetBlogId=%d, types="%s"',
+                        $submissionArray[SubmissionEntity::FIELD_SOURCE_BLOG_ID],
+                        $submissionArray[SubmissionEntity::FIELD_SOURCE_ID],
+                        $submissionArray[SubmissionEntity::FIELD_TARGET_BLOG_ID],
+                        implode(',', $types)
+                    ));
+                }
+                $existing = ArrayHelper::first($found);
                 if ($existing instanceof SubmissionEntity) {
                     $submission = $existing;
                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);

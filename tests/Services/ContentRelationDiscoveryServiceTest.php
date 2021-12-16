@@ -48,6 +48,7 @@ namespace Smartling\Tests\Services {
     use Smartling\Submissions\SubmissionManager;
     use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
     use Smartling\Tuner\MediaAttachmentRulesManager;
+    use Smartling\Vendor\Psr\Log\NullLogger;
 
     class ContentRelationDiscoveryServiceTest extends TestCase
     {
@@ -354,9 +355,6 @@ namespace Smartling\Tests\Services {
 
             $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
 
-            if (function_exists('switch_to_blog')) {
-                switch_to_blog(1);
-            }
             $x->createSubmissions([
                 'source' => ['contentType' => $contentType, 'id' => [$sourceId]],
                 'job' =>
@@ -374,6 +372,35 @@ namespace Smartling\Tests\Services {
             Bootstrap::getContainer()->set('factory.contentIO', $ioFactory);
         }
 
+        public function testCloneCreatesNoDuplicateMediaOnDifferentTypes(): void
+        {
+            $submissionManager = $this->createMock(SubmissionManager::class);
+            $submissionManager->method('find')->willReturnCallback(function (array $params) {
+                if ($params[SubmissionEntity::FIELD_SOURCE_ID] === 652) {
+                    return [
+                        SubmissionEntity::fromArray([
+                            SubmissionEntity::FIELD_SOURCE_ID => 652,
+                            SubmissionEntity::FIELD_CONTENT_TYPE => 'attachment',
+                        ], new NullLogger()),
+                        SubmissionEntity::fromArray([
+                            SubmissionEntity::FIELD_SOURCE_ID => 652,
+                            SubmissionEntity::FIELD_CONTENT_TYPE => 'otherType',
+                        ], new NullLogger()),
+                    ];
+                }
+                return [SubmissionEntity::fromArray([SubmissionEntity::FIELD_SOURCE_ID => $params[SubmissionEntity::FIELD_SOURCE_ID]], new NullLogger())];
+            });
+            $submissionManager->method('storeSubmissions')->willReturnCallback(function (array $submissions) {
+                $this->assertEquals([656, 651, 654, 652], array_reduce($submissions, static function (array $carry, SubmissionEntity $submission) {
+                    $carry[] = $submission->getSourceId();
+                    return $carry;
+                }, []));
+                return $submissions;
+            });
+            $x = $this->getContentRelationDiscoveryService($this->createMock(ApiWrapper::class), $this->createMock(ContentHelper::class), $this->createMock(SettingsManager::class), $submissionManager);
+            $x->clone(json_decode('{"formAction":"clone","source":{"contentType":"post","id":["656"]},"targetBlogIds":"2","relations":{"2":{"post":["651","654"],"attachment":["652"]},"3":{"post":["651","654"],"attachment":["652"]},"4":{"post":["651","654"],"attachment":["652"]}}}', true));
+        }
+
         /**
          * @return MockObject|ContentRelationsDiscoveryService
          */
@@ -382,8 +409,7 @@ namespace Smartling\Tests\Services {
             ContentHelper $contentHelper,
             SettingsManager $settingsManager,
             SubmissionManager $submissionManager
-        )
-        {
+        ) {
             return $this->getMockBuilder(ContentRelationsDiscoveryService::class)->setConstructorArgs([
                 $contentHelper,
                 $this->createMock(FieldsFilterHelper::class),
