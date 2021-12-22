@@ -62,6 +62,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 2.11.1 =
+* Fixed media library attachments duplication when cloning
+
 = 2.11.0 =
 * Added test run. Test run submits posts and pages to a new blog for "pseudo" translation. This should help quickly check compatibility between your content and the plugin.
 

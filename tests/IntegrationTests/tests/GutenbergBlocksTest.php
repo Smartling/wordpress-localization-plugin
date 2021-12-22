@@ -43,12 +43,6 @@ class GutenbergBlocksTest extends SmartlingUnitTestCaseAbstract
 HTML;
         $postIds = [];
         $submissions = [];
-        $this->rulesManager->offsetSet('blade', [
-            'block' => 'sf/post',
-            'path' => 'id',
-            'replacerId' => 'related|post',
-        ]);
-        $this->rulesManager->saveData();
         for ($id = 1; $id < 4; $id++) {
             $postIds[] = $this->createPost('post', "title $id", "Post $id content");
         }
@@ -64,17 +58,20 @@ HTML;
             $submission->getFileUri();
             $this->submissionManager->storeEntity($submission);
         }
-        $this->executeUpload();
-        $this->forceSubmissionDownload($submissions[3]);
+        $this->withBlockRules($this->rulesManager, ['test' => [
+            'block' => 'sf/post',
+            'path' => 'id',
+            'replacerId' => 'related|post',
+        ]], function () use ($submissions) {
+            $this->executeUpload();
+            $this->forceSubmissionDownload($submissions[3]);
+        });
+
         foreach ($submissions as &$submission) {
             $submission = $this->translationHelper->reloadSubmission($submission);
         }
         unset($submission);
         $submission = ArrayHelper::first($this->submissionManager->find(['id' => $submissions[3]->getId()]));
-
-        // cleanup
-        $this->rulesManager->offsetUnset('blade');
-        $this->rulesManager->saveData();
 
         $blocks = $this->getGutenbergBlockHelper()->parseBlocks($this->getTargetPost($this->siteHelper, $submission)->post_content);
         $this->assertCount(2, $blocks, 'Expected to have an wp:sf/fourup-blade-layout-one block, and non-Gutenberg block');
@@ -111,29 +108,28 @@ HTML;
 <!-- /wp:si/nested -->
 <!-- /wp:si/block -->
 HTML;
-        $this->rulesManager->offsetSet('copy', [
-            'block' => 'si/block',
-            'path' => 'copy',
-            'replacerId' => 'copy',
-        ]);
-        $this->rulesManager->offsetSet('exclude', [
-            'block' => 'si/block',
-            'path' => 'exclude',
-            'replacerId' => 'exclude',
-        ]);
-        $this->rulesManager->saveData();
         $postId = $this->createPost('post', 'main title', $content);
         $submission = $this->translationHelper->prepareSubmission('post', $this->sourceBlogId, $postId, $this->targetBlogId);
         $submission->getFileUri();
         $this->submissionManager->storeEntity($submission);
-        $this->executeUpload();
-        $this->forceSubmissionDownload($submission);
+        $this->withBlockRules($this->rulesManager, [
+            'copy' => [
+                'block' => 'si/block',
+                'path' => 'copy',
+                'replacerId' => 'copy',
+            ],
+            'exclude' => [
+                'block' => 'si/block',
+                'path' => 'exclude',
+                'replacerId' => 'exclude',
+            ],
+        ], function () use ($submission) {
+            $this->executeUpload();
+            $this->forceSubmissionDownload($submission);
+        });
+
         $submission = $this->translationHelper->reloadSubmission($submission);
 
-        // cleanup
-        $this->rulesManager->offsetUnset('copy');
-        $this->rulesManager->offsetUnset('exclude');
-        $this->rulesManager->saveData();
         $this->assertEquals($expected, $this->getTargetPost($this->siteHelper, $submission)->post_content);
     }
 
