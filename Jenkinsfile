@@ -14,10 +14,10 @@ pipeline {
             steps {
                 sh '''
                 composer global install ilab/namespacer
-                ~/composer/vendor/ilab/namespacer/bin/namespacer --composer ./composer.json --package smartling-connector --namespace "Smartling\Vendor" inc
+                ~/composer/vendor/ilab/namespacer/bin/namespacer --composer ./composer.json --package smartling-connector --namespace "Smartling\\Vendor" inc
                 # Second pass required
-                ~/composer/vendor/ilab/namespacer/bin/namespacer --composer ./composer.json --package smartling-connector --namespace "Smartling\Vendor" inc
-                find ./inc/lib -type f -name '*.php' -exec sed -i '' 's~Smartling\\Vendor\\Smartling\\Vendor\\~Smartling\\Vendor\\~g' {} +
+                ~/composer/vendor/ilab/namespacer/bin/namespacer --composer ./composer.json --package smartling-connector --namespace "Smartling\\Vendor" inc
+                find ./inc/lib -type f -name '*.php' -exec sed -i '' 's~Smartling\\\\Vendor\\\\Smartling\\\\Vendor\\\\~Smartling\\\\Vendor\\\\~g' {} +
                 '''
             }
         }
