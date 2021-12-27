@@ -32,16 +32,16 @@ composer global require ilab/namespacer
 chown -R mysql:mysql /var/lib/mysql && service mysql start
 
 cd "$LOCAL_GIT_DIR"
-wget https://raw.githubusercontent.com/vsolovei-smartling/namespacer/master/Source/Commands/RenamespaceCommand.php
-wget https://raw.githubusercontent.com/vsolovei-smartling/namespacer/master/Source/Models/Package.php
-wget https://raw.githubusercontent.com/vsolovei-smartling/namespacer/master/Source/Models/Project.php
-mv RenamespaceCommand.php ~/.composer/vendor/ilab/namespacer/Source/Commands
-mv Package.php Project.php ~/.composer/vendor/ilab/namespacer/Source/Models
+chdir
+curl -s -o ~/.composer/vendor/ilab/namespacer/Source/Commands/RenamespaceCommand.php https://raw.githubusercontent.com/vsolovei-smartling/namespacer/master/Source/Commands/RenamespaceCommand.php
+curl -s -o ~/.composer/vendor/ilab/namespacer/Source/Models/Package.php https://raw.githubusercontent.com/vsolovei-smartling/namespacer/master/Source/Models/Package.php
+curl -s -o ~/.composer/vendor/ilab/namespacer/Source/Models/Project.php  https://raw.githubusercontent.com/vsolovei-smartling/namespacer/master/Source/Models/Project.php
 
 composer update
-echo "Starting namespacer"
 ~/.composer/vendor/ilab/namespacer/bin/namespacer --composer ./composer.json --package smartling-connector --namespace "Smartling\Vendor" inc
-echo "Namespacer done"
+# two instances of replace not a typo
+find ./inc/lib -type f -name '*.php' -exec sed -i '' 's~Smartling\\Vendor\\Smartling\\Vendor\\~Smartling\\Vendor\\~g' {} +
+find ./inc/lib -type f -name '*.php' -exec sed -i '' 's~Smartling\\Vendor\\Smartling\\Vendor\\~Smartling\\Vendor\\~g' {} +
 
 # remove installer plugin dir and replace with dev dir
 rm -rf "$PLUGIN_DIR"
@@ -73,7 +73,7 @@ PHPUNIT_EXIT_CODE=$?
 
 service mysql stop
 
-svn checkout https://plugins.svn.wordpress.org/smartling-connector/trunk trunk
+#svn checkout https://plugins.svn.wordpress.org/smartling-connector/trunk trunk
 
 chdir
 
