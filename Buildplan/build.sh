@@ -63,3 +63,7 @@ PHPUNIT_XML="${PLUGIN_DIR}/tests/phpunit.xml"
 PHPUNIT_EXIT_CODE=$?
 
 service mysql stop
+
+svn checkout https://plugins.svn.wordpress.org/smartling-connector/trunk trunk
+
+zip -r wordpress-connector.zip trunk/
