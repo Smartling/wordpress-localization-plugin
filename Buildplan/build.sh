@@ -34,7 +34,7 @@ chown -R mysql:mysql /var/lib/mysql && service mysql start
 cd "$LOCAL_GIT_DIR"
 composer update
 echo "Starting namespacer"
-~/.composer/vendor/ilab/namespacer/bin/namespacer --config /config.patches.php --composer ./composer.json --package smartling-connector --namespace "Smartling\Vendor" inc
+~/.composer/vendor/ilab/namespacer/bin/namespacer --composer ./composer.json --package smartling-connector --namespace "Smartling\Vendor" inc
 echo "Namespacer done"
 
 # remove installer plugin dir and replace with dev dir
