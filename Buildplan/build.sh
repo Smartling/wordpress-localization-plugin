@@ -26,7 +26,7 @@ php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
 php composer-setup.php --install-dir="$COMPOSER_INSTALL_DIR" --filename=composer
 php -r "unlink('composer-setup.php');"
 COMPOSER_BIN="$COMPOSER_INSTALL_DIR/composer"
-$COMPOSER_BIN global install ilab/namespacer
+$COMPOSER_BIN global require ilab/namespacer
 
 chown -R mysql:mysql /var/lib/mysql && service mysql start
 
