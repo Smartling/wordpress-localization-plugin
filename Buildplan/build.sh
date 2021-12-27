@@ -27,14 +27,14 @@ php composer-setup.php --install-dir="$COMPOSER_INSTALL_DIR" --filename=composer
 php -r "unlink('composer-setup.php');"
 COMPOSER_BIN="$COMPOSER_INSTALL_DIR/composer"
 cp $COMPOSER_INSTALL_DIR/composer /usr/local/bin/composer
-composer global require ilab/namespacer
+composer global require vsolovei-smartling/namespacer
 
 chown -R mysql:mysql /var/lib/mysql && service mysql start
 
 cd "$LOCAL_GIT_DIR"
 composer update
 echo "Starting namespacer"
-~/.composer/vendor/ilab/namespacer/bin/namespacer --composer ./composer.json --package smartling-connector --namespace "Smartling\Vendor" inc
+~/.composer/vendor/vsolovei-smartling/namespacer/bin/namespacer --composer ./composer.json --package smartling-connector --namespace "Smartling\Vendor" inc
 echo "Namespacer done"
 
 # remove installer plugin dir and replace with dev dir
