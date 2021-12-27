@@ -27,13 +27,15 @@ php composer-setup.php --install-dir="$COMPOSER_INSTALL_DIR" --filename=composer
 php -r "unlink('composer-setup.php');"
 COMPOSER_BIN="$COMPOSER_INSTALL_DIR/composer"
 cp $COMPOSER_INSTALL_DIR/composer /usr/local/bin/composer
-$COMPOSER_BIN global require ilab/namespacer
+composer global require ilab/namespacer
 
 chown -R mysql:mysql /var/lib/mysql && service mysql start
 
 cd "$LOCAL_GIT_DIR"
-$COMPOSER_BIN update
+composer update
+echo "Starting namespacer"
 ~/.composer/vendor/ilab/namespacer/bin/namespacer --composer ./composer.json --package smartling-connector --namespace "Smartling\Vendor" inc
+echo "Namespacer done"
 
 # remove installer plugin dir and replace with dev dir
 rm -rf "$PLUGIN_DIR"
@@ -66,5 +68,7 @@ PHPUNIT_EXIT_CODE=$?
 service mysql stop
 
 svn checkout https://plugins.svn.wordpress.org/smartling-connector/trunk trunk
+
+chdir
 
 zip -r wordpress-connector.zip trunk/
