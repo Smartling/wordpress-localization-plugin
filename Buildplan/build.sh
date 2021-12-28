@@ -66,4 +66,4 @@ PHPUNIT_EXIT_CODE=$?
 
 service mysql stop
 
-chdir
+exit $PHPUNIT_EXIT_CODE
