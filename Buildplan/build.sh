@@ -18,12 +18,23 @@
 # CRE_TOKEN_SECRET
 
 # install composer
-svn checkout https://plugins.svn.wordpress.org/smartling-connector/trunk trunk
-cp -r trunk/inc/lib ./inc
+COMPOSER_INSTALL_DIR="$LOCAL_GIT_DIR/inc/third-party/bin"
+if [ ! -d "$COMPOSER_INSTALL_DIR" ]; then
+    mkdir -p "$COMPOSER_INSTALL_DIR"
+fi
+php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+php composer-setup.php --install-dir="$COMPOSER_INSTALL_DIR" --filename=composer
+php -r "unlink('composer-setup.php');"
+COMPOSER_BIN="$COMPOSER_INSTALL_DIR/composer"
 
 chown -R mysql:mysql /var/lib/mysql && service mysql start
 
 cd "$LOCAL_GIT_DIR"
+$COMPOSER_BIN update
+svn checkout https://plugins.svn.wordpress.org/smartling-connector/trunk trunk
+cp -r trunk/inc/lib ./inc
+
+chown -R mysql:mysql /var/lib/mysql && service mysql start
 
 # remove installer plugin dir and replace with dev dir
 rm -rf "$PLUGIN_DIR"
