@@ -62,7 +62,7 @@ class ApiWrapper implements ApiWrapperInterface
     /**
      * @throws SmartlingDbException
      */
-    public function getConfigurationProfile(SubmissionEntity $submission): ConfigurationProfileEntity
+    private function getConfigurationProfile(SubmissionEntity $submission): ConfigurationProfileEntity
     {
         $profile = $this->settings->getSingleSettingsProfile($submission->getSourceBlogId());
         if (TestRunHelper::isTestRunBlog($submission->getTargetBlogId())) {
@@ -74,7 +74,7 @@ class ApiWrapper implements ApiWrapperInterface
         return $profile;
     }
 
-    public function getAuthProvider(ConfigurationProfileEntity $profile): AuthTokenProvider
+    private function getAuthProvider(ConfigurationProfileEntity $profile): AuthTokenProvider
     {
         $cacheKey = 'profile.auth-provider.' . $profile->getId();
         $authProvider = $this->getCache()->get($cacheKey);
