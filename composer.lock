@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c04d1aaf94bb2d255c350a28f0222383",
+    "content-hash": "05a5e82ea0108a2f4f038bdddb8a1b13",
     "packages": [
         {
             "name": "guzzlehttp/guzzle",
@@ -552,19 +552,20 @@
         },
         {
             "name": "smartling/api-sdk-php",
-            "version": "3.6.4",
+            "version": "3.9.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Smartling/api-sdk-php.git",
-                "reference": "3b23e9f1a56285e9cb4d41b65ad36e9d558c8250"
+                "reference": "0e969793cd8756462f0cfc90e9ec8488f41f8e6e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Smartling/api-sdk-php/zipball/3b23e9f1a56285e9cb4d41b65ad36e9d558c8250",
-                "reference": "3b23e9f1a56285e9cb4d41b65ad36e9d558c8250",
+                "url": "https://api.github.com/repos/Smartling/api-sdk-php/zipball/0e969793cd8756462f0cfc90e9ec8488f41f8e6e",
+                "reference": "0e969793cd8756462f0cfc90e9ec8488f41f8e6e",
                 "shasum": ""
             },
             "require": {
+                "ext-json": "*",
                 "guzzlehttp/guzzle": "~6",
                 "php": ">=5.5",
                 "psr/log": "~1.0"
@@ -592,9 +593,9 @@
             ],
             "support": {
                 "issues": "https://github.com/Smartling/api-sdk-php/issues",
-                "source": "https://github.com/Smartling/api-sdk-php/tree/3.6.4"
+                "source": "https://github.com/Smartling/api-sdk-php/tree/3.9.1"
             },
-            "time": "2019-04-30T15:12:47+00:00"
+            "time": "2021-10-06T14:13:27+00:00"
         },
         {
             "name": "symfony/config",
@@ -1916,16 +1917,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "8.5.21",
+            "version": "8.5.22",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "50a58a60b85947b0bee4c8ecfe0f4bbdcf20e984"
+                "reference": "ddd05b9d844260353895a3b950a9258126c11503"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/50a58a60b85947b0bee4c8ecfe0f4bbdcf20e984",
-                "reference": "50a58a60b85947b0bee4c8ecfe0f4bbdcf20e984",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/ddd05b9d844260353895a3b950a9258126c11503",
+                "reference": "ddd05b9d844260353895a3b950a9258126c11503",
                 "shasum": ""
             },
             "require": {
@@ -1997,11 +1998,11 @@
             ],
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/8.5.21"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/8.5.22"
             },
             "funding": [
                 {
-                    "url": "https://phpunit.de/donate.html",
+                    "url": "https://phpunit.de/sponsors.html",
                     "type": "custom"
                 },
                 {
@@ -2009,7 +2010,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2021-09-25T07:37:20+00:00"
+            "time": "2021-12-25T06:58:09+00:00"
         },
         {
             "name": "sebastian/code-unit-reverse-lookup",

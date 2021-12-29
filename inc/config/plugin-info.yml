@@ -1,4 +1,4 @@
 parameters:
-  plugin.name: smartling-connector
+  plugin.name: "wordpress-connector"
   plugin.version: "auto updated"
   plugin.domain: %plugin.name%
