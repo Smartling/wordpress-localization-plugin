@@ -495,8 +495,9 @@ HTML
 
         $containerBuilder = new ContainerBuilder();
         $yamlFileLoader = new YamlFileLoader($containerBuilder, new FileLocator(__DIR__));
-        $yamlFileLoader->load(__DIR__ . '/../../../inc/config/' . 'services.yml');
-        $yamlFileLoader->load(__DIR__ . '/../../../inc/config/' . 'media-attachment-rules.yml');
+        $configDir = __DIR__ . '/../../../inc/config/';
+        $yamlFileLoader->load($configDir . 'services.yml');
+        $yamlFileLoader->load($configDir . 'media-attachment-rules.yml');
         $mediaAttachmentRulesManager = $containerBuilder->get('media.attachment.rules.manager');
         if (!$mediaAttachmentRulesManager instanceof MediaAttachmentRulesManager) {
             throw new \RuntimeException(MediaAttachmentRulesManager::class . ' expected');
