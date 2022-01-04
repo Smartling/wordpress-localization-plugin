@@ -6,9 +6,9 @@
         convertErrorsToExceptions="true"
         convertNoticesToExceptions="false"
         convertWarningsToExceptions="true"
-        processIsolation="false"
+        processIsolation="true"
         stopOnFailure="false"
-        verbose="true"
+        debug="true"
 >
     <php>
         <const name="WP_TESTS_MULTISITE" value="1" />
