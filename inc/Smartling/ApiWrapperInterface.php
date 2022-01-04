@@ -2,14 +2,15 @@
 
 namespace Smartling;
 
+use DateTime;
 use JetBrains\PhpStorm\ArrayShape;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
-use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 
 interface ApiWrapperInterface
 {
@@ -50,81 +51,45 @@ interface ApiWrapperInterface
     public function releaseLock(ConfigurationProfileEntity $profile, string $key): void;
 
     /**
-     * @param SubmissionEntity $entity
-     *
-     * @return string
      * @throws SmartlingFileDownloadException
      */
-    public function downloadFile(SubmissionEntity $entity);
+    public function downloadFile(SubmissionEntity $entity): string;
 
     /**
-     * @param SubmissionEntity $entity
-     *
-     * @return SubmissionEntity
      * @throws SmartlingFileDownloadException
      * @throws SmartlingNetworkException
      */
-    public function getStatus(SubmissionEntity $entity);
+    public function getStatus(SubmissionEntity $entity): SubmissionEntity;
 
     /**
-     * @param ConfigurationProfileEntity $profile
-     *
-     * @return bool
-     * @internal param string $locale
+     * @throws SmartlingNetworkException
      */
-    public function testConnection(ConfigurationProfileEntity $profile);
+    public function testConnection(ConfigurationProfileEntity $profile): bool;
 
     /**
-     * @param SubmissionEntity $entity
-     * @param string $xmlString
-     * @param string $filename
-     * @param array $smartlingLocaleList
-     *
-     * @return bool
      * @throws SmartlingFileUploadException
      */
-    public function uploadContent(SubmissionEntity $entity, $xmlString = '', $filename = '', array $smartlingLocaleList = []);
+    public function uploadContent(SubmissionEntity $entity, string $xmlString = '', string $filename = '', array $smartlingLocaleList = []): bool;
+
+    public function getSupportedLocales(ConfigurationProfileEntity $profile): array;
+
+    public function getAccountUid(ConfigurationProfileEntity $profile): string;
 
     /**
-     * @param ConfigurationProfileEntity $profile
-     *
-     * @return array
-     */
-    public function getSupportedLocales(ConfigurationProfileEntity $profile);
-
-    /**
-     * @param ConfigurationProfileEntity $profile
-     *
-     * @return mixed
-     */
-    public function getAccountUid(ConfigurationProfileEntity $profile);
-
-    /**
-     * @param SubmissionEntity $submission
-     *
-     * @return array mixed
      * @throws SmartlingNetworkException
      */
-    public function lastModified(SubmissionEntity $submission);
+    public function lastModified(SubmissionEntity $submission): array;
 
     /**
      * @param SubmissionEntity[] $submissions
-     *
      * @return SubmissionEntity[]
+     * @throws SmartlingNetworkException
      */
-    public function getStatusForAllLocales(array $submissions);
+    public function getStatusForAllLocales(array $submissions): array;
 
-    /**
-     * @param SubmissionEntity $submission
-     */
-    public function deleteFile(SubmissionEntity $submission);
+    public function deleteFile(SubmissionEntity $submission): void;
 
-    /**
-     * @param ConfigurationProfileEntity $profile
-     *
-     * @return array
-     */
-    public function listJobs(ConfigurationProfileEntity $profile);
+    public function listJobs(ConfigurationProfileEntity $profile, ?string $name = null, array $statuses = []): array;
 
     /**
      * @throws SmartlingApiException
@@ -133,16 +98,9 @@ interface ApiWrapperInterface
     public function createJob(ConfigurationProfileEntity $profile, array $params): array;
 
     /**
-     * @param ConfigurationProfileEntity $profile
-     * @param                            $jobId
-     * @param                            $name
-     * @param                            $description
-     * @param                            $dueDate
-     *
-     * @return array
      * @throws SmartlingApiException
      */
-    public function updateJob(ConfigurationProfileEntity $profile, $jobId, $name, $description, $dueDate);
+    public function updateJob(ConfigurationProfileEntity $profile, string $jobId, string $name, ?string $description = null, ?DateTime $dueDate = null): array;
 
     /**
      * @throws SmartlingApiException
@@ -151,48 +109,26 @@ interface ApiWrapperInterface
     public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, bool $authorize = false): array;
 
     /**
-     * @param ConfigurationProfileEntity $profile
-     * @param                                                $batchUid
-     *
+     * @return string batch uid for a given job
      * @throws SmartlingApiException
      */
-    public function executeBatch(ConfigurationProfileEntity $profile, $batchUid);
+    public function retrieveBatch(ConfigurationProfileEntity $profile, string $jobId, bool $authorize = true, array $updateJob = []): string;
 
     /**
-     * @param ConfigurationProfileEntity $profile
-     *
-     * @return mixed
+     * @throws SmartlingApiException
      */
-    public function getProgressToken(ConfigurationProfileEntity $profile);
+    public function executeBatch(ConfigurationProfileEntity $profile, string $batchUid): void;
 
-    /**
-     * @param ConfigurationProfileEntity $profile
-     * @param string $space
-     * @param string $object
-     * @param string $record
-     */
-    public function deleteNotificationRecord(ConfigurationProfileEntity $profile, $space, $object, $record);
+    public function getProgressToken(ConfigurationProfileEntity $profile): array;
 
-    /**
-     * @param ConfigurationProfileEntity $profile
-     * @param string $space
-     * @param string $object
-     * @param string $record
-     * @param array $data
-     * @param int $ttl
-     *
-     * @return array
-     */
-    public function setNotificationRecord(ConfigurationProfileEntity $profile, $space, $object, $record, $data = [], $ttl = 30);
+    public function deleteNotificationRecord(ConfigurationProfileEntity $profile, string $space, string $object, string $record): void;
+
+    public function setNotificationRecord(ConfigurationProfileEntity $profile, string $space, string $object, string $record, array $data = [], int $ttl = 30): void;
 
     /**
      * @throws SmartlingApiException
      */
     public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, bool $authorize): JobEntityWithBatchUid;
 
-    /**
-     * @param \Exception $e
-     * @return bool
-     */
-    public function isUnrecoverable(\Exception $e);
+    public function isUnrecoverable(\Exception $e): bool;
 }

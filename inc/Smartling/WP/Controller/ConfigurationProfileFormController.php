@@ -52,7 +52,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
             'status' => 200,
         ];
 
-        $wrapper = Bootstrap::getContainer()->get('wrapper.sdk.api.smartling');
+        $wrapper = Bootstrap::getContainer()->get('api.wrapper.with.retries');
 
         $settingsManager = Bootstrap::getContainer()->get('manager.settings');
 

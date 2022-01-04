@@ -20,7 +20,7 @@ services:
   cron.worker.upload:
     class: Smartling\Jobs\UploadJob
     arguments:
-      - "@wrapper.sdk.api.smartling"
+      - "@api.wrapper.with.retries"
       - "@manager.settings"
       - "@manager.submission"
       - "%cron.interval.upload%"
@@ -33,7 +33,7 @@ services:
   cron.worker.submission-collector:
     class: Smartling\Jobs\SubmissionCollectorJob
     arguments:
-      - "@wrapper.sdk.api.smartling"
+      - "@api.wrapper.with.retries"
       - "@manager.settings"
       - "@manager.submission"
       - "%cron.interval.group.submission%"
@@ -47,7 +47,7 @@ services:
   cron.worker.last-modified-check:
     class: Smartling\Jobs\LastModifiedCheckJob
     arguments:
-      - "@wrapper.sdk.api.smartling"
+      - "@api.wrapper.with.retries"
       - "@manager.settings"
       - "@manager.submission"
       - "%cron.interval.last-modified-check%"
@@ -61,7 +61,7 @@ services:
   cron.worker.download:
     class: Smartling\Jobs\DownloadTranslationJob
     arguments:
-      - "@wrapper.sdk.api.smartling"
+      - "@api.wrapper.with.retries"
       - "@manager.settings"
       - "@manager.submission"
       - "%cron.interval.download%"
