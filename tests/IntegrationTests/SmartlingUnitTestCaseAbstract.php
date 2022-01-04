@@ -395,13 +395,9 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
 
     protected function getTargetPost(SiteHelper $siteHelper, SubmissionEntity $submission): \WP_Post
     {
-        echo "getTargetPost switching to {$submission->getTargetBlogId()}\n";
         $siteHelper->switchBlogId($submission->getTargetBlogId());
-        echo "current blog id is: " . get_current_blog_id() . "\n";
         wp_cache_delete($submission->getTargetId(), 'posts');
-        echo count(get_posts()) . " posts\n";
         $post = get_post($submission->getTargetId());
-        var_dump($post);
         $siteHelper->restoreBlogId();
 
         return $post;

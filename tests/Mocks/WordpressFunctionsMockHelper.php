@@ -76,7 +76,6 @@ namespace {
         if (!function_exists('switch_to_blog')) {
             function switch_to_blog($blogId)
             {
-                echo "MockSwitchToBlog\n";
                 return true;
             }
         }
