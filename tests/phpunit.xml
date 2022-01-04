@@ -6,7 +6,7 @@
         convertErrorsToExceptions="true"
         convertNoticesToExceptions="false"
         convertWarningsToExceptions="true"
-        processIsolation="true"
+        processIsolation="false"
         stopOnFailure="false"
         verbose="true"
 >
