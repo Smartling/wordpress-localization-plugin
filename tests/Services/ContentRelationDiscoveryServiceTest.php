@@ -53,7 +53,6 @@ namespace Smartling\Tests\Services {
     {
         protected function setUp(): void
         {
-            echo "setup";
             WordpressFunctionsMockHelper::injectFunctionsMocks();
         }
 
@@ -385,7 +384,6 @@ namespace Smartling\Tests\Services {
             SubmissionManager $submissionManager
         )
         {
-            echo ":)";
             return $this->getMockBuilder(ContentRelationsDiscoveryService::class)->setConstructorArgs([
                 $contentHelper,
                 $this->createMock(FieldsFilterHelper::class),
