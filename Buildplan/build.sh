@@ -60,7 +60,7 @@ chmod +x $PHPUNIT_BIN
 
 PHPUNIT_XML="${PLUGIN_DIR}/tests/phpunit.xml"
 
-${PHPUNIT_BIN} -c ${PHPUNIT_XML} --debug
+${PHPUNIT_BIN} -c ${PHPUNIT_XML}
 
 PHPUNIT_EXIT_CODE=$?
 
