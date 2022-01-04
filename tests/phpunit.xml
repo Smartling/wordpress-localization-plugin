@@ -8,7 +8,7 @@
         convertWarningsToExceptions="true"
         processIsolation="true"
         stopOnFailure="false"
-        debug="true"
+        verbose="true"
 >
     <php>
         <const name="WP_TESTS_MULTISITE" value="1" />
