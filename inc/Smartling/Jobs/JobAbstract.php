@@ -12,9 +12,6 @@ use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
-use Smartling\Vendor\Jralph\Retry\Command;
-use Smartling\Vendor\Jralph\Retry\Retry;
-use Smartling\Vendor\Jralph\Retry\RetryException;
 use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 use Smartling\WP\WPHookInterface;
 use Smartling\WP\WPInstallableInterface;
@@ -25,8 +22,6 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
 
     public const LAST_FINISH_SUFFIX = '-last-run';
     public const SOURCE_USER = 'user';
-    private const LOCK_RETRY_ATTEMPTS = 2;
-    private const LOCK_RETRY_WAIT_SECONDS = 1;
 
     protected ApiWrapperInterface $api;
     protected string $jobRunInterval;
@@ -122,13 +117,9 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         ));
 
         if ($renew) {
-            $this->lockWithRetry(function () use ($flagName, $profile) {
-                $this->api->renewLock($profile, $flagName, $this->workerTTL);
-            });
+            $this->api->renewLock($profile, $flagName, $this->workerTTL);
         } else {
-            $this->lockWithRetry(function () use ($flagName, $profile) {
-                $this->api->acquireLock($profile, $flagName, $this->workerTTL);
-            });
+            $this->api->acquireLock($profile, $flagName, $this->workerTTL);
         }
     }
 
@@ -149,9 +140,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
                 ]
             )
         );
-        $this->lockWithRetry(function () use ($flagName, $profile) {
-            $this->api->releaseLock($profile, $flagName);
-        }, true);
+        $this->api->releaseLock($profile, $flagName);
     }
 
     public function runCronJob(string $source = ''): void
@@ -168,17 +157,6 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
 
         try {
             $message = $this->tryRunJob();
-        } catch (RetryException $e) {
-            if ($source === self::SOURCE_USER) {
-                if (preg_match('~1/' . self::LOCK_RETRY_ATTEMPTS . '\)$~', $e->getMessage())) {
-                    // lock set, no retries
-                    throw new \RuntimeException($this->getCronFlagName() . ' already running');
-                } elseif ($e->getPrevious() !== null) {
-                    throw new \RuntimeException($e->getPrevious()->getMessage());
-                } else {
-                    throw new \RuntimeException('Unable to start ' . $this->getCronFlagName() . ' at this time, please retry');
-                }
-            }
         } catch (\Throwable $e) {
             $errorClass = get_class($e);
             $this->getLogger()->error("Caught class=\"$errorClass\", code=\"{$e->getCode()}\", message=\"{$e->getMessage()}\", trace: {$e->getTraceAsString()}");
@@ -232,27 +210,6 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
             throw new EntityNotFoundException('No active profiles');
         }
         return $profile;
-    }
-
-    private function lockWithRetry(callable $command, $ignoreLockNotAcquired = false): void
-    {
-        (new Retry(new Command($command)))
-            ->attempts(self::LOCK_RETRY_ATTEMPTS)
-            ->wait(self::LOCK_RETRY_WAIT_SECONDS)
-            ->onlyIf(function ($attempt, $error) use ($ignoreLockNotAcquired) {
-                if ($error === null) {
-                    return false;
-                }
-                if ($error instanceof SmartlingApiException) {
-                    $topError = ArrayHelper::first($error->getErrors());
-                    if ($topError['key'] ?? '' === 'lock.not.acquired') {
-                        $this->getLogger()->debug( 'Failed to acquire lock');
-                        return !$ignoreLockNotAcquired;
-                    }
-                }
-                return true;
-             })
-            ->run();
     }
 
     public function register(): void

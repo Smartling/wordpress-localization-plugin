@@ -260,7 +260,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
                 }
             }
 
-            $wrapper = Bootstrap::getContainer()->get('wrapper.sdk.api.smartling');
+            $wrapper = Bootstrap::getContainer()->get('api.wrapper.with.retries');
 
             try {
                 $jobName = $smartlingData['jobName'];

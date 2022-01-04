@@ -17,6 +17,7 @@ use Smartling\Jobs\SubmissionJobEntity;
 use Smartling\Jobs\UploadJob;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
+use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\Locale;
@@ -131,6 +132,27 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
     private static function getWPInstallDirEnv(): string
     {
         return getenv('WP_INSTALL_DIR');
+    }
+
+    public function getContentRelationsDiscoveryService(): ContentRelationsDiscoveryService
+    {
+        return $this->get('service.relations-discovery');
+    }
+
+    public function withBlockRules(MediaAttachmentRulesManager $manager, array $rules, callable $function)
+    {
+        try {
+            foreach ($rules as $offset => $value) {
+                $manager->offsetSet($offset, $value);
+            }
+            $manager->saveData();
+            return $function();
+        } finally {
+            foreach (array_keys($rules) as $offset) {
+                $manager->offsetUnset($offset);
+            }
+            $manager->saveData();
+        }
     }
 
     protected function uploadDownload(SubmissionEntity $submission): ?SubmissionEntity

@@ -2,8 +2,8 @@
 
 namespace Smartling;
 
+use DateTime;
 use DateTimeZone;
-use JetBrains\PhpStorm\ArrayShape;
 use Smartling\API\FileApiExtended;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingFileDownloadException;
@@ -13,14 +13,13 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\FileHelper;
 use Smartling\Helpers\LogContextMixinHelper;
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\RuntimeCacheHelper;
 use Smartling\Helpers\TestRunHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\Vendor\Smartling\AuthApi\AuthTokenProvider;
 use Smartling\Vendor\Smartling\Batch\BatchApi;
 use Smartling\Vendor\Smartling\Batch\Params\CreateBatchParameters;
@@ -40,104 +39,24 @@ use Smartling\Vendor\Smartling\Project\ProjectApi;
 
 class ApiWrapper implements ApiWrapperInterface
 {
+    use LoggerSafeTrait;
+
     private const ADDITIONAL_HEADERS = ['X-SL-UseSecondaryDB' => 'true'];
-    /**
-     * @var SettingsManager
-     */
-    private $settings;
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    private SettingsManager $settings;
+    private string $pluginName;
+    private string $pluginVersion;
 
-    /**
-     * @var string
-     */
-    private $pluginName = '';
-
-    /**
-     * @var string
-     */
-    private $pluginVersion = '';
-
-    /**
-     * @return string
-     */
-    public function getPluginName()
-    {
-        return $this->pluginName;
-    }
-
-    /**
-     * @param string $pluginName
-     */
-    public function setPluginName($pluginName)
-    {
-        $this->pluginName = $pluginName;
-    }
-
-    /**
-     * @return string
-     */
-    public function getPluginVersion()
-    {
-        return $this->pluginVersion;
-    }
-
-    /**
-     * @param string $pluginVersion
-     */
-    public function setPluginVersion($pluginVersion)
-    {
-        $this->pluginVersion = $pluginVersion;
-    }
-
-    /**
-     * @return SettingsManager
-     */
-    public function getSettings()
-    {
-        return $this->settings;
-    }
-
-    /**
-     * @param SettingsManager $settings
-     */
-    public function setSettings($settings)
-    {
-        $this->settings = $settings;
-    }
-
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
-    {
-        return $this->logger;
-    }
-
-    /**
-     * @return RuntimeCacheHelper
-     */
-    public function getCache()
+    public function getCache(): RuntimeCacheHelper
     {
         return RuntimeCacheHelper::getInstance();
     }
 
-    /**
-     * ApiWrapper constructor.
-     *
-     * @param SettingsManager $manager
-     * @param string          $pluginName
-     * @param string          $pluginVersion
-     */
-    public function __construct(SettingsManager $manager, $pluginName, $pluginVersion)
+    public function __construct(SettingsManager $manager, string $pluginName, string $pluginVersion)
     {
-        $this->logger = MonologWrapper::getLogger(get_called_class());
-        $this->setSettings($manager);
-        $this->setPluginName($pluginName);
-        $this->setPluginVersion($pluginVersion);
+        $this->settings = $manager;
+        $this->pluginName = $pluginName;
+        $this->pluginVersion = $pluginVersion;
     }
 
     /**
@@ -145,7 +64,7 @@ class ApiWrapper implements ApiWrapperInterface
      */
     private function getConfigurationProfile(SubmissionEntity $submission): ConfigurationProfileEntity
     {
-        $profile = $this->getSettings()->getSingleSettingsProfile($submission->getSourceBlogId());
+        $profile = $this->settings->getSingleSettingsProfile($submission->getSourceBlogId());
         if (TestRunHelper::isTestRunBlog($submission->getTargetBlogId())) {
             $profile->setRetrievalType(ConfigurationProfileEntity::RETRIEVAL_TYPE_PSEUDO);
         }
@@ -155,19 +74,14 @@ class ApiWrapper implements ApiWrapperInterface
         return $profile;
     }
 
-    /**
-     * @param ConfigurationProfileEntity $profile
-     *
-     * @return AuthTokenProvider
-     */
-    private function getAuthProvider(ConfigurationProfileEntity $profile)
+    private function getAuthProvider(ConfigurationProfileEntity $profile): AuthTokenProvider
     {
         $cacheKey = 'profile.auth-provider.' . $profile->getId();
         $authProvider = $this->getCache()->get($cacheKey);
 
         if (false === $authProvider) {
-            AuthTokenProvider::setCurrentClientId('wordpress-connector');
-            AuthTokenProvider::setCurrentClientVersion($this->getPluginVersion());
+            AuthTokenProvider::setCurrentClientId($this->pluginName);
+            AuthTokenProvider::setCurrentClientVersion($this->pluginVersion);
             $authProvider = AuthTokenProvider::create(
                 $profile->getUserIdentifier(),
                 $profile->getSecretKey(),
@@ -198,12 +112,9 @@ class ApiWrapper implements ApiWrapperInterface
     }
 
     /**
-     * @param SubmissionEntity $entity
-     *
-     * @return string
      * @throws SmartlingFileDownloadException
      */
-    public function downloadFile(SubmissionEntity $entity)
+    public function downloadFile(SubmissionEntity $entity): string
     {
         try {
             $profile = $this->getConfigurationProfile($entity);
@@ -226,13 +137,11 @@ class ApiWrapper implements ApiWrapperInterface
 
             $params->setRetrievalType($profile->getRetrievalType());
 
-            $result = $api->downloadFile(
+            return $api->downloadFile(
                 $entity->getFileUri(),
                 $this->getSmartlingLocaleBySubmission($entity),
                 $params
             );
-
-            return $result;
 
         } catch (\Exception $e) {
             $this->getLogger()
@@ -242,16 +151,7 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
-    /**
-     * @param SubmissionEntity $entity
-     * @param int              $completedStrings
-     * @param int              $authorizedStrings
-     * @param int              $totalStringCount
-     * @param int              $excludedStringCount
-     *
-     * @return SubmissionEntity
-     */
-    private function setTranslationStatusToEntity(SubmissionEntity $entity, $completedStrings, $authorizedStrings, $totalStringCount, $excludedStringCount)
+    private function setTranslationStatusToEntity(SubmissionEntity $entity, int $completedStrings, int $authorizedStrings, int $totalStringCount, int $excludedStringCount): SubmissionEntity
     {
         $entity->setApprovedStringCount($completedStrings + $authorizedStrings);
         $entity->setCompletedStringCount($completedStrings);
@@ -261,9 +161,6 @@ class ApiWrapper implements ApiWrapperInterface
         return $entity;
     }
 
-    /**
-     * @throws SmartlingNetworkException
-     */
     public function getStatus(SubmissionEntity $entity): SubmissionEntity
     {
         try {
@@ -272,10 +169,10 @@ class ApiWrapper implements ApiWrapperInterface
 
             $entity = $this
                 ->setTranslationStatusToEntity($entity,
-                                               $data['completedStringCount'],
-                                               $data['authorizedStringCount'],
-                                               $data['totalStringCount'],
-                                               $data['excludedStringCount']
+                    (int)$data['completedStringCount'],
+                    (int) $data['authorizedStringCount'],
+                    (int) $data['totalStringCount'],
+                    (int)$data['excludedStringCount'],
                 );
 
             $entity->setWordCount($data['totalWordCount']);
@@ -287,13 +184,7 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
-    /**
-     * @param ConfigurationProfileEntity $profile
-     *
-     * @return bool
-     * @throws SmartlingNetworkException
-     */
-    public function testConnection(ConfigurationProfileEntity $profile)
+    public function testConnection(ConfigurationProfileEntity $profile): bool
     {
         try {
             $api = $this->getFileApi($profile);
@@ -309,13 +200,10 @@ class ApiWrapper implements ApiWrapperInterface
 
     private function getSmartlingLocaleBySubmission(SubmissionEntity $entity): string
     {
-        return $this->getSettings()->getSmartlingLocaleBySubmission($entity);
+        return $this->settings->getSmartlingLocaleBySubmission($entity);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function uploadContent(SubmissionEntity $entity, $xmlString = '', $filename = '', array $smartlingLocaleList = [])
+    public function uploadContent(SubmissionEntity $entity, string $xmlString = '', string $filename = '', array $smartlingLocaleList = []): bool
     {
         $this->getLogger()
             ->info(vsprintf(
@@ -333,7 +221,7 @@ class ApiWrapper implements ApiWrapperInterface
 
             $api = $this->getBatchApi($profile);
 
-            $params = new UploadFileParameters('wordpress-connector', $this->getPluginVersion());
+            $params = new UploadFileParameters('wordpress-connector', $this->pluginVersion);
             $params->setLocalesToApprove($smartlingLocaleList);
 
             if (FileHelper::testFile($filename)) {
@@ -364,10 +252,7 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function getSupportedLocales(ConfigurationProfileEntity $profile)
+    public function getSupportedLocales(ConfigurationProfileEntity $profile): array
     {
         $supportedLocales = [];
         try {
@@ -390,7 +275,7 @@ class ApiWrapper implements ApiWrapperInterface
         return $supportedLocales;
     }
 
-    public function getAccountUid(ConfigurationProfileEntity $profile)
+    public function getAccountUid(ConfigurationProfileEntity $profile): string
     {
         try {
             $api = ProjectApi::create(
@@ -409,9 +294,6 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
-    /**
-     * @throws SmartlingNetworkException
-     */
     public function lastModified(SubmissionEntity $submission): array
     {
         $output = [];
@@ -428,12 +310,6 @@ class ApiWrapper implements ApiWrapperInterface
         return $output;
     }
 
-    /**
-     * @param SubmissionEntity[] $submissions
-     *
-     * @return Submissions\SubmissionEntity[]
-     * @throws SmartlingNetworkException
-     */
     public function getStatusForAllLocales(array $submissions): array
     {
         $submission = ArrayHelper::first($submissions);
@@ -452,10 +328,10 @@ class ApiWrapper implements ApiWrapperInterface
                 $localeId = $descriptor['localeId'];
 
                 if (array_key_exists($localeId, $submissions)) {
-                    $completedStrings = $descriptor['completedStringCount'];
-                    $authorizedStrings = $descriptor['authorizedStringCount'];
-                    $totalStringCount = $data['totalStringCount'];
-                    $excludedStringCount = $descriptor['excludedStringCount'];
+                    $completedStrings = (int)$descriptor['completedStringCount'];
+                    $authorizedStrings = (int)$descriptor['authorizedStringCount'];
+                    $totalStringCount = (int)$data['totalStringCount'];
+                    $excludedStringCount = (int)$descriptor['excludedStringCount'];
 
                     $currentProgress = $submissions[$localeId]->getCompletionPercentage(); // current progress value 0..100
 
@@ -494,10 +370,7 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
-    /**
-     * @param SubmissionEntity $submission
-     */
-    public function deleteFile(SubmissionEntity $submission)
+    public function deleteFile(SubmissionEntity $submission): void
     {
         try {
             $profile = $this->getConfigurationProfile($submission);
@@ -508,34 +381,17 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
-    /**
-     * @param ConfigurationProfileEntity $profile
-     *
-     * @return JobsApi
-     */
-    private function getJobsApi(ConfigurationProfileEntity $profile)
+    private function getJobsApi(ConfigurationProfileEntity $profile): JobsApi
     {
         return JobsApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger());
     }
 
-    /**
-     * @param ConfigurationProfileEntity $profile
-     *
-     * @return BatchApi
-     */
-    private function getBatchApi(ConfigurationProfileEntity $profile)
+    private function getBatchApi(ConfigurationProfileEntity $profile): BatchApi
     {
         return BatchApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger());
     }
 
-    /**
-     * @param ConfigurationProfileEntity $profile
-     * @param null                       $name
-     * @param array                      $statuses
-     *
-     * @return array
-     */
-    public function listJobs(ConfigurationProfileEntity $profile, $name = null, array $statuses = [])
+    public function listJobs(ConfigurationProfileEntity $profile, ?string $name = null, array $statuses = []): array
     {
         $params = new ListJobsParameters();
 
@@ -550,10 +406,6 @@ class ApiWrapper implements ApiWrapperInterface
         return $this->getJobsApi($profile)->listJobs($params);
     }
 
-    /**
-     * @throws SmartlingApiException
-     */
-    #[ArrayShape(ApiWrapperInterface::CREATE_JOB_RESPONSE)]
     public function createJob(ConfigurationProfileEntity $profile, array $params): array
     {
         $param = new CreateJobParameters();
@@ -577,10 +429,7 @@ class ApiWrapper implements ApiWrapperInterface
         return $this->getJobsApi($profile)->createJob($param);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function updateJob(ConfigurationProfileEntity $profile, $jobId, $name, $description = null, $dueDate = null)
+    public function updateJob(ConfigurationProfileEntity $profile, string $jobId, string $name, ?string $description = null, ?DateTime $dueDate = null): array
     {
         $params = new UpdateJobParameters();
         $params->setName($name);
@@ -589,17 +438,13 @@ class ApiWrapper implements ApiWrapperInterface
             $params->setDescription($description);
         }
 
-        if (!empty($dueDate)) {
+        if ($dueDate !== null) {
             $params->setDueDate($dueDate);
         }
 
         return $this->getJobsApi($profile)->updateJob($jobId, $params);
     }
 
-    /**
-     * @throws SmartlingApiException
-     */
-    #[ArrayShape(self::CREATE_BATCH_RESPONSE)]
     public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, bool $authorize = false): array
     {
         $createBatchParameters = new CreateBatchParameters();
@@ -609,26 +454,11 @@ class ApiWrapper implements ApiWrapperInterface
         return $this->getBatchApi($profile)->createBatch($createBatchParameters);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function executeBatch(ConfigurationProfileEntity $profile, $batchUid)
+    public function executeBatch(ConfigurationProfileEntity $profile, string $batchUid): void
     {
         $this->getBatchApi($profile)->executeBatch($batchUid);
     }
-
-    /**
-     * Returns batch uid for a given job.
-     *
-     * @param       $profile
-     * @param       $jobId
-     * @param bool  $authorize
-     * @param array $updateJob
-     *
-     * @return string
-     * @throws SmartlingApiException
-     */
-    public function retrieveBatch(ConfigurationProfileEntity $profile, $jobId, $authorize = true, $updateJob = [])
+    public function retrieveBatch(ConfigurationProfileEntity $profile, string $jobId, bool $authorize = true, array $updateJob = []): string
     {
         if ($authorize) {
             $this->getLogger()->debug(vsprintf('Job \'%s\' should be authorized once upload is finished.', [$jobId]));
@@ -646,7 +476,7 @@ class ApiWrapper implements ApiWrapperInterface
 
                 $this->updateJob($profile, $jobId, $updateJob['name'], $description, $dueDate);
 
-                $this->getLogger()->debug(vsprintf('Updated job "%s": "%s"', [$jobId, json_encode($updateJob)]));
+                $this->getLogger()->debug(vsprintf('Updated job "%s": "%s"', [$jobId, json_encode($updateJob, JSON_THROW_ON_ERROR)]));
             }
 
             $result = $this->createBatch($profile, $jobId, $authorize);
@@ -750,10 +580,7 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function getProgressToken(ConfigurationProfileEntity $profile)
+    public function getProgressToken(ConfigurationProfileEntity $profile): array
     {
         try {
             $accountUid = $this->getAccountUid($profile);
@@ -766,17 +593,15 @@ class ApiWrapper implements ApiWrapperInterface
 
             $token = $progressApi->getToken($accountUid);
 
-            $token = array_merge($token, [
+            return array_merge($token, [
                 'accountUid' => $accountUid,
                 'projectId'  => $profile->getProjectId(),
             ]);
-
-            return $token;
         } catch (\Exception $e) {
             $this->getLogger()->error(
                 vsprintf(
                     'Can\'t get progress token for project id "%s". Error: %s',
-                    [$profile->getProjectId(), $e->formatErrors()]
+                    [$profile->getProjectId(), $this->formatError($e)]
                 )
             );
 
@@ -784,10 +609,7 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function deleteNotificationRecord(ConfigurationProfileEntity $profile, $space, $object, $record)
+    public function deleteNotificationRecord(ConfigurationProfileEntity $profile, string $space, string $object, string $record): void
     {
         try {
             $progressApi = ProgressTrackerApi::create(
@@ -807,16 +629,13 @@ class ApiWrapper implements ApiWrapperInterface
                             $space,
                             $object,
                             $record,
-                            $e->formatErrors(),
+                            $this->formatError($e),
                         ]
                     ));
         }
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function setNotificationRecord(ConfigurationProfileEntity $profile, $space, $object, $recordId, $data = [], $ttl = 30)
+    public function setNotificationRecord(ConfigurationProfileEntity $profile, string $space, string $object, string $record, array $data = [], int $ttl = 30): void
     {
         try {
             $progressApi = ProgressTrackerApi::create(
@@ -826,10 +645,10 @@ class ApiWrapper implements ApiWrapperInterface
             );
 
             $params = new RecordParameters();
-            $params->setTtl((int)$ttl);
+            $params->setTtl($ttl);
             $params->setData($data);
 
-            $progressApi->updateRecord($space, $object, $recordId, $params);
+            $progressApi->updateRecord($space, $object, $record, $params);
         } catch (\Exception $e) {
             $this
                 ->getLogger()
@@ -841,24 +660,38 @@ class ApiWrapper implements ApiWrapperInterface
                             $object,
                             var_export($data, true),
                             $ttl,
-                            $e->formatErrors(),
+                            $this->formatError($e),
                         ]
                     ));
         }
     }
 
-    /**
-     * @param \Exception $e
-     */
-    public function isUnrecoverable(\Exception $e) {
-        return strpos($e->getMessage(), 'file.not.found') !== false;
+    public function isUnrecoverable(\Exception $e): bool {
+        switch (get_class($e)) {
+            case SmartlingApiException::class:
+                foreach ($e->getErrors() as $error) {
+                    if ($error['key'] === 'forbidden') {
+                        return true;
+                    }
+                }
+                break;
+            case SmartlingNetworkException::class:
+                return strpos($e->getMessage(), 'file.not.found') !== false;
+        }
+
+        return false;
     }
 
-    private function getFileApi(ConfigurationProfileEntity $profile, $withAdditionalHeaders = false): FileApi
+    public function getFileApi(ConfigurationProfileEntity $profile, $withAdditionalHeaders = false): FileApi
     {
         $auth = $this->getAuthProvider($profile);
         $projectId = $profile->getProjectId();
 
         return $withAdditionalHeaders ? new FileApiExtended($auth, $projectId, self::ADDITIONAL_HEADERS) : FileApi::create($auth, $projectId, $this->logger);
+    }
+
+    private function formatError(\Exception $e): string
+    {
+        return $e instanceof SmartlingApiException ? $e->formatErrors() : $e->getMessage();
     }
 }

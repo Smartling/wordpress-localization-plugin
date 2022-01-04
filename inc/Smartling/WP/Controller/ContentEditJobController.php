@@ -69,7 +69,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                 'status' => 200,
             ];
 
-            $wrapper = Bootstrap::getContainer()->get('wrapper.sdk.api.smartling');
+            $wrapper = Bootstrap::getContainer()->get('api.wrapper.with.retries');
             /**
              * @var ApiWrapper $wrapper
              */

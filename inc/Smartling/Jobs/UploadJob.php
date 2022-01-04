@@ -62,12 +62,8 @@ class UploadJob extends JobAbstract
 
     private function processCloning(): void
     {
-        $submissions = $this->submissionManager->findSubmissionsForCloning();
-        foreach ($submissions as $submission) {
+        while (($submission = $this->submissionManager->findSubmissionForCloning()) !== null) {
             do_action(ExportedAPI::ACTION_SMARTLING_PREPARE_SUBMISSION_UPLOAD, $submission);
-        }
-        // needs to be in a separate loop to have all relations when cloning
-        foreach ($submissions as $submission) {
             do_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $submission);
         }
     }

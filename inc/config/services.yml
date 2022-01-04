@@ -57,6 +57,12 @@ services:
       - "@manager.settings"
       - "%plugin.name%"
       - "%plugin.version%"
+
+  api.wrapper.with.retries:
+    class: Smartling\ApiWrapperWithRetries
+    arguments:
+      - "@wrapper.sdk.api.smartling"
+
   queue.db:
     class: Smartling\Queue\Queue
     calls:
@@ -76,7 +82,7 @@ services:
     calls:
       - [ "setSubmissionManager", [ "@manager.submission" ]]
       - [ "setSiteHelper", [ "@site.helper" ]]
-      - [ "setApiWrapper", [ "@wrapper.sdk.api.smartling" ]]
+      - [ "setApiWrapper", [ "@api.wrapper.with.retries" ]]
       - [ "setMultilangProxy", [ "@multilang.proxy" ]]
       - [ "setContentIoFactory", [ "@factory.contentIO" ]]
       - [ "setCache", [ "@site.cache" ]]
@@ -233,7 +239,7 @@ services:
       - "@entity.helper"
       - "@site.cache"
       - "@service.relations-discovery"
-      - "@wrapper.sdk.api.smartling"
+      - "@api.wrapper.with.retries"
       - "@manager.settings"
       - "%cron.interval.upload%"
 
@@ -249,7 +255,7 @@ services:
   service.submission-cleanup:
     class: Smartling\Helpers\SubmissionCleanupHelper
     calls:
-      - [ "setApiWrapper", [ "@wrapper.sdk.api.smartling" ] ]
+      - [ "setApiWrapper", [ "@api.wrapper.with.retries" ] ]
       - [ "setSiteHelper" , [ "@site.helper" ] ]
       - [ "setSubmissionManager", [ "@manager.submission" ] ]
       - [ "setIoWrapper", [ "@factory.contentIO" ] ]
@@ -298,7 +304,7 @@ services:
   service.side-removal-handler:
     class: Smartling\Services\BlogRemovalHandler
     calls:
-      - [ "setApiWrapper", [ "@wrapper.sdk.api.smartling" ] ]
+      - [ "setApiWrapper", [ "@api.wrapper.with.retries" ] ]
       - [ "setSubmissionManager", [ "@manager.submission" ] ]
 
   service.invalid-character-cleaner:
@@ -364,7 +370,7 @@ services:
   live_notification.service:
     class: Smartling\WP\Controller\LiveNotificationController
     arguments:
-      - "@wrapper.sdk.api.smartling"
+      - "@api.wrapper.with.retries"
       - "@manager.settings"
       - "@site.cache"
       - "@plugin.info"
@@ -380,7 +386,7 @@ services:
       - "@helper.shortcode"
       - "@helper.gutenberg"
       - "@manager.submission"
-      - "@wrapper.sdk.api.smartling"
+      - "@api.wrapper.with.retries"
       - "@media.attachment.rules.manager"
       - "@factory.replacer"
       - "@manager.settings"
