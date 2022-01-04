@@ -29,13 +29,13 @@ pipeline {
             }
         }
 
-        stage('Publish archive') {
+        stage('Archive logs') {
             agent {
                 label 'master'
             }
 
             steps {
-                archiveArtifacts artifacts: 'wordpress-connector.zip'
+                archiveArtifacts artifacts: '/plugin-dir/logs.zip'
             }
         }
     }
