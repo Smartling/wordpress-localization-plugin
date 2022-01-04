@@ -35,7 +35,7 @@ pipeline {
             }
 
             steps {
-                archiveArtifacts artifacts: '/plugin-dir/logs.zip'
+                archiveArtifacts artifacts: 'logs.zip'
             }
         }
     }
