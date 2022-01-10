@@ -57,7 +57,7 @@ pipeline {
                             parameters: [[$class: 'TextParameterDefinition', defaultValue: '', description: 'tag', name: 'tag']]
                         )
 
-                        tag = userInput.tag;
+                        tag = userInput['tag'];
                     }
 
                     withCredentials([string(credentialsId: 'WORDPRESS_ORG_SVN_PASSWORD', variable: 'WORDPRESS_ORG_SVN_PASSWORD')]) {
