@@ -54,7 +54,7 @@ pipeline {
 
                         def userInput = input(
                             id: 'userInput', message: 'Enter version tag for WordPress.org release',
-                            parameters: [[$class: 'StringParameterDefinition', defaultValue: '', description: 'tag', name: 'tag']]
+                            parameters: [[$class: 'TextParameterDefinition', defaultValue: '', description: 'tag', name: 'tag']]
                         )
 
                         tag = userInput.tag;
