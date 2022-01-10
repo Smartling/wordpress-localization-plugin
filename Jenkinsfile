@@ -48,19 +48,8 @@ pipeline {
             }
 
             steps {
-                timeout(time: 1, unit: 'HOURS') {
-                    script {
-                        def tag
-
-                        def userInput = input(
-                            id: 'userInput', message: 'Enter version tag for WordPress.org release',
-                            parameters: [[$class: 'TextParameterDefinition', defaultValue: '', description: 'tag', name: 'tag']]
-                        )
-
-                        tag = userInput['tag'];
-                    }
-
-                    withCredentials([string(credentialsId: 'WORDPRESS_ORG_SVN_PASSWORD', variable: 'WORDPRESS_ORG_SVN_PASSWORD')]) {
+                withCredentials([string(credentialsId: 'WORDPRESS_ORG_SVN_PASSWORD', variable: 'WORDPRESS_ORG_SVN_PASSWORD')]) {
+                    timeout(time: 1, unit: 'HOURS') {
                         dir('.\trunk') {
                             sh 'cp ../readme.txt ../smartling-connector.php .'
                             sh 'cp -r ../css ./css'
@@ -68,7 +57,8 @@ pipeline {
                             sh 'cp -r ../languages ./languages'
                             sh 'cp -r ../inc/config ./inc'
                             sh 'cp -r ../inc/Smartling ./inc'
-                            sh 'svn --username smartling --password $WORDPRESS_ORG_SVN_PASSWORD copy https://plugins.svn.wordpress.org/smartling-connector/trunk https://plugins.svn.wordpress.org/smartling-connector/tags/$tag -m "Tagging new version $tag"'
+                            sh "TAG=`grep '* Version' smartling-connector.php | sed 's/ \* Version: *//'`"
+                            sh "echo $TAG"
                         }
                     }
                 }
