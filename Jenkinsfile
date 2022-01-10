@@ -57,7 +57,7 @@ pipeline {
                             sh 'cp -r ../languages ./languages'
                             sh 'cp -r ../inc/config ./inc'
                             sh 'cp -r ../inc/Smartling ./inc'
-                            sh "TAG=`grep '* Version' smartling-connector.php | sed 's/ \* Version: *//'`"
+                            sh "TAG=`grep '* Version' smartling-connector.php | sed 's/ \\* Version: *//'`"
                             sh "echo $TAG"
                         }
                     }
