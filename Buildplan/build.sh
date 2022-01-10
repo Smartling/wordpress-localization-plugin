@@ -31,7 +31,7 @@ chown -R mysql:mysql /var/lib/mysql && service mysql start
 
 cd "$LOCAL_GIT_DIR"
 $COMPOSER_BIN update
-svn checkout https://plugins.svn.wordpress.org/smartling-connector/trunk trunk
+svn -q checkout https://plugins.svn.wordpress.org/smartling-connector/trunk trunk
 cp -r trunk/inc/lib ./inc
 
 chown -R mysql:mysql /var/lib/mysql && service mysql start
@@ -66,6 +66,6 @@ PHPUNIT_EXIT_CODE=$?
 
 service mysql stop
 
-zip -r ${PLUGIN_DIR}/release.zip ${PLUGIN_DIR}
+zip -q -r ${PLUGIN_DIR}/release.zip ${PLUGIN_DIR} > /dev/null
 
 exit $PHPUNIT_EXIT_CODE
