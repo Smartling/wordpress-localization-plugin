@@ -184,11 +184,11 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         $this->assertEquals(
             sprintf(
             '<!-- wp:acf/custom-image %s /-->',
-                json_encode([
+                stripslashes(json_encode([
                     'id' => '',
                     'name' => '[á~cf/c~ústó~m-ím~ágé]',
                     'data' => ['mediaId' => (string)$attachmentSubmission->getTargetId(), '_mediaId' => $acfImageFieldId],
-                ]),
+                ], JSON_UNESCAPED_UNICODE)),
             ),
             $targetPost->post_content,
         );
