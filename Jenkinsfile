@@ -42,6 +42,15 @@ pipeline {
             }
         }
 
+        stage('Release on WordPress.org?') {
+            agent none
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    input "Release on WordPress.org?"
+                }
+            }
+        }
+
         stage('WordPress.org SVN') {
             agent {
                 label 'master'
@@ -49,17 +58,15 @@ pipeline {
 
             steps {
                 withCredentials([string(credentialsId: 'WORDPRESS_ORG_SVN_PASSWORD', variable: 'WORDPRESS_ORG_SVN_PASSWORD')]) {
-                    timeout(time: 1, unit: 'HOURS') {
-                        dir('.\trunk') {
-                            sh 'cp ../readme.txt ../smartling-connector.php .'
-                            sh 'cp -r ../css ./css'
-                            sh 'cp -r ../js ./js'
-                            sh 'cp -r ../languages ./languages'
-                            sh 'cp -r ../inc/config ./inc'
-                            sh 'cp -r ../inc/Smartling ./inc'
-                            sh "TAG=`grep '* Version' smartling-connector.php | sed 's/ \\* Version: *//'`"
-                            sh "echo $TAG"
-                        }
+                    dir('.\trunk') {
+                        sh 'cp ../readme.txt ../smartling-connector.php .'
+                        sh 'cp -r ../css ./css'
+                        sh 'cp -r ../js ./js'
+                        sh 'cp -r ../languages ./languages'
+                        sh 'cp -r ../inc/config ./inc'
+                        sh 'cp -r ../inc/Smartling ./inc'
+                        sh "TAG=`grep '* Version' smartling-connector.php | sed 's/ \\* Version: *//'`"
+                        sh 'echo \$TAG'
                     }
                 }
             }
