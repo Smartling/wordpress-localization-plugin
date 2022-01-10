@@ -22,6 +22,7 @@ pipeline {
             agent {
                 label 'master'
             }
+
             steps {
                 withCredentials([string(credentialsId: 'PROJECT_ID', variable: 'PROJECT_ID'), string(credentialsId: 'USER_IDENTIFIER', variable: 'USER_IDENTIFIER'), string(credentialsId: 'TOKEN_SECRET', variable: 'TOKEN_SECRET')]) {
                     dir('.') {
@@ -67,7 +68,7 @@ pipeline {
                             sh 'cp -r ../languages ./languages'
                             sh 'cp -r ../inc/config ./inc'
                             sh 'cp -r ../inc/Smartling ./inc'
-                            sh 'svn --username smartling --password $WORDPRESS_ORG_SVN_PASSWORD copy https://plugins.svn.wordpress.org/smartling-connector/trunk https://plugins.svn.wordpress.org/smartling-connector/tags/$tag -m "Tagging new version $tag"
+                            sh 'svn --username smartling --password $WORDPRESS_ORG_SVN_PASSWORD copy https://plugins.svn.wordpress.org/smartling-connector/trunk https://plugins.svn.wordpress.org/smartling-connector/tags/$tag -m "Tagging new version $tag"'
                         }
                     }
                 }
