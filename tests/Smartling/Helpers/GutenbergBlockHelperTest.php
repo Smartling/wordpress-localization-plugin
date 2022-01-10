@@ -1,6 +1,12 @@
 <?php
 
 namespace {
+    if (!function_exists('get_site_option')) {
+        function get_site_option($storageKey, $defaultValue)
+        {
+            return $defaultValue;
+        }
+    }
     if (!function_exists('wp_parse_str')) {
         /**
          * @param string $string
@@ -50,10 +56,14 @@ namespace Smartling\Tests\Smartling\Helpers {
     use Smartling\Helpers\WordpressFunctionProxyHelper;
     use Smartling\Models\GutenbergBlock;
     use Smartling\Replacers\ReplacerFactory;
+    use Smartling\Replacers\ReplacerInterface;
     use Smartling\Submissions\SubmissionEntity;
     use Smartling\Tests\Traits\InvokeMethodTrait;
     use Smartling\Tests\Traits\SettingsManagerMock;
     use Smartling\Tuner\MediaAttachmentRulesManager;
+    use Smartling\Vendor\Symfony\Component\Config\FileLocator;
+    use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
+    use Smartling\Vendor\Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
     class GutenbergBlockHelperTest extends TestCase
 {
@@ -63,12 +73,24 @@ namespace Smartling\Tests\Smartling\Helpers {
     /**
      * @return MockObject|GutenbergBlockHelper
      */
-    private function mockHelper(array $methods = ['getLogger', 'postReceiveFiltering', 'preSendFiltering', 'processAttributes'])
+    private function mockHelper(
+        array $methods = ['getLogger', 'postReceiveFiltering', 'preSendFiltering', 'processAttributes'],
+        ?MediaAttachmentRulesManager $mediaAttachmentRulesManager = null,
+        ?ReplacerFactory $replacerFactory = null
+    )
     {
+        if ($mediaAttachmentRulesManager === null) {
+            $mediaAttachmentRulesManager = $this->createMock(MediaAttachmentRulesManager::class);
+        }
+
+        if ($replacerFactory === null) {
+            $replacerFactory = $this->createMock(ReplacerFactory::class);
+        }
+
         return $this->getMockBuilder(GutenbergBlockHelper::class)
             ->setConstructorArgs([
-                $this->createMock(MediaAttachmentRulesManager::class),
-                $this->createMock(ReplacerFactory::class),
+                $mediaAttachmentRulesManager,
+                $replacerFactory,
                 new SerializerJsonWithFallback(),
                 $this->createMock(WordpressFunctionProxyHelper::class),
             ])
@@ -447,8 +469,53 @@ HTML
                ->method('postReceiveFiltering')
                ->willReturnArgument(0);
 
+        /** @noinspection PhpParamsInspection */
         $result = $helper->renderTranslatedBlockNode($node, $this->createMock(SubmissionEntity::class), 0);
         self::assertEquals($expectedBlock, $result);
+    }
+
+    public function testRenderTranslatedBlockNodeImageClass()
+    {
+        $sourceId = 17;
+        $targetId = 21;
+        $originalAttributes = base64_encode('{"id":' . $sourceId . ',"sizeSlug":"large","smartlingLockId":"tuzsc"}');
+        $xmlPart = '<gutenbergBlock blockName="core/image" originalAttributes="' . $originalAttributes . '"><contentChunk><![CDATA[
+<figure class="wp-block-image size-large"><img src="http://test/wp-content/uploads/2021/11/imageClass.png" alt="" class="wp-image-' . $sourceId . '"/></figure>
+]]></contentChunk><blockAttribute name="sizeSlug"><![CDATA[[l~árgé]]]></blockAttribute><blockAttribute name="smartlingLockId"><![CDATA[[t~úzsc]]]></blockAttribute></gutenbergBlock>';
+        $expectedBlock = '<!-- wp:core/image {"id":' . $targetId . ',"sizeSlug":"[l~árgé]","smartlingLockId":"[t~úzsc]"} -->
+<figure class="wp-block-image size-large"><img src="http://test/wp-content/uploads/2021/11/imageClass.png" alt="" class="wp-image-' . $targetId . '"/></figure>
+<!-- /wp:core/image -->';
+
+        $dom = new \DOMDocument('1.0', 'utf8');
+        $dom->loadXML($xmlPart);
+        $xpath = new \DOMXPath($dom);
+
+        $list = $xpath->query('/gutenbergBlock');
+        $node = $list->item(0);
+
+        $containerBuilder = new ContainerBuilder();
+        $yamlFileLoader = new YamlFileLoader($containerBuilder, new FileLocator(__DIR__));
+        $configDir = __DIR__ . '/../../../inc/config/';
+        $yamlFileLoader->load($configDir . 'services.yml');
+        $yamlFileLoader->load($configDir . 'media-attachment-rules.yml');
+        $mediaAttachmentRulesManager = $containerBuilder->get('media.attachment.rules.manager');
+        if (!$mediaAttachmentRulesManager instanceof MediaAttachmentRulesManager) {
+            throw new \RuntimeException(MediaAttachmentRulesManager::class . ' expected');
+        }
+
+        $replacer = $this->createMock(ReplacerInterface::class);
+        $replacer->method('processOnDownload')->willReturn($targetId);
+        $replacerFactory = $this->createMock(ReplacerFactory::class);
+        $replacerFactory->method('getReplacer')->willReturn($replacer);
+
+        $helper = $this->mockHelper(['postReceiveFiltering'], $mediaAttachmentRulesManager, $replacerFactory);
+
+        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock()));
+        $helper->method('postReceiveFiltering')->willReturnArgument(0);
+
+        /** @noinspection PhpParamsInspection */
+        $result = $helper->renderTranslatedBlockNode($node, $this->createMock(SubmissionEntity::class), 0);
+        self::assertEquals($expectedBlock, $result, 'Expected both id attribute in Gutenberg block and inner image class to get replaced');
     }
 
     public function testRenderTranslatedBlockNodeAttributeTypes()
