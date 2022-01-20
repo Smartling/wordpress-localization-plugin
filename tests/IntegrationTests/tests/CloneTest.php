@@ -48,8 +48,12 @@ class CloneTest extends SmartlingUnitTestCaseAbstract
         $this->assertInstanceOf(SubmissionEntity::class, $rootSubmission);
         $this->assertInstanceOf(SubmissionEntity::class, $childSubmission);
         $this->assertInstanceOf(SubmissionEntity::class, $imageSubmission);
-        $this->assertEquals('<!-- wp:test/post {"id":' . $childSubmission->getTargetId() . '} /-->', get_post($rootSubmission->getTargetId())->post_content);
-        $this->assertEquals($imageSubmission->getTargetId(), get_post_meta($childSubmission->getTargetId(), '_thumbnail_id', true));
+        $childPostTargetId = $childSubmission->getTargetId();
+        $this->assertEquals('<!-- wp:test/post {"id":' . $childPostTargetId . '} /-->', get_post($rootSubmission->getTargetId())->post_content, 'Expected root post to reference child post id at the target blog');
+        $imageTargetId = $imageSubmission->getTargetId();
+        $this->assertEquals($imageTargetId, get_post_meta($childPostTargetId, '_thumbnail_id', true), 'Expected child post to reference attachment id at the target blog');
+        $this->assertNotEquals($childPostId, $childPostTargetId, 'Expected child post id to change in translation');
+        $this->assertNotEquals($imageId, $imageTargetId, 'Expected attachment id to change in translation');
         restore_current_blog();
     }
 
