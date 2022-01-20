@@ -4,8 +4,9 @@ namespace Smartling\Services;
 
 use Exception;
 use Smartling\Exception\SmartlingHumanReadableException;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\LoggerSafeTrait;
-use Smartling\Jobs\JobEntityWithBatchUid;
+use Smartling\Models\CloneRequest;
 
 /**
  *
@@ -44,7 +45,7 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
 
     public const ACTION_NAME = 'smartling-get-relations';
 
-    private const ACTION_NAME_CREATE_SUBMISSIONS = 'smartling-create-submissions';
+    public const ACTION_NAME_CREATE_SUBMISSIONS = 'smartling-create-submissions';
 
     private ContentRelationsDiscoveryService $service;
     public function __construct(ContentRelationsDiscoveryService $service)
@@ -83,7 +84,7 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
     {
         try {
             if ($_POST['formAction'] === 'clone') {
-                $this->service->clone($_POST);
+                $this->service->clone(new CloneRequest((int)ArrayHelper::first($_POST['source']['id']), $_POST['source']['contentType'], explode(',', $_POST['targetBlogIds']), $_POST['relations']));
             } else {
                 $this->service->createSubmissions($_POST);
             }

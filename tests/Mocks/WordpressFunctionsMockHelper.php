@@ -153,7 +153,7 @@ namespace {
         }
 
         if (!function_exists('get_post_meta')) {
-            function get_post_meta($postId)
+            function get_post_meta($postId, $key, $single)
             {
                 return ['meta1' => ['value1'], 'meta2' => ['value2'], 'meta3' => ['value3'],];
             }

@@ -667,7 +667,7 @@ if ($post instanceof WP_Post) {
                     e.preventDefault();
                     $('#error-messages').hide();
 
-                    var url = `${ajaxurl}?action=smartling-create-submissions`;
+                    var url = `${ajaxurl}?action=<?= ContentRelationsHandler::ACTION_NAME_CREATE_SUBMISSIONS?>`;
 
                     var blogIds = [];
 
@@ -693,10 +693,10 @@ if ($post instanceof WP_Post) {
                     if (!isBulkSubmitPage) {
                         switch ($('#cloneDepth').val()) {
                             case "1":
-                                data.relations = l1Relations.missingTranslatedReferences;
+                                data.relations = {1: l1Relations.missingTranslatedReferences};
                                 break;
                             case "2":
-                                data.relations = mergeRelations(l1Relations.missingTranslatedReferences, l2Relations.missingTranslatedReferences);
+                                data.relations = {1: l1Relations.missingTranslatedReferences, 2: l2Relations.missingTranslatedReferences}
                                 break;
                         }
                     }

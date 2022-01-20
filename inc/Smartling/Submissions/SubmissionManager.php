@@ -320,7 +320,7 @@ class SubmissionManager extends EntityManagerAbstract
             $this->getDbal()->completeTableName(SubmissionEntity::getTableName()),
             array_keys(SubmissionEntity::getFieldDefinitions()),
             $block,
-            null,
+            ['id' => 'asc'],
             ['limit' => 1, 'page' => 1],
         ));
 
