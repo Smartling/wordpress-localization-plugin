@@ -24,6 +24,7 @@ use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
 use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
+use Smartling\Models\CloneRequest;
 use Smartling\Models\DetectedRelations;
 use Smartling\Models\GutenbergBlock;
 use Smartling\MonologWrapper\MonologWrapper;
@@ -151,27 +152,19 @@ class ContentRelationsDiscoveryService
         }
     }
 
-    public function clone(array $data): void
+    public function clone(CloneRequest $request): void
     {
-        $contentId = ArrayHelper::first($data['source']['id']);
-        $contentType = $data['source']['contentType'];
         $sourceBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
-        $targetBlogIds = explode(',', $data['targetBlogIds']);
         $submissionArray = [
             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
         ];
         $submissions = [];
 
-        foreach ($targetBlogIds as $targetBlogId) {
-            $sources = [
-                [
-                    'id' => $contentId,
-                    'type' => $contentType,
-                ],
-            ];
+        foreach ($request->getTargetBlogIds() as $targetBlogId) {
+            $sources = [];
             $submissionArray[SubmissionEntity::FIELD_TARGET_BLOG_ID] = $targetBlogId;
-            if ($this->hasRelations($data, (int)$targetBlogId)) {
-                foreach ($data['relations'][$targetBlogId] as $type => $ids) {
+            foreach ($request->getRelationsOrdered() as $relationSet) {
+                foreach ($relationSet[$targetBlogId] as $type => $ids) {
                     foreach ($ids as $id) {
                         $sources[] = [
                             'id' => $id,
@@ -180,6 +173,11 @@ class ContentRelationsDiscoveryService
                     }
                 }
             }
+            $sources[] = [
+                'id' => $request->getContentId(),
+                'type' => $request->getContentType(),
+            ];
+
             foreach ($sources as $source) {
                 $submissionArray[SubmissionEntity::FIELD_CONTENT_TYPE] = $source['type'];
                 $submissionArray[SubmissionEntity::FIELD_SOURCE_ID] = (int)$source['id'];
