@@ -84,7 +84,7 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
     {
         try {
             if ($_POST['formAction'] === 'clone') {
-                $this->service->clone(new CloneRequest((int)ArrayHelper::first($_POST['source']['id']), $_POST['source']['contentType'], explode(',', $_POST['targetBlogIds']), $_POST['relations']));
+                $this->service->clone(new CloneRequest((int)ArrayHelper::first($_POST['source']['id']), $_POST['source']['contentType'], $_POST['relations'], explode(',', $_POST['targetBlogIds'])));
             } else {
                 $this->service->createSubmissions($_POST);
             }
