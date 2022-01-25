@@ -59,14 +59,7 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'WORDPRESS_ORG_SVN_PASSWORD', variable: 'WORDPRESS_ORG_SVN_PASSWORD')]) {
                     dir('.') {
-                        sh 'docker run --rm -w /plugin-dir -v $PWD:/plugin-dir -e MYSQL_HOST=localhost -e WORDPRESS_ORG_SVN_PASSWORD=$WORDPRESS_ORG_SVN_PASSWORD wordpress-localization-plugin-php74:latest release.sh'
-                        sh 'cp ../readme.txt ../smartling-connector.php .'
-                        sh 'cp -r ../css ./css'
-                        sh 'cp -r ../js ./js'
-                        sh 'cp -r ../languages ./languages'
-                        sh 'cp -r ../inc/config ./inc'
-                        sh 'cp -r ../inc/Smartling ./inc'
-                        sh 'svn add --force * --auto-props --parents --depth infinity -q'
+                        sh 'docker run --rm -w /plugin-dir -v $PWD:/plugin-dir -e MYSQL_HOST=localhost -e WORDPRESS_ORG_SVN_PASSWORD=$WORDPRESS_ORG_SVN_PASSWORD wordpress-localization-plugin-php74:latest /release.sh'
                     }
                 }
             }
