@@ -18,7 +18,6 @@ ENV SVN_PASS=${SVN_PASS}
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
-    apt-get upgrade -y && \
     apt-get install -y \
         curl \
         mysql-server \
@@ -34,6 +33,12 @@ RUN apt-get update && \
         php-xdebug \
         subversion \
         zip
+
+RUN wget http://opensource.wandisco.com/1.11/scripts/subversion_installer_1.11.sh && \
+    chmod +x subversion_installer_1.11.sh && \
+    ./subversion_installer_1.11.sh \
+
+RUN svn --version
 
 RUN echo "[mysqld]" >> /etc/mysql/my.cnf && \
     echo "default_authentication_plugin=mysql_native_password" >> /etc/mysql/my.cnf && \
