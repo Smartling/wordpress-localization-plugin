@@ -95,4 +95,4 @@ CMD WP_INSTALL_DIR=${WP_INSTALL_DIR} \
     SITES=${SITES} \
     LOCAL_GIT_DIR=${LOCAL_GIT_DIR} \
     SVN_PASS=${SVN_PASS} \
-    /build.sh
+    /test.sh

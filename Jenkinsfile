@@ -59,9 +59,7 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'WORDPRESS_ORG_SVN_PASSWORD', variable: 'WORDPRESS_ORG_SVN_PASSWORD')]) {
                     dir('.') {
-                        sh 'cd trunk'
-                        sh 'ls -la'
-                        sh 'svn --version'
+                        sh 'docker run --rm -w /plugin-dir -v $PWD:/plugin-dir -e MYSQL_HOST=localhost -e WORDPRESS_ORG_SVN_PASSWORD=$WORDPRESS_ORG_SVN_PASSWORD wordpress-localization-plugin-php74:latest release.sh'
                         sh 'cp ../readme.txt ../smartling-connector.php .'
                         sh 'cp -r ../css ./css'
                         sh 'cp -r ../js ./js'
