@@ -32,6 +32,7 @@ RUN apt-get update && \
         php-mbstring \
         php-xdebug \
         subversion \
+        subversion-tools \
         zip
 
 RUN echo "[mysqld]" >> /etc/mysql/my.cnf && \
