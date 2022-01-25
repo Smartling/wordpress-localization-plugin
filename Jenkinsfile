@@ -58,10 +58,10 @@ pipeline {
 
             steps {
                 withCredentials([string(credentialsId: 'WORDPRESS_ORG_SVN_PASSWORD', variable: 'WORDPRESS_ORG_SVN_PASSWORD')]) {
-                    dir('./trunk') {
-                        sh 'apt-get install subversion'
-                        sh 'svn --version'
+                    dir('.') {
+                        sh 'cd trunk'
                         sh 'ls -la'
+                        sh 'svn --version'
                         sh 'cp ../readme.txt ../smartling-connector.php .'
                         sh 'cp -r ../css ./css'
                         sh 'cp -r ../js ./js'

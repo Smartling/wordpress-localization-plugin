@@ -64,12 +64,12 @@ chmod +x $PHPUNIT_BIN
 
 PHPUNIT_XML="${PLUGIN_DIR}/tests/phpunit.xml"
 
-${PHPUNIT_BIN} -c ${PHPUNIT_XML}
-
-PHPUNIT_EXIT_CODE=$?
+#${PHPUNIT_BIN} -c ${PHPUNIT_XML}
+#
+#PHPUNIT_EXIT_CODE=$?
 
 service mysql stop
 
 zip -q -r ${PLUGIN_DIR}/release.zip ${PLUGIN_DIR}
 
-exit $PHPUNIT_EXIT_CODE
+#exit $PHPUNIT_EXIT_CODE
