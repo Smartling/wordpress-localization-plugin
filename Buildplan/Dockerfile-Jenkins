@@ -35,11 +35,6 @@ RUN apt-get update && \
         wget \
         zip
 
-RUN wget https://opensource.wandisco.com/subversion/subversion_installer_1.11.sh && \
-    chmod +x subversion_installer_1.11.sh && \
-    ./subversion_installer_1.11.sh && \
-    rm ./subversion_installer_1.11.sh
-
 RUN svn --version
 
 RUN echo "[mysqld]" >> /etc/mysql/my.cnf && \
