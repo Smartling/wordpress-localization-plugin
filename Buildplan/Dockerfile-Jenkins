@@ -34,9 +34,9 @@ RUN apt-get update && \
         subversion \
         zip
 
-RUN wget http://opensource.wandisco.com/1.11/scripts/subversion_installer_1.11.sh && \
-    chmod +x subversion_installer_1.11.sh && \
-    ./subversion_installer_1.11.sh \
+RUN wget http://opensource.wandisco.com/1.14.1/scripts/subversion_installer_1.14.1.sh && \
+    chmod +x subversion_installer_1.14.1.sh && \
+    ./subversion_installer_1.14.1.sh \
 
 RUN svn --version
 
