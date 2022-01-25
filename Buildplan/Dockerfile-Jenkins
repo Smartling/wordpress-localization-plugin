@@ -18,6 +18,7 @@ ENV SVN_PASS=${SVN_PASS}
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
+    apt-get upgrade && \
     apt-get install -y \
         curl \
         mysql-server \
@@ -32,7 +33,6 @@ RUN apt-get update && \
         php-mbstring \
         php-xdebug \
         subversion \
-        subversion-tools \
         zip
 
 RUN echo "[mysqld]" >> /etc/mysql/my.cnf && \
