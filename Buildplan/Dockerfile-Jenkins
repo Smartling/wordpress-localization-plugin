@@ -32,6 +32,7 @@ RUN apt-get update && \
         php-mbstring \
         php-xdebug \
         subversion \
+        wget \
         zip
 
 RUN wget http://opensource.wandisco.com/1.14.1/scripts/subversion_installer_1.14.1.sh && \
