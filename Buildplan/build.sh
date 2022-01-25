@@ -31,6 +31,8 @@ chown -R mysql:mysql /var/lib/mysql && service mysql start
 
 cd "$LOCAL_GIT_DIR"
 $COMPOSER_BIN update
+
+apt-get install subversion
 svn -q checkout https://plugins.svn.wordpress.org/smartling-connector/trunk trunk
 cp -r trunk/inc/lib ./inc
 

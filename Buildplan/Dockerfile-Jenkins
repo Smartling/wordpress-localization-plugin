@@ -31,8 +31,6 @@ RUN apt-get update && \
         php-xml \
         php-mbstring \
         php-xdebug \
-        subversion \
-        wget \
         zip
 
 RUN svn --version
