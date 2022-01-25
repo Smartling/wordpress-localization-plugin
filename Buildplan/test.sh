@@ -67,6 +67,9 @@ PHPUNIT_EXIT_CODE=$?
 
 service mysql stop
 
+cd ${PLUGIN_DIR}
+rm -rf trunk
+
 zip -q -r ${PLUGIN_DIR}/release.zip ${PLUGIN_DIR}
 
 exit $PHPUNIT_EXIT_CODE
