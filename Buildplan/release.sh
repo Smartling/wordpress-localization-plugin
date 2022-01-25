@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
+svn --version
+svn -q checkout https://plugins.svn.wordpress.org/smartling-connector/trunk trunk
 cd trunk
 ls -la
-svn --version
 cp ../readme.txt ../smartling-connector.php .
 cp -r ../css ./css
 cp -r ../js ./js
