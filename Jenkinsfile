@@ -60,15 +60,16 @@ pipeline {
                 withCredentials([string(credentialsId: 'WORDPRESS_ORG_SVN_PASSWORD', variable: 'WORDPRESS_ORG_SVN_PASSWORD')]) {
                     dir('./trunk') {
                         sh 'apt-get install subversion'
+                        sh 'svn --version'
+                        sh 'ls -la'
                         sh 'cp ../readme.txt ../smartling-connector.php .'
                         sh 'cp -r ../css ./css'
                         sh 'cp -r ../js ./js'
                         sh 'cp -r ../languages ./languages'
                         sh 'cp -r ../inc/config ./inc'
                         sh 'cp -r ../inc/Smartling ./inc'
-                        sh 'svn --version'
-                        sh "TAG=`grep '* Version' smartling-connector.php | sed 's/ \\* Version: *//'` && echo \$TAG && svn commit -m 'Update to v \$TAG' --username smartling --password $WORDPRESS_ORG_SVN_PASSWORD && svn copy https://plugins.svn.wordpress.org/smartling-connector/trunk https://plugins.svn.wordpress.org/smartling-connector/tags/\$TAG -m 'Tagging new version \$TAG'"
                         sh 'svn add --force * --auto-props --parents --depth infinity -q'
+                        sh "TAG=`grep '* Version' smartling-connector.php | sed 's/ \\* Version: *//'` && echo \$TAG && svn commit -m 'Update to v \$TAG' --username smartling --password $WORDPRESS_ORG_SVN_PASSWORD && svn copy https://plugins.svn.wordpress.org/smartling-connector/trunk https://plugins.svn.wordpress.org/smartling-connector/tags/\$TAG -m 'Tagging new version \$TAG'"
                     }
                 }
             }
