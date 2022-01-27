@@ -68,7 +68,15 @@ PHPUNIT_EXIT_CODE=$?
 service mysql stop
 
 cd ${PLUGIN_DIR}
-rm -rf trunk
+cd trunk
+cp ../readme.txt ../smartling-connector.php .
+cp -r ../css .
+cp -r ../inc/config ./inc
+cp -r ../inc/Smartling ./inc
+cp -r ../js .
+cp -r ../languages .
+svn add --force * --auto-props --parents --depth infinity -q
+svn status
 
 zip -q -r ${PLUGIN_DIR}/release.zip ${PLUGIN_DIR}
 
