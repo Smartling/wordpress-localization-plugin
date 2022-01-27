@@ -78,6 +78,6 @@ cp -r ../languages .
 svn add --force * --auto-props --parents --depth infinity -q
 svn status
 
-zip -q -r ${PLUGIN_DIR}/release.zip ${PLUGIN_DIR}
+zip -q -r ${PLUGIN_DIR}/release.zip ${PLUGIN_DIR} -x trunk/**\*
 
 exit $PHPUNIT_EXIT_CODE
