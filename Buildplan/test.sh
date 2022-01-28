@@ -31,6 +31,7 @@ chown -R mysql:mysql /var/lib/mysql && service mysql start
 
 cd "$LOCAL_GIT_DIR"
 $COMPOSER_BIN update
+
 svn -q checkout https://plugins.svn.wordpress.org/smartling-connector/trunk trunk
 cp -r trunk/inc/lib ./inc
 
@@ -66,6 +67,17 @@ PHPUNIT_EXIT_CODE=$?
 
 service mysql stop
 
-zip -q -r ${PLUGIN_DIR}/release.zip ${PLUGIN_DIR}
+cd ${PLUGIN_DIR}
+cd trunk
+cp ../readme.txt ../smartling-connector.php .
+cp -r ../css .
+cp -r ../inc/config ./inc
+cp -r ../inc/Smartling ./inc
+cp -r ../js .
+cp -r ../languages .
+svn add --force * --auto-props --parents --depth infinity -q
+svn status
+
+zip -q -r ${PLUGIN_DIR}/release.zip ${PLUGIN_DIR} -x trunk/**\*
 
 exit $PHPUNIT_EXIT_CODE
