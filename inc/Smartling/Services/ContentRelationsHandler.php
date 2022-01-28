@@ -80,13 +80,16 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
      *      'relations'    => {{@see actionHandler }} relations response
      *  ]
      */
-    public function createSubmissionsHandler(): void
+    public function createSubmissionsHandler(array $data = null): void
     {
+        if ($data === null) {
+            $data = $_POST;
+        }
         try {
-            if ($_POST['formAction'] === 'clone') {
-                $this->service->clone(new CloneRequest((int)ArrayHelper::first($_POST['source']['id']), $_POST['source']['contentType'], $_POST['relations'], explode(',', $_POST['targetBlogIds'])));
+            if ($data['formAction'] === 'clone') {
+                $this->service->clone(new CloneRequest((int)ArrayHelper::first($data['source']['id']), $data['source']['contentType'], $data['relations'] ?? [], explode(',', $data['targetBlogIds'])));
             } else {
-                $this->service->createSubmissions($_POST);
+                $this->service->createSubmissions($data);
             }
             $this->returnResponse(['status' => 'SUCCESS']);
         } catch (Exception $e) {
