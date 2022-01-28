@@ -57,7 +57,7 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
     public function register(): void
     {
         parent::register();
-        add_action('wp_ajax_' . static::ACTION_NAME_CREATE_SUBMISSIONS, [$this, 'createSubmissionsHandler']);
+        add_action('wp_ajax_' . static::ACTION_NAME_CREATE_SUBMISSIONS, [$this, 'createSubmissionsHandler'], 10, 0);
     }
 
     /**
