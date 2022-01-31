@@ -103,9 +103,7 @@ class LastModifiedCheckJob extends JobAbstract
                 $lastModified = $this->api->lastModified($submission);
             } catch (SmartlingNetworkException $e) {
                 if ($this->api->isUnrecoverable($e)) {
-                    $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
-                    $this->submissionManager->storeEntity($submission);
-                    $this->getLogger()->warning("Marking submission {$submission->getId()} failed because of an unrecoverable error in ApiWrapper::lastModified response");
+                    $this->submissionManager->setErrorMessage($submission, $e->getMessage());
                 }
                 throw $e;
             }
