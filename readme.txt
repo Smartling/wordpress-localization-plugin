@@ -63,7 +63,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 2.11.5 =
-* Fixed cloned submissions failing from completed status after time passes
+* Cloned submissions are excluded from status check background job. This change fixes cloned submissions changing status from completed to failed after time passes
 
 = 2.11.4 =
 * Fixed upload widget not uploading content
