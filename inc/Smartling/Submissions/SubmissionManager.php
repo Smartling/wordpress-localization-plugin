@@ -631,6 +631,7 @@ class SubmissionManager extends EntityManagerAbstract
                 ]
             )
         );
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_NOT_EQ, SubmissionEntity::FIELD_IS_CLONED, [1]));
         $query = QueryBuilder::buildSelectQuery(
             $this->getDbal()->completeTableName(SubmissionEntity::getTableName()),
             [

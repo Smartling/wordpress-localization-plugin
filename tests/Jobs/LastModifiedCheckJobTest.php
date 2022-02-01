@@ -425,7 +425,7 @@ class LastModifiedCheckJobTest extends TestCase
 
         $this->submissionManager
             ->expects(self::exactly($storeEntityCount))
-            ->method('storeEntity');
+            ->method('setErrorMessage');
 
         $worker->run();
     }
