@@ -342,7 +342,7 @@ class ContentHelper
         $targetEntity = $wrapper->get($submission->getTargetId());
         if ($targetEntity instanceof EntityAbstract) {
             foreach ($metadata as $key => $value) {
-                $targetEntity->setMetaTag($key, $value);
+                $targetEntity->setMetaTag((string)$key, $value);
             }
         }
         $this->ensureRestoredBlogId();

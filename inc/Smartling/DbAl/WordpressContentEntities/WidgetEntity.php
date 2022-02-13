@@ -122,12 +122,7 @@ class WidgetEntity extends VirtualEntityAbstract
         $this->entityNotFound('theme_widget', $guid);
     }
 
-    /**
-     * @param string $tagName
-     * @param string $tagValue
-     * @param bool   $unique
-     */
-    public function setMetaTag($tagName, $tagValue, $unique = true)
+    public function setMetaTag(string $tagName, $tagValue, bool $unique = true): void
     {
     }
 

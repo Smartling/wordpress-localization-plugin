@@ -45,7 +45,7 @@ class TaxonomyEntityStd extends EntityAbstract
         return get_term_meta($this->getPK());
     }
 
-    public function setMetaTag($tagName, $tagValue, $unique = true)
+    public function setMetaTag(string $tagName, $tagValue, bool $unique = true): void
     {
         $curValue = get_term_meta($this->getPK(), $tagName, $unique);
 

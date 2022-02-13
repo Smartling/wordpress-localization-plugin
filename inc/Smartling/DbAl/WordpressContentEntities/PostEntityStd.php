@@ -418,18 +418,23 @@ class PostEntityStd extends EntityAbstract
         }
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function setMetaTag($tagName, $tagValue, $unique = true)
+    public function setMetaTag(string $tagName, $tagValue, bool $unique = true): void
     {
-        $result = null;
+        $result = add_post_meta($this->ID, $tagName, $tagValue, $unique);
+        if (false === $result) {
+            $this->getLogger()->debug(sprintf('Failed to add meta tagName="%s" for type="%s" id="%s"', $tagName, $this->post_type, $this->ID));
+            $currentMeta = get_post_meta($this->ID, $tagName, true);
+            if (wp_unslash($tagValue) === $currentMeta) {
+                $this->getLogger()->debug('Previous meta is same as current, skipping update');
+                return;
+            }
 
-        if (false === ($result = add_post_meta($this->ID, $tagName, $tagValue, $unique))) {
             $result = update_post_meta($this->ID, $tagName, $tagValue);
         }
 
         if (false === $result) {
+            $this->getLogger()->debug(sprintf('Failed to update meta tagName="%s", tagValue="%s" for id="%s"', $tagName, $tagValue, $this->ID));
+            $this->getLogger()->debug(sprintf('Meta table for type="%s", id="%s": tableName="%s"', $this->post_type, $this->ID, _get_meta_table($this->post_type)));
             if (false === $this->ensureMetaValue($tagName, $tagValue)) {
                 $message = vsprintf(
                     'Error saving meta tag "%s" with value "%s" for type="%s" id="%s"',

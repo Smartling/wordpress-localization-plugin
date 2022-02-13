@@ -240,11 +240,9 @@ abstract class EntityAbstract
     abstract public function get($guid);
 
     /**
-     * @param string $tagName
-     * @param string $tagValue
-     * @param bool   $unique
+     * @param mixed $tagValue
      */
-    abstract public function setMetaTag($tagName, $tagValue, $unique = true);
+    abstract public function setMetaTag(string $tagName, $tagValue, bool $unique = true): void;
 
     /**
      * @param int $limit
