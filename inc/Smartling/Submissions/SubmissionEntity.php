@@ -246,6 +246,11 @@ class SubmissionEntity extends SmartlingEntityAbstract
         $this->stateFields[static::FIELD_OUTDATED] = $outdated;
     }
 
+    public function isCloned(): bool
+    {
+        return $this->getIsCloned() === 1;
+    }
+
     public function getIsCloned(): int
     {
         return (int)$this->stateFields[static::FIELD_IS_CLONED];

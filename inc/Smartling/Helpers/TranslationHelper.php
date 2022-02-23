@@ -146,7 +146,10 @@ class TranslationHelper
         throw new SmartlingDataReadException($message);
     }
 
-    public function isRelatedSubmissionCreationNeeded(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId): bool {
+    public function isRelatedSubmissionCreationNeeded(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId, bool $cloning = false): bool {
+        if ($cloning && $this->submissionManager->submissionExists($contentType, $sourceBlogId, $contentId, $targetBlogId)) {
+            return false;
+        }
         return !GlobalSettingsManager::isHandleRelationsManually() ||
             $this->submissionManager->submissionExistsNoLastError($contentType, $sourceBlogId, $contentId, $targetBlogId);
     }
