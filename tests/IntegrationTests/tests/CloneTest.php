@@ -20,7 +20,7 @@ class CloneTest extends SmartlingUnitTestCaseAbstract
         $childPostId = $this->createPost('post', 'embedded post', 'embedded content');
         $imageId = $this->createAttachment();
         set_post_thumbnail($childPostId, $imageId);
-        wp_update_post(['ID' => $imageId, 'post_parent' => $childPostId]); // Force ReferencedStdBasedContentProcessorAbstract change
+        wp_update_post(['ID' => $imageId, 'post_parent' => $childPostId]); // Force ReferencedStdBasedContentProcessorAbstract change that caused regression initially
 
         $rootPostId = $this->createPost('post', 'root post', "<!-- wp:test/post {\"id\":$childPostId} /-->");
 
