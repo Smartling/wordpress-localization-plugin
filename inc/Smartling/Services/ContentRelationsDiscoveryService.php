@@ -198,11 +198,7 @@ class ContentRelationsDiscoveryService
                     if ($title !== '') {
                         $submission->setSourceTitle($title);
                     }
-                    try {
-                        $submission->getFileUri();
-                    } catch (SmartlingInvalidFactoryArgumentException $e) {
-                        $this->getLogger()->error(sprintf('Failed to set submission file uri while cloning: %s, sourceBlogId=%s, sourceId=%s', $e->getMessage(), $sourceBlogId, $submissionArray[SubmissionEntity::FIELD_SOURCE_ID]));
-                    }
+                    $submission->getFileUri();
                 }
                 $submission->setIsCloned(1);
                 $submissions[] = $submission;

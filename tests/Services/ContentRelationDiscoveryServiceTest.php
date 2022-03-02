@@ -24,6 +24,7 @@ namespace Smartling\Tests\Services {
     use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
     use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
     use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
+    use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
     use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
     use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
     use Smartling\Helpers\ContentHelper;
@@ -377,6 +378,13 @@ namespace Smartling\Tests\Services {
 
         public function testCloningNoDuplication()
         {
+            $serviceId = 'factory.contentIO';
+            $containerBuilder = Bootstrap::getContainer();
+            $io = $containerBuilder->get($serviceId);
+            $factory = $this->createMock(ContentEntitiesIOFactory::class);
+            $factory->method('getMapper')->willReturn($this->createMock(VirtualEntityAbstract::class));
+            $containerBuilder->set($serviceId, $factory);
+
             $contentType = 'post';
             $cloneLevel1 = 1;
             $childPostId = 2;
@@ -411,6 +419,8 @@ namespace Smartling\Tests\Services {
                 $submissionManager
             );
             $x->clone(new CloneRequest($rootPostId, $contentType, [$cloneLevel1 => [$targetBlogId => [$contentType => [$childPostId]]]], [$targetBlogId]));
+
+            $containerBuilder->set($serviceId, $io);
         }
 
         /**
