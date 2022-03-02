@@ -138,7 +138,7 @@ trait SmartlingCoreUploadTrait
             $this->prepareFieldProcessorValues($submission);
             $filteredValues = $this->getFieldsFilter()->processStringsBeforeEncoding($submission, $source);
 
-            if (is_array($filteredValues) && 0 === count($filteredValues)) {
+            if (is_array($filteredValues) && 0 === count($filteredValues) && !$submission->isCloned()) {
                 $message = vsprintf(
                     'Prepared Submission = \'%s\' has nothing to translate. Setting status to \'%s\'.',
                     [

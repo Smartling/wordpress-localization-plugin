@@ -81,20 +81,16 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         $postId = $this->createSourcePostWithMetadata($imageId, $taxonomyIds);
         $translationHelper = $this->getTranslationHelper();
 
-        $submission = $translationHelper->prepareSubmission('post', 1, $postId, 2, true);
-
-        /**
-         * Check submission status
-         */
+        $submission = $translationHelper->prepareSubmission('post', 1, $postId, 2);
         $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_NEW, $submission->getStatus());
-        $this->assertEquals(1, $submission->getIsCloned());
 
         $this->executeUpload();
+        $this->executeDownload();
 
         $submissions = $this->getSubmissionManager()->find(
             [
                 'content_type' => 'attachment',
-                'is_cloned'    => 1,
+                'is_cloned' => 0,
             ]);
 
         $this->assertCount(1, $submissions);
@@ -104,7 +100,7 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         $submissions = $this->getSubmissionManager()->find(
             [
                 'content_type' => 'category',
-                'is_cloned'    => 1,
+                'is_cloned' => 0,
             ]);
 
         $this->assertCount(1, $submissions);
@@ -116,7 +112,7 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         $submissions = $this->getSubmissionManager()->find(
             [
                 'content_type' => 'post',
-                'is_cloned'    => 1,
+                'is_cloned' => 0,
             ]);
 
         $this->assertCount(1, $submissions);
@@ -126,8 +122,9 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         $realMetadata = $this->getContentHelper()->readTargetMetadata($postSubmission);
 
         foreach ($realMetadata as & $realMetadatum) {
-            $realMetadatum = maybe_unserialize($realMetadatum);
+            $realMetadatum = maybe_unserialize(maybe_unserialize($realMetadatum));
         }
+        unset($realMetadatum);
 
         foreach ($expectedMetadata as $eKey => $eValue) {
             self::assertArrayHasKey($eKey, $realMetadata);
