@@ -181,7 +181,12 @@ class ContentRelationsDiscoveryService
             foreach ($sources as $source) {
                 $submissionArray[SubmissionEntity::FIELD_CONTENT_TYPE] = $source['type'];
                 $submissionArray[SubmissionEntity::FIELD_SOURCE_ID] = (int)$source['id'];
-                $existing = ArrayHelper::first($this->submissionManager->find($submissionArray));
+                $existing = ArrayHelper::first($this->submissionManager->find([
+                    SubmissionEntity::FIELD_CONTENT_TYPE => $submissionArray[SubmissionEntity::FIELD_CONTENT_TYPE],
+                    SubmissionEntity::FIELD_SOURCE_ID => $submissionArray[SubmissionEntity::FIELD_SOURCE_ID],
+                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submissionArray[SubmissionEntity::FIELD_SOURCE_BLOG_ID],
+                    SubmissionEntity::FIELD_TARGET_BLOG_ID => $submissionArray[SubmissionEntity::FIELD_TARGET_BLOG_ID],
+                ]));
                 if ($existing instanceof SubmissionEntity) {
                     $submission = $existing;
                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
@@ -193,7 +198,11 @@ class ContentRelationsDiscoveryService
                     if ($title !== '') {
                         $submission->setSourceTitle($title);
                     }
-                    $submission->getFileUri();
+                    try {
+                        $submission->getFileUri();
+                    } catch (SmartlingInvalidFactoryArgumentException $e) {
+                        $this->getLogger()->error(sprintf('Failed to set submission file uri while cloning: %s, sourceBlogId=%s, sourceId=%s', $e->getMessage(), $sourceBlogId, $submissionArray[SubmissionEntity::FIELD_SOURCE_ID]));
+                    }
                 }
                 $submission->setIsCloned(1);
                 $submissions[] = $submission;
