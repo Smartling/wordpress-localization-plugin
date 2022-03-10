@@ -102,7 +102,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         }
         $result = '';
         $originalBlocks = $this->parseBlocks($original);
-        $translatedBlocks = $this->parseBlocks(stripslashes($translated));
+        $translatedBlocks = $this->parseBlocks($translated);
         if (count($originalBlocks) !== count($translatedBlocks)) {
             $this->getLogger()->notice('Counts of blocks differ between original and translated, skipping replacing of post translate block content');
             return $translated;
@@ -110,7 +110,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         foreach ($translatedBlocks as $index => $block) {
             $result .= $this->wpProxy->serialize_block($this->applyPostTranslationReplacers($originalBlocks[$index], $block)->toArray());
         }
-        return addslashes($result);
+        return $result;
     }
 
     private function applyPostTranslationReplacers(GutenbergBlock $original, GutenbergBlock $translated): GutenbergBlock
@@ -380,21 +380,20 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     {
         /* Some user content might have JSON with \u0022 to escape quotes.
         After processing XML \u0022 turns into &quot;, which is correct for general content.
-        To properly encode the quotes in JSON again we replace &quot; with " */
-        $needsQuotes = $this->isJson($attrs);
-        if ($needsQuotes && $depth === 0) {
+        To properly encode the quotes in JSON again we replace &quot; with \" */
+        if ($this->isPossibleJson($attrs) && $depth === 0) {
             array_walk_recursive($attrs, static function (&$value) {
-                $value = str_replace('&quot;', '"', $value);
+                $value = str_replace('&quot;', '\"', $value);
             });
         }
-        $attributes = 0 < count($attrs) ? ' ' . json_encode($attrs, JSON_UNESCAPED_UNICODE) : '';
+        $attributes = 0 < count($attrs) ? ' ' . json_encode($attrs, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) : '';
         $content = implode('', $chunks);
         $result = ('' !== $content)
             ? vsprintf('<!-- wp:%s%s -->%s<!-- /wp:%s -->', [$name, $attributes, $content, $name])
             : vsprintf('<!-- wp:%s%s /-->', [$name, $attributes]);
 
-        // Only apply slashes for root depth: ACF blocks and blocks that we have previously replaced quotes in
-        if ($depth === 0 && ($needsQuotes || (function_exists('acf_has_block_type') && acf_has_block_type($name)))) {
+        // ACF will call stripslashes on save, but $result is properly slashed now
+        if ($this->isAcfBlock($name)) {
             $result = addslashes($result);
         }
 
@@ -470,7 +469,12 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $translatedAttributes;
     }
 
-    private function isJson(array $attrs): bool
+    private function isAcfBlock(string $name): bool
+    {
+        return function_exists('acf_has_block_type') && acf_has_block_type($name);
+    }
+
+    private function isPossibleJson(array $attrs): bool
     {
         foreach ($attrs as $attr) {
             try {
