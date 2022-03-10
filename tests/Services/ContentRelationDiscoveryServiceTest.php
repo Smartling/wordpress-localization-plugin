@@ -24,6 +24,7 @@ namespace Smartling\Tests\Services {
     use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
     use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
     use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
+    use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
     use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
     use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
     use Smartling\Helpers\ContentHelper;
@@ -39,6 +40,7 @@ namespace Smartling\Tests\Services {
     use Smartling\Jobs\JobManager;
     use Smartling\Jobs\SubmissionJobEntity;
     use Smartling\Jobs\SubmissionsJobsManager;
+    use Smartling\Models\CloneRequest;
     use Smartling\Processors\ContentEntitiesIOFactory;
     use Smartling\Replacers\ReplacerFactory;
     use Smartling\Services\ContentRelationsDiscoveryService;
@@ -372,6 +374,53 @@ namespace Smartling\Tests\Services {
                 'relations' => [],
             ]);
             Bootstrap::getContainer()->set('factory.contentIO', $ioFactory);
+        }
+
+        public function testCloningNoDuplication()
+        {
+            $serviceId = 'factory.contentIO';
+            $containerBuilder = Bootstrap::getContainer();
+            $io = $containerBuilder->get($serviceId);
+            $factory = $this->createMock(ContentEntitiesIOFactory::class);
+            $factory->method('getMapper')->willReturn($this->createMock(VirtualEntityAbstract::class));
+            $containerBuilder->set($serviceId, $factory);
+
+            $contentType = 'post';
+            $cloneLevel1 = 1;
+            $childPostId = 2;
+            $rootPostId = 1;
+            $sourceBlogId = 1;
+            $targetBlogId = 2;
+
+            $siteHelper = $this->createMock(SiteHelper::class);
+            $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
+
+            $contentHelper = $this->createMock(ContentHelper::class);
+            $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
+            $submissionManager = $this->createMock(SubmissionManager::class);
+
+            $submissionManager->expects($this->at(0))->method('find')->with([
+                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+                SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+                SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
+                SubmissionEntity::FIELD_SOURCE_ID => $childPostId,
+            ]);
+            $submissionManager->expects($this->at(1))->method('find')->with([
+                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+                SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+                SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
+                SubmissionEntity::FIELD_SOURCE_ID => $rootPostId,
+            ]);
+
+            $x = $this->getContentRelationDiscoveryService(
+                $this->createMock(ApiWrapper::class),
+                $contentHelper,
+                $this->createMock(SettingsManager::class),
+                $submissionManager
+            );
+            $x->clone(new CloneRequest($rootPostId, $contentType, [$cloneLevel1 => [$targetBlogId => [$contentType => [$childPostId]]]], [$targetBlogId]));
+
+            $containerBuilder->set($serviceId, $io);
         }
 
         /**
