@@ -4,7 +4,7 @@ Tags: translation, localization, localisation, translate, multilingual, smartlin
 Requires at least: 5.5
 Tested up to: 5.9
 Requires PHP: 7.4
-Stable tag: 2.12.0
+Stable tag: 2.12.1
 License: GPLv2 or later
 
 Translate content in WordPress quickly and seamlessly with Smartling, the industry-leading Translation Management System.
@@ -62,6 +62,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 2.12.1 =
+* Fixed issue where ACF blocks couldn't be decoded and were missing in translated submissions
+
 = 2.12.0 =
 * Fixed regression where media duplication occured and/or related item ids were not changed when cloning items. This release majorly changes the handling of related items while cloning, from this release onwards only the items directly sent for cloning (including cloning one or two levels deep) should be cloned, without any related submissions.
 

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "62bb0fb32b99ca19c68a90f829b47cfd",
+    "content-hash": "bfa6c42de470c1d192d2c624a5a919ba",
     "packages": [
         {
             "name": "guzzlehttp/guzzle",
@@ -319,16 +319,16 @@
         },
         {
             "name": "monolog/monolog",
-            "version": "1.26.1",
+            "version": "1.27.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Seldaek/monolog.git",
-                "reference": "c6b00f05152ae2c9b04a448f99c7590beb6042f5"
+                "reference": "52ebd235c1f7e0d5e1b16464b695a28335f8e44a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/c6b00f05152ae2c9b04a448f99c7590beb6042f5",
-                "reference": "c6b00f05152ae2c9b04a448f99c7590beb6042f5",
+                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/52ebd235c1f7e0d5e1b16464b695a28335f8e44a",
+                "reference": "52ebd235c1f7e0d5e1b16464b695a28335f8e44a",
                 "shasum": ""
             },
             "require": {
@@ -389,7 +389,7 @@
             ],
             "support": {
                 "issues": "https://github.com/Seldaek/monolog/issues",
-                "source": "https://github.com/Seldaek/monolog/tree/1.26.1"
+                "source": "https://github.com/Seldaek/monolog/tree/1.27.0"
             },
             "funding": [
                 {
@@ -401,7 +401,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2021-05-28T08:32:12+00:00"
+            "time": "2022-03-13T20:29:46+00:00"
         },
         {
             "name": "psr/http-message",
@@ -776,7 +776,7 @@
         },
         {
             "name": "symfony/polyfill-ctype",
-            "version": "v1.24.0",
+            "version": "v1.25.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-ctype.git",
@@ -838,7 +838,7 @@
                 "portable"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-ctype/tree/v1.24.0"
+                "source": "https://github.com/symfony/polyfill-ctype/tree/v1.25.0"
             },
             "funding": [
                 {
@@ -858,7 +858,7 @@
         },
         {
             "name": "symfony/polyfill-intl-idn",
-            "version": "v1.24.0",
+            "version": "v1.25.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-intl-idn.git",
@@ -925,7 +925,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-intl-idn/tree/v1.24.0"
+                "source": "https://github.com/symfony/polyfill-intl-idn/tree/v1.25.0"
             },
             "funding": [
                 {
@@ -945,7 +945,7 @@
         },
         {
             "name": "symfony/polyfill-intl-normalizer",
-            "version": "v1.24.0",
+            "version": "v1.25.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-intl-normalizer.git",
@@ -1009,7 +1009,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-intl-normalizer/tree/v1.24.0"
+                "source": "https://github.com/symfony/polyfill-intl-normalizer/tree/v1.25.0"
             },
             "funding": [
                 {
@@ -1029,7 +1029,7 @@
         },
         {
             "name": "symfony/polyfill-php72",
-            "version": "v1.24.0",
+            "version": "v1.25.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-php72.git",
@@ -1085,7 +1085,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-php72/tree/v1.24.0"
+                "source": "https://github.com/symfony/polyfill-php72/tree/v1.25.0"
             },
             "funding": [
                 {
@@ -1160,29 +1160,30 @@
     "packages-dev": [
         {
             "name": "doctrine/instantiator",
-            "version": "1.4.0",
+            "version": "1.4.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/instantiator.git",
-                "reference": "d56bf6102915de5702778fe20f2de3b2fe570b5b"
+                "reference": "10dcfce151b967d20fde1b34ae6640712c3891bc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/instantiator/zipball/d56bf6102915de5702778fe20f2de3b2fe570b5b",
-                "reference": "d56bf6102915de5702778fe20f2de3b2fe570b5b",
+                "url": "https://api.github.com/repos/doctrine/instantiator/zipball/10dcfce151b967d20fde1b34ae6640712c3891bc",
+                "reference": "10dcfce151b967d20fde1b34ae6640712c3891bc",
                 "shasum": ""
             },
             "require": {
                 "php": "^7.1 || ^8.0"
             },
             "require-dev": {
-                "doctrine/coding-standard": "^8.0",
+                "doctrine/coding-standard": "^9",
                 "ext-pdo": "*",
                 "ext-phar": "*",
-                "phpbench/phpbench": "^0.13 || 1.0.0-alpha2",
-                "phpstan/phpstan": "^0.12",
-                "phpstan/phpstan-phpunit": "^0.12",
-                "phpunit/phpunit": "^7.0 || ^8.0 || ^9.0"
+                "phpbench/phpbench": "^0.16 || ^1",
+                "phpstan/phpstan": "^1.4",
+                "phpstan/phpstan-phpunit": "^1",
+                "phpunit/phpunit": "^7.5 || ^8.5 || ^9.5",
+                "vimeo/psalm": "^4.22"
             },
             "type": "library",
             "autoload": {
@@ -1209,7 +1210,7 @@
             ],
             "support": {
                 "issues": "https://github.com/doctrine/instantiator/issues",
-                "source": "https://github.com/doctrine/instantiator/tree/1.4.0"
+                "source": "https://github.com/doctrine/instantiator/tree/1.4.1"
             },
             "funding": [
                 {
@@ -1225,29 +1226,33 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2020-11-10T18:47:58+00:00"
+            "time": "2022-03-03T08:28:38+00:00"
         },
         {
             "name": "myclabs/deep-copy",
-            "version": "1.10.2",
+            "version": "1.11.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/myclabs/DeepCopy.git",
-                "reference": "776f831124e9c62e1a2c601ecc52e776d8bb7220"
+                "reference": "14daed4296fae74d9e3201d2c4925d1acb7aa614"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/myclabs/DeepCopy/zipball/776f831124e9c62e1a2c601ecc52e776d8bb7220",
-                "reference": "776f831124e9c62e1a2c601ecc52e776d8bb7220",
+                "url": "https://api.github.com/repos/myclabs/DeepCopy/zipball/14daed4296fae74d9e3201d2c4925d1acb7aa614",
+                "reference": "14daed4296fae74d9e3201d2c4925d1acb7aa614",
                 "shasum": ""
             },
             "require": {
                 "php": "^7.1 || ^8.0"
             },
+            "conflict": {
+                "doctrine/collections": "<1.6.8",
+                "doctrine/common": "<2.13.3 || >=3,<3.2.2"
+            },
             "require-dev": {
-                "doctrine/collections": "^1.0",
-                "doctrine/common": "^2.6",
-                "phpunit/phpunit": "^7.1"
+                "doctrine/collections": "^1.6.8",
+                "doctrine/common": "^2.13.3 || ^3.2.2",
+                "phpunit/phpunit": "^7.5.20 || ^8.5.23 || ^9.5.13"
             },
             "type": "library",
             "autoload": {
@@ -1272,7 +1277,7 @@
             ],
             "support": {
                 "issues": "https://github.com/myclabs/DeepCopy/issues",
-                "source": "https://github.com/myclabs/DeepCopy/tree/1.10.2"
+                "source": "https://github.com/myclabs/DeepCopy/tree/1.11.0"
             },
             "funding": [
                 {
@@ -1280,7 +1285,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2020-11-13T09:40:50+00:00"
+            "time": "2022-03-03T13:19:32+00:00"
         },
         {
             "name": "phar-io/manifest",
@@ -1919,16 +1924,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "8.5.23",
+            "version": "8.5.24",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "efb20ff3623b9d09bf190a68fdfe574538a8d496"
+                "reference": "293cb0099d75407d971a73f41e51f35b664667ed"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/efb20ff3623b9d09bf190a68fdfe574538a8d496",
-                "reference": "efb20ff3623b9d09bf190a68fdfe574538a8d496",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/293cb0099d75407d971a73f41e51f35b664667ed",
+                "reference": "293cb0099d75407d971a73f41e51f35b664667ed",
                 "shasum": ""
             },
             "require": {
@@ -2000,7 +2005,7 @@
             ],
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/8.5.23"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/8.5.24"
             },
             "funding": [
                 {
@@ -2012,7 +2017,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2022-01-21T05:50:34+00:00"
+            "time": "2022-03-05T16:52:36+00:00"
         },
         {
             "name": "sebastian/code-unit-reverse-lookup",
