@@ -386,16 +386,18 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
                 $value = str_replace('&quot;', '\"', $value);
             });
         }
-        $attributes = 0 < count($attrs) ? ' ' . json_encode($attrs, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE) : '';
+        $attributes = '';
+        if (count($attrs) > 0) {
+            try {
+                $attributes = ' ' . json_encode($attrs, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+            } catch (\JsonException $e) {
+                $this->getLogger()->warning(sprintf('Failed to encode attributes for blockName=%s, attributes will be empty', $name));
+            }
+        }
         $content = implode('', $chunks);
         $result = ('' !== $content)
             ? vsprintf('<!-- wp:%s%s -->%s<!-- /wp:%s -->', [$name, $attributes, $content, $name])
             : vsprintf('<!-- wp:%s%s /-->', [$name, $attributes]);
-
-        // ACF will call stripslashes on save, but $result is properly slashed now
-        if ($this->isAcfBlock($name)) {
-            $result = addslashes($result);
-        }
 
         return $result;
     }
@@ -467,11 +469,6 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         }
 
         return $translatedAttributes;
-    }
-
-    private function isAcfBlock(string $name): bool
-    {
-        return function_exists('acf_has_block_type') && acf_has_block_type($name);
     }
 
     private function isPossibleJson(array $attrs): bool

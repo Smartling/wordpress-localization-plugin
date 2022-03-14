@@ -190,4 +190,24 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
             $targetPost->post_content,
         );
     }
+
+    /**
+     * Covered: ACF block with array value caused php warning before fix, replacer unable to decode blocks due to escaping bugs
+     */
+    public function testWP690()
+    {
+        $submissionManager = $this->getSubmissionManager();
+        $translationHelper = $this->getTranslationHelper();
+        $sourceBlogId = 1;
+        $targetBlogId = 2;
+        $postId = $this->createPost('post', 'title', file_get_contents(DIR_TESTDATA . '/wp-690-source.html'));
+        $submission = $translationHelper->prepareSubmission('post', $sourceBlogId, $postId, $targetBlogId);
+        $submission->getFileUri();
+        $submission = $submissionManager->storeEntity($submission);
+        $this->uploadDownload($submission);
+        $this->assertStringEqualsFile(
+            DIR_TESTDATA . '/wp-690-expected.html',
+            $this->getTargetPost($this->getSiteHelper(), $translationHelper->reloadSubmission($submission))->post_content
+        );
+    }
 }
