@@ -2,6 +2,8 @@
 
 namespace Smartling\ContentTypes\AutoDiscover;
 
+use Smartling\Base\ExportedAPI;
+
 class PostTypes
 {
     private array $ignoredTypes;
@@ -17,7 +19,7 @@ class PostTypes
             return;
         }
 
-        add_action('smartling_register_custom_type', static function (array $definition) use ($postType) {
+        add_action(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE, static function (array $definition) use ($postType) {
             global $wp_post_types;
 
             if (true === $wp_post_types[$postType]->public) {
