@@ -398,13 +398,14 @@ class ContentRelationsDiscoveryService
 
     private function addPostContentReferences(array $array, GutenbergBlock $block): array
     {
-        foreach ($block->getAttributes() as $attribute => $value) {
+        foreach ($block->getAttributes() as $attribute => $_) {
             foreach ($this->mediaAttachmentRulesManager->getGutenbergReplacementRules($block->getBlockName(), $attribute) as $rule) {
                 try {
                     $replacer = $this->replacerFactory->getReplacer($rule->getReplacerId());
                 } catch (EntityNotFoundException $e) {
                     continue;
                 }
+                $value = $this->gutenbergBlockHelper->getValue($block, $rule);
                 if ($replacer instanceof ContentIdReplacer && is_numeric($value)) {
                     $array[] = $value;
                 }

@@ -5,6 +5,7 @@
   "description": "",
   "type": "wordpress-plugin",
   "require": {
+    "galbar/jsonpath": "^2.0",
     "jralph/retry": "^2.0",
     "php": ">=7.4",
     "monolog/monolog": "~1",
