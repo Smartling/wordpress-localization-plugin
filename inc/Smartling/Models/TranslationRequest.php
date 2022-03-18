@@ -28,9 +28,10 @@ class TranslationRequest extends CloneRequest
 
     public static function fromArray(array $array): self
     {
+        self::validate($array);
         return new self(
             self::getSourceId($array),
-            $array['source']['contentType'],
+            $array['source']['contentType'] ?? '',
             $array['relations'] ?? [],
             explode(',', $array['targetBlogIds']),
             new JobInformation($array['job']['id'], $array['job']['authorize'] === 'true', $array['job']['name'], $array['job']['description'], $array['job']['dueDate'], $array['job']['timeZone']),
@@ -41,6 +42,34 @@ class TranslationRequest extends CloneRequest
     public function isBulk(): bool
     {
         return count($this->ids) > 0;
+    }
+
+    private static function validate(array $array)
+    {
+        if (!array_key_exists('source', $array)) {
+            throw new \InvalidArgumentException('Source array required');
+        }
+        if (!array_key_exists('job', $array)) {
+            throw new \InvalidArgumentException('Job array required');
+        }
+        if (!array_key_exists('id', $array['job'])) {
+            throw new \InvalidArgumentException('Job id required');
+        }
+        if (!array_key_exists('authorize', $array['job'])) {
+            throw new \InvalidArgumentException('Job authorize key required');
+        }
+        if (!array_key_exists('name', $array['job'])) {
+            throw new \InvalidArgumentException('Job name required');
+        }
+        if (!array_key_exists('description', $array['job'])) {
+            throw new \InvalidArgumentException('Job description required');
+        }
+        if (!array_key_exists('dueDate', $array['job'])) {
+            throw new \InvalidArgumentException('Job due date required');
+        }
+        if (!array_key_exists('timeZone', $array['job'])) {
+            throw new \InvalidArgumentException('Job time zone required');
+        }
     }
 
     private static function toIntegerArray(array $ids): array
