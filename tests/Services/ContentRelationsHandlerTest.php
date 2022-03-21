@@ -10,7 +10,7 @@ use Smartling\Services\ContentRelationsHandler;
 
 class ContentRelationsHandlerTest extends TestCase
 {
-    private ?CloneRequest $request;
+    private $request;
     public function testCreateSubmissionsHandlerCloneNoRelations()
     {
         $service = $this->createMock(ContentRelationsDiscoveryService::class);
@@ -27,7 +27,7 @@ class ContentRelationsHandlerTest extends TestCase
                 TestCase::fail('Should not return error, got ' . $message);
             }
         };
-        $x->createSubmissionsHandler(['formAction' => 'clone', 'source' => ['id' => [13], 'contentType' => 'post'], 'targetBlogIds' => '2,3']);
+        $x->createSubmissionsHandler(['formAction' => ContentRelationsHandler::FORM_ACTION_CLONE, 'source' => ['id' => [13], 'contentType' => 'post'], 'targetBlogIds' => '2,3']);
         $this->assertInstanceOf(CloneRequest::class, $this->request);
         $this->assertEquals(13, $this->request->getContentId());
         $this->assertEquals('post', $this->request->getContentType());
@@ -53,7 +53,7 @@ class ContentRelationsHandlerTest extends TestCase
             }
         };
         $x->createSubmissionsHandler([
-            'formAction' => 'clone',
+            'formAction' => ContentRelationsHandler::FORM_ACTION_CLONE,
             'source' => ['id' => [13], 'contentType' => 'post'],
             'relations' => [
                 1 => [$targetBlogId => ['post' => 3]],

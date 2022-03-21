@@ -41,9 +41,11 @@ namespace Smartling\Tests\Services {
     use Smartling\Jobs\SubmissionJobEntity;
     use Smartling\Jobs\SubmissionsJobsManager;
     use Smartling\Models\CloneRequest;
+    use Smartling\Models\TranslationRequest;
     use Smartling\Processors\ContentEntitiesIOFactory;
     use Smartling\Replacers\ReplacerFactory;
     use Smartling\Services\ContentRelationsDiscoveryService;
+    use Smartling\Services\ContentRelationsHandler;
     use Smartling\Settings\ConfigurationProfileEntity;
     use Smartling\Settings\SettingsManager;
     use Smartling\Submissions\SubmissionEntity;
@@ -102,7 +104,7 @@ namespace Smartling\Tests\Services {
 
             $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
 
-            $x->createSubmissions([
+            $x->createSubmissions(TranslationRequest::fromArray([
                 'source' => ['contentType' => $contentType, 'id' => [$sourceId]],
                 'job' =>
                     [
@@ -115,7 +117,7 @@ namespace Smartling\Tests\Services {
                     ],
                 'targetBlogIds' => $targetBlogId,
                 'relations' => [],
-            ]);
+            ]));
         }
 
         public function testBulkSubmitHandler()
@@ -178,7 +180,7 @@ namespace Smartling\Tests\Services {
                 return $titlePrefix . $id;
             });
 
-            $x->createSubmissions([
+            $x->createSubmissions(TranslationRequest::fromArray([
                 'source' => ['contentType' => $contentType, 'id' => [0]],
                 'job' =>
                     [
@@ -191,7 +193,7 @@ namespace Smartling\Tests\Services {
                     ],
                 'targetBlogIds' => $targetBlogId,
                 'ids' => $sourceIds,
-            ]);
+            ]));
         }
 
         public function testExistingMenuItemsGetSubmittedOnExistingMenuBulkSubmit()
@@ -359,7 +361,7 @@ namespace Smartling\Tests\Services {
             if (function_exists('switch_to_blog')) {
                 switch_to_blog(1);
             }
-            $x->createSubmissions([
+            $x->createSubmissions(TranslationRequest::fromArray([
                 'source' => ['contentType' => $contentType, 'id' => [$sourceId]],
                 'job' =>
                     [
@@ -372,7 +374,7 @@ namespace Smartling\Tests\Services {
                     ],
                 'targetBlogIds' => $targetBlogId,
                 'relations' => [],
-            ]);
+            ]));
             Bootstrap::getContainer()->set('factory.contentIO', $ioFactory);
         }
 
@@ -421,6 +423,74 @@ namespace Smartling\Tests\Services {
             $x->clone(new CloneRequest($rootPostId, $contentType, [$cloneLevel1 => [$targetBlogId => [$contentType => [$childPostId]]]], [$targetBlogId]));
 
             $containerBuilder->set($serviceId, $io);
+        }
+
+        public function testRelatedItemsSentForTranslation()
+        {
+            $batchUid = 'batchUid';
+            $contentType = 'post';
+            $jobAuthorize = 'false';
+            $jobDescription = 'Test Job Description';
+            $jobDueDate = '2022-02-20 20:02';
+            $jobName = 'Test Job Name';
+            $jobTimeZone = 'Europe/Kyiv';
+            $jobUid = 'jobUid';
+            $projectUid = 'projectUid';
+            $sourceBlogId = 1;
+            $sourceId = 48;
+            $depth1AttachmentId = 3;
+            $depth2AttachmentId = 5;
+            $targetBlogId = 2;
+
+            $apiWrapper = $this->createMock(ApiWrapper::class);
+            $apiWrapper->method('retrieveBatch')->willReturn($batchUid);
+
+            $profile = $this->createMock(ConfigurationProfileEntity::class);
+            $profile->method('getProjectId')->willReturn($projectUid);
+
+            $settingsManager = $this->createMock(SettingsManager::class);
+            $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+
+            $siteHelper = $this->createMock(SiteHelper::class);
+            $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
+
+            $contentHelper = $this->createMock(ContentHelper::class);
+            $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
+
+            $submission = $this->createMock(SubmissionEntity::class);
+
+            $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
+            $submissionManager->expects(self::once())->method('find')->with([
+                'source_blog_id' => $sourceBlogId,
+                'target_blog_id' => $targetBlogId,
+                'content_type' => $contentType,
+                'source_id' => $sourceId,
+            ])->willReturn([$submission]);
+
+            // Expects the original submission is stored to DB
+            $submissionManager->expects(self::once())->method('storeEntity')->with($submission);
+
+            $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
+            // Expects 2 related submissions are stored to DB
+            $x->expects($this->exactly(2))->method('getPostTitle')->withConsecutive([$depth2AttachmentId], [$depth1AttachmentId]);
+
+            $x->createSubmissions(TranslationRequest::fromArray([
+                'job' => [
+                    'id' => $jobUid,
+                    'name' => $jobName,
+                    'description' => $jobDescription,
+                    'dueDate' => $jobDueDate,
+                    'timeZone' => $jobTimeZone,
+                    'authorize' => $jobAuthorize,
+                ],
+                'formAction' => ContentRelationsHandler::FORM_ACTION_UPLOAD,
+                'source' => ['id' => [$sourceId], 'contentType' => $contentType],
+                'relations' => [
+                    1 => [$targetBlogId => ['post' => [$depth1AttachmentId]]],
+                    2 => [$targetBlogId => ['attachment' => [$depth2AttachmentId]]],
+                ],
+                'targetBlogIds' => (string)$targetBlogId,
+            ]));
         }
 
         /**

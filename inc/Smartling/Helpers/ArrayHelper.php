@@ -6,7 +6,6 @@ use Smartling\Settings\Locale;
 
 class ArrayHelper
 {
-
     /**
      * Retrieves the value of an array element or object property with the given key or property name.
      * If the key does not exist in the array or object, the default value will be returned instead.
@@ -148,5 +147,15 @@ class ArrayHelper
             return $a->getLabel() > $b->getLabel();
 
         });
+    }
+
+    public static function toArrayOfIntegers(array $array, ?string $errorMessage): array
+    {
+        return array_map(static function($value) use ($errorMessage) {
+            if (!is_numeric($value)) {
+                throw new \InvalidArgumentException($errorMessage ?: 'Value expected to be numeric, got ' . $value);
+            }
+            return (int)$value;
+        }, $array);
     }
 }
