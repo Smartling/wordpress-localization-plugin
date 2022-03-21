@@ -27,9 +27,12 @@ use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Models\CloneRequest;
 use Smartling\Models\DetectedRelations;
 use Smartling\Models\GutenbergBlock;
+use Smartling\Models\JobInformation;
+use Smartling\Models\TranslationRequest;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Replacers\ContentIdReplacer;
 use Smartling\Replacers\ReplacerFactory;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -93,22 +96,21 @@ class ContentRelationsDiscoveryService
 
     /**
      * @throws SmartlingApiException
-     * @throws SmartlingDbException
      */
-    protected function getBatchUid(int $sourceBlogId, array $job): string
+    protected function getBatchUid(ConfigurationProfileEntity $profile, JobInformation $job): string
     {
         return $this
             ->apiWrapper
             ->retrieveBatch(
-                $this->settingsManager->getSingleSettingsProfile($sourceBlogId),
-                $job['id'],
-                'true' === $job['authorize'],
+                $profile,
+                $job->getId(),
+                $job->isAuthorize(),
                 [
-                    'name' => $job['name'],
-                    'description' => $job['description'],
+                    'name' => $job->getName(),
+                    'description' => $job->getDescription(),
                     'dueDate' => [
-                        'date' => $job['dueDate'],
-                        'timezone' => $job['timeZone'],
+                        'date' => $job->getDueDate(),
+                        'timezone' => $job->getTimeZone(),
                     ],
                 ]
             );
@@ -161,18 +163,9 @@ class ContentRelationsDiscoveryService
         $submissions = [];
 
         foreach ($request->getTargetBlogIds() as $targetBlogId) {
-            $sources = [];
             $submissionArray[SubmissionEntity::FIELD_TARGET_BLOG_ID] = $targetBlogId;
-            foreach ($request->getRelationsOrdered() as $relationSet) {
-                foreach ($relationSet[$targetBlogId] as $type => $ids) {
-                    foreach ($ids as $id) {
-                        $sources[] = [
-                            'id' => $id,
-                            'type' => $type,
-                        ];
-                    }
-                }
-            }
+            $sources = $this->getSources($request, $targetBlogId);
+
             $sources[] = [
                 'id' => $request->getContentId(),
                 'type' => $request->getContentType(),
@@ -207,53 +200,41 @@ class ContentRelationsDiscoveryService
         $this->submissionManager->storeSubmissions($submissions);
     }
 
-    public function createSubmissions(array $data): void
+    public function createSubmissions(TranslationRequest $request): void
     {
-        $contentType = $data['source']['contentType'];
         $curBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
-        $batchUid = $this->getBatchUid($curBlogId, $data['job']);
-        $jobInfo = new JobEntityWithBatchUid($batchUid, $data['job']['name'], $data['job']['id'], $this->settingsManager->getSingleSettingsProfile($curBlogId)->getProjectId());
-        $targetBlogIds = explode(',', $data['targetBlogIds']);
+        $profile = $this->settingsManager->getSingleSettingsProfile($curBlogId);
+        $job = $request->getJobInformation();
+        $batchUid = $this->getBatchUid($profile, $job);
+        $jobInfo = new JobEntityWithBatchUid($batchUid, $job->getName(), $job->getId(), $profile->getProjectId());
 
-        if (array_key_exists('ids', $data)) {
-            $this->bulkUpload($jobInfo, $data['ids'], $contentType, $curBlogId, $targetBlogIds);
+        if ($request->isBulk()) {
+            $this->bulkUpload($jobInfo, $request->getIds(), $request->getContentType(), $curBlogId, $request->getTargetBlogIds());
             return;
         }
 
-        foreach ($targetBlogIds as $targetBlogId) {
+        foreach ($request->getTargetBlogIds() as $targetBlogId) {
             $submissionTemplateArray = [
                 SubmissionEntity::FIELD_SOURCE_BLOG_ID => $curBlogId,
-                SubmissionEntity::FIELD_TARGET_BLOG_ID => (int)$targetBlogId,
+                SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
             ];
 
             /**
              * Submission for original content may already exist
              */
-            $contentId = ArrayHelper::first($data['source']['id']);
             $searchParams = array_merge($submissionTemplateArray, [
-                SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
-                SubmissionEntity::FIELD_SOURCE_ID => $contentId,
+                SubmissionEntity::FIELD_CONTENT_TYPE => $request->getContentType(),
+                SubmissionEntity::FIELD_SOURCE_ID => $request->getContentId(),
             ]);
 
-            $sources = [];
-
-            if ($this->hasRelations($data, (int)$targetBlogId)) {
-                foreach ($data['relations'][$targetBlogId] as $sysType => $ids) {
-                    foreach ($ids as $id) {
-                        $sources[] = [
-                            'type' => $sysType,
-                            'id' => $id,
-                        ];
-                    }
-                }
-            }
+            $sources = $this->getSources($request, $targetBlogId);
 
             $result = $this->submissionManager->find($searchParams, 1);
 
             if (empty($result)) {
                 $sources[] = [
-                    'type' => $contentType,
-                    'id' => $contentId,
+                    'id' => $request->getContentId(),
+                    'type' => $request->getContentType(),
                 ];
             } else {
                 $submission = ArrayHelper::first($result);
@@ -608,8 +589,21 @@ class ContentRelationsDiscoveryService
         return '';
     }
 
-    private function hasRelations(array $data, int $targetBlogId): bool
+    private function getSources(CloneRequest $request, int $targetBlogId): array
     {
-        return array_key_exists('relations', $data) && is_array($data['relations']) && array_key_exists($targetBlogId, $data['relations']);
+        $sources = [];
+
+        foreach ($request->getRelationsOrdered() as $relationSet) {
+            foreach ($relationSet[$targetBlogId] as $type => $ids) {
+                foreach ($ids as $id) {
+                    $sources[] = [
+                        'id' => $id,
+                        'type' => $type,
+                    ];
+                }
+            }
+        }
+
+        return $sources;
     }
 }
