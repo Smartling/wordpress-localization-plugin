@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0d960e59becb0689020bd692d54453a3",
+    "content-hash": "931a0944d4e1c27e0768d584fbc0db7e",
     "packages": [
         {
             "name": "galbar/jsonpath",
@@ -215,16 +215,16 @@
         },
         {
             "name": "guzzlehttp/psr7",
-            "version": "1.8.3",
+            "version": "1.8.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/psr7.git",
-                "reference": "1afdd860a2566ed3c2b0b4a3de6e23434a79ec85"
+                "reference": "337e3ad8e5716c15f9657bd214d16cc5e69df268"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/psr7/zipball/1afdd860a2566ed3c2b0b4a3de6e23434a79ec85",
-                "reference": "1afdd860a2566ed3c2b0b4a3de6e23434a79ec85",
+                "url": "https://api.github.com/repos/guzzle/psr7/zipball/337e3ad8e5716c15f9657bd214d16cc5e69df268",
+                "reference": "337e3ad8e5716c15f9657bd214d16cc5e69df268",
                 "shasum": ""
             },
             "require": {
@@ -305,7 +305,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/psr7/issues",
-                "source": "https://github.com/guzzle/psr7/tree/1.8.3"
+                "source": "https://github.com/guzzle/psr7/tree/1.8.5"
             },
             "funding": [
                 {
@@ -321,7 +321,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2021-10-05T13:56:00+00:00"
+            "time": "2022-03-20T21:51:18+00:00"
         },
         {
             "name": "jralph/retry",
@@ -604,19 +604,20 @@
         },
         {
             "name": "smartling/api-sdk-php",
-            "version": "3.6.4",
+            "version": "3.9.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Smartling/api-sdk-php.git",
-                "reference": "3b23e9f1a56285e9cb4d41b65ad36e9d558c8250"
+                "reference": "0065a8b5b534b0b1578992a46d3d5f85bda86a3d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Smartling/api-sdk-php/zipball/3b23e9f1a56285e9cb4d41b65ad36e9d558c8250",
-                "reference": "3b23e9f1a56285e9cb4d41b65ad36e9d558c8250",
+                "url": "https://api.github.com/repos/Smartling/api-sdk-php/zipball/0065a8b5b534b0b1578992a46d3d5f85bda86a3d",
+                "reference": "0065a8b5b534b0b1578992a46d3d5f85bda86a3d",
                 "shasum": ""
             },
             "require": {
+                "ext-json": "*",
                 "guzzlehttp/guzzle": "~6",
                 "php": ">=5.5",
                 "psr/log": "~1.0"
@@ -644,9 +645,9 @@
             ],
             "support": {
                 "issues": "https://github.com/Smartling/api-sdk-php/issues",
-                "source": "https://github.com/Smartling/api-sdk-php/tree/3.6.4"
+                "source": "https://github.com/Smartling/api-sdk-php/tree/3.9.2"
             },
-            "time": "2019-04-30T15:12:47+00:00"
+            "time": "2022-01-20T14:42:36+00:00"
         },
         {
             "name": "symfony/config",
@@ -2921,5 +2922,5 @@
         "ext-json": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.2.0"
+    "plugin-api-version": "2.1.0"
 }

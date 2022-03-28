@@ -40,7 +40,7 @@ class MediaAttachmentRulesManager extends CustomizationManagerAbstract
         if ($attribute !== null) {
             $rules = array_filter($rules, function ($item) use ($attribute) {
                 if ($this->isJsonPath($item->getPropertyPath())) {
-                    return explode('.', $item->getPropertyPath())[1] === $attribute;
+                    return explode('.', $item->getPropertyPath())[1] === explode('/', $attribute)[0];
                 }
                 return preg_match('#' . preg_replace('~([^\\\\])#~', '\1\#', $item->getPropertyPath()) . '#', $attribute) === 1;
             });

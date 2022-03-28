@@ -39,7 +39,7 @@ class GutenbergBlock
         return $this->attributes[PostContentHelper::SMARTLING_LOCK_ID] ?? null;
     }
 
-    public function clearInnerBlocks(): self
+    public function withNoInnerBlocks(): self
     {
         $result = clone $this;
         $result->innerBlocks = [];
@@ -55,7 +55,7 @@ class GutenbergBlock
         return $this->innerBlocks;
     }
 
-    public function setAttributes(array $attributes): self
+    public function withAttributes(array $attributes): self
     {
         $result = clone $this;
         $result->attributes = $attributes;

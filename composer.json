@@ -12,7 +12,7 @@
     "symfony/dependency-injection": "~2.8",
     "symfony/config": "~2.8",
     "symfony/yaml": "~2.8",
-    "smartling/api-sdk-php": "3.6.4",
+    "smartling/api-sdk-php": "3.9.2",
     "ext-dom": "*",
     "ext-libxml": "*",
     "ext-json": "*"
