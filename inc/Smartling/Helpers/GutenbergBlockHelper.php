@@ -87,9 +87,9 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         foreach ($block->getInnerBlocks() as $index => $innerBlock) {
             $block = $block->withInnerBlock($this->replacePreTranslateBlockContent($innerBlock), $index);
         }
-        foreach ($block->getAttributes() as $attribute => $value) {
+        foreach ($block->getAttributes() as $attribute => $_) {
             foreach ($this->rulesManager->getGutenbergReplacementRules($block->getBlockName(), $attribute) as $rule) {
-                $block = $block->withAttribute($attribute, $this->replacerFactory->getReplacer($rule->getReplacerId())->processOnUpload($value));
+                $block = $block->withAttribute($attribute, $this->replacerFactory->getReplacer($rule->getReplacerId())->processOnUpload($this->getValue($block, $rule)));
             }
         }
 

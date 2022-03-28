@@ -85,6 +85,7 @@ use Smartling\WP\Controller\MediaRuleForm;
                         'required' => 'required',
                         'value' => htmlentities($path),
                     ])?>
+                    <br /><?= __('Treated as regex, if JSONpath is required (e. g. nested attributes), start with')?> <pre style="display: inline"> $.</pre><br/>
                 </td>
             </tr>
             <tr>
