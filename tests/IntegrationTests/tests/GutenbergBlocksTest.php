@@ -147,9 +147,15 @@ HTML;
             $submission->getFileUri();
             $this->submissionManager->storeEntity($submission);
         }
-        $this->executeUpload();
-        $this->forceSubmissionDownload($submissions[0]);
-        $this->forceSubmissionDownload($submissions[1]);
+        $this->withBlockRules($this->rulesManager, ['test' => [
+            'block' => 'si/test',
+            'path' => '$.panelPromo.eyebrowMediaImage.id',
+            'replacerId' => 'related|post',
+        ]], function () use ($submissions) {
+            $this->executeUpload();
+            $this->forceSubmissionDownload($submissions[0]);
+            $this->forceSubmissionDownload($submissions[1]);
+        });
         foreach ($submissions as &$submission) {
             $submission = $this->translationHelper->reloadSubmission($submission);
         }
