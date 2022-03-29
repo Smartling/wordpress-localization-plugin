@@ -87,9 +87,9 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         foreach ($block->getInnerBlocks() as $index => $innerBlock) {
             $block = $block->withInnerBlock($this->replacePreTranslateBlockContent($innerBlock), $index);
         }
-        foreach ($block->getAttributes() as $attribute => $_) {
+        foreach ($block->getAttributes() as $attribute => $value) {
             foreach ($this->rulesManager->getGutenbergReplacementRules($block->getBlockName(), $attribute) as $rule) {
-                $block = $block->withAttribute($attribute, $this->replacerFactory->getReplacer($rule->getReplacerId())->processOnUpload($this->getValue($block, $rule)));
+                $block = $block->withAttribute($attribute, $this->replacerFactory->getReplacer($rule->getReplacerId())->processOnUpload($value));
             }
         }
 
@@ -123,18 +123,14 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             foreach ($this->rulesManager->getGutenbergReplacementRules($translated->getBlockName(), $attribute) as $rule) {
                 try {
                     // Last argument for $submission here is intentionally null, all attributes based on related ids should be processed when decoding XML. Here we only update clone/ignore values
-                    $value = $this->replacerFactory->getReplacer($rule->getReplacerId())->processOnDownload($original->getAttributes()[$attribute] ?? '', $this->getValue($translated, $rule), null);
+                    $value = $this->replacerFactory->getReplacer($rule->getReplacerId())->processOnDownload($original->getAttributes()[$attribute] ?? '', $value, null);
                 } catch (\InvalidArgumentException $e) {
                     // do nothing, $value is preserved
                 }
-                try {
-                    $translated = $this->setValue($translated, $rule, $value);
-                } catch (\Exception $e) {
-                    $this->getLogger()->error("Failed to set translated value for blockName={$translated->getBlockName()}, attributeName=$attribute, errorMessage=\"{$e->getMessage()}\"");
-                }
             }
+            $translated = $translated->withAttribute($attribute, $value);
         }
-        return $translated;
+        return $translated->withAttributes($this->fixAttributeTypes($original->getAttributes(), $translated->getAttributes()));
     }
 
     /**
@@ -506,7 +502,11 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     {
         foreach ($translatedAttributes as $key => $value) {
             if (array_key_exists($key, $originalAttributes)) {
-                settype($translatedAttributes[$key], gettype($originalAttributes[$key]));
+                if (is_array($translatedAttributes[$key])) {
+                    $translatedAttributes[$key] = $this->fixAttributeTypes($originalAttributes[$key], $translatedAttributes[$key]);
+                } elseif (is_scalar($translatedAttributes[$key])) {
+                    settype($translatedAttributes[$key], gettype($originalAttributes[$key]));
+                }
             }
         }
 
@@ -542,7 +542,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
                     $this->getLogger()->warning("Replacer not found while processing blockName=\"$blockName\", attribute=\"$attribute\", submissionId=\"$submissionId\", replacerId=\"{$rule->getReplacerId()}\", skipping");
                     continue;
                 }
-                $translatedAttributes[$attribute] = $replacer->processOnDownload($originalAttributes[$attribute] ?? '', $this->getValue(new GutenbergBlock($blockName, $this->getFieldsFilter()->structurizeArray($translatedAttributes), [], '', []), $rule), $submission);
+                $translatedAttributes[$attribute] = $replacer->processOnDownload($originalAttributes[$attribute] ?? '', $value, $submission);
             }
         }
 
