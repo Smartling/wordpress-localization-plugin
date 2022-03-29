@@ -133,6 +133,41 @@ HTML;
         $this->assertEquals($expected, $this->getTargetPost($this->siteHelper, $submission)->post_content);
     }
 
+    public function testReplacerJsonPath()
+    {
+        $attachmentSourceId = $this->createAttachment();
+        $content = <<<HTML
+<!-- wp:si/test {"panelPromo": { "eyebrowMediaImage": {"id": $attachmentSourceId} }} /-->
+HTML;
+        $postId = $this->createPost('post', 'JSON path translation', $content);
+        $attachment = $this->translationHelper->prepareSubmission('attachment', $this->sourceBlogId, $attachmentSourceId, $this->targetBlogId);
+        $post = $this->translationHelper->prepareSubmission('post', $this->sourceBlogId, $postId, $this->targetBlogId);
+        $submissions = [$attachment, $post];
+        foreach ($submissions as $submission) {
+            $submission->getFileUri();
+            $this->submissionManager->storeEntity($submission);
+        }
+        $this->withBlockRules($this->rulesManager, ['test' => [
+            'block' => 'si/test',
+            'path' => '$.panelPromo.eyebrowMediaImage.id',
+            'replacerId' => 'related|post',
+        ]], function () use ($submissions) {
+            $this->executeUpload();
+            $this->forceSubmissionDownload($submissions[0]);
+            $this->forceSubmissionDownload($submissions[1]);
+        });
+        foreach ($submissions as &$submission) {
+            $submission = $this->translationHelper->reloadSubmission($submission);
+        }
+        unset($submission);
+        $attachmentTargetId = $submissions[0]->getTargetId();
+        $expectedContent = <<<HTML
+<!-- wp:si/test {"panelPromo":{"eyebrowMediaImage":{"id":"$attachmentTargetId"}}} /-->
+HTML;
+        $this->assertNotEquals($attachmentSourceId, $attachmentTargetId);
+        $this->assertEquals($expectedContent, $this->getTargetPost($this->siteHelper, $submissions[1])->post_content);
+    }
+
     public function testCoreImageClassTranslation()
     {
         $attachmentSourceId = $this->createAttachment();

@@ -38,7 +38,10 @@ class MediaAttachmentRulesManager extends CustomizationManagerAbstract
             });
         }
         if ($attribute !== null) {
-            $rules = array_filter($rules, static function ($item) use ($attribute) {
+            $rules = array_filter($rules, function ($item) use ($attribute) {
+                if ($this->isJsonPath($item->getPropertyPath())) {
+                    return explode('.', $item->getPropertyPath())[1] === explode('/', $attribute)[0];
+                }
                 return preg_match('#' . preg_replace('~([^\\\\])#~', '\1\#', $item->getPropertyPath()) . '#', $attribute) === 1;
             });
         }
@@ -74,5 +77,10 @@ class MediaAttachmentRulesManager extends CustomizationManagerAbstract
             'propertyPath' => $item['path'],
             'replacerId' => $item['replacerId'] ?? 'related|postbased'
         ];
+    }
+
+    public function isJsonPath(string $string): bool
+    {
+        return strpos($string, '$.') === 0;
     }
 }

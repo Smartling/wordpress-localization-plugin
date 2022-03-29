@@ -54,7 +54,7 @@ class ContentIdReplacer implements ReplacerInterface
 
         $targetId = ArrayHelper::first($relatedSubmissions)->getTargetId();
         if ($targetId !== 0) {
-            settype($targetId, gettype($translatedValue));
+            settype($targetId, gettype($originalValue));
             return $targetId;
         }
 
