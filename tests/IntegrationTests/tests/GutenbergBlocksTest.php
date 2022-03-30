@@ -162,7 +162,7 @@ HTML;
         unset($submission);
         $attachmentTargetId = $submissions[0]->getTargetId();
         $expectedContent = <<<HTML
-<!-- wp:si/test {"panelPromo":{"eyebrowMediaImage":{"id":"$attachmentTargetId"}}} /-->
+<!-- wp:si/test {"panelPromo":{"eyebrowMediaImage":{"id":$attachmentTargetId}}} /-->
 HTML;
         $this->assertNotEquals($attachmentSourceId, $attachmentTargetId);
         $this->assertEquals($expectedContent, $this->getTargetPost($this->siteHelper, $submissions[1])->post_content);

@@ -130,7 +130,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             }
             $translated = $translated->withAttribute($attribute, $value);
         }
-        return $translated;
+        return $translated->withAttributes($this->fixAttributeTypes($original->getAttributes(), $translated->getAttributes()));
     }
 
     /**
@@ -502,7 +502,11 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     {
         foreach ($translatedAttributes as $key => $value) {
             if (array_key_exists($key, $originalAttributes)) {
-                settype($translatedAttributes[$key], gettype($originalAttributes[$key]));
+                if (is_array($translatedAttributes[$key])) {
+                    $translatedAttributes[$key] = $this->fixAttributeTypes($originalAttributes[$key], $translatedAttributes[$key]);
+                } elseif (is_scalar($translatedAttributes[$key])) {
+                    settype($translatedAttributes[$key], gettype($originalAttributes[$key]));
+                }
             }
         }
 
