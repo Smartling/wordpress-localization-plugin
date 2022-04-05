@@ -267,7 +267,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
      * @return GutenbergBlock[]
      * @throws SmartlingGutenbergParserNotFoundException
      */
-    public function parseBlocks($string)
+    public function parseBlocks($string): array
     {
         if (function_exists('\parse_blocks')) {
             $blocks = \parse_blocks($string);

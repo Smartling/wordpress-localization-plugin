@@ -8,7 +8,6 @@ use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\EntityNotFoundException;
-use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
@@ -292,7 +291,7 @@ class ContentRelationsDiscoveryService
         return $relatedTaxonomies;
     }
 
-    private function getBackwardRelatedTaxonomies(int $contentId, string $contentType): array
+    public function getBackwardRelatedTaxonomies(int $contentId, string $contentType): array
     {
         $detectedReferences = [];
         $relatedTaxonomyTypes = $this->getTaxonomiesForContentType($contentType);
@@ -499,7 +498,7 @@ class ContentRelationsDiscoveryService
         $detectedReferences['taxonomies'] = $this->getBackwardRelatedTaxonomies($id, $contentType);
 
         if (array_key_exists('post_content', $content['entity'])) {
-            $detectedReferences = array_merge($detectedReferences, $this->getPostContentReferences($content['entity']['post_content']));
+            $detectedReferences = array_merge_recursive($detectedReferences, $this->getPostContentReferences($content['entity']['post_content']));
         }
 
         $detectedReferences = $this->normalizeReferences($detectedReferences);
