@@ -359,7 +359,7 @@ class Bootstrap
             $mainMessage = 'No active smartling configuration profiles found. Please create at least one on '
                            .
                            '<a href="' . get_site_url() .
-                           '/wp-admin/admin.php?page=' . ConfigurationProfilesController::MENU_SLUG . '>settings page</a>';
+                           '/wp-admin/admin.php?page=' . ConfigurationProfilesController::MENU_SLUG . '">settings page</a>';
 
             static::getLogger()->critical('Boot :: ' . $mainMessage);
 
