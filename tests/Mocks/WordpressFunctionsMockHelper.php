@@ -153,7 +153,7 @@ namespace {
         }
 
         if (!function_exists('get_post_meta')) {
-            function get_post_meta($postId, $key, $single)
+            function get_post_meta($postId, $key = '', $single = false)
             {
                 return ['meta1' => ['value1'], 'meta2' => ['value2'], 'meta3' => ['value3'],];
             }
@@ -162,7 +162,7 @@ namespace {
         if (!function_exists('get_post_types')) {
             function get_post_types($args = array(), $output = 'names', $operator = 'and')
             {
-                return ['acf-field' => '', 'acf-field-group' => ''];
+                return ['acf-field' => 'acf-field', 'acf-field-group' => 'acf-field-group', 'page' => 'page'];
             }
         }
 

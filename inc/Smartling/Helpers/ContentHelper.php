@@ -65,10 +65,7 @@ class ContentHelper
         $this->ioFactory = $ioFactory;
     }
 
-    /**
-     * @return SiteHelper
-     */
-    public function getSiteHelper()
+    public function getSiteHelper(): SiteHelper
     {
         return $this->siteHelper;
     }

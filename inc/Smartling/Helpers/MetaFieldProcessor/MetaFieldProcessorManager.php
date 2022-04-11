@@ -24,10 +24,7 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
      */
     private $acfTypeDetector;
 
-    /**
-     * @return AcfTypeDetector
-     */
-    public function getAcfTypeDetector()
+    public function getAcfTypeDetector(): AcfTypeDetector
     {
         return $this->acfTypeDetector;
     }

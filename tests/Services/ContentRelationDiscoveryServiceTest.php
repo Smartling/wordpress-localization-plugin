@@ -26,15 +26,19 @@ namespace Smartling\Tests\Services {
     use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
     use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
     use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
+    use Smartling\Extensions\Acf\AcfDynamicSupport;
     use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
     use Smartling\Helpers\ContentHelper;
     use Smartling\Helpers\CustomMenuContentTypeHelper;
     use Smartling\Helpers\EntityHelper;
     use Smartling\Helpers\FieldsFilterHelper;
     use Smartling\Helpers\GutenbergBlockHelper;
+    use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\PostBasedProcessor;
+    use Smartling\Helpers\MetaFieldProcessor\DefaultMetaFieldProcessor;
     use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
     use Smartling\Helpers\ShortcodeHelper;
     use Smartling\Helpers\SiteHelper;
+    use Smartling\Helpers\TranslationHelper;
     use Smartling\Jobs\JobEntity;
     use Smartling\Jobs\JobEntityWithBatchUid;
     use Smartling\Jobs\JobManager;
@@ -425,6 +429,67 @@ namespace Smartling\Tests\Services {
             $containerBuilder->set($serviceId, $io);
         }
 
+        public function testParentPageReferenceDetected()
+        {
+            $parentId = 10001;
+            $targetBlogId = 2;
+            $contentHelper = $this->createMock(ContentHelper::class);
+            $contentHelper->method('checkEntityExists')->willReturn(true);
+
+            $mapper = $this->createMock(EntityAbstract::class);
+            $mapper->method('get')->willReturnCallback(function ($guid) use ($parentId) {
+                $result = new PostEntityStd();
+                $result->ID = $guid;
+                $result->post_content = 'post content';
+                $result->post_parent = $parentId;
+                return $result;
+            });
+
+            $contentIoFactory = $this->createMock(ContentEntitiesIOFactory::class);
+            $contentIoFactory->method('getMapper')->willReturn($mapper);
+
+            $contentHelper->method('getIoFactory')->willReturn($contentIoFactory);
+
+            $settingsManager = $this->createMock(SettingsManager::class);
+
+            $fieldFilterHelper = $this->getMockBuilder(FieldsFilterHelper::class)
+                ->setConstructorArgs([$settingsManager, $this->createMock(AcfDynamicSupport::class)])
+                ->onlyMethods([])
+                ->getMock();
+
+            $metaFieldProcessorManager = $this->createMock(MetaFieldProcessorManager::class);
+            $metaFieldProcessorManager->method('getProcessor')->willReturnCallback(function (string $fieldName) use ($parentId) {
+                if ($fieldName === 'entity/post_parent') {
+                    return new PostBasedProcessor($this->createMock(TranslationHelper::class), '');
+                }
+                return $this->createMock(DefaultMetaFieldProcessor::class);
+            });
+
+            $x = $this->getContentRelationDiscoveryService(
+                $this->createMock(ApiWrapper::class),
+                $contentHelper,
+                $settingsManager,
+                $this->createMock(SubmissionManager::class),
+                $metaFieldProcessorManager,
+                $fieldFilterHelper,
+            );
+            $x->method('getBackwardRelatedTaxonomies')->willReturn([]);
+            $x->method('normalizeReferences')->willReturnCallback(function (array $references) {
+                $result = $references;
+                if (isset($references['PostBasedProcessor'])) {
+                    $postTypeIds = array_keys($references['PostBasedProcessor']);
+                    foreach ($postTypeIds as $postTypeId) {
+                        $result['page'][] = $postTypeId;
+                    }
+                    unset($result['PostBasedProcessor']);
+                }
+                return $result;
+            });
+
+            $relations = $x->getRelations('post', 1, [$targetBlogId]);
+            $this->assertEquals($parentId, $relations->getMissingReferences()[$targetBlogId]['page'][0]);
+        }
+
         public function testRelatedItemsSentForTranslation()
         {
             $batchUid = 'batchUid';
@@ -500,13 +565,21 @@ namespace Smartling\Tests\Services {
             ApiWrapper $apiWrapper,
             ContentHelper $contentHelper,
             SettingsManager $settingsManager,
-            SubmissionManager $submissionManager
+            SubmissionManager $submissionManager,
+            MetaFieldProcessorManager $metaFieldProcessorManager = null,
+            FieldsFilterHelper $fieldsFilterHelper = null
         )
         {
+            if ($metaFieldProcessorManager === null) {
+                $metaFieldProcessorManager = $this->createMock(MetaFieldProcessorManager::class);
+            }
+            if ($fieldsFilterHelper === null) {
+                $fieldsFilterHelper = $this->createMock(FieldsFilterHelper::class);
+            }
             return $this->getMockBuilder(ContentRelationsDiscoveryService::class)->setConstructorArgs([
                 $contentHelper,
-                $this->createMock(FieldsFilterHelper::class),
-                $this->createMock(MetaFieldProcessorManager::class),
+                $fieldsFilterHelper,
+                $metaFieldProcessorManager,
                 $this->createMock(LocalizationPluginProxyInterface::class),
                 $this->createMock(AbsoluteLinkedAttachmentCoreHelper::class),
                 $this->createMock(ShortcodeHelper::class),
@@ -517,7 +590,7 @@ namespace Smartling\Tests\Services {
                 $this->createMock(ReplacerFactory::class),
                 $settingsManager,
                 $this->createMock(CustomMenuContentTypeHelper::class),
-            ])->onlyMethods(['getPostTitle'])->getMock();
+            ])->onlyMethods(['getPostTitle', 'getBackwardRelatedTaxonomies', 'normalizeReferences'])->getMock();
         }
     }
 }
