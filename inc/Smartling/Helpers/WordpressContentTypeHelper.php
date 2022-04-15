@@ -158,7 +158,7 @@ class WordpressContentTypeHelper
                     $tail = vsprintf('/post.php?post=%s&action=edit', [$submission->getTargetId()]);
                     break;
                 case 'taxonomy':
-                    $tail = '/term.php?taxonomy=category&tag_ID=2';
+                    $tail = sprintf('/term.php?taxonomy=%s&tag_ID=%s',  $submission->getContentType(), $submission->getTargetId());
                     break;
                 default:
                     return '';
