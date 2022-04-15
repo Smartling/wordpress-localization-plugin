@@ -45,6 +45,13 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
+    public function auditLogCreate(ConfigurationProfileEntity $profile, SubmissionEntity $submission, string $actionType, bool $isAuthorize): void
+    {
+        $this->withRetry(function () use ($profile, $submission, $actionType, $isAuthorize) {
+            $this->base->auditLogCreate($profile, $submission, $actionType, $isAuthorize);
+        });
+    }
+
     public function downloadFile(SubmissionEntity $entity): string
     {
         return $this->withRetry(function () use ($entity) {

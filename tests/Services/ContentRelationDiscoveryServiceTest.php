@@ -56,6 +56,7 @@ namespace Smartling\Tests\Services {
     use Smartling\Submissions\SubmissionManager;
     use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
     use Smartling\Tuner\MediaAttachmentRulesManager;
+    use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 
     class ContentRelationDiscoveryServiceTest extends TestCase
     {
@@ -105,6 +106,8 @@ namespace Smartling\Tests\Services {
             ])->willReturn([$submission]);
 
             $submissionManager->expects(self::once())->method('storeEntity')->with($submission);
+
+            $apiWrapper->expects($this->once())->method('auditLogCreate')->with($profile, $submission, CreateRecordParameters::ACTION_TYPE_UPLOAD, true);
 
             $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
 

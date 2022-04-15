@@ -40,6 +40,8 @@ interface ApiWrapperInterface
      */
     public function acquireLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime;
 
+    public function auditLogCreate(ConfigurationProfileEntity $profile, SubmissionEntity $submission, string $actionType, bool $isAuthorize): void;
+
     /**
      * @throws SmartlingApiException
      */

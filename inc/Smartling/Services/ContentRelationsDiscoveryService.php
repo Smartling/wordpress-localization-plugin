@@ -37,6 +37,7 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tuner\MediaAttachmentRulesManager;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
+use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 
 class ContentRelationsDiscoveryService
@@ -238,7 +239,7 @@ class ContentRelationsDiscoveryService
             } else {
                 $submission = ArrayHelper::first($result);
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                $this->storeWithJobInfo($submission, $jobInfo);
+                $this->storeWithJobInfo($submission, $jobInfo, $profile, $job->isAuthorize());
             }
 
             /**
@@ -263,7 +264,7 @@ class ContentRelationsDiscoveryService
                 // trigger generation of fileUri
                 try {
                     $submission->getFileUri();
-                    $this->storeWithJobInfo($submission, $jobInfo);
+                    $this->storeWithJobInfo($submission, $jobInfo, $profile, $job->isAuthorize());
                 } catch (SmartlingInvalidFactoryArgumentException $e) {
                     $this->getLogger()->info("Skipping submission because no mapper was found: contentType={$submission->getContentType()} sourceBlogId={$submission->getSourceBlogId()}, sourceId={$submission->getSourceId()}, targetBlogId={$submission->getTargetBlogId()}");
                 }
@@ -572,11 +573,13 @@ class ContentRelationsDiscoveryService
         return $result;
     }
 
-    private function storeWithJobInfo(SubmissionEntity $submission, JobEntityWithBatchUid $jobInfo): void
+    private function storeWithJobInfo(SubmissionEntity $submission, JobEntityWithBatchUid $jobInfo, ConfigurationProfileEntity $profile, bool $isAuthorize): void
     {
         $submission->setBatchUid($jobInfo->getBatchUid());
         $submission->setJobInfo($jobInfo->getJobInformationEntity());
         $this->submissionManager->storeEntity($submission);
+        $this->getLogger()->info(sprintf("Adding submissionId=%d, fileName=%s, sourceBlogId=%d, sourceId=%d for upload to batchUid=%s due to user request", $submission->getId(), $submission->getStateFieldFileUri(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getBatchUid()));
+        $this->apiWrapper->auditLogCreate($profile, $submission, CreateRecordParameters::ACTION_TYPE_UPLOAD, $isAuthorize);
     }
 
     public function getPostTitle(int $id): string
