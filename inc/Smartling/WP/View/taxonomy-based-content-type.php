@@ -114,7 +114,9 @@ if (!empty($locales)) {
                             $locale->getLabel(),
                             (false === $enabled ? false : $value),
                             $enabled,
-                            $editUrl
+                            $editUrl,
+                            [],
+                            $item->getId(),
                         ) ?>
                     </div>
                     <div class="smtPostWidget-progress" style="left: 15px;">
