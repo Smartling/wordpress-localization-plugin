@@ -180,20 +180,18 @@ class SubmissionManager extends EntityManagerAbstract
     /**
      * Gets SubmissionEntity from database by primary key
      * alias to getEntities
-     *
-     * @return null|SubmissionEntity[]
      */
-    public function getEntityById(int $id): ?array
+    public function getEntityById(int $id): ?SubmissionEntity
     {
         $query = $this->buildSelectQuery([SubmissionEntity::FIELD_ID => $id]);
 
         $obj = $this->fetchData($query);
 
-        if (is_array($obj) && empty($obj)) {
-            $obj = null;
+        if (empty($obj)) {
+            return null;
         }
 
-        return $obj;
+        return ArrayHelper::first($obj);
     }
 
     public function buildSelectQuery(array $where): string

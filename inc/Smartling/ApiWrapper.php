@@ -113,8 +113,9 @@ class ApiWrapper implements ApiWrapperInterface
             ->releaseLock($key);
     }
 
-    public function auditLogCreate(ConfigurationProfileEntity $profile, SubmissionEntity $submission, string $actionType, bool $isAuthorize): void
+    public function auditLogCreate(SubmissionEntity $submission, string $actionType, string $description, ?bool $isAuthorize = null): void
     {
+        $profile = $this->getConfigurationProfile($submission);
         $record = new CreateRecordParameters();
         $record->setActionType($actionType);
         $record->setFileUri($submission->getFileUri());
@@ -122,9 +123,12 @@ class ApiWrapper implements ApiWrapperInterface
         $job = $jobInfo->getJobInformationEntity();
         $record->setTranslationJobUid($job->getJobUid());
         $record->setTranslationJobName($job->getJobName());
-        $record->setTranslationJobAuthorize($isAuthorize);
+        if ($isAuthorize !== null) {
+            $record->setTranslationJobAuthorize($isAuthorize);
+        }
         $record->setBatchUid($jobInfo->getBatchUid());
         $record->setClientUserId(wp_get_current_user()->ID);
+        $record->setDescription($description);
 
         AuditLogApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())
             ->createProjectLevelLogRecord($record);

@@ -2,19 +2,27 @@
 
 namespace Smartling\WP\Controller;
 
+use Smartling\ApiWrapperInterface;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
+use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\Cache;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\EntityHelper;
+use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Jobs\JobAbstract;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Queue\Queue;
 use Smartling\Services\GlobalSettingsManager;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
+use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
@@ -62,10 +70,16 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     const ERROR_KEY_TYPE_MISSING = 'content.type.missing';
     const ERROR_MSG_TYPE_MISSING = 'Source content-type missing.';
 
-
+    private ApiWrapperInterface $apiWrapper;
     private $mutedTypes = [
         'attachment',
     ];
+
+    public function __construct(ApiWrapperInterface $apiWrapper, LocalizationPluginProxyInterface $connector, PluginInfo $pluginInfo, EntityHelper $entityHelper, SubmissionManager $manager, Cache $cache)
+    {
+        $this->apiWrapper = $apiWrapper;
+        parent::__construct($connector, $pluginInfo, $entityHelper, $manager, $cache);
+    }
 
     private function isMuted()
     {
@@ -129,6 +143,10 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
         if (array_key_exists('submissionIds', $_POST)) {
             $submissionIds = explode(',', $_POST['submissionIds']);
             foreach ($submissionIds as $submissionId) {
+                $submission = $this->getManager()->getEntityById($submissionId);
+                if ($submission !== null) {
+                    $this->apiWrapper->auditLogCreate($submission, CreateRecordParameters::ACTION_TYPE_DOWNLOAD, 'User request to download submissions');
+                }
                 $this->getCore()->getQueue()->enqueue([$submissionId], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
             }
             $result = [];

@@ -87,6 +87,7 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
     {
         if ($data === null) {
             $data = $_POST;
+            $data['description'] = 'User request to create submissions';
         }
         try {
             if ($data['formAction'] === self::FORM_ACTION_CLONE) {

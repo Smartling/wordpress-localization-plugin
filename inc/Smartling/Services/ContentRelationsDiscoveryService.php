@@ -143,6 +143,7 @@ class ContentRelationsDiscoveryService
                     $submission->setSourceTitle($title);
                 }
                 $this->submissionManager->storeEntity($submission);
+                $this->logSubmissionCreated($submission, 'Bulk upload request', false);
                 if ($submission->getContentType() === ContentTypeNavigationMenu::WP_CONTENT_TYPE) {
                     $menuItemIds = array_reduce($this->menuHelper->getMenuItems($submission->getSourceId(), $submission->getSourceBlogId()), static function ($carry, $item) {
                         $carry[] = $item->ID;
@@ -239,7 +240,7 @@ class ContentRelationsDiscoveryService
             } else {
                 $submission = ArrayHelper::first($result);
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                $this->storeWithJobInfo($submission, $jobInfo, $profile, $job->isAuthorize());
+                $this->storeWithJobInfo($submission, $jobInfo, $profile, $job->isAuthorize(), $request->getDescription());
             }
 
             /**
@@ -264,7 +265,7 @@ class ContentRelationsDiscoveryService
                 // trigger generation of fileUri
                 try {
                     $submission->getFileUri();
-                    $this->storeWithJobInfo($submission, $jobInfo, $profile, $job->isAuthorize());
+                    $this->storeWithJobInfo($submission, $jobInfo, $profile, $job->isAuthorize(), $request->getDescription());
                 } catch (SmartlingInvalidFactoryArgumentException $e) {
                     $this->getLogger()->info("Skipping submission because no mapper was found: contentType={$submission->getContentType()} sourceBlogId={$submission->getSourceBlogId()}, sourceId={$submission->getSourceId()}, targetBlogId={$submission->getTargetBlogId()}");
                 }
@@ -573,13 +574,12 @@ class ContentRelationsDiscoveryService
         return $result;
     }
 
-    private function storeWithJobInfo(SubmissionEntity $submission, JobEntityWithBatchUid $jobInfo, ConfigurationProfileEntity $profile, bool $isAuthorize): void
+    private function storeWithJobInfo(SubmissionEntity $submission, JobEntityWithBatchUid $jobInfo, ConfigurationProfileEntity $profile, bool $isAuthorize, string $description): void
     {
         $submission->setBatchUid($jobInfo->getBatchUid());
         $submission->setJobInfo($jobInfo->getJobInformationEntity());
         $this->submissionManager->storeEntity($submission);
-        $this->getLogger()->info(sprintf("Adding submissionId=%d, fileName=%s, sourceBlogId=%d, sourceId=%d for upload to batchUid=%s due to user request", $submission->getId(), $submission->getStateFieldFileUri(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getBatchUid()));
-        $this->apiWrapper->auditLogCreate($profile, $submission, CreateRecordParameters::ACTION_TYPE_UPLOAD, $isAuthorize);
+        $this->logSubmissionCreated($submission, $description, $isAuthorize);
     }
 
     public function getPostTitle(int $id): string
@@ -607,5 +607,11 @@ class ContentRelationsDiscoveryService
         }
 
         return $sources;
+    }
+
+    private function logSubmissionCreated(SubmissionEntity $submission, string $description, bool $isAuthorize): void
+    {
+        $this->getLogger()->info(sprintf("Adding submissionId=%d, fileName=%s, sourceBlogId=%d, sourceId=%d for upload to batchUid=%s due to user request, reason=\"%s\"", $submission->getId(), $submission->getStateFieldFileUri(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getBatchUid(), $description));
+        $this->apiWrapper->auditLogCreate($submission, CreateRecordParameters::ACTION_TYPE_UPLOAD, $description, $isAuthorize);
     }
 }
