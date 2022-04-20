@@ -211,6 +211,7 @@ services:
   wp.submissions:
     class: Smartling\WP\Controller\SubmissionsPageController
     arguments:
+      - "@api.wrapper.with.retries"
       - "@multilang.proxy"
       - "@plugin.info"
       - "@entity.helper"

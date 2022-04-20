@@ -22,7 +22,7 @@ use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\UploadJob;
 use Smartling\Models\JobInformation;
 use Smartling\Models\TestRunViewData;
-use Smartling\Models\TranslationRequest;
+use Smartling\Models\UserTranslationRequest;
 use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
@@ -189,7 +189,7 @@ class TestRunController extends WPAbstract implements WPHookInterface
             if (!$post instanceof \WP_Post) {
                 wp_send_json_error('Unable to get posts');
             }
-            $this->contentRelationDiscoveryService->createSubmissions(new TranslationRequest(
+            $this->contentRelationDiscoveryService->createSubmissions(new UserTranslationRequest(
                 $post->ID,
                 $post->post_type,
                 $this->contentRelationDiscoveryService->getRelations($post->post_type, $post->ID, [$targetBlogId])->getMissingReferences(),

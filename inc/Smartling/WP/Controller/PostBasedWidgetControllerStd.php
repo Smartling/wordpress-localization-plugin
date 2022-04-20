@@ -140,12 +140,23 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
     public function ajaxDownloadHandler()
     {
+        $logSubmissions = [];
         if (array_key_exists('submissionIds', $_POST)) {
+            $profile = null;
             $submissionIds = explode(',', $_POST['submissionIds']);
             foreach ($submissionIds as $submissionId) {
                 $submission = $this->getManager()->getEntityById($submissionId);
                 if ($submission !== null) {
-                    $this->apiWrapper->auditLogCreate($submission, CreateRecordParameters::ACTION_TYPE_DOWNLOAD, 'User request to download submissions');
+                    if ($profile === null) {
+                        $profile = $this->getEntityHelper()->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
+                    }
+                    $logSubmissions[] = [
+                        'sourceBlogId' => $submission->getSourceBlogId(),
+                        'sourceId' => $submission->getSourceId(),
+                        'submissionId' => $submission->getId(),
+                        'targetBlogId' => $submission->getTargetBlogId(),
+                        'targetId' => $submission->getTargetId(),
+                    ];
                 }
                 $this->getCore()->getQueue()->enqueue([$submissionId], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
             }
@@ -156,6 +167,12 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             } catch (\Exception $e) {
                 $result['status'] = self::RESPONSE_AJAX_STATUS_FAIL;
                 $result['message'] = $e->getMessage();
+            }
+            if ($profile !== null) {
+                $this->apiWrapper->createAuditLogRecord($profile, CreateRecordParameters::ACTION_TYPE_DOWNLOAD, 'User request to download submissions', ['submissions' => $logSubmissions]);
+            } else {
+                /** @noinspection JsonEncodingApiUsageInspection */
+                $this->getLogger()->notice('No profile was found for submissions, no audit log created, submissions=' . json_encode($logSubmissions));
             }
             wp_send_json($result);
         }

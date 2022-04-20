@@ -4,7 +4,7 @@ namespace Smartling\Models;
 
 use Smartling\Helpers\ArrayHelper;
 
-class TranslationRequest extends CloneRequest
+class UserTranslationRequest extends UserCloneRequest
 {
     private JobInformation $jobInformation;
     private array $ids;
@@ -29,14 +29,16 @@ class TranslationRequest extends CloneRequest
     public static function fromArray(array $array): self
     {
         self::validate($array);
+        $ids = self::toIntegerArray($array['ids'] ?? []);
+
         return new self(
             self::getSourceId($array),
             $array['source']['contentType'] ?? '',
             $array['relations'] ?? [],
             explode(',', $array['targetBlogIds']),
             new JobInformation($array['job']['id'], $array['job']['authorize'] === 'true', $array['job']['name'], $array['job']['description'], $array['job']['dueDate'], $array['job']['timeZone']),
-            self::toIntegerArray($array['ids'] ?? []),
-            $array['description'] ?? '',
+            $ids,
+            $array['description'] ?? count($ids) > 0 ? 'From Bulk Submit' : 'From Widget',
         );
     }
 

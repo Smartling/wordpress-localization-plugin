@@ -3,7 +3,7 @@
 namespace Smartling\Tests\Models;
 
 use PHPUnit\Framework\TestCase;
-use Smartling\Models\TranslationRequest;
+use Smartling\Models\UserTranslationRequest;
 use Smartling\Services\ContentRelationsHandler;
 
 class TranslationRequestTest extends TestCase
@@ -19,7 +19,7 @@ class TranslationRequestTest extends TestCase
         $sourceContentType = 'post';
         $sourceId = 13;
         $targetBlogId = 2;
-        $x = TranslationRequest::fromArray([
+        $x = UserTranslationRequest::fromArray([
             'job' => [
                 'id' => $jobUid,
                 'name' => $jobName,

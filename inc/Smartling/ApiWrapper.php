@@ -113,22 +113,24 @@ class ApiWrapper implements ApiWrapperInterface
             ->releaseLock($key);
     }
 
-    public function auditLogCreate(SubmissionEntity $submission, string $actionType, string $description, ?bool $isAuthorize = null): void
+    public function createAuditLogRecord(ConfigurationProfileEntity $profile, string $actionType, string $description, array $clientData, ?JobEntityWithBatchUid $jobInfo = null, ?bool $isAuthorize = null): void
     {
-        $profile = $this->getConfigurationProfile($submission);
         $record = new CreateRecordParameters();
         $record->setActionType($actionType);
-        $record->setFileUri($submission->getFileUri());
-        $jobInfo = $submission->getJobInfoWithBatchUid();
-        $job = $jobInfo->getJobInformationEntity();
-        $record->setTranslationJobUid($job->getJobUid());
-        $record->setTranslationJobName($job->getJobName());
+        if ($jobInfo !== null) {
+            $job = $jobInfo->getJobInformationEntity();
+            $record->setTranslationJobUid($job->getJobUid());
+            $record->setTranslationJobName($job->getJobName());
+            $record->setBatchUid($jobInfo->getBatchUid());
+        }
         if ($isAuthorize !== null) {
             $record->setTranslationJobAuthorize($isAuthorize);
         }
-        $record->setBatchUid($jobInfo->getBatchUid());
         $record->setClientUserId(wp_get_current_user()->ID);
         $record->setDescription($description);
+        foreach ($clientData as $key => $value) {
+            $record->setClientData($key, $value);
+        }
 
         AuditLogApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())
             ->createProjectLevelLogRecord($record);

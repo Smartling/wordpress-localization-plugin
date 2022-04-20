@@ -44,8 +44,8 @@ namespace Smartling\Tests\Services {
     use Smartling\Jobs\JobManager;
     use Smartling\Jobs\SubmissionJobEntity;
     use Smartling\Jobs\SubmissionsJobsManager;
-    use Smartling\Models\CloneRequest;
-    use Smartling\Models\TranslationRequest;
+    use Smartling\Models\UserCloneRequest;
+    use Smartling\Models\UserTranslationRequest;
     use Smartling\Processors\ContentEntitiesIOFactory;
     use Smartling\Replacers\ReplacerFactory;
     use Smartling\Services\ContentRelationsDiscoveryService;
@@ -107,11 +107,11 @@ namespace Smartling\Tests\Services {
 
             $submissionManager->expects(self::once())->method('storeEntity')->with($submission);
 
-            $apiWrapper->expects($this->once())->method('auditLogCreate')->with($profile, $submission, CreateRecordParameters::ACTION_TYPE_UPLOAD, true);
+            $apiWrapper->expects($this->once())->method('createAuditLogRecord')->with($profile, $submission, CreateRecordParameters::ACTION_TYPE_UPLOAD, true);
 
             $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
 
-            $x->createSubmissions(TranslationRequest::fromArray([
+            $x->createSubmissions(UserTranslationRequest::fromArray([
                 'source' => ['contentType' => $contentType, 'id' => [$sourceId]],
                 'job' =>
                     [
@@ -187,7 +187,7 @@ namespace Smartling\Tests\Services {
                 return $titlePrefix . $id;
             });
 
-            $x->createSubmissions(TranslationRequest::fromArray([
+            $x->createSubmissions(UserTranslationRequest::fromArray([
                 'source' => ['contentType' => $contentType, 'id' => [0]],
                 'job' =>
                     [
@@ -368,7 +368,7 @@ namespace Smartling\Tests\Services {
             if (function_exists('switch_to_blog')) {
                 switch_to_blog(1);
             }
-            $x->createSubmissions(TranslationRequest::fromArray([
+            $x->createSubmissions(UserTranslationRequest::fromArray([
                 'source' => ['contentType' => $contentType, 'id' => [$sourceId]],
                 'job' =>
                     [
@@ -427,7 +427,7 @@ namespace Smartling\Tests\Services {
                 $this->createMock(SettingsManager::class),
                 $submissionManager
             );
-            $x->clone(new CloneRequest($rootPostId, $contentType, [$cloneLevel1 => [$targetBlogId => [$contentType => [$childPostId]]]], [$targetBlogId]));
+            $x->clone(new UserCloneRequest($rootPostId, $contentType, [$cloneLevel1 => [$targetBlogId => [$contentType => [$childPostId]]]], [$targetBlogId]));
 
             $containerBuilder->set($serviceId, $io);
         }
@@ -542,7 +542,7 @@ namespace Smartling\Tests\Services {
             // Expects 2 related submissions are stored to DB
             $x->expects($this->exactly(2))->method('getPostTitle')->withConsecutive([$depth2AttachmentId], [$depth1AttachmentId]);
 
-            $x->createSubmissions(TranslationRequest::fromArray([
+            $x->createSubmissions(UserTranslationRequest::fromArray([
                 'job' => [
                     'id' => $jobUid,
                     'name' => $jobName,

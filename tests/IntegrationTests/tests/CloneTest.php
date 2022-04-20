@@ -3,7 +3,7 @@
 namespace IntegrationTests\tests;
 
 use Smartling\Helpers\ArrayHelper;
-use Smartling\Models\CloneRequest;
+use Smartling\Models\UserCloneRequest;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 
@@ -35,7 +35,7 @@ class CloneTest extends SmartlingUnitTestCaseAbstract
             $references = $relationsDiscoveryService->getRelations('post', $rootPostId, [$targetBlogId]);
             $this->assertCount(1, $references->getMissingReferences()[$targetBlogId]['post']);
             $this->assertEquals($childPostId, $references->getMissingReferences()[$targetBlogId]['post'][0]);
-            $relationsDiscoveryService->clone(new CloneRequest($rootPostId, 'post', [
+            $relationsDiscoveryService->clone(new UserCloneRequest($rootPostId, 'post', [
                 1 => [$targetBlogId => ['post' => [$childPostId]]],
                 2 => [$targetBlogId => ['attachment' => [$imageId]]],
             ], [$targetBlogId]));

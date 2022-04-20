@@ -5,7 +5,7 @@ namespace Smartling\Models;
 use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Helpers\ArrayHelper;
 
-class CloneRequest
+class UserCloneRequest
 {
     private int $contentId;
     private string $contentType;
