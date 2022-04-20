@@ -39,11 +39,11 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     const WIDGET_DATA_NAME = 'smartling';
     const CONNECTOR_NONCE = 'smartling_connector_nonce';
 
+    private ApiWrapperInterface $apiWrapper;
     protected $servedContentType = 'undefined';
     protected $needSave = 'Need to have title';
     protected $noOriginalFound = 'No original post found';
     protected $abilityNeeded = 'edit_post';
-
 
     const RESPONSE_AJAX_STATUS_FAIL = 'FAIL';
     const RESPONSE_AJAX_STATUS_SUCCESS = 'SUCCESS';
@@ -70,15 +70,14 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     const ERROR_KEY_TYPE_MISSING = 'content.type.missing';
     const ERROR_MSG_TYPE_MISSING = 'Source content-type missing.';
 
-    private ApiWrapperInterface $apiWrapper;
     private $mutedTypes = [
         'attachment',
     ];
 
     public function __construct(ApiWrapperInterface $apiWrapper, LocalizationPluginProxyInterface $connector, PluginInfo $pluginInfo, EntityHelper $entityHelper, SubmissionManager $manager, Cache $cache)
     {
-        $this->apiWrapper = $apiWrapper;
         parent::__construct($connector, $pluginInfo, $entityHelper, $manager, $cache);
+        $this->apiWrapper = $apiWrapper;
     }
 
     private function isMuted()
