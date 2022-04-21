@@ -2,7 +2,7 @@ parameters:
   known.attachment.rules: #built-in wordpress and Smartling-specific
     - "@image.id.related.attachment"
     - "@media-text.media-id.related.attachment"
-    - "@smartling.lock.id.ignore"
+    - "@smartling.lock.id.copy"
 
 services:
   image.id.related.attachment:
@@ -19,7 +19,7 @@ services:
       - "mediaId"
       - "related|attachment"
 
-  smartling.lock.id.ignore:
+  smartling.lock.id.copy:
     class: Smartling\Helpers\GutenbergReplacementRule
     arguments:
       - ".+"
