@@ -12,6 +12,7 @@ namespace PHPSTORM_META {
     exitPoint(\Smartling\Services\BaseAjaxServiceAbstract::returnError());
     exitPoint(\Smartling\Services\BaseAjaxServiceAbstract::returnResponse());
     exitPoint(\Smartling\Services\BaseAjaxServiceAbstract::returnSuccess());
+    exitPoint(\Smartling\WP\Controller\ConfigurationProfilesController::processCnqAction());
     exitPoint(\Smartling\Helpers\WordpressFunctionProxyHelper::wp_send_json());
     exitPoint(\Smartling\DbAl\WordpressContentEntities\EntityAbstract::entityNotFound());
     exitPoint(\wp_send_json());

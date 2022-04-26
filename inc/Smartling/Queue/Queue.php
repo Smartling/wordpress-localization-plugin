@@ -98,6 +98,11 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
         return is_string($queue);
     }
 
+    public function isVirtual(string $queue): bool
+    {
+        return $queue === QueueInterface::VIRTUAL_UPLOAD_QUEUE;
+    }
+
     private function getRealTableName()
     {
         return $this->getDbal()->completeTableName(static::getTableName());
@@ -247,17 +252,15 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
     }
 
     /**
-     * @param string|null $queue
-     *
      * @throws SmartlingDbException
      */
-    public function purge($queue = null)
+    public function purge(?string $queue = null): void
     {
         $pageOptions = null;
 
         $condition = null;
 
-        if (null !== $queue && is_string($queue)) {
+        if (null !== $queue) {
             $condition = ConditionBlock::getConditionBlock();
             $condition->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'queue', [$queue]));
         }
@@ -286,7 +289,7 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
     /**
      * @return array['queue' => elements_count]
      */
-    public function stats()
+    public function stats(): array
     {
         $query = QueryBuilder::buildSelectQuery(
             $this->getRealTableName(),
