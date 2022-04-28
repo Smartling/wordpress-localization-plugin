@@ -96,19 +96,19 @@ class ApiWrapper implements ApiWrapperInterface
     public function acquireLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime
     {
         return DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())
-            ->acquireLock("{$profile->getProjectId()}/$key", $ttlSeconds);
+            ->acquireLock("{$profile->getProjectId()}-$key", $ttlSeconds);
     }
 
     public function renewLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime
     {
         return DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())
-            ->renewLock("{$profile->getProjectId()}/$key", $ttlSeconds);
+            ->renewLock("{$profile->getProjectId()}-$key", $ttlSeconds);
     }
 
     public function releaseLock(ConfigurationProfileEntity $profile, string $key): void
     {
         DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())
-            ->releaseLock("{$profile->getProjectId()}/$key");
+            ->releaseLock("{$profile->getProjectId()}-$key");
     }
 
     /**
