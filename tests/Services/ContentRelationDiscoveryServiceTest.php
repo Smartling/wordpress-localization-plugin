@@ -107,12 +107,24 @@ namespace Smartling\Tests\Services {
 
             $submissionManager->expects(self::once())->method('storeEntity')->with($submission);
 
-            $apiWrapper->expects($this->once())->method('createAuditLogRecord')->with($profile, CreateRecordParameters::ACTION_TYPE_UPLOAD, 'From Widget', [
-                'relatedContentIds' => [],
-                'sourceBlogId' => $sourceBlogId,
-                'sourceId' => $sourceId,
-                'targetBlogIds' => [$targetBlogId],
-            ]);
+            $apiWrapper->expects($this->once())->method('createAuditLogRecord')->willReturnCallback(function (ConfigurationProfileEntity $configurationProfile, string $actionType, string $description, array $clientData, ?JobEntityWithBatchUid $jobInfo = null, ?bool $isAuthorize = null) use ($batchUid, $jobName, $jobUid, $profile, $sourceBlogId, $sourceId, $targetBlogId): void {
+                $this->assertEquals($profile, $configurationProfile);
+                $this->assertEquals(CreateRecordParameters::ACTION_TYPE_UPLOAD, $actionType);
+                $this->assertEquals('From Widget', $description);
+                $this->assertEquals([
+                    'relatedContentIds' => [],
+                    'sourceBlogId' => $sourceBlogId,
+                    'sourceId' => $sourceId,
+                    'targetBlogIds' => [$targetBlogId],
+                ], $clientData);
+                $this->assertNotNull($jobInfo);
+                $this->assertEquals($batchUid, $jobInfo->getBatchUid());
+                $job = $jobInfo->getJobInformationEntity();
+                $this->assertEquals($jobName, $job->getJobName());
+                $this->assertEquals($jobUid, $job->getJobUid());
+                $this->assertEquals($profile->getProjectId(), $job->getProjectUid());
+                $this->assertTrue($isAuthorize);
+            });
 
             $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
 
