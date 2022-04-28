@@ -504,7 +504,13 @@ HTML
         }
 
         $replacer = $this->createMock(ReplacerInterface::class);
-        $replacer->method('processOnDownload')->willReturn($targetId);
+        $replacer->method('processOnDownload')->willReturnCallback(function ($originalValue, $translatedValue
+        ) use ($sourceId, $targetId) {
+            if ($originalValue === $sourceId) {
+                return $targetId;
+            }
+            return $translatedValue;
+        });
         $replacerFactory = $this->createMock(ReplacerFactory::class);
         $replacerFactory->method('getReplacer')->willReturn($replacer);
 

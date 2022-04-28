@@ -7,91 +7,43 @@ use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Jobs\LastModifiedCheckJob;
 use Smartling\Jobs\SubmissionCollectorJob;
 use Smartling\Jobs\UploadJob;
-use Smartling\Queue\Queue;
 use Smartling\Queue\QueueInterface;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\Controller\ConfigurationProfilesController;
 use Smartling\WP\Controller\SmartlingListTable;
 use Smartling\WP\WPHookInterface;
 
-/**
- * Class QueueManagerTableWidget
- * @package Smartling\WP\Table
- */
 class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterface
 {
+    private SubmissionManager $submissionManager;
+    private QueueInterface $queue;
 
-
-    /**
-     * @var SubmissionManager
-     */
-    private $submissionManager;
-
-    /**
-     * @var Queue
-     */
-    private $queue;
-
-    /**
-     * @return SubmissionManager
-     */
-    public function getSubmissionManager()
-    {
-        return $this->submissionManager;
-    }
-
-    /**
-     * @param SubmissionManager $submissionManager
-     */
-    public function setSubmissionManager($submissionManager)
-    {
-        $this->submissionManager = $submissionManager;
-    }
-
-    /**
-     * @return Queue
-     */
-    public function getQueue()
+    public function getQueue(): QueueInterface
     {
         return $this->queue;
     }
 
-    /**
-     * @param Queue $queue
-     */
-    public function setQueue($queue)
+    public function setQueue(QueueInterface $queue): void
     {
         $this->queue = $queue;
     }
 
-
     public function register(): void
     {
-        //add_action('admin_post_smartling_run_cron', [$this, 'runCron']);
     }
 
     public function __construct(SubmissionManager $submissionManager)
     {
-        $this->setSubmissionManager($submissionManager);
+        $this->submissionManager = $submissionManager;
         $this->setSource($_REQUEST);
         parent::__construct([
                                 'singular' => __('Queue'),
                                 'plural'   => __('Queues'),
                                 'ajax'     => false,
-
                             ]);
     }
 
-    public function runCronJob()
-    {
-
-    }
-
-    public function clearQueue()
-    {
-    }
-
-    public function get_columns()
+    public function get_columns(): array
     {
         return [
             'cron_name'   => __('Cron Name'),
@@ -103,28 +55,17 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
 
     public function column_default($item, $column_name)
     {
-        switch ($column_name) {
-            default:
-                return $item[$column_name];
-        }
+        return $item[$column_name];
     }
 
 
-    public function prepare_items()
+    public function prepare_items(): void
     {
         $curStats = $this->getQueue()->stats();
-
-        $newSubmissionsCount = $this->getSubmissionManager()->getTotalInUploadQueue();
-
-        $collectorQueueSize = $this->getSubmissionManager()->getTotalInCheckStatusHelperQueue();
-
-        $checkStatusPoolSize = array_key_exists(Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE, $curStats)
-            ? $curStats[Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE]
-            : 0;
-
-        $downloadPoolSize = array_key_exists(Queue::QUEUE_NAME_DOWNLOAD_QUEUE, $curStats)
-            ? $curStats[Queue::QUEUE_NAME_DOWNLOAD_QUEUE]
-            : 0;
+        $newSubmissionsCount = $this->submissionManager->getTotalInUploadQueue();
+        $collectorQueueSize = $this->submissionManager->getTotalInCheckStatusHelperQueue();
+        $checkStatusPoolSize = $curStats[QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE] ?? 0;
+        $downloadPoolSize = $curStats[QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE] ?? 0;
 
         $data = [
             [
@@ -153,7 +94,22 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
                         ]
                     ),
                 'queue_name'  => __('&nbsp;'),
-                'queue_purge' => __('&nbsp;'),
+                'queue_purge' => 0 === $newSubmissionsCount
+                    ? __('Nothing to purge')
+                    : HtmlTagGeneratorHelper::tag(
+                        'a',
+                        __('Purge'),
+                        [
+                            'href'  => vsprintf(
+                                admin_url('admin-post.php') . '?action=cnq&_c_action=%s&argument=%s',
+                                [
+                                    ConfigurationProfilesController::ACTION_QUEUE_PURGE,
+                                    QueueInterface::VIRTUAL_UPLOAD_QUEUE,
+                                ]
+                            ),
+                            'class' => 'ajaxcall',
+                        ]
+                    ),
             ],
             [
                 'cron_name'   => __('Check Status Helper'),
@@ -208,23 +164,8 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
                             $checkStatusPoolSize,
                         ]
                     ),
-                'queue_name'  => Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE,
-                'queue_purge' => 0 === $checkStatusPoolSize
-                    ? __('Nothing to purge')
-                    : HtmlTagGeneratorHelper::tag(
-                        'a',
-                        __('Purge'),
-                        [
-                            'href'  => vsprintf(
-                                admin_url('admin-post.php') . '?action=cnq&_c_action=%s&argument=%s',
-                                [
-                                    ConfigurationProfilesController::ACTION_QUEUE_PURGE,
-                                    Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE,
-                                ]
-                            ),
-                            'class' => 'ajaxcall',
-                        ]
-                    ),
+                'queue_name' => QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE,
+                'queue_purge' => $this->queuePurgeLink($checkStatusPoolSize === 0, QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE),
             ],
             [
                 'cron_name'   => __('Download'),
@@ -251,23 +192,8 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
                             $downloadPoolSize,
                         ]
                     ),
-                'queue_name'  => Queue::QUEUE_NAME_DOWNLOAD_QUEUE,
-                'queue_purge' => 0 === $downloadPoolSize
-                    ? __('Nothing to purge')
-                    : HtmlTagGeneratorHelper::tag(
-                        'a',
-                        __('Purge'),
-                        [
-                            'href'  => vsprintf(
-                                admin_url('admin-post.php') . '?action=cnq&_c_action=%s&argument=%s',
-                                [
-                                    ConfigurationProfilesController::ACTION_QUEUE_PURGE,
-                                    Queue::QUEUE_NAME_DOWNLOAD_QUEUE,
-                                ]
-                            ),
-                            'class' => 'ajaxcall',
-                        ]
-                    ),
+                'queue_name' => QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE,
+                'queue_purge' => $this->queuePurgeLink($downloadPoolSize === 0, QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE),
             ],
         ];
 
@@ -293,18 +219,7 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
                     $curStats[$queueName],
                 ),
                 'queue_name' => $queueName,
-                'queue_purge' => HtmlTagGeneratorHelper::tag(
-                    'a',
-                    __('Purge'),
-                    [
-                        'href' => sprintf(
-                            admin_url('admin-post.php') . '?action=cnq&_c_action=%s&argument=%s',
-                            ConfigurationProfilesController::ACTION_QUEUE_PURGE,
-                            $queueName,
-                        ),
-                        'class' => 'ajaxcall',
-                    ]
-                ),
+                'queue_purge' => $this->queuePurgeLink(false, $queueName)
             ];
         }
 
@@ -313,5 +228,19 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
         $sortable = array();
         $this->_column_headers = array($columns, $hidden, $sortable);
         $this->items = $data;
+    }
+
+    private function queuePurgeLink(bool $isQueueEmpty, string $queueName): string
+    {
+        return $isQueueEmpty
+            ? __('Nothing to purge')
+            : HtmlTagGeneratorHelper::tag(
+                'a',
+                __('Purge'),
+                [
+                    'href' => sprintf(admin_url('admin-post.php') . '?action=cnq&_c_action=%s&argument=%s', ConfigurationProfilesController::ACTION_QUEUE_PURGE, $queueName),
+                    'class' => 'ajaxcall',
+                ]
+            );
     }
 }
