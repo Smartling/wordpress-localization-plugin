@@ -4,14 +4,14 @@ namespace Smartling\Models;
 
 use Smartling\Helpers\ArrayHelper;
 
-class TranslationRequest extends CloneRequest
+class UserTranslationRequest extends UserCloneRequest
 {
     private JobInformation $jobInformation;
     private array $ids;
 
-    public function __construct(int $contentId, string $contentType, array $relations, array $targetBlogIds, JobInformation $jobInformation, array $ids)
+    public function __construct(int $contentId, string $contentType, array $relations, array $targetBlogIds, JobInformation $jobInformation, array $ids = [], string $description = '')
     {
-        parent::__construct($contentId, $contentType, $relations, $targetBlogIds);
+        parent::__construct($contentId, $contentType, $relations, $targetBlogIds, $description);
         $this->jobInformation = $jobInformation;
         $this->ids = self::toIntegerArray($ids);
     }
@@ -29,13 +29,16 @@ class TranslationRequest extends CloneRequest
     public static function fromArray(array $array): self
     {
         self::validate($array);
+        $ids = self::toIntegerArray($array['ids'] ?? []);
+
         return new self(
             self::getSourceId($array),
             $array['source']['contentType'] ?? '',
             $array['relations'] ?? [],
             explode(',', $array['targetBlogIds']),
             new JobInformation($array['job']['id'], $array['job']['authorize'] === 'true', $array['job']['name'], $array['job']['description'], $array['job']['dueDate'], $array['job']['timeZone']),
-            self::toIntegerArray($array['ids'] ?? []),
+            $ids,
+            $array['description'] ?? count($ids) > 0 ? 'From Bulk Submit' : 'From Widget',
         );
     }
 

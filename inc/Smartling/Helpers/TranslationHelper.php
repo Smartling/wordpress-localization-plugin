@@ -135,15 +135,14 @@ class TranslationHelper
      */
     public function reloadSubmission(SubmissionEntity $submission): SubmissionEntity
     {
-        $submissionsList = $this->submissionManager->getEntityById($submission->getId());
-        if (is_array($submissionsList)) {
-            return ArrayHelper::first($submissionsList);
+        $result = $this->submissionManager->getEntityById($submission->getId());
+        if ($result === null) {
+            throw new SmartlingDataReadException(sprintf(
+                'Error while reloading submission. Nothing returned from database. Original Submission: %s',
+                var_export($submission->toArray(false), true),
+            ));
         }
-        $message = vsprintf(
-            'Error while reloading submission. Nothing returned from database. Original Submission: %s',
-            [var_export($submission->toArray(false), true),]
-        );
-        throw new SmartlingDataReadException($message);
+        return $result;
     }
 
     public function isRelatedSubmissionCreationNeeded(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId, bool $cloning = false): bool {

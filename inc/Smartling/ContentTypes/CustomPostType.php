@@ -67,6 +67,7 @@ class CustomPostType extends PostBasedContentTypeAbstract
             $tag = 'wp.' . $this->getSystemName();
             $di
                 ->register($tag, PostBasedWidgetControllerStd::class)
+                ->addArgument($di->getDefinition('api.wrapper.with.retries'))
                 ->addArgument($di->getDefinition('multilang.proxy'))
                 ->addArgument($di->getDefinition('plugin.info'))
                 ->addArgument($di->getDefinition('entity.helper'))

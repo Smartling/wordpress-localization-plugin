@@ -2,19 +2,27 @@
 
 namespace Smartling\WP\Controller;
 
+use Smartling\ApiWrapperInterface;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
+use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\Cache;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\EntityHelper;
+use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Jobs\JobAbstract;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Queue\Queue;
 use Smartling\Services\GlobalSettingsManager;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
+use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
@@ -31,11 +39,11 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     const WIDGET_DATA_NAME = 'smartling';
     const CONNECTOR_NONCE = 'smartling_connector_nonce';
 
+    private ApiWrapperInterface $apiWrapper;
     protected $servedContentType = 'undefined';
     protected $needSave = 'Need to have title';
     protected $noOriginalFound = 'No original post found';
     protected $abilityNeeded = 'edit_post';
-
 
     const RESPONSE_AJAX_STATUS_FAIL = 'FAIL';
     const RESPONSE_AJAX_STATUS_SUCCESS = 'SUCCESS';
@@ -62,10 +70,15 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     const ERROR_KEY_TYPE_MISSING = 'content.type.missing';
     const ERROR_MSG_TYPE_MISSING = 'Source content-type missing.';
 
-
     private $mutedTypes = [
         'attachment',
     ];
+
+    public function __construct(ApiWrapperInterface $apiWrapper, LocalizationPluginProxyInterface $connector, PluginInfo $pluginInfo, EntityHelper $entityHelper, SubmissionManager $manager, Cache $cache)
+    {
+        parent::__construct($connector, $pluginInfo, $entityHelper, $manager, $cache);
+        $this->apiWrapper = $apiWrapper;
+    }
 
     private function isMuted()
     {
@@ -126,9 +139,24 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
     public function ajaxDownloadHandler()
     {
+        $logSubmissions = [];
         if (array_key_exists('submissionIds', $_POST)) {
+            $profile = null;
             $submissionIds = explode(',', $_POST['submissionIds']);
             foreach ($submissionIds as $submissionId) {
+                $submission = $this->getManager()->getEntityById($submissionId);
+                if ($submission !== null) {
+                    if ($profile === null) {
+                        $profile = $this->getEntityHelper()->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
+                    }
+                    $logSubmissions[] = [
+                        'sourceBlogId' => $submission->getSourceBlogId(),
+                        'sourceId' => $submission->getSourceId(),
+                        'submissionId' => $submission->getId(),
+                        'targetBlogId' => $submission->getTargetBlogId(),
+                        'targetId' => $submission->getTargetId(),
+                    ];
+                }
                 $this->getCore()->getQueue()->enqueue([$submissionId], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
             }
             $result = [];
@@ -138,6 +166,12 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             } catch (\Exception $e) {
                 $result['status'] = self::RESPONSE_AJAX_STATUS_FAIL;
                 $result['message'] = $e->getMessage();
+            }
+            if ($profile !== null) {
+                $this->apiWrapper->createAuditLogRecord($profile, CreateRecordParameters::ACTION_TYPE_DOWNLOAD, 'User request to download submissions', ['submissions' => $logSubmissions]);
+            } else {
+                /** @noinspection JsonEncodingApiUsageInspection */
+                $this->getLogger()->notice('No profile was found for submissions, no audit log created, submissions=' . json_encode($logSubmissions));
             }
             wp_send_json($result);
         }

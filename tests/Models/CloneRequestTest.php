@@ -3,7 +3,7 @@
 namespace Smartling\Tests\Models;
 
 use PHPUnit\Framework\TestCase;
-use Smartling\Models\CloneRequest;
+use Smartling\Models\UserCloneRequest;
 use Smartling\Services\ContentRelationsHandler;
 
 class CloneRequestTest extends TestCase
@@ -13,7 +13,7 @@ class CloneRequestTest extends TestCase
         $sourceContentType = 'post';
         $sourceId = 13;
         $targetBlogId = 2;
-        $x = CloneRequest::fromArray([
+        $x = UserCloneRequest::fromArray([
             'formAction' => ContentRelationsHandler::FORM_ACTION_UPLOAD,
             'source' => ['id' => [$sourceId], 'contentType' => $sourceContentType],
             'relations' => [

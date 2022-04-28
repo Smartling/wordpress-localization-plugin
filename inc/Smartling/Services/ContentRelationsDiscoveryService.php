@@ -23,11 +23,11 @@ use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
 use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
-use Smartling\Models\CloneRequest;
+use Smartling\Models\UserCloneRequest;
 use Smartling\Models\DetectedRelations;
 use Smartling\Models\GutenbergBlock;
 use Smartling\Models\JobInformation;
-use Smartling\Models\TranslationRequest;
+use Smartling\Models\UserTranslationRequest;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Replacers\ContentIdReplacer;
 use Smartling\Replacers\ReplacerFactory;
@@ -37,6 +37,7 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tuner\MediaAttachmentRulesManager;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
+use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 
 class ContentRelationsDiscoveryService
@@ -142,6 +143,7 @@ class ContentRelationsDiscoveryService
                     $submission->setSourceTitle($title);
                 }
                 $this->submissionManager->storeEntity($submission);
+                $this->logSubmissionCreated($submission, 'Bulk upload request');
                 if ($submission->getContentType() === ContentTypeNavigationMenu::WP_CONTENT_TYPE) {
                     $menuItemIds = array_reduce($this->menuHelper->getMenuItems($submission->getSourceId(), $submission->getSourceBlogId()), static function ($carry, $item) {
                         $carry[] = $item->ID;
@@ -153,7 +155,7 @@ class ContentRelationsDiscoveryService
         }
     }
 
-    public function clone(CloneRequest $request): void
+    public function clone(UserCloneRequest $request): void
     {
         $sourceBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
         $submissionArray = [
@@ -199,13 +201,19 @@ class ContentRelationsDiscoveryService
         $this->submissionManager->storeSubmissions($submissions);
     }
 
-    public function createSubmissions(TranslationRequest $request): void
+    public function createSubmissions(UserTranslationRequest $request): void
     {
         $curBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
         $profile = $this->settingsManager->getSingleSettingsProfile($curBlogId);
         $job = $request->getJobInformation();
         $batchUid = $this->getBatchUid($profile, $job);
         $jobInfo = new JobEntityWithBatchUid($batchUid, $job->getName(), $job->getId(), $profile->getProjectId());
+        $this->apiWrapper->createAuditLogRecord($profile, CreateRecordParameters::ACTION_TYPE_UPLOAD, $request->getDescription(), [
+            'relatedContentIds' => $request->getRelationsOrdered(),
+            'sourceBlogId' => $curBlogId,
+            'sourceId' => $request->getContentId(),
+            'targetBlogIds' => $request->getTargetBlogIds(),
+        ], $jobInfo, $job->isAuthorize());
 
         if ($request->isBulk()) {
             $this->bulkUpload($jobInfo, $request->getIds(), $request->getContentType(), $curBlogId, $request->getTargetBlogIds());
@@ -238,7 +246,7 @@ class ContentRelationsDiscoveryService
             } else {
                 $submission = ArrayHelper::first($result);
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                $this->storeWithJobInfo($submission, $jobInfo);
+                $this->storeWithJobInfo($submission, $jobInfo, $profile, $job->isAuthorize(), $request->getDescription());
             }
 
             /**
@@ -263,7 +271,7 @@ class ContentRelationsDiscoveryService
                 // trigger generation of fileUri
                 try {
                     $submission->getFileUri();
-                    $this->storeWithJobInfo($submission, $jobInfo);
+                    $this->storeWithJobInfo($submission, $jobInfo, $profile, $job->isAuthorize(), $request->getDescription());
                 } catch (SmartlingInvalidFactoryArgumentException $e) {
                     $this->getLogger()->info("Skipping submission because no mapper was found: contentType={$submission->getContentType()} sourceBlogId={$submission->getSourceBlogId()}, sourceId={$submission->getSourceId()}, targetBlogId={$submission->getTargetBlogId()}");
                 }
@@ -572,11 +580,12 @@ class ContentRelationsDiscoveryService
         return $result;
     }
 
-    private function storeWithJobInfo(SubmissionEntity $submission, JobEntityWithBatchUid $jobInfo): void
+    private function storeWithJobInfo(SubmissionEntity $submission, JobEntityWithBatchUid $jobInfo, ConfigurationProfileEntity $profile, bool $isAuthorize, string $description): void
     {
         $submission->setBatchUid($jobInfo->getBatchUid());
         $submission->setJobInfo($jobInfo->getJobInformationEntity());
         $this->submissionManager->storeEntity($submission);
+        $this->logSubmissionCreated($submission, $description);
     }
 
     public function getPostTitle(int $id): string
@@ -588,7 +597,7 @@ class ContentRelationsDiscoveryService
         return '';
     }
 
-    private function getSources(CloneRequest $request, int $targetBlogId): array
+    private function getSources(UserCloneRequest $request, int $targetBlogId): array
     {
         $sources = [];
 
@@ -604,5 +613,10 @@ class ContentRelationsDiscoveryService
         }
 
         return $sources;
+    }
+
+    private function logSubmissionCreated(SubmissionEntity $submission, string $description): void
+    {
+        $this->getLogger()->info(sprintf("Adding submissionId=%d, fileName=%s, sourceBlogId=%d, sourceId=%d for upload to batchUid=%s due to user request, reason=\"%s\"", $submission->getId(), $submission->getStateFieldFileUri(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getBatchUid(), $description));
     }
 }

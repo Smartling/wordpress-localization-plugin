@@ -5,17 +5,19 @@ namespace Smartling\Models;
 use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Helpers\ArrayHelper;
 
-class CloneRequest
+class UserCloneRequest
 {
     private int $contentId;
     private string $contentType;
+    private string $description;
     private array $relations;
     private array $targetBlogIds;
 
-    public function __construct(int $contentId, string $contentType, array $relations, array $targetBlogIds)
+    public function __construct(int $contentId, string $contentType, array $relations, array $targetBlogIds, string $description = '')
     {
         $this->contentId = $contentId;
         $this->contentType = $contentType;
+        $this->description = $description;
         krsort($relations);
         $this->relations = $relations;
         $this->targetBlogIds = ArrayHelper::toArrayOfIntegers($targetBlogIds, 'Target blog id expected to be numeric');
@@ -29,6 +31,11 @@ class CloneRequest
     public function getContentType(): string
     {
         return $this->contentType;
+    }
+
+    public function getDescription(): string
+    {
+        return $this->description;
     }
 
     public function getRelationsOrdered(): array

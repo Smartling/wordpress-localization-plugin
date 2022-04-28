@@ -4,12 +4,14 @@ namespace Smartling;
 
 use DateTime;
 use JetBrains\PhpStorm\ArrayShape;
+use JetBrains\PhpStorm\ExpectedValues;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 
 interface ApiWrapperInterface
@@ -49,6 +51,17 @@ interface ApiWrapperInterface
      * @throws SmartlingApiException
      */
     public function releaseLock(ConfigurationProfileEntity $profile, string $key): void;
+
+    public function createAuditLogRecord(
+        ConfigurationProfileEntity $profile,
+        /** @noinspection PhpLanguageLevelInspection */
+        #[ExpectedValues(valuesFromClass: CreateRecordParameters::class)]
+        string $actionType,
+        string $description,
+        array $clientData,
+        ?JobEntityWithBatchUid $jobInfo = null,
+        ?bool $isAuthorize = null
+    ): void;
 
     /**
      * @throws SmartlingFileDownloadException
@@ -93,6 +106,7 @@ interface ApiWrapperInterface
 
     /**
      * @throws SmartlingApiException
+     * @noinspection PhpLanguageLevelInspection
      */
     #[ArrayShape(self::CREATE_JOB_RESPONSE)]
     public function createJob(ConfigurationProfileEntity $profile, array $params): array;
@@ -104,6 +118,7 @@ interface ApiWrapperInterface
 
     /**
      * @throws SmartlingApiException
+     * @noinspection PhpLanguageLevelInspection
      */
     #[ArrayShape(self::CREATE_BATCH_RESPONSE)]
     public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, bool $authorize = false): array;

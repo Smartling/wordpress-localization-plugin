@@ -5,8 +5,8 @@ namespace Smartling\Services;
 use Exception;
 use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Helpers\LoggerSafeTrait;
-use Smartling\Models\CloneRequest;
-use Smartling\Models\TranslationRequest;
+use Smartling\Models\UserCloneRequest;
+use Smartling\Models\UserTranslationRequest;
 
 /**
  *
@@ -90,9 +90,9 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
         }
         try {
             if ($data['formAction'] === self::FORM_ACTION_CLONE) {
-                $this->service->clone(CloneRequest::fromArray($data));
+                $this->service->clone(UserCloneRequest::fromArray($data));
             } else {
-                $this->service->createSubmissions(TranslationRequest::fromArray($data));
+                $this->service->createSubmissions(UserTranslationRequest::fromArray($data));
             }
             $this->returnResponse(['status' => 'SUCCESS']);
         } catch (Exception $e) {

@@ -20,7 +20,9 @@ use Smartling\Helpers\TestRunHelper;
 use Smartling\Jobs\JobAbstract;
 use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\UploadJob;
+use Smartling\Models\JobInformation;
 use Smartling\Models\TestRunViewData;
+use Smartling\Models\UserTranslationRequest;
 use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
@@ -187,25 +189,15 @@ class TestRunController extends WPAbstract implements WPHookInterface
             if (!$post instanceof \WP_Post) {
                 wp_send_json_error('Unable to get posts');
             }
-            $relations = $this->contentRelationDiscoveryService->getRelations($post->post_type, $post->ID, [$targetBlogId]);
-
-            $this->contentRelationDiscoveryService->createSubmissions([
-                'source' => [
-                    'contentType' => $post->post_type,
-                    'id' => [$post->ID]
-                ],
-                'job' =>
-                    [
-                        'id' => $job->getJobUid(),
-                        'name' => $job->getJobName(),
-                        'description' => '',
-                        'dueDate' => '',
-                        'timeZone' => 'UTC',
-                        'authorize' => 'true',
-                    ],
-                'targetBlogIds' => $targetBlogId,
-                'relations' => $relations->getMissingReferences(),
-            ]);
+            $this->contentRelationDiscoveryService->createSubmissions(new UserTranslationRequest(
+                $post->ID,
+                $post->post_type,
+                $this->contentRelationDiscoveryService->getRelations($post->post_type, $post->ID, [$targetBlogId])->getMissingReferences(),
+                [$targetBlogId],
+                new JobInformation($job->getJobUid(), true, $job->getJobName(), 'Test run job', '', 'UTC'),
+                [],
+                'Test run'
+            ));
         }
 
         wp_send_json_success('Test run started');

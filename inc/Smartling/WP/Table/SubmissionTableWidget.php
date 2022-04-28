@@ -2,6 +2,7 @@
 
 namespace Smartling\WP\Table;
 
+use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Helpers\ArrayHelper;
@@ -22,6 +23,7 @@ use Smartling\Settings\Locale;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
+use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 use Smartling\WP\Controller\SmartlingListTable;
 
 class SubmissionTableWidget extends SmartlingListTable
@@ -52,6 +54,7 @@ class SubmissionTableWidget extends SmartlingListTable
     private SubmissionManager $submissionManager;
     private EntityHelper $entityHelper;
     private Queue $queue;
+    private ApiWrapperInterface $apiWrapper;
 
     public function getLogger(): LoggerInterface
     {
@@ -74,8 +77,9 @@ class SubmissionTableWidget extends SmartlingListTable
 
     private array $_settings = ['singular' => 'submission', 'plural' => 'submissions', 'ajax' => false,];
 
-    public function __construct(SubmissionManager $manager, EntityHelper $entityHelper, Queue $queue)
+    public function __construct(ApiWrapperInterface $apiWrapper, SubmissionManager $manager, EntityHelper $entityHelper, Queue $queue)
     {
+        $this->apiWrapper = $apiWrapper;
         $this->queue = $queue;
         $this->submissionManager = $manager;
         $this->setSource($_REQUEST);
@@ -186,8 +190,26 @@ class SubmissionTableWidget extends SmartlingListTable
                         }
                         break;
                     case self::ACTION_DOWNLOAD:
+                        $logSubmissions = [];
+                        $profile = null;
                         foreach ($submissions as $submission) {
+                            if ($profile === null) {
+                                $profile = $this->entityHelper->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
+                            }
+                            $logSubmissions[] = [
+                                'sourceBlogId' => $submission->getSourceBlogId(),
+                                'sourceId' => $submission->getSourceId(),
+                                'submissionId' => $submission->getId(),
+                                'targetBlogId' => $submission->getTargetBlogId(),
+                                'targetId' => $submission->getTargetId(),
+                            ];
                             $this->queue->enqueue([$submission->getId()], QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE);
+                        }
+                        if ($profile === null) {
+                            $this->apiWrapper->createAuditLogRecord($profile, CreateRecordParameters::ACTION_TYPE_DOWNLOAD, 'User initiated bulk download', ['submissions' => $logSubmissions]);
+                        } else {
+                            /** @noinspection JsonEncodingApiUsageInspection */
+                            $this->getLogger()->notice('No profile was found for submissions, no audit log created, submissions=' . json_encode($logSubmissions));
                         }
                         break;
                     case self::ACTION_LOCK:

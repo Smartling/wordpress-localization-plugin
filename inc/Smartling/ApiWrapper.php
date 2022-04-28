@@ -20,6 +20,8 @@ use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Vendor\Smartling\AuditLog\AuditLogApi;
+use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 use Smartling\Vendor\Smartling\AuthApi\AuthTokenProvider;
 use Smartling\Vendor\Smartling\Batch\BatchApi;
 use Smartling\Vendor\Smartling\Batch\Params\CreateBatchParameters;
@@ -109,6 +111,29 @@ class ApiWrapper implements ApiWrapperInterface
     {
         DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())
             ->releaseLock("{$profile->getProjectId()}-$key");
+    }
+
+    public function createAuditLogRecord(ConfigurationProfileEntity $profile, string $actionType, string $description, array $clientData, ?JobEntityWithBatchUid $jobInfo = null, ?bool $isAuthorize = null): void
+    {
+        $record = new CreateRecordParameters();
+        $record->setActionType($actionType);
+        if ($jobInfo !== null) {
+            $job = $jobInfo->getJobInformationEntity();
+            $record->setTranslationJobUid($job->getJobUid());
+            $record->setTranslationJobName($job->getJobName());
+            $record->setBatchUid($jobInfo->getBatchUid());
+        }
+        if ($isAuthorize !== null) {
+            $record->setTranslationJobAuthorize($isAuthorize);
+        }
+        $record->setClientUserId(wp_get_current_user()->ID);
+        $record->setDescription($description);
+        foreach ($clientData as $key => $value) {
+            $record->setClientData($key, $value);
+        }
+
+        AuditLogApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())
+            ->createProjectLevelLogRecord($record);
     }
 
     /**
