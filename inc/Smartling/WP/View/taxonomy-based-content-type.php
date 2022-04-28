@@ -70,7 +70,6 @@ if (!empty($locales)) {
         ArrayHelper::sortLocales($locales);
         ?>
         <div class="locale-list"> <?php
-
             foreach ($locales as $locale) {
                 if (!$locale->isEnabled()) {
                     continue;
@@ -78,6 +77,7 @@ if (!empty($locales)) {
                 $lastError = '';
                 $value = false;
                 $enabled = false;
+                $percent = 0;
                 $status = '';
                 $submission = null;
                 $statusValue = null;
@@ -116,7 +116,7 @@ if (!empty($locales)) {
                             $enabled,
                             $editUrl,
                             [],
-                            $item->getId(),
+                            $id,
                         ) ?>
                     </div>
                     <div class="smtPostWidget-progress" style="left: 15px;">
