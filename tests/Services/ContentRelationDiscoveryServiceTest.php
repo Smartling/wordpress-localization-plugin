@@ -107,7 +107,12 @@ namespace Smartling\Tests\Services {
 
             $submissionManager->expects(self::once())->method('storeEntity')->with($submission);
 
-            $apiWrapper->expects($this->once())->method('createAuditLogRecord')->with($profile, $submission, CreateRecordParameters::ACTION_TYPE_UPLOAD, true);
+            $apiWrapper->expects($this->once())->method('createAuditLogRecord')->with($profile, CreateRecordParameters::ACTION_TYPE_UPLOAD, 'From Widget', [
+                'relatedContentIds' => [],
+                'sourceBlogId' => $sourceBlogId,
+                'sourceId' => $sourceId,
+                'targetBlogIds' => [$targetBlogId],
+            ]);
 
             $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
 
