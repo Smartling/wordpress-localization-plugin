@@ -154,79 +154,13 @@ class PostEntityStd extends EntityAbstract
         return new WordpressFunctionProxyHelper();
     }
 
-    /**
-     * @param array $metadata
-     * @return bool
-     */
-    private function areMetadataValuesUnique(array $metadata)
-    {
-        $valueHash = function ($value) {
-            return md5(serialize($value));
-        };
-
-        if (1 < count($metadata)) {
-            $firstHash = $valueHash(array_shift($metadata));
-            foreach ($metadata as $metadatum) {
-                if ($valueHash($metadatum) !== $firstHash) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * @param array $metadata
-     * @return array
-     */
-    private function formatMetadata(array $metadata)
-    {
-        foreach ($metadata as & $mValue) {
-            if (!$this->areMetadataValuesUnique($mValue)) {
-                $mValue = ArrayHelper::first($mValue);
-            } else {
-                $msg = vsprintf(
-                    'Detected unsupported metadata: \'%s\' for entity %s=\'%s\'',
-                    [
-                        \json_encode($metadata),
-                        $this->getPrimaryFieldName(),
-                        $this->getPK(),
-                    ]
-                );
-                $this->getLogger()->warning($msg);
-
-                /**
-                 * Get last value
-                 */
-                $lastValue = ArrayHelper::last($mValue);
-
-                $msg = vsprintf(
-                    'Got unsupported metadata \'%s\' for post ID=\'%s\' Continue using last value = \'%s\'.',
-                    [
-                        \json_encode($mValue),
-                        $this->getPK(),
-                        $lastValue,
-                    ]
-                );
-
-                $this->getLogger()->warning($msg);
-
-                $mValue = $lastValue;
-            }
-        }
-
-        return $metadata;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getMetadata()
+    public function getMetadata(): array
     {
         $metadata = $this->getWpProxyHelper()->getPostMeta($this->ID);
 
-        if ((is_array($metadata) && 0 === count($metadata)) || !is_array($metadata)) {
+        if (!is_array($metadata) || 0 === count($metadata)) {
             $this->rawLogPostMetadata($this->ID);
+            return [];
         }
 
         return $this->formatMetadata($metadata);
