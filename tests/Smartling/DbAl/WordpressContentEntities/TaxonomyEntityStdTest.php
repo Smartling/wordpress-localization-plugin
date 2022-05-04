@@ -8,9 +8,9 @@ use Smartling\Helpers\WordpressFunctionProxyHelper;
 
 class TaxonomyEntityStdTest extends TestCase {
     /**
-     * Metadata values for taxonomies should not be stored as array for scalar values
+     * @see https://bt.smartling.net/browse/WP-704
      */
-    public function testWP704()
+    public function testTermMetadataStoredAsScalars()
     {
         $logoField = 'field_609bacf18fec4';
         $logoId = 33404;
@@ -18,8 +18,18 @@ class TaxonomyEntityStdTest extends TestCase {
         $websiteLink = '';
 
         $wp = $this->createMock(WordpressFunctionProxyHelper::class);
-        $wp->method('get_term_meta')->willReturn(['logo' => [$logoId], '_logo' => [$logoField], 'website_link' => [$websiteLink], '_website_link' => [$websiteField]]);
-        $x = new TaxonomyEntityStd('category', [], $wp);
-        $this->assertEquals(['logo' => $logoId, '_logo' => $logoField, 'website_link' => $websiteLink, '_website_link' => $websiteField], $x->getMetadata());
+        $wp->method('get_term_meta')->willReturn([
+            'logo' => [$logoId],
+            '_logo' => [$logoField],
+            'website_link' => [$websiteLink],
+            '_website_link' => [$websiteField]
+        ]);
+
+        $this->assertEquals([
+            'logo' => $logoId,
+            '_logo' => $logoField,
+            'website_link' => $websiteLink,
+            '_website_link' => $websiteField
+        ], (new TaxonomyEntityStd('category', [], $wp))->getMetadata());
     }
 }
