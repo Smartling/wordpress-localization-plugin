@@ -5,6 +5,7 @@ namespace Smartling\DbAl\WordpressContentEntities;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\WordpressContentTypeHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 
 /**
  * Class TaxonomyEntityAbstract
@@ -37,12 +38,18 @@ class TaxonomyEntityStd extends EntityAbstract
         'count',
     ];
 
-    /**
-     * @inheritdoc
-     */
-    public function getMetadata()
+    private WordpressFunctionProxyHelper $wordpressProxy;
+
+    public function getMetadata(): array
     {
-        return get_term_meta($this->getPK());
+        $metadata = $this->wordpressProxy->get_term_meta($this->getPK());
+
+        if (!is_array($metadata) || 0 === count($metadata)) {
+            $this->getLogger()->warning('Expected to get metadata array for termId=' . $this->getPK() . ', got ' . is_array($metadata) ? 'empty array' : gettype($metadata));
+            return [];
+        }
+
+        return $this->formatMetadata($metadata);
     }
 
     public function setMetaTag($tagName, $tagValue, $unique = true)
@@ -95,10 +102,7 @@ class TaxonomyEntityStd extends EntityAbstract
 
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function __construct($type, array $related = [])
+    public function __construct(string $type, array $related = [], WordpressFunctionProxyHelper $wordpressProxy = null)
     {
         parent::__construct();
 
@@ -110,6 +114,10 @@ class TaxonomyEntityStd extends EntityAbstract
         $this->setEntityFields($this->fields);
         $this->setType($type);
         $this->setRelatedTypes($related);
+        if ($wordpressProxy === null) {
+            $wordpressProxy = new WordpressFunctionProxyHelper();
+        }
+        $this->wordpressProxy = $wordpressProxy;
     }
 
     /**

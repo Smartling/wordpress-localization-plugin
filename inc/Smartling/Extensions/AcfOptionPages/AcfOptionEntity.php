@@ -72,10 +72,7 @@ class AcfOptionEntity extends VirtualEntityAbstract
         throw new \BadMethodCallException($message);
     }
 
-    /**
-     * @return array;
-     */
-    public function getMetadata()
+    public function getMetadata(): array
     {
         return [];
     }

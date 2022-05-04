@@ -175,10 +175,7 @@ abstract class EntityAbstract
         }
     }
 
-    /**
-     * @return array;
-     */
-    abstract public function getMetadata();
+    abstract public function getMetadata(): array;
 
     /**
      * @return mixed
@@ -364,4 +361,54 @@ abstract class EntityAbstract
      * @return array
      */
     abstract public function toBulkSubmitScreenRow();
+
+    protected function areMetadataValuesUnique(array $metadata): bool
+    {
+        $valueHash = static function ($value) {
+            /** @noinspection JsonEncodingApiUsageInspection */
+            return md5(json_encode($value));
+        };
+
+        if (1 < count($metadata)) {
+            $firstHash = $valueHash(array_shift($metadata));
+            foreach ($metadata as $metadatum) {
+                if ($valueHash($metadatum) !== $firstHash) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    protected function formatMetadata(array $metadata): array
+    {
+        foreach ($metadata as &$mValue) {
+            if (!$this->areMetadataValuesUnique($mValue)) {
+                $mValue = ArrayHelper::first($mValue);
+            } else {
+                /** @noinspection JsonEncodingApiUsageInspection */
+                $this->getLogger()->warning(sprintf(
+                    "Detected unsupported metadata: '%s' for entity %s='%s'",
+                    \json_encode($metadata),
+                    $this->getPrimaryFieldName(),
+                    $this->getPK(),
+                ));
+
+                $lastValue = ArrayHelper::last($mValue);
+
+                /** @noinspection JsonEncodingApiUsageInspection */
+                $this->getLogger()->warning(sprintf(
+                    "Got unsupported metadata '%s' for post ID='%s' Continue using last value = '%s'.",
+                    \json_encode($mValue),
+                    $this->getPK(),
+                    $lastValue,
+                ));
+
+                $mValue = $lastValue;
+            }
+        }
+
+        return $metadata;
+    }
 }

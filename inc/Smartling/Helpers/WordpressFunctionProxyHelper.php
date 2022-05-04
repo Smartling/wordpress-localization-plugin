@@ -24,6 +24,11 @@ class WordpressFunctionProxyHelper
         return get_taxonomies(...func_get_args());
     }
 
+    public function get_term_meta()
+    {
+        return get_term_meta(...func_get_args());
+    }
+
     public function getPostMeta($postId)
     {
         return get_post_meta($postId);
