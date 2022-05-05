@@ -106,6 +106,19 @@ class SubmissionManagerTest extends TestCase
         $x->searchByCondition($block);
     }
 
+    /**
+     * Locked submissions should not get cloned
+     */
+    public function testFindSubmissionsForCloning()
+    {
+        $db = $this->db;
+        $x = $this->subject;
+        $x->method('getDbal')->willReturn($db);
+        $x->expects($this->once())->method('fetchData')->with("SELECT `id`, `source_title`, `source_blog_id`, `source_content_hash`, `content_type`, `source_id`, `file_uri`, `target_locale`, `target_blog_id`, `target_id`, `submitter`, `submission_date`, `applied_date`, `approved_string_count`, `completed_string_count`, `excluded_string_count`, `total_string_count`, `word_count`, `status`, `is_locked`, `is_cloned`, `last_modified`, `outdated`, `last_error`, `batch_uid`, `locked_fields` FROM `wp_smartling_submissions` WHERE ( `status` = 'New' AND `is_cloned` = '1' AND `is_locked` = '0' ) ORDER BY `id` asc LIMIT 0,1")->willReturn([]);
+
+        $x->findSubmissionForCloning();
+    }
+
     public function testFindSubmissionsForUploadJob()
     {
         $db = $this->db;
