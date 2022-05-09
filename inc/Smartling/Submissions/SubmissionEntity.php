@@ -271,6 +271,11 @@ class SubmissionEntity extends SmartlingEntityAbstract
         $this->stateFields[static::FIELD_WORD_COUNT] = $word_count;
     }
 
+    public function isLocked(): bool
+    {
+        return $this->getIsLocked() === 1;
+    }
+
     public function getIsLocked(): int
     {
         return (int)$this->stateFields[static::FIELD_IS_LOCKED];

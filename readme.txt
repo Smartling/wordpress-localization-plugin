@@ -62,6 +62,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 2.12.8 =
+* Fixed cloning affecting fully locked submissions
+
 = 2.12.7 =
 * Fixed terms meta values stored as array instead of scalar values
 
