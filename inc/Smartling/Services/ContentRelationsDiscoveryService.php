@@ -183,6 +183,10 @@ class ContentRelationsDiscoveryService
                 ]));
                 if ($existing instanceof SubmissionEntity) {
                     $submission = $existing;
+                    if ($submission->isLocked()) {
+                        $this->getLogger()->debug('Skipping cloning for submissionId=' . $submission->getId() . ', because it is locked');
+                        continue;
+                    }
                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 } else {
                     $submissionArray[SubmissionEntity::FIELD_STATUS] = SubmissionEntity::SUBMISSION_STATUS_NEW;

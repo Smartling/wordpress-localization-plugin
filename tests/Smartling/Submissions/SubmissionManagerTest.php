@@ -106,6 +106,23 @@ class SubmissionManagerTest extends TestCase
         $x->searchByCondition($block);
     }
 
+    /**
+     * Locked submissions should not get cloned
+     */
+    public function testFindSubmissionsForCloning()
+    {
+        $db = $this->db;
+        $x = $this->subject;
+        $x->method('getDbal')->willReturn($db);
+        $x->expects($this->once())->method('fetchData')->willReturnCallback(function(string $query) {
+            $this->assertStringContainsString("`is_cloned` = '1'", $query);
+            $this->assertStringContainsString("`is_locked` = '0'", $query);
+            return [];
+        });
+
+        $x->findSubmissionForCloning();
+    }
+
     public function testFindSubmissionsForUploadJob()
     {
         $db = $this->db;

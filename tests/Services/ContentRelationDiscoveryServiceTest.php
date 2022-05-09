@@ -449,6 +449,28 @@ namespace Smartling\Tests\Services {
             $containerBuilder->set($serviceId, $io);
         }
 
+        public function testCloningSkipsLockedSubmissions()
+        {
+            $contentType = 'post';
+            $contentId = 1;
+            $targetBlogId = 2;
+            $existing = $this->createMock(SubmissionEntity::class);
+            $existing->method('isLocked')->willReturn(true);
+            $existing->expects($this->never())->method('setStatus');
+
+            $submissionManager = $this->createMock(SubmissionManager::class);
+            $submissionManager->expects($this->once())->method('find')->willReturn([$existing]);
+            $submissionManager->expects($this->once())->method('storeSubmissions')->with([]);
+
+            $x = $this->getContentRelationDiscoveryService(
+                $this->createMock(ApiWrapper::class),
+                $this->createMock(ContentHelper::class),
+                $this->createMock(SettingsManager::class),
+                $submissionManager
+            );
+            $x->clone(new UserCloneRequest($contentId, $contentType, [], [$targetBlogId]));
+        }
+
         public function testParentPageReferenceDetected()
         {
             $parentId = 10001;
