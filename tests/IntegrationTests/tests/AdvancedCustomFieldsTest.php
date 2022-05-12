@@ -192,9 +192,10 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
     }
 
     /**
-     * Covered: ACF block with array value caused php warning before fix, replacer unable to decode blocks due to escaping bugs
+     * ACF block with array value caused php warning before fix, replacer unable to decode blocks due to escaping bugs
+     * @see https://bt.smartling.net/browse/WP-690
      */
-    public function testWP690()
+    public function testAcfBlocksWithArraysDontCauseWarnings()
     {
         $submissionManager = $this->getSubmissionManager();
         $translationHelper = $this->getTranslationHelper();
