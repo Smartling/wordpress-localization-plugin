@@ -25,7 +25,7 @@ pipeline {
 
             steps {
                 dir('.') {
-                    sh 'docker run --rm -w /plugin-dir -v $PWD:/plugin-dir /releaseVersionCheck.sh'
+                    sh 'docker run --rm -w /plugin-dir -v $PWD:/plugin-dir wordpress-localization-plugin-php74:latest /releaseVersionCheck.sh'
                 }
             }
         }
