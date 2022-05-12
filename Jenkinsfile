@@ -18,6 +18,18 @@ pipeline {
             }
         }
 
+        stage('Release version check') {
+            agent {
+                label 'master'
+            }
+
+            steps {
+                dir('.') {
+                    sh 'docker run --rm -w /plugin-dir -v $PWD:/plugin-dir /releaseVersionCheck.sh'
+                }
+            }
+        }
+
         stage('Run tests') {
             agent {
                 label 'master'
