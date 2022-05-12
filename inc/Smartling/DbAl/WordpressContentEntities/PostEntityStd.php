@@ -235,8 +235,10 @@ class PostEntityStd extends EntityAbstract
         $instance = null === $entity ? $this : $entity;
         $array = $instance->toArray();
         $array['post_category'] = \wp_get_post_categories($instance->ID);
+        // ACF would replace our properly escaped content with its own escaping.
         remove_action('content_save_pre', 'acf_parse_save_blocks', 5);
         if (isset($array['post_content'])) {
+            // Content needs to be slashed for wp_insert_post() call
             $array['post_content'] = addslashes($array['post_content']);
         }
         $res = wp_insert_post($array, true);
