@@ -67,9 +67,8 @@ ENV COMPOSER_H_DIR="${HOME}/.composer"
 ENV PLUGIN_DIR="${WP_PLUGINS_DIR}/smartling-connector"
 ENV LOCAL_GIT_DIR="/plugin-dir"
 
-COPY Buildplan/release.sh /release.sh
-COPY Buildplan/test.sh /test.sh
-RUN chmod +x /release.sh /test.sh
+COPY Buildplan/release.sh Buildplan/releaseVersionCheck.sh /test.sh /
+RUN chmod +x /release.sh /releaseVersionCheck.sh /test.sh
 
 RUN service mysql start && cd ${WP_INSTALL_DIR} && \
     if [ ! -d "${COMPOSER_H_DIR}" ]; then mkdir "${COMPOSER_H_DIR}"; fi; echo "{\"github-oauth\":{\"github.com\":\"$GITHUB_OAUTH_TOKEN\"}}" > "${COMPOSER_H_DIR}/auth.json" && \
