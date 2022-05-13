@@ -42,6 +42,18 @@ pipeline {
             }
         }
 
+        stage('Release version check') {
+            agent {
+                label 'master'
+            }
+
+            steps {
+                dir('.') {
+                    sh 'docker run --rm -w /plugin-dir -v $PWD:/plugin-dir wordpress-localization-plugin-php74:latest /releaseVersionCheck.sh'
+                }
+            }
+        }
+
         stage('Release on WordPress.org?') {
             agent none
             steps {
