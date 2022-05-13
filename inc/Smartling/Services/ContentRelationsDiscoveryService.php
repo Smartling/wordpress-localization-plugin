@@ -42,6 +42,7 @@ use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 
 class ContentRelationsDiscoveryService
 {
+    private const POST_BASED_PROCESSOR = 'PostBasedProcessor';
     private LoggerInterface $logger;
     private ContentHelper $contentHelper;
     private FieldsFilterHelper $fieldFilterHelper;
@@ -385,21 +386,24 @@ class ContentRelationsDiscoveryService
 
         $result = array_unique($result);
 
-        return ['PostBasedProcessor' => array_combine($result, $result)] ;
+        return [self::POST_BASED_PROCESSOR => array_combine($result, $result)] ;
     }
 
     private function addPostContentReferences(array $array, GutenbergBlock $block): array
     {
         foreach ($block->getAttributes() as $attribute => $_) {
             foreach ($this->mediaAttachmentRulesManager->getGutenbergReplacementRules($block->getBlockName(), $attribute) as $rule) {
+                $this->getLogger()->debug("Found rule for blockName=\"{$block->getBlockName()}\" attributeName=\"$attribute\"");
                 try {
                     $replacer = $this->replacerFactory->getReplacer($rule->getReplacerId());
+                    $this->getLogger()->debug("Got replacerId={$rule->getReplacerId()}");
                 } catch (EntityNotFoundException $e) {
                     continue;
                 }
                 $value = $this->gutenbergBlockHelper->getValue($block, $rule);
                 if ($replacer instanceof ContentIdReplacer && is_numeric($value)) {
                     $array[] = $value;
+                    $this->getLogger()->debug("Added relatedId=$value to references");
                 }
             }
         }
@@ -513,6 +517,7 @@ class ContentRelationsDiscoveryService
             $detectedReferences = array_merge_recursive($detectedReferences, $this->getPostContentReferences($content['entity']['post_content']));
         }
 
+        $this->getLogger()->debug(self::POST_BASED_PROCESSOR . ' has ' . ($detectedReferences[self::POST_BASED_PROCESSOR] ?? '0') . ' references');
         $detectedReferences = $this->normalizeReferences($detectedReferences);
 
         $responseData = new DetectedRelations($detectedReferences);
@@ -551,8 +556,8 @@ class ContentRelationsDiscoveryService
             $result['attachment'] = array_merge(($result['attachment'] ?? []), array_keys($references['MediaBasedProcessor']));
         }
 
-        if (isset($references['PostBasedProcessor'])) {
-            $postTypeIds = array_keys($references['PostBasedProcessor']);
+        if (isset($references[self::POST_BASED_PROCESSOR])) {
+            $postTypeIds = array_keys($references[self::POST_BASED_PROCESSOR]);
             foreach ($postTypeIds as $postTypeId) {
                 $post = get_post($postTypeId);
                 if ($post instanceof \WP_Post) {

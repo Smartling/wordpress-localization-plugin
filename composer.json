@@ -1,7 +1,7 @@
 {
   "name": "smartling/wordpress-connector",
   "license": "GPL-2.0-or-later",
-  "version": "2.12.8",
+  "version": "2.12.9",
   "description": "",
   "type": "wordpress-plugin",
   "require": {
