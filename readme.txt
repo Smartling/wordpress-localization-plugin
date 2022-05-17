@@ -63,6 +63,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 2.12.10 =
+* Fixed shortcodes with no attributes preventing content uploads
 
 = 2.12.9 =
 * Fixed broken content in ACF fields after translation
