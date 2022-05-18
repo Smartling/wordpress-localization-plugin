@@ -54,8 +54,15 @@ class SmartlingCoreTest extends TestCase
                     $this->createMock(WordpressFunctionProxyHelper::class),
                 )
             ),
-            new XmlHelper(new SerializerJsonWithFallback()),
-            $this->createMock(TestRunHelper::class),
+            new PostContentHelper(
+                new GutenbergBlockHelper(
+                    $this->createMock(MediaAttachmentRulesManager::class),
+                    $this->createMock(ReplacerFactory::class),
+                    new SerializerJsonWithFallback(),
+                    $this->createMock(WordpressFunctionProxyHelper::class),
+                )
+            ),
+            new XmlHelper(new SerializerJsonWithFallback()), $this->createMock(TestRunHelper::class),
         );
     }
 

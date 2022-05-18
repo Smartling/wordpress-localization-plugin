@@ -129,7 +129,7 @@ trait SmartlingCoreUploadTrait
         try {
             $submission = $this->prepareUpload($submission);
 
-            $source = $this->readSourceContentWithMetadataAsArray($submission);
+            $source = $this->externalContentManager->getExternalContent($this->readSourceContentWithMetadataAsArray($submission), $submission);
 
             $contentEntity = $this->getContentHelper()->readSourceContent($submission);
             $params = new BeforeSerializeContentEventParameters($source, $submission, $contentEntity, $source['meta']);
@@ -252,6 +252,7 @@ trait SmartlingCoreUploadTrait
             do_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
             $translation = $this->processPostContentBlocks($targetContent, $original, $translation, $submission, $postContentHelper, $lockedData['entity']);
             $this->setValues($targetContent, $translation['entity'] ?? []);
+            $this->externalContentManager->setExternalContent($translation, $submission);
             $configurationProfile = $this->getSettingsManager()
                 ->getSingleSettingsProfile($submission->getSourceBlogId());
 
