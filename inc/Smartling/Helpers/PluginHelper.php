@@ -9,6 +9,7 @@ class PluginHelper
     public function canHandleExternalContent(ContentTypePluggableInterface $handler): bool
     {
         $activePlugins = wp_get_active_network_plugins();
+        $plugins = get_plugins();
         foreach ($activePlugins as $plugin) {
             $parts = array_reverse(explode('/', $plugin));
             if (count($parts) < 2) {
@@ -16,7 +17,6 @@ class PluginHelper
             }
             $path = implode('/', [$parts[1], $parts[0]]);
             if ($path === $handler->getPluginPath()) {
-                $plugins = get_plugins();
                 if (!array_key_exists($path, $plugins)) {
                     return false;
                 }

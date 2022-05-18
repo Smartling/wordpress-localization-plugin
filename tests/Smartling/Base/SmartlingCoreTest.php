@@ -4,10 +4,12 @@ namespace Smartling\Tests\Smartling\Base;
 
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapper;
+use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
 use Smartling\Helpers\GutenbergBlockHelper;
+use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
 use Smartling\Helpers\TestRunHelper;
@@ -46,6 +48,7 @@ class SmartlingCoreTest extends TestCase
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
         $this->core = new SmartlingCore(
+            new ExternalContentManager(new PluginHelper()),
             new PostContentHelper(
                 new GutenbergBlockHelper(
                     $this->createMock(MediaAttachmentRulesManager::class),
@@ -54,15 +57,8 @@ class SmartlingCoreTest extends TestCase
                     $this->createMock(WordpressFunctionProxyHelper::class),
                 )
             ),
-            new PostContentHelper(
-                new GutenbergBlockHelper(
-                    $this->createMock(MediaAttachmentRulesManager::class),
-                    $this->createMock(ReplacerFactory::class),
-                    new SerializerJsonWithFallback(),
-                    $this->createMock(WordpressFunctionProxyHelper::class),
-                )
-            ),
-            new XmlHelper(new SerializerJsonWithFallback()), $this->createMock(TestRunHelper::class),
+            new XmlHelper(new SerializerJsonWithFallback()),
+            $this->createMock(TestRunHelper::class),
         );
     }
 
