@@ -213,12 +213,34 @@ class ContentRelationsDiscoveryService
         $job = $request->getJobInformation();
         $batchUid = $this->getBatchUid($profile, $job);
         $jobInfo = new JobEntityWithBatchUid($batchUid, $job->getName(), $job->getId(), $profile->getProjectId());
-        $this->apiWrapper->createAuditLogRecord($profile, CreateRecordParameters::ACTION_TYPE_UPLOAD, $request->getDescription(), [
-            'relatedContentIds' => $request->getRelationsOrdered(),
-            'sourceBlogId' => $curBlogId,
-            'sourceId' => $request->getContentId(),
-            'targetBlogIds' => $request->getTargetBlogIds(),
-        ], $jobInfo, $job->isAuthorize());
+        $relatedIds = [];
+        try {
+            foreach ($request->getRelationsOrdered() as $level => $relations) {
+                foreach ($relations as $blogId => $contentIds) {
+                    foreach ($contentIds as $contentType => $contentId) {
+                        if (!array_key_exists($contentType, $relatedIds)) {
+                            $relatedIds[$contentType] = [];
+                        }
+                        $relatedIds[$contentType][] = $contentId;
+                    }
+                }
+            }
+            foreach ($relatedIds as $contentType => $contentIds) {
+                $relatedIds[$contentType] = array_unique($contentIds);
+            }
+        } catch (\Exception $e) {
+            $this->getLogger()->error('Failed to build related ids array for audit log');
+        }
+        try {
+            $this->apiWrapper->createAuditLogRecord($profile, CreateRecordParameters::ACTION_TYPE_UPLOAD, $request->getDescription(), [
+                'relatedContentIds' => $relatedIds,
+                'sourceBlogId' => $curBlogId,
+                'sourceId' => $request->getContentId(),
+                'targetBlogIds' => $request->getTargetBlogIds(),
+            ], $jobInfo, $job->isAuthorize());
+        } catch (\Exception $e) {
+            $this->getLogger()->error(sprintf('Failed to create audit log record actionType=%s, requestDescription="%s", sourceId=%d, sourceBlogId=%d', CreateRecordParameters::ACTION_TYPE_UPLOAD, $request->getDescription(), $request->getContentId(), $curBlogId));
+        }
 
         if ($request->isBulk()) {
             $this->bulkUpload($jobInfo, $request->getIds(), $request->getContentType(), $curBlogId, $request->getTargetBlogIds());
@@ -251,7 +273,7 @@ class ContentRelationsDiscoveryService
             } else {
                 $submission = ArrayHelper::first($result);
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                $this->storeWithJobInfo($submission, $jobInfo, $profile, $job->isAuthorize(), $request->getDescription());
+                $this->storeWithJobInfo($submission, $jobInfo, $request->getDescription());
             }
 
             /**
@@ -276,7 +298,7 @@ class ContentRelationsDiscoveryService
                 // trigger generation of fileUri
                 try {
                     $submission->getFileUri();
-                    $this->storeWithJobInfo($submission, $jobInfo, $profile, $job->isAuthorize(), $request->getDescription());
+                    $this->storeWithJobInfo($submission, $jobInfo, $request->getDescription());
                 } catch (SmartlingInvalidFactoryArgumentException $e) {
                     $this->getLogger()->info("Skipping submission because no mapper was found: contentType={$submission->getContentType()} sourceBlogId={$submission->getSourceBlogId()}, sourceId={$submission->getSourceId()}, targetBlogId={$submission->getTargetBlogId()}");
                 }
@@ -517,7 +539,7 @@ class ContentRelationsDiscoveryService
             $detectedReferences = array_merge_recursive($detectedReferences, $this->getPostContentReferences($content['entity']['post_content']));
         }
 
-        $this->getLogger()->debug(self::POST_BASED_PROCESSOR . ' has ' . ($detectedReferences[self::POST_BASED_PROCESSOR] ?? '0') . ' references');
+        $this->getLogger()->debug(self::POST_BASED_PROCESSOR . ' has ' . (count($detectedReferences[self::POST_BASED_PROCESSOR], COUNT_RECURSIVE) ?? 0) . ' references');
         $detectedReferences = $this->normalizeReferences($detectedReferences);
 
         $responseData = new DetectedRelations($detectedReferences);
@@ -589,7 +611,7 @@ class ContentRelationsDiscoveryService
         return $result;
     }
 
-    private function storeWithJobInfo(SubmissionEntity $submission, JobEntityWithBatchUid $jobInfo, ConfigurationProfileEntity $profile, bool $isAuthorize, string $description): void
+    private function storeWithJobInfo(SubmissionEntity $submission, JobEntityWithBatchUid $jobInfo, string $description): void
     {
         $submission->setBatchUid($jobInfo->getBatchUid());
         $submission->setJobInfo($jobInfo->getJobInformationEntity());
