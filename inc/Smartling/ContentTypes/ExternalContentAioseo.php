@@ -75,8 +75,9 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
 
     public function getContentFields(SubmissionEntity $submission): array
     {
+        $submission->assertHasSource();
         return $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($submission) {
-            $row = $this->db->fetch('select * from ' . $this->db->getPrefix() . 'aioseo_posts where post_id = ' . $submission->getSourceId(), ARRAY_A)[0] ?? [];
+            $row = $this->db->fetchPrepared('select * from ' . $this->db->getPrefix() . 'aioseo_posts where post_id = %d', $submission->getSourceId())[0] ?? [];
 
             return $this->transformContentForUpload($row);
         });

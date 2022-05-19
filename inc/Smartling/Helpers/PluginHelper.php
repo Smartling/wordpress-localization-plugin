@@ -30,16 +30,13 @@ class PluginHelper
     {
         $maxVersionParts = explode('.', $maxVersion);
         $versionParts = explode('.', $version);
-        $potentiallyNotSupported = false;
         foreach ($maxVersionParts as $index => $part) {
             if (!array_key_exists($index, $versionParts)) {
                 return false; // misconfiguration
             }
-            if ($versionParts[$index] > $part && $potentiallyNotSupported) {
+            if ($versionParts[$index] > $part) {
                 return false; // not supported
             }
-
-            $potentiallyNotSupported = $versionParts[$index] === $part;
         }
 
         return version_compare($version, $minVersion, '>=');
