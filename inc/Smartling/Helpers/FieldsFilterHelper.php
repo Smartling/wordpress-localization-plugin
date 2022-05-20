@@ -252,7 +252,6 @@ class FieldsFilterHelper
         $translatedValues = $this->prepareSourceData($translatedValues);
         $translatedValues = $this->flattenArray($translatedValues);
 
-
         $result = [];
 
         if (true === $applyFilters) {

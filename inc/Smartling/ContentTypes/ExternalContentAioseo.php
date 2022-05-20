@@ -73,14 +73,13 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
         $this->siteHelper = $siteHelper;
     }
 
-    public function getContentFields(SubmissionEntity $submission): array
+    public function getContentFields(SubmissionEntity $submission, bool $raw): array
     {
         $submission->assertHasSource();
-        return $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($submission) {
-            $row = $this->db->fetchPrepared('select * from ' . $this->db->getPrefix() . 'aioseo_posts where post_id = %d', $submission->getSourceId())[0] ?? [];
-
-            return $this->transformContentForUpload($row);
+        $fields = $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($submission) {
+            return $this->db->fetchPrepared('select * from ' . $this->db->getPrefix() . 'aioseo_posts where post_id = %d', $submission->getSourceId())[0] ?? [];
         });
+        return $raw ? $this->transformContentRaw($fields) : $this->transformContentForUpload($fields);
     }
 
     public function getMaxVersion(): string
@@ -110,6 +109,7 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
                 $content[$field] = json_encode($content[$field], JSON_THROW_ON_ERROR);
             }
         }
+        unset($content['id']);
         $content['post_id'] = $submission->getTargetId();
         $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($content, $submission) {
             if (($this->db->fetchPrepared("select count(*) c from {$this->db->getPrefix()}aioseo_posts where post_id = %d", $submission->getTargetId())[0]['c'] ?? null) === '0') {
@@ -157,6 +157,16 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
             unset($content[$field]);
         }
 
+        return $content;
+    }
+
+    public function transformContentRaw(array $content): array
+    {
+        foreach ($this->jsonFields as $field) {
+            if (array_key_exists($field, $content)) {
+                $content[$field] = json_decode($content[$field], true, 512,JSON_THROW_ON_ERROR);
+            }
+        }
         return $content;
     }
 }

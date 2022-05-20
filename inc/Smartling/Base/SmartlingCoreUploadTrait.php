@@ -129,7 +129,7 @@ trait SmartlingCoreUploadTrait
         try {
             $submission = $this->prepareUpload($submission);
 
-            $source = $this->externalContentManager->getExternalContent($this->readSourceContentWithMetadataAsArray($submission), $submission);
+            $source = $this->externalContentManager->getExternalContent($this->readSourceContentWithMetadataAsArray($submission), $submission, false);
 
             $contentEntity = $this->getContentHelper()->readSourceContent($submission);
             $params = new BeforeSerializeContentEventParameters($source, $submission, $contentEntity, $source['meta']);

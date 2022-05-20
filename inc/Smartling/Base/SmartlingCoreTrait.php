@@ -118,14 +118,10 @@ trait SmartlingCoreTrait
             $targetContent->translationDrafted();
         }
 
-
-        /**
-         * @var EntityAbstract $targetContent
-         */
         $targetContent = $this->getContentHelper()->writeTargetContent($submission, $targetContent);
-        $this->externalContentManager->setExternalContent($this->externalContentManager->getExternalContent([], $submission), $submission);
         $submission->setTargetId($targetContent->getPK());
         $submission = $this->getSubmissionManager()->storeEntity($submission);
+        $this->externalContentManager->setExternalContent($this->externalContentManager->getExternalContent([], $submission, true), $submission);
 
         $this->getLogger()
             ->debug(

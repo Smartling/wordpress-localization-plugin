@@ -24,11 +24,11 @@ class ExternalContentManager
         $this->handlers[] = $handler;
     }
 
-    public function getExternalContent(array $source, SubmissionEntity $submission): array
+    public function getExternalContent(array $source, SubmissionEntity $submission, bool $raw): array
     {
         foreach ($this->handlers as $handler) {
             if ($this->pluginHelper->canHandleExternalContent($handler)) {
-                $source[$handler->getPluginSlug()] = $handler->getContentFields($submission);
+                $source[$handler->getPluginSlug()] = $handler->getContentFields($submission, $raw);
             }
         }
 
