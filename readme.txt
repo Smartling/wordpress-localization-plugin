@@ -63,6 +63,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 2.13.0 =
+* Fixed widget uploads broken when an audit log record could not be created
 
 = 2.12.9 =
 * Fixed broken content in ACF fields after translation
