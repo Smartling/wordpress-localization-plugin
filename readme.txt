@@ -63,6 +63,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 2.13.0 =
+* Added support for AIOSEO pack
 * Fixed shortcodes with no attributes preventing content uploads
 * Fixed widget uploads broken when an audit log record could not be created
 
