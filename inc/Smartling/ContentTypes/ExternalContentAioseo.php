@@ -92,14 +92,14 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
         return '4.2';
     }
 
+    public function getPluginId(): string
+    {
+        return 'aioseo';
+    }
+
     public function getPluginPath(): string
     {
         return 'all-in-one-seo-pack/all_in_one_seo_pack.php';
-    }
-
-    public function getPluginSlug(): string
-    {
-        return 'aioseo';
     }
 
     public function setContentFields(array $content, SubmissionEntity $submission): void

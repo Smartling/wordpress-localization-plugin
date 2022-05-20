@@ -12,9 +12,9 @@ interface ContentTypePluggableInterface
 
     public function getMinVersion(): string;
 
-    public function getPluginPath(): string;
+    public function getPluginId(): string;
 
-    public function getPluginSlug(): string;
+    public function getPluginPath(): string;
 
     public function setContentFields(array $content, SubmissionEntity $submission): void;
 }
