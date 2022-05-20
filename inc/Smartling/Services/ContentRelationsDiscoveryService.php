@@ -345,11 +345,16 @@ class ContentRelationsDiscoveryService
     private array $shortcodeFields = [];
 
     /**
+     * @param mixed $attributes
+     * @see do_shortcode_tag(), shortcode_parse_atts() attributes might be an array, or an empty string
      * @see extractFieldsFromShortcodes();
      * @noinspection PhpUnused
      */
-    public function shortcodeHandler(array $attributes, string $content, string $shortcodeName): void
+    public function shortcodeHandler($attributes, string $content, string $shortcodeName): void
     {
+        if (!is_array($attributes)) {
+            return;
+        }
         foreach ($attributes as $attributeName => $attributeValue) {
             $this->shortcodeFields[$shortcodeName . '/' . $attributeName][] = $attributeValue;
             if (!StringHelper::isNullOrEmpty($content)) {
