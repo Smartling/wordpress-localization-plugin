@@ -215,13 +215,13 @@ class ContentRelationsDiscoveryService
         $jobInfo = new JobEntityWithBatchUid($batchUid, $job->getName(), $job->getId(), $profile->getProjectId());
         $relatedIds = [];
         try {
-            foreach ($request->getRelationsOrdered() as $level => $relations) {
-                foreach ($relations as $blogId => $contentIds) {
-                    foreach ($contentIds as $contentType => $contentId) {
+            foreach ($request->getRelationsOrdered() as $relations) {
+                foreach ($relations as $content) {
+                    foreach ($content as $contentType => $contentIds) {
                         if (!array_key_exists($contentType, $relatedIds)) {
                             $relatedIds[$contentType] = [];
                         }
-                        $relatedIds[$contentType][] = $contentId;
+                        $relatedIds[$contentType] = array_merge($relatedIds[$contentType], $contentIds);
                     }
                 }
             }
