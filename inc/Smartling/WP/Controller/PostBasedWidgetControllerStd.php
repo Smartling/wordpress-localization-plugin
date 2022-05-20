@@ -19,7 +19,6 @@ use Smartling\Jobs\JobAbstract;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Queue\Queue;
 use Smartling\Services\GlobalSettingsManager;
-use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
@@ -168,7 +167,12 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                 $result['message'] = $e->getMessage();
             }
             if ($profile !== null) {
-                $this->apiWrapper->createAuditLogRecord($profile, CreateRecordParameters::ACTION_TYPE_DOWNLOAD, 'User request to download submissions', ['submissions' => $logSubmissions]);
+                try {
+                    $requestDescription = 'User request to download submissions';
+                    $this->apiWrapper->createAuditLogRecord($profile, CreateRecordParameters::ACTION_TYPE_DOWNLOAD, $requestDescription, ['submissions' => $logSubmissions]);
+                } catch (\Exception $e) {
+                    $this->getLogger()->error(sprintf('Failed to create audit log record actionType=%s, requestDescription="%s", submissions="%s"', CreateRecordParameters::ACTION_TYPE_DOWNLOAD, $requestDescription, json_encode($logSubmissions)));
+                }
             } else {
                 /** @noinspection JsonEncodingApiUsageInspection */
                 $this->getLogger()->notice('No profile was found for submissions, no audit log created, submissions=' . json_encode($logSubmissions));
@@ -574,7 +578,6 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
      */
     public function save($post_id): void
     {
-        $this->getLogger()->debug("Usage: class='" . __CLASS__ . "', function='" . __FUNCTION__ . "'");
         remove_action('save_post', [$this, 'save']);
         if (!array_key_exists('post_type', $_POST)) {
             return;

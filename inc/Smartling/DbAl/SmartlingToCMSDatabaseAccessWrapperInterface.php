@@ -34,4 +34,6 @@ interface SmartlingToCMSDatabaseAccessWrapperInterface
     public function getLastInsertedId(): int;
 
     public function getLastErrorMessage(): string;
+
+    public function getPrefix(): string;
 }

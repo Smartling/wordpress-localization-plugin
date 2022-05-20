@@ -495,4 +495,9 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
     {
         return $this->wpdb->prepare($query, ...$args);
     }
+
+    public function getPrefix(): string
+    {
+        return $this->wpdb->prefix;
+    }
 }

@@ -41,6 +41,9 @@ services:
       - "@factory.contentIO"
       - "@site.helper"
 
+  helper.plugins:
+    class: Smartling\Helpers\PluginHelper
+
   helper.post.content:
     class: Smartling\Helpers\PostContentHelper
     arguments:
@@ -68,6 +71,13 @@ services:
     calls:
       - ["setDbal", ["@site.db"]]
 
+  content.aioseo:
+    class: Smartling\ContentTypes\ExternalContentAioseo
+    arguments:
+      - "@site.helper"
+      - "@site.db"
+      - "@fields-filter.helper"
+
   content.relations.handler:
     class: Smartling\Services\ContentRelationsHandler
     arguments:
@@ -76,6 +86,7 @@ services:
   entrypoint:
     class: Smartling\Base\SmartlingCore
     arguments:
+      - "@manager.content.external"
       - "@helper.post.content"
       - "@helper.xml"
       - "@test.run.helper"
@@ -96,6 +107,13 @@ services:
 
   factory.contentIO:
     class: Smartling\Processors\ContentEntitiesIOFactory
+
+  manager.content.external:
+    class: Smartling\ContentTypes\ExternalContentManager
+    arguments:
+      - "@helper.plugins"
+    calls:
+      - ["addHandler", ["@content.aioseo"]]
 
   manager.job:
     class: Smartling\Jobs\JobManager

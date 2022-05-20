@@ -206,7 +206,12 @@ class SubmissionTableWidget extends SmartlingListTable
                             $this->queue->enqueue([$submission->getId()], QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE);
                         }
                         if ($profile === null) {
-                            $this->apiWrapper->createAuditLogRecord($profile, CreateRecordParameters::ACTION_TYPE_DOWNLOAD, 'User initiated bulk download', ['submissions' => $logSubmissions]);
+                            $requestDescription = 'User initiated bulk download';
+                            try {
+                                $this->apiWrapper->createAuditLogRecord($profile, CreateRecordParameters::ACTION_TYPE_DOWNLOAD, $requestDescription, ['submissions' => $logSubmissions]);
+                            } catch (\Exception $e) {
+                                $this->getLogger()->error(sprintf('Failed to create audit log record actionType=%s, requestDescription="%s", submissions="%s"', CreateRecordParameters::ACTION_TYPE_DOWNLOAD, $requestDescription, json_encode($logSubmissions)));
+                            }
                         } else {
                             /** @noinspection JsonEncodingApiUsageInspection */
                             $this->getLogger()->notice('No profile was found for submissions, no audit log created, submissions=' . json_encode($logSubmissions));

@@ -16,6 +16,7 @@ namespace Smartling\Tests\Services {
 
     use PHPUnit\Framework\MockObject\MockObject;
     use PHPUnit\Framework\TestCase;
+    use Psr\Log\LoggerInterface;
     use Smartling\ApiWrapper;
     use Smartling\Bootstrap;
     use Smartling\ContentTypes\ContentTypeNavigationMenu;
@@ -60,6 +61,7 @@ namespace Smartling\Tests\Services {
 
     class ContentRelationDiscoveryServiceTest extends TestCase
     {
+        private ?\Exception $exception = null;
         protected function setUp(): void
         {
             WordpressFunctionsMockHelper::injectFunctionsMocks();
@@ -382,9 +384,6 @@ namespace Smartling\Tests\Services {
 
             $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
 
-            if (function_exists('switch_to_blog')) {
-                switch_to_blog(1);
-            }
             $x->createSubmissions(UserTranslationRequest::fromArray([
                 'source' => ['contentType' => $contentType, 'id' => [$sourceId]],
                 'job' =>
@@ -551,6 +550,16 @@ namespace Smartling\Tests\Services {
 
             $apiWrapper = $this->createMock(ApiWrapper::class);
             $apiWrapper->method('retrieveBatch')->willReturn($batchUid);
+            $apiWrapper->expects($this->once())->method('createAuditLogRecord')->willReturnCallback(function (ConfigurationProfileEntity $configurationProfile, string $actionType, string $description, array $clientData, ?JobEntityWithBatchUid $jobInfo = null, ?bool $isAuthorize = null) use ($depth1AttachmentId, $depth2AttachmentId): void {
+                try { // ApiWrapper call is wrapped in try/catch, this is needed to ensure exception gets thrown in test
+                    $this->assertEquals([
+                        'attachment' => [$depth2AttachmentId],
+                        'post' => [$depth1AttachmentId],
+                    ], $clientData['relatedContentIds']);
+                } catch (\Exception $e) {
+                    $this->exception = $e;
+                }
+            });
 
             $profile = $this->createMock(ConfigurationProfileEntity::class);
             $profile->method('getProjectId')->willReturn($projectUid);
@@ -598,6 +607,9 @@ namespace Smartling\Tests\Services {
                 ],
                 'targetBlogIds' => (string)$targetBlogId,
             ]));
+            if ($this->exception !== null) {
+                throw $this->exception;
+            }
         }
 
         /**

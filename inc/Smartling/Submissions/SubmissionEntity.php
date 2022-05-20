@@ -6,6 +6,7 @@ use InvalidArgumentException;
 use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingEntityAbstract;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
+use Smartling\Exception\SmartlingSubmissionsProcessingException;
 use Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater;
 use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\StringHelper;
@@ -712,5 +713,15 @@ class SubmissionEntity extends SmartlingEntityAbstract
     public static function getTableName(): string
     {
         return 'smartling_submissions';
+    }
+
+    public function assertHasSource(): void
+    {
+        if ($this->getSourceBlogId() === 0) {
+            throw new SmartlingSubmissionsProcessingException('Submission source blog id is zero');
+        }
+        if ($this->getSourceId() === 0) {
+            throw new SmartlingSubmissionsProcessingException('Submission source id is zero');
+        }
     }
 }
