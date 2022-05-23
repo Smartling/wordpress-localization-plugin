@@ -613,6 +613,7 @@ namespace Smartling\Tests\Services {
         }
 
         /**
+         * @param SubmissionFactory|null $submissionFactory *
          * @return MockObject|ContentRelationsDiscoveryService
          */
         private function getContentRelationDiscoveryService(
@@ -638,7 +639,7 @@ namespace Smartling\Tests\Services {
                 $this->createMock(AbsoluteLinkedAttachmentCoreHelper::class),
                 $this->createMock(ShortcodeHelper::class),
                 $this->createMock(GutenbergBlockHelper::class),
-                $this->createMock(SubmissionFactory::class),
+                new SubmissionFactory(),
                 $submissionManager,
                 $apiWrapper,
                 $this->createMock(MediaAttachmentRulesManager::class),
