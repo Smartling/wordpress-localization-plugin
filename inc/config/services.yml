@@ -19,6 +19,9 @@ services:
     arguments:
       - "@manager.submission"
 
+  factory.submission:
+    class: Smartling\Submissions\SubmissionFactory
+
   smartling.helper.relative-image-path-support:
     class: Smartling\Helpers\RelativeLinkedAttachmentCoreHelper
     arguments:

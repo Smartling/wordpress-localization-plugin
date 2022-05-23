@@ -16,7 +16,6 @@ namespace Smartling\Tests\Services {
 
     use PHPUnit\Framework\MockObject\MockObject;
     use PHPUnit\Framework\TestCase;
-    use Psr\Log\LoggerInterface;
     use Smartling\ApiWrapper;
     use Smartling\Bootstrap;
     use Smartling\ContentTypes\ContentTypeNavigationMenu;
@@ -54,6 +53,7 @@ namespace Smartling\Tests\Services {
     use Smartling\Settings\ConfigurationProfileEntity;
     use Smartling\Settings\SettingsManager;
     use Smartling\Submissions\SubmissionEntity;
+    use Smartling\Submissions\SubmissionFactory;
     use Smartling\Submissions\SubmissionManager;
     use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
     use Smartling\Tuner\MediaAttachmentRulesManager;
@@ -202,8 +202,8 @@ namespace Smartling\Tests\Services {
 
             $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
 
-            $x->expects(self::exactly(count($sourceIds)))->method('getPostTitle')->willReturnCallback(static function ($id) use ($titlePrefix) {
-                return $titlePrefix . $id;
+            $x->expects(self::exactly(count($sourceIds)))->method('getTitle')->willReturnCallback(static function (SubmissionEntity $submission) use ($titlePrefix) {
+                return $titlePrefix . $submission->getId();
             });
 
             $x->createSubmissions(UserTranslationRequest::fromArray([
@@ -315,12 +315,12 @@ namespace Smartling\Tests\Services {
                 $this->createMock(AbsoluteLinkedAttachmentCoreHelper::class),
                 $this->createMock(ShortcodeHelper::class),
                 $this->createMock(GutenbergBlockHelper::class),
+                $this->createMock(SubmissionFactory::class),
                 $submissionManager,
                 $apiWrapper,
                 $this->createMock(MediaAttachmentRulesManager::class),
                 $this->createMock(ReplacerFactory::class),
-                $settingsManager,
-                $customMenuContentTypeHelper,
+                $settingsManager, $customMenuContentTypeHelper,
             );
 
             $x->bulkUpload(new JobEntityWithBatchUid($batchUid, $jobName, $jobUid, $projectUid), $sourceIds, $contentType, $sourceBlogId, $targetBlogId);
@@ -499,7 +499,7 @@ namespace Smartling\Tests\Services {
                 ->getMock();
 
             $metaFieldProcessorManager = $this->createMock(MetaFieldProcessorManager::class);
-            $metaFieldProcessorManager->method('getProcessor')->willReturnCallback(function (string $fieldName) use ($parentId) {
+            $metaFieldProcessorManager->method('getProcessor')->willReturnCallback(function (string $fieldName) {
                 if ($fieldName === 'entity/post_parent') {
                     return new PostBasedProcessor($this->createMock(TranslationHelper::class), '');
                 }
@@ -583,12 +583,11 @@ namespace Smartling\Tests\Services {
                 'source_id' => $sourceId,
             ])->willReturn([$submission]);
 
-            // Expects the original submission is stored to DB
-            $submissionManager->expects(self::once())->method('storeEntity')->with($submission);
+            // Expects the original submission and 2 related submissions are stored to DB
+            $submissionManager->expects(self::exactly(3))->method('storeEntity');
+            $submissionManager->expects(self::at(1))->method('storeEntity')->with($submission);
 
             $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
-            // Expects 2 related submissions are stored to DB
-            $x->expects($this->exactly(2))->method('getPostTitle')->withConsecutive([$depth2AttachmentId], [$depth1AttachmentId]);
 
             $x->createSubmissions(UserTranslationRequest::fromArray([
                 'job' => [
@@ -638,13 +637,14 @@ namespace Smartling\Tests\Services {
                 $this->createMock(AbsoluteLinkedAttachmentCoreHelper::class),
                 $this->createMock(ShortcodeHelper::class),
                 $this->createMock(GutenbergBlockHelper::class),
+                $this->createMock(SubmissionFactory::class),
                 $submissionManager,
                 $apiWrapper,
                 $this->createMock(MediaAttachmentRulesManager::class),
                 $this->createMock(ReplacerFactory::class),
                 $settingsManager,
                 $this->createMock(CustomMenuContentTypeHelper::class),
-            ])->onlyMethods(['getPostTitle', 'getBackwardRelatedTaxonomies', 'normalizeReferences'])->getMock();
+            ])->onlyMethods(['getTitle', 'getBackwardRelatedTaxonomies', 'normalizeReferences'])->getMock();
         }
     }
 }
