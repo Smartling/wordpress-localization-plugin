@@ -320,7 +320,8 @@ namespace Smartling\Tests\Services {
                 $apiWrapper,
                 $this->createMock(MediaAttachmentRulesManager::class),
                 $this->createMock(ReplacerFactory::class),
-                $settingsManager, $customMenuContentTypeHelper,
+                $settingsManager,
+                $customMenuContentTypeHelper,
             );
 
             $x->bulkUpload(new JobEntityWithBatchUid($batchUid, $jobName, $jobUid, $projectUid), $sourceIds, $contentType, $sourceBlogId, $targetBlogId);

@@ -7,9 +7,11 @@ use Smartling\ApiWrapperInterface;
 use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
+use Smartling\Exception\SmartlingNotSupportedContentException;
 use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
@@ -631,7 +633,11 @@ class ContentRelationsDiscoveryService
     public function getTitle(SubmissionEntity $submission): string
     {
         try {
-            return $this->contentHelper->readSourceContent($submission)->getTitle();
+            $content = $this->contentHelper->readSourceContent($submission);
+            if ($content instanceof EntityAbstract) {
+                return $content->getTitle();
+            }
+            throw new SmartlingNotSupportedContentException("Could not read content of type {$submission->getContentType()}");
         } catch (\Exception $e) {
             $this->getLogger()->notice(sprintf('Unable to get content title for submissionId=%d, sourceBlogId=%d, sourceId=%d, type="%s"', $submission->getId(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getContentType()));
             $this->getLogger()->debug('Exception: ' . $e->getMessage());
