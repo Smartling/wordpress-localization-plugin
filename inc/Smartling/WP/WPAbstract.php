@@ -280,7 +280,7 @@ class WPAbstract
      * @return string
      */
 
-    public static function localeSelectionCheckboxBlock($namePrefix, $blog_id, $blog_name, $checked = false, $enabled = true, $editLink = '', array $extraAttributes = [], $submissionId = null)
+    public static function localeSelectionCheckboxBlock($namePrefix, $blog_id, $blog_name, $checked = false, $enabled = true, $editLink = '', array $extraAttributes = [], $submissionId = null): string
     {
         $parts = [];
 
@@ -299,7 +299,7 @@ class WPAbstract
 
         $checkboxAttributes = [
             'name'         => vsprintf('%s[locales][%s][enabled]', [$namePrefix, $blog_id]),
-            'class'        => 'mcheck',
+            'class'        => "mcheck $namePrefix",
             'type'         => 'checkbox',
             'data-blog-id' => $blog_id,
         ];
@@ -390,18 +390,22 @@ class WPAbstract
         );
     }
 
-    public static function checkUncheckBlock()
+    public static function checkUncheckBlock(string $widgetName): string
     {
+        $className = 'mcheck';
+        if ($widgetName !== '') {
+            $className .= ".$widgetName";
+        }
         $output = '';
 
         $check = HtmlTagGeneratorHelper::tag('a', __('Check All'), [
-            'href'    => '#',
-            'onclick' => 'bulkCheck(\'mcheck\',\'check\');return false;',
+            'href' => '#',
+            'onclick' => "bulkCheck('$className','check');return false;",
         ]);
 
         $unCheck = HtmlTagGeneratorHelper::tag('a', __('Uncheck All'), [
-            'href'    => '#',
-            'onclick' => 'bulkCheck(\'mcheck\',\'uncheck\');return false;',
+            'href' => '#',
+            'onclick' => "bulkCheck('$className','uncheck');return false;",
         ]);
 
         return $output . HtmlTagGeneratorHelper::tag('span', vsprintf('%s / %s', [$check, $unCheck]));

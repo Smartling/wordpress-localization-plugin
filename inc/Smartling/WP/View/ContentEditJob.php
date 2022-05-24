@@ -16,6 +16,7 @@ use Smartling\WP\WPAbstract;
  */
 $data = $this->getViewData();
 $profile = $data['profile'];
+$widgetName = 'bulk-submit-locales';
 
 ?>
 <?php
@@ -87,7 +88,7 @@ $needWrapper = ($tag instanceof WP_Term);
                             <th>Target Locales</th>
                             <td>
                                 <div>
-                                    <?= WPAbstract::checkUncheckBlock() ?>
+                                    <?= WPAbstract::checkUncheckBlock($widgetName) ?>
                                 </div>
                                 <div class="locale-list">
                                     <?php
@@ -103,7 +104,7 @@ $needWrapper = ($tag instanceof WP_Term);
                                         ?>
                                         <p class="locale-list">
                                             <?= WPAbstract::localeSelectionCheckboxBlock(
-                                                'bulk-submit-locales',
+                                                $widgetName,
                                                 $locale->getBlogId(),
                                                 $locale->getLabel(),
                                                 false,
