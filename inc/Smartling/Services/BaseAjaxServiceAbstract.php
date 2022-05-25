@@ -12,6 +12,9 @@ abstract class BaseAjaxServiceAbstract implements WPHookInterface
      */
     const ACTION_NAME = 'service-id';
 
+    public const RESPONSE_FAILED = 'FAILED';
+    public const RESPONSE_SUCCESS = 'SUCCESS';
+
     protected array $requestData;
 
     public function __construct(array $requestData)
@@ -49,7 +52,7 @@ abstract class BaseAjaxServiceAbstract implements WPHookInterface
     {
         $this->returnResponse(
             [
-                'status'   => 'FAILED',
+                'status' => self::RESPONSE_FAILED,
                 'response' => [
                     'key'     => $key,
                     'message' => $message,
@@ -74,7 +77,7 @@ abstract class BaseAjaxServiceAbstract implements WPHookInterface
     {
         $this->returnResponse(
             [
-                'status'   => 'SUCCESS',
+                'status' => self::RESPONSE_SUCCESS,
                 'response' => $data,
             ],
             $responseCode
