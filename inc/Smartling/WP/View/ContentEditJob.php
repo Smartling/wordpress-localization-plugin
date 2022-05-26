@@ -2,7 +2,7 @@
 
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
-use Smartling\Services\ContentRelationsDiscoveryService;
+use Smartling\Services\BaseAjaxServiceAbstract;
 use Smartling\Services\ContentRelationsHandler;
 use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -16,6 +16,7 @@ use Smartling\WP\WPAbstract;
  */
 $data = $this->getViewData();
 $profile = $data['profile'];
+$widgetName = 'bulk-submit-locales';
 
 ?>
 <?php
@@ -87,7 +88,7 @@ $needWrapper = ($tag instanceof WP_Term);
                             <th>Target Locales</th>
                             <td>
                                 <div>
-                                    <?= WPAbstract::checkUncheckBlock() ?>
+                                    <?= WPAbstract::checkUncheckBlock($widgetName) ?>
                                 </div>
                                 <div class="locale-list">
                                     <?php
@@ -103,7 +104,7 @@ $needWrapper = ($tag instanceof WP_Term);
                                         ?>
                                         <p class="locale-list">
                                             <?= WPAbstract::localeSelectionCheckboxBlock(
-                                                'bulk-submit-locales',
+                                                $widgetName,
                                                 $locale->getBlogId(),
                                                 $locale->getLabel(),
                                                 false,
@@ -574,7 +575,7 @@ if ($post instanceof WP_Post) {
                                 }
                                 if (canDispatch) {
                                     switch (data.status) {
-                                        case "SUCCESS":
+                                        case "<?= BaseAjaxServiceAbstract::RESPONSE_SUCCESS ?>":
                                             try {
                                                 wp.data.dispatch("core/notices").createSuccessNotice("Content added to Upload queue.");
                                             } catch (e) {
@@ -582,7 +583,7 @@ if ($post instanceof WP_Post) {
                                                 reportDispatchError(e);
                                             }
                                             break;
-                                        case "FAIL":
+                                        case "<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>":
                                             try {
                                                 wp.data.dispatch("core/notices").createErrorNotice("Failed adding content to download queue: " + data.message);
                                             } catch (e) {
@@ -713,10 +714,10 @@ if ($post instanceof WP_Post) {
                     var uiShowMessage = function (style, message) {
                         var cssStyle;
                         switch (style) {
-                            case "SUCCESS":
+                            case "<?= BaseAjaxServiceAbstract::RESPONSE_SUCCESS ?>":
                                 cssStyle='success';
                                 break;
-                            case "FAILED":
+                            case "<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>":
                                 cssStyle='error';
                                 break;
                             default:
@@ -731,14 +732,18 @@ if ($post instanceof WP_Post) {
                         uiShowMessage = function (style, message) {
                             if (canDispatch) {
                                 switch (style) {
-                                    case "SUCCESS":
+                                    case "<?= BaseAjaxServiceAbstract::RESPONSE_SUCCESS ?>":
                                         wp.data.dispatch("core/notices").createSuccessNotice(message);
                                         break;
-                                    case "FAIL":
+                                    case "<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>":
                                         wp.data.dispatch("core/notices").createErrorNotice(message);
                                         break;
                                     default:
                                         console.log(data);
+                                }
+                            } else {
+                                if (style === '<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>') {
+                                    $('#error-messages').html(message).show();
                                 }
                             }
                         };
@@ -750,19 +755,19 @@ if ($post instanceof WP_Post) {
                             loadRelations(currentContent.contentType, currentContent.id, localeList);
                         }
                         switch (d.status) {
-                            case "SUCCESS":
+                            case "<?= BaseAjaxServiceAbstract::RESPONSE_SUCCESS ?>":
                                 uiShowMessage(d.status, "Content successfully added to upload queue.");
                                 break;
-                            case "FAILED":
+                            case "<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>":
                             default:
-                                uiShowMessage("FAILED", message);
+                                uiShowMessage("<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>", message);
                                 break;
                         }
                     }).fail(function (e) {
                         if (e.responseJSON && e.responseJSON.response && e.responseJSON.response.message) {
                             message = e.responseJSON.response.message;
                         }
-                        $('#error-messages').html(message);
+                        uiShowMessage("<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>", message);
                     });
                 });
             }

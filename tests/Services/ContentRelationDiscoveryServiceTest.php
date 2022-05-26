@@ -16,7 +16,6 @@ namespace Smartling\Tests\Services {
 
     use PHPUnit\Framework\MockObject\MockObject;
     use PHPUnit\Framework\TestCase;
-    use Psr\Log\LoggerInterface;
     use Smartling\ApiWrapper;
     use Smartling\Bootstrap;
     use Smartling\ContentTypes\ContentTypeNavigationMenu;
@@ -54,6 +53,7 @@ namespace Smartling\Tests\Services {
     use Smartling\Settings\ConfigurationProfileEntity;
     use Smartling\Settings\SettingsManager;
     use Smartling\Submissions\SubmissionEntity;
+    use Smartling\Submissions\SubmissionFactory;
     use Smartling\Submissions\SubmissionManager;
     use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
     use Smartling\Tuner\MediaAttachmentRulesManager;
@@ -181,6 +181,7 @@ namespace Smartling\Tests\Services {
             $submission->expects(self::exactly(count($sourceIds)))->method('setBatchUid')->with($batchUid);
             $submission->expects(self::exactly(count($sourceIds)))->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
             $submission->expects(self::exactly(count($sourceIds)))->method('setSourceTitle')->withConsecutive(...$expectedTitles);
+            $submission->method('getId')->willReturn(48, 48, 49, 49); // getId is used two times per submission
 
             $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
 
@@ -202,8 +203,8 @@ namespace Smartling\Tests\Services {
 
             $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
 
-            $x->expects(self::exactly(count($sourceIds)))->method('getPostTitle')->willReturnCallback(static function ($id) use ($titlePrefix) {
-                return $titlePrefix . $id;
+            $x->expects(self::exactly(count($sourceIds)))->method('getTitle')->willReturnCallback(static function (SubmissionEntity $submission) use ($titlePrefix) {
+                return $titlePrefix . $submission->getId();
             });
 
             $x->createSubmissions(UserTranslationRequest::fromArray([
@@ -315,6 +316,7 @@ namespace Smartling\Tests\Services {
                 $this->createMock(AbsoluteLinkedAttachmentCoreHelper::class),
                 $this->createMock(ShortcodeHelper::class),
                 $this->createMock(GutenbergBlockHelper::class),
+                $this->createMock(SubmissionFactory::class),
                 $submissionManager,
                 $apiWrapper,
                 $this->createMock(MediaAttachmentRulesManager::class),
@@ -382,7 +384,7 @@ namespace Smartling\Tests\Services {
             ])->onlyMethods(['find'])->getMock();
             $submissionManager->method('find')->willReturn([]);
 
-            $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
+            $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager, new SubmissionFactory());
 
             $x->createSubmissions(UserTranslationRequest::fromArray([
                 'source' => ['contentType' => $contentType, 'id' => [$sourceId]],
@@ -499,7 +501,7 @@ namespace Smartling\Tests\Services {
                 ->getMock();
 
             $metaFieldProcessorManager = $this->createMock(MetaFieldProcessorManager::class);
-            $metaFieldProcessorManager->method('getProcessor')->willReturnCallback(function (string $fieldName) use ($parentId) {
+            $metaFieldProcessorManager->method('getProcessor')->willReturnCallback(function (string $fieldName) {
                 if ($fieldName === 'entity/post_parent') {
                     return new PostBasedProcessor($this->createMock(TranslationHelper::class), '');
                 }
@@ -511,8 +513,8 @@ namespace Smartling\Tests\Services {
                 $contentHelper,
                 $settingsManager,
                 $this->createMock(SubmissionManager::class),
-                $metaFieldProcessorManager,
-                $fieldFilterHelper,
+                null,
+                $metaFieldProcessorManager, $fieldFilterHelper,
             );
             $x->method('getBackwardRelatedTaxonomies')->willReturn([]);
             $x->method('normalizeReferences')->willReturnCallback(function (array $references) {
@@ -583,12 +585,11 @@ namespace Smartling\Tests\Services {
                 'source_id' => $sourceId,
             ])->willReturn([$submission]);
 
-            // Expects the original submission is stored to DB
-            $submissionManager->expects(self::once())->method('storeEntity')->with($submission);
+            // Expects the original submission and 2 related submissions are stored to DB
+            $submissionManager->expects(self::exactly(3))->method('storeEntity');
+            $submissionManager->expects(self::at(1))->method('storeEntity')->with($submission);
 
             $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
-            // Expects 2 related submissions are stored to DB
-            $x->expects($this->exactly(2))->method('getPostTitle')->withConsecutive([$depth2AttachmentId], [$depth1AttachmentId]);
 
             $x->createSubmissions(UserTranslationRequest::fromArray([
                 'job' => [
@@ -613,6 +614,8 @@ namespace Smartling\Tests\Services {
         }
 
         /**
+         * @param SubmissionFactory|null $submissionFactory *
+         *
          * @return MockObject|ContentRelationsDiscoveryService
          */
         private function getContentRelationDiscoveryService(
@@ -620,6 +623,7 @@ namespace Smartling\Tests\Services {
             ContentHelper $contentHelper,
             SettingsManager $settingsManager,
             SubmissionManager $submissionManager,
+            SubmissionFactory $submissionFactory = null,
             MetaFieldProcessorManager $metaFieldProcessorManager = null,
             FieldsFilterHelper $fieldsFilterHelper = null
         )
@@ -630,6 +634,9 @@ namespace Smartling\Tests\Services {
             if ($fieldsFilterHelper === null) {
                 $fieldsFilterHelper = $this->createMock(FieldsFilterHelper::class);
             }
+            if ($submissionFactory === null) {
+                $submissionFactory = $this->createMock(SubmissionFactory::class);
+            }
             return $this->getMockBuilder(ContentRelationsDiscoveryService::class)->setConstructorArgs([
                 $contentHelper,
                 $fieldsFilterHelper,
@@ -638,13 +645,14 @@ namespace Smartling\Tests\Services {
                 $this->createMock(AbsoluteLinkedAttachmentCoreHelper::class),
                 $this->createMock(ShortcodeHelper::class),
                 $this->createMock(GutenbergBlockHelper::class),
+                $submissionFactory,
                 $submissionManager,
                 $apiWrapper,
                 $this->createMock(MediaAttachmentRulesManager::class),
                 $this->createMock(ReplacerFactory::class),
                 $settingsManager,
                 $this->createMock(CustomMenuContentTypeHelper::class),
-            ])->onlyMethods(['getPostTitle', 'getBackwardRelatedTaxonomies', 'normalizeReferences'])->getMock();
+            ])->onlyMethods(['getTitle', 'getBackwardRelatedTaxonomies', 'normalizeReferences'])->getMock();
         }
     }
 }
