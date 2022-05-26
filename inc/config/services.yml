@@ -19,6 +19,9 @@ services:
     arguments:
       - "@manager.submission"
 
+  factory.submission:
+    class: Smartling\Submissions\SubmissionFactory
+
   smartling.helper.relative-image-path-support:
     class: Smartling\Helpers\RelativeLinkedAttachmentCoreHelper
     arguments:
@@ -404,6 +407,7 @@ services:
       - "@smartling.helper.absolute-image-path-support"
       - "@helper.shortcode"
       - "@helper.gutenberg"
+      - "@factory.submission"
       - "@manager.submission"
       - "@api.wrapper.with.retries"
       - "@media.attachment.rules.manager"

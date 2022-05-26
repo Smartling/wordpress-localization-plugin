@@ -7,9 +7,11 @@ use Smartling\ApiWrapperInterface;
 use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
+use Smartling\Exception\SmartlingNotSupportedContentException;
 use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
@@ -34,6 +36,7 @@ use Smartling\Replacers\ReplacerFactory;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionFactory;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tuner\MediaAttachmentRulesManager;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
@@ -52,6 +55,7 @@ class ContentRelationsDiscoveryService
     private AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper;
     private ShortcodeHelper $shortcodeHelper;
     private GutenbergBlockHelper $gutenbergBlockHelper;
+    private SubmissionFactory $submissionFactory;
     private SubmissionManager $submissionManager;
     private ApiWrapperInterface $apiWrapper;
     private SettingsManager $settingsManager;
@@ -71,6 +75,7 @@ class ContentRelationsDiscoveryService
         AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper,
         ShortcodeHelper $shortcodeHelper,
         GutenbergBlockHelper $blockHelper,
+        SubmissionFactory $submissionFactory,
         SubmissionManager $submissionManager,
         ApiWrapperInterface $apiWrapper,
         MediaAttachmentRulesManager $mediaAttachmentRulesManager,
@@ -91,6 +96,7 @@ class ContentRelationsDiscoveryService
         $this->replacerFactory = $replacerFactory;
         $this->settingsManager = $settingsManager;
         $this->shortcodeHelper = $shortcodeHelper;
+        $this->submissionFactory = $submissionFactory;
         $this->submissionManager = $submissionManager;
         $this->menuHelper = $menuHelper;
     }
@@ -139,7 +145,7 @@ class ContentRelationsDiscoveryService
                 $submission->setJobInfo($jobInfo->getJobInformationEntity());
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission->getFileUri();
-                $title = $this->getPostTitle($id);
+                $title = $this->getTitle($submission);
                 if ($title !== '') {
                     $submission->setSourceTitle($title);
                 }
@@ -192,8 +198,8 @@ class ContentRelationsDiscoveryService
                 } else {
                     $submissionArray[SubmissionEntity::FIELD_STATUS] = SubmissionEntity::SUBMISSION_STATUS_NEW;
                     $submissionArray[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::nowAsString();
-                    $submission = SubmissionEntity::fromArray($submissionArray, $this->getLogger());
-                    $title = $this->getPostTitle($submission->getSourceId());
+                    $submission = $this->submissionFactory->fromArray($submissionArray);
+                    $title = $this->getTitle($submission);
                     if ($title !== '') {
                         $submission->setSourceTitle($title);
                     }
@@ -289,8 +295,8 @@ class ContentRelationsDiscoveryService
                     SubmissionEntity::FIELD_SOURCE_ID => $source['id'],
                 ]);
 
-                $submission = SubmissionEntity::fromArray($submissionArray, $this->getLogger());
-                $title = $this->getPostTitle($submission->getSourceId());
+                $submission = $this->submissionFactory->fromArray($submissionArray);
+                $title = $this->getTitle($submission);
                 if ($title !== '') {
                     $submission->setSourceTitle($title);
                 }
@@ -624,13 +630,19 @@ class ContentRelationsDiscoveryService
         $this->logSubmissionCreated($submission, $description);
     }
 
-    public function getPostTitle(int $id): string
+    public function getTitle(SubmissionEntity $submission): string
     {
-        $post = get_post($id);
-        if ($post instanceof \WP_Post) {
-            return $post->post_title;
+        try {
+            $content = $this->contentHelper->readSourceContent($submission);
+            if ($content instanceof EntityAbstract) {
+                return $content->getTitle();
+            }
+            throw new SmartlingNotSupportedContentException("Could not read content of type {$submission->getContentType()}");
+        } catch (\Exception $e) {
+            $this->getLogger()->notice(sprintf('Unable to get content title for submissionId=%d, sourceBlogId=%d, sourceId=%d, type="%s"', $submission->getId(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getContentType()));
+            $this->getLogger()->debug('Exception: ' . $e->getMessage());
+            return '';
         }
-        return '';
     }
 
     private function getSources(UserCloneRequest $request, int $targetBlogId): array
