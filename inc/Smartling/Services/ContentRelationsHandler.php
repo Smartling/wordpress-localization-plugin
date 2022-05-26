@@ -94,7 +94,7 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
             } else {
                 $this->service->createSubmissions(UserTranslationRequest::fromArray($data));
             }
-            $this->returnResponse(['status' => 'SUCCESS']);
+            $this->returnResponse(['status' => BaseAjaxServiceAbstract::RESPONSE_SUCCESS]);
         } catch (Exception $e) {
             $this->returnError('content.submission.failed', $e->getMessage());
         }
