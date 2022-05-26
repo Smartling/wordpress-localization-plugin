@@ -468,7 +468,7 @@ if (0 === $profileId) {
             <tr>
                 <th scope="row"><?= __('Target Locales', $domain) ?></th>
                 <td>
-                    <?= WPAbstract::checkUncheckBlock() ?>
+                    <?= WPAbstract::checkUncheckBlock('configuration-profile-form') ?>
                     <table id="target-locale-block">
                         <?php
                         $targetLocales = $profile->getTargetLocales();

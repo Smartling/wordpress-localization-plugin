@@ -14,6 +14,7 @@ use Smartling\WP\WPAbstract;
  * @var WPAbstract self
  */
 $data = $this->getViewData();
+$widgetName = PostBasedWidgetControllerStd::WIDGET_DATA_NAME;
 
 /**
  * @var TargetLocale[] $locales
@@ -44,10 +45,7 @@ if (!empty($locales)) {
     <div class="fields">
 
         <h3><?= $this->getWidgetHeader() ?></h3>
-        <?= WPAbstract::checkUncheckBlock() ?>
-        <?php
-        $nameKey = PostBasedWidgetControllerStd::WIDGET_DATA_NAME;
-        ?>
+        <?= WPAbstract::checkUncheckBlock($widgetName) ?>
         <div class="locale-list">
             <?php
 
@@ -105,7 +103,7 @@ if (!empty($locales)) {
                 <div class="smtPostWidget-rowWrapper">
                     <div class="smtPostWidget-row">
                         <?= WPAbstract::localeSelectionCheckboxBlock(
-                            $nameKey,
+                            $widgetName,
                             $locale->getBlogId(),
                             $locale->getLabel(),
                             (false === $enabled ? false : $value),

@@ -200,6 +200,8 @@ var downloadSelector = "#smartling-download";
     });
 })(jQuery);
 
+// @see \Smartling\WP\WPAbstract::checkUncheckBlock()
+// noinspection JSUnusedGlobalSymbols
 function bulkCheck(className, action) {
     jQuery.each(jQuery('.' + className), function (i, e) {
         this.checked = 'check' === action;
