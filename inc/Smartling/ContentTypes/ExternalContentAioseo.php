@@ -75,6 +75,10 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
 
     public function getContentFields(SubmissionEntity $submission, bool $raw): array
     {
+        // Only process posts, because taxonomies are only supported in AIOSEO Pro
+        if (!in_array($submission->getContentType(), get_post_types(), true)) {
+            return [];
+        }
         $submission->assertHasSource();
         $fields = $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($submission) {
             return $this->db->fetchPrepared('select * from ' . $this->db->getPrefix() . 'aioseo_posts where post_id = %d', $submission->getSourceId())[0] ?? [];
@@ -122,8 +126,11 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
         });
     }
 
-    public function stripTags(string $string): string
+    public function stripTags(?string $string): ?string
     {
+        if ($string === null) {
+            return null;
+        }
         $parts = explode(' ', $string);
         $result = [];
         foreach ($parts as $part) {
@@ -144,7 +151,11 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
             $content[$field] = $this->stripTags($content[$field]);
         }
         foreach ($this->jsonFields as $field) {
-            $content[$field] = json_decode($content[$field], true, 512, JSON_THROW_ON_ERROR);
+            try {
+                $content[$field] = json_decode($content[$field], true, 512, JSON_THROW_ON_ERROR);
+            } catch (\JsonException $e) {
+                $content[$field] = null;
+            }
         }
         if (array_key_exists('focus', $content['keyphrases'])) {
             $content['keyphrases']['focus'] = ['keyphrase' => $content['keyphrases']['focus']['keyphrase']];
