@@ -309,6 +309,7 @@ namespace Smartling\Tests\Services {
             $customMenuContentTypeHelper->method('getMenuItems')->willReturn($menuItemPosts);
 
             $x = new ContentRelationsDiscoveryService(
+                $this->createMock(AcfDynamicSupport::class),
                 $contentHelper,
                 $this->createMock(FieldsFilterHelper::class),
                 $this->createMock(MetaFieldProcessorManager::class),
@@ -638,6 +639,7 @@ namespace Smartling\Tests\Services {
                 $submissionFactory = $this->createMock(SubmissionFactory::class);
             }
             return $this->getMockBuilder(ContentRelationsDiscoveryService::class)->setConstructorArgs([
+                $this->createMock(AcfDynamicSupport::class),
                 $contentHelper,
                 $fieldsFilterHelper,
                 $metaFieldProcessorManager,

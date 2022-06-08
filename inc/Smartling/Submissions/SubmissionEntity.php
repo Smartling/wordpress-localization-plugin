@@ -6,6 +6,7 @@ use InvalidArgumentException;
 use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingEntityAbstract;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
+use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Exception\SmartlingSubmissionsProcessingException;
 use Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater;
 use Smartling\Helpers\FileUriHelper;
@@ -474,6 +475,8 @@ class SubmissionEntity extends SmartlingEntityAbstract
 
     /**
      * Will try to set file uri if it is currently empty
+     *
+     * @throws SmartlingInvalidFactoryArgumentException
      */
     public function getFileUri(): string
     {

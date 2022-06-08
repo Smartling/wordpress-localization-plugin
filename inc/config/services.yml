@@ -400,6 +400,7 @@ services:
   service.relations-discovery:
     class: Smartling\Services\ContentRelationsDiscoveryService
     arguments:
+      - "@acf.dynamic.support"
       - "@content.helper"
       - "@fields-filter.helper"
       - "@meta-field.processor.manager"

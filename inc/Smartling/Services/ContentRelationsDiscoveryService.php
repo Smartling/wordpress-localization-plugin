@@ -9,9 +9,11 @@ use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\EntityNotFoundException;
+use Smartling\Exception\SmartlingGutenbergParserNotFoundException;
 use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Exception\SmartlingNotSupportedContentException;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
@@ -46,6 +48,7 @@ use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 class ContentRelationsDiscoveryService
 {
     private const POST_BASED_PROCESSOR = 'PostBasedProcessor';
+    private AcfDynamicSupport $acfDynamicSupport;
     private LoggerInterface $logger;
     private ContentHelper $contentHelper;
     private FieldsFilterHelper $fieldFilterHelper;
@@ -68,6 +71,7 @@ class ContentRelationsDiscoveryService
     }
 
     public function __construct(
+        AcfDynamicSupport $acfDynamicSupport,
         ContentHelper $contentHelper,
         FieldsFilterHelper $fieldFilterHelper,
         MetaFieldProcessorManager $fieldProcessorManager,
@@ -85,6 +89,7 @@ class ContentRelationsDiscoveryService
     )
     {
         $this->absoluteLinkedAttachmentCoreHelper = $absoluteLinkedAttachmentCoreHelper;
+        $this->acfDynamicSupport = $acfDynamicSupport;
         $this->apiWrapper = $apiWrapper;
         $this->contentHelper = $contentHelper;
         $this->fieldFilterHelper = $fieldFilterHelper;
@@ -384,7 +389,7 @@ class ContentRelationsDiscoveryService
         return $fields;
     }
 
-    private function extractFieldsFromGutenbergBlock(string $basename, string $string): array
+    private function extractFieldsFromGutenbergBlocks(string $basename, string $string): array
     {
         $result = [];
         $blocks = $this->gutenbergBlockHelper->parseBlocks($string);
@@ -410,11 +415,19 @@ class ContentRelationsDiscoveryService
         return $array;
     }
 
+    /**
+     * @return int[]
+     */
     private function getPostContentReferences(string $content): array
     {
         $result = [];
-        foreach ($this->gutenbergBlockHelper->parseBlocks($content) as $block) {
-            $result = $this->addPostContentReferences($result, $block);
+        try {
+            foreach ($this->gutenbergBlockHelper->parseBlocks($content) as $block) {
+                $result = $this->addPostContentReferences($result, $block);
+            }
+        } catch (SmartlingGutenbergParserNotFoundException $e) {
+            $this->getLogger()->warning('Failed to parse blocks: ' . $e->getMessage());
+            return $result;
         }
 
         $result = array_unique($result);
@@ -422,29 +435,18 @@ class ContentRelationsDiscoveryService
         return [self::POST_BASED_PROCESSOR => array_combine($result, $result)] ;
     }
 
+    /**
+     * @return int[]
+     */
     private function addPostContentReferences(array $array, GutenbergBlock $block): array
     {
-        foreach ($block->getAttributes() as $attribute => $_) {
-            foreach ($this->mediaAttachmentRulesManager->getGutenbergReplacementRules($block->getBlockName(), $attribute) as $rule) {
-                $this->getLogger()->debug("Found rule for blockName=\"{$block->getBlockName()}\" attributeName=\"$attribute\"");
-                try {
-                    $replacer = $this->replacerFactory->getReplacer($rule->getReplacerId());
-                    $this->getLogger()->debug("Got replacerId={$rule->getReplacerId()}");
-                } catch (EntityNotFoundException $e) {
-                    continue;
-                }
-                $value = $this->gutenbergBlockHelper->getValue($block, $rule);
-                if ($replacer instanceof ContentIdReplacer && is_numeric($value)) {
-                    $array[] = $value;
-                    $this->getLogger()->debug("Added relatedId=$value to references");
-                }
-            }
-        }
+        $referencesFromAcf = $this->getReferencesFromAcf($block);
+        $referencesFromSetupBlocks = $this->getReferencesFromGutenbergReplacementRules($block);
         foreach ($block->getInnerBlocks() as $innerBlock) {
             $array = $this->addPostContentReferences($array, $innerBlock);
         }
 
-        return $array;
+        return array_merge($array, $referencesFromAcf, $referencesFromSetupBlocks);
     }
 
     /**
@@ -491,7 +493,7 @@ class ContentRelationsDiscoveryService
             foreach ($fields as $fName => $fValue) {
                 $extraFields = array_merge(
                     $extraFields,
-                    $this->fieldFilterHelper->flattenArray($this->extractFieldsFromGutenbergBlock($fName, $fValue))
+                    $this->fieldFilterHelper->flattenArray($this->extractFieldsFromGutenbergBlocks($fName, $fValue))
                 );
             }
             $fields = array_merge($fields, $extraFields);
@@ -666,5 +668,59 @@ class ContentRelationsDiscoveryService
     private function logSubmissionCreated(SubmissionEntity $submission, string $description): void
     {
         $this->getLogger()->info(sprintf("Adding submissionId=%d, fileName=%s, sourceBlogId=%d, sourceId=%d for upload to batchUid=%s due to user request, reason=\"%s\"", $submission->getId(), $submission->getStateFieldFileUri(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getBatchUid(), $description));
+    }
+
+    /**
+     * @return int[]
+     */
+    private function getReferencesFromAcf(GutenbergBlock $block): array
+    {
+        $result = [];
+        if (strpos($block->getBlockName(), 'acf/') !== 0) {
+            return $result;
+        }
+
+        foreach ($block->getAttributes()['data'] ?? [] as $attribute => $value) {
+            if (strpos($attribute, '_') !== 0) {
+                continue;
+            }
+            $type = $this->acfDynamicSupport->getReferencedTypeByKey($value);
+            if (in_array($type, [
+                AcfDynamicSupport::REFERENCED_TYPE_MEDIA,
+                AcfDynamicSupport::REFERENCED_TYPE_POST,
+            ], true)) {
+                $referencedValue = $block->getAttributes()['data'][substr($attribute, 1)] ?? null;
+                if (is_numeric($referencedValue)) {
+                    $result[] = (int)$referencedValue;
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @return int[]
+     */
+    private function getReferencesFromGutenbergReplacementRules(GutenbergBlock $block): array
+    {
+        $result = [];
+        foreach ($block->getAttributes() as $attribute => $_) {
+            foreach ($this->mediaAttachmentRulesManager->getGutenbergReplacementRules($block->getBlockName(), $attribute) as $rule) {
+                $this->getLogger()->debug("Found rule for blockName=\"{$block->getBlockName()}\" attributeName=\"$attribute\"");
+                try {
+                    $replacer = $this->replacerFactory->getReplacer($rule->getReplacerId());
+                    $this->getLogger()->debug("Got replacerId={$rule->getReplacerId()}");
+                } catch (EntityNotFoundException $e) {
+                    continue;
+                }
+                $value = $this->gutenbergBlockHelper->getValue($block, $rule);
+                if ($replacer instanceof ContentIdReplacer && is_numeric($value)) {
+                    $result[] = (int)$value;
+                    $this->getLogger()->debug("Added relatedId=$value to references (found rule for blockName=\"{$block->getBlockName()} attributeName=\"{$attribute}");
+                }
+            }
+        }
+
+        return $result;
     }
 }
