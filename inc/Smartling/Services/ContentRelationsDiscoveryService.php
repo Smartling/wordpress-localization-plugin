@@ -673,7 +673,7 @@ class ContentRelationsDiscoveryService
     /**
      * @return int[]
      */
-    private function getReferencesFromAcf(GutenbergBlock $block): array
+    public function getReferencesFromAcf(GutenbergBlock $block): array
     {
         $result = [];
         if (strpos($block->getBlockName(), 'acf/') !== 0) {
@@ -701,7 +701,7 @@ class ContentRelationsDiscoveryService
     /**
      * @return int[]
      */
-    private function getReferencesFromGutenbergReplacementRules(GutenbergBlock $block): array
+    public function getReferencesFromGutenbergReplacementRules(GutenbergBlock $block): array
     {
         $result = [];
         foreach ($block->getAttributes() as $attribute => $_) {
