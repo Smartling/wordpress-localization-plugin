@@ -17,6 +17,11 @@ use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 class AcfDynamicSupport
 {
+    public const REFERENCED_TYPE_NONE = 'none';
+    public const REFERENCED_TYPE_MEDIA = 'media';
+    public const REFERENCED_TYPE_POST = 'post';
+    public const REFERENCED_TYPE_TAXONOMY = 'taxonomy';
+
     private LoggerInterface $logger;
 
     public static array $acfReverseDefinitionAction = [];
@@ -497,37 +502,27 @@ class AcfDynamicSupport
         static::$acfReverseDefinitionAction = $rules;
     }
 
-    private function getFieldTypeByKey($key)
+    public function getReferencedTypeByKey($key): string
     {
-        $def = &$this->definitions;
-
-        return array_key_exists($key, $def) && array_key_exists('type', $def[$key]) ? $def[$key]['type'] : false;
-    }
-
-    private function getReferencedTypeByKey($key): string
-    {
-        $type = $this->getFieldTypeByKey($key);
-
-        $value = 'none';
+        if (count($this->definitions) === 0) {
+            $this->run();
+        }
+        $type = $this->definitions[$key]['type'] ?? '';
 
         switch ($type) {
             case 'image':
             case 'file':
             case 'gallery':
-                $value = 'media';
-                break;
+                return self::REFERENCED_TYPE_MEDIA;
             case 'post_object':
             case 'page_link':
             case 'relationship':
-                $value = 'post';
-                break;
+                return self::REFERENCED_TYPE_POST;
             case 'taxonomy':
-                $value = 'taxonomy';
-                break;
-            default:
+                return self::REFERENCED_TYPE_TAXONOMY;
         }
 
-        return $value;
+        return self::REFERENCED_TYPE_NONE;
     }
 
     public function removePreTranslationFields(array $data): array

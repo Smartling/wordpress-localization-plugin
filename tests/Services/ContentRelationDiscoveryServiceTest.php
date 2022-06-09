@@ -44,6 +44,7 @@ namespace Smartling\Tests\Services {
     use Smartling\Jobs\JobManager;
     use Smartling\Jobs\SubmissionJobEntity;
     use Smartling\Jobs\SubmissionsJobsManager;
+    use Smartling\Models\GutenbergBlock;
     use Smartling\Models\UserCloneRequest;
     use Smartling\Models\UserTranslationRequest;
     use Smartling\Processors\ContentEntitiesIOFactory;
@@ -309,6 +310,7 @@ namespace Smartling\Tests\Services {
             $customMenuContentTypeHelper->method('getMenuItems')->willReturn($menuItemPosts);
 
             $x = new ContentRelationsDiscoveryService(
+                $this->createMock(AcfDynamicSupport::class),
                 $contentHelper,
                 $this->createMock(FieldsFilterHelper::class),
                 $this->createMock(MetaFieldProcessorManager::class),
@@ -613,9 +615,39 @@ namespace Smartling\Tests\Services {
             }
         }
 
+        public function testAcfReferencesDetected() {
+            $attachmentId = 19320;
+            $attachmentKey = 'field_5d5db4987e813';
+            $irrelevantKey = 'field_5d5db4597e812';
+
+            $acfDynamicSupport = $this->createMock(AcfDynamicSupport::class);
+            $acfDynamicSupport->expects($this->at(0))->method('getReferencedTypeByKey')->with($attachmentKey)->willReturn(AcfDynamicSupport::REFERENCED_TYPE_MEDIA);
+            $acfDynamicSupport->expects($this->at(1))->method('getReferencedTypeByKey')->with($irrelevantKey)->willReturn(AcfDynamicSupport::REFERENCED_TYPE_NONE);
+
+            $x = $this->getContentRelationDiscoveryService(
+                $this->createMock(ApiWrapper::class),
+                $this->createMock(ContentHelper::class),
+                $this->createMock(SettingsManager::class),
+                $this->createMock(SubmissionManager::class),
+                null,
+                null,
+                null,
+                $acfDynamicSupport
+            );
+
+            $this->assertEquals([$attachmentId], $x->getReferencesFromAcf(new GutenbergBlock('acf/gallery-carousel', [
+                'id' => 'block_62a079bcb49b1',
+                'name' => 'acf/gallery-carousel',
+                'data' => [
+                    'media_0_image' => $attachmentId,
+                    '_media_0_image' => $attachmentKey,
+                    'media' => 1,
+                    '_media' => $irrelevantKey,
+                ]
+            ], [], '', [])));
+        }
+
         /**
-         * @param SubmissionFactory|null $submissionFactory *
-         *
          * @return MockObject|ContentRelationsDiscoveryService
          */
         private function getContentRelationDiscoveryService(
@@ -625,9 +657,13 @@ namespace Smartling\Tests\Services {
             SubmissionManager $submissionManager,
             SubmissionFactory $submissionFactory = null,
             MetaFieldProcessorManager $metaFieldProcessorManager = null,
-            FieldsFilterHelper $fieldsFilterHelper = null
+            FieldsFilterHelper $fieldsFilterHelper = null,
+            AcfDynamicSupport $acfDynamicSupport = null
         )
         {
+            if ($acfDynamicSupport === null) {
+                $acfDynamicSupport = $this->createMock(AcfDynamicSupport::class);
+            }
             if ($metaFieldProcessorManager === null) {
                 $metaFieldProcessorManager = $this->createMock(MetaFieldProcessorManager::class);
             }
@@ -638,6 +674,7 @@ namespace Smartling\Tests\Services {
                 $submissionFactory = $this->createMock(SubmissionFactory::class);
             }
             return $this->getMockBuilder(ContentRelationsDiscoveryService::class)->setConstructorArgs([
+                $acfDynamicSupport,
                 $contentHelper,
                 $fieldsFilterHelper,
                 $metaFieldProcessorManager,
