@@ -45,7 +45,7 @@ class TaxonomyEntityStd extends EntityAbstract
         $metadata = $this->wordpressProxy->get_term_meta($this->getPK());
 
         if (!is_array($metadata) || 0 === count($metadata)) {
-            $this->getLogger()->warning('Expected to get metadata array for termId=' . $this->getPK() . ', got ' . is_array($metadata) ? 'empty array' : gettype($metadata));
+            $this->getLogger()->warning('Expected to get metadata array for termId=' . $this->getPK() . ', got ' . (is_array($metadata) ? 'empty array' : gettype($metadata)));
             return [];
         }
 
