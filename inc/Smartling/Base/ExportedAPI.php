@@ -192,5 +192,17 @@ interface ExportedAPI
      * @param SubmissionEntity
      */
     public const ACTION_SMARTLING_PLACE_RECORD_ID = 'smartling_place_record_id';
-    // TODO add filters after/before translation applied, convert external content to filters as well
+
+    /**
+     * @param SubmissionEntity
+     */
+    public const ACTION_AFTER_TRANSLATION_APPLIED = 'smartling_action_after_translation_applied';
+
+    /**
+     * @param array translation
+     * @param array lockedData
+     * @param SubmissionEntity
+     * @return array translation
+     */
+    public const FILTER_BEFORE_TRANSLATION_APPLIED = 'smartling_filter_before_translation_applied';
 }
