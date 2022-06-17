@@ -99,11 +99,7 @@ class PostContentHelper
         $lockId = array_shift($parts);
         foreach ($parent->getInnerBlocks() as $index => $block) {
             if ($block->getSmartlingLockId() === $lockId) {
-                if (count($parts) === 0) {
-                    return $parent->withInnerBlock($replace, $index);
-                }
-
-                return $this->replaceInnerBlock($block, implode('/', $parts), $replace);
+                return $parent->withInnerBlock($replace, $index);
             }
         }
 
