@@ -8,6 +8,7 @@ use Smartling\Helpers\Cache;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginInfo;
+use Smartling\Models\NotificationParameters;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPHookInterface;
@@ -229,33 +230,21 @@ EOF;
 
     public static function pushNotification(string $projectId, string $contentId, string $severity, string $message): void
     {
-        do_action(ExportedAPI::ACTION_SMARTLING_PUSH_LIVE_NOTIFICATION,
-                  [
-                      'projectId' => $projectId,
-                      'content_id' => $contentId,
-                      'message' => [
-                          'severity' => $severity,
-                          'message'  => $message,
-                      ],
-                  ]
-
-        );
+        do_action(ExportedAPI::ACTION_SMARTLING_PUSH_LIVE_NOTIFICATION, new NotificationParameters($contentId, $message, $projectId, $severity));
     }
 
-    public function pushNotificationHandler($params): void
+    public function pushNotificationHandler(NotificationParameters $params): void
     {
-        $projectId = $params['projectId'];
-        $contentId = $params['content_id'];
-        $message = $params['message'];
         try {
-            $profile = $this->settingsManager->getActiveProfileByProjectId($projectId);
-
             $this->apiWrapper->setNotificationRecord(
-                $profile,
+                $this->settingsManager->getActiveProfileByProjectId($params->getProjectId()),
                 static::FIREBASE_SPACE_ID,
                 static::FIREBASE_OBJECT_ID,
-                $contentId,
-                $message
+                $params->getContentId(),
+                [
+                    'message' => $params->getMessage(),
+                    'severity' => $params->getSeverity(),
+                ]
             );
         } catch (\Exception $e) {
         }

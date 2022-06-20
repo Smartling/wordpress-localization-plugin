@@ -251,6 +251,7 @@ trait SmartlingCoreUploadTrait
             $params = new AfterDeserializeContentEventParameters($translation, $submission, $targetContent, $translation['meta']);
             do_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
             $translation = $this->processPostContentBlocks($targetContent, $original, $translation, $submission, $postContentHelper, $lockedData['entity']);
+            $translation = apply_filters(ExportedAPI::FILTER_BEFORE_TRANSLATION_APPLIED, $translation, $lockedData, $submission);
             $this->setValues($targetContent, $translation['entity'] ?? []);
             $this->externalContentManager->setExternalContent($translation, $submission);
             $configurationProfile = $this->getSettingsManager()
@@ -324,6 +325,7 @@ trait SmartlingCoreUploadTrait
                 $this->testRunHelper->checkDownloadedSubmission($submission);
             }
             $submission = $this->getSubmissionManager()->storeEntity($submission);
+            do_action(ExportedAPI::ACTION_AFTER_TRANSLATION_APPLIED, $submission);
 
             $this->prepareRelatedSubmissions($submission);
         } catch (InvalidXMLException $e) {
