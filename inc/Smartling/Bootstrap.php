@@ -404,15 +404,13 @@ class Bootstrap
          */
         add_action($action, static function () use ($di) {
             // registering taxonomies first.
-            $dynTermDefinitions = [];
-            $dynTermDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY, $dynTermDefinitions);
+            $dynTermDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY, []);
             foreach ($dynTermDefinitions as $dynTermDefinition) {
                 CustomTaxonomyType::registerCustomType($di, $dynTermDefinition);
             }
 
             // then registering posts
-            $externalDefinitions = [];
-            $externalDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE, $externalDefinitions);
+            $externalDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE, []);
             foreach ($externalDefinitions as $externalDefinition) {
                 CustomPostType::registerCustomType($di, $externalDefinition);
             }
