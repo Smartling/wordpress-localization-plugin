@@ -62,6 +62,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 2.13.5 =
+* Fixed upload queue length appearing stuck
+
 = 2.13.4 =
 * Added actions to alter translated content or do other actions just before translation gets saved
 * Fixed block level locking for nested Gutenberg blocks

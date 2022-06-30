@@ -121,19 +121,13 @@ class SubmissionManager extends EntityManagerAbstract
         return $result;
     }
 
-    private function getTotalByFieldInValues(array $conditions): int
+    private function getTotalByFieldInValues(ConditionBlock $conditionBlock): int
     {
-        $block = ConditionBlock::getConditionBlock();
-
-        foreach ($conditions as $field => $values) {
-            $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_IN, $field, $values));
-        }
-
         $countQuery = $this->buildCountQuery(
             null,
             null,
             null,
-            $block
+            $conditionBlock,
         );
 
         $totalCount = $this->getDbal()->fetch($countQuery);
@@ -143,26 +137,20 @@ class SubmissionManager extends EntityManagerAbstract
 
     public function getTotalInUploadQueue(): int
     {
-        return $this->getTotalByFieldInValues(
-            [
-                SubmissionEntity::FIELD_STATUS => [
-                    SubmissionEntity::SUBMISSION_STATUS_NEW,
-                ],
-                SubmissionEntity::FIELD_IS_LOCKED => [0],
-            ]);
+        return $this->getTotalByFieldInValues($this->getConditionBlockForUploadJob());
     }
 
     public function getTotalInCheckStatusHelperQueue(): int
     {
-        return $this->getTotalByFieldInValues(
-            [
-                SubmissionEntity::FIELD_STATUS => [
-                    SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
-                    SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
-                ],
-                SubmissionEntity::FIELD_IS_LOCKED => [0],
-            ]
-        );
+        $conditionBlock = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
+        $conditionBlock->addCondition(Condition::getCondition(
+            ConditionBuilder::CONDITION_SIGN_IN,
+            SubmissionEntity::FIELD_STATUS,
+            [SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS, SubmissionEntity::SUBMISSION_STATUS_COMPLETED],
+        ));
+        $conditionBlock->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_LOCKED, [0]));
+
+        return $this->getTotalByFieldInValues($conditionBlock);
     }
 
 
@@ -290,17 +278,12 @@ class SubmissionManager extends EntityManagerAbstract
      */
     public function findSubmissionsForUploadJob(): array
     {
-        $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_NEW]));
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_LOCKED, [0]));
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_NOT_EQ, SubmissionEntity::FIELD_BATCH_UID, ['']));
-
         $pageOptions = ['limit' => 1, 'page' => 1];
 
         $query = QueryBuilder::buildSelectQuery(
             $this->getDbal()->completeTableName(SubmissionEntity::getTableName()),
             array_keys(SubmissionEntity::getFieldDefinitions()),
-            $block,
+            $this->getConditionBlockForUploadJob(),
             [],
             $pageOptions
         );
@@ -715,5 +698,15 @@ SQL;
             $this->submissionTableAlias => array_keys(SubmissionEntity::getFieldDefinitions()),
             $this->jobsTableAlias => array_keys(JobEntity::getFieldDefinitions()),
         ];
+    }
+
+    private function getConditionBlockForUploadJob(): ConditionBlock
+    {
+        $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_NEW]));
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_LOCKED, [0]));
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_NOT_EQ, SubmissionEntity::FIELD_BATCH_UID, ['']));
+
+        return $block;
     }
 }
