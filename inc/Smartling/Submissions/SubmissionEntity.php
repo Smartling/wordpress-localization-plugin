@@ -566,7 +566,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return $this;
     }
 
-    public function setCreatedAt(?string $createdAt): self
+    public function setCreatedAt(string $createdAt): self
     {
         $this->stateFields[static::FIELD_CREATED_AT] = $createdAt;
 
