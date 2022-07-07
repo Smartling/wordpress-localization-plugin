@@ -4,6 +4,7 @@ namespace Smartling\ContentTypes;
 
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Helpers\PlaceholderHelper;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
@@ -58,7 +59,7 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
         'videos',
         'video_thumbnail',
     ];
-    private array $stripTagsFields = [
+    private array $tagFields = [
         'title',
         'description',
         'og_title',
@@ -113,6 +114,11 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
                 $content[$field] = json_encode($content[$field], JSON_THROW_ON_ERROR);
             }
         }
+        foreach ($this->tagFields as $field) {
+            if (array_key_exists($field, $content)) {
+                $content[$field] = $this->joinTagField($content[$field]);
+            }
+        }
         unset($content['id']);
         $content['post_id'] = $submission->getTargetId();
         $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($content, $submission) {
@@ -126,20 +132,58 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
         });
     }
 
-    public function stripTags(?string $string): ?string
+    public function joinTagField(?array $array): ?string
     {
-        if ($string === null) {
+        if ($array === null) {
             return null;
         }
-        $parts = explode(' ', $string);
         $result = [];
-        foreach ($parts as $part) {
-            if (strpos($part, '#') !== 0) {
-                $result[] = $part;
-            }
+        foreach ($array as $item) {
+            $result[] = preg_replace('~^' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '|' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END . '$~', '', $item);
         }
 
         return implode(' ', $result);
+    }
+
+    public function splitTagField(?string $string): array
+    {
+        $currentItem = 0;
+        $previousIsTag = null;
+        $result = [];
+        $parts = [];
+        $split = explode(' ', $string);
+        if (count($split) === 1) {
+            return [$this->convertTagFieldParts($split)];
+        }
+
+        foreach ($split as $item) {
+            ++$currentItem;
+            $lastItem = $currentItem === count($split);
+            $currentIsTag = $this->isTag($item);
+
+            if ($lastItem || ($previousIsTag !== null && ($currentIsTag !== $previousIsTag))) {
+                if ($lastItem && $currentIsTag === $previousIsTag) {
+                    $parts[] = $item;
+                }
+                $result[] = $this->convertTagFieldParts($parts);
+                $parts = [];
+                if ($lastItem && $currentIsTag !== $previousIsTag) {
+                    $result[] = $this->convertTagFieldParts([$item]);
+                }
+            }
+
+            $previousIsTag = $currentIsTag;
+            $parts[] = $item;
+        }
+
+        return $this->fieldsFilterHelper->flattenArray($result);
+    }
+
+    private function convertTagFieldParts(array $parts): string
+    {
+        return $this->isTag($parts[0] ?? '') ?
+            PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . implode(' ', $parts) . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END :
+            implode(' ', $parts);
     }
 
     public function transformContentForUpload(array $content): array
@@ -147,8 +191,8 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
         foreach ($this->removeFields as $field) {
             unset($content[$field]);
         }
-        foreach ($this->stripTagsFields as $field) {
-            $content[$field] = $this->stripTags($content[$field]);
+        foreach ($this->tagFields as $field) {
+            $content[$field] = $this->splitTagField($content[$field]);
         }
         foreach ($this->jsonFields as $field) {
             try {
@@ -179,5 +223,10 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
             }
         }
         return $content;
+    }
+
+    private function isTag(string $string): bool
+    {
+        return strpos($string, '#') === 0;
     }
 }

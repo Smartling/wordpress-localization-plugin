@@ -2,11 +2,13 @@
 
 namespace Smartling\ContentTypes;
 
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 class ExternalContentManager
 {
+    use LoggerSafeTrait;
     /**
      * @var ContentTypePluggableInterface[] $handlers
      */
@@ -28,7 +30,11 @@ class ExternalContentManager
     {
         foreach ($this->handlers as $handler) {
             if ($this->pluginHelper->canHandleExternalContent($handler)) {
-                $source[$handler->getPluginId()] = $handler->getContentFields($submission, $raw);
+                try {
+                    $source[$handler->getPluginId()] = $handler->getContentFields($submission, $raw);
+                } catch (\Error $e) {
+                    $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to get external content: ' . $e->getMessage());
+                }
             }
         }
 
@@ -39,7 +45,11 @@ class ExternalContentManager
     {
         foreach ($this->handlers as $handler) {
             if (array_key_exists($handler->getPluginId(), $content) && $this->pluginHelper->canHandleExternalContent($handler)) {
-                $handler->setContentFields($content[$handler->getPluginId()], $submission);
+                try {
+                    $handler->setContentFields($content[$handler->getPluginId()], $submission);
+                } catch (\Error $e) {
+                    $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to set external content: ' . $e->getMessage());
+                }
             }
         }
     }

@@ -5,6 +5,7 @@ namespace Smartling\Tests\Smartling\Helpers;
 use DOMDocument;
 use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
+use Smartling\Helpers\PlaceholderHelper;
 use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 
@@ -200,8 +201,8 @@ class ShortcodeHelperTest extends TestCase
                 'vc_row',
                 ['a' => 'b', 'c' => 'd'],
                 'Row here',
-                ShortcodeHelper::SMARTLING_SHORTCODE_MASK_S . '[',
-                ']' . ShortcodeHelper::SMARTLING_SHORTCODE_MASK_E,
+                PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '[',
+                ']' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END,
                 '#sl-start#[vc_row a="b" c="d"]#sl-end#Row here#sl-start#[/vc_row]#sl-end#',
             ],
         ];
