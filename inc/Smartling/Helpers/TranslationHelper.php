@@ -195,7 +195,7 @@ class TranslationHelper
             $relatedSubmission = $this->submissionManager->storeEntity($relatedSubmission);
             // try to create target entity
             $relatedSubmission = apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $relatedSubmission);
-            if (!$relatedSubmission instanceof SubmissionEntity) {
+            if (!($relatedSubmission instanceof SubmissionEntity)) {
                 $this->logger->critical('Related submission not instance of ' . SubmissionEntity::class . ' after filter ' . ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT . '. This is most likely due to an error outside of the plugins code.');
             }
 
