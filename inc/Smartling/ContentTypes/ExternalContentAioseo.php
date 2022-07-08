@@ -123,7 +123,7 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
         }
         foreach ($this->tagFields as $field) {
             if (array_key_exists($field, $content)) {
-                $content[$field] = $this->removePlaceholders($content[$field]);
+                $content[$field] = $this->placeholderHelper->removePlaceholders($content[$field] ?? '');
             }
         }
         unset($content['id']);
@@ -137,14 +137,6 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
                 $this->db->query(QueryBuilder::buildUpdateQuery($this->db->getPrefix() . 'aioseo_posts', $content, $conditionBlock));
             }
         });
-    }
-
-    public function removePlaceholders(?string $string): ?string
-    {
-        if ($string === null) {
-            return null;
-        }
-        return $this->placeholderHelper->removePlaceholders($string);
     }
 
     public function addPlaceholders(?string $string): ?string
@@ -193,10 +185,5 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
             }
         }
         return $content;
-    }
-
-    private function isTag(string $string): bool
-    {
-        return strpos($string, '#') === 0;
     }
 }
