@@ -89,7 +89,7 @@ trait SmartlingCoreUploadTrait
     {
         $submission = $this->getFunctionProxyHelper()->apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $submission);
         if (!$submission instanceof SubmissionEntity) {
-            $this->getLogger()->critical('Submission not instance of ' . SubmissionEntity::class . ' after filter ' . ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT);
+            $this->getLogger()->critical('Submission not instance of ' . SubmissionEntity::class . ' after filter ' . ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT) . '. This is most likely due to an error outside of the plugins code.';
         }
 
         if (SubmissionEntity::SUBMISSION_STATUS_FAILED === $submission->getStatus()) {
@@ -256,7 +256,7 @@ trait SmartlingCoreUploadTrait
             $translation = $this->processPostContentBlocks($targetContent, $original, $translation, $submission, $postContentHelper, $lockedData['entity']);
             $translation = apply_filters(ExportedAPI::FILTER_BEFORE_TRANSLATION_APPLIED, $translation, $lockedData, $submission);
             if (!is_array($translation)) {
-                $this->getLogger()->critical('Translation is not array after applying filter ' . ExportedAPI::FILTER_BEFORE_TRANSLATION_APPLIED);
+                $this->getLogger()->critical('Translation is not array after applying filter ' . ExportedAPI::FILTER_BEFORE_TRANSLATION_APPLIED . '. This is most likely due to an error outside of the plugins code.');
             }
             $this->setValues($targetContent, $translation['entity'] ?? []);
             $this->externalContentManager->setExternalContent($translation, $submission);

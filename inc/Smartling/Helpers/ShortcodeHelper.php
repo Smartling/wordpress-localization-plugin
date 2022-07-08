@@ -436,7 +436,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         try {
             $injectedShortcodes = apply_filters(ExportedAPI::FILTER_SMARTLING_INJECT_SHORTCODE, []);
             if (!is_array($injectedShortcodes)) {
-                $this->getLogger()->critical('Injected shortcodes not an array after filter ' . ExportedAPI::FILTER_SMARTLING_INJECT_SHORTCODE);
+                $this->getLogger()->critical('Injected shortcodes not an array after filter ' . ExportedAPI::FILTER_SMARTLING_INJECT_SHORTCODE . '. This is most likely due to an error outside of the plugins code.');
             }
             $shortcodes = array_merge($shortcodes, $injectedShortcodes);
         } catch (\Exception $e) {

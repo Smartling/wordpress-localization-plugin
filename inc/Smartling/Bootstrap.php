@@ -407,7 +407,7 @@ class Bootstrap
             // registering taxonomies first.
             $dynTermDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY, []);
             if (!is_iterable($dynTermDefinitions)) {
-                self::$loggerInstance->critical('Dynamic term definitions not iterable after filter ' . ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY);
+                self::$loggerInstance->critical('Dynamic term definitions not iterable after filter ' . ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY . '. This is most likely due to an error outside of the plugins code.');
             }
             foreach ($dynTermDefinitions as $dynTermDefinition) {
                 CustomTaxonomyType::registerCustomType($di, $dynTermDefinition);
@@ -416,7 +416,7 @@ class Bootstrap
             // then registering posts
             $externalDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE, []);
             if (!is_iterable($externalDefinitions)) {
-                self::$loggerInstance->critical('External definitions not iterable after filter ' . ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE);
+                self::$loggerInstance->critical('External definitions not iterable after filter ' . ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE . '. This is most likely due to an error outside of the plugins code.');
             }
             foreach ($externalDefinitions as $externalDefinition) {
                 CustomPostType::registerCustomType($di, $externalDefinition);
@@ -450,10 +450,9 @@ class Bootstrap
                 ],
             ];
 
-
             $filters = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_FIELD_FILTER, $filters);
             if (!is_iterable($filters)) {
-                self::$loggerInstance->critical('Filters not iterable after filter ' . ExportedAPI::FILTER_SMARTLING_REGISTER_FIELD_FILTER);
+                self::$loggerInstance->critical('Filters not iterable after filter ' . ExportedAPI::FILTER_SMARTLING_REGISTER_FIELD_FILTER . '. This is most likely due to an error outside of the plugins code.');
             }
             foreach ($filters as $filter) {
                 try {
