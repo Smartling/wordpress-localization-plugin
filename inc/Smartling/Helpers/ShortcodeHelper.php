@@ -125,7 +125,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         while ($index) {
             $cNode = $node->childNodes->item(--$index);
 
-            if ($cNode->nodeName === static::SHORTCODE_SUBSTRING_NODE_NAME && $cNode->hasAttributes()) {
+            if ($cNode->nodeName === self::SHORTCODE_SUBSTRING_NODE_NAME && $cNode->hasAttributes()) {
                 $translation = $this->nodeToArray($cNode);
 
                 $this->addBlockAttribute(
@@ -277,7 +277,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     private function createShortcodeAttributeNode($shortcodeName, $attributeName, $value)
     {
         return $this->createDomNode(
-            static::SHORTCODE_SUBSTRING_NODE_NAME,
+            self::SHORTCODE_SUBSTRING_NODE_NAME,
             [
                 'shortcode' => $shortcodeName,
                 'hash'      => md5($value),
