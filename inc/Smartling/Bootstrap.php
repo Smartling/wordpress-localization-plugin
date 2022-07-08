@@ -14,6 +14,7 @@ use Smartling\ContentTypes\CustomTaxonomyType;
 use Smartling\Exception\SmartlingBootException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\MetaFieldProcessor\CustomFieldFilterHandler;
 use Smartling\Helpers\SchedulerHelper;
 use Smartling\Helpers\SiteHelper;
@@ -405,12 +406,18 @@ class Bootstrap
         add_action($action, static function () use ($di) {
             // registering taxonomies first.
             $dynTermDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY, []);
+            if (!is_iterable($dynTermDefinitions)) {
+                self::$loggerInstance->critical('Dynamic term definitions not iterable after filter ' . ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY);
+            }
             foreach ($dynTermDefinitions as $dynTermDefinition) {
                 CustomTaxonomyType::registerCustomType($di, $dynTermDefinition);
             }
 
             // then registering posts
             $externalDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE, []);
+            if (!is_iterable($externalDefinitions)) {
+                self::$loggerInstance->critical('External definitions not iterable after filter ' . ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE);
+            }
             foreach ($externalDefinitions as $externalDefinition) {
                 CustomPostType::registerCustomType($di, $externalDefinition);
             }
@@ -445,6 +452,9 @@ class Bootstrap
 
 
             $filters = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_FIELD_FILTER, $filters);
+            if (!is_iterable($filters)) {
+                self::$loggerInstance->critical('Filters not iterable after filter ' . ExportedAPI::FILTER_SMARTLING_REGISTER_FIELD_FILTER);
+            }
             foreach ($filters as $filter) {
                 try {
                     CustomFieldFilterHandler::registerFilter($di, $filter);

@@ -88,6 +88,9 @@ trait SmartlingCoreUploadTrait
     private function createTargetContent(SubmissionEntity $submission): SubmissionEntity
     {
         $submission = $this->getFunctionProxyHelper()->apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $submission);
+        if (!$submission instanceof SubmissionEntity) {
+            $this->getLogger()->critical('Submission not instance of ' . SubmissionEntity::class . ' after filter ' . ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT);
+        }
 
         if (SubmissionEntity::SUBMISSION_STATUS_FAILED === $submission->getStatus()) {
             $msg = vsprintf(
@@ -252,6 +255,9 @@ trait SmartlingCoreUploadTrait
             do_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
             $translation = $this->processPostContentBlocks($targetContent, $original, $translation, $submission, $postContentHelper, $lockedData['entity']);
             $translation = apply_filters(ExportedAPI::FILTER_BEFORE_TRANSLATION_APPLIED, $translation, $lockedData, $submission);
+            if (!is_array($translation)) {
+                $this->getLogger()->critical('Translation is not array after applying filter ' . ExportedAPI::FILTER_BEFORE_TRANSLATION_APPLIED);
+            }
             $this->setValues($targetContent, $translation['entity'] ?? []);
             $this->externalContentManager->setExternalContent($translation, $submission);
             $configurationProfile = $this->getSettingsManager()
@@ -366,6 +372,7 @@ trait SmartlingCoreUploadTrait
 
                 foreach ($sourceMetadata as $key => $value) {
                     try {
+                        // Value is of `mixed` type
                         $filteredMetadata[$key] =
                             apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $key, $value, $submission);
                     } catch (\Exception $ex) {
