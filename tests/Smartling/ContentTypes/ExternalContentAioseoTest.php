@@ -15,7 +15,7 @@ class ExternalContentAioseoTest extends TestCase {
         if (!defined('OBJECT')) {
             define('OBJECT', 'OBJECT');
         }
-        $x = new ExternalContentAioseo($this->createMock(SiteHelper::class), $this->createMock(SmartlingToCMSDatabaseAccessWrapperInterface::class), $this->createPartialMock(FieldsFilterHelper::class, []));
+        $x = $this->getExternalContentAioseo();
 
         $this->assertEquals([
             'title' => [PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#post_title #separator_sa #site_title' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END],
@@ -57,7 +57,7 @@ class ExternalContentAioseoTest extends TestCase {
         if (!defined('OBJECT')) {
             define('OBJECT', 'OBJECT');
         }
-        $x = new ExternalContentAioseo($this->createMock(SiteHelper::class), $this->createMock(SmartlingToCMSDatabaseAccessWrapperInterface::class), $this->createPartialMock(FieldsFilterHelper::class, []));
+        $x = $this->getExternalContentAioseo();
         $this->assertEquals([null], $x->splitTagField(null));
         $this->assertEquals([''], $x->splitTagField(''));
         $this->assertEquals(['Content'], $x->splitTagField('Content'));
@@ -71,5 +71,31 @@ class ExternalContentAioseoTest extends TestCase {
             'Translation content in the middle',
             PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#separator_sa' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END,
         ], $x->splitTagField('#post_excerpt Translation content in the middle #separator_sa'));
+    }
+
+    public function testJoinTagField()
+    {
+        if (!defined('OBJECT')) {
+            define('OBJECT', 'OBJECT');
+        }
+        $x = $this->getExternalContentAioseo();
+        $this->assertNull($x->joinTagField(null));
+        $this->assertEquals('', $x->joinTagField([]));
+        $this->assertEquals('', $x->joinTagField(['']));
+        $this->assertEquals('#Content', $x->joinTagField([PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#Content' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END]));
+        $this->assertEquals('#post_title #separator_sa #site_title Post title edited', $x->joinTagField([
+            PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#post_title #separator_sa #site_title' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END,
+            'Post title edited',
+        ]));
+        $this->assertEquals('#post_excerpt Translation content in the middle #separator_sa', $x->joinTagField([
+            PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#post_excerpt' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END,
+            'Translation content in the middle',
+            PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#separator_sa' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END,
+        ]));
+    }
+
+    private function getExternalContentAioseo(): ExternalContentAioseo
+    {
+        return new ExternalContentAioseo($this->createMock(SiteHelper::class), $this->createMock(SmartlingToCMSDatabaseAccessWrapperInterface::class), $this->createPartialMock(FieldsFilterHelper::class, []));
     }
 }
