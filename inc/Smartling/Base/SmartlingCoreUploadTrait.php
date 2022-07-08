@@ -88,7 +88,7 @@ trait SmartlingCoreUploadTrait
     private function createTargetContent(SubmissionEntity $submission): SubmissionEntity
     {
         $submission = $this->getFunctionProxyHelper()->apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $submission);
-        if (!$submission instanceof SubmissionEntity) {
+        if (!($submission instanceof SubmissionEntity)) {
             $this->getLogger()->critical('Submission not instance of ' . SubmissionEntity::class . ' after filter ' . ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT) . '. This is most likely due to an error outside of the plugins code.';
         }
 
