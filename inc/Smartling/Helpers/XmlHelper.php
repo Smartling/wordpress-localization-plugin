@@ -84,7 +84,7 @@ class XmlHelper
                     ShortcodeHelper::getMaskRegexp(),
                 ]
             ),
-            'smartling.placeholder_format_custom = #sl-start#.+#sl-end#',
+            'smartling.placeholder_format_custom = #sl-start#.+?#sl-end#',
         ];
 
         foreach ($additionalComments as $extraComment) {

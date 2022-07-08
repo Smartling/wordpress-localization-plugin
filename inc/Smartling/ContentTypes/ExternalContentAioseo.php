@@ -15,6 +15,7 @@ use Smartling\Submissions\SubmissionEntity;
 class ExternalContentAioseo implements ContentTypePluggableInterface
 {
     private FieldsFilterHelper $fieldsFilterHelper;
+    private PlaceholderHelper $placeholderHelper;
     private SiteHelper $siteHelper;
     private SmartlingToCMSDatabaseAccessWrapperInterface $db;
     private array $intFields = [
@@ -67,10 +68,16 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
         'og_article_section',
     ];
 
-    public function __construct(SiteHelper $siteHelper, SmartlingToCMSDatabaseAccessWrapperInterface $db, FieldsFilterHelper $fieldsFilterHelper)
+    public function __construct(
+        PlaceholderHelper $placeholderHelper,
+        SiteHelper $siteHelper,
+        SmartlingToCMSDatabaseAccessWrapperInterface $db,
+        FieldsFilterHelper $fieldsFilterHelper
+    )
     {
         $this->db = $db;
         $this->fieldsFilterHelper = $fieldsFilterHelper;
+        $this->placeholderHelper = $placeholderHelper;
         $this->siteHelper = $siteHelper;
     }
 
@@ -116,7 +123,7 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
         }
         foreach ($this->tagFields as $field) {
             if (array_key_exists($field, $content)) {
-                $content[$field] = $this->joinTagField($content[$field]);
+                $content[$field] = $this->removePlaceholders($content[$field]);
             }
         }
         unset($content['id']);
@@ -132,58 +139,21 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
         });
     }
 
-    public function joinTagField(?array $array): ?string
+    public function removePlaceholders(?string $string): ?string
     {
-        if ($array === null) {
+        if ($string === null) {
             return null;
         }
-        $result = [];
-        foreach ($array as $item) {
-            $result[] = preg_replace('~^' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '|' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END . '$~', '', $item);
-        }
-
-        return implode(' ', $result);
+        return $this->placeholderHelper->removePlaceholders($string);
     }
 
-    public function splitTagField(?string $string): array
+    public function addPlaceholders(?string $string): ?string
     {
-        $currentItem = 0;
-        $previousIsTag = null;
-        $result = [];
-        $parts = [];
-        $split = explode(' ', $string);
-        if (count($split) === 1) {
-            return [$this->convertTagFieldParts($split)];
+        if ($string === null) {
+            return null;
         }
 
-        foreach ($split as $item) {
-            ++$currentItem;
-            $lastItem = $currentItem === count($split);
-            $currentIsTag = $this->isTag($item);
-
-            if ($lastItem || ($previousIsTag !== null && ($currentIsTag !== $previousIsTag))) {
-                if ($lastItem && $currentIsTag === $previousIsTag) {
-                    $parts[] = $item;
-                }
-                $result[] = $this->convertTagFieldParts($parts);
-                $parts = [];
-                if ($lastItem && $currentIsTag !== $previousIsTag) {
-                    $result[] = $this->convertTagFieldParts([$item]);
-                }
-            }
-
-            $previousIsTag = $currentIsTag;
-            $parts[] = $item;
-        }
-
-        return $this->fieldsFilterHelper->flattenArray($result);
-    }
-
-    private function convertTagFieldParts(array $parts): string
-    {
-        return $this->isTag($parts[0] ?? '') ?
-            PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . implode(' ', $parts) . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END :
-            implode(' ', $parts);
+        return preg_replace('~(#[a-z_]+)~i', $this->placeholderHelper->addPlaceholders('$1'), $string);
     }
 
     public function transformContentForUpload(array $content): array
@@ -192,7 +162,7 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
             unset($content[$field]);
         }
         foreach ($this->tagFields as $field) {
-            $content[$field] = $this->splitTagField($content[$field]);
+            $content[$field] = $this->addPlaceholders($content[$field]);
         }
         foreach ($this->jsonFields as $field) {
             try {
