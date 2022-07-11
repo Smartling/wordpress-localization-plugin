@@ -145,7 +145,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
                     )
                 );
                 $this->getLogger()->debug(vsprintf('Removing subnode. Name=\'%s\', Contents: \'%s\'', [
-                    static::SHORTCODE_SUBSTRING_NODE_NAME,
+                    self::SHORTCODE_SUBSTRING_NODE_NAME,
                     var_export($translation, true),
                 ]));
                 $node->removeChild($cNode);
@@ -191,8 +191,8 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         $string = static::getCdata($node);
         $string = preg_replace(vsprintf('/%s\[/', [PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START]), '[', $string);
         $string = preg_replace(vsprintf('/\]%s/', [PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END]), ']', $string);
-        $string = preg_replace(vsprintf('/\]%s/', [static::SMARTLING_SHORTCODE_MASK_OLD]), ']', $string);
-        $string = preg_replace(vsprintf('/%s\[/', [static::SMARTLING_SHORTCODE_MASK_OLD]), '[', $string);
+        $string = preg_replace(vsprintf('/\]%s/', [self::SMARTLING_SHORTCODE_MASK_OLD]), ']', $string);
+        $string = preg_replace(vsprintf('/%s\[/', [self::SMARTLING_SHORTCODE_MASK_OLD]), '[', $string);
         static::replaceCData($node, $string);
     }
 
