@@ -107,11 +107,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         return false;
     }
 
-    /**
-     * @param DOMNode $node
-     * @return array
-     */
-    public function extractTranslations(DOMNode $node)
+    public function extractTranslations(DOMNode $node): array
     {
         $translations = [];
 
@@ -151,6 +147,8 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
                 $node->removeChild($cNode);
             }
         }
+
+        return $translations;
     }
 
     /**
@@ -366,9 +364,9 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     {
         if (function_exists('esc_attr')) {
             return esc_attr($data);
-        } else {
-            return htmlspecialchars($data);
         }
+
+        return htmlspecialchars($data);
     }
 
     /**
@@ -414,7 +412,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     /**
      * Applies translation to shortcodes
      *
-     * @param string $attr
+     * @param mixed $attr
      * @param string $content
      * @param string $name
      *
