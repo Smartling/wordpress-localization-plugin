@@ -79,11 +79,12 @@ class XmlHelper
             'Smartling Wordpress Connector version: ' . Bootstrap::getCurrentVersion(),
             'Wordpress installation host: ' . Bootstrap::getHttpHostName(),
             vsprintf(
-                ' smartling.placeholder_format_custom = %s ',
+                'smartling.placeholder_format_custom = %s',
                 [
                     ShortcodeHelper::getMaskRegexp(),
                 ]
             ),
+            'smartling.placeholder_format_custom = #sl-start#.+?#sl-end#',
         ];
 
         foreach ($additionalComments as $extraComment) {
