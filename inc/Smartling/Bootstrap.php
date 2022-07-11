@@ -33,6 +33,8 @@ class Bootstrap
     use DebugTrait;
     use DITrait;
 
+    private const WORDPRESS_ORG_PLUGIN_NAME = 'smartling-connector';
+
     /**
      * @var LoggerInterface
      */
@@ -304,7 +306,6 @@ class Bootstrap
 
     private function testUpdates(): void
     {
-        $staticSlug = $this->fromContainer('plugin.name', true);
         $cur_version = static::$pluginVersion;
         $new_version = '0.0.0';
 
@@ -313,7 +314,7 @@ class Bootstrap
             $response = $info->response;
             if (is_array($response)) {
                 foreach ($response as $definition) {
-                    if ($staticSlug !== $definition->slug) {
+                    if (self::WORDPRESS_ORG_PLUGIN_NAME !== $definition->slug) {
                         continue;
                     }
                     $new_version = $definition->new_version;
@@ -325,7 +326,7 @@ class Bootstrap
             if (!function_exists('plugins_api')) {
                 require_once(ABSPATH . 'wp-admin/includes/plugin-install.php');
             }
-            $args = ['slug' => $staticSlug, 'fields' => ['version' => true]];
+            $args = ['slug' => self::WORDPRESS_ORG_PLUGIN_NAME, 'fields' => ['version' => true]];
             $response = plugins_api('plugin_information', $args);
 
             if (is_wp_error($response)) {

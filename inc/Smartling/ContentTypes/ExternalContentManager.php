@@ -32,7 +32,11 @@ class ExternalContentManager
         foreach ($this->handlers as $handler) {
             if ($this->pluginHelper->canHandleExternalContent($handler)) {
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get fields");
-                $source[$handler->getPluginId()] = $handler->getContentFields($submission, $raw);
+                try {
+                    $source[$handler->getPluginId()] = $handler->getContentFields($submission, $raw);
+                } catch (\Error $e) {
+                    $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to get external content: ' . $e->getMessage());
+                }
             }
         }
 
@@ -44,7 +48,11 @@ class ExternalContentManager
         foreach ($this->handlers as $handler) {
             if (array_key_exists($handler->getPluginId(), $content) && $this->pluginHelper->canHandleExternalContent($handler)) {
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to set fields");
-                $handler->setContentFields($content[$handler->getPluginId()], $submission);
+                try {
+                    $handler->setContentFields($content[$handler->getPluginId()], $submission);
+                } catch (\Error $e) {
+                    $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to set external content: ' . $e->getMessage());
+                }
             }
         }
     }
