@@ -10,27 +10,39 @@ use Smartling\Helpers\PlaceholderHelper;
 use Smartling\Helpers\SiteHelper;
 
 class ExternalContentAioseoTest extends TestCase {
-    public function testProcessContent()
+    private PlaceholderHelper $placeholderHelper;
+    public function __construct($name = null, array $data = [], $dataName = '')
     {
+        parent::__construct($name, $data, $dataName);
+        $this->placeholderHelper = new PlaceholderHelper();
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
         if (!defined('OBJECT')) {
             define('OBJECT', 'OBJECT');
         }
+    }
+
+    public function testProcessContent()
+    {
         $x = $this->getExternalContentAioseo();
 
         $this->assertEquals([
-            'title' => [PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#post_title #separator_sa #site_title' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END],
-            'description' => [PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#post_excerpt' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END],
+            'title' => implode(' ', [$this->placeholderHelper->addPlaceholders('#post_title'), $this->placeholderHelper->addPlaceholders('#separator_sa'), $this->placeholderHelper->addPlaceholders('#site_title')]),
+            'description' => PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#post_excerpt' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END,
             'keywords' => [],
             'keyphrases' => ['focus/keyphrase' => 'Focus keyphrase'],
             'canonical_url' => null,
-            'og_title' => ['FB Title'],
-            'og_description' => ['FB Description'],
+            'og_title' => 'FB Title',
+            'og_description' => 'FB Description',
             'og_image_url' => null,
             'og_image_custom_url' => null,
             'og_image_custom_fields' => null,
             'og_video' => '',
             'og_custom_url' => null,
-            'og_article_section' => ['Article seo section'],
+            'og_article_section' => 'Article seo section',
             'og_article_tags' => [
                 '0/label' => 'Seo tag',
                 '0/value' => 'Seo tag'
@@ -54,9 +66,6 @@ class ExternalContentAioseoTest extends TestCase {
     
     public function testSplitTagField()
     {
-        if (!defined('OBJECT')) {
-            define('OBJECT', 'OBJECT');
-        }
         $x = $this->getExternalContentAioseo();
         $this->assertEquals(null, $x->addPlaceholders(null));
         $this->assertEquals('', $x->addPlaceholders(''));
@@ -71,26 +80,6 @@ class ExternalContentAioseoTest extends TestCase {
             ' Translation content in the middle ' .
             PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#separator_sa' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END,
         $x->addPlaceholders('#post_excerpt Translation content in the middle #separator_sa'));
-    }
-
-    public function testJoinTagField()
-    {
-        if (!defined('OBJECT')) {
-            define('OBJECT', 'OBJECT');
-        }
-        $x = $this->getExternalContentAioseo();
-        $this->assertNull($x->removePlaceholders(null));
-        $this->assertEquals('', $x->removePlaceholders(''));
-        $this->assertEquals('#Content', $x->removePlaceholders(PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#Content' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END));
-        $this->assertEquals('#post_title #separator_sa #site_title Post title edited', $x->removePlaceholders(
-            PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#post_title #separator_sa #site_title' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END .
-            ' Post title edited'
-        ));
-        $this->assertEquals('#post_excerpt Translation content in the middle #separator_sa', $x->removePlaceholders(
-            PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#post_excerpt' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END .
-            ' Translation content in the middle ' .
-            PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#separator_sa' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END
-        ));
     }
 
     private function getExternalContentAioseo(): ExternalContentAioseo
