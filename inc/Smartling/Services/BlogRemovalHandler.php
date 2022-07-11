@@ -119,7 +119,7 @@ class BlogRemovalHandler implements WPHookInterface
         $submissions = $this->getSubmissions($blogId);
 
         if (0 < count($submissions)) {
-            $this->getLogger()->debug(
+            $this->getLogger()->info(
                 vsprintf(
                     'While deleting blog id=%d found %d translations.', [$blogId, count($submissions)]
                 )
@@ -127,7 +127,7 @@ class BlogRemovalHandler implements WPHookInterface
 
             foreach ($submissions as $submission)
             {
-                $this->getLogger()->debug(
+                $this->getLogger()->info(
                     vsprintf(
                         'Deleting submission id=%d that references deleted blog %d.', [$submission->getId(), $blogId]
                     )
@@ -135,7 +135,7 @@ class BlogRemovalHandler implements WPHookInterface
                 $this->getSubmissionManager()->delete($submission);
 
                 if ('' !== $submission->getStateFieldFileUri() && 0 === $this->getSubmissionCountByFileUri($submission->getFileUri())) {
-                    $this->getLogger()->debug(
+                    $this->getLogger()->notice(
                         vsprintf(
                             'File %s is not in use and will be deleted', [$submission->getFileUri()]
                         )

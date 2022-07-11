@@ -9,6 +9,7 @@ use Smartling\Submissions\SubmissionEntity;
 class ExternalContentManager
 {
     use LoggerSafeTrait;
+
     /**
      * @var ContentTypePluggableInterface[] $handlers
      */
@@ -30,6 +31,7 @@ class ExternalContentManager
     {
         foreach ($this->handlers as $handler) {
             if ($this->pluginHelper->canHandleExternalContent($handler)) {
+                $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get fields");
                 try {
                     $source[$handler->getPluginId()] = $handler->getContentFields($submission, $raw);
                 } catch (\Error $e) {
@@ -45,6 +47,7 @@ class ExternalContentManager
     {
         foreach ($this->handlers as $handler) {
             if (array_key_exists($handler->getPluginId(), $content) && $this->pluginHelper->canHandleExternalContent($handler)) {
+                $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to set fields");
                 try {
                     $handler->setContentFields($content[$handler->getPluginId()], $submission);
                 } catch (\Error $e) {
