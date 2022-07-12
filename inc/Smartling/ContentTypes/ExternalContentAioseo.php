@@ -4,6 +4,7 @@ namespace Smartling\ContentTypes;
 
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Helpers\PlaceholderHelper;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
@@ -14,6 +15,7 @@ use Smartling\Submissions\SubmissionEntity;
 class ExternalContentAioseo implements ContentTypePluggableInterface
 {
     private FieldsFilterHelper $fieldsFilterHelper;
+    private PlaceholderHelper $placeholderHelper;
     private SiteHelper $siteHelper;
     private SmartlingToCMSDatabaseAccessWrapperInterface $db;
     private array $intFields = [
@@ -58,7 +60,7 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
         'videos',
         'video_thumbnail',
     ];
-    private array $stripTagsFields = [
+    private array $tagFields = [
         'title',
         'description',
         'og_title',
@@ -66,10 +68,16 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
         'og_article_section',
     ];
 
-    public function __construct(SiteHelper $siteHelper, SmartlingToCMSDatabaseAccessWrapperInterface $db, FieldsFilterHelper $fieldsFilterHelper)
+    public function __construct(
+        PlaceholderHelper $placeholderHelper,
+        SiteHelper $siteHelper,
+        SmartlingToCMSDatabaseAccessWrapperInterface $db,
+        FieldsFilterHelper $fieldsFilterHelper
+    )
     {
         $this->db = $db;
         $this->fieldsFilterHelper = $fieldsFilterHelper;
+        $this->placeholderHelper = $placeholderHelper;
         $this->siteHelper = $siteHelper;
     }
 
@@ -113,6 +121,11 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
                 $content[$field] = json_encode($content[$field], JSON_THROW_ON_ERROR);
             }
         }
+        foreach ($this->tagFields as $field) {
+            if (array_key_exists($field, $content)) {
+                $content[$field] = $this->placeholderHelper->removePlaceholders($content[$field] ?? '');
+            }
+        }
         unset($content['id']);
         $content['post_id'] = $submission->getTargetId();
         $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($content, $submission) {
@@ -126,20 +139,13 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
         });
     }
 
-    public function stripTags(?string $string): ?string
+    public function addPlaceholders(?string $string): ?string
     {
         if ($string === null) {
             return null;
         }
-        $parts = explode(' ', $string);
-        $result = [];
-        foreach ($parts as $part) {
-            if (strpos($part, '#') !== 0) {
-                $result[] = $part;
-            }
-        }
 
-        return implode(' ', $result);
+        return preg_replace('~(#[a-z_]+)~i', $this->placeholderHelper->addPlaceholders('$1'), $string);
     }
 
     public function transformContentForUpload(array $content): array
@@ -147,8 +153,8 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
         foreach ($this->removeFields as $field) {
             unset($content[$field]);
         }
-        foreach ($this->stripTagsFields as $field) {
-            $content[$field] = $this->stripTags($content[$field]);
+        foreach ($this->tagFields as $field) {
+            $content[$field] = $this->addPlaceholders($content[$field]);
         }
         foreach ($this->jsonFields as $field) {
             try {

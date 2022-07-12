@@ -44,6 +44,9 @@ services:
       - "@factory.contentIO"
       - "@site.helper"
 
+  helper.placeholders:
+    class: Smartling\Helpers\PlaceholderHelper
+
   helper.plugins:
     class: Smartling\Helpers\PluginHelper
 
@@ -77,6 +80,7 @@ services:
   content.aioseo:
     class: Smartling\ContentTypes\ExternalContentAioseo
     arguments:
+      - "@helper.placeholders"
       - "@site.helper"
       - "@site.db"
       - "@fields-filter.helper"
