@@ -85,6 +85,9 @@ services:
       - "@site.db"
       - "@fields-filter.helper"
 
+  content.elementor:
+    class: Smartling\ContentTypes\ExternalContentElementor
+
   content.relations.handler:
     class: Smartling\Services\ContentRelationsHandler
     arguments:
@@ -121,6 +124,7 @@ services:
       - "@helper.plugins"
     calls:
       - ["addHandler", ["@content.aioseo"]]
+      - ["addHandler", ["@content.elementor"]]
 
   manager.job:
     class: Smartling\Jobs\JobManager

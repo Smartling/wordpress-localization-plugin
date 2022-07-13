@@ -35,6 +35,13 @@ class ExternalContentManager
                 } catch (\Error $e) {
                     $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to get external content: ' . $e->getMessage());
                 }
+                if ($handler instanceof ContentTypeModifyingInterface) {
+                    try {
+                        $source = $handler->alterContentFields($source);
+                    } catch (\Error $e) {
+                        $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to alter content fields: ' . $e->getMessage());
+                    }
+                }
             }
         }
 
