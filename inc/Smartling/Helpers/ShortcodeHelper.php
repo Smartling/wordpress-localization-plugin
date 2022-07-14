@@ -151,14 +151,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         return $translations;
     }
 
-    /**
-     * Filter handler
-     *
-     * @param TranslationStringFilterParameters $params
-     *
-     * @return TranslationStringFilterParameters
-     */
-    public function processTranslation(TranslationStringFilterParameters $params)
+    public function processTranslation(TranslationStringFilterParameters $params): TranslationStringFilterParameters
     {
         $this->resetInternalState();
         $this->setParams($params);
@@ -219,14 +212,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         $this->setShortcodeAssignments($activeShortcodeAssignments);
     }
 
-    /**
-     * Filter handler
-     *
-     * @param TranslationStringFilterParameters $params
-     *
-     * @return TranslationStringFilterParameters
-     */
-    public function processString(TranslationStringFilterParameters $params)
+    public function processString(TranslationStringFilterParameters $params): TranslationStringFilterParameters
     {
         $this->resetInternalState();
         $this->setParams($params);
@@ -444,7 +430,11 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     {
         $shortcodes = array_keys($this->getShortcodeAssignments());
         try {
-            $shortcodes = array_merge($shortcodes, apply_filters(ExportedAPI::FILTER_SMARTLING_INJECT_SHORTCODE, []));
+            $injectedShortcodes = apply_filters(ExportedAPI::FILTER_SMARTLING_INJECT_SHORTCODE, []);
+            if (!is_array($injectedShortcodes)) {
+                $this->getLogger()->critical('Injected shortcodes not an array after filter ' . ExportedAPI::FILTER_SMARTLING_INJECT_SHORTCODE . '. This is most likely due to an error outside of the plugins code.');
+            }
+            $shortcodes = array_merge($shortcodes, $injectedShortcodes);
         } catch (\Exception $e) {
             $this->getLogger()->warning(
                 vsprintf(

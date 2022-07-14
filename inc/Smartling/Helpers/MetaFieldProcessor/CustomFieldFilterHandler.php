@@ -23,25 +23,20 @@ class CustomFieldFilterHandler
     {
         self::getLogger()->debug(vsprintf('Registering filter for config: %s', [var_export($config, true)]));
         $parser = new FieldFilterConfigParser($config, $di);
-        self::getLogger()->debug(vsprintf('Validating filter...', []));
-        $isValid = $parser->getValidFiler();
-        if (true === $isValid) {
+        self::getLogger()->debug('Validating filter...');
+        if (true === $parser->isValidFiler()) {
             static::$filters[] = $config;
             $filter = $parser->getFilter();
-            self::getLogger()->debug(vsprintf('Adding filter for config: %s', [var_export($config, true)]));
+            self::getLogger()->debug('Adding filter...');
             $di->get('meta-field.processor.manager')->registerProcessor($filter);
-        } else {
-            self::getLogger()->warning
-            (vsprintf('Filter isn\'t added. Filter isn\'t valid for config: %s', [var_export($config, true)])
-            );
         }
     }
 
     public static function getProcessor(ContainerBuilder $di, array $config)
     {
         $parser = new FieldFilterConfigParser($config, $di);
-        self::getLogger()->warning(vsprintf('looking for processor for config: %s', [var_export($config, true)]));
-        if (true === $isValid = $parser->getValidFiler()) {
+        self::getLogger()->debug(vsprintf('looking for processor for config: %s', [var_export($config, true)]));
+        if (true === $parser->isValidFiler()) {
             return $parser->getFilter();
         }
 
