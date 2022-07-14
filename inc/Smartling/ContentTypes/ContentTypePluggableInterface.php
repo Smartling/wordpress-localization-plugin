@@ -16,5 +16,5 @@ interface ContentTypePluggableInterface
 
     public function getPluginPath(): string;
 
-    public function setContentFields(array $content, SubmissionEntity $submission): void;
+    public function setContentFields(array $content, SubmissionEntity $submission): ?array;
 }

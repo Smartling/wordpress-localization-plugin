@@ -114,7 +114,7 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
         return 'all-in-one-seo-pack/all_in_one_seo_pack.php';
     }
 
-    public function setContentFields(array $content, SubmissionEntity $submission): void
+    public function setContentFields(array $content, SubmissionEntity $submission): ?array
     {
         foreach ($this->jsonFields as $field) {
             if (array_key_exists($field, $content)) {
@@ -137,6 +137,8 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
                 $this->db->query(QueryBuilder::buildUpdateQuery($this->db->getPrefix() . 'aioseo_posts', $content, $conditionBlock));
             }
         });
+
+        return null;
     }
 
     public function addPlaceholders(?string $string): ?string

@@ -2,26 +2,18 @@
 
 namespace Smartling\ContentTypes;
 
-use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
-use Smartling\Helpers\FieldsFilterHelper;
-use Smartling\Helpers\PlaceholderHelper;
-use Smartling\Helpers\QueryBuilder\Condition\Condition;
-use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
-use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
-use Smartling\Helpers\QueryBuilder\QueryBuilder;
-use Smartling\Helpers\SiteHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 class ExternalContentElementor implements ContentTypeModifyingInterface
 {
     public function getContentFields(SubmissionEntity $submission, bool $raw): array
     {
-        return [];
+        return json_decode($source['meta']['_elementor_data'] ?? '[]', true, 512, JSON_THROW_ON_ERROR);
     }
 
     public function getMaxVersion(): string
     {
-        return '3.4';
+        return '3.6';
     }
 
     public function getMinVersion(): string
@@ -39,13 +31,15 @@ class ExternalContentElementor implements ContentTypeModifyingInterface
         return 'elementor/elementor.php';
     }
 
-    public function setContentFields(array $content, SubmissionEntity $submission): void
+    public function setContentFields(array $content, SubmissionEntity $submission): array
     {
+        $content['meta']['_elementor_data'] = json_encode($content['elementor'], JSON_THROW_ON_ERROR);
+        return $content;
     }
 
     public function alterContentFields(array $source): array
     {
-        unset($source['post_content']);
+        unset($source['meta']['_elementor_data']);
         return $source;
     }
 }
