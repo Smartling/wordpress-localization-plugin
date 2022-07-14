@@ -495,6 +495,7 @@ class SubmissionManager extends EntityManagerAbstract
             $entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
             $entity->setSubmitter(WordpressUserHelper::getUserLogin());
             $entity->setSourceTitle('no title');
+            $entity->setCreatedAt(DateTimeHelper::nowAsString());
         }
 
         return $entity;
