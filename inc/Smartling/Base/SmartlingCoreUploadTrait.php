@@ -504,6 +504,7 @@ trait SmartlingCoreUploadTrait
                     foreach ($submissions as $_submission) {
                         $_submission->setBatchUid('');
                         $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
+                        $_submission->setSubmissionDate(DateTimeHelper::nowAsString());
                     }
                 } else {
                     LiveNotificationController::pushNotification(
