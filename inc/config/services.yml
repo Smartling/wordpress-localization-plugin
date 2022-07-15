@@ -87,6 +87,8 @@ services:
 
   content.elementor:
     class: Smartling\ContentTypes\ExternalContentElementor
+    arguments:
+      - "@wp.proxy"
 
   content.relations.handler:
     class: Smartling\Services\ContentRelationsHandler

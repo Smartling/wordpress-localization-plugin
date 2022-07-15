@@ -126,12 +126,14 @@ class LocalizationRulesTableWidget extends \WP_List_Table
         $this->manager->loadData();
         $managedFilters = [];
         foreach ($this->manager as $id => $filter) {
-            $managedFilters[$filter['pattern']] = [
-                'id'      => $id,
-                'pattern' => $filter['pattern'],
-                'action'  => $filter['action'],
-                'type'    => $filter['type'],
-            ];
+            if (array_key_exists('pattern', $filter)) {
+                $managedFilters[$filter['pattern']] = [
+                    'id' => $id,
+                    'pattern' => $filter['pattern'],
+                    'action' => $filter['action'],
+                    'type' => $filter['type'],
+                ];
+            }
         }
 
         $this->_column_headers = [$this->get_columns(), [], []];
@@ -142,7 +144,7 @@ class LocalizationRulesTableWidget extends \WP_List_Table
                 'id'      => $i,
                 'pattern' => $filter['pattern'],
                 'action'  => $filter['action'],
-                'type'    => $filter['type'],
+                'type'    => $filter['type'] ?? '',
             ];
 
             if (array_key_exists($filter['pattern'], $managedFilters)) {

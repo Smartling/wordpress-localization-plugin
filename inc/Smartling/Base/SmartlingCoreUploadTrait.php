@@ -252,7 +252,7 @@ trait SmartlingCoreUploadTrait
             do_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
             $translation = $this->processPostContentBlocks($targetContent, $original, $translation, $submission, $postContentHelper, $lockedData['entity']);
             $translation = apply_filters(ExportedAPI::FILTER_BEFORE_TRANSLATION_APPLIED, $translation, $lockedData, $submission);
-            $translation = $this->externalContentManager->setExternalContent($translation, $submission);
+            $translation = $this->externalContentManager->setExternalContent($original, $translation, $submission);
             $this->setValues($targetContent, $translation['entity'] ?? []);
             $configurationProfile = $this->getSettingsManager()
                 ->getSingleSettingsProfile($submission->getSourceBlogId());

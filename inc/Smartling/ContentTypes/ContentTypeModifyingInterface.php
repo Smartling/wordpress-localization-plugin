@@ -4,5 +4,5 @@ namespace Smartling\ContentTypes;
 
 interface ContentTypeModifyingInterface extends ContentTypePluggableInterface
 {
-    public function alterContentFields(array $source): array;
+    public function alterContentFieldsForUpload(array $source): array;
 }
