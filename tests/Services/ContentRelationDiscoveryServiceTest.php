@@ -7,7 +7,7 @@ namespace {
     if (!function_exists('apply_filters')) {
         /** @noinspection PhpUnusedParameterInspection */
         function apply_filters($a, ...$b) {
-            return $b;
+            return $b[0];
         }
     }
 }

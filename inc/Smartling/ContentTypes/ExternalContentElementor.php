@@ -9,11 +9,6 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 {
     private WordpressFunctionProxyHelper $wpProxy;
 
-    public function __construct(WordpressFunctionProxyHelper $wpProxy)
-    {
-        $this->wpProxy = $wpProxy;
-    }
-
     private array $removeOnUploadFields = [
         'entity' => [
             'post_content',
@@ -113,6 +108,24 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         'user_placeholder',
     ];
 
+    public function __construct(WordpressFunctionProxyHelper $wpProxy)
+    {
+        $this->wpProxy = $wpProxy;
+    }
+
+    public function alterContentFieldsForUpload(array $source): array
+    {
+        foreach ($this->removeOnUploadFields as $key => $value) {
+            if (array_key_exists($key, $source)) {
+                foreach ($value as $field) {
+                    unset($source[$key][$field]);
+                }
+            }
+        }
+
+        return $source;
+    }
+
     private function extractElementorData(array $data, string $prefix = ''): array {
         $result = [];
         foreach ($data as $component) {
@@ -182,18 +195,5 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         $translation['meta']['_elementor_data'] = json_encode($translation[$this->getPluginId()], JSON_THROW_ON_ERROR);
         unset($translation[$this->getPluginId()]);
         return $translation;
-    }
-
-    public function alterContentFieldsForUpload(array $source): array
-    {
-        foreach ($this->removeOnUploadFields as $key => $value) {
-            if (array_key_exists($key, $source)) {
-                foreach ($value as $field) {
-                    unset($source[$key][$field]);
-                }
-            }
-        }
-
-        return $source;
     }
 }
