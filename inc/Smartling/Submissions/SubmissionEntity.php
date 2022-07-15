@@ -91,6 +91,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
     public const FIELD_LAST_ERROR = 'last_error';
     public const FIELD_BATCH_UID = 'batch_uid';
     public const FIELD_LOCKED_FIELDS = 'locked_fields';
+    public const FIELD_CREATED_AT = 'created_at';
 
     public const VIRTUAL_FIELD_JOB_LINK = 'job_link';
 
@@ -125,6 +126,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
             static::FIELD_LAST_ERROR => static::DB_TYPE_STRING_TEXT,
             static::FIELD_BATCH_UID => static::DB_TYPE_STRING_64 . ' ' . static::DB_TYPE_DEFAULT_EMPTYSTRING,
             static::FIELD_LOCKED_FIELDS => 'TEXT NULL',
+            static::FIELD_CREATED_AT => static::DB_TYPE_DATETIME,
         ];
     }
 
@@ -564,12 +566,24 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return $this;
     }
 
+    public function getCreatedAt(): ?string
+    {
+        return $this->stateFields[static::FIELD_CREATED_AT];
+    }
+
+    public function setCreatedAt(?string $createdAt): self
+    {
+        $this->stateFields[static::FIELD_CREATED_AT] = $createdAt;
+
+        return $this;
+    }
+
     public function getSubmissionDate(): string
     {
         return (string)$this->stateFields[static::FIELD_SUBMISSION_DATE];
     }
 
-    public function setSubmissionDate(string $submission_date): SubmissionEntity
+    public function setSubmissionDate(?string $submission_date): SubmissionEntity
     {
         $this->stateFields[static::FIELD_SUBMISSION_DATE] = $submission_date;
 

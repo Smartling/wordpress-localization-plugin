@@ -7,11 +7,11 @@ class StringHelper
     private const EMPTY_STRING = '';
 
     /**
-     * @param mixed $string
+     * @param mixed $value
      */
-    public static function isNullOrEmpty($string): bool
+    public static function isNullOrEmpty($value): bool
     {
-        return in_array($string, [false, null, self::EMPTY_STRING], true);
+        return in_array($value, [false, null, self::EMPTY_STRING], true);
     }
 
     public static function buildPattern(string $pattern, string $borders = '/', string $modifiers = 'ius'): string
