@@ -11,6 +11,8 @@ use Smartling\Submissions\SubmissionEntity;
 class ExternalContentElementor extends ExternalContentAbstract implements ContentTypeModifyingInterface
 {
     use LoggerSafeTrait;
+
+    private FieldsFilterHelper $fieldsFilterHelper;
     private WordpressFunctionProxyHelper $wpProxy;
 
     private array $removeOnUploadFields = [
@@ -112,8 +114,9 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         'user_placeholder',
     ];
 
-    public function __construct(WordpressFunctionProxyHelper $wpProxy)
+    public function __construct(FieldsFilterHelper $fieldsFilterHelper, WordpressFunctionProxyHelper $wpProxy)
     {
+        $this->fieldsFilterHelper = $fieldsFilterHelper;
         $this->wpProxy = $wpProxy;
     }
 
@@ -199,10 +202,10 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         throw new EntityNotFoundException();
     }
 
-    private function mergeElementorData(array $original, array $translation, SubmissionEntity $submission, string $prefix = ''): array
+    private function mergeElementorData(array $original, array $translation, SubmissionEntity $submission, string $previousPrefix = ''): array
     {
         foreach ($original as $componentIndex => $component) {
-            $prefix .= $component['id'];
+            $prefix = $previousPrefix . $component['id'];
             if (array_key_exists('elements', $component)) {
                 $original[$componentIndex]['elements'] = $this->mergeElementorData($component['elements'], $translation, $submission, $prefix . FieldsFilterHelper::ARRAY_DIVIDER);
             }
@@ -260,7 +263,11 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     public function setContentFields(array $original, array $translation, SubmissionEntity $submission): array
     {
-        $translation['meta']['_elementor_data'] = json_encode($this->mergeElementorData(json_decode($original['meta']['_elementor_data'] ?? '[]', true, 512, JSON_THROW_ON_ERROR), $translation[$this->getPluginId()] ?? [], $submission, ''), JSON_THROW_ON_ERROR);
+        $translation['meta']['_elementor_data'] = addslashes(json_encode($this->mergeElementorData(
+            json_decode($original['meta']['_elementor_data'] ?? '[]', true, 512, JSON_THROW_ON_ERROR),
+            $this->fieldsFilterHelper->flattenArray($translation[$this->getPluginId()] ?? []),
+            $submission,
+            ''), JSON_THROW_ON_ERROR));
         unset($translation[$this->getPluginId()]);
         return $translation;
     }

@@ -88,6 +88,7 @@ services:
   content.elementor:
     class: Smartling\ContentTypes\ExternalContentElementor
     arguments:
+      - "@fields-filter.helper"
       - "@wp.proxy"
 
   content.relations.handler:
