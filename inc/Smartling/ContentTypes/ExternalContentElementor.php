@@ -2,11 +2,15 @@
 
 namespace Smartling\ContentTypes;
 
+use Smartling\Exception\EntityNotFoundException;
+use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 class ExternalContentElementor extends ExternalContentAbstract implements ContentTypeModifyingInterface
 {
+    use LoggerSafeTrait;
     private WordpressFunctionProxyHelper $wpProxy;
 
     private array $removeOnUploadFields = [
@@ -131,7 +135,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         foreach ($data as $component) {
             $prefix .= $component['id'];
             if (isset($component['elements'])) {
-                $result = array_merge($result, $this->extractElementorData($component['elements'], $prefix . '/'));
+                $result = array_merge($result, $this->extractElementorData($component['elements'], $prefix . FieldsFilterHelper::ARRAY_DIVIDER));
             }
             if (isset($component['settings'])) {
                 foreach ($component['settings'] as $key => $setting) {
@@ -147,15 +151,15 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
                                 foreach ($options as $optionKey => $optionValue) {
                                     if (in_array($optionKey, $this->translatableFields, true)) {
-                                        $result[$prefix . '/' . $key . '/' . $option['_id'] . '/' . $optionKey] = $optionValue;
+                                        $result[implode(FieldsFilterHelper::ARRAY_DIVIDER, [$prefix, $key, $option['_id'], $optionKey])] = $optionValue;
                                     }
                                 }
                             } else if (in_array($id, $this->translatableFields, true)) {
-                                $result[$prefix . '/' . $key . '/' . $id] = $option;
+                                $result[implode(FieldsFilterHelper::ARRAY_DIVIDER, [$prefix, $key, $id])] = $option;
                             }
                         }
                     } else if (in_array($key, $this->translatableFields, true)) {
-                        $result[$prefix . '/' . $key] = $setting;
+                        $result[$prefix . FieldsFilterHelper::ARRAY_DIVIDER . $key] = $setting;
                     }
                 }
             }
@@ -190,9 +194,73 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return 'elementor/elementor.php';
     }
 
+    private function getTargetAttachmentId(SubmissionEntity $submission, int $attachmentId): int
+    {
+        throw new EntityNotFoundException();
+    }
+
+    private function mergeElementorData(array $original, array $translation, SubmissionEntity $submission, string $prefix = ''): array
+    {
+        foreach ($original as $componentIndex => $component) {
+            $prefix .= $component['id'];
+            if (array_key_exists('elements', $component)) {
+                $original[$componentIndex]['elements'] = $this->mergeElementorData($component['elements'], $translation, $submission, $prefix . FieldsFilterHelper::ARRAY_DIVIDER);
+            }
+            if (array_key_exists('settings', $component)) {
+                foreach($component['settings'] as $settingIndex => $setting) {
+                    if (strpos($settingIndex, '_') === 0) {
+                        continue;
+                    }
+                    if (is_array($setting)) {
+                        if (array_key_exists('id', $setting) && array_key_exists('url', $setting)) {
+                            try {
+                                $original[$componentIndex]['settings'][$settingIndex] = $this->getTargetAttachmentId($submission, $setting['id']);
+                            } catch (EntityNotFoundException $e) {
+                                $this->getLogger()->info('No submission found, skipped changing id for attachmentId=' . $setting['id']);
+                            }
+                        } else {
+                            foreach ($setting as $optionIndex => $option) {
+                                if (is_array($option)) {
+                                    foreach ($option as $optionsIndex => $optionValue) {
+                                        if (strpos($optionsIndex, '_') === 0) {
+                                            continue;
+                                        }
+                                        $key = implode(FieldsFilterHelper::ARRAY_DIVIDER, [$prefix, $settingIndex, $option['_id'], $optionsIndex]);
+                                        $element = $original[$componentIndex]['settings'][$settingIndex][$optionIndex][$optionsIndex];
+                                        if (is_array($element) && array_key_exists('id', $element) && array_key_exists('url', $element)) {
+                                            try {
+                                                $original[$componentIndex]['settings'][$settingIndex][$optionIndex][$optionsIndex] = $this->getTargetAttachmentId($submission, $element['id']);
+                                            } catch (EntityNotFoundException $e) {
+                                                $this->getLogger()->info('No submission found, skipped changing id for attachmentId=' . $setting['id']);
+                                            }
+                                        } else if (array_key_exists($key, $translation) && in_array($optionsIndex, $this->translatableFields, true)) {
+                                            $original[$componentIndex]['settings'][$settingIndex][$optionIndex][$optionsIndex] = $translation[$key];
+                                        }
+                                    }
+                                } else {
+                                    $key = implode(FieldsFilterHelper::ARRAY_DIVIDER, [$prefix, $settingIndex, $optionIndex]);
+                                    if (array_key_exists($key, $translation) && in_array($optionIndex, $this->translatableFields, true)) {
+                                        $original[$componentIndex]['settings'][$settingIndex][$optionIndex] = $translation[$key];
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        $key = $prefix . FieldsFilterHelper::ARRAY_DIVIDER . $settingIndex;
+                        if (array_key_exists($key, $translation) && in_array($settingIndex, $this->translatableFields, true)) {
+                            $original[$componentIndex]['settings'][$settingIndex] = $translation[$key];
+                        }
+                    }
+                }
+            }
+        }
+
+        return $original;
+    }
+
     public function setContentFields(array $original, array $translation, SubmissionEntity $submission): array
     {
-        $translation['meta']['_elementor_data'] = json_encode($translation[$this->getPluginId()], JSON_THROW_ON_ERROR);
+        $translation['meta']['_elementor_data'] = json_encode($this->mergeElementorData(json_decode($original['meta']['_elementor_data'] ?? '[]', true, 512, JSON_THROW_ON_ERROR), $translation[$this->getPluginId()] ?? [], $submission, ''), JSON_THROW_ON_ERROR);
         unset($translation[$this->getPluginId()]);
         return $translation;
     }
