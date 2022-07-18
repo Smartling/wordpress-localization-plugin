@@ -130,10 +130,10 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return $source;
     }
 
-    private function extractElementorData(array $data, string $prefix = ''): array {
+    private function extractElementorData(array $data, string $previousPrefix = ''): array {
         $result = [];
         foreach ($data as $component) {
-            $prefix .= $component['id'];
+            $prefix = $previousPrefix . $component['id'];
             if (isset($component['elements'])) {
                 $result = array_merge($result, $this->extractElementorData($component['elements'], $prefix . FieldsFilterHelper::ARRAY_DIVIDER));
             }

@@ -15,6 +15,7 @@
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       smartling-connector
  * Domain Path:       /languages
+ * Elementor tested up to: 3.6.7
  */
 
 // If this file is called directly, abort.
