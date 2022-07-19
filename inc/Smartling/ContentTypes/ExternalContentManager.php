@@ -30,12 +30,19 @@ class ExternalContentManager
     public function getExternalContent(array $source, SubmissionEntity $submission, bool $raw): array
     {
         foreach ($this->handlers as $handler) {
-            if ($this->pluginHelper->canHandleExternalContent($handler)) {
+            if ($handler->canHandle($this->pluginHelper)) {
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get fields");
                 try {
                     $source[$handler->getPluginId()] = $handler->getContentFields($submission, $raw);
                 } catch (\Error $e) {
                     $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to get external content: ' . $e->getMessage());
+                }
+                if ($handler instanceof ContentTypeModifyingInterface) {
+                    try {
+                        $source = $handler->alterContentFieldsForUpload($source);
+                    } catch (\Error $e) {
+                        $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to alter content fields: ' . $e->getMessage());
+                    }
                 }
             }
         }
@@ -43,17 +50,23 @@ class ExternalContentManager
         return $source;
     }
 
-    public function setExternalContent(array $content, SubmissionEntity $submission): void
+    public function setExternalContent(array $original, array $translation, SubmissionEntity $submission): array
     {
         foreach ($this->handlers as $handler) {
-            if (array_key_exists($handler->getPluginId(), $content) && $this->pluginHelper->canHandleExternalContent($handler)) {
+            if (array_key_exists($handler->getPluginId(), $translation) && $handler->canHandle($this->pluginHelper)) {
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to set fields");
                 try {
-                    $handler->setContentFields($content[$handler->getPluginId()], $submission);
+                    $externalContent = $handler->setContentFields($original, $translation, $submission);
+                    if ($externalContent !== null) {
+                        $this->getLogger()->info('Content array modified by HandlerName="' . $handler->getPluginId() . '"');
+                        $translation = $externalContent;
+                    }
                 } catch (\Error $e) {
                     $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to set external content: ' . $e->getMessage());
                 }
             }
         }
+
+        return $translation;
     }
 }

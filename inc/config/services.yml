@@ -85,6 +85,12 @@ services:
       - "@site.db"
       - "@fields-filter.helper"
 
+  content.elementor:
+    class: Smartling\ContentTypes\ExternalContentElementor
+    arguments:
+      - "@fields-filter.helper"
+      - "@wp.proxy"
+
   content.relations.handler:
     class: Smartling\Services\ContentRelationsHandler
     arguments:
@@ -97,6 +103,7 @@ services:
       - "@helper.post.content"
       - "@helper.xml"
       - "@test.run.helper"
+      - "@wp.proxy"
     calls:
       - [ "setSubmissionManager", [ "@manager.submission" ]]
       - [ "setSiteHelper", [ "@site.helper" ]]
@@ -121,6 +128,7 @@ services:
       - "@helper.plugins"
     calls:
       - ["addHandler", ["@content.aioseo"]]
+      - ["addHandler", ["@content.elementor"]]
 
   manager.job:
     class: Smartling\Jobs\JobManager

@@ -12,7 +12,7 @@ use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Submissions\SubmissionEntity;
 
-class ExternalContentAioseo implements ContentTypePluggableInterface
+class ExternalContentAioseo extends ExternalContentAbstract
 {
     private FieldsFilterHelper $fieldsFilterHelper;
     private PlaceholderHelper $placeholderHelper;
@@ -43,6 +43,7 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
         'og_article_tags',
     ];
     private array $removeFields = [
+        'created',
         'id',
         'page_analysis',
         'og_object_type',
@@ -54,6 +55,7 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
         'schema_type_options',
         'robots_max_imagepreview',
         'tabs',
+        'image_scan_date',
         'images',
         'priority',
         'frequency',
@@ -114,29 +116,32 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
         return 'all-in-one-seo-pack/all_in_one_seo_pack.php';
     }
 
-    public function setContentFields(array $content, SubmissionEntity $submission): void
+    public function setContentFields(array $original, array $translation, SubmissionEntity $submission): ?array
     {
+        $translation = $translation[$this->getPluginId()] ?? [];
         foreach ($this->jsonFields as $field) {
-            if (array_key_exists($field, $content)) {
-                $content[$field] = json_encode($content[$field], JSON_THROW_ON_ERROR);
+            if (array_key_exists($field, $translation)) {
+                $translation[$field] = json_encode($translation[$field], JSON_THROW_ON_ERROR);
             }
         }
         foreach ($this->tagFields as $field) {
-            if (array_key_exists($field, $content)) {
-                $content[$field] = $this->placeholderHelper->removePlaceholders($content[$field] ?? '');
+            if (array_key_exists($field, $translation)) {
+                $translation[$field] = $this->placeholderHelper->removePlaceholders($translation[$field] ?? '');
             }
         }
-        unset($content['id']);
-        $content['post_id'] = $submission->getTargetId();
-        $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($content, $submission) {
+        unset($translation['id']);
+        $translation['post_id'] = $submission->getTargetId();
+        $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($translation, $submission) {
             if (($this->db->fetchPrepared("select count(*) c from {$this->db->getPrefix()}aioseo_posts where post_id = %d", $submission->getTargetId())[0]['c'] ?? null) === '0') {
-                $this->db->query(QueryBuilder::buildInsertQuery($this->db->getPrefix() . 'aioseo_posts', $content));
+                $this->db->query(QueryBuilder::buildInsertQuery($this->db->getPrefix() . 'aioseo_posts', $translation));
             } else {
                 $conditionBlock = ConditionBlock::getConditionBlock();
                 $conditionBlock->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'post_id', [$submission->getTargetId()]));
-                $this->db->query(QueryBuilder::buildUpdateQuery($this->db->getPrefix() . 'aioseo_posts', $content, $conditionBlock));
+                $this->db->query(QueryBuilder::buildUpdateQuery($this->db->getPrefix() . 'aioseo_posts', $translation, $conditionBlock));
             }
         });
+
+        return null;
     }
 
     public function addPlaceholders(?string $string): ?string
@@ -163,12 +168,14 @@ class ExternalContentAioseo implements ContentTypePluggableInterface
                 $content[$field] = null;
             }
         }
-        if (array_key_exists('focus', $content['keyphrases'])) {
+        if (is_array($content['keyphrases']) && array_key_exists('focus', $content['keyphrases'])) {
             $content['keyphrases']['focus'] = ['keyphrase' => $content['keyphrases']['focus']['keyphrase']];
             unset($content['keyphrases']['additional']);
         }
         foreach ($this->jsonFields as $field) {
-            $content[$field] = $this->fieldsFilterHelper->flattenArray($content[$field]);
+            if (is_array($content[$field])) {
+                $content[$field] = $this->fieldsFilterHelper->flattenArray($content[$field]);
+            }
         }
         foreach ($this->intFields as $field) {
             unset($content[$field]);
