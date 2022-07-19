@@ -2,6 +2,8 @@
 
 namespace Smartling\ContentTypes\AutoDiscover;
 
+use Smartling\Base\ExportedAPI;
+
 class Taxonomies
 {
     private array $ignoredTypes;
@@ -17,7 +19,7 @@ class Taxonomies
             return;
         }
 
-        add_action('smartling_register_custom_taxonomy', static function (array $definition) use ($taxonomy) {
+        add_action(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY, static function (array $definition) use ($taxonomy) {
             return array_merge(
                 $definition,
                 [
