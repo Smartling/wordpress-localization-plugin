@@ -103,6 +103,7 @@ services:
       - "@helper.post.content"
       - "@helper.xml"
       - "@test.run.helper"
+      - "@wp.proxy"
     calls:
       - [ "setSubmissionManager", [ "@manager.submission" ]]
       - [ "setSiteHelper", [ "@site.helper" ]]

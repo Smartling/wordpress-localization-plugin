@@ -52,10 +52,8 @@ class ExternalContentAioseoTest extends TestCase {
             'twitter_image_custom_fields' => null,
             'twitter_title' => null,
             'twitter_description' => null,
-            'image_scan_date' => null,
             'video_scan_date' => null,
             'local_seo' => null,
-            'created' => '2022-05-17 12:17:01',
             'updated' => '2022-05-17 12:17:40',
         ],
             $x->transformContentForUpload(

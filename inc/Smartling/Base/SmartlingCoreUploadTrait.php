@@ -254,7 +254,7 @@ trait SmartlingCoreUploadTrait
             $params = new AfterDeserializeContentEventParameters($translation, $submission, $targetContent, $translation['meta']);
             do_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
             $translation = $this->processPostContentBlocks($targetContent, $original, $translation, $submission, $postContentHelper, $lockedData['entity']);
-            $translation = apply_filters(ExportedAPI::FILTER_BEFORE_TRANSLATION_APPLIED, $translation, $lockedData, $submission);
+            $translation = $this->getFunctionProxyHelper()->apply_filters(ExportedAPI::FILTER_BEFORE_TRANSLATION_APPLIED, $translation, $lockedData, $submission);
             if (!is_array($translation)) {
                 $this->getLogger()->critical('Translation is not array after applying filter ' . ExportedAPI::FILTER_BEFORE_TRANSLATION_APPLIED . '. This is most likely due to an error outside of the plugins code.');
             }
