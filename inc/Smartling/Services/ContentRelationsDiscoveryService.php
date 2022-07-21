@@ -6,6 +6,7 @@ use Exception;
 use Smartling\ApiWrapperInterface;
 use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
+use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\EntityNotFoundException;
@@ -49,6 +50,7 @@ class ContentRelationsDiscoveryService
 {
     private const POST_BASED_PROCESSOR = 'PostBasedProcessor';
     private AcfDynamicSupport $acfDynamicSupport;
+    private ExternalContentManager $externalContentManager;
     private LoggerInterface $logger;
     private ContentHelper $contentHelper;
     private FieldsFilterHelper $fieldFilterHelper;
@@ -85,13 +87,15 @@ class ContentRelationsDiscoveryService
         MediaAttachmentRulesManager $mediaAttachmentRulesManager,
         ReplacerFactory $replacerFactory,
         SettingsManager $settingsManager,
-        CustomMenuContentTypeHelper $menuHelper
+        CustomMenuContentTypeHelper $menuHelper,
+        ExternalContentManager $externalContentManager
     )
     {
         $this->absoluteLinkedAttachmentCoreHelper = $absoluteLinkedAttachmentCoreHelper;
         $this->acfDynamicSupport = $acfDynamicSupport;
         $this->apiWrapper = $apiWrapper;
         $this->contentHelper = $contentHelper;
+        $this->externalContentManager = $externalContentManager;
         $this->fieldFilterHelper = $fieldFilterHelper;
         $this->gutenbergBlockHelper = $blockHelper;
         $this->localizationPluginProxy = $localizationPluginProxy;
@@ -551,6 +555,7 @@ class ContentRelationsDiscoveryService
         if (array_key_exists('post_content', $content['entity'])) {
             $detectedReferences = array_merge_recursive($detectedReferences, $this->getPostContentReferences($content['entity']['post_content']));
         }
+        $detectedReferences = array_merge_recursive($detectedReferences, $this->externalContentManager->getExternalRelations($contentType, $id, $targetBlogIds));
 
         $this->getLogger()->debug(self::POST_BASED_PROCESSOR . ' has ' . (count($detectedReferences[self::POST_BASED_PROCESSOR], COUNT_RECURSIVE) ?? 0) . ' references');
         $detectedReferences = $this->normalizeReferences($detectedReferences);
