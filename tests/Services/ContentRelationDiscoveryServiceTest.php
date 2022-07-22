@@ -20,6 +20,7 @@ namespace Smartling\Tests\Services {
     use Smartling\Bootstrap;
     use Smartling\ContentTypes\ContentTypeNavigationMenu;
     use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
+    use Smartling\ContentTypes\ExternalContentManager;
     use Smartling\DbAl\LocalizationPluginProxyInterface;
     use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
     use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
@@ -325,6 +326,7 @@ namespace Smartling\Tests\Services {
                 $this->createMock(ReplacerFactory::class),
                 $settingsManager,
                 $customMenuContentTypeHelper,
+                $this->createMock(ExternalContentManager::class)
             );
 
             $x->bulkUpload(new JobEntityWithBatchUid($batchUid, $jobName, $jobUid, $projectUid), $sourceIds, $contentType, $sourceBlogId, $targetBlogId);
@@ -689,6 +691,7 @@ namespace Smartling\Tests\Services {
                 $this->createMock(ReplacerFactory::class),
                 $settingsManager,
                 $this->createMock(CustomMenuContentTypeHelper::class),
+                $this->createMock(ExternalContentManager::class),
             ])->onlyMethods(['getTitle', 'getBackwardRelatedTaxonomies', 'normalizeReferences'])->getMock();
         }
     }

@@ -50,13 +50,13 @@ class ExternalContentManager
         return $source;
     }
 
-    public function getExternalRelations(string $contentType, int $id, array $targetBlogIds): array
+    public function getExternalRelations(string $contentType, int $id): array
     {
         foreach ($this->handlers as $handler) {
             if ($handler->canHandle($this->pluginHelper)) {
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get related content");
                 try {
-                    return $handler->getRelatedContent($contentType, $id, $targetBlogIds);
+                    return $handler->getRelatedContent($contentType, $id);
                 } catch (\Error $e) {
                     $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to get external related content: ' . $e->getMessage());
                 }

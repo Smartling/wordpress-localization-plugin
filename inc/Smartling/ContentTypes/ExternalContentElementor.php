@@ -137,12 +137,12 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return $source;
     }
 
-    private function extractElementorData(array $data, string $previousPrefix = ''): ExternalData {
+    private function extractContent(array $data, string $previousPrefix = ''): ExternalData {
         $result = new ExternalData();
         foreach ($data as $component) {
             $prefix = $previousPrefix . $component['id'];
             if (is_array($component['elements'])) {
-                $result = $result->merge($this->extractElementorData($component['elements'], $prefix . FieldsFilterHelper::ARRAY_DIVIDER));
+                $result = $result->merge($this->extractContent($component['elements'], $prefix . FieldsFilterHelper::ARRAY_DIVIDER));
                 $relatedId = $this->getRelatedImageIdFromElement($component);
                 if ($relatedId !== null) {
                     $result = $result->addRelated(['attachment' => $relatedId]);
@@ -183,7 +183,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     public function getContentFields(SubmissionEntity $submission, bool $raw): array
     {
         $submission->assertHasSource();
-        return $this->extractElementorData($this->getElementorDataFromPostMeta($submission->getSourceId()))->getStrings();
+        return $this->extractContent($this->getElementorDataFromPostMeta($submission->getSourceId()))->getStrings();
     }
 
     private function getElementorDataFromPostMeta(int $id)
@@ -211,9 +211,9 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return 'elementor/elementor.php';
     }
 
-    public function getRelatedContent(string $contentType, int $id, array $targetBlogIds): array
+    public function getRelatedContent(string $contentType, int $id): array
     {
-        return $this->extractElementorData($this->getElementorDataFromPostMeta($id))->getRelated();
+        return $this->extractContent($this->getElementorDataFromPostMeta($id))->getRelated();
     }
 
     private function getTargetAttachmentId(SubmissionEntity $submission, int $attachmentId): int
@@ -312,7 +312,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
             json_decode($original['meta']['_elementor_data'] ?? '[]', true, 512, JSON_THROW_ON_ERROR),
             $this->fieldsFilterHelper->flattenArray($translation[$this->getPluginId()] ?? []),
             $submission,
-            ), JSON_THROW_ON_ERROR));
+        ), JSON_THROW_ON_ERROR));
         unset($translation[$this->getPluginId()]);
         return $translation;
     }

@@ -555,7 +555,7 @@ class ContentRelationsDiscoveryService
         if (array_key_exists('post_content', $content['entity'])) {
             $detectedReferences = array_merge_recursive($detectedReferences, $this->getPostContentReferences($content['entity']['post_content']));
         }
-        $detectedReferences = array_merge_recursive($detectedReferences, $this->externalContentManager->getExternalRelations($contentType, $id, $targetBlogIds));
+        $detectedReferences = array_merge_recursive($detectedReferences, $this->externalContentManager->getExternalRelations($contentType, $id));
 
         $this->getLogger()->debug(self::POST_BASED_PROCESSOR . ' has ' . (count($detectedReferences[self::POST_BASED_PROCESSOR], COUNT_RECURSIVE) ?? 0) . ' references');
         $detectedReferences = $this->normalizeReferences($detectedReferences);

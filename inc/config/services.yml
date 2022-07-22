@@ -428,3 +428,4 @@ services:
       - "@factory.replacer"
       - "@manager.settings"
       - "@helper.customMenu"
+      - "@manager.content.external"
