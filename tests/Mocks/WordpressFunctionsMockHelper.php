@@ -1,4 +1,7 @@
 <?php
+/** @noinspection PhpUnused */
+/** @noinspection PhpUnusedParameterInspection */
+
 namespace {
 
     use Smartling\DbAl\MultilingualPress2Connector;
@@ -78,6 +81,10 @@ namespace {
             {
                 return true;
             }
+        } else {
+            // Switch \Smartling\Helpers\SiteHelper active blog id to 1 to mimic WordPress when tests are running in Docker
+            /** @noinspection PhpExpressionResultUnusedInspection */
+            switch_to_blog(1);
         }
 
         if (!function_exists('add_site_option')) {
@@ -90,13 +97,11 @@ namespace {
         if (!function_exists('get_site_option')) {
             function get_site_option($key, $default = null, $useCache = true)
             {
-                switch ($key) {
-                    case MultilingualPress2Connector::MULTILINGUAL_PRESS_PRO_SITE_OPTION_KEY_NAME: {
-                        return [1 => ['text' => '', 'lang' => 'en_US',], 2 => ['text' => '', 'lang' => 'es_ES',],
-                                3 => ['text' => '', 'lang' => 'fr_FR',], 4 => ['text' => '', 'lang' => 'ru_RU',],];
-                        break;
-                    }
+                if ($key === MultilingualPress2Connector::MULTILINGUAL_PRESS_PRO_SITE_OPTION_KEY_NAME) {
+                    return [1 => ['text' => '', 'lang' => 'en_US',], 2 => ['text' => '', 'lang' => 'es_ES',],
+                       3 => ['text' => '', 'lang' => 'fr_FR',], 4 => ['text' => '', 'lang' => 'ru_RU',],];
                 }
+
                 return $default;
             }
         }
@@ -164,13 +169,6 @@ namespace {
             function get_post_types($args = array(), $output = 'names', $operator = 'and')
             {
                 return ['acf-field' => 'acf-field', 'acf-field-group' => 'acf-field-group', 'page' => 'page'];
-            }
-        }
-
-        if (!function_exists('metadata_exists')) {
-            function metadata_exists($meta_type, $object_id, $meta_key)
-            {
-                return rand(0, 9) >= 5;
             }
         }
 
@@ -254,7 +252,7 @@ namespace {
                     return false;
                 }
                 $data = trim($data);
-                if ('N;' == $data) {
+                if ('N;' === $data) {
                     return true;
                 }
                 if (strlen($data) < 4) {
@@ -293,16 +291,16 @@ namespace {
                         } elseif (false === strpos($data, '"')) {
                             return false;
                         }
-                    // or else fall through
+                    // no break
                     case 'a' :
                     case 'O' :
-                        return (bool)preg_match("/^{$token}:[0-9]+:/s", $data);
+                        return (bool)preg_match("/^$token:\d+:/s", $data);
                     case 'b' :
                     case 'i' :
                     case 'd' :
                         $end = $strict ? '$' : '';
 
-                        return (bool)preg_match("/^{$token}:[0-9.E-]+;$end/", $data);
+                        return (bool)preg_match("/^$token:[\d.E-]+;$end/", $data);
                 }
 
                 return false;
