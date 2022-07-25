@@ -52,18 +52,19 @@ class ExternalContentManager
 
     public function getExternalRelations(string $contentType, int $id): array
     {
+        $result = [];
         foreach ($this->handlers as $handler) {
             if ($handler->canHandle($this->pluginHelper)) {
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get related content");
                 try {
-                    return $handler->getRelatedContent($contentType, $id);
+                    $result = array_merge_recursive($result, $handler->getRelatedContent($contentType, $id));
                 } catch (\Error $e) {
                     $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to get external related content: ' . $e->getMessage());
                 }
             }
         }
 
-        return [];
+        return $result;
     }
 
     public function setExternalContent(array $original, array $translation, SubmissionEntity $submission): array

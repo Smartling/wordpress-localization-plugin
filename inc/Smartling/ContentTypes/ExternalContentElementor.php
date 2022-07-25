@@ -2,7 +2,6 @@
 
 namespace Smartling\ContentTypes;
 
-use Smartling\Exception\EntityNotFoundException;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
@@ -216,7 +215,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return $this->extractContent($this->getElementorDataFromPostMeta($id))->getRelated();
     }
 
-    private function getTargetAttachmentId(SubmissionEntity $submission, int $attachmentId): int
+    private function getTargetAttachmentId(SubmissionEntity $submission, int $attachmentId): ?int
     {
         $targetSubmissions = $this->submissionManager->find([
             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
@@ -237,7 +236,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
             default:
                 $this->getLogger()->notice('Found more than one submissions while getting target attachmentId for sourceId=' . $attachmentId);
         }
-        throw new EntityNotFoundException();
+        return null;
     }
 
     private function getRelatedImageIdFromElement(array $element): ?int {
@@ -261,10 +260,9 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                     }
                     if (is_array($setting)) {
                         if (array_key_exists('id', $setting) && array_key_exists('url', $setting)) {
-                            try {
-                                $original[$componentIndex]['settings'][$settingIndex]['id'] = $this->getTargetAttachmentId($submission, $setting['id']);
-                            } catch (EntityNotFoundException $e) {
-                                $this->getLogger()->info('No target id found, skipped changing id for attachmentId=' . $setting['id']);
+                            $targetAttachmentId = $this->getTargetAttachmentId($submission, $setting['id']);
+                            if ($targetAttachmentId !== null) {
+                                $original[$componentIndex]['settings'][$settingIndex]['id'] = $targetAttachmentId;
                             }
                         } else {
                             foreach ($setting as $optionIndex => $option) {
@@ -276,10 +274,9 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                                         $key = implode(FieldsFilterHelper::ARRAY_DIVIDER, [$prefix, $settingIndex, $option['_id'], $optionsIndex]);
                                         $element = $original[$componentIndex]['settings'][$settingIndex][$optionIndex][$optionsIndex];
                                         if (is_array($element) && array_key_exists('id', $element) && array_key_exists('url', $element)) {
-                                            try {
-                                                $original[$componentIndex]['settings'][$settingIndex][$optionIndex][$optionsIndex]['id'] = $this->getTargetAttachmentId($submission, $element['id']);
-                                            } catch (EntityNotFoundException $e) {
-                                                $this->getLogger()->info('No target id found, skipped changing id for attachmentId=' . $setting['id']);
+                                            $targetAttachmentId = $this->getTargetAttachmentId($submission, $element['id']);
+                                            if ($targetAttachmentId !== null) {
+                                                $original[$componentIndex]['settings'][$settingIndex][$optionIndex][$optionsIndex]['id'] = $targetAttachmentId;
                                             }
                                         } else if (array_key_exists($key, $translation) && in_array($optionsIndex, $this->translatableFields, true)) {
                                             $original[$componentIndex]['settings'][$settingIndex][$optionIndex][$optionsIndex] = $translation[$key];
