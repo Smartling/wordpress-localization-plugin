@@ -13,7 +13,7 @@ class ExternalContentManager
     /**
      * @var ContentTypePluggableInterface[] $handlers
      */
-    private array $handlers;
+    private array $handlers = [];
     private PluginHelper $pluginHelper;
 
     public function __construct(PluginHelper $pluginHelper)
@@ -58,7 +58,7 @@ class ExternalContentManager
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get related content");
                 try {
                     $result = array_merge_recursive($result, $handler->getRelatedContent($contentType, $id));
-                } catch (\Error $e) {
+                } catch (\Throwable $e) {
                     $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to get external related content: ' . $e->getMessage());
                 }
             }

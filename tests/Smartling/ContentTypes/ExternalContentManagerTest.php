@@ -23,6 +23,8 @@ class ExternalContentManagerTest extends TestCase {
         $content2->method('getRelatedContent')->willThrowException(new \ParseError());
         $content2->method('setContentFields')->willThrowException(new \Error());
         $x = new ExternalContentManager(new PluginHelper());
+        $x->addHandler($content1);
+        $x->addHandler($content2);
         $submission = $this->createMock(SubmissionEntity::class);
         $this->assertEquals([], $x->getExternalContent([], $submission, false));
         $this->assertEquals([], $x->getExternalRelations('post', 1));
