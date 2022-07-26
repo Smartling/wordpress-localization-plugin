@@ -144,7 +144,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                 $result = $result->merge($this->extractContent($component['elements'], $prefix . FieldsFilterHelper::ARRAY_DIVIDER));
                 $relatedId = $this->getRelatedImageIdFromElement($component);
                 if ($relatedId !== null) {
-                    $result = $result->addRelated(['attachment' => $relatedId]);
+                    $result = $result->addRelated(['attachment' => [$relatedId]]);
                 }
             }
             if (isset($component['settings'])) {

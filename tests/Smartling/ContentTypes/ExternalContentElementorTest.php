@@ -36,7 +36,7 @@ class ExternalContentElementorTest extends TestCase {
                     '590657a/0f3ad3c/0088b31/editor' => '<p>Middle text</p>',
                     '590657a/8798127/78d53a1/title' => 'Right heading',
                 ],
-                ['attachment' => 597],
+                ['attachment' => [597]],
             ]
         ];
     }
