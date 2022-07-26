@@ -15,13 +15,13 @@ class ExternalContentManagerTest extends TestCase {
         $content1 = $this->createMock(ContentTypePluggableInterface::class);
         $content1->method('canHandle')->willReturn(true);
         $content1->method('getContentFields')->willThrowException(new \JsonException());
-        $content1->method('setRelatedContent')->willThrowException(new \RuntimeException());
         $content1->method('getRelatedContent')->willThrowException(new \Exception());
+        $content1->method('setContentFields')->willThrowException(new \RuntimeException());
         $content2 = $this->createMock(ContentTypeModifyingInterface::class);
         $content2->method('canHandle')->willReturn(true);
         $content2->method('getContentFields')->willThrowException(new \TypeError());
-        $content2->method('setRelatedContent')->willThrowException(new \Error());
         $content2->method('getRelatedContent')->willThrowException(new \ParseError());
+        $content2->method('setContentFields')->willThrowException(new \Error());
         $x = new ExternalContentManager(new PluginHelper());
         $submission = $this->createMock(SubmissionEntity::class);
         $this->assertEquals([], $x->getExternalContent([], $submission, false));
