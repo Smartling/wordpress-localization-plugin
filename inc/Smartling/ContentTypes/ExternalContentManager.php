@@ -34,13 +34,13 @@ class ExternalContentManager
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get fields");
                 try {
                     $source[$handler->getPluginId()] = $handler->getContentFields($submission, $raw);
-                } catch (\Error $e) {
+                } catch (\Throwable $e) {
                     $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to get external content: ' . $e->getMessage());
                 }
                 if ($handler instanceof ContentTypeModifyingInterface) {
                     try {
                         $source = $handler->alterContentFieldsForUpload($source);
-                    } catch (\Error $e) {
+                    } catch (\Throwable $e) {
                         $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to alter content fields: ' . $e->getMessage());
                     }
                 }
@@ -78,7 +78,7 @@ class ExternalContentManager
                         $this->getLogger()->info('Content array modified by HandlerName="' . $handler->getPluginId() . '"');
                         $translation = $externalContent;
                     }
-                } catch (\Error $e) {
+                } catch (\Throwable $e) {
                     $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to set external content: ' . $e->getMessage());
                 }
             }

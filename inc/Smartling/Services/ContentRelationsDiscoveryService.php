@@ -557,7 +557,12 @@ class ContentRelationsDiscoveryService
         }
         $detectedReferences = array_merge_recursive($detectedReferences, $this->externalContentManager->getExternalRelations($contentType, $id));
 
-        $this->getLogger()->debug(self::POST_BASED_PROCESSOR . ' has ' . (count($detectedReferences[self::POST_BASED_PROCESSOR], COUNT_RECURSIVE) ?? 0) . ' references');
+        $message = self::POST_BASED_PROCESSOR . ' has %d references';
+        $count = 0;
+        if (array_key_exists(self::POST_BASED_PROCESSOR, $detectedReferences)) {
+            $count = count($detectedReferences[self::POST_BASED_PROCESSOR], COUNT_RECURSIVE);
+        }
+        $this->getLogger()->debug(sprintf($message, $count));
         $detectedReferences = $this->normalizeReferences($detectedReferences);
 
         $responseData = new DetectedRelations($detectedReferences);
