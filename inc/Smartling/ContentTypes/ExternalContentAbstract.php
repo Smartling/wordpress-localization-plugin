@@ -26,4 +26,9 @@ abstract class ExternalContentAbstract implements ContentTypePluggableInterface 
 
         return false;
     }
+
+    public function getRelatedContent(string $contentType, int $id): array
+    {
+        return [];
+    }
 }

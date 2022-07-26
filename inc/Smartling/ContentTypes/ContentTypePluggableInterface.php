@@ -19,5 +19,7 @@ interface ContentTypePluggableInterface
 
     public function getPluginPath(): string;
 
+    public function getRelatedContent(string $contentType, int $id): array;
+
     public function setContentFields(array $original, array $translation, SubmissionEntity $submission): ?array;
 }

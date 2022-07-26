@@ -2,17 +2,19 @@
 
 namespace Smartling\ContentTypes;
 
-use Smartling\Exception\EntityNotFoundException;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Models\ExternalData;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 
 class ExternalContentElementor extends ExternalContentAbstract implements ContentTypeModifyingInterface
 {
     use LoggerSafeTrait;
 
     private FieldsFilterHelper $fieldsFilterHelper;
+    private SubmissionManager $submissionManager;
     private WordpressFunctionProxyHelper $wpProxy;
 
     private array $removeOnUploadFields = [
@@ -114,9 +116,10 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         'user_placeholder',
     ];
 
-    public function __construct(FieldsFilterHelper $fieldsFilterHelper, WordpressFunctionProxyHelper $wpProxy)
+    public function __construct(FieldsFilterHelper $fieldsFilterHelper, SubmissionManager $submissionManager, WordpressFunctionProxyHelper $wpProxy)
     {
         $this->fieldsFilterHelper = $fieldsFilterHelper;
+        $this->submissionManager = $submissionManager;
         $this->wpProxy = $wpProxy;
     }
 
@@ -133,36 +136,41 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return $source;
     }
 
-    private function extractElementorData(array $data, string $previousPrefix = ''): array {
-        $result = [];
+    private function extractContent(array $data, string $previousPrefix = ''): ExternalData {
+        $result = new ExternalData();
         foreach ($data as $component) {
             $prefix = $previousPrefix . $component['id'];
-            if (isset($component['elements'])) {
-                $result = array_merge($result, $this->extractElementorData($component['elements'], $prefix . FieldsFilterHelper::ARRAY_DIVIDER));
+            if (is_array($component['elements'])) {
+                $result = $result->merge($this->extractContent($component['elements'], $prefix . FieldsFilterHelper::ARRAY_DIVIDER));
+                $relatedId = $this->getRelatedImageIdFromElement($component);
+                if ($relatedId !== null) {
+                    $result = $result->addRelated(['attachment' => [$relatedId]]);
+                }
             }
             if (isset($component['settings'])) {
                 foreach ($component['settings'] as $key => $setting) {
                     if (strpos($key, '_') === 0) {
                         continue;
                     }
+
                     if (is_array($setting)) {
                         foreach ($setting as $id => $option) {
                             if (is_array($option)) {
-                                $options = array_filter($option, static function ($k) {
-                                    return strpos($k, '_') !== 0;
-                                }, ARRAY_FILTER_USE_KEY);
+                                foreach ($option as $optionKey => $optionValue) {
+                                    if (strpos($optionKey, '_') === 0) {
+                                        continue;
+                                    }
 
-                                foreach ($options as $optionKey => $optionValue) {
                                     if (in_array($optionKey, $this->translatableFields, true)) {
-                                        $result[implode(FieldsFilterHelper::ARRAY_DIVIDER, [$prefix, $key, $option['_id'], $optionKey])] = $optionValue;
+                                        $result = $result->addStrings([implode(FieldsFilterHelper::ARRAY_DIVIDER, [$prefix, $key, $option['_id'], $optionKey]) => $optionValue]);
                                     }
                                 }
                             } else if (in_array($id, $this->translatableFields, true)) {
-                                $result[implode(FieldsFilterHelper::ARRAY_DIVIDER, [$prefix, $key, $id])] = $option;
+                                $result = $result->addStrings([implode(FieldsFilterHelper::ARRAY_DIVIDER, [$prefix, $key, $id]) => $option]);
                             }
                         }
                     } else if (in_array($key, $this->translatableFields, true)) {
-                        $result[$prefix . FieldsFilterHelper::ARRAY_DIVIDER . $key] = $setting;
+                        $result = $result->addStrings([$prefix . FieldsFilterHelper::ARRAY_DIVIDER . $key => $setting]);
                     }
                 }
             }
@@ -174,7 +182,12 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     public function getContentFields(SubmissionEntity $submission, bool $raw): array
     {
         $submission->assertHasSource();
-        return $this->extractElementorData(json_decode($this->wpProxy->getPostMeta($submission->getSourceId(), '_elementor_data', true) ?? '[]', true, 512, JSON_THROW_ON_ERROR));
+        return $this->extractContent($this->getElementorDataFromPostMeta($submission->getSourceId()))->getStrings();
+    }
+
+    private function getElementorDataFromPostMeta(int $id)
+    {
+        return json_decode($this->wpProxy->getPostMeta($id, '_elementor_data', true) ?? '[]', true, 512, JSON_THROW_ON_ERROR);
     }
 
     public function getMaxVersion(): string
@@ -197,9 +210,40 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return 'elementor/elementor.php';
     }
 
-    private function getTargetAttachmentId(SubmissionEntity $submission, int $attachmentId): int
+    public function getRelatedContent(string $contentType, int $id): array
     {
-        throw new EntityNotFoundException();
+        return $this->extractContent($this->getElementorDataFromPostMeta($id))->getRelated();
+    }
+
+    private function getTargetAttachmentId(SubmissionEntity $submission, int $attachmentId): ?int
+    {
+        $targetSubmissions = $this->submissionManager->find([
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
+            SubmissionEntity::FIELD_SOURCE_ID => $attachmentId,
+            SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
+        ]);
+        switch (count($targetSubmissions)) {
+            case 0:
+                $this->getLogger()->debug('No submissions found while getting target attachmentId for sourceId=' . $attachmentId);
+                break;
+            case 1:
+                $targetId = $targetSubmissions[0]->getTargetId();
+                if ($targetId !== 0) {
+                    return $targetId;
+                }
+                $this->getLogger()->info('Got 0 target attachment id for sourceId=' . $attachmentId);
+                break;
+            default:
+                $this->getLogger()->notice('Found more than one submissions while getting target attachmentId for sourceId=' . $attachmentId);
+        }
+        return null;
+    }
+
+    private function getRelatedImageIdFromElement(array $element): ?int {
+        if ($element['elType'] === 'widget' && $element['widgetType'] === 'image') {
+            return $element['settings']['image']['id'] ?? null;
+        }
+        return null;
     }
 
     private function mergeElementorData(array $original, array $translation, SubmissionEntity $submission, string $previousPrefix = ''): array
@@ -216,10 +260,9 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                     }
                     if (is_array($setting)) {
                         if (array_key_exists('id', $setting) && array_key_exists('url', $setting)) {
-                            try {
-                                $original[$componentIndex]['settings'][$settingIndex] = $this->getTargetAttachmentId($submission, $setting['id']);
-                            } catch (EntityNotFoundException $e) {
-                                $this->getLogger()->info('No submission found, skipped changing id for attachmentId=' . $setting['id']);
+                            $targetAttachmentId = $this->getTargetAttachmentId($submission, $setting['id']);
+                            if ($targetAttachmentId !== null) {
+                                $original[$componentIndex]['settings'][$settingIndex]['id'] = $targetAttachmentId;
                             }
                         } else {
                             foreach ($setting as $optionIndex => $option) {
@@ -231,10 +274,9 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                                         $key = implode(FieldsFilterHelper::ARRAY_DIVIDER, [$prefix, $settingIndex, $option['_id'], $optionsIndex]);
                                         $element = $original[$componentIndex]['settings'][$settingIndex][$optionIndex][$optionsIndex];
                                         if (is_array($element) && array_key_exists('id', $element) && array_key_exists('url', $element)) {
-                                            try {
-                                                $original[$componentIndex]['settings'][$settingIndex][$optionIndex][$optionsIndex] = $this->getTargetAttachmentId($submission, $element['id']);
-                                            } catch (EntityNotFoundException $e) {
-                                                $this->getLogger()->info('No submission found, skipped changing id for attachmentId=' . $setting['id']);
+                                            $targetAttachmentId = $this->getTargetAttachmentId($submission, $element['id']);
+                                            if ($targetAttachmentId !== null) {
+                                                $original[$componentIndex]['settings'][$settingIndex][$optionIndex][$optionsIndex]['id'] = $targetAttachmentId;
                                             }
                                         } else if (array_key_exists($key, $translation) && in_array($optionsIndex, $this->translatableFields, true)) {
                                             $original[$componentIndex]['settings'][$settingIndex][$optionIndex][$optionsIndex] = $translation[$key];
@@ -267,7 +309,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
             json_decode($original['meta']['_elementor_data'] ?? '[]', true, 512, JSON_THROW_ON_ERROR),
             $this->fieldsFilterHelper->flattenArray($translation[$this->getPluginId()] ?? []),
             $submission,
-            ''), JSON_THROW_ON_ERROR));
+        ), JSON_THROW_ON_ERROR));
         unset($translation[$this->getPluginId()]);
         return $translation;
     }

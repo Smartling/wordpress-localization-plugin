@@ -89,6 +89,7 @@ services:
     class: Smartling\ContentTypes\ExternalContentElementor
     arguments:
       - "@fields-filter.helper"
+      - "@manager.submission"
       - "@wp.proxy"
 
   content.relations.handler:
@@ -427,3 +428,4 @@ services:
       - "@factory.replacer"
       - "@manager.settings"
       - "@helper.customMenu"
+      - "@manager.content.external"
