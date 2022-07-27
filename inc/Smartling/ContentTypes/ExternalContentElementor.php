@@ -305,11 +305,11 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     public function setContentFields(array $original, array $translation, SubmissionEntity $submission): array
     {
-        $translation['meta']['_elementor_data'] = addslashes(json_encode($this->mergeElementorData(
+        $translation['meta']['_elementor_data'] = json_encode($this->mergeElementorData(
             json_decode($original['meta']['_elementor_data'] ?? '[]', true, 512, JSON_THROW_ON_ERROR),
             $this->fieldsFilterHelper->flattenArray($translation[$this->getPluginId()] ?? []),
             $submission,
-        ), JSON_THROW_ON_ERROR));
+        ), JSON_THROW_ON_ERROR);
         unset($translation[$this->getPluginId()]);
         return $translation;
     }
