@@ -369,8 +369,12 @@ class PostEntityStd extends EntityAbstract
          * Tag name and value expected to be slashed
          * @see add_metadata()
          */
-        $tagName = addslashes($tagName);
-        $tagValue = addslashes($tagValue);
+        if (is_string($tagName)) {
+            $tagName = addslashes($tagName);
+        }
+        if (is_string($tagValue)) {
+            $tagValue = addslashes($tagValue);
+        }
         if (false === ($result = add_post_meta($this->ID, $tagName, $tagValue, $unique))) {
             $result = update_post_meta($this->ID, $tagName, $tagValue);
         }
