@@ -124,7 +124,7 @@ class WidgetEntity extends VirtualEntityAbstract
      * @param string $tagValue
      * @param bool   $unique
      */
-    public function setMetaTag($tagName, $tagValue, $unique = true)
+    public function setMetaTag($tagName, $tagValue, $unique = true): void
     {
     }
 
