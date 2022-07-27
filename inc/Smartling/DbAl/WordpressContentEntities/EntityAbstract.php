@@ -241,7 +241,7 @@ abstract class EntityAbstract
      * @param string $tagValue
      * @param bool   $unique
      */
-    abstract public function setMetaTag($tagName, $tagValue, $unique = true);
+    abstract public function setMetaTag($tagName, $tagValue, $unique = true): void;
 
     /**
      * @param int $limit

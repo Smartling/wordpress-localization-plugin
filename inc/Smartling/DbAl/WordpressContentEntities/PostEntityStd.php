@@ -3,7 +3,6 @@
 namespace Smartling\DbAl\WordpressContentEntities;
 
 use Smartling\Exception\SmartlingDataUpdateException;
-use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\RawDbQueryHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\WordpressUserHelper;
@@ -237,9 +236,15 @@ class PostEntityStd extends EntityAbstract
         $array['post_category'] = \wp_get_post_categories($instance->ID);
         // ACF would replace our properly escaped content with its own escaping.
         remove_action('content_save_pre', 'acf_parse_save_blocks', 5);
-        if (isset($array['post_content'])) {
-            // Content needs to be slashed for wp_insert_post() call
-            $array['post_content'] = addslashes($array['post_content']);
+
+        /**
+         * Content expected to be slashed for
+         * @see wp_insert_post() $data declaration
+         */
+        foreach (['post_author', 'post_content', 'post_content_filtered', 'post_title', 'post_excerpt', 'post_password', 'post_name', 'to_ping', 'pinged'] as $field) {
+            if (isset($array[$field])) {
+                $array[$field] = addslashes($array[$field]);
+            }
         }
         $res = wp_insert_post($array, true);
         if (is_wp_error($res) || 0 === $res) {
@@ -358,13 +363,14 @@ class PostEntityStd extends EntityAbstract
         }
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function setMetaTag($tagName, $tagValue, $unique = true)
+    public function setMetaTag($tagName, $tagValue, $unique = true): void
     {
-        $result = null;
-
+        /**
+         * Tag name and value expected to be slashed
+         * @see add_metadata()
+         */
+        $tagName = addslashes($tagName);
+        $tagValue = addslashes($tagValue);
         if (false === ($result = add_post_meta($this->ID, $tagName, $tagValue, $unique))) {
             $result = update_post_meta($this->ID, $tagName, $tagValue);
         }
