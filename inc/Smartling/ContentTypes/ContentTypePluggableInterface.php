@@ -7,7 +7,7 @@ use Smartling\Submissions\SubmissionEntity;
 
 interface ContentTypePluggableInterface
 {
-    public function canHandle(PluginHelper $pluginHelper): bool;
+    public function canHandle(PluginHelper $pluginHelper, int $contentId): bool;
 
     public function getContentFields(SubmissionEntity $submission, bool $raw): array;
 

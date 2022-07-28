@@ -3,12 +3,16 @@
 namespace Smartling\ContentTypes;
 
 use Smartling\Helpers\PluginHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 
 abstract class ExternalContentAbstract implements ContentTypePluggableInterface {
-    public function canHandle(PluginHelper $pluginHelper): bool
+    public function canHandle(PluginHelper $pluginHelper, int $contentId, ?WordpressFunctionProxyHelper $wpProxy = null): bool
     {
-        $activePlugins = wp_get_active_network_plugins();
-        $plugins = get_plugins();
+        if ($wpProxy === null) {
+            $wpProxy = new WordpressFunctionProxyHelper();
+        }
+        $activePlugins = $wpProxy->wp_get_active_network_plugins();
+        $plugins = $wpProxy->get_plugins();
         foreach ($activePlugins as $plugin) {
             $parts = array_reverse(explode('/', $plugin));
             if (count($parts) < 2) {
