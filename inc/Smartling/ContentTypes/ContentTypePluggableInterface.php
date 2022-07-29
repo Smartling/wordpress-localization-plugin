@@ -8,7 +8,7 @@ use Smartling\Submissions\SubmissionEntity;
 
 interface ContentTypePluggableInterface
 {
-    public function canHandle(PluginHelper $pluginHelper, int $contentId, WordpressFunctionProxyHelper $wpProxy): bool;
+    public function canHandle(PluginHelper $pluginHelper, WordpressFunctionProxyHelper $wpProxy, int $contentId): bool;
 
     public function getContentFields(SubmissionEntity $submission, bool $raw): array;
 
