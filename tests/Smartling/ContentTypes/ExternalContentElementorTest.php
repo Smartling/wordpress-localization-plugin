@@ -5,11 +5,24 @@ namespace Smartling\Tests\Smartling\ContentTypes;
 use Smartling\ContentTypes\ExternalContentElementor;
 use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
 class ExternalContentElementorTest extends TestCase {
+    public function testCanHandle()
+    {
+        $pluginHelper = $this->createMock(PluginHelper::class);
+        $pluginHelper->method('versionInRange')->willReturn(true);
+        $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $proxy->method('getPostMeta')->willReturn('', []);
+        $proxy->method('get_plugins')->willReturn(['elementor/elementor.php' => []]);
+        $proxy->method('wp_get_active_network_plugins')->willReturn(['elementor/elementor.php']);
+        $this->assertFalse($this->getExternalContentElementor($proxy)->canHandle($pluginHelper, $proxy, 1));
+        $this->assertTrue($this->getExternalContentElementor($proxy)->canHandle($pluginHelper, $proxy, 1));
+    }
+
     /**
      * @dataProvider extractElementorDataProvider
      */

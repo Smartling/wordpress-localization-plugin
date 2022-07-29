@@ -4,6 +4,7 @@ namespace Smartling\ContentTypes;
 
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Models\ExternalData;
 use Smartling\Submissions\SubmissionEntity;
@@ -134,6 +135,12 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         }
 
         return $source;
+    }
+
+    public function canHandle(PluginHelper $pluginHelper, WordpressFunctionProxyHelper $wpProxy, int $contentId): bool
+    {
+        return parent::canHandle($pluginHelper, $wpProxy, $contentId) &&
+            $this->wpProxy->getPostMeta($contentId, '_elementor_data', true) !== '';
     }
 
     private function extractContent(array $data, string $previousPrefix = ''): ExternalData {

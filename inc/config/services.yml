@@ -127,6 +127,7 @@ services:
     class: Smartling\ContentTypes\ExternalContentManager
     arguments:
       - "@helper.plugins"
+      - "@wp.proxy"
     calls:
       - ["addHandler", ["@content.aioseo"]]
       - ["addHandler", ["@content.elementor"]]

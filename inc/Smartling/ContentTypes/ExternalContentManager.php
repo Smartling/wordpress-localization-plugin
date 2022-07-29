@@ -4,6 +4,7 @@ namespace Smartling\ContentTypes;
 
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 class ExternalContentManager
@@ -15,10 +16,12 @@ class ExternalContentManager
      */
     private array $handlers = [];
     private PluginHelper $pluginHelper;
+    private WordpressFunctionProxyHelper $wpProxy;
 
-    public function __construct(PluginHelper $pluginHelper)
+    public function __construct(PluginHelper $pluginHelper, WordpressFunctionProxyHelper $wpProxy)
     {
         $this->pluginHelper = $pluginHelper;
+        $this->wpProxy = $wpProxy;
     }
 
     /** @noinspection PhpUnused, used in DI */
@@ -30,7 +33,7 @@ class ExternalContentManager
     public function getExternalContent(array $source, SubmissionEntity $submission, bool $raw): array
     {
         foreach ($this->handlers as $handler) {
-            if ($handler->canHandle($this->pluginHelper)) {
+            if ($handler->canHandle($this->pluginHelper, $this->wpProxy, $submission->getSourceId())) {
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get fields");
                 try {
                     $source[$handler->getPluginId()] = $handler->getContentFields($submission, $raw);
@@ -54,7 +57,7 @@ class ExternalContentManager
     {
         $result = [];
         foreach ($this->handlers as $handler) {
-            if ($handler->canHandle($this->pluginHelper)) {
+            if ($handler->canHandle($this->pluginHelper, $this->wpProxy, $id)) {
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get related content");
                 try {
                     $result = array_merge_recursive($result, $handler->getRelatedContent($contentType, $id));
@@ -70,7 +73,7 @@ class ExternalContentManager
     public function setExternalContent(array $original, array $translation, SubmissionEntity $submission): array
     {
         foreach ($this->handlers as $handler) {
-            if (array_key_exists($handler->getPluginId(), $translation) && $handler->canHandle($this->pluginHelper)) {
+            if ($handler->canHandle($this->pluginHelper, $this->wpProxy, $submission->getSourceId())) {
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to set fields");
                 try {
                     $externalContent = $handler->setContentFields($original, $translation, $submission);
