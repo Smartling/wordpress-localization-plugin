@@ -137,7 +137,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return $source;
     }
 
-    public function canHandle(PluginHelper $pluginHelper, int $contentId, ?WordpressFunctionProxyHelper $wpProxy = null): bool
+    public function canHandle(PluginHelper $pluginHelper, int $contentId, WordpressFunctionProxyHelper $wpProxy): bool
     {
         return parent::canHandle($pluginHelper, $contentId, $wpProxy) &&
             $this->wpProxy->getPostMeta($contentId, '_elementor_data', true) !== '';

@@ -6,11 +6,8 @@ use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 
 abstract class ExternalContentAbstract implements ContentTypePluggableInterface {
-    public function canHandle(PluginHelper $pluginHelper, int $contentId, ?WordpressFunctionProxyHelper $wpProxy = null): bool
+    public function canHandle(PluginHelper $pluginHelper, int $contentId, WordpressFunctionProxyHelper $wpProxy): bool
     {
-        if ($wpProxy === null) {
-            $wpProxy = new WordpressFunctionProxyHelper();
-        }
         $activePlugins = $wpProxy->wp_get_active_network_plugins();
         $plugins = $wpProxy->get_plugins();
         foreach ($activePlugins as $plugin) {
