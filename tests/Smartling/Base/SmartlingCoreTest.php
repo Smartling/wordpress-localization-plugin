@@ -48,7 +48,7 @@ class SmartlingCoreTest extends TestCase
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
         $this->core = new SmartlingCore(
-            new ExternalContentManager(new PluginHelper()),
+            new ExternalContentManager(new PluginHelper(), new WordpressFunctionProxyHelper()),
             new PostContentHelper(
                 new GutenbergBlockHelper(
                     $this->createMock(MediaAttachmentRulesManager::class),
