@@ -14,9 +14,9 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 {
     use LoggerSafeTrait;
 
+    private ContentTypeHelper $contentTypeHelper;
     private FieldsFilterHelper $fieldsFilterHelper;
     private SubmissionManager $submissionManager;
-    private WordpressFunctionProxyHelper $wpProxy;
 
     private array $removeOnUploadFields = [
         'entity' => [
@@ -117,11 +117,18 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         'user_placeholder',
     ];
 
-    public function __construct(FieldsFilterHelper $fieldsFilterHelper, SubmissionManager $submissionManager, WordpressFunctionProxyHelper $wpProxy)
+    public function __construct(
+        ContentTypeHelper $contentTypeHelper,
+        FieldsFilterHelper $fieldsFilterHelper,
+        PluginHelper $pluginHelper,
+        SubmissionManager $submissionManager,
+        WordpressFunctionProxyHelper $wpProxy
+    )
     {
+        parent::__construct($pluginHelper, $wpProxy);
+        $this->contentTypeHelper = $contentTypeHelper;
         $this->fieldsFilterHelper = $fieldsFilterHelper;
         $this->submissionManager = $submissionManager;
-        $this->wpProxy = $wpProxy;
     }
 
     public function alterContentFieldsForUpload(array $source): array
@@ -137,11 +144,11 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return $source;
     }
 
-    public function canHandle(ContentTypeHelper $contentTypeHelper, PluginHelper $pluginHelper, WordpressFunctionProxyHelper $wpProxy, int $contentId, string $contentType): bool
+    public function canHandle(int $contentId, string $contentType): bool
     {
-        return parent::canHandle($contentTypeHelper, $pluginHelper, $wpProxy, $contentId, $contentType) &&
-            $contentTypeHelper->isPost($contentType) &&
-            $wpProxy->getPostMeta($contentId, '_elementor_data', true) !== '';
+        return parent::canHandle($contentId, $contentType) &&
+            $this->contentTypeHelper->isPost($contentType) &&
+            $this->wpProxy->getPostMeta($contentId, '_elementor_data', true) !== '';
     }
 
     private function extractContent(array $data, string $previousPrefix = ''): ExternalData {

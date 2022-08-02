@@ -20,8 +20,8 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
     public const META_NODE_SETTINGS_NAME_REGEX = self::META_NODE_PATH_NAME_REGEX . 'settings/';
     private const META_SETTINGS_NAME = '_fl_builder_data_settings';
 
+    private ContentTypeHelper $contentTypeHelper;
     private SubmissionManager $submissionManager;
-    private WordpressFunctionProxyHelper $wpProxy;
 
     private array $removeOnUploadFields = [
         'entity' => [
@@ -37,10 +37,11 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
         ]
     ];
 
-    public function __construct(SubmissionManager $submissionManager, WordpressFunctionProxyHelper $wpProxy)
+    public function __construct(ContentTypeHelper $contentTypeHelper, PluginHelper $pluginHelper, SubmissionManager $submissionManager, WordpressFunctionProxyHelper $wpProxy)
     {
+        parent::__construct($pluginHelper, $wpProxy);
+        $this->contentTypeHelper = $contentTypeHelper;
         $this->submissionManager = $submissionManager;
-        $this->wpProxy = $wpProxy;
     }
 
     public function alterContentFieldsForUpload(array $source): array
@@ -60,11 +61,11 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
         return $source;
     }
 
-    public function canHandle(ContentTypeHelper $contentTypeHelper, PluginHelper $pluginHelper, WordpressFunctionProxyHelper $wpProxy, int $contentId, string $contentType): bool
+    public function canHandle(int $contentId, string $contentType): bool
     {
-        return parent::canHandle($contentTypeHelper, $pluginHelper, $wpProxy, $contentId, $contentType) &&
-            $contentTypeHelper->isPost($contentType) &&
-            $wpProxy->getPostMeta($contentId, self::META_FIELD_NAME, true) !== '';
+        return parent::canHandle($contentId, $contentType) &&
+            $this->contentTypeHelper->isPost($contentType) &&
+            $this->wpProxy->getPostMeta($contentId, self::META_FIELD_NAME, true) !== '';
     }
 
     private function extractContent(array $data): ExternalData {
@@ -193,17 +194,6 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
         return array_merge(...$result);
     }
 
-    private function flattenObject(\stdClass $object, string $base, string $divider): array
-    {
-        $result = [];
-        foreach ((array)$object as $key => $value) {
-            $path = '' === $base ? $key : implode($divider, [$base, $key]);
-            $result[] = $this->processArrayElement($path, $value, $divider);
-        }
-
-        return array_merge(...$result);
-    }
-
     private function processArrayElement(string $path, $value, string $divider): array
     {
         $valueType = gettype($value);
@@ -220,7 +210,7 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
                 $result[$path] = (string)$value;
                 break;
             case 'object':
-                $result = $this->flattenObject($value, $path, $divider);
+                $result = $this->flatten((array)$value, $path, $divider);
                 break;
             case 'unknown type':
             case 'resource':

@@ -2,13 +2,11 @@
 
 namespace Smartling\ContentTypes;
 
-use Smartling\Helpers\PluginHelper;
-use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 interface ContentTypePluggableInterface
 {
-    public function canHandle(ContentTypeHelper $contentTypeHelper, PluginHelper $pluginHelper, WordpressFunctionProxyHelper $wpProxy, int $contentId, string $contentType): bool;
+    public function canHandle(int $contentId, string $contentType): bool;
 
     public function getContentFields(SubmissionEntity $submission, bool $raw): array;
 

@@ -11,10 +11,19 @@ use Smartling\Submissions\SubmissionManager;
 abstract class ExternalContentAbstract implements ContentTypePluggableInterface {
     use LoggerSafeTrait;
 
-    public function canHandle(ContentTypeHelper $contentTypeHelper, PluginHelper $pluginHelper, WordpressFunctionProxyHelper $wpProxy, int $contentId, string $contentType): bool
+    protected PluginHelper $pluginHelper;
+    protected WordpressFunctionProxyHelper $wpProxy;
+
+    public function __construct(PluginHelper $pluginHelper, WordpressFunctionProxyHelper $wpProxy)
     {
-        $activePlugins = $wpProxy->wp_get_active_network_plugins();
-        $plugins = $wpProxy->get_plugins();
+        $this->pluginHelper = $pluginHelper;
+        $this->wpProxy = $wpProxy;
+    }
+
+    public function canHandle(int $contentId, string $contentType): bool
+    {
+        $activePlugins = $this->wpProxy->wp_get_active_network_plugins();
+        $plugins = $this->wpProxy->get_plugins();
         foreach ($activePlugins as $plugin) {
             $parts = array_reverse(explode('/', $plugin));
             if (count($parts) < 2) {
@@ -26,7 +35,7 @@ abstract class ExternalContentAbstract implements ContentTypePluggableInterface 
                     return false;
                 }
 
-                return $pluginHelper->versionInRange($plugins[$path]['Version'] ?? '0', $this->getMinVersion(), $this->getMaxVersion());
+                return $this->pluginHelper->versionInRange($plugins[$path]['Version'] ?? '0', $this->getMinVersion(), $this->getMaxVersion());
             }
         }
 

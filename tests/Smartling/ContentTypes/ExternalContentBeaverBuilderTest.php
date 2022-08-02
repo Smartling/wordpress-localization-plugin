@@ -5,7 +5,6 @@ namespace Smartling\Tests\Smartling\ContentTypes;
 use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\ExternalContentBeaverBuilder;
 use PHPUnit\Framework\TestCase;
-use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
@@ -18,17 +17,13 @@ class ExternalContentBeaverBuilderTest extends TestCase {
 
     public function testCanHandle()
     {
-        $contentTypeHelper = $this->createMock(ContentTypeHelper::class);
-        $contentTypeHelper->method('isPost')->willReturn(true);
-        $pluginHelper = $this->createMock(PluginHelper::class);
-        $pluginHelper->method('versionInRange')->willReturn(true);
         $pluginPath = 'bb-plugin/fl-builder.php';
         $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
         $proxy->method('getPostMeta')->willReturn('', []);
         $proxy->method('get_plugins')->willReturn([$pluginPath => []]);
         $proxy->method('wp_get_active_network_plugins')->willReturn([$pluginPath]);
-        $this->assertFalse($this->getExternalContentBeaverBuilder($proxy)->canHandle($contentTypeHelper, $pluginHelper, $proxy, 1, 'post'));
-        $this->assertTrue($this->getExternalContentBeaverBuilder($proxy)->canHandle($contentTypeHelper, $pluginHelper, $proxy, 1, 'post'));
+        $this->assertFalse($this->getExternalContentBeaverBuilder($proxy)->canHandle(1, 'post'));
+        $this->assertTrue($this->getExternalContentBeaverBuilder($proxy)->canHandle(1, 'post'));
     }
 
     /**
@@ -104,9 +99,12 @@ class ExternalContentBeaverBuilderTest extends TestCase {
         if ($submissionManager === null) {
             $submissionManager = $this->createMock(SubmissionManager::class);
         }
-        $fieldsFilterHelper = $this->getMockBuilder(FieldsFilterHelper::class)->disableOriginalConstructor()->setMethodsExcept(['flattenArray', 'structurizeArray'])->getMock();
+        $contentTypeHelper = $this->createMock(ContentTypeHelper::class);;
+        $contentTypeHelper->method('isPost')->willReturn(true);
+        $pluginHelper = $this->createMock(PluginHelper::class);
+        $pluginHelper->method('versionInRange')->willReturn(true);
 
-        return new ExternalContentBeaverBuilder($submissionManager, $proxy);
+        return new ExternalContentBeaverBuilder($contentTypeHelper, $pluginHelper, $submissionManager, $proxy);
     }
 
     public function testMergeData()

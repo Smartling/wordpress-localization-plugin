@@ -7,7 +7,9 @@ use PHPUnit\Framework\TestCase;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\PlaceholderHelper;
+use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\SiteHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 
 class ExternalContentAioseoTest extends TestCase {
     private PlaceholderHelper $placeholderHelper;
@@ -82,6 +84,13 @@ class ExternalContentAioseoTest extends TestCase {
 
     private function getExternalContentAioseo(): ExternalContentAioseo
     {
-        return new ExternalContentAioseo(new PlaceholderHelper(), $this->createMock(SiteHelper::class), $this->createMock(SmartlingToCMSDatabaseAccessWrapperInterface::class), $this->createPartialMock(FieldsFilterHelper::class, []));
+        return new ExternalContentAioseo(
+            $this->createPartialMock(FieldsFilterHelper::class, []),
+            new PlaceholderHelper(),
+            $this->createMock(PluginHelper::class),
+            $this->createMock(SiteHelper::class),
+            $this->createMock(SmartlingToCMSDatabaseAccessWrapperInterface::class),
+            $this->createMock(WordpressFunctionProxyHelper::class),
+        );
     }
 }

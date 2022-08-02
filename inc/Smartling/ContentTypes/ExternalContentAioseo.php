@@ -5,11 +5,13 @@ namespace Smartling\ContentTypes;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\PlaceholderHelper;
+use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Helpers\SiteHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 class ExternalContentAioseo extends ExternalContentAbstract
@@ -71,12 +73,15 @@ class ExternalContentAioseo extends ExternalContentAbstract
     ];
 
     public function __construct(
+        FieldsFilterHelper $fieldsFilterHelper,
         PlaceholderHelper $placeholderHelper,
+        PluginHelper $pluginHelper,
         SiteHelper $siteHelper,
         SmartlingToCMSDatabaseAccessWrapperInterface $db,
-        FieldsFilterHelper $fieldsFilterHelper
+        WordpressFunctionProxyHelper $wpProxy
     )
     {
+        parent::__construct($pluginHelper, $wpProxy);
         $this->db = $db;
         $this->fieldsFilterHelper = $fieldsFilterHelper;
         $this->placeholderHelper = $placeholderHelper;
