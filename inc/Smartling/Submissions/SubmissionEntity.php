@@ -229,7 +229,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
         if ($dateTime instanceof \DateTime) {
             $this->stateFields[static::FIELD_LAST_MODIFIED] = $dateTime->format(static::DATETIME_FORMAT);
         } else {
-            $dt = \DateTime::createFromFormat(static::DATETIME_FORMAT, $dateTime);
+            $dt = \DateTime::createFromFormat(static::DATETIME_FORMAT, (string)$dateTime);
             if (false === $dt) {
                 $dt = '1990-01-01 12:00:00';
             } else {
@@ -673,7 +673,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
 
     public function setBatchUid($batchUid): void
     {
-        $this->stateFields[static::FIELD_BATCH_UID] = trim($batchUid);
+        $this->stateFields[static::FIELD_BATCH_UID] = trim((string)$batchUid);
     }
 
     public function getJobInfo(): JobEntity
