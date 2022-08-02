@@ -137,10 +137,11 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return $source;
     }
 
-    public function canHandle(PluginHelper $pluginHelper, WordpressFunctionProxyHelper $wpProxy, int $contentId): bool
+    public function canHandle(ContentTypeHelper $contentTypeHelper, PluginHelper $pluginHelper, WordpressFunctionProxyHelper $wpProxy, int $contentId, string $contentType): bool
     {
-        return parent::canHandle($pluginHelper, $wpProxy, $contentId) &&
-            $this->wpProxy->getPostMeta($contentId, '_elementor_data', true) !== '';
+        return parent::canHandle($contentTypeHelper, $pluginHelper, $wpProxy, $contentId, $contentType) &&
+            $contentTypeHelper->isPost($contentType) &&
+            $wpProxy->getPostMeta($contentId, '_elementor_data', true) !== '';
     }
 
     private function extractContent(array $data, string $previousPrefix = ''): ExternalData {
@@ -222,30 +223,6 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return $this->extractContent($this->getElementorDataFromPostMeta($id))->getRelated();
     }
 
-    private function getTargetAttachmentId(SubmissionEntity $submission, int $attachmentId): ?int
-    {
-        $targetSubmissions = $this->submissionManager->find([
-            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
-            SubmissionEntity::FIELD_SOURCE_ID => $attachmentId,
-            SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
-        ]);
-        switch (count($targetSubmissions)) {
-            case 0:
-                $this->getLogger()->debug('No submissions found while getting target attachmentId for sourceId=' . $attachmentId);
-                break;
-            case 1:
-                $targetId = $targetSubmissions[0]->getTargetId();
-                if ($targetId !== 0) {
-                    return $targetId;
-                }
-                $this->getLogger()->info('Got 0 target attachment id for sourceId=' . $attachmentId);
-                break;
-            default:
-                $this->getLogger()->notice('Found more than one submissions while getting target attachmentId for sourceId=' . $attachmentId);
-        }
-        return null;
-    }
-
     private function getRelatedImageIdFromElement(array $element): ?int {
         if ($element['elType'] === 'widget' && $element['widgetType'] === 'image') {
             return $element['settings']['image']['id'] ?? null;
@@ -267,7 +244,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                     }
                     if (is_array($setting)) {
                         if (array_key_exists('id', $setting) && array_key_exists('url', $setting)) {
-                            $targetAttachmentId = $this->getTargetAttachmentId($submission, $setting['id']);
+                            $targetAttachmentId = $this->getTargetAttachmentId($this->submissionManager, $submission, $setting['id']);
                             if ($targetAttachmentId !== null) {
                                 $original[$componentIndex]['settings'][$settingIndex]['id'] = $targetAttachmentId;
                             }
@@ -281,7 +258,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                                         $key = implode(FieldsFilterHelper::ARRAY_DIVIDER, [$prefix, $settingIndex, $option['_id'], $optionsIndex]);
                                         $element = $original[$componentIndex]['settings'][$settingIndex][$optionIndex][$optionsIndex];
                                         if (is_array($element) && array_key_exists('id', $element) && array_key_exists('url', $element)) {
-                                            $targetAttachmentId = $this->getTargetAttachmentId($submission, $element['id']);
+                                            $targetAttachmentId = $this->getTargetAttachmentId($this->submissionManager, $submission, $element['id']);
                                             if ($targetAttachmentId !== null) {
                                                 $original[$componentIndex]['settings'][$settingIndex][$optionIndex][$optionsIndex]['id'] = $targetAttachmentId;
                                             }

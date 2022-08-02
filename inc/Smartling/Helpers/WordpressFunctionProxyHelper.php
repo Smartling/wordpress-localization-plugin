@@ -16,6 +16,11 @@ class WordpressFunctionProxyHelper
         return get_post_types(...func_get_args());
     }
 
+    public function get_post_types()
+    {
+        return get_post_types(...func_get_args());
+    }
+
     public static function getTaxonomies()
     {
         return get_taxonomies(...func_get_args());

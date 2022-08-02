@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests\Smartling\ContentTypes;
 
+use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\ExternalContentElementor;
 use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\FieldsFilterHelper;
@@ -13,14 +14,16 @@ use Smartling\Submissions\SubmissionManager;
 class ExternalContentElementorTest extends TestCase {
     public function testCanHandle()
     {
+        $contentTypeHelper = $this->createMock(ContentTypeHelper::class);
+        $contentTypeHelper->method('isPost')->willReturn(true);
         $pluginHelper = $this->createMock(PluginHelper::class);
         $pluginHelper->method('versionInRange')->willReturn(true);
         $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
         $proxy->method('getPostMeta')->willReturn('', []);
         $proxy->method('get_plugins')->willReturn(['elementor/elementor.php' => []]);
         $proxy->method('wp_get_active_network_plugins')->willReturn(['elementor/elementor.php']);
-        $this->assertFalse($this->getExternalContentElementor($proxy)->canHandle($pluginHelper, $proxy, 1));
-        $this->assertTrue($this->getExternalContentElementor($proxy)->canHandle($pluginHelper, $proxy, 1));
+        $this->assertFalse($this->getExternalContentElementor($proxy)->canHandle($contentTypeHelper, $pluginHelper, $proxy, 1, 'post'));
+        $this->assertTrue($this->getExternalContentElementor($proxy)->canHandle($contentTypeHelper, $pluginHelper, $proxy, 1, 'post'));
     }
 
     /**

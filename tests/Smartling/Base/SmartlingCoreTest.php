@@ -4,6 +4,7 @@ namespace Smartling\Tests\Smartling\Base;
 
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapper;
+use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
@@ -47,8 +48,9 @@ class SmartlingCoreTest extends TestCase
     protected function setUp(): void
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
+        $wpProxy = new WordpressFunctionProxyHelper();
         $this->core = new SmartlingCore(
-            new ExternalContentManager(new PluginHelper()),
+            new ExternalContentManager(new ContentTypeHelper($wpProxy), new PluginHelper(), $wpProxy),
             new PostContentHelper(
                 new GutenbergBlockHelper(
                     $this->createMock(MediaAttachmentRulesManager::class),
