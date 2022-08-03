@@ -71,4 +71,9 @@ abstract class ExternalContentAbstract implements ContentTypePluggableInterface 
 
         return null;
     }
+
+    protected function getDataFromPostMeta(int $id)
+    {
+        return $this->wpProxy->getPostMeta($id, static::META_FIELD_NAME, true);
+    }
 }

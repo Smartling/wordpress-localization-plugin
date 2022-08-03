@@ -14,7 +14,7 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
 {
     use LoggerSafeTrait;
 
-    private const META_FIELD_NAME = '_fl_builder_data';
+    protected const META_FIELD_NAME = '_fl_builder_data';
     private const META_NODE_PATH_NAME_REGEX = '[0-9a-f]{13}/';
     private const META_NODE_SETTINGS_CHILD_NODE_REGEX = self::META_NODE_SETTINGS_NAME_REGEX . '.+/';
     public const META_NODE_SETTINGS_NAME_REGEX = self::META_NODE_PATH_NAME_REGEX . 'settings/';
@@ -65,7 +65,7 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
     {
         return parent::canHandle($contentId, $contentType) &&
             $this->contentTypeHelper->isPost($contentType) &&
-            $this->wpProxy->getPostMeta($contentId, self::META_FIELD_NAME, true) !== '';
+            $this->getDataFromPostMeta($contentId) !== '';
     }
 
     private function extractContent(array $data): ExternalData {
@@ -95,11 +95,6 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
     {
         $submission->assertHasSource();
         return $this->extractContent($this->getDataFromPostMeta($submission->getSourceId()))->getStrings();
-    }
-
-    private function getDataFromPostMeta(int $id): array
-    {
-        return $this->wpProxy->getPostMeta($id, self::META_FIELD_NAME, true);
     }
 
     public function getMaxVersion(): string

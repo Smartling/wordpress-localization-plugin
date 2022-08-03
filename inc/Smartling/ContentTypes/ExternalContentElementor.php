@@ -14,6 +14,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 {
     use LoggerSafeTrait;
 
+    protected const META_FIELD_NAME = '_elementor_data';
     private ContentTypeHelper $contentTypeHelper;
     private FieldsFilterHelper $fieldsFilterHelper;
     private SubmissionManager $submissionManager;
@@ -23,7 +24,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
             'post_content',
         ],
         'meta' => [
-            '_elementor_data',
+            self::META_FIELD_NAME,
             '_elementor_edit_mode',
             '_elementor_template_type',
             '_elementor_version',
@@ -148,7 +149,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     {
         return parent::canHandle($contentId, $contentType) &&
             $this->contentTypeHelper->isPost($contentType) &&
-            $this->wpProxy->getPostMeta($contentId, '_elementor_data', true) !== '';
+            $this->getDataFromPostMeta($contentId) !== '';
     }
 
     private function extractContent(array $data, string $previousPrefix = ''): ExternalData {
@@ -202,7 +203,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     private function getElementorDataFromPostMeta(int $id)
     {
-        return json_decode($this->wpProxy->getPostMeta($id, '_elementor_data', true) ?? '[]', true, 512, JSON_THROW_ON_ERROR);
+        return json_decode($this->getDataFromPostMeta($id), true, 512, JSON_THROW_ON_ERROR);
     }
 
     public function getMaxVersion(): string
@@ -296,8 +297,8 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     public function setContentFields(array $original, array $translation, SubmissionEntity $submission): array
     {
-        $translation['meta']['_elementor_data'] = json_encode($this->mergeElementorData(
-            json_decode($original['meta']['_elementor_data'] ?? '[]', true, 512, JSON_THROW_ON_ERROR),
+        $translation['meta'][self::META_FIELD_NAME] = json_encode($this->mergeElementorData(
+            json_decode($original['meta'][self::META_FIELD_NAME] ?? '[]', true, 512, JSON_THROW_ON_ERROR),
             $this->fieldsFilterHelper->flattenArray($translation[$this->getPluginId()] ?? []),
             $submission,
         ), JSON_THROW_ON_ERROR);
