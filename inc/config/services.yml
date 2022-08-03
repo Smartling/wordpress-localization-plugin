@@ -80,11 +80,13 @@ services:
   content.aioseo:
     class: Smartling\ContentTypes\ExternalContentAioseo
     arguments:
+      - "@content.type.helper"
       - "@fields-filter.helper"
       - "@helper.placeholders"
       - "@helper.plugins"
       - "@site.helper"
       - "@site.db"
+      - "@manager.submission"
       - "@wp.proxy"
 
   content.beaver.builder:
