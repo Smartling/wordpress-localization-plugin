@@ -61,9 +61,9 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
         return $source;
     }
 
-    public function canHandle(int $contentId, string $contentType): bool
+    public function canHandle(string $contentType, int $contentId): bool
     {
-        return parent::canHandle($contentId, $contentType) &&
+        return parent::canHandle($contentType, $contentId) &&
             $this->contentTypeHelper->isPost($contentType) &&
             $this->getDataFromPostMeta($contentId) !== '';
     }
@@ -117,9 +117,9 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
         return 'bb-plugin/fl-builder.php';
     }
 
-    public function getRelatedContent(string $contentType, int $id): array
+    public function getRelatedContent(string $contentType, int $contentId): array
     {
-        return $this->extractContent($this->getDataFromPostMeta($id))->getRelated();
+        return $this->extractContent($this->getDataFromPostMeta($contentId))->getRelated();
     }
 
     public function setContentFields(array $original, array $translation, SubmissionEntity $submission): array

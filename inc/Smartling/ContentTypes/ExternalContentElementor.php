@@ -145,9 +145,9 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return $source;
     }
 
-    public function canHandle(int $contentId, string $contentType): bool
+    public function canHandle(string $contentType, int $contentId): bool
     {
-        return parent::canHandle($contentId, $contentType) &&
+        return parent::canHandle($contentType, $contentId) &&
             $this->contentTypeHelper->isPost($contentType) &&
             $this->getDataFromPostMeta($contentId) !== '';
     }
@@ -226,9 +226,9 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return 'elementor/elementor.php';
     }
 
-    public function getRelatedContent(string $contentType, int $id): array
+    public function getRelatedContent(string $contentType, int $contentId): array
     {
-        return $this->extractContent($this->getElementorDataFromPostMeta($id))->getRelated();
+        return $this->extractContent($this->getElementorDataFromPostMeta($contentId))->getRelated();
     }
 
     private function getRelatedImageIdFromElement(array $element): ?int {
