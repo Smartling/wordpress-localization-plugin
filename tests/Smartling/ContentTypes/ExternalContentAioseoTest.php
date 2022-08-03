@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests\Smartling\ContentTypes;
 
+use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\ExternalContentAioseo;
 use PHPUnit\Framework\TestCase;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
@@ -10,6 +11,7 @@ use Smartling\Helpers\PlaceholderHelper;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Submissions\SubmissionManager;
 
 class ExternalContentAioseoTest extends TestCase {
     private PlaceholderHelper $placeholderHelper;
@@ -84,13 +86,17 @@ class ExternalContentAioseoTest extends TestCase {
 
     private function getExternalContentAioseo(): ExternalContentAioseo
     {
+        $contentHelper = $this->createMock(ContentTypeHelper::class);
+        $contentHelper->method('isPost')->willReturn(true);
         return new ExternalContentAioseo(
+            $contentHelper,
             $this->createPartialMock(FieldsFilterHelper::class, []),
             new PlaceholderHelper(),
             $this->createMock(PluginHelper::class),
             $this->createMock(SiteHelper::class),
             $this->createMock(SmartlingToCMSDatabaseAccessWrapperInterface::class),
-            $this->createMock(WordpressFunctionProxyHelper::class),
+            $this->createMock(SubmissionManager::class),
+            $this->createMock(WordpressFunctionProxyHelper::class)
         );
     }
 }

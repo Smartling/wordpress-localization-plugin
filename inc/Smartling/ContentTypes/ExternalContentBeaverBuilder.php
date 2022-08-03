@@ -21,7 +21,6 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
     private const META_SETTINGS_NAME = '_fl_builder_data_settings';
 
     private ContentTypeHelper $contentTypeHelper;
-    private SubmissionManager $submissionManager;
 
     private array $removeOnUploadFields = [
         'entity' => [
@@ -39,7 +38,7 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
 
     public function __construct(ContentTypeHelper $contentTypeHelper, PluginHelper $pluginHelper, SubmissionManager $submissionManager, WordpressFunctionProxyHelper $wpProxy)
     {
-        parent::__construct($pluginHelper, $wpProxy);
+        parent::__construct($pluginHelper, $submissionManager, $wpProxy);
         $this->contentTypeHelper = $contentTypeHelper;
         $this->submissionManager = $submissionManager;
     }
@@ -73,7 +72,7 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
         $attachmentIds = $this->getAttachmentIds($flat);
         $result = (new ExternalData())->addStrings($this->removeUntranslatable($flat));
         if (count($attachmentIds) > 0) {
-            $result = $result->addRelated(['attachment' => $attachmentIds]);
+            $result = $result->addRelated([ContentTypeHelper::POST_TYPE_ATTACHMENT => $attachmentIds]);
         }
 
         return $result;
@@ -159,7 +158,7 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
                     $result[$key]->settings = (object)$t;
                 }
                 if (property_exists($value->settings, 'type') && $value->settings->type === 'photo') {
-                    $result[$key]->settings->data->id = $this->getTargetAttachmentId($this->submissionManager, $submission, $result[$key]->settings->data->id);
+                    $result[$key]->settings->data->id = $this->getTargetAttachmentId($submission->getSourceBlogId(), $result[$key]->settings->data->id, $submission->getTargetBlogId());
                 }
             }
         }

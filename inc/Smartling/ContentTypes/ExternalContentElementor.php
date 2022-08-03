@@ -17,7 +17,6 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     protected const META_FIELD_NAME = '_elementor_data';
     private ContentTypeHelper $contentTypeHelper;
     private FieldsFilterHelper $fieldsFilterHelper;
-    private SubmissionManager $submissionManager;
 
     private array $removeOnUploadFields = [
         'entity' => [
@@ -126,10 +125,9 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         WordpressFunctionProxyHelper $wpProxy
     )
     {
-        parent::__construct($pluginHelper, $wpProxy);
+        parent::__construct($pluginHelper, $submissionManager, $wpProxy);
         $this->contentTypeHelper = $contentTypeHelper;
         $this->fieldsFilterHelper = $fieldsFilterHelper;
-        $this->submissionManager = $submissionManager;
     }
 
     public function alterContentFieldsForUpload(array $source): array
@@ -160,7 +158,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                 $result = $result->merge($this->extractContent($component['elements'], $prefix . FieldsFilterHelper::ARRAY_DIVIDER));
                 $relatedId = $this->getRelatedImageIdFromElement($component);
                 if ($relatedId !== null) {
-                    $result = $result->addRelated(['attachment' => [$relatedId]]);
+                    $result = $result->addRelated([ContentTypeHelper::POST_TYPE_ATTACHMENT => [$relatedId]]);
                 }
             }
             if (isset($component['settings'])) {
@@ -252,7 +250,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                     }
                     if (is_array($setting)) {
                         if (array_key_exists('id', $setting) && array_key_exists('url', $setting)) {
-                            $targetAttachmentId = $this->getTargetAttachmentId($this->submissionManager, $submission, $setting['id']);
+                            $targetAttachmentId = $this->getTargetAttachmentId($submission->getSourceBlogId(), $setting['id'], $submission->getTargetBlogId());
                             if ($targetAttachmentId !== null) {
                                 $original[$componentIndex]['settings'][$settingIndex]['id'] = $targetAttachmentId;
                             }
@@ -266,7 +264,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                                         $key = implode(FieldsFilterHelper::ARRAY_DIVIDER, [$prefix, $settingIndex, $option['_id'], $optionsIndex]);
                                         $element = $original[$componentIndex]['settings'][$settingIndex][$optionIndex][$optionsIndex];
                                         if (is_array($element) && array_key_exists('id', $element) && array_key_exists('url', $element)) {
-                                            $targetAttachmentId = $this->getTargetAttachmentId($this->submissionManager, $submission, $element['id']);
+                                            $targetAttachmentId = $this->getTargetAttachmentId($submission->getSourceBlogId(), $element['id'], $submission->getTargetBlogId());
                                             if ($targetAttachmentId !== null) {
                                                 $original[$componentIndex]['settings'][$settingIndex][$optionIndex][$optionsIndex]['id'] = $targetAttachmentId;
                                             }

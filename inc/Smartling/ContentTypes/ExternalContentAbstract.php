@@ -12,11 +12,13 @@ abstract class ExternalContentAbstract implements ContentTypePluggableInterface 
     use LoggerSafeTrait;
 
     protected PluginHelper $pluginHelper;
+    protected SubmissionManager $submissionManager;
     protected WordpressFunctionProxyHelper $wpProxy;
 
-    public function __construct(PluginHelper $pluginHelper, WordpressFunctionProxyHelper $wpProxy)
+    public function __construct(PluginHelper $pluginHelper, SubmissionManager $submissionManager, WordpressFunctionProxyHelper $wpProxy)
     {
         $this->pluginHelper = $pluginHelper;
+        $this->submissionManager = $submissionManager;
         $this->wpProxy = $wpProxy;
     }
 
@@ -47,26 +49,27 @@ abstract class ExternalContentAbstract implements ContentTypePluggableInterface 
         return [];
     }
 
-    protected function getTargetAttachmentId(SubmissionManager $submissionManager, SubmissionEntity $submission, int $attachmentId): ?int
+    protected function getTargetAttachmentId(int $sourceBlogId, int $sourceId, int $targetBlogId): ?int
     {
-        $targetSubmissions = $submissionManager->find([
-            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
-            SubmissionEntity::FIELD_SOURCE_ID => $attachmentId,
-            SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
+        $targetSubmissions = $this->submissionManager->find([
+            SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+            SubmissionEntity::FIELD_SOURCE_ID => $sourceId,
+            SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
         ]);
         switch (count($targetSubmissions)) {
             case 0:
-                $this->getLogger()->debug('No submissions found while getting target attachmentId for sourceId=' . $attachmentId);
+                $this->getLogger()->debug('No submissions found while getting target attachmentId for sourceId=' . $sourceId);
                 break;
             case 1:
                 $targetId = $targetSubmissions[0]->getTargetId();
                 if ($targetId !== 0) {
                     return $targetId;
                 }
-                $this->getLogger()->info('Got 0 target attachment id for sourceId=' . $attachmentId);
+                $this->getLogger()->info('Got 0 target attachment id for sourceId=' . $sourceId);
                 break;
             default:
-                $this->getLogger()->notice('Found more than one submissions while getting target attachmentId for sourceId=' . $attachmentId);
+                $this->getLogger()->notice('Found more than one submissions while getting target attachmentId for sourceId=' . $sourceId);
         }
 
         return null;

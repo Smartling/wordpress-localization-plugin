@@ -100,6 +100,7 @@ class ExternalContentElementorTest extends TestCase {
         $translatedSubmission->method('getTargetBlogId')->willReturn($targetBlogId);
         $submissionManager = $this->createMock(SubmissionManager::class);
         $submissionManager->expects($this->once())->method('find')->with([
+            SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
             SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
             SubmissionEntity::FIELD_SOURCE_ID => $sourceAttachmentId,
