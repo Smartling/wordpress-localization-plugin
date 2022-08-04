@@ -14,16 +14,16 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 {
     use LoggerSafeTrait;
 
+    protected const META_FIELD_NAME = '_elementor_data';
+    private ContentTypeHelper $contentTypeHelper;
     private FieldsFilterHelper $fieldsFilterHelper;
-    private SubmissionManager $submissionManager;
-    private WordpressFunctionProxyHelper $wpProxy;
 
     private array $removeOnUploadFields = [
         'entity' => [
             'post_content',
         ],
         'meta' => [
-            '_elementor_data',
+            self::META_FIELD_NAME,
             '_elementor_edit_mode',
             '_elementor_template_type',
             '_elementor_version',
@@ -117,11 +117,17 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         'user_placeholder',
     ];
 
-    public function __construct(FieldsFilterHelper $fieldsFilterHelper, SubmissionManager $submissionManager, WordpressFunctionProxyHelper $wpProxy)
+    public function __construct(
+        ContentTypeHelper $contentTypeHelper,
+        FieldsFilterHelper $fieldsFilterHelper,
+        PluginHelper $pluginHelper,
+        SubmissionManager $submissionManager,
+        WordpressFunctionProxyHelper $wpProxy
+    )
     {
+        parent::__construct($pluginHelper, $submissionManager, $wpProxy);
+        $this->contentTypeHelper = $contentTypeHelper;
         $this->fieldsFilterHelper = $fieldsFilterHelper;
-        $this->submissionManager = $submissionManager;
-        $this->wpProxy = $wpProxy;
     }
 
     public function alterContentFieldsForUpload(array $source): array
@@ -137,10 +143,11 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return $source;
     }
 
-    public function canHandle(PluginHelper $pluginHelper, WordpressFunctionProxyHelper $wpProxy, int $contentId): bool
+    public function canHandle(string $contentType, int $contentId): bool
     {
-        return parent::canHandle($pluginHelper, $wpProxy, $contentId) &&
-            $this->wpProxy->getPostMeta($contentId, '_elementor_data', true) !== '';
+        return parent::canHandle($contentType, $contentId) &&
+            $this->contentTypeHelper->isPost($contentType) &&
+            $this->getDataFromPostMeta($contentId) !== '';
     }
 
     private function extractContent(array $data, string $previousPrefix = ''): ExternalData {
@@ -151,7 +158,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                 $result = $result->merge($this->extractContent($component['elements'], $prefix . FieldsFilterHelper::ARRAY_DIVIDER));
                 $relatedId = $this->getRelatedImageIdFromElement($component);
                 if ($relatedId !== null) {
-                    $result = $result->addRelated(['attachment' => [$relatedId]]);
+                    $result = $result->addRelated([ContentTypeHelper::POST_TYPE_ATTACHMENT => [$relatedId]]);
                 }
             }
             if (isset($component['settings'])) {
@@ -194,7 +201,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     private function getElementorDataFromPostMeta(int $id)
     {
-        return json_decode($this->wpProxy->getPostMeta($id, '_elementor_data', true) ?? '[]', true, 512, JSON_THROW_ON_ERROR);
+        return json_decode($this->getDataFromPostMeta($id), true, 512, JSON_THROW_ON_ERROR);
     }
 
     public function getMaxVersion(): string
@@ -217,33 +224,9 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return 'elementor/elementor.php';
     }
 
-    public function getRelatedContent(string $contentType, int $id): array
+    public function getRelatedContent(string $contentType, int $contentId): array
     {
-        return $this->extractContent($this->getElementorDataFromPostMeta($id))->getRelated();
-    }
-
-    private function getTargetAttachmentId(SubmissionEntity $submission, int $attachmentId): ?int
-    {
-        $targetSubmissions = $this->submissionManager->find([
-            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
-            SubmissionEntity::FIELD_SOURCE_ID => $attachmentId,
-            SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
-        ]);
-        switch (count($targetSubmissions)) {
-            case 0:
-                $this->getLogger()->debug('No submissions found while getting target attachmentId for sourceId=' . $attachmentId);
-                break;
-            case 1:
-                $targetId = $targetSubmissions[0]->getTargetId();
-                if ($targetId !== 0) {
-                    return $targetId;
-                }
-                $this->getLogger()->info('Got 0 target attachment id for sourceId=' . $attachmentId);
-                break;
-            default:
-                $this->getLogger()->notice('Found more than one submissions while getting target attachmentId for sourceId=' . $attachmentId);
-        }
-        return null;
+        return $this->extractContent($this->getElementorDataFromPostMeta($contentId))->getRelated();
     }
 
     private function getRelatedImageIdFromElement(array $element): ?int {
@@ -267,7 +250,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                     }
                     if (is_array($setting)) {
                         if (array_key_exists('id', $setting) && array_key_exists('url', $setting)) {
-                            $targetAttachmentId = $this->getTargetAttachmentId($submission, $setting['id']);
+                            $targetAttachmentId = $this->getTargetAttachmentId($submission->getSourceBlogId(), $setting['id'], $submission->getTargetBlogId());
                             if ($targetAttachmentId !== null) {
                                 $original[$componentIndex]['settings'][$settingIndex]['id'] = $targetAttachmentId;
                             }
@@ -281,7 +264,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                                         $key = implode(FieldsFilterHelper::ARRAY_DIVIDER, [$prefix, $settingIndex, $option['_id'], $optionsIndex]);
                                         $element = $original[$componentIndex]['settings'][$settingIndex][$optionIndex][$optionsIndex];
                                         if (is_array($element) && array_key_exists('id', $element) && array_key_exists('url', $element)) {
-                                            $targetAttachmentId = $this->getTargetAttachmentId($submission, $element['id']);
+                                            $targetAttachmentId = $this->getTargetAttachmentId($submission->getSourceBlogId(), $element['id'], $submission->getTargetBlogId());
                                             if ($targetAttachmentId !== null) {
                                                 $original[$componentIndex]['settings'][$settingIndex][$optionIndex][$optionsIndex]['id'] = $targetAttachmentId;
                                             }
@@ -312,8 +295,8 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     public function setContentFields(array $original, array $translation, SubmissionEntity $submission): array
     {
-        $translation['meta']['_elementor_data'] = json_encode($this->mergeElementorData(
-            json_decode($original['meta']['_elementor_data'] ?? '[]', true, 512, JSON_THROW_ON_ERROR),
+        $translation['meta'][self::META_FIELD_NAME] = json_encode($this->mergeElementorData(
+            json_decode($original['meta'][self::META_FIELD_NAME] ?? '[]', true, 512, JSON_THROW_ON_ERROR),
             $this->fieldsFilterHelper->flattenArray($translation[$this->getPluginId()] ?? []),
             $submission,
         ), JSON_THROW_ON_ERROR);

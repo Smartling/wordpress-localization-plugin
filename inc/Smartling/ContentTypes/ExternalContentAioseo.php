@@ -5,12 +5,15 @@ namespace Smartling\ContentTypes;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\PlaceholderHelper;
+use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Helpers\SiteHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 
 class ExternalContentAioseo extends ExternalContentAbstract
 {
@@ -69,26 +72,35 @@ class ExternalContentAioseo extends ExternalContentAbstract
         'og_description',
         'og_article_section',
     ];
+    private ContentTypeHelper $contentTypeHelper;
 
     public function __construct(
+        ContentTypeHelper $contentTypeHelper,
+        FieldsFilterHelper $fieldsFilterHelper,
         PlaceholderHelper $placeholderHelper,
+        PluginHelper $pluginHelper,
         SiteHelper $siteHelper,
         SmartlingToCMSDatabaseAccessWrapperInterface $db,
-        FieldsFilterHelper $fieldsFilterHelper
+        SubmissionManager $submissionManager,
+        WordpressFunctionProxyHelper $wpProxy
     )
     {
+        parent::__construct($pluginHelper, $submissionManager, $wpProxy);
+        $this->contentTypeHelper = $contentTypeHelper;
         $this->db = $db;
         $this->fieldsFilterHelper = $fieldsFilterHelper;
         $this->placeholderHelper = $placeholderHelper;
         $this->siteHelper = $siteHelper;
     }
 
+    public function canHandle(string $contentType, int $contentId): bool
+    {
+        return parent::canHandle($contentType, $contentId) &&
+            $this->contentTypeHelper->isPost($contentType);
+    }
+
     public function getContentFields(SubmissionEntity $submission, bool $raw): array
     {
-        // Only process posts, because taxonomies are only supported in AIOSEO Pro
-        if (!in_array($submission->getContentType(), get_post_types(), true)) {
-            return [];
-        }
         $submission->assertHasSource();
         $fields = $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($submission) {
             return $this->db->fetchPrepared('select * from ' . $this->db->getPrefix() . 'aioseo_posts where post_id = %d', $submission->getSourceId())[0] ?? [];

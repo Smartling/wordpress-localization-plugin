@@ -15,11 +15,13 @@ class ExternalContentManager
      * @var ContentTypePluggableInterface[] $handlers
      */
     private array $handlers = [];
+    private ContentTypeHelper $contentTypeHelper;
     private PluginHelper $pluginHelper;
     private WordpressFunctionProxyHelper $wpProxy;
 
-    public function __construct(PluginHelper $pluginHelper, WordpressFunctionProxyHelper $wpProxy)
+    public function __construct(ContentTypeHelper $contentTypeHelper, PluginHelper $pluginHelper, WordpressFunctionProxyHelper $wpProxy)
     {
+        $this->contentTypeHelper = $contentTypeHelper;
         $this->pluginHelper = $pluginHelper;
         $this->wpProxy = $wpProxy;
     }
@@ -33,7 +35,7 @@ class ExternalContentManager
     public function getExternalContent(array $source, SubmissionEntity $submission, bool $raw): array
     {
         foreach ($this->handlers as $handler) {
-            if ($handler->canHandle($this->pluginHelper, $this->wpProxy, $submission->getSourceId())) {
+            if ($handler->canHandle($submission->getContentType(), $submission->getSourceId())) {
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get fields");
                 try {
                     $source[$handler->getPluginId()] = $handler->getContentFields($submission, $raw);
@@ -57,7 +59,7 @@ class ExternalContentManager
     {
         $result = [];
         foreach ($this->handlers as $handler) {
-            if ($handler->canHandle($this->pluginHelper, $this->wpProxy, $id)) {
+            if ($handler->canHandle($contentType, $id)) {
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get related content");
                 try {
                     $result = array_merge_recursive($result, $handler->getRelatedContent($contentType, $id));
@@ -73,7 +75,7 @@ class ExternalContentManager
     public function setExternalContent(array $original, array $translation, SubmissionEntity $submission): array
     {
         foreach ($this->handlers as $handler) {
-            if ($handler->canHandle($this->pluginHelper, $this->wpProxy, $submission->getSourceId())) {
+            if ($handler->canHandle($submission->getContentType(), $submission->getSourceId())) {
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to set fields");
                 try {
                     $externalContent = $handler->setContentFields($original, $translation, $submission);

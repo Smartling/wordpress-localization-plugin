@@ -2,14 +2,30 @@
 
 namespace Smartling\ContentTypes;
 
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 
 abstract class ExternalContentAbstract implements ContentTypePluggableInterface {
-    public function canHandle(PluginHelper $pluginHelper, WordpressFunctionProxyHelper $wpProxy, int $contentId): bool
+    use LoggerSafeTrait;
+
+    protected PluginHelper $pluginHelper;
+    protected SubmissionManager $submissionManager;
+    protected WordpressFunctionProxyHelper $wpProxy;
+
+    public function __construct(PluginHelper $pluginHelper, SubmissionManager $submissionManager, WordpressFunctionProxyHelper $wpProxy)
     {
-        $activePlugins = $wpProxy->wp_get_active_network_plugins();
-        $plugins = $wpProxy->get_plugins();
+        $this->pluginHelper = $pluginHelper;
+        $this->submissionManager = $submissionManager;
+        $this->wpProxy = $wpProxy;
+    }
+
+    public function canHandle(string $contentType, int $contentId): bool
+    {
+        $activePlugins = $this->wpProxy->wp_get_active_network_plugins();
+        $plugins = $this->wpProxy->get_plugins();
         foreach ($activePlugins as $plugin) {
             $parts = array_reverse(explode('/', $plugin));
             if (count($parts) < 2) {
@@ -21,15 +37,46 @@ abstract class ExternalContentAbstract implements ContentTypePluggableInterface 
                     return false;
                 }
 
-                return $pluginHelper->versionInRange($plugins[$path]['Version'] ?? '0', $this->getMinVersion(), $this->getMaxVersion());
+                return $this->pluginHelper->versionInRange($plugins[$path]['Version'] ?? '0', $this->getMinVersion(), $this->getMaxVersion());
             }
         }
 
         return false;
     }
 
-    public function getRelatedContent(string $contentType, int $id): array
+    public function getRelatedContent(string $contentType, int $contentId): array
     {
         return [];
+    }
+
+    protected function getTargetAttachmentId(int $sourceBlogId, int $sourceId, int $targetBlogId): ?int
+    {
+        $targetSubmissions = $this->submissionManager->find([
+            SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+            SubmissionEntity::FIELD_SOURCE_ID => $sourceId,
+            SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+        ]);
+        switch (count($targetSubmissions)) {
+            case 0:
+                $this->getLogger()->debug('No submissions found while getting target attachmentId for sourceId=' . $sourceId);
+                break;
+            case 1:
+                $targetId = $targetSubmissions[0]->getTargetId();
+                if ($targetId !== 0) {
+                    return $targetId;
+                }
+                $this->getLogger()->info('Got 0 target attachment id for sourceId=' . $sourceId);
+                break;
+            default:
+                $this->getLogger()->notice('Found more than one submissions while getting target attachmentId for sourceId=' . $sourceId);
+        }
+
+        return null;
+    }
+
+    protected function getDataFromPostMeta(int $id)
+    {
+        return $this->wpProxy->getPostMeta($id, static::META_FIELD_NAME, true);
     }
 }

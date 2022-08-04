@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests\Smartling\ContentTypes;
 
+use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\ExternalContentElementor;
 use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\FieldsFilterHelper;
@@ -13,14 +14,12 @@ use Smartling\Submissions\SubmissionManager;
 class ExternalContentElementorTest extends TestCase {
     public function testCanHandle()
     {
-        $pluginHelper = $this->createMock(PluginHelper::class);
-        $pluginHelper->method('versionInRange')->willReturn(true);
         $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
         $proxy->method('getPostMeta')->willReturn('', []);
         $proxy->method('get_plugins')->willReturn(['elementor/elementor.php' => []]);
         $proxy->method('wp_get_active_network_plugins')->willReturn(['elementor/elementor.php']);
-        $this->assertFalse($this->getExternalContentElementor($proxy)->canHandle($pluginHelper, $proxy, 1));
-        $this->assertTrue($this->getExternalContentElementor($proxy)->canHandle($pluginHelper, $proxy, 1));
+        $this->assertFalse($this->getExternalContentElementor($proxy)->canHandle('post', 1));
+        $this->assertTrue($this->getExternalContentElementor($proxy)->canHandle('post', 1));
     }
 
     /**
@@ -73,6 +72,10 @@ class ExternalContentElementorTest extends TestCase {
 
     private function getExternalContentElementor(?WordpressFunctionProxyHelper $proxy = null, ?SubmissionManager $submissionManager = null): ExternalContentElementor
     {
+        $contentTypeHelper = $this->createMock(ContentTypeHelper::class);
+        $contentTypeHelper->method('isPost')->willReturn(true);
+        $pluginHelper = $this->createMock(PluginHelper::class);
+        $pluginHelper->method('versionInRange')->willReturn(true);
         if ($proxy === null) {
             $proxy = new WordpressFunctionProxyHelper();
         }
@@ -81,7 +84,7 @@ class ExternalContentElementorTest extends TestCase {
         }
         $fieldsFilterHelper = $this->getMockBuilder(FieldsFilterHelper::class)->disableOriginalConstructor()->setMethodsExcept(['flattenArray'])->getMock();
 
-        return new ExternalContentElementor($fieldsFilterHelper, $submissionManager, $proxy);
+        return new ExternalContentElementor($contentTypeHelper, $fieldsFilterHelper, $pluginHelper, $submissionManager, $proxy);
     }
 
     public function testMergeElementorData()
@@ -97,6 +100,7 @@ class ExternalContentElementorTest extends TestCase {
         $translatedSubmission->method('getTargetBlogId')->willReturn($targetBlogId);
         $submissionManager = $this->createMock(SubmissionManager::class);
         $submissionManager->expects($this->once())->method('find')->with([
+            SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
             SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
             SubmissionEntity::FIELD_SOURCE_ID => $sourceAttachmentId,

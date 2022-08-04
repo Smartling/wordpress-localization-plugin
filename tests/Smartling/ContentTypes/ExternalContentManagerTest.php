@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests\Smartling\ContentTypes;
 
+use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\ContentTypeModifyingInterface;
 use Smartling\ContentTypes\ContentTypePluggableInterface;
 use Smartling\ContentTypes\ExternalContentManager;
@@ -11,6 +12,12 @@ use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 class ExternalContentManagerTest extends TestCase {
+    private function getExternalContentManager(): ExternalContentManager
+    {
+        $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+
+        return new ExternalContentManager(new ContentTypeHelper($wpProxy), new PluginHelper(), $wpProxy);
+    }
     public function testExceptionHandling()
     {
         $content1 = $this->createMock(ContentTypePluggableInterface::class);
@@ -23,7 +30,7 @@ class ExternalContentManagerTest extends TestCase {
         $content2->method('getContentFields')->willThrowException(new \TypeError());
         $content2->method('getRelatedContent')->willThrowException(new \ParseError());
         $content2->method('setContentFields')->willThrowException(new \Error());
-        $x = new ExternalContentManager(new PluginHelper(), new WordpressFunctionProxyHelper());
+        $x = $this->getExternalContentManager();
         $x->addHandler($content1);
         $x->addHandler($content2);
         $submission = $this->createMock(SubmissionEntity::class);
@@ -41,7 +48,7 @@ class ExternalContentManagerTest extends TestCase {
         $content2->method('canHandle')->willReturn(false);
         $content2->method('getContentFields')->willReturn(['content2' => ['content_2' => 'content 2']]);
         $content3 = $this->createMock(ContentTypePluggableInterface::class);
-        $x = new ExternalContentManager(new PluginHelper(), new WordpressFunctionProxyHelper());
+        $x = $this->getExternalContentManager();
         $x->addHandler($content1);
         $x->addHandler($content2);
         $x->addHandler($content3);
@@ -72,7 +79,7 @@ class ExternalContentManagerTest extends TestCase {
         $content3->method('canHandle')->willReturn(true);
         $content3->method('getContentFields')->willReturn(['content_3' => 'content 3']);
         $content3->method('getPluginId')->willReturn('content3');
-        $x = new ExternalContentManager(new PluginHelper(), new WordpressFunctionProxyHelper());
+        $x = $this->getExternalContentManager();
         $x->addHandler($content1);
         $x->addHandler($content2);
         $x->addHandler($content3);
@@ -150,7 +157,7 @@ class ExternalContentManagerTest extends TestCase {
                 'content_3' => 'content 3',
             ],
         ]);
-        $x = new ExternalContentManager(new PluginHelper(), new WordpressFunctionProxyHelper());
+        $x = $this->getExternalContentManager();
         $x->addHandler($content1);
         $x->addHandler($content2);
         $x->addHandler($content3);
@@ -173,7 +180,7 @@ class ExternalContentManagerTest extends TestCase {
             'image' => [2, 1],
             'other' => [3],
         ];
-        $x = new ExternalContentManager(new PluginHelper(), new WordpressFunctionProxyHelper());
+        $x = $this->getExternalContentManager();
         $x->addHandler($content1);
         $x->addHandler($content2);
         $x->addHandler($content3);

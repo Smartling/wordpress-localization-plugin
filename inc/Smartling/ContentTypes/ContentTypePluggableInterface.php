@@ -2,13 +2,11 @@
 
 namespace Smartling\ContentTypes;
 
-use Smartling\Helpers\PluginHelper;
-use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 interface ContentTypePluggableInterface
 {
-    public function canHandle(PluginHelper $pluginHelper, WordpressFunctionProxyHelper $wpProxy, int $contentId): bool;
+    public function canHandle(string $contentType, int $contentId): bool;
 
     public function getContentFields(SubmissionEntity $submission, bool $raw): array;
 
@@ -20,7 +18,7 @@ interface ContentTypePluggableInterface
 
     public function getPluginPath(): string;
 
-    public function getRelatedContent(string $contentType, int $id): array;
+    public function getRelatedContent(string $contentType, int $contentId): array;
 
     public function setContentFields(array $original, array $translation, SubmissionEntity $submission): ?array;
 }
