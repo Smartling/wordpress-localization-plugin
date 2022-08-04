@@ -19,12 +19,9 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
 
     /**
      * Returns a regexp for masked shortcodes
-     *
-     * @return string
      */
-    public static function getMaskRegexp()
+    public static function getMaskRegexp(): string
     {
-
         $variants = [
             '%s\[\/?[^\]]+\]%e',
         ];
@@ -42,7 +39,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         );
     }
 
-    private function resetInternalState()
+    private function resetInternalState(): void
     {
         $this->blockAttributes = [];
         $this->subNodes        = [];
@@ -272,14 +269,11 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
 
     /**
      * Handler for shortcodes to prepare strings for translation
+     * @see https://codex.wordpress.org/Shortcode_API for parameters list
      *
-     * @param array       $attributes
-     * @param string|null $content
-     * @param string      $name
-     *
-     * @return string
+     * @param array|string $attributes
      */
-    public function uploadShortcodeHandler($attributes, $content = null, $name)
+    public function uploadShortcodeHandler($attributes, ?string $content, string $name): string
     {
         if (is_array($attributes)) {
             $this->getLogger()->debug(vsprintf('Pre filtered attributes (while uploading) %s',
@@ -293,14 +287,11 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
             }
         } else {
             $this->getLogger()->debug(vsprintf('No attributes found in shortcode \'%s\'.', [$name]));
+            $attributes = [];
         }
         if (null !== $content) {
             $this->getLogger()->debug(vsprintf('Shortcode \'%s\' has content, digging deeper...', [$name]));
             $content = $this->renderString($content);
-        }
-
-        if (!is_array($attributes)) {
-            $attributes = [];
         }
 
         return static::buildMaskedShortcode($name, $attributes, $content);
@@ -308,14 +299,8 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
 
     /**
      * Generates masked shortcode
-     *
-     * @param string $name
-     * @param array  $attributes
-     * @param string $content
-     *
-     * @return string
      */
-    private static function buildMaskedShortcode($name, array $attributes, $content)
+    private static function buildMaskedShortcode(string $name, array $attributes, string $content): string
     {
         $openString  = PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '[';
         $closeString = ']' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END;
@@ -323,11 +308,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         return static::buildShortcode($name, $attributes, $content, $openString, $closeString);
     }
 
-    /**
-     * @param array $attributes
-     * @return string
-     */
-    private static function buildShortcodeAttributes(array $attributes = [])
+    private static function buildShortcodeAttributes(array $attributes = []): string
     {
         $attributesString = '';
         $isInteger        = function ($data) {
@@ -358,14 +339,8 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     /**
      * Since PHP Wordpress shortcode handlers are not sensitive whether shortcode has closing tag or not moving to
      * always-enclosed shortcodes
-     * @param string $name
-     * @param array  $attributes
-     * @param string $content
-     * @param string $openString
-     * @param string $closeString
-     * @return string
      */
-    private static function buildShortcode($name, array $attributes, $content, $openString = '[', $closeString = ']')
+    private static function buildShortcode(string $name, array $attributes, ?string $content, string $openString = '[', string $closeString = ']'): string
     {
         return vsprintf('%s%s%s%s%s%s/%s%s', [
             $openString,
@@ -397,14 +372,8 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
 
     /**
      * Applies translation to shortcodes
-     *
-     * @param mixed $attr
-     * @param string $content
-     * @param string $name
-     *
-     * @return string
      */
-    public function shortcodeApplierHandler($attr, $content, $name)
+    public function shortcodeApplierHandler($attr, ?string $content, string $name): string
     {
         $attr = is_array($attr) ? $attr : [];
 
@@ -421,12 +390,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         return static::buildShortcode($name, $attr, $content);
     }
 
-    /**
-     * Returns list of all registered shortcoders in the wordpress
-     *
-     * @return array
-     */
-    public function getRegisteredShortcodes()
+    public function getRegisteredShortcodes(): array
     {
         $shortcodes = array_keys($this->getShortcodeAssignments());
         try {
@@ -451,10 +415,8 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
 
     /**
      * Getter for global $shortcode_tags
-     *
-     * @return array
      */
-    private function getShortcodeAssignments()
+    private function getShortcodeAssignments(): array
     {
         global $shortcode_tags;
 
@@ -466,7 +428,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
      * @param string $string
      * @return string
      */
-    public function renderString($string)
+    public function renderString($string): string
     {
         if (function_exists('do_shortcode')) {
             return do_shortcode($string);

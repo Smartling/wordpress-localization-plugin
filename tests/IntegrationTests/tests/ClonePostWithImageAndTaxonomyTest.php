@@ -18,7 +18,8 @@ class ClonePostWithImageAndTaxonomyTest extends SmartlingUnitTestCaseAbstract
         $categoryId = $category['term_id'];
         $wrapper = new TaxonomyEntityStd('category');
         $cat = $wrapper->get($categoryId);
-        self::assertTrue($cat->getName() === $categoryName);
+        $this->assertEquals($categoryName, $cat->name);
+        $this->assertEquals($categoryId, $cat->term_id);
         /**
          * Creating post
          */
@@ -26,19 +27,7 @@ class ClonePostWithImageAndTaxonomyTest extends SmartlingUnitTestCaseAbstract
         /**
          * Adding post to taxonomy
          */
-        $result = wp_set_object_terms($postId, [$cat->getId()], 'category');
-
-        /**
-         * wp_set_object_terms doesn't work in current mode,
-         * so raw table update is used
-         */
-        $queryTemplate = "REPLACE INTO `%sterm_relationships` VALUES('%s', '%s', 0)";
-        global $wpdb;
-        /**
-         * @var \wpdb $wpdb
-         */
-        $query = vsprintf($queryTemplate, [$wpdb->base_prefix, $postId, $categoryId]);
-        $wpdb->query($query);
+        wp_set_object_terms($postId, $cat->term_id, 'category');
 
         $imageId = $this->createAttachment();
         set_post_thumbnail($postId, $imageId);
@@ -46,40 +35,31 @@ class ClonePostWithImageAndTaxonomyTest extends SmartlingUnitTestCaseAbstract
 
         $translationHelper = $this->getTranslationHelper();
 
-        /**
-         * @var SubmissionEntity $submission
-         */
         $submission = $translationHelper->prepareSubmission('post', 1, $postId, 2, true);
 
         /**
          * Check submission status
          */
-        $this->assertTrue(SubmissionEntity::SUBMISSION_STATUS_NEW === $submission->getStatus());
-        $this->assertTrue(1 === $submission->getIsCloned());
+        $this->assertSame(SubmissionEntity::SUBMISSION_STATUS_NEW, $submission->getStatus());
+        $this->assertSame(1, $submission->getIsCloned());
 
         $this->uploadDownload($submission);
 
-        $submissions = $this->getSubmissionManager()->find(
+        $this->assertCount(1, $this->getSubmissionManager()->find(
             [
                 'content_type' => 'post',
                 'is_cloned'    => 1,
-            ]);
+            ]));
 
-        $this->assertTrue(1 === count($submissions));
-
-        $submissions = $this->getSubmissionManager()->find(
+        $this->assertCount(1, $this->getSubmissionManager()->find(
             [
                 'content_type' => 'attachment',
                 'is_cloned'    => 1,
-            ]);
-
-        $this->assertTrue(1 === count($submissions));
-        $submissions = $this->getSubmissionManager()->find(
+            ]));
+        $this->assertCount(1, $this->getSubmissionManager()->find(
             [
                 'content_type' => 'category',
                 'is_cloned'    => 1,
-            ]);
-
-        $this->assertTrue(1 === count($submissions));
+            ]));
     }
 }

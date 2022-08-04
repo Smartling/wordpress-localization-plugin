@@ -368,7 +368,7 @@ class LastModifiedCheckJobTest extends TestCase
             $this->queue
                 ->expects(self::at($index))
                 ->method('dequeue')
-                ->with(Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE)
+                ->with(QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE)
                 ->willReturn($dequeueResult[$index]);
 
             if (false !== $mockedResult) {
@@ -497,6 +497,10 @@ class LastModifiedCheckJobTest extends TestCase
 
         $missingSubmission = $this->createMock(SubmissionEntity::class);
         $missingSubmission->method('getTargetLocale')->willReturn('MissingLocale');
+        $this->lastModifiedWorker = $this->getMockBuilder(LastModifiedCheckJob::class) // TODO test/fix
+            ->onlyMethods(['prepareSubmissionList', 'getSmartlingLocaleIdBySubmission', 'placeLockFlag'])
+            ->setConstructorArgs([$this->apiWrapper, $this->settingsManager, $this->submissionManager, '20m', 1200, $this->queue])
+            ->getMock();
         $this->lastModifiedWorker->method('getSmartlingLocaleIdBySubmission')->willReturn($missingSubmission->getTargetLocale());
 
         $this->queue->expects($this->at(0))->method('dequeue')->willReturn(false);
