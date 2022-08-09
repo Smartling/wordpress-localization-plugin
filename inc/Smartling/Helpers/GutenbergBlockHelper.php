@@ -542,7 +542,9 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
                     $this->getLogger()->warning("Replacer not found while processing blockName=\"$blockName\", attribute=\"$attribute\", submissionId=\"$submissionId\", replacerId=\"{$rule->getReplacerId()}\", skipping");
                     continue;
                 }
-                $translatedAttributes[$attribute] = $replacer->processOnDownload($originalAttributes[$attribute] ?? '', $value, $submission);
+                $originalValue = $originalAttributes[$attribute] ?? '';
+                $this->getLogger()->debug("ReplacerId=\"{$rule->getReplacerId()}\" processing blockName=\"$blockName\", attribute=\"$attribute\", originalValue=\"$originalValue\"");
+                $translatedAttributes[$attribute] = $replacer->processOnDownload($originalValue, $value, $submission);
             }
         }
 
