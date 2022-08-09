@@ -46,6 +46,11 @@ class WordpressFunctionProxyHelper
         return get_post_meta(...func_get_args());
     }
 
+    public function is_plugin_active(string $plugin): bool
+    {
+        return is_plugin_active($plugin);
+    }
+
     /**
      * @return mixed
      */

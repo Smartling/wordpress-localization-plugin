@@ -20,5 +20,6 @@ class PluginHelperTest extends TestCase {
         $this->assertFalse($x->versionInRange('2.3.0', '2.3.1', '2.3'));
         $this->assertTrue($x->versionInRange('2.3.1', '2.3', '2.3.1'));
         $this->assertFalse($x->versionInRange('2.3.2', '2.3', '2.3.1'));
+        $this->assertTrue($x->versionInRange('2.5.2.1', '2.4', '2.5'));
     }
 }
