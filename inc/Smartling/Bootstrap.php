@@ -14,7 +14,6 @@ use Smartling\ContentTypes\CustomTaxonomyType;
 use Smartling\Exception\SmartlingBootException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\DiagnosticsHelper;
-use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\MetaFieldProcessor\CustomFieldFilterHandler;
 use Smartling\Helpers\SchedulerHelper;
 use Smartling\Helpers\SiteHelper;
@@ -232,7 +231,7 @@ class Bootstrap
         }
 
         $this->testPluginSetup();
-        $this->testMinimalWordpressVersion();
+        $this->testWordpress();
         $this->testTimeLimit();
 
         if (current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
@@ -269,19 +268,22 @@ class Bootstrap
             $logMessage = 'Cron doesn\'t seem to be configured.';
             static::getLogger()->warning($logMessage);
             if (current_user_can('manage_network_plugins')) {
-                $mainMessage = '<strong>Smartling-connector</strong> configuration is not optimal.<br />Warning! Wordpress cron installation is not configured properly. Please follow configuration steps described <a target="_blank" href="https://help.smartling.com/hc/en-us/articles/4405135381915-Configure-Expert-Settings-WordPress-Cron-for-the-WordPress-Connector-">here</a>';
+                $mainMessage = '<strong>Smartling-connector</strong> configuration is not optimal.<br />Warning! WordPress cron installation is not configured properly. Please follow configuration steps described <a target="_blank" href="https://help.smartling.com/hc/en-us/articles/4405135381915-Configure-Expert-Settings-WordPress-Cron-for-the-WordPress-Connector-">here</a>';
                 DiagnosticsHelper::addDiagnosticsMessage($mainMessage, false);
             }
         }
     }
 
-    private function testMinimalWordpressVersion(): void
+    private function testWordpress(): void
     {
         $minVersion = '5.5';
         if (version_compare(get_bloginfo('version'), $minVersion, '<')) {
             $msg = vsprintf('Wordpress has to be at least version %s to run smartling connector plugin. Please upgrade Your Wordpress installation.', [$minVersion]);
             static::getLogger()->critical('Boot :: ' . $msg);
             DiagnosticsHelper::addDiagnosticsMessage($msg, true);
+        }
+        if (!function_exists('get_sites')) {
+            DiagnosticsHelper::addDiagnosticsMessage('WordPress needs to be in multisite mode to run Smartling connector plugin. Please, <a href="https://wordpress.org/support/article/create-a-network/">create a network</a>.', true);
         }
     }
 

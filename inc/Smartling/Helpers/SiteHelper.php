@@ -37,7 +37,7 @@ class SiteHelper
     protected static array $_flatBlogIdCache = [];
 
     /**
-     * Fallback for direct run if Wordpress functionality is not reachable
+     * Fallback for direct run if WordPress functionality is not reachable
      * @throws SmartlingDirectRunRuntimeException
      */
     private function directRunDetectedFallback(string $requiredFunction = ''): void
@@ -52,8 +52,14 @@ class SiteHelper
         throw new SmartlingDirectRunRuntimeException($message);
     }
 
+    /**
+     * @throws SmartlingDirectRunRuntimeException
+     */
     private function cacheSites(): void
     {
+        if (!function_exists('get_sites')) {
+            $this->directRunDetectedFallback('get_sites');
+        }
         if (empty(static::$_siteCache)) {
             $sites = get_sites(['number' => 1000]);
             foreach ($sites as $site) {
@@ -67,27 +73,10 @@ class SiteHelper
     /**
      * @return int[]
      * @throws SmartlingDirectRunRuntimeException
-     */
-    public function listSites(): array
-    {
-        !function_exists('get_sites')
-        && $this->directRunDetectedFallback();
-
-        $this->cacheSites();
-
-        return array_keys(static::$_siteCache);
-    }
-
-    /**
-     * @return int[]
-     * @throws SmartlingDirectRunRuntimeException
      * @throws InvalidArgumentException
      */
     public function listBlogs(int $siteId = 1): array
     {
-        !function_exists('get_sites')
-        && $this->directRunDetectedFallback('get_sites');
-
         $this->cacheSites();
 
         if (isset(static::$_siteCache[$siteId])) {
@@ -124,19 +113,6 @@ class SiteHelper
     {
         if (function_exists('get_current_blog_id')) {
             return get_current_blog_id();
-        }
-
-        $this->directRunDetectedFallback();
-    }
-
-    /**
-     * @throws SmartlingDirectRunRuntimeException
-     */
-    public function getCurrentUserLogin(): ?string
-    {
-        if (function_exists('wp_get_current_user')) {
-            $user = wp_get_current_user();
-            return $user->user_login ?? null;
         }
 
         $this->directRunDetectedFallback();
