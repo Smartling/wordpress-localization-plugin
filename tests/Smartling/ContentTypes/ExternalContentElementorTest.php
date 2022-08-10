@@ -17,7 +17,7 @@ class ExternalContentElementorTest extends TestCase {
         $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
         $proxy->method('getPostMeta')->willReturn('', []);
         $proxy->method('get_plugins')->willReturn(['elementor/elementor.php' => []]);
-        $proxy->method('wp_get_active_network_plugins')->willReturn(['elementor/elementor.php']);
+        $proxy->method('is_plugin_active')->willReturn(true);
         $this->assertFalse($this->getExternalContentElementor($proxy)->canHandle('post', 1));
         $this->assertTrue($this->getExternalContentElementor($proxy)->canHandle('post', 1));
     }

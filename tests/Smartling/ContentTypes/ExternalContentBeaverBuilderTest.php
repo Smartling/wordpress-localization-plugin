@@ -21,7 +21,7 @@ class ExternalContentBeaverBuilderTest extends TestCase {
         $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
         $proxy->method('getPostMeta')->willReturn('', []);
         $proxy->method('get_plugins')->willReturn([$pluginPath => []]);
-        $proxy->method('wp_get_active_network_plugins')->willReturn([$pluginPath]);
+        $proxy->method('is_plugin_active')->willReturn(true);
         $this->assertFalse($this->getExternalContentBeaverBuilder($proxy)->canHandle('post', 1));
         $this->assertTrue($this->getExternalContentBeaverBuilder($proxy)->canHandle('post', 1));
     }
