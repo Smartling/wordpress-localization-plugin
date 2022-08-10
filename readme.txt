@@ -66,7 +66,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 * Added debugging for related content replacer
 * Added diagnostic message for WordPress not in multisite mode
 * Fixed critical error with locking when metadata was null
-* Improve detection of active AIOSEO pack, Beaver Builder and Elementor plugins when running with limited capabilities
+* Improved detection of active AIOSEO pack, Beaver Builder and Elementor plugins when running with limited capabilities
 
 = 2.14.6 =
 * Added Beaver Builder plugin support
