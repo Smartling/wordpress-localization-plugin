@@ -330,6 +330,7 @@ services:
   helper.gutenberg:
     class: Smartling\Helpers\GutenbergBlockHelper
     arguments:
+      - "@acf.dynamic.support"
       - "@media.attachment.rules.manager"
       - "@factory.replacer"
       - "@serializer.json"

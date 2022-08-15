@@ -89,6 +89,7 @@ namespace Smartling\Tests\Smartling\Helpers {
 
         return $this->getMockBuilder(GutenbergBlockHelper::class)
             ->setConstructorArgs([
+                $this->createMock(AcfDynamicSupport::class),
                 $mediaAttachmentRulesManager,
                 $replacerFactory,
                 new SerializerJsonWithFallback(),
@@ -103,6 +104,7 @@ namespace Smartling\Tests\Smartling\Helpers {
     protected function setUp(): void
     {
         $this->helper = new GutenbergBlockHelper(
+            $this->createMock(AcfDynamicSupport::class),
             $this->createMock(MediaAttachmentRulesManager::class),
             $this->createMock(ReplacerFactory::class),
             new SerializerJsonWithFallback(),
@@ -777,7 +779,13 @@ some par 2
         if ($replacerFactory === null) {
             $replacerFactory = $this->createMock(ReplacerFactory::class);
         }
-        return new GutenbergBlockHelper($rulesManager, $replacerFactory, new SerializerJsonWithFallback(), $this->createMock(WordpressFunctionProxyHelper::class));
+        return new GutenbergBlockHelper(
+            $this->createMock(AcfDynamicSupport::class),
+            $rulesManager,
+            $replacerFactory,
+            new SerializerJsonWithFallback(),
+            $this->createMock(WordpressFunctionProxyHelper::class)
+        );
     }
 }
 }

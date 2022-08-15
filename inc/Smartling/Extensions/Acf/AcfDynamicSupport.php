@@ -9,6 +9,7 @@ use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Extensions\AcfOptionPages\ContentTypeAcfOption;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\EntityHelper;
+use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Services\GlobalSettingsManager;
@@ -500,6 +501,15 @@ class AcfDynamicSupport
         }
 
         static::$acfReverseDefinitionAction = $rules;
+    }
+
+    public function isRelatedField(array $attributes, string $key): bool
+    {
+        $parts = array_reverse(explode(FieldsFilterHelper::ARRAY_DIVIDER, $key));
+        $lastPart = "_$parts[0]";
+        $parts[0] = $lastPart;
+        $key = implode(FieldsFilterHelper::ARRAY_DIVIDER, array_reverse($parts));
+        return array_key_exists($key, $attributes) && $this->getReferencedTypeByKey($attributes[$key]) !== self::REFERENCED_TYPE_NONE;
     }
 
     public function getReferencedTypeByKey($key): string

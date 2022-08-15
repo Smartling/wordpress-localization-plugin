@@ -9,6 +9,7 @@ use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\PostContentHelper;
@@ -53,6 +54,7 @@ class SmartlingCoreTest extends TestCase
             new ExternalContentManager(new ContentTypeHelper($wpProxy), new PluginHelper(), $wpProxy),
             new PostContentHelper(
                 new GutenbergBlockHelper(
+                    $this->createMock(AcfDynamicSupport::class),
                     $this->createMock(MediaAttachmentRulesManager::class),
                     $this->createMock(ReplacerFactory::class),
                     new SerializerJsonWithFallback(),

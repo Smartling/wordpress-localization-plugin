@@ -7,6 +7,7 @@ use Psr\Log\NullLogger;
 use Smartling\Base\SmartlingCoreUploadTrait;
 use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DecodedXml;
 use Smartling\Helpers\FieldsFilterHelper;
@@ -581,6 +582,7 @@ HTML;
     private function assertSuccessApplyXml(SmartlingCoreUpload $smartlingCoreUpload, SubmissionEntity $submission, XmlHelper $xmlHelper)
     {
         $postContentHelper = new PostContentHelper(new GutenbergBlockHelper(
+            $this->createMock(AcfDynamicSupport::class),
             $this->createMock(MediaAttachmentRulesManager::class),
             $this->createMock(ReplacerFactory::class),
             new SerializerJsonWithFallback(),
