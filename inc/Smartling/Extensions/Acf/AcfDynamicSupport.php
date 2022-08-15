@@ -506,8 +506,7 @@ class AcfDynamicSupport
     public function isRelatedField(array $attributes, string $key): bool
     {
         $parts = array_reverse(explode(FieldsFilterHelper::ARRAY_DIVIDER, $key));
-        $lastPart = "_$parts[0]";
-        $parts[0] = $lastPart;
+        $parts[0] = "_$parts[0]";
         $key = implode(FieldsFilterHelper::ARRAY_DIVIDER, array_reverse($parts));
         return array_key_exists($key, $attributes) && $this->getReferencedTypeByKey($attributes[$key]) !== self::REFERENCED_TYPE_NONE;
     }
