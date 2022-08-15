@@ -1,6 +1,7 @@
 <?php
 
 namespace {
+    require __DIR__ . '/../../wordpressBlocks.php';
     if (!function_exists('get_site_option')) {
         function get_site_option($storageKey, $defaultValue)
         {
@@ -48,6 +49,7 @@ namespace Smartling\Tests\Smartling\Helpers {
 
     use PHPUnit\Framework\MockObject\MockObject;
     use PHPUnit\Framework\TestCase;
+    use Smartling\Exception\EntityNotFoundException;
     use Smartling\Extensions\Acf\AcfDynamicSupport;
     use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
     use Smartling\Helpers\FieldsFilterHelper;
@@ -451,6 +453,74 @@ HTML
                 ['data' => ['texts' => ['foo1', 'bar1']]],
             ],
         ];
+    }
+
+    public function testTranslationAttributesWithRelations()
+    {
+        $replacements = [
+            19350 => 13,
+            19351 => 17,
+        ];
+        $acfDynamicSupport = $this->createPartialMock(AcfDynamicSupport::class, ['getReferencedTypeByKey']);
+        $acfDynamicSupport->method('getReferencedTypeByKey')->willReturnCallback(static function(string $key): string {
+            if ($key === 'field_6006a62721335') {
+                return AcfDynamicSupport::REFERENCED_TYPE_MEDIA;
+            }
+            return AcfDynamicSupport::REFERENCED_TYPE_NONE;
+        });
+        $rulesManager = new MediaAttachmentRulesManager();
+        $replacer = $this->createMock(ReplacerInterface::class);
+        $replacer->expects($this->exactly(2))->method('processOnDownload')->willReturnCallback(static function($originalValue, $translatedValue, $submission) use ($replacements) {
+            if (array_key_exists($originalValue, $replacements)) {
+                return $replacements[$originalValue];
+            }
+
+            return $originalValue;
+        });
+        $replacerFactory = $this->createMock(ReplacerFactory::class);
+        $replacerFactory->method('getReplacer')->willReturnCallback(static function (string $id) use ($replacer): ReplacerInterface {
+            if ($id === ReplacerFactory::REPLACER_RELATED) {
+                return $replacer;
+            }
+
+            throw new EntityNotFoundException();
+        });
+        $serializer = $this->createMock(SerializerJsonWithFallback::class);
+        $submission = $this->createMock(SubmissionEntity::class);
+        $wpProxy = new WordpressFunctionProxyHelper();
+        $x = new GutenbergBlockHelper($acfDynamicSupport, $rulesManager, $replacerFactory, $serializer, $wpProxy);
+        $this->assertEquals([
+            'data/rows_0_image' => 17,
+            'data/_rows_0_image' => 'field_6006a62721335',
+            'data/rows_0_content' => 'translated content',
+            'data/rows_1_image' => 13,
+            'data/_rows_1_image' => 'field_6006a62721335',
+            'data/rows_1_content' => 'other translated content',
+        ], $x->applyDownloadRules('test/repeater', [
+            'id' => 'block_629db415895a8',
+            'name' => 'test/repeater',
+            'data' => [
+                'rows_0_type' => 'image',
+                '_rows_0_type' => 'field_6006a6f2ede5b',
+                'rows_0_image' => 19351,
+                '_rows_0_image' => 'field_6006a62721335',
+                'rows_0_content' => 'some content',
+                '_rows_0_content' => 'field_5f722c9e1bc75',
+                'rows_1_type' => 'image',
+                '_rows_1_type' => 'field_6006a6f2ede5b',
+                'rows_1_image' => 19350,
+                '_rows_1_image' => 'field_6006a62721335',
+                'rows_1_content' => 'other content',
+                '_rows_1_content' => 'field_5f722c9e1bc75',
+            ],
+        ], [
+            'data/rows_0_image' => '19351',
+            'data/_rows_0_image' => 'field_6006a62721335',
+            'data/rows_0_content' => 'translated content',
+            'data/rows_1_image' => '19350',
+            'data/_rows_1_image' => 'field_6006a62721335',
+            'data/rows_1_content' => 'other translated content',
+        ], $submission));
     }
 
     public function testRenderTranslatedBlockNode()
