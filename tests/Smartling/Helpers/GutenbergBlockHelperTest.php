@@ -457,10 +457,6 @@ HTML
 
     public function testTranslationAttributesWithRelations()
     {
-        $replacements = [
-            19350 => 13,
-            19351 => 17,
-        ];
         $acfDynamicSupport = $this->createPartialMock(AcfDynamicSupport::class, ['getReferencedTypeByKey']);
         $acfDynamicSupport->method('getReferencedTypeByKey')->willReturnCallback(static function(string $key): string {
             if ($key === 'field_6006a62721335') {
@@ -468,9 +464,12 @@ HTML
             }
             return AcfDynamicSupport::REFERENCED_TYPE_NONE;
         });
-        $rulesManager = new MediaAttachmentRulesManager();
         $replacer = $this->createMock(ReplacerInterface::class);
-        $replacer->expects($this->exactly(2))->method('processOnDownload')->willReturnCallback(static function($originalValue, $translatedValue, $submission) use ($replacements) {
+        $replacer->expects($this->exactly(2))->method('processOnDownload')->willReturnCallback(static function($originalValue, $translatedValue, $submission) {
+            $replacements = [
+                19350 => 13,
+                19351 => 17,
+            ];
             if (array_key_exists($originalValue, $replacements)) {
                 return $replacements[$originalValue];
             }
@@ -482,13 +481,9 @@ HTML
             if ($id === ReplacerFactory::REPLACER_RELATED) {
                 return $replacer;
             }
-
             throw new EntityNotFoundException();
         });
-        $serializer = $this->createMock(SerializerJsonWithFallback::class);
-        $submission = $this->createMock(SubmissionEntity::class);
-        $wpProxy = new WordpressFunctionProxyHelper();
-        $x = new GutenbergBlockHelper($acfDynamicSupport, $rulesManager, $replacerFactory, $serializer, $wpProxy);
+
         $this->assertEquals([
             'data/rows_0_image' => 17,
             'data/_rows_0_image' => 'field_6006a62721335',
@@ -496,7 +491,12 @@ HTML
             'data/rows_1_image' => 13,
             'data/_rows_1_image' => 'field_6006a62721335',
             'data/rows_1_content' => 'other translated content',
-        ], $x->applyDownloadRules('test/repeater', [
+        ], (new GutenbergBlockHelper(
+            $acfDynamicSupport,
+            new MediaAttachmentRulesManager(),
+            $replacerFactory,
+            $this->createMock(SerializerJsonWithFallback::class), new WordpressFunctionProxyHelper())
+        )->applyDownloadRules('test/repeater', [
             'id' => 'block_629db415895a8',
             'name' => 'test/repeater',
             'data' => [
@@ -520,7 +520,7 @@ HTML
             'data/rows_1_image' => '19350',
             'data/_rows_1_image' => 'field_6006a62721335',
             'data/rows_1_content' => 'other translated content',
-        ], $submission));
+        ], $this->createMock(SubmissionEntity::class)));
     }
 
     public function testRenderTranslatedBlockNode()
