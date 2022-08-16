@@ -1,6 +1,7 @@
 <?php
 
 namespace {
+    require __DIR__ . '/../../wordpressBlocks.php';
     if (!function_exists('get_site_option')) {
         function get_site_option($storageKey, $defaultValue)
         {
@@ -48,6 +49,7 @@ namespace Smartling\Tests\Smartling\Helpers {
 
     use PHPUnit\Framework\MockObject\MockObject;
     use PHPUnit\Framework\TestCase;
+    use Smartling\Exception\EntityNotFoundException;
     use Smartling\Extensions\Acf\AcfDynamicSupport;
     use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
     use Smartling\Helpers\FieldsFilterHelper;
@@ -89,6 +91,7 @@ namespace Smartling\Tests\Smartling\Helpers {
 
         return $this->getMockBuilder(GutenbergBlockHelper::class)
             ->setConstructorArgs([
+                $this->createMock(AcfDynamicSupport::class),
                 $mediaAttachmentRulesManager,
                 $replacerFactory,
                 new SerializerJsonWithFallback(),
@@ -103,6 +106,7 @@ namespace Smartling\Tests\Smartling\Helpers {
     protected function setUp(): void
     {
         $this->helper = new GutenbergBlockHelper(
+            $this->createMock(AcfDynamicSupport::class),
             $this->createMock(MediaAttachmentRulesManager::class),
             $this->createMock(ReplacerFactory::class),
             new SerializerJsonWithFallback(),
@@ -451,6 +455,74 @@ HTML
         ];
     }
 
+    public function testTranslationAttributesWithRelations()
+    {
+        $acfDynamicSupport = $this->createPartialMock(AcfDynamicSupport::class, ['getReferencedTypeByKey']);
+        $acfDynamicSupport->method('getReferencedTypeByKey')->willReturnCallback(static function(string $key): string {
+            if ($key === 'field_6006a62721335') {
+                return AcfDynamicSupport::REFERENCED_TYPE_MEDIA;
+            }
+            return AcfDynamicSupport::REFERENCED_TYPE_NONE;
+        });
+        $replacer = $this->createMock(ReplacerInterface::class);
+        $replacer->expects($this->exactly(2))->method('processOnDownload')->willReturnCallback(static function($originalValue, $translatedValue, $submission) {
+            $replacements = [
+                19350 => 13,
+                19351 => 17,
+            ];
+            if (array_key_exists($originalValue, $replacements)) {
+                return $replacements[$originalValue];
+            }
+
+            return $originalValue;
+        });
+        $replacerFactory = $this->createMock(ReplacerFactory::class);
+        $replacerFactory->method('getReplacer')->willReturnCallback(static function (string $id) use ($replacer): ReplacerInterface {
+            if ($id === ReplacerFactory::REPLACER_RELATED) {
+                return $replacer;
+            }
+            throw new EntityNotFoundException();
+        });
+
+        $this->assertEquals([
+            'data/rows_0_image' => 17,
+            'data/_rows_0_image' => 'field_6006a62721335',
+            'data/rows_0_content' => 'translated content',
+            'data/rows_1_image' => 13,
+            'data/_rows_1_image' => 'field_6006a62721335',
+            'data/rows_1_content' => 'other translated content',
+        ], (new GutenbergBlockHelper(
+            $acfDynamicSupport,
+            new MediaAttachmentRulesManager(),
+            $replacerFactory,
+            $this->createMock(SerializerJsonWithFallback::class), new WordpressFunctionProxyHelper())
+        )->applyDownloadRules('test/repeater', [
+            'id' => 'block_629db415895a8',
+            'name' => 'test/repeater',
+            'data' => [
+                'rows_0_type' => 'image',
+                '_rows_0_type' => 'field_6006a6f2ede5b',
+                'rows_0_image' => 19351,
+                '_rows_0_image' => 'field_6006a62721335',
+                'rows_0_content' => 'some content',
+                '_rows_0_content' => 'field_5f722c9e1bc75',
+                'rows_1_type' => 'image',
+                '_rows_1_type' => 'field_6006a6f2ede5b',
+                'rows_1_image' => 19350,
+                '_rows_1_image' => 'field_6006a62721335',
+                'rows_1_content' => 'other content',
+                '_rows_1_content' => 'field_5f722c9e1bc75',
+            ],
+        ], [
+            'data/rows_0_image' => '19351',
+            'data/_rows_0_image' => 'field_6006a62721335',
+            'data/rows_0_content' => 'translated content',
+            'data/rows_1_image' => '19350',
+            'data/_rows_1_image' => 'field_6006a62721335',
+            'data/rows_1_content' => 'other translated content',
+        ], $this->createMock(SubmissionEntity::class)));
+    }
+
     public function testRenderTranslatedBlockNode()
     {
         $xmlPart = '<gutenbergBlock blockName="core/foo" originalAttributes="YToxOntzOjQ6ImRhdGEiO2E6Mzp7czo2OiJ0ZXh0X2EiO3M6NzoiVGl0bGUgMSI7czo2OiJ0ZXh0X2IiO3M6NzoiVGl0bGUgMiI7czo1OiJ0ZXh0cyI7YToyOntpOjA7czo1OiJsb3JlbSI7aToxO3M6NToiaXBzdW0iO319fQ=="><![CDATA[]]><contentChunk hash="d3d67cc32ac556aae106e606357f449e"><![CDATA[<p>Inner HTML</p>]]></contentChunk><blockAttribute name="data/text_a" hash="90bc6d3874182275bd4cd88cbd734fe9"><![CDATA[Title 1]]></blockAttribute><blockAttribute name="data/text_b" hash="e4bb56dda4ecb60c34ccb89fd50506df"><![CDATA[Title 2]]></blockAttribute><blockAttribute name="data/texts/0" hash="d2e16e6ef52a45b7468f1da56bba1953"><![CDATA[lorem]]></blockAttribute><blockAttribute name="data/texts/1" hash="e78f5438b48b39bcbdea61b73679449d"><![CDATA[ipsum]]></blockAttribute></gutenbergBlock>';
@@ -777,7 +849,13 @@ some par 2
         if ($replacerFactory === null) {
             $replacerFactory = $this->createMock(ReplacerFactory::class);
         }
-        return new GutenbergBlockHelper($rulesManager, $replacerFactory, new SerializerJsonWithFallback(), $this->createMock(WordpressFunctionProxyHelper::class));
+        return new GutenbergBlockHelper(
+            $this->createMock(AcfDynamicSupport::class),
+            $rulesManager,
+            $replacerFactory,
+            new SerializerJsonWithFallback(),
+            $this->createMock(WordpressFunctionProxyHelper::class)
+        );
     }
 }
 }

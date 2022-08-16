@@ -9,6 +9,7 @@ use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingGutenbergNotFoundException;
 use Smartling\Exception\SmartlingGutenbergParserNotFoundException;
 use Smartling\Exception\SmartlingNotSupportedContentException;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\Helpers\Serializers\SerializerInterface;
 use Smartling\Models\GutenbergBlock;
@@ -24,14 +25,22 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     protected const ATTRIBUTE_NODE_NAME = 'blockAttribute';
     private const MAX_NODE_DEPTH = 10;
 
+    private AcfDynamicSupport $acfDynamicSupport;
     private MediaAttachmentRulesManager $rulesManager;
     private ReplacerFactory $replacerFactory;
     private SerializerInterface $serializer;
     private WordpressFunctionProxyHelper $wpProxy;
 
-    public function __construct(MediaAttachmentRulesManager $rulesManager, ReplacerFactory $replacerFactory, SerializerInterface $serializer, WordpressFunctionProxyHelper $wpProxy)
+    public function __construct(
+        AcfDynamicSupport $acfDynamicSupport,
+        MediaAttachmentRulesManager $rulesManager,
+        ReplacerFactory $replacerFactory,
+        SerializerInterface $serializer,
+        WordpressFunctionProxyHelper $wpProxy
+    )
     {
         parent::__construct();
+        $this->acfDynamicSupport = $acfDynamicSupport;
         $this->replacerFactory = $replacerFactory;
         $this->rulesManager = $rulesManager;
         $this->serializer = $serializer;
@@ -534,6 +543,9 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     public function applyDownloadRules(string $blockName, array $originalAttributes, array $translatedAttributes, ?SubmissionEntity $submission): array
     {
         foreach ($translatedAttributes as $attribute => $value) {
+            if ($this->acfDynamicSupport->isRelatedField($translatedAttributes, $attribute)) {
+                $this->rulesManager->addTemporaryRule(new GutenbergReplacementRule($blockName, '$.' . str_replace(FieldsFilterHelper::ARRAY_DIVIDER, '.', $attribute), ReplacerFactory::REPLACER_RELATED));
+            }
             foreach ($this->rulesManager->getGutenbergReplacementRules($blockName, $attribute) as $rule) {
                 try {
                     $replacer = $this->replacerFactory->getReplacer($rule->getReplacerId());
@@ -542,7 +554,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
                     $this->getLogger()->warning("Replacer not found while processing blockName=\"$blockName\", attribute=\"$attribute\", submissionId=\"$submissionId\", replacerId=\"{$rule->getReplacerId()}\", skipping");
                     continue;
                 }
-                $originalValue = $originalAttributes[$attribute] ?? '';
+                $originalValue = $this->getValue(new GutenbergBlock($blockName, $originalAttributes, [], '', []), $rule);
                 $this->getLogger()->debug("ReplacerId=\"{$rule->getReplacerId()}\" processing blockName=\"$blockName\", attribute=\"$attribute\", originalValue=\"$originalValue\"");
                 $translatedAttributes[$attribute] = $replacer->processOnDownload($originalValue, $value, $submission);
             }

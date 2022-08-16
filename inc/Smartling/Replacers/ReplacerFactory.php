@@ -9,7 +9,7 @@ class ReplacerFactory
 {
     private const REPLACER_COPY = 'copy';
     private const REPLACER_EXCLUDE = 'exclude';
-    private const REPLACER_RELATED = 'related';
+    public const REPLACER_RELATED = 'related';
 
     /**
      * @var ReplacerInterface[] $replacers
