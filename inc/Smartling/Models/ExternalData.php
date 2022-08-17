@@ -15,7 +15,7 @@ class ExternalData {
     public function addRelated(array $related): self
     {
         $result = clone $this;
-        $result->related = array_merge($this->related, $related);
+        $result->related = array_merge_recursive($this->related, $related);
 
         return $result;
     }

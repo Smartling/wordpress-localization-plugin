@@ -40,6 +40,7 @@ namespace Smartling\Tests\Services {
     use Smartling\Helpers\ShortcodeHelper;
     use Smartling\Helpers\SiteHelper;
     use Smartling\Helpers\TranslationHelper;
+    use Smartling\Helpers\WordpressFunctionProxyHelper;
     use Smartling\Jobs\JobEntity;
     use Smartling\Jobs\JobEntityWithBatchUid;
     use Smartling\Jobs\JobManager;
@@ -326,7 +327,8 @@ namespace Smartling\Tests\Services {
                 $this->createMock(ReplacerFactory::class),
                 $settingsManager,
                 $customMenuContentTypeHelper,
-                $this->createMock(ExternalContentManager::class)
+                $this->createMock(ExternalContentManager::class),
+                $this->createMock(WordpressFunctionProxyHelper::class),
             );
 
             $x->bulkUpload(new JobEntityWithBatchUid($batchUid, $jobName, $jobUid, $projectUid), $sourceIds, $contentType, $sourceBlogId, $targetBlogId);
@@ -512,26 +514,21 @@ namespace Smartling\Tests\Services {
                 return $this->createMock(DefaultMetaFieldProcessor::class);
             });
 
+            $wordpressProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wordpressProxy->method('get_post_type')->willReturn('page');
+
             $x = $this->getContentRelationDiscoveryService(
                 $this->createMock(ApiWrapper::class),
                 $contentHelper,
                 $settingsManager,
                 $this->createMock(SubmissionManager::class),
                 null,
-                $metaFieldProcessorManager, $fieldFilterHelper,
+                $metaFieldProcessorManager,
+                $fieldFilterHelper,
+                null,
+                $wordpressProxy,
             );
             $x->method('getBackwardRelatedTaxonomies')->willReturn([]);
-            $x->method('normalizeReferences')->willReturnCallback(function (array $references) {
-                $result = $references;
-                if (isset($references['PostBasedProcessor'])) {
-                    $postTypeIds = array_keys($references['PostBasedProcessor']);
-                    foreach ($postTypeIds as $postTypeId) {
-                        $result['page'][] = $postTypeId;
-                    }
-                    unset($result['PostBasedProcessor']);
-                }
-                return $result;
-            });
 
             $relations = $x->getRelations('post', 1, [$targetBlogId]);
             $this->assertEquals($parentId, $relations->getMissingReferences()[$targetBlogId]['page'][0]);
@@ -660,7 +657,8 @@ namespace Smartling\Tests\Services {
             SubmissionFactory $submissionFactory = null,
             MetaFieldProcessorManager $metaFieldProcessorManager = null,
             FieldsFilterHelper $fieldsFilterHelper = null,
-            AcfDynamicSupport $acfDynamicSupport = null
+            AcfDynamicSupport $acfDynamicSupport = null,
+            WordpressFunctionProxyHelper $wpProxy = null
         )
         {
             if ($acfDynamicSupport === null) {
@@ -674,6 +672,9 @@ namespace Smartling\Tests\Services {
             }
             if ($submissionFactory === null) {
                 $submissionFactory = $this->createMock(SubmissionFactory::class);
+            }
+            if ($wpProxy === null) {
+                $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
             }
             return $this->getMockBuilder(ContentRelationsDiscoveryService::class)->setConstructorArgs([
                 $acfDynamicSupport,
@@ -692,7 +693,8 @@ namespace Smartling\Tests\Services {
                 $settingsManager,
                 $this->createMock(CustomMenuContentTypeHelper::class),
                 $this->createMock(ExternalContentManager::class),
-            ])->onlyMethods(['getTitle', 'getBackwardRelatedTaxonomies', 'normalizeReferences'])->getMock();
+                $wpProxy,
+            ])->onlyMethods(['getTitle', 'getBackwardRelatedTaxonomies'])->getMock();
         }
     }
 }

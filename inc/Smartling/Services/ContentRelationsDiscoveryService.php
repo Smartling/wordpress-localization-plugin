@@ -27,6 +27,7 @@ use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorAbstract;
 use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
 use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Helpers\StringHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Models\UserCloneRequest;
 use Smartling\Models\DetectedRelations;
@@ -48,7 +49,7 @@ use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 
 class ContentRelationsDiscoveryService
 {
-    private const POST_BASED_PROCESSOR = 'PostBasedProcessor';
+    public const POST_BASED_PROCESSOR = 'PostBasedProcessor';
     private AcfDynamicSupport $acfDynamicSupport;
     private ExternalContentManager $externalContentManager;
     private LoggerInterface $logger;
@@ -66,6 +67,7 @@ class ContentRelationsDiscoveryService
     private SettingsManager $settingsManager;
     private LocalizationPluginProxyInterface $localizationPluginProxy;
     private CustomMenuContentTypeHelper $menuHelper;
+    private WordpressFunctionProxyHelper $wordpressProxy;
 
     public function getLogger(): LoggerInterface
     {
@@ -88,7 +90,8 @@ class ContentRelationsDiscoveryService
         ReplacerFactory $replacerFactory,
         SettingsManager $settingsManager,
         CustomMenuContentTypeHelper $menuHelper,
-        ExternalContentManager $externalContentManager
+        ExternalContentManager $externalContentManager,
+        WordpressFunctionProxyHelper $wordpressProxy
     )
     {
         $this->absoluteLinkedAttachmentCoreHelper = $absoluteLinkedAttachmentCoreHelper;
@@ -108,6 +111,7 @@ class ContentRelationsDiscoveryService
         $this->submissionFactory = $submissionFactory;
         $this->submissionManager = $submissionManager;
         $this->menuHelper = $menuHelper;
+        $this->wordpressProxy = $wordpressProxy;
     }
 
     /**
@@ -555,7 +559,7 @@ class ContentRelationsDiscoveryService
         if (array_key_exists('post_content', $content['entity'])) {
             $detectedReferences = array_merge_recursive($detectedReferences, $this->getPostContentReferences($content['entity']['post_content']));
         }
-        $detectedReferences = array_merge_recursive($detectedReferences, $this->externalContentManager->getExternalRelations($contentType, $id));
+        $detectedReferences = array_merge_recursive($this->externalContentManager->getExternalRelations($contentType, $id), $detectedReferences);
 
         $message = self::POST_BASED_PROCESSOR . ' has %d references';
         $count = 0;
@@ -602,11 +606,10 @@ class ContentRelationsDiscoveryService
         }
 
         if (isset($references[self::POST_BASED_PROCESSOR])) {
-            $postTypeIds = array_keys($references[self::POST_BASED_PROCESSOR]);
-            foreach ($postTypeIds as $postTypeId) {
-                $post = get_post($postTypeId);
-                if ($post instanceof \WP_Post) {
-                    $result[$post->post_type][] = $post->ID;
+            foreach (array_keys($references[self::POST_BASED_PROCESSOR]) as $postTypeId) {
+                $postType = $this->wordpressProxy->get_post_type($postTypeId);
+                if ($postType !== false) {
+                    $result[$postType][] = $postTypeId;
                 }
             }
         }

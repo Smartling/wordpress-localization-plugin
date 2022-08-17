@@ -158,7 +158,7 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
                     $result[$key]->settings = (object)$t;
                 }
                 if (property_exists($value->settings, 'type') && $value->settings->type === 'photo') {
-                    $result[$key]->settings->data->id = $this->getTargetAttachmentId($submission->getSourceBlogId(), $result[$key]->settings->data->id, $submission->getTargetBlogId());
+                    $result[$key]->settings->data->id = $this->getTargetId($submission->getSourceBlogId(), $result[$key]->settings->data->id, $submission->getTargetBlogId());
                 }
             }
         }

@@ -7,6 +7,7 @@ use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Models\ExternalData;
+use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
@@ -14,7 +15,9 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 {
     use LoggerSafeTrait;
 
+    public const CONTENT_TYPE_ELEMENTOR_LIBRARY = 'elementor_library';
     protected const META_FIELD_NAME = '_elementor_data';
+    private const PROPERTY_TEMPLATE_ID = 'templateID';
     private ContentTypeHelper $contentTypeHelper;
     private FieldsFilterHelper $fieldsFilterHelper;
 
@@ -156,9 +159,9 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
             $prefix = $previousPrefix . $component['id'];
             if (is_array($component['elements'])) {
                 $result = $result->merge($this->extractContent($component['elements'], $prefix . FieldsFilterHelper::ARRAY_DIVIDER));
-                $relatedId = $this->getRelatedImageIdFromElement($component);
-                if ($relatedId !== null) {
-                    $result = $result->addRelated([ContentTypeHelper::POST_TYPE_ATTACHMENT => [$relatedId]]);
+                $related = $this->getRelatedFromElement($component);
+                if ($related !== null) {
+                    $result = $result->addRelated($related);
                 }
             }
             if (isset($component['settings'])) {
@@ -229,10 +232,24 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return $this->extractContent($this->getElementorDataFromPostMeta($contentId))->getRelated();
     }
 
-    private function getRelatedImageIdFromElement(array $element): ?int {
-        if ($element['elType'] === 'widget' && $element['widgetType'] === 'image') {
-            return $element['settings']['image']['id'] ?? null;
+    private function getRelatedFromElement(array $element): ?array {
+        if ($element['elType'] === 'widget' && array_key_exists('widgetType', $element)) {
+            switch ($element['widgetType']) {
+                case 'global':
+                    $id = $element[self::PROPERTY_TEMPLATE_ID] ?? null;
+                    if ($id !== null) {
+                        return [ContentRelationsDiscoveryService::POST_BASED_PROCESSOR => [$id => $id]];
+                    }
+                    break;
+                case 'image':
+                    $id = $element['settings']['image']['id'] ?? null;
+                    if ($id !== null) {
+                        return [ContentTypeHelper::POST_TYPE_ATTACHMENT => [$id => $id]];
+                    }
+                    break;
+            }
         }
+
         return null;
     }
 
@@ -250,7 +267,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                     }
                     if (is_array($setting)) {
                         if (array_key_exists('id', $setting) && array_key_exists('url', $setting)) {
-                            $targetAttachmentId = $this->getTargetAttachmentId($submission->getSourceBlogId(), $setting['id'], $submission->getTargetBlogId());
+                            $targetAttachmentId = $this->getTargetId($submission->getSourceBlogId(), $setting['id'], $submission->getTargetBlogId());
                             if ($targetAttachmentId !== null) {
                                 $original[$componentIndex]['settings'][$settingIndex]['id'] = $targetAttachmentId;
                             }
@@ -264,7 +281,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                                         $key = implode(FieldsFilterHelper::ARRAY_DIVIDER, [$prefix, $settingIndex, $option['_id'], $optionsIndex]);
                                         $element = $original[$componentIndex]['settings'][$settingIndex][$optionIndex][$optionsIndex];
                                         if (is_array($element) && array_key_exists('id', $element) && array_key_exists('url', $element)) {
-                                            $targetAttachmentId = $this->getTargetAttachmentId($submission->getSourceBlogId(), $element['id'], $submission->getTargetBlogId());
+                                            $targetAttachmentId = $this->getTargetId($submission->getSourceBlogId(), $element['id'], $submission->getTargetBlogId());
                                             if ($targetAttachmentId !== null) {
                                                 $original[$componentIndex]['settings'][$settingIndex][$optionIndex][$optionsIndex]['id'] = $targetAttachmentId;
                                             }
@@ -286,6 +303,12 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                             $original[$componentIndex]['settings'][$settingIndex] = $translation[$key];
                         }
                     }
+                }
+            }
+            if (array_key_exists('elType', $component) && array_key_exists('widgetType', $component) && $component['elType'] === 'widget' && $component['widgetType'] === 'global') {
+                $targetAttachmentId = $this->getTargetId($submission->getSourceBlogId(), $component[self::PROPERTY_TEMPLATE_ID], $submission->getTargetBlogId(), self::CONTENT_TYPE_ELEMENTOR_LIBRARY);
+                if ($targetAttachmentId !== null) {
+                    $original[$componentIndex][self::PROPERTY_TEMPLATE_ID] = $targetAttachmentId;
                 }
             }
         }
