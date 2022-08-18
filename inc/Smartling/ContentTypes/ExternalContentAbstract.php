@@ -38,30 +38,24 @@ abstract class ExternalContentAbstract implements ContentTypePluggableInterface 
         return [];
     }
 
-    protected function getTargetAttachmentId(int $sourceBlogId, int $sourceId, int $targetBlogId): ?int
+    protected function getTargetId(int $sourceBlogId, int $sourceId, int $targetBlogId, string $contentType = ContentTypeHelper::POST_TYPE_ATTACHMENT): ?int
     {
-        $targetSubmissions = $this->submissionManager->find([
-            SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
+        $this->getLogger()->debug("Searching for target id to replace sourceId=$sourceId");
+        $targetSubmission = $this->submissionManager->findOne([
+            SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
             SubmissionEntity::FIELD_SOURCE_ID => $sourceId,
             SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
         ]);
-        switch (count($targetSubmissions)) {
-            case 0:
-                $this->getLogger()->debug('No submissions found while getting target attachmentId for sourceId=' . $sourceId);
-                break;
-            case 1:
-                $targetId = $targetSubmissions[0]->getTargetId();
-                if ($targetId !== 0) {
-                    return $targetId;
-                }
-                $this->getLogger()->info('Got 0 target attachment id for sourceId=' . $sourceId);
-                break;
-            default:
-                $this->getLogger()->notice('Found more than one submissions while getting target attachmentId for sourceId=' . $sourceId);
+        if ($targetSubmission === null) {
+            return null;
+        }
+        if ($targetSubmission->getTargetId() === 0) {
+            $this->getLogger()->info("Got 0 target attachment id for sourceId=$sourceId");
+            return null;
         }
 
-        return null;
+        return $targetSubmission->getTargetId();
     }
 
     protected function getDataFromPostMeta(int $id)
