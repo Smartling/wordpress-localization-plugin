@@ -4,6 +4,7 @@ namespace Smartling\Base;
 
 use Exception;
 use Smartling\ContentTypes\ContentTypeNavigationMenu;
+use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
@@ -16,21 +17,18 @@ use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Class SmartlingCore
- * @package Smartling\Base
- */
 class SmartlingCore extends SmartlingCoreAbstract
 {
     use SmartlingCoreTrait;
     use SmartlingCoreExportApi;
     use CommonLogMessagesTrait;
 
+    private ExternalContentManager $externalContentManager;
     private $postContentHelper;
     private TestRunHelper $testRunHelper;
     private $xmlHelper;
 
-    public function __construct(PostContentHelper $postContentHelper, XmlHelper $xmlHelper, TestRunHelper $testRunHelper)
+    public function __construct(ExternalContentManager $externalContentManager, PostContentHelper $postContentHelper, XmlHelper $xmlHelper, TestRunHelper $testRunHelper)
     {
         parent::__construct();
 
@@ -41,6 +39,7 @@ class SmartlingCore extends SmartlingCoreAbstract
         add_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, [$this, 'regenerateTargetThumbnailsBySubmission']);
         add_filter(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, [$this, 'prepareTargetContent']);
         add_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, [$this, 'syncAttachment']);
+        $this->externalContentManager = $externalContentManager;
         $this->postContentHelper = $postContentHelper;
         /** @noinspection UnusedConstructorDependenciesInspection */
         /** @see SmartlingCoreUploadTrait::applyXML() */

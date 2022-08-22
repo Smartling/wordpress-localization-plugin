@@ -1,10 +1,22 @@
 <?php
 
+/** Want this not to change whenever underlying WP functions change
+ * @noinspection PhpMethodParametersCountMismatchInspection
+ * @noinspection PhpMissingReturnTypeInspection
+ * @noinspection PhpVoidFunctionResultUsedInspection
+ * @noinspection ReturnTypeCanBeDeclaredInspection
+ */
+
 namespace Smartling\Helpers;
 
 class WordpressFunctionProxyHelper
 {
     public static function getPostTypes()
+    {
+        return get_post_types(...func_get_args());
+    }
+
+    public function get_post_types()
     {
         return get_post_types(...func_get_args());
     }
@@ -24,9 +36,19 @@ class WordpressFunctionProxyHelper
         return get_taxonomies(...func_get_args());
     }
 
-    public function getPostMeta($postId)
+    public function get_term_meta()
     {
-        return get_post_meta($postId);
+        return get_term_meta(...func_get_args());
+    }
+
+    public function getPostMeta()
+    {
+        return get_post_meta(...func_get_args());
+    }
+
+    public function is_plugin_active(string $plugin): bool
+    {
+        return is_plugin_active($plugin);
     }
 
     /**
@@ -42,19 +64,14 @@ class WordpressFunctionProxyHelper
         return delete_post_meta(...func_get_args());
     }
 
-    public function delete_term_meta()
-    {
-        return delete_term_meta(...func_get_args());
-    }
-
-    /**
-     * @param int $blogId
-     * @param int $postId
-     * @return mixed
-     */
     public function get_blog_permalink(int $blogId, int $postId)
     {
         return get_blog_permalink(...func_get_args());
+    }
+
+    public function get_plugins(): array
+    {
+        return get_plugins(...func_get_args());
     }
 
     public function get_terms()
@@ -73,7 +90,12 @@ class WordpressFunctionProxyHelper
 
     public function url_to_postid(string $url): int
     {
-        return (int)url_to_postid($url);
+        return url_to_postid($url);
+    }
+
+    public function wp_get_active_network_plugins(): array
+    {
+        return wp_get_active_network_plugins(...func_get_args());
     }
 
     public function wp_send_json()

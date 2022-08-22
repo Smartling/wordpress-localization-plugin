@@ -2,9 +2,9 @@
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 5.5
-Tested up to: 5.9
+Tested up to: 6.0
 Requires PHP: 7.4
-Stable tag: 3.0.0
+Stable tag: 2.15.0
 License: GPLv2 or later
 
 Translate content in WordPress quickly and seamlessly with Smartling, the industry-leading Translation Management System.
@@ -62,8 +62,95 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
-= 3.0.0 =
-* The plugin will no longer automatically fail submissions based on content type not registered in WordPress.
+= 2.15.0 =
+* The plugin will no longer automatically fail submissions based on content type not registered in WordPress
+
+= 2.14.8 =
+* Improved supported for nested ACF in Gutenberg block fields (e.g. repeater blocks)
+
+= 2.14.7 =
+* Added debugging for related content replacer
+* Added diagnostic message for WordPress not in multisite mode
+* Fixed critical error with locking when metadata was null
+* Improved detection of active AIOSEO pack, Beaver Builder and Elementor plugins when running with limited capabilities
+
+= 2.14.6 =
+* Added Beaver Builder plugin support
+
+= 2.14.5 =
+* Fix scoping to avoid conflict with Symfony\Polyfill\Intl\Idn
+
+= 2.14.4 =
+* Fixed post content not being sent for translation when Elementor is active, but not used for a specific post
+
+= 2.14.3 =
+* Fixed errors when saving metadata by improving the escaping process
+
+= 2.14.2 =
+* Fixed issue where content without Elementor data was unable to be sent for translation
+
+= 2.14.1 =
+* Added sending related attachments for translation along with Elementor plugin content
+
+= 2.14.0 =
+* Added Elementor plugin support
+
+= 2.13.6 =
+* Improved AIOSEO pack plugin translation for fields that contain tags
+
+= 2.13.5 =
+* Fixed upload queue length appearing stuck
+
+= 2.13.4 =
+* Added actions to alter translated content or do other actions just before translation gets saved
+* Fixed block level locking for nested Gutenberg blocks
+
+= 2.13.3 =
+* Added support for sending related items from within ACF Gutenberg blocks
+
+= 2.13.2 =
+* Fixed AIOSEO pack plugin translation using wrong fieldset when translating taxonomies
+
+= 2.13.1 =
+* Added display of error messages when widget uploads fail
+* Fixed check/uncheck all links in widgets affecting all Smartling checkboxes on a page
+* Fixed source title detection for taxonomy submissions
+
+= 2.13.0 =
+* Added support for AIOSEO pack
+* Fixed shortcodes with no attributes preventing content uploads
+* Fixed widget uploads broken when an audit log record could not be created
+
+= 2.12.9 =
+* Fixed broken content in ACF fields after translation
+
+= 2.12.8 =
+* Fixed cloning affecting fully locked submissions
+
+= 2.12.7 =
+* Fixed terms meta values stored as array instead of scalar values
+
+= 2.12.6 =
+* Added purge upload queue action (sets all NEW submissions to CANCELLED)
+* Fixed smartlingLockId attribute being sent for translation
+
+= 2.12.5 =
+* Fixed taxonomy page widget not downloading content
+
+= 2.12.4 =
+* Fixed parent page not being sent for translation when sending content one or two levels deep
+
+= 2.12.3 =
+* Added support for nested attributes via JSON path in fine-tuning
+
+= 2.12.2 =
+* Fixed related content not being sent for translation from the post based content UI
+
+= 2.12.1 =
+* Fixed issue where ACF blocks couldn't be decoded and were missing in translated submissions
+
+= 2.12.0 =
+* Fixed regression where media duplication occured and/or related item ids were not changed when cloning items. This release majorly changes the handling of related items while cloning, from this release onwards only the items directly sent for cloning (including cloning one or two levels deep) should be cloned, without any related submissions.
 
 = 2.11.5 =
 * Cloned submissions are excluded from status check background job. This change fixes cloned submissions changing status from completed to failed after time passes

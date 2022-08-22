@@ -6,11 +6,15 @@ use Exception;
 use Smartling\ApiWrapperInterface;
 use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
+use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\EntityNotFoundException;
-use Smartling\Exception\SmartlingDbException;
+use Smartling\Exception\SmartlingGutenbergParserNotFoundException;
 use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
+use Smartling\Exception\SmartlingNotSupportedContentException;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
@@ -24,21 +28,29 @@ use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
 use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
-use Smartling\Models\CloneRequest;
+use Smartling\Models\UserCloneRequest;
 use Smartling\Models\DetectedRelations;
 use Smartling\Models\GutenbergBlock;
+use Smartling\Models\JobInformation;
+use Smartling\Models\UserTranslationRequest;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Replacers\ContentIdReplacer;
 use Smartling\Replacers\ReplacerFactory;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionFactory;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tuner\MediaAttachmentRulesManager;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
+use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 
 class ContentRelationsDiscoveryService
 {
+    private const POST_BASED_PROCESSOR = 'PostBasedProcessor';
+    private AcfDynamicSupport $acfDynamicSupport;
+    private ExternalContentManager $externalContentManager;
     private LoggerInterface $logger;
     private ContentHelper $contentHelper;
     private FieldsFilterHelper $fieldFilterHelper;
@@ -48,6 +60,7 @@ class ContentRelationsDiscoveryService
     private AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper;
     private ShortcodeHelper $shortcodeHelper;
     private GutenbergBlockHelper $gutenbergBlockHelper;
+    private SubmissionFactory $submissionFactory;
     private SubmissionManager $submissionManager;
     private ApiWrapperInterface $apiWrapper;
     private SettingsManager $settingsManager;
@@ -60,6 +73,7 @@ class ContentRelationsDiscoveryService
     }
 
     public function __construct(
+        AcfDynamicSupport $acfDynamicSupport,
         ContentHelper $contentHelper,
         FieldsFilterHelper $fieldFilterHelper,
         MetaFieldProcessorManager $fieldProcessorManager,
@@ -67,17 +81,21 @@ class ContentRelationsDiscoveryService
         AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper,
         ShortcodeHelper $shortcodeHelper,
         GutenbergBlockHelper $blockHelper,
+        SubmissionFactory $submissionFactory,
         SubmissionManager $submissionManager,
         ApiWrapperInterface $apiWrapper,
         MediaAttachmentRulesManager $mediaAttachmentRulesManager,
         ReplacerFactory $replacerFactory,
         SettingsManager $settingsManager,
-        CustomMenuContentTypeHelper $menuHelper
+        CustomMenuContentTypeHelper $menuHelper,
+        ExternalContentManager $externalContentManager
     )
     {
         $this->absoluteLinkedAttachmentCoreHelper = $absoluteLinkedAttachmentCoreHelper;
+        $this->acfDynamicSupport = $acfDynamicSupport;
         $this->apiWrapper = $apiWrapper;
         $this->contentHelper = $contentHelper;
+        $this->externalContentManager = $externalContentManager;
         $this->fieldFilterHelper = $fieldFilterHelper;
         $this->gutenbergBlockHelper = $blockHelper;
         $this->localizationPluginProxy = $localizationPluginProxy;
@@ -87,28 +105,28 @@ class ContentRelationsDiscoveryService
         $this->replacerFactory = $replacerFactory;
         $this->settingsManager = $settingsManager;
         $this->shortcodeHelper = $shortcodeHelper;
+        $this->submissionFactory = $submissionFactory;
         $this->submissionManager = $submissionManager;
         $this->menuHelper = $menuHelper;
     }
 
     /**
      * @throws SmartlingApiException
-     * @throws SmartlingDbException
      */
-    protected function getBatchUid(int $sourceBlogId, array $job): string
+    protected function getBatchUid(ConfigurationProfileEntity $profile, JobInformation $job): string
     {
         return $this
             ->apiWrapper
             ->retrieveBatch(
-                $this->settingsManager->getSingleSettingsProfile($sourceBlogId),
-                $job['id'],
-                'true' === $job['authorize'],
+                $profile,
+                $job->getId(),
+                $job->isAuthorize(),
                 [
-                    'name' => $job['name'],
-                    'description' => $job['description'],
+                    'name' => $job->getName(),
+                    'description' => $job->getDescription(),
                     'dueDate' => [
-                        'date' => $job['dueDate'],
-                        'timezone' => $job['timeZone'],
+                        'date' => $job->getDueDate(),
+                        'timezone' => $job->getTimeZone(),
                     ],
                 ]
             );
@@ -136,11 +154,12 @@ class ContentRelationsDiscoveryService
                 $submission->setJobInfo($jobInfo->getJobInformationEntity());
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission->getFileUri();
-                $title = $this->getPostTitle($id);
+                $title = $this->getTitle($submission);
                 if ($title !== '') {
                     $submission->setSourceTitle($title);
                 }
                 $this->submissionManager->storeEntity($submission);
+                $this->logSubmissionCreated($submission, 'Bulk upload request');
                 if ($submission->getContentType() === ContentTypeNavigationMenu::WP_CONTENT_TYPE) {
                     $menuItemIds = array_reduce($this->menuHelper->getMenuItems($submission->getSourceId(), $submission->getSourceBlogId()), static function ($carry, $item) {
                         $carry[] = $item->ID;
@@ -152,7 +171,7 @@ class ContentRelationsDiscoveryService
         }
     }
 
-    public function clone(CloneRequest $request): void
+    public function clone(UserCloneRequest $request): void
     {
         $sourceBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
         $submissionArray = [
@@ -161,18 +180,9 @@ class ContentRelationsDiscoveryService
         $submissions = [];
 
         foreach ($request->getTargetBlogIds() as $targetBlogId) {
-            $sources = [];
             $submissionArray[SubmissionEntity::FIELD_TARGET_BLOG_ID] = $targetBlogId;
-            foreach ($request->getRelationsOrdered() as $relationSet) {
-                foreach ($relationSet[$targetBlogId] as $type => $ids) {
-                    foreach ($ids as $id) {
-                        $sources[] = [
-                            'id' => $id,
-                            'type' => $type,
-                        ];
-                    }
-                }
-            }
+            $sources = $this->getSources($request, $targetBlogId);
+
             $sources[] = [
                 'id' => $request->getContentId(),
                 'type' => $request->getContentType(),
@@ -181,15 +191,24 @@ class ContentRelationsDiscoveryService
             foreach ($sources as $source) {
                 $submissionArray[SubmissionEntity::FIELD_CONTENT_TYPE] = $source['type'];
                 $submissionArray[SubmissionEntity::FIELD_SOURCE_ID] = (int)$source['id'];
-                $existing = ArrayHelper::first($this->submissionManager->find($submissionArray));
+                $existing = ArrayHelper::first($this->submissionManager->find([
+                    SubmissionEntity::FIELD_CONTENT_TYPE => $submissionArray[SubmissionEntity::FIELD_CONTENT_TYPE],
+                    SubmissionEntity::FIELD_SOURCE_ID => $submissionArray[SubmissionEntity::FIELD_SOURCE_ID],
+                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submissionArray[SubmissionEntity::FIELD_SOURCE_BLOG_ID],
+                    SubmissionEntity::FIELD_TARGET_BLOG_ID => $submissionArray[SubmissionEntity::FIELD_TARGET_BLOG_ID],
+                ]));
                 if ($existing instanceof SubmissionEntity) {
                     $submission = $existing;
+                    if ($submission->isLocked()) {
+                        $this->getLogger()->debug('Skipping cloning for submissionId=' . $submission->getId() . ', because it is locked');
+                        continue;
+                    }
                     $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 } else {
                     $submissionArray[SubmissionEntity::FIELD_STATUS] = SubmissionEntity::SUBMISSION_STATUS_NEW;
                     $submissionArray[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::nowAsString();
-                    $submission = SubmissionEntity::fromArray($submissionArray, $this->getLogger());
-                    $title = $this->getPostTitle($submission->getSourceId());
+                    $submission = $this->submissionFactory->fromArray($submissionArray);
+                    $title = $this->getTitle($submission);
                     if ($title !== '') {
                         $submission->setSourceTitle($title);
                     }
@@ -202,58 +221,74 @@ class ContentRelationsDiscoveryService
         $this->submissionManager->storeSubmissions($submissions);
     }
 
-    public function createSubmissions(array $data): void
+    public function createSubmissions(UserTranslationRequest $request): void
     {
-        $contentType = $data['source']['contentType'];
         $curBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
-        $batchUid = $this->getBatchUid($curBlogId, $data['job']);
-        $jobInfo = new JobEntityWithBatchUid($batchUid, $data['job']['name'], $data['job']['id'], $this->settingsManager->getSingleSettingsProfile($curBlogId)->getProjectId());
-        $targetBlogIds = explode(',', $data['targetBlogIds']);
+        $profile = $this->settingsManager->getSingleSettingsProfile($curBlogId);
+        $job = $request->getJobInformation();
+        $batchUid = $this->getBatchUid($profile, $job);
+        $jobInfo = new JobEntityWithBatchUid($batchUid, $job->getName(), $job->getId(), $profile->getProjectId());
+        $relatedIds = [];
+        try {
+            foreach ($request->getRelationsOrdered() as $relations) {
+                foreach ($relations as $content) {
+                    foreach ($content as $contentType => $contentIds) {
+                        if (!array_key_exists($contentType, $relatedIds)) {
+                            $relatedIds[$contentType] = [];
+                        }
+                        $relatedIds[$contentType] = array_merge($relatedIds[$contentType], $contentIds);
+                    }
+                }
+            }
+            foreach ($relatedIds as $contentType => $contentIds) {
+                $relatedIds[$contentType] = array_unique($contentIds);
+            }
+        } catch (\Exception $e) {
+            $this->getLogger()->error('Failed to build related ids array for audit log');
+        }
+        try {
+            $this->apiWrapper->createAuditLogRecord($profile, CreateRecordParameters::ACTION_TYPE_UPLOAD, $request->getDescription(), [
+                'relatedContentIds' => $relatedIds,
+                'sourceBlogId' => $curBlogId,
+                'sourceId' => $request->getContentId(),
+                'targetBlogIds' => $request->getTargetBlogIds(),
+            ], $jobInfo, $job->isAuthorize());
+        } catch (\Exception $e) {
+            $this->getLogger()->error(sprintf('Failed to create audit log record actionType=%s, requestDescription="%s", sourceId=%d, sourceBlogId=%d', CreateRecordParameters::ACTION_TYPE_UPLOAD, $request->getDescription(), $request->getContentId(), $curBlogId));
+        }
 
-        if (array_key_exists('ids', $data)) {
-            $this->bulkUpload($jobInfo, $data['ids'], $contentType, $curBlogId, $targetBlogIds);
+        if ($request->isBulk()) {
+            $this->bulkUpload($jobInfo, $request->getIds(), $request->getContentType(), $curBlogId, $request->getTargetBlogIds());
             return;
         }
 
-        foreach ($targetBlogIds as $targetBlogId) {
+        foreach ($request->getTargetBlogIds() as $targetBlogId) {
             $submissionTemplateArray = [
                 SubmissionEntity::FIELD_SOURCE_BLOG_ID => $curBlogId,
-                SubmissionEntity::FIELD_TARGET_BLOG_ID => (int)$targetBlogId,
+                SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
             ];
 
             /**
              * Submission for original content may already exist
              */
-            $contentId = ArrayHelper::first($data['source']['id']);
             $searchParams = array_merge($submissionTemplateArray, [
-                SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
-                SubmissionEntity::FIELD_SOURCE_ID => $contentId,
+                SubmissionEntity::FIELD_CONTENT_TYPE => $request->getContentType(),
+                SubmissionEntity::FIELD_SOURCE_ID => $request->getContentId(),
             ]);
 
-            $sources = [];
-
-            if ($this->hasRelations($data, (int)$targetBlogId)) {
-                foreach ($data['relations'][$targetBlogId] as $sysType => $ids) {
-                    foreach ($ids as $id) {
-                        $sources[] = [
-                            'type' => $sysType,
-                            'id' => $id,
-                        ];
-                    }
-                }
-            }
+            $sources = $this->getSources($request, $targetBlogId);
 
             $result = $this->submissionManager->find($searchParams, 1);
 
             if (empty($result)) {
                 $sources[] = [
-                    'type' => $contentType,
-                    'id' => $contentId,
+                    'id' => $request->getContentId(),
+                    'type' => $request->getContentType(),
                 ];
             } else {
                 $submission = ArrayHelper::first($result);
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                $this->storeWithJobInfo($submission, $jobInfo);
+                $this->storeWithJobInfo($submission, $jobInfo, $request->getDescription());
             }
 
             /**
@@ -269,8 +304,8 @@ class ContentRelationsDiscoveryService
                     SubmissionEntity::FIELD_SOURCE_ID => $source['id'],
                 ]);
 
-                $submission = SubmissionEntity::fromArray($submissionArray, $this->getLogger());
-                $title = $this->getPostTitle($submission->getSourceId());
+                $submission = $this->submissionFactory->fromArray($submissionArray);
+                $title = $this->getTitle($submission);
                 if ($title !== '') {
                     $submission->setSourceTitle($title);
                 }
@@ -278,7 +313,7 @@ class ContentRelationsDiscoveryService
                 // trigger generation of fileUri
                 try {
                     $submission->getFileUri();
-                    $this->storeWithJobInfo($submission, $jobInfo);
+                    $this->storeWithJobInfo($submission, $jobInfo, $request->getDescription());
                 } catch (SmartlingInvalidFactoryArgumentException $e) {
                     $this->getLogger()->info("Skipping submission because no mapper was found: contentType={$submission->getContentType()} sourceBlogId={$submission->getSourceBlogId()}, sourceId={$submission->getSourceId()}, targetBlogId={$submission->getTargetBlogId()}");
                 }
@@ -306,7 +341,7 @@ class ContentRelationsDiscoveryService
         return $relatedTaxonomies;
     }
 
-    private function getBackwardRelatedTaxonomies(int $contentId, string $contentType): array
+    public function getBackwardRelatedTaxonomies(int $contentId, string $contentType): array
     {
         $detectedReferences = [];
         $relatedTaxonomyTypes = $this->getTaxonomiesForContentType($contentType);
@@ -325,11 +360,16 @@ class ContentRelationsDiscoveryService
     private array $shortcodeFields = [];
 
     /**
+     * @param mixed $attributes
+     * @see do_shortcode_tag(), shortcode_parse_atts() attributes might be an array, or an empty string
      * @see extractFieldsFromShortcodes();
      * @noinspection PhpUnused
      */
-    public function shortcodeHandler(array $attributes, string $content, string $shortcodeName): void
+    public function shortcodeHandler($attributes, string $content, string $shortcodeName): void
     {
+        if (!is_array($attributes)) {
+            return;
+        }
         foreach ($attributes as $attributeName => $attributeValue) {
             $this->shortcodeFields[$shortcodeName . '/' . $attributeName][] = $attributeValue;
             if (!StringHelper::isNullOrEmpty($content)) {
@@ -353,7 +393,7 @@ class ContentRelationsDiscoveryService
         return $fields;
     }
 
-    private function extractFieldsFromGutenbergBlock(string $basename, string $string): array
+    private function extractFieldsFromGutenbergBlocks(string $basename, string $string): array
     {
         $result = [];
         $blocks = $this->gutenbergBlockHelper->parseBlocks($string);
@@ -379,37 +419,38 @@ class ContentRelationsDiscoveryService
         return $array;
     }
 
+    /**
+     * @return int[]
+     */
     private function getPostContentReferences(string $content): array
     {
         $result = [];
-        foreach ($this->gutenbergBlockHelper->parseBlocks($content) as $block) {
-            $result = $this->addPostContentReferences($result, $block);
+        try {
+            foreach ($this->gutenbergBlockHelper->parseBlocks($content) as $block) {
+                $result = $this->addPostContentReferences($result, $block);
+            }
+        } catch (SmartlingGutenbergParserNotFoundException $e) {
+            $this->getLogger()->warning('Failed to parse blocks: ' . $e->getMessage());
+            return $result;
         }
 
         $result = array_unique($result);
 
-        return ['PostBasedProcessor' => array_combine($result, $result)] ;
+        return [self::POST_BASED_PROCESSOR => array_combine($result, $result)] ;
     }
 
+    /**
+     * @return int[]
+     */
     private function addPostContentReferences(array $array, GutenbergBlock $block): array
     {
-        foreach ($block->getAttributes() as $attribute => $value) {
-            foreach ($this->mediaAttachmentRulesManager->getGutenbergReplacementRules($block->getBlockName(), $attribute) as $rule) {
-                try {
-                    $replacer = $this->replacerFactory->getReplacer($rule->getReplacerId());
-                } catch (EntityNotFoundException $e) {
-                    continue;
-                }
-                if ($replacer instanceof ContentIdReplacer && is_numeric($value)) {
-                    $array[] = $value;
-                }
-            }
-        }
+        $referencesFromAcf = $this->getReferencesFromAcf($block);
+        $referencesFromSetupBlocks = $this->getReferencesFromGutenbergReplacementRules($block);
         foreach ($block->getInnerBlocks() as $innerBlock) {
             $array = $this->addPostContentReferences($array, $innerBlock);
         }
 
-        return $array;
+        return array_merge($array, $referencesFromAcf, $referencesFromSetupBlocks);
     }
 
     /**
@@ -456,7 +497,7 @@ class ContentRelationsDiscoveryService
             foreach ($fields as $fName => $fValue) {
                 $extraFields = array_merge(
                     $extraFields,
-                    $this->fieldFilterHelper->flattenArray($this->extractFieldsFromGutenbergBlock($fName, $fValue))
+                    $this->fieldFilterHelper->flattenArray($this->extractFieldsFromGutenbergBlocks($fName, $fValue))
                 );
             }
             $fields = array_merge($fields, $extraFields);
@@ -512,9 +553,16 @@ class ContentRelationsDiscoveryService
         $detectedReferences['taxonomies'] = $this->getBackwardRelatedTaxonomies($id, $contentType);
 
         if (array_key_exists('post_content', $content['entity'])) {
-            $detectedReferences = array_merge($detectedReferences, $this->getPostContentReferences($content['entity']['post_content']));
+            $detectedReferences = array_merge_recursive($detectedReferences, $this->getPostContentReferences($content['entity']['post_content']));
         }
+        $detectedReferences = array_merge_recursive($detectedReferences, $this->externalContentManager->getExternalRelations($contentType, $id));
 
+        $message = self::POST_BASED_PROCESSOR . ' has %d references';
+        $count = 0;
+        if (array_key_exists(self::POST_BASED_PROCESSOR, $detectedReferences)) {
+            $count = count($detectedReferences[self::POST_BASED_PROCESSOR], COUNT_RECURSIVE);
+        }
+        $this->getLogger()->debug(sprintf($message, $count));
         $detectedReferences = $this->normalizeReferences($detectedReferences);
 
         $responseData = new DetectedRelations($detectedReferences);
@@ -553,8 +601,8 @@ class ContentRelationsDiscoveryService
             $result['attachment'] = array_merge(($result['attachment'] ?? []), array_keys($references['MediaBasedProcessor']));
         }
 
-        if (isset($references['PostBasedProcessor'])) {
-            $postTypeIds = array_keys($references['PostBasedProcessor']);
+        if (isset($references[self::POST_BASED_PROCESSOR])) {
+            $postTypeIds = array_keys($references[self::POST_BASED_PROCESSOR]);
             foreach ($postTypeIds as $postTypeId) {
                 $post = get_post($postTypeId);
                 if ($post instanceof \WP_Post) {
@@ -586,24 +634,103 @@ class ContentRelationsDiscoveryService
         return $result;
     }
 
-    private function storeWithJobInfo(SubmissionEntity $submission, JobEntityWithBatchUid $jobInfo): void
+    private function storeWithJobInfo(SubmissionEntity $submission, JobEntityWithBatchUid $jobInfo, string $description): void
     {
         $submission->setBatchUid($jobInfo->getBatchUid());
         $submission->setJobInfo($jobInfo->getJobInformationEntity());
         $this->submissionManager->storeEntity($submission);
+        $this->logSubmissionCreated($submission, $description);
     }
 
-    public function getPostTitle(int $id): string
+    public function getTitle(SubmissionEntity $submission): string
     {
-        $post = get_post($id);
-        if ($post instanceof \WP_Post) {
-            return $post->post_title;
+        try {
+            $content = $this->contentHelper->readSourceContent($submission);
+            if ($content instanceof EntityAbstract) {
+                return $content->getTitle();
+            }
+            throw new SmartlingNotSupportedContentException("Could not read content of type {$submission->getContentType()}");
+        } catch (\Exception $e) {
+            $this->getLogger()->notice(sprintf('Unable to get content title for submissionId=%d, sourceBlogId=%d, sourceId=%d, type="%s"', $submission->getId(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getContentType()));
+            $this->getLogger()->debug('Exception: ' . $e->getMessage());
+            return '';
         }
-        return '';
     }
 
-    private function hasRelations(array $data, int $targetBlogId): bool
+    private function getSources(UserCloneRequest $request, int $targetBlogId): array
     {
-        return array_key_exists('relations', $data) && is_array($data['relations']) && array_key_exists($targetBlogId, $data['relations']);
+        $sources = [];
+
+        foreach ($request->getRelationsOrdered() as $relationSet) {
+            foreach ($relationSet[$targetBlogId] as $type => $ids) {
+                foreach ($ids as $id) {
+                    $sources[] = [
+                        'id' => $id,
+                        'type' => $type,
+                    ];
+                }
+            }
+        }
+
+        return $sources;
+    }
+
+    private function logSubmissionCreated(SubmissionEntity $submission, string $description): void
+    {
+        $this->getLogger()->info(sprintf("Adding submissionId=%d, fileName=%s, sourceBlogId=%d, sourceId=%d for upload to batchUid=%s due to user request, reason=\"%s\"", $submission->getId(), $submission->getStateFieldFileUri(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getBatchUid(), $description));
+    }
+
+    /**
+     * @return int[]
+     */
+    public function getReferencesFromAcf(GutenbergBlock $block): array
+    {
+        $result = [];
+        if (strpos($block->getBlockName(), 'acf/') !== 0) {
+            return $result;
+        }
+
+        foreach ($block->getAttributes()['data'] ?? [] as $attribute => $value) {
+            if (strpos($attribute, '_') !== 0) {
+                continue;
+            }
+            $type = $this->acfDynamicSupport->getReferencedTypeByKey($value);
+            if (in_array($type, [
+                AcfDynamicSupport::REFERENCED_TYPE_MEDIA,
+                AcfDynamicSupport::REFERENCED_TYPE_POST,
+            ], true)) {
+                $referencedValue = $block->getAttributes()['data'][substr($attribute, 1)] ?? null;
+                if (is_numeric($referencedValue)) {
+                    $result[] = (int)$referencedValue;
+                }
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @return int[]
+     */
+    public function getReferencesFromGutenbergReplacementRules(GutenbergBlock $block): array
+    {
+        $result = [];
+        foreach ($block->getAttributes() as $attribute => $_) {
+            foreach ($this->mediaAttachmentRulesManager->getGutenbergReplacementRules($block->getBlockName(), $attribute) as $rule) {
+                $this->getLogger()->debug("Found rule for blockName=\"{$block->getBlockName()}\" attributeName=\"$attribute\"");
+                try {
+                    $replacer = $this->replacerFactory->getReplacer($rule->getReplacerId());
+                    $this->getLogger()->debug("Got replacerId={$rule->getReplacerId()}");
+                } catch (EntityNotFoundException $e) {
+                    continue;
+                }
+                $value = $this->gutenbergBlockHelper->getValue($block, $rule);
+                if ($replacer instanceof ContentIdReplacer && is_numeric($value)) {
+                    $result[] = (int)$value;
+                    $this->getLogger()->debug("Added relatedId=$value to references (found rule for blockName=\"{$block->getBlockName()} attributeName=\"{$attribute}");
+                }
+            }
+        }
+
+        return $result;
     }
 }

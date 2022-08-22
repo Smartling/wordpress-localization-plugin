@@ -9,6 +9,7 @@ use Smartling\WP\WPAbstract;
  * @var WPAbstract self
  */
 $data = $this->getViewData();
+$widgetName = 'bulk-submit-locales';
 
 ?>
 <div class="wrap">
@@ -75,7 +76,7 @@ $data = $this->getViewData();
                                     <td>
                                         <h3><?= __('Clone into next languages:'); ?></h3>
                                         <div>
-                                            <?= WPAbstract::checkUncheckBlock(); ?>
+                                            <?= WPAbstract::checkUncheckBlock($widgetName) ?>
                                         </div>
                                         <?php
                                         /**
@@ -97,7 +98,7 @@ $data = $this->getViewData();
                                             ?>
                                             <p>
                                                 <?= WPAbstract::localeSelectionCheckboxBlock(
-                                                    'bulk-submit-locales',
+                                                    $widgetName,
                                                     $locale->getBlogId(),
                                                     $locale->getLabel(),
                                                     false

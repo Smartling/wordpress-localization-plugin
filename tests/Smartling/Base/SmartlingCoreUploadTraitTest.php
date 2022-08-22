@@ -5,7 +5,9 @@ namespace Smartling\Tests\Smartling\Base;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Smartling\Base\SmartlingCoreUploadTrait;
+use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DecodedXml;
 use Smartling\Helpers\FieldsFilterHelper;
@@ -29,19 +31,23 @@ class SmartlingCoreUpload {
     use SmartlingCoreUploadTrait;
 
     private ContentHelper $contentHelper;
+    private ExternalContentManager $externalContentManager;
     private FieldsFilterHelper $fieldsFilterHelper;
     private GutenbergBlockHelper $blockHelper;
     private SettingsManager $settingsManager;
     private SubmissionManager $submissionManager;
     private TestRunHelper $testRunHelper;
+    private WordpressFunctionProxyHelper $wpProxy;
 
-    public function __construct(ContentHelper $contentHelper, FieldsFilterHelper $fieldsFilterHelper, SettingsManager $settingsManager, SubmissionManager $submissionManager, TestRunHelper $testRunHelper)
+    public function __construct(ContentHelper $contentHelper, ExternalContentManager $externalContentManager, FieldsFilterHelper $fieldsFilterHelper, SettingsManager $settingsManager, SubmissionManager $submissionManager, TestRunHelper $testRunHelper, WordpressFunctionProxyHelper $wpProxy)
     {
         $this->contentHelper = $contentHelper;
+        $this->externalContentManager = $externalContentManager;
         $this->fieldsFilterHelper = $fieldsFilterHelper;
         $this->settingsManager = $settingsManager;
         $this->submissionManager = $submissionManager;
         $this->testRunHelper = $testRunHelper;
+        $this->wpProxy = $wpProxy;
     }
 
     public function getLogger(): NullLogger
@@ -76,6 +82,11 @@ class SmartlingCoreUpload {
     {
         return $this->submissionManager;
     }
+
+    protected function getFunctionProxyHelper(): WordpressFunctionProxyHelper
+    {
+        return $this->wpProxy;
+    }
 }
 
 class SmartlingCoreUploadTraitTest extends TestCase
@@ -107,7 +118,8 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
         $submissionManager->method('storeEntity')->willReturnArgument(0);
 
-        $x = new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager, $this->createMock(TestRunHelper::class));
+        $x = $this->getSmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager);
+
         $xmlHelper = $this->createMock(XmlHelper::class);
         $xmlHelper->method('xmlDecode')->willReturn(new DecodedXml(
             ['meta' => $translatedFields],
@@ -146,7 +158,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
         $submissionManager->method('storeEntity')->willReturnArgument(0);
 
-        $x = new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager, $this->createMock(TestRunHelper::class));
+        $x = $this->getSmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager);
         $xmlHelper = $this->createMock(XmlHelper::class);
         $xmlHelper->method('xmlDecode')->willReturn(new DecodedXml(
             ['meta' => ['metaToTranslate' => '~Translated~']],
@@ -238,7 +250,7 @@ HTML;
         $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
         $submissionManager->method('storeEntity')->willReturnArgument(0);
 
-        $x = new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager, $this->createMock(TestRunHelper::class));
+        $x = $this->getSmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager);
         $xmlHelper = $this->createMock(XmlHelper::class);
         $xmlHelper->method('xmlDecode')->willReturn(new DecodedXml(
             ['entity' => ['post_content' => $translatedContent]],
@@ -397,7 +409,7 @@ HTML;
         $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
         $submissionManager->method('storeEntity')->willReturnArgument(0);
 
-        $x = new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager, $this->createMock(TestRunHelper::class));
+        $x = $this->getSmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager);
         $xmlHelper = $this->createMock(XmlHelper::class);
         $xmlHelper->method('xmlDecode')->willReturn(new DecodedXml(
             ['entity' => ['post_content' => $translatedContent]],
@@ -552,7 +564,7 @@ HTML;
         $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
         $submissionManager->method('storeEntity')->willReturnArgument(0);
 
-        $x = new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager, $this->createMock(TestRunHelper::class));
+        $x = $this->getSmartlingCoreUpload($contentHelper,$fieldsFilterHelper, $settingsManager, $submissionManager);
         $xmlHelper = $this->createMock(XmlHelper::class);
         $xmlHelper->method('xmlDecode')->willReturn(new DecodedXml(
             ['entity' => ['post_content' => $translatedContent]],
@@ -570,11 +582,28 @@ HTML;
     private function assertSuccessApplyXml(SmartlingCoreUpload $smartlingCoreUpload, SubmissionEntity $submission, XmlHelper $xmlHelper)
     {
         $postContentHelper = new PostContentHelper(new GutenbergBlockHelper(
+            $this->createMock(AcfDynamicSupport::class),
             $this->createMock(MediaAttachmentRulesManager::class),
             $this->createMock(ReplacerFactory::class),
             new SerializerJsonWithFallback(),
             $this->createMock(WordpressFunctionProxyHelper::class),
         ));
         self::assertEquals([], $smartlingCoreUpload->applyXML($submission, ' ', $xmlHelper, $postContentHelper));
+    }
+
+    private function getSmartlingCoreUpload(
+        ContentHelper $contentHelper,
+        FieldsFilterHelper $fieldsFilterHelper,
+        SettingsManager $settingsManager,
+        SubmissionManager $submissionManager
+    )
+    {
+        $externalContentManager = $this->createMock(ExternalContentManager::class);
+        $externalContentManager->method('setExternalContent')->willReturnArgument(1);
+
+        $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $wpProxy->method('apply_filters')->willReturnArgument(1);
+
+        return new SmartlingCoreUpload($contentHelper, $externalContentManager, $fieldsFilterHelper, $settingsManager, $submissionManager, $this->createMock(TestRunHelper::class), $wpProxy);
     }
 }

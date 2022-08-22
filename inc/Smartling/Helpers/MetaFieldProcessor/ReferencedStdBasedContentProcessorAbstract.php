@@ -85,7 +85,7 @@ abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProce
             $sourceBlogId = $submission->getSourceBlogId();
             $contentType = $this->detectRealContentType($sourceBlogId, $value);
             $targetBlogId = $submission->getTargetBlogId();
-            if ($this->getTranslationHelper()->isRelatedSubmissionCreationNeeded($contentType, $sourceBlogId, $value, $targetBlogId)) {
+            if ($this->getTranslationHelper()->isRelatedSubmissionCreationNeeded($contentType, $sourceBlogId, $value, $targetBlogId, $submission->isCloned())) {
                 $this->getLogger()->debug("Sending for translation referenced content id = '$value' related to submission = '{$submission->getId()}'.");
 
                 if ($this->getContentHelper()->checkEntityExists($sourceBlogId, $contentType, $value)) {

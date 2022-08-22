@@ -4,17 +4,17 @@ namespace Smartling\Tests\Services;
 
 use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\ArrayHelper;
-use Smartling\Models\CloneRequest;
+use Smartling\Models\UserCloneRequest;
 use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Services\ContentRelationsHandler;
 
 class ContentRelationsHandlerTest extends TestCase
 {
-    private ?CloneRequest $request;
+    private $request;
     public function testCreateSubmissionsHandlerCloneNoRelations()
     {
         $service = $this->createMock(ContentRelationsDiscoveryService::class);
-        $service->expects($this->once())->method('clone')->willReturnCallback(function (CloneRequest $request) {
+        $service->expects($this->once())->method('clone')->willReturnCallback(function (UserCloneRequest $request) {
             $this->request = $request;
         });
         $x = new class($service) extends ContentRelationsHandler {
@@ -27,8 +27,8 @@ class ContentRelationsHandlerTest extends TestCase
                 TestCase::fail('Should not return error, got ' . $message);
             }
         };
-        $x->createSubmissionsHandler(['formAction' => 'clone', 'source' => ['id' => [13], 'contentType' => 'post'], 'targetBlogIds' => '2,3']);
-        $this->assertInstanceOf(CloneRequest::class, $this->request);
+        $x->createSubmissionsHandler(['formAction' => ContentRelationsHandler::FORM_ACTION_CLONE, 'source' => ['id' => [13], 'contentType' => 'post'], 'targetBlogIds' => '2,3']);
+        $this->assertInstanceOf(UserCloneRequest::class, $this->request);
         $this->assertEquals(13, $this->request->getContentId());
         $this->assertEquals('post', $this->request->getContentType());
         $this->assertEquals([], $this->request->getRelationsOrdered(), 'Should be empty array if no relations specified');
@@ -38,7 +38,7 @@ class ContentRelationsHandlerTest extends TestCase
     public function testCreateSubmissionsHandlerCloneRelations()
     {
         $service = $this->createMock(ContentRelationsDiscoveryService::class);
-        $service->expects($this->once())->method('clone')->willReturnCallback(function (CloneRequest $request) {
+        $service->expects($this->once())->method('clone')->willReturnCallback(function (UserCloneRequest $request) {
             $this->request = $request;
         });
         $targetBlogId = 2;
@@ -53,7 +53,7 @@ class ContentRelationsHandlerTest extends TestCase
             }
         };
         $x->createSubmissionsHandler([
-            'formAction' => 'clone',
+            'formAction' => ContentRelationsHandler::FORM_ACTION_CLONE,
             'source' => ['id' => [13], 'contentType' => 'post'],
             'relations' => [
                 1 => [$targetBlogId => ['post' => 3]],
@@ -61,7 +61,7 @@ class ContentRelationsHandlerTest extends TestCase
             ],
             'targetBlogIds' => (string)$targetBlogId
         ]);
-        $this->assertInstanceOf(CloneRequest::class, $this->request);
+        $this->assertInstanceOf(UserCloneRequest::class, $this->request);
         $this->assertEquals([1 => [$targetBlogId => ['post' => 3]], 2 => [$targetBlogId => ['attachment' => 5]]], $this->request->getRelationsOrdered());
         $this->assertEquals([$targetBlogId => ['attachment' => 5]], ArrayHelper::first($this->request->getRelationsOrdered()), 'Should return deepest level first');
     }

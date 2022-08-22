@@ -3,7 +3,7 @@
 namespace IntegrationTests\tests;
 
 use Smartling\Helpers\ArrayHelper;
-use Smartling\Models\CloneRequest;
+use Smartling\Models\UserCloneRequest;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 
@@ -20,6 +20,8 @@ class CloneTest extends SmartlingUnitTestCaseAbstract
         $childPostId = $this->createPost('post', 'embedded post', 'embedded content');
         $imageId = $this->createAttachment();
         set_post_thumbnail($childPostId, $imageId);
+        wp_update_post(['ID' => $imageId, 'post_parent' => $childPostId]); // Force ReferencedStdBasedContentProcessorAbstract change that caused regression initially
+
         $rootPostId = $this->createPost('post', 'root post', "<!-- wp:test/post {\"id\":$childPostId} /-->");
 
         $this->withBlockRules($this->getRulesManager(), [
@@ -33,7 +35,7 @@ class CloneTest extends SmartlingUnitTestCaseAbstract
             $references = $relationsDiscoveryService->getRelations('post', $rootPostId, [$targetBlogId]);
             $this->assertCount(1, $references->getMissingReferences()[$targetBlogId]['post']);
             $this->assertEquals($childPostId, $references->getMissingReferences()[$targetBlogId]['post'][0]);
-            $relationsDiscoveryService->clone(new CloneRequest($rootPostId, 'post', [
+            $relationsDiscoveryService->clone(new UserCloneRequest($rootPostId, 'post', [
                 1 => [$targetBlogId => ['post' => [$childPostId]]],
                 2 => [$targetBlogId => ['attachment' => [$imageId]]],
             ], [$targetBlogId]));

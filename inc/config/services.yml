@@ -19,6 +19,9 @@ services:
     arguments:
       - "@manager.submission"
 
+  factory.submission:
+    class: Smartling\Submissions\SubmissionFactory
+
   smartling.helper.relative-image-path-support:
     class: Smartling\Helpers\RelativeLinkedAttachmentCoreHelper
     arguments:
@@ -40,6 +43,12 @@ services:
     arguments:
       - "@factory.contentIO"
       - "@site.helper"
+
+  helper.placeholders:
+    class: Smartling\Helpers\PlaceholderHelper
+
+  helper.plugins:
+    class: Smartling\Helpers\PluginHelper
 
   helper.post.content:
     class: Smartling\Helpers\PostContentHelper
@@ -68,6 +77,35 @@ services:
     calls:
       - ["setDbal", ["@site.db"]]
 
+  content.aioseo:
+    class: Smartling\ContentTypes\ExternalContentAioseo
+    arguments:
+      - "@content.type.helper"
+      - "@fields-filter.helper"
+      - "@helper.placeholders"
+      - "@helper.plugins"
+      - "@site.helper"
+      - "@site.db"
+      - "@manager.submission"
+      - "@wp.proxy"
+
+  content.beaver.builder:
+    class: Smartling\ContentTypes\ExternalContentBeaverBuilder
+    arguments:
+      - "@content.type.helper"
+      - "@helper.plugins"
+      - "@manager.submission"
+      - "@wp.proxy"
+
+  content.elementor:
+    class: Smartling\ContentTypes\ExternalContentElementor
+    arguments:
+      - "@content.type.helper"
+      - "@fields-filter.helper"
+      - "@helper.plugins"
+      - "@manager.submission"
+      - "@wp.proxy"
+
   content.relations.handler:
     class: Smartling\Services\ContentRelationsHandler
     arguments:
@@ -76,9 +114,11 @@ services:
   entrypoint:
     class: Smartling\Base\SmartlingCore
     arguments:
+      - "@manager.content.external"
       - "@helper.post.content"
       - "@helper.xml"
       - "@test.run.helper"
+      - "@wp.proxy"
     calls:
       - [ "setSubmissionManager", [ "@manager.submission" ]]
       - [ "setSiteHelper", [ "@site.helper" ]]
@@ -96,6 +136,17 @@ services:
 
   factory.contentIO:
     class: Smartling\Processors\ContentEntitiesIOFactory
+
+  manager.content.external:
+    class: Smartling\ContentTypes\ExternalContentManager
+    arguments:
+      - "@content.type.helper"
+      - "@helper.plugins"
+      - "@wp.proxy"
+    calls:
+      - ["addHandler", ["@content.aioseo"]]
+      - ["addHandler", ["@content.beaver.builder"]]
+      - ["addHandler", ["@content.elementor"]]
 
   manager.job:
     class: Smartling\Jobs\JobManager
@@ -116,6 +167,11 @@ services:
     class: Smartling\Jobs\SubmissionsJobsManager
     arguments:
       - "@site.db"
+
+  content.type.helper:
+    class: Smartling\ContentTypes\ContentTypeHelper
+    arguments:
+      - "@wp.proxy"
 
   site.helper:
     class: Smartling\Helpers\SiteHelper
@@ -211,6 +267,7 @@ services:
   wp.submissions:
     class: Smartling\WP\Controller\SubmissionsPageController
     arguments:
+      - "@api.wrapper.with.retries"
       - "@multilang.proxy"
       - "@plugin.info"
       - "@entity.helper"
@@ -273,6 +330,7 @@ services:
   helper.gutenberg:
     class: Smartling\Helpers\GutenbergBlockHelper
     arguments:
+      - "@acf.dynamic.support"
       - "@media.attachment.rules.manager"
       - "@factory.replacer"
       - "@serializer.json"
@@ -378,6 +436,7 @@ services:
   service.relations-discovery:
     class: Smartling\Services\ContentRelationsDiscoveryService
     arguments:
+      - "@acf.dynamic.support"
       - "@content.helper"
       - "@fields-filter.helper"
       - "@meta-field.processor.manager"
@@ -385,9 +444,11 @@ services:
       - "@smartling.helper.absolute-image-path-support"
       - "@helper.shortcode"
       - "@helper.gutenberg"
+      - "@factory.submission"
       - "@manager.submission"
       - "@api.wrapper.with.retries"
       - "@media.attachment.rules.manager"
       - "@factory.replacer"
       - "@manager.settings"
       - "@helper.customMenu"
+      - "@manager.content.external"

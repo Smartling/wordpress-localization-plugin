@@ -30,7 +30,7 @@ use Smartling\WP\WPAbstract;
  * @var WPAbstract self
  */
 $data = $this->getViewData();
-
+$widgetName = TaxonomyWidgetController::WIDGET_DATA_NAME;
 
 /**
  * @var TargetLocale[] $locales
@@ -63,14 +63,12 @@ if (!empty($locales)) {
     <h2>Smartling connector actions</h2>
 
     <h3><?= __($widgetTitle) ?></h3>
-    <?= WPAbstract::checkUncheckBlock() ?>
+    <?= WPAbstract::checkUncheckBlock($widgetName) ?>
     <div style="width: 400px;">
         <?php
-        $nameKey = TaxonomyWidgetController::WIDGET_DATA_NAME;
         ArrayHelper::sortLocales($locales);
         ?>
         <div class="locale-list"> <?php
-
             foreach ($locales as $locale) {
                 if (!$locale->isEnabled()) {
                     continue;
@@ -78,6 +76,7 @@ if (!empty($locales)) {
                 $lastError = '';
                 $value = false;
                 $enabled = false;
+                $percent = 0;
                 $status = '';
                 $submission = null;
                 $statusValue = null;
@@ -109,12 +108,14 @@ if (!empty($locales)) {
                 <div class="smtPostWidget-rowWrapper" style="display: inline-block; width: 100%;">
                     <div class="smtPostWidget-row">
                         <?= WPAbstract::localeSelectionCheckboxBlock(
-                            $nameKey,
+                            $widgetName,
                             $locale->getBlogId(),
                             $locale->getLabel(),
                             (false === $enabled ? false : $value),
                             $enabled,
-                            $editUrl
+                            $editUrl,
+                            [],
+                            $id,
                         ) ?>
                     </div>
                     <div class="smtPostWidget-progress" style="left: 15px;">

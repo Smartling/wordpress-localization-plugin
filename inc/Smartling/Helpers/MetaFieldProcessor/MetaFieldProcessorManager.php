@@ -24,10 +24,7 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
      */
     private $acfTypeDetector;
 
-    /**
-     * @return AcfTypeDetector
-     */
-    public function getAcfTypeDetector()
+    public function getAcfTypeDetector(): AcfTypeDetector
     {
         return $this->acfTypeDetector;
     }
@@ -105,19 +102,27 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
     {
         $processor = $this->getProcessor($fieldName);
         $processor = $this->tryGetAcfProcessor($fieldName, $submission, $processor);
+        $processorClass = get_class($processor);
         $result = $processor->processFieldPostTranslation($submission, $fieldName, $fieldValue);
 
-        $this->getLogger()->debug(
-            vsprintf(
-                'Post Translation filter received field=\'%s\' with value=%s for submission id=\'%s\' that was processed by %s processor and received %s on output.',
-                [
-                    $fieldName,
-                    var_export($fieldValue, true),
-                    $submission->getId(),
-                    get_class($processor),
-                    var_export($result, true),
-                ]
+        if ($result === $fieldValue) {
+            $this->getLogger()->debug(sprintf(
+                'Post Translation filter received submissionId="%s", field="%s", value="%s", processor="%s" left unchanged',
+                $fieldName,
+                $processorClass,
+                var_export($fieldValue, true),
+                $submission->getId(),
             ));
+        } else {
+            $this->getLogger()->debug(sprintf(
+                'Post Translation filter received submissionId="%s", field="%s", value="%s", processor="%s", changed to %s',
+                $submission->getId(),
+                $fieldName,
+                var_export($fieldValue, true),
+                $processorClass,
+                var_export($result, true),
+            ));
+        }
 
         return $result;
     }

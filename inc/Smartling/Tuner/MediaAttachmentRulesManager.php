@@ -2,12 +2,14 @@
 
 namespace Smartling\Tuner;
 
+use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergReplacementRule;
 
 class MediaAttachmentRulesManager extends CustomizationManagerAbstract
 {
     private const STORAGE_KEY = 'CUSTOM_MEDIA_RULES';
     private array $preconfiguredRules;
+    private array $temporaryRules = [];
 
     /**
      * @param GutenbergReplacementRule[] $rules
@@ -16,6 +18,11 @@ class MediaAttachmentRulesManager extends CustomizationManagerAbstract
     {
         parent::__construct(static::STORAGE_KEY);
         $this->preconfiguredRules = $rules;
+    }
+
+    public function addTemporaryRule(GutenbergReplacementRule $rule): void
+    {
+        $this->temporaryRules[$rule->getBlockType() . $rule->getPropertyPath()] = $rule;
     }
 
     /**
@@ -31,14 +38,17 @@ class MediaAttachmentRulesManager extends CustomizationManagerAbstract
     public function getGutenbergReplacementRules(?string $blockType = null, ?string $attribute = null): array
     {
         $this->loadData();
-        $rules = array_merge($this->preconfiguredRules, $this->listItems());
+        $rules = array_merge($this->preconfiguredRules, $this->temporaryRules, $this->listItems());
         if ($blockType !== null) {
             $rules = array_filter($rules, static function ($item) use ($blockType) {
                 return preg_match('#' . preg_replace('~([^\\\\])#~', '\1\#', $item->getBlockType()) . '#', $blockType) === 1;
             });
         }
         if ($attribute !== null) {
-            $rules = array_filter($rules, static function ($item) use ($attribute) {
+            $rules = array_filter($rules, function ($item) use ($attribute) {
+                if ($this->isJsonPath($item->getPropertyPath())) {
+                    return str_replace('.', FieldsFilterHelper::ARRAY_DIVIDER, substr($item->getPropertyPath(), '2')) === $attribute;
+                }
                 return preg_match('#' . preg_replace('~([^\\\\])#~', '\1\#', $item->getPropertyPath()) . '#', $attribute) === 1;
             });
         }
@@ -74,5 +84,10 @@ class MediaAttachmentRulesManager extends CustomizationManagerAbstract
             'propertyPath' => $item['path'],
             'replacerId' => $item['replacerId'] ?? 'related|postbased'
         ];
+    }
+
+    public function isJsonPath(string $string): bool
+    {
+        return strpos($string, '$.') === 0;
     }
 }

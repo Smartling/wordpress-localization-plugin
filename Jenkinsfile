@@ -13,7 +13,7 @@ pipeline {
 
             steps {
                 withCredentials([string(credentialsId: 'GITHUB_OAUTH', variable: 'GITHUB_OAUTH'), string(credentialsId: 'ACF_PRO_KEY', variable: 'ACF_PRO_KEY')]) {
-                    sh "docker build --no-cache --rm --pull --tag=\"wordpress-localization-plugin-php74\" -f \"Buildplan/Dockerfile-Jenkins\" --build-arg ACFPRO_KEY=\"${ACF_PRO_KEY}\" --build-arg WP_VERSION=\"5.8.2\" --build-arg ACF_PRO_VERSION=\"5.11\" --build-arg GITHUB_OAUTH_TOKEN=\"${GITHUB_OAUTH}\" ."
+                    sh "docker build --no-cache --rm --pull --tag=\"wordpress-localization-plugin-php74\" -f \"Buildplan/Dockerfile-Jenkins\" --build-arg ACFPRO_KEY=\"${ACF_PRO_KEY}\" --build-arg WP_VERSION=\"5.9.3\" --build-arg ACF_PRO_VERSION=\"5.11\" --build-arg GITHUB_OAUTH_TOKEN=\"${GITHUB_OAUTH}\" ."
                 }
             }
         }
@@ -39,6 +39,18 @@ pipeline {
 
             steps {
                 archiveArtifacts artifacts: 'release.zip'
+            }
+        }
+
+        stage('Release version check') {
+            agent {
+                label 'master'
+            }
+
+            steps {
+                dir('.') {
+                    sh 'docker run --rm -w /plugin-dir -v $PWD:/plugin-dir wordpress-localization-plugin-php74:latest /releaseVersionCheck.sh'
+                }
             }
         }
 

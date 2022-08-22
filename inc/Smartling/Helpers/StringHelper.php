@@ -7,11 +7,11 @@ class StringHelper
     private const EMPTY_STRING = '';
 
     /**
-     * @param mixed $string
+     * @param mixed $value
      */
-    public static function isNullOrEmpty($string): bool
+    public static function isNullOrEmpty($value): bool
     {
-        return in_array($string, [false, null, self::EMPTY_STRING], true);
+        return in_array($value, [false, null, self::EMPTY_STRING], true);
     }
 
     public static function buildPattern(string $pattern, string $borders = '/', string $modifiers = 'ius'): string
@@ -27,8 +27,11 @@ class StringHelper
         );
     }
 
-    public static function safeHtmlStringShrink(string $string, int $maxLength = 50, string $encoding = 'utf8', bool $applyHtmlEncoding = true, string $wrapperTag = 'span'): string
+    public static function safeHtmlStringShrink(?string $string, int $maxLength = 50, string $encoding = 'utf8', bool $applyHtmlEncoding = true, string $wrapperTag = 'span'): string
     {
+        if ($string === null) {
+            return '';
+        }
         if (true === $applyHtmlEncoding) {
             $string = htmlentities($string);
         }
@@ -42,8 +45,11 @@ class StringHelper
         return $string;
     }
 
-    public static function safeStringShrink(string $string, int $maxLength = 50, string $encoding = 'utf8', bool $applyHtmlEncoding = true): string
+    public static function safeStringShrink(?string $string, int $maxLength = 50, string $encoding = 'utf8', bool $applyHtmlEncoding = true): string
     {
+        if ($string === null) {
+            return '';
+        }
         if (mb_strlen($string, $encoding) > $maxLength) {
             $orig = $string;
 

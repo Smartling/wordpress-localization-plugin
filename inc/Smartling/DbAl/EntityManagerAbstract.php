@@ -127,7 +127,7 @@ abstract class EntityManagerAbstract
         $this->setPluginProxy($localizationProxy);
     }
 
-    protected function fetchData($query)
+    protected function fetchData($query): array
     {
         $results = [];
         $res = $this->getDbal()->fetch($query);

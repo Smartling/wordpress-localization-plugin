@@ -110,6 +110,7 @@ trait SmartlingCoreTrait
              * @var array $_entity
              */
             foreach ($_entity as $k => $v) {
+                // Value is of `mixed` type
                 $targetContent->{$k} = apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $k, $v, $submission);
             }
         }
@@ -118,13 +119,10 @@ trait SmartlingCoreTrait
             $targetContent->translationDrafted();
         }
 
-
-        /**
-         * @var EntityAbstract $targetContent
-         */
         $targetContent = $this->getContentHelper()->writeTargetContent($submission, $targetContent);
         $submission->setTargetId($targetContent->getPK());
         $submission = $this->getSubmissionManager()->storeEntity($submission);
+        $this->externalContentManager->setExternalContent($unfilteredSourceData, $this->externalContentManager->getExternalContent([], $submission, true), $submission);
 
         $this->getLogger()
             ->debug(
@@ -147,6 +145,7 @@ trait SmartlingCoreTrait
              * @var array $metaFields
              */
             foreach ($metaFields as $metaName => & $metaValue) {
+                /* @var mixed $metaValue */
                 $metaValue = apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $metaName, $metaValue, $submission);
             }
             unset ($metaValue);

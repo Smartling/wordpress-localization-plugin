@@ -359,12 +359,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
 
     public function getSubmissionById(int $id): ?SubmissionEntity
     {
-        $result = $this->getSubmissionManager()->getEntityById($id);
-        if (0 < count($result)) {
-            return ArrayHelper::first($result);
-        }
-
-        return null;
+        return $this->getSubmissionManager()->getEntityById($id);
     }
 
     protected function createPostWithMeta(string $title, string $body, string $post_type, array $meta): int

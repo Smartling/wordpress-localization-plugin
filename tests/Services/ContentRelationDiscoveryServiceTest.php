@@ -6,8 +6,8 @@ namespace {
     }
     if (!function_exists('apply_filters')) {
         /** @noinspection PhpUnusedParameterInspection */
-        function apply_filters($a, $b) {
-            return $b;
+        function apply_filters($a, ...$b) {
+            return $b[0];
         }
     }
 }
@@ -20,37 +20,50 @@ namespace Smartling\Tests\Services {
     use Smartling\Bootstrap;
     use Smartling\ContentTypes\ContentTypeNavigationMenu;
     use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
+    use Smartling\ContentTypes\ExternalContentManager;
     use Smartling\DbAl\LocalizationPluginProxyInterface;
     use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
     use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
     use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
+    use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
     use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
+    use Smartling\Extensions\Acf\AcfDynamicSupport;
     use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
     use Smartling\Helpers\ContentHelper;
     use Smartling\Helpers\CustomMenuContentTypeHelper;
     use Smartling\Helpers\EntityHelper;
     use Smartling\Helpers\FieldsFilterHelper;
     use Smartling\Helpers\GutenbergBlockHelper;
+    use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\PostBasedProcessor;
+    use Smartling\Helpers\MetaFieldProcessor\DefaultMetaFieldProcessor;
     use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
     use Smartling\Helpers\ShortcodeHelper;
     use Smartling\Helpers\SiteHelper;
+    use Smartling\Helpers\TranslationHelper;
     use Smartling\Jobs\JobEntity;
     use Smartling\Jobs\JobEntityWithBatchUid;
     use Smartling\Jobs\JobManager;
     use Smartling\Jobs\SubmissionJobEntity;
     use Smartling\Jobs\SubmissionsJobsManager;
+    use Smartling\Models\GutenbergBlock;
+    use Smartling\Models\UserCloneRequest;
+    use Smartling\Models\UserTranslationRequest;
     use Smartling\Processors\ContentEntitiesIOFactory;
     use Smartling\Replacers\ReplacerFactory;
     use Smartling\Services\ContentRelationsDiscoveryService;
+    use Smartling\Services\ContentRelationsHandler;
     use Smartling\Settings\ConfigurationProfileEntity;
     use Smartling\Settings\SettingsManager;
     use Smartling\Submissions\SubmissionEntity;
+    use Smartling\Submissions\SubmissionFactory;
     use Smartling\Submissions\SubmissionManager;
     use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
     use Smartling\Tuner\MediaAttachmentRulesManager;
+    use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 
     class ContentRelationDiscoveryServiceTest extends TestCase
     {
+        private ?\Exception $exception = null;
         protected function setUp(): void
         {
             WordpressFunctionsMockHelper::injectFunctionsMocks();
@@ -98,9 +111,28 @@ namespace Smartling\Tests\Services {
 
             $submissionManager->expects(self::once())->method('storeEntity')->with($submission);
 
+            $apiWrapper->expects($this->once())->method('createAuditLogRecord')->willReturnCallback(function (ConfigurationProfileEntity $configurationProfile, string $actionType, string $description, array $clientData, ?JobEntityWithBatchUid $jobInfo = null, ?bool $isAuthorize = null) use ($batchUid, $jobName, $jobUid, $profile, $sourceBlogId, $sourceId, $targetBlogId): void {
+                $this->assertEquals($profile, $configurationProfile);
+                $this->assertEquals(CreateRecordParameters::ACTION_TYPE_UPLOAD, $actionType);
+                $this->assertEquals('From Widget', $description);
+                $this->assertEquals([
+                    'relatedContentIds' => [],
+                    'sourceBlogId' => $sourceBlogId,
+                    'sourceId' => $sourceId,
+                    'targetBlogIds' => [$targetBlogId],
+                ], $clientData);
+                $this->assertNotNull($jobInfo);
+                $this->assertEquals($batchUid, $jobInfo->getBatchUid());
+                $job = $jobInfo->getJobInformationEntity();
+                $this->assertEquals($jobName, $job->getJobName());
+                $this->assertEquals($jobUid, $job->getJobUid());
+                $this->assertEquals($profile->getProjectId(), $job->getProjectUid());
+                $this->assertTrue($isAuthorize);
+            });
+
             $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
 
-            $x->createSubmissions([
+            $x->createSubmissions(UserTranslationRequest::fromArray([
                 'source' => ['contentType' => $contentType, 'id' => [$sourceId]],
                 'job' =>
                     [
@@ -113,7 +145,7 @@ namespace Smartling\Tests\Services {
                     ],
                 'targetBlogIds' => $targetBlogId,
                 'relations' => [],
-            ]);
+            ]));
         }
 
         public function testBulkSubmitHandler()
@@ -151,6 +183,7 @@ namespace Smartling\Tests\Services {
             $submission->expects(self::exactly(count($sourceIds)))->method('setBatchUid')->with($batchUid);
             $submission->expects(self::exactly(count($sourceIds)))->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
             $submission->expects(self::exactly(count($sourceIds)))->method('setSourceTitle')->withConsecutive(...$expectedTitles);
+            $submission->method('getId')->willReturn(48, 48, 49, 49); // getId is used two times per submission
 
             $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
 
@@ -172,11 +205,11 @@ namespace Smartling\Tests\Services {
 
             $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
 
-            $x->expects(self::exactly(count($sourceIds)))->method('getPostTitle')->willReturnCallback(static function ($id) use ($titlePrefix) {
-                return $titlePrefix . $id;
+            $x->expects(self::exactly(count($sourceIds)))->method('getTitle')->willReturnCallback(static function (SubmissionEntity $submission) use ($titlePrefix) {
+                return $titlePrefix . $submission->getId();
             });
 
-            $x->createSubmissions([
+            $x->createSubmissions(UserTranslationRequest::fromArray([
                 'source' => ['contentType' => $contentType, 'id' => [0]],
                 'job' =>
                     [
@@ -189,7 +222,7 @@ namespace Smartling\Tests\Services {
                     ],
                 'targetBlogIds' => $targetBlogId,
                 'ids' => $sourceIds,
-            ]);
+            ]));
         }
 
         public function testExistingMenuItemsGetSubmittedOnExistingMenuBulkSubmit()
@@ -278,6 +311,7 @@ namespace Smartling\Tests\Services {
             $customMenuContentTypeHelper->method('getMenuItems')->willReturn($menuItemPosts);
 
             $x = new ContentRelationsDiscoveryService(
+                $this->createMock(AcfDynamicSupport::class),
                 $contentHelper,
                 $this->createMock(FieldsFilterHelper::class),
                 $this->createMock(MetaFieldProcessorManager::class),
@@ -285,12 +319,14 @@ namespace Smartling\Tests\Services {
                 $this->createMock(AbsoluteLinkedAttachmentCoreHelper::class),
                 $this->createMock(ShortcodeHelper::class),
                 $this->createMock(GutenbergBlockHelper::class),
+                $this->createMock(SubmissionFactory::class),
                 $submissionManager,
                 $apiWrapper,
                 $this->createMock(MediaAttachmentRulesManager::class),
                 $this->createMock(ReplacerFactory::class),
                 $settingsManager,
                 $customMenuContentTypeHelper,
+                $this->createMock(ExternalContentManager::class)
             );
 
             $x->bulkUpload(new JobEntityWithBatchUid($batchUid, $jobName, $jobUid, $projectUid), $sourceIds, $contentType, $sourceBlogId, $targetBlogId);
@@ -352,12 +388,9 @@ namespace Smartling\Tests\Services {
             ])->onlyMethods(['find'])->getMock();
             $submissionManager->method('find')->willReturn([]);
 
-            $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
+            $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager, new SubmissionFactory());
 
-            if (function_exists('switch_to_blog')) {
-                switch_to_blog(1);
-            }
-            $x->createSubmissions([
+            $x->createSubmissions(UserTranslationRequest::fromArray([
                 'source' => ['contentType' => $contentType, 'id' => [$sourceId]],
                 'job' =>
                     [
@@ -370,8 +403,250 @@ namespace Smartling\Tests\Services {
                     ],
                 'targetBlogIds' => $targetBlogId,
                 'relations' => [],
-            ]);
+            ]));
             Bootstrap::getContainer()->set('factory.contentIO', $ioFactory);
+        }
+
+        public function testCloningNoDuplication()
+        {
+            $serviceId = 'factory.contentIO';
+            $containerBuilder = Bootstrap::getContainer();
+            $io = $containerBuilder->get($serviceId);
+            $factory = $this->createMock(ContentEntitiesIOFactory::class);
+            $factory->method('getMapper')->willReturn($this->createMock(VirtualEntityAbstract::class));
+            $containerBuilder->set($serviceId, $factory);
+
+            $contentType = 'post';
+            $cloneLevel1 = 1;
+            $childPostId = 2;
+            $rootPostId = 1;
+            $sourceBlogId = 1;
+            $targetBlogId = 2;
+
+            $siteHelper = $this->createMock(SiteHelper::class);
+            $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
+
+            $contentHelper = $this->createMock(ContentHelper::class);
+            $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
+            $submissionManager = $this->createMock(SubmissionManager::class);
+
+            $submissionManager->expects($this->at(0))->method('find')->with([
+                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+                SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+                SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
+                SubmissionEntity::FIELD_SOURCE_ID => $childPostId,
+            ]);
+            $submissionManager->expects($this->at(1))->method('find')->with([
+                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+                SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+                SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
+                SubmissionEntity::FIELD_SOURCE_ID => $rootPostId,
+            ]);
+
+            $x = $this->getContentRelationDiscoveryService(
+                $this->createMock(ApiWrapper::class),
+                $contentHelper,
+                $this->createMock(SettingsManager::class),
+                $submissionManager
+            );
+            $x->clone(new UserCloneRequest($rootPostId, $contentType, [$cloneLevel1 => [$targetBlogId => [$contentType => [$childPostId]]]], [$targetBlogId]));
+
+            $containerBuilder->set($serviceId, $io);
+        }
+
+        public function testCloningSkipsLockedSubmissions()
+        {
+            $contentType = 'post';
+            $contentId = 1;
+            $targetBlogId = 2;
+            $existing = $this->createMock(SubmissionEntity::class);
+            $existing->method('isLocked')->willReturn(true);
+            $existing->expects($this->never())->method('setStatus');
+
+            $submissionManager = $this->createMock(SubmissionManager::class);
+            $submissionManager->expects($this->once())->method('find')->willReturn([$existing]);
+            $submissionManager->expects($this->once())->method('storeSubmissions')->with([]);
+
+            $x = $this->getContentRelationDiscoveryService(
+                $this->createMock(ApiWrapper::class),
+                $this->createMock(ContentHelper::class),
+                $this->createMock(SettingsManager::class),
+                $submissionManager
+            );
+            $x->clone(new UserCloneRequest($contentId, $contentType, [], [$targetBlogId]));
+        }
+
+        public function testParentPageReferenceDetected()
+        {
+            $parentId = 10001;
+            $targetBlogId = 2;
+            $contentHelper = $this->createMock(ContentHelper::class);
+            $contentHelper->method('checkEntityExists')->willReturn(true);
+
+            $mapper = $this->createMock(EntityAbstract::class);
+            $mapper->method('get')->willReturnCallback(function ($guid) use ($parentId) {
+                $result = new PostEntityStd();
+                $result->ID = $guid;
+                $result->post_content = 'post content';
+                $result->post_parent = $parentId;
+                return $result;
+            });
+
+            $contentIoFactory = $this->createMock(ContentEntitiesIOFactory::class);
+            $contentIoFactory->method('getMapper')->willReturn($mapper);
+
+            $contentHelper->method('getIoFactory')->willReturn($contentIoFactory);
+
+            $settingsManager = $this->createMock(SettingsManager::class);
+
+            $fieldFilterHelper = $this->getMockBuilder(FieldsFilterHelper::class)
+                ->setConstructorArgs([$settingsManager, $this->createMock(AcfDynamicSupport::class)])
+                ->onlyMethods([])
+                ->getMock();
+
+            $metaFieldProcessorManager = $this->createMock(MetaFieldProcessorManager::class);
+            $metaFieldProcessorManager->method('getProcessor')->willReturnCallback(function (string $fieldName) {
+                if ($fieldName === 'entity/post_parent') {
+                    return new PostBasedProcessor($this->createMock(TranslationHelper::class), '');
+                }
+                return $this->createMock(DefaultMetaFieldProcessor::class);
+            });
+
+            $x = $this->getContentRelationDiscoveryService(
+                $this->createMock(ApiWrapper::class),
+                $contentHelper,
+                $settingsManager,
+                $this->createMock(SubmissionManager::class),
+                null,
+                $metaFieldProcessorManager, $fieldFilterHelper,
+            );
+            $x->method('getBackwardRelatedTaxonomies')->willReturn([]);
+            $x->method('normalizeReferences')->willReturnCallback(function (array $references) {
+                $result = $references;
+                if (isset($references['PostBasedProcessor'])) {
+                    $postTypeIds = array_keys($references['PostBasedProcessor']);
+                    foreach ($postTypeIds as $postTypeId) {
+                        $result['page'][] = $postTypeId;
+                    }
+                    unset($result['PostBasedProcessor']);
+                }
+                return $result;
+            });
+
+            $relations = $x->getRelations('post', 1, [$targetBlogId]);
+            $this->assertEquals($parentId, $relations->getMissingReferences()[$targetBlogId]['page'][0]);
+        }
+
+        public function testRelatedItemsSentForTranslation()
+        {
+            $batchUid = 'batchUid';
+            $contentType = 'post';
+            $jobAuthorize = 'false';
+            $jobDescription = 'Test Job Description';
+            $jobDueDate = '2022-02-20 20:02';
+            $jobName = 'Test Job Name';
+            $jobTimeZone = 'Europe/Kyiv';
+            $jobUid = 'jobUid';
+            $projectUid = 'projectUid';
+            $sourceBlogId = 1;
+            $sourceId = 48;
+            $depth1AttachmentId = 3;
+            $depth2AttachmentId = 5;
+            $targetBlogId = 2;
+
+            $apiWrapper = $this->createMock(ApiWrapper::class);
+            $apiWrapper->method('retrieveBatch')->willReturn($batchUid);
+            $apiWrapper->expects($this->once())->method('createAuditLogRecord')->willReturnCallback(function (ConfigurationProfileEntity $configurationProfile, string $actionType, string $description, array $clientData, ?JobEntityWithBatchUid $jobInfo = null, ?bool $isAuthorize = null) use ($depth1AttachmentId, $depth2AttachmentId): void {
+                try { // ApiWrapper call is wrapped in try/catch, this is needed to ensure exception gets thrown in test
+                    $this->assertEquals([
+                        'attachment' => [$depth2AttachmentId],
+                        'post' => [$depth1AttachmentId],
+                    ], $clientData['relatedContentIds']);
+                } catch (\Exception $e) {
+                    $this->exception = $e;
+                }
+            });
+
+            $profile = $this->createMock(ConfigurationProfileEntity::class);
+            $profile->method('getProjectId')->willReturn($projectUid);
+
+            $settingsManager = $this->createMock(SettingsManager::class);
+            $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+
+            $siteHelper = $this->createMock(SiteHelper::class);
+            $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
+
+            $contentHelper = $this->createMock(ContentHelper::class);
+            $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
+
+            $submission = $this->createMock(SubmissionEntity::class);
+
+            $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
+            $submissionManager->expects(self::once())->method('find')->with([
+                'source_blog_id' => $sourceBlogId,
+                'target_blog_id' => $targetBlogId,
+                'content_type' => $contentType,
+                'source_id' => $sourceId,
+            ])->willReturn([$submission]);
+
+            // Expects the original submission and 2 related submissions are stored to DB
+            $submissionManager->expects(self::exactly(3))->method('storeEntity');
+            $submissionManager->expects(self::at(1))->method('storeEntity')->with($submission);
+
+            $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
+
+            $x->createSubmissions(UserTranslationRequest::fromArray([
+                'job' => [
+                    'id' => $jobUid,
+                    'name' => $jobName,
+                    'description' => $jobDescription,
+                    'dueDate' => $jobDueDate,
+                    'timeZone' => $jobTimeZone,
+                    'authorize' => $jobAuthorize,
+                ],
+                'formAction' => ContentRelationsHandler::FORM_ACTION_UPLOAD,
+                'source' => ['id' => [$sourceId], 'contentType' => $contentType],
+                'relations' => [
+                    1 => [$targetBlogId => ['post' => [$depth1AttachmentId]]],
+                    2 => [$targetBlogId => ['attachment' => [$depth2AttachmentId]]],
+                ],
+                'targetBlogIds' => (string)$targetBlogId,
+            ]));
+            if ($this->exception !== null) {
+                throw $this->exception;
+            }
+        }
+
+        public function testAcfReferencesDetected() {
+            $attachmentId = 19320;
+            $attachmentKey = 'field_5d5db4987e813';
+            $irrelevantKey = 'field_5d5db4597e812';
+
+            $acfDynamicSupport = $this->createMock(AcfDynamicSupport::class);
+            $acfDynamicSupport->expects($this->at(0))->method('getReferencedTypeByKey')->with($attachmentKey)->willReturn(AcfDynamicSupport::REFERENCED_TYPE_MEDIA);
+            $acfDynamicSupport->expects($this->at(1))->method('getReferencedTypeByKey')->with($irrelevantKey)->willReturn(AcfDynamicSupport::REFERENCED_TYPE_NONE);
+
+            $x = $this->getContentRelationDiscoveryService(
+                $this->createMock(ApiWrapper::class),
+                $this->createMock(ContentHelper::class),
+                $this->createMock(SettingsManager::class),
+                $this->createMock(SubmissionManager::class),
+                null,
+                null,
+                null,
+                $acfDynamicSupport
+            );
+
+            $this->assertEquals([$attachmentId], $x->getReferencesFromAcf(new GutenbergBlock('acf/gallery-carousel', [
+                'id' => 'block_62a079bcb49b1',
+                'name' => 'acf/gallery-carousel',
+                'data' => [
+                    'media_0_image' => $attachmentId,
+                    '_media_0_image' => $attachmentKey,
+                    'media' => 1,
+                    '_media' => $irrelevantKey,
+                ]
+            ], [], '', [])));
         }
 
         /**
@@ -381,24 +656,43 @@ namespace Smartling\Tests\Services {
             ApiWrapper $apiWrapper,
             ContentHelper $contentHelper,
             SettingsManager $settingsManager,
-            SubmissionManager $submissionManager
+            SubmissionManager $submissionManager,
+            SubmissionFactory $submissionFactory = null,
+            MetaFieldProcessorManager $metaFieldProcessorManager = null,
+            FieldsFilterHelper $fieldsFilterHelper = null,
+            AcfDynamicSupport $acfDynamicSupport = null
         )
         {
+            if ($acfDynamicSupport === null) {
+                $acfDynamicSupport = $this->createMock(AcfDynamicSupport::class);
+            }
+            if ($metaFieldProcessorManager === null) {
+                $metaFieldProcessorManager = $this->createMock(MetaFieldProcessorManager::class);
+            }
+            if ($fieldsFilterHelper === null) {
+                $fieldsFilterHelper = $this->createMock(FieldsFilterHelper::class);
+            }
+            if ($submissionFactory === null) {
+                $submissionFactory = $this->createMock(SubmissionFactory::class);
+            }
             return $this->getMockBuilder(ContentRelationsDiscoveryService::class)->setConstructorArgs([
+                $acfDynamicSupport,
                 $contentHelper,
-                $this->createMock(FieldsFilterHelper::class),
-                $this->createMock(MetaFieldProcessorManager::class),
+                $fieldsFilterHelper,
+                $metaFieldProcessorManager,
                 $this->createMock(LocalizationPluginProxyInterface::class),
                 $this->createMock(AbsoluteLinkedAttachmentCoreHelper::class),
                 $this->createMock(ShortcodeHelper::class),
                 $this->createMock(GutenbergBlockHelper::class),
+                $submissionFactory,
                 $submissionManager,
                 $apiWrapper,
                 $this->createMock(MediaAttachmentRulesManager::class),
                 $this->createMock(ReplacerFactory::class),
                 $settingsManager,
                 $this->createMock(CustomMenuContentTypeHelper::class),
-            ])->onlyMethods(['getPostTitle'])->getMock();
+                $this->createMock(ExternalContentManager::class),
+            ])->onlyMethods(['getTitle', 'getBackwardRelatedTaxonomies', 'normalizeReferences'])->getMock();
         }
     }
 }

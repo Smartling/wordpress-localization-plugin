@@ -1,0 +1,109 @@
+[
+  {
+    "blockName": "core\/table",
+    "attrs": {
+      "smartlingLockId": "xgkfr"
+    },
+    "innerBlocks": [],
+    "innerHTML": "\n<figure class=\"wp-block-table\"><table><tbody><tr><td><\/td><td><\/td><\/tr><tr><td><\/td><td><\/td><\/tr><\/tbody><\/table><\/figure>\n",
+    "innerContent": [
+      "\n<figure class=\"wp-block-table\"><table><tbody><tr><td><\/td><td><\/td><\/tr><tr><td><\/td><td><\/td><\/tr><\/tbody><\/table><\/figure>\n"
+    ]
+  },
+  {
+    "blockName": null,
+    "attrs": [],
+    "innerBlocks": [],
+    "innerHTML": "\n\n",
+    "innerContent": [
+      "\n\n"
+    ]
+  },
+  {
+    "blockName": "core\/columns",
+    "attrs": {
+      "smartlingLockId": "ixqsm"
+    },
+    "innerBlocks": [
+      {
+        "blockName": "core\/column",
+        "attrs": {
+          "smartlingLockId": "ydqur"
+        },
+        "innerBlocks": [
+          {
+            "blockName": "core\/paragraph",
+            "attrs": {
+              "smartlingLockId": "apkmc"
+            },
+            "innerBlocks": [],
+            "innerHTML": "\n<p>a left paragraph<\/p>\n",
+            "innerContent": [
+              "\n<p>a left paragraph<\/p>\n"
+            ]
+          }
+        ],
+        "innerHTML": "\n<div class=\"wp-block-column\"><\/div>\n",
+        "innerContent": [
+          "\n<div class=\"wp-block-column\">",
+          null,
+          "<\/div>\n"
+        ]
+      },
+      {
+        "blockName": "core\/column",
+        "attrs": {
+          "smartlingLockId": "utaeq"
+        },
+        "innerBlocks": [
+          {
+            "blockName": "core\/paragraph",
+            "attrs": {
+              "smartlingLocked": true,
+              "smartlingLockId": "lmqoq"
+            },
+            "innerBlocks": [],
+            "innerHTML": "\n<p>a right paragraph<\/p>\n",
+            "innerContent": [
+              "\n<p>a right paragraph<\/p>\n"
+            ]
+          }
+        ],
+        "innerHTML": "\n<div class=\"wp-block-column\"><\/div>\n",
+        "innerContent": [
+          "\n<div class=\"wp-block-column\">",
+          null,
+          "<\/div>\n"
+        ]
+      }
+    ],
+    "innerHTML": "\n<div class=\"wp-block-columns\">\n\n<\/div>\n",
+    "innerContent": [
+      "\n<div class=\"wp-block-columns\">",
+      null,
+      "\n\n",
+      null,
+      "<\/div>\n"
+    ]
+  },
+  {
+    "blockName": null,
+    "attrs": [],
+    "innerBlocks": [],
+    "innerHTML": "\n\n",
+    "innerContent": [
+      "\n\n"
+    ]
+  },
+  {
+    "blockName": "core\/html",
+    "attrs": {
+      "smartlingLockId": "xvxcq"
+    },
+    "innerBlocks": [],
+    "innerHTML": "\n<h1>:)<\/h1>\n",
+    "innerContent": [
+      "\n<h1>:)<\/h1>\n"
+    ]
+  }
+]

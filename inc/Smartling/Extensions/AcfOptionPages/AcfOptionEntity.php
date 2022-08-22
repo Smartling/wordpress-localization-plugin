@@ -72,10 +72,7 @@ class AcfOptionEntity extends VirtualEntityAbstract
         throw new \BadMethodCallException($message);
     }
 
-    /**
-     * @return array;
-     */
-    public function getMetadata()
+    public function getMetadata(): array
     {
         return [];
     }
@@ -104,7 +101,7 @@ class AcfOptionEntity extends VirtualEntityAbstract
      * @param string $tagValue
      * @param bool   $unique
      */
-    public function setMetaTag($tagName, $tagValue, $unique = true)
+    public function setMetaTag($tagName, $tagValue, $unique = true): void
     {
     }
 

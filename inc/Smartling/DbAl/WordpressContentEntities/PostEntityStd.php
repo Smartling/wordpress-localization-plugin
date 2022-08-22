@@ -3,7 +3,6 @@
 namespace Smartling\DbAl\WordpressContentEntities;
 
 use Smartling\Exception\SmartlingDataUpdateException;
-use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\RawDbQueryHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\WordpressUserHelper;
@@ -154,79 +153,13 @@ class PostEntityStd extends EntityAbstract
         return new WordpressFunctionProxyHelper();
     }
 
-    /**
-     * @param array $metadata
-     * @return bool
-     */
-    private function areMetadataValuesUnique(array $metadata)
-    {
-        $valueHash = function ($value) {
-            return md5(serialize($value));
-        };
-
-        if (1 < count($metadata)) {
-            $firstHash = $valueHash(array_shift($metadata));
-            foreach ($metadata as $metadatum) {
-                if ($valueHash($metadatum) !== $firstHash) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * @param array $metadata
-     * @return array
-     */
-    private function formatMetadata(array $metadata)
-    {
-        foreach ($metadata as & $mValue) {
-            if (!$this->areMetadataValuesUnique($mValue)) {
-                $mValue = ArrayHelper::first($mValue);
-            } else {
-                $msg = vsprintf(
-                    'Detected unsupported metadata: \'%s\' for entity %s=\'%s\'',
-                    [
-                        \json_encode($metadata),
-                        $this->getPrimaryFieldName(),
-                        $this->getPK(),
-                    ]
-                );
-                $this->getLogger()->warning($msg);
-
-                /**
-                 * Get last value
-                 */
-                $lastValue = ArrayHelper::last($mValue);
-
-                $msg = vsprintf(
-                    'Got unsupported metadata \'%s\' for post ID=\'%s\' Continue using last value = \'%s\'.',
-                    [
-                        \json_encode($mValue),
-                        $this->getPK(),
-                        $lastValue,
-                    ]
-                );
-
-                $this->getLogger()->warning($msg);
-
-                $mValue = $lastValue;
-            }
-        }
-
-        return $metadata;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getMetadata()
+    public function getMetadata(): array
     {
         $metadata = $this->getWpProxyHelper()->getPostMeta($this->ID);
 
-        if ((is_array($metadata) && 0 === count($metadata)) || !is_array($metadata)) {
+        if (!is_array($metadata) || 0 === count($metadata)) {
             $this->rawLogPostMetadata($this->ID);
+            return [];
         }
 
         return $this->formatMetadata($metadata);
@@ -301,6 +234,18 @@ class PostEntityStd extends EntityAbstract
         $instance = null === $entity ? $this : $entity;
         $array = $instance->toArray();
         $array['post_category'] = \wp_get_post_categories($instance->ID);
+        // ACF would replace our properly escaped content with its own escaping.
+        remove_action('content_save_pre', 'acf_parse_save_blocks', 5);
+
+        /**
+         * Content expected to be slashed for
+         * @see wp_insert_post() $data declaration
+         */
+        foreach (['post_author', 'post_content', 'post_content_filtered', 'post_title', 'post_excerpt', 'post_password', 'post_name', 'to_ping', 'pinged'] as $field) {
+            if (isset($array[$field])) {
+                $array[$field] = addslashes($array[$field]);
+            }
+        }
         $res = wp_insert_post($array, true);
         if (is_wp_error($res) || 0 === $res) {
             $msg = vsprintf('An error had happened while saving post : \'%s\'', [\json_encode($array)]);
@@ -418,13 +363,18 @@ class PostEntityStd extends EntityAbstract
         }
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function setMetaTag($tagName, $tagValue, $unique = true)
+    public function setMetaTag($tagName, $tagValue, $unique = true): void
     {
-        $result = null;
-
+        /**
+         * Tag name and value expected to be slashed
+         * @see add_metadata()
+         */
+        if (is_string($tagName)) {
+            $tagName = addslashes($tagName);
+        }
+        if (is_string($tagValue)) {
+            $tagValue = addslashes($tagValue);
+        }
         if (false === ($result = add_post_meta($this->ID, $tagName, $tagValue, $unique))) {
             $result = update_post_meta($this->ID, $tagName, $tagValue);
         }

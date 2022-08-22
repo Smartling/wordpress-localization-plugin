@@ -252,7 +252,6 @@ class FieldsFilterHelper
         $translatedValues = $this->prepareSourceData($translatedValues);
         $translatedValues = $this->flattenArray($translatedValues);
 
-
         $result = [];
 
         if (true === $applyFilters) {
@@ -288,48 +287,38 @@ class FieldsFilterHelper
         return $array;
     }
 
-    /**
-     * @param SubmissionEntity $submission
-     * @param array            $data
-     *
-     * @return array
-     */
-    public function passFieldProcessorsBeforeSendFilters(SubmissionEntity $submission, array $data)
+    public function passFieldProcessorsBeforeSendFilters(SubmissionEntity $submission, array $data): array
     {
-        foreach ($data as $stringName => & $stringValue) {
-            $stringValue = apply_filters(
+        foreach ($data as $stringName => &$value) {
+            /* @var mixed $value */
+            $value = apply_filters(
                 ExportedAPI::FILTER_SMARTLING_METADATA_PROCESS_BEFORE_TRANSLATION,
                 $submission,
                 $stringName,
-                $stringValue,
+                $value,
                 $data
             );
         }
-        unset($stringValue);
+        unset($value);
 
         return $data;
     }
 
-    /**
-     * @param SubmissionEntity $submission
-     * @param array            $data
-     *
-     * @return array
-     */
-    public function passFieldProcessorsFilters(SubmissionEntity $submission, array $data)
+    public function passFieldProcessorsFilters(SubmissionEntity $submission, array $data): array
     {
-        foreach ($data as $stringName => & $stringValue) {
-            if (StringHelper::isNullOrEmpty($stringValue)) {
+        foreach ($data as $stringName => &$value) {
+            if (StringHelper::isNullOrEmpty($value)) {
                 continue;
             }
             try {
-                $stringValue = apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $stringName, $stringValue, $submission);
+                /* @var mixed $value */
+                $value = apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $stringName, $value, $submission);
             } catch (\Exception $e) {
                 $message = vsprintf(
                     'An error happened while processing field=\'%s\' with value=\'%s\' of submission=\'%s\'. Message:%s',
                     [
                         $stringName,
-                        $stringValue,
+                        $value,
                         $submission->getId(),
                         $e->getMessage(),
                     ]
@@ -337,7 +326,7 @@ class FieldsFilterHelper
                 $this->getLogger()->error($message);
             }
         }
-        unset($stringValue);
+        unset($value);
 
         return $data;
     }

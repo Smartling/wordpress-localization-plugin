@@ -53,8 +53,9 @@ class ContentIdReplacer implements ReplacerInterface
         }
 
         $targetId = ArrayHelper::first($relatedSubmissions)->getTargetId();
+        $this->logger->debug("ContentIdReplacer found replacement for submissionId=\"{$submission->getId()}, originalValue=\"$originalValue\", translatedValue=\"$targetId\"");
         if ($targetId !== 0) {
-            settype($targetId, gettype($translatedValue));
+            settype($targetId, gettype($originalValue));
             return $targetId;
         }
 

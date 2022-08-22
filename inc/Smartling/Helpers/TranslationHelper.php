@@ -135,18 +135,20 @@ class TranslationHelper
      */
     public function reloadSubmission(SubmissionEntity $submission): SubmissionEntity
     {
-        $submissionsList = $this->submissionManager->getEntityById($submission->getId());
-        if (is_array($submissionsList)) {
-            return ArrayHelper::first($submissionsList);
+        $result = $this->submissionManager->getEntityById($submission->getId());
+        if ($result === null) {
+            throw new SmartlingDataReadException(sprintf(
+                'Error while reloading submission. Nothing returned from database. Original Submission: %s',
+                var_export($submission->toArray(false), true),
+            ));
         }
-        $message = vsprintf(
-            'Error while reloading submission. Nothing returned from database. Original Submission: %s',
-            [var_export($submission->toArray(false), true),]
-        );
-        throw new SmartlingDataReadException($message);
+        return $result;
     }
 
-    public function isRelatedSubmissionCreationNeeded(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId): bool {
+    public function isRelatedSubmissionCreationNeeded(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId, bool $cloning = false): bool {
+        if ($cloning && $this->submissionManager->submissionExists($contentType, $sourceBlogId, $contentId, $targetBlogId)) {
+            return false;
+        }
         return !GlobalSettingsManager::isHandleRelationsManually() ||
             $this->submissionManager->submissionExistsNoLastError($contentType, $sourceBlogId, $contentId, $targetBlogId);
     }
@@ -193,6 +195,9 @@ class TranslationHelper
             $relatedSubmission = $this->submissionManager->storeEntity($relatedSubmission);
             // try to create target entity
             $relatedSubmission = apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $relatedSubmission);
+            if (!($relatedSubmission instanceof SubmissionEntity)) {
+                $this->logger->critical('Related submission not instance of ' . SubmissionEntity::class . ' after filter ' . ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT . '. This is most likely due to an error outside of the plugins code.');
+            }
 
             // add to upload queue
             $relatedSubmission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);

@@ -88,6 +88,9 @@ trait SmartlingCoreUploadTrait
     private function createTargetContent(SubmissionEntity $submission): SubmissionEntity
     {
         $submission = $this->getFunctionProxyHelper()->apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $submission);
+        if (!($submission instanceof SubmissionEntity)) {
+            $this->getLogger()->critical('Submission not instance of ' . SubmissionEntity::class . ' after filter ' . ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT) . '. This is most likely due to an error outside of the plugins code.';
+        }
 
         if (SubmissionEntity::SUBMISSION_STATUS_FAILED === $submission->getStatus()) {
             $msg = vsprintf(
@@ -129,7 +132,7 @@ trait SmartlingCoreUploadTrait
         try {
             $submission = $this->prepareUpload($submission);
 
-            $source = $this->readSourceContentWithMetadataAsArray($submission);
+            $source = $this->externalContentManager->getExternalContent($this->readSourceContentWithMetadataAsArray($submission), $submission, false);
 
             $contentEntity = $this->getContentHelper()->readSourceContent($submission);
             $params = new BeforeSerializeContentEventParameters($source, $submission, $contentEntity, $source['meta']);
@@ -138,7 +141,7 @@ trait SmartlingCoreUploadTrait
             $this->prepareFieldProcessorValues($submission);
             $filteredValues = $this->getFieldsFilter()->processStringsBeforeEncoding($submission, $source);
 
-            if (is_array($filteredValues) && 0 === count($filteredValues)) {
+            if (is_array($filteredValues) && 0 === count($filteredValues) && !$submission->isCloned()) {
                 $message = vsprintf(
                     'Prepared Submission = \'%s\' has nothing to translate. Setting status to \'%s\'.',
                     [
@@ -251,6 +254,11 @@ trait SmartlingCoreUploadTrait
             $params = new AfterDeserializeContentEventParameters($translation, $submission, $targetContent, $translation['meta']);
             do_action(ExportedAPI::EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT, $params);
             $translation = $this->processPostContentBlocks($targetContent, $original, $translation, $submission, $postContentHelper, $lockedData['entity']);
+            $translation = $this->getFunctionProxyHelper()->apply_filters(ExportedAPI::FILTER_BEFORE_TRANSLATION_APPLIED, $translation, $lockedData, $submission);
+            if (!is_array($translation)) {
+                $this->getLogger()->critical('Translation is not array after applying filter ' . ExportedAPI::FILTER_BEFORE_TRANSLATION_APPLIED . '. This is most likely due to an error outside of the plugins code.');
+            }
+            $translation = $this->externalContentManager->setExternalContent($original, $translation, $submission);
             $this->setValues($targetContent, $translation['entity'] ?? []);
             $configurationProfile = $this->getSettingsManager()
                 ->getSingleSettingsProfile($submission->getSourceBlogId());
@@ -323,6 +331,7 @@ trait SmartlingCoreUploadTrait
                 $this->testRunHelper->checkDownloadedSubmission($submission);
             }
             $submission = $this->getSubmissionManager()->storeEntity($submission);
+            do_action(ExportedAPI::ACTION_AFTER_TRANSLATION_APPLIED, $submission);
 
             $this->prepareRelatedSubmissions($submission);
         } catch (InvalidXMLException $e) {
@@ -363,6 +372,7 @@ trait SmartlingCoreUploadTrait
 
                 foreach ($sourceMetadata as $key => $value) {
                     try {
+                        // Value is of `mixed` type
                         $filteredMetadata[$key] =
                             apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $key, $value, $submission);
                     } catch (\Exception $ex) {
@@ -494,6 +504,7 @@ trait SmartlingCoreUploadTrait
                     foreach ($submissions as $_submission) {
                         $_submission->setBatchUid('');
                         $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
+                        $_submission->setSubmissionDate(DateTimeHelper::nowAsString());
                     }
                 } else {
                     LiveNotificationController::pushNotification(

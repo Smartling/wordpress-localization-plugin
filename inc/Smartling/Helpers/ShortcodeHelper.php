@@ -14,12 +14,8 @@ use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
  */
 class ShortcodeHelper extends SubstringProcessorHelperAbstract
 {
-    const SMARTLING_SHORTCODE_MASK_OLD = '##';
-
-    const SMARTLING_SHORTCODE_MASK_S = '#sl-start#';
-    const SMARTLING_SHORTCODE_MASK_E = '#sl-end#';
-
-    const SHORTCODE_SUBSTRING_NODE_NAME = 'shortcodeattribute';
+    private const SMARTLING_SHORTCODE_MASK_OLD = '##';
+    private const SHORTCODE_SUBSTRING_NODE_NAME = 'shortcodeattribute';
 
     /**
      * Returns a regexp for masked shortcodes
@@ -39,8 +35,8 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
                 '%e',
             ],
             [
-                static::SMARTLING_SHORTCODE_MASK_S,
-                static::SMARTLING_SHORTCODE_MASK_E,
+                PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START,
+                PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END,
             ],
             ('(' . implode('|', $variants) . ')')
         );
@@ -111,11 +107,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         return false;
     }
 
-    /**
-     * @param DOMNode $node
-     * @return array
-     */
-    public function extractTranslations(DOMNode $node)
+    public function extractTranslations(DOMNode $node): array
     {
         $translations = [];
 
@@ -129,7 +121,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         while ($index) {
             $cNode = $node->childNodes->item(--$index);
 
-            if ($cNode->nodeName === static::SHORTCODE_SUBSTRING_NODE_NAME && $cNode->hasAttributes()) {
+            if ($cNode->nodeName === self::SHORTCODE_SUBSTRING_NODE_NAME && $cNode->hasAttributes()) {
                 $translation = $this->nodeToArray($cNode);
 
                 $this->addBlockAttribute(
@@ -149,22 +141,17 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
                     )
                 );
                 $this->getLogger()->debug(vsprintf('Removing subnode. Name=\'%s\', Contents: \'%s\'', [
-                    static::SHORTCODE_SUBSTRING_NODE_NAME,
+                    self::SHORTCODE_SUBSTRING_NODE_NAME,
                     var_export($translation, true),
                 ]));
                 $node->removeChild($cNode);
             }
         }
+
+        return $translations;
     }
 
-    /**
-     * Filter handler
-     *
-     * @param TranslationStringFilterParameters $params
-     *
-     * @return TranslationStringFilterParameters
-     */
-    public function processTranslation(TranslationStringFilterParameters $params)
+    public function processTranslation(TranslationStringFilterParameters $params): TranslationStringFilterParameters
     {
         $this->resetInternalState();
         $this->setParams($params);
@@ -193,10 +180,10 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         $this->getLogger()->debug(vsprintf('Removing masking...', []));
         $node   = $this->getNode();
         $string = static::getCdata($node);
-        $string = preg_replace(vsprintf('/%s\[/', [static::SMARTLING_SHORTCODE_MASK_S]), '[', $string);
-        $string = preg_replace(vsprintf('/\]%s/', [static::SMARTLING_SHORTCODE_MASK_E]), ']', $string);
-        $string = preg_replace(vsprintf('/\]%s/', [static::SMARTLING_SHORTCODE_MASK_OLD]), ']', $string);
-        $string = preg_replace(vsprintf('/%s\[/', [static::SMARTLING_SHORTCODE_MASK_OLD]), '[', $string);
+        $string = preg_replace(vsprintf('/%s\[/', [PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START]), '[', $string);
+        $string = preg_replace(vsprintf('/\]%s/', [PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END]), ']', $string);
+        $string = preg_replace(vsprintf('/\]%s/', [self::SMARTLING_SHORTCODE_MASK_OLD]), ']', $string);
+        $string = preg_replace(vsprintf('/%s\[/', [self::SMARTLING_SHORTCODE_MASK_OLD]), '[', $string);
         static::replaceCData($node, $string);
     }
 
@@ -225,14 +212,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         $this->setShortcodeAssignments($activeShortcodeAssignments);
     }
 
-    /**
-     * Filter handler
-     *
-     * @param TranslationStringFilterParameters $params
-     *
-     * @return TranslationStringFilterParameters
-     */
-    public function processString(TranslationStringFilterParameters $params)
+    public function processString(TranslationStringFilterParameters $params): TranslationStringFilterParameters
     {
         $this->resetInternalState();
         $this->setParams($params);
@@ -264,7 +244,6 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     protected function preUploadFiltering($name, $attributes)
     {
         $preparedAttributes = static::maskAttributes($name, $attributes);
-        $this->postReceiveFiltering($preparedAttributes);
         $preparedAttributes = $this->preSendFiltering($preparedAttributes);
         $this->getLogger()->debug(vsprintf('Post filtered attributes (while uploading) %s',
             [var_export($preparedAttributes, true)]));
@@ -282,7 +261,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     private function createShortcodeAttributeNode($shortcodeName, $attributeName, $value)
     {
         return $this->createDomNode(
-            static::SHORTCODE_SUBSTRING_NODE_NAME,
+            self::SHORTCODE_SUBSTRING_NODE_NAME,
             [
                 'shortcode' => $shortcodeName,
                 'hash'      => md5($value),
@@ -338,8 +317,8 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
      */
     private static function buildMaskedShortcode($name, array $attributes, $content)
     {
-        $openString  = static::SMARTLING_SHORTCODE_MASK_S . '[';
-        $closeString = ']' . static::SMARTLING_SHORTCODE_MASK_E;
+        $openString  = PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '[';
+        $closeString = ']' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END;
 
         return static::buildShortcode($name, $attributes, $content, $openString, $closeString);
     }
@@ -371,9 +350,9 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     {
         if (function_exists('esc_attr')) {
             return esc_attr($data);
-        } else {
-            return htmlspecialchars($data);
         }
+
+        return htmlspecialchars($data);
     }
 
     /**
@@ -419,7 +398,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     /**
      * Applies translation to shortcodes
      *
-     * @param string $attr
+     * @param mixed $attr
      * @param string $content
      * @param string $name
      *
@@ -451,7 +430,11 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     {
         $shortcodes = array_keys($this->getShortcodeAssignments());
         try {
-            $shortcodes = array_merge($shortcodes, apply_filters(ExportedAPI::FILTER_SMARTLING_INJECT_SHORTCODE, []));
+            $injectedShortcodes = apply_filters(ExportedAPI::FILTER_SMARTLING_INJECT_SHORTCODE, []);
+            if (!is_array($injectedShortcodes)) {
+                $this->getLogger()->critical('Injected shortcodes not an array after filter ' . ExportedAPI::FILTER_SMARTLING_INJECT_SHORTCODE . '. This is most likely due to an error outside of the plugins code.');
+            }
+            $shortcodes = array_merge($shortcodes, $injectedShortcodes);
         } catch (\Exception $e) {
             $this->getLogger()->warning(
                 vsprintf(

@@ -7,6 +7,8 @@ use Smartling\Helpers\AdminNoticesHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Jobs\JobAbstract;
 use Smartling\Queue\Queue;
+use Smartling\Queue\QueueInterface;
+use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\Table\QueueManagerTableWidget;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -34,6 +36,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
 
     /**
      * @param Queue $queue
+     * @noinspection PhpUnused used in services.yml
      */
     public function setQueue($queue)
     {
@@ -77,8 +80,12 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
         add_action('admin_post_cnq', [$this, 'processCnqAction']);
     }
 
+    public function processCnqAction(): void
+    {
+        wp_send_json($this->processCnq());
+    }
 
-    public function processCnqAction()
+    public function processCnq(): array
     {
         $response = [
             'status'   => [
@@ -99,7 +106,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
             ];
             $response['errors']['_c_action'] = ['Cannot be empty.'];
             $response['messages'][] = 'Invalid action.';
-
+            return $response;
         }
 
         $argument = $this->getFromRequest('argument', null);
@@ -111,58 +118,71 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
             ];
             $response['errors']['argument'] = ['Cannot be empty.'];
             $response['messages'][] = 'Invalid argument.';
-
+            return $response;
         }
 
-        if (0 === $response['status']['code']) {
-            switch ($action) {
-                case self::ACTION_QUEUE_PURGE:
-                    try {
+        switch ($action) {
+            case self::ACTION_QUEUE_PURGE:
+                try {
+                    if ($argument === QueueInterface::VIRTUAL_UPLOAD_QUEUE) {
+                        $submissions = $this->getManager()->find([
+                            SubmissionEntity::FIELD_STATUS => SubmissionEntity::SUBMISSION_STATUS_NEW,
+                        ]);
+                        if (count($submissions) > 0) {
+                            $ids = [];
+                            foreach ($submissions as $submission) {
+                                $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_CANCELLED);
+                                $ids[] = $submission->getId();
+                            }
+                            /** @noinspection JsonEncodingApiUsageInspection */
+                            $this->getLogger()->info('User cancelled submissionCount=' . count($submissions) . ' submissions, submissionIds="' . json_encode($ids) . '"');
+                            $this->getManager()->storeSubmissions($submissions);
+                        }
+                    } else {
                         $this->getQueue()->purge($argument);
-                        $response['status'] = [
-                            'code'    => 200,
-                            'message' => 'Ok',
-                        ];
-                    } catch (\Exception $e) {
-                        $response['status'] = [
-                            'code'    => 500,
-                            'message' => 'Internal Server Error',
-                        ];
-                        $response['messages'][] = $e->getMessage();
                     }
-                    break;
-                case self::ACTION_QUEUE_FORCE:
-                    try {
-                        do_action($argument, JobAbstract::SOURCE_USER);
-                        $response['status'] = [
-                            'code'    => 200,
-                            'message' => 'Ok',
-                        ];
-                        $message = "$argument started";
-                        AdminNoticesHelper::addSuccess($message);
-                    } catch (\Exception $e) {
-                        $response['status'] = [
-                            'code'    => 500,
-                            'message' => 'Internal Server Error',
-                        ];
-                        $response['messages'][] = $e->getMessage();
-                        AdminNoticesHelper::addError($e->getMessage());
-                    }
-                    break;
-                default:
                     $response['status'] = [
-                        'code'    => 400,
-                        'message' => 'Bad Request',
+                        'code' => 200,
+                        'message' => 'Ok',
                     ];
-                    $response['errors']['_c_action'] = ['Invalid action.'];
-                    $response['messages'][] = 'Invalid action.';
-                    break;
-            }
+                } catch (\Exception $e) {
+                    $response['status'] = [
+                        'code' => 500,
+                        'message' => 'Internal Server Error',
+                    ];
+                    $response['messages'][] = $e->getMessage();
+                }
+                break;
+            case self::ACTION_QUEUE_FORCE:
+                try {
+                    do_action($argument, JobAbstract::SOURCE_USER);
+                    $response['status'] = [
+                        'code' => 200,
+                        'message' => 'Ok',
+                    ];
+                    $message = "$argument started";
+                    AdminNoticesHelper::addSuccess($message);
+                } catch (\Exception $e) {
+                    $response['status'] = [
+                        'code' => 500,
+                        'message' => 'Internal Server Error',
+                    ];
+                    $response['messages'][] = $e->getMessage();
+                    AdminNoticesHelper::addError($e->getMessage());
+                }
+                break;
+            default:
+                $response['status'] = [
+                    'code' => 400,
+                    'message' => 'Bad Request',
+                ];
+                $response['errors']['_c_action'] = ['Invalid action.'];
+                $response['messages'][] = 'Invalid action.';
+                break;
         }
 
-        wp_send_json($response);
+        return $response;
     }
-
 
     public function menu()
     {

@@ -32,6 +32,8 @@ class Bootstrap
     use DebugTrait;
     use DITrait;
 
+    private const WORDPRESS_ORG_PLUGIN_NAME = 'smartling-connector';
+
     /**
      * @var LoggerInterface
      */
@@ -229,7 +231,7 @@ class Bootstrap
         }
 
         $this->testPluginSetup();
-        $this->testMinimalWordpressVersion();
+        $this->testWordpress();
         $this->testTimeLimit();
 
         if (current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
@@ -266,19 +268,22 @@ class Bootstrap
             $logMessage = 'Cron doesn\'t seem to be configured.';
             static::getLogger()->warning($logMessage);
             if (current_user_can('manage_network_plugins')) {
-                $mainMessage = '<strong>Smartling-connector</strong> configuration is not optimal.<br />Warning! Wordpress cron installation is not configured properly. Please follow configuration steps described <a target="_blank" href="https://help.smartling.com/hc/en-us/articles/4405135381915-Configure-Expert-Settings-WordPress-Cron-for-the-WordPress-Connector-">here</a>';
+                $mainMessage = '<strong>Smartling-connector</strong> configuration is not optimal.<br />Warning! WordPress cron installation is not configured properly. Please follow configuration steps described <a target="_blank" href="https://help.smartling.com/hc/en-us/articles/4405135381915-Configure-Expert-Settings-WordPress-Cron-for-the-WordPress-Connector-">here</a>';
                 DiagnosticsHelper::addDiagnosticsMessage($mainMessage, false);
             }
         }
     }
 
-    private function testMinimalWordpressVersion(): void
+    private function testWordpress(): void
     {
         $minVersion = '5.5';
         if (version_compare(get_bloginfo('version'), $minVersion, '<')) {
             $msg = vsprintf('Wordpress has to be at least version %s to run smartling connector plugin. Please upgrade Your Wordpress installation.', [$minVersion]);
             static::getLogger()->critical('Boot :: ' . $msg);
             DiagnosticsHelper::addDiagnosticsMessage($msg, true);
+        }
+        if (!function_exists('get_sites')) {
+            DiagnosticsHelper::addDiagnosticsMessage('WordPress needs to be in multisite mode to run Smartling connector plugin. Please, <a href="https://wordpress.org/support/article/create-a-network/">create a network</a>.', true);
         }
     }
 
@@ -303,7 +308,6 @@ class Bootstrap
 
     private function testUpdates(): void
     {
-        $staticSlug = $this->fromContainer('plugin.name', true);
         $cur_version = static::$pluginVersion;
         $new_version = '0.0.0';
 
@@ -312,7 +316,7 @@ class Bootstrap
             $response = $info->response;
             if (is_array($response)) {
                 foreach ($response as $definition) {
-                    if ($staticSlug !== $definition->slug) {
+                    if (self::WORDPRESS_ORG_PLUGIN_NAME !== $definition->slug) {
                         continue;
                     }
                     $new_version = $definition->new_version;
@@ -324,7 +328,7 @@ class Bootstrap
             if (!function_exists('plugins_api')) {
                 require_once(ABSPATH . 'wp-admin/includes/plugin-install.php');
             }
-            $args = ['slug' => $staticSlug, 'fields' => ['version' => true]];
+            $args = ['slug' => self::WORDPRESS_ORG_PLUGIN_NAME, 'fields' => ['version' => true]];
             $response = plugins_api('plugin_information', $args);
 
             if (is_wp_error($response)) {
@@ -359,7 +363,7 @@ class Bootstrap
             $mainMessage = 'No active smartling configuration profiles found. Please create at least one on '
                            .
                            '<a href="' . get_site_url() .
-                           '/wp-admin/admin.php?page=' . ConfigurationProfilesController::MENU_SLUG . '>settings page</a>';
+                           '/wp-admin/admin.php?page=' . ConfigurationProfilesController::MENU_SLUG . '">settings page</a>';
 
             static::getLogger()->critical('Boot :: ' . $mainMessage);
 
@@ -404,15 +408,19 @@ class Bootstrap
          */
         add_action($action, static function () use ($di) {
             // registering taxonomies first.
-            $dynTermDefinitions = [];
-            $dynTermDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY, $dynTermDefinitions);
+            $dynTermDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY, []);
+            if (!is_iterable($dynTermDefinitions)) {
+                self::$loggerInstance->critical('Dynamic term definitions not iterable after filter ' . ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY . '. This is most likely due to an error outside of the plugins code.');
+            }
             foreach ($dynTermDefinitions as $dynTermDefinition) {
                 CustomTaxonomyType::registerCustomType($di, $dynTermDefinition);
             }
 
             // then registering posts
-            $externalDefinitions = [];
-            $externalDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE, $externalDefinitions);
+            $externalDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE, []);
+            if (!is_iterable($externalDefinitions)) {
+                self::$loggerInstance->critical('External definitions not iterable after filter ' . ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE . '. This is most likely due to an error outside of the plugins code.');
+            }
             foreach ($externalDefinitions as $externalDefinition) {
                 CustomPostType::registerCustomType($di, $externalDefinition);
             }
@@ -445,8 +453,10 @@ class Bootstrap
                 ],
             ];
 
-
             $filters = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_FIELD_FILTER, $filters);
+            if (!is_iterable($filters)) {
+                self::$loggerInstance->critical('Filters not iterable after filter ' . ExportedAPI::FILTER_SMARTLING_REGISTER_FIELD_FILTER . '. This is most likely due to an error outside of the plugins code.');
+            }
             foreach ($filters as $filter) {
                 try {
                     CustomFieldFilterHandler::registerFilter($di, $filter);

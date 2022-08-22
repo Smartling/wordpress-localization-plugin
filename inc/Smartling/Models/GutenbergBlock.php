@@ -39,6 +39,14 @@ class GutenbergBlock
         return $this->attributes[PostContentHelper::SMARTLING_LOCK_ID] ?? null;
     }
 
+    public function withNoInnerBlocks(): self
+    {
+        $result = clone $this;
+        $result->innerBlocks = [];
+
+        return $result;
+    }
+
     /**
      * @return self[]
      */
@@ -47,10 +55,18 @@ class GutenbergBlock
         return $this->innerBlocks;
     }
 
+    public function withAttributes(array $attributes): self
+    {
+        $result = clone $this;
+        $result->attributes = $attributes;
+
+        return $result;
+    }
+
     /**
      * @param mixed $value
      */
-    public function withAttribute(GutenbergBlock $block, string $attribute, $value): self
+    public function withAttribute(string $attribute, $value): self
     {
         $result = clone $this;
         $result->attributes[$attribute] = $value;

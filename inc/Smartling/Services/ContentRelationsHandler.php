@@ -4,9 +4,9 @@ namespace Smartling\Services;
 
 use Exception;
 use Smartling\Exception\SmartlingHumanReadableException;
-use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\LoggerSafeTrait;
-use Smartling\Models\CloneRequest;
+use Smartling\Models\UserCloneRequest;
+use Smartling\Models\UserTranslationRequest;
 
 /**
  *
@@ -47,6 +47,9 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
 
     public const ACTION_NAME_CREATE_SUBMISSIONS = 'smartling-create-submissions';
 
+    public const FORM_ACTION_CLONE = 'clone';
+    public const FORM_ACTION_UPLOAD = 'upload';
+
     private ContentRelationsDiscoveryService $service;
     public function __construct(ContentRelationsDiscoveryService $service)
     {
@@ -86,12 +89,12 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
             $data = $_POST;
         }
         try {
-            if ($data['formAction'] === 'clone') {
-                $this->service->clone(new CloneRequest((int)ArrayHelper::first($data['source']['id']), $data['source']['contentType'], $data['relations'] ?? [], explode(',', $data['targetBlogIds'])));
+            if ($data['formAction'] === self::FORM_ACTION_CLONE) {
+                $this->service->clone(UserCloneRequest::fromArray($data));
             } else {
-                $this->service->createSubmissions($data);
+                $this->service->createSubmissions(UserTranslationRequest::fromArray($data));
             }
-            $this->returnResponse(['status' => 'SUCCESS']);
+            $this->returnResponse(['status' => BaseAjaxServiceAbstract::RESPONSE_SUCCESS]);
         } catch (Exception $e) {
             $this->returnError('content.submission.failed', $e->getMessage());
         }

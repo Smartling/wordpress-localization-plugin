@@ -13,33 +13,28 @@ use Smartling\Helpers\Serializers\SerializerInterface;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
-/**
- * Class FieldFilterConfigParser
- * @package Smartling\ContentTypes\ConfigParsers
- */
 class FieldFilterConfigParser
 {
     /**
      * Valid actions
      */
-    const ACTION_COPY     = 'copy';
-    const ACTION_SKIP     = 'skip';
-    const ACTION_LOCALIZE = 'localize';
+    private const ACTION_COPY     = 'copy';
+    private const ACTION_SKIP     = 'skip';
+    private const ACTION_LOCALIZE = 'localize';
 
-    const VALUE_TYPE_REFERENCE = 'reference';
-    const VALUE_TYPE_URL       = 'url';
+    private const VALUE_TYPE_REFERENCE = 'reference';
+    private const VALUE_TYPE_URL       = 'url';
 
-    private $actions = [
+    private array $actions = [
         self::ACTION_COPY,
         self::ACTION_SKIP,
         self::ACTION_LOCALIZE,
     ];
 
-    private $valueTypes = [
+    private array $valueTypes = [
         self::VALUE_TYPE_REFERENCE,
         self::VALUE_TYPE_URL,
     ];
-
 
     /**
      * @var string
@@ -71,10 +66,7 @@ class FieldFilterConfigParser
      */
     private $filterType;
 
-    /**
-     * bool
-     */
-    private $validFiler;
+    private bool $validFiler;
 
     /**
      * @var ContainerBuilder
@@ -102,18 +94,12 @@ class FieldFilterConfigParser
         $this->di = $di;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getValidFiler()
+    public function isValidFiler(): bool
     {
         return $this->validFiler;
     }
 
-    /**
-     * @param mixed $validFiler
-     */
-    public function setValidFiler($validFiler)
+    public function setValidFiler(bool $validFiler): void
     {
         $this->validFiler = $validFiler;
     }

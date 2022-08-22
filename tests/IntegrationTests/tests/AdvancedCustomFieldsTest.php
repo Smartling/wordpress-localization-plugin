@@ -81,20 +81,16 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         $postId = $this->createSourcePostWithMetadata($imageId, $taxonomyIds);
         $translationHelper = $this->getTranslationHelper();
 
-        $submission = $translationHelper->prepareSubmission('post', 1, $postId, 2, true);
-
-        /**
-         * Check submission status
-         */
+        $submission = $translationHelper->prepareSubmission('post', 1, $postId, 2);
         $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_NEW, $submission->getStatus());
-        $this->assertEquals(1, $submission->getIsCloned());
 
         $this->executeUpload();
+        $this->executeDownload();
 
         $submissions = $this->getSubmissionManager()->find(
             [
                 'content_type' => 'attachment',
-                'is_cloned'    => 1,
+                'is_cloned' => 0,
             ]);
 
         $this->assertCount(1, $submissions);
@@ -104,7 +100,7 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         $submissions = $this->getSubmissionManager()->find(
             [
                 'content_type' => 'category',
-                'is_cloned'    => 1,
+                'is_cloned' => 0,
             ]);
 
         $this->assertCount(1, $submissions);
@@ -116,7 +112,7 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         $submissions = $this->getSubmissionManager()->find(
             [
                 'content_type' => 'post',
-                'is_cloned'    => 1,
+                'is_cloned' => 0,
             ]);
 
         $this->assertCount(1, $submissions);
@@ -126,8 +122,9 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         $realMetadata = $this->getContentHelper()->readTargetMetadata($postSubmission);
 
         foreach ($realMetadata as & $realMetadatum) {
-            $realMetadatum = maybe_unserialize($realMetadatum);
+            $realMetadatum = maybe_unserialize(maybe_unserialize($realMetadatum));
         }
+        unset($realMetadatum);
 
         foreach ($expectedMetadata as $eKey => $eValue) {
             self::assertArrayHasKey($eKey, $realMetadata);
@@ -187,10 +184,31 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
                 stripslashes(json_encode([
                     'id' => '',
                     'name' => '[á~cf/c~ústó~m-ím~ágé]',
-                    'data' => ['mediaId' => (string)$attachmentSubmission->getTargetId(), '_mediaId' => $acfImageFieldId],
+                    'data' => ['mediaId' => $attachmentSubmission->getTargetId(), '_mediaId' => $acfImageFieldId],
                 ], JSON_UNESCAPED_UNICODE)),
             ),
             $targetPost->post_content,
+        );
+    }
+
+    /**
+     * ACF block with array value caused php warning before fix, replacer unable to decode blocks due to escaping bugs
+     * @see https://bt.smartling.net/browse/WP-690
+     */
+    public function testWP690AcfBlocksWithArraysDontCauseWarnings()
+    {
+        $submissionManager = $this->getSubmissionManager();
+        $translationHelper = $this->getTranslationHelper();
+        $sourceBlogId = 1;
+        $targetBlogId = 2;
+        $postId = $this->createPost('post', 'title', file_get_contents(DIR_TESTDATA . '/wp-690-source.html'));
+        $submission = $translationHelper->prepareSubmission('post', $sourceBlogId, $postId, $targetBlogId);
+        $submission->getFileUri();
+        $submission = $submissionManager->storeEntity($submission);
+        $this->uploadDownload($submission);
+        $this->assertStringEqualsFile(
+            DIR_TESTDATA . '/wp-690-expected.html',
+            $this->getTargetPost($this->getSiteHelper(), $translationHelper->reloadSubmission($submission))->post_content
         );
     }
 }

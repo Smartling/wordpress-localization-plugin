@@ -318,7 +318,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
             $acfData = json_decode(stripslashes($block), true, 512, JSON_THROW_ON_ERROR);
             if (array_key_exists('data', $acfData)) {
                 foreach ($acfData['data'] as $key => $value) {
-                    if (array_key_exists($value, $this->acfDefinitions)
+                    if ((is_string($value) || is_int($value)) && array_key_exists($value, $this->acfDefinitions)
                         && array_key_exists('type', $this->acfDefinitions[$value])
                         && $this->acfDefinitions[$value]['type'] === 'image'
                         && strpos($key, '_') === 0

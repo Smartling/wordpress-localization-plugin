@@ -106,12 +106,29 @@ class SubmissionManagerTest extends TestCase
         $x->searchByCondition($block);
     }
 
+    /**
+     * Locked submissions should not get cloned
+     */
+    public function testFindSubmissionsForCloning()
+    {
+        $db = $this->db;
+        $x = $this->subject;
+        $x->method('getDbal')->willReturn($db);
+        $x->expects($this->once())->method('fetchData')->willReturnCallback(function(string $query) {
+            $this->assertStringContainsString("`is_cloned` = '1'", $query);
+            $this->assertStringContainsString("`is_locked` = '0'", $query);
+            return [];
+        });
+
+        $x->findSubmissionForCloning();
+    }
+
     public function testFindSubmissionsForUploadJob()
     {
         $db = $this->db;
         $x = $this->subject;
         $x->method('getDbal')->willReturn($db);
-        $x->expects($this->once())->method('fetchData')->with("SELECT `id`, `source_title`, `source_blog_id`, `source_content_hash`, `content_type`, `source_id`, `file_uri`, `target_locale`, `target_blog_id`, `target_id`, `submitter`, `submission_date`, `applied_date`, `approved_string_count`, `completed_string_count`, `excluded_string_count`, `total_string_count`, `word_count`, `status`, `is_locked`, `is_cloned`, `last_modified`, `outdated`, `last_error`, `batch_uid`, `locked_fields` FROM `wp_smartling_submissions` WHERE ( `status` = 'New' AND `is_locked` = '0' AND `batch_uid` <> '' ) LIMIT 0,1")->willReturn([]);
+        $x->expects($this->once())->method('fetchData')->with("SELECT `id`, `source_title`, `source_blog_id`, `source_content_hash`, `content_type`, `source_id`, `file_uri`, `target_locale`, `target_blog_id`, `target_id`, `submitter`, `submission_date`, `applied_date`, `approved_string_count`, `completed_string_count`, `excluded_string_count`, `total_string_count`, `word_count`, `status`, `is_locked`, `is_cloned`, `last_modified`, `outdated`, `last_error`, `batch_uid`, `locked_fields`, `created_at` FROM `wp_smartling_submissions` WHERE ( `status` = 'New' AND `is_locked` = '0' AND `batch_uid` <> '' ) LIMIT 0,1")->willReturn([]);
 
         $x->findSubmissionsForUploadJob();
     }
@@ -148,7 +165,7 @@ class SubmissionManagerTest extends TestCase
         $submissionId = 17;
         $db = $this->db;
         $db->expects($this->once())->method('query')
-            ->with("UPDATE `wp_smartling_submissions` SET `source_title` = '$title', `source_blog_id` = '$sourceBlogId', `source_content_hash` = '', `content_type` = '', `source_id` = '', `file_uri` = '', `target_locale` = '', `target_blog_id` = '', `target_id` = '', `submitter` = '', `submission_date` = '', `applied_date` = '', `approved_string_count` = '', `completed_string_count` = '', `excluded_string_count` = '', `total_string_count` = '', `word_count` = '', `status` = '', `is_locked` = '', `is_cloned` = '', `last_modified` = '', `outdated` = '', `last_error` = '', `batch_uid` = '', `locked_fields` = '' WHERE ( `id` = '$submissionId' ) LIMIT 1")
+            ->with("UPDATE `wp_smartling_submissions` SET `source_title` = '$title', `source_blog_id` = '$sourceBlogId', `source_content_hash` = '', `content_type` = '', `source_id` = '', `file_uri` = '', `target_locale` = '', `target_blog_id` = '', `target_id` = '', `submitter` = '', `submission_date` = '', `applied_date` = '', `approved_string_count` = '', `completed_string_count` = '', `excluded_string_count` = '', `total_string_count` = '', `word_count` = '', `status` = '', `is_locked` = '', `is_cloned` = '', `last_modified` = '', `outdated` = '', `last_error` = '', `batch_uid` = '', `locked_fields` = '', `created_at` = '' WHERE ( `id` = '$submissionId' ) LIMIT 1")
             ->willReturn(true);
         $x = $this->subject;
         $x->method('getDbal')->willReturn($db);
@@ -182,7 +199,7 @@ class SubmissionManagerTest extends TestCase
         $submissionsJobsManager,
         ])->onlyMethods(['fetchData', 'getLogger'])->getMock();
         $x->method('getLogger')->willReturn(new NullLogger());
-        $x->expects($this->once())->method('fetchData')->with("SELECT s.id, s.source_title, s.source_blog_id, s.source_content_hash, s.content_type, s.source_id, s.file_uri, s.target_locale, s.target_blog_id, s.target_id, s.submitter, s.submission_date, s.applied_date, s.approved_string_count, s.completed_string_count, s.excluded_string_count, s.total_string_count, s.word_count, s.status, s.is_locked, s.is_cloned, s.last_modified, s.outdated, s.last_error, s.batch_uid, s.locked_fields, j.job_name, j.job_uid, j.project_uid, j.created, j.modified     FROM wp_smartling_submissions AS s\n        LEFT JOIN wp_smartling_submissions_jobs AS sj ON s.id = sj.submission_id\n        LEFT JOIN wp_smartling_jobs AS j ON sj.job_id = j.id  WHERE ( ( s.id IN('$submissionId') ) )")->willReturn([$entity]);
+        $x->expects($this->once())->method('fetchData')->with("SELECT s.id, s.source_title, s.source_blog_id, s.source_content_hash, s.content_type, s.source_id, s.file_uri, s.target_locale, s.target_blog_id, s.target_id, s.submitter, s.submission_date, s.applied_date, s.approved_string_count, s.completed_string_count, s.excluded_string_count, s.total_string_count, s.word_count, s.status, s.is_locked, s.is_cloned, s.last_modified, s.outdated, s.last_error, s.batch_uid, s.locked_fields, s.created_at, j.job_name, j.job_uid, j.project_uid, j.created, j.modified     FROM wp_smartling_submissions AS s\n        LEFT JOIN wp_smartling_submissions_jobs AS sj ON s.id = sj.submission_id\n        LEFT JOIN wp_smartling_jobs AS j ON sj.job_id = j.id  WHERE ( ( s.id IN('$submissionId') ) )")->willReturn([$entity]);
 
         $x->delete($entity);
     }
