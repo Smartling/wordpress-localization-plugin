@@ -271,6 +271,23 @@ class SubmissionManager extends EntityManagerAbstract
         return $this->fetchData($query);
     }
 
+    public function findOne(array $parameters): ?SubmissionEntity
+    {
+        $parametersString = addslashes(json_encode($parameters, JSON_THROW_ON_ERROR));
+        $result = $this->find($parameters, 2);
+
+        switch (count($result)) {
+            case 0:
+                $this->getLogger()->debug("No submissions found searchParams=\"$parametersString\"");
+                break;
+            case 1:
+                return current($result);
+            default:
+                $this->getLogger()->notice("Found more than one submission searchParams=\"$parametersString\"");
+        }
+
+        return null;
+    }
 
     /**
      * Looks for submissions with status = 'New' AND batch_uid <> '' AND is_locked = 0

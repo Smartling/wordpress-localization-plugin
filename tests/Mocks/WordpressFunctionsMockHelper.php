@@ -317,6 +317,7 @@ namespace {
         if (!function_exists('wp_get_object_terms')) {
             function wp_get_object_terms($a, $b)
             {
+                return [];
             }
         }
 

@@ -65,6 +65,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 = 2.15.0 =
 * The plugin will no longer automatically fail submissions based on content type not registered in WordPress
 
+= 2.14.9 =
+* Added support for Elementor global widgets translation using the related items translation interface
+
 = 2.14.8 =
 * Improved supported for nested ACF in Gutenberg block fields (e.g. repeater blocks)
 

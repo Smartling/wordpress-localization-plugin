@@ -452,3 +452,4 @@ services:
       - "@manager.settings"
       - "@helper.customMenu"
       - "@manager.content.external"
+      - "@wp.proxy"
