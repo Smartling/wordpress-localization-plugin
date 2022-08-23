@@ -89,10 +89,6 @@ class LastModifiedCheckJobTest extends TestCase
 
     /**
      * @dataProvider runDataProvider
-     *
-     * @param array $groupedSubmissions
-     * @param array $lastModifiedResponse
-     * @param int $expectedStatusCheckRequests
      */
     public function testRun(array $groupedSubmissions, array $lastModifiedResponse, int $expectedStatusCheckRequests)
     {
@@ -104,35 +100,32 @@ class LastModifiedCheckJobTest extends TestCase
             $this->queue
                 ->expects(self::at($index))
                 ->method('dequeue')
-                ->with(Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE)
+                ->with(QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE)
                 ->willReturn($dequeueResult[$index]);
 
             if (false !== $mockedResult) {
                 foreach ($mockedResult as $fileUri => $submissionList) {
 
-                    $dequeued = &$dequeueResult[$index][$fileUri];
-
-                    foreach ($submissionList as & $submissionArray) {
+                    foreach ($submissionList as &$submissionArray) {
+                        $submissionArray[SubmissionEntity::FIELD_STATUS] = SubmissionEntity::SUBMISSION_STATUS_FAILED;
                         $submissionArray = SubmissionEntity::fromArray($submissionArray, $this->getLogger());
                     }
                     unset ($submissionArray);
 
                     $this->submissionManager
                         ->method('findByIds')
-                        ->with($dequeued)
+                        ->with($dequeueResult[$index][$fileUri])
                         ->willReturn($submissionList);
-
-                    $unserializedSubmissions = $this->submissionManager->findByIds($dequeued);
 
                     $worker
                         ->method('prepareSubmissionList')
-                        ->with($unserializedSubmissions)
-                        ->willReturn($this->emulatePrepareSubmissionList($unserializedSubmissions));
+                        ->with($submissionList)
+                        ->willReturn($this->emulatePrepareSubmissionList($submissionList));
 
                     $this->apiWrapper
                         ->expects(self::once())
                         ->method('lastModified')
-                        ->with(reset($unserializedSubmissions))
+                        ->with($submissionList[0])
                         ->willReturn($lastModifiedResponse);
                 }
             }

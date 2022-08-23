@@ -12,7 +12,6 @@ use Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater;
 use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\TextHelper;
-use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressUserHelper;
 use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\JobEntityWithBatchUid;
@@ -423,24 +422,10 @@ class SubmissionEntity extends SmartlingEntityAbstract
     /**
      * @param string $content_type
      * @return SubmissionEntity
-     * @throws SmartlingDirectRunRuntimeException
      */
     public function setContentType(string $content_type): SubmissionEntity
     {
-        $reverseMap = WordpressContentTypeHelper::getReverseMap();
-
-        if (array_key_exists($content_type, $reverseMap)) {
-            $this->stateFields[static::FIELD_CONTENT_TYPE] = $reverseMap[$content_type];
-        } else {
-            $this->stateFields[static::FIELD_CONTENT_TYPE] = $content_type;
-            $this->setLastError('Invalid Content Type');
-            $this->setStatus(static::SUBMISSION_STATUS_FAILED);
-            $message = vsprintf('Invalid content type. Got \'%s\', expected one of: %s', [
-                $content_type,
-                implode(',', $reverseMap),
-            ]);
-            $this->logger->error($message);
-        }
+        $this->stateFields[static::FIELD_CONTENT_TYPE] = $content_type;
 
         return $this;
     }
