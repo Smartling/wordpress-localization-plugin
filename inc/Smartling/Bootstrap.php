@@ -201,6 +201,8 @@ class Bootstrap
 
         $pageSize = $rawPageSize < 1 ? GlobalSettingsManager::getPageSizeDefault() : $rawPageSize;
 
+        GlobalSettingsManager::setAddSlashesBeforeSavingContent($data[GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT]);
+        GlobalSettingsManager::setAddSlashesBeforeSavingMeta($data[GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_META]);
         GlobalSettingsManager::setSkipSelfCheck((int)$data['selfCheckDisabled']);
         GlobalSettingsManager::setDisableLogging((int)$data['disableLogging']);
         GlobalSettingsManager::setDisableACF((int)$data['disableACF']);

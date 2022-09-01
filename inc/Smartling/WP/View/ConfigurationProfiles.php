@@ -56,7 +56,7 @@ $data = $this->getViewData();
             <a href="<?= get_site_url(); ?>/wp-admin/admin-post.php?action=smartling_zerolength_log_file"><?= __('DELETE current log file.'); ?></a>
         </li>
 
-        <div class="update-nag">
+        <div>
             <p>
                 <?= __("<strong>Warning!</strong><br/>Do not modify the next setting unless you are a Wordpress expert and fully understand the purpose of this setting.<br>"   ); ?>
             </p>
@@ -269,7 +269,7 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
-                        <th><label for="loggingPath">Enable Fine-Tuning</label></th>
+                        <th><label for="enableFilterUI">Enable Fine-Tuning</label></th>
                         <td>
                             <?=
                             HtmlTagGeneratorHelper::tag(
@@ -285,6 +285,46 @@ $data = $this->getViewData();
                                     'name' => 'enableFilterUI',
                                 ]
                             );
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="<?= GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT?>"><?= __('Add slashes before saving post content')?></label></th>
+                        <td>
+                            <?=
+                            HtmlTagGeneratorHelper::tag(
+                                'select',
+                                HtmlTagGeneratorHelper::renderSelectOptions(
+                                    GlobalSettingsManager::isAddSlashesBeforeSavingPostContent() ? 1 : 0,
+                                    [
+                                        0 => 'No',
+                                        1 => 'Yes',
+                                    ]),
+                                [
+                                    'id'   => GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT,
+                                    'name' => GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT,
+                                ]
+                            )
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="<?= GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_META?>"><?= __('Add slashes before saving post metadata')?></label></th>
+                        <td>
+                            <?=
+                            HtmlTagGeneratorHelper::tag(
+                                'select',
+                                HtmlTagGeneratorHelper::renderSelectOptions(
+                                    GlobalSettingsManager::isAddSlashesBeforeSavingPostMeta() ? 1 : 0,
+                                    [
+                                        0 => 'No',
+                                        1 => 'Yes',
+                                    ]),
+                                [
+                                    'id'   => GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_META,
+                                    'name' => GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_META,
+                                ]
+                            )
                             ?>
                         </td>
                     </tr>
