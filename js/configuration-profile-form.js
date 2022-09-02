@@ -28,12 +28,9 @@
                     'disableLogging': $('#disableLogging').val(),
                     'loggingPath': $('#loggingPath').val(),
                     'pageSize': $('#pageSize').val(),
-                    'disableDBLookup': $('#disableDBLookup').val(),
-                    'disableACF': $('#disableACF').val(),
                     'loggingCustomization': $('#loggingCustomization').val(),
                     'smartling_frontend_generate_lock_ids': $('#smartling_frontend_generate_lock_ids').val(),
-                    'handleRelationsManually': $('#handleRelationsManually').val(),
-                    'related_checkbox_state': $('#related_checkbox_state').val(),
+                    'smartling_related_content_select_state': $('#smartling_related_content_select_state').val(),
                     'enableFilterUI': $('#enableFilterUI').val()
                 }
             };
@@ -76,10 +73,10 @@
             $('#smartling_frontend_generate_lock_ids').val($(this).attr('data-default'));
         });
 
-        $('#resetRelatedContentCheckbox').on('click', function (e) {
+        $('#resetRelatedContentSelect').on('click', function (e) {
             e.stopPropagation();
             e.preventDefault();
-            $('#related_checkbox_state').val($(this).attr('data-default'));
+            $('#smartling_related_content_select_state').val($(this).attr('data-default'));
         });
     });
 })(jQuery);

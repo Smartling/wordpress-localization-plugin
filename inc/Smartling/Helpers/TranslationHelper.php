@@ -8,7 +8,6 @@ use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\SmartlingDataReadException;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\MonologWrapper\MonologWrapper;
-use Smartling\Services\GlobalSettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
@@ -117,10 +116,6 @@ class TranslationHelper
         );
 
         if (0 === (int)$submission->getId()) {
-            if (GlobalSettingsManager::isHandleRelationsManually()) {
-                $this->logger->debug(sprintf('Created submission %s %d despite manual relations handling). Backtrace: %s', $submission->getContentType(), $submission->getSourceId(), json_encode(debug_backtrace())));
-            }
-
             if (true === $clone) {
                 $submission->setIsCloned(1);
             }
@@ -149,8 +144,7 @@ class TranslationHelper
         if ($cloning && $this->submissionManager->submissionExists($contentType, $sourceBlogId, $contentId, $targetBlogId)) {
             return false;
         }
-        return !GlobalSettingsManager::isHandleRelationsManually() ||
-            $this->submissionManager->submissionExistsNoLastError($contentType, $sourceBlogId, $contentId, $targetBlogId);
+        return $this->submissionManager->submissionExistsNoLastError($contentType, $sourceBlogId, $contentId, $targetBlogId);
     }
 
     /**
