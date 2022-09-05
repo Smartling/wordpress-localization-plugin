@@ -12,6 +12,7 @@ use Smartling\ContentTypes\ContentTypeWidget;
 use Smartling\ContentTypes\CustomPostType;
 use Smartling\ContentTypes\CustomTaxonomyType;
 use Smartling\Exception\SmartlingBootException;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\MetaFieldProcessor\CustomFieldFilterHandler;
 use Smartling\Helpers\SchedulerHelper;
@@ -380,6 +381,13 @@ class Bootstrap
         (new PostTypes($di->getParameter('ignoredTypes')['posts'] ?? []))->registerHookHandler();
 
         $action = defined('DOING_CRON') && true === DOING_CRON ? 'wp_loaded' : 'admin_init';
+
+        add_action($action, function () {
+            /**
+             * Initializing ACF and ACF Option Pages support.
+             */
+            (new AcfDynamicSupport($this->fromContainer('entity.helper')))->run();
+        });
 
         /**
          * Post types and taxonomies are registered on 'init' hook, but this code is executed on 'plugins_loaded' hook,
