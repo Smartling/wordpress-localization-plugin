@@ -7,8 +7,7 @@ use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Vendor\Symfony\Component\Yaml\Parser;
 
 /**
- * Class GlobalSettingsManager
- * @package Smartling\Services
+ * @see js/configuration-profile-form.js change frontend handling there as well when changing options here
  */
 class GlobalSettingsManager
 {
@@ -322,9 +321,43 @@ class GlobalSettingsManager
     {
         SimpleStorageHelper::set(static::SMARTLING_FILTER_UI_VISIBLE, $value);
 
-        if (static::SMARTLING_FILTER_UI_VISIBLE_DEFAULT === (int)$value) {SimpleStorageHelper::drop(static::SMARTLING_FILTER_UI_VISIBLE);
+        if (static::SMARTLING_FILTER_UI_VISIBLE_DEFAULT === (int)$value) {
+            SimpleStorageHelper::drop(static::SMARTLING_FILTER_UI_VISIBLE);
         }
     }
 
-}
 
+    public const SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT = 'smartling_add_slashes_before_saving_content';
+    public const SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT_DEFAULT = "1";
+
+    public static function isAddSlashesBeforeSavingPostContent(): bool
+    {
+        return SimpleStorageHelper::get(self::SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT, self::SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT_DEFAULT) === "1";
+    }
+
+    public static function setAddSlashesBeforeSavingContent(string $value): void
+    {
+        if ($value === self::SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT_DEFAULT) {
+            SimpleStorageHelper::drop(self::SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT);
+        } else {
+            SimpleStorageHelper::set(self::SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT, $value);
+        }
+    }
+
+    public const SETTING_ADD_SLASHES_BEFORE_SAVING_META = 'smartling_add_slashes_before_saving_meta';
+    public const SETTING_ADD_SLASHES_BEFORE_SAVING_META_DEFAULT = "1";
+
+    public static function isAddSlashesBeforeSavingPostMeta(): bool
+    {
+        return SimpleStorageHelper::get(self::SETTING_ADD_SLASHES_BEFORE_SAVING_META, self::SETTING_ADD_SLASHES_BEFORE_SAVING_META_DEFAULT) === "1";
+    }
+
+    public static function setAddSlashesBeforeSavingMeta(string $value): void
+    {
+        if ($value === self::SETTING_ADD_SLASHES_BEFORE_SAVING_META_DEFAULT) {
+            SimpleStorageHelper::drop(self::SETTING_ADD_SLASHES_BEFORE_SAVING_META);
+        } else {
+            SimpleStorageHelper::set(self::SETTING_ADD_SLASHES_BEFORE_SAVING_META, $value);
+        }
+    }
+}

@@ -269,7 +269,7 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
-                        <th><label for="loggingPath">Enable Fine-Tuning</label></th>
+                        <th><label for="enableFilterUI">Enable Fine-Tuning</label></th>
                         <td>
                             <?=
                             HtmlTagGeneratorHelper::tag(
@@ -285,6 +285,46 @@ $data = $this->getViewData();
                                     'name' => 'enableFilterUI',
                                 ]
                             );
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="<?= GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT?>"><?= __('Add slashes before saving post content')?></label></th>
+                        <td>
+                            <?=
+                            HtmlTagGeneratorHelper::tag(
+                                'select',
+                                HtmlTagGeneratorHelper::renderSelectOptions(
+                                    GlobalSettingsManager::isAddSlashesBeforeSavingPostContent() ? 1 : 0,
+                                    [
+                                        0 => 'No',
+                                        1 => 'Yes',
+                                    ]),
+                                [
+                                    'id'   => GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT,
+                                    'name' => GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT,
+                                ]
+                            )
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="<?= GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_META?>"><?= __('Add slashes before saving post metadata')?></label></th>
+                        <td>
+                            <?=
+                            HtmlTagGeneratorHelper::tag(
+                                'select',
+                                HtmlTagGeneratorHelper::renderSelectOptions(
+                                    GlobalSettingsManager::isAddSlashesBeforeSavingPostMeta() ? 1 : 0,
+                                    [
+                                        0 => 'No',
+                                        1 => 'Yes',
+                                    ]),
+                                [
+                                    'id'   => GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_META,
+                                    'name' => GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_META,
+                                ]
+                            )
                             ?>
                         </td>
                     </tr>

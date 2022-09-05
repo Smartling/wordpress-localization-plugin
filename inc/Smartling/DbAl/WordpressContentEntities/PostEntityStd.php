@@ -6,6 +6,7 @@ use Smartling\Exception\SmartlingDataUpdateException;
 use Smartling\Helpers\RawDbQueryHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\WordpressUserHelper;
+use Smartling\Services\GlobalSettingsManager;
 
 /**
  * @method setPostContent($string)
@@ -241,11 +242,16 @@ class PostEntityStd extends EntityAbstract
          * Content expected to be slashed for
          * @see wp_insert_post() $data declaration
          */
-        foreach (['post_author', 'post_content', 'post_content_filtered', 'post_title', 'post_excerpt', 'post_password', 'post_name', 'to_ping', 'pinged'] as $field) {
-            if (isset($array[$field])) {
-                $array[$field] = addslashes($array[$field]);
+        $addSlashes = GlobalSettingsManager::isAddSlashesBeforeSavingPostContent();
+        if ($addSlashes) {
+            foreach (['post_author', 'post_content', 'post_content_filtered', 'post_title', 'post_excerpt', 'post_password', 'post_name', 'to_ping', 'pinged'] as $field) {
+                if (isset($array[$field])) {
+                    $array[$field] = addslashes($array[$field]);
+                }
             }
         }
+        /** @noinspection JsonEncodingApiUsageInspection failure to json_encode suitable for logging */
+        $this->getLogger()->debug(sprintf('Calling wp_insert_post with postArray="%s", addSlashes=%s', json_encode($array), $addSlashes));
         $res = wp_insert_post($array, true);
         if (is_wp_error($res) || 0 === $res) {
             $msg = vsprintf('An error had happened while saving post : \'%s\'', [\json_encode($array)]);
@@ -369,18 +375,22 @@ class PostEntityStd extends EntityAbstract
          * Tag name and value expected to be slashed
          * @see add_metadata()
          */
-        if (is_string($tagName)) {
-            $tagName = addslashes($tagName);
-        }
-        if (is_string($tagValue)) {
-            $tagValue = addslashes($tagValue);
+        $expectedTagName = $tagName;
+        $expectedTagValue = $tagValue;
+        if (GlobalSettingsManager::isAddSlashesBeforeSavingPostMeta()) {
+            if (is_string($tagName)) {
+                $tagName = addslashes($tagName);
+            }
+            if (is_string($tagValue)) {
+                $tagValue = addslashes($tagValue);
+            }
         }
         if (false === ($result = add_post_meta($this->ID, $tagName, $tagValue, $unique))) {
             $result = update_post_meta($this->ID, $tagName, $tagValue);
         }
 
         if (false === $result) {
-            if (false === $this->ensureMetaValue($tagName, $tagValue)) {
+            if (false === $this->ensureMetaValue($expectedTagName, $expectedTagValue)) {
                 $message = vsprintf(
                     'Error saving meta tag "%s" with value "%s" for type="%s" id="%s"',
                     [
