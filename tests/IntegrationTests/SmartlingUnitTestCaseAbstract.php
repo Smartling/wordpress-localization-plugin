@@ -119,6 +119,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         $this->cleanUpTables();
         $this->registerPostTypes();
         $this->ensureProfileExists();
+        GlobalSettingsManager::setHandleRelationsManually(0);
     }
 
     protected ConfigurationProfileEntity $profile;

@@ -8,6 +8,7 @@ use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\SmartlingDataReadException;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Services\GlobalSettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
@@ -144,7 +145,8 @@ class TranslationHelper
         if ($cloning && $this->submissionManager->submissionExists($contentType, $sourceBlogId, $contentId, $targetBlogId)) {
             return false;
         }
-        return $this->submissionManager->submissionExistsNoLastError($contentType, $sourceBlogId, $contentId, $targetBlogId);
+        return !GlobalSettingsManager::isHandleRelationsManually() ||
+            $this->submissionManager->submissionExistsNoLastError($contentType, $sourceBlogId, $contentId, $targetBlogId);
     }
 
     /**
