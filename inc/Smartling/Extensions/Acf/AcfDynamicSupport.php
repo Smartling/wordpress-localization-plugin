@@ -12,7 +12,6 @@ use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\MonologWrapper\MonologWrapper;
-use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
 
@@ -421,41 +420,29 @@ class AcfDynamicSupport
             $this->getLogger()->debug('ACF detected.');
             $localDefinitions = $this->getLocalDefinitions();
 
-            if (1 === (int)GlobalSettingsManager::getDisableAcfDbLookup()) {
-                $definitions = $localDefinitions;
-                $url         = admin_url('edit.php?post_type=acf-field-group&page=acf-tools');
-                $msg         = [
-                    'Automatic ACF support is disabled. Please ensure that you use relevant exported ACF configuration.',
-                    vsprintf('To export your ACF configuration click <strong><a href="%s">here</a></strong>', [$url]),
-                ];
-                DiagnosticsHelper::addDiagnosticsMessage(implode('<br/>', $msg));
-                $this->getLogger()->notice('Automatic ACF support is disabled.');
-            } else {
-                try {
-                    $dbDefinitions = $this->getDatabaseDefinitions();
-                } catch (SmartlingDirectRunRuntimeException $e) {
-                    $dbDefinitions = [];
-                    DiagnosticsHelper::addDiagnosticsMessage(
-                        'Failed to get ACF definitions from database.' .
-                        'Please ensure that WordPress network is set up properly.<br>' .
-                        "Exception message: {$e->getMessage()}"
-                    );
-                }
-
-                if (false === $this->verifyDefinitions($localDefinitions, $dbDefinitions)) {
-                    $url = admin_url('edit.php?post_type=acf-field-group&page=acf-tools');
-                    $msg = [
-                        'ACF Configuration has been changed.',
-                        'Please update groups and fields definitions for all sites (As PHP generated code).',
-                        vsprintf('Use <strong><a href="%s">this</a></strong> page to generate export code and add it to your theme or extra plugin.',
-                            [$url]),
-                    ];
-                    DiagnosticsHelper::addDiagnosticsMessage(implode('<br/>', $msg));
-                }
-                $definitions = array_merge($localDefinitions, $dbDefinitions);
+            try {
+                $dbDefinitions = $this->getDatabaseDefinitions();
+            } catch (SmartlingDirectRunRuntimeException $e) {
+                $dbDefinitions = [];
+                DiagnosticsHelper::addDiagnosticsMessage(
+                    'Failed to get ACF definitions from database.' .
+                    'Please ensure that WordPress network is set up properly.<br>' .
+                    "Exception message: {$e->getMessage()}"
+                );
             }
 
-            $this->definitions = $definitions;
+            if (false === $this->verifyDefinitions($localDefinitions, $dbDefinitions)) {
+                $url = admin_url('edit.php?post_type=acf-field-group&page=acf-tools');
+                $msg = [
+                    'ACF Configuration has been changed.',
+                    'Please update groups and fields definitions for all sites (As PHP generated code).',
+                    vsprintf('Use <strong><a href="%s">this</a></strong> page to generate export code and add it to your theme or extra plugin.',
+                        [$url]),
+                ];
+                DiagnosticsHelper::addDiagnosticsMessage(implode('<br/>', $msg));
+            }
+
+            $this->definitions = array_merge($localDefinitions, $dbDefinitions);
             $this->buildRules();
             $this->prepareFilters();
         } else {

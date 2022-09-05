@@ -2,13 +2,13 @@
 
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Services\GlobalSettingsManager;
+use Smartling\WP\Controller\ConfigurationProfilesController;
 use Smartling\WP\Controller\ConfigurationProfilesWidget;
 use Smartling\WP\Table\QueueManagerTableWidget;
 use Smartling\Vendor\Symfony\Component\Yaml\Yaml;
 
 /**
- * @var WPAbstract $this
- * @var WPAbstract self
+ * @var ConfigurationProfilesController $this
  */
 $data = $this->getViewData();
 ?>
@@ -142,51 +142,6 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
-                        <th colspan="2" class="center">ACF Runtime settings</th>
-                    </tr>
-                    <tr>
-                        <th><label for="disableACF">Disable ACF support</label></th>
-                        <td>
-                            <?=
-                            HtmlTagGeneratorHelper::tag(
-                                'select',
-                                HtmlTagGeneratorHelper::renderSelectOptions(
-                                        GlobalSettingsManager::getDisableACF(),
-                                    [
-                                        0 => 'No',
-                                        1 => 'Yes',
-                                    ]),
-                                [
-                                    'id'   => 'disableACF',
-                                    'name' => 'disableACF',
-                                ]
-                            );
-                            ?>
-                            <br />Disabling of ACF plugin increases speed but disables support of ACF plugin content and handling of content relations. It is highly recommended to keep ACF plugin support enabled.<br/>
-                        </td>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><label for="disableDBLookup">Disable ACF configuration database lookup (not recommended)</label></th>
-                        <td>
-                            <?=
-                            HtmlTagGeneratorHelper::tag(
-                                'select',
-                                HtmlTagGeneratorHelper::renderSelectOptions(
-                                    GlobalSettingsManager::getDisableAcfDbLookup(),
-                                    [
-                                        0 => 'No',
-                                        1 => 'Yes',
-                                    ]),
-                                [
-                                    'id'   => 'disableDBLookup',
-                                    'name' => 'disableDBLookup',
-                                ]
-                            );
-                            ?>
-                        </td>
-                    </tr>
-                    <tr>
                         <th colspan="2" class="center">User Interface Customizations</th>
                     </tr>
                     <tr>
@@ -225,47 +180,26 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
-                        <th><label for="handleRelationsManually">Handle relations</label></th>
-                        <td>
-                            <?=
-                            \Smartling\Helpers\HtmlTagGeneratorHelper::tag(
-                                'select',
-                                \Smartling\Helpers\HtmlTagGeneratorHelper::renderSelectOptions(
-                                    GlobalSettingsManager::getHandleRelationsManually(),
-                                    [
-                                        0 => 'Automatically',
-                                        1 => 'Manually',
-                                    ]),
-                                [
-                                    'id'   => 'handleRelationsManually',
-                                    'name' => 'handleRelationsManually',
-                                ]
-                            );
-                            ?>
-                            <br /><a href="javascript:void(0)" id="resetHandleRelationsManually" data-default="<?= GlobalSettingsManager::getHandleRelationsManuallyDefault(); ?>">reset to defaults</a>
-                            <br /><?= __('Note, that switching handling of relations to Manual changes how plugin will work with related assets. An example, if &quot;post&quot; has category and image, then plugin will not create them on a target site. As a result, your translated post layout may look broken')?><br/>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th><label for="<?= GlobalSettingsManager::RELATED_CHECKBOX_STATE ?>">
-                                Upload widget send related content for translation checkbox default state
+                        <th><label for="<?= GlobalSettingsManager::SMARTLING_RELATED_CONTENT_SELECT_STATE ?>">
+                                Upload widget send related content for translation selection default state
                             </label></th>
                         <td>
                             <?= HtmlTagGeneratorHelper::tag(
                                 'select',
                                 HtmlTagGeneratorHelper::renderSelectOptions(
-                                    GlobalSettingsManager::getRelatedContentCheckboxState(),
+                                    GlobalSettingsManager::getRelatedContentSelectState(),
                                     [
-                                        0 => 'Unchecked',
-                                        1 => 'Checked',
+                                        0 => 'No related content',
+                                        1 => 'Related content 1 level deep',
+                                        2 => 'Related content 2 levels deep',
                                     ]),
                                 [
-                                    'id'   => GlobalSettingsManager::RELATED_CHECKBOX_STATE,
-                                    'name' => GlobalSettingsManager::RELATED_CHECKBOX_STATE,
+                                    'id'   => GlobalSettingsManager::SMARTLING_RELATED_CONTENT_SELECT_STATE,
+                                    'name' => GlobalSettingsManager::SMARTLING_RELATED_CONTENT_SELECT_STATE,
                                 ]
                             )
                             ?>
-                            <br /><a href="javascript:void(0)" id="resetRelatedContentCheckbox" data-default="<?= GlobalSettingsManager::getRelatedContentCheckboxDefault(); ?>">reset to defaults</a>
+                            <br /><a href="javascript:void(0)" id="resetRelatedContentSelect" data-default="<?= GlobalSettingsManager::SMARTLING_RELATED_CHECKBOX_STATE_DEFAULT ?>">reset to defaults</a>
                         </td>
                     </tr>
                     <tr>

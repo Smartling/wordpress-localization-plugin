@@ -203,7 +203,7 @@ class FieldsFilterHelper
         ContentSerializationHelper::prepareFieldProcessorValues($settingsManager, $submission);
         $profile = $settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
         $data = $this->prepareSourceData($data);
-        if ($strategy === self::FILTER_STRATEGY_UPLOAD && !GlobalSettingsManager::isAcfDisabled()) {
+        if ($strategy === self::FILTER_STRATEGY_UPLOAD) {
             $data = $this->acfDynamicSupport->removePreTranslationFields($data);
         }
         $data = $this->flattenArray($data);

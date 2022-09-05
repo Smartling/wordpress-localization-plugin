@@ -205,15 +205,12 @@ class Bootstrap
         GlobalSettingsManager::setAddSlashesBeforeSavingMeta($data[GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_META]);
         GlobalSettingsManager::setSkipSelfCheck((int)$data['selfCheckDisabled']);
         GlobalSettingsManager::setDisableLogging((int)$data['disableLogging']);
-        GlobalSettingsManager::setDisableACF((int)$data['disableACF']);
-        GlobalSettingsManager::setDisableAcfDbLookup((int)$data['disableDBLookup']);
         GlobalSettingsManager::setLogFileSpec($data['loggingPath']);
         GlobalSettingsManager::setPageSize($pageSize);
         GlobalSettingsManager::setLoggingCustomization($data['loggingCustomization']);
-        GlobalSettingsManager::setHandleRelationsManually((int)$data['handleRelationsManually']);
         GlobalSettingsManager::setGenerateLockIdsFrontend($data[GlobalSettingsManager::SMARTLING_FRONTEND_GENERATE_LOCK_IDS]);
-        GlobalSettingsManager::setRelatedContentCheckboxState((int)$data[GlobalSettingsManager::RELATED_CHECKBOX_STATE]);
-        GlobalSettingsManager::setFilterUiVisible((int) $data['enableFilterUI']);
+        GlobalSettingsManager::setRelatedContentSelectState((int)$data[GlobalSettingsManager::SMARTLING_RELATED_CONTENT_SELECT_STATE]);
+        GlobalSettingsManager::setFilterUiVisible((int)$data['enableFilterUI']);
 
         wp_send_json($data);
     }
@@ -385,25 +382,13 @@ class Bootstrap
 
         $action = defined('DOING_CRON') && true === DOING_CRON ? 'wp_loaded' : 'admin_init';
 
-        if (1 === (int)GlobalSettingsManager::getDisableACF()) {
-            DiagnosticsHelper::addDiagnosticsMessage('Warning, ACF plugin support is <strong>disabled</strong>.');
-        } else {
-            add_action($action, function () {
-                $postTypes = array_keys(get_post_types());
-                if (in_array('acf', $postTypes, true)) {
-                    $msg = 'Detected a free version of ACF plugin that is not supported anymore. Please upgrade to full version.';
-                    DiagnosticsHelper::addDiagnosticsMessage($msg, false);
-                    MonologWrapper::getLogger(get_class($this))->notice($msg);
-                }
-            });
+        add_action($action, function () {
+            /**
+             * Initializing ACF and ACF Option Pages support.
+             */
+            (new AcfDynamicSupport($this->fromContainer('entity.helper')))->run();
+        });
 
-            add_action($action, function () {
-                /**
-                 * Initializing ACF and ACF Option Pages support.
-                 */
-                (new AcfDynamicSupport($this->fromContainer('entity.helper')))->run();
-            });
-        }
         /**
          * Post types and taxonomies are registered on 'init' hook, but this code is executed on 'plugins_loaded' hook,
          * so we need to postpone dynamic handlers execution

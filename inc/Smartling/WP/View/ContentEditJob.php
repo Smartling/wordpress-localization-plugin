@@ -30,7 +30,6 @@ $needWrapper = ($tag instanceof WP_Term);
 ?>
 
 <script>
-    const handleRelationsManually = <?= GlobalSettingsManager::isHandleRelationsManually() ? 'true' : 'false' ?>;
     const isBulkSubmitPage = <?= $isBulkSubmitPage ? 'true' : 'false'?>;
     let l1Relations = {missingTranslatedReferences: {}, originalReferences: {}};
     let l2Relations = {missingTranslatedReferences: {}, originalReferences: {}};
@@ -122,14 +121,14 @@ $needWrapper = ($tag instanceof WP_Term);
                                 </div>
                             </td>
                         </tr>
-                        <?php if (!$isBulkSubmitPage && GlobalSettingsManager::isHandleRelationsManually()) { ?>
+                        <?php if (!$isBulkSubmitPage) { ?>
                             <tr>
                                 <th>Related content</th>
                                 <td>
                                     <?= HtmlTagGeneratorHelper::tag(
                                         'select',
                                         HtmlTagGeneratorHelper::renderSelectOptions(
-                                            0,
+                                            GlobalSettingsManager::getRelatedContentSelectState(),
                                             [
                                                 0 => 'Don\'t send  related content',
                                                 1 => 'Send related content one level deep',
@@ -483,7 +482,7 @@ if ($post instanceof WP_Post) {
                 });
             };
 
-            if (handleRelationsManually && !isBulkSubmitPage) {
+            if (!isBulkSubmitPage) {
                 loadRelations(currentContent.contentType, currentContent.id);
                 $('.job-wizard input.mcheck, .job-wizard a').on('click', recalculateRelations);
                 $('#cloneDepth').on('change', recalculateRelations);
@@ -497,280 +496,113 @@ if ($post instanceof WP_Post) {
                 && hasProp(window.wp.data, "dispatch")
             ;
 
-            if (!handleRelationsManually) {
-                /*
-                * Use class checking method for detecting Gutenberg as defined here https://github.com/WordPress/gutenberg/issues/12200
-                * This prevents conflicts with plugins that enqueue the React library when the Classic Editor is enabled.
-                */
-                if (document.body.classList.contains("block-editor-page")) {
-                    $("#addToJob").on("click", function (e) {
-                        e.stopPropagation();
-                        e.preventDefault();
+            $("#addToJob, #cloneButton").on("click", function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                $('#error-messages').hide();
 
-                        if (isBulkSubmitPage) {
-                            // we're on bulk submit page and need to rebuild currentContent structure for WP 5.2+
-                            currentContent.contentType = $("#smartling-bulk-submit-page-content-type").val();
-                            currentContent.id = [];
+                var url = `${ajaxurl}?action=<?= ContentRelationsHandler::ACTION_NAME_CREATE_SUBMISSIONS?>`;
 
-                            $("input.bulkaction[type=checkbox]:checked").each(
-                                function () {
-                                    var id = parseInt($(this).attr("id").split("-")[0]);
-                                    currentContent.id = currentContent.id.concat([id]);
-                                });
-                        }
+                var blogIds = [];
 
-                        var btnSelector = "#addToJob";
-                        var wp5an = "components-button is-primary is-busy is-large";
-                        var btn = $(btnSelector);
+                $(".job-wizard input.mcheck[type=checkbox]:checked").each(function () {
+                    blogIds.push(this.dataset.blogId);
+                });
 
-                        var defaultText = btn.val();
+                var data = {
+                    formAction: e.target.id === 'cloneButton' ? '<?= ContentRelationsHandler::FORM_ACTION_CLONE?>' : '<?= ContentRelationsHandler::FORM_ACTION_UPLOAD?>',
+                    source: currentContent,
+                    job: {
+                        id: $("#jobSelect").val(),
+                        name: $("option[value=" + jobSelectEl.val() + "]").html(),
+                        relations: [],
+                        description: $("textarea[name=\"description-sm\"]").val(),
+                        dueDate: $("input[name=\"dueDate\"]").val(),
+                        timeZone: timezone,
+                        authorize: ($("div.job-wizard input[type=checkbox].authorize:checked").length > 0)
+                    },
+                    targetBlogIds: blogIds.join(","),
+                };
 
-                        var btnLockWait = function () {
-                            $(btn).addClass(wp5an);
-                            $(btn).val("Please wait...");
-                            $(btn).attr("disabled", "disabled");
-                        };
-                        var btnUnlockWait = function () {
-                            $(btn).removeClass(wp5an);
-                            $(btn).val(defaultText);
-                            $(btn).removeAttr("disabled");
-                        };
+                if (!isBulkSubmitPage) {
+                    switch ($('#cloneDepth').val()) {
+                        case "1":
+                            data.relations = {1: l1Relations.missingTranslatedReferences};
+                            break;
+                        case "2":
+                            data.relations = {1: l1Relations.missingTranslatedReferences, 2: l2Relations.missingTranslatedReferences}
+                            break;
+                    }
+                }
 
-                        var checkedLocalesCbs = $("div.job-wizard input[type=checkbox].mcheck:checked");
-                        var blogs = [];
-
-                        for (var i = 0; i < checkedLocalesCbs.length; i++) {
-                            var blogId = $(checkedLocalesCbs[i]).attr("data-blog-id");
-                            blogs = blogs.concat([blogId]);
-                        }
-
-                        var jobSelectEl = $("#jobSelect");
-                        jobSelectEl.select();
-
-                        var obj = {
-                            content: {
-                                type: currentContent.contentType,
-                                id: currentContent.id.join(",")
-                            },
-                            job: {
-                                id: jobSelectEl.val(),
-                                name: $("input[name=\"jobName\"]").val(),
-                                description: $("textarea[name=\"description-sm\"]").val(),
-                                dueDate: $("input[name=\"dueDate\"]").val(),
-                                timeZone: timezone,
-                                authorize: ($("div.job-wizard input[type=checkbox].authorize:checked").length > 0)
-                            },
-                            blogs: blogs.join(",")
-                        };
-                        btnLockWait();
-                        $('#error-messages').hide();
-                        $.post(
-                            ajaxurl + "?action=" + "smartling_upload_handler",
-                            obj,
-                            function (data) {
-                                function reportDispatchError(e) {
-                                    console.log("An exception prevented proper notification for this event");
-                                    console.log(JSON.stringify(wp.data.dispatch('core/notices')));
-                                    console.log(e);
-                                }
-                                if (canDispatch) {
-                                    switch (data.status) {
-                                        case "<?= BaseAjaxServiceAbstract::RESPONSE_SUCCESS ?>":
-                                            try {
-                                                wp.data.dispatch("core/notices").createSuccessNotice("Content added to Upload queue.");
-                                            } catch (e) {
-                                                console.log("Content added to Upload queue.");
-                                                reportDispatchError(e);
-                                            }
-                                            break;
-                                        case "<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>":
-                                            try {
-                                                wp.data.dispatch("core/notices").createErrorNotice("Failed adding content to download queue: " + data.message);
-                                            } catch (e) {
-                                                console.error("Failed adding content to download queue: " + data.message);
-                                                reportDispatchError(e);
-                                            }
-                                            break;
-                                        default:
-                                            console.log(data);
-                                    }
-                                }
-                                btnUnlockWait();
-                            }
-                        );
-                    });
-                } else { // document.body doesn't contain block-editor-page (non-gutenberg editor or admin page)
-                    $("#addToJob").on("click", function (e) {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        var jobId = $("#jobSelect").val();
-                        var jobName = $("#name-sm").val();
-                        var jobDescription = $("textarea[name=\"description-sm\"]").val();
-                        var jobDueDate = $("input[name=\"dueDate\"]").val();
-
-                        if ("" !== jobDueDate) {
-                            var nowTS = Math.floor((new Date()).getTime() / 1000);
-                            var formTS = Math.floor(moment(jobDueDate, "YYYY-MM-DD HH:mm").toDate().getTime() / 1000);
-                            if (nowTS >= formTS) {
-                                alert("Invalid Due Date value. It cannot be in the past!.");
-                                return false;
-                            }
-                        }
-
-                        var locales = Helper.ui.getSelectedTargetLocales();
-
-                        var createHiddenInput = function (name, value) {
-                            return createInput("hidden", name, value);
-                        };
-
-                        var createInput = function (type, name, value) {
-                            return "<input type=\"" + type + "\" name=\"" + name + "\" value=\"" + value + "\" />";
-                        };
-
-                        var formSelector = $("#post").length ? "post" : "edittag";
-                        var isBulkSubmitPage = $("form#bulk-submit-main").length;
-
-                        // Support for bulk submit form.
-                        if (isBulkSubmitPage) {
-                            formSelector = "bulk-submit-main";
-                            currentContent.id = $("input.bulkaction:checked").map(function () {
-                                return $(this).val();
-                            }).get();
-
-                            $("#action").val("send");
-                        }
-
-                        // Add hidden fields only if validation is passed.
-                        var formSelectorEl = $("#" + formSelector);
-                        if (currentContent.id.length) {
-                            formSelectorEl.append(createHiddenInput("smartling[ids]", currentContent.id));
-                            formSelectorEl.append(createHiddenInput("smartling[locales]", locales));
-                            formSelectorEl.append(createHiddenInput("smartling[jobId]", jobId));
-                            formSelectorEl.append(createHiddenInput("smartling[jobName]", jobName));
-                            formSelectorEl.append(createHiddenInput("smartling[jobDescription]", jobDescription));
-                            formSelectorEl.append(createHiddenInput("smartling[jobDueDate]", jobDueDate));
-                            formSelectorEl.append(createHiddenInput("smartling[timezone]", timezone));
-                            formSelectorEl.append(createHiddenInput("smartling[authorize]", $(".authorize:checked").length > 0));
-                            formSelectorEl.append(createHiddenInput("sub", "Upload"));
-                        }
-
-                        formSelectorEl.submit();
-
-                        // Support for bulk submit form.
-                        if (isBulkSubmitPage && currentContent.id.length) {
-                            $("input[type=\"submit\"]").click();
-                        }
+                if (isBulkSubmitPage) {
+                    data.ids = [];
+                    $("input.bulkaction[type=checkbox]:checked").each(function () {
+                        var parts = $(this).attr("id").split("-");
+                        data.ids.push(parseInt(parts.shift()));
+                        data.source.contentType = parts.join("-");
                     });
                 }
-            } else { // handle relations manually
-                $("#addToJob, #cloneButton").on("click", function (e) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    $('#error-messages').hide();
 
-                    var url = `${ajaxurl}?action=<?= ContentRelationsHandler::ACTION_NAME_CREATE_SUBMISSIONS?>`;
-
-                    var blogIds = [];
-
-                    $(".job-wizard input.mcheck[type=checkbox]:checked").each(function () {
-                        blogIds.push(this.dataset.blogId);
-                    });
-
-                    var data = {
-                        formAction: e.target.id === 'cloneButton' ? '<?= ContentRelationsHandler::FORM_ACTION_CLONE?>' : '<?= ContentRelationsHandler::FORM_ACTION_UPLOAD?>',
-                        source: currentContent,
-                        job: {
-                            id: $("#jobSelect").val(),
-                            name: $("option[value=" + jobSelectEl.val() + "]").html(),
-                            relations: [],
-                            description: $("textarea[name=\"description-sm\"]").val(),
-                            dueDate: $("input[name=\"dueDate\"]").val(),
-                            timeZone: timezone,
-                            authorize: ($("div.job-wizard input[type=checkbox].authorize:checked").length > 0)
-                        },
-                        targetBlogIds: blogIds.join(","),
-                    };
-
-                    if (!isBulkSubmitPage) {
-                        switch ($('#cloneDepth').val()) {
-                            case "1":
-                                data.relations = {1: l1Relations.missingTranslatedReferences};
-                                break;
-                            case "2":
-                                data.relations = {1: l1Relations.missingTranslatedReferences, 2: l2Relations.missingTranslatedReferences}
-                                break;
-                        }
+                var uiShowMessage = function (style, message) {
+                    var cssStyle;
+                    switch (style) {
+                        case "<?= BaseAjaxServiceAbstract::RESPONSE_SUCCESS ?>":
+                            cssStyle='success';
+                            break;
+                        case "<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>":
+                            cssStyle='error';
+                            break;
+                        default:
+                            cssStyle='info';
+                            break;
                     }
+                    var msg = `<div id="smartling_upload_msg" class="notice-${cssStyle} notice is-dismissible"><p>${message}</p><button type="button" class="notice-dismiss" onclick="this.parentNode.remove()"></button></div>`;
+                    $(msg).insertAfter(isBulkSubmitPage ? '#loader-image' : 'hr.wp-header-end');
+                };
 
-                    if (isBulkSubmitPage) {
-                        data.ids = [];
-                        $("input.bulkaction[type=checkbox]:checked").each(function () {
-                            var parts = $(this).attr("id").split("-");
-                            data.ids.push(parseInt(parts.shift()));
-                            data.source.contentType = parts.join("-");
-                        });
-                    }
-
-                    var uiShowMessage = function (style, message) {
-                        var cssStyle;
-                        switch (style) {
-                            case "<?= BaseAjaxServiceAbstract::RESPONSE_SUCCESS ?>":
-                                cssStyle='success';
-                                break;
-                            case "<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>":
-                                cssStyle='error';
-                                break;
-                            default:
-                                cssStyle='info';
-                                break;
-                        }
-                        var msg = `<div id="smartling_upload_msg" class="notice-${cssStyle} notice is-dismissible"><p>${message}</p><button type="button" class="notice-dismiss" onclick="this.parentNode.remove()"></button></div>`;
-                        $(msg).insertAfter(isBulkSubmitPage ? '#loader-image' : 'hr.wp-header-end');
-                    };
-
-                    if (document.body.classList.contains("block-editor-page")) {
-                        uiShowMessage = function (style, message) {
-                            if (canDispatch) {
-                                switch (style) {
-                                    case "<?= BaseAjaxServiceAbstract::RESPONSE_SUCCESS ?>":
-                                        wp.data.dispatch("core/notices").createSuccessNotice(message);
-                                        break;
-                                    case "<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>":
-                                        wp.data.dispatch("core/notices").createErrorNotice(message);
-                                        break;
-                                    default:
-                                        console.log(data);
-                                }
-                            } else {
-                                if (style === '<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>') {
-                                    $('#error-messages').html(message).show();
-                                }
+                if (document.body.classList.contains("block-editor-page")) {
+                    uiShowMessage = function (style, message) {
+                        if (canDispatch) {
+                            switch (style) {
+                                case "<?= BaseAjaxServiceAbstract::RESPONSE_SUCCESS ?>":
+                                    wp.data.dispatch("core/notices").createSuccessNotice(message);
+                                    break;
+                                case "<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>":
+                                    wp.data.dispatch("core/notices").createErrorNotice(message);
+                                    break;
+                                default:
+                                    console.log(data);
                             }
-                        };
-                    }
+                        } else {
+                            if (style === '<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>') {
+                                $('#error-messages').html(message).show();
+                            }
+                        }
+                    };
+                }
 
-                    var message = "Failed adding content to upload queue.";
-                    $.post(url, data, function (d) {
-                        if (!isBulkSubmitPage) {
-                            loadRelations(currentContent.contentType, currentContent.id, localeList);
-                        }
-                        switch (d.status) {
-                            case "<?= BaseAjaxServiceAbstract::RESPONSE_SUCCESS ?>":
-                                uiShowMessage(d.status, "Content successfully added to upload queue.");
-                                break;
-                            case "<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>":
-                            default:
-                                uiShowMessage("<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>", message);
-                                break;
-                        }
-                    }).fail(function (e) {
-                        if (e.responseJSON && e.responseJSON.response && e.responseJSON.response.message) {
-                            message = e.responseJSON.response.message;
-                        }
-                        uiShowMessage("<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>", message);
-                    });
+                var message = "Failed adding content to upload queue.";
+                $.post(url, data, function (d) {
+                    if (!isBulkSubmitPage) {
+                        loadRelations(currentContent.contentType, currentContent.id, localeList);
+                    }
+                    switch (d.status) {
+                        case "<?= BaseAjaxServiceAbstract::RESPONSE_SUCCESS ?>":
+                            uiShowMessage(d.status, "Content successfully added to upload queue.");
+                            break;
+                        case "<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>":
+                        default:
+                            uiShowMessage("<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>", message);
+                            break;
+                    }
+                }).fail(function (e) {
+                    if (e.responseJSON && e.responseJSON.response && e.responseJSON.response.message) {
+                        message = e.responseJSON.response.message;
+                    }
+                    uiShowMessage("<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>", message);
                 });
-            }
+            });
 
             $("#createJob").on("click", function (e) {
                 e.stopPropagation();

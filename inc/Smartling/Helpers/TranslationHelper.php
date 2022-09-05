@@ -117,10 +117,6 @@ class TranslationHelper
         );
 
         if (0 === (int)$submission->getId()) {
-            if (GlobalSettingsManager::isHandleRelationsManually()) {
-                $this->logger->debug(sprintf('Created submission %s %d despite manual relations handling). Backtrace: %s', $submission->getContentType(), $submission->getSourceId(), json_encode(debug_backtrace())));
-            }
-
             if (true === $clone) {
                 $submission->setIsCloned(1);
             }

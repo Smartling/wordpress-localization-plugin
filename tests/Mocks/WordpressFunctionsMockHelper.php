@@ -108,6 +108,7 @@ namespace {
 
         if (!function_exists('delete_site_option')) {
             function delete_site_option($key) {
+                return true;
             }
         }
 
