@@ -56,7 +56,7 @@ $data = $this->getViewData();
             <a href="<?= get_site_url(); ?>/wp-admin/admin-post.php?action=smartling_zerolength_log_file"><?= __('DELETE current log file.'); ?></a>
         </li>
 
-        <div>
+        <div class="update-nag">
             <p>
                 <?= __("<strong>Warning!</strong><br/>Do not modify the next setting unless you are a Wordpress expert and fully understand the purpose of this setting.<br>"   ); ?>
             </p>
