@@ -15,6 +15,11 @@ class GutenbergReplacementRule
         $this->replacerId = $replacerId;
     }
 
+    public function __toString()
+    {
+        return sprintf('blockType="%s", propertyPath="%s", replacerId="%s"', addslashes($this->blockType), addslashes($this->propertyPath), addslashes($this->replacerId));
+    }
+
     public function getBlockType(): string
     {
         return $this->blockType;

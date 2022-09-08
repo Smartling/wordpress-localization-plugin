@@ -2,11 +2,15 @@
 
 namespace Smartling\Tuner;
 
-use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergReplacementRule;
+use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Vendor\JsonPath\JsonObject;
 
 class MediaAttachmentRulesManager extends CustomizationManagerAbstract
 {
+    use LoggerSafeTrait;
+
+    public const EXPORT_ACTION_STRING = 'smartling_export_gutenberg_rules';
     private const STORAGE_KEY = 'CUSTOM_MEDIA_RULES';
     private array $preconfiguredRules;
     private array $temporaryRules = [];
@@ -35,7 +39,7 @@ class MediaAttachmentRulesManager extends CustomizationManagerAbstract
     /**
      * @return GutenbergReplacementRule[]
      */
-    public function getGutenbergReplacementRules(?string $blockType = null, ?string $attribute = null): array
+    public function getGutenbergReplacementRules(?string $blockType = null, array $attributes = []): array
     {
         $this->loadData();
         $rules = array_merge($this->preconfiguredRules, $this->temporaryRules, $this->listItems());
@@ -44,12 +48,23 @@ class MediaAttachmentRulesManager extends CustomizationManagerAbstract
                 return preg_match('#' . preg_replace('~([^\\\\])#~', '\1\#', $item->getBlockType()) . '#', $blockType) === 1;
             });
         }
-        if ($attribute !== null) {
-            $rules = array_filter($rules, function ($item) use ($attribute) {
+        if (count($attributes) > 0) {
+            try {
+                $json = json_encode($attributes, JSON_THROW_ON_ERROR);
+            } catch (\JsonException $e) {
+                $this->getLogger()->notice(sprintf('Failed to encode attributes attributeCount=%d, blockName="%s"', count($json), $blockType));
+                return [];
+            }
+            $rules = array_filter($rules, function ($item) use ($attributes, $json) {
                 if ($this->isJsonPath($item->getPropertyPath())) {
-                    return str_replace('.', FieldsFilterHelper::ARRAY_DIVIDER, substr($item->getPropertyPath(), '2')) === $attribute;
+                    return $this->jsonValueExists($json, $item->getPropertyPath());
                 }
-                return preg_match('#' . preg_replace('~([^\\\\])#~', '\1\#', $item->getPropertyPath()) . '#', $attribute) === 1;
+                foreach (array_keys($attributes) as $attribute) {
+                    if (preg_match('#' . preg_replace('~([^\\\\])#~', '\1\#', $item->getPropertyPath()) . '#', $attribute) === 1) {
+                        return true;
+                    }
+                }
+                return false;
             });
         }
 
@@ -88,6 +103,17 @@ class MediaAttachmentRulesManager extends CustomizationManagerAbstract
 
     public function isJsonPath(string $string): bool
     {
-        return strpos($string, '$.') === 0;
+        return preg_match('~^\$[.\[]~', $string) === 1;
+    }
+
+    private function jsonValueExists(string $json, string $path): bool
+    {
+        try {
+            $value = (new JsonObject($json))->get($path);
+        } catch (\Exception $e) {
+            $this->getLogger()->debug('Got invalid json when trying to check if json value exists (' . $e->getMessage() . '), skipping');
+            return false;
+        }
+        return $value !== false && count($value) > 0;
     }
 }

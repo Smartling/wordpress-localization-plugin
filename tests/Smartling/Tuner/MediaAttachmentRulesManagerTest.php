@@ -21,7 +21,7 @@ class MediaAttachmentRulesManagerTest extends TestCase
      */
     public function testGetGutenbergReplacementRules(array $allRules, array $expectedRules, string $blockType, string $path, string $message): void
     {
-        $this->assertEquals($expectedRules, (new MediaAttachmentRulesManager($allRules))->getGutenbergReplacementRules($blockType, $path), $message);
+        $this->assertEquals($expectedRules, (new MediaAttachmentRulesManager($allRules))->getGutenbergReplacementRules($blockType), $message);
     }
 
     public function getGutenbergReplacementRulesDataProvider(): array

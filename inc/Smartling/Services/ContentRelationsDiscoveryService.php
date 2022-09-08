@@ -448,7 +448,9 @@ class ContentRelationsDiscoveryService
      */
     private function addPostContentReferences(array $array, GutenbergBlock $block): array
     {
+        $this->getLogger()->debug('Detecting post content references in block ' . $block);
         $referencesFromAcf = $this->getReferencesFromAcf($block);
+        $this->getLogger()->debug(sprintf("Got %d references from ACF", count($referencesFromAcf)));
         $referencesFromSetupBlocks = $this->getReferencesFromGutenbergReplacementRules($block);
         foreach ($block->getInnerBlocks() as $innerBlock) {
             $array = $this->addPostContentReferences($array, $innerBlock);
@@ -717,20 +719,17 @@ class ContentRelationsDiscoveryService
     public function getReferencesFromGutenbergReplacementRules(GutenbergBlock $block): array
     {
         $result = [];
-        foreach ($block->getAttributes() as $attribute => $_) {
-            foreach ($this->mediaAttachmentRulesManager->getGutenbergReplacementRules($block->getBlockName(), $attribute) as $rule) {
-                $this->getLogger()->debug("Found rule for blockName=\"{$block->getBlockName()}\" attributeName=\"$attribute\"");
-                try {
-                    $replacer = $this->replacerFactory->getReplacer($rule->getReplacerId());
-                    $this->getLogger()->debug("Got replacerId={$rule->getReplacerId()}");
-                } catch (EntityNotFoundException $e) {
-                    continue;
-                }
-                $value = $this->gutenbergBlockHelper->getValue($block, $rule);
-                if ($replacer instanceof ContentIdReplacer && is_numeric($value)) {
-                    $result[] = (int)$value;
-                    $this->getLogger()->debug("Added relatedId=$value to references (found rule for blockName=\"{$block->getBlockName()} attributeName=\"{$attribute}");
-                }
+        foreach ($this->mediaAttachmentRulesManager->getGutenbergReplacementRules($block->getBlockName(), $block->getAttributes()) as $rule) {
+            try {
+                $replacer = $this->replacerFactory->getReplacer($rule->getReplacerId());
+                $this->getLogger()->debug("Got replacerId={$rule->getReplacerId()}");
+            } catch (EntityNotFoundException $e) {
+                continue;
+            }
+            $value = $this->gutenbergBlockHelper->getValue($block, $rule);
+            if ($replacer instanceof ContentIdReplacer && is_numeric($value)) {
+                $result[] = (int)$value;
+                $this->getLogger()->debug("Added relatedId=$value to references (found rule for blockName=\"{$rule->getBlockType()} rule=\"{$rule->getPropertyPath()}");
             }
         }
 
