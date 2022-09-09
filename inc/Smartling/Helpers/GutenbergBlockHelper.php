@@ -586,14 +586,16 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
                 continue;
             }
             $originalValue = $this->getValue(new GutenbergBlock($blockName, $originalAttributes, [], '', []), $rule);
-            $translatedValue = $this->getValue(new GutenbergBlock($blockName, $hydrated, [], '', []), $rule);
-            $this->getLogger()->debug("ReplacerId=\"{$rule->getReplacerId()}\" processing blockName=\"$blockName\", path=\"{$rule->getPropertyPath()}\", originalValue=\"$originalValue\", translatedValue=\"$translatedValue\"");
-            $processedValue = $replacer->processOnDownload($originalValue, $translatedValue, $submission);
-            if ($translatedValue !== $processedValue) {
-                if ($this->rulesManager->isJsonPath($rule->getPropertyPath())) {
-                    $replacements[$rule->getPropertyPath()] = $processedValue;
-                } else {
-                    $translatedAttributes[$rule->getPropertyPath()] = $processedValue;
+            if ($originalValue !== null) {
+                $translatedValue = $this->getValue(new GutenbergBlock($blockName, $hydrated, [], '', []), $rule);
+                $this->getLogger()->debug("ReplacerId=\"{$rule->getReplacerId()}\" processing blockName=\"$blockName\", path=\"{$rule->getPropertyPath()}\", originalValue=\"$originalValue\", translatedValue=\"$translatedValue\"");
+                $processedValue = $replacer->processOnDownload($originalValue, $translatedValue, $submission);
+                if ($translatedValue !== $processedValue) {
+                    if ($this->rulesManager->isJsonPath($rule->getPropertyPath())) {
+                        $replacements[$rule->getPropertyPath()] = $processedValue;
+                    } else {
+                        $hydrated[$rule->getPropertyPath()] = $processedValue;
+                    }
                 }
             }
         }
