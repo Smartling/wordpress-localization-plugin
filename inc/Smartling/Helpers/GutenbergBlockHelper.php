@@ -181,7 +181,11 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             if ($json === '') {
                 return null;
             }
-            return (new JsonObject($json, true))->get($rule->getPropertyPath());
+            $result = (new JsonObject($json))->get($rule->getPropertyPath());
+            if (!is_array($result)) {
+                return null;
+            }
+            return $result[0];
         }
 
         foreach ($block->getAttributes() as $attribute => $value) {
