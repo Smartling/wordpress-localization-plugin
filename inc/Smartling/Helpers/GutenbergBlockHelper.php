@@ -585,7 +585,6 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             }
             $originalValue = $this->getValue(new GutenbergBlock($blockName, $originalAttributes, [], '', []), $rule);
             if ($originalValue !== null) {
-                $hydrated['debug_' . $rule->getPropertyPath()] = json_encode($originalValue); // TODO remove
                 $translatedValue = $this->getValue(new GutenbergBlock($blockName, $hydrated, [], '', []), $rule);
                 $this->getLogger()->debug("ReplacerId=\"{$rule->getReplacerId()}\" processing blockName=\"$blockName\", path=\"{$rule->getPropertyPath()}\", originalValue=\"$originalValue\", translatedValue=\"$translatedValue\"");
                 $processedValue = $replacer->processOnDownload($originalValue, $translatedValue, $submission);
