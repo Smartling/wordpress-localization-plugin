@@ -168,6 +168,56 @@ HTML;
         $this->assertEquals($expectedContent, $this->getTargetPost($this->siteHelper, $submissions[1])->post_content);
     }
 
+    public function testReplacerNestedJsonPath()
+    {
+        $attachmentIds = [];
+        $targetAttachmentIds = [];
+        $attachments = [];
+        while (count($attachmentIds) < 4) {
+            $attachmentIds[] = $this->createAttachment();
+        }
+        $postId = $this->createPost('post', 'JSON path translation', sprintf(file_get_contents(DIR_TESTDATA . '/wp-674-source.html'), ...$attachmentIds));
+        foreach ($attachmentIds as $attachmentId) {
+            $attachments[] = $this->translationHelper->prepareSubmission('attachment', $this->sourceBlogId, $attachmentId, $this->targetBlogId);
+        }
+        $post = $this->translationHelper->prepareSubmission('post', $this->sourceBlogId, $postId, $this->targetBlogId);
+        $submissions = array_merge($attachments, [$post]);
+        foreach ($submissions as $submission) {
+            $submission->getFileUri();
+            $this->submissionManager->storeEntity($submission);
+        }
+        $this->withBlockRules($this->rulesManager, [
+            'teste' => [
+                'block' => '.+',
+                'path' => '$.eyebrow.image.id',
+                'replacerId' => 'related|post',
+            ],
+            'testb' => [
+                'block' => '.+',
+                'path' => '$.blade_background_type.blade_background_image.id',
+                'replacerId' => 'related|post',
+            ],
+            'testm' => [
+                'block' => '.+',
+                'path' => '$.media.image.id',
+                'replacerId' => 'related|post',
+            ],
+        ], function () use ($submissions) {
+            $this->executeUpload();
+            foreach ($submissions as $submission) {
+                $this->forceSubmissionDownload($submission);
+            }
+        });
+        foreach ($submissions as &$submission) {
+            $submission = $this->translationHelper->reloadSubmission($submission);
+        }
+        unset($submission);
+        $expectedContent = <<<HTML
+<!-- wp:si/test {"panelPromo":{"eyebrowMediaImage":{"id":0}}} /-->
+HTML;
+        $this->assertEquals($expectedContent, $this->getTargetPost($this->siteHelper, $submissions[1])->post_content);
+    }
+
     public function testCoreImageClassTranslation()
     {
         $attachmentSourceId = $this->createAttachment();
