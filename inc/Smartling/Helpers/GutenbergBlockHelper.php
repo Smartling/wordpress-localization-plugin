@@ -182,8 +182,11 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
                 return null;
             }
             $result = (new JsonObject($json))->get($rule->getPropertyPath());
-            if (!is_array($result)) {
+            if (!is_array($result) || count($result) === 0) {
                 return null;
+            }
+            if (count($result) > 1) {
+                $this->getLogger()->debug(sprintf("Got more than one result for propertyPath=\"%s\"", addslashes($rule->getPropertyPath())));
             }
             return $result[0];
         }
@@ -197,18 +200,13 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return null;
     }
 
-    public function setValue(GutenbergBlock $block, GutenbergReplacementRule $rule, $value): GutenbergBlock
+    public function setValue(array $attributes, GutenbergReplacementRule $rule, $value): array
     {
         if ($this->rulesManager->isJsonPath($rule->getPropertyPath())) {
-            $json = $this->getJson($block);
-            if ($json === '') {
-                return $block;
-            }
-
-            return $block->withAttributes(json_decode((new JsonObject($json))->set($rule->getPropertyPath(), $value)->getJson(), true, 512, JSON_THROW_ON_ERROR));
+            return (new JsonObject($attributes))->set($rule->getPropertyPath(), $value)->getValue();
         }
-
-        return $block->withAttribute($rule->getPropertyPath(), $value);
+        $attributes[$rule->getPropertyPath()] = $value;
+        return $attributes;
     }
 
     public function processAttributes(?string $blockName, array $flatAttributes): array
@@ -416,7 +414,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             $attr = $this->postReceiveFiltering($attr);
             $attr = static::unmaskAttributes($blockName, $attr);
             $filteredAttributes = array_merge($flatAttributes, $attr, $translatedAttributes);
-            $processedAttributes = $this->getFieldsFilter()->structurizeArray($this->applyDownloadRules($blockName, $originalAttributes, $filteredAttributes, $submission));
+            $processedAttributes = $this->applyDownloadRules($blockName, $originalAttributes, $filteredAttributes, $submission);
         }
 
         return $this->fixAttributeTypes($originalAttributes, $processedAttributes);
@@ -591,15 +589,12 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             }
             $originalValue = $this->getValue(new GutenbergBlock($blockName, $originalAttributes, [], '', []), $rule);
             if ($originalValue !== null) {
+                $hydrated['debug_' . $rule->getPropertyPath()] = json_encode($originalValue); // TODO remove
                 $translatedValue = $this->getValue(new GutenbergBlock($blockName, $hydrated, [], '', []), $rule);
                 $this->getLogger()->debug("ReplacerId=\"{$rule->getReplacerId()}\" processing blockName=\"$blockName\", path=\"{$rule->getPropertyPath()}\", originalValue=\"$originalValue\", translatedValue=\"$translatedValue\"");
                 $processedValue = $replacer->processOnDownload($originalValue, $translatedValue, $submission);
                 if ($translatedValue !== $processedValue) {
-                    if ($this->rulesManager->isJsonPath($rule->getPropertyPath())) {
-                        $replacements[$rule->getPropertyPath()] = $processedValue;
-                    } else {
-                        $hydrated[$rule->getPropertyPath()] = $processedValue;
-                    }
+                    $hydrated = $this->setValue($hydrated, $rule, $processedValue);
                 }
             }
         }
