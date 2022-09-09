@@ -106,12 +106,10 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
                 return $block;
             }
             $value = $this->getValue($block, $rule);
-            $processedValue = $replacer->processOnUpload($value);
-            if ($value !== $processedValue) {
-                if ($this->rulesManager->isJsonPath($rule->getPropertyPath())) {
-                    $replacements[$rule->getPropertyPath()] = $processedValue;
-                } else {
-                    $attributes[$rule->getPropertyPath()] = $processedValue;
+            if ($value !== null) {
+                $processedValue = $replacer->processOnUpload($value);
+                if ($value !== $processedValue) {
+                    $this->setValue($attributes, $rule, $value);
                 }
             }
         }
@@ -152,18 +150,16 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
                 return $translated;
             }
             $originalValue = $this->getValue($original, $rule);
-            $translatedValue = $this->getValue($translated, $rule);
-            // Last argument for $submission here is intentionally null, all attributes based on related ids should be processed when decoding XML. Here we only update clone/ignore values
-            try {
-                $processedValue = $replacer->processOnDownload($originalValue ?? '', $translatedValue, null);
-            } catch (\InvalidArgumentException $e) {
-                $processedValue = $translatedValue;
-            }
-            if ($translatedValue !== $processedValue) {
-                if ($this->rulesManager->isJsonPath($rule->getPropertyPath())) {
-                    $replacements[$rule->getPropertyPath()] = $processedValue;
-                } else {
-                    $attributes[$rule->getPropertyPath()] = $processedValue;
+            if ($originalValue !== null) {
+                $translatedValue = $this->getValue($translated, $rule);
+                // Last argument for $submission here is intentionally null, all attributes based on related ids should be processed when decoding XML. Here we only update clone/ignore values
+                try {
+                    $processedValue = $replacer->processOnDownload($originalValue ?? '', $translatedValue, null);
+                } catch (\InvalidArgumentException $e) {
+                    $processedValue = $translatedValue;
+                }
+                if ($translatedValue !== $processedValue) {
+                    $this->setValue($attributes, $rule, $processedValue);
                 }
             }
         }
