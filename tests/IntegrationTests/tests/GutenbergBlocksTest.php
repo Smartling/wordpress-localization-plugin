@@ -115,12 +115,12 @@ HTML;
         $this->withBlockRules($this->rulesManager, [
             'copy' => [
                 'block' => 'si/block',
-                'path' => 'copy',
+                'path' => 'copyAttribute',
                 'replacerId' => 'copy',
             ],
             'exclude' => [
                 'block' => 'si/block',
-                'path' => 'exclude',
+                'path' => 'excludeAttribute',
                 'replacerId' => 'exclude',
             ],
         ], function () use ($submission) {
