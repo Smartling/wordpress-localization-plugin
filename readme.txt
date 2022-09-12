@@ -69,7 +69,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 * Removed ACF and manual relation handling obsolete expert settings. The behaviours controlled by these options have been reverted to the default values
 
 = 2.15.1 =
-* Added options to prevent plugin from escaping post content and metadata before saving. It is useful if the installation has other plugins that hook into the post content or metadata saving and add extra escaping slashes to them
+* Added options to prevent plugin from escaping post content and metadata before saving. This is useful if there are other plugins that hook on the "post content" or "save metadata" and add extra escaping slashes to them
 
 = 2.15.0 =
 * The plugin will no longer automatically fail submissions based on content type not registered in WordPress
