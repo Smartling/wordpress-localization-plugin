@@ -223,7 +223,10 @@ HTML;
         }
         $this->assertEquals(
             sprintf(file_get_contents(DIR_TESTDATA . '/wp-745-expected.html'), ...$attachmentIdPairs),
-            $this->getTargetPost($this->siteHelper, $submissions[count($attachmentIds)])->post_content
+            $this->getTargetPost($this->siteHelper, $submissions[count($attachmentIds)])->post_content,
+            "All strings in block attributes should be converted to pseudo translated strings,\n" .
+            "all boolean values and digits that are not submission ids with matching rules should be preserved,\n" .
+            "source submission ids with matching rules should be replaced with target submission ids",
         );
     }
 
