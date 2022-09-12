@@ -176,7 +176,7 @@ HTML;
         while (count($attachmentIds) < 4) {
             $attachmentIds[] = $this->createAttachment();
         }
-        $postId = $this->createPost('post', 'JSON path translation', sprintf(file_get_contents(DIR_TESTDATA . '/wp-674-source.html'), ...$attachmentIds));
+        $postId = $this->createPost('post', 'JSON path translation', sprintf(file_get_contents(DIR_TESTDATA . '/wp-745-source.html'), ...$attachmentIds));
         foreach ($attachmentIds as $attachmentId) {
             $attachments[] = $this->translationHelper->prepareSubmission('attachment', $this->sourceBlogId, $attachmentId, $this->targetBlogId);
         }
