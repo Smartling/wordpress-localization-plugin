@@ -93,7 +93,7 @@ class GutenbergBlock
     }
 
     /**
-     * @return string|null[]
+     * @return (string|null)[]
      */
     public function getInnerContent(): array
     {

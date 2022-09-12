@@ -171,7 +171,7 @@ HTML;
     public function testReplacerNestedJsonPath()
     {
         $attachmentIds = [];
-        $targetAttachmentIds = [];
+        $attachmentIdPairs = [];
         $attachments = [];
         while (count($attachmentIds) < 4) {
             $attachmentIds[] = $this->createAttachment();
@@ -210,12 +210,21 @@ HTML;
         });
         foreach ($submissions as &$submission) {
             $submission = $this->translationHelper->reloadSubmission($submission);
+            if (in_array($submission->getSourceId(), $attachmentIds, true)) {
+                $attachmentIdPairs[$submission->getSourceId()] = $submission->getTargetId();
+            }
+            if (count($attachmentIdPairs) === 4) {
+                $attachmentIdPairs[] = $submission->getSourceId(); // The same id is used, but no rule set up, so the id is expected to be copied
+            }
         }
         unset($submission);
-        $expectedContent = <<<HTML
-<!-- wp:si/test {"panelPromo":{"eyebrowMediaImage":{"id":0}}} /-->
-HTML;
-        $this->assertEquals($expectedContent, $this->getTargetPost($this->siteHelper, $submissions[1])->post_content);
+        foreach ($attachmentIdPairs as $sourceId => $targetId) {
+            $this->assertNotEquals($sourceId, $targetId, "Expected attachment sourceId $sourceId to change");
+        }
+        $this->assertEquals(
+            sprintf(file_get_contents(DIR_TESTDATA . '/wp-745-expected.html'), ...$attachmentIdPairs),
+            $this->getTargetPost($this->siteHelper, $submissions[count($attachmentIds)])->post_content
+        );
     }
 
     public function testCoreImageClassTranslation()
