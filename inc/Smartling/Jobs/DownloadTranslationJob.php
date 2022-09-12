@@ -44,7 +44,6 @@ class DownloadTranslationJob extends JobAbstract
     private function processDownloadQueue(): void
     {
         while (false !== ($submissionId = $this->queue->dequeue(QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE))) {
-            $this->placeLockFlag(true);
             $submissionId = ArrayHelper::first($submissionId);
             $result = $this->submissionManager->find(['id' => $submissionId]);
 
@@ -57,6 +56,7 @@ class DownloadTranslationJob extends JobAbstract
             }
 
             do_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, $entity);
+            $this->placeLockFlag(true);
         }
     }
 }
