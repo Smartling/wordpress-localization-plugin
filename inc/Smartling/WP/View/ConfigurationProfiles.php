@@ -1,5 +1,6 @@
 <?php
 
+use Smartling\Bootstrap;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Services\GlobalSettingsManager;
 use Smartling\WP\Controller\ConfigurationProfilesController;
@@ -45,11 +46,11 @@ $data = $this->getViewData();
     <h2><?= __('Crons and Queues'); ?></h2>
     <?php $cnqTable->display(); ?>
     <p>
-    <h2><?= __('Log file'); ?></h2>
+    <h2><?= __('Log file') . ' (' . __('Connector plugin version:') . ' ' . Bootstrap::getCurrentVersion() . ')' ?></h2>
     <ul>
         <li>
             <a class="button action" href="<?= get_site_url(); ?>/wp-admin/admin-post.php?action=smartling_download_log_file">
-                <?= vsprintf(__('Download current log file ( <strong>%s</strong> ).'),[\Smartling\Bootstrap::getCurrentLogFileSize()]); ?>
+                <?= vsprintf(__('Download current log file ( <strong>%s</strong> ).'),[Bootstrap::getCurrentLogFileSize()]); ?>
             </a>
         </li>
         <li>
@@ -122,7 +123,7 @@ $data = $this->getViewData();
                             <?=
                             HtmlTagGeneratorHelper::tag('input', '', [
                                 'type'  => 'text',
-                                'value' => \Smartling\Bootstrap::getLogFileName(false),
+                                'value' => Bootstrap::getLogFileName(false),
                                 'id'    => 'loggingPath',
                             ]);
                             ?>

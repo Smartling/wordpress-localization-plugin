@@ -1,5 +1,6 @@
 <?php
 
+use Smartling\Tuner\MediaAttachmentRulesManager;
 use Smartling\WP\Table\LocalizationRulesTableWidget;
 use Smartling\WP\Table\MediaAttachmentTableWidget;
 use Smartling\WP\Table\ShortcodeTableClass;
@@ -57,8 +58,10 @@ use Smartling\WP\Table\ShortcodeTableClass;
 
     <form id="media-rules-table-list" method="get">
         <?= $mediaTable->renderNewButton()?>
+        <a class="button action" href="<?= get_admin_url() ?>/admin-post.php?action=<?= MediaAttachmentRulesManager::EXPORT_ACTION_STRING?>">
+            <?= __('Export rules')?>
+        </a>
         <input type="hidden" name="page" value="smartling_customization_tuning_media_form"/>
-        <input type="hidden" name="id"/>
         <?php $mediaTable->display()?>
     </form>
 </div>

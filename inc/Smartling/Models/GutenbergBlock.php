@@ -24,6 +24,11 @@ class GutenbergBlock
         $this->innerContent = $innerContent;
     }
 
+    public function __toString()
+    {
+        return $this->serializeBlock($this);
+    }
+
     public function getBlockName(): ?string
     {
         return $this->blockName;
@@ -37,14 +42,6 @@ class GutenbergBlock
     public function getSmartlingLockId(): ?string
     {
         return $this->attributes[PostContentHelper::SMARTLING_LOCK_ID] ?? null;
-    }
-
-    public function withNoInnerBlocks(): self
-    {
-        $result = clone $this;
-        $result->innerBlocks = [];
-
-        return $result;
     }
 
     /**
@@ -63,17 +60,6 @@ class GutenbergBlock
         return $result;
     }
 
-    /**
-     * @param mixed $value
-     */
-    public function withAttribute(string $attribute, $value): self
-    {
-        $result = clone $this;
-        $result->attributes[$attribute] = $value;
-
-        return $result;
-    }
-
     public function withInnerBlock(GutenbergBlock $block, int $index): self
     {
         $result = clone $this;
@@ -88,7 +74,7 @@ class GutenbergBlock
     }
 
     /**
-     * @return string|null[]
+     * @return (string|null)[]
      */
     public function getInnerContent(): array
     {
@@ -123,5 +109,55 @@ class GutenbergBlock
             'innerHTML' => $this->innerHtml,
             'innerContent' => $this->innerContent,
         ];
+    }
+
+    private function getCommentDelimitedBlockContent(?string $name, array $attributes, string $content): string
+    {
+        if ($name === null) {
+            return $content;
+        }
+
+        $name = $this->stripCoreBlockNamespace($name);
+        $attributeString = empty($attributes) ? '' : $this->serializeBlockAttributes($attributes) . ' ';
+
+        if ($content === '') {
+            return sprintf('<!-- wp:%s %s/-->', $name, $attributeString);
+        }
+
+        return sprintf('<!-- wp:%1$s %2$s-->%3$s<!-- /wp:%1$s -->', $name, $attributeString, $content);
+    }
+
+    public function serializeBlock(self $block): string
+    {
+        $content = '';
+
+        $index = 0;
+        foreach ($block->innerContent as $chunk) {
+            $content .= is_string($chunk) ? $chunk : $this->serializeBlock($block->innerBlocks[$index++]);
+        }
+
+        return $this->getCommentDelimitedBlockContent(
+            $block->blockName,
+            $block->attributes,
+            $content,
+        );
+    }
+
+    private function serializeBlockAttributes(array $attributes): string
+    {
+        return preg_replace(
+            ['/</', '/>/', '/&/', '/\\\\"/'],
+            ['\\u003c', '\\u003e', '\\u0026', '\\u0022'],
+            str_replace("--", '\\u002d\\u002d', json_encode($attributes)),
+        );
+    }
+
+    private function stripCoreBlockNamespace(string $name): string
+    {
+        $prefix = 'core/';
+        if (0 === strpos($name, $prefix)) {
+            return substr($name, strlen($prefix));
+        }
+        return $name;
     }
 }

@@ -484,19 +484,25 @@ HTML
             throw new EntityNotFoundException();
         });
 
-        $this->assertEquals([
-            'data/rows_0_image' => 17,
-            'data/_rows_0_image' => 'field_6006a62721335',
-            'data/rows_0_content' => 'translated content',
-            'data/rows_1_image' => 13,
-            'data/_rows_1_image' => 'field_6006a62721335',
-            'data/rows_1_content' => 'other translated content',
-        ], (new GutenbergBlockHelper(
+        $x = new GutenbergBlockHelper(
             $acfDynamicSupport,
             new MediaAttachmentRulesManager(),
             $replacerFactory,
-            $this->createMock(SerializerJsonWithFallback::class), new WordpressFunctionProxyHelper())
-        )->applyDownloadRules('test/repeater', [
+            $this->createMock(SerializerJsonWithFallback::class),
+            new WordpressFunctionProxyHelper(),
+        );
+        $x->setFieldsFilter($this->createPartialMock(FieldsFilterHelper::class, []));
+        $this->assertEquals([
+            'data' => [
+                'rows_0_image' => 17,
+                '_rows_0_image' => 'field_6006a62721335',
+                'rows_0_content' => 'translated content',
+                'rows_1_image' => 13,
+                '_rows_1_image' => 'field_6006a62721335',
+                'rows_1_content' => 'other translated content',
+            ]
+
+        ], $x->applyDownloadRules('test/repeater', [
             'id' => 'block_629db415895a8',
             'name' => 'test/repeater',
             'data' => [
@@ -551,9 +557,11 @@ HTML
         $sourceId = 17;
         $targetId = 21;
         $originalAttributes = base64_encode('{"id":' . $sourceId . ',"sizeSlug":"large","smartlingLockId":"tuzsc"}');
-        $xmlPart = '<gutenbergBlock blockName="core/image" originalAttributes="' . $originalAttributes . '"><contentChunk><![CDATA[
-<figure class="wp-block-image size-large"><img src="http://test/wp-content/uploads/2021/11/imageClass.png" alt="" class="wp-image-' . $sourceId . '"/></figure>
-]]></contentChunk><blockAttribute name="sizeSlug"><![CDATA[[l~árgé]]]></blockAttribute><blockAttribute name="smartlingLockId"><![CDATA[[t~úzsc]]]></blockAttribute></gutenbergBlock>';
+        $xmlPart = <<<XML
+<gutenbergBlock blockName="core/image" originalAttributes="$originalAttributes"><contentChunk><![CDATA[
+<figure class="wp-block-image size-large"><img src="http://test/wp-content/uploads/2021/11/imageClass.png" alt="" class="wp-image-$sourceId"/></figure>
+]]></contentChunk><blockAttribute name="sizeSlug"><![CDATA[[l~árgé]]]></blockAttribute><blockAttribute name="smartlingLockId"><![CDATA[[t~úzsc]]]></blockAttribute></gutenbergBlock>
+XML;
         $expectedBlock = '<!-- wp:core/image {"id":' . $targetId . ',"sizeSlug":"[l~árgé]","smartlingLockId":"[t~úzsc]"} -->
 <figure class="wp-block-image size-large"><img src="http://test/wp-content/uploads/2021/11/imageClass.png" alt="" class="wp-image-' . $targetId . '"/></figure>
 <!-- /wp:core/image -->';
@@ -576,8 +584,7 @@ HTML
         }
 
         $replacer = $this->createMock(ReplacerInterface::class);
-        $replacer->method('processOnDownload')->willReturnCallback(function ($originalValue, $translatedValue
-        ) use ($sourceId, $targetId) {
+        $replacer->method('processOnDownload')->willReturnCallback(function ($originalValue, $translatedValue) use ($sourceId, $targetId) {
             if ($originalValue === $sourceId) {
                 return $targetId;
             }

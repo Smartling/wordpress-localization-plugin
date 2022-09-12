@@ -28,9 +28,10 @@ class AdminPage extends ControllerAbstract implements WPHookInterface
         add_action('admin_menu', [$this, 'menu']);
         add_action('network_admin_menu', [$this, 'menu']);
         add_action('admin_post_smartling_customization_tuning', [$this, 'pageHandler']);
+        add_action('admin_post_' . MediaAttachmentRulesManager::EXPORT_ACTION_STRING, [$this, 'exportMediaAttachmentRules']);
     }
 
-    public function menu()
+    public function menu(): void
     {
         add_submenu_page(
             'smartling-submissions-page',
@@ -45,7 +46,21 @@ class AdminPage extends ControllerAbstract implements WPHookInterface
         );
     }
 
-    private function processAction()
+    public function exportMediaAttachmentRules(): void
+    {
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="smartling_media_attachment_rules.txt"');
+        header('Content-Transfer-Encoding: binary');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+        header('Pragma: public');
+
+        foreach ($this->mediaAttachmentRulesManager->listItems() as $rule) {
+            echo "$rule\n";
+        }
+    }
+
+    private function processAction(): void
     {
         $action = $_REQUEST['action'];
         $type = $_REQUEST['type'];
@@ -79,7 +94,7 @@ class AdminPage extends ControllerAbstract implements WPHookInterface
         }
     }
 
-    public function pageHandler()
+    public function pageHandler(): void
     {
         if (array_key_exists('action', $_REQUEST) && array_key_exists('type', $_REQUEST)) {
             $this->processAction();
