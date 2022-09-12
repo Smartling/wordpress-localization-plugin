@@ -622,7 +622,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     private function getJson(GutenbergBlock $block): string
     {
         $matches = [];
-        preg_match('~({.+}) /?-->~', $this->wpProxy->serialize_block($block->withNoInnerBlocks()->toArray()), $matches);
+        preg_match('~({.+}) /?-->~', $this->wpProxy->serialize_block((new GutenbergBlock($block->getBlockName(), $block->getAttributes(), [], '', []))->toArray()), $matches);
         if (count($matches) < 2) {
             return '';
         }
