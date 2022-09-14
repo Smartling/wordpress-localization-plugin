@@ -3,8 +3,6 @@
 namespace Smartling\ContentTypes;
 
 use Smartling\Helpers\LoggerSafeTrait;
-use Smartling\Helpers\PluginHelper;
-use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 class ExternalContentManager
@@ -15,16 +13,6 @@ class ExternalContentManager
      * @var ContentTypePluggableInterface[] $handlers
      */
     private array $handlers = [];
-    private ContentTypeHelper $contentTypeHelper;
-    private PluginHelper $pluginHelper;
-    private WordpressFunctionProxyHelper $wpProxy;
-
-    public function __construct(ContentTypeHelper $contentTypeHelper, PluginHelper $pluginHelper, WordpressFunctionProxyHelper $wpProxy)
-    {
-        $this->contentTypeHelper = $contentTypeHelper;
-        $this->pluginHelper = $pluginHelper;
-        $this->wpProxy = $wpProxy;
-    }
 
     /** @noinspection PhpUnused, used in DI */
     public function addHandler(ContentTypePluggableInterface $handler): void
@@ -70,6 +58,14 @@ class ExternalContentManager
         }
 
         return $result;
+    }
+
+    /**
+     * @return ContentTypePluggableInterface[]
+     */
+    public function getHandlers(): array
+    {
+        return $this->handlers;
     }
 
     public function setExternalContent(array $original, array $translation, SubmissionEntity $submission): array
