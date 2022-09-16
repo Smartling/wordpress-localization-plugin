@@ -286,13 +286,13 @@ class Bootstrap
         $unsupportedPluginPaths = [];
         $wpProxy = $this->fromContainer('wp.proxy');
         if (!$externalContentManager instanceof ExternalContentManager) {
-            throw new SmartlingConfigException('External content manager from container is ' . get_class($externalContentManager));
+            throw new SmartlingConfigException('Expected to get ' . ExternalContentManager::class . ' from container, got ' . get_class($externalContentManager));
         }
         if (!$pluginHelper instanceof PluginHelper) {
-            throw new SmartlingConfigException('External content manager from container is ' . get_class($pluginHelper));
+            throw new SmartlingConfigException('Expected to get ' . PluginHelper::class . ' from container, got ' . get_class($externalContentManager));
         }
         if (!$wpProxy instanceof WordpressFunctionProxyHelper) {
-            throw new SmartlingConfigException('External content manager from container is ' . get_class($wpProxy));
+            throw new SmartlingConfigException('Expected to get ' . WordpressFunctionProxyHelper::class . ' from container, got ' . get_class($externalContentManager));
         }
         $handlers = $externalContentManager->getHandlers();
         foreach ($handlers as $handler) {
