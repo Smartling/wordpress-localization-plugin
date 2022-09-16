@@ -282,6 +282,7 @@ class Bootstrap
     {
         $externalContentManager = $this->fromContainer('manager.content.external');
         $externalContentPluginPaths = [];
+        $messages = [];
         $pluginHelper = $this->fromContainer('helper.plugins');
         $unsupportedPluginPaths = [];
         $wpProxy = $this->fromContainer('wp.proxy');
@@ -307,7 +308,22 @@ class Bootstrap
             $unsupportedPluginPaths[] = $pluginPath;
         }
         if (count($unsupportedPluginPaths) > 0) {
-            DiagnosticsHelper::addDiagnosticsMessage('Unsupported plugin version detected: ' . implode(', ', $unsupportedPluginPaths));
+            $supportedPluginVersions = [];
+            foreach ($unsupportedPluginPaths as $pluginPath) {
+                foreach ($handlers as $handler) {
+                    if (!array_key_exists($pluginPath, $supportedPluginVersions)) {
+                        $supportedPluginVersions[$pluginPath] = [];
+                    }
+                    if ($handler->getPluginPath() === $pluginPath) {
+                        $supportedPluginVersions[$pluginPath][] = $handler->getMinVersion() . '-' . $handler->getMaxVersion();
+                    }
+                }
+            }
+            $plugins = $wpProxy->get_plugins();
+            foreach ($supportedPluginVersions as $pluginPath => $versions) {
+                $messages[] = ($plugins[$pluginPath]['Name'] ?? 'Undefined plugin (' . $pluginPath . ')') . ' version ' . ($plugins[$pluginPath]['Version'] ?? 'undefined') . ' (supported versions: ' . implode(', ', $versions) . ')';
+            }
+            DiagnosticsHelper::addDiagnosticsMessage('Unsupported plugin version detected: ' . implode(', ', $messages));
         }
     }
 
