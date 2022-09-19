@@ -11,14 +11,18 @@ use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\ContentTypes\ContentTypeWidget;
 use Smartling\ContentTypes\CustomPostType;
 use Smartling\ContentTypes\CustomTaxonomyType;
+use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\Exception\SmartlingBootException;
+use Smartling\Exception\SmartlingConfigException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\MetaFieldProcessor\CustomFieldFilterHandler;
+use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\SchedulerHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\UiMessageHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Services\GlobalSettingsManager;
 use Smartling\Services\LocalizationPluginProxyCollection;
@@ -229,6 +233,7 @@ class Bootstrap
             $this->testPhpExtension($ext);
         }
 
+        $this->testExternalHandlers();
         $this->testPluginSetup();
         $this->testWordpress();
         $this->testTimeLimit();
@@ -270,6 +275,55 @@ class Bootstrap
                 $mainMessage = '<strong>Smartling-connector</strong> configuration is not optimal.<br />Warning! WordPress cron installation is not configured properly. Please follow configuration steps described <a target="_blank" href="https://help.smartling.com/hc/en-us/articles/4405135381915-Configure-Expert-Settings-WordPress-Cron-for-the-WordPress-Connector-">here</a>';
                 DiagnosticsHelper::addDiagnosticsMessage($mainMessage, false);
             }
+        }
+    }
+
+    private function testExternalHandlers(): void
+    {
+        $externalContentManager = $this->fromContainer('manager.content.external');
+        $externalContentPluginPaths = [];
+        $messages = [];
+        $pluginHelper = $this->fromContainer('helper.plugins');
+        $unsupportedPluginPaths = [];
+        $wpProxy = $this->fromContainer('wp.proxy');
+        if (!$externalContentManager instanceof ExternalContentManager) {
+            throw new SmartlingConfigException('Expected to get ' . ExternalContentManager::class . ' from container, got ' . get_class($externalContentManager));
+        }
+        if (!$pluginHelper instanceof PluginHelper) {
+            throw new SmartlingConfigException('Expected to get ' . PluginHelper::class . ' from container, got ' . get_class($externalContentManager));
+        }
+        if (!$wpProxy instanceof WordpressFunctionProxyHelper) {
+            throw new SmartlingConfigException('Expected to get ' . WordpressFunctionProxyHelper::class . ' from container, got ' . get_class($externalContentManager));
+        }
+        $handlers = $externalContentManager->getHandlers();
+        foreach ($handlers as $handler) {
+            $externalContentPluginPaths[] = $handler->getPluginPath();
+        }
+        foreach (array_unique($externalContentPluginPaths) as $pluginPath) {
+            foreach ($handlers as $handler) {
+                if (!$wpProxy->is_plugin_active($pluginPath) || $pluginHelper->pluginVersionInRange($pluginPath, $handler->getMinVersion(), $handler->getMaxVersion())) {
+                    continue 2;
+                }
+            }
+            $unsupportedPluginPaths[] = $pluginPath;
+        }
+        if (count($unsupportedPluginPaths) > 0) {
+            $supportedPluginVersions = [];
+            foreach ($unsupportedPluginPaths as $pluginPath) {
+                foreach ($handlers as $handler) {
+                    if (!array_key_exists($pluginPath, $supportedPluginVersions)) {
+                        $supportedPluginVersions[$pluginPath] = [];
+                    }
+                    if ($handler->getPluginPath() === $pluginPath) {
+                        $supportedPluginVersions[$pluginPath][] = $handler->getMinVersion() . '-' . $handler->getMaxVersion();
+                    }
+                }
+            }
+            $plugins = $wpProxy->get_plugins();
+            foreach ($supportedPluginVersions as $pluginPath => $versions) {
+                $messages[] = ($plugins[$pluginPath]['Name'] ?? 'Undefined plugin (' . $pluginPath . ')') . ' version ' . ($plugins[$pluginPath]['Version'] ?? 'undefined') . ' (supported versions: ' . implode(', ', $versions) . ')';
+            }
+            DiagnosticsHelper::addDiagnosticsMessage('Unsupported plugin version detected: ' . implode(', ', $messages));
         }
     }
 
