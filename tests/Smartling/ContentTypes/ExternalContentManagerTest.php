@@ -14,9 +14,7 @@ use Smartling\Submissions\SubmissionEntity;
 class ExternalContentManagerTest extends TestCase {
     private function getExternalContentManager(): ExternalContentManager
     {
-        $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
-
-        return new ExternalContentManager(new ContentTypeHelper($wpProxy), new PluginHelper(), $wpProxy);
+        return new ExternalContentManager();
     }
     public function testExceptionHandling()
     {

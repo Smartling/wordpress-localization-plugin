@@ -4,14 +4,12 @@ namespace Smartling\Tests\Smartling\Base;
 
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapper;
-use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\GutenbergBlockHelper;
-use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
 use Smartling\Helpers\TestRunHelper;
@@ -49,9 +47,8 @@ class SmartlingCoreTest extends TestCase
     protected function setUp(): void
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
-        $wpProxy = new WordpressFunctionProxyHelper();
         $this->core = new SmartlingCore(
-            new ExternalContentManager(new ContentTypeHelper($wpProxy), new PluginHelper(), $wpProxy),
+            new ExternalContentManager(),
             new PostContentHelper(
                 new GutenbergBlockHelper(
                     $this->createMock(AcfDynamicSupport::class),
@@ -108,7 +105,7 @@ class SmartlingCoreTest extends TestCase
     {
         try {
             SubmissionEntity::fromArray([], $this->getLogger());
-        } catch (SmartlingDirectRunRuntimeException $e) {
+        } catch (SmartlingDirectRunRuntimeException) {
             $this->markTestSkipped('Requires active wordpress');
         }
         return [
