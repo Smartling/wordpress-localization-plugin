@@ -4,20 +4,9 @@ namespace Smartling\Tuner;
 
 use Smartling\Helpers\SimpleStorageHelper;
 
-/**
- * Class CustomizationManagerAbstract
- * @package Smartling\Tuner
- */
 abstract class CustomizationManagerAbstract implements ManagerInterface, \Iterator, \ArrayAccess
 {
-    /**
-     * @var string
-     */
     private string $storageKey = '';
-
-    /**
-     * @var array
-     */
     private array $state = [];
 
     protected function generateId(int $length = 12): string
@@ -50,51 +39,37 @@ abstract class CustomizationManagerAbstract implements ManagerInterface, \Iterat
         SimpleStorageHelper::set($this->getStorageKey(), $this->state);
     }
 
-    /**
-     * @return array[]
-     */
     public function listItems(): array
     {
         return $this->state;
     }
 
-    /**
-     * @param string $id
-     */
-    public function updateItem($id, array $data): void
+    public function updateItem(string $id, array $data): void
     {
         $this[$id] = $data;
     }
 
-    /**
-     * @param string $id
-     */
-    public function removeItem($id): void
+    public function removeItem(string $id): void
     {
         unset($this[$id]);
     }
 
-    /**
-     * @param string $id
-     *
-     * @return mixed
-     */
-    public function getItem($id)
+    public function getItem(string $id): mixed
     {
         return $this[$id];
     }
 
-    public function current()
+    public function current(): mixed
     {
         return current($this->state);
     }
 
-    public function next()
+    public function next(): void
     {
-        return next($this->state);
+        next($this->state);
     }
 
-    public function key()
+    public function key(): string|int|null
     {
         return key($this->state);
     }
@@ -104,9 +79,9 @@ abstract class CustomizationManagerAbstract implements ManagerInterface, \Iterat
         return null !== $this->key();
     }
 
-    public function rewind()
+    public function rewind(): void
     {
-        return reset($this->state);
+        reset($this->state);
     }
 
     public function offsetExists($offset): bool
@@ -114,7 +89,7 @@ abstract class CustomizationManagerAbstract implements ManagerInterface, \Iterat
         return array_key_exists($offset, $this->state);
     }
 
-    public function offsetGet($offset)
+    public function offsetGet($offset): mixed
     {
         if (isset($this[$offset])) {
             return $this->state[$offset];

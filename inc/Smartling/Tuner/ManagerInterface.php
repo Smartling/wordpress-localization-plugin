@@ -2,36 +2,16 @@
 
 namespace Smartling\Tuner;
 
-/**
- * Interface ManagerInterface
- * @package Smartling\Tuner
- */
 interface ManagerInterface
 {
     /**
      * @return array[]
      */
-    public function listItems();
+    public function listItems(): array;
 
-    /**
-     * @param string $id
-     * @param array  $data
-     *
-     * @return mixed
-     */
-    public function updateItem($id, array $data);
+    public function updateItem(string $id, array $data): void;
 
-    /**
-     * @param string $id
-     *
-     * @return mixed
-     */
-    public function removeItem($id);
+    public function removeItem(string $id): void;
 
-    /**
-     * @param string $id
-     *
-     * @return mixed
-     */
-    public function getItem($id);
+    public function getItem(string $id): mixed;
 }

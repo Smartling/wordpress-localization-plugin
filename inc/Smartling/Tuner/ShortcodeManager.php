@@ -6,25 +6,18 @@ use Smartling\WP\WPHookInterface;
 
 class ShortcodeManager extends CustomizationManagerAbstract implements WPHookInterface
 {
-
-    const STORAGE_KEY = 'CUSTOM_SHORTCODES';
+    private const STORAGE_KEY = 'CUSTOM_SHORTCODES';
 
     public function __construct()
     {
         parent::__construct(static::STORAGE_KEY);
     }
 
-    /**
-     * @param $items []
-     *
-     * @return array
-     */
-    public function injector($items)
+    public function injector(array $items): array
     {
         $this->loadData();
-        $list = static::listItems();
         $shortcodes = [];
-        foreach ($list as $item) {
+        foreach ($this->listItems() as $item) {
             $shortcodes[] = $item['name'];
         }
 
