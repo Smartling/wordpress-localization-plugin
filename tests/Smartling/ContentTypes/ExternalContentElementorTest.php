@@ -102,7 +102,7 @@ class ExternalContentElementorTest extends TestCase {
         if ($submissionManager === null) {
             $submissionManager = $this->createMock(SubmissionManager::class);
         }
-        $fieldsFilterHelper = $this->getMockBuilder(FieldsFilterHelper::class)->disableOriginalConstructor()->setMethodsExcept(['flattenArray'])->getMock();
+        $fieldsFilterHelper = $this->getMockBuilder(FieldsFilterHelper::class)->disableOriginalConstructor()->onlyMethods([])->getMock();
 
         return new ExternalContentElementor($contentTypeHelper, $fieldsFilterHelper, $pluginHelper, $submissionManager, $proxy);
     }
@@ -123,18 +123,17 @@ class ExternalContentElementorTest extends TestCase {
         $translatedSubmission->method('getSourceBlogId')->willReturn($sourceBlogId);
         $translatedSubmission->method('getTargetBlogId')->willReturn($targetBlogId);
         $submissionManager = $this->createMock(SubmissionManager::class);
-        $submissionManager->expects($this->at(0))->method('findOne')->with([
+        $submissionManager->expects($this->exactly(2))->method('findOne')->withConsecutive([[
             SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
             SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
             SubmissionEntity::FIELD_SOURCE_ID => $sourceAttachmentId,
-        ])->willReturn($foundSubmissionAttachment);
-        $submissionManager->expects($this->at(1))->method('findOne')->with([
+        ]], [[
             SubmissionEntity::FIELD_CONTENT_TYPE => ExternalContentElementor::CONTENT_TYPE_ELEMENTOR_LIBRARY,
             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
             SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
             SubmissionEntity::FIELD_SOURCE_ID => $sourceWidgetId,
-        ])->willReturn($foundSubmissionWidget);
+        ]])->willReturnOnConsecutiveCalls($foundSubmissionAttachment, $foundSubmissionWidget);
 
         $x = $this->getExternalContentElementor(null, $submissionManager);
 

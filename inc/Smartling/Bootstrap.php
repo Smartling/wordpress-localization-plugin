@@ -197,7 +197,7 @@ class Bootstrap
         }
     }
 
-    public function updateGlobalExpertSettings(): void
+    public function updateGlobalExpertSettings(): never
     {
         $data = $_POST['params'];
 
