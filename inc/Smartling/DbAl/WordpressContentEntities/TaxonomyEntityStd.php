@@ -8,15 +8,17 @@ use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 
 /**
- * @property int term_id
- * @property string name
+ * Class TaxonomyEntityAbstract
+ * @package Smartling\DbAl\WordpressContentEntities
+ * @property int    $term_id
+ * @property string $name
  * @property string slug
- * @property int term_group
- * @property int term_taxonomy_id
- * @property string taxonomy
- * @property string description
- * @property int parent
- * @property int count
+ * @property int    $term_group
+ * @property int    $term_taxonomy_id
+ * @property string $taxonomy
+ * @property string $description
+ * @property int    $parent
+ * @property int    $count
  */
 class TaxonomyEntityStd extends EntityAbstract
 {
