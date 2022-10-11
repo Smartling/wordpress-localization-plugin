@@ -53,7 +53,12 @@ class WordpressFunctionProxyHelper
 
     public function is_plugin_active(string $plugin): bool
     {
-        return is_plugin_active($plugin);
+        // This function is unavailable before all_plugins_loaded is called, and it's safe to assume that plugins are not "active" when function doesn't exist
+        if (function_exists('is_plugin_active')) {
+            return is_plugin_active($plugin);
+        }
+
+        return false;
     }
 
     /**
