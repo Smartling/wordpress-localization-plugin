@@ -314,7 +314,7 @@ abstract class SubstringProcessorHelperAbstract implements WPHookInterface
     protected function createDomNode($nodeName, array $attrs, $value = null) {
         $node = $this->getParams()->getDom()->createElement($nodeName);
         foreach ($attrs as $attrName => $attrValue) {
-            $node->setAttributeNode(new \DOMAttr($attrName,$attrValue));
+            $node->setAttributeNode(new \DOMAttr($attrName, (string)$attrValue));
         }
         if (null !== $value) {
             $node->appendChild(new \DOMCdataSection($value));

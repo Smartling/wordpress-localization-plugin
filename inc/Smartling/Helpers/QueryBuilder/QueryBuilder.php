@@ -352,7 +352,7 @@ class QueryBuilder
      */
     public static function escapeValue($value)
     {
-        return addslashes(trim($value));
+        return addslashes(trim((string)$value));
     }
 
     /**

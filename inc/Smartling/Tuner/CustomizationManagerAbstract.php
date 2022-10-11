@@ -4,28 +4,12 @@ namespace Smartling\Tuner;
 
 use Smartling\Helpers\SimpleStorageHelper;
 
-/**
- * Class CustomizationManagerAbstract
- * @package Smartling\Tuner
- */
 abstract class CustomizationManagerAbstract implements ManagerInterface, \Iterator, \ArrayAccess
 {
-    /**
-     * @var string
-     */
-    private $storageKey = '';
+    private string $storageKey = '';
+    private array $state = [];
 
-    /**
-     * @var array
-     */
-    private $state = [];
-
-    /**
-     * @param int $length
-     *
-     * @return string
-     */
-    protected function generateId($length = 12)
+    protected function generateId(int $length = 12): string
     {
         return substr(md5(microtime(true)), 0, $length);
     }
@@ -35,122 +19,76 @@ abstract class CustomizationManagerAbstract implements ManagerInterface, \Iterat
         $this->setStorageKey($storageKey);
     }
 
-    /**
-     * @return string
-     */
-    public function getStorageKey()
+    public function getStorageKey(): string
     {
         return $this->storageKey;
     }
 
-    /**
-     * @param string $storageKey
-     */
-    public function setStorageKey($storageKey)
+    public function setStorageKey(string $storageKey): void
     {
         $this->storageKey = $storageKey;
     }
 
-    public function loadData()
+    public function loadData(): void
     {
         $this->state = SimpleStorageHelper::get($this->getStorageKey(), []);
     }
 
-    public function saveData()
+    public function saveData(): void
     {
         SimpleStorageHelper::set($this->getStorageKey(), $this->state);
     }
 
-    /**
-     * @return array[]
-     */
-    public function listItems()
+    public function listItems(): array
     {
         return $this->state;
     }
 
-    /**
-     * @param string $id
-     * @param array $data
-     *
-     * @return void
-     */
-    public function updateItem($id, array $data)
+    public function updateItem(string $id, array $data): void
     {
         $this[$id] = $data;
     }
 
-    /**
-     * @param string $id
-     *
-     * @return void
-     */
-    public function removeItem($id)
+    public function removeItem(string $id): void
     {
         unset($this[$id]);
     }
 
-    /**
-     * @param string $id
-     *
-     * @return mixed
-     */
-    public function getItem($id)
+    public function getItem(string $id)
     {
         return $this[$id];
     }
 
-    /**
-     * @inheritdoc
-     */
     public function current()
     {
         return current($this->state);
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function next()
+    public function next(): void
     {
-        return next($this->state);
+        next($this->state);
     }
 
-    /**
-     * @return mixed
-     */
     public function key()
     {
         return key($this->state);
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function valid()
+    public function valid(): bool
     {
         return null !== $this->key();
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function rewind()
+    public function rewind(): void
     {
-        return reset($this->state);
+        reset($this->state);
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function offsetExists($offset)
+    public function offsetExists($offset): bool
     {
         return array_key_exists($offset, $this->state);
     }
 
-    /**
-     * @inheritdoc
-     */
     public function offsetGet($offset)
     {
         if (isset($this[$offset])) {
@@ -160,30 +98,23 @@ abstract class CustomizationManagerAbstract implements ManagerInterface, \Iterat
         throw new \InvalidArgumentException(vsprintf('Invalid index "%s" used', [$offset]));
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
         $this->state[$offset] = $value;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         if (isset($this[$offset])) {
             unset($this->state[$offset]);
         }
     }
 
-    public function add(array $value)
+    public function add(array $value): string
     {
         $id = $this->generateId();
         $this[$id] = $value;
 
         return $id;
     }
-
 }

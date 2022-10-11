@@ -63,7 +63,8 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 2.16.2 =
-* Improved logging for related assets discovery
+* Improved logging when discovering related assets
+* PHP 7.4 will stop receiving security updates on 28th of November! Refactored code to remove known E_DEPRECATED notices, next major release expected to require at least PHP 8.1
 
 = 2.16.1 =
 * Fixed Gutenberg block rules with JSON paths in nested Gutenberg blocks
