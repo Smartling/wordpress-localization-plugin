@@ -51,7 +51,7 @@ class SmartlingCoreTest extends TestCase
         WordpressFunctionsMockHelper::injectFunctionsMocks();
         $wpProxy = new WordpressFunctionProxyHelper();
         $this->core = new SmartlingCore(
-            new ExternalContentManager(new ContentTypeHelper($wpProxy), new PluginHelper(), $wpProxy),
+            new ExternalContentManager(),
             new PostContentHelper(
                 new GutenbergBlockHelper(
                     $this->createMock(AcfDynamicSupport::class),
