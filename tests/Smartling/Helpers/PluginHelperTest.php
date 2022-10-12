@@ -4,11 +4,12 @@ namespace Smartling\Tests\Smartling\Helpers;
 
 use Smartling\Helpers\PluginHelper;
 use PHPUnit\Framework\TestCase;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 
 class PluginHelperTest extends TestCase {
     public function testVersionInRange()
     {
-        $x = new PluginHelper();
+        $x = new PluginHelper($this->createMock(WordpressFunctionProxyHelper::class));
         $this->assertTrue($x->versionInRange('1.0.0', '1', '1'));
         $this->assertTrue($x->versionInRange('1.9.9', '1', '1'));
         $this->assertFalse($x->versionInRange('2.0.0', '1', '1'));
