@@ -466,6 +466,7 @@ class ContentRelationsDiscoveryService
     {
         $detectedReferences = ['attachment' => []];
         $curBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
+        $this->getLogger()->debug("Getting relations for contentType=\"$contentType\", id=$id, blogId=$curBlogId");
 
         if (!$this->contentHelper->checkEntityExists($curBlogId, $contentType, $id)) {
             throw new SmartlingHumanReadableException('Requested content is not found', 'content.not.found', 404);
@@ -579,11 +580,12 @@ class ContentRelationsDiscoveryService
             foreach ($detectedReferences as $detectedContentType => $ids) {
                 if (in_array($detectedContentType, $registeredTypes, true) || in_array($detectedContentType, $taxonomies, true)) {
                     foreach ($ids as $detectedId) {
-                        // TODO: find out when a null id gets added to the list, this should not happen
                         if ($detectedId === null) {
                             $this->getLogger()->notice("Null id passed when processing detected references detectedContentType=\"$detectedContentType\"");
                         } elseif (!$this->submissionManager->submissionExists($detectedContentType, $curBlogId, $detectedId, $targetBlogId)) {
                             $responseData->addMissingReference($targetBlogId, $detectedContentType, $detectedId);
+                        } else {
+                            $this->getLogger()->debug("Skipped adding related item id=$detectedId: submission exists");
                         }
                     }
                 } else {
@@ -608,10 +610,12 @@ class ContentRelationsDiscoveryService
         }
 
         if (isset($references[self::POST_BASED_PROCESSOR])) {
-            foreach (array_keys($references[self::POST_BASED_PROCESSOR]) as $postTypeId) {
-                $postType = $this->wordpressProxy->get_post_type($postTypeId);
+            foreach (array_keys($references[self::POST_BASED_PROCESSOR]) as $postId) {
+                $postType = $this->wordpressProxy->get_post_type($postId);
                 if ($postType !== false) {
-                    $result[$postType][] = $postTypeId;
+                    $result[$postType][] = $postId;
+                } else {
+                    $this->getLogger()->debug("Removed related item because it's type couldn't be determined, postId=$postId");
                 }
             }
         }

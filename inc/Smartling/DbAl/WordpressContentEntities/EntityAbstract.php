@@ -158,7 +158,6 @@ abstract class EntityAbstract
      */
     public function __call($method, array $params)
     {
-        $this->getLogger()->debug("Magic call to $method");
         switch (substr($method, 0, 3)) {
             case 'set' :
                 $field = $this->getFieldNameByMethodName($method);

@@ -293,14 +293,11 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
             }
         } else {
             $this->getLogger()->debug(vsprintf('No attributes found in shortcode \'%s\'.', [$name]));
+            $attributes = [];
         }
         if (null !== $content) {
             $this->getLogger()->debug(vsprintf('Shortcode \'%s\' has content, digging deeper...', [$name]));
             $content = $this->renderString($content);
-        }
-
-        if (!is_array($attributes)) {
-            $attributes = [];
         }
 
         return static::buildMaskedShortcode($name, $attributes, $content);

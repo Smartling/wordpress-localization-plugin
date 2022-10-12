@@ -52,7 +52,7 @@ class MediaAttachmentRulesManager extends CustomizationManagerAbstract
             try {
                 $json = json_encode($attributes, JSON_THROW_ON_ERROR);
             } catch (\JsonException $e) {
-                $this->getLogger()->notice(sprintf('Failed to encode attributes attributeCount=%d, blockName="%s"', count($json), $blockType));
+                $this->getLogger()->notice(sprintf('Failed to encode attributes attributeCount=%d, blockName="%s": %s', count($json), $blockType, $e->getMessage()));
                 return [];
             }
             $rules = array_filter($rules, function ($item) use ($attributes, $json) {
