@@ -41,7 +41,7 @@ class CloneValueFieldProcessor extends MetaFieldProcessorAbstract
     public function processFieldPostTranslation(SubmissionEntity $submission, $fieldName, $value)
     {
         $originalMetadata = $this->getContentHelper()->readSourceMetadata($submission);
-        $metaFieldName = str_replace('meta/','',$fieldName);
+        $metaFieldName = str_replace('meta/','', $fieldName);
 
         if (array_key_exists($metaFieldName, $originalMetadata)) {
             $originalValue = $originalMetadata[$metaFieldName];
@@ -55,9 +55,9 @@ class CloneValueFieldProcessor extends MetaFieldProcessorAbstract
             }
             $value = $originalValue;
         } else {
-            $this->getLogger()->warning(
+            $this->getLogger()->debug(
                 vsprintf(
-                    'Cannot clone value of metadata=\'%s\' for submission=\'%s\'. Keeping value=%s',
+                    "Metadata='%s' for submissionId='%s' not found in source metadata. Keeping value='%s'",
                     [$fieldName, $submission->getId(), var_export($value, true),]
                 )
             );

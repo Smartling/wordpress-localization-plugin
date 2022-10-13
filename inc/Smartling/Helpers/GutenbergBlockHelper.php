@@ -23,6 +23,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     protected const BLOCK_NODE_NAME = 'gutenbergBlock';
     protected const CHUNK_NODE_NAME = 'contentChunk';
     protected const ATTRIBUTE_NODE_NAME = 'blockAttribute';
+    private const CDATA_SECTION_NODE_NAME = '#cdata-section';
     private const MAX_NODE_DEPTH = 10;
 
     private AcfDynamicSupport $acfDynamicSupport;
@@ -371,14 +372,17 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
              */
 
             switch ($childNode->nodeName) {
-                case static::BLOCK_NODE_NAME :
+                case static::BLOCK_NODE_NAME:
                     $chunks[] = $this->renderTranslatedBlockNode($childNode, $submission, $depth);
                     break;
-                case static::CHUNK_NODE_NAME :
+                case static::CHUNK_NODE_NAME:
                     $chunks[] = $childNode->nodeValue;
                     break;
-                case static::ATTRIBUTE_NODE_NAME :
+                case static::ATTRIBUTE_NODE_NAME:
                     $attrs[$childNode->getAttribute('name')] = $childNode->nodeValue;
+                    break;
+                case self::CDATA_SECTION_NODE_NAME:
+                    // processing by this helper is not needed, processed in self::CHUNK_NODE_NAME
                     break;
                 default:
                     $this->getLogger()->notice(
