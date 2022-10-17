@@ -57,7 +57,7 @@ class CloneValueFieldProcessor extends MetaFieldProcessorAbstract
         } else {
             $this->getLogger()->debug(
                 vsprintf(
-                    "Metadata='%s' for submissionId='%s' not found in source metadata. Keeping value='%s'",
+                    'Metadata="%s" for submissionId="%s" not found in source metadata. Keeping value="%s"',
                     [$fieldName, $submission->getId(), var_export($value, true),]
                 )
             );
