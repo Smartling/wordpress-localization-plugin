@@ -4,7 +4,6 @@ namespace Smartling\Base;
 
 use Exception;
 use JetBrains\PhpStorm\ArrayShape;
-use Smartling\ApiWrapperInterface;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\BlogNotFoundException;
@@ -15,7 +14,6 @@ use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
 use Smartling\Exception\SmartlingTestRunCheckFailedException;
 use Smartling\Helpers\ArrayHelper;
-use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
@@ -23,7 +21,6 @@ use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\TestRunHelper;
-use Smartling\Helpers\TranslationHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\XmlHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
@@ -141,7 +138,7 @@ trait SmartlingCoreUploadTrait
             $this->prepareFieldProcessorValues($submission);
             $filteredValues = $this->getFieldsFilter()->processStringsBeforeEncoding($submission, $source);
 
-            if (is_array($filteredValues) && 0 === count($filteredValues) && !$submission->isCloned()) {
+            if (0 === count($filteredValues) && !$submission->isCloned()) {
                 $message = vsprintf(
                     'Prepared Submission = \'%s\' has nothing to translate. Setting status to \'%s\'.',
                     [
@@ -201,7 +198,7 @@ trait SmartlingCoreUploadTrait
                 $_fieldName = preg_replace('/^meta\//iu', '', $lockedFieldName);
                 $this->getLogger()->debug(vsprintf('Got field \'%s\'', [$_fieldName]));
                 if (array_key_exists($_fieldName, $targetMeta)) {
-                    $lockedData['meta'][$_fieldName] = $targetMeta[$_fieldName];
+                    $lockedData['meta'][$_fieldName] = $this->wpProxy->maybe_unserialize($targetMeta[$_fieldName]);
                 }
             } elseif (preg_match('/^entity\//iu', $lockedFieldName)) {
                 $_fieldName = preg_replace('/^entity\//iu', '', $lockedFieldName);
@@ -362,9 +359,6 @@ trait SmartlingCoreUploadTrait
             $customTypes = [ContentTypeNavigationMenuItem::WP_CONTENT_TYPE, 'attachment'];
             if (0 < $submission->getTargetId() && in_array($submission->getContentType(), $customTypes, true)) {
                 $contentHelper = $this->getContentHelper();
-                /**
-                 * @var ContentHelper $contentHelper
-                 */
                 $currentSiteId = $contentHelper->getSiteHelper()->getCurrentSiteId();
                 $sourceMetadata = $contentHelper->readSourceMetadata($submission);
 
@@ -614,7 +608,6 @@ trait SmartlingCoreUploadTrait
                 ->getSettingsManager()
                 ->getSingleSettingsProfile($submission->getSourceBlogId());
 
-            /** @var ApiWrapperInterface $apiWrapper */
             $apiWrapper = $this->getApiWrapper();
             $jobInfo = $apiWrapper->retrieveJobInfoForDailyBucketJob($profile, $profile->getAutoAuthorize());
 
@@ -767,9 +760,6 @@ trait SmartlingCoreUploadTrait
 
     public function createForTranslation(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, JobEntityWithBatchUid $jobInfo, bool $clone): SubmissionEntity
     {
-        /**
-         * @var TranslationHelper $translationHelper
-         */
         $translationHelper = $this->getTranslationHelper();
         $submission = $translationHelper
             ->prepareSubmissionEntity($contentType, $sourceBlog, $sourceEntity, $targetBlog);
@@ -827,7 +817,7 @@ trait SmartlingCoreUploadTrait
             return $postContentHelper->applyTranslationsWithLockedBlocks($targetContent['post_content'], $translatedContent, $lockedBlocks);
         }
 
-        if (count($submission->getLockedFields()) > 0) { // TODO remove after deprecation period
+        if (count($submission->getLockedFields()) > 0) {
             return $postContentHelper->applyBlockLevelLocks($targetContent['post_content'], $translatedContent, $submission->getLockedFields());
         }
         return $translatedContent;
@@ -871,6 +861,10 @@ trait SmartlingCoreUploadTrait
         return $result;
     }
 
+    /**
+     * @noinspection PhpUnusedPrivateMethodInspection
+     * @see SmartlingCoreDownloadTrait::downloadTranslationBySubmission
+     */
     private function getXml(SubmissionEntity $submission): string
     {
         $source = $this->readSourceContentWithMetadataAsArray($submission);
