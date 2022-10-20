@@ -140,7 +140,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $contentHelper->method('readSourceContent')->willReturnArgument(0);
         $contentHelper->method('readSourceMetadata')->willReturn([]);
         $contentHelper->method('readTargetContent')->willReturn(new PostEntityStd());
-        $contentHelper->method('readTargetMetadata')->willReturn(['locked' => 'locked', 'unlocked' => 'unlocked']);
+        $contentHelper->method('readTargetMetadata')->willReturn(['locked' => 'a:1:{s:5:"title";s:19:"Se våra prisplaner";}', 'unlocked' => 'unlocked']);
 
         $fieldsFilterHelper = $this->createPartialMock(FieldsFilterHelper::class, ['applyTranslatedValues', 'getLogger', 'processStringsAfterDecoding']);
         $fieldsFilterHelper->method('processStringsAfterDecoding')->willReturnArgument(0);
@@ -166,7 +166,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         ));
 
         $contentHelper->expects(self::once())->method('removeTargetMetadata');
-        $contentHelper->expects(self::once())->method('writeTargetMetadata')->with($submission, ['sourceMetaField' => 'set', 'metaToTranslate' => '~Translated~', 'locked' => 'locked']);
+        $contentHelper->expects(self::once())->method('writeTargetMetadata')->with($submission, ['sourceMetaField' => 'set', 'metaToTranslate' => '~Translated~', 'locked' => ['title' => 'Se våra prisplaner']]);
         $this->assertSuccessApplyXml($x, $submission, $xmlHelper);
     }
 
@@ -588,7 +588,8 @@ HTML;
             new SerializerJsonWithFallback(),
             $this->createMock(WordpressFunctionProxyHelper::class),
         ));
-        self::assertEquals([], $smartlingCoreUpload->applyXML($submission, ' ', $xmlHelper, $postContentHelper));
+        $result = $smartlingCoreUpload->applyXML($submission, ' ', $xmlHelper, $postContentHelper);
+        self::assertCount(0, $result, $result[0] ?? '');
     }
 
     private function getSmartlingCoreUpload(
@@ -603,6 +604,9 @@ HTML;
 
         $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
         $wpProxy->method('apply_filters')->willReturnArgument(1);
+        $wpProxy->method('maybe_unserialize')->willReturnCallback(function ($original) {
+            return is_serialized($original) ? @unserialize($original) : $original;
+        });
 
         return new SmartlingCoreUpload($contentHelper, $externalContentManager, $fieldsFilterHelper, $settingsManager, $submissionManager, $this->createMock(TestRunHelper::class), $wpProxy);
     }
