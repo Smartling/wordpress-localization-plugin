@@ -63,7 +63,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 2.16.3 =
-* Fixed locked serialized metadata fields corrupt after translation applied
+* Fixed locked serialized metadata fields becoming corrupt after translation is applied
 
 = 2.16.2 =
 * Improved logging when discovering related assets
