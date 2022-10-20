@@ -166,7 +166,11 @@ class SmartlingCoreUploadTraitTest extends TestCase
         ));
 
         $contentHelper->expects(self::once())->method('removeTargetMetadata');
-        $contentHelper->expects(self::once())->method('writeTargetMetadata')->with($submission, ['sourceMetaField' => 'set', 'metaToTranslate' => '~Translated~', 'locked' => ['title' => 'Se våra prisplaner']]);
+        $contentHelper->expects(self::once())->method('writeTargetMetadata')->with($submission, [
+            'sourceMetaField' => 'set',
+            'metaToTranslate' => '~Translated~',
+            'locked' => ['title' => 'Se våra prisplaner'], // Must be unserialized
+        ]);
         $this->assertSuccessApplyXml($x, $submission, $xmlHelper);
     }
 
