@@ -108,9 +108,9 @@ class SmartlingCore extends SmartlingCoreAbstract
                 $this->getContentHelper()->ensureRestoredBlogId();
             } else {
                 $this->getCustomMenuHelper()->assignMenuItemsToMenu(
-                    (int)$submission->getTargetId(),
-                    (int)$submission->getTargetBlogId(),
-                    $accumulator[ContentTypeNavigationMenu::WP_CONTENT_TYPE]
+                    $submission->getTargetId(),
+                    $submission->getTargetBlogId(),
+                    $accumulator[ContentTypeNavigationMenu::WP_CONTENT_TYPE] ?? [],
                 );
             }
         } catch (BlogNotFoundException $e) {
