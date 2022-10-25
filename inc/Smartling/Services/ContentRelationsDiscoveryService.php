@@ -615,7 +615,8 @@ class ContentRelationsDiscoveryService
                 if ($postType !== false) {
                     $result[$postType][] = $postId;
                 } else {
-                    $this->getLogger()->debug("Removed related item because it's type couldn't be determined, postId=$postId");
+                    $this->getLogger()->notice("Related item type couldn't be determined, assuming 'attachment', postId=$postId");
+                    $result['attachment'][] = $postId;
                 }
             }
         }
