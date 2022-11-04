@@ -70,7 +70,9 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 $queue,
             ])->addMethods(['current_action'])->getMock();
             $x->method('current_action')->willReturn(SubmissionTableWidget::ACTION_DOWNLOAD);
-            $x->setSource(['submission' => ['1', '2', '3']]);
+            $x->setSource(['submission' => array_map(static function (SubmissionEntity $submission): string {
+                return (string)$submission->getId();
+            }, $submissions)]);
 
             $x->prepare_items();
         }
