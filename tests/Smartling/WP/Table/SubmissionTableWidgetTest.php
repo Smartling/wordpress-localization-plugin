@@ -68,8 +68,8 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 $submissionManager,
                 $this->createMock(EntityHelper::class),
                 $queue,
-            ])->onlyMethods(['getCurrentAction'])->getMock();
-            $x->method('getCurrentAction')->willReturn(SubmissionTableWidget::ACTION_DOWNLOAD);
+            ])->addMethods(['current_action'])->getMock();
+            $x->method('current_action')->willReturn(SubmissionTableWidget::ACTION_DOWNLOAD);
             $x->setSource(['submission' => ['1', '2', '3']]);
 
             $x->prepare_items();

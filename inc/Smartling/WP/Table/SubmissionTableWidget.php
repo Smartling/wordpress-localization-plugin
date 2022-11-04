@@ -168,14 +168,6 @@ class SubmissionTableWidget extends SmartlingListTable
     }
 
     /**
-     * Testing wrapper
-     * @return false|string
-     */
-    public function getCurrentAction() {
-        return $this->current_action();
-    }
-
-    /**
      * Handles actions for multiple objects
      */
     private function processBulkAction(): void
@@ -187,7 +179,7 @@ class SubmissionTableWidget extends SmartlingListTable
         if (0 < count($submissionsIds)) {
             $submissions = $this->submissionManager->findByIds($submissionsIds);
             if (0 < count($submissions)) {
-                switch ($this->getCurrentAction()) {
+                switch ($this->current_action()) {
                     case self::ACTION_CHECK_STATUS:
                         foreach ($submissions as $submission) {
                             $submission->setLastModified($submission->getSubmissionDate());
