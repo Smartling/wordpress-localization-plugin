@@ -86,10 +86,7 @@ class EntityHelper
         return $this->logger;
     }
 
-    /**
-     * @return SettingsManager
-     */
-    public function getSettingsManager()
+    public function getSettingsManager(): SettingsManager
     {
         return $this->getPluginInfo()->getSettingsManager();
     }

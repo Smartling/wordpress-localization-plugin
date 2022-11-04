@@ -7,7 +7,6 @@ use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
-use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
@@ -17,7 +16,6 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Jobs\JobEntity;
-use Smartling\Queue\Queue;
 use Smartling\Queue\QueueInterface;
 use Smartling\Settings\Locale;
 use Smartling\Submissions\SubmissionEntity;
@@ -31,7 +29,7 @@ class SubmissionTableWidget extends SmartlingListTable
     use CommonLogMessagesTrait;
 
     private const ACTION_CHECK_STATUS = 'checkStatus';
-    private const ACTION_DOWNLOAD = 'download';
+    public const ACTION_DOWNLOAD = 'download';
     private const ACTION_LOCK = 'lock';
     private const ACTION_UNLOCK = 'unlock';
 
@@ -53,7 +51,7 @@ class SubmissionTableWidget extends SmartlingListTable
     private LoggerInterface $logger;
     private SubmissionManager $submissionManager;
     private EntityHelper $entityHelper;
-    private Queue $queue;
+    private QueueInterface $queue;
     private ApiWrapperInterface $apiWrapper;
 
     public function getLogger(): LoggerInterface
@@ -77,7 +75,7 @@ class SubmissionTableWidget extends SmartlingListTable
 
     private array $_settings = ['singular' => 'submission', 'plural' => 'submissions', 'ajax' => false,];
 
-    public function __construct(ApiWrapperInterface $apiWrapper, SubmissionManager $manager, EntityHelper $entityHelper, Queue $queue)
+    public function __construct(ApiWrapperInterface $apiWrapper, SubmissionManager $manager, EntityHelper $entityHelper, QueueInterface $queue)
     {
         $this->apiWrapper = $apiWrapper;
         $this->queue = $queue;
@@ -170,6 +168,14 @@ class SubmissionTableWidget extends SmartlingListTable
     }
 
     /**
+     * Testing wrapper
+     * @return false|string
+     */
+    public function getCurrentAction() {
+        return $this->current_action();
+    }
+
+    /**
      * Handles actions for multiple objects
      */
     private function processBulkAction(): void
@@ -178,10 +184,10 @@ class SubmissionTableWidget extends SmartlingListTable
             return (int)$value;
         }, $this->getFormElementValue('submission', []));
 
-        if (is_array($submissionsIds) && 0 < count($submissionsIds)) {
+        if (0 < count($submissionsIds)) {
             $submissions = $this->submissionManager->findByIds($submissionsIds);
             if (0 < count($submissions)) {
-                switch ($this->current_action()) {
+                switch ($this->getCurrentAction()) {
                     case self::ACTION_CHECK_STATUS:
                         foreach ($submissions as $submission) {
                             $submission->setLastModified($submission->getSubmissionDate());
@@ -205,11 +211,12 @@ class SubmissionTableWidget extends SmartlingListTable
                             ];
                             $this->queue->enqueue([$submission->getId()], QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE);
                         }
-                        if ($profile === null) {
+                        if ($profile !== null) {
                             $requestDescription = 'User initiated bulk download';
                             try {
                                 $this->apiWrapper->createAuditLogRecord($profile, CreateRecordParameters::ACTION_TYPE_DOWNLOAD, $requestDescription, ['submissions' => $logSubmissions]);
                             } catch (\Exception $e) {
+                                /** @noinspection JsonEncodingApiUsageInspection */
                                 $this->getLogger()->error(sprintf('Failed to create audit log record actionType=%s, requestDescription="%s", submissions="%s"', CreateRecordParameters::ACTION_TYPE_DOWNLOAD, $requestDescription, json_encode($logSubmissions)));
                             }
                         } else {
@@ -386,9 +393,8 @@ class SubmissionTableWidget extends SmartlingListTable
             $row[SubmissionEntity::FIELD_FILE_URI] = $fileName;
             $row[SubmissionEntity::FIELD_SOURCE_TITLE] = htmlentities($row[SubmissionEntity::FIELD_SOURCE_TITLE]);
             $row[SubmissionEntity::FIELD_CONTENT_TYPE] = WordpressContentTypeHelper::getLocalizedContentType($row[SubmissionEntity::FIELD_CONTENT_TYPE]);
-            $row[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row[SubmissionEntity::FIELD_SUBMISSION_DATE]));
-            $row[SubmissionEntity::FIELD_APPLIED_DATE] = '0000-00-00 00:00:00' === $row[SubmissionEntity::FIELD_APPLIED_DATE] ? __('Never')
-                : DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row[SubmissionEntity::FIELD_APPLIED_DATE]));
+            $row[SubmissionEntity::FIELD_SUBMISSION_DATE] = $this->sqlToReadableDate($row[SubmissionEntity::FIELD_SUBMISSION_DATE]);
+            $row[SubmissionEntity::FIELD_APPLIED_DATE] = $this->sqlToReadableDate($row[SubmissionEntity::FIELD_APPLIED_DATE]);
             try {
                 $blogLabel = $siteHelper->getBlogLabelById($this->entityHelper->getConnector(), $row[SubmissionEntity::FIELD_TARGET_BLOG_ID]);
             } catch (BlogNotFoundException $e) {
