@@ -137,7 +137,11 @@ class SubmissionManager extends EntityManagerAbstract
 
     public function getTotalInUploadQueue(): int
     {
-        return $this->getTotalByFieldInValues($this->getConditionBlockForUploadJob());
+        $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR);
+        $block->addConditionBlock($this->getConditionBlockForCloning());
+        $block->addConditionBlock($this->getConditionBlockForUploadJob());
+
+        return $this->getTotalByFieldInValues($block);
     }
 
     public function getTotalInCheckStatusHelperQueue(): int
@@ -723,6 +727,16 @@ SQL;
         $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_NEW]));
         $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_LOCKED, [0]));
         $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_NOT_EQ, SubmissionEntity::FIELD_BATCH_UID, ['']));
+
+        return $block;
+    }
+
+    private function getConditionBlockForCloning(): ConditionBlock
+    {
+        $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_NEW]));
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_LOCKED, [0]));
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_CLONED, [1]));
 
         return $block;
     }
