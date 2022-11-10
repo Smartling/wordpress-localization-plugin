@@ -209,7 +209,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     public function getMaxVersion(): string
     {
-        return '3.6';
+        return '3.8';
     }
 
     public function getMinVersion(): string
