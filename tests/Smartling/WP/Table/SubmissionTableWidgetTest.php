@@ -68,7 +68,14 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 $submissionManager,
                 $this->createMock(EntityHelper::class),
                 $queue,
-            ])->addMethods(['current_action'])->getMock();
+            ]);
+            // Is this running with WordPress classes?
+            if (method_exists('WP_List_Table', 'current_action')) {
+                $x->onlyMethods(['current_action']);
+            } else {
+                $x->addMethods(['current_action']);
+            }
+            $x = $x->getMock();
             $x->method('current_action')->willReturn(SubmissionTableWidget::ACTION_DOWNLOAD);
             $x->setSource(['submission' => array_map(static function (SubmissionEntity $submission): string {
                 return (string)$submission->getId();

@@ -681,6 +681,7 @@ namespace Smartling\Tests\Services {
             return $this->getMockBuilder(ContentRelationsDiscoveryService::class)->setConstructorArgs([
                 $acfDynamicSupport,
                 $contentHelper,
+                $this->createMock(ContentTypeManager::class),
                 $fieldsFilterHelper,
                 $metaFieldProcessorManager,
                 $this->createMock(LocalizationPluginProxyInterface::class),
