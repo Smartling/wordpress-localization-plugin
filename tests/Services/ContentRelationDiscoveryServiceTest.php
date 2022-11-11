@@ -18,6 +18,7 @@ namespace Smartling\Tests\Services {
     use PHPUnit\Framework\TestCase;
     use Smartling\ApiWrapper;
     use Smartling\Bootstrap;
+    use Smartling\ContentTypes\ContentTypeManager;
     use Smartling\ContentTypes\ContentTypeNavigationMenu;
     use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
     use Smartling\ContentTypes\ExternalContentManager;
@@ -314,6 +315,7 @@ namespace Smartling\Tests\Services {
             $x = new ContentRelationsDiscoveryService(
                 $this->createMock(AcfDynamicSupport::class),
                 $contentHelper,
+                $this->createMock(ContentTypeManager::class),
                 $this->createMock(FieldsFilterHelper::class),
                 $this->createMock(MetaFieldProcessorManager::class),
                 $this->createMock(LocalizationPluginProxyInterface::class),
