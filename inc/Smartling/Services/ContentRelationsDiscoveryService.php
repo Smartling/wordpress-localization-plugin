@@ -4,6 +4,7 @@ namespace Smartling\Services;
 
 use Exception;
 use Smartling\ApiWrapperInterface;
+use Smartling\ContentTypes\ContentTypeManager;
 use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\ContentTypes\ExternalContentManager;
@@ -51,6 +52,7 @@ class ContentRelationsDiscoveryService
 {
     public const POST_BASED_PROCESSOR = 'PostBasedProcessor';
     private AcfDynamicSupport $acfDynamicSupport;
+    private ContentTypeManager $contentTypeManager;
     private ExternalContentManager $externalContentManager;
     private LoggerInterface $logger;
     private ContentHelper $contentHelper;
@@ -77,6 +79,7 @@ class ContentRelationsDiscoveryService
     public function __construct(
         AcfDynamicSupport $acfDynamicSupport,
         ContentHelper $contentHelper,
+        ContentTypeManager $contentTypeManager,
         FieldsFilterHelper $fieldFilterHelper,
         MetaFieldProcessorManager $fieldProcessorManager,
         LocalizationPluginProxyInterface $localizationPluginProxy,
@@ -98,6 +101,7 @@ class ContentRelationsDiscoveryService
         $this->acfDynamicSupport = $acfDynamicSupport;
         $this->apiWrapper = $apiWrapper;
         $this->contentHelper = $contentHelper;
+        $this->contentTypeManager = $contentTypeManager;
         $this->externalContentManager = $externalContentManager;
         $this->fieldFilterHelper = $fieldFilterHelper;
         $this->gutenbergBlockHelper = $blockHelper;
@@ -574,11 +578,9 @@ class ContentRelationsDiscoveryService
 
         $responseData = new DetectedRelations($detectedReferences);
 
-        $registeredTypes = get_post_types();
-        $taxonomies = $this->contentHelper->getSiteHelper()->getTermTypes();
         foreach ($targetBlogIds as $targetBlogId) {
             foreach ($detectedReferences as $detectedContentType => $ids) {
-                if (in_array($detectedContentType, $registeredTypes, true) || in_array($detectedContentType, $taxonomies, true)) {
+                if (in_array($detectedContentType, $this->contentTypeManager->getRegisteredContentTypes(), true)) {
                     foreach ($ids as $detectedId) {
                         if ($detectedId === null) {
                             $this->getLogger()->notice("Null id passed when processing detected references detectedContentType=\"$detectedContentType\"");
@@ -589,7 +591,7 @@ class ContentRelationsDiscoveryService
                         }
                     }
                 } else {
-                    $this->getLogger()->debug("Excluded $detectedContentType from related submissions");
+                    $this->getLogger()->debug("Excluded $detectedContentType from related submissions, type not in registered types");
                 }
             }
         }
