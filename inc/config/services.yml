@@ -436,6 +436,7 @@ services:
     arguments:
       - "@acf.dynamic.support"
       - "@content.helper"
+      - "@content-type-descriptor-manager"
       - "@fields-filter.helper"
       - "@meta-field.processor.manager"
       - "@multilang.proxy"
