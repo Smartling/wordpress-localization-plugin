@@ -290,10 +290,10 @@ abstract class EntityAbstract
         return $entity;
     }
 
-    protected function entityNotFound($type, $guid)
+    protected function entityNotFound(string $type, $guid): void
     {
-        $template = 'The \'%s\' with ID %s not found in the database.';
-        $message = vsprintf($template, [WordpressContentTypeHelper::getLocalizedContentType($type), $guid]);
+        $template = 'Entity not found in the database, localizedContentType="%s", contentType="%s", contentId="%s", className="%s", currentBlogId=%d';
+        $message = sprintf($template, WordpressContentTypeHelper::getLocalizedContentType($type), $type, $guid, static::class, get_current_blog_id());
         throw new EntityNotFoundException($message);
     }
 
