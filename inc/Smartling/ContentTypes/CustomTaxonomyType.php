@@ -4,6 +4,8 @@ namespace Smartling\ContentTypes;
 
 use Smartling\ContentTypes\ConfigParsers\TermTypeConfigParser;
 use Smartling\Helpers\StringHelper;
+use Smartling\WP\Controller\ContentEditJobController;
+use Smartling\WP\Controller\TaxonomyWidgetController;
 
 /**
  * Class CustomTaxonomyType
@@ -64,10 +66,11 @@ class CustomTaxonomyType extends TermBasedContentTypeAbstract
             $di = $this->getContainerBuilder();
             $tag = 'wp.taxonomy.' . static::getSystemName();
             $di
-                ->register($tag, 'Smartling\WP\Controller\TaxonomyWidgetController')
+                ->register($tag, TaxonomyWidgetController::class)
                 ->addArgument($di->getDefinition('multilang.proxy'))
                 ->addArgument($di->getDefinition('plugin.info'))
-                ->addArgument($di->getDefinition('entity.helper'))
+                ->addArgument($di->getDefinition('manager.settings'))
+                ->addArgument($di->getDefinition('site.helper'))
                 ->addArgument($di->getDefinition('manager.submission'))
                 ->addArgument($di->getDefinition('site.cache'))
                 ->addMethodCall('setDetectChangesHelper', [$di->getDefinition('detect-changes.helper')])
@@ -83,10 +86,11 @@ class CustomTaxonomyType extends TermBasedContentTypeAbstract
         $tag = 'wp.job.' . static::getSystemName();
 
         $di
-            ->register($tag, 'Smartling\WP\Controller\ContentEditJobController')
+            ->register($tag, ContentEditJobController::class)
             ->addArgument($di->getDefinition('multilang.proxy'))
             ->addArgument($di->getDefinition('plugin.info'))
-            ->addArgument($di->getDefinition('entity.helper'))
+            ->addArgument($di->getDefinition('manager.settings'))
+            ->addArgument($di->getDefinition('site.helper'))
             ->addArgument($di->getDefinition('manager.submission'))
             ->addArgument($di->getDefinition('site.cache'))
             ->addMethodCall('setServedContentType', [static::getSystemName()])
