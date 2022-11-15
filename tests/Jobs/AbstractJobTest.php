@@ -11,14 +11,12 @@ use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 use Smartling\Tests\Traits\DbAlMock;
-use Smartling\Tests\Traits\EntityHelperMock;
 use Smartling\Tests\Traits\SiteHelperMock;
 use Smartling\Tests\Traits\SubmissionManagerMock;
 
 class AbstractJobTest extends TestCase
 {
     use DbAlMock;
-    use EntityHelperMock;
     use SiteHelperMock;
     use SubmissionManagerMock;
 
@@ -31,8 +29,7 @@ class AbstractJobTest extends TestCase
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
         $this->submissionManager = $this->mockSubmissionManager(
-            $this->mockDbAl(),
-            $this->mockEntityHelper($this->mockSiteHelper())
+            $this->mockDbAl()
         );
         $this->profile = $this->createMock(ConfigurationProfileEntity::class);
         $this->profile->method('getProjectId')->willReturn($this->projectId);

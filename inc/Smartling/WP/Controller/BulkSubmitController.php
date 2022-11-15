@@ -51,17 +51,18 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
 
     public function renderPage()
     {
-        $currentBlogId = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
-        $applicableProfiles = $this->getEntityHelper()->getSettingsManager()->findEntityByMainLocale($currentBlogId);
+        $currentBlogId = $this->siteHelper->getCurrentBlogId();
+        $applicableProfiles = $this->settingsManager->findEntityByMainLocale($currentBlogId);
         if (0 === count($applicableProfiles)) {
             echo HtmlTagGeneratorHelper::tag('p', __('No suitable profile found for this site.'));
         } else {
             $profile = ArrayHelper::first($applicableProfiles);
             $table = new BulkSubmitTableWidget(
+                $this->localizationPluginProxy,
+                $this->siteHelper,
                 Bootstrap::getContainer()->get('entrypoint'),
                 $this->getManager(),
                 $this->getPluginInfo(),
-                $this->getEntityHelper(),
                 $profile
             );
             $this->view($table);

@@ -39,8 +39,10 @@ namespace {
 namespace Smartling\Tests\Smartling\WP\Table {
 
     use Smartling\ApiWrapperInterface;
-    use Smartling\Helpers\EntityHelper;
+    use Smartling\DbAl\LocalizationPluginProxyInterface;
+    use Smartling\Helpers\SiteHelper;
     use Smartling\Queue\QueueInterface;
+    use Smartling\Settings\SettingsManager;
     use Smartling\Submissions\SubmissionEntity;
     use Smartling\Submissions\SubmissionManager;
     use Smartling\WP\Table\SubmissionTableWidget;
@@ -65,8 +67,10 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $apiWrapper->expects($this->once())->method('createAuditLogRecord');
             $x = $this->getMockBuilder(SubmissionTableWidget::class)->setConstructorArgs([
                 $apiWrapper,
+                $this->createMock(LocalizationPluginProxyInterface::class),
+                $this->createMock(SettingsManager::class),
+                $this->createMock(SiteHelper::class),
                 $submissionManager,
-                $this->createMock(EntityHelper::class),
                 $queue,
             ]);
             // Is this running with WordPress classes?

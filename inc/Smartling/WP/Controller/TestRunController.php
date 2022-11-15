@@ -8,7 +8,6 @@ use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\AdminNoticesHelper;
 use Smartling\Helpers\Cache;
-use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
@@ -36,11 +35,8 @@ class TestRunController extends WPAbstract implements WPHookInterface
 {
     private const TEST_RUN_JOB_NAME = 'Test Run Job';
 
-    protected LocalizationPluginProxyInterface $localizationPluginProxy;
-    protected SiteHelper $siteHelper;
     private ContentRelationsDiscoveryService $contentRelationDiscoveryService;
     private ApiWrapperInterface $apiWrapper;
-    private SettingsManager $settingsManager;
     private SubmissionManager $submissionManager;
     private int $uploadCronInterval;
 
@@ -49,19 +45,15 @@ class TestRunController extends WPAbstract implements WPHookInterface
         LocalizationPluginProxyInterface $localizationPluginProxy,
         SiteHelper $siteHelper,
         SubmissionManager $submissionManager,
-        EntityHelper $entityHelper,
         Cache $cache,
         ContentRelationsDiscoveryService $contentRelationDiscoveryService,
         ApiWrapperInterface $apiWrapper,
         SettingsManager $settingsManager,
         string $uploadCronInterval
     ) {
-        parent::__construct($localizationPluginProxy, $pluginInfo, $entityHelper, $submissionManager, $cache);
+        parent::__construct($localizationPluginProxy, $pluginInfo, $settingsManager, $siteHelper, $submissionManager, $cache);
         $this->apiWrapper = $apiWrapper;
         $this->contentRelationDiscoveryService = $contentRelationDiscoveryService;
-        $this->localizationPluginProxy = $localizationPluginProxy;
-        $this->settingsManager = $settingsManager;
-        $this->siteHelper = $siteHelper;
         $this->submissionManager = $submissionManager;
         if (!preg_match('~^\d+m$~', $uploadCronInterval)) {
             throw new SmartlingConfigException('Upload job cron interval must be specified in minutes (e. g. 5m), with no extra symbols');

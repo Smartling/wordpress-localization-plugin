@@ -7,12 +7,13 @@ use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\SmartlingIOException;
 use Smartling\Helpers\Cache;
-use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
@@ -30,15 +31,9 @@ class WPAbstract
      */
     private $pluginInfo;
 
-    /**
-     * @var LocalizationPluginProxyInterface
-     */
-    private $connector;
-
-    /**
-     * @var EntityHelper
-     */
-    private $entityHelper;
+    protected LocalizationPluginProxyInterface $localizationPluginProxy;
+    protected SettingsManager $settingsManager;
+    protected SiteHelper $siteHelper;
 
     /**
      * @var SubmissionManager
@@ -93,27 +88,20 @@ class WPAbstract
         $this->widgetHeader = $widgetHeader;
     }
 
-    /**
-     * Constructor
-     *
-     * @param LocalizationPluginProxyInterface $connector
-     * @param PluginInfo                       $pluginInfo
-     * @param EntityHelper                     $entityHelper
-     * @param SubmissionManager                $manager
-     * @param Cache                            $cache
-     */
     public function __construct(
         LocalizationPluginProxyInterface $connector,
         PluginInfo $pluginInfo,
-        EntityHelper $entityHelper,
+        SettingsManager $settingsManager,
+        SiteHelper $siteHelper,
         SubmissionManager $manager,
         Cache $cache
     )
     {
         $this->logger = MonologWrapper::getLogger(get_called_class());
-        $this->connector = $connector;
+        $this->localizationPluginProxy = $connector;
         $this->pluginInfo = $pluginInfo;
-        $this->entityHelper = $entityHelper;
+        $this->settingsManager = $settingsManager;
+        $this->siteHelper = $siteHelper;
         $this->manager = $manager;
         $this->cache = $cache;
     }
@@ -135,14 +123,6 @@ class WPAbstract
     }
 
     /**
-     * @return EntityHelper
-     */
-    public function getEntityHelper()
-    {
-        return $this->entityHelper;
-    }
-
-    /**
      * @return LoggerInterface
      */
     public function getLogger()
@@ -159,22 +139,11 @@ class WPAbstract
     }
 
     /**
-     * @return LocalizationPluginProxyInterface
-     */
-    public function getConnector()
-    {
-        return $this->connector;
-    }
-
-    /**
      * @return ConfigurationProfileEntity[]
      */
-    public function getProfiles()
+    public function getProfiles(): array
     {
-        $eh = $this->getEntityHelper();
-        $currentBlogId = $eh->getSiteHelper()->getCurrentBlogId();
-
-        return $eh->getSettingsManager()->findEntityByMainLocale($currentBlogId);
+        return $this->settingsManager->findEntityByMainLocale($this->siteHelper->getCurrentBlogId());
     }
 
     /**

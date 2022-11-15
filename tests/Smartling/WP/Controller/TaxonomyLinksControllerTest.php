@@ -30,10 +30,10 @@ namespace Smartling\Tests\Smartling\WP\Controller {
     use PHPUnit\Framework\TestCase;
     use Smartling\DbAl\LocalizationPluginProxyInterface;
     use Smartling\Helpers\Cache;
-    use Smartling\Helpers\EntityHelper;
     use Smartling\Helpers\PluginInfo;
     use Smartling\Helpers\SiteHelper;
     use Smartling\Helpers\WordpressFunctionProxyHelper;
+    use Smartling\Settings\SettingsManager;
     use Smartling\Submissions\SubmissionEntity;
     use Smartling\Submissions\SubmissionManager;
     use Smartling\WP\Controller\TaxonomyLinksController;
@@ -44,12 +44,11 @@ namespace Smartling\Tests\Smartling\WP\Controller {
         {
             $x = new TaxonomyLinksController(
                 $this->getMockBuilder(PluginInfo::class)->disableOriginalConstructor()->getMock(),
+                $this->createMock(SettingsManager::class),
                 $this->createMock(LocalizationPluginProxyInterface::class),
                 $this->getSiteHelperMock(),
                 $this->getSubmissionManagerMock(),
-                $this->getWordpressMock(),
-                $this->createMock(EntityHelper::class),
-                $this->createMock(Cache::class)
+                $this->getWordpressMock(), $this->createMock(Cache::class)
             );
 
             self::assertEquals([

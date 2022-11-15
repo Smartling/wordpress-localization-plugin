@@ -6,7 +6,6 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
-use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Jobs\UploadJob;
@@ -38,9 +37,7 @@ class UploadJobTest extends TestCase
     {
         $batchUid = 'batchUid';
 
-        $entityHelper = $this->createMock(EntityHelper::class);
         $siteHelper = $this->createMock(SiteHelper::class);
-        $entityHelper->method('getSiteHelper')->willReturn($siteHelper);
 
         $activeProfile = $this->createMock(ConfigurationProfileEntity::class);
         $activeProfile->method('getUploadOnUpdate')->willReturn(ConfigurationProfileEntity::UPLOAD_ON_CHANGE_AUTO);
@@ -82,9 +79,7 @@ class UploadJobTest extends TestCase
     {
         $batchUid = 'batchUid';
 
-        $entityHelper = $this->createMock(EntityHelper::class);
         $siteHelper = $this->createMock(SiteHelper::class);
-        $entityHelper->method('getSiteHelper')->willReturn($siteHelper);
 
         $activeProfile = $this->createMock(ConfigurationProfileEntity::class);
         $activeProfile->method('getUploadOnUpdate')->willReturn(ConfigurationProfileEntity::UPLOAD_ON_CHANGE_MANUAL);

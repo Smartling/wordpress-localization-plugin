@@ -32,7 +32,6 @@ namespace Smartling\Tests\Services {
     use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
     use Smartling\Helpers\ContentHelper;
     use Smartling\Helpers\CustomMenuContentTypeHelper;
-    use Smartling\Helpers\EntityHelper;
     use Smartling\Helpers\FieldsFilterHelper;
     use Smartling\Helpers\GutenbergBlockHelper;
     use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\PostBasedProcessor;
@@ -386,8 +385,10 @@ namespace Smartling\Tests\Services {
             $submissionManager = $this->getMockBuilder(SubmissionManager::class)->setConstructorArgs([
                 $this->getMockForAbstractClass(SmartlingToCMSDatabaseAccessWrapperInterface::class),
                 20,
-                $this->createMock(EntityHelper::class),
                 $jobManager,
+                $this->createMock(LocalizationPluginProxyInterface::class),
+                $this->createMock(SettingsManager::class),
+                $this->createMock(SiteHelper::class),
                 $submissionsJobsManager,
             ])->onlyMethods(['find'])->getMock();
             $submissionManager->method('find')->willReturn([]);

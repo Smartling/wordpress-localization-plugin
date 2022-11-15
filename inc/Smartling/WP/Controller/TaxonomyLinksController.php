@@ -5,12 +5,12 @@ namespace Smartling\WP\Controller;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\Cache;
-use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\WordpressUserHelper;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\WPAbstract;
@@ -18,16 +18,12 @@ use Smartling\WP\WPHookInterface;
 
 class TaxonomyLinksController extends WPAbstract implements WPHookInterface
 {
-    protected $localizationPluginProxy;
-    protected $siteHelper;
     private $submissionManager;
     private $wordpressProxy;
 
-    public function __construct(PluginInfo $pluginInfo, LocalizationPluginProxyInterface $localizationPluginProxy, SiteHelper $siteHelper, SubmissionManager $submissionManager, WordpressFunctionProxyHelper $wordpressProxy, EntityHelper $entityHelper, Cache $cache)
+    public function __construct(PluginInfo $pluginInfo, SettingsManager $settingsManager, LocalizationPluginProxyInterface $localizationPluginProxy, SiteHelper $siteHelper, SubmissionManager $submissionManager, WordpressFunctionProxyHelper $wordpressProxy, Cache $cache)
     {
-        parent::__construct($localizationPluginProxy, $pluginInfo, $entityHelper, $submissionManager, $cache);
-        $this->localizationPluginProxy = $localizationPluginProxy;
-        $this->siteHelper = $siteHelper;
+        parent::__construct($localizationPluginProxy, $pluginInfo, $settingsManager, $siteHelper, $submissionManager, $cache);
         $this->submissionManager = $submissionManager;
         $this->wordpressProxy = $wordpressProxy;
     }

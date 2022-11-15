@@ -121,9 +121,8 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
 
         try {
             if (current_user_can('publish_posts') && $this->getInternalType($taxonomyType)) {
-                $curBlogId = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
-                $applicableProfiles = $this->getEntityHelper()->getSettingsManager()
-                    ->findEntityByMainLocale($curBlogId);
+                $curBlogId = $this->siteHelper->getCurrentBlogId();
+                $applicableProfiles = $this->settingsManager->findEntityByMainLocale($curBlogId);
 
                 if (0 < count($applicableProfiles)) {
                     $submissions = $this->getManager()
@@ -149,8 +148,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
         } catch (SmartlingDbException $e) {
             $message = 'Failed to search for the original taxonomy. No source taxonomy found for blog %s, taxonomy_id %s. Hiding widget';
             $this->getLogger()
-                ->warning(vsprintf($message, [$this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
-                                              $term->term_id,]));
+                ->warning(sprintf($message, $this->siteHelper->getCurrentBlogId(), $term->term_id));
         }
     }
 
@@ -164,7 +162,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
         if (!in_array($termType, WordpressContentTypeHelper::getSupportedTaxonomyTypes(), true)) {
             return;
         }
-        $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
+        $sourceBlog = $this->siteHelper->getCurrentBlogId();
         $originalId = (int)$term_id;
         $this->detectChange($sourceBlog, $originalId, $termType);
         remove_action("edited_{$termType}", [$this, 'save']);
@@ -192,7 +190,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
             $translationHelper = $core->getTranslationHelper();
 
             if (array_key_exists('sub', $_POST) && count($locales) > 0) {
-                $curBlogId = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
+                $curBlogId = $this->siteHelper->getCurrentBlogId();
                 switch ($_POST['sub']) {
                     case 'Upload':
                         if (0 < count($locales)) {

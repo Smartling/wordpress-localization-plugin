@@ -23,7 +23,6 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 use Smartling\Tests\Traits\DbAlMock;
 use Smartling\Tests\Traits\DummyLoggerMock;
-use Smartling\Tests\Traits\EntityHelperMock;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 use Smartling\Tests\Traits\SettingsManagerMock;
 use Smartling\Tests\Traits\SiteHelperMock;
@@ -42,7 +41,6 @@ class SmartlingCoreTest extends TestCase
     use SettingsManagerMock;
     use SubmissionManagerMock;
     use SiteHelperMock;
-    use EntityHelperMock;
     use DbAlMock;
 
     private SmartlingCore $core;
@@ -352,8 +350,7 @@ class SmartlingCoreTest extends TestCase
         $settingsManager = $this->getSettingsManagerMock();
 
         $submissionManager = $this->mockSubmissionManager(
-            $this->mockDbAl(),
-            $this->mockEntityHelper($this->mockSiteHelper())
+            $this->mockDbAl()
         );
 
         $submissionManager->expects(self::once())->method('storeEntity')->with($submission)->willReturn($submission);
@@ -392,8 +389,7 @@ class SmartlingCoreTest extends TestCase
         $settingsManager = $this->getSettingsManagerMock();
 
         $submissionManager = $this->mockSubmissionManager(
-            $this->mockDbAl(),
-            $this->mockEntityHelper($this->mockSiteHelper())
+            $this->mockDbAl()
         );
 
         $submissionManager->expects(self::once())->method('storeEntity')->with($submission)->willReturn($submission);
@@ -435,8 +431,7 @@ class SmartlingCoreTest extends TestCase
         $settingsManager = $this->getSettingsManagerMock();
 
         $submissionManager = $this->mockSubmissionManager(
-            $this->mockDbAl(),
-            $this->mockEntityHelper($this->mockSiteHelper())
+            $this->mockDbAl()
         );
 
         $submissionManager->expects(self::once())->method('storeEntity')->with($submission)->willReturn($submission);
@@ -474,8 +469,7 @@ class SmartlingCoreTest extends TestCase
         $obj = $this->createPartialMock(SmartlingCore::class, ['getFunctionProxyHelper', 'getLogger']);
 
         $submissionManager = $this->mockSubmissionManager(
-            $this->mockDbAl(),
-            $this->mockEntityHelper($this->mockSiteHelper())
+            $this->mockDbAl()
         );
 
         $submissionManager

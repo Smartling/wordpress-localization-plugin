@@ -157,8 +157,9 @@ services:
     arguments:
      - "@site.db"
      - "%submission.pagesize%"
-     - "@entity.helper"
      - "@manager.job"
+     - "@multilang.proxy"
+     - "@site.helper"
      - "@manager.submissions.jobs"
 
   manager.submissions.jobs:
@@ -221,13 +222,6 @@ services:
   multilingualpress3.connector:
     class: Smartling\DbAl\MultilingualPress3Connector
 
-  entity.helper:
-    class: Smartling\Helpers\EntityHelper
-    calls:
-      - [ "setPluginInfo", [ "@plugin.info" ]]
-      - [ "setConnector", [ "@multilang.proxy" ]]
-      - [ "setSiteHelper", [ "@site.helper" ]]
-
   test.run.helper:
     class: Smartling\Helpers\TestRunHelper
     arguments:
@@ -247,7 +241,8 @@ services:
     arguments:
       - "@multilang.proxy"
       - "@plugin.info"
-      - "@entity.helper"
+      - "@manager.settings"
+      - "@site.helper"
       - "@manager.submission"
       - "@site.cache"
     calls:
@@ -258,7 +253,8 @@ services:
     arguments:
       - "@multilang.proxy"
       - "@plugin.info"
-      - "@entity.helper"
+      - "@manager.settings"
+      - "@site.helper"
       - "@manager.submission"
       - "@site.cache"
 
@@ -268,7 +264,8 @@ services:
       - "@api.wrapper.with.retries"
       - "@multilang.proxy"
       - "@plugin.info"
-      - "@entity.helper"
+      - "@manager.settings"
+      - "@site.helper"
       - "@manager.submission"
       - "@site.cache"
       - "@queue.db"
@@ -277,11 +274,11 @@ services:
     class: Smartling\WP\Controller\TaxonomyLinksController
     arguments:
       - "@plugin.info"
+      - "@manager.settings"
       - "@multilang.proxy"
       - "@site.helper"
       - "@manager.submission"
       - "@wp.proxy"
-      - "@entity.helper"
       - "@site.cache"
 
   wp.test.run:
@@ -291,7 +288,6 @@ services:
       - "@multilang.proxy"
       - "@site.helper"
       - "@manager.submission"
-      - "@entity.helper"
       - "@site.cache"
       - "@service.relations-discovery"
       - "@api.wrapper.with.retries"
@@ -303,7 +299,8 @@ services:
       arguments:
         - "@multilang.proxy"
         - "@plugin.info"
-        - "@entity.helper"
+        - "@manager.settings"
+        - "@site.helper"
         - "@manager.submission"
         - "@site.cache"
 
@@ -321,7 +318,8 @@ services:
     arguments:
       - "@multilang.proxy"
       - "@plugin.info"
-      - "@entity.helper"
+      - "@manager.settings"
+      - "@site.helper"
       - "@manager.submission"
       - "@site.cache"
 
@@ -404,7 +402,8 @@ services:
   acf.dynamic.support:
     class: Smartling\Extensions\Acf\AcfDynamicSupport
     arguments:
-      - "@entity.helper"
+      - "@manager.settings"
+      - "@site.helper"
 
   acf.type.detector:
     class: Smartling\Extensions\Acf\AcfTypeDetector
@@ -417,7 +416,8 @@ services:
     arguments:
       - "@multilang.proxy"
       - "@plugin.info"
-      - "@entity.helper"
+      - "@manager.settings"
+      - "@site.helper"
       - "@manager.submission"
       - "@site.cache"
       - "@content.helper"
