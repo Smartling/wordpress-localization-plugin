@@ -8,7 +8,6 @@ use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Jobs\JobManager;
 use Smartling\Jobs\SubmissionsJobsManager;
-use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
 
 trait SubmissionManagerMock
@@ -31,10 +30,9 @@ trait SubmissionManagerMock
             ->setConstructorArgs([
                 $dbal,
                 10,
-                $this->createMock(LocalizationPluginProxyInterface::class),
-                $this->createMock(SettingsManager::class),
-                $this->createMock(SiteHelper::class),
                 $this->createMock(JobManager::class),
+                $this->createMock(LocalizationPluginProxyInterface::class),
+                $this->createMock(SiteHelper::class),
                 $this->createMock(SubmissionsJobsManager::class)
             ])
             ->getMock();

@@ -387,7 +387,6 @@ namespace Smartling\Tests\Services {
                 20,
                 $jobManager,
                 $this->createMock(LocalizationPluginProxyInterface::class),
-                $this->createMock(SettingsManager::class),
                 $this->createMock(SiteHelper::class),
                 $submissionsJobsManager,
             ])->onlyMethods(['find'])->getMock();
