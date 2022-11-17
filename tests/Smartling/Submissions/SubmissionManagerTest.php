@@ -4,14 +4,16 @@ namespace Smartling\Tests\Smartling\Submissions;
 
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
-use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\JobManager;
 use Smartling\Jobs\SubmissionsJobsManager;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
@@ -194,9 +196,10 @@ class SubmissionManagerTest extends TestCase
         $x = $this->getMockBuilder(SubmissionManager::class)->setConstructorArgs([
             $db,
             20,
-            $this->createMock(EntityHelper::class),
             $this->createMock(JobManager::class),
-        $submissionsJobsManager,
+            $this->createMock(LocalizationPluginProxyInterface::class),
+            $this->createMock(SiteHelper::class),
+            $submissionsJobsManager,
         ])->onlyMethods(['fetchData', 'getLogger'])->getMock();
         $x->method('getLogger')->willReturn(new NullLogger());
         $x->expects($this->once())->method('fetchData')->with("SELECT s.id, s.source_title, s.source_blog_id, s.source_content_hash, s.content_type, s.source_id, s.file_uri, s.target_locale, s.target_blog_id, s.target_id, s.submitter, s.submission_date, s.applied_date, s.approved_string_count, s.completed_string_count, s.excluded_string_count, s.total_string_count, s.word_count, s.status, s.is_locked, s.is_cloned, s.last_modified, s.outdated, s.last_error, s.batch_uid, s.locked_fields, s.created_at, j.job_name, j.job_uid, j.project_uid, j.created, j.modified     FROM wp_smartling_submissions AS s\n        LEFT JOIN wp_smartling_submissions_jobs AS sj ON s.id = sj.submission_id\n        LEFT JOIN wp_smartling_jobs AS j ON sj.job_id = j.id  WHERE ( ( s.id IN('$submissionId') ) )")->willReturn([$entity]);

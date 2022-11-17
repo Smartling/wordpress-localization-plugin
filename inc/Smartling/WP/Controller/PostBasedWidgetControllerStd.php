@@ -11,14 +11,15 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
-use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\PluginInfo;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Jobs\JobAbstract;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Queue\Queue;
 use Smartling\Services\GlobalSettingsManager;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
@@ -73,9 +74,9 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
         'attachment',
     ];
 
-    public function __construct(ApiWrapperInterface $apiWrapper, LocalizationPluginProxyInterface $connector, PluginInfo $pluginInfo, EntityHelper $entityHelper, SubmissionManager $manager, Cache $cache)
+    public function __construct(ApiWrapperInterface $apiWrapper, LocalizationPluginProxyInterface $connector, PluginInfo $pluginInfo, SettingsManager $settingsManager, SiteHelper $siteHelper, SubmissionManager $manager, Cache $cache)
     {
-        parent::__construct($connector, $pluginInfo, $entityHelper, $manager, $cache);
+        parent::__construct($connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
         $this->apiWrapper = $apiWrapper;
     }
 
@@ -146,7 +147,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                 $submission = $this->getManager()->getEntityById($submissionId);
                 if ($submission !== null) {
                     if ($profile === null) {
-                        $profile = $this->getEntityHelper()->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
+                        $profile = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
                     }
                     $logSubmissions[] = [
                         'sourceBlogId' => $submission->getSourceBlogId(),
@@ -187,7 +188,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
      */
     private function validateTargetBlog($blogId)
     {
-        $blogs = $this->getEntityHelper()->getSiteHelper()->listBlogIdsFlat();
+        $blogs = $this->siteHelper->listBlogIdsFlat();
         return in_array((int)$blogId, $blogs, true);
     }
 
@@ -343,7 +344,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
         if ($continue) {
             $sourceIds = &$data['content']['id'];
             $contentType = &$data['content']['type'];
-            $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
+            $sourceBlog = $this->siteHelper->getCurrentBlogId();
 
             /**
              * Walk through target blogs
@@ -461,9 +462,8 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
         wp_nonce_field(self::WIDGET_NAME, self::CONNECTOR_NONCE);
         if ($post && $post->post_title && '' !== $post->post_title) {
             try {
-                $eh = $this->getEntityHelper();
-                $currentBlogId = $eh->getSiteHelper()->getCurrentBlogId();
-                $profile = $eh->getSettingsManager()->findEntityByMainLocale($currentBlogId);
+                $currentBlogId = $this->siteHelper->getCurrentBlogId();
+                $profile = $this->settingsManager->findEntityByMainLocale($currentBlogId);
                 $submissionManager = $this->getManager();
 
                 if (0 < count($profile)) {
@@ -509,9 +509,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                 $this->getLogger()
                      ->warning(
                          vsprintf($message, [
-                             $this->getEntityHelper()
-                                  ->getSiteHelper()
-                                  ->getCurrentBlogId(),
+                             $this->siteHelper->getCurrentBlogId(),
                              $post->ID,
                          ])
                      );
@@ -589,7 +587,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                 vsprintf('Entering post save hook. post_id = \'%s\', blog_id = \'%s\'',
                     [
                         $post_id,
-                        $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
+                        $this->siteHelper->getCurrentBlogId(),
                     ])
             );
             // Handle case when a revision is being saved. Get post_id by
@@ -598,7 +596,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                 $post_id = $parent_id;
             }
 
-            $sourceBlog = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
+            $sourceBlog = $this->siteHelper->getCurrentBlogId();
             $originalId = (int)$post_id;
             $this->getLogger()->debug(vsprintf('Detecting changes for \'%s\' id=%d',
                 [$this->servedContentType, $post_id]));

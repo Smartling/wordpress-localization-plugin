@@ -6,7 +6,6 @@ use PHPUnit\Framework\TestCase;
 use Smartling\Base\SmartlingCore;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
-use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\RelativeLinkedAttachmentCoreHelper;
 use Smartling\Helpers\TranslationHelper;
@@ -15,18 +14,15 @@ use Smartling\Jobs\JobEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
-use Smartling\Tuner\MediaAttachmentRulesManager;
 
 class RelativeLinkedAttachmentCoreHelperTest extends TestCase
 {
-    private $mediaAttachmentRulesManager;
     private $sourceBlogId = 3;
     private $targetBlogId = 5;
 
     protected function setUp(): void
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
-        $this->mediaAttachmentRulesManager = $this->createMock(MediaAttachmentRulesManager::class);
     }
 
     /**
@@ -40,9 +36,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
         $jobInfo = new JobEntity('', '', '', 1, new \DateTime('2000-12-24 01:23:46'), new \DateTime('2001-12-24 02:34:45'));
         $submission->setBatchUid('');
         $submission->setJobInfo($jobInfo);
-        $acf = $this->getMockBuilder(AcfDynamicSupport::class)
-            ->setConstructorArgs([$this->createMock(EntityHelper::class)])
-            ->getMock();
+        $acf = $this->createMock(AcfDynamicSupport::class);
         $acf->method('getDefinitions')->willReturn($definitions);
 
         $translationHelper = $this->createMock(TranslationHelper::class);
@@ -88,9 +82,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
         $submission->setTargetId($targetId);
         $submission->setBatchUid('');
 
-        $acf = $this->getMockBuilder(AcfDynamicSupport::class)
-            ->setConstructorArgs([$this->createMock(EntityHelper::class)])
-            ->getMock();
+        $acf = $this->createMock(AcfDynamicSupport::class);
         $acf->method('getDefinitions')->willReturn(
             [
                 'field_5eb1344b55a84' => ['type' => 'image'],

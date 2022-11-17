@@ -8,11 +8,11 @@ use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Extensions\AcfOptionPages\ContentTypeAcfOption;
 use Smartling\Helpers\DiagnosticsHelper;
-use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Settings\SettingsManager;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 class AcfDynamicSupport
@@ -26,7 +26,7 @@ class AcfDynamicSupport
 
     public static array $acfReverseDefinitionAction = [];
 
-    private EntityHelper $entityHelper;
+    private SettingsManager $settingsManager;
     private SiteHelper $siteHelper;
 
     private array $definitions = [];
@@ -58,16 +58,16 @@ class AcfDynamicSupport
 
         if (!isset($acf)) {
             throw new SmartlingConfigException('ACF plugin is not installed or activated.');
-        } else {
-            return $acf;
         }
+
+        return $acf;
     }
 
-    public function __construct(EntityHelper $entityHelper)
+    public function __construct(SettingsManager $settingsManager, SiteHelper $siteHelper)
     {
         $this->logger = MonologWrapper::getLogger(get_class($this));
-        $this->entityHelper = $entityHelper;
-        $this->siteHelper = $entityHelper->getSiteHelper();
+        $this->settingsManager = $settingsManager;
+        $this->siteHelper = $siteHelper;
     }
 
     /**
@@ -79,30 +79,18 @@ class AcfDynamicSupport
     }
 
     /**
-     * @return ConfigurationProfileEntity[]
-     */
-    private function getActiveProfiles(): array
-    {
-        return $this->entityHelper->getSettingsManager()->getActiveProfiles();
-    }
-
-    /**
      * @throws SmartlingDirectRunRuntimeException
      */
     private function getBlogListForSearch(): array
     {
         $blogs    = $this->getBlogs();
-        $profiles = $this->getActiveProfiles();
+        $profiles = $this->settingsManager->getActiveProfiles();
 
         $blogsToSearch = [];
 
         foreach ($profiles as $profile) {
-            /**
-             * @var ConfigurationProfileEntity $profile
-             */
             if (
                 ($profile instanceof ConfigurationProfileEntity)
-
                 && in_array($profile->getOriginalBlogId()->getBlogId(), $blogs, true)
             ) {
                 $blogsToSearch[] = $profile->getOriginalBlogId()->getBlogId();
@@ -124,7 +112,7 @@ class AcfDynamicSupport
             $this->getLogger()->debug(vsprintf('Collecting ACF definitions for blog = \'%s\'...', [$blog]));
             try {
                 $this->getLogger()->debug(vsprintf('Looking for profiles for blog %s', [$blog]));
-                $applicableProfiles = $this->entityHelper->getSettingsManager()->findEntityByMainLocale($blog);
+                $applicableProfiles = $this->settingsManager->findEntityByMainLocale($blog);
                 if (0 === count($applicableProfiles)) {
                     $this->getLogger()->debug(vsprintf('No suitable profile found for this blog %s', [$blog]));
                 } else {

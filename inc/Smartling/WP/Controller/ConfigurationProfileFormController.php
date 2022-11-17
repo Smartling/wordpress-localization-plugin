@@ -105,11 +105,9 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
         );
     }
 
-
     public function edit(): void
     {
-        $this->view($this->getEntityHelper()
-                         ->getSettingsManager());
+        $this->view($this->settingsManager);
     }
 
     public function save(): void
@@ -118,13 +116,10 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 
         $profileId = (int)($settings['id'] ? : 0);
 
-        $settingsManager = $this->getEntityHelper()
-                                ->getSettingsManager();
-
         if (0 === $profileId) {
-            $profile = $settingsManager->createProfile([]);
+            $profile = $this->settingsManager->createProfile([]);
         } else {
-            $profiles = $settingsManager->getEntityById($profileId);
+            $profiles = $this->settingsManager->getEntityById($profileId);
             $profile = ArrayHelper::first($profiles);
         }
 
@@ -215,15 +210,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 
             $locale = new Locale();
             $locale->setBlogId($defaultBlogId);
-            $locale->setLabel(
-                $this->getEntityHelper()
-                     ->getSiteHelper()
-                     ->getBlogLabelById(
-                         $this->getEntityHelper()
-                              ->getConnector(),
-                         $defaultBlogId
-                     )
-            );
+            $locale->setLabel($this->siteHelper->getBlogLabelById($this->localizationPluginProxy, $defaultBlogId));
 
             $profile->setLocale($locale);
         }
@@ -236,11 +223,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
                 try {
                     $tLocale = new TargetLocale();
                     $tLocale->setBlogId($blogId);
-                    $tLocale->setLabel($this->getEntityHelper()
-                                            ->getSiteHelper()
-                                            ->getBlogLabelById($this->getEntityHelper()
-                                                                    ->getConnector(),
-                                                $blogId));
+                    $tLocale->setLabel($this->siteHelper->getBlogLabelById($this->localizationPluginProxy, $blogId));
                     $enabled = 'on' === $settings['enabled'];
                     $tLocale->setEnabled(array_key_exists('enabled', $settings) && $enabled);
                     $smartlingLocale = array_key_exists('target', $settings) ? $settings['target'] : -1;
@@ -259,7 +242,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
         }
 
         if ($this->validateTargetLocales($usedTargetLocales)) {
-            $settingsManager->storeEntity($profile);
+            $this->settingsManager->storeEntity($profile);
             wp_redirect(get_admin_url(null, 'admin.php?page=' . ConfigurationProfilesController::MENU_SLUG));
         } elseif ($profile->getId() > 0) {
             wp_redirect(get_admin_url(null, 'admin.php?page=smartling_configuration_profile_setup&error=' . self::ERROR_TARGET_LOCALES . '&action=edit&profile=' . $profile->getId()));

@@ -244,9 +244,8 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
         $contentType = ($attr instanceof \WP_Term) ? $attr->taxonomy : $attr;
         if ($this->getServedContentType() === $contentType) {
             if ($attr instanceof \WP_Term) {
-                $currentBlogId = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
-                $applicableProfiles = $this->getEntityHelper()->getSettingsManager()
-                    ->findEntityByMainLocale($currentBlogId);
+                $currentBlogId = $this->siteHelper->getCurrentBlogId();
+                $applicableProfiles = $this->settingsManager->findEntityByMainLocale($currentBlogId);
                 if (0 === count($applicableProfiles)) {
                     echo HtmlTagGeneratorHelper::tag('p', __('No suitable profile found for this site.'));
                 } else {
@@ -261,11 +260,8 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
             } else {
                 $id = 'smartling.job.' . $contentType;
                 add_meta_box($id, 'Smartling Upload Widget', function ($meta_id) use ($contentType) {
-                    $currentBlogId = $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId();
-                    $applicableProfiles = $this
-                        ->getEntityHelper()
-                        ->getSettingsManager()
-                        ->findEntityByMainLocale($currentBlogId);
+                    $currentBlogId = $this->siteHelper->getCurrentBlogId();
+                    $applicableProfiles = $this->settingsManager->findEntityByMainLocale($currentBlogId);
                     if (0 === count($applicableProfiles)) {
                         echo HtmlTagGeneratorHelper::tag('p', __('No suitable profile found for this site.'));
                     } else {

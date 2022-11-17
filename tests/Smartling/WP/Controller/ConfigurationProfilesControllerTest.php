@@ -5,9 +5,10 @@ namespace Smartling\Tests\WP\Controller;
 use PHPUnit\Framework\TestCase;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\Cache;
-use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\PluginInfo;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Queue\QueueInterface;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\Controller\ConfigurationProfilesController;
@@ -34,13 +35,14 @@ class ConfigurationProfilesControllerTest extends TestCase {
 
         $submission = $this->createMock(SubmissionEntity::class);
 
-        $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
+        $submissionManager = $this->createMock(SubmissionManager::class);
         $submissionManager->method('find')->willReturn([$submission]);
 
         $x = new ConfigurationProfilesController(
             $this->createMock(LocalizationPluginProxyInterface::class),
-            $this->getMockBuilder(PluginInfo::class)->disableOriginalConstructor()->getMock(),
-            $this->createMock(EntityHelper::class),
+            $this->createMock(PluginInfo::class),
+            $this->createMock(SettingsManager::class),
+            $this->createMock(SiteHelper::class),
             $submissionManager,
             $this->createMock(Cache::class)
         );
