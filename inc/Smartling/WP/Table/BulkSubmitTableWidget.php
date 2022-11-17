@@ -11,6 +11,7 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
@@ -19,18 +20,12 @@ use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\Controller\SmartlingListTable;
 
-
-/**
- * Class BulkSubmitTableWidget
- * @package Smartling\WP\View
- */
 class BulkSubmitTableWidget extends SmartlingListTable
 {
-
     use CommonLogMessagesTrait;
+    use LoggerSafeTrait;
 
     /**
      * @var string
@@ -64,7 +59,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
 
     private ConfigurationProfileEntity $profile;
     private LocalizationPluginProxyInterface $localizationPluginProxy;
-    private LoggerInterface $logger;
     private PluginInfo $pluginInfo;
     private SiteHelper $siteHelper;
     private SmartlingCore $core;
@@ -73,11 +67,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
     public function getProfile(): ConfigurationProfileEntity
     {
         return $this->profile;
-    }
-
-    public function getLogger(): LoggerInterface
-    {
-        return $this->logger;
     }
 
     public function __construct(

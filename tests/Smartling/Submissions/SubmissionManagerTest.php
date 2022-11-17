@@ -198,7 +198,6 @@ class SubmissionManagerTest extends TestCase
             20,
             $this->createMock(JobManager::class),
             $this->createMock(LocalizationPluginProxyInterface::class),
-            $this->createMock(SettingsManager::class),
             $this->createMock(SiteHelper::class),
             $submissionsJobsManager,
         ])->onlyMethods(['fetchData', 'getLogger'])->getMock();

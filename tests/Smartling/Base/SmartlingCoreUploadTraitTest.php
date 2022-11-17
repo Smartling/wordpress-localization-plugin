@@ -42,9 +42,11 @@ class SmartlingCoreUpload {
     public function __construct(ContentHelper $contentHelper, ExternalContentManager $externalContentManager, FieldsFilterHelper $fieldsFilterHelper, SettingsManager $settingsManager, SubmissionManager $submissionManager, TestRunHelper $testRunHelper, WordpressFunctionProxyHelper $wpProxy)
     {
         $this->contentHelper = $contentHelper;
+        $this->externalContentManager = $externalContentManager;
         $this->fieldsFilterHelper = $fieldsFilterHelper;
         $this->settingsManager = $settingsManager;
         $this->submissionManager = $submissionManager;
+        $this->testRunHelper = $testRunHelper;
         $this->wpProxy = $wpProxy;
     }
 
