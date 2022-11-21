@@ -3,35 +3,36 @@
 namespace Smartling\WP\Table;
 
 use Smartling\ApiWrapperInterface;
+use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
-use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\DiagnosticsHelper;
-use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Jobs\JobEntity;
-use Smartling\Queue\Queue;
 use Smartling\Queue\QueueInterface;
 use Smartling\Settings\Locale;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 use Smartling\WP\Controller\SmartlingListTable;
 
 class SubmissionTableWidget extends SmartlingListTable
 {
     use CommonLogMessagesTrait;
+    use LoggerSafeTrait;
 
     private const ACTION_CHECK_STATUS = 'checkStatus';
-    private const ACTION_DOWNLOAD = 'download';
+    public const ACTION_DOWNLOAD = 'download';
     private const ACTION_LOCK = 'lock';
     private const ACTION_UNLOCK = 'unlock';
 
@@ -50,16 +51,12 @@ class SubmissionTableWidget extends SmartlingListTable
     private const SUBMISSION_CLONED_STATE = 'state_cloned';
     private const SUBMISSION_TARGET_LOCALE = 'target-locale';
 
-    private LoggerInterface $logger;
+    private LocalizationPluginProxyInterface $localizationPluginProxy;
+    private SettingsManager $settingsManager;
+    private SiteHelper $siteHelper;
     private SubmissionManager $submissionManager;
-    private EntityHelper $entityHelper;
-    private Queue $queue;
+    private QueueInterface $queue;
     private ApiWrapperInterface $apiWrapper;
-
-    public function getLogger(): LoggerInterface
-    {
-        return $this->logger;
-    }
 
     private string $_custom_controls_namespace = 'smartling-submissions-page';
 
@@ -77,17 +74,17 @@ class SubmissionTableWidget extends SmartlingListTable
 
     private array $_settings = ['singular' => 'submission', 'plural' => 'submissions', 'ajax' => false,];
 
-    public function __construct(ApiWrapperInterface $apiWrapper, SubmissionManager $manager, EntityHelper $entityHelper, Queue $queue)
+    public function __construct(ApiWrapperInterface $apiWrapper, LocalizationPluginProxyInterface $localizationPluginProxy, SettingsManager $settingsManager, SiteHelper $siteHelper, SubmissionManager $manager, QueueInterface $queue)
     {
         $this->apiWrapper = $apiWrapper;
+        $this->localizationPluginProxy = $localizationPluginProxy;
         $this->queue = $queue;
+        $this->settingsManager = $settingsManager;
+        $this->siteHelper = $siteHelper;
         $this->submissionManager = $manager;
         $this->setSource($_REQUEST);
-        $this->entityHelper = $entityHelper;
 
         $this->defaultValues[self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME] = $manager->getDefaultSubmissionStatus();
-
-        $this->logger = $entityHelper->getLogger();
 
         parent::__construct($this->_settings);
     }
@@ -178,7 +175,7 @@ class SubmissionTableWidget extends SmartlingListTable
             return (int)$value;
         }, $this->getFormElementValue('submission', []));
 
-        if (is_array($submissionsIds) && 0 < count($submissionsIds)) {
+        if (0 < count($submissionsIds)) {
             $submissions = $this->submissionManager->findByIds($submissionsIds);
             if (0 < count($submissions)) {
                 switch ($this->current_action()) {
@@ -194,7 +191,7 @@ class SubmissionTableWidget extends SmartlingListTable
                         $profile = null;
                         foreach ($submissions as $submission) {
                             if ($profile === null) {
-                                $profile = $this->entityHelper->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
+                                $profile = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
                             }
                             $logSubmissions[] = [
                                 'sourceBlogId' => $submission->getSourceBlogId(),
@@ -205,11 +202,12 @@ class SubmissionTableWidget extends SmartlingListTable
                             ];
                             $this->queue->enqueue([$submission->getId()], QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE);
                         }
-                        if ($profile === null) {
+                        if ($profile !== null) {
                             $requestDescription = 'User initiated bulk download';
                             try {
                                 $this->apiWrapper->createAuditLogRecord($profile, CreateRecordParameters::ACTION_TYPE_DOWNLOAD, $requestDescription, ['submissions' => $logSubmissions]);
                             } catch (\Exception $e) {
+                                /** @noinspection JsonEncodingApiUsageInspection */
                                 $this->getLogger()->error(sprintf('Failed to create audit log record actionType=%s, requestDescription="%s", submissions="%s"', CreateRecordParameters::ACTION_TYPE_DOWNLOAD, $requestDescription, json_encode($logSubmissions)));
                             }
                         } else {
@@ -288,7 +286,6 @@ class SubmissionTableWidget extends SmartlingListTable
 
     public function prepare_items(): void
     {
-        $siteHelper = $this->entityHelper->getSiteHelper();
         $pageOptions = ['limit' => $this->submissionManager->getPageSize(), 'page' => $this->get_pagenum(),];
 
         $this->_column_headers = [$this->get_columns(), ['id'], $this->get_sortable_columns(),];
@@ -386,11 +383,10 @@ class SubmissionTableWidget extends SmartlingListTable
             $row[SubmissionEntity::FIELD_FILE_URI] = $fileName;
             $row[SubmissionEntity::FIELD_SOURCE_TITLE] = htmlentities($row[SubmissionEntity::FIELD_SOURCE_TITLE]);
             $row[SubmissionEntity::FIELD_CONTENT_TYPE] = WordpressContentTypeHelper::getLocalizedContentType($row[SubmissionEntity::FIELD_CONTENT_TYPE]);
-            $row[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row[SubmissionEntity::FIELD_SUBMISSION_DATE]));
-            $row[SubmissionEntity::FIELD_APPLIED_DATE] = '0000-00-00 00:00:00' === $row[SubmissionEntity::FIELD_APPLIED_DATE] ? __('Never')
-                : DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($row[SubmissionEntity::FIELD_APPLIED_DATE]));
+            $row[SubmissionEntity::FIELD_SUBMISSION_DATE] = $this->sqlToReadableDate($row[SubmissionEntity::FIELD_SUBMISSION_DATE]);
+            $row[SubmissionEntity::FIELD_APPLIED_DATE] = $this->sqlToReadableDate($row[SubmissionEntity::FIELD_APPLIED_DATE]);
             try {
-                $blogLabel = $siteHelper->getBlogLabelById($this->entityHelper->getConnector(), $row[SubmissionEntity::FIELD_TARGET_BLOG_ID]);
+                $blogLabel = $this->siteHelper->getBlogLabelById($this->localizationPluginProxy, $row[SubmissionEntity::FIELD_TARGET_BLOG_ID]);
             } catch (BlogNotFoundException $e) {
                 $blogLabel = "*blog id {$row[SubmissionEntity::FIELD_TARGET_BLOG_ID]} not found*";
             }
@@ -552,13 +548,12 @@ class SubmissionTableWidget extends SmartlingListTable
     {
         $controlName = self::SUBMISSION_TARGET_LOCALE;
 
-        $siteHelper = $this->entityHelper->getSiteHelper();
         $locales = [];
-        foreach ($siteHelper->listBlogs() as $blogId) {
+        foreach ($this->siteHelper->listBlogs() as $blogId) {
             try {
                 $locale = new Locale();
                 $locale->setBlogId($blogId);
-                $locale->setLabel($siteHelper->getBlogLabelById($this->entityHelper->getConnector(), $blogId));
+                $locale->setLabel($this->siteHelper->getBlogLabelById($this->localizationPluginProxy, $blogId));
                 $locales[] = $locale;
             } catch (BlogNotFoundException $e) {
                 $this->getLogger()->warning($e->getMessage());
@@ -592,7 +587,7 @@ class SubmissionTableWidget extends SmartlingListTable
     {
         $controlName = 'content-type';
 
-        $types = $this->getActiveContentTypes($this->entityHelper->getSiteHelper(), 'submissionBoard');
+        $types = $this->getActiveContentTypes($this->siteHelper, 'submissionBoard');
 
         // add 'Any' to turn off filter
         $types = array_merge(['any' => __('Any')], $types);

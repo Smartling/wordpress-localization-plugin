@@ -18,7 +18,7 @@ use Smartling\Bootstrap;
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       smartling-connector
  * Domain Path:       /languages
- * Elementor tested up to: 3.6.7
+ * Elementor tested up to: 3.8.1
  */
 
 // If this file is called directly, abort.

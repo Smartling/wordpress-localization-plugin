@@ -40,9 +40,10 @@ namespace Smartling\Tests\Smartling\WP\Table {
 
     use PHPUnit\Framework\TestCase;
     use Smartling\Base\SmartlingCore;
+    use Smartling\DbAl\LocalizationPluginProxyInterface;
     use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
-    use Smartling\Helpers\EntityHelper;
     use Smartling\Helpers\PluginInfo;
+    use Smartling\Helpers\SiteHelper;
     use Smartling\Jobs\JobEntityWithBatchUid;
     use Smartling\Processors\ContentEntitiesIOFactory;
     use Smartling\Settings\ConfigurationProfileEntity;
@@ -63,7 +64,6 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $submissionType = 'post';
             $targetBlogId = 5;
 
-            $entityHelper = $this->createMock(EntityHelper::class);
             $manager = $this->createMock(SubmissionManager::class);
             $manager->method('getPageSize')->willReturn(7);
             $pluginInfo = $this->createMock(PluginInfo::class);
@@ -91,7 +91,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $profile->method('getOriginalBlogId')->willReturn($locale);
             $profile->method('getProjectId')->willReturn($projectUid);
 
-            $x = new BulkSubmitTableWidget($core, $manager, $pluginInfo, $entityHelper, $profile);
+            $x = new BulkSubmitTableWidget($this->createMock(LocalizationPluginProxyInterface::class), $this->createMock(SiteHelper::class), $core, $manager, $pluginInfo, $profile);
             $x->setSource([
                 'smartling-bulk-submit-page-content-type' => $submissionType,
                 'smartling-bulk-submit-page-submission' => ["$submissionId-$submissionType"],

@@ -19,6 +19,7 @@ namespace Smartling\Tests\Services {
     use PHPUnit\Framework\TestCase;
     use Smartling\ApiWrapper;
     use Smartling\Bootstrap;
+    use Smartling\ContentTypes\ContentTypeManager;
     use Smartling\ContentTypes\ContentTypeNavigationMenu;
     use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
     use Smartling\ContentTypes\ExternalContentManager;
@@ -32,7 +33,6 @@ namespace Smartling\Tests\Services {
     use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
     use Smartling\Helpers\ContentHelper;
     use Smartling\Helpers\CustomMenuContentTypeHelper;
-    use Smartling\Helpers\EntityHelper;
     use Smartling\Helpers\FieldsFilterHelper;
     use Smartling\Helpers\GutenbergBlockHelper;
     use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\PostBasedProcessor;
@@ -315,6 +315,7 @@ namespace Smartling\Tests\Services {
             $x = new ContentRelationsDiscoveryService(
                 $this->createMock(AcfDynamicSupport::class),
                 $contentHelper,
+                $this->createMock(ContentTypeManager::class),
                 $this->createMock(FieldsFilterHelper::class),
                 $this->createMock(MetaFieldProcessorManager::class),
                 $this->createMock(LocalizationPluginProxyInterface::class),
@@ -385,8 +386,9 @@ namespace Smartling\Tests\Services {
             $submissionManager = $this->getMockBuilder(SubmissionManager::class)->setConstructorArgs([
                 $this->getMockForAbstractClass(SmartlingToCMSDatabaseAccessWrapperInterface::class),
                 20,
-                $this->createMock(EntityHelper::class),
                 $jobManager,
+                $this->createMock(LocalizationPluginProxyInterface::class),
+                $this->createMock(SiteHelper::class),
                 $submissionsJobsManager,
             ])->onlyMethods(['find'])->getMock();
             $submissionManager->method('find')->willReturn([]);
@@ -499,6 +501,9 @@ namespace Smartling\Tests\Services {
 
             $contentHelper->method('getIoFactory')->willReturn($contentIoFactory);
 
+            $contentTypeManager = $this->createMock(ContentTypeManager::class);
+            $contentTypeManager->method('getRegisteredContentTypes')->willReturn(['page']);
+
             $settingsManager = $this->createMock(SettingsManager::class);
 
             $fieldFilterHelper = $this->getMockBuilder(FieldsFilterHelper::class)
@@ -527,6 +532,7 @@ namespace Smartling\Tests\Services {
                 $fieldFilterHelper,
                 null,
                 $wordpressProxy,
+                $contentTypeManager,
             );
             $x->method('getBackwardRelatedTaxonomies')->willReturn([]);
 
@@ -660,11 +666,15 @@ namespace Smartling\Tests\Services {
             MetaFieldProcessorManager $metaFieldProcessorManager = null,
             FieldsFilterHelper $fieldsFilterHelper = null,
             AcfDynamicSupport $acfDynamicSupport = null,
-            WordpressFunctionProxyHelper $wpProxy = null
+            WordpressFunctionProxyHelper $wpProxy = null,
+            ContentTypeManager $contentTypeManager = null
         )
         {
             if ($acfDynamicSupport === null) {
                 $acfDynamicSupport = $this->createMock(AcfDynamicSupport::class);
+            }
+            if ($contentTypeManager === null) {
+                $contentTypeManager = $this->createMock(ContentTypeManager::class);
             }
             if ($metaFieldProcessorManager === null) {
                 $metaFieldProcessorManager = $this->createMock(MetaFieldProcessorManager::class);
@@ -681,6 +691,7 @@ namespace Smartling\Tests\Services {
             return $this->getMockBuilder(ContentRelationsDiscoveryService::class)->setConstructorArgs([
                 $acfDynamicSupport,
                 $contentHelper,
+                $contentTypeManager,
                 $fieldsFilterHelper,
                 $metaFieldProcessorManager,
                 $this->createMock(LocalizationPluginProxyInterface::class),

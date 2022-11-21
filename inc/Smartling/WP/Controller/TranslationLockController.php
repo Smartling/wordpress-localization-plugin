@@ -9,11 +9,12 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DiagnosticsHelper;
-use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\Table\TranslationLockTableWidget;
@@ -28,13 +29,14 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
     public function __construct(
         LocalizationPluginProxyInterface $connector,
         PluginInfo $pluginInfo,
-        EntityHelper $entityHelper,
+        SettingsManager $settingsManager,
+        SiteHelper $siteHelper,
         SubmissionManager $manager,
         Cache $cache,
         ContentHelper $contentHelper,
         GutenbergBlockHelper $blockHelper
     ) {
-        parent::__construct($connector, $pluginInfo, $entityHelper, $manager, $cache);
+        parent::__construct($connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
         $this->blockHelper = $blockHelper;
         $this->contentHelper = $contentHelper;
     }
@@ -129,7 +131,7 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
         $submissionManager = $this->getManager();
         $submissions = $submissionManager->find(
             [
-                SubmissionEntity::FIELD_TARGET_BLOG_ID => $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
+                SubmissionEntity::FIELD_TARGET_BLOG_ID => $this->siteHelper->getCurrentBlogId(),
                 SubmissionEntity::FIELD_TARGET_ID      => $postId,
             ]
         );

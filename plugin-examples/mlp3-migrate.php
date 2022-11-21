@@ -8,9 +8,9 @@
  */
 
 use Smartling\DbAl\DB;
+use Smartling\DbAl\DummyLocalizationPlugin;
 use Smartling\DbAl\MultilingualPress3Connector;
 use Smartling\Helpers\ArrayHelper;
-use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Jobs\JobManager;
 use Smartling\Jobs\SubmissionsJobsManager;
@@ -33,11 +33,8 @@ add_action('admin_menu', static function () use ($log, $showForm) {
         global $wpdb;
         $start = (int)get_option($slug);
         $max = getMaxRelationshipId();
-        $entity_helper = new EntityHelper();
-
-        $entity_helper->setSiteHelper($siteHelper);
         $submissionsJobsManager = new SubmissionsJobsManager($db);
-        $submissionManager = new SubmissionManager($db, $pageSize, $entity_helper, new JobManager($db, $submissionsJobsManager), $submissionsJobsManager);
+        $submissionManager = new SubmissionManager($db, $pageSize, new JobManager($db, $submissionsJobsManager), new DummyLocalizationPlugin(), $siteHelper, $submissionsJobsManager);
         $tablePrefix = $wpdb->prefix . 'mlp_';
         while ($start < $max) {
             $relationship = $wpdb->get_results("SELECT relationship_id, type " .

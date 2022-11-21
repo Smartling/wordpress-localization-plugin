@@ -4,6 +4,7 @@ namespace Smartling\Services;
 
 use Exception;
 use Smartling\ApiWrapperInterface;
+use Smartling\ContentTypes\ContentTypeManager;
 use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\ContentTypes\ExternalContentManager;
@@ -51,6 +52,7 @@ class ContentRelationsDiscoveryService
 {
     public const POST_BASED_PROCESSOR = 'PostBasedProcessor';
     private AcfDynamicSupport $acfDynamicSupport;
+    private ContentTypeManager $contentTypeManager;
     private ExternalContentManager $externalContentManager;
     private LoggerInterface $logger;
     private ContentHelper $contentHelper;
@@ -77,6 +79,7 @@ class ContentRelationsDiscoveryService
     public function __construct(
         AcfDynamicSupport $acfDynamicSupport,
         ContentHelper $contentHelper,
+        ContentTypeManager $contentTypeManager,
         FieldsFilterHelper $fieldFilterHelper,
         MetaFieldProcessorManager $fieldProcessorManager,
         LocalizationPluginProxyInterface $localizationPluginProxy,
@@ -98,6 +101,7 @@ class ContentRelationsDiscoveryService
         $this->acfDynamicSupport = $acfDynamicSupport;
         $this->apiWrapper = $apiWrapper;
         $this->contentHelper = $contentHelper;
+        $this->contentTypeManager = $contentTypeManager;
         $this->externalContentManager = $externalContentManager;
         $this->fieldFilterHelper = $fieldFilterHelper;
         $this->gutenbergBlockHelper = $blockHelper;
@@ -466,6 +470,7 @@ class ContentRelationsDiscoveryService
     {
         $detectedReferences = ['attachment' => []];
         $curBlogId = $this->contentHelper->getSiteHelper()->getCurrentBlogId();
+        $this->getLogger()->debug("Getting relations for contentType=\"$contentType\", id=$id, blogId=$curBlogId");
 
         if (!$this->contentHelper->checkEntityExists($curBlogId, $contentType, $id)) {
             throw new SmartlingHumanReadableException('Requested content is not found', 'content.not.found', 404);
@@ -573,21 +578,20 @@ class ContentRelationsDiscoveryService
 
         $responseData = new DetectedRelations($detectedReferences);
 
-        $registeredTypes = get_post_types();
-        $taxonomies = $this->contentHelper->getSiteHelper()->getTermTypes();
         foreach ($targetBlogIds as $targetBlogId) {
             foreach ($detectedReferences as $detectedContentType => $ids) {
-                if (in_array($detectedContentType, $registeredTypes, true) || in_array($detectedContentType, $taxonomies, true)) {
+                if (in_array($detectedContentType, $this->contentTypeManager->getRegisteredContentTypes(), true)) {
                     foreach ($ids as $detectedId) {
-                        // TODO: find out when a null id gets added to the list, this should not happen
                         if ($detectedId === null) {
                             $this->getLogger()->notice("Null id passed when processing detected references detectedContentType=\"$detectedContentType\"");
                         } elseif (!$this->submissionManager->submissionExists($detectedContentType, $curBlogId, $detectedId, $targetBlogId)) {
                             $responseData->addMissingReference($targetBlogId, $detectedContentType, $detectedId);
+                        } else {
+                            $this->getLogger()->debug("Skipped adding related item id=$detectedId: submission exists");
                         }
                     }
                 } else {
-                    $this->getLogger()->debug("Excluded $detectedContentType from related submissions");
+                    $this->getLogger()->debug("Excluded $detectedContentType from related submissions, type not in registered types");
                 }
             }
         }
@@ -608,10 +612,13 @@ class ContentRelationsDiscoveryService
         }
 
         if (isset($references[self::POST_BASED_PROCESSOR])) {
-            foreach (array_keys($references[self::POST_BASED_PROCESSOR]) as $postTypeId) {
-                $postType = $this->wordpressProxy->get_post_type($postTypeId);
+            foreach (array_keys($references[self::POST_BASED_PROCESSOR]) as $postId) {
+                $postType = $this->wordpressProxy->get_post_type($postId);
                 if ($postType !== false) {
-                    $result[$postType][] = $postTypeId;
+                    $result[$postType][] = $postId;
+                } else {
+                    $this->getLogger()->notice("Related item type couldn't be determined, assuming 'attachment', postId=$postId");
+                    $result['attachment'][] = $postId;
                 }
             }
         }

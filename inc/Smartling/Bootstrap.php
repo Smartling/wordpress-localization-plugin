@@ -440,7 +440,7 @@ class Bootstrap
             /**
              * Initializing ACF and ACF Option Pages support.
              */
-            (new AcfDynamicSupport($this->fromContainer('entity.helper')))->run();
+            (new AcfDynamicSupport($this->fromContainer('manager.settings'), $this->fromContainer('site.helper')))->run();
         });
 
         /**

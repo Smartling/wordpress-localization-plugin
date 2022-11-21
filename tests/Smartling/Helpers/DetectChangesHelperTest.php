@@ -9,7 +9,6 @@ use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\TargetLocale;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Traits\DbAlMock;
-use Smartling\Tests\Traits\EntityHelperMock;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 use Smartling\Tests\Traits\SettingsManagerMock;
 use Smartling\Tests\Traits\SiteHelperMock;
@@ -21,7 +20,6 @@ class DetectChangesHelperTest extends TestCase
     use SettingsManagerMock;
     use SubmissionManagerMock;
     use DbAlMock;
-    use EntityHelperMock;
     use SiteHelperMock;
 
     public function testGetSubmissionsWithExistingProfile()
@@ -48,8 +46,7 @@ class DetectChangesHelperTest extends TestCase
             ->willReturn($profile);
 
         $submissionManagerMock = $this->mockSubmissionManager(
-            $this->mockDbAl(),
-            $this->mockEntityHelper($this->mockSiteHelper()));
+            $this->mockDbAl());
 
         $submissionManagerMock
             ->expects(self::once())
@@ -90,8 +87,7 @@ class DetectChangesHelperTest extends TestCase
             });
 
         $submissionManagerMock = $this->mockSubmissionManager(
-            $this->mockDbAl(),
-            $this->mockEntityHelper($this->mockSiteHelper()));
+            $this->mockDbAl());
 
         $helper = new DetectChangesHelper();
         $helper->setSettingsManager($mock);

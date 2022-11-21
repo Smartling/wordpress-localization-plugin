@@ -12,6 +12,7 @@ use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\TestRunHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\XmlHelper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -24,11 +25,12 @@ class SmartlingCore extends SmartlingCoreAbstract
     use CommonLogMessagesTrait;
 
     private ExternalContentManager $externalContentManager;
-    private $postContentHelper;
+    private PostContentHelper $postContentHelper;
     private TestRunHelper $testRunHelper;
-    private $xmlHelper;
+    private XmlHelper $xmlHelper;
+    private WordpressFunctionProxyHelper $wpProxy;
 
-    public function __construct(ExternalContentManager $externalContentManager, PostContentHelper $postContentHelper, XmlHelper $xmlHelper, TestRunHelper $testRunHelper)
+    public function __construct(ExternalContentManager $externalContentManager, PostContentHelper $postContentHelper, XmlHelper $xmlHelper, TestRunHelper $testRunHelper, WordpressFunctionProxyHelper $wpProxy)
     {
         parent::__construct();
 
@@ -44,6 +46,9 @@ class SmartlingCore extends SmartlingCoreAbstract
         /** @noinspection UnusedConstructorDependenciesInspection */
         /** @see SmartlingCoreUploadTrait::applyXML() */
         $this->testRunHelper = $testRunHelper;
+        /** @noinspection UnusedConstructorDependenciesInspection */
+        /** @see SmartlingCoreUploadTrait::readLockedTranslationFieldsBySubmission */
+        $this->wpProxy = $wpProxy;
         $this->xmlHelper = $xmlHelper;
     }
 
@@ -103,9 +108,9 @@ class SmartlingCore extends SmartlingCoreAbstract
                 $this->getContentHelper()->ensureRestoredBlogId();
             } else {
                 $this->getCustomMenuHelper()->assignMenuItemsToMenu(
-                    (int)$submission->getTargetId(),
-                    (int)$submission->getTargetBlogId(),
-                    $accumulator[ContentTypeNavigationMenu::WP_CONTENT_TYPE]
+                    $submission->getTargetId(),
+                    $submission->getTargetBlogId(),
+                    $accumulator[ContentTypeNavigationMenu::WP_CONTENT_TYPE] ?? [],
                 );
             }
         } catch (BlogNotFoundException $e) {

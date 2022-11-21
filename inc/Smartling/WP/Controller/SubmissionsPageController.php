@@ -5,10 +5,11 @@ namespace Smartling\WP\Controller;
 use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\Cache;
-use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\PluginInfo;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Queue\Queue;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\Table\SubmissionTableWidget;
 use Smartling\WP\WPAbstract;
@@ -19,9 +20,9 @@ class SubmissionsPageController extends WPAbstract implements WPHookInterface
     private ApiWrapperInterface $apiWrapper;
     private Queue $queue;
 
-    public function __construct(ApiWrapperInterface $apiWrapper, LocalizationPluginProxyInterface $connector, PluginInfo $pluginInfo, EntityHelper $entityHelper, SubmissionManager $manager, Cache $cache, Queue $queue)
+    public function __construct(ApiWrapperInterface $apiWrapper, LocalizationPluginProxyInterface $connector, PluginInfo $pluginInfo, SettingsManager $settingsManager, SiteHelper $siteHelper, SubmissionManager $manager, Cache $cache, Queue $queue)
     {
-        parent::__construct($connector, $pluginInfo, $entityHelper, $manager, $cache);
+        parent::__construct($connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
         $this->apiWrapper = $apiWrapper;
         $this->queue = $queue;
     }
@@ -55,7 +56,7 @@ class SubmissionsPageController extends WPAbstract implements WPHookInterface
 
     public function renderPage(): void
     {
-        $table = new SubmissionTableWidget($this->apiWrapper, $this->getManager(), $this->getEntityHelper(), $this->queue);
+        $table = new SubmissionTableWidget($this->apiWrapper, $this->localizationPluginProxy, $this->settingsManager, $this->siteHelper, $this->getManager(), $this->queue);
         $table->prepare_items();
         $this->view($table);
     }

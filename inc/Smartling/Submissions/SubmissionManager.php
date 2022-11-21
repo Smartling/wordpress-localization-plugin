@@ -7,11 +7,11 @@ use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DateTimeHelper;
-use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressUserHelper;
 use Smartling\Jobs\JobEntity;
@@ -37,11 +37,9 @@ class SubmissionManager extends EntityManagerAbstract
         return SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS;
     }
 
-    public function __construct(SmartlingToCMSDatabaseAccessWrapperInterface $dbal, int $pageSize, EntityHelper $entityHelper, JobManager $jobManager, SubmissionsJobsManager $submissionsJobsManager)
+    public function __construct(SmartlingToCMSDatabaseAccessWrapperInterface $dbal, int $pageSize, JobManager $jobManager, LocalizationPluginProxyInterface $localizationPluginProxy, SiteHelper $siteHelper, SubmissionsJobsManager $submissionsJobsManager)
     {
-        $siteHelper = $entityHelper->getSiteHelper();
-        $proxy = $entityHelper->getConnector();
-        parent::__construct($dbal, $pageSize, $siteHelper, $proxy);
+        parent::__construct($dbal, $pageSize, $siteHelper, $localizationPluginProxy);
         $this->jobManager = $jobManager;
         $this->submissionsJobsManager = $submissionsJobsManager;
     }
@@ -137,7 +135,11 @@ class SubmissionManager extends EntityManagerAbstract
 
     public function getTotalInUploadQueue(): int
     {
-        return $this->getTotalByFieldInValues($this->getConditionBlockForUploadJob());
+        $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR);
+        $block->addConditionBlock($this->getConditionBlockForCloning());
+        $block->addConditionBlock($this->getConditionBlockForUploadJob());
+
+        return $this->getTotalByFieldInValues($block);
     }
 
     public function getTotalInCheckStatusHelperQueue(): int
@@ -723,6 +725,16 @@ SQL;
         $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_NEW]));
         $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_LOCKED, [0]));
         $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_NOT_EQ, SubmissionEntity::FIELD_BATCH_UID, ['']));
+
+        return $block;
+    }
+
+    private function getConditionBlockForCloning(): ConditionBlock
+    {
+        $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_NEW]));
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_LOCKED, [0]));
+        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_CLONED, [1]));
 
         return $block;
     }

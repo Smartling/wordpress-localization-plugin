@@ -5,57 +5,39 @@ namespace Smartling\WP\Controller;
 use Smartling\Bootstrap;
 use Smartling\ContentTypes\ContentTypeInterface;
 use Smartling\ContentTypes\ContentTypeManager;
+use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use WP_List_Table;
 
-/**
- * Class SmartlingListTable
- * @package Smartling\WP\Controller
- */
 class SmartlingListTable extends WP_List_Table
 {
+    private array $source;
 
-    private $source;
-
-    /**
-     * @return mixed
-     */
-    public function getSource()
-    {
-        return $this->source;
-    }
-
-    /**
-     * @param mixed $source
-     */
-    public function setSource($source)
+    public function setSource(array $source): void
     {
         $this->source = $source;
     }
 
-    /**
-     * @param SiteHelper $siteHelper
-     *
-     * @return array
-     */
-    protected function getActiveContentTypes(SiteHelper $siteHelper, $page = 'bulkSubmit')
+    public function sqlToReadableDate(string $date): string
+    {
+        return '0000-00-00 00:00:00' === $date ? __('Never') : DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($date));
+    }
+
+    protected function getActiveContentTypes(SiteHelper $siteHelper, string $page = 'bulkSubmit'): array
     {
         $supportedTypes = WordpressContentTypeHelper::getLabelMap();
 
         $contentTypeManager = Bootstrap::getContainer()->get('content-type-descriptor-manager');
-        /**
-         * @var ContentTypeManager $contentTypeManager
-         */
+        if (!$contentTypeManager instanceof ContentTypeManager) {
+            throw new \RuntimeException('Expected ' . ContentTypeManager::class, ' got ' . get_class($contentTypeManager) . ' from container (content-type-descriptor-manager)');
+        }
 
         $output = [];
 
         $registeredInWordpressTypes = array_merge($siteHelper->getPostTypes(), $siteHelper->getTermTypes());
 
         foreach ($supportedTypes as $contentTypeName => $contentTypeLabel) {
-            /**
-             * @var ContentTypeInterface $descriptor
-             */
             $descriptor = $contentTypeManager->getDescriptorByType($contentTypeName);
 
             if (!($descriptor instanceof ContentTypeInterface)) {
@@ -78,8 +60,8 @@ class SmartlingListTable extends WP_List_Table
      *
      * @return mixed
      */
-    public function getFromSource($keyName, $defaultValue)
+    public function getFromSource(string $keyName, $defaultValue)
     {
-        return array_key_exists($keyName, $this->getSource()) ? $this->getSource()[$keyName] : $defaultValue;
+        return array_key_exists($keyName, $this->source) ? ($this->source)[$keyName] : $defaultValue;
     }
 }

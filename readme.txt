@@ -2,8 +2,8 @@
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 5.5
-Tested up to: 6.0
-Requires PHP: 8.1
+Tested up to: 6.1
+Requires PHP: 8.0
 Stable tag: 3.0.0
 License: GPLv2 or later
 
@@ -29,7 +29,7 @@ Integration Features
 = Minimum Requirements =
 * WordPress 5.5 or higher
 * Multisite mode enabled
-* PHP Version 8.1 or higher
+* PHP Version 8.0 or higher
 * PHP extensions:
  * `mbstring`
  * `curl`
@@ -63,7 +63,26 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 3.0.0 =
-* Minimum required PHP version is now 8.1!
+* Minimum required PHP version is now 8.0!
+
+= 2.16.7 =
+* Added Beaver Builder 2.6 to supported versions
+
+= 2.16.6 =
+* Changed handling of related items: plugin will now honor the changes in registered custom post types and taxonomies by ExportedApi::FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE and ExportedApi::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY when sending related items for translation
+
+= 2.16.5 =
+* Tested compatibility with WP 6.1
+
+= 2.16.4 =
+* Changed related assets handling. The plugin will treat unknown post types as the default 'attachment' post type when working with related content
+
+= 2.16.3 =
+* Fixed locked serialized metadata fields becoming corrupt after translation is applied
+
+= 2.16.2 =
+* Improved logging when discovering related assets
+* PHP 7.4 will stop receiving security updates on 28th of November! Refactored code to remove known E_DEPRECATED notices, next major release expected to require at least PHP 8.1
 
 = 2.16.1 =
 * Fixed Gutenberg block rules with JSON paths in nested Gutenberg blocks

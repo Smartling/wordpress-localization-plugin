@@ -7,7 +7,6 @@ use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Extensions\Acf\AcfTypeDetector;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\ContentHelper;
-use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\MediaBasedProcessor;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Settings\SettingsManager;
@@ -52,15 +51,12 @@ class AcfTypeDetectorTest extends TestCase
             'local-fields' => $fields,
         ];
 
-        $entityHelper = $this->createMock(EntityHelper::class);
         $settingsManager = $this->getMockBuilder(SettingsManager::class)->disableOriginalConstructor()->getMock();
         $settingsManager->method('getActiveProfiles')->willReturn([]);
         $siteHelper = $this->createMock(SiteHelper::class);
         $siteHelper->method('listBlogs')->willReturn([]);
-        $entityHelper->method('getSiteHelper')->willReturn($siteHelper);
-        $entityHelper->method('getSettingsManager')->willReturn($settingsManager);
 
-        $ads = new AcfDynamicSupport($entityHelper);
+        $ads = new AcfDynamicSupport($settingsManager, $siteHelper);
         $ads->run();
 
         $fields = json_decode('{"entity\/post_content\/acf\/testimonial\/data\/media":"297",' .

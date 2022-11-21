@@ -89,6 +89,11 @@ class WordpressFunctionProxyHelper
         return get_terms(...func_get_args());
     }
 
+    public function maybe_unserialize()
+    {
+        return maybe_unserialize(...func_get_args());
+    }
+
     /**
      * @param array|\WP_Block_Parser_Block $block
      * @return string

@@ -18,7 +18,6 @@ use Smartling\Tests\Traits\ApiWrapperMock;
 use Smartling\Tests\Traits\DateTimeBuilder;
 use Smartling\Tests\Traits\DbAlMock;
 use Smartling\Tests\Traits\DummyLoggerMock;
-use Smartling\Tests\Traits\EntityHelperMock;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 use Smartling\Tests\Traits\QueueMock;
 use Smartling\Tests\Traits\SettingsManagerMock;
@@ -32,7 +31,6 @@ class LastModifiedCheckJobTest extends TestCase
     use DateTimeBuilder;
     use DbAlMock;
     use SiteHelperMock;
-    use EntityHelperMock;
     use SubmissionEntityMock;
     use SubmissionManagerMock;
     use SettingsManagerMock;
@@ -53,8 +51,7 @@ class LastModifiedCheckJobTest extends TestCase
         $dbMock = $this->mockDbAl();
 
         $this->submissionManager = $this->mockSubmissionManager(
-            $dbMock,
-            $this->mockEntityHelper($this->mockSiteHelper())
+            $dbMock
         );
 
         $profile = $this->createMock(ConfigurationProfileEntity::class);

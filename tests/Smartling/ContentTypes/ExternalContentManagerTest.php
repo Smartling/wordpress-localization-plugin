@@ -12,10 +12,6 @@ use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 class ExternalContentManagerTest extends TestCase {
-    private function getExternalContentManager(): ExternalContentManager
-    {
-        return new ExternalContentManager();
-    }
     public function testExceptionHandling()
     {
         $content1 = $this->createMock(ContentTypePluggableInterface::class);
@@ -28,7 +24,7 @@ class ExternalContentManagerTest extends TestCase {
         $content2->method('getContentFields')->willThrowException(new \TypeError());
         $content2->method('getRelatedContent')->willThrowException(new \ParseError());
         $content2->method('setContentFields')->willThrowException(new \Error());
-        $x = $this->getExternalContentManager();
+        $x = new ExternalContentManager();
         $x->addHandler($content1);
         $x->addHandler($content2);
         $submission = $this->createMock(SubmissionEntity::class);
@@ -46,7 +42,7 @@ class ExternalContentManagerTest extends TestCase {
         $content2->method('canHandle')->willReturn(false);
         $content2->method('getContentFields')->willReturn(['content2' => ['content_2' => 'content 2']]);
         $content3 = $this->createMock(ContentTypePluggableInterface::class);
-        $x = $this->getExternalContentManager();
+        $x = new ExternalContentManager();
         $x->addHandler($content1);
         $x->addHandler($content2);
         $x->addHandler($content3);
@@ -77,7 +73,7 @@ class ExternalContentManagerTest extends TestCase {
         $content3->method('canHandle')->willReturn(true);
         $content3->method('getContentFields')->willReturn(['content_3' => 'content 3']);
         $content3->method('getPluginId')->willReturn('content3');
-        $x = $this->getExternalContentManager();
+        $x = new ExternalContentManager();
         $x->addHandler($content1);
         $x->addHandler($content2);
         $x->addHandler($content3);
@@ -155,7 +151,7 @@ class ExternalContentManagerTest extends TestCase {
                 'content_3' => 'content 3',
             ],
         ]);
-        $x = $this->getExternalContentManager();
+        $x = new ExternalContentManager();
         $x->addHandler($content1);
         $x->addHandler($content2);
         $x->addHandler($content3);
@@ -178,7 +174,7 @@ class ExternalContentManagerTest extends TestCase {
             'image' => [2, 1],
             'other' => [3],
         ];
-        $x = $this->getExternalContentManager();
+        $x = new ExternalContentManager();
         $x->addHandler($content1);
         $x->addHandler($content2);
         $x->addHandler($content3);

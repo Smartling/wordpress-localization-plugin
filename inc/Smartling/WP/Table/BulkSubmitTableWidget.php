@@ -5,31 +5,27 @@ namespace Smartling\WP\Table;
 use DateTime;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
+use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DateTimeHelper;
-use Smartling\Helpers\EntityHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginInfo;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\Controller\SmartlingListTable;
 
-
-/**
- * Class BulkSubmitTableWidget
- * @package Smartling\WP\View
- */
 class BulkSubmitTableWidget extends SmartlingListTable
 {
-
     use CommonLogMessagesTrait;
+    use LoggerSafeTrait;
 
     /**
      * @var string
@@ -62,9 +58,9 @@ class BulkSubmitTableWidget extends SmartlingListTable
     ];
 
     private ConfigurationProfileEntity $profile;
-    private EntityHelper $entityHelper;
-    private LoggerInterface $logger;
+    private LocalizationPluginProxyInterface $localizationPluginProxy;
     private PluginInfo $pluginInfo;
+    private SiteHelper $siteHelper;
     private SmartlingCore $core;
     private SubmissionManager $manager;
 
@@ -73,26 +69,22 @@ class BulkSubmitTableWidget extends SmartlingListTable
         return $this->profile;
     }
 
-    public function getLogger(): LoggerInterface
-    {
-        return $this->logger;
-    }
-
     public function __construct(
+        LocalizationPluginProxyInterface $localizationPluginProxy,
+        SiteHelper $siteHelper,
         SmartlingCore $core,
         SubmissionManager $manager,
         PluginInfo $pluginInfo,
-        EntityHelper $entityHelper,
         ConfigurationProfileEntity $profile
     )
     {
         $this->core = $core;
+        $this->localizationPluginProxy = $localizationPluginProxy;
         $this->manager = $manager;
         $this->setSource($_REQUEST);
         $this->pluginInfo = $pluginInfo;
-        $this->entityHelper = $entityHelper;
         $this->profile = $profile;
-        $this->logger = $entityHelper->getLogger();
+        $this->siteHelper = $siteHelper;
 
         /*
          * Set default content type to first known
@@ -109,14 +101,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
     public function getManager()
     {
         return $this->manager;
-    }
-
-    /**
-     * @return EntityHelper
-     */
-    public function getEntityHelper()
-    {
-        return $this->entityHelper;
     }
 
     /**
@@ -401,7 +385,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
                 if (isset($row['id'], $row['type'])) {
                     $entities = $this->getManager()
                         ->find([
-                                   SubmissionEntity::FIELD_SOURCE_BLOG_ID => $this->getEntityHelper()->getSiteHelper()->getCurrentBlogId(),
+                                   SubmissionEntity::FIELD_SOURCE_BLOG_ID => $this->siteHelper->getCurrentBlogId(),
                                    SubmissionEntity::FIELD_SOURCE_ID      => $row['id'],
                                    SubmissionEntity::FIELD_CONTENT_TYPE   => $this->getContentTypeFilterValue(),
                                ]
@@ -414,8 +398,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
                     $locales = [];
                     foreach ($entities as $entity) {
                         $locales[] =
-                            $this->entityHelper->getConnector()
-                                ->getBlogNameByLocale($entity->getTargetLocale());
+                            $this->localizationPluginProxy->getBlogNameByLocale($entity->getTargetLocale());
                     }
 
                     $row['locales'] = implode(', ', $locales);
@@ -458,7 +441,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
     private function getFilteredAllowedTypes()
     {
 
-        $types = $this->getActiveContentTypes($this->entityHelper->getSiteHelper(), 'bulkSubmit');
+        $types = $this->getActiveContentTypes($this->siteHelper, 'bulkSubmit');
 
         $restrictedTypes = WordpressContentTypeHelper::getTypesRestrictedToBulkSubmit();
 
