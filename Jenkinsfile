@@ -18,6 +18,16 @@ pipeline {
             }
         }
 
+        stage('Release version check') {
+            agent {
+                label 'master'
+            }
+
+            steps {
+                sh 'docker run --rm -w /plugin-dir -v $PWD:/plugin-dir wordpress-localization-plugin-php74:latest /releaseVersionCheck.sh'
+            }
+        }
+
         stage('Run tests') {
             agent {
                 label 'master'
@@ -25,9 +35,7 @@ pipeline {
 
             steps {
                 withCredentials([string(credentialsId: 'PROJECT_ID', variable: 'PROJECT_ID'), string(credentialsId: 'USER_IDENTIFIER', variable: 'USER_IDENTIFIER'), string(credentialsId: 'TOKEN_SECRET', variable: 'TOKEN_SECRET')]) {
-                    dir('.') {
-                        sh 'docker run --rm -w /plugin-dir -v $PWD:/plugin-dir -e MYSQL_HOST=localhost -e CRE_PROJECT_ID=$PROJECT_ID -e CRE_USER_IDENTIFIER=$USER_IDENTIFIER -e CRE_TOKEN_SECRET="$TOKEN_SECRET" wordpress-localization-plugin-php74:latest'
-                    }
+                    sh 'docker run --rm -w /plugin-dir -v $PWD:/plugin-dir -e MYSQL_HOST=localhost -e CRE_PROJECT_ID=$PROJECT_ID -e CRE_USER_IDENTIFIER=$USER_IDENTIFIER -e CRE_TOKEN_SECRET="$TOKEN_SECRET" wordpress-localization-plugin-php74:latest'
                 }
             }
         }
@@ -39,18 +47,6 @@ pipeline {
 
             steps {
                 archiveArtifacts artifacts: 'release.zip'
-            }
-        }
-
-        stage('Release version check') {
-            agent {
-                label 'master'
-            }
-
-            steps {
-                dir('.') {
-                    sh 'docker run --rm -w /plugin-dir -v $PWD:/plugin-dir wordpress-localization-plugin-php74:latest /releaseVersionCheck.sh'
-                }
             }
         }
 
@@ -70,9 +66,7 @@ pipeline {
 
             steps {
                 withCredentials([string(credentialsId: 'WORDPRESS_ORG_SVN_PASSWORD', variable: 'WORDPRESS_ORG_SVN_PASSWORD')]) {
-                    dir('.') {
-                        sh 'docker run --rm -w /plugin-dir -v $PWD:/plugin-dir -e WORDPRESS_ORG_SVN_PASSWORD=$WORDPRESS_ORG_SVN_PASSWORD wordpress-localization-plugin-php74:latest /release.sh'
-                    }
+                    sh 'docker run --rm -w /plugin-dir -v $PWD:/plugin-dir -e WORDPRESS_ORG_SVN_PASSWORD=$WORDPRESS_ORG_SVN_PASSWORD wordpress-localization-plugin-php74:latest /release.sh'
                 }
             }
         }

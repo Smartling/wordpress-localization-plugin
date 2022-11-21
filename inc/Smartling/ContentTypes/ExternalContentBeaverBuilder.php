@@ -98,7 +98,7 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
 
     public function getMaxVersion(): string
     {
-        return '2.5';
+        return '2.6';
     }
 
     public function getMinVersion(): string
