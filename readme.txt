@@ -4,7 +4,7 @@ Tags: translation, localization, localisation, translate, multilingual, smartlin
 Requires at least: 5.5
 Tested up to: 6.1
 Requires PHP: 7.4
-Stable tag: 3.0.0
+Stable tag: 2.16.7
 License: GPLv2 or later
 
 Translate content in WordPress quickly and seamlessly with Smartling, the industry-leading Translation Management System.
@@ -62,8 +62,8 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
-= 3.0.0 =
-* Minimum required PHP version is now 8.1!
+= 2.16.7 =
+* Added Beaver Builder 2.6 to supported versions
 
 = 2.16.6 =
 * Changed handling of related items: plugin will now honor the changes in registered custom post types and taxonomies by ExportedApi::FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE and ExportedApi::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY when sending related items for translation
