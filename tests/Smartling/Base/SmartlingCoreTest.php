@@ -45,6 +45,7 @@ class SmartlingCoreTest extends TestCase
     protected function setUp(): void
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
+        $wpProxy = new WordpressFunctionProxyHelper();
         $this->core = new SmartlingCore(
             new ExternalContentManager(),
             new PostContentHelper(
