@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:21.10
 
 ARG ACF_PRO_VERSION=latest
 ARG WP_VERSION=latest
