@@ -13,5 +13,5 @@ interface ManagerInterface
 
     public function removeItem(string $id): void;
 
-    public function getItem(string $id);
+    public function getItem(string $id): mixed;
 }

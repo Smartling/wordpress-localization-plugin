@@ -38,11 +38,12 @@ class LastModifiedCheckJobTest extends TestCase
     use ApiWrapperMock;
 
     use InvokeMethodTrait;
-    private $settingsManager;
-    private $lastModifiedWorker;
-    private $submissionManager;
-    private $apiWrapper;
-    private $queue;
+
+    private ApiWrapperInterface $apiWrapper;
+    private LastModifiedCheckJob $lastModifiedWorker;
+    private QueueInterface $queue;
+    private SettingsManager $settingsManager;
+    private SubmissionManager $submissionManager;
     private string $modifiedDateTimeString = '2016-01-10 00:00:00';
 
     protected function setUp(): void
@@ -91,15 +92,19 @@ class LastModifiedCheckJobTest extends TestCase
     {
         $worker = $this->lastModifiedWorker;
 
+        $dequeueResult = $this->mockedResultToDequeueResult($groupedSubmissions);
+        $dequeueResult[] = false;
+        $this->queue
+            ->expects($this->exactly(count($groupedSubmissions) + 1))
+            ->method('dequeue')
+            ->withConsecutive(
+                ...array_merge(
+                array_fill(0, count($groupedSubmissions), [QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE]),
+                [[QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE]],
+            ))
+            ->willReturnOnConsecutiveCalls(...$dequeueResult);
+
         foreach ($groupedSubmissions as $index => $mockedResult) {
-            $dequeueResult = $this->mockedResultToDequeueResult($groupedSubmissions);
-
-            $this->queue
-                ->expects(self::at($index))
-                ->method('dequeue')
-                ->with(QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE)
-                ->willReturn($dequeueResult[$index]);
-
             if (false !== $mockedResult) {
                 foreach ($mockedResult as $fileUri => $submissionList) {
 
@@ -127,12 +132,6 @@ class LastModifiedCheckJobTest extends TestCase
                 }
             }
         }
-
-        $this->queue
-            ->expects(self::at(count($groupedSubmissions)))
-            ->method('dequeue')
-            ->with(QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE)
-            ->willReturn(false);
 
         $this->apiWrapper
             ->expects(self::exactly($expectedStatusCheckRequests))
@@ -359,15 +358,18 @@ class LastModifiedCheckJobTest extends TestCase
     {
         $worker = $this->lastModifiedWorker;
 
+        $dequeueResult = $this->mockedResultToDequeueResult($groupedSubmissions);
+        $dequeueResult[] = false;
+        $this->queue
+            ->expects($this->exactly(count($groupedSubmissions) + 1))
+            ->method('dequeue')
+            ->withConsecutive(...array_merge(
+                array_fill(0, count($groupedSubmissions), [QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE]),
+                [[QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE]],
+            ))
+            ->willReturnOnConsecutiveCalls(...$dequeueResult);
+
         foreach ($groupedSubmissions as $index => $mockedResult) {
-            $dequeueResult = $this->mockedResultToDequeueResult($groupedSubmissions);
-
-            $this->queue
-                ->expects(self::at($index))
-                ->method('dequeue')
-                ->with(Queue::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE)
-                ->willReturn($dequeueResult[$index]);
-
             if (false !== $mockedResult) {
                 foreach ($mockedResult as $fileUri => $submissionList) {
 
@@ -398,12 +400,6 @@ class LastModifiedCheckJobTest extends TestCase
                 }
             }
         }
-
-        $this->queue
-            ->expects(self::at(count($groupedSubmissions)))
-            ->method('dequeue')
-            ->with(QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE)
-            ->willReturn(false);
 
         $this->apiWrapper
             ->expects(self::never())
@@ -494,14 +490,20 @@ class LastModifiedCheckJobTest extends TestCase
 
         $missingSubmission = $this->createMock(SubmissionEntity::class);
         $missingSubmission->method('getTargetLocale')->willReturn('MissingLocale');
+        $this->lastModifiedWorker = $this->getMockBuilder(LastModifiedCheckJob::class)
+            ->onlyMethods(['prepareSubmissionList', 'getSmartlingLocaleIdBySubmission', 'placeLockFlag'])
+            ->setConstructorArgs([$this->apiWrapper, $this->settingsManager, $this->submissionManager, '20m', 1200, $this->queue])
+            ->getMock();
         $this->lastModifiedWorker->method('getSmartlingLocaleIdBySubmission')->willReturn($missingSubmission->getTargetLocale());
 
-        $this->queue->expects($this->at(0))->method('dequeue')->willReturn(false);
+        $dequeueResult = $this->mockedResultToDequeueResult($submissions);
+        $this->queue->expects($this->exactly(count($submissions) + 2))->method('dequeue')
+            ->withConsecutive(...array_merge(
+                [[QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE]],
+                array_fill(0, count($submissions) + 2, [QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE]),
+            ))
+            ->willReturnOnConsecutiveCalls(...array_merge([false], $dequeueResult, [false]));
         foreach ($submissions as $index => $result) {
-            $dequeueResult = $this->mockedResultToDequeueResult($submissions);
-            $this->queue->expects($this->at($index + 1))->method('dequeue')
-                ->with(QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE)
-                ->willReturn($dequeueResult[$index]);
             if (is_array($result)) {
                 foreach ($result as $fileUri => $submissionList) {
                     $dequeued = $dequeueResult[$index][$fileUri];
@@ -520,14 +522,11 @@ class LastModifiedCheckJobTest extends TestCase
                 }
             }
         }
-        $this->queue->expects($this->at($index + 2))->method('dequeue')
-            ->with(QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE)
-            ->willReturn(false);
 
         $missingSubmission->expects($this->once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_FAILED);
         $missingSubmission->expects($this->once())->method('setLastError')->with('File submitted for locales TestLocaleA, TestLocaleB. This submission is for locale ' . $missingSubmission->getTargetLocale());
-        
-        $this->submissionManager->expects($this->at(1))->method('storeSubmissions')->with([$missingSubmission]);
+
+        $this->submissionManager->expects($this->exactly(2))->method('storeSubmissions')->withConsecutive([[$missingSubmission]], [['TestLocaleA' => $submissionList[0], 'TestLocaleB' => $submissionList[1]]]);
 
         $this->lastModifiedWorker->run();
     }

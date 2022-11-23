@@ -6,25 +6,19 @@ use Smartling\WP\WPHookInterface;
 
 class FilterManager extends CustomizationManagerAbstract implements WPHookInterface
 {
-
-    const STORAGE_KEY = 'CUSTOM_FILTERS';
+    private const STORAGE_KEY = 'CUSTOM_FILTERS';
 
     public function __construct()
     {
         parent::__construct(static::STORAGE_KEY);
     }
 
-    /**
-     * @param $items []
-     *
-     * @return array
-     */
-    public function injector($items)
+    public function injector(array $items): array
     {
         $this->loadData();
-        $list = static::listItems();
+        $list = $this->listItems();
 
-        if (is_array($list) && 0 < count($list)) {
+        if (0 < count($list)) {
             return array_merge($items, $list);
         }
 

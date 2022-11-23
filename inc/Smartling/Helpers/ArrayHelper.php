@@ -39,7 +39,7 @@ class ArrayHelper
      *
      * @return mixed the value of the element if found, default value otherwise
      */
-    public static function getValue($array, $key, $default = null)
+    public static function getValue(array|object $array, string|\Closure $key, mixed $default = null): mixed
     {
         if ($key instanceof \Closure) {
             return $key($array, $default);
@@ -56,11 +56,13 @@ class ArrayHelper
 
         if (is_object($array)) {
             return $array->$key;
-        } elseif (is_array($array)) {
-            return array_key_exists($key, $array) ? $array[$key] : $default;
-        } else {
-            return $default;
         }
+
+        if (is_array($array)) {
+            return array_key_exists($key, $array) ? $array[$key] : $default;
+        }
+
+        return $default;
     }
 
     /**
@@ -81,9 +83,9 @@ class ArrayHelper
      *
      * @return mixed|null the value of the element if found, default value otherwise
      */
-    public static function remove(&$array, $key, $default = null)
+    public static function remove(array &$array, string $key, mixed $default = null): mixed
     {
-        if (is_array($array) && (isset($array[$key]) || array_key_exists($key, $array))) {
+        if (isset($array[$key]) || array_key_exists($key, $array)) {
             $value = $array[$key];
             unset($array[$key]);
 
@@ -94,58 +96,38 @@ class ArrayHelper
     }
 
     /**
-     * @param $value
-     *
-     * @return bool true if given value is an array and it is not empty
+     * @return bool true if given value is an array, and it is not empty
      */
-    public static function notEmpty($value)
+    public static function notEmpty(mixed $value): bool
     {
         return is_array($value) && 0 < count($value);
     }
 
-    /**
-     * Returns first element of a given array
-     *
-     * @param array $array
-     *
-     * @return mixed
-     */
-    public static function first(array $array)
+    public static function first(array $array): mixed
     {
         if (!static::notEmpty($array)) {
             return false; // as reset() does
         }
 
-        $keys = array_keys($array);
-
-        return $array[$keys[0]];
+        return $array[array_key_first($array)];
     }
 
-    /**
-     * @param array $array
-     * @return bool|mixed
-     */
-    public static function last(array $array) {
+    public static function last(array $array): mixed
+    {
         if (!static::notEmpty($array)) {
             return false; // as reset() does
         }
 
-        return end($array);
+        return $array[array_key_last($array)];
     }
 
-    /**
-     * @param array $locales
-     */
-    public static function sortLocales(array & $locales)
+    public static function sortLocales(array &$locales): void
     {
-        usort($locales, function ($a, $b) {
-            /**
-             * @var Locale $a
-             * @var Locale $b
-             */
-
-            return $a->getLabel() > $b->getLabel();
-
+        usort($locales, static function (Locale $a, Locale $b) {
+            if ($a->getLabel() === $b->getLabel()) {
+                return 0;
+            }
+            return $a->getLabel() > $b->getLabel() ? 1 : -1;
         });
     }
 

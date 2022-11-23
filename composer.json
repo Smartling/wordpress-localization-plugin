@@ -1,13 +1,19 @@
 {
   "name": "smartling/wordpress-connector",
   "license": "GPL-2.0-or-later",
-  "version": "2.16.7",
+  "version": "3.0.0",
   "description": "",
   "type": "wordpress-plugin",
+  "repositories": [
+    {
+      "type": "github",
+      "url": "https://github.com/vsolovei-smartling/retry"
+    }
+  ],
   "require": {
     "galbar/jsonpath": "^2.0",
-    "jralph/retry": "^2.0",
-    "php": ">=7.4",
+    "vsolovei-smartling/retry": "^2.0.1",
+    "php": ">=8.0",
     "monolog/monolog": "~1",
     "symfony/dependency-injection": "~2.8",
     "symfony/config": "~2.8",
@@ -18,7 +24,7 @@
     "ext-json": "*"
   },
   "require-dev": {
-    "phpunit/phpunit": "~8"
+    "phpunit/phpunit": "~9"
   },
   "config": {
     "vendor-dir": "inc/third-party"

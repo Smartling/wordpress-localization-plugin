@@ -14,6 +14,7 @@ namespace {
 
 namespace Smartling\Tests\Services {
 
+    use PHPUnit\Framework\Constraint\IsInstanceOf;
     use PHPUnit\Framework\MockObject\MockObject;
     use PHPUnit\Framework\TestCase;
     use Smartling\ApiWrapper;
@@ -434,18 +435,17 @@ namespace Smartling\Tests\Services {
             $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
             $submissionManager = $this->createMock(SubmissionManager::class);
 
-            $submissionManager->expects($this->at(0))->method('find')->with([
+            $submissionManager->expects($this->exactly(2))->method('find')->withConsecutive([[
                 SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
                 SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
                 SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
                 SubmissionEntity::FIELD_SOURCE_ID => $childPostId,
-            ]);
-            $submissionManager->expects($this->at(1))->method('find')->with([
+            ]], [[
                 SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
                 SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
                 SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
                 SubmissionEntity::FIELD_SOURCE_ID => $rootPostId,
-            ]);
+            ]]);
 
             $x = $this->getContentRelationDiscoveryService(
                 $this->createMock(ApiWrapper::class),
@@ -593,8 +593,9 @@ namespace Smartling\Tests\Services {
             ])->willReturn([$submission]);
 
             // Expects the original submission and 2 related submissions are stored to DB
-            $submissionManager->expects(self::exactly(3))->method('storeEntity');
-            $submissionManager->expects(self::at(1))->method('storeEntity')->with($submission);
+            $submissionManager->expects(self::exactly(3))->method('storeEntity')
+                ->withConsecutive([$submission], [new IsInstanceOf(SubmissionEntity::class)], [new IsInstanceOf(SubmissionEntity::class)])
+                ->willReturnArgument(0);
 
             $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
 
@@ -626,8 +627,9 @@ namespace Smartling\Tests\Services {
             $irrelevantKey = 'field_5d5db4597e812';
 
             $acfDynamicSupport = $this->createMock(AcfDynamicSupport::class);
-            $acfDynamicSupport->expects($this->at(0))->method('getReferencedTypeByKey')->with($attachmentKey)->willReturn(AcfDynamicSupport::REFERENCED_TYPE_MEDIA);
-            $acfDynamicSupport->expects($this->at(1))->method('getReferencedTypeByKey')->with($irrelevantKey)->willReturn(AcfDynamicSupport::REFERENCED_TYPE_NONE);
+            $acfDynamicSupport->expects($this->exactly(2))->method('getReferencedTypeByKey')
+                ->withConsecutive([$attachmentKey], [$irrelevantKey])
+                ->willReturnOnConsecutiveCalls(AcfDynamicSupport::REFERENCED_TYPE_MEDIA, AcfDynamicSupport::REFERENCED_TYPE_NONE);
 
             $x = $this->getContentRelationDiscoveryService(
                 $this->createMock(ApiWrapper::class),

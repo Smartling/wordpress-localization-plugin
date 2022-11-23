@@ -54,12 +54,12 @@ abstract class CustomizationManagerAbstract implements ManagerInterface, \Iterat
         unset($this[$id]);
     }
 
-    public function getItem(string $id)
+    public function getItem(string $id): mixed
     {
         return $this[$id];
     }
 
-    public function current()
+    public function current(): mixed
     {
         return current($this->state);
     }
@@ -69,7 +69,7 @@ abstract class CustomizationManagerAbstract implements ManagerInterface, \Iterat
         next($this->state);
     }
 
-    public function key()
+    public function key(): string|int|null
     {
         return key($this->state);
     }
@@ -89,7 +89,7 @@ abstract class CustomizationManagerAbstract implements ManagerInterface, \Iterat
         return array_key_exists($offset, $this->state);
     }
 
-    public function offsetGet($offset)
+    public function offsetGet($offset): mixed
     {
         if (isset($this[$offset])) {
             return $this->state[$offset];

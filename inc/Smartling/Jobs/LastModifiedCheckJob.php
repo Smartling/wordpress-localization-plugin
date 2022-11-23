@@ -116,15 +116,6 @@ class LastModifiedCheckJob extends JobAbstract
     }
 
     /**
-     * @param SubmissionEntity[] $submissions
-     * @return SubmissionEntity[]
-     */
-    protected function storeSubmissions(array $submissions): array
-    {
-        return $this->submissionManager->storeSubmissions($submissions);
-    }
-
-    /**
      * @param array $serializedPair
      * @return bool
      */
@@ -174,7 +165,7 @@ class LastModifiedCheckJob extends JobAbstract
                     continue;
                 }
 
-                $submissions = $this->storeSubmissions($submissions);
+                $submissions = $this->submissionManager->storeSubmissions($submissions);
 
                 if (0 < count($submissions)) {
                     try {

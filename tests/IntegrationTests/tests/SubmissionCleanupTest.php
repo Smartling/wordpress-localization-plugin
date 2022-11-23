@@ -2,11 +2,28 @@
 
 namespace Smartling\Tests\IntegrationTests\tests;
 
+use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\Helpers\SiteHelper;
+use Smartling\Helpers\SubmissionCleanupHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 
 class SubmissionCleanupTest extends SmartlingUnitTestCaseAbstract
 {
+    private ?SubmissionCleanupHelper $submissionCleanupHelper = null;
+    public function setUp(): void
+    {
+        if ($this->submissionCleanupHelper === null) {
+            $this->submissionCleanupHelper = $this->getSubmissionCleanupHelper();
+        }
+        $this->submissionCleanupHelper->register();
+    }
+
+    public function tearDown(): void
+    {
+        $this->submissionCleanupHelper?->unregister();
+    }
+
     private int $targetBlogId = 2;
 
     private function prepareSubmissionAndUpload(): SubmissionEntity
@@ -43,8 +60,20 @@ class SubmissionCleanupTest extends SmartlingUnitTestCaseAbstract
     public function testRemovedTranslatedContent()
     {
         $submission = $this->prepareSubmissionAndUpload();
-        switch_to_blog($this->targetBlogId);
-        wp_delete_post($submission->getTargetId(), true);
+        (new SiteHelper())->withBlog($this->targetBlogId, function() use ($submission) {
+            $submission->target_id = $this->createPost();
+            $this->getSubmissionManager()->storeEntity($submission);
+            wp_delete_post($submission->getTargetId(), true);
+        });
+
         $this->assertNoSubmissions();
+    }
+
+    private function getSubmissionCleanupHelper(): SubmissionCleanupHelper
+    {
+        $localizationPluginProxy = $this->createMock(LocalizationPluginProxyInterface::class);
+        $localizationPluginProxy->method('unlinkObjects')->willReturn(true);
+
+        return new SubmissionCleanupHelper($localizationPluginProxy, $this->getSiteHelper(), $this->getSubmissionManager());
     }
 }

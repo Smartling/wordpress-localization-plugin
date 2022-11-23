@@ -1,16 +1,15 @@
 <?php
 define('DIR_TESTDATA', getenv('TEST_DATA_DIR'));
-define('WP_LANG_DIR', DIR_TESTDATA . '/languages');
+const WP_LANG_DIR = DIR_TESTDATA . '/languages';
 define('WP_TESTS_TABLE_PREFIX', getenv('WP_DB_TABLE_PREFIX'));
-define('DISABLE_WP_CRON', true);
-define('WP_MEMORY_LIMIT', -1);
-define('WP_MAX_MEMORY_LIMIT', -1);
-define('REST_TESTS_IMPOSSIBLY_HIGH_NUMBER', 99999999);
+const DISABLE_WP_CRON = true;
+const WP_MEMORY_LIMIT = - 1;
+const WP_MAX_MEMORY_LIMIT = - 1;
 if (!defined('WP_DEFAULT_THEME')) {
     define('WP_DEFAULT_THEME', 'default');
 }
 defined('MULTISITE') or define('MULTISITE', true);
-define('SUBDOMAIN_INSTALL', false);
+const SUBDOMAIN_INSTALL = false;
 $config_file_path = getenv('TEST_CONFIG');
 global $wpdb, $current_site, $current_blog, $wp_rewrite, $shortcode_tags, $wp, $phpmailer, $wp_theme_directories;
 require_once __DIR__ . '/functions.php';
