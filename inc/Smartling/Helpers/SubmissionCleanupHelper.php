@@ -1,14 +1,10 @@
 <?php
 namespace Smartling\Helpers;
 
-use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\EntityNotFoundException;
-use Smartling\MonologWrapper\MonologWrapper;
-use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\WPHookInterface;
 
 /**
@@ -21,133 +17,20 @@ use Smartling\WP\WPHookInterface;
  */
 class SubmissionCleanupHelper implements WPHookInterface
 {
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    use LoggerSafeTrait;
 
-    /**
-     * @var ApiWrapperInterface
-     */
-    private $apiWrapper;
+    private LocalizationPluginProxyInterface $multilangProxy;
+    private SiteHelper $siteHelper;
+    private SubmissionManager $submissionManager;
 
-    /**
-     * @var SiteHelper
-     */
-    private $siteHelper;
-
-    /**
-     * @var SubmissionManager
-     */
-    private $submissionManager;
-
-    /**
-     * @var ContentEntitiesIOFactory
-     */
-    private $ioWrapper;
-
-    /**
-     * @var LocalizationPluginProxyInterface
-     */
-    private $multilangProxy;
-
-    /**
-     * SubmissionCleanupHelper constructor.
-     */
-    public function __construct() {
-        $this->logger = MonologWrapper::getLogger(get_called_class());
-    }
-
-    /**
-     * @return SiteHelper
-     */
-    public function getSiteHelper()
-    {
-        return $this->siteHelper;
-    }
-
-    /**
-     * @param SiteHelper $siteHelper
-     */
-    public function setSiteHelper($siteHelper)
-    {
+    public function __construct(LocalizationPluginProxyInterface $localizationPluginProxy, SiteHelper $siteHelper, SubmissionManager $submissionManager) {
+        $this->multilangProxy = $localizationPluginProxy;
         $this->siteHelper = $siteHelper;
-    }
-
-    /**
-     * @return SubmissionManager
-     */
-    public function getSubmissionManager()
-    {
-        return $this->submissionManager;
-    }
-
-    /**
-     * @param SubmissionManager $submissionManager
-     */
-    public function setSubmissionManager($submissionManager)
-    {
         $this->submissionManager = $submissionManager;
     }
 
     /**
-     * @return ContentEntitiesIOFactory
-     */
-    public function getIoWrapper()
-    {
-        return $this->ioWrapper;
-    }
-
-    /**
-     * @param ContentEntitiesIOFactory $ioWrapper
-     */
-    public function setIoWrapper($ioWrapper)
-    {
-        $this->ioWrapper = $ioWrapper;
-    }
-
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
-    {
-        return $this->logger;
-    }
-
-    /**
-     * @return ApiWrapperInterface
-     */
-    public function getApiWrapper()
-    {
-        return $this->apiWrapper;
-    }
-
-    /**
-     * @param ApiWrapperInterface $apiWrapper
-     */
-    public function setApiWrapper($apiWrapper)
-    {
-        $this->apiWrapper = $apiWrapper;
-    }
-
-    /**
-     * @return LocalizationPluginProxyInterface
-     */
-    public function getMultilangProxy()
-    {
-        return $this->multilangProxy;
-    }
-
-    /**
-     * @param LocalizationPluginProxyInterface $multilangProxy
-     */
-    public function setMultilangProxy($multilangProxy)
-    {
-        $this->multilangProxy = $multilangProxy;
-    }
-
-    /**
-     * Registers wp hook handlers. Invoked by wordpress.
+     * Registers wp hook handlers. Invoked by WordPress.
      */
     public function register(): void
     {
@@ -158,17 +41,27 @@ class SubmissionCleanupHelper implements WPHookInterface
     }
 
     /**
+     * Used for testing
+     */
+    public function unregister(): void
+    {
+        remove_action('before_delete_post', [$this, 'beforeDeletePostHandler']);
+        remove_action('delete_attachment', [$this, 'deleteAttachmentHandler']);
+        remove_action('delete_widget', [$this, 'deleteWidgetHandler']);
+        remove_action('pre_delete_term', [$this, 'preDeleteTermHandler'], 999);
+    }
+
+    /**
      * @param int $postId
      */
-    public function beforeDeletePostHandler($postId)
+    public function beforeDeletePostHandler($postId): void
     {
         if (wp_is_post_revision($postId)) {
             return;
         }
 
-        remove_action('before_delete_post', [$this, 'beforeDeletePostHandler']);
         try {
-            $currentBlogId = $this->getSiteHelper()->getCurrentBlogId();
+            $currentBlogId = $this->siteHelper->getCurrentBlogId();
             $this->getLogger()->debug(vsprintf('Post id=%s is going to be deleted in blog=%s', [$postId, $currentBlogId]));
             global $post_type;
 
@@ -180,8 +73,6 @@ class SubmissionCleanupHelper implements WPHookInterface
         } catch (EntityNotFoundException $e) {
             $this->getLogger()->warning($e->getMessage());
         }
-
-        add_action('before_delete_post', [$this, 'beforeDeletePostHandler']);
     }
 
     /**
@@ -199,7 +90,7 @@ class SubmissionCleanupHelper implements WPHookInterface
 
     public function deleteWidgetHandler($widgetId): void
     {
-        $currentBlogId = $this->getSiteHelper()->getCurrentBlogId();
+        $currentBlogId = $this->siteHelper->getCurrentBlogId();
         $postType = get_post($widgetId)->post_type;
         $this->getLogger()->debug("Widget id=$widgetId type=$postType in blogId=$currentBlogId is going to be deleted");
         $this->deleteSubmissions($postType, $currentBlogId, $widgetId);
@@ -209,9 +100,9 @@ class SubmissionCleanupHelper implements WPHookInterface
      * @param int    $term
      * @param string $taxonomy
      */
-    public function preDeleteTermHandler($term, $taxonomy)
+    public function preDeleteTermHandler($term, $taxonomy): void
     {
-        $currentBlogId = $this->getSiteHelper()->getCurrentBlogId();
+        $currentBlogId = $this->siteHelper->getCurrentBlogId();
 
         $this->getLogger()->debug(
             vsprintf(
@@ -233,9 +124,8 @@ class SubmissionCleanupHelper implements WPHookInterface
 
     private function deleteSubmissions(string $contentType, int $blogId, int $contentId): void
     {
-
         // try treat as translation
-        $params = $searchParams = [
+        $params = [
             SubmissionEntity::FIELD_TARGET_BLOG_ID => $blogId,
             SubmissionEntity::FIELD_CONTENT_TYPE   => $contentType,
             SubmissionEntity::FIELD_TARGET_ID      => $contentId,
@@ -255,19 +145,19 @@ class SubmissionCleanupHelper implements WPHookInterface
     /**
      * @param array $searchParams
      */
-    private function processDeletion(array $searchParams)
+    private function processDeletion(array $searchParams): void
     {
         $this->getLogger()->debug(
             vsprintf('Looking for submissions matching next params: %s', [var_export($searchParams, true)])
         );
 
-        $submissions = $this->getSubmissionManager()->find($searchParams);
+        $submissions = $this->submissionManager->find($searchParams);
 
         if (0 < count($submissions)) {
             $this->getLogger()->debug(vsprintf('Found %d submissions', [count($submissions)]));
             foreach ($submissions as $submission) {
                 $this->unlinkContent($submission);
-                $this->getSubmissionManager()->delete($submission);
+                $this->submissionManager->delete($submission);
             }
         } else {
             $this->getLogger()
@@ -275,10 +165,7 @@ class SubmissionCleanupHelper implements WPHookInterface
         }
     }
 
-    /**
-     * @param SubmissionEntity $submission
-     */
-    private function unlinkContent(SubmissionEntity $submission)
+    private function unlinkContent(SubmissionEntity $submission): void
     {
         $result = false;
         $this->getLogger()->debug(
@@ -291,7 +178,7 @@ class SubmissionCleanupHelper implements WPHookInterface
         );
 
         try {
-            $result = $this->getMultilangProxy()->unlinkObjects($submission);
+            $result = $this->multilangProxy->unlinkObjects($submission);
         } catch (\Exception $e) {
             $this->getLogger()->debug(
                 vsprintf(
@@ -299,7 +186,7 @@ class SubmissionCleanupHelper implements WPHookInterface
                     [
                         $e->getMessage(),
                     ]
-                ), $e
+                ),
             );
         }
 
