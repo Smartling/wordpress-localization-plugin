@@ -3,6 +3,7 @@
 namespace Smartling;
 
 use Exception;
+use JetBrains\PhpStorm\NoReturn;
 use Smartling\Base\ExportedAPI;
 use Smartling\ContentTypes\AutoDiscover\PostTypes;
 use Smartling\ContentTypes\AutoDiscover\Taxonomies;
@@ -197,7 +198,8 @@ class Bootstrap
         }
     }
 
-    public function updateGlobalExpertSettings(): never
+    #[NoReturn]
+    public function updateGlobalExpertSettings(): void
     {
         $data = $_POST['params'];
 
