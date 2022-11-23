@@ -50,7 +50,7 @@ class UploadJob extends JobAbstract
 
             try {
                 do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $entity);
-            } catch (\Error $e) {
+            } catch (\Exception $e) {
                 $this->getLogger()->notice(sprintf('Failing submissionId=%s: %s', $entity->getId(), $e->getMessage()));
                 $this->submissionManager->setErrorMessage($entity, $e->getMessage());
             }
