@@ -293,9 +293,8 @@ class SubmissionManager extends EntityManagerAbstract
 
     /**
      * Looks for submissions with status = 'New' AND batch_uid <> '' AND is_locked = 0
-     * @return SubmissionEntity[] with a single item or empty array
      */
-    public function findSubmissionsForUploadJob(): array
+    public function findSubmissionForUploadJob(): ?SubmissionEntity
     {
         $pageOptions = ['limit' => 1, 'page' => 1];
 
@@ -307,7 +306,7 @@ class SubmissionManager extends EntityManagerAbstract
             $pageOptions
         );
 
-        return $this->fetchData($query);
+        return $this->fetchData($query)[0] ?? null;
     }
 
     public function findSubmissionForCloning(): ?SubmissionEntity
