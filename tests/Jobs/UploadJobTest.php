@@ -60,7 +60,7 @@ class UploadJobTest extends TestCase
 
         $submissionManager = $this->createMock(SubmissionManager::class);
 
-        $submissionManager->method('findSubmissionsForUploadJob')->willReturn([]);
+        $submissionManager->method('findSubmissionForUploadJob')->willReturn(null);
         $submissionManager->method('find')->willReturn([
             $submission
         ]);
@@ -102,7 +102,7 @@ class UploadJobTest extends TestCase
         $submission = new SubmissionEntity();
 
         $submissionManager = $this->createMock(SubmissionManager::class);
-        $submissionManager->method('findSubmissionsForUploadJob')->willReturn([]);
+        $submissionManager->method('findSubmissionForUploadJob')->willReturn(null);
         $submissionManager->method('find')->willReturn([
             $submission
         ]);
@@ -115,5 +115,17 @@ class UploadJobTest extends TestCase
         $x->run();
 
         $this->assertEquals('', $submission->getBatchUid());
+    }
+
+    public function testSubmissionUploadsProcessed(): void
+    {
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->expects($this->exactly(2))->method('findSubmissionForUploadJob')
+            ->willReturnOnConsecutiveCalls($this->createMock(SubmissionEntity::class), null);
+
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->method('getActiveProfiles')->willReturn([$this->createMock(ConfigurationProfileEntity::class)]);
+
+        $this->getWorkerMock($submissionManager, $this->createMock(ApiWrapperInterface::class), $settingsManager)->run();
     }
 }

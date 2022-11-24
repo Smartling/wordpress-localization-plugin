@@ -31,14 +31,7 @@ class UploadJob extends JobAbstract
 
     private function processUploadQueue(): void
     {
-        do {
-            $entities = $this->submissionManager->findSubmissionsForUploadJob();
-
-            if (0 === count($entities)) {
-                break;
-            }
-
-            $entity = ArrayHelper::first($entities);
+        while (($entity = $this->submissionManager->findSubmissionForUploadJob()) !== null) {
             $this->getLogger()->info(
                 vsprintf(
                     'Cron Job triggers content upload for submission id="%s" with status="%s" for entity="%s", blog="%s", id="%s", targetBlog="%s", locale="%s", batchUid="%s".',
@@ -55,9 +48,14 @@ class UploadJob extends JobAbstract
                 )
             );
 
-            do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $entity);
+            try {
+                do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $entity);
+            } catch (\Exception $e) {
+                $this->getLogger()->notice(sprintf('Failing submissionId=%s: %s', $entity->getId(), $e->getMessage()));
+                $this->submissionManager->setErrorMessage($entity, $e->getMessage());
+            }
             $this->placeLockFlag(true);
-        } while (0 < count($entities));
+        }
     }
 
     private function processCloning(): void
