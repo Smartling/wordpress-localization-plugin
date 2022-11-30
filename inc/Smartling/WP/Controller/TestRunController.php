@@ -35,6 +35,9 @@ class TestRunController extends WPAbstract implements WPHookInterface
 {
     private const TEST_RUN_JOB_NAME = 'Test Run Job';
 
+    public const ACTION_CLEAR_FLAG = 'clear_flag';
+    public const SLUG = 'smartling_test_run';
+
     private ContentRelationsDiscoveryService $contentRelationDiscoveryService;
     private ApiWrapperInterface $apiWrapper;
     private SubmissionManager $submissionManager;
@@ -121,13 +124,16 @@ class TestRunController extends WPAbstract implements WPHookInterface
             'Test run',
             'Test run',
             SmartlingUserCapabilities::SMARTLING_CAPABILITY_MENU_CAP,
-            'smartling_test_run',
+            self::SLUG,
             [$this, 'widget']
         );
     }
 
     public function widget(): void
     {
+        if (($_POST['action'] ?? "") === self::ACTION_CLEAR_FLAG) {
+            SimpleStorageHelper::drop(TestRunHelper::TEST_RUN_BLOG_ID_SETTING_NAME);
+        }
         $viewData = $this->buildViewData();
         if ($viewData->getNew() + $viewData->getInProgress() + $viewData->getCompleted() + $viewData->getFailed() === 0) {
             $this->getLogger()->notice('A blog was selected for test run, but no entries uploaded, clearing test run blog');

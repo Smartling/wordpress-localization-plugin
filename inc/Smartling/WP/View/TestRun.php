@@ -38,7 +38,7 @@ if ($viewData->getTestBlogId() === null) {
     const button = jQuery('#testRunForm #testRun');
     button.on('click', function () {
         button.prop('disabled', true);
-        jQuery.post(ajaxurl + '?action=smartling_test_run', jQuery('#testRunForm').serialize(), function (data) {
+        jQuery.post(ajaxurl + '?action=<?= TestRunController::SLUG?>', jQuery('#testRunForm').serialize(), function (data) {
             const success = data.success;
             if (success) {
                 const message = 'Queued for test run';
@@ -99,7 +99,10 @@ if ($viewData->getTestBlogId() === null) {
 </table>
 <?php
 if ($viewData->getNew() + $viewData->getInProgress() === 0) {
-    echo '<p>Test run is has completed. You should now review the translated blog to check if strings everywhere are replaced with pseudo translations.</p>';
+    echo '<p>Test run has completed. You should now review the translated blog to check if strings everywhere are replaced with pseudo translations.</p>';
+    if ($viewData->getTestBlogId() !== null) {
+        echo sprintf('<form method="post" action="%s"><input type="hidden" name="action" value="%s" /><input type="submit" class="button action" value="Clear Test Run flag from blog" /><br />(to allow regular translations to be applied.)</form>', get_admin_url(null, 'admin.php?page=' . $this::SLUG), $this::ACTION_CLEAR_FLAG);
+    }
 } else {
     echo '<p>Test run is in progress. When there are no pending submissions, you should review the translated blog.';
 }
