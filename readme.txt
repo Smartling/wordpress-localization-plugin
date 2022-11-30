@@ -62,6 +62,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 3.0.1 =
+* Added option to remove "Test run" flag from a blog that was previously used to do a test run
+
 = 3.0.0 =
 * Minimum required PHP version is now 8.0!
 * Fixed upload queue getting stuck
