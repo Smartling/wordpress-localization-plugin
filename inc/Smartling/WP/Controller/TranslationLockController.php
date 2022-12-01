@@ -23,8 +23,7 @@ use Smartling\WP\WPHookInterface;
 
 class TranslationLockController extends WPAbstract implements WPHookInterface
 {
-    private $blockHelper;
-    private $contentHelper;
+    private ContentHelper $contentHelper;
 
     public function __construct(
         LocalizationPluginProxyInterface $connector,
@@ -34,10 +33,8 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
         SubmissionManager $manager,
         Cache $cache,
         ContentHelper $contentHelper,
-        GutenbergBlockHelper $blockHelper
     ) {
         parent::__construct($connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
-        $this->blockHelper = $blockHelper;
         $this->contentHelper = $contentHelper;
     }
 
@@ -184,13 +181,12 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
     }
 
     /**
-     * @param SubmissionEntity $submission
-     * @return array
+     * @return string[]
      */
-    private function getTranslationFields(SubmissionEntity $submission)
+    private function getTranslationFields(SubmissionEntity $submission): array
     {
         $_fields = [];
-        foreach ($this->blockHelper->addPostContentBlocks($this->contentHelper->readTargetContent($submission)->toArray()) as $k => $v) {
+        foreach ($this->contentHelper->readTargetContent($submission)->toArray() as $k => $v) {
             $_fields["entity/$k"] = $v;
         }
         foreach ($this->contentHelper->readTargetMetadata($submission) as $k => $v) {
