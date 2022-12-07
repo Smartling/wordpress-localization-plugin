@@ -3,7 +3,6 @@
 namespace Smartling\Tests\IntegrationTests\tests;
 
 use Smartling\Helpers\PlaceholderHelper;
-use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 
 class PlaceholdersTest extends SmartlingUnitTestCaseAbstract
