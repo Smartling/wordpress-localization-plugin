@@ -12,15 +12,27 @@ class PlaceholdersTest extends SmartlingUnitTestCaseAbstract
     {
         $ps = PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START;
         $pe = PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END;
+        $placeholders = [
+            'block' => "{$ps}Gutenberg block attribute placeholder{$pe}",
+            'inline' => "{$ps}an inline placeholder{$pe}",
+            'meta' => "{$ps}can have placeholders{$pe}",
+            'title' => "{$ps}title placeholder{$pe}",
+        ];
         $content = <<<HTML
-<!-- wp:paragraph {"placeholder":"A {$ps}Gutenberg block attribute placeholder{$pe} and some content","fontSize":"large"} -->
-<p>Some paragraph with {$ps}an inline placeholder{$pe} and some more words.</p>
+<!-- wp:paragraph {"placeholder":"A {$placeholders['block']} and some content"} -->
+<p>Some paragraph with {$placeholders['inline']} and some more words.</p>
+<!-- /wp:paragraph -->
+HTML;
+        $expected = <<<HTML
+<!-- wp:paragraph {"placeholder":"[Á {$placeholders['block']} ~áñd ~sómé ~cóñ~téñt]"} -->
+<p>[S~ómé p~árág~ráph ~wíth {$placeholders['inline']} ~áñd s~ómé m~óré w~órds~.]</p>
 <!-- /wp:paragraph -->
 HTML;
 
-        $postId = $this->createPost('post', "A {$ps}title placeholder{$pe}, followed by a title", $content);
+
+        $postId = $this->createPost('post', "A {$placeholders['title']}, followed by a title", $content);
         $metaKey = 'someMeta';
-        add_post_meta($postId, $metaKey, "Meta values {$ps}can have placeholders{$pe} as well");
+        add_post_meta($postId, $metaKey, "Meta values {$placeholders['meta']} as well");
 
 
         $submission = $this->getTranslationHelper()->prepareSubmission('post', 1, $postId, 2);
@@ -29,11 +41,11 @@ HTML;
         $submission = $this->uploadDownload($submission);
 
 
-        $this->getSiteHelper()->withBlog($submission->getTargetBlogId(), function () use ($metaKey, $submission) {
+        $this->getSiteHelper()->withBlog($submission->getTargetBlogId(), function () use ($expected, $metaKey, $placeholders, $submission) {
             $post = get_post($submission->getTargetId());
-            echo $post->post_title;
-            echo $post->post_content;
-            var_dump(get_post_meta($submission->getTargetId(), $metaKey, true));
+            $this->assertEquals("[Á {$placeholders['title']} ~, fól~lówé~d bý á ~títl~é]", $post->post_title);
+            $this->assertEquals($expected, $post->post_content);
+            $this->assertEquals("[M~étá ~válú~és {$placeholders['meta']} ás ~wéll]", get_post_meta($submission->getTargetId(), $metaKey, true));
         });
     }
 }
