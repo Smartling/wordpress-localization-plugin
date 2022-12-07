@@ -43,7 +43,7 @@ HTML;
 
         $this->getSiteHelper()->withBlog($submission->getTargetBlogId(), function () use ($expected, $metaKey, $placeholders, $submission) {
             $post = get_post($submission->getTargetId());
-            $this->assertEquals("[Á {$placeholders['title']} ~, fól~lówé~d bý á ~títl~é]", $post->post_title);
+            $this->assertEquals("[Á {$placeholders['title']}~, fól~lówé~d bý á ~títl~é]", $post->post_title);
             $this->assertEquals($expected, $post->post_content);
             $this->assertEquals("[M~étá ~válú~és {$placeholders['meta']} ás ~wéll]", get_post_meta($submission->getTargetId(), $metaKey, true));
         });
