@@ -2,6 +2,7 @@
 
 namespace IntegrationTests\tests;
 
+use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
@@ -168,13 +169,16 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
                 $acfImageFieldId,
             ),
         );
-        $submission = $translationHelper->prepareSubmission('post', $sourceBlogId, $postId, $targetBlogId);
+        $attachmentSubmission = $translationHelper->prepareSubmission(ContentTypeHelper::POST_TYPE_ATTACHMENT, $sourceBlogId, $imageId, $targetBlogId);
+        $attachmentSubmission->getFileUri();
+        $attachmentSubmission = $submissionManager->storeEntity($attachmentSubmission);
+
+        $submission = $translationHelper->prepareSubmission(ContentTypeHelper::CONTENT_TYPE_POST, $sourceBlogId, $postId, $targetBlogId);
         $submission->getFileUri();
         $submission = $submissionManager->storeEntity($submission);
-        $this->uploadDownload($submission);
-        $attachmentSubmission = ArrayHelper::first($submissionManager->find([SubmissionEntity::FIELD_SOURCE_ID => $imageId]));
+        $attachmentSubmission = $this->uploadDownload($attachmentSubmission);
+        $submission = $this->uploadDownload($submission);
         $this->assertInstanceOf(SubmissionEntity::class, $attachmentSubmission);
-        $submission = ArrayHelper::first($submissionManager->find([SubmissionEntity::FIELD_CONTENT_TYPE => 'post']));
         $this->assertInstanceOf(SubmissionEntity::class, $submission);
         $targetPost = $this->getTargetPost($this->getSiteHelper(), $submission);
         $this->assertNotEquals($imageId, $attachmentSubmission->getTargetId(), 'Attachment id expected to change after translation');
