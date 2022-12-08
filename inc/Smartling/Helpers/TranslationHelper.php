@@ -7,22 +7,19 @@ use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\SmartlingDataReadException;
 use Smartling\Jobs\JobEntityWithBatchUid;
-use Smartling\MonologWrapper\MonologWrapper;
-use Smartling\Services\GlobalSettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
 use UnexpectedValueException;
 
 class TranslationHelper
 {
+    use LoggerSafeTrait;
+
     private LocalizationPluginProxyInterface $multilangProxy;
-    private LoggerInterface $logger;
     private SiteHelper $siteHelper;
     private SubmissionManager $submissionManager;
 
     public function __construct(LocalizationPluginProxyInterface $proxy, SiteHelper $siteHelper, SubmissionManager $submissionManager) {
-        $this->logger = MonologWrapper::getLogger(get_called_class());
         $this->multilangProxy = $proxy;
         $this->siteHelper = $siteHelper;
         $this->submissionManager = $submissionManager;
@@ -145,8 +142,7 @@ class TranslationHelper
         if ($cloning && $this->submissionManager->submissionExists($contentType, $sourceBlogId, $contentId, $targetBlogId)) {
             return false;
         }
-        return !GlobalSettingsManager::isHandleRelationsManually() ||
-            $this->submissionManager->submissionExistsNoLastError($contentType, $sourceBlogId, $contentId, $targetBlogId);
+        return !$this->submissionManager->submissionExistsNoLastError($contentType, $sourceBlogId, $contentId, $targetBlogId);
     }
 
     /**

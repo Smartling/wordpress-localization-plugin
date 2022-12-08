@@ -151,27 +151,6 @@ class GlobalSettingsManager
         return Bootstrap::getContainer()->getParameter('submission.pagesize');
     }
 
-    private const SMARTLING_HANDLE_RELATIONS_MANUALLY = 'smartling_handle_relations_manually';
-
-    public static function getHandleRelationsManuallyDefault(): int
-    {
-        return 1;
-    }
-
-    public static function isHandleRelationsManually(): bool
-    {
-        return 1 === (int)SimpleStorageHelper::get(self::SMARTLING_HANDLE_RELATIONS_MANUALLY, self::getHandleRelationsManuallyDefault());
-    }
-
-    public static function setHandleRelationsManually(int $value): void
-    {
-        SimpleStorageHelper::set(static::SMARTLING_HANDLE_RELATIONS_MANUALLY, $value);
-
-        if (static::getHandleRelationsManuallyDefault() === $value) {
-            SimpleStorageHelper::drop(static::SMARTLING_HANDLE_RELATIONS_MANUALLY);
-        }
-    }
-
     public const SMARTLING_FRONTEND_GENERATE_LOCK_IDS = 'smartling_frontend_generate_lock_ids';
     public const SMARTLING_GENERATE_LOCK_IDS_DEFAULT = "0";
 
