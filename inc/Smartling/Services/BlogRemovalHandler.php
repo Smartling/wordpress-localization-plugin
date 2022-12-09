@@ -134,7 +134,7 @@ class BlogRemovalHandler implements WPHookInterface
                 );
                 $this->getSubmissionManager()->delete($submission);
 
-                if ('' !== $submission->getStateFieldFileUri() && 0 === $this->getSubmissionCountByFileUri($submission->getFileUri())) {
+                if ('' !== $submission->getFileUri() && 0 === $this->getSubmissionCountByFileUri($submission->getFileUri())) {
                     $this->getLogger()->notice(
                         vsprintf(
                             'File %s is not in use and will be deleted', [$submission->getFileUri()]

@@ -186,7 +186,7 @@ class TranslationHelper
             $relatedSubmission->setJobInfo($jobInfo->getJobInformationEntity());
             $serialized = $relatedSubmission->toArray(false);
             if (null === $serialized[SubmissionEntity::FIELD_FILE_URI]) {
-                $relatedSubmission->getFileUri();
+                $relatedSubmission->generateFileUri();
             }
             $relatedSubmission = $this->submissionManager->storeEntity($relatedSubmission);
             // try to create target entity

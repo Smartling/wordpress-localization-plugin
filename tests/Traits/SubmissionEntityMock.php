@@ -17,7 +17,7 @@ trait SubmissionEntityMock
                     'getStatus', 'setStatus', 'getStatusColor', 'getId', 'setId', 'getSourceTitle',
                     'setSourceTitle', 'getSourceBlogId', 'setSourceBlogId', 'getSourceContentHash',
                     'setSourceContentHash', 'getContentType', 'setContentType', 'getSourceId',
-                    'setSourceId', 'getFileUri', 'setFileUri', 'getTargetLocale', 'setTargetLocale',
+                    'setSourceId', 'getFileUri', 'generateFileUri', 'setFileUri', 'getTargetLocale', 'setTargetLocale',
                     'getTargetBlogId', 'setTargetBlogId', 'getTargetId', 'setTargetId', 'getSubmitter',
                     'setSubmitter', 'getSubmissionDate', 'setSubmissionDate', 'getAppliedDate',
                     'setAppliedDate', 'getApprovedStringCount', 'setApprovedStringCount',

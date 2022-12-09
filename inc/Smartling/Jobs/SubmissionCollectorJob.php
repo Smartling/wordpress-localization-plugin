@@ -47,7 +47,7 @@ class SubmissionCollectorJob extends JobAbstract
                 break;
             }
             foreach ($submissions as $submission) {
-                $submission->getFileUri();
+                $submission->generateFileUri();
             }
             $this->submissionManager->storeSubmissions($submissions);
         } while (0 < count($submissions));

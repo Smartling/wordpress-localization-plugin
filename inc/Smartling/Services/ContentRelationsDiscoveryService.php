@@ -161,7 +161,7 @@ class ContentRelationsDiscoveryService
                 $submission->setBatchUid($jobInfo->getBatchUid());
                 $submission->setJobInfo($jobInfo->getJobInformationEntity());
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                $submission->getFileUri();
+                $submission->generateFileUri();
                 $title = $this->getTitle($submission);
                 if ($title !== '') {
                     $submission->setSourceTitle($title);
@@ -220,7 +220,7 @@ class ContentRelationsDiscoveryService
                     if ($title !== '') {
                         $submission->setSourceTitle($title);
                     }
-                    $submission->getFileUri();
+                    $submission->generateFileUri();
                 }
                 $submission->setIsCloned(1);
                 $submissions[] = $submission;
@@ -318,11 +318,10 @@ class ContentRelationsDiscoveryService
                     $submission->setSourceTitle($title);
                 }
 
-                // trigger generation of fileUri
                 try {
-                    $submission->getFileUri();
+                    $submission->generateFileUri();
                     $this->storeWithJobInfo($submission, $jobInfo, $request->getDescription());
-                } catch (SmartlingInvalidFactoryArgumentException $e) {
+                } catch (SmartlingInvalidFactoryArgumentException) {
                     $this->getLogger()->info("Skipping submission because no mapper was found: contentType={$submission->getContentType()} sourceBlogId={$submission->getSourceBlogId()}, sourceId={$submission->getSourceId()}, targetBlogId={$submission->getTargetBlogId()}");
                 }
             }
@@ -689,7 +688,7 @@ class ContentRelationsDiscoveryService
 
     private function logSubmissionCreated(SubmissionEntity $submission, string $description): void
     {
-        $this->getLogger()->info(sprintf("Adding submissionId=%d, fileName=%s, sourceBlogId=%d, sourceId=%d for upload to batchUid=%s due to user request, reason=\"%s\"", $submission->getId(), $submission->getStateFieldFileUri(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getBatchUid(), $description));
+        $this->getLogger()->info(sprintf("Adding submissionId=%d, fileName=%s, sourceBlogId=%d, sourceId=%d for upload to batchUid=%s due to user request, reason=\"%s\"", $submission->getId(), $submission->getFileUri(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getBatchUid(), $description));
     }
 
     /**
