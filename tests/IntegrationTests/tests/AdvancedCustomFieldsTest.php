@@ -126,9 +126,10 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
 
         $realMetadata = $this->getContentHelper()->readTargetMetadata($postSubmission);
 
-        array_walk($realMetadata, static function ($value) {
-            return maybe_unserialize(maybe_unserialize($value));
-        });
+        foreach ($realMetadata as & $realMetadatum) {
+            $realMetadatum = maybe_unserialize(maybe_unserialize($realMetadatum));
+        }
+        unset($realMetadatum);
 
         foreach ($expectedMetadata as $eKey => $eValue) {
             self::assertArrayHasKey($eKey, $realMetadata);
