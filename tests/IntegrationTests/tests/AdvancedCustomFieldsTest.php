@@ -68,7 +68,7 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         return $this->createPostWithMeta('title', 'body', 'post', $this->getMetadata($taxonomy, $imageId));
     }
 
-    private function createTaxonomy($taxonomyName = 'Some taxonomy', $taxonomy = 'category')
+    private function createTaxonomy(string $taxonomyName = 'Some taxonomy', string $taxonomy = 'category'): int
     {
         $_taxonomy = wp_insert_term($taxonomyName, $taxonomy);
 
@@ -78,11 +78,15 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
     public function testAdvancedCustomFields()
     {
         $imageId = $this->createAttachment();
-        $taxonomyIds = $this->createTaxonomy('Category A');
-        $postId = $this->createSourcePostWithMetadata($imageId, $taxonomyIds);
+        $taxonomyId = $this->createTaxonomy('Category A');
+        $postId = $this->createSourcePostWithMetadata($imageId, $taxonomyId);
         $translationHelper = $this->getTranslationHelper();
 
-        $submission = $translationHelper->prepareSubmission('post', 1, $postId, 2);
+        $sourceBlogId = 1;
+        $targetBlogId = 2;
+        $translationHelper->prepareSubmission(ContentTypeHelper::POST_TYPE_ATTACHMENT, $sourceBlogId, $imageId, $targetBlogId);
+        $translationHelper->prepareSubmission('category', $sourceBlogId, $taxonomyId, $targetBlogId);
+        $submission = $translationHelper->prepareSubmission('post', $sourceBlogId, $postId, $targetBlogId);
         $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_NEW, $submission->getStatus());
 
         $this->executeUpload();
@@ -122,10 +126,9 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
 
         $realMetadata = $this->getContentHelper()->readTargetMetadata($postSubmission);
 
-        foreach ($realMetadata as & $realMetadatum) {
-            $realMetadatum = maybe_unserialize(maybe_unserialize($realMetadatum));
-        }
-        unset($realMetadatum);
+        array_walk($realMetadata, static function ($value) {
+            return maybe_unserialize(maybe_unserialize($value));
+        });
 
         foreach ($expectedMetadata as $eKey => $eValue) {
             self::assertArrayHasKey($eKey, $realMetadata);
@@ -174,10 +177,10 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         $attachmentSubmission = $submissionManager->storeEntity($attachmentSubmission);
 
         $submission = $translationHelper->prepareSubmission(ContentTypeHelper::CONTENT_TYPE_POST, $sourceBlogId, $postId, $targetBlogId);
-        $submission->getFileUri();
-        $submission = $submissionManager->storeEntity($submission);
-        $attachmentSubmission = $this->uploadDownload($attachmentSubmission);
-        $submission = $this->uploadDownload($submission);
+        $this->executeUpload();
+        $this->executeDownload();
+        $attachmentSubmission = $this->getSubmissionManager()->getEntityById($attachmentSubmission->getId());
+        $submission = $this->getSubmissionManager()->getEntityById($submission->getId());
         $this->assertInstanceOf(SubmissionEntity::class, $attachmentSubmission);
         $this->assertInstanceOf(SubmissionEntity::class, $submission);
         $targetPost = $this->getTargetPost($this->getSiteHelper(), $submission);
