@@ -2,6 +2,7 @@
 
 namespace Smartling\Helpers;
 
+use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
@@ -83,9 +84,8 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
                 $submission = $this->getParams()->getSubmission();
                 $sourceBlogId = $submission->getSourceBlogId();
                 $targetBlogId = $submission->getTargetBlogId();
-                if ($this->core->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, $attachmentId, $targetBlogId)) {
-                    $attachmentSubmission = $this->core->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, $attachmentId, $submission->getJobInfoWithBatchUid(), $submission->getIsCloned());
-
+                $attachmentSubmission = $this->submissionManager->findTargetSubmission(ContentTypeHelper::POST_TYPE_ATTACHMENT, $sourceBlogId, $attachmentId, $targetBlogId);
+                if ($attachmentSubmission !== null) {
                     $newPath = $this->generateTranslatedUrl($path, $attachmentSubmission);
                     $replacer->addReplacementPair(new ReplacementPair($path, $newPath));
                     $this->getLogger()->debug(sprintf("%s has replaced URL from '%s' to '%s'", __CLASS__, $path, $newPath));

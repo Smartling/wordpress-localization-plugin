@@ -44,13 +44,12 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
 
         $core = $this->createMock(SmartlingCore::class);
         $core->method('getTranslationHelper')->willReturn($translationHelper);
-        $core->expects(self::once())->method('sendAttachmentForTranslation')
-            ->with($this->sourceBlogId, $this->targetBlogId, $sourceId)
-            ->willReturn($submission);
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('findTargetSubmission')->willReturn($submission);
         $x = $this->getMockBuilder(RelativeLinkedAttachmentCoreHelper::class)->setConstructorArgs([
             $core,
             $acf,
-            $this->createMock(SubmissionManager::class),
+            $submissionManager,
             $this->createMock(WordpressFunctionProxyHelper::class),
         ])->onlyMethods([])->getMock();
         $source = [$string];
