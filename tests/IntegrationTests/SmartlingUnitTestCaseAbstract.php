@@ -18,7 +18,6 @@ use Smartling\Jobs\UploadJob;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
 use Smartling\Services\ContentRelationsDiscoveryService;
-use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\Locale;
 use Smartling\Settings\SettingsManager;
@@ -119,7 +118,6 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         $this->cleanUpTables();
         $this->registerPostTypes();
         $this->ensureProfileExists();
-        GlobalSettingsManager::setHandleRelationsManually(0);
     }
 
     protected ConfigurationProfileEntity $profile;
@@ -396,5 +394,12 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         $siteHelper->restoreBlogId();
 
         return $post;
+    }
+
+    public function createTaxonomy(string $taxonomyName = 'Some taxonomy', string $taxonomy = 'category'): int
+    {
+        $_taxonomy = wp_insert_term($taxonomyName, $taxonomy);
+
+        return $_taxonomy['term_id'];
     }
 }

@@ -13,7 +13,6 @@ use Smartling\Helpers\SiteHelper;
 use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\JobManager;
 use Smartling\Jobs\SubmissionsJobsManager;
-use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 

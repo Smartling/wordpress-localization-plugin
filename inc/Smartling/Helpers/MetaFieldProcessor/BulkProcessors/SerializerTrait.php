@@ -2,31 +2,19 @@
 
 namespace Smartling\Helpers\MetaFieldProcessor\BulkProcessors;
 
-/**
- * Class SerializerTrait
- * @package Smartling\Helpers\MetaFieldProcessor\BulkProcessors
- */
+use Smartling\Helpers\Serializers\SerializerInterface;
+
 trait SerializerTrait
 {
-    /**
-     * @var SerializerInterface
-     */
-    private $serializer;
+    private SerializerInterface $serializer;
 
-    /**
-     * @return SerializerInterface
-     */
-    public function getSerializer()
+    public function getSerializer(): SerializerInterface
     {
         return $this->serializer;
     }
 
-    /**
-     * @param SerializerInterface $serializer
-     */
-    public function setSerializer($serializer)
+    public function setSerializer(SerializerInterface $serializer): void
     {
         $this->serializer = $serializer;
     }
-
 }

@@ -421,9 +421,6 @@ trait SmartlingCoreUploadTrait
             $submission = $this->getSubmissionManager()->storeEntity($submission);
             $xml = $this->getXMLFiltered($submission);
             $submission = $this->getSubmissionManager()->storeEntity($submission);
-            /**
-             * @var SubmissionEntity $submission
-             */
             $params = [
                 SubmissionEntity::FIELD_STATUS          => [SubmissionEntity::SUBMISSION_STATUS_NEW],
                 SubmissionEntity::FIELD_FILE_URI        => $submission->getFileUri(),
@@ -632,7 +629,7 @@ trait SmartlingCoreUploadTrait
     {
         if (1 === $submission->getIsLocked()) {
             $this->getLogger()
-                ->debug(vsprintf('Requested re-upload of protected submission id=%s. Skipping.', [$submission->getId()]));
+                ->notice(sprintf('Requested re-upload of locked submissionId=%s, skipping.', $submission->getId()));
 
             return;
         }

@@ -2,6 +2,7 @@
 
 namespace Smartling\Base;
 
+use Smartling\Exception\SmartlingWpDataIntegrityException;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -40,10 +41,9 @@ trait SmartlingCoreExportApi
     }
 
     /**
-     * @param SubmissionEntity $submission
-     * @return string
+     * @throws SmartlingWpDataIntegrityException
      */
-    public function getAttachmentRelativePathBySubmission(SubmissionEntity $submission)
+    public function getAttachmentRelativePathBySubmission(SubmissionEntity $submission): string
     {
         $info = $this->getAttachmentFileInfoBySubmission($submission);
 
@@ -51,10 +51,9 @@ trait SmartlingCoreExportApi
     }
 
     /**
-     * @param SubmissionEntity $submission
-     * @return string
+     * @throws SmartlingWpDataIntegrityException
      */
-    public function getAttachmentAbsolutePathBySubmission(SubmissionEntity $submission)
+    public function getAttachmentAbsolutePathBySubmission(SubmissionEntity $submission): string
     {
         $info = $this->getAttachmentFileInfoBySubmission($submission);
 

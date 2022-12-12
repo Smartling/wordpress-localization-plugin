@@ -222,10 +222,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return $dt;
     }
 
-    /**
-     * @param string|\DateTime|null $dateTime
-     */
-    public function setLastModified($dateTime): void
+    public function setLastModified(\DateTime|string|null $dateTime): void
     {
         if ($dateTime instanceof \DateTime) {
             $this->stateFields[static::FIELD_LAST_MODIFIED] = $dateTime->format(static::DATETIME_FORMAT);
@@ -420,10 +417,6 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return (string)$this->stateFields[static::FIELD_CONTENT_TYPE];
     }
 
-    /**
-     * @param string $content_type
-     * @return SubmissionEntity
-     */
     public function setContentType(string $content_type): SubmissionEntity
     {
         $this->stateFields[static::FIELD_CONTENT_TYPE] = $content_type;
@@ -434,8 +427,6 @@ class SubmissionEntity extends SmartlingEntityAbstract
     /**
      * Converts associative array to entity
      * array keys must match field names;
-     *
-     * @throws SmartlingDirectRunRuntimeException
      */
     public static function fromArray(array $array, LoggerInterface $logger): SubmissionEntity
     {

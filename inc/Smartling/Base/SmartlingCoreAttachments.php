@@ -5,13 +5,14 @@ namespace Smartling\Base;
 use Smartling\Exception\SmartlingWpDataIntegrityException;
 use Smartling\Helpers\AttachmentHelper;
 use Smartling\Helpers\StringHelper;
-use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 
 trait SmartlingCoreAttachments
 {
-
-    public function syncAttachment(SubmissionEntity $submission)
+    /**
+     * @throws SmartlingWpDataIntegrityException
+     */
+    public function syncAttachment(SubmissionEntity $submission): void
     {
         if ('attachment' !== $submission->getContentType()) {
             return;
@@ -34,16 +35,17 @@ trait SmartlingCoreAttachments
             ])
         );
         $profile = $this->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
-        if ($profile instanceof ConfigurationProfileEntity) {
-            if (1 === $profile->getAlwaysSyncImagesOnUpload() || ($submission->getStatus() == SubmissionEntity::SUBMISSION_STATUS_NEW && !$targetFileExists)) {
-                $this->syncMediaFile($submission);
-            }
-
-            do_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, $submission);
+        if (1 === $profile->getAlwaysSyncImagesOnUpload() || ($submission->getStatus() === SubmissionEntity::SUBMISSION_STATUS_NEW && !$targetFileExists)) {
+            $this->syncMediaFile($submission);
         }
+
+        do_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, $submission);
     }
 
-    private function syncMediaFile(SubmissionEntity $submission)
+    /**
+     * @throws SmartlingWpDataIntegrityException
+     */
+    private function syncMediaFile(SubmissionEntity $submission): void
     {
         $this->getLogger()->debug(
             vsprintf('Preparing to sync media file for blog = \'%s\' attachment id = \'%s\'.', [
