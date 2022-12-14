@@ -153,6 +153,23 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         }
     }
 
+    public function toWpGutenbergParagraph(string $string): string
+    {
+        return "<!-- wp:paragraph -->\n<p>$string</p>\n<!-- /wp:paragraph -->\n";
+    }
+
+    public function toWpGutenbergImage(int $imageId): string
+    {
+        $image = get_post($imageId);
+        $this->assertInstanceOf(\WP_Post::class, $image);
+        return implode("\n", [
+            "<!-- wp:image {\"id\":$imageId,\"sizeSlug\":\"large\"} -->",
+            "<figure class=\"wp-block-image size-large\"><img src=\"$image->guid\" alt=\"\" class=\"wp-image-$imageId\"/></figure>",
+            "<!-- /wp:image -->",
+            '',
+        ]);
+    }
+
     protected function uploadDownload(SubmissionEntity $submission): ?SubmissionEntity
     {
         $this->executeUpload();
@@ -298,10 +315,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         return $this->factory()->attachment->create_upload_object(DIR_TESTDATA . '/' . $filename);
     }
 
-    /**
-     * @return mixed
-     */
-    protected function createPost(string $post_type = 'post', string $title = 'title', string $content = 'content')
+    protected function createPost(string $post_type = 'post', string $title = 'title', string $content = 'content'): int|\WP_Error
     {
         return $this->factory()->post->create_object(
             [
@@ -396,10 +410,30 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         return $post;
     }
 
+    protected function getPostCountFromDb(string $type): int
+    {
+        global $wpdb;
+
+        return (int)$wpdb->get_var($wpdb->prepare("select count(*) ct FROM $wpdb->posts WHERE post_type = %s", $type));
+
+    }
+    protected function getPostCount(string $type = 'post', string $status = 'draft'): int
+    {
+        wp_cache_flush();
+
+        return (int)wp_count_posts($type)->$status;
+    }
+
     public function createTaxonomy(string $taxonomyName = 'Some taxonomy', string $taxonomy = 'category'): int
     {
         $_taxonomy = wp_insert_term($taxonomyName, $taxonomy);
 
         return $_taxonomy['term_id'];
+    }
+
+    protected function loadBuiltInFilters(): void
+    {
+        (new Bootstrap())->load();
+        do_action('admin_init');
     }
 }
