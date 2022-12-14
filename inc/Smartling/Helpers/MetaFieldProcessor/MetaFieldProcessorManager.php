@@ -3,6 +3,7 @@
 namespace Smartling\Helpers\MetaFieldProcessor;
 
 use Smartling\Base\ExportedAPI;
+use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Extensions\Acf\AcfTypeDetector;
 use Smartling\Processors\SmartlingFactoryAbstract;
 use Smartling\Submissions\SubmissionEntity;
@@ -127,72 +128,42 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
         return $result;
     }
 
-    /**
-     * @param $fieldName
-     *
-     * @return MetaFieldProcessorInterface
-     */
-    public function getProcessor($fieldName)
+    public function getProcessor(string $fieldName): MetaFieldProcessorInterface
     {
         $processor = $this->getHandler($fieldName);
-        if ($processor instanceof MetaFieldProcessorInterface) {
-            if ($processor instanceof DefaultMetaFieldProcessor && false !== strpos($fieldName, '/')) {
-                $parts = explode('/', $fieldName);
-                foreach ($parts as $fieldNamePart) {
-                    if (in_array($fieldNamePart, ['entity', 'meta'], true)) {
-                        continue;
-                    }
-                    $partProcessor = $this->getProcessor($fieldNamePart);
-                    if (!($partProcessor instanceof DefaultMetaFieldProcessor)) {
-                        $processor = $partProcessor;
-                        break;
-                    }
+        if ($processor instanceof DefaultMetaFieldProcessor && str_contains($fieldName, '/')) {
+            $parts = explode('/', $fieldName);
+            foreach ($parts as $fieldNamePart) {
+                if (in_array($fieldNamePart, ['entity', 'meta'], true)) {
+                    continue;
+                }
+                $partProcessor = $this->getProcessor($fieldNamePart);
+                if (!($partProcessor instanceof DefaultMetaFieldProcessor)) {
+                    $processor = $partProcessor;
+                    break;
                 }
             }
-        } else {
-            $this->getLogger()->warning(
-                vsprintf(
-                    'Found strange processor \'%s\' for field name \'%s\'.',
-                    [
-                        get_class($processor),
-                        $fieldName,
-                    ]
-                )
-            );
         }
 
+        $this->getLogger()->debug("Using processor " . get_class($processor) . " for $fieldName");
         return $processor;
     }
 
-    /**
-     * @param MetaFieldProcessorInterface
-     *
-     * @return object
-     */
-    public function getHandler($contentType)
+    public function getHandler(string $contentType): MetaFieldProcessorInterface
     {
         $registeredProcessors = $this->getCollection();
 
-        $patterns = array_keys($registeredProcessors);
-
-        //$this->getLogger()->debug(vsprintf('Looking for match for \'%s\' in : %s',[$contentType, var_export($patterns, true)]));
-
-        foreach ($patterns as $pattern) {
+        foreach (array_keys($registeredProcessors) as $pattern) {
             if (preg_match(vsprintf('#%s#u', [$pattern]), $contentType)) {
-                //$this->getLogger()->debug(vsprintf('Probing done successfully with pattern \'%s\' for \'%s\'...',[$pattern, $contentType]));
                 return $registeredProcessors[$pattern];
-            } else {
-                //$this->getLogger()->debug(vsprintf('Probing failed with pattern \'%s\' for \'%s\'...',[$pattern, $contentType]));
             }
         }
 
         if (true === $this->getAllowDefault() && null !== $this->getDefaultHandler()) {
             return $this->getDefaultHandler();
-        } else {
-            $message = vsprintf($this->message, [$contentType, get_called_class()]);
-            $this->getLogger()->error($message);
-            throw new SmartlingInvalidFactoryArgumentException($message);
         }
+
+        throw new SmartlingInvalidFactoryArgumentException(sprintf($this->message, $contentType, static::class));
     }
 
     private function tryGetAcfProcessor($fieldName, SubmissionEntity $submission, MetaFieldProcessorInterface $processor)

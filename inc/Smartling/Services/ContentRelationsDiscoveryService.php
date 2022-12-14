@@ -697,12 +697,12 @@ class ContentRelationsDiscoveryService
     public function getReferencesFromAcf(GutenbergBlock $block): array
     {
         $result = [];
-        if (strpos($block->getBlockName(), 'acf/') !== 0) {
+        if ($block->getBlockName() === null || !str_starts_with($block->getBlockName(), 'acf/')) {
             return $result;
         }
 
         foreach ($block->getAttributes()['data'] ?? [] as $attribute => $value) {
-            if (strpos($attribute, '_') !== 0) {
+            if (!str_starts_with($attribute, '_')) {
                 continue;
             }
             $type = $this->acfDynamicSupport->getReferencedTypeByKey($value);

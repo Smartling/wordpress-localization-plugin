@@ -107,36 +107,27 @@ class CustomPostType extends PostBasedContentTypeAbstract
 
     /**
      * Alters $params->accumulator
-     *
-     * @param ProcessRelatedContentParams $params
-     * @return void
-     * @throws SmartlingDataReadException
+     * @throws SmartlingConfigException
      */
-    public function registerTaxonomyRelations(ProcessRelatedContentParams $params)
+    public function registerTaxonomyRelations(ProcessRelatedContentParams $params): void
     {
         $submission = $params->getSubmission();
         $sourceBlogId = $submission->getSourceBlogId();
         $targetBlogId = $submission->getTargetBlogId();
         if ($this->getSystemName() === $submission->getContentType()) {
-            $logger = MonologWrapper::getLogger(static::class);
+            $menuHelper = $this->getContainerBuilder()->get('helper.customMenu');
+            if (!$menuHelper instanceof CustomMenuContentTypeHelper) {
+                throw new SmartlingConfigException(CustomMenuContentTypeHelper::class . ' expected in DI for `helper.customMenu`');
+            }
             foreach ($this->getContainerBuilder()->get('helper.customMenu')->getTerms($submission, $params->getContentType()) as $element) {
-                $contentType = $element->taxonomy;
                 $id = $element->term_id;
-                $logger->debug("Sending for translation term = '{$contentType}' id = '$id' related to submission = '{$submission->getId()}'.");
-                $translationHelper = $this->getContainerBuilder()->get('translation.helper');
-                if ($translationHelper->isRelatedSubmissionCreationNeeded($contentType, $sourceBlogId, $id, $targetBlogId)) {
-                    $relatedSubmission = $translationHelper->tryPrepareRelatedContent(
-                        $contentType,
-                        $sourceBlogId,
-                        $id,
-                        $targetBlogId,
-                        $submission->getJobInfoWithBatchUid(),
-                        (1 === $submission->getIsCloned())
-                    );
+                $submissionManager = $this->getContainerBuilder()->get('manager.submission');
+                if (!$submissionManager instanceof SubmissionManager) {
+                    throw new SmartlingConfigException(SubmissionManager::class . ' expected in DI for `manager.submission`');
+                }
+                $relatedSubmission = $submissionManager->findTargetSubmission($params->getContentType(), $sourceBlogId, $id, $targetBlogId);
+                if ($relatedSubmission !== null) {
                     $params->getAccumulator()[$params->getContentType()][] = $relatedSubmission->getTargetId();
-                    $logger->debug("Received id={$relatedSubmission->getTargetId()} for submission id={$relatedSubmission->getId()}");
-                } else {
-                    $logger->debug("Skipped sending term $id for translation due to manual relations handling");
                 }
             }
         }
