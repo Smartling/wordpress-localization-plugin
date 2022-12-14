@@ -296,7 +296,7 @@ class FieldFilterConfigParser
         return $this->getService('manager.serializer')->getSerializer($this->getSerialization());
     }
 
-    private function getLocalizeFilter(): CustomTypeProcessor|TermBasedProcessor|MediaBasedProcessor|PostBasedProcessor
+    private function getLocalizeFilter(): MetaFieldProcessorInterface
     {
         $serializer = $this->getSerializerInstance();
 
@@ -349,10 +349,7 @@ class FieldFilterConfigParser
         return $filter;
     }
 
-    /**
-     * @return MetaFieldProcessorInterface
-     */
-    public function getFilter()
+    public function getFilter(): MetaFieldProcessorInterface
     {
         switch ($this->getAction()) {
             case self::ACTION_SKIP:
