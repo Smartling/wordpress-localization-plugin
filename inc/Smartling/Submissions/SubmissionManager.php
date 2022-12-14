@@ -97,26 +97,6 @@ class SubmissionManager extends EntityManagerAbstract
             ], 1));
     }
 
-    public function findTargetSubmission(string $contentType, int $sourceBlogId, int $sourceId, int $targetBlogId): ?SubmissionEntity
-    {
-        $submissions = $this->find([
-            SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
-            SubmissionEntity::FIELD_LAST_ERROR => '',
-            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
-            SubmissionEntity::FIELD_SOURCE_ID => $sourceId,
-            SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
-        ], 2);
-        switch (count($submissions)) {
-            case 0:
-                return null;
-            case 2:
-                $this->getLogger()->error("More than one submissions exist, contentType=$contentType, sourceBlogId=$sourceBlogId, sourceId=$sourceId, targetBlogId=$targetBlogId");
-                // no break
-            default:
-                return ArrayHelper::first($submissions);
-        }
-    }
-
     /**
      * @return SubmissionEntity[]
      */

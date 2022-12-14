@@ -153,7 +153,12 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                     $attachmentId = $this->getAttachmentId($relativePathOfOriginalFile);
 
                     if (null !== $attachmentId) {
-                        $attachmentSubmission = $this->submissionManager->findTargetSubmission(ContentTypeHelper::POST_TYPE_ATTACHMENT, $submission->getSourceBlogId(), $attachmentId, $submission->getTargetBlogId());
+                        $attachmentSubmission = $this->submissionManager->findOne([
+                            SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
+                            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
+                            SubmissionEntity::FIELD_SOURCE_ID => $attachmentId,
+                            SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
+                        ]);
                         if ($attachmentSubmission !== null) {
                             $targetUploadInfo = $this->core->getUploadFileInfo($submission->getTargetBlogId());
 
@@ -316,7 +321,12 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                         $attachmentId = $acfData['data'][substr($key, 1)];
 
                         if (!empty($attachmentId) && is_numeric($attachmentId)) {
-                            $attachment = $this->submissionManager->findTargetSubmission(ContentTypeHelper::POST_TYPE_ATTACHMENT, $sourceBlogId, (int)$attachmentId, $targetBlogId);
+                            $attachment = $this->submissionManager->findOne([
+                                SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
+                                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+                                SubmissionEntity::FIELD_SOURCE_ID => (int)$attachmentId,
+                                SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+                            ]);
                             if ($attachment !== null) {
                                 $result->addReplacementPair(new ReplacementPair((string)$attachmentId, (string)$attachment->getTargetId()));
                             } else {
@@ -345,7 +355,12 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                 $submission = $this->getParams()->getSubmission();
                 $sourceBlogId = $submission->getSourceBlogId();
                 $targetBlogId = $submission->getTargetBlogId();
-                $attachmentSubmission = $this->submissionManager->findTargetSubmission(ContentTypeHelper::POST_TYPE_ATTACHMENT, $sourceBlogId, $attachmentId, $targetBlogId);
+                $attachmentSubmission = $this->submissionManager->findOne([
+                    SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
+                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+                    SubmissionEntity::FIELD_SOURCE_ID => $attachmentId,
+                    SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+                ]);
                 if ($attachmentSubmission !== null) {
                     $result->addReplacementPair(new ReplacementPair($path, $this->core->getAttachmentRelativePathBySubmission($attachmentSubmission)));
                 } else {

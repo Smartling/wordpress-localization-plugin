@@ -8,6 +8,7 @@ use Smartling\Exception\SmartlingConfigException;
 use Smartling\Helpers\CustomMenuContentTypeHelper;
 use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
 use Smartling\Helpers\StringHelper;
+use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\Controller\PostBasedWidgetControllerStd;
 use Smartling\WP\Controller\ContentEditJobController;
@@ -125,7 +126,12 @@ class CustomPostType extends PostBasedContentTypeAbstract
                 if (!$submissionManager instanceof SubmissionManager) {
                     throw new SmartlingConfigException(SubmissionManager::class . ' expected in DI for `manager.submission`');
                 }
-                $relatedSubmission = $submissionManager->findTargetSubmission($params->getContentType(), $sourceBlogId, $id, $targetBlogId);
+                $relatedSubmission = $submissionManager->findOne([
+                    SubmissionEntity::FIELD_CONTENT_TYPE => $params->getContentType(),
+                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+                    SubmissionEntity::FIELD_SOURCE_ID => $id,
+                    SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+                ]);
                 if ($relatedSubmission !== null) {
                     $params->getAccumulator()[$params->getContentType()][] = $relatedSubmission->getTargetId();
                 }

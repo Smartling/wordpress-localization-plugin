@@ -84,7 +84,12 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
                 $submission = $this->getParams()->getSubmission();
                 $sourceBlogId = $submission->getSourceBlogId();
                 $targetBlogId = $submission->getTargetBlogId();
-                $attachmentSubmission = $this->submissionManager->findTargetSubmission(ContentTypeHelper::POST_TYPE_ATTACHMENT, $sourceBlogId, $attachmentId, $targetBlogId);
+                $attachmentSubmission = $this->submissionManager->findOne([
+                    SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
+                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+                    SubmissionEntity::FIELD_SOURCE_ID => $attachmentId,
+                    SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+                ]);
                 if ($attachmentSubmission !== null) {
                     $newPath = $this->generateTranslatedUrl($path, $attachmentSubmission);
                     $replacer->addReplacementPair(new ReplacementPair($path, $newPath));

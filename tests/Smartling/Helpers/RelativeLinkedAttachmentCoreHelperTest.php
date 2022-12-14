@@ -45,7 +45,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
         $core = $this->createMock(SmartlingCore::class);
         $core->method('getTranslationHelper')->willReturn($translationHelper);
         $submissionManager = $this->createMock(SubmissionManager::class);
-        $submissionManager->method('findTargetSubmission')->willReturn($submission);
+        $submissionManager->method('findOne')->willReturn($submission);
         $x = $this->getMockBuilder(RelativeLinkedAttachmentCoreHelper::class)->setConstructorArgs([
             $core,
             $acf,

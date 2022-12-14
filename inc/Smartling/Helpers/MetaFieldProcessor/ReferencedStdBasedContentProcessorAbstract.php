@@ -79,7 +79,12 @@ abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProce
             return $value;
         }
 
-        $attachment = $this->submissionManager->findTargetSubmission(ContentTypeHelper::POST_TYPE_ATTACHMENT, $submission->getSourceBlogId(), (int)$value, $submission->getTargetBlogId());
+        $attachment = $this->submissionManager->findOne([
+            SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
+            SubmissionEntity::FIELD_SOURCE_ID => (int)$value,
+            SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
+        ]);
         if ($attachment !== null) {
             return $attachment->getTargetId();
         }
