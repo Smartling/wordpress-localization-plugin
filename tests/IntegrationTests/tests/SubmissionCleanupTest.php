@@ -34,19 +34,19 @@ class SubmissionCleanupTest extends SmartlingUnitTestCaseAbstract
         $this->assertSame(1, $submission->getIsCloned());
         $this->executeUpload();
         $submissions = $this->getSubmissionManager()->find([
+            SubmissionEntity::FIELD_ID => $submission->getId(),
             'content_type' => 'post',
-            'is_cloned'    => 1,
+            'is_cloned' => 1,
         ]);
         $this->assertCount(1, $submissions);
 
         return reset($submissions);
     }
 
-    private function assertNoSubmissions()
+    private function assertNoSubmission(SubmissionEntity $submission)
     {
         $this->assertCount(0, $this->getSubmissionManager()->find([
-            'content_type' => 'post',
-            'is_cloned' => 1,
+            SubmissionEntity::FIELD_ID => $submission->getId(),
         ]));
     }
 
@@ -54,7 +54,7 @@ class SubmissionCleanupTest extends SmartlingUnitTestCaseAbstract
     {
         $submission = $this->prepareSubmissionAndUpload();
         wp_delete_post($submission->getSourceId(), true);
-        $this->assertNoSubmissions();
+        $this->assertNoSubmission($submission);
     }
 
     public function testRemovedTranslatedContent()
@@ -66,7 +66,7 @@ class SubmissionCleanupTest extends SmartlingUnitTestCaseAbstract
             wp_delete_post($submission->getTargetId(), true);
         });
 
-        $this->assertNoSubmissions();
+        $this->assertNoSubmission($submission);
     }
 
     private function getSubmissionCleanupHelper(): SubmissionCleanupHelper

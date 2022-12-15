@@ -2,6 +2,7 @@
 
 namespace Smartling\ContentTypes\ConfigParsers;
 
+use Smartling\Exception\SmartlingConfigException;
 use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\CustomTypeProcessor;
 use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\MediaBasedProcessor;
 use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\PostBasedProcessor;
@@ -11,10 +12,13 @@ use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorInterface;
 use Smartling\Helpers\MetaFieldProcessor\SkipFieldProcessor;
 use Smartling\Helpers\Serializers\SerializerInterface;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Submissions\SubmissionManager;
 use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class FieldFilterConfigParser
 {
+    private SubmissionManager $submissionManager;
+
     /**
      * Valid actions
      */
@@ -268,39 +272,31 @@ class FieldFilterConfigParser
         }
     }
 
-
-    /**
-     * @return mixed
-     */
-    public function parse()
+    public function parse(): void
     {
         $result = $this->validatePattern() && $this->validateAction();
 
         $this->setValidFiler($result);
     }
 
-
-    /**
-     * ConfigParserAbstract constructor.
-     *
-     * @param array $config
-     */
     public function __construct(array $config, ContainerBuilder $di)
     {
         $this->setRawConfig($config);
         $this->setDi($di);
+        $submissionManager = $this->getService('manager.submission');
+        if (!$submissionManager instanceof SubmissionManager) {
+            throw new SmartlingConfigException(SubmissionManager::class . ' expected in DI for `manager.submission`');
+        }
+        $this->submissionManager = $submissionManager;
         $this->parse();
     }
 
-    /**
-     * @return SerializerInterface
-     */
-    private function getSerializerInstance()
+    private function getSerializerInstance(): SerializerInterface
     {
         return $this->getService('manager.serializer')->getSerializer($this->getSerialization());
     }
 
-    private function getLocalizeFilter()
+    private function getLocalizeFilter(): MetaFieldProcessorInterface
     {
         $serializer = $this->getSerializerInstance();
 
@@ -314,6 +310,7 @@ class FieldFilterConfigParser
             case 'term':
             case 'taxonomy':
                 $filter = new TermBasedProcessor(
+                    $this->submissionManager,
                     $this->getService('translation.helper'),
                     $this->getPattern()
                 );
@@ -322,6 +319,7 @@ class FieldFilterConfigParser
                 break;
             case 'post':
                 $filter = new PostBasedProcessor(
+                    $this->submissionManager,
                     $this->getService('translation.helper'),
                     $this->getPattern()
                 );
@@ -330,6 +328,7 @@ class FieldFilterConfigParser
                 break;
             case 'media':
                 $filter = new MediaBasedProcessor(
+                    $this->submissionManager,
                     $this->getService('translation.helper'),
                     $this->getPattern()
                 );
@@ -350,10 +349,7 @@ class FieldFilterConfigParser
         return $filter;
     }
 
-    /**
-     * @return MetaFieldProcessorInterface
-     */
-    public function getFilter()
+    public function getFilter(): MetaFieldProcessorInterface
     {
         switch ($this->getAction()) {
             case self::ACTION_SKIP:

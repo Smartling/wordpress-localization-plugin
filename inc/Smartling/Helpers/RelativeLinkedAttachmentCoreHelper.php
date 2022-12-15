@@ -6,6 +6,7 @@ use DOMDocument;
 use LibXMLError;
 use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
+use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\MonologWrapper\MonologWrapper;
@@ -31,7 +32,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     private LoggerInterface $logger;
     protected SmartlingCore $core;
     private AfterDeserializeContentEventParameters $params;
-    private SubmissionManager $submissionManager;
+    protected SubmissionManager $submissionManager;
     private WordpressFunctionProxyHelper $wordpressProxy;
 
     public function getLogger(): LoggerInterface
@@ -152,20 +153,13 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                     $attachmentId = $this->getAttachmentId($relativePathOfOriginalFile);
 
                     if (null !== $attachmentId) {
-                        if ($this->core->getTranslationHelper()->isRelatedSubmissionCreationNeeded(
-                            'attachment',
-                            $submission->getSourceBlogId(),
-                            $attachmentId,
-                            $submission->getTargetBlogId())
-                        ) {
-                            $attachmentSubmission = $this->core->sendAttachmentForTranslation(
-                                $submission->getSourceBlogId(),
-                                $submission->getTargetBlogId(),
-                                $attachmentId,
-                                $submission->getJobInfoWithBatchUid(),
-                                $submission->getIsCloned()
-                            );
-
+                        $attachmentSubmission = $this->submissionManager->findOne([
+                            SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
+                            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
+                            SubmissionEntity::FIELD_SOURCE_ID => $attachmentId,
+                            SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
+                        ]);
+                        if ($attachmentSubmission !== null) {
                             $targetUploadInfo = $this->core->getUploadFileInfo($submission->getTargetBlogId());
 
                             $fullTargetFileName = $targetUploadInfo['basedir'] . DIRECTORY_SEPARATOR .
@@ -186,7 +180,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                             return new ReplacementPair($path, $targetThumbnailRelativePath);
                         }
 
-                        $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
+                        $this->getLogger()->debug("Skipping replacing id attachmentId=$attachmentId: no target submissions found");
                         return null;
                     }
 
@@ -321,24 +315,30 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                     if ((is_string($value) || is_int($value)) && array_key_exists($value, $this->acfDefinitions)
                         && array_key_exists('type', $this->acfDefinitions[$value])
                         && $this->acfDefinitions[$value]['type'] === 'image'
-                        && strpos($key, '_') === 0
+                        && str_starts_with($key, '_')
                         && array_key_exists(substr($key, 1), $acfData['data'])) {
+                        $this->getLogger()->debug("Detected ACF image, key=$key");
                         $attachmentId = $acfData['data'][substr($key, 1)];
 
                         if (!empty($attachmentId) && is_numeric($attachmentId)) {
-                            if ($this->core->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, (int)$attachmentId, $targetBlogId)) {
-                                $attachment = $this->core->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, (int)$attachmentId, $submission->getJobInfoWithBatchUid());
+                            $attachment = $this->submissionManager->findOne([
+                                SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
+                                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+                                SubmissionEntity::FIELD_SOURCE_ID => (int)$attachmentId,
+                                SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+                            ]);
+                            if ($attachment !== null) {
                                 $result->addReplacementPair(new ReplacementPair((string)$attachmentId, (string)$attachment->getTargetId()));
                             } else {
-                                $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
+                                $this->getLogger()->debug("Skipping replacing id attachmentId=$attachmentId, key=$key: no target submissions found");
                             }
                         } else {
-                            $this->getLogger()->warning("Can not send attachment as it has empty id acfFieldId=$value acfFieldValue=\"$attachmentId\"");
+                            $this->getLogger()->debug("Skipping replacing id, attachmentId=$attachmentId, key=$key: attachment id non numeric");
                         }
                     }
                 }
             }
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             $this->getLogger()->debug("Failed to decode block $block, skipping id replacements");
         }
         return $result;
@@ -355,11 +355,16 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                 $submission = $this->getParams()->getSubmission();
                 $sourceBlogId = $submission->getSourceBlogId();
                 $targetBlogId = $submission->getTargetBlogId();
-                if ($this->core->getTranslationHelper()->isRelatedSubmissionCreationNeeded('attachment', $sourceBlogId, $attachmentId, $targetBlogId)) {
-                    $attachmentSubmission = $this->core->sendAttachmentForTranslation($sourceBlogId, $targetBlogId, $attachmentId, $submission->getJobInfoWithBatchUid(), $submission->getIsCloned());
+                $attachmentSubmission = $this->submissionManager->findOne([
+                    SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
+                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+                    SubmissionEntity::FIELD_SOURCE_ID => $attachmentId,
+                    SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+                ]);
+                if ($attachmentSubmission !== null) {
                     $result->addReplacementPair(new ReplacementPair($path, $this->core->getAttachmentRelativePathBySubmission($attachmentSubmission)));
                 } else {
-                    $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
+                    $this->getLogger()->debug("Skipping replacing id attachmentId=$attachmentId: no target submissions found");
                 }
             } else {
                 $thumbnail = $this->tryProcessThumbnail($path);

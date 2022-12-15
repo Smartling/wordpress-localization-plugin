@@ -17,78 +17,31 @@ class LinkedImageCloneTest extends SmartlingUnitTestCaseAbstract
 
         $translationHelper = $this->getTranslationHelper();
 
-        /**
-         * @var SubmissionEntity $submission
-         */
         $submission = $translationHelper->prepareSubmission('attachment', 1, $imageId, 2, true);
         $imageSubmissionId = $submission->getId();
 
         /**
          * Check submission status
          */
-        $this->assertTrue(SubmissionEntity::SUBMISSION_STATUS_NEW === $submission->getStatus());
-        $this->assertTrue(1 === $submission->getIsCloned());
+        $this->assertSame(SubmissionEntity::SUBMISSION_STATUS_NEW, $submission->getStatus());
+        $this->assertSame(1, $submission->getIsCloned());
 
         $this->executeUpload();
 
         $submissions = $this->getSubmissionManager()->find(
             [
                 'content_type' => 'page',
-                'is_cloned'    => 1,
+                'is_cloned' => 1,
             ]);
-        $this->assertTrue(0 === count($submissions));
+        $this->assertEmpty($submissions);
 
         $submissions = $this->getSubmissionManager()->find(
             [
                 'content_type' => 'attachment',
-                'is_cloned'    => 1,
+                'is_cloned' => 1,
             ]);
-        $this->assertTrue(1 === count($submissions));
+        $this->assertCount(1, $submissions);
         $submission = ArrayHelper::first($submissions);
-        /**
-         * @var SubmissionEntity $submission
-         */
-        $this->assertTrue($imageSubmissionId === $submission->getId());
-    }
-
-    private function sendPageForTranslationWithAttachedImage($alwaysClone = 0)
-    {
-        $profile = $this->getProfileById(1);
-        $profile->setCloneAttachment($alwaysClone);
-        $this->getSettingsManager()->storeEntity($profile);
-
-        $imageId = $this->createAttachment();
-        $postId = $this->createPost('page');
-        set_post_thumbnail($postId, $imageId);
-        $this->assertTrue(has_post_thumbnail($postId));
-
-        $submission = $this->createSubmission('page', $postId);
-        $submission = $this->getSubmissionManager()->storeEntity($submission);
-
-        $this->uploadDownload($submission);
-    }
-
-    public function testAlwaysCloneOff()
-    {
-        $this->sendPageForTranslationWithAttachedImage(0);
-
-        $submissions = $this->getSubmissionManager()->find(
-            [
-                'content_type' => 'attachment',
-                'is_cloned'    => 0,
-            ]);
-        $this->assertTrue(1 === count($submissions));
-    }
-
-    public function testAlwaysCloneOn()
-    {
-        $this->sendPageForTranslationWithAttachedImage(1);
-
-        $submissions = $this->getSubmissionManager()->find(
-            [
-                'content_type' => 'attachment',
-                'is_cloned'    => 1,
-            ]);
-        $this->assertTrue(1 === count($submissions));
+        $this->assertSame($imageSubmissionId, $submission->getId());
     }
 }

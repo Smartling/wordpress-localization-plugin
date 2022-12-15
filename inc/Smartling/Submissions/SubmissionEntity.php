@@ -5,6 +5,7 @@ namespace Smartling\Submissions;
 use InvalidArgumentException;
 use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingEntityAbstract;
+use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Exception\SmartlingSubmissionsProcessingException;
@@ -221,10 +222,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return $dt;
     }
 
-    /**
-     * @param string|\DateTime|null $dateTime
-     */
-    public function setLastModified($dateTime): void
+    public function setLastModified(\DateTime|string|null $dateTime): void
     {
         if ($dateTime instanceof \DateTime) {
             $this->stateFields[static::FIELD_LAST_MODIFIED] = $dateTime->format(static::DATETIME_FORMAT);
@@ -419,10 +417,6 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return (string)$this->stateFields[static::FIELD_CONTENT_TYPE];
     }
 
-    /**
-     * @param string $content_type
-     * @return SubmissionEntity
-     */
     public function setContentType(string $content_type): SubmissionEntity
     {
         $this->stateFields[static::FIELD_CONTENT_TYPE] = $content_type;
@@ -433,8 +427,6 @@ class SubmissionEntity extends SmartlingEntityAbstract
     /**
      * Converts associative array to entity
      * array keys must match field names;
-     *
-     * @throws SmartlingDirectRunRuntimeException
      */
     public static function fromArray(array $array, LoggerInterface $logger): SubmissionEntity
     {
@@ -460,45 +452,52 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return $this;
     }
 
-    /**
-     * Will try to set file uri if it is currently empty
-     *
-     * @throws SmartlingInvalidFactoryArgumentException
-     */
     public function getFileUri(): string
     {
         if (empty($this->stateFields[static::FIELD_FILE_URI])) {
-
-            $fileUri = FileUriHelper::generateFileUri($this);
-
-            $filterParams = (new SmartlingFileUriFilterParamater())
-                ->setContentType($this->getContentType())
-                ->setFileUri($fileUri)
-                ->setSourceBlogId($this->getSourceBlogId())
-                ->setSourceContentId($this->getSourceId());
-
-            $filterParams = apply_filters(ExportedAPI::FILTER_SMARTLING_FILE_URI, $filterParams);
-
-            if (($filterParams instanceof SmartlingFileUriFilterParamater)
-                && !StringHelper::isNullOrEmpty($filterParams->getFileUri())
-            ) {
-                $fileUri = $filterParams->getFileUri();
+            /** @noinspection JsonEncodingApiUsageInspection, it's ok to have no backtrace, this is for debugging to untangle this function into proper get and set pair */
+            $this->logger->warning("Set file uri on get, backtrace: " . json_encode(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)));
+            try {
+                $this->generateFileUri();
+            } catch (\Exception $e) {
+                $this->logger->error(sprintf("Failed to generate file uri for submissionId=%s: %s", $this->getId(), $e->getMessage()));
             }
-
-            $this->setFileUri($fileUri);
         }
 
         return $this->stateFields[static::FIELD_FILE_URI];
     }
 
-    public function getStateFieldFileUri(): string
-    {
-        return (string)$this->stateFields[static::FIELD_FILE_URI];
-    }
-
     protected function setFileUri(?string $file_uri): SubmissionEntity
     {
         $this->stateFields[static::FIELD_FILE_URI] = $file_uri;
+
+        return $this;
+    }
+
+    /**
+     * @throws SmartlingDirectRunRuntimeException
+     * @throws SmartlingInvalidFactoryArgumentException
+     * @throws BlogNotFoundException
+     */
+    public function generateFileUri(): self
+    {
+        $fileUri = FileUriHelper::generateFileUri($this);
+
+        $filterParams = (new SmartlingFileUriFilterParamater())
+            ->setContentType($this->getContentType())
+            ->setFileUri($fileUri)
+            ->setSourceBlogId($this->getSourceBlogId())
+            ->setSourceContentId($this->getSourceId());
+
+        $filterParams = apply_filters(ExportedAPI::FILTER_SMARTLING_FILE_URI, $filterParams);
+
+        if (($filterParams instanceof SmartlingFileUriFilterParamater)
+            && !StringHelper::isNullOrEmpty($filterParams->getFileUri())
+        ) {
+            $fileUri = $filterParams->getFileUri();
+        }
+
+        $this->stateFields[static::FIELD_FILE_URI] = $fileUri;
 
         return $this;
     }

@@ -2,15 +2,38 @@
 
 namespace IntegrationTests\tests;
 
+use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 
 class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
 {
+    private string $retrievalType;
+
     public static function setUpBeforeClass(): void
     {
         self::wpCliExec('plugin', 'activate', 'acf-pro-test-definitions --network');
+    }
+
+    public function setUp(): void
+    {
+        parent::setUp();
+        $profile = $this->getProfileById(1);
+        $this->assertNotNull($profile);
+        $this->retrievalType = $profile->getRetrievalType();
+    }
+
+    public function tearDown(): void
+    {
+        parent::tearDown();
+        $profile = $this->getProfileById(1);
+        $this->assertNotNull($profile);
+        if ($profile->getRetrievalType() !== $this->retrievalType) {
+            $profile->setRetrievalType($this->retrievalType);
+            $this->getSettingsManager()->storeEntity($profile);
+        }
     }
 
     private function getMetadata($taxonomyId, $imageId = 0)
@@ -38,8 +61,6 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
             '_page_link_field'                                              => 'field_5ad064fb763b6',
             'post_object_field'                                             => $imageId,
             '_post_object_field'                                            => 'field_5ad06541763b7',
-            'taxonomy_field'                                                => $taxonomyId,
-            '_taxonomy_field'                                               => 'field_5ad0655e763b8',
             'repeater_field_0_repeater_text_field'                          => 'Smale Text',
             '_repeater_field_0_repeater_text_field'                         => 'field_5ad0759209c41',
             'repeater_field_0_repeater_image_field'                         => $imageId,
@@ -67,25 +88,25 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         return $this->createPostWithMeta('title', 'body', 'post', $this->getMetadata($taxonomy, $imageId));
     }
 
-    private function createTaxonomy($taxonomyName = 'Some taxonomy', $taxonomy = 'category')
-    {
-        $_taxonomy = wp_insert_term($taxonomyName, $taxonomy);
-
-        return $_taxonomy['term_id'];
-    }
-
     public function testAdvancedCustomFields()
     {
+        $profile = $this->getProfileById(1);
+        $profile->setRetrievalType(ConfigurationProfileEntity::RETRIEVAL_TYPE_PUBLISHED);
+        $this->getSettingsManager()->storeEntity($profile);
         $imageId = $this->createAttachment();
-        $taxonomyIds = $this->createTaxonomy('Category A');
-        $postId = $this->createSourcePostWithMetadata($imageId, $taxonomyIds);
+        $taxonomyId = $this->createTaxonomy('Category A');
+        $postId = $this->createSourcePostWithMetadata($imageId, $taxonomyId);
         $translationHelper = $this->getTranslationHelper();
 
-        $submission = $translationHelper->prepareSubmission('post', 1, $postId, 2);
+        $sourceBlogId = 1;
+        $targetBlogId = 2;
+        $translationHelper->prepareSubmission(ContentTypeHelper::POST_TYPE_ATTACHMENT, $sourceBlogId, $imageId, $targetBlogId);
+        $translationHelper->prepareSubmission('category', $sourceBlogId, $taxonomyId, $targetBlogId);
+        $submission = $translationHelper->prepareSubmission('post', $sourceBlogId, $postId, $targetBlogId);
         $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_NEW, $submission->getStatus());
 
         $this->executeUpload();
-        $this->executeDownload();
+        $this->forceSubmissionDownload($submission);
 
         $submissions = $this->getSubmissionManager()->find(
             [
@@ -137,7 +158,7 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
                 $eValue = (string)$eValue;
             }
             self::assertEquals(
-                $realMetadata[$eKey], $eValue, vsprintf('Expected: %s=>%s, real %s=>%s',
+                $eValue, $realMetadata[$eKey], vsprintf('Expected: %s=>%s, real %s=>%s',
                          [
                              $eKey,
                              var_export($eValue, true),
@@ -160,7 +181,7 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         $imageId = $this->createAttachment();
 
         $postId = $this->createPost(
-            'post',
+            ContentTypeHelper::CONTENT_TYPE_POST,
             'title',
             sprintf(
                 '<!-- wp:acf/custom-image {"id":"","name":"acf/custom-image","data":{"mediaId":%d,"_mediaId":"%s"}} /-->',
@@ -168,13 +189,12 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
                 $acfImageFieldId,
             ),
         );
-        $submission = $translationHelper->prepareSubmission('post', $sourceBlogId, $postId, $targetBlogId);
-        $submission->getFileUri();
-        $submission = $submissionManager->storeEntity($submission);
+        $translationHelper->prepareSubmission(ContentTypeHelper::POST_TYPE_ATTACHMENT, $sourceBlogId, $imageId, $targetBlogId);
+        $submission = $translationHelper->prepareSubmission(ContentTypeHelper::CONTENT_TYPE_POST, $sourceBlogId, $postId, $targetBlogId);
         $this->uploadDownload($submission);
         $attachmentSubmission = ArrayHelper::first($submissionManager->find([SubmissionEntity::FIELD_SOURCE_ID => $imageId]));
         $this->assertInstanceOf(SubmissionEntity::class, $attachmentSubmission);
-        $submission = ArrayHelper::first($submissionManager->find([SubmissionEntity::FIELD_CONTENT_TYPE => 'post']));
+        $submission = ArrayHelper::first($submissionManager->find([SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::CONTENT_TYPE_POST]));
         $this->assertInstanceOf(SubmissionEntity::class, $submission);
         $targetPost = $this->getTargetPost($this->getSiteHelper(), $submission);
         $this->assertNotEquals($imageId, $attachmentSubmission->getTargetId(), 'Attachment id expected to change after translation');
@@ -201,9 +221,8 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         $translationHelper = $this->getTranslationHelper();
         $sourceBlogId = 1;
         $targetBlogId = 2;
-        $postId = $this->createPost('post', 'title', file_get_contents(DIR_TESTDATA . '/wp-690-source.html'));
+        $postId = $this->createPost(ContentTypeHelper::CONTENT_TYPE_POST, 'title', file_get_contents(DIR_TESTDATA . '/wp-690-source.html'));
         $submission = $translationHelper->prepareSubmission('post', $sourceBlogId, $postId, $targetBlogId);
-        $submission->getFileUri();
         $submission = $submissionManager->storeEntity($submission);
         $this->uploadDownload($submission);
         $this->assertStringEqualsFile(

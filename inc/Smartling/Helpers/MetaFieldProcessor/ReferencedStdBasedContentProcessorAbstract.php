@@ -2,11 +2,13 @@
 
 namespace Smartling\Helpers\MetaFieldProcessor;
 
+use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 
 abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProcessorAbstract
 {
@@ -14,6 +16,7 @@ abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProce
      * @var ContentHelper
      */
     private $contentHelper;
+    private SubmissionManager $submissionManager;
 
     /**
      * @return ContentHelper
@@ -31,17 +34,12 @@ abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProce
         $this->contentHelper = $contentHelper;
     }
 
-    /**
-     * ReferencedPostBasedContentProcessor constructor.
-     *
-     * @param TranslationHelper $translationHelper
-     * @param string            $fieldRegexp
-     */
-    public function __construct(TranslationHelper $translationHelper, $fieldRegexp)
+    public function __construct(SubmissionManager $submissionManager, TranslationHelper $translationHelper, string $fieldRegexp)
     {
         parent::__construct();
         $this->setTranslationHelper($translationHelper);
         $this->setFieldRegexp($fieldRegexp);
+        $this->submissionManager = $submissionManager;
     }
 
     /**
@@ -81,40 +79,14 @@ abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProce
             return $value;
         }
 
-        try {
-            $sourceBlogId = $submission->getSourceBlogId();
-            $contentType = $this->detectRealContentType($sourceBlogId, $value);
-            $targetBlogId = $submission->getTargetBlogId();
-            if ($this->getTranslationHelper()->isRelatedSubmissionCreationNeeded($contentType, $sourceBlogId, $value, $targetBlogId, $submission->isCloned())) {
-                $this->getLogger()->debug("Sending for translation referenced content id = '$value' related to submission = '{$submission->getId()}'.");
-
-                if ($this->getContentHelper()->checkEntityExists($sourceBlogId, $contentType, $value)) {
-                    return $this->getTranslationHelper()->tryPrepareRelatedContent(
-                        $contentType,
-                        $sourceBlogId,
-                        $value,
-                        $targetBlogId,
-                        $submission->getJobInfoWithBatchUid(),
-                        (1 === $submission->getIsCloned())
-                    )->getTargetId();
-                }
-
-                $this->getLogger()->debug("Couldn't identify content type for id='$value', blog='$sourceBlogId'. Keeping existing value '$value'.");
-            } else {
-                $this->getLogger()->debug("Skip sending for translation referenced content id = '$value' related to submission = '{$submission->getId()}' due to manual relations handling");
-            }
-
-            return $value;
-        } catch (\Exception $e) {
-            $message = vsprintf(
-                'An exception occurred while sending related item=%s, submission=%s for translation. Message: %s',
-                [
-                    var_export($originalValue, true),
-                    $submission->getId(),
-                    $e->getMessage(),
-                ]
-            );
-            $this->getLogger()->error($message);
+        $attachment = $this->submissionManager->findOne([
+            SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
+            SubmissionEntity::FIELD_SOURCE_ID => (int)$value,
+            SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
+        ]);
+        if ($attachment !== null) {
+            return $attachment->getTargetId();
         }
 
         return $originalValue;

@@ -514,7 +514,7 @@ namespace Smartling\Tests\Services {
             $metaFieldProcessorManager = $this->createMock(MetaFieldProcessorManager::class);
             $metaFieldProcessorManager->method('getProcessor')->willReturnCallback(function (string $fieldName) {
                 if ($fieldName === 'entity/post_parent') {
-                    return new PostBasedProcessor($this->createMock(TranslationHelper::class), '');
+                    return new PostBasedProcessor($this->createMock(SubmissionManager::class), $this->createMock( TranslationHelper::class), '');
                 }
                 return $this->createMock(DefaultMetaFieldProcessor::class);
             });

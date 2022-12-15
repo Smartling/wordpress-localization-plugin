@@ -8,7 +8,6 @@ use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\SmartlingDataReadException;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\MonologWrapper\MonologWrapper;
-use Smartling\Services\GlobalSettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
@@ -145,8 +144,8 @@ class TranslationHelper
         if ($cloning && $this->submissionManager->submissionExists($contentType, $sourceBlogId, $contentId, $targetBlogId)) {
             return false;
         }
-        return !GlobalSettingsManager::isHandleRelationsManually() ||
-            $this->submissionManager->submissionExistsNoLastError($contentType, $sourceBlogId, $contentId, $targetBlogId);
+
+        return !$this->submissionManager->submissionExistsNoLastError($contentType, $sourceBlogId, $contentId, $targetBlogId);
     }
 
     /**
@@ -186,7 +185,7 @@ class TranslationHelper
             $relatedSubmission->setJobInfo($jobInfo->getJobInformationEntity());
             $serialized = $relatedSubmission->toArray(false);
             if (null === $serialized[SubmissionEntity::FIELD_FILE_URI]) {
-                $relatedSubmission->getFileUri();
+                $relatedSubmission->generateFileUri();
             }
             $relatedSubmission = $this->submissionManager->storeEntity($relatedSubmission);
             // try to create target entity
