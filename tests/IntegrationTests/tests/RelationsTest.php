@@ -87,7 +87,6 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
 
     public function testTranslationAndCloningRelationsOneLevelDeep()
     {
-
         $this->loadBuiltInFilters();
         #region create posts, images, link them
         $translationBlogId = 2;
