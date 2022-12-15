@@ -119,7 +119,7 @@ abstract class SmartlingFactoryAbstract
      * @return object
      * @throws SmartlingInvalidFactoryArgumentException
      */
-    public function getHandler($contentType)
+    public function getHandler(string $contentType)
     {
         if (array_key_exists($contentType, $this->collection)) {
             return $this->collection[$contentType];

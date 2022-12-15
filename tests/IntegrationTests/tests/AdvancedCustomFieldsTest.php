@@ -191,8 +191,7 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         );
         $translationHelper->prepareSubmission(ContentTypeHelper::POST_TYPE_ATTACHMENT, $sourceBlogId, $imageId, $targetBlogId);
         $submission = $translationHelper->prepareSubmission(ContentTypeHelper::CONTENT_TYPE_POST, $sourceBlogId, $postId, $targetBlogId);
-        $this->executeUpload();
-        $this->forceSubmissionDownload($submission);
+        $this->uploadDownload($submission);
         $attachmentSubmission = ArrayHelper::first($submissionManager->find([SubmissionEntity::FIELD_SOURCE_ID => $imageId]));
         $this->assertInstanceOf(SubmissionEntity::class, $attachmentSubmission);
         $submission = ArrayHelper::first($submissionManager->find([SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::CONTENT_TYPE_POST]));

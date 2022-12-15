@@ -96,7 +96,7 @@ class ContentTypeManager extends SmartlingFactoryAbstract
         return $output;
     }
 
-    public function getHandler($contentType)
+    public function getHandler(string $contentType)
     {
         if (array_key_exists($contentType, $this->getCollection())) {
             return $this->getCollection()[$contentType];
