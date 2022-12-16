@@ -811,9 +811,6 @@ trait SmartlingCoreUploadTrait
             return $postContentHelper->applyTranslationsWithLockedBlocks($targetContent['post_content'], $translatedContent, $lockedBlocks);
         }
 
-        if (count($submission->getLockedFields()) > 0) {
-            return $postContentHelper->applyBlockLevelLocks($targetContent['post_content'], $translatedContent, $submission->getLockedFields());
-        }
         return $translatedContent;
     }
 

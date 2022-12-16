@@ -114,42 +114,6 @@ namespace Smartling\Tests\Smartling\Helpers {
         );
     }
 
-    public function testAddPostContentBlocksWithBlocks()
-    {
-        $blocks = [
-            <<<HTML
-<!-- wp:media-text {"mediaId":55,"mediaLink":"http://localhost.localdomain/2020/02/26/test/abc-teachers/","mediaType":"image"} -->
-<div class="wp-block-media-text alignwide is-stacked-on-mobile"><figure class="wp-block-media-text__media"><img src="http://localhost.localdomain/wp-content/uploads/2020/02/abc-teachers.jpg" alt="" class="wp-image-55"/></figure><div class="wp-block-media-text__content"><!-- wp:paragraph {"placeholder":"Content…","fontSize":"large"} -->
-<p class="has-large-font-size">Some text</p>
-<!-- /wp:paragraph --></div></div>
-<!-- /wp:media-text -->
-HTML
-        ,
-            <<<HTML
-<!-- wp:image {"id":55,"sizeSlug":"large"} -->
-<figure class="wp-block-image size-large"><img src="http://localhost.localdomain/wp-content/uploads/2020/02/abc-teachers.jpg" alt="" class="wp-image-55"/></figure>
-<!-- /wp:image -->
-HTML
-        ,
-        ];
-        $x = $this->getHelper();
-        $postContent = $blocks[0] . '<p>Wee, I\'m not a part of Gutenberg!</p>' . $blocks[1];
-        $result = $x->addPostContentBlocks(['post_content' => $postContent]);
-        $this->assertCount(5, $result);
-        $this->assertEquals($postContent, $result['post_content'], 'Content should not change');
-        $this->assertStringStartsWith('<!-- wp:media-text', $result['post_content/blocks/0']);
-        $this->assertEquals($blocks[1], $result['post_content/blocks/2']);
-    }
-
-    public function testAddPostContentBlocksWithNoBlocks()
-    {
-        $x = $this->getHelper();
-        $postContent = '<!-- An html comment --><p>Some content</p><!-- Another comment -->';
-        $result = $x->addPostContentBlocks(['post_content' => $postContent]);
-        $this->assertCount(1, $result);
-        $this->assertEquals($postContent, $result['post_content']);
-    }
-
     public function testRegisterFilters()
     {
         $result = $this->helper->registerFilters([]);
