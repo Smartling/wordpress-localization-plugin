@@ -6,6 +6,7 @@ use Smartling\Services\BaseAjaxServiceAbstract;
 use Smartling\Services\ContentRelationsHandler;
 use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\WP\Controller\ContentEditJobController;
 use Smartling\WP\Table\BulkSubmitTableWidget;
 use Smartling\WP\WPAbstract;
 
@@ -153,13 +154,13 @@ $needWrapper = ($tag instanceof WP_Term);
                             <th class="center" colspan="2">
                                 <div id="error-messages"></div>
                                 <div id="loader-image" class="hidden"><span class="loader"></span></div>
-                                <button class="button button-primary" id="createJob"
+                                <button class="button button-primary components-button is-primary" id="createJob"
                                         title="Create a new job and add content into it">Create Job
                                 </button>
-                                <button class="button button-primary hidden" id="addToJob"
+                                <button class="button button-primary components-button is-primary hidden" id="addToJob"
                                         title="Add content into your chosen job">Add to selected Job
                                 </button>
-                                <button class="button button-primary hidden" id="cloneButton">Clone</button>
+                                <button class="button button-primary components-button is-primary hidden" id="cloneButton">Clone</button>
                             </th>
                         </tr>
                         <input type="hidden" id="timezone-sm" name="timezone-sm" value="UTC"/>
@@ -214,7 +215,7 @@ if ($post instanceof WP_Post) {
                 }
             },
             queryProxy: {
-                baseEndpoint: '<?= admin_url('admin-ajax.php') ?>?action=smartling_job_api_proxy',
+                baseEndpoint: '<?= admin_url('admin-ajax.php')?>?action=<?= ContentEditJobController::SMARTLING_JOB_API_PROXY?>',
                 query: function (action, params, success) {
                     var data = { "innerAction": action, "params": params };
                     $.post(this.baseEndpoint, data, function (response) {
@@ -339,6 +340,9 @@ if ($post instanceof WP_Post) {
                 }
             }
         };
+
+        const busyClass = 'is-busy';
+        const buttonTexts = {};
 
         $(document).ready(function () {
             // emulate tabs
@@ -482,6 +486,23 @@ if ($post instanceof WP_Post) {
                 });
             };
 
+            const lockUploadWidgetButton = function lockUploadWidgetButton(event) {
+                const button = $(event.target);
+                if (button.hasClass(busyClass)) {
+                    return false;
+                }
+
+                buttonTexts[button.id] = button.text();
+                button.text('Wait...');
+                button.addClass(busyClass);
+                return true;
+            }
+
+            const unlockUploadWidgetButton = function unlockUploadWidgetButton(button) {
+                button.removeClass(busyClass);
+                button.text(buttonTexts[button.id]);
+            }
+
             if (!isBulkSubmitPage) {
                 loadRelations(currentContent.contentType, currentContent.id);
                 $('.job-wizard input.mcheck, .job-wizard a').on('click', recalculateRelations);
@@ -499,6 +520,10 @@ if ($post instanceof WP_Post) {
             $("#addToJob, #cloneButton").on("click", function (e) {
                 e.stopPropagation();
                 e.preventDefault();
+                const btn = $(e.target);
+                if (!lockUploadWidgetButton(e)) {
+                    return;
+                }
                 $('#error-messages').hide();
 
                 var url = `${ajaxurl}?action=<?= ContentRelationsHandler::ACTION_NAME_CREATE_SUBMISSIONS?>`;
@@ -602,11 +627,16 @@ if ($post instanceof WP_Post) {
                     }
                     uiShowMessage("<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>", message);
                 });
+                unlockUploadWidgetButton(btn);
             });
 
             $("#createJob").on("click", function (e) {
                 e.stopPropagation();
                 e.preventDefault();
+                const btn = $(e.target);
+                if (!lockUploadWidgetButton(e)) {
+                    return;
+                }
 
                 var name = $("#name-sm").val();
                 var description = $("#description-sm").val();
@@ -637,7 +667,7 @@ if ($post instanceof WP_Post) {
                     var text = "<span>" + messages.join("</span><span>") + "</span>";
                     $("#error-messages").html(text);
                 });
-
+                unlockUploadWidgetButton(btn);
             });
 
             jobSelectEl.on("change", function () {

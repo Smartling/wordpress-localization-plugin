@@ -17,6 +17,7 @@ use Smartling\WP\WPHookInterface;
 
 class ContentEditJobController extends WPAbstract implements WPHookInterface
 {
+    public const SMARTLING_JOB_API_PROXY = 'smartling_job_api_proxy';
     /**
      * @var string
      */
@@ -61,7 +62,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
 
     public function initJobApiProxy()
     {
-        add_action('wp_ajax_' . 'smartling_job_api_proxy', function () {
+        add_action('wp_ajax_' . self::SMARTLING_JOB_API_PROXY, function () {
 
             $data =& $_POST;
 
