@@ -250,8 +250,12 @@ function ajaxDownload() {
     var wp5an = "components-button editor-post-publish-button is-button is-default is-primary is-large is-busy";
     var btn = $(downloadSelector);
     var btnLockWait = function () {
+        if (btn.hasClass(wp5an)) {
+            return false;
+        }
         $(btn).addClass(wp5an);
         $(btn).val("Wait...");
+        return true;
     };
     var btnUnlockWait = function () {
         $(btn).removeClass(wp5an);
@@ -262,7 +266,9 @@ function ajaxDownload() {
     var checkedTargetLocales = $(".smtPostWidget-row input.mcheck:checked");
 
     if (0 < checkedTargetLocales.length) {
-        btnLockWait();
+        if (!btnLockWait()) {
+            return;
+        }
         for (var i = 0; i < checkedTargetLocales.length; i++) {
             var submissionId = $(checkedTargetLocales[i]).attr("data-submission-id");
             submissionIds = submissionIds.concat([submissionId]);
