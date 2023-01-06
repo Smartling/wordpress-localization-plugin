@@ -62,6 +62,10 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 3.0.3 =
+* Fixed wrong content IDs being sent for translation when sending related content one or two levels deep
+* Fixed plugin unable to change target content IDs when encountering a non-standard post type
+
 = 3.0.2 =
 * Removed possible target site content duplication when translating
 
