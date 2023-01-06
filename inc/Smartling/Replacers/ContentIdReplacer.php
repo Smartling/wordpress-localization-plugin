@@ -2,7 +2,6 @@
 
 namespace Smartling\Replacers;
 
-use Smartling\Helpers\ArrayHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -24,35 +23,22 @@ class ContentIdReplacer implements ReplacerInterface
         return "Related: Post based content";
     }
 
-    /**
-     * @param mixed $originalValue
-     * @param mixed $translatedValue
-     *
-     * @return mixed
-     */
-    public function processOnDownload($originalValue, $translatedValue, ?SubmissionEntity $submission)
+    public function processOnDownload(mixed $originalValue, mixed $translatedValue, ?SubmissionEntity $submission): mixed
     {
         if ($submission === null) {
             throw new \InvalidArgumentException('Submission must not be null');
         }
-        $sourceBlogId = $submission->getSourceBlogId();
-        $targetBlogId = $submission->getTargetBlogId();
-        $relatedSubmissions = $this->submissionManager->find([
-            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
-            SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+        $relatedSubmission = $this->submissionManager->findOne([
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
+            SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
             SubmissionEntity::FIELD_SOURCE_ID => $translatedValue,
         ]);
-        if (count($relatedSubmissions) === 0) {
+        if ($relatedSubmission === null) {
             $this->logger->debug("No related submissions found while trying to replace content id for submissionId=\"{$submission->getId()}\", skipping");
             return $translatedValue;
         }
 
-        if (count($relatedSubmissions) > 1) {
-            $this->logger->warning("More than a single submission found while trying to replace content id for submissionId=\"{$submission->getId()}\", skipping");
-            return $translatedValue;
-        }
-
-        $targetId = ArrayHelper::first($relatedSubmissions)->getTargetId();
+        $targetId = $relatedSubmission->getTargetId();
         $this->logger->debug("ContentIdReplacer found replacement for submissionId=\"{$submission->getId()}, originalValue=\"$originalValue\", translatedValue=\"$targetId\"");
         if ($targetId !== 0) {
             settype($targetId, gettype($originalValue));
@@ -62,11 +48,7 @@ class ContentIdReplacer implements ReplacerInterface
         return $translatedValue;
     }
 
-    /**
-     * @param mixed $value
-     * @return mixed
-     */
-    public function processOnUpload($value, ?SubmissionEntity $submission = null)
+    public function processOnUpload(mixed $value, ?SubmissionEntity $submission = null): mixed
     {
         return $value;
     }

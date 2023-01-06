@@ -11,20 +11,12 @@ class ExcludeReplacer implements ReplacerInterface
         return "Exclude attribute";
     }
 
-    /**
-     * @param mixed $originalValue
-     * @param mixed $translatedValue
-     * @return null
-     */
-    public function processOnDownload($originalValue, $translatedValue, ?SubmissionEntity $submission)
+    public function processOnDownload(mixed $originalValue, mixed $translatedValue, ?SubmissionEntity $submission): mixed
     {
         return null;
     }
 
-    /**
-     * @param mixed $value
-     */
-    public function processOnUpload($value, ?SubmissionEntity $submission = null): string
+    public function processOnUpload(mixed $value, ?SubmissionEntity $submission = null): string
     {
         return '';
     }

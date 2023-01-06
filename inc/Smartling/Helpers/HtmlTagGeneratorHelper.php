@@ -221,10 +221,9 @@ class HtmlTagGeneratorHelper
      * See [[renderTagAttributes()]] for details on how attributes are being rendered.
      *
      * @return string the generated HTML tag
-     * @see beginTag()
-     * @see endTag()
+     * @see beginTag(), endTag(), renderTagAttributes()
      */
-    public static function tag($name, $content = '', $options = [])
+    public static function tag(string $name, string $content = '', array $options = []): string
     {
         $html = "<$name" . static::renderTagAttributes($options) . '>';
 

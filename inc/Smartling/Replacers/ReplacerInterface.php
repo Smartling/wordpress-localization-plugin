@@ -8,16 +8,7 @@ interface ReplacerInterface
 {
     public function getLabel(): string;
 
-    /**
-     * @param mixed $originalValue
-     * @param mixed $translatedValue
-     * @return mixed
-     */
-    public function processOnDownload($originalValue, $translatedValue, ?SubmissionEntity $submission);
+    public function processOnDownload(mixed $originalValue, mixed $translatedValue, ?SubmissionEntity $submission):mixed;
 
-    /**
-     * @param mixed $value
-     * @return mixed
-     */
-    public function processOnUpload($value, ?SubmissionEntity $submission = null);
+    public function processOnUpload(mixed $value, ?SubmissionEntity $submission = null):mixed;
 }

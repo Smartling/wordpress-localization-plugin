@@ -431,6 +431,7 @@ class SubmissionManager extends EntityManagerAbstract
         $tableName = $this->getDbal()->completeTableName(SubmissionEntity::getTableName());
 
         if ($is_insert) {
+            $this->getLogger()->debug("Inserting submission $originalSubmission");
             $storeQuery = QueryBuilder::buildInsertQuery($tableName, $fields);
         } else {
             // update

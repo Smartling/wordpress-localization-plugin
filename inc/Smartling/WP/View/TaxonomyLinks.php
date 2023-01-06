@@ -31,7 +31,7 @@ $blogs = $this->getViewData()['blogs'];
             <th><label for="sourceId">Term</label></th>
             <td><?= HtmlTagGeneratorHelper::tag(
                     'select',
-                    [],
+                    '',
                     ['id' => 'sourceId', 'name' => 'sourceId']
                 )?>
             </td>
@@ -41,7 +41,7 @@ $blogs = $this->getViewData()['blogs'];
             <th><label for="targetId_<?= $blogId?>"><?= $blogTitle?></label></th>
             <td><?= HtmlTagGeneratorHelper::tag(
                     'select',
-                    [],
+                    '',
                     ['id' => "targetId_$blogId", 'name' => "targetId[$blogId]"]
                 )?>
             </td>

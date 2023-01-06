@@ -11,21 +11,12 @@ class CopyReplacer implements ReplacerInterface
         return "Copy attribute value";
     }
 
-    /**
-     * @param mixed $originalValue
-     * @param mixed $translatedValue
-     * @return mixed
-     */
-    public function processOnDownload($originalValue, $translatedValue, ?SubmissionEntity $submission)
+    public function processOnDownload(mixed $originalValue, mixed $translatedValue, ?SubmissionEntity $submission): mixed
     {
         return $originalValue;
     }
 
-    /**
-     * @param mixed $value
-     * @return mixed
-     */
-    public function processOnUpload($value, ?SubmissionEntity $submission = null): string
+    public function processOnUpload(mixed $value, ?SubmissionEntity $submission = null): string
     {
         return '';
     }

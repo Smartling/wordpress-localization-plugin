@@ -142,6 +142,7 @@ class ContentRelationsDiscoveryService
 
     public function bulkUpload(JobEntityWithBatchUid $jobInfo, array $contentIds, string $contentType, int $currentBlogId, array $targetBlogIds): void
     {
+        $this->getLogger()->debug("Bulk upload request, contentIds=" . json_encode($contentIds));
         foreach ($targetBlogIds as $targetBlogId) {
             $blogFields = [
                 SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
@@ -156,6 +157,7 @@ class ContentRelationsDiscoveryService
                 if (empty($existing)) {
                     $submission = $this->submissionManager->getSubmissionEntity($contentType, $currentBlogId, $id, $targetBlogId, $this->localizationPluginProxy);
                 } else {
+                    $this->getLogger()->warning("Multiple submissions exist for contentId=$id, targetBlogId=$targetBlogId, submissionCount=" . count($existing));
                     $submission = ArrayHelper::first($existing);
                 }
                 $submission->setBatchUid($jobInfo->getBatchUid());
@@ -166,7 +168,7 @@ class ContentRelationsDiscoveryService
                 if ($title !== '') {
                     $submission->setSourceTitle($title);
                 }
-                $this->submissionManager->storeEntity($submission);
+                $submission = $this->submissionManager->storeEntity($submission);
                 $this->logSubmissionCreated($submission, 'Bulk upload request');
                 if ($submission->getContentType() === ContentTypeNavigationMenu::WP_CONTENT_TYPE) {
                     $menuItemIds = array_reduce($this->menuHelper->getMenuItems($submission->getSourceId(), $submission->getSourceBlogId()), static function ($carry, $item) {
@@ -567,12 +569,11 @@ class ContentRelationsDiscoveryService
         }
         $detectedReferences = array_merge_recursive($this->externalContentManager->getExternalRelations($contentType, $id), $detectedReferences);
 
-        $message = self::POST_BASED_PROCESSOR . ' has %d references';
         $count = 0;
         if (array_key_exists(self::POST_BASED_PROCESSOR, $detectedReferences)) {
             $count = count($detectedReferences[self::POST_BASED_PROCESSOR], COUNT_RECURSIVE);
         }
-        $this->getLogger()->debug(sprintf($message, $count));
+        $this->getLogger()->debug(sprintf(self::POST_BASED_PROCESSOR . ' has %d references', $count));
         $detectedReferences = $this->normalizeReferences($detectedReferences);
 
         $responseData = new DetectedRelations($detectedReferences);
@@ -583,7 +584,7 @@ class ContentRelationsDiscoveryService
                     foreach ($ids as $detectedId) {
                         if ($detectedId === null) {
                             $this->getLogger()->notice("Null id passed when processing detected references detectedContentType=\"$detectedContentType\"");
-                        } elseif (!$this->submissionManager->submissionExists($detectedContentType, $curBlogId, $detectedId, $targetBlogId)) {
+                        } elseif (!$this->submissionManager->submissionExistsNoLastError($detectedContentType, $curBlogId, $detectedId, $targetBlogId)) {
                             $responseData->addMissingReference($targetBlogId, $detectedContentType, $detectedId);
                         } else {
                             $this->getLogger()->debug("Skipped adding related item id=$detectedId: submission exists");
@@ -598,7 +599,7 @@ class ContentRelationsDiscoveryService
         return $responseData;
     }
 
-    protected function normalizeReferences(array $references): array
+    public function normalizeReferences(array $references): array
     {
         $result = [];
 
@@ -611,13 +612,11 @@ class ContentRelationsDiscoveryService
         }
 
         if (isset($references[self::POST_BASED_PROCESSOR])) {
-            foreach (array_keys($references[self::POST_BASED_PROCESSOR]) as $postId) {
+            foreach ($references[self::POST_BASED_PROCESSOR] as $key => $value) {
+                $postId = is_int($value) ? $value : $key;
                 $postType = $this->wordpressProxy->get_post_type($postId);
-                if ($postType !== false) {
+                if (is_string($postType)) {
                     $result[$postType][] = $postId;
-                } else {
-                    $this->getLogger()->notice("Related item type couldn't be determined, assuming 'attachment', postId=$postId");
-                    $result['attachment'][] = $postId;
                 }
             }
         }
@@ -640,6 +639,9 @@ class ContentRelationsDiscoveryService
 
         foreach ($result as $contentType => $items) {
             $result[$contentType] = array_unique($items);
+            if (empty($result[$contentType])) {
+                unset($result[$contentType]);
+            }
         }
 
         return $result;

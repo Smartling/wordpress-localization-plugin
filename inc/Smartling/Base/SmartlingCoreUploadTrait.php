@@ -420,6 +420,7 @@ trait SmartlingCoreUploadTrait
             $submission->generateFileUri();
             $submission = $this->getSubmissionManager()->storeEntity($submission);
             $xml = $this->getXMLFiltered($submission);
+            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
             $submission = $this->getSubmissionManager()->storeEntity($submission);
             $params = [
                 SubmissionEntity::FIELD_STATUS          => [SubmissionEntity::SUBMISSION_STATUS_NEW],
@@ -443,7 +444,7 @@ trait SmartlingCoreUploadTrait
              */
             $submissions = $this->getSubmissionManager()->find($params);
 
-            $locales = [];
+            $locales = [$this->getSettingsManager()->getSmartlingLocaleBySubmission($submission)];
 
             foreach ($submissions as $_submission) {
                 /**

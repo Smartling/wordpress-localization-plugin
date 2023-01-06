@@ -29,19 +29,18 @@ class PostBasedProcessor extends ReferencedPostBasedContentProcessor
                 try {
                     $_value = parent::processFieldPostTranslation($submission, $fieldName, $_value);
                 } catch (Exception $e) {
-                    $this->getLogger()->error(vsprintf('Error filtering field \'%s\' with value \'%s\' by \'%s\'', [
-                        $fieldName, var_export($value, true), get_class($this),
-                    ]));
+                    $this->getLogger()->error(sprintf('Error filtering fieldName="%s", value="%s", processorClass="%s", errorMessage="%s"',
+                        $fieldName, var_export(addslashes($value), true), get_class($this), addslashes($e->getMessage()),
+                    ));
                 }
-
             }
 
             $serializedValue = $this->getSerializer()->serialize($deserializedValue);
         } catch (\Exception $e) {
             $this->getLogger()
-                ->error(vsprintf('Error filtering field \'%s\' with value \'%s\' by \'%s\'. Using original value.', [
-                    $fieldName, var_export($value, true), get_class($this),
-                ]));
+                ->error(sprintf('Error filtering fieldName="%s", value="%s", processorClass="%s", errorMessage="%s". Using original value.',
+                    $fieldName, var_export($value, true), get_class($this), $e->getMessage(),
+                ));
 
             return $originalValue;
         }

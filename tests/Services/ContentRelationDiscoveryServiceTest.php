@@ -18,7 +18,9 @@ namespace Smartling\Tests\Services {
     use PHPUnit\Framework\MockObject\MockObject;
     use PHPUnit\Framework\TestCase;
     use Smartling\ApiWrapper;
+    use Smartling\ApiWrapperInterface;
     use Smartling\Bootstrap;
+    use Smartling\ContentTypes\ContentTypeHelper;
     use Smartling\ContentTypes\ContentTypeManager;
     use Smartling\ContentTypes\ContentTypeNavigationMenu;
     use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
@@ -654,14 +656,51 @@ namespace Smartling\Tests\Services {
             ], [], '', [])));
         }
 
+        public function testNormalizeReferences()
+        {
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->method('get_post_type')->willReturnMap([
+                [9224, ContentTypeHelper::CONTENT_TYPE_POST],
+                [10899, ContentTypeHelper::POST_TYPE_ATTACHMENT],
+                [10902, ContentTypeHelper::POST_TYPE_ATTACHMENT],
+                [10903, ContentTypeHelper::POST_TYPE_ATTACHMENT],
+                [11292, ContentTypeHelper::CONTENT_TYPE_POST],
+            ]);
+            $x = $this->getContentRelationDiscoveryService(wpProxy: $wpProxy);
+            $this->assertEquals([
+                'attachment' => [11290, 10903, 10902, 10899],
+                ContentTypeHelper::CONTENT_TYPE_POST => [9224, 11292],
+            ], $x->normalizeReferences(
+                [
+                    ContentTypeHelper::POST_TYPE_ATTACHMENT => [],
+                    'CloneValueFieldProcessor' => [
+                        '11298' => ['entity/post_name'],
+                    ],
+                    'PostBasedProcessor' => [
+                        '9224' => ['entity/post_parent'],
+                        '9225' => 10903,
+                        '9226' => 10902,
+                        '9227' => 10899,
+                        '9228' => 11292,
+                    ],
+                    'MediaBasedProcessor' => [
+                        '11290' => ['meta/_thumbnail_id'],
+                    ],
+                    'SkipFieldProcessor' => [
+                        '-1' => ['meta/stage_key'],
+                    ],
+                    'taxonomies' => [],
+                ]
+            ));
+        }
         /**
          * @return MockObject|ContentRelationsDiscoveryService
          */
         private function getContentRelationDiscoveryService(
-            ApiWrapper $apiWrapper,
-            ContentHelper $contentHelper,
-            SettingsManager $settingsManager,
-            SubmissionManager $submissionManager,
+            ApiWrapperInterface $apiWrapper = null,
+            ContentHelper $contentHelper = null,
+            SettingsManager $settingsManager = null,
+            SubmissionManager $submissionManager = null,
             SubmissionFactory $submissionFactory = null,
             MetaFieldProcessorManager $metaFieldProcessorManager = null,
             FieldsFilterHelper $fieldsFilterHelper = null,
@@ -670,8 +709,14 @@ namespace Smartling\Tests\Services {
             ContentTypeManager $contentTypeManager = null
         )
         {
+            if ($apiWrapper === null) {
+                $apiWrapper = $this->createMock(ApiWrapperInterface::class);
+            }
             if ($acfDynamicSupport === null) {
                 $acfDynamicSupport = $this->createMock(AcfDynamicSupport::class);
+            }
+            if ($contentHelper === null) {
+                $contentHelper = $this->createMock(ContentHelper::class);
             }
             if ($contentTypeManager === null) {
                 $contentTypeManager = $this->createMock(ContentTypeManager::class);
@@ -681,6 +726,12 @@ namespace Smartling\Tests\Services {
             }
             if ($fieldsFilterHelper === null) {
                 $fieldsFilterHelper = $this->createMock(FieldsFilterHelper::class);
+            }
+            if ($settingsManager === null) {
+                $settingsManager = $this->createMock(SettingsManager::class);
+            }
+            if ($submissionManager === null) {
+                $submissionManager = $this->createMock(SubmissionManager::class);
             }
             if ($submissionFactory === null) {
                 $submissionFactory = $this->createMock(SubmissionFactory::class);
