@@ -461,6 +461,10 @@ class ContentRelationsDiscoveryService
             $array = $this->addPostContentReferences($array, $innerBlock);
         }
 
+        $this->getLogger()->debug("addPostContentReferences({$block->serializeBlock($block)}");
+        $this->getLogger()->debug("Add post content references result: " . json_encode($array));
+        $this->getLogger()->debug("Add post content references ACF: " . json_encode($referencesFromAcf));
+        $this->getLogger()->debug("Add post content references from setup: " . json_encode($referencesFromSetupBlocks));
         return array_merge($array, $referencesFromAcf, $referencesFromSetupBlocks);
     }
 
@@ -564,10 +568,13 @@ class ContentRelationsDiscoveryService
 
         $detectedReferences['taxonomies'] = $this->getBackwardRelatedTaxonomies($id, $contentType);
 
+        $this->getLogger()->debug('References before getting post content references: ' . json_encode($detectedReferences));
         if (array_key_exists('post_content', $content['entity'])) {
             $detectedReferences = array_merge_recursive($detectedReferences, $this->getPostContentReferences($content['entity']['post_content']));
+            $this->getLogger()->debug('References after getting post content references: ' . json_encode($detectedReferences));
         }
         $detectedReferences = array_merge_recursive($this->externalContentManager->getExternalRelations($contentType, $id), $detectedReferences);
+        $this->getLogger()->debug('References after getting external relations: ' . json_encode($detectedReferences));
 
         $count = 0;
         if (array_key_exists(self::POST_BASED_PROCESSOR, $detectedReferences)) {
@@ -575,6 +582,7 @@ class ContentRelationsDiscoveryService
         }
         $this->getLogger()->debug(sprintf(self::POST_BASED_PROCESSOR . ' has %d references', $count));
         $detectedReferences = $this->normalizeReferences($detectedReferences);
+        $this->getLogger()->debug('References after normalizing: ' . json_encode($detectedReferences));
 
         $responseData = new DetectedRelations($detectedReferences);
 
@@ -615,7 +623,7 @@ class ContentRelationsDiscoveryService
             foreach ($references[self::POST_BASED_PROCESSOR] as $key => $value) {
                 $postId = is_int($value) ? $value : $key;
                 $postType = $this->wordpressProxy->get_post_type($postId);
-                if (is_string($postType)) {
+                if ($postType !== false) {
                     $result[$postType][] = $postId;
                 }
             }
