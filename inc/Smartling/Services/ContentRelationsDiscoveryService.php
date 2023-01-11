@@ -157,7 +157,6 @@ class ContentRelationsDiscoveryService
                 if (empty($existing)) {
                     $submission = $this->submissionManager->getSubmissionEntity($contentType, $currentBlogId, $id, $targetBlogId, $this->localizationPluginProxy);
                 } else {
-                    $this->getLogger()->warning("Multiple submissions exist for contentId=$id, targetBlogId=$targetBlogId, submissionCount=" . count($existing));
                     $submission = ArrayHelper::first($existing);
                 }
                 $submission->setBatchUid($jobInfo->getBatchUid());

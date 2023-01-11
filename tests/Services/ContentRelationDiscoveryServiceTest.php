@@ -187,7 +187,7 @@ namespace Smartling\Tests\Services {
             $submission->expects(self::exactly(count($sourceIds)))->method('setBatchUid')->with($batchUid);
             $submission->expects(self::exactly(count($sourceIds)))->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
             $submission->expects(self::exactly(count($sourceIds)))->method('setSourceTitle')->withConsecutive(...$expectedTitles);
-            $submission->method('getId')->willReturn(48, 48, 49, 49); // getId is used two times per submission
+            $submission->method('getId')->willReturn(48, 49);
 
             $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
 
