@@ -2,7 +2,7 @@
 
 namespace Smartling\Helpers\MetaFieldProcessor;
 
-use Smartling\ContentTypes\ContentTypeHelper;
+use Smartling\Exception\SmartlingWpDataIntegrityException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
@@ -43,12 +43,9 @@ abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProce
     }
 
     /**
-     * @param int $blogId
-     * @param int $contentId
-     *
-     * @return string mixed
+     * @throws SmartlingWpDataIntegrityException
      */
-    abstract protected function detectRealContentType($blogId, $contentId);
+    abstract protected function detectRealContentType(int $blogId, int $contentId): string;
 
     /**
      * @param SubmissionEntity $submission
@@ -80,7 +77,7 @@ abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProce
         }
 
         $attachment = $this->submissionManager->findOne([
-            SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
+            SubmissionEntity::FIELD_CONTENT_TYPE => $this->detectRealContentType($submission->getSourceBlogId(), $value),
             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
             SubmissionEntity::FIELD_SOURCE_ID => (int)$value,
             SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),

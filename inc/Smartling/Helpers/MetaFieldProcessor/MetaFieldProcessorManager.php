@@ -83,13 +83,10 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
         $this->setAllowDefault(true);
     }
 
-    /**
-     * @param MetaFieldProcessorInterface $handler
-     */
-    public function registerProcessor(MetaFieldProcessorInterface $handler)
+    /** @noinspection PhpUnused, used in DI */
+    public function registerProcessor(MetaFieldProcessorInterface $handler): void
     {
         $pattern = $handler->getFieldRegexp();
-        //$this->getLogger()->debug(vsprintf('Adding to collection processor for pattern: \'%s\'', [$pattern]));
         if ($this->collectionKeyExists($pattern)) {
             $this->removeFromCollection($pattern);
         }
@@ -109,10 +106,10 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
         if ($result === $fieldValue) {
             $this->getLogger()->debug(sprintf(
                 'Post Translation filter received submissionId="%s", field="%s", value="%s", processor="%s" left unchanged',
-                $fieldName,
-                $processorClass,
-                var_export($fieldValue, true),
                 $submission->getId(),
+                $fieldName,
+                var_export($fieldValue, true),
+                $processorClass,
             ));
         } else {
             $this->getLogger()->debug(sprintf(
