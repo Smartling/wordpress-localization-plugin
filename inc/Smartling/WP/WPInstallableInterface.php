@@ -2,27 +2,20 @@
 
 namespace Smartling\WP;
 
-/**
- * Interface WPInstallableInterface
- * @package Smartling\WP
- */
 interface WPInstallableInterface
 {
     /**
      * Is triggered on plugin uninstall
-     * @return void
      */
-    public function uninstall();
+    public function uninstall(): void;
 
     /**
      * Is triggered on plugin activation
-     * @return void
      */
-    public function activate();
+    public function activate(): void;
 
     /**
      * Is triggered on plugin deactivation
-     * @return void
      */
-    public function deactivate();
+    public function deactivate(): void;
 }

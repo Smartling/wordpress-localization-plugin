@@ -4,7 +4,6 @@ namespace Smartling\DbAl;
 
 use Smartling\Bootstrap;
 use Smartling\DbAl\Migrations\DbMigrationManager;
-use Smartling\DbAl\Migrations\SmartlingDbMigrationInterface;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
@@ -20,28 +19,21 @@ use Smartling\WP\WPInstallableInterface;
 
 class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableInterface
 {
-
-    const SMARTLING_DB_SCHEMA_VERSION = 'smartling_db_ver';
+    private const SMARTLING_DB_SCHEMA_VERSION = 'smartling_db_ver';
 
     /**
      * Plugin tables definition based on array
      * @var array
      */
-    private $tables = [];
+    private array $tables = [];
 
     /**
      * @var \wpdb
      */
     private $wpdb;
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    private LoggerInterface $logger;
 
-    /**
-     * DB constructor.
-     */
     public function __construct()
     {
         $this->logger = MonologWrapper::getLogger(get_called_class());
@@ -50,14 +42,8 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
         $this->wpdb = $wpdb;
     }
 
-    /**
-     * @return DbMigrationManager
-     */
-    public function getMigrationManager()
+    public function getMigrationManager(): DbMigrationManager
     {
-        /**
-         * @var DbMigrationManager $mgr
-         */
         return Bootstrap::getContainer()->get('manager.db.migrations');
     }
 
@@ -104,12 +90,10 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
     /**
      * Is executed on plugin activation
      */
-    public function install()
+    public function install(): void
     {
         $currentDbVersion = $this->getSchemaVersion();
         if (0 === $currentDbVersion) {
-            $curVer = $currentDbVersion;
-
             $currentDbVersion = $this->installDb();
 
             // check if there was 1.0.12 version
@@ -117,17 +101,16 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
                 ->query('SHOW TABLES LIKE \'%smartling%\'');
             $res = $this->getWpdb()->num_rows;
 
-            if (0 < $res && 0 === $curVer) {
+            if (0 < $res) {
                 // 1.0.12 detected
                 $this->schemaUpdate($currentDbVersion);
             }
         } else {
             $this->schemaUpdate($currentDbVersion);
         }
-
     }
 
-    private function installDb()
+    private function installDb(): int
     {
         foreach ($this->tables as $tableDefinition) {
             $query = $this->prepareSql($tableDefinition);
@@ -147,39 +130,19 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
         $this->setSchemaVersion($currentDbVersion);
 
         return $currentDbVersion;
-
     }
 
-    /**
-     * @param $fromVersion
-     */
-    public function schemaUpdate($fromVersion)
+    public function schemaUpdate(int $fromVersion): void
     {
-        /**
-         * @var DbMigrationManager $mgr
-         */
-        $mgr = Bootstrap::getContainer()->get('manager.db.migrations');
-        $pool = $mgr->getMigrations($fromVersion);
-        if (0 < count($pool)) {
-            $prefix = $this->getWpdb()->base_prefix;
-            foreach ($pool as $version => $migration) {
-                /**
-                 * @var SmartlingDbMigrationInterface $migration
-                 */
-                $this->logger->info('Starting applying migration ' . $migration->getVersion());
-                $queries = $migration->getQueries($prefix);
-                $stopMigrate = false;
-                foreach ($queries as $query) {
-                    $this->logger->debug('Executing query: ' . $query);
-                    $result = $this->getWpdb()->query($query);
-                    if (false === $result) {
-                        $this->logger->error('Error executing query: ' . $this->getWpdb()->last_error);
-                        $stopMigrate = true;
-                        break;
-                    }
-                }
-
-                if (true === $stopMigrate) {
+        $prefix = $this->getWpdb()->base_prefix;
+        foreach ($this->getMigrationManager()->getMigrations($fromVersion) as $migration) {
+            $this->logger->info('Starting applying migration ' . $migration->getVersion());
+            $queries = $migration->getQueries($prefix);
+            foreach ($queries as $query) {
+                $this->logger->debug('Executing query: ' . $query);
+                $result = $this->getWpdb()->query($query);
+                if (false === $result) {
+                    $this->logger->error('Error executing query: ' . $this->getWpdb()->last_error);
                     $message = vsprintf(
                         'Error applying migration <strong>#%s</strong>. <br/>
 Got error: <strong>%s</strong>.<br/>
@@ -197,33 +160,19 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
 
                     return;
                 }
-
-                if (false === $stopMigrate) {
-                    $this->logger->info('Finished applying migration ' . $migration->getVersion());
-                    $this->setSchemaVersion($migration->getVersion());
-                } else {
-                    $this->logger->error('Error occurred while applying migration ' . $migration->getVersion() .
-                                         '. Error: ' . $this->getWpdb()->last_error);
-                    break;
-                }
             }
-        } else {
-            // Commented it because it generates too many noise in logs
-            // $this->logger->info( 'Activated. No new migrations found.' );
+
+            $this->logger->info('Finished applying migration ' . $migration->getVersion());
+            $this->setSchemaVersion($migration->getVersion());
         }
     }
 
-    public function getSchemaVersion()
+    public function getSchemaVersion(): int
     {
         return IntegerParser::integerOrDefault(SimpleStorageHelper::get(self::SMARTLING_DB_SCHEMA_VERSION, 0), 0);
     }
 
-    /**
-     * @param $version
-     *
-     * @return bool|null
-     */
-    public function setSchemaVersion($version)
+    public function setSchemaVersion(int $version): bool
     {
         $currentVersion = $this->getSchemaVersion();
         $version = IntegerParser::integerOrDefault($version, 0);
@@ -252,7 +201,7 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
     /**
      * Is executed on plugin deactivation
      */
-    public function uninstall()
+    public function uninstall(): void
     {
         if (!defined('SMARTLING_COMPLETE_REMOVE')) {
             return;
@@ -267,7 +216,7 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
         delete_site_option(self::SMARTLING_DB_SCHEMA_VERSION);
     }
 
-    public function activate()
+    public function activate(): void
     {
         $currentDbVersion = $this->getSchemaVersion();
         if (0 === $currentDbVersion) {
@@ -277,48 +226,34 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
         }
     }
 
-    public function deactivate()
+    public function deactivate(): void
     {
     }
 
     /**
      * Extracts table name from tableDefinition
-     *
-     * @param array $tableDefinition
-     *
-     * @return string
      */
-    private function getTableName(array $tableDefinition)
+    private function getTableName(array $tableDefinition): string
     {
         return $this->getWpdb()->base_prefix . $tableDefinition['name'];
     }
 
     /**
      * Extracts columns definition from tableDefinition
-     *
-     * @param array $tableDefinition
-     *
-     * @return array
      */
-    private function getSchema(array $tableDefinition)
+    private function getSchema(array $tableDefinition): array
     {
         return $tableDefinition['columns'];
     }
 
     /**
      * Extracts primary key from tableDefinition
-     *
-     * @param array $tableDefinition
-     *
-     * @return array
      */
-    private function getPrimaryKey(array $tableDefinition)
+    private function getPrimaryKey(array $tableDefinition): array
     {
         foreach ($tableDefinition['indexes'] as $indexDefinition) {
             if ($indexDefinition['type'] === 'primary') {
                 return $indexDefinition['columns'];
-            } else {
-                continue;
             }
         }
 
@@ -327,12 +262,8 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
 
     /**
      * Extracts indexes definitions from tableDefinition
-     *
-     * @param array $tableDefinition
-     *
-     * @return string
      */
-    private function getIndex(array $tableDefinition)
+    private function getIndex(array $tableDefinition): string
     {
         $_indexes = [];
 
@@ -353,21 +284,20 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
         return implode(', ', $_indexes);
     }
 
-    private function getCharset()
+    private function getCharset(): string
     {
         return $this->getWpdb()->charset;
     }
 
-    private function getCollate()
+    private function getCollate(): string
     {
         return $this->getWpdb()->collate;
     }
 
     /**
      * Gets Character set and collation for table
-     * @return string
      */
-    private function getCharsetCollate()
+    private function getCharsetCollate(): string
     {
         $parts = [];
 
@@ -385,17 +315,12 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
 
         if (0 < count($parts)) {
             return vsprintf(' %s ', [implode(' ', $parts)]);
-        } else {
-            return '';
         }
+
+        return '';
     }
 
-    /**
-     * @param array $columns
-     *
-     * @return string
-     */
-    private function arrayToSqlColumn(array $columns)
+    private function arrayToSqlColumn(array $columns): string
     {
         $out = '';
         foreach ($columns as $name => $type) {
@@ -429,16 +354,7 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
             $add .= vsprintf(', %s', [$index]);
         }
 
-        $sql = vsprintf(
-            'CREATE TABLE IF NOT EXISTS %s ( %s %s ) %s;',
-            [
-                $table,
-                $schema,
-                $add,
-                $charset_collate,
-            ]);
-
-        return $sql;
+        return "CREATE TABLE IF NOT EXISTS $table ( $schema $add ) $charset_collate;";
     }
 
     public function escape(string $string): string
@@ -456,19 +372,39 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
         return $this->getWpdb()->prefix . $tableName;
     }
 
-    public function query(string $query)
+    private function loggedQuery(string $query): int|bool
     {
-        return $this->wpdb->query($query);
+        $result = $this->wpdb->query($query);
+        if ($result === false) {
+            $this->logFailedQuery($query);
+        }
+
+        return $result;
     }
 
-    public function queryPrepared(string $query, ...$args)
+    private function logFailedQuery(string $query): void
     {
-        return $this->wpdb->query($this->prepare($query, ...$args));
+        $this->logger->notice("Query failed: $query, last error: {$this->getLastErrorMessage()}");
     }
 
-    public function fetch(string $query, string $output = OBJECT)
+    public function query(string $query): int|bool
     {
-        return $this->getWpdb()->get_results($query, $output);
+        return $this->loggedQuery($query);
+    }
+
+    public function queryPrepared(string $query, ...$args): bool|int
+    {
+        return $this->loggedQuery($this->prepare($query, ...$args));
+    }
+
+    public function fetch(string $query, string $output = OBJECT): array|object|null
+    {
+        $results = $this->getWpdb()->get_results($query, $output);
+        if ($results === null) {
+            $this->logFailedQuery($query);
+        }
+
+        return $results;
     }
 
     public function fetchPrepared(string $query, ...$args): array
