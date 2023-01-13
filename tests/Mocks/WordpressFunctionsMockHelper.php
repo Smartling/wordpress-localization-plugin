@@ -4,6 +4,7 @@
 
 namespace {
 
+    use JetBrains\PhpStorm\Pure;
     use Smartling\DbAl\MultilingualPress2Connector;
 
     function injectMocks()
@@ -107,7 +108,8 @@ namespace {
         }
 
         if (!function_exists('update_site_option')) {
-            function update_site_option($key, $value) {
+            function update_site_option($key, $value): bool {
+                return true;
             }
         }
 

@@ -11,13 +11,16 @@ use Smartling\Processors\SmartlingFactoryAbstract;
  */
 class DbMigrationManager extends SmartlingFactoryAbstract
 {
-
-    public function registerMigration(SmartlingDbMigrationInterface $migration)
+    /** @noinspection PhpUnused, used in DI */
+    public function registerMigration(SmartlingDbMigrationInterface $migration): void
     {
         $this->registerHandler($migration->getVersion(), $migration);
     }
 
-    public function getMigrations($fromVersion)
+    /**
+     * @return SmartlingDbMigrationInterface[]
+     */
+    public function getMigrations(int $fromVersion): array
     {
         $pool = [];
         foreach ($this->getCollection() as $version => $migration) {
@@ -30,7 +33,7 @@ class DbMigrationManager extends SmartlingFactoryAbstract
         return $pool;
     }
 
-    public function getLastMigration()
+    public function getLastMigration(): int
     {
         $ver = 0;
 
