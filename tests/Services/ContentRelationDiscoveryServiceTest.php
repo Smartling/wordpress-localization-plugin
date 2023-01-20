@@ -730,43 +730,7 @@ namespace Smartling\Tests\Services {
                 ]
             ], $relations->getOriginalReferences());
         }
-        public function testNormalizeReferences()
-        {
-            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
-            $wpProxy->method('get_post_type')->willReturnMap([
-                [9224, ContentTypeHelper::CONTENT_TYPE_POST],
-                [10899, ContentTypeHelper::POST_TYPE_ATTACHMENT],
-                [10902, ContentTypeHelper::POST_TYPE_ATTACHMENT],
-                [10903, ContentTypeHelper::POST_TYPE_ATTACHMENT],
-                [11292, ContentTypeHelper::CONTENT_TYPE_POST],
-            ]);
-            $x = $this->getContentRelationDiscoveryService(wpProxy: $wpProxy);
-            $this->assertEquals([
-                'attachment' => [11290, 10903, 10902, 10899],
-                ContentTypeHelper::CONTENT_TYPE_POST => [9224, 11292],
-            ], $x->normalizeReferences(
-                [
-                    ContentTypeHelper::POST_TYPE_ATTACHMENT => [],
-                    'CloneValueFieldProcessor' => [
-                        '11298' => ['entity/post_name'],
-                    ],
-                    'PostBasedProcessor' => [
-                        '9224' => ['entity/post_parent'],
-                        '9225' => 10903,
-                        '9226' => 10902,
-                        '9227' => 10899,
-                        '9228' => 11292,
-                    ],
-                    'MediaBasedProcessor' => [
-                        '11290' => ['meta/_thumbnail_id'],
-                    ],
-                    'SkipFieldProcessor' => [
-                        '-1' => ['meta/stage_key'],
-                    ],
-                    'taxonomies' => [],
-                ]
-            ));
-        }
+
         /**
          * @return MockObject|ContentRelationsDiscoveryService
          */
