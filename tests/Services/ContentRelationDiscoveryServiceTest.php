@@ -37,6 +37,7 @@ namespace Smartling\Tests\Services {
     use Smartling\Helpers\CustomMenuContentTypeHelper;
     use Smartling\Helpers\FieldsFilterHelper;
     use Smartling\Helpers\GutenbergBlockHelper;
+    use Smartling\Helpers\GutenbergReplacementRule;
     use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\PostBasedProcessor;
     use Smartling\Helpers\MetaFieldProcessor\DefaultMetaFieldProcessor;
     use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
@@ -53,6 +54,7 @@ namespace Smartling\Tests\Services {
     use Smartling\Models\UserCloneRequest;
     use Smartling\Models\UserTranslationRequest;
     use Smartling\Processors\ContentEntitiesIOFactory;
+    use Smartling\Replacers\ContentIdReplacer;
     use Smartling\Replacers\ReplacerFactory;
     use Smartling\Services\ContentRelationsDiscoveryService;
     use Smartling\Services\ContentRelationsHandler;
@@ -656,6 +658,78 @@ namespace Smartling\Tests\Services {
             ], [], '', [])));
         }
 
+        public function testGetRelations()
+        {
+            $contentType = 'post';
+            $postParentId = 9024;
+            $relatedPostId = 13;
+            $fieldsFilterHelper = $this->createPartialMock(FieldsFilterHelper::class, []);
+
+            $mapper = $this->createMock(EntityAbstract::class);
+            $mapper->method('get')->willReturn($mapper);
+            $mapper->method('toArray')->willReturn([
+                'post_content' => "<!-- wp:test {\"relatedContent\":$relatedPostId} /-->",
+                'post_parent' => $postParentId,
+            ]);
+            $mapper->method('getMetadata')->willReturn([]);
+
+            $metaFieldProcessorManager = $this->createMock(MetaFieldProcessorManager::class);
+            $metaFieldProcessorManager->method('getProcessor')->willReturnCallback(function ($field) {
+                if ($field === 'entity/post_parent') {
+                    return $this->getMockBuilder(PostBasedProcessor::class)
+                        ->disableOriginalConstructor()
+                        ->setMockClassName(ContentRelationsDiscoveryService::POST_BASED_PROCESSOR)
+                        ->getMock();
+                }
+
+                return $this->createMock(DefaultMetaFieldProcessor::class);
+            });
+
+            $ioFactory = $this->createMock(ContentEntitiesIOFactory::class);
+            $ioFactory->method('getMapper')->willReturn($mapper);
+
+            $siteHelper = $this->createMock(SiteHelper::class);
+            $siteHelper->method('getCurrentBlogId')->willReturn(1);
+
+            $contentHelper = $this->createMock(ContentHelper::class);
+            $contentHelper->method('checkEntityExists')->willReturn(true);
+            $contentHelper->method('getIoFactory')->willReturn($ioFactory);
+            $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
+
+            $gutenbergBlockHelper = $this->createMock(GutenbergBlockHelper::class);
+            $gutenbergBlockHelper->method('parseBlocks')->willReturn([
+                new GutenbergBlock('test', ['relatedContent' => $relatedPostId], [], '', []),
+            ]);
+            $gutenbergBlockHelper->method('getValue')->willReturn($relatedPostId);
+
+            $mediaAttachmentRulesManager = $this->createMock(MediaAttachmentRulesManager::class);
+            $mediaAttachmentRulesManager->method('getGutenbergReplacementRules')->willReturn([
+                new GutenbergReplacementRule('test', '$.relatedContent', ReplacerFactory::REPLACER_RELATED),
+            ]);
+
+            $replacerFactory = $this->createMock(ReplacerFactory::class);
+            $replacerFactory->method('getReplacer')->willReturn($this->createMock(ContentIdReplacer::class));
+
+            $wordpressProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wordpressProxy->method('get_post_type')->willReturn($contentType);
+
+            $x = $this->getContentRelationDiscoveryService(
+                contentHelper: $contentHelper,
+                metaFieldProcessorManager: $metaFieldProcessorManager,
+                fieldsFilterHelper: $fieldsFilterHelper,
+                wpProxy: $wordpressProxy,
+                gutenbergBlockHelper: $gutenbergBlockHelper,
+                mediaAttachmentRulesManager: $mediaAttachmentRulesManager,
+                replacerFactory: $replacerFactory,
+            );
+            $relations = $x->getRelations($contentType, 1, [2]);
+            $this->assertEquals([
+                $contentType => [
+                    $postParentId,
+                    13,
+                ]
+            ], $relations->getOriginalReferences());
+        }
         public function testNormalizeReferences()
         {
             $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
@@ -706,7 +780,10 @@ namespace Smartling\Tests\Services {
             FieldsFilterHelper $fieldsFilterHelper = null,
             AcfDynamicSupport $acfDynamicSupport = null,
             WordpressFunctionProxyHelper $wpProxy = null,
-            ContentTypeManager $contentTypeManager = null
+            ContentTypeManager $contentTypeManager = null,
+            GutenbergBlockHelper $gutenbergBlockHelper = null,
+            MediaAttachmentRulesManager $mediaAttachmentRulesManager = null,
+            ReplacerFactory $replacerFactory = null,
         )
         {
             if ($apiWrapper === null) {
@@ -721,24 +798,34 @@ namespace Smartling\Tests\Services {
             if ($contentTypeManager === null) {
                 $contentTypeManager = $this->createMock(ContentTypeManager::class);
             }
+            if ($fieldsFilterHelper === null) {
+                $fieldsFilterHelper = $this->createMock(FieldsFilterHelper::class);
+            }
+            if ($gutenbergBlockHelper === null) {
+                $gutenbergBlockHelper = $this->createMock(GutenbergBlockHelper::class);
+            }
+            if ($mediaAttachmentRulesManager === null) {
+                $mediaAttachmentRulesManager = $this->createMock(MediaAttachmentRulesManager::class);
+            }
             if ($metaFieldProcessorManager === null) {
                 $metaFieldProcessorManager = $this->createMock(MetaFieldProcessorManager::class);
             }
-            if ($fieldsFilterHelper === null) {
-                $fieldsFilterHelper = $this->createMock(FieldsFilterHelper::class);
+            if ($replacerFactory === null) {
+                $replacerFactory = $this->createMock(ReplacerFactory::class);
             }
             if ($settingsManager === null) {
                 $settingsManager = $this->createMock(SettingsManager::class);
             }
-            if ($submissionManager === null) {
-                $submissionManager = $this->createMock(SubmissionManager::class);
-            }
             if ($submissionFactory === null) {
                 $submissionFactory = $this->createMock(SubmissionFactory::class);
+            }
+            if ($submissionManager === null) {
+                $submissionManager = $this->createMock(SubmissionManager::class);
             }
             if ($wpProxy === null) {
                 $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
             }
+
             return $this->getMockBuilder(ContentRelationsDiscoveryService::class)->setConstructorArgs([
                 $acfDynamicSupport,
                 $contentHelper,
@@ -748,12 +835,12 @@ namespace Smartling\Tests\Services {
                 $this->createMock(LocalizationPluginProxyInterface::class),
                 $this->createMock(AbsoluteLinkedAttachmentCoreHelper::class),
                 $this->createMock(ShortcodeHelper::class),
-                $this->createMock(GutenbergBlockHelper::class),
+                $gutenbergBlockHelper,
                 $submissionFactory,
                 $submissionManager,
                 $apiWrapper,
-                $this->createMock(MediaAttachmentRulesManager::class),
-                $this->createMock(ReplacerFactory::class),
+                $mediaAttachmentRulesManager,
+                $replacerFactory,
                 $settingsManager,
                 $this->createMock(CustomMenuContentTypeHelper::class),
                 $this->createMock(ExternalContentManager::class),
