@@ -545,7 +545,7 @@ class ContentRelationsDiscoveryService
                 if ($processor instanceof MetaFieldProcessorAbstract && 0 !== (int)$fValue) {
                     $shortProcessorName = ArrayHelper::last(explode('\\', get_class($processor)));
 
-                    $detectedReferences[$shortProcessorName][] = (int)$fValue; // TODO uncomment fix, remove following line
+                    $detectedReferences[$shortProcessorName][] = (int)$fValue;
                 } else {
                     $detectedReferences['attachment'] = array_merge($detectedReferences['attachment'],
                         $this->absoluteLinkedAttachmentCoreHelper->getImagesIdsFromString($fValue, $curBlogId));
