@@ -4,53 +4,30 @@ namespace Smartling\WP\Table;
 
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Tuner\ShortcodeManager;
+use Smartling\WP\Controller\AdminPage;
 
 class ShortcodeTableClass extends \WP_List_Table
 {
-    /**
-     * the source array with request data
-     * @var array
-     */
-    private $source;
-
-    private $_settings = [
+    private array $_settings = [
         'singular' => 'shortcode',
         'plural'   => 'shortcodes',
         'ajax'     => false,
     ];
 
-    /**
-     * @var ShortcodeManager $manager
-     */
-    private $manager;
+    private ShortcodeManager $manager;
 
-    /**
-     * @param ShortcodeManager $manager
-     */
     public function __construct(ShortcodeManager $manager)
     {
         $this->manager = $manager;
-        $this->source = &$_REQUEST;
         parent::__construct($this->_settings);
     }
 
-    /**
-     * @param $item
-     * @param $column_name
-     *
-     * @return mixed
-     */
-    public function column_default($item, $column_name)
+    public function column_default($item, $column_name): mixed
     {
         return $item[$column_name];
     }
 
-    /**
-     * @param $item
-     *
-     * @return string
-     */
-    public function applyRowActions($item)
+    public function applyRowActions(array $item): string
     {
         $actions = [
             'edit'   => HtmlTagGeneratorHelper::tag(
@@ -71,13 +48,11 @@ class ShortcodeTableClass extends \WP_List_Table
                 'a',
                 __('Delete'),
                 [
-                    'href' => vsprintf(
+                    'href' => sprintf(
                         '?page=%s&action=%s&type=shortcode&id=%s',
-                        [
-                            'smartling_customization_tuning',
-                            'delete',
-                            $item['id'],
-                        ]
+                        AdminPage::SLUG,
+                        'delete',
+                        $item['id'],
                     ),
                 ]
             ),
@@ -87,10 +62,7 @@ class ShortcodeTableClass extends \WP_List_Table
         return vsprintf('%s %s', [esc_html__($item['name']), $this->row_actions($actions)]);
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function get_columns()
+    public function get_columns(): array
     {
         return [
             //'id'   => 'Identifier',
@@ -99,9 +71,8 @@ class ShortcodeTableClass extends \WP_List_Table
 
     }
 
-    public function renderNewProfileButton()
+    public function renderNewShortcodeButton(): string
     {
-
         $options = [
             'id'    => $this->buildHtmlTagName('createNew'),
             'name'  => '',
@@ -114,14 +85,12 @@ class ShortcodeTableClass extends \WP_List_Table
         return HtmlTagGeneratorHelper::tag('input', '', $options);
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function prepare_items()
+    public function prepare_items(): void
     {
         $this->_column_headers = [$this->get_columns(), [], []];
         $this->manager->loadData();
         $data = $this->manager->listItems();
+        $dataAsArray = [];
 
         foreach ($data as $id => $element) {
             $row = $element;

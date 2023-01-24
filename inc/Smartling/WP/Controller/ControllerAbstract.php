@@ -7,12 +7,7 @@ use Smartling\Exception\SmartlingIOException;
 
 abstract class ControllerAbstract
 {
-    /**
-     * @param null|string $script
-     *
-     * @return void
-     */
-    protected function renderScript($script = null)
+    protected function renderScript(?string $script = null): void
     {
         if (null === $script) {
             $parts = explode('\\', get_called_class());
@@ -27,30 +22,33 @@ abstract class ControllerAbstract
 
         if (!file_exists($script) || !is_file($script) || !is_readable($script)) {
             throw new SmartlingIOException(vsprintf('Requested view file (%s) not found.', [$script]));
-        } else {
-            /** @noinspection PhpIncludeInspection */
-            require_once $script;
         }
+
+        require_once $script;
     }
 
-    /**
-     * @var array
-     */
-    private $viewData;
+    private array $viewData;
 
-    /**
-     * @return mixed
-     */
-    public function getViewData()
+    public function getViewData(): array
     {
         return $this->viewData;
     }
 
-    /**
-     * @param mixed $viewData
-     */
-    public function setViewData($viewData)
+    public function setViewData(array $viewData): void
     {
         $this->viewData = $viewData;
+    }
+
+    public function getUploadedFileContents(string $inputName): string
+    {
+        if (!isset($_FILES) || !array_key_exists($inputName, $_FILES)) {
+            throw new \RuntimeException('File not uploaded');
+        }
+        $result = file_get_contents($_FILES[$inputName]['tmp_name']);
+        if (!is_string($result)) {
+            throw new \RuntimeException('Unable to get contents from ' . $_FILES[$inputName]['tmp_name']);
+        }
+
+        return $result;
     }
 }

@@ -7,7 +7,7 @@ use Smartling\Helpers\SimpleStorageHelper;
 abstract class CustomizationManagerAbstract implements ManagerInterface, \Iterator, \ArrayAccess
 {
     private string $storageKey = '';
-    private array $state = [];
+    protected array $state = [];
 
     protected function generateId(int $length = 12): string
     {

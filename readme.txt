@@ -4,7 +4,7 @@ Tags: translation, localization, localisation, translate, multilingual, smartlin
 Requires at least: 5.5
 Tested up to: 6.1
 Requires PHP: 8.0
-Stable tag: 3.0.3
+Stable tag: 3.0.4
 License: GPLv2 or later
 
 Translate content in WordPress quickly and seamlessly with Smartling, the industry-leading Translation Management System.
@@ -62,6 +62,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 3.0.4 =
+* Added Gutenberg block rules import from exported file
+
 = 3.0.3 =
 * Fixed wrong content IDs being sent for translation when sending related content one or two levels deep
 * Fixed plugin unable to change target content IDs when encountering a non-standard post type

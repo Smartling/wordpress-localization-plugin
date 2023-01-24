@@ -8,22 +8,25 @@ use Smartling\WP\WPHookInterface;
 
 class FilterForm extends ControllerAbstract implements WPHookInterface
 {
+    public const SLUG = AdminPage::SLUG . '_filter_form';
+    public const ACTION_SAVE = self::SLUG . '_save';
+
     public function register(): void
     {
         add_action('admin_menu', [$this, 'menu']);
         add_action('network_admin_menu', [$this, 'menu']);
-        add_action('admin_post_smartling_customization_tuning_filter_form', [$this, 'pageHandler']);
-        add_action('admin_post_smartling_customization_tuning_filter_form_save', [$this, 'save']);
+        add_action('admin_post_' . self::SLUG, [$this, 'pageHandler']);
+        add_action('admin_post_' . self::ACTION_SAVE, [$this, 'save']);
     }
 
-    public function menu()
+    public function menu(): void
     {
         add_submenu_page(
-            'smartling_customization_tuning',
+            AdminPage::SLUG,
             'Custom Filter setup',
             'Custom Filter setup',
             SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP,
-            'smartling_customization_tuning_filter_form',
+            self::SLUG,
             [
                 $this,
                 'pageHandler',
@@ -31,7 +34,7 @@ class FilterForm extends ControllerAbstract implements WPHookInterface
         );
     }
 
-    public function pageHandler()
+    public function pageHandler(): void
     {
         $this->setViewData(
             [
@@ -41,7 +44,7 @@ class FilterForm extends ControllerAbstract implements WPHookInterface
         $this->renderScript();
     }
 
-    public function save()
+    public function save(): void
     {
         $settings = &$_REQUEST['filter'];
 
@@ -65,6 +68,6 @@ class FilterForm extends ControllerAbstract implements WPHookInterface
         }
 
         $manager->saveData();
-        wp_redirect(get_site_url() . '/wp-admin/admin.php?page=smartling_customization_tuning');
+        wp_redirect(admin_url('admin.php?page=' . AdminPage::SLUG));
     }
 }

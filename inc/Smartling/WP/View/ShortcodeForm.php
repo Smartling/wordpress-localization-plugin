@@ -9,12 +9,13 @@
     <?php
 
     use Smartling\Helpers\HtmlTagGeneratorHelper;
+    use Smartling\Tuner\ShortcodeManager;
+    use Smartling\WP\Controller\ShortcodeForm;
 
     $data = $this->getViewData();
 
-
     /**
-     * @var \Smartling\Tuner\ShortcodeManager $manager
+     * @var ShortcodeManager $manager
      */
     $manager = $data['manager'];
 
@@ -35,12 +36,12 @@
     }
     ?>
 
-    <form id="admin_post_smartling_customization_tuning_shortcode_form"
-          action="<?= get_site_url(); ?>/wp-admin/admin-post.php" method="POST">
+    <form id="admin_post_<?= ShortcodeForm::SLUG?>>"
+          action="<?= admin_url('admin-post.php')?>" method="POST">
         <?= HtmlTagGeneratorHelper::tag('input', '', [
             'type'  => 'hidden',
             'name'  => 'action',
-            'value' => 'smartling_customization_tuning_shortcode_form_save',
+            'value' => ShortcodeForm::ACTION_SAVE,
         ]); ?>
 
         <?= HtmlTagGeneratorHelper::tag('input', '', [

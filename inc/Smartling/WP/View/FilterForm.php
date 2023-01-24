@@ -5,16 +5,18 @@
 </style>
 <div class="wrap">
 
-    <h2><?= get_admin_page_title(); ?></h2>
+    <h2><?= get_admin_page_title()?></h2>
     <?php
 
     use Smartling\Helpers\HtmlTagGeneratorHelper;
+    use Smartling\Tuner\FilterManager;
+    use Smartling\WP\Controller\FilterForm;
 
     $data = $this->getViewData();
 
 
     /**
-     * @var \Smartling\Tuner\FilterManager $manager
+     * @var FilterManager $manager
      */
     $manager = $data['manager'];
 
@@ -39,19 +41,19 @@
     }
     ?>
 
-    <form id="smartling_customization_tuning_filter_form"
-          action="<?= get_site_url(); ?>/wp-admin/admin-post.php" method="POST">
+    <form id="<?= FilterForm::SLUG?>"
+          action="<?= admin_url('admin-post.php')?>" method="POST">
         <?= HtmlTagGeneratorHelper::tag('input', '', [
             'type'  => 'hidden',
             'name'  => 'action',
-            'value' => 'smartling_customization_tuning_filter_form_save',
-        ]); ?>
+            'value' => FilterForm::ACTION_SAVE,
+        ])?>
 
         <?= HtmlTagGeneratorHelper::tag('input', '', [
             'type'  => 'hidden',
             'name'  => 'filter[id]',
             'value' => $id,
-        ]); ?>
+        ])?>
 
 
         <h3><?= __('Filter details') ?></h3>
@@ -60,7 +62,7 @@
             <tr>
                 <th scope="row">
                     <label for="filterPattern">
-                        <?= __('Filter Pattern'); ?>
+                        <?= __('Filter Pattern')?>
                     </label>
                 </th>
                 <td>
@@ -72,7 +74,7 @@
                         'placeholder' => __('Write here the pattern'),
                         'data-msg'    => __('Please write the pattern'),
                         'required'    => 'required',
-                        'value'       => htmlentities($pattern),
+                        'value'       => htmlentities($pattern ?? ''),
                     ])
                     ?>
                     <br>
@@ -98,8 +100,7 @@
                             'id'   => 'action',
                             'name' => 'filter[action]',
                         ]
-                    );
-                    ?>
+                    )?>
                 </td>
             </tr>
             <tr>
@@ -122,8 +123,7 @@
                             'id'   => 'type',
                             'name' => 'filter[type]',
                         ]
-                    );
-                    ?>
+                    )?>
                 </td>
             </tr>
             </tbody>
