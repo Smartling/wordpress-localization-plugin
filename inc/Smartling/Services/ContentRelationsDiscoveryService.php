@@ -254,7 +254,7 @@ class ContentRelationsDiscoveryService
                 $relatedIds[$contentType] = array_unique($contentIds);
             }
         } catch (\Exception $e) {
-            $this->getLogger()->error('Failed to build related ids array for audit log');
+            $this->getLogger()->error('Failed to build related ids array for audit log: ' . $e->getMessage());
         }
         try {
             $this->apiWrapper->createAuditLogRecord($profile, CreateRecordParameters::ACTION_TYPE_UPLOAD, $request->getDescription(), [
@@ -376,12 +376,11 @@ class ContentRelationsDiscoveryService
     private array $shortcodeFields = [];
 
     /**
-     * @param mixed $attributes
      * @see do_shortcode_tag(), shortcode_parse_atts() attributes might be an array, or an empty string
      * @see extractFieldsFromShortcodes();
      * @noinspection PhpUnused
      */
-    public function shortcodeHandler($attributes, string $content, string $shortcodeName): void
+    public function shortcodeHandler(mixed $attributes, string $content, string $shortcodeName): void
     {
         if (!is_array($attributes)) {
             return;
@@ -457,6 +456,7 @@ class ContentRelationsDiscoveryService
 
     /**
      * @return int[]
+     * @noinspection JsonEncodingApiUsageInspection
      */
     private function addPostContentReferences(array $array, GutenbergBlock $block): array
     {
@@ -477,6 +477,7 @@ class ContentRelationsDiscoveryService
 
     /**
      * @param int[] $targetBlogIds
+     * @noinspection JsonEncodingApiUsageInspection
      */
     public function getRelations(string $contentType, int $id, array $targetBlogIds): DetectedRelations
     {
@@ -555,24 +556,19 @@ class ContentRelationsDiscoveryService
                 if ($processor instanceof MetaFieldProcessorAbstract && 0 !== (int)$fValue) {
                     $shortProcessorName = ArrayHelper::last(explode('\\', get_class($processor)));
 
-                    $detectedReferences[$shortProcessorName][$fValue][] = $fName;
+                    $detectedReferences[$shortProcessorName][] = (int)$fValue;
                 } else {
                     $detectedReferences['attachment'] = array_merge($detectedReferences['attachment'],
                         $this->absoluteLinkedAttachmentCoreHelper->getImagesIdsFromString($fValue, $curBlogId));
                     $detectedReferences['attachment'] = array_unique($detectedReferences['attachment']);
                 }
             } catch (Exception $e) {
-                $this
-                    ->getLogger()
-                    ->warning(
-                        vsprintf(
-                            'failed searching for processor for field \'%s\'=\'%s\'',
-                            [
-                                $fName,
-                                $fValue,
-                            ]
-                        )
-                    );
+                $this->getLogger()->warning(sprintf(
+                    'Failed searching for processor for fieldName="%s", fieldValue="%s", errorMessage="%s"',
+                    $fName,
+                    $fValue,
+                    $e->getMessage(),
+                ));
             }
         }
 
@@ -626,21 +622,22 @@ class ContentRelationsDiscoveryService
         }
 
         if (isset($references['MediaBasedProcessor'])) {
-            $result['attachment'] = array_merge(($result['attachment'] ?? []), array_keys($references['MediaBasedProcessor']));
+            $result['attachment'] = array_merge(($result['attachment'] ?? []), $references['MediaBasedProcessor']);
         }
 
         if (isset($references[self::POST_BASED_PROCESSOR])) {
-            foreach ($references[self::POST_BASED_PROCESSOR] as $key => $value) {
-                $postId = is_int($value) ? $value : $key;
+            foreach ($references[self::POST_BASED_PROCESSOR] as $postId) {
                 $postType = $this->wordpressProxy->get_post_type($postId);
                 if ($postType !== false) {
                     $result[$postType][] = $postId;
+                } else {
+                    $this->getLogger()->warning("WordPress returned no post exist for detected reference postId=$postId");
                 }
             }
         }
 
         if (isset($references['TermBasedProcessor'])) {
-            $termTypeIds = array_keys($references['TermBasedProcessor']);
+            $termTypeIds = $references['TermBasedProcessor'];
             foreach ($termTypeIds as $termTypeId) {
                 $term = get_term($termTypeId, '', \ARRAY_A);
                 if (is_array($term)) {
@@ -751,7 +748,7 @@ class ContentRelationsDiscoveryService
             try {
                 $replacer = $this->replacerFactory->getReplacer($rule->getReplacerId());
                 $this->getLogger()->debug("Got replacerId={$rule->getReplacerId()}");
-            } catch (EntityNotFoundException $e) {
+            } catch (EntityNotFoundException) {
                 continue;
             }
             $value = $this->gutenbergBlockHelper->getValue($block, $rule);

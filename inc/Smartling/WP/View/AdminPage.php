@@ -1,6 +1,9 @@
 <?php
 
-use Smartling\Tuner\MediaAttachmentRulesManager;
+use Smartling\WP\Controller\AdminPage;
+use Smartling\WP\Controller\FilterForm;
+use Smartling\WP\Controller\MediaRuleForm;
+use Smartling\WP\Controller\ShortcodeForm;
 use Smartling\WP\Table\LocalizationRulesTableWidget;
 use Smartling\WP\Table\MediaAttachmentTableWidget;
 use Smartling\WP\Table\ShortcodeTableClass;
@@ -39,8 +42,8 @@ use Smartling\WP\Table\ShortcodeTableClass;
     <div id="icon-users" class="icon32"><br/></div>
 
     <form id="shortcodes-table-list" method="get">
-        <?= $shortcodeTable->renderNewProfileButton(); ?>
-        <input type="hidden" name="page" value="smartling_customization_tuning_shortcode_form"/>
+        <?= $shortcodeTable->renderNewShortcodeButton()?>
+        <input type="hidden" name="page" value="<?= ShortcodeForm::SLUG?>"/>
         <input type="hidden" name="id" value=""/>
         <?php $shortcodeTable->display(); ?>
     </form>
@@ -49,19 +52,24 @@ use Smartling\WP\Table\ShortcodeTableClass;
 
     <form id="filters-table-list" method="get">
         <?= $filterTable->renderNewFilterButton(); ?>
-        <input type="hidden" name="page" value="smartling_customization_tuning_filter_form"/>
+        <input type="hidden" name="page" value="<?= FilterForm::SLUG?>"/>
         <input type="hidden" name="id" value=""/>
         <?php $filterTable->display(); ?>
     </form>
 
     <h3>Gutenberg block rules</h3>
-
     <form id="media-rules-table-list" method="get">
         <?= $mediaTable->renderNewButton()?>
-        <a class="button action" href="<?= get_admin_url() ?>/admin-post.php?action=<?= MediaAttachmentRulesManager::EXPORT_ACTION_STRING?>">
+        <a class="button action" href="<?= admin_url('admin-post.php?action=' . AdminPage::ACTION_EXPORT_GUTENBERG_RULES)?>">
             <?= __('Export rules')?>
         </a>
-        <input type="hidden" name="page" value="smartling_customization_tuning_media_form"/>
+        <input type="hidden" name="page" value="<?= MediaRuleForm::SLUG?>"/>
         <?php $mediaTable->display()?>
+    </form>
+
+    <h3>Import Gutenberg block rules</h3>
+    <form id="import-media-rules" method="post" enctype="multipart/form-data" action="<?= admin_url('admin-post.php?action=' . AdminPage::ACTION_IMPORT_GUTENBERG_RULES)?>">
+        <input type="file" name="file" id="importFileInput" accept=".txt"/>
+        <input class="button" type="submit"/>
     </form>
 </div>
