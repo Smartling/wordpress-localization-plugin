@@ -2,6 +2,6 @@
 
 namespace Smartling\DbAl\WordpressContentEntities;
 
-interface EntityWithMetadata extends EntityInterface {
+interface EntityWithMetadata extends Entity {
     public function getMetadata(): array;
 }

@@ -9,10 +9,10 @@ interface EntityHandler {
     /**
      * @throws EntityNotFoundException
      */
-    public function get(int $id): EntityInterface;
+    public function get(int $id): Entity;
 
     /**
-     * @return EntityInterface[]
+     * @return Entity[]
      */
     public function getAll(int $limit = 0, int $offset = 0, string $orderBy = '', string $order = '', string $searchString = ''): array;
 
@@ -23,5 +23,5 @@ interface EntityHandler {
     /**
      * @throws SmartlingDbException
      */
-    public function set(EntityInterface $entity): int;
+    public function set(Entity $entity): int;
 }

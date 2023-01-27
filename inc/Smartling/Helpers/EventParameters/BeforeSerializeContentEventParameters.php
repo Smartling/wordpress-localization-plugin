@@ -2,7 +2,7 @@
 
 namespace Smartling\Helpers\EventParameters;
 
-use Smartling\DbAl\WordpressContentEntities\EntityInterface;
+use Smartling\DbAl\WordpressContentEntities\Entity;
 use Smartling\Submissions\SubmissionEntity;
 
 class BeforeSerializeContentEventParameters
@@ -11,14 +11,14 @@ class BeforeSerializeContentEventParameters
 
     private SubmissionEntity $submission;
 
-    private EntityInterface $originalContent;
+    private Entity $originalContent;
 
     private array $originalMetadata;
 
     public function __construct(
         array &$source,
         SubmissionEntity $submission,
-        EntityInterface $contentEntity,
+        Entity $contentEntity,
         array $meta
     )
     {
@@ -41,7 +41,7 @@ class BeforeSerializeContentEventParameters
         return $this->submission;
     }
 
-    public function getOriginalContent(): EntityInterface
+    public function getOriginalContent(): Entity
     {
         return $this->originalContent;
     }

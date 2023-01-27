@@ -5,7 +5,7 @@ namespace Smartling\Base;
 use Exception;
 use JetBrains\PhpStorm\ArrayShape;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
-use Smartling\DbAl\WordpressContentEntities\EntityInterface;
+use Smartling\DbAl\WordpressContentEntities\Entity;
 use Smartling\DbAl\WordpressContentEntities\EntityWithPostStatus;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\BlogNotFoundException;
@@ -787,7 +787,7 @@ trait SmartlingCoreUploadTrait
         return $this->getFieldsFilter()->removeFields($fields, $configurationProfile->getFilterSkipArray(), $configurationProfile->getFilterFieldNameRegExp());
     }
 
-    private function processPostContentBlocks(EntityInterface $targetContent, array $original, array $translation, SubmissionEntity $submission, PostContentHelper $postContentHelper, array $lockedEntityFields): array
+    private function processPostContentBlocks(Entity $targetContent, array $original, array $translation, SubmissionEntity $submission, PostContentHelper $postContentHelper, array $lockedEntityFields): array
     {
         if (array_key_exists('entity', $translation) && ArrayHelper::notEmpty($translation['entity'])) {
             $targetContentArray = $targetContent->toArray();

@@ -82,7 +82,7 @@ class GravityFormsFormHandler implements EntityHandler {
         return (int)$this->db->fetch("select count(*) cnt from $this->tableName", ARRAY_A)[0]['cnt'];
     }
 
-    public function set(EntityInterface $entity): int
+    public function set(Entity $entity): int
     {
         if (!$entity instanceof GravityFormsForm) {
             throw new \InvalidArgumentException("Handler only supports setting " . GravityFormsForm::class . ", " . get_class($entity) . " provided");

@@ -9,7 +9,7 @@ use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
 
-abstract class EntityAbstract implements EntityInterface
+abstract class EntityAbstract implements Entity
 {
     use LoggerTrait;
 

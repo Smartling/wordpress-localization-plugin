@@ -2,7 +2,7 @@
 
 namespace Smartling\DbAl\WordpressContentEntities;
 
-interface EntityWithPostStatus extends EntityInterface {
+interface EntityWithPostStatus extends Entity {
     public function translationCompleted(): void;
 
     public function translationDrafted(): void;

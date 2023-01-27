@@ -4,7 +4,7 @@ namespace Smartling\DbAl\WordpressContentEntities;
 
 use Smartling\ContentTypes\ExternalContentGravityForms;
 
-class GravityFormsForm implements EntityInterface {
+class GravityFormsForm implements Entity {
     private string $displayMeta;
     private int $id;
     private string $title;

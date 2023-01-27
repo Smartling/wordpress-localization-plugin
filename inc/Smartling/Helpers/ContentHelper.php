@@ -3,7 +3,7 @@
 namespace Smartling\Helpers;
 
 use Exception;
-use Smartling\DbAl\WordpressContentEntities\EntityInterface;
+use Smartling\DbAl\WordpressContentEntities\Entity;
 use Smartling\DbAl\WordpressContentEntities\EntityHandler;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\EntityWithMetadata;
@@ -144,7 +144,7 @@ class ContentHelper
         return $return;
     }
 
-    public function readSourceContent(SubmissionEntity $submission): EntityInterface
+    public function readSourceContent(SubmissionEntity $submission): Entity
     {
         if (false === ($cached = $this->getRuntimeCache()->get($submission->getId(), 'sourceContent'))) {
             $wrapper = $this->getWrapper($submission->getContentType());
@@ -159,7 +159,7 @@ class ContentHelper
         return $clone;
     }
 
-    public function readTargetContent(SubmissionEntity $submission): EntityInterface
+    public function readTargetContent(SubmissionEntity $submission): Entity
     {
         $wrapper = $this->getWrapper($submission->getContentType());
         $this->ensureTargetBlogId($submission);
@@ -203,7 +203,7 @@ class ContentHelper
         return $metadata;
     }
 
-    public function writeTargetContent(SubmissionEntity $submission, EntityInterface $entity): EntityInterface
+    public function writeTargetContent(SubmissionEntity $submission, Entity $entity): Entity
     {
         $wrapper = $this->getWrapper($submission->getContentType());
 
@@ -316,7 +316,7 @@ class ContentHelper
         }
 
         try {
-            if (($this->getIoFactory()->getMapper($contentType)->get($contentId)) instanceof EntityInterface) {
+            if (($this->getIoFactory()->getMapper($contentType)->get($contentId)) instanceof Entity) {
                 $result = true;
             }
         } catch (Exception) {

@@ -4,7 +4,7 @@ namespace Smartling\DbAl\WordpressContentEntities;
 
 use JetBrains\PhpStorm\ArrayShape;
 
-interface EntityInterface {
+interface Entity {
     public function fromArray(array $array): self;
 
     public function getId(): ?int;
