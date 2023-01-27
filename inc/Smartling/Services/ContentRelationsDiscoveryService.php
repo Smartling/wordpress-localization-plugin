@@ -611,7 +611,7 @@ class ContentRelationsDiscoveryService
         }
 
         if (isset($references['MediaBasedProcessor'])) {
-            $result['attachment'] = array_merge(($result['attachment'] ?? []), array_keys($references['MediaBasedProcessor']));
+            $result['attachment'] = array_merge(($result['attachment'] ?? []), $references['MediaBasedProcessor']);
         }
 
         if (isset($references[self::POST_BASED_PROCESSOR])) {
@@ -626,7 +626,7 @@ class ContentRelationsDiscoveryService
         }
 
         if (isset($references['TermBasedProcessor'])) {
-            $termTypeIds = array_keys($references['TermBasedProcessor']);
+            $termTypeIds = $references['TermBasedProcessor'];
             foreach ($termTypeIds as $termTypeId) {
                 $term = get_term($termTypeId, '', \ARRAY_A);
                 if (is_array($term)) {
