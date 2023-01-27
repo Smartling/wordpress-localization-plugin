@@ -72,7 +72,7 @@ class AdminPage extends ControllerAbstract implements WPHookInterface
         $duplicates = 0;
         $skipped = 0;
         $this->mediaAttachmentRulesManager->loadData();
-        foreach (explode("\n", $this->getUploadedFileContents('file')) as $ruleString) {
+        while ($ruleString = fgets($this->getUploadedFileResource('file'))) {
             try {
                 $rule = GutenbergReplacementRule::fromString($ruleString);
             } catch (\InvalidArgumentException) {
@@ -90,7 +90,7 @@ class AdminPage extends ControllerAbstract implements WPHookInterface
             }
         }
         $this->mediaAttachmentRulesManager->saveData();
-        AdminNoticesHelper::addInfo("Done importing Gutenberg block rules, $added added, $duplicates duplicates $skipped skipped");
+        AdminNoticesHelper::addInfo("Done importing Gutenberg block rules, $added added, $duplicates duplicates, $skipped skipped");
         wp_redirect(admin_url('admin.php?page=' . self::SLUG));
     }
 

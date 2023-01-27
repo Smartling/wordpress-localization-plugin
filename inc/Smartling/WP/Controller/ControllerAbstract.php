@@ -39,14 +39,17 @@ abstract class ControllerAbstract
         $this->viewData = $viewData;
     }
 
-    public function getUploadedFileContents(string $inputName): string
+    /**
+     * @return resource
+     */
+    public function getUploadedFileResource(string $inputName)
     {
         if (!isset($_FILES) || !array_key_exists($inputName, $_FILES)) {
             throw new \RuntimeException('File not uploaded');
         }
-        $result = file_get_contents($_FILES[$inputName]['tmp_name']);
-        if (!is_string($result)) {
-            throw new \RuntimeException('Unable to get contents from ' . $_FILES[$inputName]['tmp_name']);
+        $result = fopen($_FILES[$inputName]['tmp_name'], 'rb');
+        if (!is_resource($result)) {
+            throw new \RuntimeException('Unable to open ' . $_FILES[$inputName]['tmp_name'] . ' for reading');
         }
 
         return $result;
