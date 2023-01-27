@@ -72,7 +72,8 @@ class AdminPage extends ControllerAbstract implements WPHookInterface
         $duplicates = 0;
         $skipped = 0;
         $this->mediaAttachmentRulesManager->loadData();
-        while ($ruleString = fgets($this->getUploadedFileResource('file'))) {
+        $pointer = $this->getUploadedFileResource('file');
+        while ($ruleString = fgets($pointer)) {
             try {
                 $rule = GutenbergReplacementRule::fromString($ruleString);
             } catch (\InvalidArgumentException) {
