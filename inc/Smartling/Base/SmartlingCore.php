@@ -5,6 +5,7 @@ namespace Smartling\Base;
 use Exception;
 use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ExternalContentManager;
+use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
@@ -70,7 +71,7 @@ class SmartlingCore extends SmartlingCoreAbstract
             $submission->getId(),
         ]));
         $originalEntity = $this->getContentHelper()->readSourceContent($submission);
-        $relatedContentTypes = $originalEntity->getRelatedTypes();
+        $relatedContentTypes = $originalEntity instanceof EntityAbstract ? $originalEntity->getRelatedTypes() : [];
         $accumulator = [
             'category' => [],
             'post_tag' => [],

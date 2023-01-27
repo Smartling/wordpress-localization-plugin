@@ -10,6 +10,7 @@ use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
+use Smartling\DbAl\WordpressContentEntities\EntityWithMetadata;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingGutenbergParserNotFoundException;
 use Smartling\Exception\SmartlingHumanReadableException;
@@ -263,7 +264,14 @@ class ContentRelationsDiscoveryService
                 'targetBlogIds' => $request->getTargetBlogIds(),
             ], $jobInfo, $job->isAuthorize());
         } catch (\Exception $e) {
-            $this->getLogger()->error(sprintf('Failed to create audit log record actionType=%s, requestDescription="%s", sourceId=%d, sourceBlogId=%d', CreateRecordParameters::ACTION_TYPE_UPLOAD, $request->getDescription(), $request->getContentId(), $curBlogId));
+            $this->getLogger()->error(sprintf(
+                'Failed to create audit log record actionType=%s, requestDescription="%s", sourceId=%d, sourceBlogId=%d, errorMessage="%s"',
+                CreateRecordParameters::ACTION_TYPE_UPLOAD,
+                $request->getDescription(),
+                $request->getContentId(),
+                $curBlogId,
+                addslashes($e->getMessage()),
+            ));
         }
 
         if ($request->isBulk()) {
@@ -480,12 +488,15 @@ class ContentRelationsDiscoveryService
             throw new SmartlingHumanReadableException('Requested content is not found', 'content.not.found', 404);
         }
 
-        $ioWrapper = $this->contentHelper->getIoFactory()->getMapper($contentType);
+        $entity = $this->contentHelper->getIoFactory()->getMapper($contentType)->get($id);
 
         $content = [
-            'entity' => $ioWrapper->get($id)->toArray(),
-            'meta' => $ioWrapper->get($id)->getMetadata(),
+            'entity' => $entity->toArray(),
+            'meta' => [],
         ];
+        if ($entity instanceof EntityWithMetadata) {
+            $content['meta'] = $entity->getMetadata();
+        }
 
         $fields = $this->fieldFilterHelper->flattenArray($content);
 
@@ -587,7 +598,7 @@ class ContentRelationsDiscoveryService
 
         foreach ($targetBlogIds as $targetBlogId) {
             foreach ($detectedReferences as $detectedContentType => $ids) {
-                if (in_array($detectedContentType, $this->contentTypeManager->getRegisteredContentTypes(), true)) {
+                if (in_array($detectedContentType, array_merge($this->contentTypeManager->getRegisteredContentTypes(), $this->externalContentManager->getExternalContentTypes()), true)) {
                     foreach ($ids as $detectedId) {
                         if ($detectedId === null) {
                             $this->getLogger()->notice("Null id passed when processing detected references detectedContentType=\"$detectedContentType\"");
@@ -598,7 +609,7 @@ class ContentRelationsDiscoveryService
                         }
                     }
                 } else {
-                    $this->getLogger()->debug("Excluded $detectedContentType from related submissions, type not in registered types");
+                    $this->getLogger()->debug("Excluded $detectedContentType from related submissions, type not in registered or external types");
                 }
             }
         }
@@ -644,6 +655,12 @@ class ContentRelationsDiscoveryService
             }
         }
 
+        foreach ($this->externalContentManager->getExternalContentTypes() as $externalContentType) {
+            if (array_key_exists($externalContentType, $references)) {
+                $result[$externalContentType] = $references[$externalContentType];
+            }
+        }
+
         foreach ($result as $contentType => $items) {
             $result[$contentType] = array_unique($items);
             if (empty($result[$contentType])) {
@@ -665,11 +682,7 @@ class ContentRelationsDiscoveryService
     public function getTitle(SubmissionEntity $submission): string
     {
         try {
-            $content = $this->contentHelper->readSourceContent($submission);
-            if ($content instanceof EntityAbstract) {
-                return $content->getTitle();
-            }
-            throw new SmartlingNotSupportedContentException("Could not read content of type {$submission->getContentType()}");
+            return $this->contentHelper->readSourceContent($submission)->getTitle();
         } catch (\Exception $e) {
             $this->getLogger()->notice(sprintf('Unable to get content title for submissionId=%d, sourceBlogId=%d, sourceId=%d, type="%s"', $submission->getId(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getContentType()));
             $this->getLogger()->debug('Exception: ' . $e->getMessage());

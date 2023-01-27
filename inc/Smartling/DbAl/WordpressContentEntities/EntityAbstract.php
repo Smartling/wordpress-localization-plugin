@@ -9,13 +9,8 @@ use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
 
-/**
- * Class EntityAbstract
- * @package Smartling\DbAl\WordpressContentEntities
- */
-abstract class EntityAbstract
+abstract class EntityAbstract implements EntityInterface
 {
-
     use LoggerTrait;
 
     /**
@@ -85,20 +80,21 @@ abstract class EntityAbstract
         }
     }
 
-    /**
-     * @param array $entityFields
-     */
-    public function setEntityFields(array $entityFields)
+    public function fromArray(array $array): self
+    {
+        $result = clone $this;
+        $result->entityFields = array_merge(['hash'], $array);
+        $result->initEntityArrayState();
+        return $result;
+    }
+
+    public function setEntityFields(array $entityFields): void
     {
         $this->entityFields = array_merge(['hash'], $entityFields);
         $this->initEntityArrayState();
     }
 
-    /**
-     * Transforms entity instance into array
-     * @return array
-     */
-    public function toArray()
+    public function toArray(): array
     {
         return $this->entityArrayState;
     }
@@ -174,12 +170,7 @@ abstract class EntityAbstract
         }
     }
 
-    abstract public function getMetadata(): array;
-
-    /**
-     * @return mixed
-     */
-    abstract public function getTitle();
+    abstract public function getTitle(): string;
 
     /**
      * @return string
@@ -227,9 +218,7 @@ abstract class EntityAbstract
 
     /**
      * Loads the entity from database
-     *
      * @param mixed $guid
-     *
      * @return EntityAbstract
      * @throws EntityNotFoundException
      */
@@ -263,19 +252,12 @@ abstract class EntityAbstract
 
     /**
      * Stores entity to database
-     *
      * @param EntityAbstract $entity
      * @return int
      */
     abstract public function set(EntityAbstract $entity = null);
 
-    /**
-     * Converts object into EntityAbstract child
-     *
-     * @param array $arr
-     * @return static
-     */
-    protected function resultToEntity(array $arr)
+    protected function resultToEntity(array $arr): static
     {
         $className = get_class($this);
         $entity = new $className($this->getType(), $this->getRelatedTypes());
@@ -285,7 +267,9 @@ abstract class EntityAbstract
                 $entity->$fieldName = $arr[$fieldName];
             }
         }
-        $entity->hash = '';
+        if (property_exists($entity, 'hash')) {
+            $entity->hash = '';
+        }
 
         return $entity;
     }
@@ -310,20 +294,6 @@ abstract class EntityAbstract
         foreach ($this->getNonCloneableFields() as $field) {
             $this->$field = $value;
         }
-    }
-
-    /**
-     * Is called when downloaded with 100% translation
-     */
-    public function translationCompleted()
-    {
-    }
-
-    /**
-     * Is called when cloned source content
-     */
-    public function translationDrafted()
-    {
     }
 
     /**
@@ -359,7 +329,7 @@ abstract class EntityAbstract
      * Converts instance of EntityAbstract to array to be used for BulkSubmit screen
      * @return array
      */
-    abstract public function toBulkSubmitScreenRow();
+    abstract public function toBulkSubmitScreenRow(): array;
 
     protected function areMetadataValuesUnique(array $metadata): bool
     {

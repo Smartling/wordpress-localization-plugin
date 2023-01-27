@@ -19,7 +19,7 @@ abstract class TermBasedContentTypeAbstract extends ContentTypeAbstract
      * Wordpress name of content-type, e.g.: post, page, post-tag
      * @return string
      */
-    public function getSystemName()
+    public function getSystemName(): string
     {
         return static::WP_CONTENT_TYPE;
     }
@@ -28,7 +28,7 @@ abstract class TermBasedContentTypeAbstract extends ContentTypeAbstract
      * Base type can be 'post' or 'term' used for Multilingual Press plugin.
      * @return string
      */
-    public function getBaseType()
+    public function getBaseType(): string
     {
         return 'taxonomy';
     }
@@ -37,7 +37,7 @@ abstract class TermBasedContentTypeAbstract extends ContentTypeAbstract
      * Display name of content type, e.g.: Post
      * @return string
      */
-    public function getLabel()
+    public function getLabel(): string
     {
         $systemName = static::getSystemName();
         $result = WordpressFunctionProxyHelper::getTaxonomies(['name' => $systemName], 'objects');
@@ -50,23 +50,9 @@ abstract class TermBasedContentTypeAbstract extends ContentTypeAbstract
     }
 
     /**
-     * @return array [
-     *  'submissionBoard'   => true|false,
-     *  'bulkSubmit'        => true|false
-     * ]
-     */
-    public function getVisibility()
-    {
-        return [
-            'submissionBoard' => true,
-            'bulkSubmit'      => true,
-        ];
-    }
-
-    /**
      * @return bool
      */
-    public function isTaxonomy()
+    public function isTaxonomy(): bool
     {
         return true;
     }

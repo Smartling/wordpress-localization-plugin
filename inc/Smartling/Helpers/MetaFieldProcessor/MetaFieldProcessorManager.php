@@ -9,94 +9,28 @@ use Smartling\Processors\SmartlingFactoryAbstract;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPHookInterface;
 
-/**
- * Class MetaFieldProcessorManager
- * @package Smartling\Helpers\MetaFieldProcessor
- */
 class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHookInterface
 {
-    /**
-     * @var array
-     */
-    private $collection = [];
-
-    /**
-     * @var AcfTypeDetector
-     */
-    private $acfTypeDetector;
+    private AcfTypeDetector $acfTypeDetector;
 
     public function getAcfTypeDetector(): AcfTypeDetector
     {
         return $this->acfTypeDetector;
     }
 
-    /**
-     * @param mixed $acfTypeDetector
-     */
-    public function setAcfTypeDetector(AcfTypeDetector $acfTypeDetector)
+    public function __construct(AcfTypeDetector $acfTypeDetector, bool $allowDefault = false, ?object $defaultHandler = null)
     {
+        parent::__construct($allowDefault, $defaultHandler);
         $this->acfTypeDetector = $acfTypeDetector;
-    }
-
-    protected function setCollection(array $collection = [])
-    {
-        $this->collection = $collection;
-    }
-
-    protected function getCollection()
-    {
-        return $this->collection;
-    }
-
-    protected function getCollectionKeys()
-    {
-        return array_keys($this->getCollection());
-    }
-
-    protected function collectionKeyExists($key)
-    {
-        return in_array($key, $this->getCollectionKeys(), true);
-    }
-
-    protected function insertIntoCollection($key, $value)
-    {
-        $_collection = $this->getCollection();
-        $_collection[$key] = $value;
-        $this->setCollection($_collection);
-    }
-
-    protected function removeFromCollection($key)
-    {
-        if ($this->collectionKeyExists($key)) {
-            $_collection = $this->getCollection();
-            unset($_collection[$key]);
-            $this->setCollection($_collection);
-        }
-    }
-
-    /**
-     * MetaFieldProcessorManager constructor.
-     */
-    public function __construct()
-    {
-        parent::__construct();
-        $this->setAllowDefault(true);
     }
 
     /** @noinspection PhpUnused, used in DI */
     public function registerProcessor(MetaFieldProcessorInterface $handler): void
     {
-        $pattern = $handler->getFieldRegexp();
-        if ($this->collectionKeyExists($pattern)) {
-            $this->removeFromCollection($pattern);
-        }
-        $this->insertIntoCollection($pattern, $handler);
-        if (!$this->collectionKeyExists($pattern)) {
-            $this->getLogger()->warning(vsprintf('FAILED Adding to collection processor for pattern: \'%s\'', [$pattern]));
-        }
+        $this->collection[$handler->getFieldRegexp()] = $handler;
     }
 
-    public function handlePostTranslationFields($fieldName, $fieldValue, SubmissionEntity $submission)
+    public function handlePostTranslationFields($fieldName, $fieldValue, SubmissionEntity $submission): mixed
     {
         $processor = $this->getProcessor($fieldName);
         $processor = $this->tryGetAcfProcessor($fieldName, $submission, $processor);
@@ -148,7 +82,7 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
 
     public function getHandler(string $contentType): MetaFieldProcessorInterface
     {
-        $registeredProcessors = $this->getCollection();
+        $registeredProcessors = $this->collection;
 
         foreach (array_keys($registeredProcessors) as $pattern) {
             if (preg_match(vsprintf('#%s#u', [$pattern]), $contentType)) {
@@ -156,14 +90,14 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
             }
         }
 
-        if (true === $this->getAllowDefault() && null !== $this->getDefaultHandler()) {
-            return $this->getDefaultHandler();
+        if ($this->defaultHandler instanceof MetaFieldProcessorInterface) {
+            return $this->defaultHandler;
         }
 
         throw new SmartlingInvalidFactoryArgumentException(sprintf($this->message, $contentType, static::class));
     }
 
-    private function tryGetAcfProcessor($fieldName, SubmissionEntity $submission, MetaFieldProcessorInterface $processor)
+    private function tryGetAcfProcessor($fieldName, SubmissionEntity $submission, MetaFieldProcessorInterface $processor): MetaFieldProcessorInterface
     {
         if (in_array(get_class($processor), [DefaultMetaFieldProcessor::class, PostContentProcessor::class], true)) {
             $_processor = $this->getAcfTypeDetector()->getProcessor($fieldName, $submission);
@@ -175,36 +109,12 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
         return $processor;
     }
 
-    /**
-     * @param SubmissionEntity $submission
-     * @param string           $fieldName
-     * @param mixed            $fieldValue
-     * @param array            $collectedValues
-     *
-     * @return mixed
-     */
-    public function handlePreTranslationFields(SubmissionEntity $submission, $fieldName, $fieldValue, array $collectedValues = [])
+    public function handlePreTranslationFields(SubmissionEntity $submission, string $fieldName, mixed $fieldValue, array $collectedValues = []): mixed
     {
-        $processor = $this->getProcessor($fieldName);
-        $processor = $this->tryGetAcfProcessor($fieldName, $submission, $processor);
+        $processor = $this->tryGetAcfProcessor($fieldName, $submission, $this->getProcessor($fieldName));
         $result = $processor->processFieldPreTranslation($submission, $fieldName, $fieldValue, $collectedValues);
 
-        if ($processor instanceof DefaultMetaFieldProcessor) {
-            /**
-             * Skip logging for Default Processor
-             */
-            /*
-             * $this->getLogger()->debug(
-                vsprintf(
-                    'Pre translation filter received field=\'%s\' with value=%s. that was processed by %s processor.',
-                    [
-                        $fieldName,
-                        var_export($fieldValue, true),
-                        get_class($processor),
-                    ]
-                ));
-            */
-        } else {
+        if (!$processor instanceof DefaultMetaFieldProcessor) {
             $this->getLogger()->debug(
                 vsprintf(
                     'Pre translation filter received field=\'%s\' with value=%s. that was processed by %s processor and received %s on output.',

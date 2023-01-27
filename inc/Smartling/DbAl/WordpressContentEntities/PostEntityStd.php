@@ -36,9 +36,8 @@ use Smartling\Services\GlobalSettingsManager;
  * @property string       $hash
  * @package Smartling\DbAl\WordpressContentEntities
  */
-class PostEntityStd extends EntityAbstract
+class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, EntityWithMetadata
 {
-
     /**
      * Standard 'post' content-type fields
      * @var array
@@ -98,6 +97,11 @@ class PostEntityStd extends EntityAbstract
     public function getContentTypeProperty()
     {
         return 'post_type';
+    }
+
+    public function getId(): ?int
+    {
+        return $this->ID;
     }
 
     /**
@@ -273,7 +277,7 @@ class PostEntityStd extends EntityAbstract
      * @param string $orderBy
      * @param string $order
      * @param string $searchString
-     * @return PostEntityStd[]
+     * @return PostEntityStdWithPostStatus[]
      */
     public function getAll($limit = 0, $offset = 0, $orderBy = 'date', $order = 'DESC', $searchString = '')
     {
@@ -337,7 +341,7 @@ class PostEntityStd extends EntityAbstract
         return $total;
     }
 
-    public function getTitle()
+    public function getTitle(): string
     {
         return $this->post_title;
     }
@@ -414,12 +418,12 @@ class PostEntityStd extends EntityAbstract
         }
     }
 
-    public function translationDrafted()
+    public function translationDrafted(): void
     {
         $this->post_status = 'draft';
     }
 
-    public function translationCompleted()
+    public function translationCompleted(): void
     {
         $this->post_status = 'publish';
     }
@@ -428,7 +432,7 @@ class PostEntityStd extends EntityAbstract
      * Converts instance of EntityAbstract to array to be used for BulkSubmit screen
      * @return array
      */
-    public function toBulkSubmitScreenRow()
+    public function toBulkSubmitScreenRow(): array
     {
         return [
             'id'      => $this->getPK(),

@@ -6,9 +6,11 @@ use Smartling\Submissions\SubmissionEntity;
 
 interface ContentTypePluggableInterface
 {
-    public function canHandle(string $contentType, int $contentId): bool;
+    public function canHandle(string $contentType, ?int $contentId = null): bool;
 
     public function getContentFields(SubmissionEntity $submission, bool $raw): array;
+
+    public function getExternalContentTypes(): array;
 
     public function getMaxVersion(): string;
 

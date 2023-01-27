@@ -108,6 +108,29 @@ services:
       - "@manager.submission"
       - "@wp.proxy"
 
+  content.gravity.forms:
+    class: Smartling\ContentTypes\ExternalContentGravityForms
+    arguments:
+      - "@factory.contentIO"
+      - "@content-type-descriptor-manager"
+      - "@content.type.helper"
+      - "@fields-filter.helper"
+      - "@content.gravity.forms.form"
+      - "@content.gravity.forms.form.handler"
+      - "@helper.gutenberg"
+      - "@helper.plugins"
+      - "@site.helper"
+      - "@manager.submission"
+      - "@wp.proxy"
+
+  content.gravity.forms.form:
+    class: Smartling\ContentTypes\GravityFormsForm
+
+  content.gravity.forms.form.handler:
+    class: Smartling\DbAl\WordpressContentEntities\GravityFormsFormHandler
+    arguments:
+      - "@site.db"
+
   content.relations.handler:
     class: Smartling\Services\ContentRelationsHandler
     arguments:
@@ -145,6 +168,7 @@ services:
       - ["addHandler", ["@content.aioseo"]]
       - ["addHandler", ["@content.beaver.builder"]]
       - ["addHandler", ["@content.elementor"]]
+      - ["addHandler", ["@content.gravity.forms"]]
 
   manager.job:
     class: Smartling\Jobs\JobManager
@@ -348,9 +372,11 @@ services:
 
   meta-field.processor.manager:
     class: Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager
+    arguments:
+      - "@acf.type.detector"
+      - true
+      - "@default.meta-field-processor"
     calls:
-      - [ "setDefaultHandler", [ "@default.meta-field-processor" ] ]
-      - [ "setAcfTypeDetector", [ "@acf.type.detector" ] ]
       - [ "registerProcessor", ["@post.content.processor"]]
 
   service.side-removal-handler:
@@ -382,9 +408,9 @@ services:
 
   content.helper:
     class: Smartling\Helpers\ContentHelper
-    calls:
-      - [ "setIoFactory", [ "@factory.contentIO" ]]
-      - [ "setSiteHelper", [ "@site.helper" ]]
+    arguments:
+      - "@factory.contentIO"
+      - "@site.helper"
 
   fields-filter.helper:
     class: Smartling\Helpers\FieldsFilterHelper

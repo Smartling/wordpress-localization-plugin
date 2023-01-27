@@ -14,7 +14,6 @@ use Smartling\Helpers\WidgetHelper;
  * @property string $bar                Sidebar Id
  * @property int    $barPosition        Widget Position in Sidebar
  * @property array  $settings           Widget settings
- * @method int getId()
  * @method array    getSettings()       Returns settings key => value array
  * @method string   getWidgetType()     Returns Wordpress Widget type
  * @method int      getIndex()          Returns Widget index
@@ -83,18 +82,14 @@ class WidgetEntity extends VirtualEntityAbstract
         throw new \BadMethodCallException($message);
     }
 
-    public function getMetadata(): array
+    public function getId(): ?int
     {
-        return [];
+        return $this->id;
     }
 
-    /**
-     * @return string
-     */
-    public function getTitle()
+    public function getTitle(): string
     {
-        $title = array_key_exists('title', $this->getSettings())
-            ? $this->getSettings()['title'] : null;
+        $title = $this->getSettings()['title'] ?? null;
 
         return StringHelper::isNullOrEmpty($title)
             ? WidgetHelper::getWpWidget($this->getWidgetType())->name
@@ -103,9 +98,7 @@ class WidgetEntity extends VirtualEntityAbstract
 
     /**
      * Loads the entity from database
-     *
      * @param $guid
-     *
      * @return EntityAbstract
      */
     public function get($guid)
@@ -228,9 +221,7 @@ class WidgetEntity extends VirtualEntityAbstract
 
     /**
      * Stores entity to database
-     *
      * @param EntityAbstract $entity
-     *
      * @return mixed
      */
     public function set(EntityAbstract $entity = null)
@@ -264,7 +255,7 @@ class WidgetEntity extends VirtualEntityAbstract
      * Converts instance of EntityAbstract to array to be used for BulkSubmit screen
      * @return array
      */
-    public function toBulkSubmitScreenRow()
+    public function toBulkSubmitScreenRow(): array
     {
         return [
             'id'      => $this->getId(),

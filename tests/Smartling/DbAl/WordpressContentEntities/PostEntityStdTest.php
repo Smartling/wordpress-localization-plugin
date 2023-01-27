@@ -10,7 +10,7 @@ use Smartling\Tests\Traits\InvokeMethodTrait;
  * Class ArrayHelperTest
  *
  * @package Smartling\Tests\Smartling\Helpers
- * @covers  \Smartling\DbAl\WordpressContentEntities\PostEntityStd
+ * @covers  \Smartling\DbAl\WordpressContentEntities\PostEntityStdWithPostStatus
  */
 class PostEntityStdTest extends TestCase
 {

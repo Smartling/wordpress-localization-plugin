@@ -5,11 +5,13 @@ use InvalidArgumentException;
 use LogicException;
 use Smartling\Bootstrap;
 
+use Smartling\DbAl\WordpressContentEntities\EntityHandler;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
 use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
 
 use Smartling\Exception\BlogNotFoundException;
+use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Processors\ContentEntitiesIOFactory;
@@ -50,14 +52,22 @@ class FileUriHelper
 
     private static function getSiteHelper(): SiteHelper
     {
-        return Bootstrap::getContainer()
-                        ->get('site.helper');
+        $id = 'site.helper';
+        $result = Bootstrap::getContainer()->get($id);
+        if (!$result instanceof SiteHelper) {
+            throw new SmartlingConfigException("$id is expected to be " . SiteHelper::class);
+        }
+        return $result;
     }
 
     private static function getIoFactory(): ContentEntitiesIOFactory
     {
-        return Bootstrap::getContainer()
-                        ->get('factory.contentIO');
+        $id = 'factory.contentIO';
+        $result = Bootstrap::getContainer()->get($id);
+        if (!$result instanceof ContentEntitiesIOFactory) {
+            throw new SmartlingConfigException("$id is expected to be " . ContentEntitiesIOFactory::class);
+        }
+        return $result;
     }
 
     /**
@@ -92,6 +102,8 @@ class FileUriHelper
         } elseif ($ioWrapper instanceof VirtualEntityAbstract) {
             /* widget content */
             $permalink = self::preparePermalink('', $submission);
+        } elseif ($ioWrapper instanceof EntityHandler) {
+            $permalink = self::preparePermalink($ioWrapper->getTitle($submission->getSourceId()), $submission);
         } else {
             $message = vsprintf(
                 'Original entity should be based on PostEntity or TaxonomyEntityAbstract or VirtualEntityAbstract and should be an appropriate ancestor of Smartling DBAL classes. Got:%s',

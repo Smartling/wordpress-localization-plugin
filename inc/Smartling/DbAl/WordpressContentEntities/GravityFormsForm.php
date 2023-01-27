@@ -1,0 +1,62 @@
+<?php
+
+namespace Smartling\DbAl\WordpressContentEntities;
+
+use Smartling\ContentTypes\ExternalContentGravityForms;
+
+class GravityFormsForm implements EntityInterface {
+    private string $displayMeta;
+    private int $id;
+    private string $title;
+    private ?string $updated;
+
+    public function __construct(string $displayMeta, int $id, string $title, ?string $updated)
+    {
+        $this->displayMeta = $displayMeta;
+        $this->id = $id;
+        $this->title = $title;
+        $this->updated = $updated;
+    }
+
+    public function fromArray(array $array): self
+    {
+        return new self($array['displayMeta'], $array['id'], $array['title'], $array['updated']);
+    }
+
+    public function getDisplayMeta(): string
+    {
+        return $this->displayMeta;
+    }
+
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    public function getTitle(): string
+    {
+        return $this->title;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'displayMeta' => $this->displayMeta,
+            'id' => $this->id,
+            'title' => $this->title,
+            'updated' => $this->updated,
+        ];
+    }
+
+    public function toBulkSubmitScreenRow(): array
+    {
+        return [
+            'author' => '',
+            'id' => $this->id,
+            'status' => '',
+            'title' => $this->title,
+            'type' => ExternalContentGravityForms::CONTENT_TYPE,
+            'updated' => $this->updated,
+        ];
+    }
+}

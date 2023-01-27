@@ -93,7 +93,7 @@ class ExternalContentAioseo extends ExternalContentAbstract
         $this->siteHelper = $siteHelper;
     }
 
-    public function canHandle(string $contentType, int $contentId): bool
+    public function canHandle(string $contentType, ?int $contentId = null): bool
     {
         return parent::canHandle($contentType, $contentId) &&
             $this->contentTypeHelper->isPost($contentType);
@@ -101,7 +101,6 @@ class ExternalContentAioseo extends ExternalContentAbstract
 
     public function getContentFields(SubmissionEntity $submission, bool $raw): array
     {
-        $submission->assertHasSource();
         $fields = $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($submission) {
             return $this->db->fetchPrepared('select * from ' . $this->db->getPrefix() . 'aioseo_posts where post_id = %d', $submission->getSourceId())[0] ?? [];
         });

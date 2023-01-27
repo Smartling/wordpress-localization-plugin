@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Smartling\Base\SmartlingCoreUploadTrait;
 use Smartling\ContentTypes\ExternalContentManager;
-use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
+use Smartling\DbAl\WordpressContentEntities\PostEntityStdWithPostStatus;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DecodedXml;
@@ -91,7 +91,7 @@ class SmartlingCoreUpload {
 
 class SmartlingCoreUploadTraitTest extends TestCase
 {
-    private PostEntityStd $resultEntity;
+    private PostEntityStdWithPostStatus $resultEntity;
 
     public function setUp(): void
     {
@@ -139,7 +139,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $contentHelper = $this->getMockBuilder(ContentHelper::class)->disableOriginalConstructor()->getMock();
         $contentHelper->method('readSourceContent')->willReturnArgument(0);
         $contentHelper->method('readSourceMetadata')->willReturn([]);
-        $contentHelper->method('readTargetContent')->willReturn(new PostEntityStd());
+        $contentHelper->method('readTargetContent')->willReturn(new PostEntityStdWithPostStatus());
         $contentHelper->method('readTargetMetadata')->willReturn(['locked' => 'a:1:{s:5:"title";s:19:"Se våra prisplaner";}', 'unlocked' => 'unlocked']);
 
         $fieldsFilterHelper = $this->createPartialMock(FieldsFilterHelper::class, ['applyTranslatedValues', 'getLogger', 'processStringsAfterDecoding']);
@@ -289,7 +289,7 @@ HTML;
 <!-- /wp:folder -->
 HTML;
 
-        $target = new PostEntityStd();
+        $target = new PostEntityStdWithPostStatus();
         $target->setPostContent($targetContent);
 
         $submission = $this->createMock(SubmissionEntity::class);

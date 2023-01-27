@@ -27,20 +27,17 @@ class BulkSubmitTableWidget extends SmartlingListTable
     use CommonLogMessagesTrait;
     use LoggerSafeTrait;
 
-    /**
-     * @var string
-     */
-    private $_custom_controls_namespace = 'smartling-bulk-submit-page';
+    private const CUSTOM_CONTROLS_NAMESPACE = 'smartling-bulk-submit-page';
 
     /**
      * base name of Content-type filtering select
      */
-    const CONTENT_TYPE_SELECT_ELEMENT_NAME = 'content-type';
+    private const CONTENT_TYPE_SELECT_ELEMENT_NAME = 'content-type';
 
     /**
      * base name of title search textbox
      */
-    const TITLE_SEARCH_TEXTBOX_ELEMENT_NAME = 'title-search';
+    private const TITLE_SEARCH_TEXTBOX_ELEMENT_NAME = 'title-search';
 
     /**
      * default values of custom form elements on page
@@ -380,8 +377,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
 
                 $row = $item->toBulkSubmitScreenRow();
 
-                $entities = [];
-
                 if (isset($row['id'], $row['type'])) {
                     $entities = $this->getManager()
                         ->find([
@@ -440,7 +435,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
 
     private function getFilteredAllowedTypes()
     {
-
         $types = $this->getActiveContentTypes($this->siteHelper, 'bulkSubmit');
 
         $restrictedTypes = WordpressContentTypeHelper::getTypesRestrictedToBulkSubmit();
@@ -568,6 +562,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
      */
     private function buildHtmlTagName($name)
     {
-        return $this->_custom_controls_namespace . '-' . $name;
+        return self::CUSTOM_CONTROLS_NAMESPACE . '-' . $name;
     }
 }

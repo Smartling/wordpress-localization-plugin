@@ -2,35 +2,27 @@
 
 namespace Smartling\Extensions;
 
+use Smartling\Exception\SmartlingConfigException;
 use Smartling\Processors\SmartlingFactoryAbstract;
 
-/**
- * Class ExtensionLoader
- *
- * @package Smartling\Extensions
- */
 class ExtensionLoader extends SmartlingFactoryAbstract
 {
-
-    public function registerExtension(ExtensionInterface $extension)
+    public function registerExtension(ExtensionInterface $extension): void
     {
         $this->registerHandler($extension->getName(), $extension);
     }
 
-    public function runExtensions()
+    /** @noinspection PhpUnused used in Bootstrap */
+    public function runExtensions(): void
     {
-        $extenstions = $this->getCollection();
-        if (0 < count($extenstions)) {
-            foreach ($extenstions as $name => $extension) {
-                try {
-                    /**
-                     * @var ExtensionInterface $extension
-                     */
-                    $extension->register();
-                } catch (\Exception $e) {
-                    $this->getLogger()
-                         ->error('Failed initialization of ' . $name . ' extension.');
+        foreach ($this->collection as $name => $extension) {
+            try {
+                if (!$extension instanceof ExtensionInterface) {
+                    throw new SmartlingConfigException(self::class . ' expects a collection of ' . ExtensionInterface::class);
                 }
+                $extension->register();
+            } catch (\Exception $e) {
+                $this->getLogger()->error("Failed initialization of $name extension: {$e->getMessage()}");
             }
         }
     }

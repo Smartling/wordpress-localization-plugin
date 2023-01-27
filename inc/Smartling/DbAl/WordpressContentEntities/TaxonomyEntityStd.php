@@ -20,7 +20,7 @@ use Smartling\Helpers\WordpressFunctionProxyHelper;
  * @property int    $parent
  * @property int    $count
  */
-class TaxonomyEntityStd extends EntityAbstract
+class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
 {
     /**
      * Standard taxonomy fields
@@ -128,10 +128,12 @@ class TaxonomyEntityStd extends EntityAbstract
         return 'taxonomy';
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function getTitle()
+    public function getId(): ?int
+    {
+        return $this->term_id;
+    }
+
+    public function getTitle(): string
     {
         return $this->name;
     }
@@ -241,7 +243,6 @@ class TaxonomyEntityStd extends EntityAbstract
 
     /**
      * @param EntityAbstract $entity
-     *
      * @return array
      * @throws SmartlingDbException
      */
@@ -386,7 +387,7 @@ class TaxonomyEntityStd extends EntityAbstract
      * Converts instance of EntityAbstract to array to be used for BulkSubmit screen
      * @return array
      */
-    public function toBulkSubmitScreenRow()
+    public function toBulkSubmitScreenRow(): array
     {
         return [
             'id'      => $this->term_id,

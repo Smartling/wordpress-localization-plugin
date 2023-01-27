@@ -72,15 +72,7 @@ class AcfOptionEntity extends VirtualEntityAbstract
         throw new \BadMethodCallException($message);
     }
 
-    public function getMetadata(): array
-    {
-        return [];
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getTitle()
+    public function getTitle(): string
     {
         return $this->getName();
     }
@@ -172,9 +164,7 @@ class AcfOptionEntity extends VirtualEntityAbstract
 
     /**
      * Stores entity to database
-     *
      * @param EntityAbstract $entity
-     *
      * @return mixed
      */
     public function set(EntityAbstract $entity = null)
@@ -219,7 +209,7 @@ class AcfOptionEntity extends VirtualEntityAbstract
      * Converts instance of EntityAbstract to array to be used for BulkSubmit screen
      * @return array
      */
-    public function toBulkSubmitScreenRow()
+    public function toBulkSubmitScreenRow(): array
     {
         return [
             'id'      => $this->getId(),

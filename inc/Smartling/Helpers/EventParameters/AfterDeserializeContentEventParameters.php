@@ -2,114 +2,49 @@
 
 namespace Smartling\Helpers\EventParameters;
 
-use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
+use Smartling\DbAl\WordpressContentEntities\EntityInterface;
 use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Class AfterDeserializeContentEventParameters
- *
- * @package Smartling\Helpers\EventParameters
- */
 class AfterDeserializeContentEventParameters
 {
+    private array $translatedFields;
 
-    /**
-     * @var array
-     */
-    private $translatedFields;
+    private SubmissionEntity $submission;
 
-    /**
-     * @var SubmissionEntity
-     */
-    private $submission;
+    private EntityInterface $targetContent;
 
-    /**
-     * @var EntityAbstract
-     */
-    private $targetContent;
-
-    /**
-     * @var array
-     */
-    private $targetMetadata;
-
+    private array $targetMetadata;
 
     public function __construct(
-        array & $source,
+        array &$source,
         SubmissionEntity $submission,
-        EntityAbstract $contentEntity,
+        EntityInterface $contentEntity,
         array $meta
     )
     {
-        $this->setTranslatedFields($source);
-        $this->setSubmission($submission);
-        $this->setTargetContent($contentEntity);
-        $this->setTargetMetadata($meta);
+        $this->translatedFields = &$source;
+        $this->submission = $submission;
+        $this->targetContent = $contentEntity;
+        $this->targetMetadata = $meta;
     }
 
-    /**
-     * @return array
-     */
-    public function &getTranslatedFields()
+    public function &getTranslatedFields(): array
     {
         return $this->translatedFields;
     }
 
-    /**
-     * @param array $translatedFields
-     */
-    private function setTranslatedFields(& $translatedFields)
-    {
-        $this->translatedFields = &$translatedFields;
-    }
-
-    /**
-     * @return SubmissionEntity
-     */
-    public function getSubmission()
+    public function getSubmission(): SubmissionEntity
     {
         return $this->submission;
     }
 
-    /**
-     * @param SubmissionEntity $submission
-     */
-    private function setSubmission($submission)
-    {
-        $this->submission = $submission;
-    }
-
-    /**
-     * @return EntityAbstract
-     */
-    public function getTargetContent()
+    public function getTargetContent(): EntityInterface
     {
         return $this->targetContent;
     }
 
-    /**
-     * @param EntityAbstract $targetContent
-     */
-    private function setTargetContent($targetContent)
-    {
-        $this->targetContent = $targetContent;
-    }
-
-    /**
-     * @return array
-     */
-    public function getTargetMetadata()
+    public function getTargetMetadata(): array
     {
         return $this->targetMetadata;
     }
-
-    /**
-     * @param array $targetMetadata
-     */
-    private function setTargetMetadata($targetMetadata)
-    {
-        $this->targetMetadata = $targetMetadata;
-    }
-
-
 }

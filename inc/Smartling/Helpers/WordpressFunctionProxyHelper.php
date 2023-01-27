@@ -84,6 +84,11 @@ class WordpressFunctionProxyHelper
         return get_plugins(...func_get_args());
     }
 
+    public function get_post()
+    {
+        return get_post(...func_get_args());
+    }
+
     public function get_terms()
     {
         return get_terms(...func_get_args());

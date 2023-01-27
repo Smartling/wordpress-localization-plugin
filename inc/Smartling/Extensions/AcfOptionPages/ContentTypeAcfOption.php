@@ -6,31 +6,15 @@ use Smartling\ContentTypes\ContentTypeAbstract;
 use Smartling\ContentTypes\ContentTypeManager;
 use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
-/**
- * Class ContentTypeAcfOption
- */
 class ContentTypeAcfOption extends ContentTypeAbstract
 {
+    public const WP_CONTENT_TYPE = 'acf_options';
 
-    /**
-     * The system name of Wordpress content type to make references safe.
-     */
-    const WP_CONTENT_TYPE = 'acf_options';
-
-    /**
-     * Wordpress name of content-type, e.g.: post, page, post-tag
-     * @return string
-     */
-    public function getSystemName()
+    public function getSystemName(): string
     {
         return static::WP_CONTENT_TYPE;
     }
 
-    /**
-     * ContentTypeAcfOption constructor.
-     *
-     * @param ContainerBuilder $di
-     */
     public function __construct(ContainerBuilder $di)
     {
         parent::__construct($di);
@@ -44,7 +28,7 @@ class ContentTypeAcfOption extends ContentTypeAbstract
      * @param ContainerBuilder $di
      * @param string           $manager
      */
-    public static function register(ContainerBuilder $di, $manager = 'content-type-descriptor-manager')
+    public static function register(ContainerBuilder $di, $manager = 'content-type-descriptor-manager'): void
     {
         $descriptor = new static($di);
         $mgr = $di->get($manager);
@@ -58,23 +42,9 @@ class ContentTypeAcfOption extends ContentTypeAbstract
      * Display name of content type, e.g.: Post
      * @return string
      */
-    public function getLabel()
+    public function getLabel(): string
     {
         return __('ACF Options Page');
-    }
-
-    /**
-     * @return array [
-     *  'submissionBoard'   => true|false,
-     *  'bulkSubmit'        => true|false
-     * ]
-     */
-    public function getVisibility()
-    {
-        return [
-            'submissionBoard' => true,
-            'bulkSubmit'      => true,
-        ];
     }
 
     /**
@@ -111,12 +81,12 @@ class ContentTypeAcfOption extends ContentTypeAbstract
      * Base type can be 'post' or 'term' used for Multilingual Press plugin.
      * @return string
      */
-    public function getBaseType()
+    public function getBaseType(): string
     {
         return 'virtual';
     }
 
-    public function isVirtual()
+    public function isVirtual(): bool
     {
         return true;
     }

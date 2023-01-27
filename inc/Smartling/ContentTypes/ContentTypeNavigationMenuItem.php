@@ -34,7 +34,7 @@ class ContentTypeNavigationMenuItem extends PostBasedContentTypeAbstract
      * @param ContainerBuilder $di
      * @param string           $manager
      */
-    public static function register(ContainerBuilder $di, $manager = 'content-type-descriptor-manager')
+    public static function register(ContainerBuilder $di, $manager = 'content-type-descriptor-manager'): void
     {
         $descriptor = new static($di);
         $mgr = $di->get($manager);
@@ -70,11 +70,11 @@ class ContentTypeNavigationMenuItem extends PostBasedContentTypeAbstract
 
     }
 
-    public function getVisibility()
+    public function getVisibility(): array
     {
         return [
             'submissionBoard' => true,
-            'bulkSubmit'      => false,
+            'bulkSubmit' => false,
         ];
     }
 

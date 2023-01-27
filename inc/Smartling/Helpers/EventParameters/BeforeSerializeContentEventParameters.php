@@ -2,114 +2,52 @@
 
 namespace Smartling\Helpers\EventParameters;
 
-use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
+use Smartling\DbAl\WordpressContentEntities\EntityInterface;
 use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Class BeforeSerializeContentEventParameters
- *
- * @package Smartling\Helpers\EventParameters
- */
 class BeforeSerializeContentEventParameters
 {
+    private array $preparedFields;
 
-    /**
-     * @var array
-     */
-    private $preparedFields;
+    private SubmissionEntity $submission;
 
-    /**
-     * @var SubmissionEntity
-     */
-    private $submission;
+    private EntityInterface $originalContent;
 
-    /**
-     * @var EntityAbstract
-     */
-    private $originalContent;
-
-    /**
-     * @var array
-     */
-    private $originalMetadata;
-
+    private array $originalMetadata;
 
     public function __construct(
-        array & $source,
+        array &$source,
         SubmissionEntity $submission,
-        EntityAbstract $contentEntity,
+        EntityInterface $contentEntity,
         array $meta
     )
     {
-        $this->setPreparedFields($source);
-        $this->setSubmission($submission);
-        $this->setOriginalContent($contentEntity);
-        $this->setOriginalMetadata($meta);
+        $this->originalContent = $contentEntity;
+        $this->originalMetadata = $meta;
+        $this->preparedFields = &$source;
+        $this->submission = $submission;
     }
 
     /**
      * @return array by reference for update
      */
-    public function &getPreparedFields()
+    public function &getPreparedFields(): array
     {
         return $this->preparedFields;
     }
 
-    /**
-     * @param array $preparedFields
-     */
-    private function setPreparedFields(& $preparedFields)
-    {
-        $this->preparedFields = &$preparedFields;
-    }
-
-    /**
-     * @return SubmissionEntity
-     */
-    public function getSubmission()
+    public function getSubmission(): SubmissionEntity
     {
         return $this->submission;
     }
 
-    /**
-     * @param SubmissionEntity $submission
-     */
-    private function setSubmission($submission)
-    {
-        $this->submission = $submission;
-    }
-
-    /**
-     * @return EntityAbstract
-     */
-    public function getOriginalContent()
+    public function getOriginalContent(): EntityInterface
     {
         return $this->originalContent;
     }
 
-    /**
-     * @param EntityAbstract $originalContent
-     */
-    private function setOriginalContent($originalContent)
-    {
-        $this->originalContent = $originalContent;
-    }
-
-    /**
-     * @return array
-     */
-    public function getOriginalMetadata()
+    public function getOriginalMetadata(): array
     {
         return $this->originalMetadata;
     }
-
-    /**
-     * @param array $originalMetadata
-     */
-    private function setOriginalMetadata($originalMetadata)
-    {
-        $this->originalMetadata = $originalMetadata;
-    }
-
-
 }

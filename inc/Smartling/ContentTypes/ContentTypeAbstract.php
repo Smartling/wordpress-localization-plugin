@@ -2,85 +2,57 @@
 
 namespace Smartling\ContentTypes;
 
+use Smartling\Exception\SmartlingConfigException;
 use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
-/**
- * Class ContentTypeAbstract
- * @package Smartling\ContentTypes
- */
 abstract class ContentTypeAbstract implements ContentTypeInterface
 {
-    private $containerBuilder;
+    private ContainerBuilder $containerBuilder;
 
-    /**
-     * @return ContainerBuilder
-     */
-    public function getContainerBuilder()
+    public function getContainerBuilder(): ContainerBuilder
     {
         return $this->containerBuilder;
     }
 
-    /**
-     * @param ContainerBuilder $containerBuilder
-     */
-    public function setContainerBuilder(ContainerBuilder $containerBuilder)
-    {
-        $this->containerBuilder = $containerBuilder;
-    }
-
-    /**
-     * ContentTypeAbstract constructor.
-     *
-     * @param ContainerBuilder $di
-     */
     public function __construct(ContainerBuilder $di)
     {
-        $this->setContainerBuilder($di);
+        $this->containerBuilder = $di;
     }
 
-    /**
-     * @param ContainerBuilder $di
-     * @param string           $manager
-     */
-    public static function register(ContainerBuilder $di, $manager = 'content-type-descriptor-manager')
+    public function getVisibility(): array
+    {
+        return [
+            'bulkSubmit' => true,
+            'submissionBoard' => true,
+        ];
+    }
+
+    public static function register(ContainerBuilder $di, $manager = 'content-type-descriptor-manager'): void
     {
         $descriptor = new static($di);
         $mgr = $di->get($manager);
-        /**
-         * @var \Smartling\ContentTypes\ContentTypeManager $mgr
-         */
+        if (!$mgr instanceof ContentTypeManager) {
+            throw new SmartlingConfigException(ContentTypeManager::class . ' expected');
+        }
         $mgr->addDescriptor($descriptor);
     }
 
-    /**
-     * @return bool
-     */
-    public function isTaxonomy()
+    public function isTaxonomy(): bool
     {
         return false;
     }
 
-    /**
-     * @return bool
-     */
-    public function isPost()
+    public function isPost(): bool
     {
         return false;
     }
 
-    /**
-     * @return bool
-     */
-    public function isVirtual()
+    public function isVirtual(): bool
     {
         return false;
     }
 
-    /**
-     * Place to filters even if not registered in Wordpress
-     * @return bool
-     */
-    public function forceDisplay()
+    public function forceDisplay(): bool
     {
         return false;
     }

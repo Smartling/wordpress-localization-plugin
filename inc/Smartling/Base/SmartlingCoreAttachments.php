@@ -2,6 +2,7 @@
 
 namespace Smartling\Base;
 
+use JetBrains\PhpStorm\ArrayShape;
 use Smartling\Exception\SmartlingWpDataIntegrityException;
 use Smartling\Helpers\AttachmentHelper;
 use Smartling\Helpers\StringHelper;
@@ -83,7 +84,7 @@ trait SmartlingCoreAttachments
      *
      * @param SubmissionEntity $submission
      */
-    public function regenerateTargetThumbnailsBySubmission(SubmissionEntity $submission)
+    public function regenerateTargetThumbnailsBySubmission(SubmissionEntity $submission): void
     {
         $this->getLogger()->debug(
             vsprintf('Starting thumbnails regeneration for blog = \'%s\' attachment id = \'%s\'.', [
@@ -108,42 +109,20 @@ trait SmartlingCoreAttachments
 
         $metadata = wp_generate_attachment_metadata($submission->getTargetId(), $originalImage);
 
-        if (is_wp_error($metadata)) {
-
-            $this->getLogger()
-                ->error(vsprintf('Error occurred while regenerating thumbnails for blog=\'%s\' attachment id=\'%s\'. Message:\'%s\'.', [
-                    $submission->getTargetBlogId(),
-                    $submission->getTargetId(),
-                    $metadata->get_error_message(),
-                ]));
-            $this->getLogger()
-                ->error(var_export($metadata, true));
-
-        }
-
         if (empty($metadata)) {
             $this->getLogger()
-                ->error(vsprintf('Couldn\'t regenerate thumbnails for blog=\'%s\' attachment id=\'%s\'.', [
+                ->error(sprintf("Couldn't regenerate thumbnails for blog='%s' attachment id='%s'.",
                     $submission->getTargetBlogId(),
                     $submission->getTargetId(),
-                ]));
+                ));
         } else {
-
-
             wp_update_attachment_metadata($submission->getTargetId(), $metadata);
-
         }
-
 
         $this->getContentHelper()->ensureRestoredBlogId();
     }
 
-    /**
-     * @param int $siteId
-     *
-     * @return array
-     */
-    private function getUploadDirForSite($siteId)
+    private function getUploadDirForSite(int $siteId): array
     {
         $this->getContentHelper()->ensureBlog($siteId);
         $data = wp_upload_dir();
@@ -152,7 +131,10 @@ trait SmartlingCoreAttachments
         return $data;
     }
 
-    private function getUploadPathForSite($siteId)
+    /** @noinspection PhpUnusedPrivateMethodInspection
+     * @see SmartlingCoreExportApi::getFullyRelateAttachmentPathByBlogId
+     */
+    private function getUploadPathForSite(int $siteId): string
     {
         $this->getContentHelper()->ensureBlog($siteId);
         $prefix = $this->getUploadDirForSite($siteId);
@@ -162,17 +144,27 @@ trait SmartlingCoreAttachments
         return $data;
     }
 
+    #[ArrayShape([
+        'uri' => 'string',
+        'relative_path' => 'string',
+        'source_path_prefix' => 'string',
+        'target_path_prefix' => 'string',
+        'base_url_target' => 'string',
+        'filename' => 'string',
+    ])]
     /**
      * Collects and returns info to copy attachment media
-     *
-     * @param SubmissionEntity $submission
-     *
-     * @return array
      * @throws SmartlingWpDataIntegrityException
      */
-    private function getAttachmentFileInfoBySubmission(SubmissionEntity $submission)
+    private function getAttachmentFileInfoBySubmission(SubmissionEntity $submission): array
     {
         $info = $this->getContentHelper()->readSourceContent($submission);
+        if (property_exists($info, 'guid')) {
+            $guid = $info->guid;
+        } else {
+            $guid = '';
+            $this->getLogger()->debug('Tried to get attachment file info for ' . get_class($info));
+        }
         $sourceSiteUploadInfo = $this->getUploadDirForSite($submission->getSourceBlogId());
         $targetSiteUploadInfo = $this->getUploadDirForSite($submission->getTargetBlogId());
         $sourceMetadata = $this->getContentHelper()->readSourceMetadata($submission);
@@ -181,19 +173,18 @@ trait SmartlingCoreAttachments
             !StringHelper::isNullOrEmpty($sourceMetadata['_wp_attached_file'])
         ) {
             $relativePath = $sourceMetadata['_wp_attached_file'];
-            $result = [
-                'uri'                => $info->guid,
-                'relative_path'      => $relativePath,
+
+            return [
+                'uri' => $guid,
+                'relative_path' => $relativePath,
                 'source_path_prefix' => $sourceSiteUploadInfo['basedir'],
                 'target_path_prefix' => $targetSiteUploadInfo['basedir'],
-                'base_url_target'    => $targetSiteUploadInfo['baseurl'],
-                'filename'           => vsprintf('%s.%s', [
+                'base_url_target' => $targetSiteUploadInfo['baseurl'],
+                'filename' => sprintf('%s.%s',
                     pathinfo($relativePath, PATHINFO_FILENAME),
                     pathinfo($relativePath, PATHINFO_EXTENSION),
-                ]),
+                ),
             ];
-
-            return $result;
         }
         throw new SmartlingWpDataIntegrityException(
             vsprintf(
