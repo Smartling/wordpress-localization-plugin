@@ -35,7 +35,7 @@ use Smartling\WP\Controller\MediaRuleForm;
     }
     ?>
 
-    <form id="smartling_customization_tuning_media_form" action="<?= get_admin_url(null, '/admin-post.php')?>" method="POST">
+    <form id="<?= MediaRuleForm::SLUG?>" action="<?= admin_url('admin-post.php')?>" method="POST">
         <?= HtmlTagGeneratorHelper::tag('input', '', [
             'type' => 'hidden',
             'name' => 'action',

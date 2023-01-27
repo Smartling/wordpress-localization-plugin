@@ -2,6 +2,8 @@
 
 namespace Smartling\WP\Controller;
 
+use Smartling\Helpers\AdminNoticesHelper;
+use Smartling\Helpers\GutenbergReplacementRule;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Replacers\ReplacerFactory;
 use Smartling\Tuner\FilterManager;
@@ -14,6 +16,9 @@ use Smartling\WP\WPHookInterface;
 
 class AdminPage extends ControllerAbstract implements WPHookInterface
 {
+    public const SLUG = 'smartling_customization_tuning';
+    public const ACTION_EXPORT_GUTENBERG_RULES = 'smartling_export_gutenberg_rules';
+    public const ACTION_IMPORT_GUTENBERG_RULES = 'smartling_import_gutenberg_rules';
     private MediaAttachmentRulesManager $mediaAttachmentRulesManager;
     private ReplacerFactory $replacerFactory;
 
@@ -27,8 +32,9 @@ class AdminPage extends ControllerAbstract implements WPHookInterface
     {
         add_action('admin_menu', [$this, 'menu']);
         add_action('network_admin_menu', [$this, 'menu']);
-        add_action('admin_post_smartling_customization_tuning', [$this, 'pageHandler']);
-        add_action('admin_post_' . MediaAttachmentRulesManager::EXPORT_ACTION_STRING, [$this, 'exportMediaAttachmentRules']);
+        add_action('admin_post_' . self::SLUG, [$this, 'pageHandler']);
+        add_action('admin_post_' . self::ACTION_EXPORT_GUTENBERG_RULES, [$this, 'exportMediaAttachmentRules']);
+        add_action('admin_post_' . self::ACTION_IMPORT_GUTENBERG_RULES, [$this, 'importMediaAttachmentRules']);
     }
 
     public function menu(): void
@@ -38,7 +44,7 @@ class AdminPage extends ControllerAbstract implements WPHookInterface
             'Gutenberg blocks, Shortcodes and Field filters tuning',
             'Fine-Tune',
             SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP,
-            'smartling_customization_tuning',
+            self::SLUG,
             [
                 $this,
                 'pageHandler',
@@ -60,12 +66,40 @@ class AdminPage extends ControllerAbstract implements WPHookInterface
         }
     }
 
+    public function importMediaAttachmentRules(): void
+    {
+        $added = 0;
+        $duplicates = 0;
+        $skipped = 0;
+        $this->mediaAttachmentRulesManager->loadData();
+        $pointer = $this->getUploadedFileResource('file');
+        while ($ruleString = fgets($pointer)) {
+            try {
+                $rule = GutenbergReplacementRule::fromString($ruleString);
+            } catch (\InvalidArgumentException) {
+                if ($ruleString !== '') {
+                    ++ $skipped;
+                    AdminNoticesHelper::addWarning("Unable to create Gutenberg replacement rule from string " . esc_html($ruleString));
+                }
+                continue;
+            }
+            $id = $this->mediaAttachmentRulesManager->add($rule->toArray());
+            if ($id === '') {
+                ++$duplicates;
+            } else {
+                ++$added;
+            }
+        }
+        $this->mediaAttachmentRulesManager->saveData();
+        AdminNoticesHelper::addInfo("Done importing Gutenberg block rules, $added added, $duplicates duplicates, $skipped skipped");
+        wp_redirect(admin_url('admin.php?page=' . self::SLUG));
+    }
+
     private function processAction(): void
     {
         $action = $_REQUEST['action'];
         $type = $_REQUEST['type'];
 
-        $manager = null;
         if ('delete' !== strtolower($action)) {
             return;
         }

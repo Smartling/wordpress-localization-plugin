@@ -10,7 +10,6 @@ class MediaAttachmentRulesManager extends CustomizationManagerAbstract
 {
     use LoggerSafeTrait;
 
-    public const EXPORT_ACTION_STRING = 'smartling_export_gutenberg_rules';
     private const STORAGE_KEY = 'CUSTOM_MEDIA_RULES';
     private array $preconfiguredRules;
     private array $temporaryRules = [];
@@ -22,6 +21,15 @@ class MediaAttachmentRulesManager extends CustomizationManagerAbstract
     {
         parent::__construct(static::STORAGE_KEY);
         $this->preconfiguredRules = $rules;
+    }
+
+    public function add(array $value): string
+    {
+        /** @noinspection TypeUnsafeArraySearchInspection we're comparing arrays, and don't care about key order here */
+        if (in_array($value, $this->state)) {
+            return '';
+        }
+        return parent::add($value);
     }
 
     public function addTemporaryRule(GutenbergReplacementRule $rule): void
