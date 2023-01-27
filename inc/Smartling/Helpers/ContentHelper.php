@@ -247,7 +247,7 @@ class ContentHelper
         $wrapper = $this->getWrapper($submission->getContentType());
         $this->ensureTargetBlogId($submission);
         $targetEntity = $wrapper->get($submission->getTargetId());
-        if ($targetEntity instanceof EntityAbstract) {
+        if ($targetEntity instanceof EntityWithMetadata) {
             foreach ($metadata as $key => $value) {
                 $targetEntity->setMetaTag($key, $value);
             }

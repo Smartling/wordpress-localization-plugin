@@ -27,7 +27,7 @@ abstract class ContentTypeAbstract implements ContentTypeInterface
         ];
     }
 
-    public static function register(ContainerBuilder $di, $manager = 'content-type-descriptor-manager'): void
+    public static function register(ContainerBuilder $di, string $manager = 'content-type-descriptor-manager'): void
     {
         $descriptor = new static($di);
         $mgr = $di->get($manager);

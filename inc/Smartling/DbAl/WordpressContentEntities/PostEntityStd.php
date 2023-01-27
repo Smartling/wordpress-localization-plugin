@@ -277,7 +277,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
      * @param string $orderBy
      * @param string $order
      * @param string $searchString
-     * @return PostEntityStdWithPostStatus[]
+     * @return self[]
      */
     public function getAll($limit = 0, $offset = 0, $orderBy = 'date', $order = 'DESC', $searchString = '')
     {

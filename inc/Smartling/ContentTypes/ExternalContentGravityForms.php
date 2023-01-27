@@ -62,15 +62,13 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
 
     public function getContentFields(SubmissionEntity $submission, bool $raw): array
     {
-        /*$fields = $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($submission) {
+        $fields = $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($submission) {
             return [
                 'entity' => $this->handler->getFormData($submission->getSourceId()),
                 'meta' => $this->handler->getMeta($submission->getSourceId()),
             ];
-        });*/
-        $form = $this->handler->getFormData($submission->getSourceId());
-        $meta = $this->handler->getMeta($submission->getSourceId());
-        $displayMeta = json_decode($meta['display_meta'], true, 512, JSON_THROW_ON_ERROR);
+        });
+        $displayMeta = json_decode($fields['meta']['display_meta'], true, 512, JSON_THROW_ON_ERROR);
 
         $confirmations = [];
         foreach ($displayMeta['confirmations'] as $key => $confirmation) {
@@ -81,7 +79,7 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
         }
 
         return [
-            'title' => $form['title'],
+            'title' => $fields['entity']['title'],
             'displayMeta' => [
                 'title' => $displayMeta['title'],
                 'description' => $displayMeta['description'],

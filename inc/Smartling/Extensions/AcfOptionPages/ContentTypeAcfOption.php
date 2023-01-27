@@ -4,6 +4,7 @@ namespace Smartling\Extensions\AcfOptionPages;
 
 use Smartling\ContentTypes\ContentTypeAbstract;
 use Smartling\ContentTypes\ContentTypeManager;
+use Smartling\Exception\SmartlingConfigException;
 use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class ContentTypeAcfOption extends ContentTypeAbstract
@@ -20,61 +21,32 @@ class ContentTypeAcfOption extends ContentTypeAbstract
         parent::__construct($di);
 
         $this->registerIOWrapper();
-        $this->registerWidgetHandler();
-        $this->registerFilters();
     }
 
-    /**
-     * @param ContainerBuilder $di
-     * @param string           $manager
-     */
-    public static function register(ContainerBuilder $di, $manager = 'content-type-descriptor-manager'): void
+    public static function register(ContainerBuilder $di, string $manager = 'content-type-descriptor-manager'): void
     {
         $descriptor = new static($di);
         $mgr = $di->get($manager);
-        /**
-         * @var ContentTypeManager $mgr
-         */
+        if (!$mgr instanceof ContentTypeManager) {
+            throw new SmartlingConfigException(ContentTypeManager::class . ' expected');
+        }
         $mgr->addDescriptor($descriptor);
     }
 
-    /**
-     * Display name of content type, e.g.: Post
-     * @return string
-     */
     public function getLabel(): string
     {
         return __('ACF Options Page');
     }
 
-    /**
-     * Handler to register IO Wrapper
-     * @return void
-     */
-    public function registerIOWrapper()
+    public function registerIOWrapper(): void
     {
         $di = $this->getContainerBuilder();
         $wrapperId = 'wrapper.entity.' . $this->getSystemName();
-        $definition = $di->register($wrapperId, 'Smartling\Extensions\AcfOptionPages\AcfOptionEntity');
+        $definition = $di->register($wrapperId, AcfOptionEntity::class);
         $definition
-            ->addMethodCall('setDbal', [$di->getDefinition('site.db')]);
+            ->addArgument($di->getDefinition('site.db'));
 
         $di->get('factory.contentIO')->registerHandler($this->getSystemName(), $di->get($wrapperId));
-    }
-
-    /**
-     * Handler to register Widget (Edit Screen)
-     * @return void
-     */
-    public function registerWidgetHandler()
-    {
-    }
-
-    /**
-     * @return void
-     */
-    public function registerFilters()
-    {
     }
 
     /**

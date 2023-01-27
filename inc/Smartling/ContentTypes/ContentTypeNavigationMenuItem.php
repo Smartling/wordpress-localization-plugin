@@ -32,9 +32,9 @@ class ContentTypeNavigationMenuItem extends PostBasedContentTypeAbstract
 
     /**
      * @param ContainerBuilder $di
-     * @param string           $manager
+     * @param string $manager
      */
-    public static function register(ContainerBuilder $di, $manager = 'content-type-descriptor-manager'): void
+    public static function register(ContainerBuilder $di, string $manager = 'content-type-descriptor-manager'): void
     {
         $descriptor = new static($di);
         $mgr = $di->get($manager);

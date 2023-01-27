@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Smartling\Base\SmartlingCoreUploadTrait;
 use Smartling\ContentTypes\ExternalContentManager;
-use Smartling\DbAl\WordpressContentEntities\PostEntityStdWithPostStatus;
+use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DecodedXml;
@@ -14,7 +14,6 @@ use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
-use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\XmlHelper;
 use Smartling\Replacers\ReplacerFactory;
@@ -31,22 +30,18 @@ class SmartlingCoreUpload {
     use SmartlingCoreUploadTrait;
 
     private ContentHelper $contentHelper;
-    private ExternalContentManager $externalContentManager;
     private FieldsFilterHelper $fieldsFilterHelper;
     private GutenbergBlockHelper $blockHelper;
     private SettingsManager $settingsManager;
     private SubmissionManager $submissionManager;
-    private TestRunHelper $testRunHelper;
     private WordpressFunctionProxyHelper $wpProxy;
 
-    public function __construct(ContentHelper $contentHelper, ExternalContentManager $externalContentManager, FieldsFilterHelper $fieldsFilterHelper, SettingsManager $settingsManager, SubmissionManager $submissionManager, TestRunHelper $testRunHelper, WordpressFunctionProxyHelper $wpProxy)
+    public function __construct(ContentHelper $contentHelper, FieldsFilterHelper $fieldsFilterHelper, SettingsManager $settingsManager, SubmissionManager $submissionManager, WordpressFunctionProxyHelper $wpProxy)
     {
         $this->contentHelper = $contentHelper;
-        $this->externalContentManager = $externalContentManager;
         $this->fieldsFilterHelper = $fieldsFilterHelper;
         $this->settingsManager = $settingsManager;
         $this->submissionManager = $submissionManager;
-        $this->testRunHelper = $testRunHelper;
         $this->wpProxy = $wpProxy;
     }
 
@@ -91,7 +86,7 @@ class SmartlingCoreUpload {
 
 class SmartlingCoreUploadTraitTest extends TestCase
 {
-    private PostEntityStdWithPostStatus $resultEntity;
+    private PostEntityStd $resultEntity;
 
     public function setUp(): void
     {
@@ -139,7 +134,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $contentHelper = $this->getMockBuilder(ContentHelper::class)->disableOriginalConstructor()->getMock();
         $contentHelper->method('readSourceContent')->willReturnArgument(0);
         $contentHelper->method('readSourceMetadata')->willReturn([]);
-        $contentHelper->method('readTargetContent')->willReturn(new PostEntityStdWithPostStatus());
+        $contentHelper->method('readTargetContent')->willReturn(new PostEntityStd());
         $contentHelper->method('readTargetMetadata')->willReturn(['locked' => 'a:1:{s:5:"title";s:19:"Se våra prisplaner";}', 'unlocked' => 'unlocked']);
 
         $fieldsFilterHelper = $this->createPartialMock(FieldsFilterHelper::class, ['applyTranslatedValues', 'getLogger', 'processStringsAfterDecoding']);
@@ -289,7 +284,7 @@ HTML;
 <!-- /wp:folder -->
 HTML;
 
-        $target = new PostEntityStdWithPostStatus();
+        $target = new PostEntityStd();
         $target->setPostContent($targetContent);
 
         $submission = $this->createMock(SubmissionEntity::class);
@@ -358,6 +353,6 @@ HTML;
             return is_serialized($original) ? @unserialize($original) : $original;
         });
 
-        return new SmartlingCoreUpload($contentHelper, $externalContentManager, $fieldsFilterHelper, $settingsManager, $submissionManager, $this->createMock(TestRunHelper::class), $wpProxy);
+        return new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager, $wpProxy);
     }
 }

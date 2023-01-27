@@ -24,7 +24,7 @@ class AcfOptionEntityTest extends TestCase
             return 'wp_' . $tableName;
         });
         $db->expects($this->once())->method('fetch')->with("SELECT `option_name` FROM `wp_options` WHERE ( `option_name` LIKE 'options_%' )")->willReturn([]);
-        $x = $this->createPartialMock(AcfOptionEntity::class, ['getDbal']);
+        $x = $this->createMock(AcfOptionEntity::class);
         $x->method('getDbal')->willReturn($db);
         try {
             $x->get('guid');

@@ -3,7 +3,7 @@
 namespace Smartling\DbAl\WordpressContentEntities;
 
 use JetBrains\PhpStorm\ArrayShape;
-use Smartling\DbAl\DB;
+use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
@@ -11,15 +11,15 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 
 class GravityFormsFormHandler implements EntityHandler {
-    private DB $db;
+    private SmartlingToCMSDatabaseAccessWrapperInterface $db;
     private string $tableName;
     private string $tableMetaName;
 
-    public function __construct(DB $db)
+    public function __construct(SmartlingToCMSDatabaseAccessWrapperInterface $db)
     {
         $this->db = $db;
-        $this->tableName = "{$this->db->getPrefix()}gf_form";
-        $this->tableMetaName = "{$this->db->getPrefix()}gf_form_meta";
+        $this->tableName = $db->completeTableName('gf_form');
+        $this->tableMetaName = $db->completeTableName('gf_form_meta');
     }
 
     public function get(int $id): GravityFormsForm

@@ -18,6 +18,7 @@ interface Entity {
         'id' => 'mixed',
         'status' => 'string',
         'title' => 'string',
+        'locales' => 'string',
         'type' => 'string',
         'updated' => 'string',
     ])]
