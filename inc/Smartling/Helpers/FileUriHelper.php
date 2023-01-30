@@ -99,11 +99,8 @@ class FileUriHelper
         } elseif ($ioWrapper instanceof PostEntityStd) {
             /* post-based content */
             $permalink = self::preparePermalink(get_permalink($submission->getSourceId()), $submission);
-        } elseif ($ioWrapper instanceof VirtualEntityAbstract) {
-            /* widget content */
+        } elseif ($ioWrapper instanceof VirtualEntityAbstract || $ioWrapper instanceof EntityHandler) {
             $permalink = self::preparePermalink('', $submission);
-        } elseif ($ioWrapper instanceof EntityHandler) {
-            $permalink = self::preparePermalink($ioWrapper->getTitle($submission->getSourceId()), $submission);
         } else {
             $message = vsprintf(
                 'Original entity should be based on PostEntity or TaxonomyEntityAbstract or VirtualEntityAbstract and should be an appropriate ancestor of Smartling DBAL classes. Got:%s',

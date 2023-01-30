@@ -22,7 +22,7 @@ class GravityFormsFormHandler implements EntityHandler {
         $this->tableMetaName = $db->completeTableName('gf_form_meta');
     }
 
-    public function get(int $id): GravityFormsForm
+    public function get(mixed $id): GravityFormsForm
     {
         $data = $this->getFormData($id);
         return new GravityFormsForm($this->getMeta($id)['display_meta'], $id, $data['title'], $data['date_updated']);
@@ -70,11 +70,6 @@ class GravityFormsFormHandler implements EntityHandler {
         }
 
         return $result[0];
-    }
-
-    public function getTitle(int $id): string
-    {
-        return $this->getFormData($id)['title'];
     }
 
     public function getTotal(): int

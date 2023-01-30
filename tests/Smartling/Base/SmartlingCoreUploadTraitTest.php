@@ -14,6 +14,7 @@ use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
+use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\XmlHelper;
 use Smartling\Replacers\ReplacerFactory;
@@ -30,18 +31,24 @@ class SmartlingCoreUpload {
     use SmartlingCoreUploadTrait;
 
     private ContentHelper $contentHelper;
+    private ExternalContentManager $externalContentManager;
     private FieldsFilterHelper $fieldsFilterHelper;
     private GutenbergBlockHelper $blockHelper;
     private SettingsManager $settingsManager;
     private SubmissionManager $submissionManager;
+    private TestRunHelper $testRunHelper;
     private WordpressFunctionProxyHelper $wpProxy;
 
-    public function __construct(ContentHelper $contentHelper, FieldsFilterHelper $fieldsFilterHelper, SettingsManager $settingsManager, SubmissionManager $submissionManager, WordpressFunctionProxyHelper $wpProxy)
+    public function __construct(ContentHelper $contentHelper, ExternalContentManager $externalContentManager, FieldsFilterHelper $fieldsFilterHelper, SettingsManager $settingsManager, SubmissionManager $submissionManager, TestRunHelper $testRunHelper, WordpressFunctionProxyHelper $wpProxy)
     {
         $this->contentHelper = $contentHelper;
+        /** @noinspection UnusedConstructorDependenciesInspection the way this test works, this is needed */
+        $this->externalContentManager = $externalContentManager;
         $this->fieldsFilterHelper = $fieldsFilterHelper;
         $this->settingsManager = $settingsManager;
         $this->submissionManager = $submissionManager;
+        /** @noinspection UnusedConstructorDependenciesInspection the way this test works, this is needed */
+        $this->testRunHelper = $testRunHelper;
         $this->wpProxy = $wpProxy;
     }
 
@@ -98,8 +105,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $submission = $this->createMock(SubmissionEntity::class);
         $translatedFields = ['metaNotToTranslate' => 's:8:"Translated"', 'metaToTranslate' => '~Translated~'];
 
-        $contentHelper = $this->getMockBuilder(ContentHelper::class)->disableOriginalConstructor()->getMock();
-        $contentHelper->method('readSourceContent')->willReturnArgument(0);
+        $contentHelper = $this->createMock(ContentHelper::class);
         $contentHelper->method('readSourceMetadata')->willReturn([]);
         $contentHelper->method('readTargetContent')->willReturn(new PostEntityStd());
 
@@ -353,6 +359,6 @@ HTML;
             return is_serialized($original) ? @unserialize($original) : $original;
         });
 
-        return new SmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager, $wpProxy);
+        return new SmartlingCoreUpload($contentHelper, $externalContentManager, $fieldsFilterHelper, $settingsManager, $submissionManager, $this->createMock(TestRunHelper::class), $wpProxy);
     }
 }

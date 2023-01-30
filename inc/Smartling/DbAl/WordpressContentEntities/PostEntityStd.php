@@ -34,15 +34,13 @@ use Smartling\Services\GlobalSettingsManager;
  * @property string       $post_mime_type
  * @property integer      $comment_count
  * @property string       $hash
- * @package Smartling\DbAl\WordpressContentEntities
  */
 class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, EntityWithMetadata
 {
     /**
      * Standard 'post' content-type fields
-     * @var array
      */
-    protected $fields = [
+    protected array $fields = [
         'ID',
         'post_author',
         'post_date',
@@ -91,10 +89,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         $this->setRelatedTypes($related);
     }
 
-    /**
-     * @return string
-     */
-    public function getContentTypeProperty()
+    public function getContentTypeProperty(): string
     {
         return 'post_type';
     }
@@ -104,10 +99,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         return $this->ID;
     }
 
-    /**
-     * @inheritdoc
-     */
-    protected function getFieldNameByMethodName($method)
+    protected function getFieldNameByMethodName($method): string
     {
         $fieldName = parent::getFieldNameByMethodName($method);
 
@@ -119,10 +111,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         return $fieldName;
     }
 
-    /**
-     * @inheritdoc
-     */
-    protected function getNonCloneableFields()
+    protected function getNonCloneableFields(): array
     {
         return [
             'comment_count',
@@ -131,12 +120,9 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         ];
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function get($guid)
+    public function get(mixed $id): self
     {
-        $post = get_post($guid, ARRAY_A);
+        $post = get_post($id, ARRAY_A);
         if (null !== $post) {
             /**
              * Content loaded from database. Checking if used valid wrapper.
@@ -147,13 +133,10 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
             return $entity;
         }
 
-        $this->entityNotFound($this->getType(), $guid);
+        $this->entityNotFound($this->getType(), $id);
     }
 
-    /**
-     * @return WordpressFunctionProxyHelper
-     */
-    protected function getWpProxyHelper()
+    protected function getWpProxyHelper(): WordpressFunctionProxyHelper
     {
         return new WordpressFunctionProxyHelper();
     }
@@ -170,7 +153,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         return $this->formatMetadata($metadata);
     }
 
-    private function rawLogPostMetadata($postId)
+    private function rawLogPostMetadata($postId): void
     {
         $query = vsprintf(
             'SELECT * FROM %s WHERE post_id=%d',
@@ -182,8 +165,6 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
 
         $data = RawDbQueryHelper::query($query);
 
-        // $data may be array|null|Object
-
         if (is_null($data)) {
             $message = vsprintf(
                 'get_post_meta(%d) (Query %s) returned empty array. Raw result is NULL.',
@@ -192,7 +173,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
                     var_export($query, true),
                 ]
             );
-        } elseif (is_array($data)) {
+        } else {
             $message = vsprintf(
                 'get_post_meta(%d) returned empty array. Raw result is:%s',
                 [
@@ -205,40 +186,18 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
                     ),
                 ]
             );
-        } elseif (is_object($data)) {
-            $message = vsprintf(
-                'get_post_meta(%d) returned empty array. Raw result is:%s',
-                [
-                    $postId,
-                    base64_encode( // safe saving
-                        var_export($data, true)
-                    ),
-                ]
-            );
-        } else {
-            $message = vsprintf(
-                'get_post_meta(%d) returned empty array. Raw result is: type:%s, value:%s',
-                [
-                    $postId,
-                    gettype($data),
-                    base64_encode( // safe saving
-                        var_export($data, true)
-                    ),
-                ]
-            );
         }
 
         $this->logMessage($message);
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function set(EntityAbstract $entity = null)
+    public function set(Entity $entity): int
     {
-        $instance = null === $entity ? $this : $entity;
-        $array = $instance->toArray();
-        $array['post_category'] = \wp_get_post_categories($instance->ID);
+        if (!$entity instanceof self) {
+            throw new \InvalidArgumentException(__CLASS__ . ' can only set itself, ' . get_class($entity) . ' provided');
+        }
+        $array = $entity->toArray();
+        $array['post_category'] = \wp_get_post_categories($entity->ID);
         // ACF would replace our properly escaped content with its own escaping.
         remove_action('content_save_pre', 'acf_parse_save_blocks', 5);
 
@@ -279,7 +238,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
      * @param string $searchString
      * @return self[]
      */
-    public function getAll($limit = 0, $offset = 0, $orderBy = 'date', $order = 'DESC', $searchString = '')
+    public function getAll(int $limit = 0, int $offset = 0, string $orderBy = 'date', string $order = 'DESC', string $searchString = ''): array
     {
         $arguments = [
             'posts_per_page'   => $limit,
@@ -309,10 +268,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         return $output;
     }
 
-    /**
-     * @return int
-     */
-    public function getTotal()
+    public function getTotal(): int
     {
         $wp = wp_count_posts($this->getType());
 
@@ -346,51 +302,42 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         return $this->post_title;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function getPrimaryFieldName()
+    public function getPrimaryFieldName(): string
     {
         return 'ID';
     }
 
     /**
      * returns true if value is same as stored.
-     *
-     * @param string $key
-     * @param mixed  $value
-     *
-     * @return bool
      */
-    private function ensureMetaValue($key, $value)
+    private function ensureMetaValue(string $key, mixed $value): bool
     {
         $meta = $this->getMetadata();
 
-        if (is_array($meta) && array_key_exists($key, $meta)) {
+        if (array_key_exists($key, $meta)) {
+            /** @noinspection TypeUnsafeComparisonInspection */
             return $value == $meta[$key];
-        } else {
-            return false;
         }
+
+        return false;
     }
 
-    public function setMetaTag($tagName, $tagValue, $unique = true): void
+    public function setMetaTag(string $key, mixed $value): void
     {
         /**
          * Tag name and value expected to be slashed
          * @see add_metadata()
          */
-        $expectedTagName = $tagName;
-        $expectedTagValue = $tagValue;
+        $expectedTagName = $key;
+        $expectedTagValue = $value;
         if (GlobalSettingsManager::isAddSlashesBeforeSavingPostMeta()) {
-            if (is_string($tagName)) {
-                $tagName = addslashes($tagName);
-            }
-            if (is_string($tagValue)) {
-                $tagValue = addslashes($tagValue);
+            $key = addslashes($key);
+            if (is_string($value)) {
+                $value = addslashes($value);
             }
         }
-        if (false === ($result = add_post_meta($this->ID, $tagName, $tagValue, $unique))) {
-            $result = update_post_meta($this->ID, $tagName, $tagValue);
+        if (false === ($result = add_post_meta($this->ID, $key, $value, true))) {
+            $result = update_post_meta($this->ID, $key, $value);
         }
 
         if (false === $result) {
@@ -398,8 +345,8 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
                 $message = vsprintf(
                     'Error saving meta tag "%s" with value "%s" for type="%s" id="%s"',
                     [
-                        $tagName,
-                        var_export($tagValue, true),
+                        $key,
+                        var_export($value, true),
                         $this->post_type,
                         $this->ID,
                     ]
@@ -410,8 +357,8 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         } else {
             $this->logMessage(
                 vsprintf('Set tag \'%s\' with value \'%s\' for %s (id=%s)', [
-                    $tagName,
-                    var_export($tagValue, true),
+                    $key,
+                    var_export($value, true),
                     $this->post_type,
                     $this->ID,
                 ]));

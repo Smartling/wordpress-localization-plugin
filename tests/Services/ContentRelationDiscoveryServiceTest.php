@@ -671,7 +671,6 @@ namespace Smartling\Tests\Services {
                 'post_content' => "<!-- wp:test {\"relatedContent\":$relatedPostId} /-->",
                 'post_parent' => $postParentId,
             ]);
-            $mapper->method('getMetadata')->willReturn([]);
 
             $metaFieldProcessorManager = $this->createMock(MetaFieldProcessorManager::class);
             $metaFieldProcessorManager->method('getProcessor')->willReturnCallback(function ($field) {

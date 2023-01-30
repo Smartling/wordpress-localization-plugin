@@ -134,10 +134,10 @@ class ContentHelper
         }
     }
 
-    private function getWrapper(string $contentType): EntityHandler
+    private function getWrapper(string $contentType): EntityAbstract|EntityHandler
     {
         $return = clone $this->getIoFactory()->getHandler($contentType);
-        if (!$return instanceof EntityHandler) {
+        if (!$return instanceof EntityHandler && !$return instanceof EntityAbstract) {
             throw new \RuntimeException("Handler for $contentType expected to be " . EntityHandler::class . ", factory returned " . get_class($return));
         }
 

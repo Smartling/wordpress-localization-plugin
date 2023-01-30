@@ -3,6 +3,7 @@
 namespace Smartling\Extensions\AcfOptionPages;
 
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\DbAl\WordpressContentEntities\Entity;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
@@ -20,19 +21,15 @@ class AcfOptionEntity extends VirtualEntityAbstract
 
     /**
      * Standard 'option' content-type fields
-     * @var array
      */
-    protected $fields = [
+    protected array $fields = [
         'id',
         'name',
         'value',
     ];
 
-    private $map = [];
+    private array $map = [];
 
-    /**
-     * @inheritdoc
-     */
     public function __construct(SmartlingToCMSDatabaseAccessWrapperInterface $dbal)
     {
         parent::__construct();
@@ -42,33 +39,20 @@ class AcfOptionEntity extends VirtualEntityAbstract
         $this->setEntityFields($this->fields);
     }
 
-    protected function getFieldNameByMethodName($method): string
-    {
-        $way = substr($method, 0, 3);
-        $possibleField = lcfirst(substr($method, 3));
-        if (in_array($way, ['set', 'get']) && in_array($possibleField, $this->fields, true)) {
-            return $possibleField;
-        }
-
-        $message = vsprintf('Method %s not found in %s', [$method, __CLASS__]);
-        $this->getLogger()->error($message);
-        throw new \BadMethodCallException($message);
-    }
-
     public function getTitle(): string
     {
         return $this->getName();
     }
 
-    public function get($guid): self
+    public function get(mixed $id): self
     {
         $this->buildMap();
 
-        if (!array_key_exists($guid, $this->map)) {
-            $this->entityNotFound(ContentTypeAcfOption::WP_CONTENT_TYPE, $guid);
+        if (!array_key_exists($id, $this->map)) {
+            $this->entityNotFound(ContentTypeAcfOption::WP_CONTENT_TYPE, $id);
         }
 
-        return $this->resultToEntity($this->map[$guid]->toArray());
+        return $this->resultToEntity($this->map[$id]->toArray());
     }
 
     private function getOptionNames(): array
@@ -113,7 +97,7 @@ class AcfOptionEntity extends VirtualEntityAbstract
      * @param string $searchString
      * @return AcfOptionEntity[]
      */
-    public function getAll($limit = 0, $offset = 0, $orderBy = '', $order = '', $searchString = ''): array
+    public function getAll(int $limit = 0, int $offset = 0, string $orderBy = '', string $order = '', string $searchString = ''): array
     {
         $this->buildMap();
         $collection = [];
@@ -136,9 +120,9 @@ class AcfOptionEntity extends VirtualEntityAbstract
     /**
      * Stores entity to database
      */
-    public function set(EntityAbstract $entity = null): ?int
+    public function set(Entity $entity): int
     {
-        if ($entity === null) {
+        if (!$entity instanceof self) {
             throw new \InvalidArgumentException(self::class . "->set() must be called with " . self::class);
         }
         $acfOptionHelper = AcfOptionHelper::fromArray($entity->toArray());

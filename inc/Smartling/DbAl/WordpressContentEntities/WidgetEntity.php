@@ -7,7 +7,6 @@ use Smartling\Helpers\ThemeSidebarHelper;
 use Smartling\Helpers\WidgetHelper;
 
 /**
- * Class WidgetEntity
  * @property int    $id                 Unique id
  * @property string $widgetType         widget type
  * @property int    $index              Widget descriptor index (Wordpress internal)
@@ -20,20 +19,15 @@ use Smartling\Helpers\WidgetHelper;
  * @method string   getBar()            Returns bar related to index
  * @method int      getBarPosition()    Returns Widget position in the bar
  * @method array setSettings(array $settings)
- * @package Smartling\DbAl\WordpressContentEntities
  */
 class WidgetEntity extends VirtualEntityAbstract
 {
     /**
      * @var WidgetHelper[] All widgets of current theme.
      */
-    protected $map = [];
+    protected array $map = [];
 
-    /**
-     * Standard 'post' content-type fields
-     * @var array
-     */
-    protected $fields = [
+    protected array $fields = [
         'id',
         'widgetType',
         'index',
@@ -42,9 +36,6 @@ class WidgetEntity extends VirtualEntityAbstract
         'settings',
     ];
 
-    /**
-     * @inheritdoc
-     */
     public function __construct($type, array $related = [])
     {
         parent::__construct();
@@ -62,26 +53,6 @@ class WidgetEntity extends VirtualEntityAbstract
         $this->setRelatedTypes($related);
     }
 
-    /**
-     * @inheritdoc
-     */
-    protected function getFieldNameByMethodName($method)
-    {
-
-        $way = substr($method, 0, 3);
-
-        $possibleField = lcfirst(substr($method, 3));
-
-        if (in_array($way, ['set', 'get']) && in_array($possibleField, $this->fields, true)) {
-            return $possibleField;
-        }
-
-        $message = vsprintf('Method %s not found in %s', [$method, __CLASS__]);
-        $this->getLogger()
-            ->error($message);
-        throw new \BadMethodCallException($message);
-    }
-
     public function getId(): ?int
     {
         return $this->id;
@@ -96,32 +67,18 @@ class WidgetEntity extends VirtualEntityAbstract
             : $title;
     }
 
-    /**
-     * Loads the entity from database
-     * @param $guid
-     * @return EntityAbstract
-     */
-    public function get($guid)
+    public function get(mixed $id): self
     {
         $this->buildMap();
 
-        if (array_key_exists($guid, $this->map)) {
-            return $this->resultToEntity($this->map[$guid]->toArray());
+        if (array_key_exists($id, $this->map)) {
+            return $this->resultToEntity($this->map[$id]->toArray());
         }
 
-        $this->entityNotFound('theme_widget', $guid);
+        $this->entityNotFound('theme_widget', $id);
     }
 
-    /**
-     * @param string $tagName
-     * @param string $tagValue
-     * @param bool   $unique
-     */
-    public function setMetaTag($tagName, $tagValue, $unique = true): void
-    {
-    }
-
-    protected function buildMap()
+    protected function buildMap(): void
     {
         $this->map = [];
 
@@ -154,14 +111,9 @@ class WidgetEntity extends VirtualEntityAbstract
     }
 
     /**
-     * @param int $limit
-     * @param int $offset
-     * @param string $orderBy
-     * @param string $order
-     * @param string $searchString
      * @return WidgetEntity[]
      */
-    public function getAll($limit = 0, $offset = 0, $orderBy = '', $order = '', $searchString = '')
+    public function getAll(int $limit = 0, int $offset = 0, string $orderBy = '', string $order = '', string $searchString = ''): array
     {
         $this->buildMap();
         $collection = [];
@@ -173,23 +125,14 @@ class WidgetEntity extends VirtualEntityAbstract
         return array_slice($collection, $offset, $limit);
     }
 
-
-    /**
-     * @return int
-     */
-    public function getTotal()
+    public function getTotal(): int
     {
         $this->buildMap();
 
         return (count($this->map));
     }
 
-    /**
-     * @param WidgetEntity $entity
-     *
-     * @return array
-     */
-    private function instanceToArray(WidgetEntity $entity)
+    private function instanceToArray(WidgetEntity $entity): array
     {
         return [
             'widgetType'  => $entity->getWidgetType(),
@@ -200,19 +143,19 @@ class WidgetEntity extends VirtualEntityAbstract
         ];
     }
 
-    /**
-     * @param WidgetEntity $entity
-     *
-     * @return WidgetHelper
-     */
-    private function getWidgetHelperInstance(WidgetEntity $entity)
+    public function toArray(): array
+    {
+        return $this->instanceToArray($this);
+    }
+
+    private function getWidgetHelperInstance(self $entity): WidgetHelper
     {
         if (
-            (int)$entity->getPK() > 0
+            $entity->getPK() > 0
             && !array_key_exists(WidgetHelper::SMARTLING_IDENTITY_FIELD_NAME, $entity->getSettings())
         ) {
             $settings = $entity->getSettings();
-            $settings[WidgetHelper::SMARTLING_IDENTITY_FIELD_NAME] = (int)$entity->getPK();
+            $settings[WidgetHelper::SMARTLING_IDENTITY_FIELD_NAME] = $entity->getPK();
             $entity->setSettings($settings);
         }
 
@@ -221,10 +164,10 @@ class WidgetEntity extends VirtualEntityAbstract
 
     /**
      * Stores entity to database
-     * @param EntityAbstract $entity
-     * @return mixed
+     * @param Entity $entity
+     * @return int
      */
-    public function set(EntityAbstract $entity = null)
+    public function set(Entity $entity): int
     {
         if (!$entity instanceof self) {
             throw new \InvalidArgumentException("WidgetEntity->set() must be called with WidgetEntity");
@@ -238,7 +181,7 @@ class WidgetEntity extends VirtualEntityAbstract
     /**
      * @return array
      */
-    protected function getNonCloneableFields()
+    protected function getNonCloneableFields(): array
     {
         return [$this->getPrimaryFieldName()];
     }
@@ -246,7 +189,7 @@ class WidgetEntity extends VirtualEntityAbstract
     /**
      * @return string
      */
-    public function getPrimaryFieldName()
+    public function getPrimaryFieldName(): string
     {
         return 'id';
     }

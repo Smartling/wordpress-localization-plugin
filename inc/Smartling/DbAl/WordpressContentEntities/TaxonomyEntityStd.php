@@ -4,12 +4,9 @@ namespace Smartling\DbAl\WordpressContentEntities;
 
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingDbException;
-use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 
 /**
- * Class TaxonomyEntityAbstract
- * @package Smartling\DbAl\WordpressContentEntities
  * @property int    $term_id
  * @property string $name
  * @property string slug
@@ -24,9 +21,8 @@ class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
 {
     /**
      * Standard taxonomy fields
-     * @var array
      */
-    protected $fields = [
+    protected array $fields = [
         'term_id',
         'name',
         'slug',
@@ -52,34 +48,34 @@ class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
         return $this->formatMetadata($metadata);
     }
 
-    public function setMetaTag($tagName, $tagValue, $unique = true): void
+    public function setMetaTag(string $key, $value, $unique = true): void
     {
-        $curValue = get_term_meta($this->getPK(), $tagName, $unique);
+        $curValue = get_term_meta($this->getPK(), $key, $unique);
 
         $result = null;
 
-        if ($curValue !== $tagValue) {
+        if ($curValue !== $value) {
             if (false === $curValue) {
                 $this->logMessage(vsprintf('Adding tag %s with value \'%s\' for \'%s\' \'%s\'.', [
-                    $tagName,
-                    var_export($tagValue, true),
+                    $key,
+                    var_export($value, true),
                     $this->type,
                     $this->getPK(),
                 ]));
-                $result = add_term_meta($this->getPK(), $tagName, $tagValue, $unique);
+                $result = add_term_meta($this->getPK(), $key, $value, $unique);
             } else {
                 $this->logMessage(vsprintf('Updating tag %s with value \'%s\' for \'%s\' \'%s\'.', [
-                    $tagName,
-                    var_export($tagValue, true),
+                    $key,
+                    var_export($value, true),
                     $this->type,
                     $this->getPK(),
                 ]));
-                $result = update_term_meta($this->getPK(), $tagName, $tagValue);
+                $result = update_term_meta($this->getPK(), $key, $value);
             }
         } else {
             $this->logMessage(vsprintf('Skipping update tag %s with value \'%s\' for \'%s\' \'%s\' as value not changed.', [
-                $tagName,
-                var_export($tagValue, true),
+                $key,
+                var_export($value, true),
                 $this->type,
                 $this->getPK(),
             ]));
@@ -89,8 +85,8 @@ class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
             $message = vsprintf(
                 'Error saving meta tag "%s" with value "%s" for "%s" "%s"',
                 [
-                    $tagName,
-                    var_export($tagValue, true),
+                    $key,
+                    var_export($value, true),
                     $this->type,
                     $this->getPK(),
                 ]
@@ -120,10 +116,7 @@ class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
         $this->wordpressProxy = $wordpressProxy;
     }
 
-    /**
-     * @return string
-     */
-    public function getContentTypeProperty()
+    public function getContentTypeProperty(): string
     {
         return 'taxonomy';
     }
@@ -139,21 +132,17 @@ class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
     }
 
     /**
-     * @param $guid
-     *
-     * @return TaxonomyEntityStd
      * @throws SmartlingDbException
      * @throws EntityNotFoundException
      */
-    public function get($guid)
+    public function get(mixed $id): self
     {
-        $term = get_term($guid, $this->getType(), ARRAY_A);
-        $entity = null;
+        $term = get_term($id, $this->getType(), ARRAY_A);
 
         if ($term instanceof \WP_Error) {
             $message = vsprintf(
                 'An error occurred while reading taxonomy id=%s, type=%s: %s',
-                [$guid, $this->getType(), $term->get_error_message()]);
+                [$id, $this->getType(), $term->get_error_message()]);
 
             $this->getLogger()->error($message);
 
@@ -161,13 +150,13 @@ class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
         }
 
         if (null === $term) {
-            $this->entityNotFound($this->getType(), $guid);
+            $this->entityNotFound($this->getType(), $id);
         }
 
         $entity = $this->resultToEntity($term);
 
         if (false === $entity->validateContentType()) {
-            $this->entityNotFound($this->getType(), $guid);
+            $this->entityNotFound($this->getType(), $id);
         }
 
         return $entity;
@@ -183,7 +172,7 @@ class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
      * @return TaxonomyEntityStd[]
      * @throws SmartlingDbException
      */
-    public function getAll($limit = 0, $offset = 0, $orderBy = 'term_id', $order = 'ASC', $searchString = '')
+    public function getAll(int $limit = 0, int $offset = 0, string $orderBy = 'term_id', string $order = 'ASC', string $searchString = ''): array
     {
 
         $result = [];
@@ -236,27 +225,19 @@ class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
     /**
      * @return int
      */
-    public function getTotal()
+    public function getTotal(): int
     {
         return wp_count_terms($this->getType());
     }
 
     /**
-     * @param EntityAbstract $entity
-     * @return array
      * @throws SmartlingDbException
      */
-    public function set(EntityAbstract $entity = null)
+    public function set(Entity $entity): int
     {
-
-        $me = get_class($this);
-
-        if (!($entity instanceof $me)) {
-            $entity = $this;
+        if (!$entity instanceof self) {
+            throw new \InvalidArgumentException(__CLASS__ . ' can only set itself, ' . get_class($entity) . ' provided');
         }
-
-        $update = !(null === $entity->term_id);
-
         $data = $entity->toArray();
 
         $argFields = [
@@ -273,7 +254,7 @@ class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
             $args[$field] = $data[$field];
         }
 
-        $result = $update
+        $result = null !== $entity->term_id
             ? wp_update_term($entity->term_id, $entity->taxonomy, $args)
             : wp_insert_term($entity->name, $entity->taxonomy, $args);
 
@@ -308,10 +289,7 @@ class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
 
     }
 
-    /**
-     * @inheritdoc
-     */
-    protected function getNonCloneableFields()
+    protected function getNonCloneableFields(): array
     {
         return [
             'term_id',
@@ -321,71 +299,19 @@ class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
         ];
     }
 
-    public static function detectTermTaxonomyByTermId($termId)
-    {
-        $taxonomies = WordpressContentTypeHelper::getSupportedTaxonomyTypes();
-
-        $args = [
-            'orderby'           => 'term_id',
-            'order'             => 'ASC',
-            'hide_empty'        => false,
-            'exclude'           => [],
-            'exclude_tree'      => [],
-            'include'           => [],
-            'number'            => '',
-            'fields'            => 'all',
-            'slug'              => '',
-            'parent'            => '',
-            'hierarchical'      => true,
-            'child_of'          => 0,
-            'get'               => '',
-            'name__like'        => '',
-            'description__like' => '',
-            'pad_counts'        => false,
-            'offset'            => '',
-            'search'            => '',
-            'cache_domain'      => 'core',
-        ];
-
-        $terms = get_terms($taxonomies, $args);
-
-
-        $result = [];
-
-        if ($terms instanceof \WP_Error) {
-            $message = vsprintf('An error occurred while readin all taxonomies of type: %s',
-                                [$terms->get_error_message()]);
-
-            throw new SmartlingDbException($message);
-        }
-
-        foreach ($terms as $term) {
-            if ((int)$term->term_id === (int)$termId) {
-                $result[] = $term->taxonomy;
-                break;
-            }
-        }
-
-        return $result;
-    }
-
-    public function cleanFields($value = null)
+    public function cleanFields(mixed $value = null): void
     {
         parent::cleanFields($value);
         $this->term_taxonomy_id = $value;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function getPrimaryFieldName()
+    public function getPrimaryFieldName(): string
     {
         return 'term_id';
     }
 
     /**
      * Converts instance of EntityAbstract to array to be used for BulkSubmit screen
-     * @return array
      */
     public function toBulkSubmitScreenRow(): array
     {

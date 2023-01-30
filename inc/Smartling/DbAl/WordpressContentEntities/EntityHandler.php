@@ -9,14 +9,12 @@ interface EntityHandler {
     /**
      * @throws EntityNotFoundException
      */
-    public function get(int $id): Entity;
+    public function get(mixed $id): Entity;
 
     /**
      * @return Entity[]
      */
     public function getAll(int $limit = 0, int $offset = 0, string $orderBy = '', string $order = '', string $searchString = ''): array;
-
-    public function getTitle(int $id): string;
 
     public function getTotal(): int;
 

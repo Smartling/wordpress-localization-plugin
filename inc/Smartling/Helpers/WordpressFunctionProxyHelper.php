@@ -81,7 +81,11 @@ class WordpressFunctionProxyHelper
 
     public function get_plugins(): array
     {
-        return get_plugins(...func_get_args());
+        if (function_exists('get_plugins')) {
+            return get_plugins(...func_get_args());
+        }
+
+        return [];
     }
 
     public function get_post()
