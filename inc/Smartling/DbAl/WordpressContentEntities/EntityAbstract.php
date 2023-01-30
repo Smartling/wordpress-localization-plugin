@@ -106,19 +106,23 @@ abstract class EntityAbstract implements Entity, EntityHandler
         return strtolower(preg_replace('/([A-Z])/', '_$1', lcfirst(substr($method, 3))));
     }
 
-    public function __call(string $method, array $params): mixed
+    /**
+     * @return mixed|void
+     */
+    public function __call(string $method, array $params)
     {
         switch (substr($method, 0, 3)) {
-            case 'set' :
+            case 'set':
                 $field = $this->getFieldNameByMethodName($method);
                 $this->$field = ArrayHelper::first($params); // get the very first arg
                 break;
-            case 'get' :
+            case 'get':
                 $field = $this->getFieldNameByMethodName($method);
 
                 return $this->$field; // get the very first arg
+            default:
+                throw new \BadMethodCallException(sprintf("Method $method does not exists in class '%s'", get_class($this)));
         }
-        throw new \BadMethodCallException(sprintf("Method $method does not exists in class '%s'", get_class($this)));
     }
 
     abstract public function getTitle(): string;

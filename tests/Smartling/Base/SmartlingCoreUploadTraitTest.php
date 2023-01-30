@@ -106,7 +106,6 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $translatedFields = ['metaNotToTranslate' => 's:8:"Translated"', 'metaToTranslate' => '~Translated~'];
 
         $contentHelper = $this->createMock(ContentHelper::class);
-        $contentHelper->method('readSourceMetadata')->willReturn([]);
         $contentHelper->method('readTargetContent')->willReturn(new PostEntityStd());
 
         $fieldsFilterHelper = $this->getMockBuilder(FieldsFilterHelper::class)->disableOriginalConstructor()->getMock();
@@ -138,8 +137,6 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $submission->method('getLockedFields')->willReturn(['meta/locked']);
         $submission->method('getTargetId')->willReturn(1 );
         $contentHelper = $this->getMockBuilder(ContentHelper::class)->disableOriginalConstructor()->getMock();
-        $contentHelper->method('readSourceContent')->willReturnArgument(0);
-        $contentHelper->method('readSourceMetadata')->willReturn([]);
         $contentHelper->method('readTargetContent')->willReturn(new PostEntityStd());
         $contentHelper->method('readTargetMetadata')->willReturn(['locked' => 'a:1:{s:5:"title";s:19:"Se våra prisplaner";}', 'unlocked' => 'unlocked']);
 
@@ -297,8 +294,6 @@ HTML;
         $submission->method('getLockedFields')->willReturn([]);
         $submission->method('getTargetId')->willReturn(1);
         $contentHelper = $this->getMockBuilder(ContentHelper::class)->disableOriginalConstructor()->getMock();
-        $contentHelper->method('readSourceContent')->willReturnArgument(0);
-        $contentHelper->method('readSourceMetadata')->willReturn([]);
         $contentHelper->method('readTargetContent')->willReturn($target);
         $contentHelper->method('readTargetMetadata')->willReturn([]);
 
