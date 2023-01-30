@@ -136,7 +136,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $submission = $this->createMock(SubmissionEntity::class);
         $submission->method('getLockedFields')->willReturn(['meta/locked']);
         $submission->method('getTargetId')->willReturn(1 );
-        $contentHelper = $this->getMockBuilder(ContentHelper::class)->disableOriginalConstructor()->getMock();
+        $contentHelper = $this->createMock(ContentHelper::class);
         $contentHelper->method('readTargetContent')->willReturn(new PostEntityStd());
         $contentHelper->method('readTargetMetadata')->willReturn(['locked' => 'a:1:{s:5:"title";s:19:"Se våra prisplaner";}', 'unlocked' => 'unlocked']);
 
@@ -293,7 +293,7 @@ HTML;
         $submission = $this->createMock(SubmissionEntity::class);
         $submission->method('getLockedFields')->willReturn([]);
         $submission->method('getTargetId')->willReturn(1);
-        $contentHelper = $this->getMockBuilder(ContentHelper::class)->disableOriginalConstructor()->getMock();
+        $contentHelper = $this->createMock(ContentHelper::class);
         $contentHelper->method('readTargetContent')->willReturn($target);
         $contentHelper->method('readTargetMetadata')->willReturn([]);
 
@@ -310,7 +310,7 @@ HTML;
         $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
         $submissionManager->method('storeEntity')->willReturnArgument(0);
 
-        $x = $this->getSmartlingCoreUpload($contentHelper,$fieldsFilterHelper, $settingsManager, $submissionManager);
+        $x = $this->getSmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager);
         $xmlHelper = $this->createMock(XmlHelper::class);
         $xmlHelper->method('xmlDecode')->willReturn(new DecodedXml(
             ['entity' => ['post_content' => $translatedContent]],
@@ -319,6 +319,7 @@ HTML;
 
         $contentHelper->expects(self::once())->method('writeTargetContent')->willReturnCallback(function (SubmissionEntity $submission, PostEntityStd $entity) {
             $this->resultEntity = $entity;
+            return $entity;
         });
 
         $this->assertSuccessApplyXml($x, $submission, $xmlHelper);
