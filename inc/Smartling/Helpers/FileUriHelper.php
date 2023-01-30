@@ -2,13 +2,10 @@
 namespace Smartling\Helpers;
 
 use InvalidArgumentException;
-use LogicException;
 use Smartling\Bootstrap;
 
-use Smartling\DbAl\WordpressContentEntities\EntityHandler;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
-use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
 
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingConfigException;
@@ -26,12 +23,7 @@ class FileUriHelper
         }
     }
 
-    /**
-     * @param mixed $string
-     * @param SubmissionEntity $entity
-     * @return string
-     */
-    private static function preparePermalink($string, SubmissionEntity $entity): string
+    private static function preparePermalink(mixed $string, SubmissionEntity $entity): string
     {
         self::checkSubmission($entity);
         $fallBack = rtrim($entity->getSourceTitle(false), '/');
@@ -71,14 +63,10 @@ class FileUriHelper
     }
 
     /**
-     * @param SubmissionEntity $submission
-     *
-     * @return string
      * @throws BlogNotFoundException
      * @throws SmartlingInvalidFactoryArgumentException
      * @throws SmartlingDirectRunRuntimeException
      * @throws InvalidArgumentException
-     * @throws LogicException
      */
     public static function generateFileUri(SubmissionEntity $submission): string
     {
@@ -99,16 +87,8 @@ class FileUriHelper
         } elseif ($ioWrapper instanceof PostEntityStd) {
             /* post-based content */
             $permalink = self::preparePermalink(get_permalink($submission->getSourceId()), $submission);
-        } elseif ($ioWrapper instanceof VirtualEntityAbstract || $ioWrapper instanceof EntityHandler) {
-            $permalink = self::preparePermalink('', $submission);
         } else {
-            $message = vsprintf(
-                'Original entity should be based on PostEntity or TaxonomyEntityAbstract or VirtualEntityAbstract and should be an appropriate ancestor of Smartling DBAL classes. Got:%s',
-                [
-                    get_class($ioWrapper),
-                ]
-            );
-            throw new LogicException($message);
+            $permalink = self::preparePermalink('', $submission);
         }
 
         $fileUri = vsprintf(

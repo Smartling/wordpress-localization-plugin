@@ -5,7 +5,6 @@ namespace Smartling\Helpers;
 use Exception;
 use Smartling\DbAl\WordpressContentEntities\Entity;
 use Smartling\DbAl\WordpressContentEntities\EntityHandler;
-use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\EntityWithMetadata;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
@@ -134,10 +133,10 @@ class ContentHelper
         }
     }
 
-    private function getWrapper(string $contentType): EntityAbstract|EntityHandler
+    private function getWrapper(string $contentType): EntityHandler
     {
         $return = clone $this->getIoFactory()->getHandler($contentType);
-        if (!$return instanceof EntityHandler && !$return instanceof EntityAbstract) {
+        if (!$return instanceof EntityHandler) {
             throw new \RuntimeException("Handler for $contentType expected to be " . EntityHandler::class . ", factory returned " . get_class($return));
         }
 
