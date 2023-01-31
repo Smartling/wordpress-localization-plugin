@@ -62,7 +62,7 @@ class ContentTypeManager extends SmartlingFactoryAbstract
             if (!$descriptor instanceof ContentTypeInterface) {
                 throw new SmartlingConfigException(ContentTypeInterface::class . ' expected');
             }
-            if (false === $descriptor->getVisibility()['bulkSubmit']) {
+            if (!$descriptor->isVisible('bulkSubmit')) {
                 $output[] = $descriptor->getSystemName();
             }
         }

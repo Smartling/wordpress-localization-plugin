@@ -17,11 +17,7 @@ interface ContentTypeInterface
      */
     public function getLabel(): string;
 
-    #[ArrayShape([
-        'bulkSubmit' => 'bool',
-        'submissionBoard' => 'bool',
-    ])]
-    public function getVisibility(): array;
+    public function isVisible(string $page): bool;
 
     public function isTaxonomy(): bool;
 

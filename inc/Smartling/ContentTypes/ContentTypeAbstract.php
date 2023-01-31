@@ -19,12 +19,9 @@ abstract class ContentTypeAbstract implements ContentTypeInterface
         $this->containerBuilder = $di;
     }
 
-    public function getVisibility(): array
+    public function isVisible(string $page): bool
     {
-        return [
-            'bulkSubmit' => true,
-            'submissionBoard' => true,
-        ];
+        return true;
     }
 
     public static function register(ContainerBuilder $di, string $manager = 'content-type-descriptor-manager'): void

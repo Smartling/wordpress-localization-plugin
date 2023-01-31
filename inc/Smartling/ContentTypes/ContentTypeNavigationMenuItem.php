@@ -70,12 +70,9 @@ class ContentTypeNavigationMenuItem extends PostBasedContentTypeAbstract
 
     }
 
-    public function getVisibility(): array
+    public function isVisible(string $page): bool
     {
-        return [
-            'submissionBoard' => true,
-            'bulkSubmit' => false,
-        ];
+        return $page === 'submissionBoard';
     }
 
     /**

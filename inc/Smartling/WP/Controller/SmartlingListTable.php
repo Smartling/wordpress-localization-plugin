@@ -3,7 +3,6 @@
 namespace Smartling\WP\Controller;
 
 use Smartling\Bootstrap;
-use Smartling\ContentTypes\ContentTypeInterface;
 use Smartling\ContentTypes\ContentTypeManager;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\SiteHelper;
@@ -40,10 +39,9 @@ class SmartlingListTable extends WP_List_Table
         foreach ($supportedTypes as $contentTypeName => $contentTypeLabel) {
             $descriptor = $contentTypeManager->getDescriptorByType($contentTypeName);
 
-            if (true === $descriptor->getVisibility()[$page]) {
-                if ($descriptor->isVirtual() || in_array($contentTypeName, $registeredInWordpressTypes, true)) {
-                    $output[$contentTypeName] = $contentTypeLabel;
-                }
+            if ($descriptor->isVisible($page) &&
+                ($descriptor->isVirtual() || in_array($contentTypeName, $registeredInWordpressTypes, true))) {
+                $output[$contentTypeName] = $contentTypeLabel;
             }
         }
 

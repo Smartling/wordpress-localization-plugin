@@ -154,14 +154,8 @@ trait CustomTypeTrait
         $descriptor->registerFilters();
     }
 
-    /**
-     * @return array [
-     *  'submissionBoard'   => true|false,
-     *  'bulkSubmit'        => true|false
-     * ]
-     */
-    public function getVisibility(): array
+    public function isVisible(string $page): bool
     {
-        return $this->getConfigParser()->getVisibility();
+        return $this->getConfigParser()->getVisibility($page);
     }
 }
