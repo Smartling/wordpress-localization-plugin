@@ -2,6 +2,7 @@
 
 namespace Smartling\ContentTypes;
 
+use Smartling\DbAl\WordpressContentEntities\GravityFormFormData;
 use Smartling\DbAl\WordpressContentEntities\GravityFormsFormHandler;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
@@ -62,13 +63,13 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
 
     public function getContentFields(SubmissionEntity $submission, bool $raw): array
     {
-        $fields = $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($submission) {
-            return [
-                'entity' => $this->handler->getFormData($submission->getSourceId()),
-                'meta' => $this->handler->getMeta($submission->getSourceId()),
-            ];
+        $formData = $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($submission) {
+            return $this->handler->getFormData($submission->getSourceId());
         });
-        $displayMeta = json_decode($fields['meta']['display_meta'], true, 512, JSON_THROW_ON_ERROR);
+        if (!$formData instanceof GravityFormFormData) {
+            throw new \RuntimeException(GravityFormFormData::class . ' expected');
+        }
+        $displayMeta = json_decode($formData->getDisplayMeta(), true, 512, JSON_THROW_ON_ERROR);
 
         $confirmations = [];
         foreach ($displayMeta['confirmations'] as $key => $confirmation) {
@@ -79,7 +80,7 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
         }
 
         return [
-            'title' => $fields['entity']['title'],
+            'title' => $formData->getTitle(),
             'displayMeta' => [
                 'title' => $displayMeta['title'],
                 'description' => $displayMeta['description'],
@@ -121,12 +122,12 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
 
     public function getMaxVersion(): string
     {
-        return '2.5.9.3';
+        return '2.7';
     }
 
     public function getMinVersion(): string
     {
-        return '2.5.9.3';
+        return '2.5';
     }
 
     public function getPluginId(): string

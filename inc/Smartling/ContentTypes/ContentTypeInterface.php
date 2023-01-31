@@ -2,7 +2,6 @@
 
 namespace Smartling\ContentTypes;
 
-use JetBrains\PhpStorm\ArrayShape;
 use JetBrains\PhpStorm\ExpectedValues;
 
 interface ContentTypeInterface

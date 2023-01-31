@@ -2,7 +2,6 @@
 
 namespace Smartling\DbAl\WordpressContentEntities;
 
-use JetBrains\PhpStorm\ArrayShape;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingDbException;
@@ -25,7 +24,7 @@ class GravityFormsFormHandler implements EntityHandler {
     public function get(mixed $id): GravityFormsForm
     {
         $data = $this->getFormData($id);
-        return new GravityFormsForm($this->getMeta($id)['display_meta'], $id, $data['title'], $data['date_updated']);
+        return new GravityFormsForm($data->getDisplayMeta(), $id, $data->getTitle(), $data->getUpdated());
     }
 
     public function getAll(int $limit = 50, int $offset = 0, string $orderBy = '', string $order = '', string $searchString = ''): array
@@ -45,31 +44,20 @@ class GravityFormsFormHandler implements EntityHandler {
         }, $this->db->fetch($query, ARRAY_A));
     }
 
-    #[ArrayShape([
-        'title' => 'string',
-        'date_updated' => 'string',
-    ])]
-    public function getFormData(int $id): array
+    public function getFormData(int $id): GravityFormFormData
     {
-        $result = $this->db->fetchPrepared("select title, date_updated from $this->tableName where id = %s", $id);
-        if (count($result) !== 1) {
+        $form = $this->db->fetchPrepared("select title, date_updated from $this->tableName where id = %s", $id);
+        if (count($form) !== 1) {
             throw new EntityNotFoundException("Unable to get form data for Gravity Form $id");
         }
-
-        return $result[0];
-    }
-
-    #[ArrayShape([
-        'display_meta' => 'string',
-    ])]
-    public function getMeta(int $id): array
-    {
-        $result = $this->db->fetchPrepared("select display_meta from $this->tableMetaName where form_id = %s", $id);
-        if (count($result) !== 1) {
+        $form = $form[0];
+        $meta = $this->db->fetchPrepared("select display_meta from $this->tableMetaName where form_id = %s", $id);
+        if (count($meta) !== 1) {
             throw new EntityNotFoundException("Unable to get meta for Gravity Form $id");
         }
+        $meta = $meta[0];
 
-        return $result[0];
+        return new GravityFormFormData($meta['display_meta'], $form['title'], $form['updated']);
     }
 
     public function getTotal(): int
