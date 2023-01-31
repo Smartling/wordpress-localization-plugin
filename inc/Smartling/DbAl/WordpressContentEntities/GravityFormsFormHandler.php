@@ -57,7 +57,7 @@ class GravityFormsFormHandler implements EntityHandler {
         }
         $meta = $meta[0];
 
-        return new GravityFormFormData($meta['display_meta'], $form['title'], $form['updated']);
+        return new GravityFormFormData($meta['display_meta'], $form['title'], $form['date_updated']);
     }
 
     public function getTotal(): int

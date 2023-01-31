@@ -5,9 +5,9 @@ namespace Smartling\DbAl\WordpressContentEntities;
 class GravityFormFormData {
     private string $display_meta;
     private string $title;
-    private string $updated;
+    private ?string $updated;
 
-    public function __construct(string $display_meta, string $title, string $updated)
+    public function __construct(string $display_meta, string $title, ?string $updated)
     {
         $this->display_meta = $display_meta;
         $this->title = $title;
@@ -24,7 +24,7 @@ class GravityFormFormData {
         return $this->title;
     }
 
-    public function getUpdated(): string
+    public function getUpdated(): ?string
     {
         return $this->updated;
     }

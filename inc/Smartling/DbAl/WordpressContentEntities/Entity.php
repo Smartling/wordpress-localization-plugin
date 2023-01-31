@@ -9,6 +9,8 @@ interface Entity {
 
     public function getId(): ?int;
 
+    public function getRelatedContentTypes(): array;
+
     public function getTitle(): string;
 
     public function toArray(): array;

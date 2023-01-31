@@ -5,7 +5,7 @@ namespace Smartling\DbAl\WordpressContentEntities;
 use Smartling\ContentTypes\ExternalContentGravityForms;
 use Smartling\WP\View\BulkSubmitScreenRow;
 
-class GravityFormsForm implements Entity {
+class GravityFormsForm extends EntityBase {
     private string $displayMeta;
     private int $id;
     private string $title;

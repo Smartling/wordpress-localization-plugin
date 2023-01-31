@@ -10,7 +10,7 @@ use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\View\BulkSubmitScreenRow;
 
-abstract class EntityAbstract implements Entity, EntityHandler
+abstract class EntityAbstract extends EntityBase implements EntityHandler
 {
     use LoggerTrait;
 

@@ -71,7 +71,7 @@ class SmartlingCore extends SmartlingCoreAbstract
             $submission->getId(),
         ]));
         $originalEntity = $this->getContentHelper()->readSourceContent($submission);
-        $relatedContentTypes = $originalEntity instanceof EntityAbstract ? $originalEntity->getRelatedTypes() : [];
+        $relatedContentTypes = $originalEntity->getRelatedTypes();
         $accumulator = [
             'category' => [],
             'post_tag' => [],

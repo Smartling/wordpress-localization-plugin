@@ -6,35 +6,25 @@ use PHPUnit\Framework\TestCase;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 
-/**
- * Class ArrayHelperTest
- *
- * @package Smartling\Tests\Smartling\Helpers
- * @covers  \Smartling\DbAl\WordpressContentEntities\PostEntityStdWithPostStatus
- */
 class PostEntityStdTest extends TestCase
 {
 
     use InvokeMethodTrait;
 
     /**
-     * @covers       \Smartling\DbAl\WordpressContentEntities\PostEntityStd::areMetadataValuesUnique
      * @dataProvider areMetadataValuesUniqueDataProvider
      */
-    public function testTestIsMetaMultiValue($inpudData, $expectedResult)
+    public function testTestIsMetaMultiValue($inputData, $expectedResult)
     {
         $obj = new PostEntityStd();
 
         self::assertEquals(
             $expectedResult,
-            $this->invokeMethod($obj, 'areMetadataValuesUnique', [$inpudData])
+            $this->invokeMethod($obj, 'areMetadataValuesUnique', [$inputData])
         );
     }
 
-    /**
-     * @return array
-     */
-    public function areMetadataValuesUniqueDataProvider()
+    public function areMetadataValuesUniqueDataProvider(): array
     {
         return [
             'empty data' => [[], false],
@@ -45,12 +35,9 @@ class PostEntityStdTest extends TestCase
     }
 
     /**
-     * @covers       \Smartling\DbAl\WordpressContentEntities\PostEntityStd::formatMetadata
      * @dataProvider formatMetadataDataProvider
-     * @param array $inputData
-     * @param array $expectedResult
      */
-    public function testFormatMetadataNoException($inputData, $expectedResult)
+    public function testFormatMetadataNoException(array $inputData, array $expectedResult): void
     {
         $obj = new PostEntityStd();
 
@@ -60,7 +47,7 @@ class PostEntityStdTest extends TestCase
         );
     }
 
-    public function formatMetadataDataProvider()
+    public function formatMetadataDataProvider(): array
     {
         return [
             'one value' => [
@@ -115,9 +102,6 @@ class PostEntityStdTest extends TestCase
         ];
     }
 
-    /**
-     * @covers  \Smartling\DbAl\WordpressContentEntities\PostEntityStd::formatMetadata
-     */
     public function testFormatMetadataWithUniqueMetavalues()
     {
         $obj = new PostEntityStd();
