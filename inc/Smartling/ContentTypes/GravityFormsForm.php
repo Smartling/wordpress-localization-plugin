@@ -2,11 +2,7 @@
 
 namespace Smartling\ContentTypes;
 
-class GravityFormsForm extends ContentTypeAbstract {
-    public function __construct()
-    {
-    }
-
+class GravityFormsForm extends UnregisteredContentTypeAbstract {
     public function getSystemName(): string
     {
         return ExternalContentGravityForms::CONTENT_TYPE;

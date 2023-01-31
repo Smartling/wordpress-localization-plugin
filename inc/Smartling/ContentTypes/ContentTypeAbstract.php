@@ -5,7 +5,7 @@ namespace Smartling\ContentTypes;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
-abstract class ContentTypeAbstract implements ContentTypeInterface
+abstract class ContentTypeAbstract extends UnregisteredContentTypeAbstract
 {
     private ContainerBuilder $containerBuilder;
 
@@ -19,11 +19,6 @@ abstract class ContentTypeAbstract implements ContentTypeInterface
         $this->containerBuilder = $di;
     }
 
-    public function isVisible(string $page): bool
-    {
-        return true;
-    }
-
     public static function register(ContainerBuilder $di, string $manager = 'content-type-descriptor-manager'): void
     {
         $descriptor = new static($di);
@@ -32,25 +27,5 @@ abstract class ContentTypeAbstract implements ContentTypeInterface
             throw new SmartlingConfigException(ContentTypeManager::class . ' expected');
         }
         $mgr->addDescriptor($descriptor);
-    }
-
-    public function isTaxonomy(): bool
-    {
-        return false;
-    }
-
-    public function isPost(): bool
-    {
-        return false;
-    }
-
-    public function isVirtual(): bool
-    {
-        return false;
-    }
-
-    public function forceDisplay(): bool
-    {
-        return false;
     }
 }
