@@ -2,7 +2,7 @@
 
 namespace Smartling\DbAl\WordpressContentEntities;
 
-use JetBrains\PhpStorm\ArrayShape;
+use Smartling\WP\View\BulkSubmitScreenRow;
 
 interface Entity {
     public function fromArray(array $array): self;
@@ -13,14 +13,5 @@ interface Entity {
 
     public function toArray(): array;
 
-    #[ArrayShape([
-        'author' => 'string',
-        'id' => 'mixed',
-        'status' => 'string',
-        'title' => 'string',
-        'locales' => 'string',
-        'type' => 'string',
-        'updated' => 'string',
-    ])]
-    public function toBulkSubmitScreenRow(): array;
+    public function toBulkSubmitScreenRow(): BulkSubmitScreenRow;
 }

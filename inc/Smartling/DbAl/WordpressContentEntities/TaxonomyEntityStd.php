@@ -5,6 +5,7 @@ namespace Smartling\DbAl\WordpressContentEntities;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\WP\View\BulkSubmitScreenRow;
 
 /**
  * @property int    $term_id
@@ -313,16 +314,8 @@ class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
     /**
      * Converts instance of EntityAbstract to array to be used for BulkSubmit screen
      */
-    public function toBulkSubmitScreenRow(): array
+    public function toBulkSubmitScreenRow(): BulkSubmitScreenRow
     {
-        return [
-            'id'      => $this->term_id,
-            'title'   => $this->name,
-            'type'    => $this->taxonomy,
-            'author'  => null,
-            'status'  => null,
-            'locales' => null,
-            'updated' => null,
-        ];
+        return new BulkSubmitScreenRow($this->term_id, $this->name, $this->taxonomy);
     }
 }

@@ -374,20 +374,12 @@ class BulkSubmitTableWidget extends SmartlingListTable
         $dataAsArray = [];
         if ($data) {
             foreach ($data as $item) {
-
-                $row = $item->toBulkSubmitScreenRow();
-
-                if (isset($row['id'], $row['type'])) {
-                    $entities = $this->getManager()
-                        ->find([
-                                   SubmissionEntity::FIELD_SOURCE_BLOG_ID => $this->siteHelper->getCurrentBlogId(),
-                                   SubmissionEntity::FIELD_SOURCE_ID      => $row['id'],
-                                   SubmissionEntity::FIELD_CONTENT_TYPE   => $this->getContentTypeFilterValue(),
-                               ]
-                        );
-                } else {
-                    continue;
-                }
+                $row = $item->toBulkSubmitScreenRow()->toArray();
+                $entities = $this->getManager()->find([
+                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $this->siteHelper->getCurrentBlogId(),
+                    SubmissionEntity::FIELD_SOURCE_ID => $row['id'],
+                    SubmissionEntity::FIELD_CONTENT_TYPE => $this->getContentTypeFilterValue(),
+                ]);
 
                 if (count($entities) > 0) {
                     $locales = [];
@@ -407,8 +399,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
                     $row['title'] = HtmlTagGeneratorHelper::tag('span', $shrinked, ['title' => $orig]);
                 }
 
-                //$row['title']  = $this->applyRowActions( $row );
-
                 $updatedDate = '';
                 if (!StringHelper::isNullOrEmpty($row['updated'])) {
                     $dt = DateTimeHelper::stringToDateTime($row['updated']);
@@ -418,7 +408,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
                 }
 
                 $row['updated'] = $updatedDate;
-                $row = array_merge(['bulkActionCb' => $this->column_cb($row)], $row);
+                $row['bulkActionCb'] = $this->column_cb($row);
                 $dataAsArray[] = $row;
             }
         }

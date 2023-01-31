@@ -7,6 +7,7 @@ use Smartling\Helpers\RawDbQueryHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\WordpressUserHelper;
 use Smartling\Services\GlobalSettingsManager;
+use Smartling\WP\View\BulkSubmitScreenRow;
 
 /**
  * @method setPostContent($string)
@@ -377,18 +378,16 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
 
     /**
      * Converts instance of EntityAbstract to array to be used for BulkSubmit screen
-     * @return array
      */
-    public function toBulkSubmitScreenRow(): array
+    public function toBulkSubmitScreenRow(): BulkSubmitScreenRow
     {
-        return [
-            'id'      => $this->getPK(),
-            'title'   => $this->post_title,
-            'type'    => $this->post_type,
-            'author'  => WordpressUserHelper::getUserLoginById((int)$this->post_author),
-            'status'  => $this->post_status,
-            'locales' => null,
-            'updated' => $this->post_date,
-        ];
+        return new BulkSubmitScreenRow($this->getId(),
+            $this->post_title,
+            $this->post_type,
+            WordpressUserHelper::getUserLoginById($this->post_author),
+            null,
+            $this->post_status,
+            $this->post_date,
+        );
     }
 }

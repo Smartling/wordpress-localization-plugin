@@ -4,12 +4,12 @@ namespace Smartling\Extensions\AcfOptionPages;
 
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\DbAl\WordpressContentEntities\Entity;
-use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
+use Smartling\WP\View\BulkSubmitScreenRow;
 
 /**
  * @method string getName
@@ -149,18 +149,9 @@ class AcfOptionEntity extends VirtualEntityAbstract
         return $state;
     }
 
-    public function toBulkSubmitScreenRow(): array
+    public function toBulkSubmitScreenRow(): BulkSubmitScreenRow
     {
-        return [
-            'id'      => $this->getId(),
-            'title'   => $this->getTitle(),
-            'type'    => $this->getType(),
-            'author'  => null,
-            'status'  => null,
-            'locales' => null,
-            'updated' => null,
-        ];
-
+        return new BulkSubmitScreenRow($this->getId(), $this->getTitle(), $this->getType());
     }
 
     public function getId(): ?int

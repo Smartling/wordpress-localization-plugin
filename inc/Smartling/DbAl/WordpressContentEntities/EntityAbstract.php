@@ -8,6 +8,7 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
+use Smartling\WP\View\BulkSubmitScreenRow;
 
 abstract class EntityAbstract implements Entity, EntityHandler
 {
@@ -238,9 +239,8 @@ abstract class EntityAbstract implements Entity, EntityHandler
 
     /**
      * Converts instance of EntityAbstract to array to be used for BulkSubmit screen
-     * @return array
      */
-    abstract public function toBulkSubmitScreenRow(): array;
+    abstract public function toBulkSubmitScreenRow(): BulkSubmitScreenRow;
 
     protected function areMetadataValuesUnique(array $metadata): bool
     {

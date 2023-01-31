@@ -5,6 +5,7 @@ namespace Smartling\DbAl\WordpressContentEntities;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\ThemeSidebarHelper;
 use Smartling\Helpers\WidgetHelper;
+use Smartling\WP\View\BulkSubmitScreenRow;
 
 /**
  * @property int    $id                 Unique id
@@ -196,19 +197,11 @@ class WidgetEntity extends VirtualEntityAbstract
 
     /**
      * Converts instance of EntityAbstract to array to be used for BulkSubmit screen
-     * @return array
      */
-    public function toBulkSubmitScreenRow(): array
+    public function toBulkSubmitScreenRow(): BulkSubmitScreenRow
     {
-        return [
-            'id'      => $this->getId(),
-            'title'   => '"' . $this->getTitle() . '" on ' . ThemeSidebarHelper::getSideBarLabel($this->getBar()) .
-                         '(position ' . $this->getBarPosition() . ')',
-            'type'    => $this->getType(),
-            'author'  => $this->getIndex(),
-            'status'  => null,
-            'locales' => null,
-            'updated' => null,
-        ];
+        return new BulkSubmitScreenRow($this->getId(),
+            sprintf('"%s" on %s (position %d)', $this->getTitle(), ThemeSidebarHelper::getSideBarLabel($this->getBar()), $this->getBarPosition()), $this->getType(),
+        );
     }
 }

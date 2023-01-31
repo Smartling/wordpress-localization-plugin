@@ -3,6 +3,7 @@
 namespace Smartling\DbAl\WordpressContentEntities;
 
 use Smartling\ContentTypes\ExternalContentGravityForms;
+use Smartling\WP\View\BulkSubmitScreenRow;
 
 class GravityFormsForm implements Entity {
     private string $displayMeta;
@@ -48,15 +49,8 @@ class GravityFormsForm implements Entity {
         ];
     }
 
-    public function toBulkSubmitScreenRow(): array
+    public function toBulkSubmitScreenRow(): BulkSubmitScreenRow
     {
-        return [
-            'author' => '',
-            'id' => $this->id,
-            'status' => '',
-            'title' => $this->title,
-            'type' => ExternalContentGravityForms::CONTENT_TYPE,
-            'updated' => $this->updated,
-        ];
+        return new BulkSubmitScreenRow($this->id, $this->title, ExternalContentGravityForms::CONTENT_TYPE, updated: $this->updated);
     }
 }
