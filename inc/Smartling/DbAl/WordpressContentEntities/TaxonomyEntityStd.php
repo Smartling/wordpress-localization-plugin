@@ -300,10 +300,12 @@ class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
         ];
     }
 
-    public function cleanFields(mixed $value = null): void
+    public function forInsert(): static
     {
-        parent::cleanFields($value);
-        $this->term_taxonomy_id = $value;
+        $result = parent::forInsert();
+        $result->term_taxonomy_id = null;
+
+        return $result;
     }
 
     public function getPrimaryFieldName(): string

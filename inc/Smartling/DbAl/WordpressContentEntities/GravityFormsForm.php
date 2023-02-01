@@ -7,16 +7,21 @@ use Smartling\WP\View\BulkSubmitScreenRow;
 
 class GravityFormsForm extends EntityBase {
     private string $displayMeta;
-    private int $id;
+    private ?int $id;
     private string $title;
     private ?string $updated;
 
-    public function __construct(string $displayMeta, int $id, string $title, ?string $updated)
+    public function __construct(string $displayMeta, ?int $id, string $title, ?string $updated)
     {
         $this->displayMeta = $displayMeta;
         $this->id = $id;
         $this->title = $title;
         $this->updated = $updated;
+    }
+
+    public function forInsert(): self
+    {
+        return new self($this->displayMeta, null, $this->title, $this->updated);
     }
 
     public function fromArray(array $array): self

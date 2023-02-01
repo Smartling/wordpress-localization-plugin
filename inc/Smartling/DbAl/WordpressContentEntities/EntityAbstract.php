@@ -51,7 +51,7 @@ abstract class EntityAbstract extends EntityBase implements EntityHandler
         }
     }
 
-    public function fromArray(array $array): self
+    public function fromArray(array $array): static
     {
         $result = clone $this;
         $result->entityFields = array_merge(['hash'], $array);
@@ -213,11 +213,13 @@ abstract class EntityAbstract extends EntityBase implements EntityHandler
      */
     abstract protected function getNonCloneableFields(): array;
 
-    public function cleanFields(mixed $value = null): void
+    public function forInsert(): static
     {
-        foreach ($this->getNonCloneableFields() as $field) {
-            $this->$field = $value;
+        $result = clone $this;
+        foreach ($result->getNonCloneableFields() as $field) {
+            $result->$field = null;
         }
+        return $result;
     }
 
     abstract public function getPrimaryFieldName(): string;

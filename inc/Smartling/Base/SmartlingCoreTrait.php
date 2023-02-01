@@ -56,16 +56,9 @@ trait SmartlingCoreTrait
             )
         );
 
-        $originalContent = $this->getContentHelper()->readSourceContent($submission);
-
-        if (false === $update) {
-            $targetContent = clone $originalContent;
-            if ($targetContent instanceof EntityAbstract) {
-                $targetContent->cleanFields();
-            }
-        } else {
-            $targetContent = $this->getContentHelper()->readTargetContent($submission);
-        }
+        $targetContent = $update ?
+            $this->getContentHelper()->readTargetContent($submission) :
+            $this->getContentHelper()->readSourceContent($submission)->forInsert();
 
         $this->prepareFieldProcessorValues($submission);
         $unfilteredSourceData = $this->readSourceContentWithMetadataAsArray($submission);
