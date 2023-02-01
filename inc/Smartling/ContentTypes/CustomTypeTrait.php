@@ -35,7 +35,7 @@ trait CustomTypeTrait
     /**
      * @return string
      */
-    public function getSystemName()
+    public function getSystemName(): string
     {
         return $this->systemName;
     }
@@ -72,7 +72,7 @@ trait CustomTypeTrait
      * Display name of content type, e.g.: Post
      * @return string
      */
-    public function getLabel()
+    public function getLabel(): string
     {
         return $this->label;
     }
@@ -154,14 +154,8 @@ trait CustomTypeTrait
         $descriptor->registerFilters();
     }
 
-    /**
-     * @return array [
-     *  'submissionBoard'   => true|false,
-     *  'bulkSubmit'        => true|false
-     * ]
-     */
-    public function getVisibility()
+    public function isVisible(string $page): bool
     {
-        return $this->getConfigParser()->getVisibility();
+        return $this->getConfigParser()->getVisibility($page);
     }
 }

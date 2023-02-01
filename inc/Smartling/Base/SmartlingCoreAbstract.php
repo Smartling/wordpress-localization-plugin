@@ -252,10 +252,7 @@ abstract class SmartlingCoreAbstract
         $this->queue = $queue;
     }
 
-    /**
-     * @return ContentHelper
-     */
-    public function getContentHelper()
+    public function getContentHelper(): ContentHelper
     {
         return $this->contentHelper;
     }

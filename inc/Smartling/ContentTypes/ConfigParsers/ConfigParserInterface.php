@@ -2,17 +2,9 @@
 
 namespace Smartling\ContentTypes\ConfigParsers;
 
-/**
- * Interface ConfigParserInterface
- * @package Smartling\ContentTypes\ConfigParsers
- */
 interface ConfigParserInterface
 {
-    /**
-     * Parses given config
-     * @return void
-     */
-    public function parse();
+    public function parse(): void;
 
     /**
      * returns true if config is valid
@@ -26,8 +18,5 @@ interface ConfigParserInterface
      */
     public function hasWidget();
 
-    /**
-     * @return array;
-     */
-    public function getVisibility();
+    public function getVisibility(string $page): bool;
 }

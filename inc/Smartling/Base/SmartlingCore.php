@@ -5,6 +5,7 @@ namespace Smartling\Base;
 use Exception;
 use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ExternalContentManager;
+use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;

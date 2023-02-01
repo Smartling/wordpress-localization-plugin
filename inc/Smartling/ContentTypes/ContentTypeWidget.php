@@ -4,18 +4,8 @@ namespace Smartling\ContentTypes;
 
 use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
-/**
- * Class ContentTypeWidget
- * @package Smartling\ContentTypes
- */
 class ContentTypeWidget extends ContentTypeAbstract
 {
-
-    /**
-     * ContentTypeWidget constructor.
-     *
-     * @param ContainerBuilder $di
-     */
     public function __construct(ContainerBuilder $di)
     {
         parent::__construct($di);
@@ -25,11 +15,7 @@ class ContentTypeWidget extends ContentTypeAbstract
         $this->registerFilters();
     }
 
-    /**
-     * @param ContainerBuilder $di
-     * @param string           $manager
-     */
-    public static function register(ContainerBuilder $di, $manager = 'content-type-descriptor-manager')
+    public static function register(ContainerBuilder $di, string $manager = 'content-type-descriptor-manager'): void
     {
         $descriptor = new static($di);
         $mgr = $di->get($manager);
@@ -49,7 +35,7 @@ class ContentTypeWidget extends ContentTypeAbstract
      * Wordpress name of content-type, e.g.: post, page, post-tag
      * @return string
      */
-    public function getSystemName()
+    public function getSystemName(): string
     {
         return static::WP_CONTENT_TYPE;
     }
@@ -58,23 +44,9 @@ class ContentTypeWidget extends ContentTypeAbstract
      * Display name of content type, e.g.: Post
      * @return string
      */
-    public function getLabel()
+    public function getLabel(): string
     {
         return __('Theme Widget');
-    }
-
-    /**
-     * @return array [
-     *  'submissionBoard'   => true|false,
-     *  'bulkSubmit'        => true|false
-     * ]
-     */
-    public function getVisibility()
-    {
-        return [
-            'submissionBoard' => true,
-            'bulkSubmit'      => true,
-        ];
     }
 
     /**
@@ -115,12 +87,12 @@ class ContentTypeWidget extends ContentTypeAbstract
      * Base type can be 'post' or 'term' used for Multilingual Press plugin.
      * @return string
      */
-    public function getBaseType()
+    public function getBaseType(): string
     {
         return 'virtual';
     }
 
-    public function isVirtual()
+    public function isVirtual(): bool
     {
         return true;
     }

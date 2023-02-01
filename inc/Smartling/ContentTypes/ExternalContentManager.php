@@ -26,6 +26,7 @@ class ExternalContentManager
             if ($handler->canHandle($submission->getContentType(), $submission->getSourceId())) {
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get fields");
                 try {
+                    $submission->assertHasSource();
                     $source[$handler->getPluginId()] = $handler->getContentFields($submission, $raw);
                 } catch (\Throwable $e) {
                     $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to get external content: ' . $e->getMessage());
@@ -41,6 +42,16 @@ class ExternalContentManager
         }
 
         return $source;
+    }
+
+    public function getExternalContentTypes(): array
+    {
+        $result = [];
+        foreach ($this->handlers as $handler) {
+            $result[] = $handler->getExternalContentTypes();
+        }
+
+        return array_merge(...$result);
     }
 
     public function getExternalRelations(string $contentType, int $id): array

@@ -3,107 +3,27 @@
 namespace Smartling\Processors;
 
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
-use Smartling\MonologWrapper\MonologWrapper;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
+use Smartling\Helpers\LoggerSafeTrait;
 
-/**
- * Class SmartlingFactoryAbstract
- *
- * @package Smartling\Processors
- */
 abstract class SmartlingFactoryAbstract
 {
+    use LoggerSafeTrait;
 
-    /**
-     * Collection of handlers
-     *
-     * @var array
-     */
-    private $collection = [];
+    protected array $collection = [];
 
-    /**
-     * @return array
-     */
-    protected function getCollection()
+    protected ?object $defaultHandler;
+
+    protected bool $allowDefault;
+
+    protected string $message = '';
+
+    public function __construct(bool $allowDefault = false, ?object $defaultHandler = null)
     {
-        return $this->collection;
-    }
-
-    /**
-     * @var null
-     */
-    private $defaultHandler = null;
-
-    /**
-     * @return null
-     */
-    public function getDefaultHandler()
-    {
-        return $this->defaultHandler;
-    }
-
-    /**
-     * @param null $defaultHandler
-     */
-    public function setDefaultHandler($defaultHandler)
-    {
+        $this->allowDefault = $allowDefault;
         $this->defaultHandler = $defaultHandler;
     }
 
-    /**
-     * @var bool
-     */
-    private $allowDefault = false;
-
-    /**
-     * @return boolean
-     */
-    public function getAllowDefault()
-    {
-        return $this->allowDefault;
-    }
-
-    /**
-     * @param boolean $allowDefault
-     */
-    public function setAllowDefault($allowDefault)
-    {
-        $this->allowDefault = $allowDefault;
-    }
-
-    /**
-     * @var string
-     */
-    protected $message = '';
-
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-
-    /**
-     * @return LoggerInterface
-     */
-    protected function getLogger()
-    {
-        return $this->logger;
-    }
-
-    /**
-     * SmartlingFactoryAbstract constructor.
-     */
-    public function __construct()
-    {
-        $this->logger = MonologWrapper::getLogger(get_called_class());
-    }
-
-    /**
-     * @param          $contentType
-     * @param          $mapper
-     * @param bool     $force
-     */
-    public function registerHandler($contentType, $mapper, $force = false)
+    public function registerHandler(string $contentType, object $mapper, bool $force = false): void
     {
         if (!array_key_exists($contentType, $this->collection)) {
             $this->collection[$contentType] = $mapper;
@@ -114,23 +34,18 @@ abstract class SmartlingFactoryAbstract
     }
 
     /**
-     * @param $contentType
-     *
-     * @return object
      * @throws SmartlingInvalidFactoryArgumentException
      */
-    public function getHandler(string $contentType)
+    public function getHandler(string $contentType): object
     {
         if (array_key_exists($contentType, $this->collection)) {
             return $this->collection[$contentType];
-        } else {
-            if (true === $this->getAllowDefault() && null !== $this->getDefaultHandler()) {
-                return $this->getDefaultHandler();
-            } else {
-                $message = vsprintf($this->message, [$contentType, get_called_class()]);
-                $this->getLogger()->error($message);
-                throw new SmartlingInvalidFactoryArgumentException($message);
-            }
         }
+
+        if (true === $this->allowDefault && null !== $this->defaultHandler) {
+            return $this->defaultHandler;
+        }
+
+        throw new SmartlingInvalidFactoryArgumentException(sprintf($this->message, $contentType, get_called_class()));
     }
 }

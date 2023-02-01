@@ -8,75 +8,41 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
+use Smartling\WP\View\BulkSubmitScreenRow;
 
-/**
- * Class EntityAbstract
- * @package Smartling\DbAl\WordpressContentEntities
- */
-abstract class EntityAbstract
+abstract class EntityAbstract extends EntityBase implements EntityHandler
 {
-
     use LoggerTrait;
 
-    /**
-     * @var string
-     */
-    protected $type = 'abstract';
+    protected string $type = 'abstract';
 
     /**
      * List of fields that affect the hash of the entity
-     * @var array
      */
-    protected $hashAffectingFields = [];
+    protected array $hashAffectingFields = [];
 
-    /**
-     * @var array
-     */
-    private $entityFields = ['hash'];
+    private array $entityFields = ['hash'];
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    private LoggerInterface $logger;
 
     /**
      * @var array List of related content-types to search
      */
-    private $relatedTypes = [];
+    private array $relatedTypes = [];
 
-    /**
-     * @return array
-     */
-    public function getRelatedTypes()
+    public function getRelatedTypes(): array
     {
         return $this->relatedTypes;
     }
 
-    /**
-     * @param array $relatedTypes
-     */
-    public function setRelatedTypes($relatedTypes)
+    public function setRelatedTypes(array $relatedTypes): void
     {
         $this->relatedTypes = $relatedTypes;
     }
 
-    public function resetRelatedTypes()
-    {
-        $this->relatedTypes = [];
-    }
+    private array $entityArrayState = [];
 
-    /**
-     * @param string $relatedType
-     */
-    public function addRelatedType($relatedType)
-    {
-        $this->relatedTypes[] = $relatedType;
-    }
-
-
-    private $entityArrayState = [];
-
-    private function initEntityArrayState()
+    private function initEntityArrayState(): void
     {
         if (0 === count($this->entityArrayState)) {
             foreach ($this->entityFields as $field) {
@@ -85,20 +51,21 @@ abstract class EntityAbstract
         }
     }
 
-    /**
-     * @param array $entityFields
-     */
-    public function setEntityFields(array $entityFields)
+    public function fromArray(array $array): static
+    {
+        $result = clone $this;
+        $result->entityFields = array_merge(['hash'], $array);
+        $result->initEntityArrayState();
+        return $result;
+    }
+
+    public function setEntityFields(array $entityFields): void
     {
         $this->entityFields = array_merge(['hash'], $entityFields);
         $this->initEntityArrayState();
     }
 
-    /**
-     * Transforms entity instance into array
-     * @return array
-     */
-    public function toArray()
+    public function toArray(): array
     {
         return $this->entityArrayState;
     }
@@ -130,66 +97,40 @@ abstract class EntityAbstract
         }
     }
 
-    /**
-     * @param string $name
-     *
-     * @return bool
-     */
-    public function __isset($name)
+    public function __isset(string $name): bool
     {
         return array_key_exists($name, $this->entityArrayState);
     }
 
-    /**
-     * @param string $method
-     *
-     * @return string
-     */
-    protected function getFieldNameByMethodName($method)
+    protected function getFieldNameByMethodName(string $method): string
     {
         return strtolower(preg_replace('/([A-Z])/', '_$1', lcfirst(substr($method, 3))));
     }
 
     /**
-     * @param string $method
-     * @param array  $params
-     *
      * @return mixed|void
      */
-    public function __call($method, array $params)
+    public function __call(string $method, array $params)
     {
         switch (substr($method, 0, 3)) {
-            case 'set' :
+            case 'set':
                 $field = $this->getFieldNameByMethodName($method);
                 $this->$field = ArrayHelper::first($params); // get the very first arg
                 break;
-            case 'get' :
+            case 'get':
                 $field = $this->getFieldNameByMethodName($method);
 
                 return $this->$field; // get the very first arg
-            default :
-                $template = 'Method \'%s\' does not exists in class \'%s\'';
-                $message = vsprintf($template, [$method, get_class($this)]);
-                throw new \BadMethodCallException($message);
+            default:
+                throw new \BadMethodCallException(sprintf("Method $method does not exists in class '%s'", get_class($this)));
         }
     }
 
-    abstract public function getMetadata(): array;
+    abstract public function getTitle(): string;
 
-    /**
-     * @return mixed
-     */
-    abstract public function getTitle();
+    abstract public function getContentTypeProperty(): string;
 
-    /**
-     * @return string
-     */
-    abstract public function getContentTypeProperty();
-
-    /**
-     * @return bool
-     */
-    protected function validateContentType()
+    protected function validateContentType(): bool
     {
         if ($this instanceof VirtualEntityAbstract) {
             return true;
@@ -208,18 +149,11 @@ abstract class EntityAbstract
         return true;
     }
 
-
-    /**
-     * @return LoggerInterface
-     */
-    protected function getLogger()
+    protected function getLogger(): LoggerInterface
     {
         return $this->logger;
     }
 
-    /**
-     * Constructor
-     */
     public function __construct()
     {
         $this->logger = MonologWrapper::getLogger(get_called_class());
@@ -227,55 +161,30 @@ abstract class EntityAbstract
 
     /**
      * Loads the entity from database
-     *
-     * @param mixed $guid
-     *
-     * @return EntityAbstract
      * @throws EntityNotFoundException
      */
-    abstract public function get($guid);
+    abstract public function get(mixed $id): self;
 
     /**
-     * @param string $tagName
-     * @param string $tagValue
-     * @param bool   $unique
-     */
-    abstract public function setMetaTag($tagName, $tagValue, $unique = true): void;
-
-    /**
-     * @param int $limit
-     * @param int $offset
-     * @param string $orderBy
-     * @param string $order
-     * @param string $searchString
      * @return static[]
      */
     // FIXME TODO : Method must be static or better moved out from this class
     // It's not good idea to ask instence of Post\Tag class to return all objects
-    abstract public function getAll($limit = 0, $offset = 0, $orderBy = '', $order = '', $searchString = '');
+    abstract public function getAll(int $limit = 0, int $offset = 0, string $orderBy = '', string $order = '', string $searchString = ''): array;
 
     /**
      * @return int
      */
     // FIXME TODO : Method must be static or better moved out from this class
     // It's not good idea to ask instence of Post\Tag class to return all objects
-    abstract public function getTotal();
+    abstract public function getTotal(): int;
 
     /**
      * Stores entity to database
-     *
-     * @param EntityAbstract $entity
-     * @return int
      */
-    abstract public function set(EntityAbstract $entity = null);
+    abstract public function set(Entity $entity): int;
 
-    /**
-     * Converts object into EntityAbstract child
-     *
-     * @param array $arr
-     * @return static
-     */
-    protected function resultToEntity(array $arr)
+    protected function resultToEntity(array $arr): static
     {
         $className = get_class($this);
         $entity = new $className($this->getType(), $this->getRelatedTypes());
@@ -285,7 +194,9 @@ abstract class EntityAbstract
                 $entity->$fieldName = $arr[$fieldName];
             }
         }
-        $entity->hash = '';
+        if (property_exists($entity, 'hash')) {
+            $entity->hash = '';
+        }
 
         return $entity;
     }
@@ -300,66 +211,38 @@ abstract class EntityAbstract
     /**
      * @return string[]
      */
-    abstract protected function getNonCloneableFields();
+    abstract protected function getNonCloneableFields(): array;
 
-    /**
-     * @param mixed $value
-     */
-    public function cleanFields($value = null)
+    public function forInsert(): static
     {
-        foreach ($this->getNonCloneableFields() as $field) {
-            $this->$field = $value;
+        $result = clone $this;
+        foreach ($result->getNonCloneableFields() as $field) {
+            $result->$field = null;
         }
+        return $result;
     }
 
-    /**
-     * Is called when downloaded with 100% translation
-     */
-    public function translationCompleted()
-    {
-    }
+    abstract public function getPrimaryFieldName(): string;
 
-    /**
-     * Is called when cloned source content
-     */
-    public function translationDrafted()
-    {
-    }
-
-    /**
-     * @return string
-     */
-    abstract public function getPrimaryFieldName();
-
-    /**
-     * @return int
-     */
-    public function getPK()
+    public function getPK(): int
     {
         return (int)$this->{$this->getPrimaryFieldName()};
     }
 
-    /**
-     * @return string
-     */
-    public function getType()
+    public function getType(): string
     {
         return $this->type;
     }
 
-    /**
-     * @param string $type
-     */
-    public function setType($type)
+    public function setType($type): void
     {
         $this->type = $type;
     }
 
     /**
      * Converts instance of EntityAbstract to array to be used for BulkSubmit screen
-     * @return array
      */
-    abstract public function toBulkSubmitScreenRow();
+    abstract public function toBulkSubmitScreenRow(): BulkSubmitScreenRow;
 
     protected function areMetadataValuesUnique(array $metadata): bool
     {

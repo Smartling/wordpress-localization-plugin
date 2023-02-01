@@ -3,51 +3,30 @@
 namespace Smartling\Processors;
 
 use Smartling\Bootstrap;
-use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
+use Smartling\DbAl\WordpressContentEntities\EntityHandler;
+use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 
-/**
- * Class ContentEntitiesIOFactory
- *
- * @package Smartling\Processors
- */
 class ContentEntitiesIOFactory extends SmartlingFactoryAbstract
 {
-
-    /**
-     * ContentEntitiesIOFactory constructor.
-     */
-    public function __construct()
+    public function __construct(bool $allowDefault = false, ?object $defaultHandler = null)
     {
-        parent::__construct();
+        parent::__construct($allowDefault, $defaultHandler);
         $this->message = 'Requested entity wrapper for content-type \'%s\' is not registered. Called by: %s';
     }
 
     /**
-     * @param                $contentType
-     * @param EntityAbstract $mapper
-     * @param bool           $force
-     */
-    public function registerMapper($contentType, $mapper, $force = false)
-    {
-        parent::registerHandler($contentType, $mapper, $force);
-    }
-
-    /**
-     * @param $contentType
-     *
-     * @return EntityAbstract
      * @throws SmartlingInvalidFactoryArgumentException
      */
-    public function getMapper($contentType)
+    public function getMapper(string $contentType): EntityHandler
     {
-        $obj = parent::getHandler($contentType);
+        $obj = $this->getHandler($contentType);
 
-        if (is_object($obj)){
+        if ($obj instanceof EntityHandler) {
             return clone $obj;
-        } else {
-            Bootstrap::DebugPrint([$contentType,$obj],true);
         }
 
+        Bootstrap::DebugPrint([$contentType,$obj],true);
+        throw new SmartlingConfigException(self::class . __METHOD__ . ' expected return is ' . EntityHandler::class);
     }
 }

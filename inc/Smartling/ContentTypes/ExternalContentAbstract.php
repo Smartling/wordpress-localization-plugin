@@ -22,7 +22,7 @@ abstract class ExternalContentAbstract implements ContentTypePluggableInterface 
         $this->wpProxy = $wpProxy;
     }
 
-    public function canHandle(string $contentType, int $contentId): bool
+    public function canHandle(string $contentType, ?int $contentId = null): bool
     {
         $plugins = $this->wpProxy->get_plugins();
         if (array_key_exists($this->getPluginPath(), $plugins)) {
@@ -31,6 +31,11 @@ abstract class ExternalContentAbstract implements ContentTypePluggableInterface 
         }
 
         return false;
+    }
+
+    public function getExternalContentTypes(): array
+    {
+        return [];
     }
 
     public function getRelatedContent(string $contentType, int $contentId): array

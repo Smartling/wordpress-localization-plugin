@@ -3,27 +3,17 @@
 namespace Smartling\Helpers;
 
 /**
- * Class RawDbQueryHelper
- *
- * @package Smartling\Helpers
- *
  * This helper is designed to make raw queries to database and get raw results for debug activities only.
  */
 class RawDbQueryHelper
 {
-
-    /**
-     * @param string $tableName
-     *
-     * @return string
-     */
-    public static function getTableName($tableName)
+    public static function getTableName(string $tableName): string
     {
         if (in_array($tableName, self::getWpdb()->tables(), true)) {
             return self::getWpdb()->{$tableName};
-        } else {
-            return self::getWpdb()->base_prefix . $tableName;
         }
+
+        return self::getWpdb()->base_prefix . $tableName;
     }
 
     /**
@@ -39,15 +29,9 @@ class RawDbQueryHelper
         return $wpdb;
     }
 
-    /**
-     * @param string $query
-     *
-     * @return array
-     */
-    public static function query($query)
+    public static function query(string $query): ?array
     {
         return self::getWpdb()
                    ->get_results($query, ARRAY_A);
     }
-
 }

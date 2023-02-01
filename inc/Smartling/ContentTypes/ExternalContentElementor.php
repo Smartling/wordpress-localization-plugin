@@ -146,7 +146,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return $source;
     }
 
-    public function canHandle(string $contentType, int $contentId): bool
+    public function canHandle(string $contentType, ?int $contentId = null): bool
     {
         return parent::canHandle($contentType, $contentId) &&
             $this->contentTypeHelper->isPost($contentType) &&
@@ -198,7 +198,6 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     public function getContentFields(SubmissionEntity $submission, bool $raw): array
     {
-        $submission->assertHasSource();
         return $this->extractContent($this->getElementorDataFromPostMeta($submission->getSourceId()))->getStrings();
     }
 

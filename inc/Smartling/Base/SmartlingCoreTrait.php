@@ -2,6 +2,8 @@
 
 namespace Smartling\Base;
 
+use Smartling\DbAl\WordpressContentEntities\EntityWithPostStatus;
+use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Submissions\SubmissionEntity;
@@ -54,14 +56,9 @@ trait SmartlingCoreTrait
             )
         );
 
-        $originalContent = $this->getContentHelper()->readSourceContent($submission);
-
-        if (false === $update) {
-            $targetContent = clone $originalContent;
-            $targetContent->cleanFields();
-        } else {
-            $targetContent = $this->getContentHelper()->readTargetContent($submission);
-        }
+        $targetContent = $update ?
+            $this->getContentHelper()->readTargetContent($submission) :
+            $this->getContentHelper()->readSourceContent($submission)->forInsert();
 
         $this->prepareFieldProcessorValues($submission);
         $unfilteredSourceData = $this->readSourceContentWithMetadataAsArray($submission);
@@ -73,6 +70,7 @@ trait SmartlingCoreTrait
         unset ($hardFilteredOriginalData['entity']['ID'], $hardFilteredOriginalData['entity']['term_id'], $hardFilteredOriginalData['entity']['id']);
 
         if (array_key_exists('entity', $hardFilteredOriginalData) &&
+            $targetContent instanceof EntityAbstract &&
             ArrayHelper::notEmpty($hardFilteredOriginalData['entity'])
         ) {
             $_entity = &$hardFilteredOriginalData['entity'];
@@ -85,12 +83,12 @@ trait SmartlingCoreTrait
             }
         }
 
-        if (false === $forceClone) {
+        if (false === $forceClone && $targetContent instanceof EntityWithPostStatus) {
             $targetContent->translationDrafted();
         }
 
         $targetContent = $this->getContentHelper()->writeTargetContent($submission, $targetContent);
-        $submission->setTargetId($targetContent->getPK());
+        $submission->setTargetId($targetContent->getId());
         $submission = $this->getSubmissionManager()->storeEntity($submission);
         $this->externalContentManager->setExternalContent($unfilteredSourceData, $this->externalContentManager->getExternalContent([], $submission, true), $submission);
 
@@ -102,7 +100,7 @@ trait SmartlingCoreTrait
                         $submission->getId(),
                         $submission->getTargetLocale(),
                         $submission->getTargetBlogId(),
-                        $targetContent->getPK(),
+                        $targetContent->getId(),
                     ]
                 )
             );
@@ -123,7 +121,7 @@ trait SmartlingCoreTrait
         }
 
         if (false === $update) {
-            $submission->setTargetId($targetContent->getPK());
+            $submission->setTargetId($targetContent->getId());
             $submission = $this->getSubmissionManager()->storeEntity($submission);
         }
 

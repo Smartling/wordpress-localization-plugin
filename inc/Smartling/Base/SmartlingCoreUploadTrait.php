@@ -5,6 +5,8 @@ namespace Smartling\Base;
 use Exception;
 use JetBrains\PhpStorm\ArrayShape;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
+use Smartling\DbAl\WordpressContentEntities\Entity;
+use Smartling\DbAl\WordpressContentEntities\EntityWithPostStatus;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
@@ -45,16 +47,10 @@ trait SmartlingCoreUploadTrait
     #[ArrayShape(['entity' => [], 'meta' => []])]
     private function readSourceContentWithMetadataAsArray(SubmissionEntity $submission): array
     {
-        $source = [
+        return [
             'entity' => $this->getContentHelper()->readSourceContent($submission)->toArray(),
-            'meta'   => $this->getContentHelper()->readSourceMetadata($submission),
+            'meta' => $this->getContentHelper()->readSourceMetadata($submission),
         ];
-
-        if (!is_array($source['meta'])) {
-            $source['meta'] = [];
-        }
-
-        return $source;
     }
 
     protected function getFunctionProxyHelper(): WordpressFunctionProxyHelper
@@ -254,7 +250,11 @@ trait SmartlingCoreUploadTrait
                 $this->getLogger()->critical('Translation is not array after applying filter ' . ExportedAPI::FILTER_BEFORE_TRANSLATION_APPLIED . '. This is most likely due to an error outside of the plugins code.');
             }
             $translation = $this->externalContentManager->setExternalContent($original, $translation, $submission);
-            $this->setValues($targetContent, $translation['entity'] ?? []);
+            if ($targetContent instanceof EntityAbstract) {
+                $this->setValues($targetContent, $translation['entity'] ?? []);
+            } else {
+                $targetContent = $targetContent->fromArray($translation['entity']);
+            }
             $configurationProfile = $this->getSettingsManager()
                 ->getSingleSettingsProfile($submission->getSourceBlogId());
 
@@ -277,7 +277,7 @@ trait SmartlingCoreUploadTrait
                 );
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
                 $translationPublishingMode = $configurationProfile->getTranslationPublishingMode();
-                if (ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_NO_CHANGE !== $translationPublishingMode) {
+                if (ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_NO_CHANGE !== $translationPublishingMode && $targetContent instanceof EntityWithPostStatus) {
                     $this->getLogger()->debug(
                         vsprintf(
                             'Submission id=%s (blog=%s, item=%s, content-type=%s) setting status %s for translation',
@@ -787,7 +787,7 @@ trait SmartlingCoreUploadTrait
         return $this->getFieldsFilter()->removeFields($fields, $configurationProfile->getFilterSkipArray(), $configurationProfile->getFilterFieldNameRegExp());
     }
 
-    private function processPostContentBlocks(EntityAbstract $targetContent, array $original, array $translation, SubmissionEntity $submission, PostContentHelper $postContentHelper, array $lockedEntityFields): array
+    private function processPostContentBlocks(Entity $targetContent, array $original, array $translation, SubmissionEntity $submission, PostContentHelper $postContentHelper, array $lockedEntityFields): array
     {
         if (array_key_exists('entity', $translation) && ArrayHelper::notEmpty($translation['entity'])) {
             $targetContentArray = $targetContent->toArray();

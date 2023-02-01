@@ -4,119 +4,61 @@ namespace Smartling\Extensions\AcfOptionPages;
 
 use Smartling\ContentTypes\ContentTypeAbstract;
 use Smartling\ContentTypes\ContentTypeManager;
+use Smartling\Exception\SmartlingConfigException;
 use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
-/**
- * Class ContentTypeAcfOption
- */
 class ContentTypeAcfOption extends ContentTypeAbstract
 {
+    public const WP_CONTENT_TYPE = 'acf_options';
 
-    /**
-     * The system name of Wordpress content type to make references safe.
-     */
-    const WP_CONTENT_TYPE = 'acf_options';
-
-    /**
-     * Wordpress name of content-type, e.g.: post, page, post-tag
-     * @return string
-     */
-    public function getSystemName()
+    public function getSystemName(): string
     {
         return static::WP_CONTENT_TYPE;
     }
 
-    /**
-     * ContentTypeAcfOption constructor.
-     *
-     * @param ContainerBuilder $di
-     */
     public function __construct(ContainerBuilder $di)
     {
         parent::__construct($di);
 
         $this->registerIOWrapper();
-        $this->registerWidgetHandler();
-        $this->registerFilters();
     }
 
-    /**
-     * @param ContainerBuilder $di
-     * @param string           $manager
-     */
-    public static function register(ContainerBuilder $di, $manager = 'content-type-descriptor-manager')
+    public static function register(ContainerBuilder $di, string $manager = 'content-type-descriptor-manager'): void
     {
         $descriptor = new static($di);
         $mgr = $di->get($manager);
-        /**
-         * @var ContentTypeManager $mgr
-         */
+        if (!$mgr instanceof ContentTypeManager) {
+            throw new SmartlingConfigException(ContentTypeManager::class . ' expected');
+        }
         $mgr->addDescriptor($descriptor);
     }
 
-    /**
-     * Display name of content type, e.g.: Post
-     * @return string
-     */
-    public function getLabel()
+    public function getLabel(): string
     {
         return __('ACF Options Page');
     }
 
-    /**
-     * @return array [
-     *  'submissionBoard'   => true|false,
-     *  'bulkSubmit'        => true|false
-     * ]
-     */
-    public function getVisibility()
-    {
-        return [
-            'submissionBoard' => true,
-            'bulkSubmit'      => true,
-        ];
-    }
-
-    /**
-     * Handler to register IO Wrapper
-     * @return void
-     */
-    public function registerIOWrapper()
+    public function registerIOWrapper(): void
     {
         $di = $this->getContainerBuilder();
         $wrapperId = 'wrapper.entity.' . $this->getSystemName();
-        $definition = $di->register($wrapperId, 'Smartling\Extensions\AcfOptionPages\AcfOptionEntity');
+        $definition = $di->register($wrapperId, AcfOptionEntity::class);
         $definition
-            ->addMethodCall('setDbal', [$di->getDefinition('site.db')]);
+            ->addArgument($di->getDefinition('site.db'));
 
         $di->get('factory.contentIO')->registerHandler($this->getSystemName(), $di->get($wrapperId));
-    }
-
-    /**
-     * Handler to register Widget (Edit Screen)
-     * @return void
-     */
-    public function registerWidgetHandler()
-    {
-    }
-
-    /**
-     * @return void
-     */
-    public function registerFilters()
-    {
     }
 
     /**
      * Base type can be 'post' or 'term' used for Multilingual Press plugin.
      * @return string
      */
-    public function getBaseType()
+    public function getBaseType(): string
     {
         return 'virtual';
     }
 
-    public function isVirtual()
+    public function isVirtual(): bool
     {
         return true;
     }

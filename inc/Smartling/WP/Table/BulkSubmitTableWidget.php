@@ -27,20 +27,17 @@ class BulkSubmitTableWidget extends SmartlingListTable
     use CommonLogMessagesTrait;
     use LoggerSafeTrait;
 
-    /**
-     * @var string
-     */
-    private $_custom_controls_namespace = 'smartling-bulk-submit-page';
+    private const CUSTOM_CONTROLS_NAMESPACE = 'smartling-bulk-submit-page';
 
     /**
      * base name of Content-type filtering select
      */
-    const CONTENT_TYPE_SELECT_ELEMENT_NAME = 'content-type';
+    private const CONTENT_TYPE_SELECT_ELEMENT_NAME = 'content-type';
 
     /**
      * base name of title search textbox
      */
-    const TITLE_SEARCH_TEXTBOX_ELEMENT_NAME = 'title-search';
+    private const TITLE_SEARCH_TEXTBOX_ELEMENT_NAME = 'title-search';
 
     /**
      * default values of custom form elements on page
@@ -377,22 +374,12 @@ class BulkSubmitTableWidget extends SmartlingListTable
         $dataAsArray = [];
         if ($data) {
             foreach ($data as $item) {
-
-                $row = $item->toBulkSubmitScreenRow();
-
-                $entities = [];
-
-                if (isset($row['id'], $row['type'])) {
-                    $entities = $this->getManager()
-                        ->find([
-                                   SubmissionEntity::FIELD_SOURCE_BLOG_ID => $this->siteHelper->getCurrentBlogId(),
-                                   SubmissionEntity::FIELD_SOURCE_ID      => $row['id'],
-                                   SubmissionEntity::FIELD_CONTENT_TYPE   => $this->getContentTypeFilterValue(),
-                               ]
-                        );
-                } else {
-                    continue;
-                }
+                $row = $item->toBulkSubmitScreenRow()->toArray();
+                $entities = $this->getManager()->find([
+                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $this->siteHelper->getCurrentBlogId(),
+                    SubmissionEntity::FIELD_SOURCE_ID => $row['id'],
+                    SubmissionEntity::FIELD_CONTENT_TYPE => $this->getContentTypeFilterValue(),
+                ]);
 
                 if (count($entities) > 0) {
                     $locales = [];
@@ -412,8 +399,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
                     $row['title'] = HtmlTagGeneratorHelper::tag('span', $shrinked, ['title' => $orig]);
                 }
 
-                //$row['title']  = $this->applyRowActions( $row );
-
                 $updatedDate = '';
                 if (!StringHelper::isNullOrEmpty($row['updated'])) {
                     $dt = DateTimeHelper::stringToDateTime($row['updated']);
@@ -423,7 +408,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
                 }
 
                 $row['updated'] = $updatedDate;
-                $row = array_merge(['bulkActionCb' => $this->column_cb($row)], $row);
+                $row['bulkActionCb'] = $this->column_cb($row);
                 $dataAsArray[] = $row;
             }
         }
@@ -440,7 +425,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
 
     private function getFilteredAllowedTypes()
     {
-
         $types = $this->getActiveContentTypes($this->siteHelper, 'bulkSubmit');
 
         $restrictedTypes = WordpressContentTypeHelper::getTypesRestrictedToBulkSubmit();
@@ -568,6 +552,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
      */
     private function buildHtmlTagName($name)
     {
-        return $this->_custom_controls_namespace . '-' . $name;
+        return self::CUSTOM_CONTROLS_NAMESPACE . '-' . $name;
     }
 }

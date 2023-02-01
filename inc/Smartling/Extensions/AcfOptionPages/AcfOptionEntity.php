@@ -3,109 +3,59 @@
 namespace Smartling\Extensions\AcfOptionPages;
 
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
-use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
+use Smartling\DbAl\WordpressContentEntities\Entity;
 use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
+use Smartling\WP\View\BulkSubmitScreenRow;
 
 /**
  * @method string getName
+ * @property int $id
  */
 class AcfOptionEntity extends VirtualEntityAbstract
 {
-    /**
-     * @var SmartlingToCMSDatabaseAccessWrapperInterface
-     */
-    private $dbal;
-
-    /**
-     * @return SmartlingToCMSDatabaseAccessWrapperInterface
-     */
-    public function getDbal()
-    {
-        return $this->dbal;
-    }
-
-    /**
-     * @param SmartlingToCMSDatabaseAccessWrapperInterface $dbal
-     */
-    public function setDbal($dbal)
-    {
-        $this->dbal = $dbal;
-    }
+    private SmartlingToCMSDatabaseAccessWrapperInterface $dbal;
 
     /**
      * Standard 'option' content-type fields
-     * @var array
      */
-    protected $fields = [
+    protected array $fields = [
         'id',
         'name',
         'value',
     ];
 
-    private $map = [];
+    private array $map = [];
 
-    /**
-     * @inheritdoc
-     */
-    public function __construct()
+    public function __construct(SmartlingToCMSDatabaseAccessWrapperInterface $dbal)
     {
         parent::__construct();
-        $this->setType(ContentTypeAcfOption::WP_CONTENT_TYPE);
+        $this->dbal = $dbal;
+        $this->type = ContentTypeAcfOption::WP_CONTENT_TYPE;
         $this->hashAffectingFields = array_merge($this->hashAffectingFields, ['name', 'value']);
         $this->setEntityFields($this->fields);
     }
 
-    protected function getFieldNameByMethodName($method)
-    {
-        $way = substr($method, 0, 3);
-        $possibleField = lcfirst(substr($method, 3));
-        if (in_array($way, ['set', 'get']) && in_array($possibleField, $this->fields, true)) {
-            return $possibleField;
-        }
-
-        $message = vsprintf('Method %s not found in %s', [$method, __CLASS__]);
-        $this->getLogger()->error($message);
-        throw new \BadMethodCallException($message);
-    }
-
-    public function getMetadata(): array
-    {
-        return [];
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getTitle()
+    public function getTitle(): string
     {
         return $this->getName();
     }
 
-    public function get($guid)
+    public function get(mixed $id): self
     {
         $this->buildMap();
 
-        if (!array_key_exists($guid, $this->map)) {
-            $this->entityNotFound(ContentTypeAcfOption::WP_CONTENT_TYPE, $guid);
+        if (!array_key_exists($id, $this->map)) {
+            $this->entityNotFound(ContentTypeAcfOption::WP_CONTENT_TYPE, $id);
         }
 
-        return $this->resultToEntity($this->map[$guid]->toArray());
+        return $this->resultToEntity($this->map[$id]->toArray());
     }
 
-    /**
-     * @param string $tagName
-     * @param string $tagValue
-     * @param bool   $unique
-     */
-    public function setMetaTag($tagName, $tagValue, $unique = true): void
-    {
-    }
-
-    private function getOptionNames()
+    private function getOptionNames(): array
     {
         $block = ConditionBlock::getConditionBlock();
         $condition = Condition::getCondition(
@@ -115,18 +65,18 @@ class AcfOptionEntity extends VirtualEntityAbstract
         );
         $block->addCondition($condition);
         $query = QueryBuilder::buildSelectQuery(
-            $this->getDbal()->completeTableName('options'),
+            $this->dbal->completeTableName('options'),
             ['option_name'],
             $block
         );
 
-        return $this->getDbal()->fetch($query, \ARRAY_A);
+        return $this->dbal->fetch($query, \ARRAY_A);
     }
 
     /**
      * Reads all options and generates InMemory map to emulate get($guid)
      */
-    private function buildMap()
+    private function buildMap(): void
     {
         $raw_options = $this->getOptionNames();
         $this->map = [];
@@ -147,7 +97,7 @@ class AcfOptionEntity extends VirtualEntityAbstract
      * @param string $searchString
      * @return AcfOptionEntity[]
      */
-    public function getAll($limit = 0, $offset = 0, $orderBy = '', $order = '', $searchString = '')
+    public function getAll(int $limit = 0, int $offset = 0, string $orderBy = '', string $order = '', string $searchString = ''): array
     {
         $this->buildMap();
         $collection = [];
@@ -160,10 +110,7 @@ class AcfOptionEntity extends VirtualEntityAbstract
         return array_slice($collection, $offset, $limit);
     }
 
-    /**
-     * @return int
-     */
-    public function getTotal()
+    public function getTotal(): int
     {
         $this->buildMap();
 
@@ -172,14 +119,10 @@ class AcfOptionEntity extends VirtualEntityAbstract
 
     /**
      * Stores entity to database
-     *
-     * @param EntityAbstract $entity
-     *
-     * @return mixed
      */
-    public function set(EntityAbstract $entity = null)
+    public function set(Entity $entity): int
     {
-        if ($entity === null) {
+        if (!$entity instanceof self) {
             throw new \InvalidArgumentException(self::class . "->set() must be called with " . self::class);
         }
         $acfOptionHelper = AcfOptionHelper::fromArray($entity->toArray());
@@ -188,48 +131,31 @@ class AcfOptionEntity extends VirtualEntityAbstract
         return $acfOptionHelper->getPk();
     }
 
-    /**
-     * @return array
-     */
-    protected function getNonCloneableFields()
+    protected function getNonCloneableFields(): array
     {
         return [$this->getPrimaryFieldName()];
     }
 
-    /**
-     * @return string
-     */
-    public function getPrimaryFieldName()
+    public function getPrimaryFieldName(): string
     {
         return 'id';
     }
 
-    public function toArray($skipNameField = true)
+    public function toArray(): array
     {
         $state = parent::toArray();
-
-        if (true === $skipNameField) {
-            unset($state['name']);
-        }
+        unset($state['name']);
 
         return $state;
     }
 
-    /**
-     * Converts instance of EntityAbstract to array to be used for BulkSubmit screen
-     * @return array
-     */
-    public function toBulkSubmitScreenRow()
+    public function toBulkSubmitScreenRow(): BulkSubmitScreenRow
     {
-        return [
-            'id'      => $this->getId(),
-            'title'   => $this->getTitle(),
-            'type'    => $this->getType(),
-            'author'  => null,
-            'status'  => null,
-            'locales' => null,
-            'updated' => null,
-        ];
+        return new BulkSubmitScreenRow($this->getId(), $this->getTitle(), $this->getType());
+    }
 
+    public function getId(): ?int
+    {
+        return $this->id;
     }
 }

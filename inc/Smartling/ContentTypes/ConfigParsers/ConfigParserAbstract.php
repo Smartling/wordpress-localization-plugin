@@ -120,12 +120,9 @@ abstract class ConfigParserAbstract implements ConfigParserInterface
         $this->widgetMessage = $widgetMessage;
     }
 
-    /**
-     * @return array
-     */
-    public function getVisibility()
+    public function getVisibility(string $page): bool
     {
-        return $this->visibility;
+        return array_key_exists($page, $this->visibility) ? $this->visibility[$page] : false;
     }
 
     /**
@@ -161,5 +158,40 @@ abstract class ConfigParserAbstract implements ConfigParserInterface
     public function hasWidget()
     {
         return $this->isValid() && true === $this->isWidgetVisible();
+    }
+
+    protected function hydrate($config): void
+    {
+        if (is_string($config)) {
+            $config = ['identifier' => $config];
+        }
+
+        $label = array_key_exists('label', $config) ? $config['label'] : '';
+
+        $typeTemplate = [
+            'identifier' => 'unknown',
+            'label' => '',
+            'widget' => [
+                'visible' => false,
+                'message' => vsprintf('No original %s found', [$label]),
+            ],
+            'visibility' => [
+                'submissionBoard' => true,
+                'bulkSubmit' => true,
+            ],
+        ];
+
+        $config = array_replace_recursive($typeTemplate, $config);
+
+        if ('unknown' !== $config['identifier']) {
+            $this->setIdentifier($config['identifier']);
+        }
+        if (!StringHelper::isNullOrEmpty($config['label'])) {
+            $this->setLabel($config['label']);
+        }
+        $this->setWidgetVisible($config['widget']['visible']);
+        $this->setWidgetMessage($config['widget']['message']);
+
+        $this->setVisibility($config['visibility']);
     }
 }

@@ -8,7 +8,7 @@ use Smartling\Helpers\WidgetHelper;
 
 class TestWidgetEntity extends WidgetEntity
 {
-    private $testMap;
+    private array $testMap;
 
     public function __construct($type, array $map)
     {
@@ -16,7 +16,7 @@ class TestWidgetEntity extends WidgetEntity
         parent::__construct($type);
     }
 
-    public function buildMap()
+    public function buildMap(): void
     {
         $this->map = $this->testMap;
     }

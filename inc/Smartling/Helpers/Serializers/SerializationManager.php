@@ -2,38 +2,25 @@
 
 namespace Smartling\Helpers\Serializers;
 
+use Smartling\Exception\SmartlingConfigException;
 use Smartling\Processors\SmartlingFactoryAbstract;
 
-/**
- * Class SerializationManager
- * @package Smartling\Helpers\Serializers
- */
 class SerializationManager extends SmartlingFactoryAbstract
 {
-    /**
-     * ContentTypeManager constructor.
-     */
-    public function __construct()
-    {
-        parent::__construct();
-        $this->setAllowDefault(false);
-    }
-
-    /**
-     * @param SerializerInterface $serializer
-     */
+    /** @noinspection PhpUnused used in DI*/
     public function addSerializer(SerializerInterface $serializer)
     {
         $this->registerHandler($serializer->getType(), $serializer);
     }
 
-    /**
-     * @param $type
-     *
-     * @return object
-     */
-    public function getSerializer($type)
+    /** @noinspection PhpUnused */
+    public function getSerializer(string $type): SerializerInterface
     {
-        return $this->getHandler($type);
+        $result = $this->getHandler($type);
+        if ($result instanceof SerializerInterface) {
+            return $result;
+        }
+
+        throw new SmartlingConfigException(self::class . __METHOD__ . ' should return ' . SerializerInterface::class);
     }
 }

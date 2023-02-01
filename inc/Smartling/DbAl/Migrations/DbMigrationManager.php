@@ -4,11 +4,6 @@ namespace Smartling\DbAl\Migrations;
 
 use Smartling\Processors\SmartlingFactoryAbstract;
 
-/**
- * Class DbMigrationManager
- *
- * @package Smartling\DbAl\Migrations
- */
 class DbMigrationManager extends SmartlingFactoryAbstract
 {
     /** @noinspection PhpUnused, used in DI */
@@ -23,7 +18,7 @@ class DbMigrationManager extends SmartlingFactoryAbstract
     public function getMigrations(int $fromVersion): array
     {
         $pool = [];
-        foreach ($this->getCollection() as $version => $migration) {
+        foreach ($this->collection as $version => $migration) {
             if ($version > $fromVersion) {
                 $pool[] = $migration;
             }
@@ -37,7 +32,7 @@ class DbMigrationManager extends SmartlingFactoryAbstract
     {
         $ver = 0;
 
-        foreach ($this->getCollection() as $version => $migration) {
+        foreach ($this->collection as $version => $migration) {
             $ver = max($ver, $version);
         }
 
