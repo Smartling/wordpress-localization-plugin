@@ -34,7 +34,7 @@ class GravityFormsForm extends EntityBase {
         return $this->displayMeta;
     }
 
-    public function getId(): int
+    public function getId(): ?int
     {
         return $this->id;
     }
