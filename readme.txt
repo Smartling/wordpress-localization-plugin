@@ -63,7 +63,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 3.1.1 =
-*
+* Added support of Elementor version 3.9 to 3.10
 
 = 3.1.0 =
 * Added Gravity Forms support
