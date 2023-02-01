@@ -211,14 +211,7 @@ function bulkCheck(className, action) {
 jQuery(document).ready(function () {
     jQuery('.checkall').on('click', function (e) {
         e.stopPropagation();
-        var checked = jQuery(this).is(':checked');
-
-        if (checked) {
-            jQuery('.bulkaction').attr("checked", "checked");
-        }
-        else {
-            jQuery('.bulkaction').removeAttr("checked");
-        }
+        jQuery('.bulkaction').prop("checked", jQuery(e.target).is(':checked'));
     });
 
     jQuery('#sent-to-smartling-bulk').on('click', function (e) {
