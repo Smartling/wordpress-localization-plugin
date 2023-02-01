@@ -11,14 +11,10 @@ use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 
 class GravityFormsFormHandler implements EntityHandler {
     private SmartlingToCMSDatabaseAccessWrapperInterface $db;
-    private string $tableName;
-    private string $tableMetaName;
 
     public function __construct(SmartlingToCMSDatabaseAccessWrapperInterface $db)
     {
         $this->db = $db;
-        $this->tableName = $db->completeTableName('gf_form');
-        $this->tableMetaName = $db->completeTableName('gf_form_meta');
     }
 
     public function get(mixed $id): GravityFormsForm
@@ -33,7 +29,7 @@ class GravityFormsFormHandler implements EntityHandler {
         if ($searchString !== '') {
             $condition->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'title', [$searchString]));
         }
-        $query = "select id, title, date_updated from $this->tableName";
+        $query = "select id, title, date_updated from {$this->getTableName()}";
         if (count($condition->getConditions()) > 0) {
             $query .= " where $condition";
         }
@@ -46,12 +42,12 @@ class GravityFormsFormHandler implements EntityHandler {
 
     public function getFormData(int $id): GravityFormFormData
     {
-        $form = $this->db->fetchPrepared("select title, date_updated from $this->tableName where id = %s", $id);
+        $form = $this->db->fetchPrepared("select title, date_updated from {$this->getTableName()} where id = %s", $id);
         if (count($form) !== 1) {
             throw new EntityNotFoundException("Unable to get form data for Gravity Form $id");
         }
         $form = $form[0];
-        $meta = $this->db->fetchPrepared("select display_meta from $this->tableMetaName where form_id = %s", $id);
+        $meta = $this->db->fetchPrepared("select display_meta from {$this->getTableMetaName()} where form_id = %s", $id);
         if (count($meta) !== 1) {
             throw new EntityNotFoundException("Unable to get meta for Gravity Form $id");
         }
@@ -60,9 +56,19 @@ class GravityFormsFormHandler implements EntityHandler {
         return new GravityFormFormData($meta['display_meta'], $form['title'], $form['date_updated']);
     }
 
+    private function getTableMetaName(): string
+    {
+        return "{$this->db->getPrefix()}gf_form_meta";
+    }
+
+    private function getTableName(): string
+    {
+        return "{$this->db->getPrefix()}gf_form";
+    }
+
     public function getTotal(): int
     {
-        return (int)$this->db->fetch("select count(*) cnt from $this->tableName", ARRAY_A)[0]['cnt'];
+        return (int)$this->db->fetch("select count(*) cnt from {$this->getTableName()}", ARRAY_A)[0]['cnt'];
     }
 
     public function set(Entity $entity): int
@@ -75,12 +81,12 @@ class GravityFormsFormHandler implements EntityHandler {
 
     private function insert(GravityFormsForm $entity): int
     {
-        $id = $this->db->queryPrepared("insert into $this->tableName (title) values ('%s')", $entity->getTitle());
+        $id = $this->db->queryPrepared("insert into {$this->getTableName()} (title) values ('%s')", $entity->getTitle());
         if (!is_int($id)) {
-            throw new SmartlingDbException("Unable to insert entity into gf_form table");
+            throw new SmartlingDbException("Unable to insert entity into form table");
         }
-        if ($this->db->queryPrepared("insert into $this->tableMetaName (display_meta, form_id) values (%s, %s)", $entity->getDisplayMeta(), $id) !== 1) {
-            $this->db->queryPrepared("delete from $this->tableName where id = %s", $id);
+        if ($this->db->queryPrepared("insert into {$this->getTableMetaName()} (display_meta, form_id) values (%s, %s)", $entity->getDisplayMeta(), $id) !== 1) {
+            $this->db->queryPrepared("delete from {$this->getTableName()} where id = %s", $id);
             throw new SmartlingDbException("Failed to insert form meta for id {$entity->getId()}");
         }
         return $id;
@@ -88,12 +94,12 @@ class GravityFormsFormHandler implements EntityHandler {
 
     private function update(GravityFormsForm $entity): int
     {
-        if ($this->db->fetchPrepared("select count(*) cnt from $this->tableName where id = %s", $entity->getId())[0]['cnt'] !== "1" ||
-            $this->db->fetchPrepared("select count(*) cnt from $this->tableMetaName where form_id = %s", $entity->getId())[0]['cnt'] !== "1") {
+        if ($this->db->fetchPrepared("select count(*) cnt from {$this->getTableName()} where id = %s", $entity->getId())[0]['cnt'] !== "1" ||
+            $this->db->fetchPrepared("select count(*) cnt from {$this->getTableMetaName()} where form_id = %s", $entity->getId())[0]['cnt'] !== "1") {
             throw new SmartlingDbException("Failed to update form table by id {$entity->getId()}");
         }
-        $this->db->queryPrepared("update {$this->db->getPrefix()}gf_form set title = '%s' where id = %s", $entity->getTitle(), $entity->getId());
-        $this->db->queryPrepared("update {$this->db->getPrefix()}gf_form_meta set display_meta = %s where form_id = %s", $entity->getDisplayMeta(), $entity->getId());
+        $this->db->queryPrepared("update {$this->getTableName()} set title = '%s' where id = %s", $entity->getTitle(), $entity->getId());
+        $this->db->queryPrepared("update {$this->getTableMetaName()} set display_meta = %s where form_id = %s", $entity->getDisplayMeta(), $entity->getId());
         return $entity->getId();
     }
 }

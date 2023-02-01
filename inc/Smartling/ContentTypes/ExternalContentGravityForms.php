@@ -51,7 +51,7 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
 
     public function alterContentFieldsForUpload(array $source): array
     {
-        unset($source['display_meta']);
+        unset($source['entity']['displayMeta']);
         return $source;
     }
 
@@ -72,7 +72,7 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
         $displayMeta = json_decode($formData->getDisplayMeta(), true, 512, JSON_THROW_ON_ERROR);
 
         $confirmations = [];
-        foreach ($displayMeta['confirmations'] as $key => $confirmation) {
+        foreach ($displayMeta['confirmations'] ?? [] as $key => $confirmation) {
             $confirmations[$key] = [
                 'name' => $confirmation['name'],
                 'message' => $confirmation['message'],
@@ -83,34 +83,56 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
             'title' => $formData->getTitle(),
             'displayMeta' => [
                 'title' => $displayMeta['title'],
-                'description' => $displayMeta['description'],
                 'button' => [
                     'text' => $displayMeta['button']['text'],
                 ],
-                'fields' => array_map(static function ($field) {
-                    return [
-                        'label' => $field['label'],
-                        'adminLabel' => $field['adminLabel'],
-                        'errorMessage' => $field['errorMessage'],
-                        'description' => $field['description'],
-                        'placeholder' => $field['placeholder'],
-                        'defaultValue' => $field['defaultValue'],
-                        'checkboxLabel' => $field['checkboxLabel'],
-                    ];
-                }, $displayMeta['fields'] ?? []),
+                'buttonText' => $displayMeta['buttonText'],
                 'confirmations' => $confirmations,
                 'customRequiredIndicator' => $displayMeta['customRequiredIndicator'],
-                'buttonText' => $displayMeta['buttonText'],
-                'saveButtonText' => $displayMeta['saveButtonText'],
+                'description' => $displayMeta['description'],
+                'fields' => array_map(static function ($field) {
+                    $choices = $field['choices'] ?? [];
+                    if (is_array($field['choices'])) {
+                        $choices = array_map(static function ($choice) {
+                            return [
+                                'text' => $choice['text'],
+                                'value' => $choice['value'],
+                            ];
+                        }, $field['choices']);
+                    }
+
+                    $inputs = $field['inputs'] ?? [];
+                    if (is_array($field['inputs'])) {
+                        $inputs = array_map(static function ($input) {
+                            return [
+                                'label' => $input['label'],
+                            ];
+                        }, $field['inputs']);
+                    }
+
+                    return [
+                        'adminLabel' => $field['adminLabel'],
+                        'checkboxLabel' => $field['checkboxLabel'] ?? '',
+                        'choices' => $choices,
+                        'content' => $field['content'] ?? '',
+                        'defaultValue' => $field['defaultValue'],
+                        'description' => $field['description'],
+                        'errorMessage' => $field['errorMessage'],
+                        'inputs' => $inputs,
+                        'label' => $field['label'],
+                        'placeholder' => $field['placeholder'],
+                    ];
+                }, $displayMeta['fields'] ?? []),
                 'limitEntriesMessage' => $displayMeta['limitEntriesMessage'],
-                'schedulePendingMessage' => $displayMeta['schedulePendingMessage'],
-                'scheduleMessage' => $displayMeta['scheduleMessage'],
                 'requireLoginMessage' => $displayMeta['requireLoginMessage'],
                 'save' => [
                     'button' => [
                         'text' => $displayMeta['save']['button']['text'],
                     ],
                 ],
+                'saveButtonText' => $displayMeta['saveButtonText'],
+                'schedulePendingMessage' => $displayMeta['schedulePendingMessage'],
+                'scheduleMessage' => $displayMeta['scheduleMessage'],
             ],
         ];
     }
