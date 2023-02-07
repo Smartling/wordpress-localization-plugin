@@ -62,6 +62,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 3.1.2 =
+* Fixed translation lock screen locking unintended submissions
+
 = 3.1.1 =
 * Added support of Elementor version 3.9 to 3.10
 
