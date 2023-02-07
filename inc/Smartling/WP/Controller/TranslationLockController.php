@@ -3,8 +3,6 @@
 namespace Smartling\WP\Controller;
 
 use Smartling\DbAl\LocalizationPluginProxyInterface;
-use Smartling\Exception\SmartlingDbException;
-use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\ContentHelper;
@@ -23,8 +21,7 @@ use Smartling\WP\WPHookInterface;
 
 class TranslationLockController extends WPAbstract implements WPHookInterface
 {
-    private $blockHelper;
-    private $contentHelper;
+    private ContentHelper $contentHelper;
 
     public function __construct(
         LocalizationPluginProxyInterface $connector,
@@ -37,7 +34,6 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
         GutenbergBlockHelper $blockHelper
     ) {
         parent::__construct($connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
-        $this->blockHelper = $blockHelper;
         $this->contentHelper = $contentHelper;
     }
 
@@ -55,13 +51,13 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
     /**
      * @param string $post_type
      * @param \WP_Post $post
-     * @noinspection PhpUnusedParameterInspection
+     * @noinspection PhpUnusedParameterInspection invoked by WordPress
      */
-    public function boxRegister($post_type, $post)
+    public function boxRegister($post_type, $post): void
     {
         try {
             if (current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)
-                && $submission = $this->getSubmission($post->ID)) {
+                && $this->getSubmission($post->ID, $post->post_type) !== null) {
                 add_meta_box(
                     'translation_lock',
                     __('Translation Lock'),
@@ -71,21 +67,20 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
                     'high'
                 );
             }
-
         } catch (\Exception $e) {
         }
-
-
     }
 
     /**
      * @param \WP_Post $post
-     * @throws SmartlingDirectRunRuntimeException
      */
-    public function boxRender($post)
+    public function boxRender($post): void
     {
         try {
-            $submission = $this->getSubmission($post->ID);
+            $submission = $this->getSubmission($post->ID, $post->post_type);
+            if ($submission === null) {
+                return;
+            }
             add_thickbox();
             echo HtmlTagGeneratorHelper::tag(
                 'div',
@@ -114,33 +109,17 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
                     ]
                 ),
                 ['class' => 'misc-pub-section']);
-        } catch (SmartlingDbException $e) {
-            return;
+        } catch (\Exception $e) {
         }
     }
 
-    /**
-     * @param $postId
-     *
-     * @return SubmissionEntity
-     * @throws SmartlingDbException
-     * @throws SmartlingDirectRunRuntimeException
-     */
-    private function getSubmission($postId)
+    private function getSubmission(int $postId, string $postType): ?SubmissionEntity
     {
-        $submissionManager = $this->getManager();
-        $submissions = $submissionManager->find(
-            [
-                SubmissionEntity::FIELD_TARGET_BLOG_ID => $this->siteHelper->getCurrentBlogId(),
-                SubmissionEntity::FIELD_TARGET_ID      => $postId,
-            ]
-        );
-
-        if (0 < count($submissions)) {
-            return ArrayHelper::first($submissions);
-        }
-
-        throw new SmartlingDbException('No submission found');
+        return $this->getManager()->findOne([
+            SubmissionEntity::FIELD_TARGET_BLOG_ID => $this->siteHelper->getCurrentBlogId(),
+            SubmissionEntity::FIELD_TARGET_ID => $postId,
+            SubmissionEntity::FIELD_CONTENT_TYPE => $postType
+        ]);
     }
 
     public function popupIFrame()
@@ -184,13 +163,12 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
     }
 
     /**
-     * @param SubmissionEntity $submission
-     * @return array
+     * @return string[]
      */
-    private function getTranslationFields(SubmissionEntity $submission)
+    private function getTranslationFields(SubmissionEntity $submission): array
     {
         $_fields = [];
-        foreach ($this->blockHelper->addPostContentBlocks($this->contentHelper->readTargetContent($submission)->toArray()) as $k => $v) {
+        foreach ($this->contentHelper->readTargetContent($submission)->toArray() as $k => $v) {
             $_fields["entity/$k"] = $v;
         }
         foreach ($this->contentHelper->readTargetMetadata($submission) as $k => $v) {

@@ -421,7 +421,6 @@ services:
       - "@manager.submission"
       - "@site.cache"
       - "@content.helper"
-      - "@helper.gutenberg"
 
   live_notification.service:
     class: Smartling\WP\Controller\LiveNotificationController

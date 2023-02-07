@@ -320,34 +320,6 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     }
 
     /**
-     * @return string[] entity fields with added blocks serialized
-     */
-    public function addPostContentBlocks(array $entityFields): array
-    {
-        if (array_key_exists('post_content', $entityFields) && $this->hasBlocks($entityFields['post_content'])) {
-            try {
-                foreach ($this->getPostContentBlocks($entityFields['post_content']) as $index => $block) {
-                    $entityFields = $this->addBlock($entityFields, "post_content/blocks/$index", $block);
-                }
-            } catch (SmartlingGutenbergParserNotFoundException $e) {
-                $this->getLogger()->warning('Block content found while getting translation fields, but no parser available');
-            }
-        }
-
-        return $entityFields;
-    }
-
-    private function addBlock(array $entityFields, string $baseKey, GutenbergBlock $block): array
-    {
-        $entityFields[$baseKey] = serialize_block($block->toArray());
-        foreach ($block->getInnerBlocks() as $index => $innerBlock) {
-            $entityFields = $this->addBlock($entityFields, "$baseKey/$index", $innerBlock);
-        }
-
-        return $entityFields;
-    }
-
-    /**
      * @return GutenbergBlock[]
      * @throws SmartlingGutenbergParserNotFoundException
      */
