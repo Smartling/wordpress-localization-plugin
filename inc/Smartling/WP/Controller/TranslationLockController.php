@@ -3,13 +3,10 @@
 namespace Smartling\WP\Controller;
 
 use Smartling\DbAl\LocalizationPluginProxyInterface;
-use Smartling\Exception\SmartlingDbException;
-use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DiagnosticsHelper;
-use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
@@ -52,13 +49,13 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
     /**
      * @param string $post_type
      * @param \WP_Post $post
-     * @noinspection PhpUnusedParameterInspection
+     * @noinspection PhpUnusedParameterInspection invoked by WordPress
      */
-    public function boxRegister($post_type, $post)
+    public function boxRegister($post_type, $post): void
     {
         try {
             if (current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)
-                && $submission = $this->getSubmission($post->ID)) {
+                && $this->getSubmission($post->ID, $post->post_type) !== null) {
                 add_meta_box(
                     'translation_lock',
                     __('Translation Lock'),
@@ -68,21 +65,20 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
                     'high'
                 );
             }
-
-        } catch (\Exception $e) {
+        } catch (\Exception) {
         }
-
-
     }
 
     /**
      * @param \WP_Post $post
-     * @throws SmartlingDirectRunRuntimeException
      */
-    public function boxRender($post)
+    public function boxRender($post): void
     {
         try {
-            $submission = $this->getSubmission($post->ID);
+            $submission = $this->getSubmission($post->ID, $post->post_type);
+            if ($submission === null) {
+                return;
+            }
             add_thickbox();
             echo HtmlTagGeneratorHelper::tag(
                 'div',
@@ -111,33 +107,17 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
                     ]
                 ),
                 ['class' => 'misc-pub-section']);
-        } catch (SmartlingDbException $e) {
-            return;
+        } catch (\Exception) {
         }
     }
 
-    /**
-     * @param $postId
-     *
-     * @return SubmissionEntity
-     * @throws SmartlingDbException
-     * @throws SmartlingDirectRunRuntimeException
-     */
-    private function getSubmission($postId)
+    private function getSubmission(int $postId, string $postType): ?SubmissionEntity
     {
-        $submissionManager = $this->getManager();
-        $submissions = $submissionManager->find(
-            [
-                SubmissionEntity::FIELD_TARGET_BLOG_ID => $this->siteHelper->getCurrentBlogId(),
-                SubmissionEntity::FIELD_TARGET_ID      => $postId,
-            ]
-        );
-
-        if (0 < count($submissions)) {
-            return ArrayHelper::first($submissions);
-        }
-
-        throw new SmartlingDbException('No submission found');
+        return $this->getManager()->findOne([
+            SubmissionEntity::FIELD_TARGET_BLOG_ID => $this->siteHelper->getCurrentBlogId(),
+            SubmissionEntity::FIELD_TARGET_ID => $postId,
+            SubmissionEntity::FIELD_CONTENT_TYPE => $postType
+        ]);
     }
 
     public function popupIFrame()
