@@ -30,8 +30,7 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
         SiteHelper $siteHelper,
         SubmissionManager $manager,
         Cache $cache,
-        ContentHelper $contentHelper,
-        GutenbergBlockHelper $blockHelper
+        ContentHelper $contentHelper
     ) {
         parent::__construct($connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
         $this->contentHelper = $contentHelper;
