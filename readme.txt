@@ -88,6 +88,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 * Minimum required PHP version is now 8.0!
 * Fixed upload queue getting stuck
 
+= 2.16.8 =
+* Fixed translation lock screen locking unintended submissions (backport of 3.1.2)
+
 = 2.16.7 =
 * Added Beaver Builder 2.6 to supported versions
 
