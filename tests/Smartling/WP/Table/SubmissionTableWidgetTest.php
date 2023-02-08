@@ -4,7 +4,7 @@ namespace {
     if (!class_exists('WP_List_Table')) {
         class WP_List_Table
         {
-            public function __construct($a)
+            public function __construct($a = [])
             {
             }
 
