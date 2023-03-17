@@ -166,7 +166,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
             }
             if (isset($component['settings'])) {
                 foreach ($component['settings'] as $key => $setting) {
-                    if (strpos($key, '_') === 0) {
+                    if (str_starts_with($key, '_')) {
                         continue;
                     }
 
@@ -174,7 +174,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                         foreach ($setting as $id => $option) {
                             if (is_array($option)) {
                                 foreach ($option as $optionKey => $optionValue) {
-                                    if (strpos($optionKey, '_') === 0) {
+                                    if (str_starts_with($optionKey, '_')) {
                                         continue;
                                     }
 
@@ -261,7 +261,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
             }
             if (array_key_exists('settings', $component)) {
                 foreach($component['settings'] as $settingIndex => $setting) {
-                    if (strpos($settingIndex, '_') === 0) {
+                    if (str_starts_with($settingIndex, '_')) {
                         continue;
                     }
                     if (is_array($setting)) {
@@ -278,7 +278,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                             foreach ($setting as $optionIndex => $option) {
                                 if (is_array($option)) {
                                     foreach ($option as $optionsIndex => $optionValue) {
-                                        if (strpos($optionsIndex, '_') === 0) {
+                                        if (str_starts_with($optionsIndex, '_')) {
                                             continue;
                                         }
                                         $key = implode(FieldsFilterHelper::ARRAY_DIVIDER, [$prefix, $settingIndex, $option['_id'], $optionsIndex]);
