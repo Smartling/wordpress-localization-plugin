@@ -266,7 +266,11 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                     }
                     if (is_array($setting)) {
                         if (array_key_exists('id', $setting) && array_key_exists('url', $setting)) {
-                            $targetAttachmentId = $this->getTargetId($submission->getSourceBlogId(), $setting['id'], $submission->getTargetBlogId());
+                            try {
+                                $targetAttachmentId = $this->getTargetId($submission->getSourceBlogId(), $setting['id'], $submission->getTargetBlogId());
+                            } catch (\TypeError) {
+                                $targetAttachmentId = null;
+                            }
                             if ($targetAttachmentId !== null) {
                                 $original[$componentIndex]['settings'][$settingIndex]['id'] = $targetAttachmentId;
                             }
@@ -305,7 +309,11 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                 }
             }
             if (array_key_exists('elType', $component) && array_key_exists('widgetType', $component) && $component['elType'] === 'widget' && $component['widgetType'] === 'global') {
-                $targetAttachmentId = $this->getTargetId($submission->getSourceBlogId(), $component[self::PROPERTY_TEMPLATE_ID], $submission->getTargetBlogId(), self::CONTENT_TYPE_ELEMENTOR_LIBRARY);
+                try {
+                    $targetAttachmentId = $this->getTargetId($submission->getSourceBlogId(), $component[self::PROPERTY_TEMPLATE_ID], $submission->getTargetBlogId(), self::CONTENT_TYPE_ELEMENTOR_LIBRARY);
+                } catch (\TypeError) {
+                    $targetAttachmentId = null;
+                }
                 if ($targetAttachmentId !== null) {
                     $original[$componentIndex][self::PROPERTY_TEMPLATE_ID] = $targetAttachmentId;
                 }
