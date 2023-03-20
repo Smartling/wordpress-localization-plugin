@@ -63,7 +63,9 @@ class ExternalContentManager
                 try {
                     $result = array_merge_recursive($result, $handler->getRelatedContent($contentType, $id));
                 } catch (\Throwable $e) {
-                    $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to get external related content: ' . $e->getMessage());
+                    $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() .
+                        '" got errorClass="' . $e::class . '" while trying to get external related content: ' .
+                        $e->getMessage());
                 }
             }
         }
