@@ -265,12 +265,8 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                         continue;
                     }
                     if (is_array($setting)) {
-                        if (array_key_exists('id', $setting) && array_key_exists('url', $setting)) {
-                            try {
-                                $targetAttachmentId = $this->getTargetId($submission->getSourceBlogId(), $setting['id'], $submission->getTargetBlogId());
-                            } catch (\TypeError) {
-                                $targetAttachmentId = null;
-                            }
+                        if (array_key_exists('id', $setting) && array_key_exists('url', $setting) && is_int($setting['id'])) {
+                            $targetAttachmentId = $this->getTargetId($submission->getSourceBlogId(), $setting['id'], $submission->getTargetBlogId());
                             if ($targetAttachmentId !== null) {
                                 $original[$componentIndex]['settings'][$settingIndex]['id'] = $targetAttachmentId;
                             }
@@ -308,12 +304,8 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                     }
                 }
             }
-            if (array_key_exists('elType', $component) && array_key_exists('widgetType', $component) && $component['elType'] === 'widget' && $component['widgetType'] === 'global') {
-                try {
-                    $targetAttachmentId = $this->getTargetId($submission->getSourceBlogId(), $component[self::PROPERTY_TEMPLATE_ID], $submission->getTargetBlogId(), self::CONTENT_TYPE_ELEMENTOR_LIBRARY);
-                } catch (\TypeError) {
-                    $targetAttachmentId = null;
-                }
+            if (array_key_exists('elType', $component) && array_key_exists('widgetType', $component) && $component['elType'] === 'widget' && $component['widgetType'] === 'global' && is_int($component[self::PROPERTY_TEMPLATE_ID])) {
+                $targetAttachmentId = $this->getTargetId($submission->getSourceBlogId(), $component[self::PROPERTY_TEMPLATE_ID], $submission->getTargetBlogId(), self::CONTENT_TYPE_ELEMENTOR_LIBRARY);
                 if ($targetAttachmentId !== null) {
                     $original[$componentIndex][self::PROPERTY_TEMPLATE_ID] = $targetAttachmentId;
                 }
