@@ -4,7 +4,7 @@ Tags: translation, localization, localisation, translate, multilingual, smartlin
 Requires at least: 5.5
 Tested up to: 6.1
 Requires PHP: 8.0
-Stable tag: 3.1.3
+Stable tag: 3.1.4
 License: GPLv2 or later
 
 Translate content in WordPress quickly and seamlessly with Smartling, the industry-leading Translation Management System.
@@ -62,6 +62,10 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 3.1.4 =
+* Added support of Elementor version 3.11 and 3.12
+* Added workaround for issue where translations of Elementor content would not apply
+
 = 3.1.3 =
 * Fixed issue where custom components could interfere with Elementor downloads
 
