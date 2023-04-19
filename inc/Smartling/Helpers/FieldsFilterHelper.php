@@ -85,13 +85,7 @@ class FieldsFilterHelper
         return $output;
     }
 
-    /**
-     * @param array  $flatArray
-     * @param string $divider
-     *
-     * @return array
-     */
-    public function structurizeArray(array $flatArray, $divider = self::ARRAY_DIVIDER)
+    public function structurizeArray(array $flatArray, string $divider = self::ARRAY_DIVIDER, bool $partial = false): array
     {
         $output = [];
 
@@ -115,12 +109,30 @@ class FieldsFilterHelper
                         $this->getLogger()->error('Could not encode pathElements as json: ' . $e->getMessage());
                         $pathElementsString = '(unknown)';
                     }
-                    $this->getLogger()->error("Skipped part of array when structurizing, array=\"$arrayString\", pathElements=\"$pathElementsString\", i=$i");
-                    break;
+                    if ($partial) {
+                        $this->getLogger()->error("Skipped part of array when structurizing, array=\"$arrayString\", pathElements=\"$pathElementsString\", i=$i");
+                        break;
+                    }
                 }
                 $pointer = &$pointer[$pathElements[$i]];
             }
             $pointer[end($pathElements)] = $element;
+        }
+
+        return $output;
+    }
+
+    public function structurizeArrayNew(array $flatArray, string $divider = self::ARRAY_DIVIDER): array
+    {
+        $output = [];
+
+        foreach ($flatArray as $key => $element) {
+            $pathElements = explode($divider, $key);
+            $stack = null;
+            foreach (array_reverse($pathElements) as $pathElement) {
+                $stack = [$pathElement => $stack ?? $element];
+            }
+            $output = array_merge_recursive($output, [$pathElement => $stack[$pathElement]]);
         }
 
         return $output;
@@ -281,7 +293,17 @@ class FieldsFilterHelper
 
         $result = array_merge($result, $translatedValues);
 
-        return $this->structurizeArray($result);
+        try {
+            return $this->structurizeArray($result);
+        } catch (\Throwable $e) {
+            $this->logError($e);
+            try {
+                return $this->structurizeArrayNew($result);
+            } catch (\Throwable $e) {
+                $this->logError($e);
+                return $this->structurizeArray(flatArray: $result, partial: true);
+            }
+        }
     }
 
     /**
@@ -463,5 +485,11 @@ class FieldsFilterHelper
         }
 
         return $rebuild;
+    }
+
+    private function logError(\Throwable $e): void
+    {
+        $errorClass = get_class($e);
+        $this->getLogger()->error("Caught class=\"$errorClass\", code=\"{$e->getCode()}\", message=\"{$e->getMessage()}\", trace: {$e->getTraceAsString()}");
     }
 }
