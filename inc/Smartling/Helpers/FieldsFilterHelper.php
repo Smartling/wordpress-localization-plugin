@@ -102,6 +102,22 @@ class FieldsFilterHelper
                 if (!isset($pointer[$pathElements[$i]])) {
                     $pointer[$pathElements[$i]] = [];
                 }
+                if (!is_array($pointer[$pathElements[$i]])) {
+                    try {
+                        $arrayString = json_encode($flatArray, JSON_THROW_ON_ERROR);
+                    } catch (\Throwable $e) {
+                        $this->getLogger()->error('Could not encode flatArray as json: ' . $e->getMessage());
+                        $arrayString = '(unknown)';
+                    }
+                    try {
+                        $pathElementsString = json_encode($pathElements, JSON_THROW_ON_ERROR);
+                    } catch (\Throwable $e) {
+                        $this->getLogger()->error('Could not encode pathElements as json: ' . $e->getMessage());
+                        $pathElementsString = '(unknown)';
+                    }
+                    $this->getLogger()->error("Skipped part of array when structurizing, array=\"$arrayString\", pathElements=\"$pathElementsString\", i=$i");
+                    break;
+                }
                 $pointer = &$pointer[$pathElements[$i]];
             }
             $pointer[end($pathElements)] = $element;
