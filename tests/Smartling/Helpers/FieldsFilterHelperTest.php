@@ -5,32 +5,28 @@ namespace Smartling\Tests\Smartling\Helpers;
 use PHPUnit\Framework\TestCase;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\FieldsFilterHelper;
-use Smartling\Tests\Traits\InvokeMethodTrait;
 use Smartling\Tests\Traits\SettingsManagerMock;
 
-/**
- * Class FieldsFilterHelperTest
- * @package Smartling\Tests\Smartling\Helpers
- * @covers  \Smartling\Helpers\FieldsFilterHelper
- */
 class FieldsFilterHelperTest extends TestCase
 {
-
-    use InvokeMethodTrait;
     use SettingsManagerMock;
 
     /**
-     * @covers       \Smartling\Helpers\FieldsFilterHelper::structurizeArray
      * @dataProvider structurizeArrayDataProvider
-     *
-     * @param array $flat
-     * @param array $structured
      */
     public function testStructurizeArray(array $flat, array $structured)
     {
         $obj = new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock());
-        $result = $this->invokeMethod($obj, 'structurizeArray', [$flat]);
-        self::assertEquals($structured, $result);
+        self::assertEquals($structured, $obj->structurizeArray($flat));
+    }
+
+    /**
+     * @dataProvider structurizeArrayDataProvider
+     */
+    public function testStructurizeArrayNew(array $flat, array $structured)
+    {
+        $obj = new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock());
+        self::assertEquals($structured, $obj->structurizeArrayNew($flat));
     }
 
     /**
