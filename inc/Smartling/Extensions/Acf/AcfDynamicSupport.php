@@ -134,7 +134,11 @@ class AcfDynamicSupport
                                     ];
 
                                     if ('clone' === $field['type']) {
-                                        $defs[$fieldKey]['clone'] = $field['clone'];
+                                        if (array_key_exists('clone', $field)) {
+                                            $defs[$fieldKey]['clone'] = $field['clone'];
+                                        } else {
+                                            $this->getLogger()->debug('ACF field fieldType="clone" has no target. ' . json_encode($field));
+                                        }
                                     }
                                 }
                             }
