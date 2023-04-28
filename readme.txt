@@ -2,9 +2,9 @@
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 5.5
-Tested up to: 6.1
+Tested up to: 6.2
 Requires PHP: 8.0
-Stable tag: 3.1.3
+Stable tag: 3.1.4
 License: GPLv2 or later
 
 Translate content in WordPress quickly and seamlessly with Smartling, the industry-leading Translation Management System.
@@ -62,6 +62,11 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 3.1.4 =
+* Fixed issue where cloning or translation would fail due to undefined wp_read_video_metadata function
+* Fixed media attachment rules being ignored when translating
+* Added support of Elementor versions 3.11 and 3.12
+
 = 3.1.3 =
 * Fixed issue where custom components could interfere with Elementor downloads
 
