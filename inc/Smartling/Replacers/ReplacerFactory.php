@@ -7,7 +7,7 @@ use Smartling\Submissions\SubmissionManager;
 
 class ReplacerFactory
 {
-    private const REPLACER_COPY = 'copy';
+    public const REPLACER_COPY = 'copy';
     private const REPLACER_EXCLUDE = 'exclude';
     public const REPLACER_RELATED = 'related';
 

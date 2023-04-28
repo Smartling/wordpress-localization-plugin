@@ -54,12 +54,14 @@ namespace Smartling\Tests\Smartling\Helpers {
     use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
     use Smartling\Helpers\FieldsFilterHelper;
     use Smartling\Helpers\GutenbergBlockHelper;
+    use Smartling\Helpers\GutenbergReplacementRule;
     use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
     use Smartling\Helpers\WordpressFunctionProxyHelper;
     use Smartling\Models\GutenbergBlock;
     use Smartling\Replacers\ReplacerFactory;
     use Smartling\Replacers\ReplacerInterface;
     use Smartling\Submissions\SubmissionEntity;
+    use Smartling\Submissions\SubmissionManager;
     use Smartling\Tests\Traits\InvokeMethodTrait;
     use Smartling\Tests\Traits\SettingsManagerMock;
     use Smartling\Tuner\MediaAttachmentRulesManager;
@@ -581,6 +583,20 @@ XML;
         self::assertEquals(
             '<!-- wp:core/foo ' . json_encode($blockData) . ' /-->',
             $helper->renderTranslatedBlockNode($node, $this->createMock(SubmissionEntity::class), 0),
+        );
+    }
+
+    public function testReplacePreTranslateBlockContent()
+    {
+        $rulesManager = $this->createMock(MediaAttachmentRulesManager::class);
+        $rulesManager->method('getGutenbergReplacementRules')->willReturn([
+            new GutenbergReplacementRule('.+', 'smartlingLockId', ReplacerFactory::REPLACER_COPY),
+        ]);
+        $this->assertEquals(
+            '',
+            $this->getHelper($rulesManager, new ReplacerFactory($this->createMock(SubmissionManager::class)))
+                ->replacePreTranslateBlockContent(new GutenbergBlock('paragraph', ['smartlingLockId' => 'lockValue'], [], '<p>Paragraph content</p>', []))
+                ->getSmartlingLockId()
         );
     }
 
