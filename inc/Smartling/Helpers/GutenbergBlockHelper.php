@@ -110,7 +110,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             if ($value !== null) {
                 $processedValue = $replacer->processOnUpload($value);
                 if ($value !== $processedValue) {
-                    $this->setValue($attributes, $rule, $value);
+                    $attributes = $this->setValue($attributes, $rule, $processedValue);
                 }
             }
         }
@@ -160,7 +160,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
                     $processedValue = $translatedValue;
                 }
                 if ($translatedValue !== $processedValue) {
-                    $this->setValue($attributes, $rule, $processedValue);
+                    $attributes = $this->setValue($attributes, $rule, $processedValue);
                 }
             }
         }
