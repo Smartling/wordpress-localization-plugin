@@ -100,6 +100,9 @@ trait SmartlingCoreAttachments
         if (!function_exists('wp_generate_attachment_metadata')) {
             include_once(ABSPATH . 'wp-admin/includes/image.php'); //including the attachment function
         }
+        if (!function_exists('wp_read_video_metadata')) {
+            include_once(ABSPATH . 'wp-admin/includes/media.php');
+        }
 
         $this->getLogger()->debug(
             vsprintf('Generating metadata for file id=\'%s\', [%s].', [
