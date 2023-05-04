@@ -238,6 +238,12 @@ class ContentRelationsDiscoveryService
         $job = $request->getJobInformation();
         $batchUid = $this->getBatchUid($profile, $job);
         $jobInfo = new JobEntityWithBatchUid($batchUid, $job->getName(), $job->getId(), $profile->getProjectId());
+
+        if ($request->isBulk()) {
+            $this->bulkUpload($jobInfo, $request->getIds(), $request->getContentType(), $curBlogId, $request->getTargetBlogIds());
+            return;
+        }
+
         $relatedIds = [];
         try {
             foreach ($request->getRelationsOrdered() as $relations) {
@@ -272,11 +278,6 @@ class ContentRelationsDiscoveryService
                 $curBlogId,
                 addslashes($e->getMessage()),
             ));
-        }
-
-        if ($request->isBulk()) {
-            $this->bulkUpload($jobInfo, $request->getIds(), $request->getContentType(), $curBlogId, $request->getTargetBlogIds());
-            return;
         }
 
         foreach ($request->getTargetBlogIds() as $targetBlogId) {

@@ -145,7 +145,7 @@ class ContentHelper
 
     public function readSourceContent(SubmissionEntity $submission): Entity
     {
-        if (false === ($cached = $this->getRuntimeCache()->get($submission->getId(), 'sourceContent'))) {
+        if (false === ($cached = $this->getRuntimeCache()->get($this->getCacheKey($submission), 'sourceContent'))) {
             $wrapper = $this->getWrapper($submission->getContentType());
             $this->ensureSourceBlogId($submission);
             $sourceContent = $wrapper->get($submission->getSourceId());
@@ -170,7 +170,7 @@ class ContentHelper
 
     public function readSourceMetadata(SubmissionEntity $submission): array
     {
-        if (false === ($cached = $this->getRuntimeCache()->get($submission->getId(), 'sourceMeta'))) {
+        if (false === ($cached = $this->getRuntimeCache()->get($this->getCacheKey($submission), 'sourceMeta'))) {
             $metadata = [];
             $wrapper = $this->getWrapper($submission->getContentType());
             $this->ensureSourceBlogId($submission);
@@ -325,5 +325,10 @@ class ContentHelper
             $this->getSiteHelper()->restoreBlogId();
         }
         return $result;
+    }
+
+    private function getCacheKey(SubmissionEntity $entity): string
+    {
+        return implode('-', [$entity->getContentType(), $entity->getSourceBlogId(), $entity->getSourceId()]);
     }
 }

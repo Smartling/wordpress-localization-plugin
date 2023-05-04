@@ -62,6 +62,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 3.1.5 =
+* Fixed related submissions file name
+
 = 3.1.4 =
 * Fixed issue where cloning or translation would fail due to undefined wp_read_video_metadata function
 * Fixed media attachment rules being ignored when translating
