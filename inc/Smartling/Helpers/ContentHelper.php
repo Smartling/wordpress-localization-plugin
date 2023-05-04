@@ -151,7 +151,7 @@ class ContentHelper
             $sourceContent = $wrapper->get($submission->getSourceId());
             $this->ensureRestoredBlogId();
             $clone = clone $sourceContent;
-            $this->getRuntimeCache()->set($submission->getId(), $sourceContent, 'sourceContent');
+            $this->getRuntimeCache()->set($this->getCacheKey($submission), $sourceContent, 'sourceContent');
         } else {
             $clone = clone $cached;
         }
@@ -181,7 +181,7 @@ class ContentHelper
             $this->ensureRestoredBlogId();
 
             $clone = $metadata;
-            $this->getRuntimeCache()->set($submission->getId(), $metadata, 'sourceMeta');
+            $this->getRuntimeCache()->set($this->getCacheKey($submission), $metadata, 'sourceMeta');
         } else {
             $clone = $cached;
         }

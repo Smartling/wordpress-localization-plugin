@@ -9,7 +9,6 @@ use Smartling\DbAl\WordpressContentEntities\EntityHandler;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\SiteHelper;
-use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
