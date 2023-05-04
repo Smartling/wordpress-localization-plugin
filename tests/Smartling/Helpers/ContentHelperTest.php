@@ -57,7 +57,9 @@ class ContentHelperTest extends TestCase
         $entity2 = $this->createMock(Entity::class);
         $entity2->method('getTitle')->willReturn('Title 2');
         $entityHandler = $this->createMock(EntityHandler::class);
-        $entityHandler->expects($this->exactly(2))->method('get')->withConsecutive([1], [2])->willReturnOnConsecutiveCalls($entity1, $entity2);
+        $entityHandler->expects($this->exactly(2))->method('get')
+            ->withConsecutive([1], [2])
+            ->willReturnOnConsecutiveCalls($entity1, $entity2);
         $submission1 = $this->createMock(SubmissionEntity::class);
         $submission1->method('getId')->willReturn(null);
         $submission1->method('getSourceId')->willReturn(1);
@@ -66,8 +68,7 @@ class ContentHelperTest extends TestCase
         $submission2->method('getSourceId')->willReturn(2);
         $IOFactory = $this->createMock(ContentEntitiesIOFactory::class);
         $IOFactory->method('getHandler')->willReturn($entityHandler);
-        $siteHelper = $this->createMock(SiteHelper::class);
-        $x = new ContentHelper($IOFactory, $siteHelper);
+        $x = new ContentHelper($IOFactory, $this->createMock(SiteHelper::class));
         $this->assertEquals($entity1->getTitle(), $x->readSourceContent($submission1)->getTitle());
         $this->assertEquals($entity2->getTitle(), $x->readSourceContent($submission2)->getTitle());
     }
