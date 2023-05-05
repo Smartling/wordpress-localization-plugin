@@ -40,13 +40,7 @@ class RuntimeCacheHelper
         return $this->checkScope($scope) && array_key_exists($key, $this->storage[$scope]);
     }
 
-    /**
-     * @param string $key
-     * @param string $scope
-     *
-     * @return mixed
-     */
-    public function get($key, $scope = self::DEFAULT_SCOPE)
+    public function get(string $key, string $scope = self::DEFAULT_SCOPE): mixed
     {
         return $this->checkElement($key, $scope) ? $this->storage[$scope][$key] : false;
     }
