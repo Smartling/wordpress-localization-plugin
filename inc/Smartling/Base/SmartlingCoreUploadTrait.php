@@ -123,7 +123,8 @@ trait SmartlingCoreUploadTrait
         try {
             $submission = $this->prepareUpload($submission);
 
-            $source = $this->externalContentManager->getExternalContent($this->readSourceContentWithMetadataAsArray($submission), $submission, false);
+            $originalContent = $this->readSourceContentWithMetadataAsArray($submission);
+            $source = $this->externalContentManager->getExternalContent($originalContent, $submission, false);
 
             $contentEntity = $this->getContentHelper()->readSourceContent($submission);
             $params = new BeforeSerializeContentEventParameters($source, $submission, $contentEntity, $source['meta']);
@@ -149,7 +150,7 @@ trait SmartlingCoreUploadTrait
             }
 
             $this->prepareFieldProcessorValues($submission);
-            return $this->xmlHelper->xmlEncode($filteredValues, $submission, $source);
+            return $this->xmlHelper->xmlEncode($filteredValues, $submission, array_merge($source, $originalContent));
         } catch (EntityNotFoundException $e) {
             $this->getLogger()->error($e->getMessage());
             $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent content.');
