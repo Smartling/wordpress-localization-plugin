@@ -250,7 +250,7 @@ trait SmartlingCoreUploadTrait
             if (!is_array($translation)) {
                 $this->getLogger()->critical('Translation is not array after applying filter ' . ExportedAPI::FILTER_BEFORE_TRANSLATION_APPLIED . '. This is most likely due to an error outside of the plugins code.');
             }
-            $translation = $this->externalContentManager->setExternalContent($original, $translation, $submission);
+            $translation = $this->externalContentManager->setExternalContent($decoded->getOriginalFields(), $translation, $submission);
             if ($targetContent instanceof EntityAbstract) {
                 $this->setValues($targetContent, $translation['entity'] ?? []);
             } else {

@@ -130,39 +130,22 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
 
     private function buildData(array $original, array $translation, SubmissionEntity $submission): array
     {
-        $result = $original;
-
-        foreach ($original as $key => $value) {
-            if (array_key_exists($key, $translation) && property_exists($value, 'settings')) {
-                if (array_key_exists('settings', $translation[$key])) {
-                    $arrayOriginalSettings = (array)$value->settings;
-                    foreach ($arrayOriginalSettings as $settingKey => $setting) {
-                        if (array_key_exists($settingKey, $translation[$key]['settings'])) {
-                            if (is_scalar($translation[$key]['settings'][$settingKey])) {
-                                settype($translation[$key]['settings'][$settingKey], gettype($setting));
-                            } elseif (is_array($translation[$key]['settings'][$settingKey])) {
-                                foreach ($translation[$key]['settings'][$settingKey] as $index => $item) {
-                                    if (is_array($setting)) {
-                                        $translation[$key]['settings'][$settingKey][$index] = $this->toStdClass(array_merge((array)$setting[$index], $translation[$key]['settings'][$settingKey][$index]));
-                                    } elseif (is_object($setting)) {
-                                        $translation[$key]['settings'][$settingKey] = $this->toStdClass(array_merge((array)$setting, $translation[$key]['settings'][$settingKey]));
-                                    } else {
-                                        $this->getLogger()->debug('Beaver builder buildData encountered unknown type while traversing, dataType=' . gettype($setting));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    $t = array_merge((array)$value->settings, $translation[$key]['settings']);
-                    $result[$key]->settings = (object)$t;
-                }
-                if (property_exists($value->settings, 'type') && $value->settings->type === 'photo') {
-                    $result[$key]->settings->data->id = $this->getTargetId($submission->getSourceBlogId(), $result[$key]->settings->data->id, $submission->getTargetBlogId());
+        foreach ($translation as $translationKey => $translationValue) {
+            if (array_key_exists('settings', $translationValue)) {
+                foreach ($translationValue['settings'] as $settingKey => $settingValue) {
+                    $original[$translationKey]['settings'][$settingKey] = $settingValue;
                 }
             }
         }
 
-        return $result;
+        foreach ($original as $key => $value) {
+            if (($value['settings']['type'] ?? '') === 'photo') {
+                $original[$key]['settings']['data']['id'] = $this->getTargetId($submission->getSourceBlogId(), $value['settings']['data']['id'] ?? 0, $submission->getTargetBlogId());
+            }
+            $original[$key] = $this->toStdClass($original[$key]);
+        }
+
+        return $original;
     }
 
     private function toStdClass(array $array): \stdClass
@@ -268,6 +251,7 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
             '^' . self::META_NODE_SETTINGS_CHILD_NODE_REGEX . '[^/]*_?color$',
             '^' . self::META_NODE_SETTINGS_CHILD_NODE_REGEX . '[^/]*_family$',
             '^' . self::META_NODE_SETTINGS_CHILD_NODE_REGEX . '[^/]*_?height$',
+            '^' . self::META_NODE_SETTINGS_CHILD_NODE_REGEX . '[^/]*_?gradient$',
             '^' . self::META_NODE_SETTINGS_CHILD_NODE_REGEX . '[^/]*_?layout$',
             '^' . self::META_NODE_SETTINGS_CHILD_NODE_REGEX . '[^/]*_?position$',
             '^' . self::META_NODE_SETTINGS_CHILD_NODE_REGEX . '[^/]*_?style$',
