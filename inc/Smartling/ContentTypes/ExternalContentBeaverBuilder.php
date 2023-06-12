@@ -122,30 +122,61 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
 
     public function setContentFields(array $original, array $translation, SubmissionEntity $submission): array
     {
-        $translation['meta'][self::META_FIELD_NAME] = $this->buildData(unserialize($original['meta'][self::META_FIELD_NAME]), $translation[$this->getPluginId()] ?? [], $submission);
+        $translation['meta'][self::META_FIELD_NAME] = $this->buildData(unserialize($original['meta'][self::META_FIELD_NAME] ?? '') ?: [], $translation[$this->getPluginId()] ?? [], $submission);
         $translation['meta'][self::META_SETTINGS_NAME] = $original['meta'][self::META_SETTINGS_NAME];
         unset($translation[$this->getPluginId()]);
         return $translation;
     }
 
-    private function buildData(array $original, array $translation, SubmissionEntity $submission): array
+    /**
+     * Mutates $original
+     */
+    private function applyTranslationValues(array $original, array $translation): void
     {
         foreach ($translation as $translationKey => $translationValue) {
-            if (array_key_exists('settings', $translationValue)) {
+            if (array_key_exists('settings', $translationValue) && property_exists($original[$translationKey], 'settings')) {
+                $settings = $original[$translationKey]->settings;
                 foreach ($translationValue['settings'] as $settingKey => $settingValue) {
-                    $original[$translationKey]['settings'][$settingKey] = $settingValue;
+                    if (is_scalar($settings->$settingKey)) {
+                        settype($settingValue, gettype($settings->$settingKey));
+                        $settings->$settingKey = $settingValue;
+                    } elseif (is_array($settings->$settingKey) || is_object($settings->$settingKey)) {
+                        foreach ($settingValue as $index => $item) {
+                            if (is_array($settings->$settingKey)) {
+                                $settings->$settingKey[$index] = $this->toStdClass(array_merge((array)$settings->$settingKey[$index], $item));
+                            } elseif (is_object($settings->$settingKey)) {
+                                $settings->$settingKey->$index = $item;
+                            } else {
+                                $this->getLogger()->warning(sprintf('Beaver builder buildData encountered unexpected type while traversing, translationKey="%s", settingsKey="%s", dataType="%s"', $translationKey, $settingKey, gettype($settings->$settingKey)));
+                            }
+                        }
+                    } else {
+                        $this->getLogger()->warning(sprintf('Beaver builder buildData encountered unexpected condition: settingsKey="%s", settingsType="%s", dataType="%s"', $settingKey, gettype($settings->$settingKey), gettype($settingValue)));
+                    }
                 }
+                $original[$translationKey]->settings = $settings;
             }
         }
+    }
 
-        foreach ($original as $key => $value) {
-            if (($value['settings']['type'] ?? '') === 'photo') {
-                $original[$key]['settings']['data']['id'] = $this->getTargetId($submission->getSourceBlogId(), $value['settings']['data']['id'] ?? 0, $submission->getTargetBlogId());
-            }
-            $original[$key] = $this->toStdClass($original[$key]);
-        }
+    private function buildData(array $original, array $translation, SubmissionEntity $submission): array
+    {
+        $this->applyTranslationValues($original, $translation);
+        $this->replaceRelatedIds($original, $submission);
 
         return $original;
+    }
+
+    /**
+     * Mutates $original
+     */
+    private function replaceRelatedIds(array $original, SubmissionEntity $submission): void
+    {
+        foreach ($original as $value) {
+            if (($value->settings->type ?? '') === 'photo') {
+                $value->settings->data->id = $this->getTargetId($submission->getSourceBlogId(), $value->settings->data->id ?? 0, $submission->getTargetBlogId());
+            }
+        }
     }
 
     private function toStdClass(array $array): \stdClass
