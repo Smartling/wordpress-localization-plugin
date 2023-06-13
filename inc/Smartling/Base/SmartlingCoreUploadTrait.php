@@ -123,7 +123,8 @@ trait SmartlingCoreUploadTrait
         try {
             $submission = $this->prepareUpload($submission);
 
-            $source = $this->externalContentManager->getExternalContent($this->readSourceContentWithMetadataAsArray($submission), $submission, false);
+            $originalContent = $this->readSourceContentWithMetadataAsArray($submission);
+            $source = $this->externalContentManager->getExternalContent($originalContent, $submission, false);
 
             $contentEntity = $this->getContentHelper()->readSourceContent($submission);
             $params = new BeforeSerializeContentEventParameters($source, $submission, $contentEntity, $source['meta']);
@@ -149,7 +150,7 @@ trait SmartlingCoreUploadTrait
             }
 
             $this->prepareFieldProcessorValues($submission);
-            return $this->xmlHelper->xmlEncode($filteredValues, $submission, $source);
+            return $this->xmlHelper->xmlEncode($filteredValues, $submission, array_merge($source, $originalContent));
         } catch (EntityNotFoundException $e) {
             $this->getLogger()->error($e->getMessage());
             $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent content.');
@@ -249,7 +250,7 @@ trait SmartlingCoreUploadTrait
             if (!is_array($translation)) {
                 $this->getLogger()->critical('Translation is not array after applying filter ' . ExportedAPI::FILTER_BEFORE_TRANSLATION_APPLIED . '. This is most likely due to an error outside of the plugins code.');
             }
-            $translation = $this->externalContentManager->setExternalContent($original, $translation, $submission);
+            $translation = $this->externalContentManager->setExternalContent($decoded->getOriginalFields(), $translation, $submission);
             if ($targetContent instanceof EntityAbstract) {
                 $this->setValues($targetContent, $translation['entity'] ?? []);
             } else {

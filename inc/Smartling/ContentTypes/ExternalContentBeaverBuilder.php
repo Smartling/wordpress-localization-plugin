@@ -122,47 +122,61 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
 
     public function setContentFields(array $original, array $translation, SubmissionEntity $submission): array
     {
-        $translation['meta'][self::META_FIELD_NAME] = $this->buildData(unserialize($original['meta'][self::META_FIELD_NAME]), $translation[$this->getPluginId()] ?? [], $submission);
+        $translation['meta'][self::META_FIELD_NAME] = $this->buildData(unserialize($original['meta'][self::META_FIELD_NAME] ?? '') ?: [], $translation[$this->getPluginId()] ?? [], $submission);
         $translation['meta'][self::META_SETTINGS_NAME] = $original['meta'][self::META_SETTINGS_NAME];
         unset($translation[$this->getPluginId()]);
         return $translation;
     }
 
-    private function buildData(array $original, array $translation, SubmissionEntity $submission): array
+    /**
+     * Mutates $original
+     */
+    private function applyTranslationValues(array $original, array $translation): void
     {
-        $result = $original;
-
-        foreach ($original as $key => $value) {
-            if (array_key_exists($key, $translation) && property_exists($value, 'settings')) {
-                if (array_key_exists('settings', $translation[$key])) {
-                    $arrayOriginalSettings = (array)$value->settings;
-                    foreach ($arrayOriginalSettings as $settingKey => $setting) {
-                        if (array_key_exists($settingKey, $translation[$key]['settings'])) {
-                            if (is_scalar($translation[$key]['settings'][$settingKey])) {
-                                settype($translation[$key]['settings'][$settingKey], gettype($setting));
-                            } elseif (is_array($translation[$key]['settings'][$settingKey])) {
-                                foreach ($translation[$key]['settings'][$settingKey] as $index => $item) {
-                                    if (is_array($setting)) {
-                                        $translation[$key]['settings'][$settingKey][$index] = $this->toStdClass(array_merge((array)$setting[$index], $translation[$key]['settings'][$settingKey][$index]));
-                                    } elseif (is_object($setting)) {
-                                        $translation[$key]['settings'][$settingKey] = $this->toStdClass(array_merge((array)$setting, $translation[$key]['settings'][$settingKey]));
-                                    } else {
-                                        $this->getLogger()->debug('Beaver builder buildData encountered unknown type while traversing, dataType=' . gettype($setting));
-                                    }
-                                }
+        foreach ($translation as $translationKey => $translationValue) {
+            if (array_key_exists('settings', $translationValue) && property_exists($original[$translationKey], 'settings')) {
+                $settings = $original[$translationKey]->settings;
+                foreach ($translationValue['settings'] as $settingKey => $settingValue) {
+                    if (is_scalar($settings->$settingKey)) {
+                        settype($settingValue, gettype($settings->$settingKey));
+                        $settings->$settingKey = $settingValue;
+                    } elseif (is_array($settings->$settingKey) || is_object($settings->$settingKey)) {
+                        foreach ($settingValue as $index => $item) {
+                            if (is_array($settings->$settingKey)) {
+                                $settings->$settingKey[$index] = $this->toStdClass(array_merge((array)$settings->$settingKey[$index], $item));
+                            } elseif (is_object($settings->$settingKey)) {
+                                $settings->$settingKey->$index = $item;
+                            } else {
+                                $this->getLogger()->warning(sprintf('Beaver builder buildData encountered unexpected type while traversing, translationKey="%s", settingsKey="%s", dataType="%s"', $translationKey, $settingKey, gettype($settings->$settingKey)));
                             }
                         }
+                    } else {
+                        $this->getLogger()->warning(sprintf('Beaver builder buildData encountered unexpected condition: settingsKey="%s", settingsType="%s", dataType="%s"', $settingKey, gettype($settings->$settingKey), gettype($settingValue)));
                     }
-                    $t = array_merge((array)$value->settings, $translation[$key]['settings']);
-                    $result[$key]->settings = (object)$t;
                 }
-                if (property_exists($value->settings, 'type') && $value->settings->type === 'photo') {
-                    $result[$key]->settings->data->id = $this->getTargetId($submission->getSourceBlogId(), $result[$key]->settings->data->id, $submission->getTargetBlogId());
-                }
+                $original[$translationKey]->settings = $settings;
             }
         }
+    }
 
-        return $result;
+    private function buildData(array $original, array $translation, SubmissionEntity $submission): array
+    {
+        $this->applyTranslationValues($original, $translation);
+        $this->replaceRelatedIds($original, $submission);
+
+        return $original;
+    }
+
+    /**
+     * Mutates $original
+     */
+    private function replaceRelatedIds(array $original, SubmissionEntity $submission): void
+    {
+        foreach ($original as $value) {
+            if (($value->settings->type ?? '') === 'photo') {
+                $value->settings->data->id = $this->getTargetId($submission->getSourceBlogId(), $value->settings->data->id ?? 0, $submission->getTargetBlogId());
+            }
+        }
     }
 
     private function toStdClass(array $array): \stdClass
@@ -268,6 +282,7 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
             '^' . self::META_NODE_SETTINGS_CHILD_NODE_REGEX . '[^/]*_?color$',
             '^' . self::META_NODE_SETTINGS_CHILD_NODE_REGEX . '[^/]*_family$',
             '^' . self::META_NODE_SETTINGS_CHILD_NODE_REGEX . '[^/]*_?height$',
+            '^' . self::META_NODE_SETTINGS_CHILD_NODE_REGEX . '[^/]*_?gradient$',
             '^' . self::META_NODE_SETTINGS_CHILD_NODE_REGEX . '[^/]*_?layout$',
             '^' . self::META_NODE_SETTINGS_CHILD_NODE_REGEX . '[^/]*_?position$',
             '^' . self::META_NODE_SETTINGS_CHILD_NODE_REGEX . '[^/]*_?style$',
