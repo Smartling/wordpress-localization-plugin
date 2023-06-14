@@ -17,6 +17,7 @@ use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\RuntimeCacheHelper;
 use Smartling\Helpers\TestRunHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
+use Smartling\Jobs\JobEntityWithStatus;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
@@ -31,9 +32,9 @@ use Smartling\Vendor\Smartling\File\FileApi;
 use Smartling\Vendor\Smartling\File\Params\DownloadFileParameters;
 use Smartling\Vendor\Smartling\File\Params\UploadFileParameters;
 use Smartling\Vendor\Smartling\Jobs\JobsApi;
-use Smartling\Vendor\Smartling\Jobs\JobStatus;
 use Smartling\Vendor\Smartling\Jobs\Params\CreateJobParameters;
 use Smartling\Vendor\Smartling\Jobs\Params\ListJobsParameters;
+use Smartling\Vendor\Smartling\Jobs\Params\SearchJobsParameters;
 use Smartling\Vendor\Smartling\Jobs\Params\UpdateJobParameters;
 use Smartling\Vendor\Smartling\ProgressTracker\Params\RecordParameters;
 use Smartling\Vendor\Smartling\ProgressTracker\ProgressTrackerApi;
@@ -543,24 +544,32 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
+    private function getBaseNameForDailyBucketJob(string $suffix = ''): string
+    {
+        $date = date('m/d/Y');
+
+        return ApiWrapperInterface::DAILY_BUCKET_JOB_NAME_PREFIX . " $date$suffix";
+    }
+
+    public function findJobByBatchUid(ConfigurationProfileEntity $profile, string $batchUid): ?JobEntityWithStatus
+    {
+        $parameters = new SearchJobsParameters();
+        $parameters->setUids([$batchUid]);
+
+        $result = $this->getJobsApi($profile)->searchJobs($parameters);
+        if (count($result) === 0) {
+            return null;
+        }
+        return new JobEntityWithStatus($result[0]['jobStatus'], $result[0]['jobName'], $result[0]['translationJobUid'], $profile->getProjectId());
+    }
+
     public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, bool $authorize): JobEntityWithBatchUid
     {
-        $getName = static function ($suffix = '') {
-            $date = date('m/d/Y');
-            $name = "Daily Bucket Job $date";
-
-            return $name . $suffix;
-        };
-
-        $jobName = $getName();
+        $jobName = $this->getBaseNameForDailyBucketJob();
         $jobId = null;
 
         try {
-            $response = $this->listJobs($profile, $jobName, [
-                JobStatus::AWAITING_AUTHORIZATION,
-                JobStatus::IN_PROGRESS,
-                JobStatus::COMPLETED,
-            ]);
+            $response = $this->listJobs($profile, $jobName, ApiWrapperInterface::JOB_STATUSES_FOR_DAILY_BUCKET_JOB);
 
             // Try to find the latest created bucket job.
             if (!empty($response['items'])) {
@@ -578,7 +587,7 @@ class ApiWrapper implements ApiWrapperInterface
                     // If there is a CLOSED bucket job then we have to
                     // come up with new job name in order to avoid
                     // "Job name is already taken" error.
-                    $jobName = $getName(' ' . date('H:i:s'));
+                    $jobName = $this->getBaseNameForDailyBucketJob(' ' . date('H:i:s'));
                     $result = $this->createJob($profile, [
                         'name'        => $jobName,
                         'description' => 'Bucket job: contains updated content.',
@@ -695,13 +704,15 @@ class ApiWrapper implements ApiWrapperInterface
         switch (get_class($e)) {
             case SmartlingApiException::class:
                 foreach ($e->getErrors() as $error) {
-                    if ($error['key'] === 'forbidden') {
+                    if (in_array($error['key'] ?? '', ['forbidden', 'lock.not.acquired'])) {
                         return true;
                     }
                 }
                 break;
+            case SmartlingFileUploadException::class:
+                return str_contains($e->getMessage(), 'batch.not.suitable');
             case SmartlingNetworkException::class:
-                return strpos($e->getMessage(), 'file.not.found') !== false;
+                return str_contains($e->getMessage(), 'file.not.found');
         }
 
         return false;

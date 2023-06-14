@@ -4,6 +4,7 @@ namespace Smartling\Base;
 
 use Exception;
 use JetBrains\PhpStorm\ArrayShape;
+use Smartling\ApiWrapperInterface;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\DbAl\WordpressContentEntities\Entity;
 use Smartling\DbAl\WordpressContentEntities\EntityWithPostStatus;
@@ -417,6 +418,7 @@ trait SmartlingCoreUploadTrait
     public function bulkSubmit(SubmissionEntity $submission): void
     {
         $submissionHasBatchUid = !StringHelper::isNullOrEmpty($submission->getBatchUid());
+        $profile = $this->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
         try {
             $submission->generateFileUri();
             $submission = $this->getSubmissionManager()->storeEntity($submission);
@@ -469,10 +471,7 @@ trait SmartlingCoreUploadTrait
 
             if (!StringHelper::isNullOrEmpty($xml)) {
                 LiveNotificationController::pushNotification(
-                    $this
-                        ->getSettingsManager()
-                        ->getSingleSettingsProfile($submission->getSourceBlogId())
-                        ->getProjectId(),
+                    $profile->getProjectId(),
                     LiveNotificationController::getContentId($submission),
                     LiveNotificationController::SEVERITY_SUCCESS,
                     vsprintf('<p>Sending file %s for locales %s.</p>', [
@@ -482,10 +481,7 @@ trait SmartlingCoreUploadTrait
                 );
                 if ($this->sendFile($submission, $xml, $locales)) {
                     LiveNotificationController::pushNotification(
-                        $this
-                            ->getSettingsManager()
-                            ->getSingleSettingsProfile($submission->getSourceBlogId())
-                            ->getProjectId(),
+                        $profile->getProjectId(),
                         LiveNotificationController::getContentId($submission),
                         LiveNotificationController::SEVERITY_SUCCESS,
                         vsprintf('<p>Sent file %s for locales %s.</p>', [
@@ -500,10 +496,7 @@ trait SmartlingCoreUploadTrait
                     }
                 } else {
                     LiveNotificationController::pushNotification(
-                        $this
-                            ->getSettingsManager()
-                            ->getSingleSettingsProfile($submission->getSourceBlogId())
-                            ->getProjectId(),
+                        $profile->getProjectId(),
                         LiveNotificationController::getContentId($submission),
                         LiveNotificationController::SEVERITY_ERROR,
                         vsprintf('<p>Failed sending file %s for locales %s.</p>', [
@@ -520,7 +513,7 @@ trait SmartlingCoreUploadTrait
                 $this->getSubmissionManager()->storeSubmissions($submissions);
             }
 
-            $this->executeBatchIfNoSubmissionsPending($submission->getBatchUid(), $submission->getSourceBlogId());
+            $this->executeBatchIfNoSubmissionsPending($submission->getBatchUid(), $profile);
         } catch (\Exception $e) {
             $caught = $e;
             do {
@@ -528,19 +521,8 @@ trait SmartlingCoreUploadTrait
                     $this->getLogger()->error('Invalid credentials. Check profile settings.');
                     break;
                 }
-                if ($submissionHasBatchUid
-                    && strpos("Batch is not suitable for adding files", $e->getMessage()) !== false) {
-                    $this->getLogger()->error("Batch {$submission->getBatchUid()} is not suitable for adding files");
-                    $submissions = $this->getSubmissionManager()->find([
-                        SubmissionEntity::FIELD_STATUS => [SubmissionEntity::SUBMISSION_STATUS_NEW],
-                        SubmissionEntity::FIELD_BATCH_UID => [$submission->getBatchUid()],
-                    ]);
-                    foreach ($submissions as $found) {
-                        $found->setBatchUid('');
-                        $found->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
-                        $this->getLogger()->notice("Setting submission {$found->getId()} status to failed");
-                    }
-                    $this->getSubmissionManager()->storeSubmissions($submissions);
+                if ($submissionHasBatchUid && str_contains($e->getMessage(), "batch.not.suitable")) {
+                    $this->handleBatchNotSuitable($profile, $submission);
                     break;
                 }
                 $e = $e->getPrevious();
@@ -551,10 +533,7 @@ trait SmartlingCoreUploadTrait
                 ->setErrorMessage($submission, vsprintf('Could not submit because: %s', [$e->getMessage()]));
 
             LiveNotificationController::pushNotification(
-                $this
-                    ->getSettingsManager()
-                    ->getSingleSettingsProfile($submission->getSourceBlogId())
-                    ->getProjectId(),
+                $profile->getProjectId(),
                 LiveNotificationController::getContentId($submission),
                 LiveNotificationController::SEVERITY_ERROR,
                 vsprintf('<p>Failed sending file %s.</p>', [
@@ -564,7 +543,7 @@ trait SmartlingCoreUploadTrait
         }
     }
 
-    private function executeBatchIfNoSubmissionsPending(string $batchUid, int $sourceBlogId): void
+    private function executeBatchIfNoSubmissionsPending(string $batchUid, ConfigurationProfileEntity $profile): void
     {
         $msg = vsprintf('Preparing to start batch "%s" execution...', [$batchUid]);
         $this->getLogger()->debug($msg);
@@ -572,8 +551,6 @@ trait SmartlingCoreUploadTrait
             $submissions = $this->getSubmissionManager()->searchByBatchUid($batchUid);
 
             if (0 === count($submissions)) {
-                $profile = $this->getSettingsManager()->getSingleSettingsProfile($sourceBlogId);
-
                 $this->getApiWrapper()->executeBatch($profile, $batchUid);
 
                 $msg = vsprintf('Batch "%s" executed', [$batchUid]);
@@ -880,5 +857,32 @@ trait SmartlingCoreUploadTrait
         }
 
         return $this->xmlHelper->xmlEncode($filteredValues, $submission, $params->getPreparedFields());
+    }
+
+    private function handleBatchNotSuitable(ConfigurationProfileEntity $profile, SubmissionEntity $submission): void
+    {
+        $this->getLogger()->error("Batch {$submission->getBatchUid()} is not suitable for adding files");
+        $submissions = $this->getSubmissionManager()->find([
+            SubmissionEntity::FIELD_STATUS => [SubmissionEntity::SUBMISSION_STATUS_NEW],
+            SubmissionEntity::FIELD_BATCH_UID => [$submission->getBatchUid()],
+        ]);
+        $jobWithStatus = $this->getApiWrapper()->findJobByBatchUid($profile, $submission->getBatchUid());
+        $batchUid = '';
+        if ($jobWithStatus !== null) {
+            $job = $jobWithStatus->getJobInformationEntity();
+            if (str_starts_with($job->getJobName(), ApiWrapperInterface::DAILY_BUCKET_JOB_NAME_PREFIX) &&
+                in_array($jobWithStatus->getStatus(), ApiWrapperInterface::JOB_STATUSES_FOR_DAILY_BUCKET_JOB, true)) {
+                $batchUid = $this->getApiWrapper()->createBatch($profile, $job->getJobUid(), $profile->getAutoAuthorize());
+                $this->getLogger()->notice("Will retry daily bucket jobUid={$job->getJobUid()} batch");
+            }
+        }
+        foreach ($submissions as $found) {
+            $found->setBatchUid($batchUid);
+            if ($batchUid === '') {
+                $found->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+                $this->getLogger()->notice("Setting submission {$found->getId()} status to failed");
+            }
+        }
+        $this->getSubmissionManager()->storeSubmissions($submissions);
     }
 }
