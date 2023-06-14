@@ -551,10 +551,10 @@ class ApiWrapper implements ApiWrapperInterface
         return ApiWrapperInterface::DAILY_BUCKET_JOB_NAME_PREFIX . " $date$suffix";
     }
 
-    public function findJobByBatchUid(ConfigurationProfileEntity $profile, string $batchUid): ?JobEntityWithStatus
+    public function findJobByFileUri(ConfigurationProfileEntity $profile, string $fileUri): ?JobEntityWithStatus
     {
         $parameters = new SearchJobsParameters();
-        $parameters->setUids([$batchUid]);
+        $parameters->setFileUris([$fileUri]);
 
         $result = $this->getJobsApi($profile)->searchJobs($parameters);
         if (count($result) === 0) {

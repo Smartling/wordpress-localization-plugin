@@ -117,7 +117,7 @@ interface ApiWrapperInterface
     #[ArrayShape(self::CREATE_JOB_RESPONSE)]
     public function createJob(ConfigurationProfileEntity $profile, array $params): array;
 
-    public function findJobByBatchUid(ConfigurationProfileEntity $profile, string $batchUid): ?JobEntityWithStatus;
+    public function findJobByFileUri(ConfigurationProfileEntity $profile, string $fileUri): ?JobEntityWithStatus;
 
     /**
      * @throws SmartlingApiException

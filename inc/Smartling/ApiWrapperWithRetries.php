@@ -151,10 +151,10 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
-    public function findJobByBatchUid(ConfigurationProfileEntity $profile, string $batchUid): ?JobEntityWithStatus
+    public function findJobByFileUri(ConfigurationProfileEntity $profile, string $fileUri): ?JobEntityWithStatus
     {
-        return $this->withRetry(function () use ($profile, $batchUid) {
-            return $this->base->findJobByBatchUid($profile, $batchUid);
+        return $this->withRetry(function () use ($profile, $fileUri) {
+            return $this->base->findJobByFileUri($profile, $fileUri);
         });
     }
 
