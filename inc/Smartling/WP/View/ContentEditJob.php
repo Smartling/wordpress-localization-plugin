@@ -21,11 +21,7 @@ $widgetName = 'bulk-submit-locales';
 
 ?>
 <?php
-$screen = get_current_screen();
-$isBulkSubmitPage = false;
-if ($screen !== null) {
-    $isBulkSubmitPage = $screen->id === 'smartling_page_smartling-bulk-submit';
-}
+$isBulkSubmitPage = get_current_screen()?->id === 'smartling_page_smartling-bulk-submit';
 global $tag;
 $needWrapper = ($tag instanceof WP_Term);
 ?>
@@ -37,7 +33,7 @@ $needWrapper = ($tag instanceof WP_Term);
 </script>
 
 <?php if ($needWrapper) : ?>
-<div class="postbox-container">
+<div class="postbox-container" style="width: 550px">
     <div id="panel-box" class="postbox hndle"><h2><span>Translate content</span></h2>
         <div class="inside">
             <?php endif; ?>
