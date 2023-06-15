@@ -64,7 +64,7 @@ if (!empty($locales)) {
 
     <h3><?= __($widgetTitle) ?></h3>
     <?= WPAbstract::checkUncheckBlock($widgetName) ?>
-    <div style="max-width: 400px;">
+    <div style="max-width: 250px;">
         <?php
         ArrayHelper::sortLocales($locales);
         ?>
