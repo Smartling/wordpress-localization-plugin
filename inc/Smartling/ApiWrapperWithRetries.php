@@ -151,10 +151,10 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
-    public function findJobByFileUri(ConfigurationProfileEntity $profile, string $fileUri): ?JobEntityWithStatus
+    public function findLastJobByFileUri(ConfigurationProfileEntity $profile, string $fileUri): ?JobEntityWithStatus
     {
         return $this->withRetry(function () use ($profile, $fileUri) {
-            return $this->base->findJobByFileUri($profile, $fileUri);
+            return $this->base->findLastJobByFileUri($profile, $fileUri);
         });
     }
 

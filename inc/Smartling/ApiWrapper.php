@@ -407,7 +407,7 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
-    private function getJobsApi(ConfigurationProfileEntity $profile): JobsApi
+    protected function getJobsApi(ConfigurationProfileEntity $profile): JobsApi
     {
         return JobsApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger());
     }
@@ -551,16 +551,21 @@ class ApiWrapper implements ApiWrapperInterface
         return ApiWrapperInterface::DAILY_BUCKET_JOB_NAME_PREFIX . " $date$suffix";
     }
 
-    public function findJobByFileUri(ConfigurationProfileEntity $profile, string $fileUri): ?JobEntityWithStatus
+    public function findLastJobByFileUri(ConfigurationProfileEntity $profile, string $fileUri): ?JobEntityWithStatus
     {
         $parameters = new SearchJobsParameters();
         $parameters->setFileUris([$fileUri]);
 
-        $result = $this->getJobsApi($profile)->searchJobs($parameters);
-        if (count($result) === 0) {
+        $result = array_reduce($this->getJobsApi($profile)->searchJobs($parameters), static function (?array $carry, array $item): array {
+            if ($carry === null) {
+                return $item;
+            }
+            return (new DateTime($item['createdDate']))->diff(new DateTime($carry['createdDate']))->invert === 0 ? $carry : $item;
+        });
+        if ($result === null) {
             return null;
         }
-        return new JobEntityWithStatus($result[0]['jobStatus'], $result[0]['jobName'], $result[0]['translationJobUid'], $profile->getProjectId());
+        return new JobEntityWithStatus($result['jobStatus'], $result['jobName'], $result['translationJobUid'], $profile->getProjectId());
     }
 
     public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, bool $authorize): JobEntityWithBatchUid

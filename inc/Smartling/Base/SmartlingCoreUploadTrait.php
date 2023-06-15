@@ -866,7 +866,7 @@ trait SmartlingCoreUploadTrait
             SubmissionEntity::FIELD_STATUS => [SubmissionEntity::SUBMISSION_STATUS_NEW],
             SubmissionEntity::FIELD_BATCH_UID => [$submission->getBatchUid()],
         ]);
-        $jobWithStatus = $this->getApiWrapper()->findJobByFileUri($profile, $submission->getFileUri());
+        $jobWithStatus = $this->getApiWrapper()->findLastJobByFileUri($profile, $submission->getFileUri());
         $batchUid = '';
         if ($jobWithStatus !== null) {
             $job = $jobWithStatus->getJobInformationEntity();
