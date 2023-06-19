@@ -8,6 +8,7 @@ use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Jobs\JobAbstract;
 use Smartling\Queue\Queue;
 use Smartling\Queue\QueueInterface;
+use Smartling\Services\GlobalSettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\Table\QueueManagerTableWidget;
 use Smartling\WP\WPAbstract;
@@ -43,7 +44,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
         $this->queue = $queue;
     }
 
-    public function wp_enqueue()
+    public function wp_enqueue(): void
     {
         wp_enqueue_script(
             $this->getPluginInfo()->getName() . 'settings',
@@ -58,6 +59,9 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
             $this->getPluginInfo()->getVersion(),
             false
         );
+        wp_localize_script($this->getPluginInfo()->getName() . 'settings-admin-footer', 'smartling', [
+            'addLockIdAttributeOnSave' => GlobalSettingsManager::isGenerateLockIdsEnabled(),
+        ]);
         wp_register_style(
             $this->getPluginInfo()->getName(),
             $this->getPluginInfo()->getUrl() . 'css/smartling-connector-admin.css', [],
