@@ -9,10 +9,12 @@ use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\Jobs\JobEntityWithBatchUid;
+use Smartling\Jobs\JobEntityWithStatus;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
+use Smartling\Vendor\Smartling\Jobs\JobStatus;
 
 interface ApiWrapperInterface
 {
@@ -36,6 +38,12 @@ interface ApiWrapperInterface
         'referenceNumber' => 'string',
         'customFields' => [],
     ];
+    public const DAILY_BUCKET_JOB_NAME_PREFIX = "Daily Bucket Job";
+    public const JOB_STATUSES_FOR_DAILY_BUCKET_JOB = [
+        JobStatus::AWAITING_AUTHORIZATION,
+        JobStatus::IN_PROGRESS,
+        JobStatus::COMPLETED,
+    ];
 
     /**
      * @throws SmartlingApiException
@@ -54,7 +62,6 @@ interface ApiWrapperInterface
 
     public function createAuditLogRecord(
         ConfigurationProfileEntity $profile,
-        /** @noinspection PhpLanguageLevelInspection */
         #[ExpectedValues(valuesFromClass: CreateRecordParameters::class)]
         string $actionType,
         string $description,
@@ -106,10 +113,11 @@ interface ApiWrapperInterface
 
     /**
      * @throws SmartlingApiException
-     * @noinspection PhpLanguageLevelInspection
      */
     #[ArrayShape(self::CREATE_JOB_RESPONSE)]
     public function createJob(ConfigurationProfileEntity $profile, array $params): array;
+
+    public function findLastJobByFileUri(ConfigurationProfileEntity $profile, string $fileUri): ?JobEntityWithStatus;
 
     /**
      * @throws SmartlingApiException
@@ -118,7 +126,6 @@ interface ApiWrapperInterface
 
     /**
      * @throws SmartlingApiException
-     * @noinspection PhpLanguageLevelInspection
      */
     #[ArrayShape(self::CREATE_BATCH_RESPONSE)]
     public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, bool $authorize = false): array;

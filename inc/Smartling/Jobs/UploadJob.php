@@ -4,7 +4,6 @@ namespace Smartling\Jobs;
 
 use Smartling\Base\ExportedAPI;
 use Smartling\Exceptions\SmartlingApiException;
-use Smartling\Helpers\ArrayHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 class UploadJob extends JobAbstract
