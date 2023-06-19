@@ -5,6 +5,7 @@ namespace Smartling;
 use DateTime;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Jobs\JobEntityWithBatchUid;
+use Smartling\Jobs\JobEntityWithStatus;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Vendor\Jralph\Retry\Command;
@@ -147,6 +148,13 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
     {
         $this->withRetry(function () use ($profile, $batchUid) {
             $this->base->executeBatch($profile, $batchUid);
+        });
+    }
+
+    public function findLastJobByFileUri(ConfigurationProfileEntity $profile, string $fileUri): ?JobEntityWithStatus
+    {
+        return $this->withRetry(function () use ($profile, $fileUri) {
+            return $this->base->findLastJobByFileUri($profile, $fileUri);
         });
     }
 

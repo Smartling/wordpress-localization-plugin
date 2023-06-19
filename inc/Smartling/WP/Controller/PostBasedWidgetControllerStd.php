@@ -480,15 +480,6 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                             'profile' => ArrayHelper::first($profile),
                         ]
                     );
-                    if (GlobalSettingsManager::isGenerateLockIdsEnabled()) {
-                        wp_enqueue_script(
-                            'smartling-block-locking',
-                            $this->getPluginInfo()->getUrl() . 'js/smartling-block-locking.js',
-                            ['wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor'],
-                            $this->getPluginInfo()->getVersion(),
-                            true,
-                        );
-                    }
                 } else {
                     echo '<p>' . __('No suitable configuration profile found.') . '</p>';
                 }

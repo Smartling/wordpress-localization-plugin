@@ -59,12 +59,12 @@ if (!empty($locales)) {
     $widgetTitle = 'Download translation';
     ?>
 
-    <div id="smartling-post-widget">
+    <div id="smartling-post-widget" style="float: right;">
     <h2>Smartling connector actions</h2>
 
     <h3><?= __($widgetTitle) ?></h3>
     <?= WPAbstract::checkUncheckBlock($widgetName) ?>
-    <div style="width: 400px;">
+    <div style="max-width: 250px;">
         <?php
         ArrayHelper::sortLocales($locales);
         ?>
@@ -144,3 +144,4 @@ if (!empty($locales)) {
         <a href="<?= get_site_url() ?>/wp-admin/network/admin.php?page=smartling_configuration_profile_setup&action=edit&profile=<?= $data['profile']->getId() ?>">settings.</a>
     </div>
 <?php } ?>
+<div style="clear: both"></div>
