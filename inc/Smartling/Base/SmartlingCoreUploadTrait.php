@@ -329,8 +329,6 @@ trait SmartlingCoreUploadTrait
             }
             $submission = $this->getSubmissionManager()->storeEntity($submission);
             do_action(ExportedAPI::ACTION_AFTER_TRANSLATION_APPLIED, $submission);
-
-            $this->prepareRelatedSubmissions($submission);
         } catch (InvalidXMLException $e) {
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
             $submission->setLastError('Received invalid XML file.');
@@ -463,8 +461,6 @@ trait SmartlingCoreUploadTrait
                 $xml = $this->getXMLFiltered($_submission);
                 // Processing attachments
                 do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $_submission);
-                // Preparing placeholders
-                $this->prepareRelatedSubmissions($_submission);
 
                 $locales[] = $this->getSettingsManager()->getSmartlingLocaleBySubmission($_submission);
             }
@@ -661,7 +657,6 @@ trait SmartlingCoreUploadTrait
 
         try {
             if (1 === $submission->getIsCloned()) {
-                $this->prepareRelatedSubmissions($submission);
                 $xml = $this->getXMLFiltered($submission);
                 $submission->generateFileUri();
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
