@@ -39,12 +39,11 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
             [
                 'content_type' => 'category',
                 'source_id' => $categoryId,
-                'status' => SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
                 'is_cloned' => 0,
             ]
         );
 
-        self::assertCount(1, $submissions);
+        self::assertCount(1, $submissions, var_export($submissions, true));
 
         $targetCategoryId = ArrayHelper::first($submissions)->getTargetId();
 
