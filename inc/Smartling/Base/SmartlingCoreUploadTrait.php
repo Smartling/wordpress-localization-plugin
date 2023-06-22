@@ -21,7 +21,6 @@ use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
 use Smartling\Helpers\PostContentHelper;
-use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
@@ -348,7 +347,6 @@ trait SmartlingCoreUploadTrait
             $submission->setLastError('Could not apply translations because submission points to non existing blog.');
             $this->getLogger()->error($e->getMessage());
             $this->getSubmissionManager()->storeEntity($submission);
-            /** @var SiteHelper $sh */
             $this->handleBadBlogId($submission);
         } catch (SmartlingFileDownloadException $e) {
             /**
@@ -798,7 +796,7 @@ trait SmartlingCoreUploadTrait
             }
             $result[$term->taxonomy][] = $term->term_id;
         }
-        $this->getSiteHelper()->withBlog($submission->getTargetBlogId(), function () use ($result, $submission) {
+        $this->getContentHelper()->getSiteHelper()->withBlog($submission->getTargetBlogId(), function () use ($result, $submission) {
             foreach ($result as $taxonomy => $ids) {
                 $result = $this->wpProxy->setObjectTerms($submission->getTargetId(), $ids, $taxonomy);
                 if ($result instanceof \WP_Error) {
