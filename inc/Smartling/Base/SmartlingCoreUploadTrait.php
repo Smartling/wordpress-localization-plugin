@@ -785,7 +785,7 @@ trait SmartlingCoreUploadTrait
             return;
         }
         foreach ($terms as $term) {
-            $relatedSubmission = $this->submissionManager->findOne([
+            $relatedSubmission = $this->getSubmissionManager()->findOne([
                 SubmissionEntity::FIELD_CONTENT_TYPE => $term->taxonomy,
                 SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
                 SubmissionEntity::FIELD_SOURCE_ID => $term->term_id,
