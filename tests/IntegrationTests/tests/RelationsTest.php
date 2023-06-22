@@ -81,7 +81,7 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
 
         $term = ArrayHelper::first($terms);
 
-        self::assertSame($targetCategoryId, $term->term_id);
+        self::assertSame($targetCategoryId, $term->term_id, var_export($this->getSubmissionManager()->find(), true));
     }
 
     public function testTranslationAndCloningRelationsOneLevelDeep()
