@@ -50,13 +50,12 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         $submissions = $this->getSubmissionManager()->find(
             [
                 'content_type' => 'post',
-                'status' => SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
                 'is_cloned' => 0,
                 'source_id' => $postId,
             ]
         );
 
-        self::assertCount(1, $submissions);
+        self::assertCount(1, $submissions, var_export($submissions, true));
 
         $submission = ArrayHelper::first($submissions);
         $targetPostId = $submission->getTargetId();
