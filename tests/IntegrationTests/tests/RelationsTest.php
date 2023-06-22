@@ -38,24 +38,25 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         $submissions = $this->getSubmissionManager()->find(
             [
                 'content_type' => 'category',
-                'source_id' => $categoryId,
+                'status' => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
                 'is_cloned' => 0,
             ]
         );
 
-        self::assertCount(1, $submissions, var_export($submissions, true));
+        self::assertCount(1, $submissions);
 
         $targetCategoryId = ArrayHelper::first($submissions)->getTargetId();
 
         $submissions = $this->getSubmissionManager()->find(
             [
                 'content_type' => 'post',
+                'status' => SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
                 'is_cloned' => 0,
                 'source_id' => $postId,
             ]
         );
 
-        self::assertCount(1, $submissions, var_export($submissions, true));
+        self::assertCount(1, $submissions);
 
         $submission = ArrayHelper::first($submissions);
         $targetPostId = $submission->getTargetId();
@@ -81,7 +82,7 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
 
         $term = ArrayHelper::first($terms);
 
-        self::assertSame($targetCategoryId, $term->term_id, var_export($this->getSubmissionManager()->find(['is_cloned' => 0]), true));
+        self::assertSame($targetCategoryId, $term->term_id);
     }
 
     public function testTranslationAndCloningRelationsOneLevelDeep()
