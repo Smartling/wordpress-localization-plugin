@@ -306,6 +306,7 @@ trait SmartlingCoreUploadTrait
                 $submission->setAppliedDate(DateTimeHelper::nowAsString());
             }
             $this->getContentHelper()->writeTargetContent($submission, $targetContent);
+            $this->setObjectTerms($submission);
             if (array_key_exists('meta', $translation) && ArrayHelper::notEmpty($translation['meta'])) {
                 $metaFields = &$translation['meta'];
 
@@ -776,6 +777,35 @@ trait SmartlingCoreUploadTrait
         }
 
         return $translation;
+    }
+
+    private function setObjectTerms(SubmissionEntity $submission): void {
+        $result = [];
+        $terms = $this->wpProxy->getObjectTerms($submission->getSourceId());
+        if ($terms instanceof \WP_Error) {
+            $this->getLogger()->error("Failed to get object terms submissionId={$submission->getId()}, sourceId={$submission->getSourceId()}: " . $terms->get_error_message());
+            return;
+        }
+        foreach ($terms as $term) {
+            $relatedSubmission = $this->submissionManager->findOne([
+                SubmissionEntity::FIELD_CONTENT_TYPE => $term->taxonomy,
+                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
+                SubmissionEntity::FIELD_SOURCE_ID => $term->term_id,
+                SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
+            ]);
+            if ($relatedSubmission !== null) {
+                $term->term_id = $relatedSubmission->getTargetId();
+            }
+            $result[$term->taxonomy][] = $term->term_id;
+        }
+        $this->getSiteHelper()->withBlog($submission->getTargetBlogId(), function () use ($result, $submission) {
+            foreach ($result as $taxonomy => $ids) {
+                $result = $this->wpProxy->setObjectTerms($submission->getTargetId(), $ids, $taxonomy);
+                if ($result instanceof \WP_Error) {
+                    $this->getLogger()->error("Failed to set object terms submissionId={$submission->getId()}, sourceId={$submission->getSourceId()}: " . $result->get_error_message());
+                }
+            }
+        });
     }
 
     private function applyBlockLevelLocks(array $targetContent, string $translatedContent, SubmissionEntity $submission, PostContentHelper $postContentHelper): string
