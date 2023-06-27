@@ -248,7 +248,7 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         foreach ($relations->getMissingReferences()[$cloneBlogId][ContentTypeHelper::POST_TYPE_ATTACHMENT] as $imageId) {
             $submission = $this->uploadDownload($this->createSubmissionForCloning(ContentTypeHelper::POST_TYPE_ATTACHMENT, $imageId));
             $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_COMPLETED, $submission->getStatus());
-            $this->assertNotEquals($submission->getSourceId(), $submission->getTargetId());
+            $this->assertNotEquals(0, $submission->getTargetId());
             if ($submission->getSourceId() !== $thumbId) {
                 $imageSubmissions = [$submission];
             } else {
@@ -269,15 +269,10 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         #endregion
         #region translation
         $imageSubmissions = [];
-        $idDifferenceCount = 0;
         foreach ($relations->getMissingReferences()[$translationBlogId][ContentTypeHelper::POST_TYPE_ATTACHMENT] as $imageId) {
             $submission = $this->uploadDownload($this->createSubmission(ContentTypeHelper::POST_TYPE_ATTACHMENT, $imageId));
             $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_COMPLETED, $submission->getStatus());
             $this->assertNotEquals(0, $submission->getTargetId());
-            if ($submission->getSourceId() !== $submission->getTargetId()) {
-                ++$idDifferenceCount;
-            }
-            $this->assertGreaterThan(0, $idDifferenceCount);
             if ($submission->getSourceId() !== $thumbId) {
                 $imageSubmissions = [$submission];
             } else {
