@@ -61,7 +61,7 @@ ARG ACFPRO_KEY
 ARG GITHUB_OAUTH_TOKEN
 
 ENV SITES=${SITES}
-ENV DEPENDENCIES="elementor --version 3.13.4;smartling-connector;wordpress-seo;"
+ENV DEPENDENCIES="elementor --version=3.13.4;smartling-connector;wordpress-seo;"
 
 ENV COMPOSER_H_DIR="${HOME}/.composer"
 ENV PLUGIN_DIR="${WP_PLUGINS_DIR}/smartling-connector"
