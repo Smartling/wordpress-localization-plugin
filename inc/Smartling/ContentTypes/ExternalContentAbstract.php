@@ -25,9 +25,6 @@ abstract class ExternalContentAbstract implements ContentTypePluggableInterface 
     public function canHandle(string $contentType, ?int $contentId = null): bool
     {
         $plugins = $this->wpProxy->get_plugins();
-        if ($contentType === 'page') {
-            $this->getLogger()->info('WP-810: ' . implode(', ', array_keys($plugins)));
-        }
         foreach ($this->getPluginPaths() as $path) {
             if (array_key_exists($path, $plugins) && $this->wpProxy->is_plugin_active($path) &&
                 $this->pluginHelper->versionInRange($plugins[$path]['Version'] ?? 0, $this->getMinVersion(), $this->getMaxVersion())) {

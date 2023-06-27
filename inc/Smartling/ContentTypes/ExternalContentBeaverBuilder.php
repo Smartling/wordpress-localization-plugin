@@ -62,9 +62,6 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
 
     public function canHandle(string $contentType, ?int $contentId = null): bool
     {
-        $this->getLogger()->info("WP-810: parentCanHandle($contentType, $contentId)" . (parent::canHandle($contentType, $contentId) ? 'true' : 'false'));
-        $this->getLogger()->info("WP-810: isPost" . ($this->contentTypeHelper->isPost($contentType) ? 'true' : 'false'));
-        $this->getLogger()->info("WP-810: getDataFromPostMeta" . var_export($this->getDataFromPostMeta($contentId), true));
         return parent::canHandle($contentType, $contentId) &&
             $this->contentTypeHelper->isPost($contentType) &&
             $this->getDataFromPostMeta($contentId) !== '';
