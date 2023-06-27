@@ -18,7 +18,7 @@ interface ContentTypePluggableInterface
 
     public function getPluginId(): string;
 
-    public function getPluginPath(): string;
+    public function getPluginPaths(): array;
 
     public function getRelatedContent(string $contentType, int $contentId): array;
 

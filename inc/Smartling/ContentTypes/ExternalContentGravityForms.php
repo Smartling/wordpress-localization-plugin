@@ -157,9 +157,9 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
         return 'gravity_forms';
     }
 
-    public function getPluginPath(): string
+    public function getPluginPaths(): array
     {
-        return 'gravityforms/gravityforms.php';
+        return ['gravityforms/gravityforms.php'];
     }
 
     public function getRelatedContent(string $contentType, int $contentId): array

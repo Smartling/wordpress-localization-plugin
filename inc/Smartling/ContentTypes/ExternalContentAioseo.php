@@ -122,9 +122,9 @@ class ExternalContentAioseo extends ExternalContentAbstract
         return 'aioseo';
     }
 
-    public function getPluginPath(): string
+    public function getPluginPaths(): array
     {
-        return 'all-in-one-seo-pack/all_in_one_seo_pack.php';
+        return ['all-in-one-seo-pack/all_in_one_seo_pack.php'];
     }
 
     public function setContentFields(array $original, array $translation, SubmissionEntity $submission): ?array

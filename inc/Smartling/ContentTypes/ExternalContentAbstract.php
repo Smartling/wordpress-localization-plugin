@@ -28,9 +28,11 @@ abstract class ExternalContentAbstract implements ContentTypePluggableInterface 
         if ($contentType === 'page') {
             $this->getLogger()->info('WP-810: ' . implode(', ', array_keys($plugins)));
         }
-        if (array_key_exists($this->getPluginPath(), $plugins)) {
-            return $this->wpProxy->is_plugin_active($this->getPluginPath()) &&
-                $this->pluginHelper->versionInRange($plugins[$this->getPluginPath()]['Version'] ?? '0', $this->getMinVersion(), $this->getMaxVersion());
+        foreach ($this->getPluginPaths() as $path) {
+            if (array_key_exists($path, $plugins) && $this->wpProxy->is_plugin_active($path) &&
+                $this->pluginHelper->versionInRange($plugins[$path]['Version'] ?? 0, $this->getMinVersion(), $this->getMaxVersion())) {
+                return true;
+            }
         }
 
         return false;
