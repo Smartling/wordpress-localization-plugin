@@ -221,9 +221,9 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return 'elementor';
     }
 
-    public function getPluginPath(): string
+    public function getPluginPaths(): array
     {
-        return 'elementor/elementor.php';
+        return ['elementor/elementor.php'];
     }
 
     public function getRelatedContent(string $contentType, int $contentId): array

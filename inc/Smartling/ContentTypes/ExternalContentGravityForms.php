@@ -157,9 +157,9 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
         return 'gravity_forms';
     }
 
-    public function getPluginPath(): string
+    public function getPluginPaths(): array
     {
-        return 'gravityforms/gravityforms.php';
+        return ['gravityforms/gravityforms.php'];
     }
 
     public function getRelatedContent(string $contentType, int $contentId): array
@@ -180,6 +180,9 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
 
     public function setContentFields(array $original, array $translation, SubmissionEntity $submission): ?array
     {
+        if (!array_key_exists($this->getPluginId(), $translation)) {
+            return null;
+        }
         $result = $original;
         $result['entity']['title'] = $translation[$this->getPluginId()]['title'];
         $displayMeta = json_decode($result['entity']['displayMeta'], true, 512, JSON_THROW_ON_ERROR);
