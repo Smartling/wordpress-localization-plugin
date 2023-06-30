@@ -2,14 +2,8 @@
 
 namespace Smartling\ContentTypes;
 
-use Smartling\Base\ExportedAPI;
 use Smartling\ContentTypes\ConfigParsers\PostTypeConfigParser;
-use Smartling\Exception\SmartlingConfigException;
-use Smartling\Helpers\CustomMenuContentTypeHelper;
-use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
 use Smartling\Helpers\StringHelper;
-use Smartling\Submissions\SubmissionEntity;
-use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\Controller\PostBasedWidgetControllerStd;
 use Smartling\WP\Controller\ContentEditJobController;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
@@ -18,7 +12,7 @@ class CustomPostType extends PostBasedContentTypeAbstract
 {
     use CustomTypeTrait;
 
-    public function validateConfig()
+    public function validateConfig(): void
     {
         $config = $this->getConfig();
         if (array_key_exists('type', $config)) {
@@ -26,7 +20,7 @@ class CustomPostType extends PostBasedContentTypeAbstract
         }
     }
 
-    private function validateType()
+    private function validateType(): void
     {
         $parser = new PostTypeConfigParser($this->getConfig());
 
@@ -45,9 +39,8 @@ class CustomPostType extends PostBasedContentTypeAbstract
 
     /**
      * Handler to register IO Wrapper. Alters DI container.
-     * @return void
      */
-    public function registerIOWrapper()
+    public function registerIOWrapper(): void
     {
         $di = $this->getContainerBuilder();
         $wrapperId = 'wrapper.entity.' . $this->getSystemName();
@@ -60,9 +53,8 @@ class CustomPostType extends PostBasedContentTypeAbstract
 
     /**
      * Handler to register Widget (Edit Screen). Alters DI container.
-     * @return void
      */
-    public function registerWidgetHandler()
+    public function registerWidgetHandler(): void
     {
         if ($this->getConfigParser()->hasWidget()) {
             $di = $this->getContainerBuilder();
@@ -89,7 +81,7 @@ class CustomPostType extends PostBasedContentTypeAbstract
     /**
      * Alters DI container
      */
-    protected function registerJobWidget()
+    protected function registerJobWidget(): void
     {
         $di = $this->getContainerBuilder();
         $tag = 'wp.job.' . $this->getSystemName();
@@ -104,48 +96,5 @@ class CustomPostType extends PostBasedContentTypeAbstract
             ->addArgument($di->getDefinition('site.cache'))
             ->addMethodCall('setServedContentType', [$this->getSystemName()]);
         $di->get($tag)->register();
-    }
-
-    /**
-     * Alters $params->accumulator
-     * @throws SmartlingConfigException
-     */
-    public function registerTaxonomyRelations(ProcessRelatedContentParams $params): void
-    {
-        $submission = $params->getSubmission();
-        $sourceBlogId = $submission->getSourceBlogId();
-        $targetBlogId = $submission->getTargetBlogId();
-        if ($this->getSystemName() === $submission->getContentType()) {
-            $menuHelper = $this->getContainerBuilder()->get('helper.customMenu');
-            if (!$menuHelper instanceof CustomMenuContentTypeHelper) {
-                throw new SmartlingConfigException(CustomMenuContentTypeHelper::class . ' expected in DI for `helper.customMenu`');
-            }
-            foreach ($this->getContainerBuilder()->get('helper.customMenu')->getTerms($submission, $params->getContentType()) as $element) {
-                $id = $element->term_id;
-                $submissionManager = $this->getContainerBuilder()->get('manager.submission');
-                if (!$submissionManager instanceof SubmissionManager) {
-                    throw new SmartlingConfigException(SubmissionManager::class . ' expected in DI for `manager.submission`');
-                }
-                $relatedSubmission = $submissionManager->findOne([
-                    SubmissionEntity::FIELD_CONTENT_TYPE => $params->getContentType(),
-                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
-                    SubmissionEntity::FIELD_SOURCE_ID => $id,
-                    SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
-                ]);
-                if ($relatedSubmission !== null) {
-                    $params->getAccumulator()[$params->getContentType()][] = $relatedSubmission->getTargetId();
-                }
-            }
-        }
-    }
-
-    /**
-     * @return void
-     */
-    public function registerFilters()
-    {
-        if (0 < count($this->getRelatedTaxonomies())) {
-            add_action(ExportedAPI::ACTION_SMARTLING_PROCESSOR_RELATED_CONTENT, [$this, 'registerTaxonomyRelations']);
-        }
     }
 }

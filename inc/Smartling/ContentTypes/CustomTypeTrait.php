@@ -6,62 +6,32 @@ use Smartling\ContentTypes\ConfigParsers\ConfigParserInterface;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
-/**
- * Class CustomTypeTrait
- * @package Smartling\ContentTypes
- */
 trait CustomTypeTrait
 {
-    /**
-     * @var string
-     */
-    private $systemName = '';
+    private string $systemName = '';
 
-    /**
-     * @var array
-     */
-    private $config = [];
+    private array $config = [];
 
-    /**
-     * @var string
-     */
-    private $label = '';
+    private string $label = '';
 
-    /**
-     * @var ConfigParserInterface
-     */
-    private $configParser;
+    private ConfigParserInterface $configParser;
 
-    /**
-     * @return string
-     */
     public function getSystemName(): string
     {
         return $this->systemName;
     }
 
-    /**
-     * @param string $systemName
-     */
-    public function setSystemName($systemName)
+    public function setSystemName(string $systemName): void
     {
         $this->systemName = $systemName;
     }
 
-    /**
-     * @return array
-     */
-    public function getConfig()
+    public function getConfig(): array
     {
         return $this->config;
     }
 
-    /**
-     * @param array $config
-     *
-     * @return ContentTypeInterface
-     */
-    public function setConfig($config)
+    public function setConfig(array $config): ContentTypeInterface
     {
         $this->config = $config;
 
@@ -70,41 +40,28 @@ trait CustomTypeTrait
 
     /**
      * Display name of content type, e.g.: Post
-     * @return string
      */
     public function getLabel(): string
     {
         return $this->label;
     }
 
-    /**
-     * @param string $label
-     */
-    public function setLabel($label)
+    public function setLabel(string $label): void
     {
         $this->label = $label;
     }
 
-    /**
-     * @return ConfigParserInterface
-     */
-    public function getConfigParser()
+    public function getConfigParser(): ConfigParserInterface
     {
         return $this->configParser;
     }
 
-    /**
-     * @param ConfigParserInterface $configParser
-     */
-    public function setConfigParser($configParser)
+    public function setConfigParser(ConfigParserInterface $configParser): void
     {
         $this->configParser = $configParser;
     }
 
-    /**
-     * @return bool
-     */
-    public function isValidType()
+    public function isValidType(): bool
     {
         if (!$this->getConfigParser()->isValid()) {
             return false;
@@ -114,31 +71,27 @@ trait CustomTypeTrait
          * Check if identifier already registered
          */
         $mgr = $this->getContainerBuilder()->get('content-type-descriptor-manager');
+        if (!$mgr instanceof ContentTypeManager) {
+            throw new \RuntimeException("content-type-descriptor-manager expected to be " . ContentTypeManager::class);
+        }
 
-        /**
-         * @var ContentTypeManager $mgr
-         */
-        $registered = null;
         try {
             $mgr->getDescriptorByType($this->getSystemName());
 
             return false;
-        } catch (SmartlingInvalidFactoryArgumentException $e) {
+        } catch (SmartlingInvalidFactoryArgumentException) {
             // all ok,  do nothing
         }
 
         return true;
     }
 
-    /**
-     * @param ContainerBuilder $di
-     * @param array            $config
-     */
-    public static function registerCustomType(ContainerBuilder $di, array $config)
+    public static function registerCustomType(ContainerBuilder $di, array $config): void
     {
         $manager = 'content-type-descriptor-manager';
 
         $descriptor = new static($di);
+
         $descriptor->setConfig($config);
         $descriptor->validateConfig();
 
@@ -146,12 +99,14 @@ trait CustomTypeTrait
             $descriptor->registerIOWrapper();
             $descriptor->registerWidgetHandler();
             $mgr = $di->get($manager);
-            /**
-             * @var \Smartling\ContentTypes\ContentTypeManager $mgr
-             */
+            if (!$mgr instanceof ContentTypeManager) {
+                throw new \RuntimeException("$manager expected to be " . ContentTypeManager::class);
+            }
+            if (!$descriptor instanceof ContentTypeInterface) {
+                throw new \RuntimeException(ContentTypeInterface::class . ' expected');
+            }
             $mgr->addDescriptor($descriptor);
         }
-        $descriptor->registerFilters();
     }
 
     public function isVisible(string $page): bool

@@ -97,11 +97,4 @@ class CustomTaxonomyType extends TermBasedContentTypeAbstract
             ->addMethodCall('setBaseType', ['taxonomy']);
         $di->get($tag)->register();
     }
-
-    /**
-     * @return void
-     */
-    public function registerFilters()
-    {
-    }
 }

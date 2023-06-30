@@ -21,7 +21,6 @@ use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
 use Smartling\Helpers\PostContentHelper;
-use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
@@ -306,6 +305,7 @@ trait SmartlingCoreUploadTrait
                 $submission->setAppliedDate(DateTimeHelper::nowAsString());
             }
             $this->getContentHelper()->writeTargetContent($submission, $targetContent);
+            $this->setObjectTerms($submission);
             if (array_key_exists('meta', $translation) && ArrayHelper::notEmpty($translation['meta'])) {
                 $metaFields = &$translation['meta'];
 
@@ -329,8 +329,6 @@ trait SmartlingCoreUploadTrait
             }
             $submission = $this->getSubmissionManager()->storeEntity($submission);
             do_action(ExportedAPI::ACTION_AFTER_TRANSLATION_APPLIED, $submission);
-
-            $this->prepareRelatedSubmissions($submission);
         } catch (InvalidXMLException $e) {
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
             $submission->setLastError('Received invalid XML file.');
@@ -349,7 +347,6 @@ trait SmartlingCoreUploadTrait
             $submission->setLastError('Could not apply translations because submission points to non existing blog.');
             $this->getLogger()->error($e->getMessage());
             $this->getSubmissionManager()->storeEntity($submission);
-            /** @var SiteHelper $sh */
             $this->handleBadBlogId($submission);
         } catch (SmartlingFileDownloadException $e) {
             /**
@@ -463,8 +460,6 @@ trait SmartlingCoreUploadTrait
                 $xml = $this->getXMLFiltered($_submission);
                 // Processing attachments
                 do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $_submission);
-                // Preparing placeholders
-                $this->prepareRelatedSubmissions($_submission);
 
                 $locales[] = $this->getSettingsManager()->getSmartlingLocaleBySubmission($_submission);
             }
@@ -661,7 +656,6 @@ trait SmartlingCoreUploadTrait
 
         try {
             if (1 === $submission->getIsCloned()) {
-                $this->prepareRelatedSubmissions($submission);
                 $xml = $this->getXMLFiltered($submission);
                 $submission->generateFileUri();
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
@@ -781,6 +775,35 @@ trait SmartlingCoreUploadTrait
         }
 
         return $translation;
+    }
+
+    private function setObjectTerms(SubmissionEntity $submission): void {
+        $result = [];
+        $terms = $this->wpProxy->getObjectTerms($submission->getSourceId());
+        if ($terms instanceof \WP_Error) {
+            $this->getLogger()->error("Failed to get object terms submissionId={$submission->getId()}, sourceId={$submission->getSourceId()}: " . $terms->get_error_message());
+            return;
+        }
+        foreach ($terms as $term) {
+            $relatedSubmission = $this->getSubmissionManager()->findOne([
+                SubmissionEntity::FIELD_CONTENT_TYPE => $term->taxonomy,
+                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
+                SubmissionEntity::FIELD_SOURCE_ID => $term->term_id,
+                SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
+            ]);
+            if ($relatedSubmission !== null) {
+                $term->term_id = $relatedSubmission->getTargetId();
+            }
+            $result[$term->taxonomy][] = $term->term_id;
+        }
+        $this->getContentHelper()->getSiteHelper()->withBlog($submission->getTargetBlogId(), function () use ($result, $submission) {
+            foreach ($result as $taxonomy => $ids) {
+                $result = $this->wpProxy->setObjectTerms($submission->getTargetId(), $ids, $taxonomy);
+                if ($result instanceof \WP_Error) {
+                    $this->getLogger()->error("Failed to set object terms submissionId={$submission->getId()}, sourceId={$submission->getSourceId()}: " . $result->get_error_message());
+                }
+            }
+        });
     }
 
     private function applyBlockLevelLocks(array $targetContent, string $translatedContent, SubmissionEntity $submission, PostContentHelper $postContentHelper): string

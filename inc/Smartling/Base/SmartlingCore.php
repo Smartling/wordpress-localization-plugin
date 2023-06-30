@@ -3,14 +3,10 @@
 namespace Smartling\Base;
 
 use Exception;
-use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ExternalContentManager;
-use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
-use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\CommonLogMessagesTrait;
-use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
@@ -56,70 +52,6 @@ class SmartlingCore extends SmartlingCoreAbstract
     public function cloneContent(SubmissionEntity $submission): void
     {
         $this->applyXML($submission, $this->getXMLFiltered($submission), $this->xmlHelper, $this->postContentHelper);
-    }
-
-    /**
-     * @param SubmissionEntity $submission
-     *
-     * @return void
-     *
-     * @throws BlogNotFoundException
-     */
-    public function prepareRelatedSubmissions(SubmissionEntity $submission)
-    {
-        $this->getLogger()->info(vsprintf('Searching for related content for submission = \'%s\' for translation', [
-            $submission->getId(),
-        ]));
-        $originalEntity = $this->getContentHelper()->readSourceContent($submission);
-        $relatedContentTypes = $originalEntity->getRelatedTypes();
-        $accumulator = [
-            'category' => [],
-            'post_tag' => [],
-        ];
-        try {
-            if (!empty($relatedContentTypes)) {
-                foreach ($relatedContentTypes as $contentType) {
-                    try {
-                        $params = new ProcessRelatedContentParams($submission, $contentType, $accumulator);
-                        do_action(ExportedAPI::ACTION_SMARTLING_PROCESSOR_RELATED_CONTENT, $params);
-                    } catch (\Exception $e) {
-                        $this->getLogger()->warning(
-                            vsprintf('An unhandled exception occurred while processing related content for submission=%s', [$submission->getId()])
-                        );
-                    }
-                }
-            }
-
-            if ($submission->getContentType() !== ContentTypeNavigationMenu::WP_CONTENT_TYPE) {
-                $this->getContentHelper()->ensureTargetBlogId($submission);
-                $this->getLogger()
-                    ->debug(vsprintf('Preparing to assign accumulator: %s', [var_export($accumulator, true)]));
-                foreach ($accumulator as $type => $ids) {
-                    $this->getLogger()
-                        ->debug(vsprintf('Assigning term (type = \'%s\', ids = \'%s\') to content (type = \'%s\', id = \'%s\') on blog= \'%s\'.', [
-                            $type,
-                            implode(',', $ids),
-                            $submission->getContentType(),
-                            $submission->getTargetId(),
-                            $submission->getTargetBlogId(),
-                        ]));
-
-                    wp_set_post_terms($submission->getTargetId(), $ids, $type);
-                }
-                $this->getContentHelper()->ensureRestoredBlogId();
-            } else {
-                $this->getCustomMenuHelper()->assignMenuItemsToMenu(
-                    $submission->getTargetId(),
-                    $submission->getTargetBlogId(),
-                    $accumulator[ContentTypeNavigationMenu::WP_CONTENT_TYPE] ?? [],
-                );
-            }
-        } catch (BlogNotFoundException $e) {
-            $message = vsprintf('Inconsistent multisite installation. %s', [$e->getMessage()]);
-            $this->getLogger()->emergency($message);
-
-            throw $e;
-        }
     }
 
     /**
