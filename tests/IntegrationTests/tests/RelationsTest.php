@@ -26,26 +26,27 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         $this->addTaxonomyToPost($postId, $categoryId);
 
         $translationHelper = $this->getTranslationHelper();
-        $translationHelper->prepareSubmission('category', $sourceBlogId, $categoryId, $targetBlogId);
+        $category = $translationHelper->prepareSubmission('category', $sourceBlogId, $categoryId, $targetBlogId);
         $submission = $translationHelper->prepareSubmission(ContentTypeHelper::CONTENT_TYPE_POST, $sourceBlogId, $postId, $targetBlogId);
 
         self::assertSame(SubmissionEntity::SUBMISSION_STATUS_NEW, $submission->getStatus());
         self::assertSame(0, $submission->getIsCloned());
 
+        $this->uploadDownload($category);
         $this->uploadDownload($submission);
 
         $submissions = $this->getSubmissionManager()->find(
             [
                 'content_type' => 'category',
-                'status' => SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,
+                'source_id' => $categoryId,
+                'status' => SubmissionEntity::SUBMISSION_STATUS_COMPLETED,
                 'is_cloned' => 0,
             ]
         );
 
         self::assertCount(1, $submissions);
 
-        $submission = ArrayHelper::first($submissions);
-        $targetCategoryId = $submission->getTargetId();
+        $targetCategoryId = ArrayHelper::first($submissions)->getTargetId();
 
         $submissions = $this->getSubmissionManager()->find(
             [
@@ -248,7 +249,7 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         foreach ($relations->getMissingReferences()[$cloneBlogId][ContentTypeHelper::POST_TYPE_ATTACHMENT] as $imageId) {
             $submission = $this->uploadDownload($this->createSubmissionForCloning(ContentTypeHelper::POST_TYPE_ATTACHMENT, $imageId));
             $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_COMPLETED, $submission->getStatus());
-            $this->assertNotEquals($submission->getSourceId(), $submission->getTargetId());
+            $this->assertNotEquals(0, $submission->getTargetId());
             if ($submission->getSourceId() !== $thumbId) {
                 $imageSubmissions = [$submission];
             } else {
@@ -272,7 +273,7 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         foreach ($relations->getMissingReferences()[$translationBlogId][ContentTypeHelper::POST_TYPE_ATTACHMENT] as $imageId) {
             $submission = $this->uploadDownload($this->createSubmission(ContentTypeHelper::POST_TYPE_ATTACHMENT, $imageId));
             $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_COMPLETED, $submission->getStatus());
-            $this->assertNotEquals($submission->getSourceId(), $submission->getTargetId());
+            $this->assertNotEquals(0, $submission->getTargetId());
             if ($submission->getSourceId() !== $thumbId) {
                 $imageSubmissions = [$submission];
             } else {

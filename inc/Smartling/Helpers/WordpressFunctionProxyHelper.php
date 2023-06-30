@@ -79,6 +79,14 @@ class WordpressFunctionProxyHelper
         return get_blog_permalink(...func_get_args());
     }
 
+    /**
+     * @return \WP_Term[]|\WP_Error
+     */
+    public function getObjectTerms(int $objectId): array|\WP_Error
+    {
+        return wp_get_object_terms($objectId, get_taxonomies());
+    }
+
     public function get_plugins(): array
     {
         if (function_exists('get_plugins')) {
@@ -110,6 +118,11 @@ class WordpressFunctionProxyHelper
     public function serialize_block($block): string
     {
         return serialize_block($block);
+    }
+
+    public function setObjectTerms(int $objectId, array $termIds, string $taxonomy): array|\WP_Error
+    {
+        return wp_set_object_terms($objectId, $termIds, $taxonomy);
     }
 
     public function url_to_postid(string $url): int

@@ -110,9 +110,12 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
         return 'beaver_builder';
     }
 
-    public function getPluginPath(): string
+    public function getPluginPaths(): array
     {
-        return 'bb-plugin/fl-builder.php';
+        return [
+            'bb-plugin/fl-builder.php',
+            'beaver-builder-lite-version/fl-builder.php',
+        ];
     }
 
     public function getRelatedContent(string $contentType, int $contentId): array

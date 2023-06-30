@@ -556,7 +556,7 @@ class ApiWrapper implements ApiWrapperInterface
         $parameters = new SearchJobsParameters();
         $parameters->setFileUris([$fileUri]);
 
-        $result = array_reduce($this->getJobsApi($profile)->searchJobs($parameters), static function (?array $carry, array $item): array {
+        $result = array_reduce($this->getJobsApi($profile)->searchJobs($parameters)['items'] ?? [], static function (?array $carry, array $item): array {
             if ($carry === null) {
                 return $item;
             }

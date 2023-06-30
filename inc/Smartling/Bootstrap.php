@@ -299,8 +299,9 @@ class Bootstrap
         }
         $handlers = $externalContentManager->getHandlers();
         foreach ($handlers as $handler) {
-            $externalContentPluginPaths[] = $handler->getPluginPath();
+            $externalContentPluginPaths[] = $handler->getPluginPaths();
         }
+        $externalContentPluginPaths = array_merge(...$externalContentPluginPaths);
         foreach (array_unique($externalContentPluginPaths) as $pluginPath) {
             foreach ($handlers as $handler) {
                 if (!$wpProxy->is_plugin_active($pluginPath) || $pluginHelper->pluginVersionInRange($pluginPath, $handler->getMinVersion(), $handler->getMaxVersion())) {
@@ -316,7 +317,7 @@ class Bootstrap
                     if (!array_key_exists($pluginPath, $supportedPluginVersions)) {
                         $supportedPluginVersions[$pluginPath] = [];
                     }
-                    if ($handler->getPluginPath() === $pluginPath) {
+                    if (in_array($pluginPath, $handler->getPluginPaths(), true)) {
                         $supportedPluginVersions[$pluginPath][] = $handler->getMinVersion() . '-' . $handler->getMaxVersion();
                     }
                 }

@@ -22,6 +22,9 @@ class ContentTypeManager extends SmartlingFactoryAbstract
         $this->registerHandler($descriptor->getSystemName(), $descriptor);
     }
 
+    /**
+     * @throws SmartlingInvalidFactoryArgumentException
+     */
     public function getDescriptorByType(string $systemName): ContentTypeInterface
     {
         return $this->getHandler($systemName);
@@ -70,6 +73,9 @@ class ContentTypeManager extends SmartlingFactoryAbstract
         return $output;
     }
 
+    /**
+     * @throws SmartlingInvalidFactoryArgumentException
+     */
     public function getHandler(string $contentType): ContentTypeInterface
     {
         if (array_key_exists($contentType, $this->collection)) {

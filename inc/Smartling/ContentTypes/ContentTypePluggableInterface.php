@@ -18,7 +18,11 @@ interface ContentTypePluggableInterface
 
     public function getPluginId(): string;
 
-    public function getPluginPath(): string;
+    /**
+     * @return array with possible paths to the plugin file relative to the plugins directory.
+     * Most plugins have a single possible path, some have variations.
+     */
+    public function getPluginPaths(): array;
 
     public function getRelatedContent(string $contentType, int $contentId): array;
 
