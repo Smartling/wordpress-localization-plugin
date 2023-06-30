@@ -22,29 +22,32 @@ class ApiWrapperTest extends TestCase {
 
         $jobs = $this->createMock(JobsApi::class);
         $jobs->method('searchJobs')->willReturn([
-            [
-                "createdDate" => "2016-11-21T11:51:17Z",
-                "jobName" => "myJobName second",
-                "jobStatus" => "IN_PROGRESS",
-                "translationJobUid" => "abc123aba",
-            ],
-            [
-                "createdDate" => "2015-11-21T11:51:17Z",
-                "jobName" => "myJobName first",
-                "jobStatus" => "IN_PROGRESS",
-                "translationJobUid" => "abc123abb",
-            ],
-            [
-                "createdDate" => "2018-11-21T11:51:17Z",
-                "jobName" => "myJobName last",
-                "jobStatus" => "IN_PROGRESS",
-                "translationJobUid" => "abc123abd",
-            ],
-            [
-                "createdDate" => "2017-11-21T11:51:17Z",
-                "jobName" => "myJobName third",
-                "jobStatus" => "IN_PROGRESS",
-                "translationJobUid" => "abc123abc",
+            "totalCount" => 4,
+            "items" => [
+                [
+                    "createdDate" => "2016-11-21T11:51:17Z",
+                    "jobName" => "myJobName second",
+                    "jobStatus" => "IN_PROGRESS",
+                    "translationJobUid" => "abc123aba",
+                ],
+                [
+                    "createdDate" => "2015-11-21T11:51:17Z",
+                    "jobName" => "myJobName first",
+                    "jobStatus" => "IN_PROGRESS",
+                    "translationJobUid" => "abc123abb",
+                ],
+                [
+                    "createdDate" => "2018-11-21T11:51:17Z",
+                    "jobName" => "myJobName last",
+                    "jobStatus" => "IN_PROGRESS",
+                    "translationJobUid" => "abc123abd",
+                ],
+                [
+                    "createdDate" => "2017-11-21T11:51:17Z",
+                    "jobName" => "myJobName third",
+                    "jobStatus" => "IN_PROGRESS",
+                    "translationJobUid" => "abc123abc",
+                ],
             ],
         ]);
         $found = (new ApiWrapper($settingsManager, $jobs))
