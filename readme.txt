@@ -4,7 +4,7 @@ Tags: translation, localization, localisation, translate, multilingual, smartlin
 Requires at least: 5.5
 Tested up to: 6.2
 Requires PHP: 8.0
-Stable tag: 3.1.8
+Stable tag: 3.2.0
 License: GPLv2 or later
 
 Translate content in WordPress quickly and seamlessly with Smartling, the industry-leading Translation Management System.
@@ -62,6 +62,11 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 3.2.0 =
+* Removed automated related items processing when uploading content. Previously, the plugin tried to create placeholders for known related content in taxonomies automatically, now any related content should be sent manually from post widget or bulk submit screen.
+* Fixed regression for retries in automated daily bucket jobs
+* Fixed Gravity Forms handler causing translations from Beaver Builder and Elementor to not apply
+
 = 3.1.8 =
 * Added retries for automated daily bucket jobs in cases where a translation batch was prematurely marked completed
 * Fixed taxonomy page submission widget layout
