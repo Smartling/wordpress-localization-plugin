@@ -41,11 +41,11 @@ trait SmartlingCoreTrait
      * Prepares a duplicate of source content for target site and links them.
      * To be used JUST BEFORE SENDING to Smartling
      */
-    protected function prepareTargetEntity(SubmissionEntity $submission, bool $forceClone = false): SubmissionEntity
+    protected function prepareTargetEntity(SubmissionEntity $submission): SubmissionEntity
     {
         $update = 0 !== $submission->getTargetId();
 
-        if (true === $update && false === $forceClone) {
+        if (true === $update && !$submission->isCloned()) {
             return $submission;
         }
 
@@ -63,27 +63,20 @@ trait SmartlingCoreTrait
         $this->prepareFieldProcessorValues($submission);
         $unfilteredSourceData = $this->readSourceContentWithMetadataAsArray($submission);
 
-        // filter as on download but clone;
+        $filteredData = $submission->isCloned() ? $unfilteredSourceData : $this->getFieldsFilter()->removeIgnoringFields($submission, $unfilteredSourceData);
 
-        $hardFilteredOriginalData = $this->getFieldsFilter()->removeIgnoringFields($submission, $unfilteredSourceData);
+        unset ($filteredData['entity']['ID'], $filteredData['entity']['term_id'], $filteredData['entity']['id']);
 
-        unset ($hardFilteredOriginalData['entity']['ID'], $hardFilteredOriginalData['entity']['term_id'], $hardFilteredOriginalData['entity']['id']);
-
-        if (array_key_exists('entity', $hardFilteredOriginalData) &&
+        if (array_key_exists('entity', $filteredData) &&
             $targetContent instanceof EntityAbstract &&
-            ArrayHelper::notEmpty($hardFilteredOriginalData['entity'])
+            ArrayHelper::notEmpty($filteredData['entity'])
         ) {
-            $_entity = &$hardFilteredOriginalData['entity'];
-            /**
-             * @var array $_entity
-             */
-            foreach ($_entity as $k => $v) {
-                // Value is of `mixed` type
+            foreach ($filteredData['entity'] as $k => $v) {
                 $targetContent->{$k} = apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $k, $v, $submission);
             }
         }
 
-        if (false === $forceClone && $targetContent instanceof EntityWithPostStatus) {
+        if ($targetContent instanceof EntityWithPostStatus) {
             $targetContent->translationDrafted();
         }
 
@@ -91,6 +84,7 @@ trait SmartlingCoreTrait
         $submission->setTargetId($targetContent->getId());
         $submission = $this->getSubmissionManager()->storeEntity($submission);
         $this->externalContentManager->setExternalContent($unfilteredSourceData, $this->externalContentManager->getExternalContent([], $submission, true), $submission);
+        $this->setObjectTerms($submission);
 
         $this->getLogger()
             ->debug(
@@ -105,24 +99,13 @@ trait SmartlingCoreTrait
                 )
             );
 
-        if (array_key_exists('meta', $hardFilteredOriginalData) &&
-            ArrayHelper::notEmpty($hardFilteredOriginalData['meta'])
-        ) {
-            $metaFields = &$hardFilteredOriginalData['meta'];
-            /**
-             * @var array $metaFields
-             */
+        if (array_key_exists('meta', $filteredData) && ArrayHelper::notEmpty($filteredData['meta'])) {
+            $metaFields = $filteredData['meta'];
             foreach ($metaFields as $metaName => & $metaValue) {
-                /* @var mixed $metaValue */
                 $metaValue = apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $metaName, $metaValue, $submission);
             }
             unset ($metaValue);
             $this->getContentHelper()->writeTargetMetadata($submission, $metaFields);
-        }
-
-        if (false === $update) {
-            $submission->setTargetId($targetContent->getId());
-            $submission = $this->getSubmissionManager()->storeEntity($submission);
         }
 
         try {

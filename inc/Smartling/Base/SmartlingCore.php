@@ -7,6 +7,7 @@ use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\CommonLogMessagesTrait;
+use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
@@ -51,7 +52,13 @@ class SmartlingCore extends SmartlingCoreAbstract
 
     public function cloneContent(SubmissionEntity $submission): void
     {
-        $this->applyXML($submission, $this->getXMLFiltered($submission), $this->xmlHelper, $this->postContentHelper);
+        $submission = $this->prepareTargetContent($submission);
+        if ($submission->getStatus() === SubmissionEntity::SUBMISSION_STATUS_NEW) {
+            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
+            $submission->setAppliedDate(DateTimeHelper::nowAsString());
+            $this->getSubmissionManager()->storeEntity($submission);
+            $this->getLogger()->info("Cloned submissionId={$submission->getId()}, sourceBlogId={$submission->getSourceBlogId()}, sourceId={$submission->getSourceId()}, targetBlogId={$submission->getTargetBlogId()}, targetId={$submission->getTargetId()}");
+        }
     }
 
     /**

@@ -218,7 +218,7 @@ trait SmartlingCoreUploadTrait
     }
 
     /**
-     * @return string[]
+     * @return string[] exception messages
      */
     public function applyXML(SubmissionEntity $submission, string $xml, XmlHelper $xmlHelper, PostContentHelper $postContentHelper): array
     {

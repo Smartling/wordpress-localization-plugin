@@ -179,6 +179,9 @@ class XmlHelper
         });
     }
 
+    /**
+     * @throws InvalidXMLException
+     */
     public function xmlDecode(string $content, SubmissionEntity $submission): DecodedXml
     {
         if ($content === '') {
