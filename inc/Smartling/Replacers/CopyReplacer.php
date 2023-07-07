@@ -4,19 +4,19 @@ namespace Smartling\Replacers;
 
 use Smartling\Submissions\SubmissionEntity;
 
-class CopyReplacer implements ReplacerInterface
+class CopyReplacer extends DoNothingContentReplacer
 {
     public function getLabel(): string
     {
         return "Copy attribute value";
     }
 
-    public function processOnDownload(mixed $originalValue, mixed $translatedValue, ?SubmissionEntity $submission): mixed
+    public function processAttributeOnDownload(mixed $originalValue, mixed $translatedValue, ?SubmissionEntity $submission): mixed
     {
         return $originalValue;
     }
 
-    public function processOnUpload(mixed $value, ?SubmissionEntity $submission = null): string
+    public function processAttributeOnUpload(mixed $value, ?SubmissionEntity $submission = null): string
     {
         return '';
     }

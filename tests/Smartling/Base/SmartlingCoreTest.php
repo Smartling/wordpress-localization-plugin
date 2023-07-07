@@ -46,17 +46,17 @@ class SmartlingCoreTest extends TestCase
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
         $wpProxy = new WordpressFunctionProxyHelper();
+        $gutenbergBlockHelper = new GutenbergBlockHelper(
+            $this->createMock(AcfDynamicSupport::class),
+            $this->createMock(MediaAttachmentRulesManager::class),
+            $this->createMock(ReplacerFactory::class),
+            new SerializerJsonWithFallback(),
+            $wpProxy,
+        );
         $this->core = new SmartlingCore(
             new ExternalContentManager(),
-            new PostContentHelper(
-                new GutenbergBlockHelper(
-                    $this->createMock(AcfDynamicSupport::class),
-                    $this->createMock(MediaAttachmentRulesManager::class),
-                    $this->createMock(ReplacerFactory::class),
-                    new SerializerJsonWithFallback(),
-                    $wpProxy,
-                )
-            ),
+            $gutenbergBlockHelper,
+            new PostContentHelper($gutenbergBlockHelper),
             new XmlHelper(new SerializerJsonWithFallback()),
             $this->createMock(TestRunHelper::class),
             $wpProxy

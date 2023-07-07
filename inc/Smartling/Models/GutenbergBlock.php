@@ -60,6 +60,14 @@ class GutenbergBlock
         return $result;
     }
 
+    public function withInnerContent(array $innerContent): self
+    {
+        $result = clone $this;
+        $result->innerContent = $innerContent;
+
+        return $result;
+    }
+
     public function withInnerBlock(GutenbergBlock $block, int $index): self
     {
         $result = clone $this;
