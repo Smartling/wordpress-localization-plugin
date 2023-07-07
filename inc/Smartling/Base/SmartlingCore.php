@@ -12,6 +12,7 @@ use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Helpers\XmlHelper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
@@ -26,10 +27,11 @@ class SmartlingCore extends SmartlingCoreAbstract
     private GutenbergBlockHelper $gutenbergBlockHelper;
     private PostContentHelper $postContentHelper;
     private TestRunHelper $testRunHelper;
+    private XmlHelper $xmlHelper;
     private WordpressFunctionProxyHelper $wpProxy;
 
 
-    public function __construct(ExternalContentManager $externalContentManager, GutenbergBlockHelper $gutenbergBlockHelper, PostContentHelper $postContentHelper, TestRunHelper $testRunHelper, WordpressFunctionProxyHelper $wpProxy)
+    public function __construct(ExternalContentManager $externalContentManager, GutenbergBlockHelper $gutenbergBlockHelper, PostContentHelper $postContentHelper, XmlHelper $xmlHelper, TestRunHelper $testRunHelper, WordpressFunctionProxyHelper $wpProxy)
     {
         parent::__construct();
 
@@ -41,6 +43,7 @@ class SmartlingCore extends SmartlingCoreAbstract
         add_filter(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, [$this, 'prepareTargetContent']);
         add_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, [$this, 'syncAttachment']);
         $this->externalContentManager = $externalContentManager;
+        $this->gutenbergBlockHelper = $gutenbergBlockHelper;
         $this->postContentHelper = $postContentHelper;
         /** @noinspection UnusedConstructorDependenciesInspection */
         /** @see SmartlingCoreUploadTrait::applyXML() */
@@ -48,7 +51,9 @@ class SmartlingCore extends SmartlingCoreAbstract
         /** @noinspection UnusedConstructorDependenciesInspection */
         /** @see SmartlingCoreUploadTrait::readLockedTranslationFieldsBySubmission */
         $this->wpProxy = $wpProxy;
-        $this->gutenbergBlockHelper = $gutenbergBlockHelper;
+        /** @noinspection UnusedConstructorDependenciesInspection */
+        /** @see SmartlingCoreUploadTrait::getXMLFiltered() */
+        $this->xmlHelper = $xmlHelper;
     }
 
     public function cloneContent(SubmissionEntity $submission): void

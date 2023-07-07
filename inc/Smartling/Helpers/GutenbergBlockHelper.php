@@ -155,7 +155,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
                 $translatedValue = $this->getValue($translated, $rule);
                 // Last argument for $submission here could be null, all attributes based on related ids are then processed when decoding XML. Here we only update clone/ignore values, and handle cloning
                 try {
-                    $processedValue = $replacer->processOnDownload($originalValue ?? '', $translatedValue, $submission);
+                    $processedValue = $replacer->processOnDownload($originalValue, $translatedValue, $submission);
                 } catch (\InvalidArgumentException $e) {
                     $processedValue = $translatedValue;
                 }
@@ -168,10 +168,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $translated->withAttributes($this->fixAttributeTypes($original->getAttributes(), $this->replaceAttributes($attributes, $replacements)));
     }
 
-    /**
-     * @return mixed
-     */
-    public function getValue(GutenbergBlock $block, GutenbergReplacementRule $rule)
+    public function getValue(GutenbergBlock $block, GutenbergReplacementRule $rule): mixed
     {
         if ($this->rulesManager->isJsonPath($rule->getPropertyPath())) {
             $json = $this->getJson($block);

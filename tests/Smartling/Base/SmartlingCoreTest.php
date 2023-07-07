@@ -13,6 +13,7 @@ use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
 use Smartling\Helpers\TestRunHelper;
+use Smartling\Helpers\XmlHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Replacers\ReplacerFactory;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -56,7 +57,9 @@ class SmartlingCoreTest extends TestCase
             new ExternalContentManager(),
             $gutenbergBlockHelper,
             new PostContentHelper($gutenbergBlockHelper),
-            $this->createMock(TestRunHelper::class), $wpProxy
+            new XmlHelper(new SerializerJsonWithFallback()),
+            $this->createMock(TestRunHelper::class),
+            $wpProxy
         );
     }
 
