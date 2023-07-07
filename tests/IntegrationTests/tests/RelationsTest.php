@@ -210,7 +210,7 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
             $this->assertInstanceOf(SubmissionEntity::class, $imageSubmission);
             $content = preg_replace("~([:-])({$imageSubmission->getSourceId()})~", '${1}' . $imageSubmission->getTargetId(), $content);
         }
-        return str_replace('/uploads/', "/uploads/sites/$blogId/", $content);
+        return $content;
     }
 
     private function pseudoPseudoTranslate(string $content): string
