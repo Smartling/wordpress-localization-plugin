@@ -142,6 +142,7 @@ services:
       - "@manager.content.external"
       - "@helper.gutenberg"
       - "@helper.post.content"
+      - "@helper.xml"
       - "@test.run.helper"
       - "@wp.proxy"
     calls:
