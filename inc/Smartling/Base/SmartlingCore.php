@@ -8,10 +8,10 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DateTimeHelper;
+use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
-use Smartling\Helpers\XmlHelper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
@@ -23,12 +23,13 @@ class SmartlingCore extends SmartlingCoreAbstract
     use CommonLogMessagesTrait;
 
     private ExternalContentManager $externalContentManager;
+    private GutenbergBlockHelper $gutenbergBlockHelper;
     private PostContentHelper $postContentHelper;
     private TestRunHelper $testRunHelper;
-    private XmlHelper $xmlHelper;
     private WordpressFunctionProxyHelper $wpProxy;
 
-    public function __construct(ExternalContentManager $externalContentManager, PostContentHelper $postContentHelper, XmlHelper $xmlHelper, TestRunHelper $testRunHelper, WordpressFunctionProxyHelper $wpProxy)
+
+    public function __construct(ExternalContentManager $externalContentManager, GutenbergBlockHelper $gutenbergBlockHelper, PostContentHelper $postContentHelper, TestRunHelper $testRunHelper, WordpressFunctionProxyHelper $wpProxy)
     {
         parent::__construct();
 
@@ -47,12 +48,20 @@ class SmartlingCore extends SmartlingCoreAbstract
         /** @noinspection UnusedConstructorDependenciesInspection */
         /** @see SmartlingCoreUploadTrait::readLockedTranslationFieldsBySubmission */
         $this->wpProxy = $wpProxy;
-        $this->xmlHelper = $xmlHelper;
+        $this->gutenbergBlockHelper = $gutenbergBlockHelper;
     }
 
     public function cloneContent(SubmissionEntity $submission): void
     {
         $submission = $this->prepareTargetContent($submission);
+        $entity = $this->getContentHelper()->readTargetContent($submission);
+        $content = $entity->toArray();
+        foreach ($content as $key => $value) {
+            if (is_string($value)) {
+                $content[$key] = $this->gutenbergBlockHelper->replacePostTranslateBlockContent($value, $value, $submission);
+            }
+        }
+        $this->getContentHelper()->writeTargetContent($submission, $entity->fromArray($content));
         if ($submission->getStatus() === SubmissionEntity::SUBMISSION_STATUS_NEW) {
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
             $submission->setAppliedDate(DateTimeHelper::nowAsString());

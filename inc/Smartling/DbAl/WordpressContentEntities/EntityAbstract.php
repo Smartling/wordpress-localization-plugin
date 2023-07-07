@@ -54,8 +54,8 @@ abstract class EntityAbstract extends EntityBase implements EntityHandler
     public function fromArray(array $array): static
     {
         $result = clone $this;
+        $result->entityArrayState = array_merge(['hash'], $array);
         $result->entityFields = array_merge(['hash'], $array);
-        $result->initEntityArrayState();
         return $result;
     }
 

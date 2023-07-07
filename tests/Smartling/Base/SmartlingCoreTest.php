@@ -13,7 +13,6 @@ use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
 use Smartling\Helpers\TestRunHelper;
-use Smartling\Helpers\XmlHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Replacers\ReplacerFactory;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -46,20 +45,18 @@ class SmartlingCoreTest extends TestCase
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
         $wpProxy = new WordpressFunctionProxyHelper();
+        $gutenbergBlockHelper = new GutenbergBlockHelper(
+            $this->createMock(AcfDynamicSupport::class),
+            $this->createMock(MediaAttachmentRulesManager::class),
+            $this->createMock(ReplacerFactory::class),
+            new SerializerJsonWithFallback(),
+            $wpProxy,
+        );
         $this->core = new SmartlingCore(
             new ExternalContentManager(),
-            new PostContentHelper(
-                new GutenbergBlockHelper(
-                    $this->createMock(AcfDynamicSupport::class),
-                    $this->createMock(MediaAttachmentRulesManager::class),
-                    $this->createMock(ReplacerFactory::class),
-                    new SerializerJsonWithFallback(),
-                    $wpProxy,
-                )
-            ),
-            new XmlHelper(new SerializerJsonWithFallback()),
-            $this->createMock(TestRunHelper::class),
-            $wpProxy
+            $gutenbergBlockHelper,
+            new PostContentHelper($gutenbergBlockHelper),
+            $this->createMock(TestRunHelper::class), $wpProxy
         );
     }
 

@@ -118,7 +118,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $block->withAttributes($this->replaceAttributes($attributes, $replacements));
     }
 
-    public function replacePostTranslateBlockContent(string $original, string $translated): string
+    public function replacePostTranslateBlockContent(string $original, string $translated, SubmissionEntity $submission = null): string
     {
         if (!$this->hasBlocks($translated)) {
             return $translated;
@@ -131,17 +131,17 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             return $translated;
         }
         foreach ($translatedBlocks as $index => $block) {
-            $result .= $this->wpProxy->serialize_block($this->applyPostTranslationReplacers($originalBlocks[$index], $block)->toArray());
+            $result .= $this->wpProxy->serialize_block($this->applyPostTranslationReplacers($originalBlocks[$index], $block, $submission)->toArray());
         }
         return $result;
     }
 
-    private function applyPostTranslationReplacers(GutenbergBlock $original, GutenbergBlock $translated): GutenbergBlock
+    private function applyPostTranslationReplacers(GutenbergBlock $original, GutenbergBlock $translated, SubmissionEntity $submission = null): GutenbergBlock
     {
         $attributes = $translated->getAttributes();
         $replacements = [];
         foreach ($translated->getInnerBlocks() as $index => $innerBlock) {
-            $translated = $translated->withInnerBlock($this->applyPostTranslationReplacers($original->getInnerBlocks()[$index], $innerBlock), $index);
+            $translated = $translated->withInnerBlock($this->applyPostTranslationReplacers($original->getInnerBlocks()[$index], $innerBlock, $submission), $index);
         }
         foreach ($this->rulesManager->getGutenbergReplacementRules($translated->getBlockName(), $attributes) as $rule) {
             try {
@@ -153,9 +153,9 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
             $originalValue = $this->getValue($original, $rule);
             if ($originalValue !== null) {
                 $translatedValue = $this->getValue($translated, $rule);
-                // Last argument for $submission here is intentionally null, all attributes based on related ids should be processed when decoding XML. Here we only update clone/ignore values
+                // Last argument for $submission here could be null, all attributes based on related ids are then processed when decoding XML. Here we only update clone/ignore values, and handle cloning
                 try {
-                    $processedValue = $replacer->processOnDownload($originalValue ?? '', $translatedValue, null);
+                    $processedValue = $replacer->processOnDownload($originalValue ?? '', $translatedValue, $submission);
                 } catch (\InvalidArgumentException $e) {
                     $processedValue = $translatedValue;
                 }

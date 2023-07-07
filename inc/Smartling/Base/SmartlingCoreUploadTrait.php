@@ -793,6 +793,17 @@ trait SmartlingCoreUploadTrait
             ]);
             if ($relatedSubmission !== null) {
                 $term->term_id = $relatedSubmission->getTargetId();
+                if ($term->parent !== 0) {
+                    $parent = $this->getSubmissionManager()->findOne([
+                        SubmissionEntity::FIELD_CONTENT_TYPE => $term->taxonomy,
+                        SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
+                        SubmissionEntity::FIELD_SOURCE_ID => $term->parent,
+                        SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
+                    ]);
+                    if ($parent !== null) {
+                        $term->parent = $parent->getTargetId();
+                    }
+                }
             }
             $result[$term->taxonomy][] = $term->term_id;
         }
