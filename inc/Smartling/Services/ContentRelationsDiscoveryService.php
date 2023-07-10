@@ -752,7 +752,7 @@ class ContentRelationsDiscoveryService
             } catch (EntityNotFoundException) {
                 continue;
             }
-            $value = $this->gutenbergBlockHelper->getValue($block, $rule);
+            $value = $this->gutenbergBlockHelper->getAttributeValue($block, $rule);
             if ($replacer instanceof ContentIdReplacer && is_numeric($value)) {
                 $result[] = (int)$value;
                 $this->getLogger()->debug("Added relatedId=$value to references (found rule for blockName=\"{$rule->getBlockType()} rule=\"{$rule->getPropertyPath()}");

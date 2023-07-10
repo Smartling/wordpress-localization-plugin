@@ -699,7 +699,7 @@ namespace Smartling\Tests\Services {
             $gutenbergBlockHelper->method('parseBlocks')->willReturn([
                 new GutenbergBlock('test', ['relatedContent' => $relatedPostId], [], '', []),
             ]);
-            $gutenbergBlockHelper->method('getValue')->willReturn($relatedPostId);
+            $gutenbergBlockHelper->method('getAttributeValue')->willReturn($relatedPostId);
 
             $mediaAttachmentRulesManager = $this->createMock(MediaAttachmentRulesManager::class);
             $mediaAttachmentRulesManager->method('getGutenbergReplacementRules')->willReturn([

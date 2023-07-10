@@ -431,7 +431,7 @@ namespace Smartling\Tests\Smartling\Helpers {
             return AcfDynamicSupport::REFERENCED_TYPE_NONE;
         });
         $replacer = $this->createMock(ReplacerInterface::class);
-        $replacer->expects($this->exactly(2))->method('processOnDownload')->willReturnCallback(static function($originalValue, $translatedValue, $submission) {
+        $replacer->expects($this->exactly(2))->method('processAttributeOnDownload')->willReturnCallback(static function($originalValue, $translatedValue, $submission) {
             $replacements = [
                 19350 => 13,
                 19351 => 17,
@@ -550,7 +550,7 @@ XML;
         }
 
         $replacer = $this->createMock(ReplacerInterface::class);
-        $replacer->method('processOnDownload')->willReturnCallback(function ($originalValue, $translatedValue) use ($sourceId, $targetId) {
+        $replacer->method('processAttributeOnDownload')->willReturnCallback(function ($originalValue, $translatedValue) use ($sourceId, $targetId) {
             if ($originalValue === $sourceId) {
                 return $targetId;
             }
@@ -598,6 +598,31 @@ XML;
                 ->replacePreTranslateBlockContent(new GutenbergBlock('paragraph', ['smartlingLockId' => 'lockValue'], [], '<p>Paragraph content</p>', []))
                 ->getSmartlingLockId()
         );
+    }
+
+    public function testReplacePostTranslateBlockContent(): void
+    {
+        $sourceId = 1;
+        $targetId = 2;
+        $sourceBlock = '<!-- wp:core/image {"id":' . $sourceId . ',"sizeSlug":"[l~árgé]","smartlingLockId":"[t~úzsc]"} -->
+<figure class="wp-block-image size-large"><img src="http://test/wp-content/uploads/2021/11/imageClass.png" alt="" class="wp-image-' . $sourceId . '"/></figure>
+<!-- /wp:core/image -->';
+        $submission = $this->createMock(SubmissionEntity::class);
+        $submission->method('getSourceId')->willReturn($sourceId);
+        $submission->method('getTargetId')->willReturn($targetId);
+        $containerBuilder = new ContainerBuilder();
+        $yamlFileLoader = new YamlFileLoader($containerBuilder, new FileLocator(__DIR__));
+        $configDir = __DIR__ . '/../../../inc/config/';
+        $yamlFileLoader->load($configDir . 'services.yml');
+        $yamlFileLoader->load($configDir . 'media-attachment-rules.yml');
+        $mediaAttachmentRulesManager = $containerBuilder->get('media.attachment.rules.manager');
+        if (!$mediaAttachmentRulesManager instanceof MediaAttachmentRulesManager) {
+            throw new \RuntimeException(MediaAttachmentRulesManager::class . ' expected');
+        }
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('findOne')->willReturn($submission);
+        $helper = new GutenbergBlockHelper($this->createMock(AcfDynamicSupport::class), $mediaAttachmentRulesManager, new ReplacerFactory($submissionManager), new SerializerJsonWithFallback(), new WordpressFunctionProxyHelper());
+        $this->assertStringContainsString("wp-image-$targetId", $helper->replacePostTranslateBlockContent($sourceBlock, $sourceBlock, $submission));
     }
 
     public function testSortChildNodesContent()

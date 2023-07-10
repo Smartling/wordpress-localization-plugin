@@ -7,7 +7,7 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
 
-class ContentIdReplacer implements ReplacerInterface
+class ContentIdReplacer extends DoNothingContentReplacer
 {
     private LoggerInterface $logger;
     private SubmissionManager $submissionManager;
@@ -23,7 +23,7 @@ class ContentIdReplacer implements ReplacerInterface
         return "Related: Post based content";
     }
 
-    public function processOnDownload(mixed $originalValue, mixed $translatedValue, ?SubmissionEntity $submission): mixed
+    public function processAttributeOnDownload(mixed $originalValue, mixed $translatedValue, ?SubmissionEntity $submission): mixed
     {
         if ($submission === null) {
             throw new \InvalidArgumentException('Submission must not be null');
@@ -46,10 +46,5 @@ class ContentIdReplacer implements ReplacerInterface
         }
 
         return $translatedValue;
-    }
-
-    public function processOnUpload(mixed $value, ?SubmissionEntity $submission = null): mixed
-    {
-        return $value;
     }
 }

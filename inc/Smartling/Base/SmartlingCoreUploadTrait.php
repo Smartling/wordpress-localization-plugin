@@ -859,7 +859,7 @@ trait SmartlingCoreUploadTrait
             in_array($originalMetadata['_menu_item_type'], ['taxonomy', 'post_type'], true)
         ) {
             $result['_menu_item_object_id'] = (new ContentIdReplacer($this->getSubmissionManager()))
-                ->processOnDownload($originalMetadata['_menu_item_object_id'], $originalMetadata['_menu_item_object_id'], $submission); // two originalMetadata here is not a typo, translated id is discarded
+                ->processAttributeOnDownload($originalMetadata['_menu_item_object_id'], $originalMetadata['_menu_item_object_id'], $submission); // two originalMetadata here is not a typo, translated id is discarded
         }
 
         return $result;
