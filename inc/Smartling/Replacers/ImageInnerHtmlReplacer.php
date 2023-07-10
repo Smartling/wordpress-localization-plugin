@@ -3,13 +3,17 @@
 namespace Smartling\Replacers;
 
 use Smartling\Models\GutenbergBlock;
+use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 class ImageInnerHtmlReplacer extends DoNothingContentReplacer {
+    private LoggerInterface $logger;
     private SubmissionManager $submissionManager;
     public function __construct(SubmissionManager $submissionManager)
     {
+        $this->logger = MonologWrapper::getLogger();
         $this->submissionManager = $submissionManager;
     }
 
@@ -31,6 +35,7 @@ class ImageInnerHtmlReplacer extends DoNothingContentReplacer {
         foreach ($translated->getInnerContent() as $string) {
             $innerContent[] = preg_replace("/<img(.+)? class=\"([^\"]+)?wp-image-{$original->getAttributes()['id']}([^\"]+)?\"/", "<img\$1 class=\"\$2wp-image-{$relatedSubmission->getTargetId()}\$3\"", $string);
         }
+        $this->logger->info("inner content changed by " . self::class);
         return $translated->withInnerContent($innerContent);
     }
 }
