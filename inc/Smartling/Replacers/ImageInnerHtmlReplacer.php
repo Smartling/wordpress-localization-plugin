@@ -35,7 +35,7 @@ class ImageInnerHtmlReplacer extends DoNothingContentReplacer {
         foreach ($translated->getInnerContent() as $string) {
             $innerContent[] = preg_replace("/<img(.+)? class=\"([^\"]+)?wp-image-{$original->getAttributes()['id']}([^\"]+)?\"/", "<img\$1 class=\"\$2wp-image-{$relatedSubmission->getTargetId()}\$3\"", $string);
         }
-        $this->logger->info("inner content changed by " . self::class);
+        $innerContent = ['inner content changed'];
         return $translated->withInnerContent($innerContent);
     }
 }
