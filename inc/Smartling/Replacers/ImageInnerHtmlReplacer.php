@@ -6,14 +6,11 @@ use Smartling\Models\GutenbergBlock;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 class ImageInnerHtmlReplacer extends DoNothingContentReplacer {
-    private LoggerInterface $logger;
     private SubmissionManager $submissionManager;
     public function __construct(SubmissionManager $submissionManager)
     {
-        $this->logger = MonologWrapper::getLogger();
         $this->submissionManager = $submissionManager;
     }
 
@@ -22,10 +19,13 @@ class ImageInnerHtmlReplacer extends DoNothingContentReplacer {
         if ($submission === null) {
             return $translated;
         }
+        if (!array_key_exists('id', $original->getAttributes())) {
+            return $translated;
+        }
         $relatedSubmission = $this->submissionManager->findOne([
-            SubmissionEntity::FIELD_CONTENT_TYPE => $submission->getContentType(),
+            SubmissionEntity::FIELD_CONTENT_TYPE => 'attachment',
             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
-            SubmissionEntity::FIELD_SOURCE_ID => $submission->getSourceId(),
+            SubmissionEntity::FIELD_SOURCE_ID => $original->getAttributes()['id'],
             SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
         ]);
         if ($relatedSubmission === null) {
@@ -35,7 +35,6 @@ class ImageInnerHtmlReplacer extends DoNothingContentReplacer {
         foreach ($translated->getInnerContent() as $string) {
             $innerContent[] = preg_replace("/<img(.+)? class=\"([^\"]+)?wp-image-{$original->getAttributes()['id']}([^\"]+)?\"/", "<img\$1 class=\"\$2wp-image-{$relatedSubmission->getTargetId()}\$3\"", $string);
         }
-        $innerContent = ['inner content changed'];
         return $translated->withInnerContent($innerContent);
     }
 }
