@@ -7,6 +7,8 @@ use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\CommonLogMessagesTrait;
+use Smartling\Helpers\DateTimeHelper;
+use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
@@ -22,12 +24,14 @@ class SmartlingCore extends SmartlingCoreAbstract
     use CommonLogMessagesTrait;
 
     private ExternalContentManager $externalContentManager;
+    private GutenbergBlockHelper $gutenbergBlockHelper;
     private PostContentHelper $postContentHelper;
     private TestRunHelper $testRunHelper;
     private XmlHelper $xmlHelper;
     private WordpressFunctionProxyHelper $wpProxy;
 
-    public function __construct(ExternalContentManager $externalContentManager, PostContentHelper $postContentHelper, XmlHelper $xmlHelper, TestRunHelper $testRunHelper, WordpressFunctionProxyHelper $wpProxy)
+
+    public function __construct(ExternalContentManager $externalContentManager, GutenbergBlockHelper $gutenbergBlockHelper, PostContentHelper $postContentHelper, XmlHelper $xmlHelper, TestRunHelper $testRunHelper, WordpressFunctionProxyHelper $wpProxy)
     {
         parent::__construct();
 
@@ -39,6 +43,7 @@ class SmartlingCore extends SmartlingCoreAbstract
         add_filter(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, [$this, 'prepareTargetContent']);
         add_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, [$this, 'syncAttachment']);
         $this->externalContentManager = $externalContentManager;
+        $this->gutenbergBlockHelper = $gutenbergBlockHelper;
         $this->postContentHelper = $postContentHelper;
         /** @noinspection UnusedConstructorDependenciesInspection */
         /** @see SmartlingCoreUploadTrait::applyXML() */
@@ -46,12 +51,28 @@ class SmartlingCore extends SmartlingCoreAbstract
         /** @noinspection UnusedConstructorDependenciesInspection */
         /** @see SmartlingCoreUploadTrait::readLockedTranslationFieldsBySubmission */
         $this->wpProxy = $wpProxy;
+        /** @noinspection UnusedConstructorDependenciesInspection */
+        /** @see SmartlingCoreUploadTrait::getXMLFiltered() */
         $this->xmlHelper = $xmlHelper;
     }
 
     public function cloneContent(SubmissionEntity $submission): void
     {
-        $this->applyXML($submission, $this->getXMLFiltered($submission), $this->xmlHelper, $this->postContentHelper);
+        $submission = $this->prepareTargetContent($submission);
+        $entity = $this->getContentHelper()->readTargetContent($submission);
+        $content = $entity->toArray();
+        foreach ($content as $key => $value) {
+            if (is_string($value)) {
+                $content[$key] = $this->gutenbergBlockHelper->replacePostTranslateBlockContent($value, $value, $submission);
+            }
+        }
+        $this->getContentHelper()->writeTargetContent($submission, $entity->fromArray($content));
+        if ($submission->getStatus() === SubmissionEntity::SUBMISSION_STATUS_NEW) {
+            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
+            $submission->setAppliedDate(DateTimeHelper::nowAsString());
+            $this->getSubmissionManager()->storeEntity($submission);
+            $this->getLogger()->info("Cloned submissionId={$submission->getId()}, sourceBlogId={$submission->getSourceBlogId()}, sourceId={$submission->getSourceId()}, targetBlogId={$submission->getTargetBlogId()}, targetId={$submission->getTargetId()}");
+        }
     }
 
     /**

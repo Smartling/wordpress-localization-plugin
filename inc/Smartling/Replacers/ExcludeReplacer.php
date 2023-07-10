@@ -4,19 +4,19 @@ namespace Smartling\Replacers;
 
 use Smartling\Submissions\SubmissionEntity;
 
-class ExcludeReplacer implements ReplacerInterface
+class ExcludeReplacer extends DoNothingContentReplacer
 {
     public function getLabel(): string
     {
         return "Exclude attribute";
     }
 
-    public function processOnDownload(mixed $originalValue, mixed $translatedValue, ?SubmissionEntity $submission): mixed
+    public function processAttributeOnDownload(mixed $originalValue, mixed $translatedValue, ?SubmissionEntity $submission): mixed
     {
         return null;
     }
 
-    public function processOnUpload(mixed $value, ?SubmissionEntity $submission = null): string
+    public function processAttributeOnUpload(mixed $value, ?SubmissionEntity $submission = null): string
     {
         return '';
     }

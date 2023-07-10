@@ -1,6 +1,7 @@
 parameters:
   known.attachment.rules: #built-in wordpress and Smartling-specific
     - "@image.id.related.attachment"
+    - "@image.id.related.content"
     - "@media-text.media-id.related.attachment"
     - "@smartling.lock.id.copy"
 
@@ -11,6 +12,13 @@ services:
       - "core/image"
       - "id"
       - "related|attachment"
+
+  image.id.related.content:
+    class: Smartling\Helpers\GutenbergReplacementRule
+    arguments:
+      - "core/image"
+      - ""
+      - "coreImage"
 
   media-text.media-id.related.attachment:
     class: Smartling\Helpers\GutenbergReplacementRule

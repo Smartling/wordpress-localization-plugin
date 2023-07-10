@@ -3,8 +3,8 @@
 namespace Smartling\Jobs;
 
 use Smartling\Base\ExportedAPI;
-use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 
 class UploadJob extends JobAbstract
 {
@@ -60,7 +60,6 @@ class UploadJob extends JobAbstract
     private function processCloning(): void
     {
         while (($submission = $this->submissionManager->findSubmissionForCloning()) !== null) {
-            do_action(ExportedAPI::ACTION_SMARTLING_PREPARE_SUBMISSION_UPLOAD, $submission);
             do_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $submission);
         }
     }

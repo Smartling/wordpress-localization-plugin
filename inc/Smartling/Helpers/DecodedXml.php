@@ -4,8 +4,8 @@ namespace Smartling\Helpers;
 
 class DecodedXml
 {
-    private $originalFields;
-    private $translatedFields;
+    private array $originalFields;
+    private array $translatedFields;
 
     public function __construct(array $translatedFields, array $originalFields)
     {
@@ -13,18 +13,12 @@ class DecodedXml
         $this->translatedFields = $translatedFields;
     }
 
-    /**
-     * @return array
-     */
-    public function getOriginalFields()
+    public function getOriginalFields(): array
     {
         return $this->originalFields;
     }
 
-    /**
-     * @return array
-     */
-    public function getTranslatedFields()
+    public function getTranslatedFields(): array
     {
         return $this->translatedFields;
     }
