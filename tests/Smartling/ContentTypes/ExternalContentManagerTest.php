@@ -123,12 +123,22 @@ class ExternalContentManagerTest extends TestCase {
             unset ($value['entity']['post_content']);
             return $value;
         });
+
         $handlerUnsupportedVersion = $this->createMock(ContentTypeModifyingInterface::class);
         $handlerUnsupportedVersion->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::VERSION_NOT_SUPPORTED);
         $handlerUnsupportedVersion->expects($this->never())->method('getContentFields')->willReturn(['content_4' => 'content 4']);
         $handlerUnsupportedVersion->method('getPluginId')->willReturn('content4');
         $handlerUnsupportedVersion->method('alterContentFieldsForUpload')->willReturnCallback(static function ($value) {
             unset ($value['meta']['unsupported_meta']);
+            return $value;
+        });
+
+        $handlerUnsupported = $this->createMock(ContentTypeModifyingInterface::class);
+        $handlerUnsupported->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::VERSION_NOT_SUPPORTED);
+        $handlerUnsupported->expects($this->never())->method('getContentFields')->willReturn(['content_5' => 'content 5']);
+        $handlerUnsupported->method('getPluginId')->willReturn('content5');
+        $handlerUnsupported->expects($this->never())->method('alterContentFieldsForUpload')->willReturnCallback(static function ($value) {
+            unset ($value['entity']['post_title']);
             return $value;
         });
 
