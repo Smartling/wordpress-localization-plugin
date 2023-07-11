@@ -23,21 +23,35 @@ class ExternalContentManager
     public function getExternalContent(array $source, SubmissionEntity $submission, bool $raw): array
     {
         foreach ($this->handlers as $handler) {
-            if ($handler->canHandle($submission->getContentType(), $submission->getSourceId())) {
-                $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get fields");
-                try {
-                    $submission->assertHasSource();
-                    $source[$handler->getPluginId()] = $handler->getContentFields($submission, $raw);
-                } catch (\Throwable $e) {
-                    $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to get external content: ' . $e->getMessage());
-                }
-                if ($handler instanceof ContentTypeModifyingInterface) {
+            switch ($handler->getSupportLevel($submission->getContentType(), $submission->getSourceId())) {
+                case ContentTypePluggableInterface::SUPPORTED:
+                    $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get fields");
                     try {
-                        $source = $handler->alterContentFieldsForUpload($source);
+                        $submission->assertHasSource();
+                        $source[$handler->getPluginId()] = $handler->getContentFields($submission, $raw);
                     } catch (\Throwable $e) {
-                        $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to alter content fields: ' . $e->getMessage());
+                        $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to get external content: ' . $e->getMessage());
                     }
-                }
+                    if ($handler instanceof ContentTypeModifyingInterface) {
+                        try {
+                            $source = $handler->alterContentFieldsForUpload($source);
+                        } catch (\Throwable $e) {
+                            $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to alter content fields: ' . $e->getMessage());
+                        }
+                    }
+                    break;
+                case ContentTypePluggableInterface::VERSION_NOT_SUPPORTED:
+                    if ($handler instanceof ContentTypeModifyingInterface) {
+                        $this->getLogger()->warning("Detected not supported version for {$handler->getPluginId()}, will clear known problematic fields");
+                        try {
+                            $source = $handler->alterContentFieldsForUpload($source);
+                        } catch (\Throwable $e) {
+                            $this->getLogger()->warning('HandlerName="' . $handler->getPluginId() . '" got exception while trying to alter content fields: ' . $e->getMessage());
+                        }
+                    } else {
+                        $this->getLogger()->debug("Detected not supported version for {$handler->getPluginId()}, no actions taken");
+                    }
+                    break;
             }
         }
 
@@ -58,7 +72,7 @@ class ExternalContentManager
     {
         $result = [];
         foreach ($this->handlers as $handler) {
-            if ($handler->canHandle($contentType, $id)) {
+            if ($handler->getSupportLevel($contentType, $id)) {
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get related content");
                 try {
                     $result = array_merge_recursive($result, $handler->getRelatedContent($contentType, $id));
@@ -84,7 +98,7 @@ class ExternalContentManager
     public function setExternalContent(array $original, array $translation, SubmissionEntity $submission): array
     {
         foreach ($this->handlers as $handler) {
-            if ($handler->canHandle($submission->getContentType(), $submission->getSourceId())) {
+            if ($handler->getSupportLevel($submission->getContentType(), $submission->getSourceId())) {
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to set fields");
                 try {
                     $externalContent = $handler->setContentFields($original, $translation, $submission);

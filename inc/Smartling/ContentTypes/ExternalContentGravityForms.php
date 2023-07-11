@@ -43,7 +43,7 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
         $this->gutenbergBlockHelper = $gutenbergBlockHelper;
         $this->handler = $handler;
         $this->siteHelper = $siteHelper;
-        if (parent::canHandle(self::CONTENT_TYPE)) {
+        if (parent::getSupportLevel(self::CONTENT_TYPE)) {
             $contentEntitiesIOFactory->registerHandler(self::CONTENT_TYPE, $handler);
             $contentTypeManager->addDescriptor($contentType);
         }
@@ -55,10 +55,12 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
         return $source;
     }
 
-    public function canHandle(string $contentType, ?int $contentId = null): bool
+    public function getSupportLevel(string $contentType, ?int $contentId = null): string
     {
-        return parent::canHandle($contentType, $contentId) &&
-            ($contentType === self::CONTENT_TYPE || $this->contentTypeHelper->isPost($contentType));
+        if ($contentType === self::CONTENT_TYPE || $this->contentTypeHelper->isPost($contentType)) {
+            return parent::getSupportLevel($contentType, $contentId);
+        }
+        return self::NOT_SUPPORTED;
     }
 
     public function getContentFields(SubmissionEntity $submission, bool $raw): array

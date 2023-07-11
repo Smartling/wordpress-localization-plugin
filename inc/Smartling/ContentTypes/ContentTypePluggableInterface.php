@@ -2,11 +2,17 @@
 
 namespace Smartling\ContentTypes;
 
+use JetBrains\PhpStorm\ExpectedValues;
 use Smartling\Submissions\SubmissionEntity;
 
 interface ContentTypePluggableInterface
 {
-    public function canHandle(string $contentType, ?int $contentId = null): bool;
+    public const NOT_SUPPORTED = 'not_supported';
+    public const SUPPORTED = 'supported';
+    public const VERSION_NOT_SUPPORTED = 'version_not_supported';
+
+    #[ExpectedValues(valuesFromClass: self::class)]
+    public function getSupportLevel(string $contentType, ?int $contentId = null): string;
 
     public function getContentFields(SubmissionEntity $submission, bool $raw): array;
 
