@@ -98,7 +98,7 @@ class ExternalContentManager
     public function setExternalContent(array $original, array $translation, SubmissionEntity $submission): array
     {
         foreach ($this->handlers as $handler) {
-            if ($handler->getSupportLevel($submission->getContentType(), $submission->getSourceId())) {
+            if ($handler->getSupportLevel($submission->getContentType(), $submission->getSourceId()) === ContentTypePluggableInterface::SUPPORTED) {
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to set fields");
                 try {
                     $externalContent = $handler->setContentFields($original, $translation, $submission);
