@@ -42,7 +42,7 @@ class ExternalContentManager
                     break;
                 case ContentTypePluggableInterface::VERSION_NOT_SUPPORTED:
                     if ($handler instanceof ContentTypeModifyingInterface) {
-                        $this->getLogger()->warning("Detected not supported version for {$handler->getPluginId()}, will clear known problematic fields");
+                        $this->getLogger()->warning("Detected not supported version for {$handler->getPluginId()}, will not include known problematic fields");
                         try {
                             $source = $handler->alterContentFieldsForUpload($source);
                         } catch (\Throwable $e) {
@@ -72,7 +72,7 @@ class ExternalContentManager
     {
         $result = [];
         foreach ($this->handlers as $handler) {
-            if ($handler->getSupportLevel($contentType, $id)) {
+            if ($handler->getSupportLevel($contentType, $id) === ContentTypePluggableInterface::SUPPORTED) {
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get related content");
                 try {
                     $result = array_merge_recursive($result, $handler->getRelatedContent($contentType, $id));

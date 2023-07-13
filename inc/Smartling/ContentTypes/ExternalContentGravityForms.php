@@ -43,7 +43,7 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
         $this->gutenbergBlockHelper = $gutenbergBlockHelper;
         $this->handler = $handler;
         $this->siteHelper = $siteHelper;
-        if (parent::getSupportLevel(self::CONTENT_TYPE)) {
+        if (parent::getSupportLevel(self::CONTENT_TYPE) === self::SUPPORTED) {
             $contentEntitiesIOFactory->registerHandler(self::CONTENT_TYPE, $handler);
             $contentTypeManager->addDescriptor($contentType);
         }
