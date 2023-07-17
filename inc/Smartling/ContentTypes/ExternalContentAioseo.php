@@ -93,10 +93,12 @@ class ExternalContentAioseo extends ExternalContentAbstract
         $this->siteHelper = $siteHelper;
     }
 
-    public function canHandle(string $contentType, ?int $contentId = null): bool
+    public function getSupportLevel(string $contentType, ?int $contentId = null): string
     {
-        return parent::canHandle($contentType, $contentId) &&
-            $this->contentTypeHelper->isPost($contentType);
+        if ($this->contentTypeHelper->isPost($contentType)) {
+            return parent::getSupportLevel($contentType, $contentId);
+        }
+        return self::NOT_SUPPORTED;
     }
 
     public function getContentFields(SubmissionEntity $submission, bool $raw): array

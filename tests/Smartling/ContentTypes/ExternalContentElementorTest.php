@@ -3,6 +3,7 @@
 namespace Smartling\Tests\Smartling\ContentTypes;
 
 use Smartling\ContentTypes\ContentTypeHelper;
+use Smartling\ContentTypes\ContentTypePluggableInterface;
 use Smartling\ContentTypes\ExternalContentElementor;
 use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\FieldsFilterHelper;
@@ -19,8 +20,8 @@ class ExternalContentElementorTest extends TestCase {
         $proxy->method('getPostMeta')->willReturn('', []);
         $proxy->method('get_plugins')->willReturn(['elementor/elementor.php' => []]);
         $proxy->method('is_plugin_active')->willReturn(true);
-        $this->assertFalse($this->getExternalContentElementor($proxy)->canHandle('post', 1));
-        $this->assertTrue($this->getExternalContentElementor($proxy)->canHandle('post', 1));
+        $this->assertEquals(ContentTypePluggableInterface::NOT_SUPPORTED, $this->getExternalContentElementor($proxy)->getSupportLevel('post', 1));
+        $this->assertEquals(ContentTypePluggableInterface::SUPPORTED, $this->getExternalContentElementor($proxy)->getSupportLevel('post', 1));
     }
 
     /**

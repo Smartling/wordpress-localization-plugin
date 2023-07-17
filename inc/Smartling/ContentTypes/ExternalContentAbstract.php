@@ -22,17 +22,20 @@ abstract class ExternalContentAbstract implements ContentTypePluggableInterface 
         $this->wpProxy = $wpProxy;
     }
 
-    public function canHandle(string $contentType, ?int $contentId = null): bool
+    public function getSupportLevel(string $contentType, ?int $contentId = null): string
     {
+        $result = self::NOT_SUPPORTED;
         $plugins = $this->wpProxy->get_plugins();
         foreach ($this->getPluginPaths() as $path) {
-            if (array_key_exists($path, $plugins) && $this->wpProxy->is_plugin_active($path) &&
-                $this->pluginHelper->versionInRange($plugins[$path]['Version'] ?? 0, $this->getMinVersion(), $this->getMaxVersion())) {
-                return true;
+            if (array_key_exists($path, $plugins) && $this->wpProxy->is_plugin_active($path)) {
+                if ($this->pluginHelper->versionInRange($plugins[$path]['Version'] ?? 0, $this->getMinVersion(), $this->getMaxVersion())) {
+                    return self::SUPPORTED;
+                }
+                $result = self::VERSION_NOT_SUPPORTED;
             }
         }
 
-        return false;
+        return $result;
     }
 
     public function getExternalContentTypes(): array

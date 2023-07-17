@@ -146,11 +146,12 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return $source;
     }
 
-    public function canHandle(string $contentType, ?int $contentId = null): bool
+    public function getSupportLevel(string $contentType, ?int $contentId = null): string
     {
-        return parent::canHandle($contentType, $contentId) &&
-            $this->contentTypeHelper->isPost($contentType) &&
-            $this->getDataFromPostMeta($contentId) !== '';
+        if ($this->contentTypeHelper->isPost($contentType) && $this->getDataFromPostMeta($contentId) !== '') {
+            return parent::getSupportLevel($contentType, $contentId);
+        }
+        return self::NOT_SUPPORTED;
     }
 
     private function extractContent(array $data, string $previousPrefix = ''): ExternalData {

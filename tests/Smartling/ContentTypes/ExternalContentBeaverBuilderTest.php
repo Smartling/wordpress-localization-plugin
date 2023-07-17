@@ -3,6 +3,7 @@
 namespace Smartling\Tests\Smartling\ContentTypes;
 
 use Smartling\ContentTypes\ContentTypeHelper;
+use Smartling\ContentTypes\ContentTypePluggableInterface;
 use Smartling\ContentTypes\ExternalContentBeaverBuilder;
 use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\PluginHelper;
@@ -22,8 +23,8 @@ class ExternalContentBeaverBuilderTest extends TestCase {
         $proxy->method('getPostMeta')->willReturn('', []);
         $proxy->method('get_plugins')->willReturn([$pluginPath => []]);
         $proxy->method('is_plugin_active')->willReturn(true);
-        $this->assertFalse($this->getExternalContentBeaverBuilder($proxy)->canHandle('post', 1));
-        $this->assertTrue($this->getExternalContentBeaverBuilder($proxy)->canHandle('post', 1));
+        $this->assertEquals(ContentTypePluggableInterface::NOT_SUPPORTED, $this->getExternalContentBeaverBuilder($proxy)->getSupportLevel('post', 1));
+        $this->assertEquals(ContentTypePluggableInterface::SUPPORTED, $this->getExternalContentBeaverBuilder($proxy)->getSupportLevel('post', 1));
     }
 
     /**
