@@ -142,6 +142,7 @@ trait SmartlingCoreUploadTrait
                     ]
                 );
                 $this->getLogger()->warning($message);
+                $submission->setBatchUid('');
                 $submission = $this->getSubmissionManager()
                     ->setErrorMessage($submission, 'There is no original content for translation.');
 
@@ -484,6 +485,7 @@ trait SmartlingCoreUploadTrait
                         ])
                     );
                     foreach ($submissions as $_submission) {
+                        $_submission->setBatchUid('');
                         $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                         $_submission->setSubmissionDate(DateTimeHelper::nowAsString());
                     }
@@ -498,6 +500,7 @@ trait SmartlingCoreUploadTrait
                         ])
                     );
                     foreach ($submissions as $_submission) {
+                        $_submission->setBatchUid('');
                         $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
                         $this->getLogger()->debug("Failing submission {$_submission->getId()}: failed to send file. Additional information should be in prior logs");
                     }
