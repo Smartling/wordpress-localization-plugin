@@ -509,6 +509,8 @@ trait SmartlingCoreUploadTrait
             }
 
             $this->executeBatchIfNoSubmissionsPending($submission->getBatchUid(), $profile);
+            $submission->setBatchUid('');
+            $this->getSubmissionManager()->storeSubmissions([$submission]);
         } catch (\Exception $e) {
             $caught = $e;
             do {

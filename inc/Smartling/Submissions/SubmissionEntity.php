@@ -317,7 +317,9 @@ class SubmissionEntity extends SmartlingEntityAbstract
             case static::SUBMISSION_STATUS_IN_PROGRESS:
                 $this->setOutdated(0);
                 break;
-            default:
+            case static::SUBMISSION_STATUS_FAILED:
+                $this->setBatchUid('');
+                break;
         }
 
         return $this;
