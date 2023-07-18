@@ -380,11 +380,12 @@ services:
     calls:
       - [ "registerProcessor", ["@post.content.processor"]]
 
-  service.side-removal-handler:
+  service.blog-removal-handler:
     class: Smartling\Services\BlogRemovalHandler
-    calls:
-      - [ "setApiWrapper", [ "@api.wrapper.with.retries" ] ]
-      - [ "setSubmissionManager", [ "@manager.submission" ] ]
+    arguments:
+      - "@api.wrapper.with.retries"
+      - "@manager.settings"
+      - "@manager.submission"
 
   service.invalid-character-cleaner:
     class: Smartling\Services\InvalidCharacterCleaner

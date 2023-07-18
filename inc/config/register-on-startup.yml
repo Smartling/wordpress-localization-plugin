@@ -23,7 +23,7 @@ services:
       - [ "addService", [ "@helper.shortcode" ]]
       - [ "addService", [ "@helper.gutenberg" ]]
       - [ "addService", [ "@meta-field.processor.manager" ]]
-      - [ "addService", [ "@service.side-removal-handler"]]
+      - [ "addService", [ "@service.blog-removal-handler"]]
       - [ "addService", [ "@service.invalid-character-cleaner" ]]
       - [ "addService", [ "@wp.translation.lock" ]]
       - [ "addService", [ "@live_notification.service" ]]
