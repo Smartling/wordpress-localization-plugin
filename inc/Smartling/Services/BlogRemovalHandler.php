@@ -10,6 +10,7 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\WPHookInterface;
 
+/** @noinspection PhpUnused */
 class BlogRemovalHandler implements WPHookInterface
 {
     use LoggerSafeTrait;
