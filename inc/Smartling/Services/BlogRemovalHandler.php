@@ -3,101 +3,22 @@
 namespace Smartling\Services;
 
 use Smartling\ApiWrapperInterface;
-use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Settings\Locale;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\WPHookInterface;
 
-/**
- * Class BlogRemovalHandler
- * @package Smartling\Services
- */
 class BlogRemovalHandler implements WPHookInterface
 {
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    use LoggerSafeTrait;
 
-    /**
-     * @var ApiWrapperInterface
-     */
-    private $apiWrapper;
-
-    /**
-     * @var SettingsManager
-     */
-    private $settingsManager;
-
-    /**
-     * @var SubmissionManager
-     */
-    private $submissionManager;
-
-    /**
-     * BlogRemovalHandler constructor.
-     */
-    public function __construct() {
-        $this->logger = MonologWrapper::getLogger(get_called_class());
-    }
-
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
-    {
-        return $this->logger;
-    }
-
-    /**
-     * @return ApiWrapperInterface
-     */
-    public function getApiWrapper()
-    {
-        return $this->apiWrapper;
-    }
-
-    /**
-     * @param ApiWrapperInterface $apiWrapper
-     */
-    public function setApiWrapper($apiWrapper)
-    {
-        $this->apiWrapper = $apiWrapper;
-    }
-
-    /**
-     * @return SettingsManager
-     */
-    public function getSettingsManager()
-    {
-        return $this->settingsManager;
-    }
-
-    /**
-     * @param SettingsManager $settingsManager
-     */
-    public function setSettingsManager($settingsManager)
-    {
-        $this->settingsManager = $settingsManager;
-    }
-
-    /**
-     * @return SubmissionManager
-     */
-    public function getSubmissionManager()
-    {
-        return $this->submissionManager;
-    }
-
-    /**
-     * @param SubmissionManager $submissionManager
-     */
-    public function setSubmissionManager($submissionManager)
-    {
-        $this->submissionManager = $submissionManager;
-    }
+    public function __construct(
+        private ApiWrapperInterface $apiWrapper,
+        private SettingsManager $settingsManager,
+        private SubmissionManager $submissionManager,
+    ) {}
 
     /**
      * Registers wp hook handlers. Invoked by wordpress.
@@ -105,16 +26,15 @@ class BlogRemovalHandler implements WPHookInterface
     public function register(): void
     {
         add_action('delete_blog', [$this, 'blogRemovalHandler']);
+        add_action('wp_delete_site', [$this, 'blogRemovalHandler51']);
     }
 
     /**
-     * At this time blog does not exists anymore
+     * At this time blog does not exist anymore
      * We need to remove all related submissions if any
      * And cleanup all
-     *
-     * @param $blogId
      */
-    public function blogRemovalHandler($blogId)
+    public function blogRemovalHandler(int $blogId): void
     {
         $submissions = $this->getSubmissions($blogId);
 
@@ -132,7 +52,7 @@ class BlogRemovalHandler implements WPHookInterface
                         'Deleting submission id=%d that references deleted blog %d.', [$submission->getId(), $blogId]
                     )
                 );
-                $this->getSubmissionManager()->delete($submission);
+                $this->submissionManager->delete($submission);
 
                 if ('' !== $submission->getFileUri() && 0 === $this->getSubmissionCountByFileUri($submission->getFileUri())) {
                     $this->getLogger()->notice(
@@ -140,20 +60,41 @@ class BlogRemovalHandler implements WPHookInterface
                             'File %s is not in use and will be deleted', [$submission->getFileUri()]
                         )
                     );
-                    $this->getApiWrapper()->deleteFile($submission);
+                    $this->apiWrapper->deleteFile($submission);
+                }
+            }
+        }
+
+        foreach ($this->settingsManager->getEntities() as $profile) {
+            if ($profile->getOriginalBlogId()->getBlogId() === $blogId) {
+                $this->settingsManager->deleteProfile($profile->getId());
+                $this->getLogger()->notice("Deleted profile profileId={$profile->getId()} while deleting blogId=$blogId");
+            } else {
+                foreach ($profile->getTargetLocales() as $locale) {
+                    if ($locale->getBlogId() === $blogId) {
+                        $profile->setTargetLocales(array_filter($profile->getTargetLocales(), static function (Locale $locale) use ($blogId) {
+                            return $locale->getBlogId() !== $blogId;
+                        }));
+                        $this->settingsManager->storeEntity($profile);
+                        break;
+                    }
                 }
             }
         }
     }
 
-    private function getSubmissions($targetBlogId)
+    public function blogRemovalHandler51(\WP_Site $site): void
     {
-        return $this->getSubmissionManager()->find([SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId]);
+        $this->blogRemovalHandler($site->blog_id);
     }
 
-    private function getSubmissionCountByFileUri($fileUri)
+    private function getSubmissions($targetBlogId): array
     {
-        return count($this->getSubmissionManager()->find([SubmissionEntity::FIELD_FILE_URI => $fileUri]));
+        return $this->submissionManager->find([SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId]);
     }
 
+    private function getSubmissionCountByFileUri($fileUri): int
+    {
+        return count($this->submissionManager->find([SubmissionEntity::FIELD_FILE_URI => $fileUri]));
+    }
 }

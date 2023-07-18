@@ -145,7 +145,7 @@ class SettingsManager extends EntityManagerAbstract
         return $this->fetchData($dataQuery);
     }
 
-    protected function dbResultToEntity(array $dbRow)
+    protected function dbResultToEntity(array $dbRow): ConfigurationProfileEntity
     {
         return ConfigurationProfileEntity::fromArray($dbRow, $this->getLogger());
     }
@@ -179,11 +179,10 @@ class SettingsManager extends EntityManagerAbstract
     {
         $data = parent::fetchData($query);
         foreach ($data as $result) {
-            try {
-                $this->updateLabels($result);
-            } catch (BlogNotFoundException $e) {
-                $this->getLogger()->warning($e->getMessage());
+            if (!$result instanceof ConfigurationProfileEntity) {
+                throw new \RuntimeException(ConfigurationProfileEntity::class . ' expected');
             }
+            $this->updateLabels($result);
         }
 
         return $data;
@@ -245,22 +244,39 @@ class SettingsManager extends EntityManagerAbstract
         return ConfigurationProfileEntity::fromArray($fields, $this->getLogger());
     }
 
-    /**
-     * @throws BlogNotFoundException
-     */
+    public function deleteProfile(int $id): void
+    {
+        $configurationsTableName = $this->getDbal()->completeTableName(ConfigurationProfileEntity::getTableName());
+        $this->getDbal()->queryPrepared("delete from $configurationsTableName where id = ?", $id);
+    }
+
     protected function updateLabels(ConfigurationProfileEntity $entity): ConfigurationProfileEntity
     {
         $mainLocaleBlogId = $entity->getOriginalBlogId()->getBlogId();
         if (0 < $mainLocaleBlogId) {
-            $entity->getOriginalBlogId()->setLabel($this->getSiteHelper()
-                                                       ->getBlogLabelById($this->getPluginProxy(), $mainLocaleBlogId));
+            try {
+                $entity->getOriginalBlogId()->setLabel($this->getSiteHelper()
+                    ->getBlogLabelById($this->getPluginProxy(), $mainLocaleBlogId));
+            } catch (BlogNotFoundException $e) {
+                $this->getLogger()->notice("Got {$e->getMessage()}, removing profileId={$entity->getId()}");
+                $entity->getOriginalBlogId()->setLabel("* deleted blog *");
+                $this->deleteProfile($entity->getId());
+            }
         }
 
         if (0 < count($entity->getTargetLocales())) {
             foreach ($entity->getTargetLocales() as $targetLocale) {
                 $blogId = $targetLocale->getBlogId();
                 if (0 < $blogId) {
-                    $targetLocale->setLabel($this->getSiteHelper()->getBlogLabelById($this->getPluginProxy(), $blogId));
+                    try {
+                        $targetLocale->setLabel($this->getSiteHelper()->getBlogLabelById($this->getPluginProxy(), $blogId));
+                    } catch (BlogNotFoundException $e) {
+                        $this->getLogger()->notice("Got {$e->getMessage()}, removing blogId={$targetLocale->getBlogId()} from target locales for profileId={$entity->getId()}");
+                        $entity->setTargetLocales(array_filter($entity->getTargetLocales(), static function (Locale $locale) use ($blogId) {
+                            return $locale->getBlogId() !== $blogId;
+                        }));
+                        $this->storeEntity($entity);
+                    }
                 }
             }
         }
