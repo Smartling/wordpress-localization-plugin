@@ -27,7 +27,7 @@ class BlogRemovalHandler implements WPHookInterface
     public function register(): void
     {
         add_action('delete_blog', [$this, 'blogRemovalHandler']);
-        add_action('wp_delete_site', [$this, 'blogRemovalHandler51']);
+        add_action('wp_delete_site', [$this, 'siteRemovalHandler']);
     }
 
     /**
@@ -84,7 +84,7 @@ class BlogRemovalHandler implements WPHookInterface
         }
     }
 
-    public function blogRemovalHandler51(\WP_Site $site): void
+    public function siteRemovalHandler(\WP_Site $site): void
     {
         $this->blogRemovalHandler($site->blog_id);
     }
