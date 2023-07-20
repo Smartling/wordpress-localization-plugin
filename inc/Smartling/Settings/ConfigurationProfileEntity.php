@@ -194,7 +194,6 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
     /**
      * Required for parent::fromArray
      * @noinspection PhpUnused
-     * @noinspection UnknownInspectionInspection
      */
     public function setOriginalBlogId(int $blogId): void
     {
