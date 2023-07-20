@@ -247,7 +247,7 @@ class SettingsManager extends EntityManagerAbstract
     public function deleteProfile(int $id): void
     {
         $configurationsTableName = $this->getDbal()->completeTableName(ConfigurationProfileEntity::getTableName());
-        $this->getDbal()->queryPrepared("delete from $configurationsTableName where id = ?", $id);
+        $this->getDbal()->queryPrepared("delete from $configurationsTableName where id = %d", $id);
     }
 
     protected function updateLabels(ConfigurationProfileEntity $entity): ConfigurationProfileEntity

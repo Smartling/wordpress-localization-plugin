@@ -86,7 +86,7 @@ class BlogRemovalHandler implements WPHookInterface
 
     public function siteRemovalHandler(\WP_Site $site): void
     {
-        $this->blogRemovalHandler($site->blog_id);
+        $this->blogRemovalHandler((int)$site->blog_id);
     }
 
     private function getSubmissions($targetBlogId): array
