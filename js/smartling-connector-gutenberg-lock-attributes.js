@@ -20,10 +20,8 @@ const addSmartlingGutenbergLockAttributes = function () {
                 return attributes;
             });
         }
-        return true;
     } else {
-        console.log('Smartling WordPress connector plugin is unable to add filter to wordpress hooks: no wp.hooks.addFilter.');
-        return false;
+        console.error('Smartling WordPress connector plugin is unable to add filter to wordpress hooks: no wp.hooks.addFilter.');
     }
 }
 
@@ -33,8 +31,6 @@ const generateSmartlingLockId = () => {
 
 const LOCK_ID_ATTRIBUTE = 'smartlingLockId';
 
-const interval = setInterval(() => {
-    if (addSmartlingGutenbergLockAttributes()) {
-        clearInterval(interval);
-    }
-}, 1000);
+document.addEventListener('DOMContentLoaded', function () {
+    addSmartlingGutenbergLockAttributes();
+});
