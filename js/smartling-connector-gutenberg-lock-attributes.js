@@ -47,6 +47,7 @@ if (!added) {
         addSmartlingGutenbergLockAttributes();
     });
     const interval = setInterval(() => {
+        addSmartlingGutenbergLockAttributes();
         if (added) {
             clearInterval(interval);
         }
