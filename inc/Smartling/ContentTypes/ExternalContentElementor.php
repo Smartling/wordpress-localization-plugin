@@ -22,6 +22,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     private FieldsFilterHelper $fieldsFilterHelper;
 
     private array $copyFields = [
+        '_elementor_controls_usage',
         '_elementor_css',
         '_elementor_edit_mode',
         '_elementor_page_assets',
