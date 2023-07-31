@@ -1,11 +1,14 @@
 let added = false;
 
 const addSmartlingGutenbergLockAttributes = function () {
-    if (added) {
+    const registerBlockTypeHookName = 'blocks.registerBlockType';
+    const namespace = 'smartling/connector/lockAttributes';
+    if (wp.hooks.hasFilter(registerBlockTypeHookName, namespace)) {
+        added = true;
         return;
     }
     if (wp && wp.hasOwnProperty('hooks') && wp.hooks.hasOwnProperty('addFilter')) {
-        wp.hooks.addFilter('blocks.registerBlockType', 'smartling/lockAttributes', (settings) => {
+        wp.hooks.addFilter(registerBlockTypeHookName, namespace, (settings) => {
             if (settings.attributes) {
                 settings.attributes['smartlingLocked'] = {
                     type: 'boolean',
@@ -17,7 +20,7 @@ const addSmartlingGutenbergLockAttributes = function () {
             return settings;
         });
         if (smartling.addLockIdAttributeOnSave === '1') {
-            wp.hooks.addFilter('blocks.getBlockAttributes', 'smartling/get-save-content/attributes', (attributes) => {
+            wp.hooks.addFilter('blocks.getBlockAttributes', namespace, (attributes) => {
                 if (!attributes[LOCK_ID_ATTRIBUTE] || attributes[LOCK_ID_ATTRIBUTE] === '') {
                     attributes[LOCK_ID_ATTRIBUTE] = generateSmartlingLockId();
                 }
