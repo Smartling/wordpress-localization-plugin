@@ -1,4 +1,9 @@
+let added = false;
+
 const addSmartlingGutenbergLockAttributes = function () {
+    if (added) {
+        return;
+    }
     if (wp && wp.hasOwnProperty('hooks') && wp.hooks.hasOwnProperty('addFilter')) {
         wp.hooks.addFilter('blocks.registerBlockType', 'smartling/lockAttributes', (settings) => {
             if (settings.attributes) {
@@ -20,8 +25,9 @@ const addSmartlingGutenbergLockAttributes = function () {
                 return attributes;
             });
         }
+        added = true;
     } else {
-        console.error('Smartling WordPress connector plugin is unable to add filter to wordpress hooks: no wp.hooks.addFilter.');
+        console.log('Smartling WordPress connector plugin is unable to add filter to wordpress hooks: no wp.hooks.addFilter.');
     }
 }
 
@@ -31,6 +37,15 @@ const generateSmartlingLockId = () => {
 
 const LOCK_ID_ATTRIBUTE = 'smartlingLockId';
 
-document.addEventListener('DOMContentLoaded', function () {
-    addSmartlingGutenbergLockAttributes();
-});
+addSmartlingGutenbergLockAttributes();
+
+if (!added) {
+    document.addEventListener('DOMContentLoaded', function () {
+        addSmartlingGutenbergLockAttributes();
+    });
+    const interval = setInterval(() => {
+        if (added) {
+            clearInterval(interval);
+        }
+    }, 1000);
+}
