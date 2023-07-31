@@ -21,15 +21,21 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     private ContentTypeHelper $contentTypeHelper;
     private FieldsFilterHelper $fieldsFilterHelper;
 
+    private array $copyFields = [
+        '_elementor_css',
+        '_elementor_edit_mode',
+        '_elementor_page_assets',
+        '_elementor_pro_version',
+        '_elementor_template_type',
+        '_elementor_version',
+    ];
+
     private array $removeOnUploadFields = [
         'entity' => [
             'post_content',
         ],
         'meta' => [
             self::META_FIELD_NAME,
-            '_elementor_edit_mode',
-            '_elementor_template_type',
-            '_elementor_version',
         ]
     ];
 
@@ -135,7 +141,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     public function alterContentFieldsForUpload(array $source): array
     {
-        foreach ($this->removeOnUploadFields as $key => $value) {
+        foreach (array_merge($this->copyFields, $this->removeOnUploadFields) as $key => $value) {
             if (array_key_exists($key, $source)) {
                 foreach ($value as $field) {
                     unset($source[$key][$field]);
@@ -318,6 +324,14 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     public function setContentFields(array $original, array $translation, SubmissionEntity $submission): array
     {
+        if (array_key_exists('meta', $original)) {
+            foreach ($this->copyFields as $field) {
+                if (array_key_exists($field, $original['meta'])) {
+                    $value = $original['meta'][$field];
+                    $translation['meta'][$field] = is_string($value) ? $this->wpProxy->maybe_unserialize($value) : $value;
+                }
+            }
+        }
         $translation['meta'][self::META_FIELD_NAME] = json_encode($this->mergeElementorData(
             json_decode($original['meta'][self::META_FIELD_NAME] ?? '[]', true, 512, JSON_THROW_ON_ERROR),
             $this->fieldsFilterHelper->flattenArray($translation[$this->getPluginId()] ?? []),
