@@ -17,7 +17,7 @@ class UploadJob extends JobAbstract
 
     public function run(): void
     {
-        $this->getLogger()->info('Started UploadJob.');
+        $this->getLogger()->debug('Started UploadJob.');
 
         $this->processUploadQueue();
 
@@ -25,7 +25,7 @@ class UploadJob extends JobAbstract
 
         $this->processDailyBucketJob();
 
-        $this->getLogger()->info('Finished UploadJob.');
+        $this->getLogger()->debug('Finished UploadJob.');
     }
 
     private function processUploadQueue(): void

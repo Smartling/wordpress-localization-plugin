@@ -34,11 +34,11 @@ class DownloadTranslationJob extends JobAbstract
 
     public function run(): void
     {
-        $this->getLogger()->info('Started Translation Download Job.');
+        $this->getLogger()->debug('Started Translation Download Job.');
 
         $this->processDownloadQueue();
 
-        $this->getLogger()->info('Finished Translation Download Job.');
+        $this->getLogger()->debug('Finished Translation Download Job.');
     }
 
     private function processDownloadQueue(): void
