@@ -62,6 +62,12 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 3.4.0 =
+* Changed behaviour for known supported plugins: unsupported versions should not upload content not meant for translation
+* Improved support for Elementor: fixed issue when translated related assets and css were present when editing, but missing on the frontend
+* Improved blog removal hook: will delete profiles that reference the deleted blog
+* Improved adding Smartling lock attributes in the blog editor: broader support for other block editor javascript
+
 = 3.3.1 =
 * Improved batch uid handling to avoid batch not suitable for adding files error when uploading
 
