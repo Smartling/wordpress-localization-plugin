@@ -21,6 +21,7 @@ use Smartling\Jobs\JobEntityWithStatus;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Vendor\Psr\Log\NullLogger;
 use Smartling\Vendor\Smartling\AuditLog\AuditLogApi;
 use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 use Smartling\Vendor\Smartling\AuthApi\AuthTokenProvider;
@@ -98,7 +99,7 @@ class ApiWrapper implements ApiWrapperInterface
 
     public function acquireLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime
     {
-        return DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())
+        return DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), new NullLogger())
             ->acquireLock("{$profile->getProjectId()}-$key", $ttlSeconds);
     }
 
