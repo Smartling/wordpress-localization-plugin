@@ -64,7 +64,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 = 3.4.0 =
 * Changed behaviour for known supported plugins: unsupported versions should not upload content not meant for translation
-* Improved support for Elementor: fixed issue when translated related assets and css were present when editing, but missing on the frontend
+* Improved support for Elementor: fixed issue when translated related assets and css were visible when editing, but missing on the frontend
 * Improved blog removal hook: will delete profiles that reference the deleted blog
 * Improved adding Smartling lock attributes in the blog editor: broader support for other block editor javascript
 
