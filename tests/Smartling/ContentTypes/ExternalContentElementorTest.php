@@ -80,7 +80,6 @@ class ExternalContentElementorTest extends TestCase {
             'entity' => [],
             'meta' => [
                 'x' => 'relevant',
-                '_elementor_version' => 'irrelevant',
             ],
         ], $this->getExternalContentElementor()->alterContentFieldsForUpload([
             'entity' => [

@@ -142,7 +142,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     public function alterContentFieldsForUpload(array $source): array
     {
-        foreach (array_merge($this->copyFields, $this->removeOnUploadFields) as $key => $value) {
+        foreach (array_merge_recursive(['meta' => $this->copyFields], $this->removeOnUploadFields) as $key => $value) {
             if (array_key_exists($key, $source)) {
                 foreach ($value as $field) {
                     unset($source[$key][$field]);
