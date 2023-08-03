@@ -78,7 +78,10 @@ class ExternalContentElementorTest extends TestCase {
     {
         $this->assertEquals([
             'entity' => [],
-            'meta' => ['x' => 'relevant'],
+            'meta' => [
+                'x' => 'relevant',
+                '_elementor_version' => 'irrelevant',
+            ],
         ], $this->getExternalContentElementor()->alterContentFieldsForUpload([
             'entity' => [
                 'post_content' => 'irrelevant',
