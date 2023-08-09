@@ -83,11 +83,10 @@ class BulkSubmitTableWidget extends SmartlingListTable
         $this->profile = $profile;
         $this->siteHelper = $siteHelper;
 
-        /*
-         * Set default content type to first known
-         */
+        $filteredAllowedTypes = $this->getFilteredAllowedTypes();
         $this->defaultValues[static::CONTENT_TYPE_SELECT_ELEMENT_NAME] =
-            ArrayHelper::first(array_keys($this->getFilteredAllowedTypes()));
+            array_key_exists('post', $filteredAllowedTypes) ? 'post' :
+                ArrayHelper::first(array_keys($filteredAllowedTypes));
 
         parent::__construct($this->_settings);
     }
@@ -177,7 +176,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
             'title'        => __('Title'),
             'author'       => __('Author'),
             'status'       => __('Status'),
-            'locales'      => __('Locales'),
+            'locales'      => __('Target blogs'),
             'updated'      => __('Updated'),
         ];
     }
@@ -217,9 +216,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
      */
     private function processBulkAction()
     {
-        /**
-         * @var array $submissions
-         */
         $action = $this->getFromSource('action', 'send');
         $submissions = $this->getFormElementValue('submission', []);
         $locales = [];
@@ -384,8 +380,8 @@ class BulkSubmitTableWidget extends SmartlingListTable
                 if (count($entities) > 0) {
                     $locales = [];
                     foreach ($entities as $entity) {
-                        $locales[] =
-                            $this->localizationPluginProxy->getBlogNameByLocale($entity->getTargetLocale());
+                        $locales[] = $this->siteHelper
+                            ->getBlogLabelById($this->localizationPluginProxy, $entity->getTargetBlogId());
                     }
 
                     $row['locales'] = implode(', ', $locales);

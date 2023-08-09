@@ -252,6 +252,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
             'meta_key'         => '',
             'meta_value'       => '',
             'post_type'        => $this->getType(),
+            'post_status'      => 'any',
             'suppress_filters' => true,
             's'                => $searchString,
         ];

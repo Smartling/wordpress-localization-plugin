@@ -1,14 +1,12 @@
 <?php
 
-use Smartling\Settings\TargetLocale;
 use Smartling\WP\Table\BulkSubmitTableWidget;
 use Smartling\WP\WPAbstract;
 
-/**
- * @var WPAbstract $this
- * @var WPAbstract self
- */
 $data = $this->getViewData();
+if (!$data instanceof BulkSubmitTableWidget) {
+    throw new \LogicException(BulkSubmitTableWidget::class . ' expected');
+}
 $widgetName = 'bulk-submit-locales';
 
 ?>
@@ -26,11 +24,7 @@ $widgetName = 'bulk-submit-locales';
 
     <div class="display-errors"></div>
     <?php
-
     $bulkSubmitTable = $data;
-    /**
-     * @var BulkSubmitTableWidget $submissionsTable
-     */
     $bulkSubmitTable->prepare_items();
     ?>
 
@@ -79,19 +73,12 @@ $widgetName = 'bulk-submit-locales';
                                             <?= WPAbstract::checkUncheckBlock($widgetName) ?>
                                         </div>
                                         <?php
-                                        /**
-                                         * @var BulkSubmitTableWidget $data
-                                         */
-
                                         $locales = $data->getProfile()
                                             ->getTargetLocales();
 
                                         \Smartling\Helpers\ArrayHelper::sortLocales($locales);
 
                                         foreach ($locales as $locale) {
-                                            /**
-                                             * @var TargetLocale $locale
-                                             */
                                             if (!$locale->isEnabled()) {
                                                 continue;
                                             }
