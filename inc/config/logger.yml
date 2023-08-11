@@ -5,7 +5,7 @@ parameters:
   logger.filehandler.standard.loglevel: DEBUG
   logger.filehandler.standard.maxfiles: 1
 
-  logger.formatter.date: "Y-m-d H:i:s"
+  logger.formatter.date: "Y-m-d H:i:s.u"
   logger.formatter.output.default: "[%%datetime%%] %%channel%%.%%level_name%%: %%message%% %%context%% %%extra%%\n"
   logger.formatter.output.short: "[%%datetime%%] %%level_name%%: %%message%%\n"
 
