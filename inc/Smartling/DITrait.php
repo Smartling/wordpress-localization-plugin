@@ -81,7 +81,8 @@ trait DITrait
     private static function registerCloudLogExtension(ContainerBuilder $di)
     {
         $defSmartling = $di->register('smartlingLogFileHandler', SmartlingLogHandler::class)
-            ->addArgument('https://api.smartling.com/updates/status');
+            ->addArgument('https://api.smartling.com/updates/status')
+            ->addArgument($di->getParameter('logger.formatter.date'));
 
         $defBuffer = $di->register('bufferHandler', BufferHandler::class)
             ->addArgument($defSmartling)
