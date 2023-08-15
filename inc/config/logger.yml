@@ -1,4 +1,5 @@
 parameters:
+  logger.buffer.limit: 1000
   logger.channel: default
   logger.filehandler.standard.filename.default: %plugin.dir%/logs/logfile
   logger.filehandler.standard.filename: %plugin.dir%/logs/logfile
@@ -8,6 +9,8 @@ parameters:
   logger.formatter.date: "Y-m-d\TH:i:s.up"
   logger.formatter.output.default: "[%%datetime%%] %%channel%%.%%level_name%%: %%message%% %%context%% %%extra%%\n"
   logger.formatter.output.short: "[%%datetime%%] %%level_name%%: %%message%%\n"
+
+  logger.host: "https://api.smartling.com/updates/status"
 
   #
   # Log String format WITH Source (class / namespace)
@@ -30,6 +33,15 @@ parameters:
       - CustomFieldFilterHandler
 
 services:
+  bufferHandler:
+    class: Smartling\Vendor\Monolog\Handler\BufferHandler
+    arguments:
+      - "@smartlingLogFileHandler"
+      - "%logger.buffer.limit%"
+      - "DEBUG"
+      - true
+      - true
+
   fileLoggerLineFormatter:
     class: Smartling\Base\CustomLogLineFormatter
     arguments:
@@ -56,4 +68,16 @@ services:
 
   logger:
     class: Smartling\MonologWrapper\Logger\LevelLogger
-    arguments: ["%logger.channel%", "%logger.filehandler.standard.loglevel%", ["@fileLoggerHandlerRotatable"]]
+    arguments:
+      - "%logger.channel%"
+      - "%logger.filehandler.standard.loglevel%"
+      -
+        - "@fileLoggerHandlerRotatable"
+    calls:
+      - [ "pushHandler", [ "@bufferHandler" ]]
+
+  smartlingLogFileHandler:
+    class: Smartling\Base\SmartlingLogHandler
+    arguments:
+      - "%logger.host%"
+      - "%logger.formatter.date%"
