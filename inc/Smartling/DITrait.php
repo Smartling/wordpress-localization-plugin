@@ -3,14 +3,11 @@
 namespace Smartling;
 
 use Smartling\Base\ExportedAPI;
-use Smartling\Base\SmartlingLogHandler;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\LogContextMixinHelper;
-use Smartling\MonologWrapper\Logger\LevelLogger;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Services\GlobalSettingsManager;
-use Smartling\Vendor\Monolog\Handler\BufferHandler;
 use Smartling\Vendor\Monolog\Handler\NullHandler;
 use Smartling\Vendor\Symfony\Component\Config\FileLocator;
 use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -55,8 +52,6 @@ trait DITrait
         self::injectLoggerCustomizations(self::$containerInstance);
         self::handleLoggerConfiguration();
 
-        self::registerCloudLogExtension(self::$containerInstance);
-
         /**
          * Exposing reference to DI interface
          */
@@ -76,25 +71,6 @@ trait DITrait
         LogContextMixinHelper::addToContext('phpVersion', PHP_VERSION);
 
         self::$loggerInstance = $logger;
-    }
-
-    private static function registerCloudLogExtension(ContainerBuilder $di)
-    {
-        $defSmartling = $di->register('smartlingLogFileHandler', SmartlingLogHandler::class)
-            ->addArgument('https://api.smartling.com/updates/status');
-
-        $defBuffer = $di->register('bufferHandler', BufferHandler::class)
-            ->addArgument($defSmartling)
-            ->addArgument(1000)
-            ->addArgument('DEBUG')
-            ->addArgument(true)
-            ->addArgument(true);
-
-        foreach ($di->getDefinitions() as $serviceId => $serviceDefinition) {
-            if ($serviceDefinition->getClass() === LevelLogger::class) {
-                $serviceDefinition->addMethodCall('pushHandler',[$defBuffer]);
-            }
-        };
     }
 
     private static function injectLoggerCustomizations(ContainerBuilder $di)
