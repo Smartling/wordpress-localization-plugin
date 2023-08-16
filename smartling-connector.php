@@ -10,7 +10,7 @@ use Smartling\Bootstrap;
  * Plugin Name:       Smartling Connector
  * Plugin URI:        https://www.smartling.com/products/automate/integrations/wordpress/
  * Description:       Integrate your WordPress site with Smartling to upload your content and download translations.
- * Version:           3.4.2
+ * Version:           3.4.3
  * Author:            Smartling
  * Author URI:        https://www.smartling.com
  * License:           GPL-2.0+
@@ -18,7 +18,7 @@ use Smartling\Bootstrap;
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       smartling-connector
  * Domain Path:       /languages
- * Elementor tested up to: 3.14.1
+ * Elementor tested up to: 3.15.2
  */
 
 // If this file is called directly, abort.
