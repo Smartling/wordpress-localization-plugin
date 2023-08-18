@@ -23,6 +23,12 @@ class CloneTest extends SmartlingUnitTestCaseAbstract
         wp_update_post(['ID' => $imageId, 'post_parent' => $childPostId]); // Force ReferencedStdBasedContentProcessorAbstract change that caused regression initially
 
         $rootPostId = $this->createPost('post', 'root post', "<!-- wp:test/post {\"id\":$childPostId} /-->");
+        $addedMetaKey = 'contribute_slug_to_childpage_url';
+        $addedMetaValue = [
+            'use_page_name' => true,
+            $addedMetaKey => false,
+        ];
+        add_post_meta($rootPostId, $addedMetaKey, $addedMetaValue);
 
         $this->withBlockRules($this->getRulesManager(), [
             'test' => [
@@ -52,6 +58,7 @@ class CloneTest extends SmartlingUnitTestCaseAbstract
         $this->assertInstanceOf(SubmissionEntity::class, $imageSubmission);
         $childPostTargetId = $childSubmission->getTargetId();
         $this->assertEquals('<!-- wp:test/post {"id":' . $childPostTargetId . '} /-->', get_post($rootSubmission->getTargetId())->post_content, 'Expected root post to reference child post id at the target blog');
+        $this->assertEquals($addedMetaValue, get_post_meta($rootSubmission->getTargetId(), $addedMetaKey, true), 'Expected boolean values in array metadata to be preserved');
         $imageTargetId = $imageSubmission->getTargetId();
         $this->assertEquals($imageTargetId, get_post_meta($childPostTargetId, '_thumbnail_id', true), 'Expected child post to reference attachment id at the target blog');
         $this->assertNotEquals($childPostId, $childPostTargetId, 'Expected child post id to change in translation');
