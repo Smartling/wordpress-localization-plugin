@@ -53,7 +53,7 @@ class CloneTest extends SmartlingUnitTestCaseAbstract
         $this->assertInstanceOf(SubmissionEntity::class, $imageSubmission);
         $childPostTargetId = $childSubmission->getTargetId();
         $this->assertEquals('<!-- wp:test/post {"id":' . $childPostTargetId . '} /-->', get_post($rootSubmission->getTargetId())->post_content, 'Expected root post to reference child post id at the target blog');
-        $this->assertEquals($rootSubmission->getTargetId(), get_post($childPostId)->post_parent);
+        $this->assertEquals($rootSubmission->getTargetId(), get_post($childPostId)->post_parent, 'Expected child post\'s parent_id to be equal to it\'s parent post');
         $imageTargetId = $imageSubmission->getTargetId();
         $this->assertEquals($imageTargetId, get_post_meta($childPostTargetId, '_thumbnail_id', true), 'Expected child post to reference attachment id at the target blog');
         $this->assertNotEquals($childPostId, $childPostTargetId, 'Expected child post id to change in translation');
