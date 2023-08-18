@@ -51,6 +51,7 @@ class CloneTest extends SmartlingUnitTestCaseAbstract
         $this->assertInstanceOf(SubmissionEntity::class, $rootSubmission);
         $this->assertInstanceOf(SubmissionEntity::class, $childSubmission);
         $this->assertInstanceOf(SubmissionEntity::class, $imageSubmission);
+        $this->assertNotEquals(0, $rootSubmission->getTargetId());
         $childPostTargetId = $childSubmission->getTargetId();
         $this->assertEquals('<!-- wp:test/post {"id":' . $childPostTargetId . '} /-->', get_post($rootSubmission->getTargetId())->post_content, 'Expected root post to reference child post id at the target blog');
         $this->assertEquals($rootSubmission->getTargetId(), get_post($childPostId)->post_parent, 'Expected child post\'s parent_id to be equal to it\'s parent post');
