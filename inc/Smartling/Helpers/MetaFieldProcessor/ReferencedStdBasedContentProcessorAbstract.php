@@ -62,7 +62,7 @@ abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProce
             $value = ArrayHelper::first($value);
         }
 
-        if (!IntegerParser::tryParseString($value, $value)) {
+        if (!$submission->isCloned() && !IntegerParser::tryParseString($value, $value)) {
             $message = vsprintf(
                 'Got bad reference number for submission id=%s metadata field=\'%s\' with value=\'%s\', expected integer > 0. Skipping.',
                 [$submission->getId(), $fieldName, var_export($originalValue, true),]

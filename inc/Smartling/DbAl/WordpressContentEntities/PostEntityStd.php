@@ -38,6 +38,7 @@ use Smartling\WP\View\BulkSubmitScreenRow;
  */
 class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, EntityWithMetadata
 {
+    private WordpressFunctionProxyHelper $wordpressFunctionProxyHelper;
     /**
      * Standard 'post' content-type fields
      */
@@ -67,7 +68,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         'comment_count',
     ];
 
-    public function __construct($type = 'post', array $related = [])
+    public function __construct($type = 'post', array $related = [], ?WordpressFunctionProxyHelper $wordpressFunctionProxyHelper = null)
     {
         parent::__construct();
         $this->setType($type);
@@ -88,6 +89,9 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         $this->setEntityFields($this->fields);
 
         $this->setRelatedTypes($related);
+        if ($wordpressFunctionProxyHelper === null) {
+            $this->wordpressFunctionProxyHelper = new WordpressFunctionProxyHelper();
+        }
     }
 
     public function getContentTypeProperty(): string
@@ -332,6 +336,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
          */
         $expectedTagName = $key;
         $expectedTagValue = $value;
+        $value = $this->wordpressFunctionProxyHelper->maybe_unserialize($value);
         if (GlobalSettingsManager::isAddSlashesBeforeSavingPostMeta()) {
             $key = addslashes($key);
             if (is_string($value)) {

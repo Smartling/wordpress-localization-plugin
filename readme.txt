@@ -64,6 +64,8 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 = 3.4.3 =
 * Added support of Elementor version 3.15
+* Fixed post parent not being properly updated when cloning
+* Fixed issues when cloning serialized metadata values
 
 = 3.4.2 =
 * Changed default Bulk Submit screen type to be Posts
