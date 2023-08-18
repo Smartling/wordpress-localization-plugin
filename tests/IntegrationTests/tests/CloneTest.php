@@ -24,6 +24,7 @@ class CloneTest extends SmartlingUnitTestCaseAbstract
 
         $rootPostId = $this->createPost('post', 'root post', "<!-- wp:test/post {\"id\":$childPostId} /-->");
         wp_update_post(['ID' => $childPostId, 'post_parent' => $rootPostId]);
+        $this->assertEquals($rootPostId, get_post($childPostId)->post_parent);
 
         $this->withBlockRules($this->getRulesManager(), [
             'test' => [
