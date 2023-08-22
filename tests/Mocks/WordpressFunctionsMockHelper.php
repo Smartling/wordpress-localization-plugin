@@ -73,6 +73,7 @@ namespace {
         if (!function_exists('restore_current_blog')) {
             function restore_current_blog()
             {
+                $_SERVER['previous_blog_id'] = 1;
                 return true;
             }
         }
@@ -80,11 +81,11 @@ namespace {
         if (!function_exists('switch_to_blog')) {
             function switch_to_blog($blogId)
             {
+                $_SERVER['previous_blog_id'] = 1;
                 return true;
             }
         } else {
             // Switch \Smartling\Helpers\SiteHelper active blog id to 1 to mimic WordPress when tests are running in Docker
-            /** @noinspection PhpExpressionResultUnusedInspection */
             switch_to_blog(1);
         }
 

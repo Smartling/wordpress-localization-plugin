@@ -16,6 +16,12 @@ class WordpressFunctionProxyHelper
         return get_post_types(...func_get_args());
     }
 
+    /** @noinspection PhpUnused, used in plugin-info.yaml */
+    public function plugin_dir_url()
+    {
+        return plugin_dir_url(...func_get_args());
+    }
+
     public function get_post_type()
     {
         return get_post_type(...func_get_args());

@@ -16,6 +16,7 @@
     "php": ">=8.0",
     "monolog/monolog": "~1",
     "symfony/dependency-injection": "~2.8",
+    "symfony/expression-language": "~2.8",
     "symfony/config": "~2.8",
     "symfony/yaml": "~2.8",
     "smartling/api-sdk-php": "3.9.2",

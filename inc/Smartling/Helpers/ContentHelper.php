@@ -133,7 +133,7 @@ class ContentHelper
         }
     }
 
-    private function getWrapper(string $contentType): EntityHandler
+    public function getWrapper(string $contentType): EntityHandler
     {
         $return = clone $this->getIoFactory()->getHandler($contentType);
         if (!$return instanceof EntityHandler) {
