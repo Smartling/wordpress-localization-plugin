@@ -55,7 +55,7 @@ class RestApi
 
     public static function permissionCallback(): bool
     {
-        return true; // TODO
+        return current_user_can('read');
     }
 
     private function registerHandlers(): void
