@@ -6,6 +6,7 @@ use Smartling\Base\ExportedAPI;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\LogContextMixinHelper;
+use Smartling\MonologWrapper\Logger\LevelLogger;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Services\GlobalSettingsManager;
 use Smartling\Vendor\Monolog\Handler\NullHandler;
@@ -16,20 +17,15 @@ use Smartling\WP\Controller\ConfigurationProfilesController;
 
 trait DITrait
 {
-    /**
-     * @var ContainerBuilder $container
-     */
-    private static $containerInstance = null;
+    private static ?ContainerBuilder $containerInstance = null;
 
     /**
      * Initializes DI Container from YAML config file
      * @throws SmartlingConfigException
      */
-    protected static function initContainer()
+    protected static function initContainer(): void
     {
         $container = new ContainerBuilder();
-
-        self::setCoreParameters($container);
 
         $configDir = [SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . 'inc' . DIRECTORY_SEPARATOR . 'config'];
 
@@ -67,13 +63,13 @@ trait DITrait
         // context naming based on https://wiki.smartling.net/pages/viewpage.action?spaceKey=DEV&title=Log+service
         LogContextMixinHelper::addToContext('host', $host);
         LogContextMixinHelper::addToContext('httpHost', $_SERVER['HTTP_HOST']);
-        LogContextMixinHelper::addToContext('moduleVersion', static::$pluginVersion);
+        LogContextMixinHelper::addToContext('moduleVersion', Bootstrap::$pluginVersion);
         LogContextMixinHelper::addToContext('phpVersion', PHP_VERSION);
 
-        self::$loggerInstance = $logger;
+        Bootstrap::$loggerInstance = $logger;
     }
 
-    private static function injectLoggerCustomizations(ContainerBuilder $di)
+    private static function injectLoggerCustomizations(ContainerBuilder $di): void
     {
         $storedConfiguration = GlobalSettingsManager::getLoggingCustomization();
 
@@ -104,7 +100,7 @@ trait DITrait
                         $item = stripslashes($item);
                         $defId = vsprintf('logger.%s.%s', [$level, md5($item)]);
 
-                        $di->register($defId, 'Smartling\MonologWrapper\Logger\LevelLogger')
+                        $di->register($defId, LevelLogger::class)
                             ->addArgument($item)
                             ->addArgument($level)
                             ->addArgument([$handler]);
@@ -114,9 +110,9 @@ trait DITrait
         }
     }
 
-    private static function handleLoggerConfiguration()
+    private static function handleLoggerConfiguration(): void
     {
-        add_action(ExportedAPI::ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT, function (ContainerBuilder $di) {
+        add_action(ExportedAPI::ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT, static function (ContainerBuilder $di) {
             $di->setParameter('logger.filehandler.standard.filename', GlobalSettingsManager::getLogFileSpec());
             $di->setParameter('submission.pagesize', GlobalSettingsManager::getPageSize());
             if (1 === (int) GlobalSettingsManager::getDisableLogging()) {
@@ -124,13 +120,13 @@ trait DITrait
             }
         }, 8);
 
-        add_action(ExportedAPI::ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT, function (ContainerBuilder $di) {
+        add_action(ExportedAPI::ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT, static function () {
             $file = self::getLogFileName();
             if (file_exists($file) && !is_writable($file)) {
                 if (1 === (int) GlobalSettingsManager::getDisableLogging()) {
                     return;
                 }
-                add_action('admin_init', function () {
+                add_action('admin_init', static function () {
                     $msg = [
                         '<strong>Warning!</strong>',
                         vsprintf('It is not possible to write runtime logs into a file <strong>%s</strong>.', [Bootstrap::getLogFileName()]),
@@ -143,20 +139,22 @@ trait DITrait
         }, 9);
     }
 
-    private static function nullLog(ContainerBuilder $di)
+    /**
+     *  Disable all defined loggers.
+     */
+    private static function nullLog(ContainerBuilder $di): void
     {
-        // Disable all defined loggers.
         foreach ($di->getDefinitions() as $serviceId => $serviceDefinition) {
-            if ($serviceDefinition->getClass() == 'Smartling\MonologWrapper\Logger\LevelLogger') {
+            if ($serviceDefinition->getClass() === LevelLogger::class) {
                 $di->get($serviceId)->setHandlers([new NullHandler()]);
             }
-        };
+        }
     }
 
-    public static function disableLogging(ContainerBuilder $di)
+    public static function disableLogging(ContainerBuilder $di): void
     {
         self::nullLog($di);
-        add_action('admin_init', function () {
+        add_action('admin_init', static function () {
             $msg = [
                 '<strong>Warning!</strong>',
                 'Logging is completely disabled. Previous log files are untouched.',
@@ -166,38 +164,77 @@ trait DITrait
         });
     }
 
-    /**
-     * Extracts mixed from container
-     *
-     * @param string $id
-     * @param bool   $isParam
-     *
-     * @return mixed
-     */
-    protected function fromContainer($id, $isParam = false)
+    protected function fromContainer(string $id, bool $isParam = false): mixed
     {
         $container = self::getContainer();
-        $content = null;
 
-        if ($isParam) {
-            $content = $container->getParameter($id);
-        } else {
-            $content = $container->get($id);
-        }
-
-        return $content;
+        return $isParam ? $container->getParameter($id) : $container->get($id);
     }
 
     /**
-     * @return ContainerBuilder
      * @throws SmartlingConfigException
      */
-    public static function getContainer()
+    public static function getContainer(): ContainerBuilder
     {
         if (null === self::$containerInstance) {
             self::initContainer();
         }
 
         return self::$containerInstance;
+    }
+
+    public static function getLogFileName(bool $withDate = true, bool $forceDefault = false): string
+    {
+        $container = static::getContainer();
+        $pluginDir = $container->getParameter('plugin.dir');
+
+        $filename = str_replace('%plugin.dir%', $pluginDir, $container->getParameter($forceDefault
+            ? 'logger.filehandler.standard.filename.default'
+            : 'logger.filehandler.standard.filename'));
+
+        return $withDate
+            ? sprintf('%s-%s', $filename, date('Y-m-d'))
+            : sprintf('%s', $filename);
+    }
+
+    public static function getCurrentLogFileSize(): string
+    {
+        $logFile = static::getLogFileName();
+
+        if (!file_exists($logFile) || !is_readable($logFile)) {
+            return 'Log does not exist or is not readable';
+        }
+
+        $size = filesize($logFile);
+
+        return static::prettyPrintSize($size);
+    }
+
+    public static function prettyPrintSize(float|int $size, int $stepForward = 750, int $divider = 1024, int $precision = 2): string
+    {
+        $scales = [
+            'B' => 'B',
+            'K' => 'kB',
+            'M' => 'MB',
+            'G' => 'GB',
+            'T' => 'TB',
+            'P' => 'PB',
+            'E' => 'EB',
+        ];
+
+        $scale = reset($scales);
+
+        while ($stepForward < $size) {
+            $newSize = $size / $divider;
+            $newScale = next($scales);
+
+            if (false === $newScale) {
+                break;
+            }
+            $size = $newSize;
+            $scale = $newScale;
+        }
+
+        return sprintf('%s %s', round($size, $precision), $scale);
     }
 }

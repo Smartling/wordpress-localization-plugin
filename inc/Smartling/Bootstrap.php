@@ -39,10 +39,7 @@ class Bootstrap
 
     private const WORDPRESS_ORG_PLUGIN_NAME = 'smartling-connector';
 
-    /**
-     * @var LoggerInterface
-     */
-    private static $loggerInstance;
+    public static LoggerInterface $loggerInstance;
 
     public static string $pluginVersion = 'undefined';
 
@@ -81,22 +78,6 @@ class Bootstrap
     public static function getCurrentVersion()
     {
         return static::getContainer()->getParameter('plugin.version');
-    }
-
-
-    private static function setCoreParameters(ContainerBuilder $container): void
-    {
-        // plugin dir (to use in config file)
-        $container->setParameter('plugin.dir', SMARTLING_PLUGIN_DIR);
-        $container->setParameter('plugin.upload', SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . 'upload');
-
-        $pluginUrl = '';
-
-        if (function_exists('plugin_dir_url')) {
-            $pluginUrl = plugin_dir_url(SMARTLING_PLUGIN_DIR . DIRECTORY_SEPARATOR . '..');
-        }
-
-        $container->setParameter('plugin.url', $pluginUrl);
     }
 
     public function activate(): void

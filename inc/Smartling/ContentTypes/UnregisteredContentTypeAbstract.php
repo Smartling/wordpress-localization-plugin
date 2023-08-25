@@ -26,9 +26,4 @@ abstract class UnregisteredContentTypeAbstract implements ContentTypeInterface
     {
         return false;
     }
-
-    public function forceDisplay(): bool
-    {
-        return false;
-    }
 }

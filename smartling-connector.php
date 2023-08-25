@@ -1,6 +1,7 @@
 <?php
 
 use Smartling\Bootstrap;
+use Smartling\RestApi;
 
 /**
  * @link              https://www.smartling.com
@@ -51,3 +52,6 @@ if (is_admin() || (defined('DOING_CRON') && true === DOING_CRON)) {
         register_uninstall_hook(__FILE__, array(Bootstrap::class, 'uninstall'));
     }
 }
+
+require_once plugin_dir_path(__FILE__) . 'inc/autoload.php';
+(new RestApi())->initApi();
