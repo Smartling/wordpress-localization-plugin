@@ -59,6 +59,14 @@ class WidgetEntity extends VirtualEntityAbstract
         return $this->id;
     }
 
+    public function setId(int $id): static
+    {
+        $result = clone $this;
+        $this->id = $id;
+
+        return $result;
+    }
+
     public function getTitle(): string
     {
         $title = $this->getSettings()['title'] ?? null;

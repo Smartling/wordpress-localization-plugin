@@ -158,4 +158,12 @@ class AcfOptionEntity extends VirtualEntityAbstract
     {
         return $this->id;
     }
+
+    public function setId(int $id): static
+    {
+        $result = clone $this;
+        $result->id = $id;
+
+        return $result;
+    }
 }

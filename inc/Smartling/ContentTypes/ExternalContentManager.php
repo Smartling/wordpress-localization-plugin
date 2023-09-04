@@ -4,6 +4,7 @@ namespace Smartling\ContentTypes;
 
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\Submission;
 
 class ExternalContentManager
 {
@@ -95,7 +96,7 @@ class ExternalContentManager
         return $this->handlers;
     }
 
-    public function setExternalContent(array $original, array $translation, SubmissionEntity $submission): array
+    public function setExternalContent(array $original, array $translation, Submission $submission): array
     {
         foreach ($this->handlers as $handler) {
             if ($handler->getSupportLevel($submission->getContentType(), $submission->getSourceId()) === ContentTypePluggableInterface::SUPPORTED) {
