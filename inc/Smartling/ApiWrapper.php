@@ -97,24 +97,28 @@ class ApiWrapper implements ApiWrapperInterface
         return $authProvider;
     }
 
+    #[Retry]
     public function acquireLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime
     {
         return DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), new NullLogger())
             ->acquireLock("{$profile->getProjectId()}-$key", $ttlSeconds);
     }
 
+    #[Retry]
     public function renewLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime
     {
         return DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())
             ->renewLock("{$profile->getProjectId()}-$key", $ttlSeconds);
     }
 
+    #[Retry]
     public function releaseLock(ConfigurationProfileEntity $profile, string $key): void
     {
         DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())
             ->releaseLock("{$profile->getProjectId()}-$key");
     }
 
+    #[Retry]
     public function createAuditLogRecord(ConfigurationProfileEntity $profile, string $actionType, string $description, array $clientData, ?JobEntityWithBatchUid $jobInfo = null, ?bool $isAuthorize = null): void
     {
         $record = new CreateRecordParameters();
@@ -141,6 +145,7 @@ class ApiWrapper implements ApiWrapperInterface
     /**
      * @throws SmartlingFileDownloadException
      */
+    #[Retry]
     public function downloadFile(SubmissionEntity $entity): string
     {
         try {
@@ -188,6 +193,7 @@ class ApiWrapper implements ApiWrapperInterface
         return $entity;
     }
 
+    #[Retry]
     public function getStatus(SubmissionEntity $entity): SubmissionEntity
     {
         try {
@@ -230,6 +236,7 @@ class ApiWrapper implements ApiWrapperInterface
         return $this->settings->getSmartlingLocaleBySubmission($entity);
     }
 
+    #[Retry]
     public function uploadContent(SubmissionEntity $entity, string $xmlString = '', string $filename = '', array $smartlingLocaleList = []): bool
     {
         $this->getLogger()
@@ -279,6 +286,7 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
+    #[Retry]
     public function getSupportedLocales(ConfigurationProfileEntity $profile): array
     {
         $supportedLocales = [];
@@ -302,6 +310,7 @@ class ApiWrapper implements ApiWrapperInterface
         return $supportedLocales;
     }
 
+    #[Retry]
     public function getAccountUid(ConfigurationProfileEntity $profile): string
     {
         try {
@@ -321,6 +330,7 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
+    #[Retry]
     public function lastModified(SubmissionEntity $submission): array
     {
         $output = [];
@@ -337,6 +347,7 @@ class ApiWrapper implements ApiWrapperInterface
         return $output;
     }
 
+    #[Retry]
     public function getStatusForAllLocales(array $submissions): array
     {
         $submission = ArrayHelper::first($submissions);
@@ -397,6 +408,7 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
+    #[Retry]
     public function deleteFile(SubmissionEntity $submission): void
     {
         try {
@@ -418,6 +430,7 @@ class ApiWrapper implements ApiWrapperInterface
         return BatchApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger());
     }
 
+    #[Retry]
     public function listJobs(ConfigurationProfileEntity $profile, ?string $name = null, array $statuses = []): array
     {
         $params = new ListJobsParameters();
@@ -433,6 +446,7 @@ class ApiWrapper implements ApiWrapperInterface
         return $this->getJobsApi($profile)->listJobs($params);
     }
 
+    #[Retry]
     public function createJob(ConfigurationProfileEntity $profile, array $params): array
     {
         $param = new CreateJobParameters();
@@ -456,6 +470,7 @@ class ApiWrapper implements ApiWrapperInterface
         return $this->getJobsApi($profile)->createJob($param);
     }
 
+    #[Retry]
     public function updateJob(ConfigurationProfileEntity $profile, string $jobId, string $name, ?string $description = null, ?DateTime $dueDate = null): array
     {
         $params = new UpdateJobParameters();
@@ -472,6 +487,7 @@ class ApiWrapper implements ApiWrapperInterface
         return $this->getJobsApi($profile)->updateJob($jobId, $params);
     }
 
+    #[Retry]
     public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, bool $authorize = false): array
     {
         $createBatchParameters = new CreateBatchParameters();
@@ -481,10 +497,13 @@ class ApiWrapper implements ApiWrapperInterface
         return $this->getBatchApi($profile)->createBatch($createBatchParameters);
     }
 
+    #[Retry]
     public function executeBatch(ConfigurationProfileEntity $profile, string $batchUid): void
     {
         $this->getBatchApi($profile)->executeBatch($batchUid);
     }
+
+    #[Retry]
     public function retrieveBatch(ConfigurationProfileEntity $profile, string $jobId, bool $authorize = true, array $updateJob = []): string
     {
         if ($authorize) {
@@ -552,6 +571,7 @@ class ApiWrapper implements ApiWrapperInterface
         return ApiWrapperInterface::DAILY_BUCKET_JOB_NAME_PREFIX . " $date$suffix";
     }
 
+    #[Retry]
     public function findLastJobByFileUri(ConfigurationProfileEntity $profile, string $fileUri): ?JobEntityWithStatus
     {
         $parameters = new SearchJobsParameters();
@@ -569,6 +589,7 @@ class ApiWrapper implements ApiWrapperInterface
         return new JobEntityWithStatus($result['jobStatus'], $result['jobName'], $result['translationJobUid'], $profile->getProjectId());
     }
 
+    #[Retry]
     public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, bool $authorize): JobEntityWithBatchUid
     {
         $jobName = $this->getBaseNameForDailyBucketJob();
@@ -589,7 +610,7 @@ class ApiWrapper implements ApiWrapperInterface
                         'name'        => $jobName,
                         'description' => 'Bucket job: contains updated content.',
                     ]);
-                } catch (SmartlingApiException $e) {
+                } catch (SmartlingApiException) {
                     // If there is a CLOSED bucket job then we have to
                     // come up with new job name in order to avoid
                     // "Job name is already taken" error.
@@ -620,6 +641,7 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
+    #[Retry]
     public function getProgressToken(ConfigurationProfileEntity $profile): array
     {
         try {
@@ -649,6 +671,7 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
+    #[Retry]
     public function deleteNotificationRecord(ConfigurationProfileEntity $profile, string $space, string $object, string $record): void
     {
         try {
@@ -675,6 +698,7 @@ class ApiWrapper implements ApiWrapperInterface
         }
     }
 
+    #[Retry]
     public function setNotificationRecord(ConfigurationProfileEntity $profile, string $space, string $object, string $record, array $data = [], int $ttl = 30): void
     {
         try {

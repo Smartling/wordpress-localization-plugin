@@ -3,7 +3,7 @@
 namespace Smartling;
 
 use DateTime;
-use Smartling\Helpers\LoggerSafeTrait;
+use ReflectionMethod;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Jobs\JobEntityWithStatus;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -12,202 +12,147 @@ use Smartling\Vendor\Jralph\Retry\Command;
 use Smartling\Vendor\Jralph\Retry\Retry;
 use Smartling\Vendor\Jralph\Retry\RetryException;
 
-class ApiWrapperWithRetries implements ApiWrapperInterface {
-    use LoggerSafeTrait;
-
-    public const RETRY_ATTEMPTS = 4;
-    private const RETRY_WAIT_SECONDS = 1;
-
-    private ApiWrapperInterface $base;
-
-    public function __construct(ApiWrapperInterface $base)
-    {
-        $this->base = $base;
-    }
-
+class ApiWrapperWithRetries extends ApiWrapper {
     public function acquireLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime
     {
-        return $this->withRetry(function () use ($profile, $key, $ttlSeconds) {
-            return $this->base->acquireLock($profile, $key, $ttlSeconds);
-        });
+        return $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function renewLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime
     {
-        return $this->withRetry(function () use ($profile, $key, $ttlSeconds) {
-            return $this->base->renewLock($profile, $key, $ttlSeconds);
-        });
+        return $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function releaseLock(ConfigurationProfileEntity $profile, string $key): void
     {
-        $this->withRetry(function () use ($profile, $key) {
-            $this->base->releaseLock($profile, $key);
-        });
+        $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function createAuditLogRecord(ConfigurationProfileEntity $profile, string $actionType, string $description, array $clientData, ?JobEntityWithBatchUid $jobInfo = null, ?bool $isAuthorize = null): void
     {
-        $this->withRetry(function () use ($profile, $jobInfo, $actionType, $isAuthorize, $clientData, $description) {
-            $this->base->createAuditLogRecord($profile, $actionType, $description, $clientData, $jobInfo, $isAuthorize);
-        });
+        $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function downloadFile(SubmissionEntity $entity): string
     {
-        return $this->withRetry(function () use ($entity) {
-            return $this->base->downloadFile($entity);
-        });
+        return $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function getStatus(SubmissionEntity $entity): SubmissionEntity
     {
-        return $this->withRetry(function () use ($entity) {
-            return $this->base->getStatus($entity);
-        });
+        return $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function uploadContent(SubmissionEntity $entity, string $xmlString = '', string $filename = '', array $smartlingLocaleList = []): bool
     {
-        return $this->withRetry(function () use ($entity, $xmlString, $filename, $smartlingLocaleList) {
-            return $this->base->uploadContent($entity, $xmlString, $filename, $smartlingLocaleList);
-        });
+        return $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function getSupportedLocales(ConfigurationProfileEntity $profile): array
     {
-        return $this->withRetry(function () use ($profile) {
-            return $this->base->getSupportedLocales($profile);
-        });
+        return $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function getAccountUid(ConfigurationProfileEntity $profile): string
     {
-        return $this->withRetry(function () use ($profile) {
-            return $this->base->getAccountUid($profile);
-        });
+        return $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function lastModified(SubmissionEntity $submission): array
     {
-        return $this->withRetry(function () use ($submission) {
-            return $this->base->lastModified($submission);
-        });
+        return $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function getStatusForAllLocales(array $submissions): array
     {
-        return $this->withRetry(function () use ($submissions) {
-            return $this->base->getStatusForAllLocales($submissions);
-        });
+        return $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function deleteFile(SubmissionEntity $submission): void
     {
-        $this->withRetry(function () use ($submission) {
-            $this->base->deleteFile($submission);
-        });
+        $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function listJobs(ConfigurationProfileEntity $profile, ?string $name = null, array $statuses = []): array
     {
-        return $this->withRetry(function () use ($profile, $name, $statuses) {
-            return $this->base->listJobs($profile, $name, $statuses);
-        });
+        return $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function createJob(ConfigurationProfileEntity $profile, array $params): array
     {
-        return $this->withRetry(function () use ($profile, $params) {
-            return $this->base->createJob($profile, $params);
-        });
+        return $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function updateJob(ConfigurationProfileEntity $profile, string $jobId, string $name, ?string $description = null, ?DateTime $dueDate = null): array
     {
-        return $this->withRetry(function () use ($profile, $jobId, $name, $description, $dueDate) {
-            return $this->base->updateJob($profile, $jobId, $name, $description, $dueDate);
-        });
+        return $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, bool $authorize = false): array
     {
-        return $this->withRetry(function () use ($profile, $jobUid, $authorize) {
-            return $this->base->createBatch($profile, $jobUid, $authorize);
-        });
+        return $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function retrieveBatch(ConfigurationProfileEntity $profile, string $jobId, bool $authorize = true, array $updateJob = []): string
     {
-        return $this->withRetry(function () use ($profile, $jobId, $authorize, $updateJob) {
-            return $this->base->retrieveBatch($profile, $jobId, $authorize, $updateJob);
-        });
+        return $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function executeBatch(ConfigurationProfileEntity $profile, string $batchUid): void
     {
-        $this->withRetry(function () use ($profile, $batchUid) {
-            $this->base->executeBatch($profile, $batchUid);
-        });
+        $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function findLastJobByFileUri(ConfigurationProfileEntity $profile, string $fileUri): ?JobEntityWithStatus
     {
-        return $this->withRetry(function () use ($profile, $fileUri) {
-            return $this->base->findLastJobByFileUri($profile, $fileUri);
-        });
+        return $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, bool $authorize): JobEntityWithBatchUid
     {
-        return $this->withRetry(function () use ($profile, $authorize) {
-            return $this->base->retrieveJobInfoForDailyBucketJob($profile, $authorize);
-        });
+        return $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function getProgressToken(ConfigurationProfileEntity $profile): array
     {
-        return $this->withRetry(function () use ($profile) {
-            return $this->base->getProgressToken($profile);
-        });
+        return $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function deleteNotificationRecord(ConfigurationProfileEntity $profile, string $space, string $object, string $record): void
     {
-        $this->withRetry(function () use ($profile, $space, $object, $record) {
-            $this->base->deleteNotificationRecord($profile, $space, $object, $record);
-        });
+        $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function setNotificationRecord(ConfigurationProfileEntity $profile, string $space, string $object, string $record, array $data = [], int $ttl = 30): void
     {
-        $this->withRetry(function () use ($profile, $space, $object, $record, $data, $ttl) {
-            $this->base->setNotificationRecord($profile, $space, $object, $record, $data, $ttl);
-        });
+        $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
     public function testConnection(ConfigurationProfileEntity $profile): bool
     {
-        return $this->base->testConnection($profile); // No retrying
+        return $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
-    public function isUnrecoverable(\Exception $e): bool
+    public function conditionalRetry(string $name, array $arguments): mixed
     {
-        return $this->base->isUnrecoverable($e);
-    }
-
-    public function withRetry(callable $command)
-    {
-        try {
-            return (new Retry(new Command($command)))
-                ->attempts(self::RETRY_ATTEMPTS)
-                ->wait(self::RETRY_WAIT_SECONDS)
-                ->onlyIf(function ($attempt, $error) {
-                    return ($error instanceof \Exception && !$this->isUnrecoverable($error));
-                })
-                ->run();
-        } catch (RetryException $e) {
-            throw $e->getPrevious();
+        foreach ((new ReflectionMethod(parent::class, $name))->getAttributes() as $attribute) {
+            if ($attribute->getName() === \Smartling\Retry::class) {
+                $retryParameters = $attribute->newInstance();
+                assert($retryParameters instanceof \Smartling\Retry);
+                try {
+                    return (new Retry(new Command(function () use ($name, $arguments) {return parent::$name(...$arguments);})))
+                        ->attempts($retryParameters->retryAttempts)
+                        ->wait($retryParameters->retryTimeoutSeconds)
+                        ->onlyIf(function ($attempt, $error) {
+                            return ($error instanceof \Exception && !$this->isUnrecoverable($error));
+                        })
+                        ->run();
+                } catch (RetryException $e) {
+                    throw $e->getPrevious();
+                }
+            }
         }
+
+        return parent::$name(...$arguments);
     }
 }
