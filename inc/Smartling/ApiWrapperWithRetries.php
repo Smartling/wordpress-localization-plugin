@@ -12,7 +12,11 @@ use Smartling\Vendor\Jralph\Retry\Command;
 use Smartling\Vendor\Jralph\Retry\Retry;
 use Smartling\Vendor\Jralph\Retry\RetryException;
 
-class ApiWrapperWithRetries extends ApiWrapper {
+class ApiWrapperWithRetries implements ApiWrapperInterface {
+    public function __construct(private ApiWrapperInterface $base)
+    {
+    }
+
     public function acquireLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime
     {
         return $this->conditionalRetry(__FUNCTION__, func_get_args());
@@ -133,14 +137,19 @@ class ApiWrapperWithRetries extends ApiWrapper {
         return $this->conditionalRetry(__FUNCTION__, func_get_args());
     }
 
+    public function isUnrecoverable(\Exception $e): bool
+    {
+        return $this->base->isUnrecoverable($e);
+    }
+
     public function conditionalRetry(string $name, array $arguments): mixed
     {
-        foreach ((new ReflectionMethod(parent::class, $name))->getAttributes() as $attribute) {
+        foreach ((new ReflectionMethod($this->base, $name))->getAttributes() as $attribute) {
             if ($attribute->getName() === \Smartling\Retry::class) {
                 $retryParameters = $attribute->newInstance();
                 assert($retryParameters instanceof \Smartling\Retry);
                 try {
-                    return (new Retry(new Command(function () use ($name, $arguments) {return parent::$name(...$arguments);})))
+                    return (new Retry(new Command(function () use ($name, $arguments) {return $this->base->$name(...$arguments);})))
                         ->attempts($retryParameters->retryAttempts)
                         ->wait($retryParameters->retryTimeoutSeconds)
                         ->onlyIf(function ($attempt, $error) {
@@ -153,6 +162,6 @@ class ApiWrapperWithRetries extends ApiWrapper {
             }
         }
 
-        return parent::$name(...$arguments);
+        return $this->base->$name(...$arguments);
     }
 }
