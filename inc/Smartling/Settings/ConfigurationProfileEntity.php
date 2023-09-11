@@ -3,6 +3,7 @@
 namespace Smartling\Settings;
 
 use Smartling\Base\SmartlingEntityAbstract;
+use Smartling\Exception\BlogNotFoundException;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\Controller\ConfigurationProfileFormController as Form;
 
@@ -184,6 +185,17 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
     public function getOriginalBlogId(): Locale
     {
         return $this->stateFields['original_blog_id'] ?? new Locale();
+    }
+
+    public function getTargetLocale(string $smartlingLocale): Locale
+    {
+        foreach ($this->getTargetLocales() as $locale) {
+            if ($locale->getSmartlingLocale() === $smartlingLocale) {
+                return $locale;
+            }
+        }
+
+        throw new BlogNotFoundException();
     }
 
     public function setLocale(Locale $mainLocale): void

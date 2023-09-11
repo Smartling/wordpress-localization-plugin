@@ -20,35 +20,14 @@ class PostContentHelper
         $this->logger = MonologWrapper::getLogger();
     }
 
-    public function applyBlockLevelLocks(string $original, string $translated, array $lockedFields): string
+    public function applyBlockLevelLocks(string $target, string $translated): string
     {
-        $result = '';
-        $originalBlocks = $this->blockHelper->parseBlocks($original);
-        $translatedBlocks = $this->blockHelper->parseBlocks($translated);
-
-        foreach ($lockedFields as $lockedField) {
-            $count = 0;
-            $lockedField = preg_replace('~^entity/post_content/blocks/~', '', $lockedField, -1, $count);
-            if ($count === 1) {
-                $parts = explode('/', $lockedField);
-                $index = array_shift($parts);
-                if (!array_key_exists($index, $originalBlocks)) {
-                    $this->logger->notice("Unable to get content for locked Gutenberg block $lockedField, skipping lock");
-                    continue;
-                }
-                if (count($parts) > 0) {
-                    $translatedBlocks[$index] = $this->applyLockedField($parts, $originalBlocks[$index], $translatedBlocks[$index]);
-                } else {
-                    $translatedBlocks[$index] = $originalBlocks[$index];
-                }
-            }
+        $lockedBlocks = $this->getLockedBlockPathsFromContentString($target);
+        if (count($lockedBlocks) > 0) {
+            return $this->applyTranslationsWithLockedBlocks($target, $translated, $lockedBlocks);
         }
 
-        foreach ($translatedBlocks as $block) {
-            $result .= serialize_block($block->toArray());
-        }
-
-        return $result;
+        return $translated;
     }
 
     /**

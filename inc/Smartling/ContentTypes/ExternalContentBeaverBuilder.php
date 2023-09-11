@@ -8,6 +8,7 @@ use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Models\ExternalData;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\Submission;
 use Smartling\Submissions\SubmissionManager;
 
 class ExternalContentBeaverBuilder extends ExternalContentAbstract implements ContentTypeModifyingInterface
@@ -124,7 +125,7 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
         return $this->extractContent($this->getDataFromPostMeta($contentId))->getRelated();
     }
 
-    public function setContentFields(array $original, array $translation, SubmissionEntity $submission): array
+    public function setContentFields(array $original, array $translation, Submission $submission): array
     {
         $translation['meta'][self::META_FIELD_NAME] = $this->buildData(unserialize($original['meta'][self::META_FIELD_NAME] ?? '') ?: [], $translation[$this->getPluginId()] ?? [], $submission);
         $translation['meta'][self::META_SETTINGS_NAME] = $original['meta'][self::META_SETTINGS_NAME];
@@ -163,7 +164,7 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
         }
     }
 
-    private function buildData(array $original, array $translation, SubmissionEntity $submission): array
+    private function buildData(array $original, array $translation, Submission $submission): array
     {
         $this->applyTranslationValues($original, $translation);
         $this->replaceRelatedIds($original, $submission);
@@ -174,7 +175,7 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
     /**
      * Mutates $original
      */
-    private function replaceRelatedIds(array $original, SubmissionEntity $submission): void
+    private function replaceRelatedIds(array $original, Submission $submission): void
     {
         foreach ($original as $value) {
             if (($value->settings->type ?? '') === 'photo') {

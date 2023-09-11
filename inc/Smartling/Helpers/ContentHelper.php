@@ -10,7 +10,9 @@ use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
 use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
 use Smartling\Exception\EntityNotFoundException;
+use Smartling\Models\AssetUid;
 use Smartling\Processors\ContentEntitiesIOFactory;
+use Smartling\Submissions\Submission;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -114,12 +116,12 @@ class ContentHelper
         return sprintf($template, $blog, $file, $line);
     }
 
-    public function ensureSourceBlogId(SubmissionEntity $submission): void
+    public function ensureSourceBlogId(Submission $submission): void
     {
         $this->ensureBlog($submission->getSourceBlogId());
     }
 
-    public function ensureTargetBlogId(SubmissionEntity $submission): void
+    public function ensureTargetBlogId(Submission $submission): void
     {
         $this->ensureBlog($submission->getTargetBlogId());
     }
@@ -143,7 +145,7 @@ class ContentHelper
         return $return;
     }
 
-    public function readSourceContent(SubmissionEntity $submission): Entity
+    public function readSourceContent(Submission $submission): Entity
     {
         if (false === ($cached = $this->getRuntimeCache()->get($this->getCacheKey($submission), 'sourceContent'))) {
             $wrapper = $this->getWrapper($submission->getContentType());
@@ -156,6 +158,25 @@ class ContentHelper
             $clone = clone $cached;
         }
         return $clone;
+    }
+
+    public function setContent(int $blogId, AssetUid $assetUid, Entity $entity): Entity
+    {
+        return $this->siteHelper->withBlog($blogId, function () use ($assetUid, $entity) {
+            $wrapper = $this->getWrapper($assetUid->getContentType());
+            $id = $wrapper->set($entity);
+            if ($id !== 0) {
+                return $wrapper->get($id);
+            }
+            throw new \RuntimeException("Unable to set content for assetUid=$assetUid");
+        });
+    }
+
+    public function getEntity(int $blogId, AssetUid $assetUid): Entity
+    {
+        return $this->siteHelper->withBlog($blogId, function () use ($assetUid) {
+            return $this->getWrapper($assetUid->getContentType())->get($assetUid->getId());
+        });
     }
 
     public function readTargetContent(SubmissionEntity $submission): Entity
@@ -202,7 +223,7 @@ class ContentHelper
         return $metadata;
     }
 
-    public function writeTargetContent(SubmissionEntity $submission, Entity $entity): Entity
+    public function writeTargetContent(Submission $submission, Entity $entity): Entity
     {
         $wrapper = $this->getWrapper($submission->getContentType());
 
@@ -241,7 +262,7 @@ class ContentHelper
         return $result;
     }
 
-    public function writeTargetMetadata(SubmissionEntity $submission, array $metadata): void
+    public function writeTargetMetadata(Submission $submission, array $metadata): void
     {
         $wrapper = $this->getWrapper($submission->getContentType());
         $this->ensureTargetBlogId($submission);
@@ -327,7 +348,7 @@ class ContentHelper
         return $result;
     }
 
-    private function getCacheKey(SubmissionEntity $entity): string
+    private function getCacheKey(Submission $entity): string
     {
         return implode('-', [$entity->getContentType(), $entity->getSourceBlogId(), $entity->getSourceId()]);
     }

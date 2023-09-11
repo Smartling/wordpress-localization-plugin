@@ -182,15 +182,30 @@ class XmlHelper
     /**
      * @throws InvalidXMLException
      */
-    public function xmlDecode(string $content, SubmissionEntity $submission): DecodedXml
+    public function xmlDecode(string $content, SubmissionEntity $submission): DecodedTranslation
     {
         if ($content === '') {
             static::logMessage('Skipped XML decoding: empty content');
-            return new DecodedXml([], []);
+            return new DecodedTranslation([], []);
         }
         static::logMessage(vsprintf('Starting XML file decoding : %s', [base64_encode(var_export($content, true))]));
         $xpath = self::prepareXPath($content);
-        return new DecodedXml(self::getFields($xpath, $submission), $this->getSource($xpath));
+        return new DecodedTranslation(self::getFields($xpath, $submission), $this->getSource($xpath));
+    }
+
+    public function decode(string $content): DecodedTranslation
+    {
+        self::preventLoadingExternalEntities();
+
+        $xml = self::initXml();
+        $result = @$xml->loadXML($content);
+        if (false === $result) {
+            throw new InvalidXMLException('Invalid XML Contents');
+        }
+
+        $xpath = new DOMXPath($xml);
+
+        return new DecodedTranslation($this->getArray($xpath), $this->getSource($xpath));
     }
 
     /**
@@ -232,6 +247,27 @@ class XmlHelper
 
             $nodeValue = $params->getNode()->nodeValue;
             $fields[$name] = $nodeValue;
+        }
+
+        foreach ($fields as $key => $value) {
+            if (is_numeric($value) && is_string($value)) {
+                $fields[$key] += 0;
+            }
+        }
+
+        return $fields;
+    }
+
+    private function getArray(DOMXPath $xpath): array
+    {
+        $nodeList = $xpath->query('/' . self::XML_ROOT_NODE_NAME . '/' . self::XML_STRING_NODE_NAME);
+        $fields = [];
+        for ($i = 0; $i < $nodeList->length; $i++) {
+            $item = $nodeList->item($i);
+            if ($item === null) {
+                break;
+            }
+            $fields[$item->attributes->getNamedItem('name')->nodeValue] = $item->nodeValue;
         }
 
         foreach ($fields as $key => $value) {
