@@ -211,7 +211,10 @@ services:
     class: Smartling\DbAl\DB
 
   site.cache:
-    class: Smartling\Helpers\Cache
+    class: Smartling\Helpers\WpObjectCache
+
+  transient.cache:
+    class: Smartling\Helpers\WpTransientCache
 
   manager.settings:
     class: Smartling\Settings\SettingsManager
@@ -395,6 +398,14 @@ services:
     arguments:
       - "@media.attachment.rules.manager"
       - "@factory.replacer"
+
+  duplicate.submissions.cleaner:
+    class: Smartling\WP\Controller\DuplicateSubmissionsCleaner
+    arguments:
+      - "@transient.cache"
+      - "@content.helper"
+      - "@site.helper"
+      - "@manager.submission"
 
   extension.loader:
     class: Smartling\Extensions\ExtensionLoader

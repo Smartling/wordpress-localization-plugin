@@ -29,7 +29,7 @@ namespace Smartling\Tests\Smartling\WP\Controller {
 
     use PHPUnit\Framework\TestCase;
     use Smartling\DbAl\LocalizationPluginProxyInterface;
-    use Smartling\Helpers\Cache;
+    use Smartling\Helpers\WpObjectCache;
     use Smartling\Helpers\PluginInfo;
     use Smartling\Helpers\SiteHelper;
     use Smartling\Helpers\WordpressFunctionProxyHelper;
@@ -48,7 +48,7 @@ namespace Smartling\Tests\Smartling\WP\Controller {
                 $this->createMock(LocalizationPluginProxyInterface::class),
                 $this->getSiteHelperMock(),
                 $this->getSubmissionManagerMock(),
-                $this->getWordpressMock(), $this->createMock(Cache::class)
+                $this->getWordpressMock(), $this->createMock(WpObjectCache::class)
             );
 
             self::assertEquals([

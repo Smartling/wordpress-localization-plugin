@@ -3,7 +3,6 @@ services:
   manager.register:
     class: Smartling\StartupRegisterManager
     calls:
-      #- [ "addService", [ @custom.scheduler.interval.helper ]]
       - [ "addService", [ "@cron.worker.upload" ]]
       - [ "addService", [ "@cron.worker.submission-collector" ]]
       - [ "addService", [ "@cron.worker.last-modified-check" ]]
@@ -28,4 +27,5 @@ services:
       - [ "addService", [ "@wp.translation.lock" ]]
       - [ "addService", [ "@live_notification.service" ]]
       - [ "addService", [ "@content.relations.handler"]]
+      - [ "addService", [ "@duplicate.submissions.cleaner"]]
       - [ "addService", [ "@service.filter-ui" ]]
