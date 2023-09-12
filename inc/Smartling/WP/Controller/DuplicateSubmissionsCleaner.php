@@ -29,7 +29,7 @@ class DuplicateSubmissionsCleaner extends ControllerAbstract implements WPHookIn
         $duplicates = $this->cache->get(self::CACHE_KEY);
         if (!is_array($duplicates)) {
             $duplicates = $this->submissionManager->getDuplicateSubmissionDetails();
-            $this->cache->set(self::CACHE_KEY, $duplicates, 86400);
+            $this->cache->set(self::CACHE_KEY, $duplicates);
         }
         if (count($duplicates) > 0) {
             add_action('admin_menu', [$this, 'menu']);
@@ -77,12 +77,12 @@ class DuplicateSubmissionsCleaner extends ControllerAbstract implements WPHookIn
         $duplicates = $this->submissionManager->getDuplicateSubmissionDetails();
         $this->cache->set(self::CACHE_KEY, $duplicates);
 
-        $dt = [];
+        $duplicateSets = [];
         foreach($duplicates as $set) {
-            $dt[] = new DuplicateSubmissions($this->contentHelper, $this->siteHelper, $this->submissionManager, $set, $nonce);
+            $duplicateSets[] = new DuplicateSubmissions($this->contentHelper, $this->siteHelper, $this->submissionManager, $set, $nonce);
         }
         $this->setViewData([
-            'duplicates' => $dt,
+            'duplicates' => $duplicateSets,
         ]);
         $this->renderScript();
     }
