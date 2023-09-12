@@ -43,10 +43,7 @@ class DuplicateSubmissionsCleaner extends ControllerAbstract implements WPHookIn
             'Duplicate submissions cleaning',
             SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP,
             self::SLUG,
-            [
-                $this,
-                'pageHandler',
-            ]
+            [$this, 'pageHandler'],
         );
     }
 
