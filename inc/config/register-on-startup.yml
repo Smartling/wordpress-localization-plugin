@@ -11,6 +11,7 @@ services:
       - [ "addService", [ "@wp.i18n" ]]
       - [ "addService", [ "@wp.checkStatus" ]]
       - [ "addService", [ "@wp.submissions" ]]
+#controllers for sub-menu pages must be added after @wp.submissions
       - [ "addService", [ "@wp.taxonomy.linker" ]]
       - [ "addService", [ "@wp.test.run" ]]
       - [ "addService", [ "@wp.bulkSubmit" ]]
