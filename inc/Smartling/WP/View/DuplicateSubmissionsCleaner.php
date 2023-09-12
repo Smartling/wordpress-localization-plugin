@@ -28,9 +28,5 @@ use Smartling\WP\Table\DuplicateSubmissions;
         $set->prepare_items();
         $set->display();
     }
-    assert($duplicates instanceof DuplicateSubmissions);
-    $duplicates->prepare_items();
     ?>
-
-    <?php $duplicates->display()?>
 </div>

@@ -6,6 +6,7 @@ use Smartling\Helpers\Cache;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\Models\DuplicateSubmissionDetails;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\Table\DuplicateSubmissions;
 use Smartling\WP\WPHookInterface;
@@ -26,11 +27,7 @@ class DuplicateSubmissionsCleaner extends ControllerAbstract implements WPHookIn
 
     public function register(): void
     {
-        $duplicates = $this->cache->get(self::CACHE_KEY);
-        if (!is_array($duplicates)) {
-            $duplicates = $this->submissionManager->getDuplicateSubmissionDetails();
-            $this->cache->set(self::CACHE_KEY, $duplicates);
-        }
+        $duplicates = $this->getDuplicatesAndCache();
         if (count($duplicates) > 0) {
             add_action('admin_menu', [$this, 'menu']);
             add_action('network_admin_menu', [$this, 'menu']);
@@ -63,27 +60,53 @@ class DuplicateSubmissionsCleaner extends ControllerAbstract implements WPHookIn
         }
 
         if (array_key_exists('id', $_REQUEST)) {
-            $this->submissionManager->delete($this->submissionManager->getEntityById((int)$_REQUEST['id']));
+            $submission = $this->submissionManager->getEntityById((int)$_REQUEST['id']);
+            if ($submission !== null) {
+                foreach ($this->getDuplicatesAndCache(false) as $details) {
+                    if ($details->getContentType() === $submission->getContentType() &&
+                        $details->getSourceBlogId() === $submission->getSourceBlogId() &&
+                        $details->getSourceId() === $submission->getSourceId() &&
+                        $details->getTargetBlogId() === $submission->getTargetBlogId()
+                    ) {
+                        $this->submissionManager->delete($submission);
+                        break;
+                    }
+                }
+            }
         }
     }
 
     public function pageHandler(): void
     {
-        $nonce = wp_create_nonce(self::NONCE_ACTION);
+        $getFromCacheFirst = true;
         if (array_key_exists('action', $_REQUEST)) {
             $this->processAction();
+            $getFromCacheFirst = false;
         }
-
-        $duplicates = $this->submissionManager->getDuplicateSubmissionDetails();
-        $this->cache->set(self::CACHE_KEY, $duplicates);
+        $nonce = wp_create_nonce(self::NONCE_ACTION);
 
         $duplicateSets = [];
-        foreach($duplicates as $set) {
+        foreach($this->getDuplicatesAndCache($getFromCacheFirst) as $set) {
             $duplicateSets[] = new DuplicateSubmissions($this->contentHelper, $this->siteHelper, $this->submissionManager, $set, $nonce);
         }
-        $this->setViewData([
-            'duplicates' => $duplicateSets,
-        ]);
+        $this->setViewData(['duplicates' => $duplicateSets]);
         $this->renderScript();
+    }
+
+    /**
+     * @return DuplicateSubmissionDetails[]
+     */
+    private function getDuplicatesAndCache($getFromCacheFirst = true): array
+    {
+        $duplicates = false;
+        if ($getFromCacheFirst) {
+            $duplicates = $this->cache->get(self::CACHE_KEY);
+        }
+        if (!is_array($duplicates)) {
+            $duplicates = $this->submissionManager->getDuplicateSubmissionDetails();
+            $this->cache->set(self::CACHE_KEY, $duplicates);
+        }
+
+        return $duplicates;
     }
 }
