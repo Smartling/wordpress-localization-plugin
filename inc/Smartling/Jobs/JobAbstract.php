@@ -154,46 +154,44 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
             )
         );
 
+        $message = null;
         try {
-            $message = $this->tryRunJob();
-        } catch (\Throwable $e) {
+            $this->tryRunJob();
+        } catch (EntityNotFoundException) {
+            $message = "No active profiles, skipping {$this->getJobHookName()} run";
+            $this->getLogger()->debug($message);
+        } catch (SmartlingApiException $e) {
+            $errorMessage = $e->getErrors()[0]['message'] ?? $e->getMessage();
+            $message = "Failed to place lock flag for {$this->getJobHookName()}: $errorMessage";
+            $this->getLogger()->debug($message);
+        } catch (\RuntimeException $e) {
+            if ($e->getMessage() === self::THROTTLED_MESSAGE) {
+                $message = self::THROTTLED_MESSAGE;
+            } else {
+                throw $e;
+            }
+        }
+        catch (\Throwable $e) {
             $errorClass = get_class($e);
             $this->getLogger()->error("Caught class=\"$errorClass\", code=\"{$e->getCode()}\", message=\"{$e->getMessage()}\", trace: {$e->getTraceAsString()}");
             if ($source === self::SOURCE_USER) {
                 throw new \RuntimeException($e->getMessage());
             }
         }
-        if ($source === self::SOURCE_USER && $message !== '') {
+        if ($source === self::SOURCE_USER && $message !== null) {
             throw new \RuntimeException($message);
         }
     }
 
-    private function tryRunJob(): string
+    /**
+     * @throws EntityNotFoundException
+     * @throws SmartlingApiException
+     */
+    private function tryRunJob(): void
     {
-        try {
-            $this->placeLockFlag();
-        } catch (EntityNotFoundException) {
-            $message = "No active profiles, skipping {$this->getJobHookName()} run";
-            $this->getLogger()->debug($message);
-            return $message;
-        } catch (SmartlingApiException $e) {
-            $errorMessage = $e->getErrors()[0]['message'] ?? $e->getMessage();
-            $message = "Failed to place lock flag for {$this->getJobHookName()}: $errorMessage";
-            $this->getLogger()->debug($message);
-            return $message;
-        } catch (\RuntimeException $e) {
-            if ($e->getMessage() === self::THROTTLED_MESSAGE) {
-                return $e->getMessage();
-            }
-            throw $e;
-        }
+        $this->placeLockFlag();
         try {
             $this->run();
-            return '';
-        } catch (\Exception $exception) {
-            $message = "Cron job {$this->getJobHookName()} execution failed: {$exception->getMessage()}";
-            $this->getLogger()->warning($message);
-            return $message;
         } finally {
             try {
                 $this->dropLockFlag();
