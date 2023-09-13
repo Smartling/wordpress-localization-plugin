@@ -3,6 +3,7 @@
 namespace Smartling\WP\Controller;
 
 use Smartling\ApiWrapperInterface;
+use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
@@ -15,10 +16,8 @@ use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Jobs\DownloadTranslationJob;
-use Smartling\Jobs\JobAbstract;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Queue\Queue;
-use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -136,16 +135,18 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
     use CommonLogMessagesTrait;
 
-
-    public function ajaxDownloadHandler()
+    public function ajaxDownloadHandler(): void
     {
         $logSubmissions = [];
+        $result = ['status' => self::RESPONSE_AJAX_STATUS_SUCCESS];
+        $submissions = [];
         if (array_key_exists('submissionIds', $_POST)) {
             $profile = null;
             $submissionIds = explode(',', $_POST['submissionIds']);
             foreach ($submissionIds as $submissionId) {
                 $submission = $this->getManager()->getEntityById($submissionId);
                 if ($submission !== null) {
+                    $submissions[] = $submission;
                     if ($profile === null) {
                         $profile = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
                     }
@@ -157,26 +158,28 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                         'targetId' => $submission->getTargetId(),
                     ];
                 }
-                $this->getCore()->getQueue()->enqueue([$submissionId], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
             }
-            $result = [];
-            try {
-                do_action(DownloadTranslationJob::JOB_HOOK_NAME, JobAbstract::SOURCE_USER);
-                $result['status'] = self::RESPONSE_AJAX_STATUS_SUCCESS;
-            } catch (\Exception $e) {
-                $result['status'] = self::RESPONSE_AJAX_STATUS_FAIL;
-                $result['message'] = $e->getMessage();
-            }
+
             if ($profile !== null) {
                 try {
                     $requestDescription = 'User request to download submissions';
                     $this->apiWrapper->createAuditLogRecord($profile, CreateRecordParameters::ACTION_TYPE_DOWNLOAD, $requestDescription, ['submissions' => $logSubmissions]);
-                } catch (\Exception $e) {
+                } catch (\Exception) {
                     $this->getLogger()->error(sprintf('Failed to create audit log record actionType=%s, requestDescription="%s", submissions="%s"', CreateRecordParameters::ACTION_TYPE_DOWNLOAD, $requestDescription, json_encode($logSubmissions)));
                 }
             } else {
                 /** @noinspection JsonEncodingApiUsageInspection */
                 $this->getLogger()->notice('No profile was found for submissions, no audit log created, submissions=' . json_encode($logSubmissions));
+            }
+
+            foreach ($submissions as $submission) {
+                try {
+                    do_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, $submission);
+                } catch (\Exception $e) {
+                    $result['status'] = self::RESPONSE_AJAX_STATUS_FAIL;
+                    $result['message'] = $e->getMessage();
+                    break;
+                }
             }
             wp_send_json($result);
         }
