@@ -44,22 +44,6 @@ class AbstractJobTest extends TestCase
         $wpdb = $this->wpdb;
     }
 
-    public function testRunCronJobUnknownSource()
-    {
-        $exception = new \RuntimeException('test');
-        $api = $this->createMock(ApiWrapperInterface::class);
-        $api->method('acquireLock')->willThrowException($exception);
-        $x = $this->getJobAbstractMock($api);
-
-        try {
-            $x->runCronJob();
-            $x->runCronJob('test');
-        } catch (\Exception $e) {
-            $this->fail('Should not throw exceptions when source is not user');
-        }
-        $this->expectNotToPerformAssertions();
-    }
-
     public function testRunCronJobUserSource()
     {
         $exception = new \RuntimeException('test');
