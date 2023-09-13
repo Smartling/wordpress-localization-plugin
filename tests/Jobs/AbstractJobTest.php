@@ -5,6 +5,7 @@ namespace Smartling\Tests\Jobs;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapperInterface;
+use Smartling\Helpers\Cache;
 use Smartling\Jobs\JobAbstract;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
@@ -83,8 +84,10 @@ class AbstractJobTest extends TestCase
         return $this->getMockBuilder(JobAbstract::class)
             ->setConstructorArgs([
                 $api,
+                $this->createMock(Cache::class),
                 $settingsManager,
                 $this->submissionManager,
+                0,
                 '5m',
                 180,
             ])
