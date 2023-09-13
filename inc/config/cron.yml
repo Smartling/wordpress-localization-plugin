@@ -3,7 +3,7 @@ parameters:
   cron.interval.group.submission: "3h"
   cron.interval.last-modified-check: "5m"
   cron.interval.download: "5m"
-  cron.interval.throttle: 60
+  cron.interval.throttle: 120
   cron.job.default_ttl: 180
 
 services:
