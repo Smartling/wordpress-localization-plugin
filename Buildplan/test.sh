@@ -53,6 +53,8 @@ cd ${PLUGIN_DIR}
 
 ${WPCLI} cron event run wp_version_check --path="${WP_INSTALL_DIR}"
 
+sed -i 's/cron.interval.throttle: 60/cron.interval.throttle: 0/' inc/config/cron.yml
+
 cd "${PLUGIN_DIR}/inc/third-party/bin"
 
 PHPUNIT_BIN="$(pwd)/phpunit"

@@ -24,15 +24,15 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
     public const LAST_FINISH_SUFFIX = '-last-run';
     public const SOURCE_USER = 'user';
     private const THROTTLED_MESSAGE = "Throttled";
-    private const THROTTLE_INTERVAL_SECONDS = 60;
 
     public function __construct(
         protected ApiWrapperInterface $api,
         private Cache $cache,
         protected SettingsManager $settingsManager,
         protected SubmissionManager $submissionManager,
-        protected string $jobRunInterval,
-        protected int $workerTTL,
+        private int $throttleIntervalSeconds,
+        private string $jobRunInterval,
+        private int $workerTTL,
     ) {
     }
 
@@ -112,7 +112,9 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
             ]
         ));
 
-        $this->cache->set($flagName, 1, self::THROTTLE_INTERVAL_SECONDS);
+        if ($this->throttleIntervalSeconds > 0) {
+            $this->cache->set($flagName, 1, $this->throttleIntervalSeconds);
+        }
         if ($renew) {
             $this->api->renewLock($profile, $flagName, $this->workerTTL);
         } else {
