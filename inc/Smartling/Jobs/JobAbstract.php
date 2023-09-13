@@ -5,6 +5,7 @@ namespace Smartling\Jobs;
 use Smartling\ApiWrapperInterface;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\Cache;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\OptionHelper;
@@ -22,25 +23,17 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
 
     public const LAST_FINISH_SUFFIX = '-last-run';
     public const SOURCE_USER = 'user';
-
-    protected ApiWrapperInterface $api;
-    protected string $jobRunInterval;
-    protected SettingsManager $settingsManager;
-    protected SubmissionManager $submissionManager;
-    protected int $workerTTL;
+    private const THROTTLED_MESSAGE = "Throttled";
+    private const THROTTLE_INTERVAL_SECONDS = 60;
 
     public function __construct(
-        ApiWrapperInterface $api,
-        SettingsManager $settingsManager,
-        SubmissionManager $submissionManager,
-        string $jobRunInterval,
-        int $workerTTL
+        protected ApiWrapperInterface $api,
+        private Cache $cache,
+        protected SettingsManager $settingsManager,
+        protected SubmissionManager $submissionManager,
+        protected string $jobRunInterval,
+        protected int $workerTTL,
     ) {
-        $this->api = $api;
-        $this->jobRunInterval = $jobRunInterval;
-        $this->settingsManager = $settingsManager;
-        $this->submissionManager = $submissionManager;
-        $this->workerTTL = $workerTTL;
     }
 
     private function getInstalledCrons(): array
@@ -103,6 +96,9 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         if (true === $renew) {
             $msgTemplate = 'Renewing flag \'%s\' for cron job \'%s\' with value \'%s\' (TTL=%s)';
         } else {
+            if ($this->cache->get($flagName)) {
+                throw new \RuntimeException(self::THROTTLED_MESSAGE);
+            }
             $msgTemplate = 'Placing flag \'%s\' for cron job \'%s\' with value \'%s\' (TTL=%s)';
         }
 
@@ -116,6 +112,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
             ]
         ));
 
+        $this->cache->set($flagName, 1, self::THROTTLE_INTERVAL_SECONDS);
         if ($renew) {
             $this->api->renewLock($profile, $flagName, $this->workerTTL);
         } else {
@@ -173,7 +170,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
     {
         try {
             $this->placeLockFlag();
-        } catch (EntityNotFoundException $e) {
+        } catch (EntityNotFoundException) {
             $message = "No active profiles, skipping {$this->getJobHookName()} run";
             $this->getLogger()->debug($message);
             return $message;
@@ -182,6 +179,11 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
             $message = "Failed to place lock flag for {$this->getJobHookName()}: $errorMessage";
             $this->getLogger()->debug($message);
             return $message;
+        } catch (\RuntimeException $e) {
+            if ($e->getMessage() === self::THROTTLED_MESSAGE) {
+                return $e->getMessage();
+            }
+            throw $e;
         }
         try {
             $this->run();
@@ -193,7 +195,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         } finally {
             try {
                 $this->dropLockFlag();
-            } catch (EntityNotFoundException $e) {
+            } catch (EntityNotFoundException) {
                 $this->getLogger()->debug('No active profiles when trying to drop lock flag for ' . $this->getJobHookName());
             } catch (SmartlingApiException $e) {
                 $errorMessage = $e->getErrors()[0]['message'] ?? $e->getMessage();

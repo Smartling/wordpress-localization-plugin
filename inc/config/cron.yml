@@ -21,6 +21,7 @@ services:
     class: Smartling\Jobs\UploadJob
     arguments:
       - "@api.wrapper.with.retries"
+      - "@transient.cache"
       - "@manager.settings"
       - "@manager.submission"
       - "%cron.interval.upload%"
@@ -34,6 +35,7 @@ services:
     class: Smartling\Jobs\SubmissionCollectorJob
     arguments:
       - "@api.wrapper.with.retries"
+      - "@transient.cache"
       - "@manager.settings"
       - "@manager.submission"
       - "%cron.interval.group.submission%"
@@ -48,6 +50,7 @@ services:
     class: Smartling\Jobs\LastModifiedCheckJob
     arguments:
       - "@api.wrapper.with.retries"
+      - "@transient.cache"
       - "@manager.settings"
       - "@manager.submission"
       - "%cron.interval.last-modified-check%"
@@ -62,6 +65,7 @@ services:
     class: Smartling\Jobs\DownloadTranslationJob
     arguments:
       - "@api.wrapper.with.retries"
+      - "@transient.cache"
       - "@manager.settings"
       - "@manager.submission"
       - "%cron.interval.download%"

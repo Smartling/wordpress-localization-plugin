@@ -17,6 +17,10 @@ class WpTransientCache implements Cache {
 
     public function set(string $key, mixed $data, ?int $expire = self::DEFAULT_EXPIRATION): bool
     {
+        if (strlen($key) > 172) {
+            // Longer silent names will silently fail by default
+            throw new \InvalidArgumentException("Key must be 172 characters or fewer in length");
+        }
         return set_transient($key, $data, $expire);
     }
 }
