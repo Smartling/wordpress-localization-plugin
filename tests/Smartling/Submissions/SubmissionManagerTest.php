@@ -209,7 +209,9 @@ class SubmissionManagerTest extends TestCase
     public function testGetGroupedIdsByFileUri()
     {
         $db = $this->db;
-        $db->expects($this->once())->method('fetch')->with("SELECT `file_uri` AS `fileUri`, GROUP_CONCAT(`id`) AS `ids` FROM `wp_smartling_submissions` WHERE ( `status` IN('In Progress', 'Completed') AND `is_cloned` <> '1' ) GROUP BY `file_uri`");
+        $db->expects($this->once())->method('fetch')
+            ->with("SELECT `file_uri` AS `fileUri`, GROUP_CONCAT(`id`) AS `ids` FROM `wp_smartling_submissions` WHERE ( `status` IN('In Progress', 'Completed') AND `is_cloned` <> '1' ) GROUP BY `file_uri`")
+            ->willReturn([]);
         $x = $this->subject;
         $x->method('getDbal')->willReturn($db);
         $x->getGroupedIdsByFileUri();
