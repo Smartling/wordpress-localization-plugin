@@ -693,10 +693,14 @@ class ContentRelationsDiscoveryService
         foreach ($request->getRelationsOrdered() as $relationSet) {
             foreach ($relationSet[$targetBlogId] as $type => $ids) {
                 foreach ($ids as $id) {
-                    $sources[] = [
-                        'id' => $id,
-                        'type' => $type,
-                    ];
+                    if ($id === $request->getContentId() && $type === $request->getContentType()) {
+                        $this->getLogger()->info("Related list contains reference to root content, skip adding sourceId=$id, contentType=$type to sources list");
+                    } else {
+                        $sources[] = [
+                            'id' => $id,
+                            'type' => $type,
+                        ];
+                    }
                 }
             }
         }
