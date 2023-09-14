@@ -6,6 +6,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapperInterface;
 use Smartling\Exception\SmartlingNetworkException;
+use Smartling\Helpers\Cache;
 use Smartling\Jobs\LastModifiedCheckJob;
 use Smartling\Queue\Queue;
 use Smartling\Queue\QueueInterface;
@@ -81,7 +82,16 @@ class LastModifiedCheckJobTest extends TestCase
     {
         return $this->getMockBuilder(LastModifiedCheckJob::class)
             ->onlyMethods(['prepareSubmissionList', 'getSmartlingLocaleIdBySubmission'])
-            ->setConstructorArgs([$apiWrapper, $this->settingsManager, $submissionManager, '20m', 1200, $queue])
+            ->setConstructorArgs([
+                $apiWrapper,
+                $this->createMock(Cache::class),
+                $this->settingsManager,
+                $submissionManager,
+                0,
+                '20m',
+                1200,
+                $queue,
+            ])
             ->getMock();
     }
 
@@ -492,7 +502,16 @@ class LastModifiedCheckJobTest extends TestCase
         $missingSubmission->method('getTargetLocale')->willReturn('MissingLocale');
         $this->lastModifiedWorker = $this->getMockBuilder(LastModifiedCheckJob::class)
             ->onlyMethods(['prepareSubmissionList', 'getSmartlingLocaleIdBySubmission', 'placeLockFlag'])
-            ->setConstructorArgs([$this->apiWrapper, $this->settingsManager, $this->submissionManager, '20m', 1200, $this->queue])
+            ->setConstructorArgs([
+                $this->apiWrapper,
+                $this->createMock(Cache::class),
+                $this->settingsManager,
+                $this->submissionManager,
+                0,
+                '20m',
+                1200,
+                $this->queue,
+            ])
             ->getMock();
         $this->lastModifiedWorker->method('getSmartlingLocaleIdBySubmission')->willReturn($missingSubmission->getTargetLocale());
 

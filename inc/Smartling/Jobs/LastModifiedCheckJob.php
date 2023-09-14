@@ -5,6 +5,7 @@ namespace Smartling\Jobs;
 use Smartling\ApiWrapperInterface;
 use Smartling\Exception\SmartlingNetworkException;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\Cache;
 use Smartling\Helpers\TestRunHelper;
 use Smartling\Queue\QueueInterface;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -16,18 +17,17 @@ class LastModifiedCheckJob extends JobAbstract
 {
     public const JOB_HOOK_NAME = 'smartling-last-modified-check-task';
 
-    private QueueInterface $queue;
-
     public function __construct(
         ApiWrapperInterface $api,
+        Cache $cache,
         SettingsManager $settingsManager,
         SubmissionManager $submissionManager,
+        int $throttleIntervalSeconds,
         string $jobRunInterval,
         int $workerTTL,
-        QueueInterface $queue
+        private QueueInterface $queue,
     ) {
-        parent::__construct($api, $settingsManager, $submissionManager, $jobRunInterval, $workerTTL);
-        $this->queue = $queue;
+        parent::__construct($api, $cache, $settingsManager, $submissionManager, $throttleIntervalSeconds, $jobRunInterval, $workerTTL);
     }
 
     public function getJobHookName(): string

@@ -9,13 +9,11 @@ use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
-use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\DbAl\WordpressContentEntities\EntityWithMetadata;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingGutenbergParserNotFoundException;
 use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
-use Smartling\Exception\SmartlingNotSupportedContentException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\ArrayHelper;
@@ -695,10 +693,14 @@ class ContentRelationsDiscoveryService
         foreach ($request->getRelationsOrdered() as $relationSet) {
             foreach ($relationSet[$targetBlogId] as $type => $ids) {
                 foreach ($ids as $id) {
-                    $sources[] = [
-                        'id' => $id,
-                        'type' => $type,
-                    ];
+                    if ($id === $request->getContentId() && $type === $request->getContentType()) {
+                        $this->getLogger()->info("Related list contains reference to root content, skip adding sourceId=$id, contentType=$type to sources list");
+                    } else {
+                        $sources[] = [
+                            'id' => $id,
+                            'type' => $type,
+                        ];
+                    }
                 }
             }
         }

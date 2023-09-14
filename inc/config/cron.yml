@@ -3,6 +3,7 @@ parameters:
   cron.interval.group.submission: "3h"
   cron.interval.last-modified-check: "5m"
   cron.interval.download: "5m"
+  cron.interval.throttle: 120
   cron.job.default_ttl: 180
 
 services:
@@ -21,8 +22,10 @@ services:
     class: Smartling\Jobs\UploadJob
     arguments:
       - "@api.wrapper.with.retries"
+      - "@transient.cache"
       - "@manager.settings"
       - "@manager.submission"
+      - "%cron.interval.throttle%"
       - "%cron.interval.upload%"
       - "%cron.job.default_ttl%"
 
@@ -34,8 +37,10 @@ services:
     class: Smartling\Jobs\SubmissionCollectorJob
     arguments:
       - "@api.wrapper.with.retries"
+      - "@transient.cache"
       - "@manager.settings"
       - "@manager.submission"
+      - "%cron.interval.throttle%"
       - "%cron.interval.group.submission%"
       - "%cron.job.default_ttl%"
       - "@queue.db"
@@ -48,8 +53,10 @@ services:
     class: Smartling\Jobs\LastModifiedCheckJob
     arguments:
       - "@api.wrapper.with.retries"
+      - "@transient.cache"
       - "@manager.settings"
       - "@manager.submission"
+      - "%cron.interval.throttle%"
       - "%cron.interval.last-modified-check%"
       - "%cron.job.default_ttl%"
       - "@queue.db"
@@ -62,8 +69,10 @@ services:
     class: Smartling\Jobs\DownloadTranslationJob
     arguments:
       - "@api.wrapper.with.retries"
+      - "@transient.cache"
       - "@manager.settings"
       - "@manager.submission"
+      - "%cron.interval.throttle%"
       - "%cron.interval.download%"
       - "%cron.job.default_ttl%"
       - "@queue.db"

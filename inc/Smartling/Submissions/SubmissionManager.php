@@ -18,6 +18,7 @@ use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\JobManager;
 use Smartling\Jobs\SubmissionJobEntity;
 use Smartling\Jobs\SubmissionsJobsManager;
+use Smartling\Models\DuplicateSubmissionDetails;
 
 class SubmissionManager extends EntityManagerAbstract
 {
@@ -44,10 +45,7 @@ class SubmissionManager extends EntityManagerAbstract
         $this->submissionsJobsManager = $submissionsJobsManager;
     }
 
-    /**
-     * @param mixed $contentType
-     */
-    private function isValidContentType($contentType): bool
+    private function isValidContentType(?string $contentType): bool
     {
         return
             null === $contentType
@@ -431,6 +429,10 @@ class SubmissionManager extends EntityManagerAbstract
         $tableName = $this->getDbal()->completeTableName(SubmissionEntity::getTableName());
 
         if ($is_insert) {
+            if ($this->submissionExists($entity->getContentType(), $entity->getSourceBlogId(), $entity->getSourceId(), $entity->getTargetBlogId())) {
+                $this->getLogger()->info("Skip inserting submission=$originalSubmission, submission for same source and target already exists");
+                return $this->getSubmissionEntity($entity->getContentType(), $entity->getSourceBlogId(), $entity->getSourceId(), $entity->getTargetBlogId());
+            }
             $this->getLogger()->debug("Inserting submission $originalSubmission");
             $storeQuery = QueryBuilder::buildInsertQuery($tableName, $fields);
         } else {
@@ -488,7 +490,7 @@ class SubmissionManager extends EntityManagerAbstract
         int $sourceBlog,
         int $sourceEntity,
         int $targetBlog,
-        LocalizationPluginProxyInterface $localizationProxy,
+        ?LocalizationPluginProxyInterface $localizationProxy = null,
         ?int $targetEntity = null
     ): SubmissionEntity
     {
@@ -510,7 +512,9 @@ class SubmissionManager extends EntityManagerAbstract
             $entity->setLastError('');
         } else {
             $entity = $this->createSubmission($params);
-            $entity->setTargetLocale($localizationProxy->getBlogLocaleById($targetBlog));
+            if ($localizationProxy !== null) {
+                $entity->setTargetLocale($localizationProxy->getBlogLocaleById($targetBlog));
+            }
             $entity->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
             $entity->setSubmitter(WordpressUserHelper::getUserLogin());
             $entity->setSourceTitle('no title');
@@ -618,7 +622,7 @@ class SubmissionManager extends EntityManagerAbstract
         return $this->storeEntity($submission);
     }
 
-    public function getGroupedIdsByFileUri()
+    public function getGroupedIdsByFileUri(): array
     {
         $this->getDbal()->query('SET group_concat_max_len=2048000');
         $block = ConditionBlock::getConditionBlock();
@@ -646,6 +650,25 @@ class SubmissionManager extends EntityManagerAbstract
         );
 
         return $this->getDbal()->fetch($query, ARRAY_A);
+    }
+
+    /**
+     * @return DuplicateSubmissionDetails[]
+     */
+    public function getDuplicateSubmissionDetails(): array
+    {
+        $result = [];
+        foreach ($this->getDbal()->fetch("select source_blog_id, content_type, source_id, target_blog_id, count(*) cnt
+from wp_smartling_submissions group by 1, 2, 3, 4 having count(*) > 1", ARRAY_A) as $row) {
+            $result[] = new DuplicateSubmissionDetails(
+                $row['content_type'],
+                (int)$row['source_blog_id'],
+                (int)$row['source_id'],
+                (int)$row['target_blog_id'],
+            );
+        }
+
+        return $result;
     }
 
     private function getTotalCountAndResult(?string $contentType, ?string $status, ?int $outdatedFlag, array $sortOptions = null, ConditionBlock $block = null, array $pageOptions = null): array

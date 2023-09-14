@@ -6,6 +6,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\Helpers\Cache;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Jobs\UploadJob;
@@ -28,7 +29,15 @@ class UploadJobTest extends TestCase
                                    SettingsManager $settingsManager
     ) {
         return $this->getMockBuilder(UploadJob::class)
-            ->setConstructorArgs([$apiWrapper, $settingsManager, $submissionManager, '5m', 1200])
+            ->setConstructorArgs([
+                $apiWrapper,
+                $this->createMock(Cache::class),
+                $settingsManager,
+                $submissionManager,
+                0,
+                '5m',
+                1200,
+            ])
             ->onlyMethods([])
             ->getMock();
     }

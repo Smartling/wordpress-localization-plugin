@@ -3,7 +3,6 @@ services:
   manager.register:
     class: Smartling\StartupRegisterManager
     calls:
-      #- [ "addService", [ @custom.scheduler.interval.helper ]]
       - [ "addService", [ "@cron.worker.upload" ]]
       - [ "addService", [ "@cron.worker.submission-collector" ]]
       - [ "addService", [ "@cron.worker.last-modified-check" ]]
@@ -12,6 +11,7 @@ services:
       - [ "addService", [ "@wp.i18n" ]]
       - [ "addService", [ "@wp.checkStatus" ]]
       - [ "addService", [ "@wp.submissions" ]]
+#controllers for sub-menu pages must be added after @wp.submissions
       - [ "addService", [ "@wp.taxonomy.linker" ]]
       - [ "addService", [ "@wp.test.run" ]]
       - [ "addService", [ "@wp.bulkSubmit" ]]
@@ -28,4 +28,5 @@ services:
       - [ "addService", [ "@wp.translation.lock" ]]
       - [ "addService", [ "@live_notification.service" ]]
       - [ "addService", [ "@content.relations.handler"]]
+      - [ "addService", [ "@duplicate.submissions.cleaner"]]
       - [ "addService", [ "@service.filter-ui" ]]

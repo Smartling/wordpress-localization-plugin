@@ -4,7 +4,7 @@ namespace Smartling\Tests\WP\Controller;
 
 use PHPUnit\Framework\TestCase;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
-use Smartling\Helpers\Cache;
+use Smartling\Helpers\WpObjectCache;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Queue\QueueInterface;
@@ -44,7 +44,7 @@ class ConfigurationProfilesControllerTest extends TestCase {
             $this->createMock(SettingsManager::class),
             $this->createMock(SiteHelper::class),
             $submissionManager,
-            $this->createMock(Cache::class)
+            $this->createMock(WpObjectCache::class)
         );
 
         $submission->expects($this->once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_CANCELLED);
