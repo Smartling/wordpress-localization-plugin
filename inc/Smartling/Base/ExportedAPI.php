@@ -205,4 +205,9 @@ interface ExportedAPI
      * @return array translation
      */
     public const FILTER_BEFORE_TRANSLATION_APPLIED = 'smartling_filter_before_translation_applied';
+
+    /**
+     * @param array items
+     */
+    public const FILTER_BULK_SUBMIT_PREPARE_ITEMS = 'smartling_filter_bulk_submit_prepare_items';
 }

@@ -42,6 +42,9 @@ $widgetName = 'bulk-submit-locales';
     </table>
 
     <form class="form-table" id="bulk-submit-main" method="post">
+        <?php if ($bulkSubmitTable->isDataFiltered()) {?>
+            <h3 style="float: right">Additional table filters present, later pages will have less rows</h3>
+        <?php }?>
         <?php $bulkSubmitTable->display() ?>
         <div id="error-messages" class="tab"></div>
         <div class="postbox-container">
@@ -121,6 +124,4 @@ $widgetName = 'bulk-submit-locales';
             });
         })(jQuery);
     </script>
-
-    </form>
 </div>

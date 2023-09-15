@@ -3,6 +3,7 @@
 namespace Smartling\WP\Table;
 
 use DateTime;
+use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
@@ -54,6 +55,8 @@ class BulkSubmitTableWidget extends SmartlingListTable
         'ajax'     => false,
     ];
 
+    private bool $dataFiltered = false;
+
     private ConfigurationProfileEntity $profile;
     private LocalizationPluginProxyInterface $localizationPluginProxy;
     private PluginInfo $pluginInfo;
@@ -89,6 +92,11 @@ class BulkSubmitTableWidget extends SmartlingListTable
                 ArrayHelper::first(array_keys($filteredAllowedTypes));
 
         parent::__construct($this->_settings);
+    }
+
+    public function isDataFiltered(): bool
+    {
+        return $this->dataFiltered;
     }
 
     /**
@@ -181,15 +189,10 @@ class BulkSubmitTableWidget extends SmartlingListTable
         ];
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function get_sortable_columns()
+    public function get_sortable_columns(): array
     {
-
         $fields = [
             'title',
-            'status',
             'author',
             'updated',
         ];
@@ -409,7 +412,11 @@ class BulkSubmitTableWidget extends SmartlingListTable
             }
         }
 
-
+        $foundCount = count($dataAsArray);
+        $dataAsArray = apply_filters(ExportedAPI::FILTER_BULK_SUBMIT_PREPARE_ITEMS, $dataAsArray);
+        if (count($dataAsArray) !== $foundCount) {
+            $this->dataFiltered = true;
+        }
         $this->items = $dataAsArray;
 
         $this->set_pagination_args([
