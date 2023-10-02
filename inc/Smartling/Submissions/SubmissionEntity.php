@@ -7,6 +7,7 @@ use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingEntityAbstract;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
+use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Exception\SmartlingSubmissionsProcessingException;
 use Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater;
@@ -639,12 +640,15 @@ class SubmissionEntity extends SmartlingEntityAbstract
      */
     public function getCompletionPercentage(): int
     {
+        if ($this->getTotalStringCount() === 0) {
+            throw new SmartlingHumanReadableException('totalStringCount must be greater than 0', '', 0);
+        }
         $translatableCount = $this->getTotalStringCount() - $this->getExcludedStringCount();
         if ($translatableCount === 0 || $this->isCloned()) {
             return 100;
         }
 
-        return (int)round(($this->getCompletedStringCount() / $translatableCount) * 100);
+        return (int)floor(($this->getCompletedStringCount() / $translatableCount) * 100);
     }
 
     public function getLastError(): string
