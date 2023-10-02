@@ -640,9 +640,6 @@ class SubmissionEntity extends SmartlingEntityAbstract
      */
     public function getCompletionPercentage(): int
     {
-        if ($this->getTotalStringCount() === 0) {
-            throw new SmartlingHumanReadableException('totalStringCount must be greater than 0', '', 0);
-        }
         $translatableCount = $this->getTotalStringCount() - $this->getExcludedStringCount();
         if ($translatableCount === 0 || $this->isCloned()) {
             return 100;

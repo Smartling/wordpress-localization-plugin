@@ -6,8 +6,6 @@ use PHPUnit\Framework\TestCase;
 
 class SubmissionEntityTest extends TestCase {
     /**
-     * @param string $description
-     * @param int $totalStringCount
      * @dataProvider completionPercentageDataProvider
      */
     public function testCompletionPercentage(int $totalStringCount, int $approvedStringCount, int $completedStringCount, int $excludedStringCount, int $expectedPercentage, string $description = ''): void
@@ -33,17 +31,5 @@ class SubmissionEntityTest extends TestCase {
             [10, 0, 0, 10, 100, 'Nothing to translate, user excluded all content'],
             [1000000, 0, 999999, 0, 99, 'Must return 99% even if 99.9999% translated'],
         ];
-    }
-    
-    public function testCompletionPercentageException(): void
-    {
-        $x = new SubmissionEntity();
-        $x->setApprovedStringCount(0);
-        $x->setCompletedStringCount(10);
-        $x->setExcludedStringCount(0);
-        $x->setTotalStringCount(0);
-
-        $this->expectExceptionMessage('totalStringCount must be greater than 0');
-        $x->getCompletionPercentage();
     }
 }
