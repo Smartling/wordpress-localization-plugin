@@ -63,8 +63,8 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 3.5.0 =
-* Fixed a use case in which an already translated post was re-uploaded, new source strings were not authorized, and the connector re-delivered translations. It happened because all authorized strings are published. This type of re-delivery confused people because it was unexpected, but it also included new strings that were untranslated.
-Starting with this release, delivery will occur when all authorized strings have been translated and published. Any unauthorized string will prevent the delivery. To unblock delivery, any unauthorized strings should be Excluded or Authorized.
+* Fixed a use case in which an already translated post was re-uploaded, new source strings were not authorized, and the connector automatically re-delivered translations. It happened because all authorized strings are published. This type of re-delivery confused people because it was unexpected, but it also included new strings that were untranslated.
+Starting with this release, automatic delivery will occur when all authorized strings have been translated and published. Any unauthorized string will prevent the automatic delivery. To unblock automatic delivery, any unauthorized strings should be Excluded or Authorized. Manual delivery is still possible at any translation status from the sidebar widget.
 
 = 3.4.5 =
 * Added bulk submit screen backend filter
