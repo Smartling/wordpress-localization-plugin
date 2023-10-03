@@ -7,6 +7,7 @@ use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingEntityAbstract;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
+use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Exception\SmartlingSubmissionsProcessingException;
 use Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater;
@@ -634,27 +635,17 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return $this;
     }
 
+    /**
+     * @see https://wiki.smartling.net/pages/viewpage.action?pageId=34209978#NFR10Submissionentity-Percentageofcompletion
+     */
     public function getCompletionPercentage(): int
     {
-        $percentage = 0;
-
-        if (($this->getApprovedStringCount() + $this->getCompletedStringCount()) > 0) {
-            if (0 !== $this->getApprovedStringCount()) {
-                $percentage = $this->getCompletedStringCount() / $this->getApprovedStringCount();
-            }
-            if ($percentage > 1) {
-                $percentage = 1;
-            }
-
-            if (1 === $this->getIsCloned()) {
-                $percentage = 1;
-            }
-        } else {
-            // if nothing is authorized then check special case when everything was excluded
-            $percentage = 0 === ($this->getTotalStringCount() - $this->getExcludedStringCount()) ? 1 : 0;
+        $translatableCount = $this->getTotalStringCount() - $this->getExcludedStringCount();
+        if ($translatableCount === 0 || $this->isCloned()) {
+            return 100;
         }
 
-        return (int)($percentage * 100);
+        return (int)floor(($this->getCompletedStringCount() / $translatableCount) * 100);
     }
 
     public function getLastError(): string
