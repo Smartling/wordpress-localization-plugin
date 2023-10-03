@@ -63,7 +63,8 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 3.5.0 =
-* Fixed connector automatically downloading content and applying translation after source was uploaded again with no new authorized strings. The connector now will automatically download submissions only if all strings are completed and there are no pending unauthorized or excluded strings.
+* Fixed a use case in which an already translated post was re-uploaded, new source strings were not authorized, and the connector re-delivered translations. It happened because all authorized strings are published. This type of re-delivery confused people because it was unexpected, but it also included new strings that were untranslated.
+Starting with this release, delivery will occur when all authorized strings have been translated and published. Any unauthorized string will prevent the delivery. To unblock delivery, any unauthorized strings should be Excluded or Authorized.
 
 = 3.4.5 =
 * Added bulk submit screen backend filter
