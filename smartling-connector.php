@@ -19,7 +19,7 @@ use Smartling\RestApi;
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       smartling-connector
  * Domain Path:       /languages
- * Elementor tested up to: 3.15.2
+ * Elementor tested up to: 3.16.4
  */
 
 // If this file is called directly, abort.
