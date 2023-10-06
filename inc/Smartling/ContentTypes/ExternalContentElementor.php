@@ -45,6 +45,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         'after_text',
         'alert_description',
         'alert_title',
+        'alt',
         'anchor',
         'anchor_note',
         'author_bio',
@@ -165,7 +166,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         $result = new ExternalData();
         foreach ($data as $component) {
             $prefix = $previousPrefix . $component['id'];
-            if (is_array($component['elements'])) {
+            if (is_array($component['elements']) && count($component['elements']) > 0) {
                 $result = $result->merge($this->extractContent($component['elements'], $prefix . FieldsFilterHelper::ARRAY_DIVIDER));
                 $related = $this->getRelatedFromElement($component);
                 if ($related !== null) {
@@ -179,6 +180,10 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                     }
 
                     if (is_array($setting)) {
+                        $related = $this->getRelatedFromSetting($setting);
+                        if ($related !== null) {
+                            $result = $result->addRelated($related);
+                        }
                         foreach ($setting as $id => $option) {
                             if (is_array($option)) {
                                 foreach ($option as $optionKey => $optionValue) {
@@ -255,6 +260,14 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                     }
                     break;
             }
+        }
+
+        return null;
+    }
+    
+    private function getRelatedFromSetting(array $setting): ?array {
+        if ($setting['source'] ?? '' === 'library' && array_key_exists('id', $setting)) {
+            return [ContentTypeHelper::POST_TYPE_ATTACHMENT => [$setting['id'] => $setting['id']]];
         }
 
         return null;
