@@ -45,6 +45,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         'after_text',
         'alert_description',
         'alert_title',
+        'alt',
         'anchor',
         'anchor_note',
         'author_bio',
@@ -179,6 +180,10 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                     }
 
                     if (is_array($setting)) {
+                        $related = $this->getRelatedFromSetting($setting);
+                        if ($related !== null) {
+                            $result = $result->addRelated($related);
+                        }
                         foreach ($setting as $id => $option) {
                             if (is_array($option)) {
                                 foreach ($option as $optionKey => $optionValue) {
@@ -216,7 +221,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     public function getMaxVersion(): string
     {
-        return '3.15';
+        return '3.16';
     }
 
     public function getMinVersion(): string
@@ -240,21 +245,19 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     }
 
     private function getRelatedFromElement(array $element): ?array {
-        if ($element['elType'] === 'widget' && array_key_exists('widgetType', $element)) {
-            switch ($element['widgetType']) {
-                case 'global':
-                    $id = $element[self::PROPERTY_TEMPLATE_ID] ?? null;
-                    if ($id !== null) {
-                        return [ContentRelationsDiscoveryService::POST_BASED_PROCESSOR => [$id => $id]];
-                    }
-                    break;
-                case 'image':
-                    $id = $element['settings']['image']['id'] ?? null;
-                    if ($id !== null) {
-                        return [ContentTypeHelper::POST_TYPE_ATTACHMENT => [$id => $id]];
-                    }
-                    break;
+        if ($element['elType'] ?? '' === 'widget' && $element['widgetType'] ?? '' === 'global') {
+            $id = $element[self::PROPERTY_TEMPLATE_ID] ?? null;
+            if ($id !== null) {
+                return [ContentRelationsDiscoveryService::POST_BASED_PROCESSOR => [$id => $id]];
             }
+        }
+
+        return null;
+    }
+    
+    private function getRelatedFromSetting(array $setting): ?array {
+        if ($setting['source'] ?? '' === 'library' && array_key_exists('id', $setting)) {
+            return [ContentTypeHelper::POST_TYPE_ATTACHMENT => [$setting['id'] => $setting['id']]];
         }
 
         return null;

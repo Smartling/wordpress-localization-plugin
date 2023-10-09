@@ -49,13 +49,21 @@ class ExternalContentElementorTest extends TestCase {
                     '590657a/b56da21/c799791/editor' => '<p>Left text</p>',
                     '590657a/0f3ad3c/0088b31/editor' => '<p>Middle text</p>',
                     '590657a/8798127/78d53a1/title' => 'Right heading',
+                    '7a874c7/d7d603e/ea10188/image/alt' => '',
                 ],
                 [ContentTypeHelper::POST_TYPE_ATTACHMENT => [597 => 597]],
+            ],
+            'background overlay' => [
+                '[{"id":"b809dba","elType":"section","settings":{"background_background":"classic","background_image":{"url":"https:\/\/test.com\/wp-content\/uploads\/2023\/08\/gradient-circle-mask.png","id":15546,"size":"","alt":"Alt text in a background","source":"library"}},"elements":[]}]',
+                ['b809dba/background_image/alt' => 'Alt text in a background'],
+                [ContentTypeHelper::POST_TYPE_ATTACHMENT => [15546 => 15546]],
             ],
             'mixed related content' => [
                 '[{"id":"ea10188","elType":"widget","settings":{"image":{"url":"http:\/\/localhost.localdomain\/wp-content\/uploads\/2021\/09\/elementor-image.png","id":597,"alt":"","source":"library"},"image_size":"medium"},"elements":[],"widgetType":"image"},{"id":"3b9b893","elType":"widget","settings":{"title":"I\'m actually a global widget"},"elements":[],"widgetType":"global","templateID":19366},{"id":"ea10189","elType":"widget","settings":{"image":{"url":"http:\/\/localhost.localdomain\/wp-content\/uploads\/2021\/09\/elementor-image*2.png","id":598,"alt":"","source":"library"},"image_size":"medium"},"elements":[],"widgetType":"image"}]',
                 [
                     '3b9b893/title' => "I'm actually a global widget",
+                    'ea10188/image/alt' => '',
+                    'ea10189/image/alt' => '',
                 ],
                 [
                     ContentRelationsDiscoveryService::POST_BASED_PROCESSOR => [19366 => 19366],
