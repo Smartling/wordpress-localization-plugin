@@ -166,7 +166,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         $result = new ExternalData();
         foreach ($data as $component) {
             $prefix = $previousPrefix . $component['id'];
-            if (is_array($component['elements']) && count($component['elements']) > 0) {
+            if (is_array($component['elements'])) {
                 $result = $result->merge($this->extractContent($component['elements'], $prefix . FieldsFilterHelper::ARRAY_DIVIDER));
                 $related = $this->getRelatedFromElement($component);
                 if ($related !== null) {
@@ -245,20 +245,10 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     }
 
     private function getRelatedFromElement(array $element): ?array {
-        if ($element['elType'] === 'widget' && array_key_exists('widgetType', $element)) {
-            switch ($element['widgetType']) {
-                case 'global':
-                    $id = $element[self::PROPERTY_TEMPLATE_ID] ?? null;
-                    if ($id !== null) {
-                        return [ContentRelationsDiscoveryService::POST_BASED_PROCESSOR => [$id => $id]];
-                    }
-                    break;
-                case 'image':
-                    $id = $element['settings']['image']['id'] ?? null;
-                    if ($id !== null) {
-                        return [ContentTypeHelper::POST_TYPE_ATTACHMENT => [$id => $id]];
-                    }
-                    break;
+        if ($element['elType'] ?? '' === 'widget' && $element['widgetType'] ?? '' === 'global') {
+            $id = $element[self::PROPERTY_TEMPLATE_ID] ?? null;
+            if ($id !== null) {
+                return [ContentRelationsDiscoveryService::POST_BASED_PROCESSOR => [$id => $id]];
             }
         }
 
