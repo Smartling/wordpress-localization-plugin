@@ -79,7 +79,14 @@
         "elType": "column",
         "settings": {
           "_column_size": 100,
-          "_inline_size": null
+          "_inline_size": null,
+          "background_image": {
+            "url": "https:\/\/example.com\/image.png",
+            "id": %d,
+            "size": "",
+            "alt": "",
+            "source": "library"
+          }
         },
         "elements": [
           {

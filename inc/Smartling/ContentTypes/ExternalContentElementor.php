@@ -245,10 +245,10 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     }
 
     private function getRelatedFromElement(array $element): ?array {
-        if ($element['elType'] ?? '' === 'widget' && $element['widgetType'] ?? '' === 'global') {
+        if (($element['elType'] ?? '') === 'widget' && ($element['widgetType'] ?? '') === 'global') {
             $id = $element[self::PROPERTY_TEMPLATE_ID] ?? null;
             if ($id !== null) {
-                return [ContentRelationsDiscoveryService::POST_BASED_PROCESSOR => [$id => $id]];
+                return [ContentRelationsDiscoveryService::POST_BASED_PROCESSOR => [$id]];
             }
         }
 
@@ -256,8 +256,8 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     }
     
     private function getRelatedFromSetting(array $setting): ?array {
-        if ($setting['source'] ?? '' === 'library' && array_key_exists('id', $setting)) {
-            return [ContentTypeHelper::POST_TYPE_ATTACHMENT => [$setting['id'] => $setting['id']]];
+        if (($setting['source'] ?? '') === 'library' && ($setting['id'] ?? '') !== '') {
+            return [ContentTypeHelper::POST_TYPE_ATTACHMENT => [$setting['id']]];
         }
 
         return null;
@@ -276,7 +276,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                         continue;
                     }
                     if (is_array($setting)) {
-                        if (array_key_exists('id', $setting) && array_key_exists('url', $setting) && is_int($setting['id'])) {
+                        if (array_key_exists('id', $setting) && array_key_exists('url', $setting) && is_int($setting['id']) && ($setting['source'] ?? '') === 'library') {
                             $targetAttachmentId = $this->getTargetId($submission->getSourceBlogId(), $setting['id'], $submission->getTargetBlogId());
                             if ($targetAttachmentId !== null) {
                                 $original[$componentIndex]['settings'][$settingIndex]['id'] = $targetAttachmentId;

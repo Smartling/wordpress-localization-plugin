@@ -1,0 +1,2710 @@
+[
+  {
+    "id": "10733aaf",
+    "elType": "container",
+    "settings": {
+      "container_type": "grid",
+      "grid_columns_grid": {
+        "unit": "fr",
+        "size": "2"
+      },
+      "grid_rows_grid": {
+        "unit": "fr",
+        "size": "1"
+      },
+      "grid_rows_grid_mobile": {
+        "unit": "fr",
+        "size": "1"
+      },
+      "grid_gaps": {
+        "unit": "px",
+        "top": "",
+        "right": "",
+        "bottom": "",
+        "left": "",
+        "isLinked": false,
+        "column": "50",
+        "row": "0"
+      },
+      "grid_gaps_tablet": {
+        "unit": "px",
+        "top": "",
+        "right": "",
+        "bottom": "",
+        "left": "",
+        "isLinked": true,
+        "column": "20",
+        "row": "20"
+      },
+      "grid_gaps_mobile": {
+        "unit": "px",
+        "top": "",
+        "right": "",
+        "bottom": "",
+        "left": "",
+        "isLinked": false,
+        "column": "0",
+        "row": "10"
+      },
+      "background_background": "classic",
+      "background_image": {
+        "url": "https:\/\/company.com\/wp-content\/uploads\/2023\/08\/Screenshot-2023-08-27-at-10.37.30-PM.png",
+        "id": 16038,
+        "size": "",
+        "alt": "",
+        "source": "library"
+      },
+      "background_position_laptop": "bottom left",
+      "background_position_tablet_extra": "bottom left",
+      "background_repeat_mobile": "no-repeat",
+      "background_size": "cover",
+      "background_size_mobile": "contain",
+      "padding": {
+        "unit": "rem",
+        "top": "5",
+        "right": "0",
+        "bottom": "5",
+        "left": "0",
+        "isLinked": false
+      },
+      "padding_laptop": {
+        "unit": "rem",
+        "top": "5",
+        "right": "2",
+        "bottom": "5",
+        "left": "2",
+        "isLinked": false
+      },
+      "padding_tablet_extra": {
+        "unit": "rem",
+        "top": "",
+        "right": "",
+        "bottom": "",
+        "left": "",
+        "isLinked": true
+      },
+      "padding_tablet": {
+        "unit": "rem",
+        "top": "3",
+        "right": "2",
+        "bottom": "3",
+        "left": "2",
+        "isLinked": false
+      },
+      "padding_mobile": {
+        "unit": "rem",
+        "top": "0",
+        "right": "1",
+        "bottom": "4",
+        "left": "1",
+        "isLinked": false
+      },
+      "eael_parallax_layers_list": [],
+      "eael_cl_logics": [
+        {
+          "_id": "738a128"
+        }
+      ]
+    },
+    "elements": [
+      {
+        "id": "215ff951",
+        "elType": "container",
+        "settings": {
+          "min_height": {
+            "unit": "px",
+            "size": 600,
+            "sizes": []
+          },
+          "min_height_tablet": {
+            "unit": "px",
+            "size": 400,
+            "sizes": []
+          },
+          "background_background": "classic",
+          "background_image": {
+            "url": "https:\/\/company.com\/wp-content\/uploads\/2023\/09\/GettyImages-1368077467.jpg",
+            "id": 17676,
+            "size": "",
+            "alt": "",
+            "source": "library"
+          },
+          "background_position": "center center",
+          "background_size": "cover",
+          "border_radius": {
+            "unit": "px",
+            "top": "24",
+            "right": "24",
+            "bottom": "24",
+            "left": "24",
+            "isLinked": true
+          },
+          "_flex_order_mobile": "end",
+          "eael_parallax_layers_list": [],
+          "eael_cl_logics": [
+            {
+              "_id": "8aebbb9"
+            }
+          ]
+        },
+        "elements": [],
+        "isInner": true
+      },
+      {
+        "id": "43212dc7",
+        "elType": "container",
+        "settings": {
+          "flex_gap": {
+            "unit": "px",
+            "size": 40,
+            "sizes": []
+          },
+          "flex_gap_mobile": {
+            "unit": "px",
+            "size": 20,
+            "sizes": []
+          },
+          "padding": {
+            "unit": "px",
+            "top": "80",
+            "right": "0",
+            "bottom": "0",
+            "left": "0",
+            "isLinked": false
+          },
+          "padding_tablet": {
+            "unit": "px",
+            "top": "40",
+            "right": "0",
+            "bottom": "0",
+            "left": "0",
+            "isLinked": false
+          },
+          "padding_mobile": {
+            "unit": "px",
+            "top": "20",
+            "right": "0",
+            "bottom": "0",
+            "left": "0",
+            "isLinked": false
+          },
+          "eael_parallax_layers_list": [],
+          "eael_cl_logics": [
+            {
+              "_id": "5130fa2"
+            }
+          ]
+        },
+        "elements": [
+          {
+            "id": "14c1dc16",
+            "elType": "widget",
+            "settings": {
+              "title": "Now in Company Wallet and Company: Breezy and secure workforce access.",
+              "typography_typography": "custom",
+              "typography_font_size_tablet": {
+                "unit": "px",
+                "size": 34,
+                "sizes": []
+              },
+              "eael_tooltip_section_content": "I am a tooltip",
+              "eael_ext_content_protection_password_placeholder": "Enter Password",
+              "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+              "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+              "eael_cl_logics": [
+                {
+                  "_id": "7ebc63e"
+                }
+              ]
+            },
+            "elements": [],
+            "widgetType": "heading"
+          },
+          {
+            "id": "7d83b076",
+            "elType": "widget",
+            "settings": {
+              "editor": "<p>Replace those plastic physical access cards with a smarter and convenient alternative right inside Company and Company Wallet. Then seamlessly manage your workforce as they securely breeze through company doors with just a quick tap of their phone or other smart device. Added perk: Your ESG stakeholders approve.<\/p>",
+              "eael_tooltip_section_content": "I am a tooltip",
+              "eael_ext_content_protection_password_placeholder": "Enter Password",
+              "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+              "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+              "eael_cl_logics": [
+                {
+                  "_id": "d02634f"
+                }
+              ]
+            },
+            "elements": [],
+            "widgetType": "text-editor"
+          },
+          {
+            "id": "255664fd",
+            "elType": "widget",
+            "settings": {
+              "text": "Book a Demo",
+              "link": {
+                "url": "https:\/\/company.com\/contact\/",
+                "is_external": "",
+                "nofollow": "",
+                "custom_attributes": ""
+              },
+              "eael_tooltip_section_content": "I am a tooltip",
+              "eael_ext_content_protection_password_placeholder": "Enter Password",
+              "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+              "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+              "eael_cl_logics": [
+                {
+                  "_id": "dc1f2b4"
+                }
+              ]
+            },
+            "elements": [],
+            "widgetType": "button"
+          }
+        ],
+        "isInner": true
+      }
+    ],
+    "isInner": false
+  },
+  {
+    "id": "2a433ce4",
+    "elType": "container",
+    "settings": {
+      "container_type": "grid",
+      "grid_columns_grid": {
+        "unit": "fr",
+        "size": "2"
+      },
+      "grid_rows_grid": {
+        "unit": "fr",
+        "size": "1"
+      },
+      "grid_rows_grid_mobile": {
+        "unit": "fr",
+        "size": "1"
+      },
+      "padding": {
+        "unit": "px",
+        "top": "90",
+        "right": "0",
+        "bottom": "90",
+        "left": "0",
+        "isLinked": false
+      },
+      "eael_parallax_layers_list": [],
+      "eael_cl_logics": [
+        {
+          "_id": "b1a4b9d"
+        }
+      ],
+      "background_background": "classic",
+      "background_image": {
+        "url": "",
+        "id": "",
+        "size": "",
+        "alt": "",
+        "source": "library"
+      },
+      "background_position": "center center",
+      "background_repeat": "no-repeat",
+      "background_size": "initial",
+      "background_bg_width": {
+        "unit": "%",
+        "size": 55,
+        "sizes": []
+      },
+      "border_border": "solid",
+      "border_width": {
+        "unit": "px",
+        "top": "1",
+        "right": "0",
+        "bottom": "0",
+        "left": "0",
+        "isLinked": false
+      },
+      "border_radius": {
+        "unit": "px",
+        "top": "024",
+        "right": "024",
+        "bottom": "0",
+        "left": "0",
+        "isLinked": false
+      },
+      "__globals__": {
+        "border_color": "globals\/colors?id=0fa09e2",
+        "background_color": "globals\/colors?id=accent"
+      },
+      "padding_laptop": {
+        "unit": "rem",
+        "top": "5",
+        "right": "2",
+        "bottom": "5",
+        "left": "2",
+        "isLinked": false
+      },
+      "padding_tablet_extra": {
+        "unit": "rem",
+        "top": "",
+        "right": "",
+        "bottom": "",
+        "left": "",
+        "isLinked": true
+      },
+      "padding_tablet": {
+        "unit": "rem",
+        "top": "",
+        "right": "",
+        "bottom": "",
+        "left": "",
+        "isLinked": true
+      },
+      "padding_mobile": {
+        "unit": "rem",
+        "top": "3",
+        "right": "1",
+        "bottom": "4",
+        "left": "1",
+        "isLinked": false
+      },
+      "background_size_mobile": "initial",
+      "background_bg_width_mobile": {
+        "unit": "%",
+        "size": 290,
+        "sizes": []
+      },
+      "margin": {
+        "unit": "px",
+        "top": "-30",
+        "right": "0",
+        "bottom": "0",
+        "left": "0",
+        "isLinked": false
+      }
+    },
+    "elements": [
+      {
+        "id": "7d1ab612",
+        "elType": "container",
+        "settings": {
+          "eael_parallax_layers_list": [],
+          "eael_cl_logics": [
+            {
+              "_id": "de6553b"
+            }
+          ],
+          "padding": {
+            "unit": "px",
+            "top": "10",
+            "right": "200",
+            "bottom": "10",
+            "left": "10",
+            "isLinked": false
+          },
+          "padding_laptop": {
+            "unit": "px",
+            "top": "10",
+            "right": "10",
+            "bottom": "10",
+            "left": "10",
+            "isLinked": true
+          }
+        },
+        "elements": [
+          {
+            "id": "4cb836df",
+            "elType": "widget",
+            "settings": {
+              "title": "Benefits that start\nwhere security\nthreats end.",
+              "eael_tooltip_section_content": "I am a tooltip",
+              "eael_ext_content_protection_password_placeholder": "Enter Password",
+              "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+              "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+              "eael_cl_logics": [
+                {
+                  "_id": "356d5cb"
+                }
+              ],
+              "typography_typography": "custom",
+              "typography_font_size_mobile": {
+                "unit": "px",
+                "size": 32,
+                "sizes": []
+              }
+            },
+            "elements": [],
+            "widgetType": "heading"
+          }
+        ],
+        "isInner": true
+      },
+      {
+        "id": "7aa00848",
+        "elType": "container",
+        "settings": {
+          "eael_parallax_layers_list": [],
+          "eael_cl_logics": [
+            {
+              "_id": "93f9624"
+            }
+          ]
+        },
+        "elements": [
+          {
+            "id": "5bb30671",
+            "elType": "widget",
+            "settings": {
+              "editor": "<p>Stronger security is everyone’s priority. But when you go all-in on NFC Wallet mobile credentials, there’s even more to look forward to.<\/p><ul><li><strong>Inside. In seconds.<\/strong><br \/>Employees can walk in simply by holding their Device or Device to an <a href=\"https:\/\/www.company.com\/product-mix\/readers\" target=\"_blank\" rel=\"noopener\">Company<\/a> or <a href=\"https:\/\/www.company.com\/readers\/product\" target=\"_blank\" rel=\"noopener\">Company<\/a> reader—no need to unlock or even wake up their device.<\/li><li><strong>Battery running low?<\/strong><br \/>No sweat. Offices and amenity areas can be accessed for up to five hours with Power Reserve.<\/li><li><strong>Tap into more and better experiences.<\/strong><br \/>Building access is only the beginning. Empower employees to also unlock office doors, print documents and access vending machines with ease.<\/li><li><strong>Reduce your carbon footprint.<\/strong><br \/>Ramp up your Environmental, Social and Governance (ESG) initiatives with smarter, mobile-friendly workspace access.<\/li><\/ul>",
+              "eael_tooltip_section_content": "I am a tooltip",
+              "eael_ext_content_protection_password_placeholder": "Enter Password",
+              "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+              "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+              "eael_cl_logics": [
+                {
+                  "_id": "d418433"
+                }
+              ],
+              "custom_css": "selector ul{\n    margin-left:-20px;\n}\nselector li{\n    margin-top:20px;\n}",
+              "_css_classes": "purple-bullets"
+            },
+            "elements": [],
+            "widgetType": "text-editor"
+          },
+          {
+            "id": "36d6b938",
+            "elType": "widget",
+            "settings": {
+              "text": "See It in Action",
+              "eael_tooltip_section_content": "I am a tooltip",
+              "eael_ext_content_protection_password_placeholder": "Enter Password",
+              "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+              "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+              "eael_cl_logics": [
+                {
+                  "_id": "0d6c9fa"
+                }
+              ],
+              "link": {
+                "url": "https:\/\/company.com\/videos\/?playlist=2f1d7ff&video=abebb6d",
+                "is_external": "on",
+                "nofollow": "",
+                "custom_attributes": ""
+              },
+              "_margin": {
+                "unit": "px",
+                "top": "40",
+                "right": "0",
+                "bottom": "0",
+                "left": "0",
+                "isLinked": false
+              },
+              "__globals__": {
+                "background_color": "globals\/colors?id=secondary",
+                "button_background_hover_color": "globals\/colors?id=primary"
+              },
+              "_margin_mobile": {
+                "unit": "px",
+                "top": "10",
+                "right": "0",
+                "bottom": "0",
+                "left": "0",
+                "isLinked": false
+              }
+            },
+            "elements": [],
+            "widgetType": "button"
+          }
+        ],
+        "isInner": true
+      }
+    ],
+    "isInner": false
+  },
+  {
+    "id": "553a03c9",
+    "elType": "container",
+    "settings": {
+      "container_type": "grid",
+      "grid_columns_grid": {
+        "unit": "fr",
+        "size": "2"
+      },
+      "grid_rows_grid": {
+        "unit": "fr",
+        "size": "1"
+      },
+      "grid_rows_grid_mobile": {
+        "unit": "fr",
+        "size": "1"
+      },
+      "padding": {
+        "unit": "px",
+        "top": "90",
+        "right": "0",
+        "bottom": "90",
+        "left": "0",
+        "isLinked": false
+      },
+      "eael_parallax_layers_list": [],
+      "eael_cl_logics": [
+        {
+          "_id": "b1a4b9d"
+        }
+      ],
+      "background_background": "classic",
+      "background_image": {
+        "url": "",
+        "id": "",
+        "size": "",
+        "alt": "",
+        "source": "library"
+      },
+      "background_position": "center center",
+      "background_repeat": "no-repeat",
+      "background_size": "initial",
+      "background_bg_width": {
+        "unit": "%",
+        "size": 55,
+        "sizes": []
+      },
+      "border_border": "solid",
+      "border_width": {
+        "unit": "px",
+        "top": "1",
+        "right": "0",
+        "bottom": "0",
+        "left": "0",
+        "isLinked": false
+      },
+      "border_radius": {
+        "unit": "px",
+        "top": "024",
+        "right": "024",
+        "bottom": "0",
+        "left": "0",
+        "isLinked": false
+      },
+      "__globals__": {
+        "border_color": "globals\/colors?id=0fa09e2",
+        "background_color": "globals\/colors?id=accent"
+      },
+      "padding_laptop": {
+        "unit": "rem",
+        "top": "5",
+        "right": "2",
+        "bottom": "5",
+        "left": "2",
+        "isLinked": false
+      },
+      "padding_tablet_extra": {
+        "unit": "rem",
+        "top": "",
+        "right": "",
+        "bottom": "",
+        "left": "",
+        "isLinked": true
+      },
+      "padding_tablet": {
+        "unit": "rem",
+        "top": "",
+        "right": "",
+        "bottom": "",
+        "left": "",
+        "isLinked": true
+      },
+      "padding_mobile": {
+        "unit": "rem",
+        "top": "3",
+        "right": "1",
+        "bottom": "4",
+        "left": "1",
+        "isLinked": false
+      },
+      "background_size_mobile": "initial",
+      "background_bg_width_mobile": {
+        "unit": "%",
+        "size": 290,
+        "sizes": []
+      },
+      "margin": {
+        "unit": "px",
+        "top": "0",
+        "right": "0",
+        "bottom": "0",
+        "left": "0",
+        "isLinked": false
+      }
+    },
+    "elements": [
+      {
+        "id": "2dc52381",
+        "elType": "container",
+        "settings": {
+          "eael_parallax_layers_list": [],
+          "eael_cl_logics": [
+            {
+              "_id": "de6553b"
+            }
+          ],
+          "padding": {
+            "unit": "px",
+            "top": "10",
+            "right": "200",
+            "bottom": "10",
+            "left": "10",
+            "isLinked": false
+          },
+          "padding_laptop": {
+            "unit": "px",
+            "top": "10",
+            "right": "10",
+            "bottom": "10",
+            "left": "10",
+            "isLinked": true
+          }
+        },
+        "elements": [
+          {
+            "id": "2d1e0c5d",
+            "elType": "widget",
+            "settings": {
+              "title": "Streamline things for your security team, too.",
+              "eael_tooltip_section_content": "I am a tooltip",
+              "eael_ext_content_protection_password_placeholder": "Enter Password",
+              "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+              "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+              "eael_cl_logics": [
+                {
+                  "_id": "356d5cb"
+                }
+              ],
+              "typography_typography": "custom",
+              "typography_font_size_mobile": {
+                "unit": "px",
+                "size": 32,
+                "sizes": []
+              }
+            },
+            "elements": [],
+            "widgetType": "heading"
+          }
+        ],
+        "isInner": true
+      },
+      {
+        "id": "29e0a994",
+        "elType": "container",
+        "settings": {
+          "eael_parallax_layers_list": [],
+          "eael_cl_logics": [
+            {
+              "_id": "93f9624"
+            }
+          ]
+        },
+        "elements": [
+          {
+            "id": "526b6bc1",
+            "elType": "widget",
+            "settings": {
+              "editor": "<p data-pm-slice=\"1 1 []\">Guardian manages the entire NFC mobile wallet credential lifecycle, so your security team can ensure the most secure front-end experience alongside back-end control. Think better automation, smarter data and all-around stronger governance.<\/p>",
+              "eael_tooltip_section_content": "I am a tooltip",
+              "eael_ext_content_protection_password_placeholder": "Enter Password",
+              "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+              "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+              "eael_cl_logics": [
+                {
+                  "_id": "d418433"
+                }
+              ]
+            },
+            "elements": [],
+            "widgetType": "text-editor"
+          }
+        ],
+        "isInner": true
+      }
+    ],
+    "isInner": false
+  },
+  {
+    "id": "67e46bf1",
+    "elType": "container",
+    "settings": {
+      "container_type": "grid",
+      "grid_columns_grid": {
+        "unit": "fr",
+        "size": "2"
+      },
+      "grid_rows_grid": {
+        "unit": "fr",
+        "size": "1"
+      },
+      "grid_rows_grid_mobile": {
+        "unit": "fr",
+        "size": "1"
+      },
+      "grid_gaps": {
+        "unit": "px",
+        "top": "",
+        "right": "",
+        "bottom": "",
+        "left": "",
+        "isLinked": false,
+        "column": "70",
+        "row": "0"
+      },
+      "grid_gaps_tablet": {
+        "unit": "px",
+        "top": "",
+        "right": "",
+        "bottom": "",
+        "left": "",
+        "isLinked": true,
+        "column": "40",
+        "row": "40"
+      },
+      "background_background": "classic",
+      "background_image": {
+        "url": "",
+        "id": "",
+        "size": "",
+        "alt": "",
+        "source": "library"
+      },
+      "background_position": "center center",
+      "background_repeat": "no-repeat",
+      "background_size": "initial",
+      "background_size_mobile": "initial",
+      "background_bg_width": {
+        "unit": "%",
+        "size": 55,
+        "sizes": []
+      },
+      "background_bg_width_mobile": {
+        "unit": "%",
+        "size": 290,
+        "sizes": []
+      },
+      "border_border": "solid",
+      "border_width": {
+        "unit": "px",
+        "top": "1",
+        "right": "0",
+        "bottom": "0",
+        "left": "0",
+        "isLinked": false
+      },
+      "border_radius": {
+        "unit": "px",
+        "top": "024",
+        "right": "024",
+        "bottom": "0",
+        "left": "0",
+        "isLinked": false
+      },
+      "padding": {
+        "unit": "px",
+        "top": "90",
+        "right": "0",
+        "bottom": "90",
+        "left": "0",
+        "isLinked": false
+      },
+      "padding_laptop": {
+        "unit": "rem",
+        "top": "5",
+        "right": "2",
+        "bottom": "5",
+        "left": "2",
+        "isLinked": false
+      },
+      "padding_tablet_extra": {
+        "unit": "rem",
+        "top": "",
+        "right": "",
+        "bottom": "",
+        "left": "",
+        "isLinked": true
+      },
+      "padding_tablet": {
+        "unit": "rem",
+        "top": "",
+        "right": "",
+        "bottom": "",
+        "left": "",
+        "isLinked": true
+      },
+      "padding_mobile": {
+        "unit": "rem",
+        "top": "3",
+        "right": "1",
+        "bottom": "4",
+        "left": "1",
+        "isLinked": false
+      },
+      "eael_parallax_layers_list": [],
+      "eael_cl_logics": [
+        {
+          "_id": "20a8cb2"
+        }
+      ],
+      "__globals__": {
+        "border_color": "globals\/colors?id=0fa09e2",
+        "background_color": "globals\/colors?id=03e59ac"
+      }
+    },
+    "elements": [
+      {
+        "id": "34e7ec01",
+        "elType": "container",
+        "settings": {
+          "min_height": {
+            "unit": "px",
+            "size": 350,
+            "sizes": []
+          },
+          "min_height_tablet": {
+            "unit": "px",
+            "size": 400,
+            "sizes": []
+          },
+          "background_background": "classic",
+          "background_image": {
+            "url": "https:\/\/company.com\/wp-content\/uploads\/2023\/09\/GettyImages-871223262.jpg",
+            "id": 17679,
+            "size": "",
+            "alt": "",
+            "source": "library"
+          },
+          "background_position": "center center",
+          "background_size": "cover",
+          "border_radius": {
+            "unit": "px",
+            "top": "24",
+            "right": "24",
+            "bottom": "24",
+            "left": "24",
+            "isLinked": true
+          },
+          "_flex_order_mobile": "start",
+          "eael_parallax_layers_list": [],
+          "eael_cl_logics": [
+            {
+              "_id": "8aebbb9"
+            }
+          ],
+          "min_height_mobile": {
+            "unit": "px",
+            "size": 250,
+            "sizes": []
+          }
+        },
+        "elements": [],
+        "isInner": true
+      },
+      {
+        "id": "6fe3c327",
+        "elType": "container",
+        "settings": {
+          "flex_gap": {
+            "unit": "px",
+            "size": 30,
+            "sizes": []
+          },
+          "flex_gap_tablet_extra": {
+            "unit": "px",
+            "size": 30,
+            "sizes": []
+          },
+          "eael_parallax_layers_list": [],
+          "eael_cl_logics": [
+            {
+              "_id": "2c7c417"
+            }
+          ],
+          "flex_justify_content": "center",
+          "flex_gap_mobile": {
+            "unit": "px",
+            "size": 15,
+            "sizes": []
+          }
+        },
+        "elements": [
+          {
+            "id": "56bcbe4b",
+            "elType": "widget",
+            "settings": {
+              "title": "I also want to ...",
+              "eael_tooltip_section_content": "I am a tooltip",
+              "eael_ext_content_protection_password_placeholder": "Enter Password",
+              "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+              "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+              "eael_cl_logics": [
+                {
+                  "_id": "356d5cb"
+                }
+              ],
+              "typography_typography": "custom",
+              "typography_font_size_mobile": {
+                "unit": "px",
+                "size": 32,
+                "sizes": []
+              }
+            },
+            "elements": [],
+            "widgetType": "heading"
+          },
+          {
+            "id": "1c9bd6b9",
+            "elType": "widget",
+            "settings": {
+              "editor": "<p>Manage insider threats and optimize physical workspaces.<\/p>",
+              "eael_tooltip_section_content": "I am a tooltip",
+              "eael_ext_content_protection_password_placeholder": "Enter Password",
+              "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+              "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+              "eael_cl_logics": [
+                {
+                  "_id": "d418433"
+                }
+              ]
+            },
+            "elements": [],
+            "widgetType": "text-editor"
+          },
+          {
+            "id": "39b92be",
+            "elType": "container",
+            "settings": {
+              "flex_direction": "row",
+              "flex_direction_tablet_extra": "column",
+              "flex_direction_tablet": "column",
+              "margin": {
+                "unit": "px",
+                "top": "0",
+                "right": "0",
+                "bottom": "0",
+                "left": "0",
+                "isLinked": false
+              },
+              "padding": {
+                "unit": "px",
+                "top": "0",
+                "right": "0",
+                "bottom": "0",
+                "left": "0",
+                "isLinked": false
+              },
+              "eael_parallax_layers_list": [],
+              "eael_cl_logics": [
+                {
+                  "_id": "57ff89f"
+                }
+              ]
+            },
+            "elements": [
+              {
+                "id": "52df86ad",
+                "elType": "widget",
+                "settings": {
+                  "text": "Securely Open Digital Doors",
+                  "eael_tooltip_section_content": "I am a tooltip",
+                  "eael_ext_content_protection_password_placeholder": "Enter Password",
+                  "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+                  "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+                  "eael_cl_logics": [
+                    {
+                      "_id": "85dbb0c"
+                    }
+                  ],
+                  "link": {
+                    "url": "https:\/\/company.com\/news\/solution-sheet\/the-heart-of-it-security\/",
+                    "is_external": "",
+                    "nofollow": "",
+                    "custom_attributes": ""
+                  },
+                  "_element_width": "auto",
+                  "_flex_align_self": "flex-start"
+                },
+                "elements": [],
+                "widgetType": "button"
+              },
+              {
+                "id": "600c314",
+                "elType": "widget",
+                "settings": {
+                  "text": " Manage Who Has Access and When",
+                  "eael_tooltip_section_content": "I am a tooltip",
+                  "eael_ext_content_protection_password_placeholder": "Enter Password",
+                  "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+                  "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+                  "eael_cl_logics": [
+                    {
+                      "_id": "85dbb0c"
+                    }
+                  ],
+                  "link": {
+                    "url": "https:\/\/company.com\/pbac\/",
+                    "is_external": "",
+                    "nofollow": "",
+                    "custom_attributes": ""
+                  },
+                  "align_mobile": "left",
+                  "typography_typography": "custom",
+                  "_element_width": "auto",
+                  "_flex_align_self": "flex-start"
+                },
+                "elements": [],
+                "widgetType": "button"
+              }
+            ],
+            "isInner": true
+          }
+        ],
+        "isInner": true
+      }
+    ],
+    "isInner": false
+  },
+  {
+    "id": "241f2a40",
+    "elType": "section",
+    "settings": {
+      "padding": {
+        "unit": "px",
+        "top": "90",
+        "right": "0",
+        "bottom": "90",
+        "left": "0",
+        "isLinked": false
+      },
+      "_element_id": "resources-anchor",
+      "eael_parallax_layers_list": [],
+      "content_width": {
+        "unit": "px",
+        "size": 1460,
+        "sizes": []
+      },
+      "eael_cl_logics": [
+        {
+          "_id": "963c6fb"
+        }
+      ],
+      "background_background": "classic",
+      "background_image": {
+        "url": "",
+        "id": "",
+        "size": "",
+        "alt": "",
+        "source": "library"
+      },
+      "background_position": "center center",
+      "background_repeat": "no-repeat",
+      "background_size": "initial",
+      "background_bg_width": {
+        "unit": "%",
+        "size": 55,
+        "sizes": []
+      },
+      "background_overlay_hover_transition": {
+        "unit": "px",
+        "size": "",
+        "sizes": []
+      },
+      "border_border": "solid",
+      "border_width": {
+        "unit": "px",
+        "top": "1",
+        "right": "0",
+        "bottom": "0",
+        "left": "0",
+        "isLinked": false
+      },
+      "border_radius": {
+        "unit": "px",
+        "top": "024",
+        "right": "024",
+        "bottom": "0",
+        "left": "0",
+        "isLinked": false
+      },
+      "__globals__": {
+        "border_color": "globals\/colors?id=0fa09e2"
+      },
+      "padding_laptop": {
+        "unit": "rem",
+        "top": "5",
+        "right": "2",
+        "bottom": "5",
+        "left": "2",
+        "isLinked": false
+      },
+      "padding_tablet_extra": {
+        "unit": "rem",
+        "top": "",
+        "right": "",
+        "bottom": "",
+        "left": "",
+        "isLinked": true
+      },
+      "padding_tablet": {
+        "unit": "rem",
+        "top": "",
+        "right": "",
+        "bottom": "",
+        "left": "",
+        "isLinked": true
+      },
+      "padding_mobile": {
+        "unit": "rem",
+        "top": "2",
+        "right": "0",
+        "bottom": "0",
+        "left": "0",
+        "isLinked": false
+      },
+      "_title": "Blog Section"
+    },
+    "elements": [
+      {
+        "id": "376cd8bf",
+        "elType": "column",
+        "settings": {
+          "_column_size": 100,
+          "_inline_size": null,
+          "eael_cl_logics": [
+            {
+              "_id": "17de790"
+            }
+          ]
+        },
+        "elements": [
+          {
+            "id": "186d353f",
+            "elType": "section",
+            "settings": {
+              "structure": "20",
+              "eael_parallax_layers_list": [],
+              "eael_cl_logics": [
+                {
+                  "_id": "8c538e4"
+                }
+              ],
+              "_title": "Inner Section - Headline"
+            },
+            "elements": [
+              {
+                "id": "1317333c",
+                "elType": "column",
+                "settings": {
+                  "_column_size": 50,
+                  "_inline_size": 61.026000000000003,
+                  "content_position": "center",
+                  "eael_cl_logics": [
+                    {
+                      "_id": "2c98948"
+                    }
+                  ]
+                },
+                "elements": [
+                  {
+                    "id": "51037771",
+                    "elType": "widget",
+                    "settings": {
+                      "title": "Open doors to more insights.",
+                      "align_mobile": "left",
+                      "typography_typography": "custom",
+                      "typography_font_size_mobile": {
+                        "unit": "vw",
+                        "size": 8,
+                        "sizes": []
+                      },
+                      "eael_tooltip_section_content": "I am a tooltip",
+                      "eael_ext_content_protection_password_placeholder": "Enter Password",
+                      "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+                      "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+                      "eael_cl_logics": [
+                        {
+                          "_id": "24c5edb"
+                        }
+                      ]
+                    },
+                    "elements": [],
+                    "widgetType": "heading"
+                  }
+                ],
+                "isInner": true
+              },
+              {
+                "id": "475245c8",
+                "elType": "column",
+                "settings": {
+                  "_column_size": 50,
+                  "_inline_size": 38.898000000000003,
+                  "align": "flex-end",
+                  "eael_cl_logics": [
+                    {
+                      "_id": "f738ee3"
+                    }
+                  ]
+                },
+                "elements": [
+                  {
+                    "id": "1632b8fd",
+                    "elType": "widget",
+                    "settings": {
+                      "text": "Resources",
+                      "__globals__": {
+                        "button_text_color": "globals\/colors?id=accent",
+                        "button_background_hover_color": "globals\/colors?id=primary",
+                        "hover_color": "globals\/colors?id=accent",
+                        "button_hover_border_color": "globals\/colors?id=primary"
+                      },
+                      "link": {
+                        "url": "https:\/\/company.com\/resource-center\/",
+                        "is_external": "",
+                        "nofollow": "",
+                        "custom_attributes": ""
+                      },
+                      "align": "right",
+                      "align_mobile": "left",
+                      "eael_tooltip_section_content": "I am a tooltip",
+                      "eael_ext_content_protection_password_placeholder": "Enter Password",
+                      "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+                      "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+                      "eael_cl_logics": [
+                        {
+                          "_id": "4d4bc3b"
+                        }
+                      ],
+                      "_margin_mobile": {
+                        "unit": "px",
+                        "top": "10",
+                        "right": "0",
+                        "bottom": "0",
+                        "left": "0",
+                        "isLinked": false
+                      }
+                    },
+                    "elements": [],
+                    "widgetType": "button"
+                  }
+                ],
+                "isInner": true
+              }
+            ],
+            "isInner": true
+          },
+          {
+            "id": "a3f1d77",
+            "elType": "section",
+            "settings": {
+              "padding": {
+                "unit": "rem",
+                "top": "1",
+                "right": "0",
+                "bottom": "0",
+                "left": "0",
+                "isLinked": false
+              },
+              "padding_laptop": {
+                "unit": "rem",
+                "top": "",
+                "right": "",
+                "bottom": "",
+                "left": "",
+                "isLinked": true
+              },
+              "padding_tablet_extra": {
+                "unit": "rem",
+                "top": "",
+                "right": "",
+                "bottom": "",
+                "left": "",
+                "isLinked": true
+              },
+              "padding_tablet": {
+                "unit": "rem",
+                "top": "",
+                "right": "",
+                "bottom": "",
+                "left": "",
+                "isLinked": true
+              },
+              "padding_mobile": {
+                "unit": "rem",
+                "top": "2",
+                "right": "0",
+                "bottom": "0",
+                "left": "0",
+                "isLinked": false
+              },
+              "eael_parallax_layers_list": [],
+              "eael_cl_logics": [
+                {
+                  "_id": "0115eef"
+                }
+              ],
+              "_title": "Inner Section - Posts"
+            },
+            "elements": [
+              {
+                "id": "2e1ae9a8",
+                "elType": "column",
+                "settings": {
+                  "_column_size": 100,
+                  "_inline_size": null,
+                  "padding": {
+                    "unit": "rem",
+                    "top": "2",
+                    "right": "3",
+                    "bottom": "1",
+                    "left": "0",
+                    "isLinked": false
+                  },
+                  "padding_laptop": {
+                    "unit": "rem",
+                    "top": "",
+                    "right": "",
+                    "bottom": "",
+                    "left": "",
+                    "isLinked": true
+                  },
+                  "padding_tablet_extra": {
+                    "unit": "rem",
+                    "top": "2",
+                    "right": "0",
+                    "bottom": "0",
+                    "left": "0",
+                    "isLinked": false
+                  },
+                  "padding_tablet": {
+                    "unit": "rem",
+                    "top": "1",
+                    "right": "0",
+                    "bottom": "0",
+                    "left": "0",
+                    "isLinked": false
+                  },
+                  "padding_mobile": {
+                    "unit": "rem",
+                    "top": "0",
+                    "right": "0",
+                    "bottom": "0",
+                    "left": "0",
+                    "isLinked": true
+                  },
+                  "_inline_size_tablet": 100,
+                  "eael_cl_logics": [
+                    {
+                      "_id": "ff5e662"
+                    }
+                  ]
+                },
+                "elements": [
+                  {
+                    "id": "a9dc109",
+                    "elType": "container",
+                    "settings": {
+                      "container_type": "grid",
+                      "grid_columns_grid": {
+                        "unit": "fr",
+                        "size": 2,
+                        "sizes": []
+                      },
+                      "grid_rows_grid": {
+                        "unit": "fr",
+                        "size": 1,
+                        "sizes": []
+                      },
+                      "eael_parallax_layers_list": [],
+                      "eael_cl_logics": [
+                        {
+                          "_id": "8e7b4fb"
+                        }
+                      ],
+                      "grid_columns_grid_tablet": {
+                        "unit": "fr",
+                        "size": 1,
+                        "sizes": []
+                      },
+                      "grid_justify_items": "stretch",
+                      "grid_justify_items_laptop": "stretch",
+                      "grid_align_items": "stretch",
+                      "padding_mobile": {
+                        "unit": "px",
+                        "top": "0",
+                        "right": "0",
+                        "bottom": "0",
+                        "left": "0",
+                        "isLinked": true
+                      },
+                      "_title": "Blog Container"
+                    },
+                    "elements": [
+                      {
+                        "id": "56d3b64",
+                        "elType": "container",
+                        "settings": {
+                          "padding": {
+                            "unit": "px",
+                            "top": "0",
+                            "right": "0",
+                            "bottom": "0",
+                            "left": "0",
+                            "isLinked": true
+                          },
+                          "eael_parallax_layers_list": [],
+                          "eael_cl_logics": [
+                            {
+                              "_id": "8f9b563"
+                            }
+                          ],
+                          "container_type": "grid",
+                          "flex_justify_content_laptop": "flex-start",
+                          "grid_columns_grid": {
+                            "unit": "fr",
+                            "size": 1,
+                            "sizes": []
+                          },
+                          "grid_columns_grid_laptop": {
+                            "unit": "fr",
+                            "size": 1,
+                            "sizes": []
+                          },
+                          "grid_columns_grid_tablet": {
+                            "unit": "fr",
+                            "size": 2,
+                            "sizes": []
+                          },
+                          "grid_rows_grid": {
+                            "unit": "fr",
+                            "size": 1,
+                            "sizes": []
+                          },
+                          "grid_rows_grid_laptop": {
+                            "unit": "fr",
+                            "size": 1,
+                            "sizes": []
+                          },
+                          "grid_rows_grid_tablet": {
+                            "unit": "fr",
+                            "size": 1,
+                            "sizes": []
+                          },
+                          "grid_gaps_tablet": {
+                            "unit": "px",
+                            "top": "",
+                            "right": "",
+                            "bottom": "",
+                            "left": "",
+                            "isLinked": true,
+                            "column": "0",
+                            "row": "0"
+                          },
+                          "grid_justify_items": "stretch",
+                          "grid_align_items": "stretch",
+                          "border_border": "solid",
+                          "border_width": {
+                            "unit": "px",
+                            "top": "1",
+                            "right": "1",
+                            "bottom": "1",
+                            "left": "1",
+                            "isLinked": true
+                          },
+                          "border_radius": {
+                            "unit": "px",
+                            "top": "24",
+                            "right": "24",
+                            "bottom": "24",
+                            "left": "24",
+                            "isLinked": true
+                          },
+                          "__globals__": {
+                            "border_color": "globals\/colors?id=primary"
+                          },
+                          "_title": "Container - Large Post"
+                        },
+                        "elements": [
+                          {
+                            "id": "15ab011",
+                            "elType": "container",
+                            "settings": {
+                              "background_background": "classic",
+                              "background_image": {
+                                "url": "https:\/\/company.com\/wp-content\/uploads\/2023\/09\/Screen-Shot-2023-09-08-at-12.53.46-PM.png",
+                                "id": 19584,
+                                "size": "",
+                                "alt": "",
+                                "source": "library"
+                              },
+                              "background_position": "center center",
+                              "background_size": "cover",
+                              "border_radius": {
+                                "unit": "px",
+                                "top": "024",
+                                "right": "024",
+                                "bottom": "0",
+                                "left": "0",
+                                "isLinked": false
+                              },
+                              "eael_parallax_layers_list": [],
+                              "eael_cl_logics": [
+                                {
+                                  "_id": "c094da4"
+                                }
+                              ],
+                              "min_height_mobile": {
+                                "unit": "px",
+                                "size": 200,
+                                "sizes": []
+                              },
+                              "flex_align_items_laptop": "stretch",
+                              "border_radius_tablet": {
+                                "unit": "px",
+                                "top": "24",
+                                "right": "0",
+                                "bottom": "0",
+                                "left": "24",
+                                "isLinked": false
+                              },
+                              "border_radius_mobile": {
+                                "unit": "px",
+                                "top": "024",
+                                "right": "24",
+                                "bottom": "0",
+                                "left": "0",
+                                "isLinked": false
+                              }
+                            },
+                            "elements": [],
+                            "isInner": true
+                          },
+                          {
+                            "id": "62b0244",
+                            "elType": "container",
+                            "settings": {
+                              "flex_justify_content": "center",
+                              "padding": {
+                                "unit": "px",
+                                "top": "40",
+                                "right": "40",
+                                "bottom": "28",
+                                "left": "40",
+                                "isLinked": false
+                              },
+                              "eael_parallax_layers_list": [],
+                              "eael_cl_logics": [
+                                {
+                                  "_id": "3b41738"
+                                }
+                              ],
+                              "flex_align_items_laptop": "stretch",
+                              "padding_mobile": {
+                                "unit": "px",
+                                "top": "40",
+                                "right": "20",
+                                "bottom": "20",
+                                "left": "20",
+                                "isLinked": false
+                              }
+                            },
+                            "elements": [
+                              {
+                                "id": "9aba319",
+                                "elType": "widget",
+                                "settings": {
+                                  "title": "NFC Wallet Mobile Credentials Data Sheet",
+                                  "header_size": "h5",
+                                  "eael_tooltip_section_content": "I am a tooltip",
+                                  "eael_ext_content_protection_password_placeholder": "Enter Password",
+                                  "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+                                  "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+                                  "eael_cl_logics": [
+                                    {
+                                      "_id": "d63065c"
+                                    }
+                                  ],
+                                  "typography_typography": "custom",
+                                  "typography_font_size_mobile": {
+                                    "unit": "px",
+                                    "size": 20,
+                                    "sizes": []
+                                  },
+                                  "typography_line_height_mobile": {
+                                    "unit": "px",
+                                    "size": 24,
+                                    "sizes": []
+                                  }
+                                },
+                                "elements": [],
+                                "widgetType": "heading"
+                              },
+                              {
+                                "id": "c9ac118",
+                                "elType": "widget",
+                                "settings": {
+                                  "editor": "<p>Mobile credentials are rapidly gaining popularity across...<\/p>",
+                                  "eael_tooltip_section_content": "I am a tooltip",
+                                  "eael_ext_content_protection_password_placeholder": "Enter Password",
+                                  "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+                                  "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+                                  "eael_cl_logics": [
+                                    {
+                                      "_id": "58c063c"
+                                    }
+                                  ],
+                                  "typography_typography": "custom",
+                                  "typography_font_size_mobile": {
+                                    "unit": "px",
+                                    "size": 18,
+                                    "sizes": []
+                                  }
+                                },
+                                "elements": [],
+                                "widgetType": "text-editor"
+                              },
+                              {
+                                "id": "e62156a",
+                                "elType": "widget",
+                                "settings": {
+                                  "selected_icon": {
+                                    "value": "fal fa-chevron-right",
+                                    "library": "fa-light"
+                                  },
+                                  "view": "framed",
+                                  "align": "right",
+                                  "size": {
+                                    "unit": "px",
+                                    "size": 20,
+                                    "sizes": []
+                                  },
+                                  "border_width": {
+                                    "unit": "px",
+                                    "top": "1",
+                                    "right": "1",
+                                    "bottom": "1",
+                                    "left": "1",
+                                    "isLinked": true
+                                  },
+                                  "eael_tooltip_section_content": "I am a tooltip",
+                                  "eael_ext_content_protection_password_placeholder": "Enter Password",
+                                  "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+                                  "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+                                  "eael_cl_logics": [
+                                    {
+                                      "_id": "6de0518"
+                                    }
+                                  ],
+                                  "size_mobile": {
+                                    "unit": "px",
+                                    "size": 20,
+                                    "sizes": []
+                                  },
+                                  "__globals__": {
+                                    "primary_color": "globals\/colors?id=primary",
+                                    "hover_primary_color": "globals\/colors?id=accent",
+                                    "hover_secondary_color": "globals\/colors?id=primary"
+                                  },
+                                  "link": {
+                                    "url": "\/wp-content\/uploads\/2023\/05\/Mobile-Credentials-Data-Sheet-FINAL-High-res-5.3.23.pdf",
+                                    "is_external": "on",
+                                    "nofollow": "",
+                                    "custom_attributes": ""
+                                  }
+                                },
+                                "elements": [],
+                                "widgetType": "icon"
+                              }
+                            ],
+                            "isInner": true
+                          }
+                        ],
+                        "isInner": true
+                      },
+                      {
+                        "id": "52e7109",
+                        "elType": "container",
+                        "settings": {
+                          "container_type": "grid",
+                          "grid_columns_grid": {
+                            "unit": "fr",
+                            "size": 1,
+                            "sizes": []
+                          },
+                          "padding": {
+                            "unit": "px",
+                            "top": "0",
+                            "right": "0",
+                            "bottom": "0",
+                            "left": "0",
+                            "isLinked": true
+                          },
+                          "eael_parallax_layers_list": [],
+                          "eael_cl_logics": [
+                            {
+                              "_id": "136d1f1"
+                            }
+                          ],
+                          "flex_direction": "column",
+                          "flex_justify_content": "space-between",
+                          "flex_align_items": "stretch",
+                          "grid_rows_grid": {
+                            "unit": "fr",
+                            "size": 1,
+                            "sizes": []
+                          },
+                          "grid_gaps": {
+                            "unit": "px",
+                            "top": "",
+                            "right": "",
+                            "bottom": "",
+                            "left": "",
+                            "isLinked": true,
+                            "column": "0",
+                            "row": "0"
+                          },
+                          "grid_justify_items": "stretch",
+                          "grid_align_items": "stretch",
+                          "_title": "Container - Two Posts"
+                        },
+                        "elements": [
+                          {
+                            "id": "3e78aa4",
+                            "elType": "container",
+                            "settings": {
+                              "container_type": "grid",
+                              "grid_columns_grid": {
+                                "unit": "fr",
+                                "size": 2,
+                                "sizes": []
+                              },
+                              "grid_rows_grid": {
+                                "unit": "fr",
+                                "size": 1,
+                                "sizes": []
+                              },
+                              "grid_gaps": {
+                                "unit": "px",
+                                "top": "",
+                                "right": "",
+                                "bottom": "",
+                                "left": "",
+                                "isLinked": true,
+                                "column": "0",
+                                "row": "0"
+                              },
+                              "border_border": "solid",
+                              "border_width_laptop": {
+                                "unit": "px",
+                                "top": "1",
+                                "right": "1",
+                                "bottom": "1",
+                                "left": "1",
+                                "isLinked": true
+                              },
+                              "border_radius": {
+                                "unit": "px",
+                                "top": "24",
+                                "right": "24",
+                                "bottom": "24",
+                                "left": "24",
+                                "isLinked": true
+                              },
+                              "border_radius_laptop": {
+                                "unit": "px",
+                                "top": "24",
+                                "right": "24",
+                                "bottom": "24",
+                                "left": "24",
+                                "isLinked": true
+                              },
+                              "padding": {
+                                "unit": "px",
+                                "top": "0",
+                                "right": "0",
+                                "bottom": "0",
+                                "left": "0",
+                                "isLinked": true
+                              },
+                              "eael_parallax_layers_list": [],
+                              "eael_cl_logics": [
+                                {
+                                  "_id": "3b15f07"
+                                }
+                              ],
+                              "__globals__": {
+                                "border_color": "globals\/colors?id=primary"
+                              },
+                              "border_width": {
+                                "unit": "px",
+                                "top": "1",
+                                "right": "1",
+                                "bottom": "1",
+                                "left": "1",
+                                "isLinked": true
+                              }
+                            },
+                            "elements": [
+                              {
+                                "id": "418ab13",
+                                "elType": "container",
+                                "settings": {
+                                  "background_background": "classic",
+                                  "background_image": {
+                                    "url": "https:\/\/company.com\/wp-content\/uploads\/2023\/03\/NFC-wallet-mobile-credentials-PR-Header.jpg",
+                                    "id": 12030,
+                                    "size": "",
+                                    "alt": "",
+                                    "source": "library"
+                                  },
+                                  "background_position": "center center",
+                                  "background_size": "cover",
+                                  "border_radius": {
+                                    "unit": "px",
+                                    "top": "24",
+                                    "right": "0",
+                                    "bottom": "0",
+                                    "left": "24",
+                                    "isLinked": false
+                                  },
+                                  "border_radius_laptop": {
+                                    "unit": "px",
+                                    "top": "024",
+                                    "right": "0",
+                                    "bottom": "0",
+                                    "left": "024",
+                                    "isLinked": false
+                                  },
+                                  "eael_parallax_layers_list": [],
+                                  "eael_cl_logics": [
+                                    {
+                                      "_id": "a5c97d1"
+                                    }
+                                  ],
+                                  "min_height_mobile": {
+                                    "unit": "px",
+                                    "size": 200,
+                                    "sizes": []
+                                  },
+                                  "border_radius_mobile": {
+                                    "unit": "px",
+                                    "top": "24",
+                                    "right": "24",
+                                    "bottom": "0",
+                                    "left": "0",
+                                    "isLinked": false
+                                  }
+                                },
+                                "elements": [],
+                                "isInner": true
+                              },
+                              {
+                                "id": "a970a87",
+                                "elType": "container",
+                                "settings": {
+                                  "padding": {
+                                    "unit": "px",
+                                    "top": "30",
+                                    "right": "023",
+                                    "bottom": "25",
+                                    "left": "40",
+                                    "isLinked": false
+                                  },
+                                  "eael_parallax_layers_list": [],
+                                  "eael_cl_logics": [
+                                    {
+                                      "_id": "ce908b4"
+                                    }
+                                  ],
+                                  "padding_mobile": {
+                                    "unit": "px",
+                                    "top": "40",
+                                    "right": "20",
+                                    "bottom": "20",
+                                    "left": "20",
+                                    "isLinked": false
+                                  }
+                                },
+                                "elements": [
+                                  {
+                                    "id": "c602aa6",
+                                    "elType": "widget",
+                                    "settings": {
+                                      "title": "Company Launches NFC Wallet Mobile Credentials Powered by Company",
+                                      "header_size": "h5",
+                                      "eael_tooltip_section_content": "I am a tooltip",
+                                      "eael_ext_content_protection_password_placeholder": "Enter Password",
+                                      "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+                                      "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+                                      "eael_cl_logics": [
+                                        {
+                                          "_id": "46bdfc9"
+                                        }
+                                      ],
+                                      "typography_typography": "custom",
+                                      "typography_font_size_mobile": {
+                                        "unit": "px",
+                                        "size": 20,
+                                        "sizes": []
+                                      }
+                                    },
+                                    "elements": [],
+                                    "widgetType": "heading"
+                                  },
+                                  {
+                                    "id": "74ec592",
+                                    "elType": "widget",
+                                    "settings": {
+                                      "editor": "<p>Location, ST – Company, Inc., the leading physical identity access<\/p>",
+                                      "eael_tooltip_section_content": "I am a tooltip",
+                                      "eael_ext_content_protection_password_placeholder": "Enter Password",
+                                      "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+                                      "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+                                      "eael_cl_logics": [
+                                        {
+                                          "_id": "aeed695"
+                                        }
+                                      ]
+                                    },
+                                    "elements": [],
+                                    "widgetType": "text-editor"
+                                  },
+                                  {
+                                    "id": "f0e5c5e",
+                                    "elType": "widget",
+                                    "settings": {
+                                      "selected_icon": {
+                                        "value": "fal fa-chevron-right",
+                                        "library": "fa-light"
+                                      },
+                                      "view": "framed",
+                                      "align": "right",
+                                      "size": {
+                                        "unit": "px",
+                                        "size": 20,
+                                        "sizes": []
+                                      },
+                                      "border_width": {
+                                        "unit": "px",
+                                        "top": "1",
+                                        "right": "1",
+                                        "bottom": "1",
+                                        "left": "1",
+                                        "isLinked": true
+                                      },
+                                      "eael_tooltip_section_content": "I am a tooltip",
+                                      "eael_ext_content_protection_password_placeholder": "Enter Password",
+                                      "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+                                      "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+                                      "eael_cl_logics": [
+                                        {
+                                          "_id": "6de0518"
+                                        }
+                                      ],
+                                      "size_mobile": {
+                                        "unit": "px",
+                                        "size": 20,
+                                        "sizes": []
+                                      },
+                                      "__globals__": {
+                                        "primary_color": "globals\/colors?id=primary",
+                                        "hover_primary_color": "globals\/colors?id=accent",
+                                        "hover_secondary_color": "globals\/colors?id=primary"
+                                      },
+                                      "link": {
+                                        "url": "\/blog\/press-release\/company-launches-nfc-wallet-mobile-credentials-powered-by-company\/",
+                                        "is_external": "",
+                                        "nofollow": "",
+                                        "custom_attributes": ""
+                                      }
+                                    },
+                                    "elements": [],
+                                    "widgetType": "icon"
+                                  }
+                                ],
+                                "isInner": true
+                              }
+                            ],
+                            "isInner": true
+                          },
+                          {
+                            "id": "f5b359a",
+                            "elType": "container",
+                            "settings": {
+                              "container_type": "grid",
+                              "grid_columns_grid": {
+                                "unit": "fr",
+                                "size": 2,
+                                "sizes": []
+                              },
+                              "grid_rows_grid": {
+                                "unit": "fr",
+                                "size": 1,
+                                "sizes": []
+                              },
+                              "grid_gaps": {
+                                "unit": "px",
+                                "top": "",
+                                "right": "",
+                                "bottom": "",
+                                "left": "",
+                                "isLinked": true,
+                                "column": "0",
+                                "row": "0"
+                              },
+                              "border_border": "solid",
+                              "border_width_laptop": {
+                                "unit": "px",
+                                "top": "1",
+                                "right": "1",
+                                "bottom": "1",
+                                "left": "1",
+                                "isLinked": true
+                              },
+                              "border_radius": {
+                                "unit": "px",
+                                "top": "24",
+                                "right": "24",
+                                "bottom": "24",
+                                "left": "24",
+                                "isLinked": true
+                              },
+                              "border_radius_laptop": {
+                                "unit": "px",
+                                "top": "24",
+                                "right": "24",
+                                "bottom": "24",
+                                "left": "24",
+                                "isLinked": true
+                              },
+                              "padding": {
+                                "unit": "px",
+                                "top": "0",
+                                "right": "0",
+                                "bottom": "0",
+                                "left": "0",
+                                "isLinked": true
+                              },
+                              "eael_parallax_layers_list": [],
+                              "eael_cl_logics": [
+                                {
+                                  "_id": "3b15f07"
+                                }
+                              ],
+                              "__globals__": {
+                                "border_color": "globals\/colors?id=primary"
+                              },
+                              "border_width": {
+                                "unit": "px",
+                                "top": "1",
+                                "right": "1",
+                                "bottom": "1",
+                                "left": "1",
+                                "isLinked": true
+                              },
+                              "margin": {
+                                "unit": "px",
+                                "top": "20",
+                                "right": "0",
+                                "bottom": "0",
+                                "left": "0",
+                                "isLinked": false
+                              }
+                            },
+                            "elements": [
+                              {
+                                "id": "dbd3164",
+                                "elType": "container",
+                                "settings": {
+                                  "background_background": "classic",
+                                  "background_image": {
+                                    "url": "https:\/\/company.com\/wp-content\/uploads\/2023\/06\/HID-partnership-PR-Thumbnail.png",
+                                    "id": 13661,
+                                    "size": "",
+                                    "alt": "Scanning company phone as entry key",
+                                    "source": "library"
+                                  },
+                                  "background_position": "center center",
+                                  "background_size": "cover",
+                                  "border_radius": {
+                                    "unit": "px",
+                                    "top": "24",
+                                    "right": "0",
+                                    "bottom": "0",
+                                    "left": "24",
+                                    "isLinked": false
+                                  },
+                                  "border_radius_laptop": {
+                                    "unit": "px",
+                                    "top": "024",
+                                    "right": "0",
+                                    "bottom": "0",
+                                    "left": "024",
+                                    "isLinked": false
+                                  },
+                                  "eael_parallax_layers_list": [],
+                                  "eael_cl_logics": [
+                                    {
+                                      "_id": "a5c97d1"
+                                    }
+                                  ],
+                                  "min_height_mobile": {
+                                    "unit": "px",
+                                    "size": 200,
+                                    "sizes": []
+                                  },
+                                  "border_radius_mobile": {
+                                    "unit": "px",
+                                    "top": "24",
+                                    "right": "24",
+                                    "bottom": "0",
+                                    "left": "0",
+                                    "isLinked": false
+                                  }
+                                },
+                                "elements": [],
+                                "isInner": true
+                              },
+                              {
+                                "id": "93359d6",
+                                "elType": "container",
+                                "settings": {
+                                  "padding": {
+                                    "unit": "px",
+                                    "top": "30",
+                                    "right": "023",
+                                    "bottom": "25",
+                                    "left": "40",
+                                    "isLinked": false
+                                  },
+                                  "eael_parallax_layers_list": [],
+                                  "eael_cl_logics": [
+                                    {
+                                      "_id": "ce908b4"
+                                    }
+                                  ],
+                                  "padding_mobile": {
+                                    "unit": "px",
+                                    "top": "40",
+                                    "right": "20",
+                                    "bottom": "20",
+                                    "left": "20",
+                                    "isLinked": false
+                                  }
+                                },
+                                "elements": [
+                                  {
+                                    "id": "6a442fb",
+                                    "elType": "widget",
+                                    "settings": {
+                                      "title": "Company Partners with Company to Offer Employee Badge in Company Wallet",
+                                      "header_size": "h5",
+                                      "eael_tooltip_section_content": "I am a tooltip",
+                                      "eael_ext_content_protection_password_placeholder": "Enter Password",
+                                      "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+                                      "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+                                      "eael_cl_logics": [
+                                        {
+                                          "_id": "46bdfc9"
+                                        }
+                                      ]
+                                    },
+                                    "elements": [],
+                                    "widgetType": "heading"
+                                  },
+                                  {
+                                    "id": "ba2f359",
+                                    "elType": "widget",
+                                    "settings": {
+                                      "editor": "<p>Company becomes one of the first organizations to...<\/p>",
+                                      "eael_tooltip_section_content": "I am a tooltip",
+                                      "eael_ext_content_protection_password_placeholder": "Enter Password",
+                                      "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+                                      "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+                                      "eael_cl_logics": [
+                                        {
+                                          "_id": "aeed695"
+                                        }
+                                      ]
+                                    },
+                                    "elements": [],
+                                    "widgetType": "text-editor"
+                                  },
+                                  {
+                                    "id": "90d86d0",
+                                    "elType": "widget",
+                                    "settings": {
+                                      "selected_icon": {
+                                        "value": "fal fa-chevron-right",
+                                        "library": "fa-light"
+                                      },
+                                      "view": "framed",
+                                      "align": "right",
+                                      "size": {
+                                        "unit": "px",
+                                        "size": 20,
+                                        "sizes": []
+                                      },
+                                      "border_width": {
+                                        "unit": "px",
+                                        "top": "1",
+                                        "right": "1",
+                                        "bottom": "1",
+                                        "left": "1",
+                                        "isLinked": true
+                                      },
+                                      "eael_tooltip_section_content": "I am a tooltip",
+                                      "eael_ext_content_protection_password_placeholder": "Enter Password",
+                                      "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+                                      "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+                                      "eael_cl_logics": [
+                                        {
+                                          "_id": "6de0518"
+                                        }
+                                      ],
+                                      "size_mobile": {
+                                        "unit": "px",
+                                        "size": 20,
+                                        "sizes": []
+                                      },
+                                      "__globals__": {
+                                        "primary_color": "globals\/colors?id=primary",
+                                        "hover_primary_color": "globals\/colors?id=accent",
+                                        "hover_secondary_color": "globals\/colors?id=primary"
+                                      },
+                                      "link": {
+                                        "url": "\/blog\/press-release\/company-partners-with-company-to-offer-employee-badge-in-company-wallet\/",
+                                        "is_external": "",
+                                        "nofollow": "",
+                                        "custom_attributes": ""
+                                      }
+                                    },
+                                    "elements": [],
+                                    "widgetType": "icon"
+                                  }
+                                ],
+                                "isInner": true
+                              }
+                            ],
+                            "isInner": true
+                          }
+                        ],
+                        "isInner": true
+                      }
+                    ],
+                    "isInner": false
+                  }
+                ],
+                "isInner": true
+              }
+            ],
+            "isInner": true
+          }
+        ],
+        "isInner": false
+      }
+    ],
+    "isInner": false
+  },
+  {
+    "id": "4770773e",
+    "elType": "container",
+    "settings": {
+      "flex_direction": "row",
+      "eael_parallax_layers_list": [],
+      "eael_cl_logics": [
+        {
+          "_id": "2418c43"
+        }
+      ],
+      "margin": {
+        "unit": "px",
+        "top": "0",
+        "right": "0",
+        "bottom": "-50",
+        "left": "0",
+        "isLinked": false
+      },
+      "padding_laptop": {
+        "unit": "rem",
+        "top": "0",
+        "right": "2",
+        "bottom": "0",
+        "left": "2",
+        "isLinked": false
+      },
+      "padding_tablet_extra": {
+        "unit": "rem",
+        "top": "",
+        "right": "",
+        "bottom": "",
+        "left": "",
+        "isLinked": true
+      },
+      "padding_tablet": {
+        "unit": "rem",
+        "top": "",
+        "right": "",
+        "bottom": "",
+        "left": "",
+        "isLinked": true
+      },
+      "padding_mobile": {
+        "unit": "rem",
+        "top": "1",
+        "right": "1",
+        "bottom": "1",
+        "left": "1",
+        "isLinked": true
+      },
+      "z_index": 2
+    },
+    "elements": [
+      {
+        "id": "53277b93",
+        "elType": "container",
+        "settings": {
+          "background_background": "classic",
+          "background_image": {
+            "url": "https:\/\/company.com\/wp-content\/uploads\/2023\/08\/download-4.jpg",
+            "id": 15813,
+            "size": "",
+            "alt": "",
+            "source": "library"
+          },
+          "background_size": "cover",
+          "border_radius": {
+            "unit": "px",
+            "top": "24",
+            "right": "24",
+            "bottom": "24",
+            "left": "24",
+            "isLinked": true
+          },
+          "padding": {
+            "unit": "px",
+            "top": "25",
+            "right": "25",
+            "bottom": "25",
+            "left": "25",
+            "isLinked": true
+          },
+          "eael_parallax_layers_list": [],
+          "eael_cl_logics": [
+            {
+              "_id": "3c87f9b"
+            }
+          ],
+          "background_position": "center left",
+          "padding_mobile": {
+            "unit": "px",
+            "top": "30",
+            "right": "10",
+            "bottom": "10",
+            "left": "10",
+            "isLinked": false
+          }
+        },
+        "elements": [
+          {
+            "id": "55cb6f1e",
+            "elType": "container",
+            "settings": {
+              "container_type": "grid",
+              "grid_columns_grid": {
+                "unit": "fr",
+                "size": 2,
+                "sizes": []
+              },
+              "grid_rows_grid": {
+                "unit": "fr",
+                "size": 1,
+                "sizes": []
+              },
+              "grid_gaps": {
+                "unit": "px",
+                "top": "",
+                "right": "",
+                "bottom": "",
+                "left": "",
+                "isLinked": false,
+                "column": "100",
+                "row": "0"
+              },
+              "eael_parallax_layers_list": [],
+              "eael_cl_logics": [
+                {
+                  "_id": "4bd4702"
+                }
+              ],
+              "grid_columns_grid_tablet": {
+                "unit": "fr",
+                "size": 1,
+                "sizes": []
+              },
+              "grid_gaps_tablet_extra": {
+                "unit": "px",
+                "top": "",
+                "right": "",
+                "bottom": "",
+                "left": "",
+                "isLinked": true,
+                "column": "50",
+                "row": "50"
+              },
+              "grid_gaps_mobile": {
+                "unit": "px",
+                "top": "",
+                "right": "",
+                "bottom": "",
+                "left": "",
+                "isLinked": false,
+                "column": "0",
+                "row": "40"
+              }
+            },
+            "elements": [
+              {
+                "id": "6197747a",
+                "elType": "container",
+                "settings": {
+                  "flex_justify_content": "flex-start",
+                  "padding": {
+                    "unit": "px",
+                    "top": "0",
+                    "right": "0",
+                    "bottom": "0",
+                    "left": "0",
+                    "isLinked": true
+                  },
+                  "eael_parallax_layers_list": [],
+                  "eael_cl_logics": [
+                    {
+                      "_id": "090b485"
+                    }
+                  ]
+                },
+                "elements": [
+                  {
+                    "id": "65534e08",
+                    "elType": "widget",
+                    "settings": {
+                      "title": "No rip and replace?<br>\nYes, please.",
+                      "eael_tooltip_section_content": "I am a tooltip",
+                      "eael_ext_content_protection_password_placeholder": "Enter Password",
+                      "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+                      "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+                      "eael_cl_logics": [
+                        {
+                          "_id": "e1743a6"
+                        }
+                      ],
+                      "__globals__": {
+                        "title_color": "globals\/colors?id=accent"
+                      },
+                      "typography_typography": "custom",
+                      "typography_font_size_mobile": {
+                        "unit": "px",
+                        "size": 32,
+                        "sizes": []
+                      }
+                    },
+                    "elements": [],
+                    "widgetType": "heading"
+                  }
+                ],
+                "isInner": true
+              },
+              {
+                "id": "70d34fd1",
+                "elType": "container",
+                "settings": {
+                  "padding_mobile": {
+                    "unit": "px",
+                    "top": "0",
+                    "right": "0",
+                    "bottom": "0",
+                    "left": "0",
+                    "isLinked": true
+                  },
+                  "eael_parallax_layers_list": [],
+                  "eael_cl_logics": [
+                    {
+                      "_id": "77827f8"
+                    }
+                  ]
+                },
+                "elements": [
+                  {
+                    "id": "16791f1d",
+                    "elType": "widget",
+                    "settings": {
+                      "editor": "<p><span dir=\"ltr\" role=\"presentation\">Our mobile credentialing solution connects with the leading PACS, HR and IT <\/span><span dir=\"ltr\" role=\"presentation\">systems, so you can start from right where you’re at.<\/span><\/p>",
+                      "align_mobile": "left",
+                      "typography_typography": "custom",
+                      "typography_font_size": {
+                        "unit": "px",
+                        "size": 24,
+                        "sizes": []
+                      },
+                      "typography_font_size_mobile": {
+                        "unit": "px",
+                        "size": 20,
+                        "sizes": []
+                      },
+                      "typography_line_height": {
+                        "unit": "px",
+                        "size": 28,
+                        "sizes": []
+                      },
+                      "_padding": {
+                        "unit": "rem",
+                        "top": "0",
+                        "right": "0",
+                        "bottom": "2",
+                        "left": "0",
+                        "isLinked": false
+                      },
+                      "_padding_laptop": {
+                        "unit": "rem",
+                        "top": "",
+                        "right": "",
+                        "bottom": "",
+                        "left": "",
+                        "isLinked": true
+                      },
+                      "_padding_tablet_extra": {
+                        "unit": "rem",
+                        "top": "",
+                        "right": "",
+                        "bottom": "",
+                        "left": "",
+                        "isLinked": true
+                      },
+                      "_padding_tablet": {
+                        "unit": "rem",
+                        "top": "",
+                        "right": "",
+                        "bottom": "",
+                        "left": "",
+                        "isLinked": true
+                      },
+                      "_padding_mobile": {
+                        "unit": "rem",
+                        "top": "0",
+                        "right": "0",
+                        "bottom": "0",
+                        "left": "0",
+                        "isLinked": true
+                      },
+                      "eael_tooltip_section_content": "I am a tooltip",
+                      "eael_ext_content_protection_password_placeholder": "Enter Password",
+                      "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+                      "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+                      "eael_cl_logics": [
+                        {
+                          "_id": "fe0982e"
+                        }
+                      ],
+                      "__globals__": {
+                        "text_color": "globals\/colors?id=accent"
+                      },
+                      "typography_line_height_mobile": {
+                        "unit": "px",
+                        "size": 24,
+                        "sizes": []
+                      }
+                    },
+                    "elements": [],
+                    "widgetType": "text-editor"
+                  },
+                  {
+                    "id": "3f749eeb",
+                    "elType": "container",
+                    "settings": {
+                      "flex_direction": "row",
+                      "flex_justify_content_mobile": "flex-start",
+                      "padding_mobile": {
+                        "unit": "px",
+                        "top": "0",
+                        "right": "0",
+                        "bottom": "0",
+                        "left": "0",
+                        "isLinked": true
+                      },
+                      "eael_parallax_layers_list": [],
+                      "eael_cl_logics": [
+                        {
+                          "_id": "788af84"
+                        }
+                      ],
+                      "padding": {
+                        "unit": "px",
+                        "top": "0",
+                        "right": "0",
+                        "bottom": "0",
+                        "left": "0",
+                        "isLinked": true
+                      }
+                    },
+                    "elements": [
+                      {
+                        "id": "65cae04f",
+                        "elType": "widget",
+                        "settings": {
+                          "text": "Build My Solution",
+                          "link": {
+                            "url": "https:\/\/company.com\/solution-builder",
+                            "is_external": "",
+                            "nofollow": "",
+                            "custom_attributes": ""
+                          },
+                          "background_color": "#02010100",
+                          "border_border": "solid",
+                          "border_width": {
+                            "unit": "px",
+                            "top": "1.5",
+                            "right": "1.5",
+                            "bottom": "1.5",
+                            "left": "1.5",
+                            "isLinked": true
+                          },
+                          "eael_tooltip_section_content": "I am a tooltip",
+                          "eael_ext_content_protection_password_placeholder": "Enter Password",
+                          "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+                          "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+                          "eael_cl_logics": [
+                            {
+                              "_id": "93439b2"
+                            }
+                          ],
+                          "__globals__": {
+                            "button_text_color": "globals\/colors?id=accent",
+                            "border_color": "globals\/colors?id=accent",
+                            "hover_color": "globals\/colors?id=primary",
+                            "button_background_hover_color": "globals\/colors?id=accent"
+                          }
+                        },
+                        "elements": [],
+                        "widgetType": "button"
+                      }
+                    ],
+                    "isInner": true
+                  }
+                ],
+                "isInner": true
+              }
+            ],
+            "isInner": true
+          }
+        ],
+        "isInner": true
+      }
+    ],
+    "isInner": false
+  }
+]
