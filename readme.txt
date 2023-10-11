@@ -63,7 +63,8 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 3.5.2 =
-* Fixed Elementor elements that could have background image from library and didn't have the images set preventing processing valid background images as related content
+* Fixed Elementor elements that could have a background image from the library but didn't have the images set, preventing valid background images from being processed as related content
+
 
 = 3.5.1 =
 * Added Elementor background images processing as related content
