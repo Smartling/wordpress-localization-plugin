@@ -62,9 +62,11 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 3.5.3 =
+* Added support for Elementor icon-list widget
+
 = 3.5.2 =
 * Fixed Elementor elements that could have a background image from the library but didn't have the images set, preventing valid background images from being processed as related content
-
 
 = 3.5.1 =
 * Added Elementor background images processing as related content
