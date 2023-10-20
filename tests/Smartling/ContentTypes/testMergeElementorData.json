@@ -115,6 +115,67 @@
     "isInner": false
   },
   {
+    "id": "680e6676",
+    "elType": "widget",
+    "settings": {
+      "icon_list": [
+        {
+          "text": "Identify and  classify assets",
+          "selected_icon": {
+            "value": {
+              "url": "https:\/\/company.com\/wp-content\/uploads\/2023\/08\/Vector.svg",
+              "id": %d
+            },
+            "library": "svg"
+          },
+          "_id": "201399d"
+        },
+        {
+          "text": "Manage and monitor assets in real time",
+          "selected_icon": {
+            "value": {
+              "url": "https:\/\/company.com\/wp-content\/uploads\/2023\/08\/Vector-1.svg",
+              "id": %d
+            },
+            "library": "svg"
+          },
+          "_id": "f79feb4"
+        }
+      ],
+      "space_between": {
+        "unit": "px",
+        "size": 15,
+        "sizes": []
+      },
+      "icon_size": {
+        "unit": "px",
+        "size": 35,
+        "sizes": []
+      },
+      "icon_typography_typography": "custom",
+      "icon_typography_font_weight": "600",
+      "_padding": {
+        "unit": "px",
+        "top": "0",
+        "right": "0",
+        "bottom": "0",
+        "left": "0",
+        "isLinked": false
+      },
+      "eael_tooltip_section_content": "I am a tooltip",
+      "eael_ext_content_protection_password_placeholder": "Enter Password",
+      "eael_ext_content_protection_password_submit_btn_txt": "Submit",
+      "eael_ext_content_protection_password_incorrect_message": "Password does not match.",
+      "eael_cl_logics": [
+        {
+          "_id": "b8a6be5"
+        }
+      ]
+    },
+    "elements": [],
+    "widgetType": "icon-list"
+  },
+  {
     "id": "3b9b893",
     "elType": "widget",
     "settings": {

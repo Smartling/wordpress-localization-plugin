@@ -259,7 +259,23 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         if (($setting['source'] ?? '') === 'library' && ($setting['id'] ?? '') !== '') {
             return [ContentTypeHelper::POST_TYPE_ATTACHMENT => [$setting['id']]];
         }
+        if (is_int($setting['selected_icon']['value']['id'] ?? '')) {
+            return [ContentTypeHelper::POST_TYPE_ATTACHMENT => [$setting['selected_icon']['value']['id']]];
+        }
 
+        $ids = [];
+        foreach ($setting as $value) {
+            if (is_array($value)) {
+                $related = $this->getRelatedFromSetting($value);
+                if ($related !== null) {
+                    $ids[] = array_values($related)[0][0];
+                }
+            }
+        }
+
+        if (count($ids) > 0) {
+            return [ContentTypeHelper::POST_TYPE_ATTACHMENT => $ids];
+        }
         return null;
     }
 
@@ -284,6 +300,12 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                         } else {
                             foreach ($setting as $optionIndex => $option) {
                                 if (is_array($option)) {
+                                    if (($option['selected_icon']['value']['id'] ?? 0) !== 0) {
+                                        $targetAttachmentId = $this->getTargetId($submission->getSourceBlogId(), $option['selected_icon']['value']['id'] ?? 0, $submission->getTargetBlogId());
+                                        if ($targetAttachmentId !== null) {
+                                            $original[$componentIndex]['settings'][$settingIndex][$optionIndex]['selected_icon']['value']['id'] = $targetAttachmentId;
+                                        }
+                                    }
                                     foreach ($option as $optionsIndex => $optionValue) {
                                         if (str_starts_with($optionsIndex, '_')) {
                                             continue;

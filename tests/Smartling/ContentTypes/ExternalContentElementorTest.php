@@ -79,7 +79,7 @@ class ExternalContentElementorTest extends TestCase {
                     ContentRelationsDiscoveryService::POST_BASED_PROCESSOR => [19366],
                 ],
             ],
-            'realistic content with empty background image ids' => [
+            'realistic content with background images' => [
                 file_get_contents(__DIR__ . '/wp-834.json'),
                 [
                     '10733aaf/215ff951/background_image/alt' => '',
@@ -132,6 +132,114 @@ Yes, please.',
                     ],
                 ],
             ],
+            'realistic content with icon lists' => [
+                file_get_contents(__DIR__ . '/wp-836.json'),
+                [
+                    '6ff0959b/160f1f6a/background_image/alt' => '',
+                    '6ff0959b/1e8393/7a705d82/title' => 'Connect physical assets to identities. Securely.',
+                    '6ff0959b/1e8393/7c7055ad/editor' => 'Who has which key, laptop, phone, or company vehicle? Keep tabs on your physical assets from the moment they’re assigned to an employee or contingent worker—until they’re transferred to the next.',
+                    '6ff0959b/1e8393/7ae4ca4e/text' => 'Book a Demo',
+                    '6ff0959b/background_image/alt' => '',
+                    '586becdf/1b6c981/3cca688f/16bf4607/32bc6d22/title' => 'Automated and within your control.',
+                    '586becdf/1b6c981/19e85cb9/6aada102/6c20c5e6/24341c5c/28a346df/title' => 'Keep compliance in check ',
+                    '586becdf/1b6c981/19e85cb9/6aada102/6c20c5e6/24341c5c/66854793/text' => 'Divider',
+                    '586becdf/1b6c981/19e85cb9/6aada102/6c20c5e6/24341c5c/374e276e/editor' => '<p>Deliver complete chain of custody and auditing with a comprehensive inventory of <br />all your assets, stored on a single dashboard.</p>',
+                    '586becdf/1b6c981/19e85cb9/6aada102/6c20c5e6/7ac98292/5aa77baa/title' => 'Streamline provisioning ',
+                    '586becdf/1b6c981/19e85cb9/6aada102/6c20c5e6/7ac98292/4e16e5d1/text' => 'Divider',
+                    '586becdf/1b6c981/19e85cb9/6aada102/6c20c5e6/7ac98292/7078632e/editor' => '<p>Identify, classify, manage and monitor all employee assets with ease—from hire to retire. And once they leave, account for all equipment without skipping a beat.</p>',
+                    '586becdf/1b6c981/19e85cb9/6aada102/6c20c5e6/74200406/61567684/title' => 'Simplify their process, too ',
+                    '586becdf/1b6c981/19e85cb9/6aada102/6c20c5e6/74200406/751c3935/text' => 'Divider',
+                    '586becdf/1b6c981/19e85cb9/6aada102/6c20c5e6/74200406/39ec7147/editor' => '<p>Does an employee need an item replaced or reported as missing? New equipment and updated inventory is just a request form away.</p>',
+                    '586becdf/background_image/alt' => '',
+                    '6b42e40d/1f4376a/5e49327e/4812c0a/title' => 'New device? No problem.',
+                    '6b42e40d/1f4376a/5e49327e/3c709f28/editor' => '<p>Automate the registration process whenever a new device gets added to the system.</p>',
+                    '6b42e40d/1f4376a/2be61870/41115868/5ba7af89/title' => '01',
+                    '6b42e40d/1f4376a/2be61870/41115868/17f48b48/editor' => '<p>Asset administrator creates or  uploads a new asset/device in  Asset Management.</p>',
+                    '6b42e40d/1f4376a/2be61870/755e2ad9/682a06b7/title' => '02',
+                    '6b42e40d/1f4376a/2be61870/755e2ad9/6fe8127f/editor' => '<p>Asset/device is available for assignments to all users.</p>',
+                    '6b42e40d/1f4376a/2be61870/7d04155b/a4b85b1/title' => '03',
+                    '6b42e40d/1f4376a/2be61870/7d04155b/69d1593/editor' => '<p>New asset/device is saved in  Asset Store.</p>',
+                    '6b42e40d/1f4376a/2be61870/64e946c8/478b0913/title' => '04',
+                    '6b42e40d/1f4376a/2be61870/64e946c8/4e95fd07/editor' => '<p>Complete audit record  is generated.</p>',
+                    'f7bac84/d011a78/text' => 'Divider',
+                    'b51ad8d/e067ee8/d7bf128/1d92969/title' => 'When they leave, your assets stay.',
+                    'b51ad8d/e067ee8/d7bf128/ea9730b/editor' => '<p>Once an employee is terminated, ensure your equipment goes back where it belongs. With you.</p>',
+                    'b51ad8d/e067ee8/9c41eef/0d1ee47/e79628a/title' => '01',
+                    'b51ad8d/e067ee8/9c41eef/0d1ee47/1c30050/editor' => '<p>User is terminated in the HR application.</p>',
+                    'b51ad8d/e067ee8/9c41eef/27895b2/b48ff22/title' => '02',
+                    'b51ad8d/e067ee8/9c41eef/27895b2/3056abb/editor' => '<p>Request is routed to asset owner for collection.</p>',
+                    'b51ad8d/e067ee8/9c41eef/a5999a9/cd6120b/title' => '03',
+                    'b51ad8d/e067ee8/9c41eef/a5999a9/7e667de/editor' => '<p>Owner receives the asset and closes the ticket.</p>',
+                    'b51ad8d/e067ee8/9c41eef/58786e8/d264be9/title' => '04',
+                    'b51ad8d/e067ee8/9c41eef/58786e8/d22e6b5/editor' => '<p>Asset is marked as returned and inventory is updated.</p>',
+                    'b51ad8d/e067ee8/9c41eef/d6a321f/048533c/title' => '04',
+                    'b51ad8d/e067ee8/9c41eef/d6a321f/2e7cb3f/editor' => '<p>Complete audit record  is generated.</p>',
+                    'b51ad8d/e067ee8/ad9e519/4de142f/text' => 'See It in Action',
+                    '16bb759d/8a8c626/background_image/alt' => '',
+                    '16bb759d/4aa49aa6/1ec28644/title' => 'Company’s Asset Governance Platform allows you to…',
+                    '16bb759d/4aa49aa6/6b2b013b/text' => 'Divider',
+                    '16bb759d/4aa49aa6/680e6676/icon_list/201399d/text' => 'Identify and  classify assets',
+                    '16bb759d/4aa49aa6/680e6676/icon_list/f79feb4/text' => 'Manage and monitor assets in real time',
+                    '16bb759d/4aa49aa6/680e6676/icon_list/6337496/text' => 'Track assets through their entire lifecycle',
+                    '16bb759d/4aa49aa6/680e6676/icon_list/dff406a/text' => 'Audit and stay up to date on assets’ chain of custody',
+                    '16bb759d/4aa49aa6/680e6676/icon_list/23411c6/text' => 'Create and maintain asset reporting',
+                    '16bb759d/background_image/alt' => '',
+                    'c756275/61f5fbb/text' => 'Divider',
+                    'c756275/background_image/alt' => '',
+                    '26468648/58305cf2/31b615ee/title' => 'We keep inventory of your:',
+                    '26468648/57b6662a/460e8145/97eb277/editor' => '<p style="font-weight: 600;">Devices​</p><p>Automate the registration process whenever a new device gets added to the system.</p>',
+                    '26468648/57b6662a/460e8145/31aa50b4/text' => 'Divider',
+                    '26468648/57b6662a/460e8145/65d12935/editor' => '<p style="font-weight: 600;">Identities​​</p><p><span class="hotkey-layer "><span class="hotkey-layer preview-overlay is-preview-sidebar-visible">Everyone from employees, to visitors, to service technicians. If they enter your building, we can track them.</span></span></p>',
+                    '26468648/57b6662a/520cd148/tabs/720b2af/tab_title' => 'Devices',
+                    '26468648/57b6662a/520cd148/tabs/720b2af/tab_content' => '<p>Automate the registration process whenever a new device gets added to the system.</p>',
+                    '26468648/57b6662a/520cd148/tabs/794d5ec/tab_title' => 'Identities​',
+                    '26468648/57b6662a/520cd148/tabs/794d5ec/tab_content' => '<p><span class="hotkey-layer "><span class="hotkey-layer preview-overlay is-preview-sidebar-visible">Everyone from employees, to visitors, to service technicians. If they enter your building, we can track them.</span></span></p>',
+                    '26468648/background_image/alt' => '',
+                    'bcf5c71/6f88ef3/text' => 'Divider',
+                    'bcf5c71/background_image/alt' => '',
+                    'bb99f51/6acdc85/3c4eb00/title' => 'You get access to 
+and management of:',
+                    'bb99f51/208412d/df74b88/tabs/720b2af/tab_title' => 'Real-time policy enforcement',
+                    'bb99f51/208412d/df74b88/tabs/720b2af/tab_content' => '<ul><li>Chain of custody</li><li>Maintenance schedules</li><li>Assignment audits</li><li>Tracking/loss prevention</li><li>Reports and audits</li></ul>',
+                    'bb99f51/208412d/df74b88/tabs/794d5ec/tab_title' => 'Device lifecycle',
+                    'bb99f51/208412d/df74b88/tabs/794d5ec/tab_content' => '<ul><li>Asset inventory</li><li>Asset criticality</li><li>Service history</li><li>Service vendors</li><li>Geofencing/location</li><li>Ownerships</li><li>Asset codes/tags</li></ul><p><span class="hotkey-layer "><span class="hotkey-layer preview-overlay is-preview-sidebar-visible"> </span></span></p>',
+                    'bb99f51/208412d/df74b88/tabs/10ded84/tab_title' => 'Workflow tickets',
+                    'bb99f51/208412d/df74b88/tabs/10ded84/tab_content' => '<ul><li>Asset allocation requests</li><li>Policy-driven assignments</li><li>Service tickets</li><li>Report lost/stolen asset</li><li>Recertifications</li><li>Ownership transfers</li><li>Workflow approvals</li></ul><p><span class="hotkey-layer "><span class="hotkey-layer preview-overlay is-preview-sidebar-visible"> </span></span></p>',
+                    'bb99f51/background_image/alt' => '',
+                    '3fc5bb6f/5444f5f8/29aa692a/65ed2329/51e8145c/title' => 'The latest word around Asset Governance.',
+                    '3fc5bb6f/5444f5f8/29aa692a/4e465e45/6b5f7fd7/text' => 'Resources',
+                    '3fc5bb6f/5444f5f8/6fa8e431/5019b5da/560d0785/3622a2bf/478d9c56/background_image/alt' => '',
+                    '3fc5bb6f/5444f5f8/6fa8e431/5019b5da/560d0785/3622a2bf/ed00f1a/354f4dd1/title' => 'Is Policy-Based Access Control and Zero Trust the Future of Physical Security?',
+                    '3fc5bb6f/5444f5f8/6fa8e431/5019b5da/560d0785/3622a2bf/ed00f1a/53a54e1d/editor' => '<p>Policy-based access control (PBAC) has…</p>',
+                    '3fc5bb6f/5444f5f8/6fa8e431/5019b5da/560d0785/1afd40b8/17239ed5/732d91ea/background_image/alt' => '',
+                    '3fc5bb6f/5444f5f8/6fa8e431/5019b5da/560d0785/1afd40b8/17239ed5/3066c559/41e344f0/title' => 'Enterprise Guardian Solution Sheet',
+                    '3fc5bb6f/5444f5f8/6fa8e431/5019b5da/560d0785/1afd40b8/17239ed5/3066c559/261e3d92/editor' => '<p>Enterprise Guardian is the industry-leading…</p>',
+                    '3fc5bb6f/5444f5f8/6fa8e431/5019b5da/560d0785/1afd40b8/8e91085/18f0712e/background_image/alt' => '',
+                    '3fc5bb6f/5444f5f8/6fa8e431/5019b5da/560d0785/1afd40b8/8e91085/6219178d/362c165c/title' => 'Company dismantles another security silo with new Asset Governance solution',
+                    '3fc5bb6f/5444f5f8/6fa8e431/5019b5da/560d0785/1afd40b8/8e91085/6219178d/2743599e/editor' => '<p>Cyber-physical identity access management and security…</p>',
+                    '3fc5bb6f/background_image/alt' => '',
+                    '7e10ae1c/4c458334/7b416def/48e3729d/77f5156d/title' => 'Start securing.',
+                    '7e10ae1c/4c458334/7b416def/7c9275c1/39ffdc20/editor' => '<p><span dir="ltr" role="presentation">Stronger security is just a few questions away with our online Solution Builder. </span><span dir="ltr" role="presentation">Ready</span> <span dir="ltr" role="presentation">to connect your physical assets and digital identities?</span></p>',
+                    '7e10ae1c/4c458334/7b416def/7c9275c1/10efe67d/17afef64/text' => 'Build My Solution',
+                    '7e10ae1c/4c458334/background_image/alt' => '',
+                ],
+                [
+                    'attachment' => [
+                        17652,
+                        16038,
+                        9609,
+                        16326,
+                        16323,
+                        16320,
+                        18837,
+                        18840,
+                        6111,
+                        7296,
+                        10785,
+                        15813,
+                    ],
+                ],
+            ],
         ];
     }
 
@@ -176,24 +284,47 @@ Yes, please.',
         $sourceAttachmentId = 597;
         $sourceBackgroundId = 16038;
         $sourceBlogId = 1;
+        $sourceIcon1Id = 16326;
+        $sourceIcon2Id = 16323;
         $sourceWidgetId = 19366;
         $targetAttachmentId = 17;
         $targetBackgroundId = 37;
         $targetBlogId = 2;
+        $targetIcon1Id = 13;
+        $targetIcon2Id = 11;
         $targetWidgetId = 23;
         $foundSubmissionAttachment = $this->createMock(SubmissionEntity::class);
         $foundSubmissionAttachment->method('getTargetId')->willReturn($targetAttachmentId);
         $foundSubmissionBackground = $this->createMock(SubmissionEntity::class);
         $foundSubmissionBackground->method('getTargetId')->willReturn($targetBackgroundId);
+        $foundSubmissionIcon1 = $this->createMock(SubmissionEntity::class);
+        $foundSubmissionIcon1->method('getTargetId')->willReturn($targetIcon1Id);
+        $foundSubmissionIcon2 = $this->createMock(SubmissionEntity::class);
+        $foundSubmissionIcon2->method('getTargetId')->willReturn($targetIcon2Id);
+        $foundSubmissionIcons = [$foundSubmissionIcon1, $foundSubmissionIcon2];
         $foundSubmissionWidget = $this->createMock(SubmissionEntity::class);
         $foundSubmissionWidget->method('getTargetId')->willReturn($targetWidgetId);
         $translatedSubmission = $this->createMock(SubmissionEntity::class);
         $translatedSubmission->method('getSourceBlogId')->willReturn($sourceBlogId);
         $translatedSubmission->method('getTargetBlogId')->willReturn($targetBlogId);
         $submissionManager = $this->createMock(SubmissionManager::class);
-        $matcher = $this->exactly(3);
+
+        $matcher = $this->exactly(5);
         $submissionManager->expects($matcher)->method('findOne')->willReturnCallback(
-            function ($value) use ($foundSubmissionAttachment, $foundSubmissionBackground, $foundSubmissionWidget, $matcher, $sourceAttachmentId, $sourceBackgroundId, $sourceBlogId, $sourceWidgetId, $targetBlogId) {
+            function ($value) use (
+                $foundSubmissionAttachment,
+                $foundSubmissionBackground,
+                $foundSubmissionIcons,
+                $foundSubmissionWidget,
+                $matcher,
+                $sourceAttachmentId,
+                $sourceBackgroundId,
+                $sourceBlogId,
+                $sourceIcon1Id,
+                $sourceIcon2Id,
+                $sourceWidgetId,
+                $targetBlogId,
+            ) {
                 switch ($matcher->getInvocationCount()) {
                     case 1:
                         $this->assertEquals([
@@ -215,6 +346,24 @@ Yes, please.',
                         return $foundSubmissionBackground;
                     case 3:
                         $this->assertEquals([
+                            SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
+                            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+                            SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+                            SubmissionEntity::FIELD_SOURCE_ID => $sourceIcon1Id,
+                        ], $value);
+
+                        return $foundSubmissionIcons[0];
+                    case 4:
+                        $this->assertEquals([
+                            SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
+                            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+                            SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+                            SubmissionEntity::FIELD_SOURCE_ID => $sourceIcon2Id,
+                        ], $value);
+
+                        return $foundSubmissionIcons[1];
+                    case 5:
+                        $this->assertEquals([
                             SubmissionEntity::FIELD_CONTENT_TYPE => ExternalContentElementor::CONTENT_TYPE_ELEMENTOR_LIBRARY,
                             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
                             SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
@@ -233,19 +382,36 @@ Yes, please.',
             ['meta' => ['_elementor_data' => '[]']],
             $x->setContentFields(['meta' => ['_elementor_data' => '[]']], ['elementor' => []], $this->createMock(SubmissionEntity::class))
         );
-        $original = json_encode(json_decode(sprintf(file_get_contents(__DIR__ . '/testMergeElementorData.json'), $sourceBackgroundId, $sourceAttachmentId, $sourceWidgetId)));
+        $original = json_encode(json_decode(sprintf(
+            file_get_contents(__DIR__ . '/testMergeElementorData.json'),
+            $sourceBackgroundId,
+            $sourceAttachmentId,
+            $sourceIcon1Id,
+            $sourceIcon2Id,
+            $sourceWidgetId,
+        )));
         $expected = str_replace(
-            ['<p>Left text<\/p>', '<p>Middle text<\/p>', 'Right heading', $sourceBackgroundId, $sourceAttachmentId, $sourceWidgetId],
-            ['<p>Left text translated<\/p>', '<p>Middle text translated<\/p>', 'Right heading translated', $targetBackgroundId, $targetAttachmentId, $targetWidgetId],
+            ['<p>Left text<\/p>', '<p>Middle text<\/p>', 'Right heading', $sourceBackgroundId, $sourceAttachmentId, $sourceIcon1Id, $sourceIcon2Id, $sourceWidgetId],
+            ['<p>Left text translated<\/p>', '<p>Middle text translated<\/p>', 'Right heading translated', $targetBackgroundId, $targetAttachmentId, $targetIcon1Id, $targetIcon2Id, $targetWidgetId],
             $original
         );
 
-        $this->assertEquals(
-            ['meta' => ['_elementor_data' => $expected]],
-            $x->setContentFields(['meta' => ['_elementor_data' => $original]], ['elementor' => [
-            '590657a/b56da21/c799791/editor' => '<p>Left text translated</p>',
-            '590657a/0f3ad3c/0088b31/editor' => '<p>Middle text translated</p>',
-            '590657a/8798127/78d53a1/title' => 'Right heading translated',
-        ]], $translatedSubmission));
+        $result = $x->setContentFields(['meta' => ['_elementor_data' => $original]], [
+            'elementor' => [
+                '590657a/b56da21/c799791/editor' => '<p>Left text translated</p>',
+                '590657a/0f3ad3c/0088b31/editor' => '<p>Middle text translated</p>',
+                '590657a/8798127/78d53a1/title' => 'Right heading translated',
+            ]
+        ], $translatedSubmission);
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('meta', $result);
+        $this->assertIsArray($result['meta']);
+        $this->assertArrayHasKey('_elementor_data', $result['meta']);
+
+        $this->assertEquals( // comparing as arrays here shows legible diff
+            json_decode($expected, true, 512, JSON_THROW_ON_ERROR),
+            json_decode($result['meta']['_elementor_data'], true, 512, JSON_THROW_ON_ERROR)
+        );
     }
 }
