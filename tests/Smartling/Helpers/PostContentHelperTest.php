@@ -24,7 +24,6 @@ class PostContentHelperTest extends TestCase {
             $x->applyTranslationsWithLockedBlocks(
                 file_get_contents(__DIR__ . '/Resources/WP733_original.html'),
                 file_get_contents(__DIR__ . '/Resources/WP733_translated.html'),
-                ['ixqsm/utaeq/lmqoq'],
             )
         );
     }
