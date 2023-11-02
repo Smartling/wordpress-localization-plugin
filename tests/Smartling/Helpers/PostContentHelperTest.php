@@ -13,8 +13,10 @@ class PostContentHelperTest extends TestCase {
     public function testApplyTranslationWithLockedBlocks()
     {
         $blockHelper = $this->createMock(GutenbergBlockHelper::class);
+        $originalBlocksFromFile = $this->getBlocksFromFile(__DIR__ . '/Resources/WP733_original_blocks.json');
         $blockHelper->method('parseBlocks')->willReturn(
-            $this->getBlocksFromFile(__DIR__ . '/Resources/WP733_original_blocks.json'),
+            $originalBlocksFromFile,
+            $originalBlocksFromFile,
             $this->getBlocksFromFile(__DIR__ . '/Resources/WP733_translated_blocks.json'),
         );
 
