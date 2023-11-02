@@ -59,6 +59,7 @@
           {
             "blockName": "core\/paragraph",
             "attrs": {
+              "smartlingLocked": true,
               "smartlingLockId": "lmqoq"
             },
             "innerBlocks": [],
