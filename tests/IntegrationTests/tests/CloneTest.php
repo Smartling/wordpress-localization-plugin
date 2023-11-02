@@ -18,10 +18,10 @@ class CloneTest extends SmartlingUnitTestCaseAbstract
 <!-- /wp:paragraph -->
 <!-- wp:test/post {"id":%d} /-->
 HTML;
-    private int $rootPostId;
+    private int $rootPostId = 0;
     private int $targetBlogId = 2;
-    private int $targetChildPostId;
-    private int $targetRootPostId;
+    private int $targetChildPostId = 0;
+    private int $targetRootPostId = 0;
     public function testNoMediaDuplication(): void
     {
         $currentBlogId = get_current_blog_id();
