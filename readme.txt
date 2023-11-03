@@ -63,7 +63,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 3.6.0 =
-* Added support for block level locking when cloning content
+* Added support for block level locking when cloning content. The target locked blocks that are present in the source page will have their contents preserved when cloning
 
 = 3.5.3 =
 * Added support for Elementor icon-list widget

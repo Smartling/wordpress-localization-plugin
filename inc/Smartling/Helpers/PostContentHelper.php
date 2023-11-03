@@ -20,22 +20,22 @@ class PostContentHelper
         $this->logger = MonologWrapper::getLogger();
     }
 
-    public function applyTranslationsWithLockedBlocks(string $target, string $translated): string
+    public function applyContentWithLockedBlocks(string $target, string $content): string
     {
         $blockPaths = $this->getLockedBlockPathsFromContentString($target);
         if (count($blockPaths) === 0) {
-            return $translated;
+            return $content;
         }
         $result = '';
         $targetBlocks = $this->blockHelper->parseBlocks($target);
-        $translatedBlocks = $this->blockHelper->parseBlocks($translated);
+        $resultBlocks = $this->blockHelper->parseBlocks($content);
 
         foreach ($blockPaths as $path) {
             $lockedContent = $this->getBlockByPath($targetBlocks, $path);
             if ($lockedContent !== null) {
                 $parts = explode('/', $path);
                 $lockId = array_shift($parts);
-                foreach ($translatedBlocks as &$block) {
+                foreach ($resultBlocks as &$block) {
                     if ($block->getSmartlingLockId() === $lockId) {
                         if (count($parts) === 0) {
                             $block = $lockedContent;
@@ -53,7 +53,7 @@ class PostContentHelper
             unset($block);
         }
 
-        foreach ($translatedBlocks as $block) {
+        foreach ($resultBlocks as $block) {
             $result .= serialize_block($block->toArray());
         }
 

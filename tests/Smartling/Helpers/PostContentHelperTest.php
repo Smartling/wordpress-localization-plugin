@@ -23,7 +23,7 @@ class PostContentHelperTest extends TestCase {
         $x = new PostContentHelper($blockHelper);
         $this->assertStringEqualsFile(
             __DIR__ . '/Resources/WP733_expected.html',
-            $x->applyTranslationsWithLockedBlocks(
+            $x->applyContentWithLockedBlocks(
                 file_get_contents(__DIR__ . '/Resources/WP733_original.html'),
                 file_get_contents(__DIR__ . '/Resources/WP733_translated.html'),
             )

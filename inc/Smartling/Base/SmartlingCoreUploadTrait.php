@@ -766,7 +766,7 @@ trait SmartlingCoreUploadTrait
         if (array_key_exists('entity', $translation) && ArrayHelper::notEmpty($translation['entity'])) {
             $targetContentArray = $targetContent->toArray();
             if (array_key_exists('post_content', $translation['entity']) && array_key_exists('post_content', $targetContentArray)) {
-                $translation['entity']['post_content'] = $postContentHelper->applyTranslationsWithLockedBlocks(
+                $translation['entity']['post_content'] = $postContentHelper->applyContentWithLockedBlocks(
                     $targetContentArray['post_content'],
                     $postContentHelper->replacePostTranslate($original['entity']['post_content'] ?? '', $translation['entity']['post_content']),
                 );
