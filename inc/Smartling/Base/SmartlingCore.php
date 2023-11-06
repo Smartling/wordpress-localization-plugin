@@ -58,11 +58,24 @@ class SmartlingCore extends SmartlingCoreAbstract
 
     public function cloneContent(SubmissionEntity $submission): void
     {
+        $target = '';
+        if ($submission->getTargetId() !== 0) {
+            $target = $this->getSiteHelper()->withBlog($submission->getTargetBlogId(), function () use ($submission) {
+                $post = get_post($submission->getTargetId());
+                if ($post instanceof \WP_Post) {
+                    return $post->post_content;
+                }
+                return '';
+            });
+        }
         $submission = $this->prepareTargetContent($submission);
         $entity = $this->getContentHelper()->readTargetContent($submission);
         $content = $entity->toArray();
         foreach ($content as $key => $value) {
             if (is_string($value)) {
+                if ($key === 'post_content') {
+                    $value = $this->postContentHelper->applyContentWithLockedBlocks($target, $value);
+                }
                 $content[$key] = $this->gutenbergBlockHelper->replacePostTranslateBlockContent($value, $value, $submission);
             }
         }

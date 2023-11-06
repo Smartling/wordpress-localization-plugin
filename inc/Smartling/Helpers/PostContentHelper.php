@@ -20,55 +20,22 @@ class PostContentHelper
         $this->logger = MonologWrapper::getLogger();
     }
 
-    public function applyBlockLevelLocks(string $original, string $translated, array $lockedFields): string
+    public function applyContentWithLockedBlocks(string $target, string $content): string
     {
-        $result = '';
-        $originalBlocks = $this->blockHelper->parseBlocks($original);
-        $translatedBlocks = $this->blockHelper->parseBlocks($translated);
-
-        foreach ($lockedFields as $lockedField) {
-            $count = 0;
-            $lockedField = preg_replace('~^entity/post_content/blocks/~', '', $lockedField, -1, $count);
-            if ($count === 1) {
-                $parts = explode('/', $lockedField);
-                $index = array_shift($parts);
-                if (!array_key_exists($index, $originalBlocks)) {
-                    $this->logger->notice("Unable to get content for locked Gutenberg block $lockedField, skipping lock");
-                    continue;
-                }
-                if (count($parts) > 0) {
-                    $translatedBlocks[$index] = $this->applyLockedField($parts, $originalBlocks[$index], $translatedBlocks[$index]);
-                } else {
-                    $translatedBlocks[$index] = $originalBlocks[$index];
-                }
-            }
+        $blockPaths = $this->getLockedBlockPathsFromContentString($target);
+        if (count($blockPaths) === 0) {
+            return $content;
         }
-
-        foreach ($translatedBlocks as $block) {
-            $result .= serialize_block($block->toArray());
-        }
-
-        return $result;
-    }
-
-    /**
-     * @param string $original
-     * @param string $translated
-     * @param string[] $blockPaths
-     * @return string
-     */
-    public function applyTranslationsWithLockedBlocks(string $original, string $translated, array $blockPaths): string
-    {
         $result = '';
-        $originalBlocks = $this->blockHelper->parseBlocks($original);
-        $translatedBlocks = $this->blockHelper->parseBlocks($translated);
+        $targetBlocks = $this->blockHelper->parseBlocks($target);
+        $resultBlocks = $this->blockHelper->parseBlocks($content);
 
         foreach ($blockPaths as $path) {
-            $lockedContent = $this->getBlockByPath($originalBlocks, $path);
+            $lockedContent = $this->getBlockByPath($targetBlocks, $path);
             if ($lockedContent !== null) {
                 $parts = explode('/', $path);
                 $lockId = array_shift($parts);
-                foreach ($translatedBlocks as &$block) {
+                foreach ($resultBlocks as &$block) {
                     if ($block->getSmartlingLockId() === $lockId) {
                         if (count($parts) === 0) {
                             $block = $lockedContent;
@@ -86,7 +53,7 @@ class PostContentHelper
             unset($block);
         }
 
-        foreach ($translatedBlocks as $block) {
+        foreach ($resultBlocks as $block) {
             $result .= serialize_block($block->toArray());
         }
 

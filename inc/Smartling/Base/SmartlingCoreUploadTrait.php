@@ -766,11 +766,9 @@ trait SmartlingCoreUploadTrait
         if (array_key_exists('entity', $translation) && ArrayHelper::notEmpty($translation['entity'])) {
             $targetContentArray = $targetContent->toArray();
             if (array_key_exists('post_content', $translation['entity']) && array_key_exists('post_content', $targetContentArray)) {
-                $translation['entity']['post_content'] = $this->applyBlockLevelLocks(
-                    $targetContentArray,
+                $translation['entity']['post_content'] = $postContentHelper->applyContentWithLockedBlocks(
+                    $targetContentArray['post_content'],
                     $postContentHelper->replacePostTranslate($original['entity']['post_content'] ?? '', $translation['entity']['post_content']),
-                    $submission,
-                    $postContentHelper
                 );
             }
             $translation['entity'] = self::arrayMergeIfKeyNotExists($lockedEntityFields, $translation['entity']);
@@ -817,16 +815,6 @@ trait SmartlingCoreUploadTrait
                 }
             }
         });
-    }
-
-    private function applyBlockLevelLocks(array $targetContent, string $translatedContent, SubmissionEntity $submission, PostContentHelper $postContentHelper): string
-    {
-        $lockedBlocks = $postContentHelper->getLockedBlockPathsFromContentString($targetContent['post_content']);
-        if (count($lockedBlocks) > 0) {
-            return $postContentHelper->applyTranslationsWithLockedBlocks($targetContent['post_content'], $translatedContent, $lockedBlocks);
-        }
-
-        return $translatedContent;
     }
 
     /**

@@ -13,18 +13,19 @@ class PostContentHelperTest extends TestCase {
     public function testApplyTranslationWithLockedBlocks()
     {
         $blockHelper = $this->createMock(GutenbergBlockHelper::class);
+        $originalBlocksFromFile = $this->getBlocksFromFile(__DIR__ . '/Resources/WP733_original_blocks.json');
         $blockHelper->method('parseBlocks')->willReturn(
-            $this->getBlocksFromFile(__DIR__ . '/Resources/WP733_original_blocks.json'),
+            $originalBlocksFromFile,
+            $originalBlocksFromFile,
             $this->getBlocksFromFile(__DIR__ . '/Resources/WP733_translated_blocks.json'),
         );
 
         $x = new PostContentHelper($blockHelper);
         $this->assertStringEqualsFile(
             __DIR__ . '/Resources/WP733_expected.html',
-            $x->applyTranslationsWithLockedBlocks(
+            $x->applyContentWithLockedBlocks(
                 file_get_contents(__DIR__ . '/Resources/WP733_original.html'),
                 file_get_contents(__DIR__ . '/Resources/WP733_translated.html'),
-                ['ixqsm/utaeq/lmqoq'],
             )
         );
     }
