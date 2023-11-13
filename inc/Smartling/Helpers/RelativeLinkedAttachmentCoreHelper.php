@@ -33,7 +33,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     protected SmartlingCore $core;
     private AfterDeserializeContentEventParameters $params;
     protected SubmissionManager $submissionManager;
-    private WordpressFunctionProxyHelper $wordpressProxy;
+    protected WordpressFunctionProxyHelper $wordpressProxy;
 
     public function getLogger(): LoggerInterface
     {
@@ -207,9 +207,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 
     private function isRelativeUrl(string $url): bool
     {
-        $parts = parse_url($url);
-
-        return $url === $parts['path'];
+        return (parse_url($url)['host'] ?? '') === '';
     }
 
     private function getAttachmentId(string $relativePath): ?int
@@ -381,7 +379,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         $result = $replacer;
         $href = $this->getAttributeFromTag($tag, 'a', 'href');
 
-        if (null !== $href) {
+        if (null !== $href && $this->isRelativeUrl($href)) {
             $sourcePostId = $this->wordpressProxy->url_to_postid($href);
             if (0 !== $sourcePostId) {
                 $targetBlogId = $this->getParams()->getSubmission()->getTargetBlogId();
@@ -390,9 +388,9 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                     SubmissionEntity::FIELD_SOURCE_ID => $sourcePostId
                 ]));
                 if ($submission !== false) {
-                    $url = parse_url($this->wordpressProxy->get_blog_permalink($targetBlogId, $submission->getTargetId()), PHP_URL_PATH);
-                    if (is_string($url)) {
-                        $result->addReplacementPair(new ReplacementPair($href, $url));
+                    $url = parse_url($this->wordpressProxy->get_blog_permalink($targetBlogId, $submission->getTargetId()));
+                    if (is_array($url)) {
+                        $result->addReplacementPair(new ReplacementPair($href, ($url['path'] ?? '') . ($url['query'] ?? '')));
                     }
                 }
             }
