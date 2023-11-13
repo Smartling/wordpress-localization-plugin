@@ -439,17 +439,20 @@ namespace Smartling\Tests\Services {
             $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
             $submissionManager = $this->createMock(SubmissionManager::class);
 
-            $submissionManager->expects($this->exactly(2))->method('find')->withConsecutive([[
-                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
-                SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
-                SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
-                SubmissionEntity::FIELD_SOURCE_ID => $childPostId,
-            ]], [[
-                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
-                SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
-                SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
-                SubmissionEntity::FIELD_SOURCE_ID => $rootPostId,
-            ]]);
+            $matcher = $this->exactly(2);
+            $submissionManager->expects($matcher)->method('findTargetBlogSubmission')->willReturnCallback(function ($actualContentType, $actualSourceBlogId, $contentId, $actualTargetBlogId) use ($contentType, $childPostId, $rootPostId, $sourceBlogId, $targetBlogId, $matcher) {
+                $this->assertEquals($contentType, $actualContentType);
+                $this->assertEquals($sourceBlogId, $actualSourceBlogId);
+                $this->assertEquals($targetBlogId, $actualTargetBlogId);
+                switch ($matcher->getInvocationCount()) {
+                    case 1:
+                        $this->assertEquals($childPostId, $contentId);
+                        break;
+                    case 2:
+                        $this->assertEquals($rootPostId, $contentId);
+                        break;
+                }
+            });
 
             $x = $this->getContentRelationDiscoveryService(
                 $this->createMock(ApiWrapper::class),
@@ -472,7 +475,7 @@ namespace Smartling\Tests\Services {
             $existing->expects($this->never())->method('setStatus');
 
             $submissionManager = $this->createMock(SubmissionManager::class);
-            $submissionManager->expects($this->once())->method('find')->willReturn([$existing]);
+            $submissionManager->expects($this->once())->method('findTargetBlogSubmission')->willReturn($existing);
             $submissionManager->expects($this->once())->method('storeSubmissions')->with([]);
 
             $x = $this->getContentRelationDiscoveryService(

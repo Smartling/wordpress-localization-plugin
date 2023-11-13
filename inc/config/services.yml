@@ -230,10 +230,8 @@ services:
         - "%plugin.name%"
         - "%plugin.version%"
         - "%plugin.url%"
-        - "%plugin.dir%"
         - "%plugin.domain%"
         - "@manager.settings"
-        - "%plugin.upload%"
 
   localization.plugin.proxy.collection:
     class: Smartling\Services\LocalizationPluginProxyCollection
