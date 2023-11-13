@@ -35,6 +35,7 @@ class SubmissionTableWidget extends SmartlingListTable
     public const ACTION_DOWNLOAD = 'download';
     private const ACTION_LOCK = 'lock';
     private const ACTION_UNLOCK = 'unlock';
+    private const ACTION_UPLOAD = 'upload';
 
     /**
      * base name of Content-type filtering select
@@ -163,6 +164,7 @@ class SubmissionTableWidget extends SmartlingListTable
             self::ACTION_DOWNLOAD => __('Enqueue for Download'),
             self::ACTION_LOCK => __('Lock translation'),
             self::ACTION_UNLOCK => __('Unlock translation'),
+            self::ACTION_UPLOAD => __('Upload'),
         ];
     }
 
@@ -227,7 +229,12 @@ class SubmissionTableWidget extends SmartlingListTable
                             $this->submissionManager->storeEntity($submission);
                         }
                         break;
-                    default:
+                    case self::ACTION_UPLOAD:
+                        foreach ($submissions as $submission) {
+                            $this->getLogger()->notice("Setting submission status to new for submissionId={$submission->getId()}, reason=\"User request from Translation Progress\"");
+                            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+                            $this->submissionManager->storeEntity($submission);
+                        }
                         break;
                 }
             }

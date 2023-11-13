@@ -61,39 +61,8 @@ class ContentHelper
 
         if ($this->needBlogSwitch) {
             $this->externalBlogSwitchFrames = [];
-            add_action('switch_blog', [$this, 'logSwitchBlog']);
             $this->getSiteHelper()->switchBlogId($blogId);
         }
-    }
-
-    public function logSwitchBlog(): void
-    {
-        $backtrace = debug_backtrace();
-        foreach ($backtrace as $index => $frame) {
-            if (array_key_exists('function', $frame) && array_key_exists('args', $frame)) {
-                $args = $frame['args'];
-                if ($frame['function'] === 'do_action' && $args[0] === 'switch_blog' && !$this->isConnectorSwitch($backtrace)) {
-                    $this->getLogger()->debug("Unexpected blog switch detected: " . json_encode($backtrace));
-                    if (array_key_exists($index + 1, $backtrace)) {
-                        $this->externalBlogSwitchFrames[] = $backtrace[$index + 1];
-                    } else {
-                        $this->externalBlogSwitchFrames[] = $frame;
-                    }
-                    break;
-                }
-            }
-        }
-    }
-
-    private function isConnectorSwitch(array $backtrace): bool
-    {
-        foreach ($backtrace as $frame) {
-            if (array_key_exists('class', $frame) && array_key_exists('function', $frame) &&
-                $frame['class'] === SiteHelper::class && in_array($frame['function'], ['switchBlogId', 'restoreBlogId'])) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private function getSwitchBlogString(array $frame): string
@@ -127,7 +96,6 @@ class ContentHelper
     public function ensureRestoredBlogId(): void
     {
         if ($this->needBlogSwitch) {
-            remove_action('switch_blog', [$this, 'logSwitchBlog']);
             $this->getSiteHelper()->restoreBlogId();
             $this->setNeedBlogSwitch(false);
         }

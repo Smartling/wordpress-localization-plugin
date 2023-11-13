@@ -7,7 +7,6 @@ use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingEntityAbstract;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
-use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Exception\SmartlingSubmissionsProcessingException;
 use Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater;
@@ -138,6 +137,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
             static::SUBMISSION_STATUS_IN_PROGRESS => __(static::SUBMISSION_STATUS_IN_PROGRESS),
             static::SUBMISSION_STATUS_COMPLETED => __(static::SUBMISSION_STATUS_COMPLETED),
             static::SUBMISSION_STATUS_FAILED => __(static::SUBMISSION_STATUS_FAILED),
+            static::SUBMISSION_STATUS_CANCELLED => __(static::SUBMISSION_STATUS_CANCELLED),
         ];
     }
 
