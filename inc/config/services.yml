@@ -422,6 +422,7 @@ services:
     arguments:
       - "@factory.contentIO"
       - "@site.helper"
+      - "@wp.proxy"
 
   fields-filter.helper:
     class: Smartling\Helpers\FieldsFilterHelper
