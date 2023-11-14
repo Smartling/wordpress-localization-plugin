@@ -8,6 +8,7 @@ use Smartling\Extensions\Acf\AcfTypeDetector;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\MediaBasedProcessor;
 use Smartling\Helpers\SiteHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\WpObjectCache;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Settings\SettingsManager;
@@ -64,7 +65,7 @@ class AcfTypeDetectorTest extends TestCase
             '"entity\/post_content\/acf\/testimonial\/data\/_media":"field_5eb1344b55a84"}', true);
         self::assertInstanceOf(
             MediaBasedProcessor::class,
-            (new AcfTypeDetector(new ContentHelper($this->createMock(ContentEntitiesIOFactory::class), $siteHelper), new WpObjectCache()))
+            (new AcfTypeDetector(new ContentHelper($this->createMock(ContentEntitiesIOFactory::class), $siteHelper, new WordpressFunctionProxyHelper()), new WpObjectCache()))
                 ->getProcessorForGutenberg(array_keys($fields)[0], $fields)
         );
     }
