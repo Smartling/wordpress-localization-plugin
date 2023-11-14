@@ -2,7 +2,6 @@
 
 namespace Smartling\Processors;
 
-use Smartling\Bootstrap;
 use Smartling\DbAl\WordpressContentEntities\EntityHandler;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
@@ -16,6 +15,7 @@ class ContentEntitiesIOFactory extends SmartlingFactoryAbstract
     }
 
     /**
+     * @throws SmartlingConfigException
      * @throws SmartlingInvalidFactoryArgumentException
      */
     public function getMapper(string $contentType): EntityHandler
@@ -26,7 +26,6 @@ class ContentEntitiesIOFactory extends SmartlingFactoryAbstract
             return clone $obj;
         }
 
-        Bootstrap::DebugPrint([$contentType,$obj],true);
         throw new SmartlingConfigException(self::class . __METHOD__ . ' expected return is ' . EntityHandler::class);
     }
 }

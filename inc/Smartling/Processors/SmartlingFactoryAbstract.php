@@ -48,4 +48,8 @@ abstract class SmartlingFactoryAbstract
 
         throw new SmartlingInvalidFactoryArgumentException(sprintf($this->message, $contentType, get_called_class()));
     }
+
+    public function getCollection(): array {
+         return $this->collection;
+    }
 }
