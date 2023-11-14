@@ -5,6 +5,7 @@ namespace Smartling\Submissions;
 use Smartling\DbAl\EntityManagerAbstract;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
@@ -86,7 +87,13 @@ class SubmissionManager extends EntityManagerAbstract
             return null;
         }
         if (count($result) > 1) {
-            $this->getLogger()->warning("Multiple target blog submissions for contentType=$contentType, sourceBlogId=$sourceBlogId, contentId=$contentId, targetBlogId=$targetBlogId");
+            throw new SmartlingHumanReadableException(sprintf(
+                'Multiple target blog submissions for contentType=%s, sourceBlogId=%s, contentId=%s, targetBlogId=%s. Please use the duplicate submissions cleaning UI to resolve',
+                $contentType,
+                $sourceBlogId,
+                $contentId,
+                $targetBlogId,
+            ), 'multiple.target.blog.submissions', 400);
         }
 
         return $result[0];
