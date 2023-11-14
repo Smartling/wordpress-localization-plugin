@@ -3,6 +3,7 @@
 namespace Smartling\Helpers;
 
 use Exception;
+use Smartling\Base\ExportedAPI;
 use Smartling\DbAl\WordpressContentEntities\Entity;
 use Smartling\DbAl\WordpressContentEntities\EntityHandler;
 use Smartling\DbAl\WordpressContentEntities\EntityWithMetadata;
@@ -170,6 +171,7 @@ class ContentHelper
         }
 
         $this->ensureRestoredBlogId();
+        do_action(ExportedAPI::ACTION_AFTER_TARGET_CONTENT_WRITTEN);
 
         return $result;
     }
