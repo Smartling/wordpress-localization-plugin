@@ -9,6 +9,7 @@ use Smartling\DbAl\WordpressContentEntities\EntityHandler;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\SiteHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
@@ -41,7 +42,7 @@ class ContentHelperTest extends TestCase
         $siteHelper->expects($currentBlogId === $otherBlogId ? self::never() : self::once())->method('switchBlogId')->with($otherBlogId);
         $siteHelper->expects($currentBlogId === $otherBlogId ? self::never() : self::once())->method('restoreBlogId');
 
-        $x = new ContentHelper($ioFactory, $siteHelper);
+        $x = new ContentHelper($ioFactory, $siteHelper, new WordpressFunctionProxyHelper());
 
         self::assertEquals($exists, $x->checkEntityExists($otherBlogId, 'post', 3));
     }
@@ -56,9 +57,17 @@ class ContentHelperTest extends TestCase
         $entity2 = $this->createMock(Entity::class);
         $entity2->method('getTitle')->willReturn('Title 2');
         $entityHandler = $this->createMock(EntityHandler::class);
-        $entityHandler->expects($this->exactly(2))->method('get')
-            ->withConsecutive([1], [2])
-            ->willReturnOnConsecutiveCalls($entity1, $entity2);
+        $matcher = $this->exactly(2);
+        $entityHandler->expects($matcher)->method('get')->willReturnCallback(function ($id) use ($entity1, $entity2, $matcher) {
+            $this->assertEquals($matcher->getInvocationCount(), $id);
+            switch ($matcher->getInvocationCount()) {
+                case 1:
+                    return $entity1;
+                case 2:
+                    return $entity2;
+            }
+            $this->fail('Expected two calls');
+        });
         $submission1 = $this->createMock(SubmissionEntity::class);
         $submission1->method('getId')->willReturn(null);
         $submission1->method('getSourceId')->willReturn(1);
@@ -67,7 +76,7 @@ class ContentHelperTest extends TestCase
         $submission2->method('getSourceId')->willReturn(2);
         $IOFactory = $this->createMock(ContentEntitiesIOFactory::class);
         $IOFactory->method('getHandler')->willReturn($entityHandler);
-        $x = new ContentHelper($IOFactory, $this->createMock(SiteHelper::class));
+        $x = new ContentHelper($IOFactory, $this->createMock(SiteHelper::class), new WordpressFunctionProxyHelper());
         $this->assertEquals($entity1->getTitle(), $x->readSourceContent($submission1)->getTitle());
         $this->assertEquals($entity2->getTitle(), $x->readSourceContent($submission2)->getTitle());
     }

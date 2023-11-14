@@ -186,9 +186,9 @@ trait DITrait
     public static function getLogFileName(bool $withDate = true, bool $forceDefault = false): string
     {
         $container = static::getContainer();
-        $pluginDir = $container->getParameter('plugin.dir');
+        $pluginDir = SMARTLING_PLUGIN_DIR;
 
-        $filename = str_replace('%plugin.dir%', $pluginDir, $container->getParameter($forceDefault
+        $filename = str_replace('%%plugin.dir%%', (string)$pluginDir, $container->getParameter($forceDefault
             ? 'logger.filehandler.standard.filename.default'
             : 'logger.filehandler.standard.filename'));
 

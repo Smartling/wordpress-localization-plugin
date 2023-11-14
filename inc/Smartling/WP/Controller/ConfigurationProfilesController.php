@@ -138,8 +138,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
                                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_CANCELLED);
                                 $ids[] = $submission->getId();
                             }
-                            /** @noinspection JsonEncodingApiUsageInspection */
-                            $this->getLogger()->info('User cancelled submissionCount=' . count($submissions) . ' submissions, submissionIds="' . json_encode($ids) . '"');
+                            $this->getLogger()->notice('User cancelled submissionCount=' . count($submissions) . ' submissions, submissionIds="' . implode(",", $ids) . '"');
                             $this->getManager()->storeSubmissions($submissions);
                         }
                     } else {

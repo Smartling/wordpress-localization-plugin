@@ -32,33 +32,22 @@ class PluginInfo
      * @var string
      */
     private $url;
-    /**
-     * @var string
-     */
-    private $dir;
-    /**
-     * @var string
-     */
-    private $upload;
+    private string $dir = SMARTLING_PLUGIN_DIR;
 
     /**
      * @param string          $name
      * @param string          $version
      * @param string          $url
-     * @param string          $dir
      * @param string          $domain
      * @param SettingsManager $settingsManager
-     * @param string          $upload
      */
-    public function __construct($name, $version, $url, $dir, $domain, $settingsManager, $upload)
+    public function __construct($name, $version, $url, $domain, $settingsManager)
     {
         $this->name = $name;
         $this->version = $version;
         $this->url = $url;
-        $this->dir = $dir;
         $this->domain = $domain;
         $this->settingsManager = $settingsManager;
-        $this->upload = $upload;
     }
 
     /**
@@ -101,19 +90,8 @@ class PluginInfo
         return $this->url;
     }
 
-    /**
-     * @return string
-     */
-    public function getDir()
+    public function getDir(): string
     {
         return $this->dir;
-    }
-
-    /**
-     * @return string
-     */
-    public function getUpload()
-    {
-        return $this->upload;
     }
 }

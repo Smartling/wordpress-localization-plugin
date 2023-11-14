@@ -22,12 +22,7 @@ class ContentHelper
 {
     use LoggerSafeTrait;
 
-    private ContentEntitiesIOFactory $ioFactory;
-
-    private SiteHelper $siteHelper;
-
     private bool $needBlogSwitch;
-    private array $externalBlogSwitchFrames = [];
 
     private function getRuntimeCache(): RuntimeCacheHelper
     {
@@ -44,10 +39,11 @@ class ContentHelper
         return $this->siteHelper;
     }
 
-    public function __construct(ContentEntitiesIOFactory $IOFactory, SiteHelper $siteHelper)
-    {
-        $this->ioFactory = $IOFactory;
-        $this->siteHelper = $siteHelper;
+    public function __construct(
+        private ContentEntitiesIOFactory $ioFactory,
+        private SiteHelper $siteHelper,
+        private WordpressFunctionProxyHelper $wordpressFunctionProxyHelper,
+    ) {
     }
 
     public function setNeedBlogSwitch(bool $needBlogSwitch): void
@@ -60,58 +56,8 @@ class ContentHelper
         $this->setNeedBlogSwitch($this->getSiteHelper()->getCurrentBlogId() !== $blogId);
 
         if ($this->needBlogSwitch) {
-            $this->externalBlogSwitchFrames = [];
-            add_action('switch_blog', [$this, 'logSwitchBlog']);
             $this->getSiteHelper()->switchBlogId($blogId);
         }
-    }
-
-    public function logSwitchBlog(): void
-    {
-        $backtrace = debug_backtrace();
-        foreach ($backtrace as $index => $frame) {
-            if (array_key_exists('function', $frame) && array_key_exists('args', $frame)) {
-                $args = $frame['args'];
-                if ($frame['function'] === 'do_action' && $args[0] === 'switch_blog' && !$this->isConnectorSwitch($backtrace)) {
-                    $this->getLogger()->debug("Unexpected blog switch detected: " . json_encode($backtrace));
-                    if (array_key_exists($index + 1, $backtrace)) {
-                        $this->externalBlogSwitchFrames[] = $backtrace[$index + 1];
-                    } else {
-                        $this->externalBlogSwitchFrames[] = $frame;
-                    }
-                    break;
-                }
-            }
-        }
-    }
-
-    private function isConnectorSwitch(array $backtrace): bool
-    {
-        foreach ($backtrace as $frame) {
-            if (array_key_exists('class', $frame) && array_key_exists('function', $frame) &&
-                $frame['class'] === SiteHelper::class && in_array($frame['function'], ['switchBlogId', 'restoreBlogId'])) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private function getSwitchBlogString(array $frame): string
-    {
-        $template = "Switched to blog %d in %s:%d";
-        $blog = 0;
-        $file = 'Unknown';
-        $line = 0;
-        if (array_key_exists('args', $frame) && is_array($frame['args']) && array_key_exists(1, $frame['args'])) {
-            $blog = $frame['args'][1];
-        }
-        if (array_key_exists('file', $frame)) {
-            $file = $frame['file'];
-        }
-        if (array_key_exists('line', $frame)) {
-            $line = $frame['line'];
-        }
-        return sprintf($template, $blog, $file, $line);
     }
 
     public function ensureSourceBlogId(SubmissionEntity $submission): void
@@ -127,7 +73,6 @@ class ContentHelper
     public function ensureRestoredBlogId(): void
     {
         if ($this->needBlogSwitch) {
-            remove_action('switch_blog', [$this, 'logSwitchBlog']);
             $this->getSiteHelper()->restoreBlogId();
             $this->setNeedBlogSwitch(false);
         }
@@ -214,29 +159,17 @@ class ContentHelper
             try {
                 $result = $wrapper->get($result);
             } catch (EntityNotFoundException $e) {
-                if (count($this->externalBlogSwitchFrames) > 0) {
-                    $message = "Unable to get target content: WordPress blog was switched outside Smartling connector plugin. Detected blog change frames follow:\n";
-                    foreach ($this->externalBlogSwitchFrames as $frame) {
-                        $message .= $this->getSwitchBlogString($frame) . "\n";
-                    }
-                    throw new EntityNotFoundException($message, $e->getCode(), $e);
-                }
+                $this->getLogger()->error(sprintf(
+                    'Unable to get content after setting, contentId=%d, targetBlogId=%d, currentBlogId=%d',
+                    $result,
+                    $submission->getTargetBlogId(),
+                    $this->wordpressFunctionProxyHelper->get_current_blog_id(),
+                ));
                 throw $e;
             }
         }
 
-        try {
-            $this->ensureRestoredBlogId();
-        } catch (\LogicException $e) {
-            $message = $e->getMessage();
-            if (count($this->externalBlogSwitchFrames) > 0) {
-                $message = "Failed to restore blog. Detected blog change frames follow:\n";
-                foreach ($this->externalBlogSwitchFrames as $frame) {
-                    $message .= $this->getSwitchBlogString($frame) . "\n";
-                }
-            }
-            throw new \LogicException($message, $e->getCode(), $e);
-        }
+        $this->ensureRestoredBlogId();
 
         return $result;
     }

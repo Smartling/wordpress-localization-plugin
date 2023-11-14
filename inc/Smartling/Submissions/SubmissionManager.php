@@ -5,6 +5,7 @@ namespace Smartling\Submissions;
 use Smartling\DbAl\EntityManagerAbstract;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
@@ -74,25 +75,39 @@ class SubmissionManager extends EntityManagerAbstract
         return ($validRequest === true);
     }
 
+    public function findTargetBlogSubmission(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId): ?SubmissionEntity
+    {
+        $result = $this->find([
+            SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
+            SubmissionEntity::FIELD_SOURCE_ID => $contentId,
+            SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
+        ], 2);
+        if (count($result) === 0) {
+            return null;
+        }
+        if (count($result) > 1) {
+            throw new SmartlingHumanReadableException(sprintf(
+                'Multiple target blog submissions for contentType=%s, sourceBlogId=%s, contentId=%s, targetBlogId=%s. Please use the duplicate submissions cleaning UI to resolve',
+                $contentType,
+                $sourceBlogId,
+                $contentId,
+                $targetBlogId,
+            ), 'multiple.target.blog.submissions', 400);
+        }
+
+        return $result[0];
+    }
+
     public function submissionExists(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId): bool
     {
-        return 1 === count($this->find([
-                SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
-                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
-                SubmissionEntity::FIELD_SOURCE_ID => $contentId,
-                SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
-            ], 1));
+        return $this->findTargetBlogSubmission($contentType, $sourceBlogId, $contentId, $targetBlogId) !== null;
     }
 
     public function submissionExistsNoLastError(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId): bool
     {
-        return 1 === count($this->find([
-                SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
-                SubmissionEntity::FIELD_LAST_ERROR => '',
-                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
-                SubmissionEntity::FIELD_SOURCE_ID => $contentId,
-                SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
-            ], 1));
+        $submission = $this->findTargetBlogSubmission($contentType, $sourceBlogId, $contentId, $targetBlogId);
+        return $submission !== null && $submission->getLastError() === '';
     }
 
     /**

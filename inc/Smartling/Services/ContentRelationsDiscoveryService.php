@@ -199,12 +199,12 @@ class ContentRelationsDiscoveryService
             foreach ($sources as $source) {
                 $submissionArray[SubmissionEntity::FIELD_CONTENT_TYPE] = $source['type'];
                 $submissionArray[SubmissionEntity::FIELD_SOURCE_ID] = (int)$source['id'];
-                $existing = ArrayHelper::first($this->submissionManager->find([
-                    SubmissionEntity::FIELD_CONTENT_TYPE => $submissionArray[SubmissionEntity::FIELD_CONTENT_TYPE],
-                    SubmissionEntity::FIELD_SOURCE_ID => $submissionArray[SubmissionEntity::FIELD_SOURCE_ID],
-                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submissionArray[SubmissionEntity::FIELD_SOURCE_BLOG_ID],
-                    SubmissionEntity::FIELD_TARGET_BLOG_ID => $submissionArray[SubmissionEntity::FIELD_TARGET_BLOG_ID],
-                ]));
+                $existing = $this->submissionManager->findTargetBlogSubmission(
+                    $submissionArray[SubmissionEntity::FIELD_CONTENT_TYPE],
+                    $submissionArray[SubmissionEntity::FIELD_SOURCE_BLOG_ID],
+                    $submissionArray[SubmissionEntity::FIELD_SOURCE_ID],
+                    $submissionArray[SubmissionEntity::FIELD_TARGET_BLOG_ID],
+                );
                 if ($existing instanceof SubmissionEntity) {
                     $submission = $existing;
                     if ($submission->isLocked()) {
@@ -595,12 +595,10 @@ class ContentRelationsDiscoveryService
             foreach ($detectedReferences as $detectedContentType => $ids) {
                 if (in_array($detectedContentType, array_merge($this->contentTypeManager->getRegisteredContentTypes(), $this->externalContentManager->getExternalContentTypes()), true)) {
                     foreach ($ids as $detectedId) {
-                        if ($detectedId === null) {
-                            $this->getLogger()->notice("Null id passed when processing detected references detectedContentType=\"$detectedContentType\"");
-                        } elseif (!$this->submissionManager->submissionExistsNoLastError($detectedContentType, $curBlogId, $detectedId, $targetBlogId)) {
+                        if (!$this->submissionManager->submissionExistsNoLastError($detectedContentType, $curBlogId, $detectedId, $targetBlogId)) {
                             $responseData->addMissingReference($targetBlogId, $detectedContentType, $detectedId);
                         } else {
-                            $this->getLogger()->debug("Skipped adding related item id=$detectedId: submission exists");
+                            $this->getLogger()->debug("Skipped adding relatedId=$detectedId for sourceContentId=$id, blogId=$targetBlogId: submission exists");
                         }
                     }
                 } else {
