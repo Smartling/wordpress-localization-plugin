@@ -97,18 +97,11 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
                     return $result;
                 }
             }
-            $sourcePostId = $this->wordpressProxy->url_to_postid($path);
-            if ($sourcePostId !== 0) {
-                $submission = $this->submissionManager->findOne([
-                    SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
-                    SubmissionEntity::FIELD_SOURCE_ID => $sourcePostId,
-                ]);
-                if ($submission !== null) {
-                    $newPath = $this->wordpressProxy->get_blog_permalink($targetBlogId, $submission->getTargetId());
-                    $replacer->addReplacementPair(new ReplacementPair($path, $newPath));
-                    $this->getLogger()->debug(sprintf('%s has replaced URL fromUrl="%s" toUrl="%s"', __CLASS__, $path, $newPath));
-                    return $result;
-                }
+
+            $newPath = $this->wordpressLinkHelper->getTargetBlogLink($path, $targetBlogId);
+            if ($newPath !== null) {
+                $replacer->addReplacementPair(new ReplacementPair($path, $newPath));
+                return $result;
             }
         }
 
@@ -158,12 +151,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
         return $ids;
     }
 
-    /**
-     * Recursively processes all found strings
-     *
-     * @param array|string $stringValue
-     */
-    protected function processString(&$stringValue): void
+    protected function processString(array|string &$stringValue): void
     {
         $replacer = new PairReplacerHelper();
         if (is_array($stringValue)) {

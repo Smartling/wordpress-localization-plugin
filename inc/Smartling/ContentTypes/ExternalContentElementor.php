@@ -6,6 +6,7 @@ use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Helpers\WordpressLinkHelper;
 use Smartling\Models\ExternalData;
 use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Submissions\SubmissionEntity;
@@ -18,8 +19,6 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     public const CONTENT_TYPE_ELEMENTOR_LIBRARY = 'elementor_library';
     protected const META_FIELD_NAME = '_elementor_data';
     private const PROPERTY_TEMPLATE_ID = 'templateID';
-    private ContentTypeHelper $contentTypeHelper;
-    private FieldsFilterHelper $fieldsFilterHelper;
 
     private array $copyFields = [
         '_elementor_controls_usage',
@@ -129,16 +128,15 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     ];
 
     public function __construct(
-        ContentTypeHelper $contentTypeHelper,
-        FieldsFilterHelper $fieldsFilterHelper,
+        private ContentTypeHelper $contentTypeHelper,
+        private FieldsFilterHelper $fieldsFilterHelper,
         PluginHelper $pluginHelper,
         SubmissionManager $submissionManager,
-        WordpressFunctionProxyHelper $wpProxy
+        WordpressFunctionProxyHelper $wpProxy,
+        private WordpressLinkHelper $wpLinkHelper,
     )
     {
         parent::__construct($pluginHelper, $submissionManager, $wpProxy);
-        $this->contentTypeHelper = $contentTypeHelper;
-        $this->fieldsFilterHelper = $fieldsFilterHelper;
     }
 
     public function alterContentFieldsForUpload(array $source): array
@@ -292,10 +290,16 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                         continue;
                     }
                     if (is_array($setting)) {
-                        if (array_key_exists('id', $setting) && array_key_exists('url', $setting) && is_int($setting['id']) && ($setting['source'] ?? '') === 'library') {
-                            $targetAttachmentId = $this->getTargetId($submission->getSourceBlogId(), $setting['id'], $submission->getTargetBlogId());
-                            if ($targetAttachmentId !== null) {
-                                $original[$componentIndex]['settings'][$settingIndex]['id'] = $targetAttachmentId;
+                        if (array_key_exists('url', $setting)) {
+                            if (array_key_exists('id', $setting) && is_int($setting['id']) && ($setting['source'] ?? '') === 'library') {
+                                $targetAttachmentId = $this->getTargetId($submission->getSourceBlogId(), $setting['id'], $submission->getTargetBlogId());
+                                if ($targetAttachmentId !== null) {
+                                    $original[$componentIndex]['settings'][$settingIndex]['id'] = $targetAttachmentId;
+                                }
+                            }
+                            $newPath = $this->wpLinkHelper->getTargetBlogLink($setting['url'], $submission->getTargetBlogId());
+                            if ($newPath !== null) {
+                                $original[$componentIndex]['settings'][$settingIndex]['url'] = $newPath;
                             }
                         } else {
                             foreach ($setting as $optionIndex => $option) {
