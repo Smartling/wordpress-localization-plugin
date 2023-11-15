@@ -171,7 +171,7 @@ class ContentHelper
         }
 
         $this->ensureRestoredBlogId();
-        do_action(ExportedAPI::ACTION_AFTER_TARGET_CONTENT_WRITTEN);
+        do_action(ExportedAPI::ACTION_AFTER_TARGET_CONTENT_WRITTEN, $submission);
 
         return $result;
     }
