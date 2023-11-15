@@ -453,7 +453,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return (string)$this->stateFields[static::FIELD_FILE_URI];
     }
 
-    public function setFileUri(string $fileUri): void
+    public function setFileUri(?string $fileUri): void
     {
         $this->stateFields[static::FIELD_FILE_URI] = $fileUri;
     }
