@@ -377,7 +377,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return (string)$source_title;
     }
 
-    public function setSourceTitle(string $source_title): SubmissionEntity
+    public function setSourceTitle(?string $source_title): SubmissionEntity
     {
         $this->stateFields[static::FIELD_SOURCE_TITLE] = $source_title;
 

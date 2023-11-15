@@ -77,7 +77,7 @@ class FileUriHelper
         return $fileUri;
     }
 
-    private function preparePermalink(mixed $string, string $title): string
+    public function preparePermalink(mixed $string, string $title): string
     {
         if ($title === '') {
             $title = self::UNTITLED;
