@@ -182,7 +182,7 @@ namespace Smartling\Tests\Services {
             $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
 
             $expectedTitles = array_map(static function ($id) use ($titlePrefix) {
-                return [$titlePrefix . $id];
+                return $titlePrefix . $id;
             }, $sourceIds);
 
             $submission = $this->createMock(SubmissionEntity::class);
@@ -190,8 +190,9 @@ namespace Smartling\Tests\Services {
             $submission->expects(self::exactly(count($sourceIds)))->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
             $matcherSubmission = $this->exactly(count($sourceIds));
             $submission->expects($matcherSubmission)->method('setSourceTitle')
-                ->willReturnCallback(function () use ($expectedTitles, $matcherSubmission) {
-                    return $expectedTitles[$matcherSubmission->getInvocationCount() - 1];
+                ->willReturnCallback(function ($actual) use ($expectedTitles, $matcherSubmission, $submission) {
+                    $this->assertEquals($expectedTitles[$matcherSubmission->getInvocationCount() - 1], $actual);
+                    return $submission;
                 });
             $submission->method('getId')->willReturn(48, 49);
 
