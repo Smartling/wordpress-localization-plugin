@@ -102,7 +102,7 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
                         [
                             'href' => '#',
                             'onCLick'  => sprintf(
-                                "if (window.confirm('This will set cancel upload for %d submissions, and is generally meant for accidentally added content that is never intended for translation. Reverting this is possible from Translation Progress screen.')) {fetch('%s').then(document.location.reload())} return false;",
+                                "if (window.confirm('This will cancel upload for %d submissions. Upload purge is generally meant for accidentally added content that is never intended for translation. Reverting cancelled submission status is possible from Translation Progress screen.')) {fetch('%s').then(document.location.reload())} return false;",
                                 $newSubmissionsCount,
                                 sprintf(
                                     admin_url('admin-post.php') . '?action=cnq&_c_action=%s&argument=%s',
