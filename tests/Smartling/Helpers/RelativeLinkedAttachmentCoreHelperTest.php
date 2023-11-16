@@ -18,8 +18,8 @@ use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 
 class RelativeLinkedAttachmentCoreHelperTest extends TestCase
 {
-    private $sourceBlogId = 3;
-    private $targetBlogId = 5;
+    private int $sourceBlogId = 3;
+    private int $targetBlogId = 5;
 
     protected function setUp(): void
     {
@@ -165,7 +165,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
             $this->createMock(AcfDynamicSupport::class),
             $submissionManager,
             $wordpressProxy,
-            $this->createMock(WordpressLinkHelper::class),
+            new WordpressLinkHelper($submissionManager, $wordpressProxy),
         );
 
         $submission = $this->getSubmission();

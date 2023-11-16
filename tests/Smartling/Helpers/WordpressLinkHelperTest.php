@@ -9,7 +9,7 @@ use Smartling\Submissions\SubmissionManager;
 class WordpressLinkHelperTest extends TestCase {
 
     /**
-     * @dataProvider testGetTargetBlogLinkProvider
+     * @dataProvider getTargetBlogLinkProvider
      */
     public function testGetTargetBlogLink(string|false $getBlogPermalinkResult, ?string $expected)
     {
@@ -35,7 +35,7 @@ class WordpressLinkHelperTest extends TestCase {
         $this->assertEquals($expected, $x->getTargetBlogLink('https://example.com/?post=1', $targetBlogId));
     }
 
-    public function testGetTargetBlogLinkProvider(): array
+    public function getTargetBlogLinkProvider(): array
     {
         return [
             'Target exists' => [
