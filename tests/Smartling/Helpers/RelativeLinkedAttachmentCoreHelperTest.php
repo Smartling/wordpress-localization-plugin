@@ -52,6 +52,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
             $acf,
             $submissionManager,
             $this->createMock(WordpressFunctionProxyHelper::class),
+            $this->createMock(WordpressLinkHelper::class),
         ])->onlyMethods([])->getMock();
         $source = [$string];
         $meta = [];
@@ -102,6 +103,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
             $acf,
             $this->createMock(SubmissionManager::class),
             $this->createMock(WordpressFunctionProxyHelper::class),
+            $this->createMock(WordpressLinkHelper::class),
         ])->onlyMethods([])->getMock();
 
         $source = [$string];
