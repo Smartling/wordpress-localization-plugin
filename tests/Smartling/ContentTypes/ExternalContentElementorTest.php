@@ -316,7 +316,6 @@ and management of:',
         $translatedSubmission->method('getSourceBlogId')->willReturn($sourceBlogId);
         $translatedSubmission->method('getTargetBlogId')->willReturn($targetBlogId);
         $submissionManager = $this->createMock(SubmissionManager::class);
-
         $matcher = $this->exactly(5);
         $submissionManager->expects($matcher)->method('findOne')->willReturnCallback(
             function ($value) use (
@@ -384,7 +383,7 @@ and management of:',
             }
         );
 
-        $x = $this->getExternalContentElementor(null, $submissionManager);
+        $x = $this->getExternalContentElementor($this->createMock(WordpressFunctionProxyHelper::class), $submissionManager);
 
         $this->assertEquals(
             ['meta' => ['_elementor_data' => '[]']],
