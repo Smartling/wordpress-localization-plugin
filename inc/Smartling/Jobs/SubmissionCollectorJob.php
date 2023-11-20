@@ -4,6 +4,7 @@ namespace Smartling\Jobs;
 
 use Smartling\ApiWrapperInterface;
 use Smartling\Helpers\Cache;
+use Smartling\Helpers\FileUriHelper;
 use Smartling\Queue\Queue;
 use Smartling\Queue\QueueInterface;
 use Smartling\Settings\SettingsManager;
@@ -17,6 +18,7 @@ class SubmissionCollectorJob extends JobAbstract
     public function __construct(
         ApiWrapperInterface $api,
         Cache $cache,
+        private FileUriHelper $fileUriHelper,
         SettingsManager $settingsManager,
         SubmissionManager $submissionManager,
         int $throttleIntervalSeconds,
@@ -47,7 +49,7 @@ class SubmissionCollectorJob extends JobAbstract
                 break;
             }
             foreach ($submissions as $submission) {
-                $submission->generateFileUri();
+                $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
             }
             $this->submissionManager->storeSubmissions($submissions);
         } while (0 < count($submissions));

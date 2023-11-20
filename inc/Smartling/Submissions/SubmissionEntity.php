@@ -3,15 +3,8 @@
 namespace Smartling\Submissions;
 
 use InvalidArgumentException;
-use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingEntityAbstract;
-use Smartling\Exception\BlogNotFoundException;
-use Smartling\Exception\SmartlingDirectRunRuntimeException;
-use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Exception\SmartlingSubmissionsProcessingException;
-use Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater;
-use Smartling\Helpers\FileUriHelper;
-use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\TextHelper;
 use Smartling\Helpers\WordpressUserHelper;
 use Smartling\Jobs\JobEntity;
@@ -384,7 +377,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return (string)$source_title;
     }
 
-    public function setSourceTitle(string $source_title): SubmissionEntity
+    public function setSourceTitle(?string $source_title): SubmissionEntity
     {
         $this->stateFields[static::FIELD_SOURCE_TITLE] = $source_title;
 
@@ -457,52 +450,12 @@ class SubmissionEntity extends SmartlingEntityAbstract
 
     public function getFileUri(): string
     {
-        if (empty($this->stateFields[static::FIELD_FILE_URI])) {
-            /** @noinspection JsonEncodingApiUsageInspection, it's ok to have no backtrace, this is for debugging to untangle this function into proper get and set pair */
-            $this->logger->warning("Set file uri on get, backtrace: " . json_encode(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)));
-            try {
-                $this->generateFileUri();
-            } catch (\Exception $e) {
-                $this->logger->error(sprintf("Failed to generate file uri for submissionId=%s: %s", $this->getId(), $e->getMessage()));
-            }
-        }
-
-        return $this->stateFields[static::FIELD_FILE_URI];
+        return (string)$this->stateFields[static::FIELD_FILE_URI];
     }
 
-    protected function setFileUri(?string $file_uri): SubmissionEntity
+    public function setFileUri(?string $fileUri): void
     {
-        $this->stateFields[static::FIELD_FILE_URI] = $file_uri;
-
-        return $this;
-    }
-
-    /**
-     * @throws SmartlingDirectRunRuntimeException
-     * @throws SmartlingInvalidFactoryArgumentException
-     * @throws BlogNotFoundException
-     */
-    public function generateFileUri(): self
-    {
-        $fileUri = FileUriHelper::generateFileUri($this);
-
-        $filterParams = (new SmartlingFileUriFilterParamater())
-            ->setContentType($this->getContentType())
-            ->setFileUri($fileUri)
-            ->setSourceBlogId($this->getSourceBlogId())
-            ->setSourceContentId($this->getSourceId());
-
-        $filterParams = apply_filters(ExportedAPI::FILTER_SMARTLING_FILE_URI, $filterParams);
-
-        if (($filterParams instanceof SmartlingFileUriFilterParamater)
-            && !StringHelper::isNullOrEmpty($filterParams->getFileUri())
-        ) {
-            $fileUri = $filterParams->getFileUri();
-        }
-
         $this->stateFields[static::FIELD_FILE_URI] = $fileUri;
-
-        return $this;
     }
 
     public function getTargetLocale(): string

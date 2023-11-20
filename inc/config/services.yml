@@ -143,6 +143,7 @@ services:
     class: Smartling\Base\SmartlingCore
     arguments:
       - "@manager.content.external"
+      - "@file.uri.helper"
       - "@helper.gutenberg"
       - "@helper.post.content"
       - "@helper.xml"
@@ -199,6 +200,12 @@ services:
     class: Smartling\ContentTypes\ContentTypeHelper
     arguments:
       - "@wp.proxy"
+
+  file.uri.helper:
+    class: Smartling\Helpers\FileUriHelper
+    arguments:
+      - "@factory.contentIO"
+      - "@site.helper"
 
   site.helper:
     class: Smartling\Helpers\SiteHelper
@@ -422,6 +429,7 @@ services:
   translation.helper:
     class: Smartling\Helpers\TranslationHelper
     arguments:
+      - "@file.uri.helper"
       - "@multilang.proxy"
       - "@site.helper"
       - "@manager.submission"
@@ -482,6 +490,7 @@ services:
       - "@content.helper"
       - "@content-type-descriptor-manager"
       - "@fields-filter.helper"
+      - "@file.uri.helper"
       - "@meta-field.processor.manager"
       - "@multilang.proxy"
       - "@smartling.helper.absolute-image-path-support"

@@ -20,7 +20,6 @@ namespace Smartling\Tests\Services {
     use Smartling\ApiWrapper;
     use Smartling\ApiWrapperInterface;
     use Smartling\Bootstrap;
-    use Smartling\ContentTypes\ContentTypeHelper;
     use Smartling\ContentTypes\ContentTypeManager;
     use Smartling\ContentTypes\ContentTypeNavigationMenu;
     use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
@@ -36,6 +35,7 @@ namespace Smartling\Tests\Services {
     use Smartling\Helpers\ContentHelper;
     use Smartling\Helpers\CustomMenuContentTypeHelper;
     use Smartling\Helpers\FieldsFilterHelper;
+    use Smartling\Helpers\FileUriHelper;
     use Smartling\Helpers\GutenbergBlockHelper;
     use Smartling\Helpers\GutenbergReplacementRule;
     use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\PostBasedProcessor;
@@ -182,28 +182,33 @@ namespace Smartling\Tests\Services {
             $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
 
             $expectedTitles = array_map(static function ($id) use ($titlePrefix) {
-                return [$titlePrefix . $id];
+                return $titlePrefix . $id;
             }, $sourceIds);
 
             $submission = $this->createMock(SubmissionEntity::class);
             $submission->expects(self::exactly(count($sourceIds)))->method('setBatchUid')->with($batchUid);
             $submission->expects(self::exactly(count($sourceIds)))->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
-            $submission->expects(self::exactly(count($sourceIds)))->method('setSourceTitle')->withConsecutive(...$expectedTitles);
+            $matcherSubmission = $this->exactly(count($sourceIds));
+            $submission->expects($matcherSubmission)->method('setSourceTitle')
+                ->willReturnCallback(function ($actual) use ($expectedTitles, $matcherSubmission, $submission) {
+                    $this->assertEquals($expectedTitles[$matcherSubmission->getInvocationCount() - 1], $actual);
+                    return $submission;
+                });
             $submission->method('getId')->willReturn(48, 49);
 
             $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
 
-            $submissionManager->expects(self::exactly(count($sourceIds)))->method('find')->withConsecutive([[
-                'source_blog_id' => $sourceBlogId,
-                'target_blog_id' => $targetBlogId,
-                'content_type' => $contentType,
-                'source_id' => $sourceIds[0],
-            ]], [[
-                'source_blog_id' => $sourceBlogId,
-                'target_blog_id' => $targetBlogId,
-                'content_type' => $contentType,
-                'source_id' => $sourceIds[1],
-            ]])->willReturn([$submission]);
+            $matcherSubmissionManager = $this->exactly(count($sourceIds));
+            $submissionManager->expects($matcherSubmissionManager)->method('findTargetBlogSubmission')
+                ->willReturnCallback(function ($callContentType, $callSourceBlogId, $callContentId, $callTargetBlogId)
+                use ($contentType, $matcherSubmissionManager, $sourceBlogId, $sourceIds, $submission, $targetBlogId) {
+                    $this->assertEquals($sourceBlogId, $callSourceBlogId);
+                    $this->assertEquals($targetBlogId, $callTargetBlogId);
+                    $this->assertEquals($contentType, $callContentType);
+                    $this->assertEquals($sourceIds[$matcherSubmissionManager->getInvocationCount() - 1], $callContentId);
+
+                    return $submission;
+                });
 
             $submissionManager->expects(self::never())->method('getSubmissionEntity')->with([$contentType, $sourceBlogId]);
 
@@ -282,21 +287,21 @@ namespace Smartling\Tests\Services {
             $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
 
             $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
-            $submissionManager->method('find')->willReturnCallback(function ($params) use ($menuSubmission, $menuItemSubmissions): array {
-                switch ($params[SubmissionEntity::FIELD_CONTENT_TYPE]) {
-                    case ContentTypeNavigationMenu::WP_CONTENT_TYPE:
-                        return [$menuSubmission];
-                    case ContentTypeNavigationMenuItem::WP_CONTENT_TYPE:
-                        foreach ($menuItemSubmissions as $submission) {
-                            if ($submission->getSourceId() === $params[SubmissionEntity::FIELD_SOURCE_ID]) {
-                                return [$submission];
+            $submissionManager->method('findTargetBlogSubmission')->willReturnCallback(
+                function ($contentType, $sourceBlogId, $contentId) use ($menuSubmission, $menuItemSubmissions) {
+                    switch ($contentType) {
+                        case ContentTypeNavigationMenu::WP_CONTENT_TYPE:
+                            return $menuSubmission;
+                        case ContentTypeNavigationMenuItem::WP_CONTENT_TYPE:
+                            foreach ($menuItemSubmissions as $submission) {
+                                if ($submission->getSourceId() === $contentId) {
+                                    return $submission;
+                                }
                             }
-                        }
-                        return $menuItemSubmissions;
-                    default:
-                        return [];
-                }
-            });
+                            break;
+                    }
+                    return null;
+                });
             $submissionManager->method('storeEntity')->willReturnCallback(function (SubmissionEntity $submission) use (&$unsavedSubmissionIds) {
                 $unsavedSubmissionIds = array_filter($unsavedSubmissionIds, static function ($item) use ($submission) {
                     return $item !== $submission->getSourceId();
@@ -321,6 +326,7 @@ namespace Smartling\Tests\Services {
                 $contentHelper,
                 $this->createMock(ContentTypeManager::class),
                 $this->createMock(FieldsFilterHelper::class),
+                $this->createMock(FileUriHelper::class),
                 $this->createMock(MetaFieldProcessorManager::class),
                 $this->createMock(LocalizationPluginProxyInterface::class),
                 $this->createMock(AbsoluteLinkedAttachmentCoreHelper::class),
@@ -797,6 +803,7 @@ namespace Smartling\Tests\Services {
                 $contentHelper,
                 $contentTypeManager,
                 $fieldsFilterHelper,
+                $this->createMock(FileUriHelper::class),
                 $metaFieldProcessorManager,
                 $this->createMock(LocalizationPluginProxyInterface::class),
                 $this->createMock(AbsoluteLinkedAttachmentCoreHelper::class),
