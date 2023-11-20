@@ -64,6 +64,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 = 3.6.2 =
 * Added ExportedApi::ACTION_AFTER_TARGET_CONTENT_WRITTEN. This action is invoked after target content has been written to the WordPress database, both after translation and cloning
+* Added Elementor links rewrite. The plugin will now try to replace links to known content in the target site
 
 = 3.6.1 =
 * Added confirmation for upload queue purge
