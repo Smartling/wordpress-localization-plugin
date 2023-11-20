@@ -3,6 +3,8 @@
 namespace Smartling\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Smartling\Helpers\SiteHelper;
+use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 use Smartling\Tests\Traits\SubmissionEntityMock;
@@ -15,24 +17,11 @@ class FileUriHelperTest extends TestCase
 
     /**
      * @dataProvider preparePermalinkDataProvider
-     *
-     * @param mixed $string
-     * @param SubmissionEntity $entity
-     * @param string $expectedValue
      */
-    public function testPreparePermalink($string, SubmissionEntity $entity, string $expectedValue)
+    public function testPreparePermalink(mixed $string, SubmissionEntity $entity, string $expectedValue): void
     {
-        self::assertEquals(
-            $this->invokeStaticMethod(
-                FileUriHelper::class,
-                'preparePermalink',
-                [
-                    $string,
-                    $entity,
-                ]
-            ),
-            $expectedValue
-        );
+        $x = new FileUriHelper($this->createMock(ContentEntitiesIOFactory::class), $this->createMock(SiteHelper::class));
+        $this->assertEquals($expectedValue, $x->preparePermalink($string, $entity->getSourceTitle(false)));
     }
 
     protected function getPreparedSubmissionEntityMock($title, $type, $blogId, $contentId)

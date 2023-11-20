@@ -1,110 +1,96 @@
 <?php
 namespace Smartling\Helpers;
 
-use InvalidArgumentException;
-use Smartling\Bootstrap;
-
+use Smartling\Base\ExportedAPI;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
-
-use Smartling\Exception\BlogNotFoundException;
-use Smartling\Exception\SmartlingConfigException;
-use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
+use Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
 
 class FileUriHelper
 {
-    private static function checkSubmission(SubmissionEntity $submission): void
-    {
-        if (StringHelper::isNullOrEmpty($submission->getSourceTitle(false))) {
-            $submission->setSourceTitle('UNTITLED');
-        }
+    use LoggerSafeTrait;
+
+    private const FILE_URI_FORMAT = '%s_%s_%s_%s.xml';
+    private const MAX_PERMALINK_LENGTH = 210;
+    private const UNTITLED = 'UNTITLED';
+
+    public function __construct(
+        private ContentEntitiesIOFactory $ioFactory,
+        private SiteHelper $siteHelper,
+    ) {
     }
 
-    private static function preparePermalink(mixed $string, SubmissionEntity $entity): string
-    {
-        self::checkSubmission($entity);
-        $fallBack = rtrim($entity->getSourceTitle(false), '/');
-        if (is_string($string)) {
-            $pathinfo = parse_url($string);
-            if (false !== $pathinfo) {
-                $path = rtrim($pathinfo['path'], '/');
-                if (StringHelper::isNullOrEmpty($path)) {
-                    return $fallBack;
-                }
+    private function buildFileUri(SubmissionEntity $submission): string {
+        try {
+            $wrapper = $this->ioFactory->getMapper($submission->getContentType());
+        } catch (SmartlingInvalidFactoryArgumentException $e) {
+            $this->getLogger()->notice(sprintf(
+                'ContentType=%s is not registered, expected one of %s',
+                $submission->getContentType(),
+                implode(',' , array_keys($this->ioFactory->getCollection()))
+            ));
+            throw $e;
+        }
+        if ($wrapper instanceof TaxonomyEntityStd) {
+            $permalink = $this->preparePermalink(get_term_link($submission->getSourceId()), $submission->getSourceTitle());
+        } elseif ($wrapper instanceof PostEntityStd) {
+            $permalink = $this->preparePermalink(get_permalink($submission->getSourceId()), $submission->getSourceTitle());
+        } else {
+            $permalink = $this->preparePermalink('', $submission->getSourceTitle());
+        }
 
-                return $path;
+        return sprintf(
+            self::FILE_URI_FORMAT,
+            trim(TextHelper::mb_wordwrap($permalink, self::MAX_PERMALINK_LENGTH), "\n\r\t,. -_\0\x0B"),
+            $submission->getContentType(),
+            $submission->getSourceBlogId(),
+            $submission->getSourceId(),
+        );
+    }
+
+    public function generateFileUri(SubmissionEntity $submission): string {
+        if ($this->siteHelper->getCurrentBlogId() !== $submission->getSourceBlogId()) {
+            $fileUri = $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($submission) {
+                return $this->buildFileUri($submission);
+            });
+        } else {
+            $fileUri = $this->buildFileUri($submission);
+        }
+
+        $filterParams = (new SmartlingFileUriFilterParamater())
+            ->setContentType($submission->getContentType())
+            ->setFileUri($fileUri)
+            ->setSourceBlogId($submission->getSourceBlogId())
+            ->setSourceContentId($submission->getSourceId());
+
+        $filterParams = apply_filters(ExportedAPI::FILTER_SMARTLING_FILE_URI, $filterParams);
+
+        if (($filterParams instanceof SmartlingFileUriFilterParamater)
+            && !StringHelper::isNullOrEmpty($filterParams->getFileUri())
+        ) {
+            $fileUri = $filterParams->getFileUri();
+        }
+
+        return $fileUri;
+    }
+
+    public function preparePermalink(mixed $string, string $title): string
+    {
+        if ($title === '') {
+            $title = self::UNTITLED;
+        }
+        $fallBack = rtrim($title , '/');
+        if (is_string($string)) {
+            $pathInfo = parse_url($string);
+            if (is_array($pathInfo) && array_key_exists('path', $pathInfo)) {
+                $path = rtrim($pathInfo['path'], '/');
+                return $path === '' ? $fallBack : $path;
             }
         }
 
         return $fallBack;
-    }
-
-    private static function getSiteHelper(): SiteHelper
-    {
-        $id = 'site.helper';
-        $result = Bootstrap::getContainer()->get($id);
-        if (!$result instanceof SiteHelper) {
-            throw new SmartlingConfigException("$id is expected to be " . SiteHelper::class);
-        }
-        return $result;
-    }
-
-    private static function getIoFactory(): ContentEntitiesIOFactory
-    {
-        $id = 'factory.contentIO';
-        $result = Bootstrap::getContainer()->get($id);
-        if (!$result instanceof ContentEntitiesIOFactory) {
-            throw new SmartlingConfigException("$id is expected to be " . ContentEntitiesIOFactory::class);
-        }
-        return $result;
-    }
-
-    /**
-     * @throws BlogNotFoundException
-     * @throws SmartlingInvalidFactoryArgumentException
-     * @throws SmartlingDirectRunRuntimeException
-     * @throws InvalidArgumentException
-     */
-    public static function generateFileUri(SubmissionEntity $submission): string
-    {
-        $ioFactory = self::getIoFactory();
-        $siteHelper = self::getSiteHelper();
-
-        $ioWrapper = $ioFactory->getMapper($submission->getContentType());
-
-        $needBlogSwitch = $siteHelper->getCurrentBlogId() !== $submission->getSourceBlogId();
-
-        if ($needBlogSwitch) {
-            $siteHelper->switchBlogId($submission->getSourceBlogId());
-        }
-
-        if ($ioWrapper instanceof TaxonomyEntityStd) {
-            /* term-based content */
-            $permalink = self::preparePermalink(get_term_link($submission->getSourceId()), $submission);
-        } elseif ($ioWrapper instanceof PostEntityStd) {
-            /* post-based content */
-            $permalink = self::preparePermalink(get_permalink($submission->getSourceId()), $submission);
-        } else {
-            $permalink = self::preparePermalink('', $submission);
-        }
-
-        $fileUri = vsprintf(
-            '%s_%s_%s_%s.xml',
-            [
-                trim(TextHelper::mb_wordwrap($permalink, 210), "\n\r\t,. -_\0\x0B"),
-                $submission->getContentType(),
-                $submission->getSourceBlogId(),
-                $submission->getSourceId(),
-            ]
-        );
-
-        if ($needBlogSwitch) {
-            $siteHelper->restoreBlogId();
-        }
-
-        return $fileUri;
     }
 }

@@ -196,6 +196,11 @@ interface ExportedAPI
     /**
      * @param SubmissionEntity
      */
+    public const ACTION_AFTER_TARGET_CONTENT_WRITTEN = 'smartling_action_after_target_content_written';
+
+    /**
+     * @param SubmissionEntity
+     */
     public const ACTION_AFTER_TRANSLATION_APPLIED = 'smartling_action_after_translation_applied';
 
     /**

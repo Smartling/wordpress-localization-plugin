@@ -38,6 +38,7 @@ services:
     arguments:
       - "@api.wrapper.with.retries"
       - "@transient.cache"
+      - "@file.uri.helper"
       - "@manager.settings"
       - "@manager.submission"
       - "%cron.interval.throttle%"

@@ -70,7 +70,8 @@ trait SmartlingCoreUploadTrait
     private function setFileUriIfNullId(SubmissionEntity $submission): SubmissionEntity
     {
         if (null === $submission->getId()) {
-            $submission = $this->getSubmissionManager()->storeEntity($submission->generateFileUri());
+            $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
+            $submission = $this->getSubmissionManager()->storeEntity($submission);
         }
 
         return $submission;
@@ -417,7 +418,7 @@ trait SmartlingCoreUploadTrait
         $submissionHasBatchUid = !StringHelper::isNullOrEmpty($submission->getBatchUid());
         $profile = $this->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
         try {
-            $submission->generateFileUri();
+            $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
             $submission = $this->getSubmissionManager()->storeEntity($submission);
             $xml = $this->getXMLFiltered($submission);
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
@@ -452,7 +453,7 @@ trait SmartlingCoreUploadTrait
                  */
                 $submissionFields = $_submission->toArray(false);
                 if (StringHelper::isNullOrEmpty($submissionFields[SubmissionEntity::FIELD_FILE_URI])) {
-                    $_submission->generateFileUri();
+                    $_submission->setFileUri($this->fileUriHelper->generateFileUri($_submission));
                     $_submission = $this->getSubmissionManager()->storeEntity($_submission);
                 }
                 unset ($submissionFields);
@@ -659,7 +660,7 @@ trait SmartlingCoreUploadTrait
         try {
             if (1 === $submission->getIsCloned()) {
                 $xml = $this->getXMLFiltered($submission);
-                $submission->generateFileUri();
+                $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                 $submission = $this->getSubmissionManager()->storeEntity($submission);
                 $this->applyXML($submission, $xml, $this->xmlHelper, $this->postContentHelper);
@@ -710,7 +711,6 @@ trait SmartlingCoreUploadTrait
             );
 
             $this->handleBadBlogId($submission);
-
         } catch (Exception $e) {
             $this->getSubmissionManager()->setErrorMessage(
                 $submission, vsprintf('Error occurred: %s', [$e->getMessage()])
@@ -740,7 +740,7 @@ trait SmartlingCoreUploadTrait
         if (null === $submission->getId()) {
             $submission->setSourceContentHash('');
             $submission->setSourceTitle($contentEntity->getTitle());
-            $submission->generateFileUri();
+            $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
         } elseif (0 === $submission->getIsLocked()) {
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
         } else {

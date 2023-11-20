@@ -9,6 +9,7 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
+use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
@@ -55,11 +56,12 @@ class SmartlingCoreTest extends TestCase
         );
         $this->core = new SmartlingCore(
             new ExternalContentManager(),
+            $this->createMock(FileUriHelper::class),
             $gutenbergBlockHelper,
             new PostContentHelper($gutenbergBlockHelper),
             new XmlHelper(new SerializerJsonWithFallback()),
             $this->createMock(TestRunHelper::class),
-            $wpProxy
+            $wpProxy,
         );
     }
 

@@ -8,6 +8,7 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DateTimeHelper;
+use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\TestRunHelper;
@@ -23,16 +24,15 @@ class SmartlingCore extends SmartlingCoreAbstract
     use SmartlingCoreExportApi;
     use CommonLogMessagesTrait;
 
-    private ExternalContentManager $externalContentManager;
-    private GutenbergBlockHelper $gutenbergBlockHelper;
-    private PostContentHelper $postContentHelper;
-    private TestRunHelper $testRunHelper;
-    private XmlHelper $xmlHelper;
-    private WordpressFunctionProxyHelper $wpProxy;
-
-
-    public function __construct(ExternalContentManager $externalContentManager, GutenbergBlockHelper $gutenbergBlockHelper, PostContentHelper $postContentHelper, XmlHelper $xmlHelper, TestRunHelper $testRunHelper, WordpressFunctionProxyHelper $wpProxy)
-    {
+    public function __construct(
+        private ExternalContentManager $externalContentManager,
+        private FileUriHelper $fileUriHelper,
+        private GutenbergBlockHelper $gutenbergBlockHelper,
+        private PostContentHelper $postContentHelper,
+        private XmlHelper $xmlHelper,
+        private TestRunHelper $testRunHelper,
+        private WordpressFunctionProxyHelper $wpProxy,
+    ) {
         parent::__construct();
 
         add_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, [$this, 'cloneContent']);
@@ -42,18 +42,6 @@ class SmartlingCore extends SmartlingCoreAbstract
         add_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, [$this, 'regenerateTargetThumbnailsBySubmission']);
         add_filter(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, [$this, 'prepareTargetContent']);
         add_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, [$this, 'syncAttachment']);
-        $this->externalContentManager = $externalContentManager;
-        $this->gutenbergBlockHelper = $gutenbergBlockHelper;
-        $this->postContentHelper = $postContentHelper;
-        /** @noinspection UnusedConstructorDependenciesInspection */
-        /** @see SmartlingCoreUploadTrait::applyXML() */
-        $this->testRunHelper = $testRunHelper;
-        /** @noinspection UnusedConstructorDependenciesInspection */
-        /** @see SmartlingCoreUploadTrait::readLockedTranslationFieldsBySubmission */
-        $this->wpProxy = $wpProxy;
-        /** @noinspection UnusedConstructorDependenciesInspection */
-        /** @see SmartlingCoreUploadTrait::getXMLFiltered() */
-        $this->xmlHelper = $xmlHelper;
     }
 
     public function cloneContent(SubmissionEntity $submission): void

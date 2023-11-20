@@ -21,7 +21,9 @@ use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\CustomMenuContentTypeHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\MetaFieldProcessor\DefaultMetaFieldProcessor;
 use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorAbstract;
 use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
@@ -34,7 +36,6 @@ use Smartling\Models\DetectedRelations;
 use Smartling\Models\GutenbergBlock;
 use Smartling\Models\JobInformation;
 use Smartling\Models\UserTranslationRequest;
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Replacers\ContentIdReplacer;
 use Smartling\Replacers\ReplacerFactory;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -43,78 +44,35 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionFactory;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tuner\MediaAttachmentRulesManager;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 
 class ContentRelationsDiscoveryService
 {
+    use LoggerSafeTrait;
     public const POST_BASED_PROCESSOR = 'PostBasedProcessor';
-    private AcfDynamicSupport $acfDynamicSupport;
-    private ContentTypeManager $contentTypeManager;
-    private ExternalContentManager $externalContentManager;
-    private LoggerInterface $logger;
-    private ContentHelper $contentHelper;
-    private FieldsFilterHelper $fieldFilterHelper;
-    private MediaAttachmentRulesManager $mediaAttachmentRulesManager;
-    private MetaFieldProcessorManager $metaFieldProcessorManager;
-    private ReplacerFactory $replacerFactory;
-    private AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper;
-    private ShortcodeHelper $shortcodeHelper;
-    private GutenbergBlockHelper $gutenbergBlockHelper;
-    private SubmissionFactory $submissionFactory;
-    private SubmissionManager $submissionManager;
-    private ApiWrapperInterface $apiWrapper;
-    private SettingsManager $settingsManager;
-    private LocalizationPluginProxyInterface $localizationPluginProxy;
-    private CustomMenuContentTypeHelper $menuHelper;
-    private WordpressFunctionProxyHelper $wordpressProxy;
-
-    public function getLogger(): LoggerInterface
-    {
-        return $this->logger;
-    }
 
     public function __construct(
-        AcfDynamicSupport $acfDynamicSupport,
-        ContentHelper $contentHelper,
-        ContentTypeManager $contentTypeManager,
-        FieldsFilterHelper $fieldFilterHelper,
-        MetaFieldProcessorManager $fieldProcessorManager,
-        LocalizationPluginProxyInterface $localizationPluginProxy,
-        AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper,
-        ShortcodeHelper $shortcodeHelper,
-        GutenbergBlockHelper $blockHelper,
-        SubmissionFactory $submissionFactory,
-        SubmissionManager $submissionManager,
-        ApiWrapperInterface $apiWrapper,
-        MediaAttachmentRulesManager $mediaAttachmentRulesManager,
-        ReplacerFactory $replacerFactory,
-        SettingsManager $settingsManager,
-        CustomMenuContentTypeHelper $menuHelper,
-        ExternalContentManager $externalContentManager,
-        WordpressFunctionProxyHelper $wordpressProxy
-    )
-    {
-        $this->absoluteLinkedAttachmentCoreHelper = $absoluteLinkedAttachmentCoreHelper;
-        $this->acfDynamicSupport = $acfDynamicSupport;
-        $this->apiWrapper = $apiWrapper;
-        $this->contentHelper = $contentHelper;
-        $this->contentTypeManager = $contentTypeManager;
-        $this->externalContentManager = $externalContentManager;
-        $this->fieldFilterHelper = $fieldFilterHelper;
-        $this->gutenbergBlockHelper = $blockHelper;
-        $this->localizationPluginProxy = $localizationPluginProxy;
-        $this->logger = MonologWrapper::getLogger(static::class);
-        $this->mediaAttachmentRulesManager = $mediaAttachmentRulesManager;
-        $this->metaFieldProcessorManager = $fieldProcessorManager;
-        $this->replacerFactory = $replacerFactory;
-        $this->settingsManager = $settingsManager;
-        $this->shortcodeHelper = $shortcodeHelper;
-        $this->submissionFactory = $submissionFactory;
-        $this->submissionManager = $submissionManager;
-        $this->menuHelper = $menuHelper;
-        $this->wordpressProxy = $wordpressProxy;
+        private AcfDynamicSupport $acfDynamicSupport,
+        private ContentHelper $contentHelper,
+        private ContentTypeManager $contentTypeManager,
+        private FieldsFilterHelper $fieldFilterHelper,
+        private FileUriHelper $fileUriHelper,
+        private MetaFieldProcessorManager $metaFieldProcessorManager,
+        private LocalizationPluginProxyInterface $localizationPluginProxy,
+        private AbsoluteLinkedAttachmentCoreHelper $absoluteLinkedAttachmentCoreHelper,
+        private ShortcodeHelper $shortcodeHelper,
+        private GutenbergBlockHelper $gutenbergBlockHelper,
+        private SubmissionFactory $submissionFactory,
+        private SubmissionManager $submissionManager,
+        private ApiWrapperInterface $apiWrapper,
+        private MediaAttachmentRulesManager $mediaAttachmentRulesManager,
+        private ReplacerFactory $replacerFactory,
+        private SettingsManager $settingsManager,
+        private CustomMenuContentTypeHelper $menuHelper,
+        private ExternalContentManager $externalContentManager,
+        private WordpressFunctionProxyHelper $wordpressProxy
+    ) {
     }
 
     /**
@@ -141,27 +99,15 @@ class ContentRelationsDiscoveryService
 
     public function bulkUpload(JobEntityWithBatchUid $jobInfo, array $contentIds, string $contentType, int $currentBlogId, array $targetBlogIds): void
     {
-        $this->getLogger()->debug("Bulk upload request, contentIds=" . json_encode($contentIds));
+        $this->getLogger()->debug("Bulk upload request, contentIds=" . implode(',', $contentIds));
         foreach ($targetBlogIds as $targetBlogId) {
-            $blogFields = [
-                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
-                SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
-            ];
             foreach ($contentIds as $id) {
-                $existing = $this->submissionManager->find(array_merge($blogFields, [
-                    SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
-                    SubmissionEntity::FIELD_SOURCE_ID => $id,
-                ]));
-
-                if (empty($existing)) {
-                    $submission = $this->submissionManager->getSubmissionEntity($contentType, $currentBlogId, $id, $targetBlogId, $this->localizationPluginProxy);
-                } else {
-                    $submission = ArrayHelper::first($existing);
-                }
+                $submission = $this->submissionManager->findTargetBlogSubmission($contentType, $currentBlogId, $id, $targetBlogId) ??
+                    $this->submissionManager->getSubmissionEntity($contentType, $currentBlogId, $id, $targetBlogId, $this->localizationPluginProxy);
                 $submission->setBatchUid($jobInfo->getBatchUid());
                 $submission->setJobInfo($jobInfo->getJobInformationEntity());
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                $submission->generateFileUri();
+                $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
                 $title = $this->getTitle($submission);
                 if ($title !== '') {
                     $submission->setSourceTitle($title);
@@ -220,7 +166,7 @@ class ContentRelationsDiscoveryService
                     if ($title !== '') {
                         $submission->setSourceTitle($title);
                     }
-                    $submission->generateFileUri();
+                    $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
                 }
                 $submission->setIsCloned(1);
                 $submissions[] = $submission;
@@ -327,7 +273,7 @@ class ContentRelationsDiscoveryService
                 }
 
                 try {
-                    $submission->generateFileUri();
+                    $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
                     $this->storeWithJobInfo($submission, $jobInfo, $request->getDescription());
                 } catch (SmartlingInvalidFactoryArgumentException) {
                     $this->getLogger()->info("Skipping submission because no mapper was found: contentType={$submission->getContentType()} sourceBlogId={$submission->getSourceBlogId()}, sourceId={$submission->getSourceId()}, targetBlogId={$submission->getTargetBlogId()}");

@@ -7,24 +7,20 @@ use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\SmartlingDataReadException;
 use Smartling\Jobs\JobEntityWithBatchUid;
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
 use UnexpectedValueException;
 
 class TranslationHelper
 {
-    private LocalizationPluginProxyInterface $multilangProxy;
-    private LoggerInterface $logger;
-    private SiteHelper $siteHelper;
-    private SubmissionManager $submissionManager;
+    use LoggerSafeTrait;
 
-    public function __construct(LocalizationPluginProxyInterface $proxy, SiteHelper $siteHelper, SubmissionManager $submissionManager) {
-        $this->logger = MonologWrapper::getLogger(get_called_class());
-        $this->multilangProxy = $proxy;
-        $this->siteHelper = $siteHelper;
-        $this->submissionManager = $submissionManager;
+    public function __construct(
+        private FileUriHelper $fileUriHelper,
+        private LocalizationPluginProxyInterface $multilangProxy,
+        private SiteHelper $siteHelper,
+        private SubmissionManager $submissionManager,
+    ) {
     }
 
     /**
@@ -185,7 +181,7 @@ class TranslationHelper
             $relatedSubmission->setJobInfo($jobInfo->getJobInformationEntity());
             $serialized = $relatedSubmission->toArray(false);
             if (null === $serialized[SubmissionEntity::FIELD_FILE_URI]) {
-                $relatedSubmission->generateFileUri();
+                $relatedSubmission->setFileUri($this->fileUriHelper->generateFileUri($relatedSubmission));
             }
             $relatedSubmission = $this->submissionManager->storeEntity($relatedSubmission);
             // try to create target entity
