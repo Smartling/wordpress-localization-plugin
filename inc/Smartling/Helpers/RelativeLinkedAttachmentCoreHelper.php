@@ -9,14 +9,14 @@ use Smartling\Base\SmartlingCore;
 use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\WPHookInterface;
 
 class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 {
+    use LoggerSafeTrait;
+
     private const ACF_GUTENBERG_BLOCK = '<!-- wp:acf/.+ ({.+}) /-->';
     /**
      * RegEx to catch images from the string
@@ -28,17 +28,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     protected const PATTERN_THUMBNAIL_IDENTITY = '-\d+x\d+$';
 
     private array $acfDefinitions = [];
-    private AcfDynamicSupport $acfDynamicSupport;
-    private LoggerInterface $logger;
-    protected SmartlingCore $core;
     private AfterDeserializeContentEventParameters $params;
-    protected SubmissionManager $submissionManager;
-    private WordpressFunctionProxyHelper $wordpressProxy;
-
-    public function getLogger(): LoggerInterface
-    {
-        return $this->logger;
-    }
 
     public function getParams(): AfterDeserializeContentEventParameters
     {
@@ -50,13 +40,13 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         $this->params = $params;
     }
 
-    public function __construct(SmartlingCore $core, AcfDynamicSupport $acfDynamicSupport, SubmissionManager $submissionManager, WordpressFunctionProxyHelper $wordpressProxy)
-    {
-        $this->acfDynamicSupport = $acfDynamicSupport;
-        $this->core = $core;
-        $this->logger = MonologWrapper::getLogger(static::class);
-        $this->submissionManager = $submissionManager;
-        $this->wordpressProxy = $wordpressProxy;
+    public function __construct(
+        protected SmartlingCore $core,
+        private AcfDynamicSupport $acfDynamicSupport,
+        protected SubmissionManager $submissionManager,
+        protected WordpressFunctionProxyHelper $wordpressProxy,
+        protected WordpressLinkHelper $wordpressLinkHelper,
+    ) {
     }
 
     public function register(): void
@@ -82,12 +72,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         }
     }
 
-    /**
-     * Recursively processes all found strings
-     *
-     * @param string|array $stringValue
-     */
-    protected function processString(&$stringValue): void
+    protected function processString(string|array &$stringValue): void
     {
         $replacer = new PairReplacerHelper();
         $matches = [];
@@ -207,9 +192,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 
     private function isRelativeUrl(string $url): bool
     {
-        $parts = parse_url($url);
-
-        return $url === $parts['path'];
+        return (parse_url($url)['host'] ?? '') === '';
     }
 
     private function getAttachmentId(string $relativePath): ?int
@@ -381,19 +364,13 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
         $result = $replacer;
         $href = $this->getAttributeFromTag($tag, 'a', 'href');
 
-        if (null !== $href) {
-            $sourcePostId = $this->wordpressProxy->url_to_postid($href);
-            if (0 !== $sourcePostId) {
-                $targetBlogId = $this->getParams()->getSubmission()->getTargetBlogId();
-                $submission = ArrayHelper::first($this->submissionManager->find([
-                    SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
-                    SubmissionEntity::FIELD_SOURCE_ID => $sourcePostId
-                ]));
-                if ($submission !== false) {
-                    $url = parse_url($this->wordpressProxy->get_blog_permalink($targetBlogId, $submission->getTargetId()), PHP_URL_PATH);
-                    if (is_string($url)) {
-                        $result->addReplacementPair(new ReplacementPair($href, $url));
-                    }
+        if (null !== $href && $this->isRelativeUrl($href)) {
+            $targetBlogId = $this->getParams()->getSubmission()->getTargetBlogId();
+            $url = $this->wordpressLinkHelper->getTargetBlogLink($href, $targetBlogId);
+            if ($url !== null) {
+                $url = parse_url($url);
+                if (is_array($url)) {
+                    $result->addReplacementPair(new ReplacementPair($href, ($url['path'] ?? '') . ($url['query'] ?? '')));
                 }
             }
         }

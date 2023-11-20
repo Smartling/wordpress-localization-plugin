@@ -29,6 +29,7 @@ services:
       - "@acf.dynamic.support"
       - "@manager.submission"
       - "@wp.proxy"
+      - "@wp.link.helper"
 
   smartling.helper.absolute-image-path-support:
       class: Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper
@@ -37,6 +38,7 @@ services:
         - "@acf.dynamic.support"
         - "@manager.submission"
         - "@wp.proxy"
+        - "@wp.link.helper"
 
   helper.customMenu:
     class: Smartling\Helpers\CustomMenuContentTypeHelper
@@ -107,6 +109,7 @@ services:
       - "@helper.plugins"
       - "@manager.submission"
       - "@wp.proxy"
+      - "@wp.link.helper"
 
   content.gravity.forms:
     class: Smartling\ContentTypes\ExternalContentGravityForms
@@ -260,6 +263,12 @@ services:
     arguments:
       - "@site.helper"
       - "@helper.gutenberg"
+
+  wp.link.helper:
+    class: Smartling\Helpers\WordpressLinkHelper
+    arguments:
+      - "@manager.submission"
+      - "@wp.proxy"
 
   wp.proxy:
     class: Smartling\Helpers\WordpressFunctionProxyHelper

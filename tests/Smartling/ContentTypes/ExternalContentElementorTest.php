@@ -9,6 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Helpers\WordpressLinkHelper;
 use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -276,7 +277,14 @@ and management of:',
         }
         $fieldsFilterHelper = $this->getMockBuilder(FieldsFilterHelper::class)->disableOriginalConstructor()->onlyMethods([])->getMock();
 
-        return new ExternalContentElementor($contentTypeHelper, $fieldsFilterHelper, $pluginHelper, $submissionManager, $proxy);
+        return new ExternalContentElementor(
+            $contentTypeHelper,
+            $fieldsFilterHelper,
+            $pluginHelper,
+            $submissionManager,
+            $proxy,
+            new WordpressLinkHelper($submissionManager, $proxy),
+        );
     }
 
     public function testMergeElementorData()
@@ -308,7 +316,6 @@ and management of:',
         $translatedSubmission->method('getSourceBlogId')->willReturn($sourceBlogId);
         $translatedSubmission->method('getTargetBlogId')->willReturn($targetBlogId);
         $submissionManager = $this->createMock(SubmissionManager::class);
-
         $matcher = $this->exactly(5);
         $submissionManager->expects($matcher)->method('findOne')->willReturnCallback(
             function ($value) use (
@@ -376,7 +383,7 @@ and management of:',
             }
         );
 
-        $x = $this->getExternalContentElementor(null, $submissionManager);
+        $x = $this->getExternalContentElementor($this->createMock(WordpressFunctionProxyHelper::class), $submissionManager);
 
         $this->assertEquals(
             ['meta' => ['_elementor_data' => '[]']],

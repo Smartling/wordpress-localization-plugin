@@ -10,6 +10,7 @@ use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\RelativeLinkedAttachmentCoreHelper;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Helpers\WordpressLinkHelper;
 use Smartling\Jobs\JobEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -17,8 +18,8 @@ use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 
 class RelativeLinkedAttachmentCoreHelperTest extends TestCase
 {
-    private $sourceBlogId = 3;
-    private $targetBlogId = 5;
+    private int $sourceBlogId = 3;
+    private int $targetBlogId = 5;
 
     protected function setUp(): void
     {
@@ -51,6 +52,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
             $acf,
             $submissionManager,
             $this->createMock(WordpressFunctionProxyHelper::class),
+            $this->createMock(WordpressLinkHelper::class),
         ])->onlyMethods([])->getMock();
         $source = [$string];
         $meta = [];
@@ -101,6 +103,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
             $acf,
             $this->createMock(SubmissionManager::class),
             $this->createMock(WordpressFunctionProxyHelper::class),
+            $this->createMock(WordpressLinkHelper::class),
         ])->onlyMethods([])->getMock();
 
         $source = [$string];
@@ -161,7 +164,8 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
             $this->createMock(SmartlingCore::class),
             $this->createMock(AcfDynamicSupport::class),
             $submissionManager,
-            $wordpressProxy
+            $wordpressProxy,
+            new WordpressLinkHelper($submissionManager, $wordpressProxy),
         );
 
         $submission = $this->getSubmission();

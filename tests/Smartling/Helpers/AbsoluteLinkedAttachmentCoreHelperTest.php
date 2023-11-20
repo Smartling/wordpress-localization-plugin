@@ -7,6 +7,7 @@ use Smartling\Base\SmartlingCore;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Helpers\WordpressLinkHelper;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 
@@ -42,7 +43,13 @@ class AbsoluteLinkedAttachmentCoreHelperTest extends TestCase
 
         $core = $this->createMock(SmartlingCore::class);
         $acfDynamicSupport = $this->createMock(AcfDynamicSupport::class);
-        $x = new AbsoluteLinkedAttachmentCoreHelper($core, $acfDynamicSupport, $this->createMock(SubmissionManager::class), $this->createMock(WordpressFunctionProxyHelper::class));
+        $x = new AbsoluteLinkedAttachmentCoreHelper(
+            $core,
+            $acfDynamicSupport,
+            $this->createMock(SubmissionManager::class),
+            $this->createMock(WordpressFunctionProxyHelper::class),
+            $this->createMock(WordpressLinkHelper::class),
+        );
         $this->invokeMethod($x, 'lookForDirectGuidEntry', [$url]);
     }
 }

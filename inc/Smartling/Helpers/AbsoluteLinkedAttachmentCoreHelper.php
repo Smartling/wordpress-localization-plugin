@@ -80,25 +80,28 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
         $result = $replacer;
         if ($this->isAbsoluteUrl($path)) {
             $attachmentId = $this->getAttachmentId($path);
+            $submission = $this->getParams()->getSubmission();
+            $sourceBlogId = $submission->getSourceBlogId();
+            $targetBlogId = $submission->getTargetBlogId();
             if (null !== $attachmentId) {
-                $submission = $this->getParams()->getSubmission();
-                $sourceBlogId = $submission->getSourceBlogId();
-                $targetBlogId = $submission->getTargetBlogId();
-                $attachmentSubmission = $this->submissionManager->findOne([
-                    SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
-                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
-                    SubmissionEntity::FIELD_SOURCE_ID => $attachmentId,
-                    SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
-                ]);
+                $attachmentSubmission = $this->submissionManager->findTargetBlogSubmission(
+                    ContentTypeHelper::POST_TYPE_ATTACHMENT,
+                    $sourceBlogId,
+                    $attachmentId,
+                    $targetBlogId,
+                );
                 if ($attachmentSubmission !== null) {
                     $newPath = $this->generateTranslatedUrl($path, $attachmentSubmission);
                     $replacer->addReplacementPair(new ReplacementPair($path, $newPath));
                     $this->getLogger()->debug(sprintf("%s has replaced URL from '%s' to '%s'", __CLASS__, $path, $newPath));
-                } else {
-                    $this->getLogger()->debug("Skipping attachment id $attachmentId due to manual relations handling");
+                    return $result;
                 }
-            } else {
-                $this->getLogger()->info(vsprintf('No \'attachment\' found for url=%s', [$path]));
+            }
+
+            $newPath = $this->wordpressLinkHelper->getTargetBlogLink($path, $targetBlogId);
+            if ($newPath !== null) {
+                $replacer->addReplacementPair(new ReplacementPair($path, $newPath));
+                return $result;
             }
         }
 
@@ -148,12 +151,7 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
         return $ids;
     }
 
-    /**
-     * Recursively processes all found strings
-     *
-     * @param array|string $stringValue
-     */
-    protected function processString(&$stringValue): void
+    protected function processString(array|string &$stringValue): void
     {
         $replacer = new PairReplacerHelper();
         if (is_array($stringValue)) {
