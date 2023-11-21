@@ -62,7 +62,7 @@ class SmartlingCore extends SmartlingCoreAbstract
         foreach ($content as $key => $value) {
             if (is_string($value)) {
                 if ($key === 'post_content') {
-                    $value = $this->postContentHelper->applyContentWithLockedBlocks($target, $value);
+                    $value = $this->postContentHelper->applyContentWithBlockLocks($target, $value);
                 }
                 $content[$key] = $this->gutenbergBlockHelper->replacePostTranslateBlockContent($value, $value, $submission);
             }
