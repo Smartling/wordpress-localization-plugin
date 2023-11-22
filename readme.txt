@@ -63,7 +63,10 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 3.7.0 =
-* Added possibility to lock attributes in a Gutenberg block. To do so, add attribute `smartlingLockedAttributes`, and set it's string value to the comma separated list of attributes you don't want changed when translation is applied
+* Added the possibility to lock attributes in a Gutenberg block. To accomplish this, manually add the attribute `smartlingLockedAttributes` to the block and set its string value to the comma-separated list of attributes you do not want to be changed when translation is applied
+    <!-- wp:paragraph {"smartlingLockId":"apkmc", "lockedAttribute1":"someValue","lockedAttribute2":"otherValue", "smartlingLockedAttributes":"lockedAttribute1,lockedAttribute2"} -->
+        <p>text here</p>
+    <!-- /wp:paragraph -->
 
 = 3.6.2 =
 * Added ExportedApi::ACTION_AFTER_TARGET_CONTENT_WRITTEN. This action is invoked after target content has been written to the WordPress database, both after translation and cloning
