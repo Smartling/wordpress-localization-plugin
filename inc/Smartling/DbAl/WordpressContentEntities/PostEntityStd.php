@@ -219,7 +219,12 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
             }
         }
         /** @noinspection JsonEncodingApiUsageInspection failure to json_encode suitable for logging */
-        $this->getLogger()->debug(sprintf('Calling wp_insert_post with postArray="%s", addSlashes=%s', json_encode($array), $addSlashes));
+        $this->getLogger()->debug(sprintf(
+            'Calling wp_insert_post with postArray="%s", addSlashes=%s, currentBlogId=%d',
+            json_encode($array),
+            $addSlashes,
+            $this->wordpressFunctionProxyHelper->get_current_blog_id(),
+        ));
         $res = wp_insert_post($array, true);
         if (is_wp_error($res) || 0 === $res) {
             $msg = vsprintf('An error had happened while saving post : \'%s\'', [\json_encode($array)]);
@@ -343,6 +348,13 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
                 $value = addslashes($value);
             }
         }
+        $this->getLogger()->debug(sprintf(
+            'Setting tagName="%s", value="%s", postId=%d, currentBlogId=%d',
+            addslashes($key),
+            json_encode($value),
+            $this->ID,
+            $this->wordpressFunctionProxyHelper->get_current_blog_id(),
+        ));
         if (false === ($result = add_post_meta($this->ID, $key, $value, true))) {
             $result = update_post_meta($this->ID, $key, $value);
         }

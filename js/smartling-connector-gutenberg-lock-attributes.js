@@ -12,10 +12,13 @@ const addSmartlingGutenbergLockAttributes = function () {
             if (settings.attributes) {
                 settings.attributes['smartlingLocked'] = {
                     type: 'boolean',
-                }
+                };
+                settings.attributes['smartlingLockedAttributes'] = {
+                    type: 'string',
+                };
                 settings.attributes['smartlingLockId'] = {
                     type: 'string',
-                }
+                };
             }
             return settings;
         });

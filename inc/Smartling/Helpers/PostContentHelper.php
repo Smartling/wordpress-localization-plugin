@@ -2,35 +2,50 @@
 
 namespace Smartling\Helpers;
 
+use JetBrains\PhpStorm\ArrayShape;
 use Smartling\Models\GutenbergBlock;
-use Smartling\MonologWrapper\MonologWrapper;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 class PostContentHelper
 {
+    use LoggerSafeTrait;
+
     public const SMARTLING_LOCK_ID = 'smartlingLockId';
     public const SMARTLING_LOCKED = 'smartlingLocked';
+    public const SMARTLING_LOCKED_ATTRIBUTES = 'smartlingLockedAttributes';
 
-    private GutenbergBlockHelper $blockHelper;
-    private LoggerInterface $logger;
-
-    public function __construct(GutenbergBlockHelper $blockHelper)
+    public function __construct(private GutenbergBlockHelper $blockHelper)
     {
-        $this->blockHelper = $blockHelper;
-        $this->logger = MonologWrapper::getLogger();
     }
 
-    public function applyContentWithLockedBlocks(string $target, string $content): string
+    public function applyContentWithBlockLocks(string $target, string $content): string
     {
-        $blockPaths = $this->getLockedBlockPathsFromContentString($target);
-        if (count($blockPaths) === 0) {
+        $lockInfo = $this->getLockInfoFromContentString($target);
+        if (count($lockInfo['lockedBlocks']) === 0 && count($lockInfo['lockedBlockAttributes']) === 0) {
             return $content;
         }
         $result = '';
         $targetBlocks = $this->blockHelper->parseBlocks($target);
         $resultBlocks = $this->blockHelper->parseBlocks($content);
 
-        foreach ($blockPaths as $path) {
+        foreach ($lockInfo['lockedBlockAttributes'] as $path) {
+            $parts = explode('/', $path);
+            $attribute = array_pop($parts);
+            $path = implode('/', $parts);
+            $resultBlock = $this->getBlockByPath($resultBlocks, $path);
+            if ($resultBlock === null) {
+                $this->getLogger()->debug("No source block found for path=$path while processing locked attributes");
+            } else {
+                $targetBlock = $this->getBlockByPath($targetBlocks, $path);
+                assert($targetBlock !== null);
+                $attributes = $resultBlock->getAttributes();
+                if (array_key_exists($attribute, $targetBlock->toArray()['attrs'])) {
+                    $attributes[$attribute] = $targetBlock->getAttributes()[$attribute];
+                }
+                $resultBlocks = $this->setBlockByPath($resultBlocks, $path, $resultBlock->withAttributes($attributes));
+            }
+        }
+
+        foreach ($lockInfo['lockedBlocks'] as $path) {
             $lockedContent = $this->getBlockByPath($targetBlocks, $path);
             if ($lockedContent !== null) {
                 $parts = explode('/', $path);
@@ -82,40 +97,48 @@ class PostContentHelper
         return $this->blockHelper->replacePostTranslateBlockContent($original, $translated);
     }
 
-    /**
-     * @return string[]
-     */
-    public function getLockedBlockPathsFromContentString(string $content): array
+    #[ArrayShape(['lockedBlocks' => 'string[]', 'lockedBlockAttributes' => 'string[]'])]
+    private function getLockInfoFromContentString(string $content): array
     {
-        return $this->getLockedBlockPathsFromBlocksArray($this->blockHelper->parseBlocks($content));
+        return $this->getLockInfoFromBlocksArray($this->blockHelper->parseBlocks($content));
     }
 
     /**
      * @param GutenbergBlock[] $blocks
-     * @param string $prefix
-     * @return string[]
      */
-    private function getLockedBlockPathsFromBlocksArray(array $blocks, string $prefix = ''): array
+    #[ArrayShape(['lockedBlocks' => 'string[]', 'lockedBlockAttributes' => 'string[]'])]
+    private function getLockInfoFromBlocksArray(array $blocks, string $prefix = ''): array
     {
-        $result = [];
+        $lockedBlockAttributes = [];
+        $lockedBlocks = [];
         foreach ($blocks as $block) {
-            foreach ($this->getLockedBlockPathsFromBlocksArray($block->getInnerBlocks(), "$prefix{$block->getSmartlingLockId()}/") as $lockedBlock) {
-                $result[] = $lockedBlock;
+            $lockInfo = $this->getLockInfoFromBlocksArray($block->getInnerBlocks(), "$prefix{$block->getSmartlingLockId()}/");
+            if (count($lockInfo['lockedBlockAttributes']) > 0) {
+                $lockedBlockAttributes[] = $lockInfo['lockedBlockAttributes'];
             }
-            $attributes = $block->getAttributes();
-            if (array_key_exists(self::SMARTLING_LOCKED, $attributes) &&
-                array_key_exists(self::SMARTLING_LOCK_ID, $attributes) &&
-                $attributes[self::SMARTLING_LOCKED] === true) {
-                $result[] = $prefix . $attributes[self::SMARTLING_LOCK_ID];
+            if (count($lockInfo['lockedBlocks']) > 0) {
+                $lockedBlocks[] = $lockInfo['lockedBlocks'];
+            }
+            $lockId = $block->getSmartlingLockId();
+            if ($lockId !== null) {
+                $path = $prefix . $lockId;
+                if ($block->isSmartlingLocked()) {
+                    $lockedBlocks[] = [$path];
+                }
+                foreach ($block->getSmartlingLockedAttributes() as $attribute) {
+                    $lockedBlockAttributes[] = ["$path/$attribute"];
+                }
             }
         }
 
-        return $result;
+        return [
+            'lockedBlocks' => array_merge(...$lockedBlocks),
+            'lockedBlockAttributes' => array_merge(...$lockedBlockAttributes),
+        ];
     }
 
     /**
      * @param GutenbergBlock[] $blocks
-     * @return GutenbergBlock|null
      */
     private function getBlockByPath(array $blocks, string $path): ?GutenbergBlock
     {
@@ -132,20 +155,35 @@ class PostContentHelper
         return null;
     }
 
-    private function applyLockedField(array $pathParts, GutenbergBlock $originalBlock, GutenbergBlock $translatedBlock): GutenbergBlock
+    public function setBlockByPath(array $blocks, string $path, GutenbergBlock $gutenbergBlock): array
     {
-        $index = array_shift($pathParts);
-        $originalInnerBlocks = $originalBlock->getInnerBlocks();
-        if (!array_key_exists($index, $originalInnerBlocks)) {
-            $this->logger->notice("Unable to get content for locked Gutenberg block " .
-                implode('/', array_merge($pathParts, [$index])) .
-                ", skipping lock");
-            return $translatedBlock;
-        }
-        while (count($pathParts) > 0) {
-            $this->applyLockedField($pathParts, $originalInnerBlocks[$index], $translatedBlock->getInnerBlocks()[$index]);
-        }
+        return $this->setBlock($blocks, $path, $gutenbergBlock)['block']->getInnerBlocks();
+    }
 
-        return $translatedBlock->withInnerBlock($originalInnerBlocks[$index], $index);
+    #[ArrayShape(['block' => GutenbergBlock::class, 'index' => '?integer', 'useInnerBlock' => 'boolean'])]
+    private function setBlock(array $blocks, string $path, GutenbergBlock $gutenbergBlock): array
+    {
+        $replaced = null;
+        $parts = explode('/', $path);
+        $lockId = array_shift($parts);
+        foreach ($blocks as $index => &$block) {
+            if (!$block instanceof GutenbergBlock) {
+                throw new \RuntimeException('Blocks expected to be array of GutenbergBlocks, got ' . gettype($block));
+            }
+            if ($block->getSmartlingLockId() === $lockId) {
+                $replaced = $index;
+                if (count($parts) === 0) {
+                    return ['block' => $gutenbergBlock, 'index' => $index, 'useInnerBlock' => false];
+                }
+                $blockInfo = $this->setBlock($block->getInnerBlocks(), implode('/', $parts), $gutenbergBlock);
+                $replacement = $blockInfo['useInnerBlock'] ? $blockInfo['block']->getInnerBlocks()[$blockInfo['index']] : $blockInfo['block'];
+                $block = $block->withInnerBlock($replacement, $blockInfo['useInnerBlock'] ? $blockInfo['index'] : $index);
+            }
+        }
+        unset($block);
+        if ($replaced === null) {
+            throw new \RuntimeException('Unable to get block by path ' . $path);
+        }
+        return ['block' => new GutenbergBlock(null, [], $blocks, '', []), 'index' => $replaced, 'useInnerBlock' => true];
     }
 }

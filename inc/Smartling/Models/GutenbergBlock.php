@@ -2,6 +2,7 @@
 
 namespace Smartling\Models;
 
+use JetBrains\PhpStorm\ArrayShape;
 use Smartling\Helpers\PostContentHelper;
 
 class GutenbergBlock
@@ -39,9 +40,21 @@ class GutenbergBlock
         return $this->attributes;
     }
 
+    public function getSmartlingLockedAttributes(): array
+    {
+        return array_key_exists(PostContentHelper::SMARTLING_LOCKED_ATTRIBUTES, $this->attributes)
+            ? array_merge(explode(',', $this->attributes[PostContentHelper::SMARTLING_LOCKED_ATTRIBUTES]), [PostContentHelper::SMARTLING_LOCKED_ATTRIBUTES])
+            : [];
+    }
+
     public function getSmartlingLockId(): ?string
     {
         return $this->attributes[PostContentHelper::SMARTLING_LOCK_ID] ?? null;
+    }
+
+    public function isSmartlingLocked(): bool
+    {
+        return ($this->attributes[PostContentHelper::SMARTLING_LOCKED] ?? null) === true;
     }
 
     /**
@@ -106,6 +119,7 @@ class GutenbergBlock
         );
     }
 
+    #[ArrayShape(['blockName' => 'string', 'attrs' => 'array', 'innerBlocks' => 'array', 'innerHTML' => 'string', 'innerContent' => 'array'])]
     public function toArray(): array
     {
         return [
