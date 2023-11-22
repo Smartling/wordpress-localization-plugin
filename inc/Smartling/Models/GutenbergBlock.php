@@ -2,6 +2,7 @@
 
 namespace Smartling\Models;
 
+use JetBrains\PhpStorm\ArrayShape;
 use Smartling\Helpers\PostContentHelper;
 
 class GutenbergBlock
@@ -118,6 +119,7 @@ class GutenbergBlock
         );
     }
 
+    #[ArrayShape(['blockName' => 'string', 'attrs' => 'array', 'innerBlocks' => 'array', 'innerHTML' => 'string', 'innerContent' => 'array'])]
     public function toArray(): array
     {
         return [

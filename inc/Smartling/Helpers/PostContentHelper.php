@@ -38,7 +38,9 @@ class PostContentHelper
                 $targetBlock = $this->getBlockByPath($targetBlocks, $path);
                 assert($targetBlock !== null);
                 $attributes = $resultBlock->getAttributes();
-                $attributes[$attribute] = $targetBlock->getAttributes()[$attribute];
+                if (array_key_exists($attribute, $targetBlock->toArray()['attrs'])) {
+                    $attributes[$attribute] = $targetBlock->getAttributes()[$attribute];
+                }
                 $resultBlocks = $this->setBlockByPath($resultBlocks, $path, $resultBlock->withAttributes($attributes));
             }
         }
