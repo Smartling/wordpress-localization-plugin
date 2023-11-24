@@ -454,6 +454,12 @@ namespace {
         {
             $contents = file_get_contents($file);
             $upload = wp_upload_bits(basename($file), null, $contents);
+            if (array_key_exists('error', $upload)) {
+                throw new \RuntimeException($upload['error']);
+            }
+            if (!$upload) {
+                throw new \RuntimeException("Failed to upload $file");
+            }
 
             $type = '';
             if (!empty($upload['type'])) {
