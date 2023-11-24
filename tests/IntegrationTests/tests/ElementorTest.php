@@ -7,12 +7,15 @@ class ElementorTest extends SmartlingUnitTestCaseAbstract {
     public function testElementor(): void
     {
         $contentType = 'post';
-        $imageIds = [$this->createAttachment(), $this->createAttachment()];
+        $imageIds = [
+            $this->createAttachment(),
+            $this->createAttachment(),
+            $this->createAttachment('beacon.svg'),
+        ];
         $postId = $this->createPostWithMeta('Elementor automated test post', '', $contentType, [
-            '_elementor_data' => addslashes(sprintf(
+            '_elementor_data' => addslashes(vsprintf(
                 str_replace('"%d"', '%d', file_get_contents(__DIR__ . '/../testdata/elementor.json')),
-                $imageIds[0],
-                $imageIds[1],
+                $imageIds,
             )),
         ]);
         $sourceBlogId = 1;
@@ -21,10 +24,11 @@ class ElementorTest extends SmartlingUnitTestCaseAbstract {
         /**
          * @var SubmissionEntity[] $images
          */
-        $images = [
-            $this->uploadDownload($this->getTranslationHelper()->prepareSubmission('attachment', $sourceBlogId, $imageIds[0], $targetBlogId)),
-            $this->uploadDownload($this->getTranslationHelper()->prepareSubmission('attachment', $sourceBlogId, $imageIds[1], $targetBlogId)),
-        ];
+        $images = [];
+        foreach ($imageIds as $imageId) {
+            $images[] = $this->uploadDownload($this->getTranslationHelper()
+                ->prepareSubmission('attachment', $sourceBlogId, $imageId, $targetBlogId));
+        }
         $result = $this->uploadDownload($submission);
         $content = $this->getContentHelper()->readTargetContent($result);
         $this->assertEquals('[É~lém~éñtó~r áút~ómá~téd t~ést p~óst]', $content->getTitle(), 'Expected post title to be translated');
@@ -37,6 +41,7 @@ class ElementorTest extends SmartlingUnitTestCaseAbstract {
         $this->assertEquals('[R~ígh~t héá~díñg ~ th~réé s~íx sé~véñ]', $decoded[0]['elements'][2]['elements'][0]['settings']['title'], $meta['_elementor_data']);
         $this->assertEquals($images[0]->getTargetId(), $decoded[1]['elements'][0]['elements'][0]['settings']['image']['id'], $meta['_elementor_data']);
         $this->assertEquals($images[1]->getTargetId(), $decoded[2]['elements'][0]['elements'][0]['settings']['image']['id'], $meta['_elementor_data']);
+        $this->assertEquals($images[2]->getTargetId(), $decoded[2]['elements'][0]['elements'][1]['settings']['selected_icon']['value']['id'], $meta['_elementor_data']);
         foreach ($images as $key => $image) {
             $this->assertNotEquals($image->getSourceId(), $image->getTargetId(), "Image $key has same source and target ids");
         }

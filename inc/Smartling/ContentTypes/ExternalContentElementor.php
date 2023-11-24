@@ -257,6 +257,9 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         if (($setting['source'] ?? '') === 'library' && ($setting['id'] ?? '') !== '') {
             return [ContentTypeHelper::POST_TYPE_ATTACHMENT => [$setting['id']]];
         }
+        if (($setting['library'] ?? '') === 'svg' && is_int($setting['value']['id'] ?? '')) {
+            return [ContentTypeHelper::POST_TYPE_ATTACHMENT => [$setting['value']['id']]];
+        }
         if (is_int($setting['selected_icon']['value']['id'] ?? '')) {
             return [ContentTypeHelper::POST_TYPE_ATTACHMENT => [$setting['selected_icon']['value']['id']]];
         }
@@ -301,6 +304,19 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                             if ($newPath !== null) {
                                 $original[$componentIndex]['settings'][$settingIndex]['url'] = $newPath;
                             }
+                        } elseif (($setting['library'] ?? '') === 'svg' && array_key_exists('value', $setting)) {
+                            if (array_key_exists('id', $setting['value'])) {
+                                $targetAttachmentId = $this->getTargetId($submission->getSourceBlogId(), $setting['value']['id'], $submission->getTargetBlogId());
+                                if ($targetAttachmentId !== null) {
+                                    $original[$componentIndex]['settings'][$settingIndex]['value']['id'] = $targetAttachmentId;
+                                }
+                            }
+                            if (array_key_exists('url', $setting['value'])) {
+                                $newPath = $this->wpLinkHelper->getTargetBlogLink($setting['value']['url'], $submission->getTargetBlogId());
+                                if ($newPath !== null) {
+                                    $original[$componentIndex]['settings'][$settingIndex]['value']['url'] = $newPath;
+                                }
+                            }
                         } else {
                             foreach ($setting as $optionIndex => $option) {
                                 if (is_array($option)) {
@@ -311,7 +327,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                                         }
                                     }
                                     foreach ($option as $optionsIndex => $optionValue) {
-                                        if (str_starts_with($optionsIndex, '_')) {
+                                        if (!array_key_exists('_id', $option) || str_starts_with($optionsIndex, '_')) {
                                             continue;
                                         }
                                         $key = implode(FieldsFilterHelper::ARRAY_DIVIDER, [$prefix, $settingIndex, $option['_id'], $optionsIndex]);
