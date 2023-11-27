@@ -73,6 +73,7 @@ RUN chmod +x /*.sh
 RUN service mysql start && cd ${WP_INSTALL_DIR} && \
     if [ ! -d "${COMPOSER_H_DIR}" ]; then mkdir "${COMPOSER_H_DIR}"; fi; echo "{\"github-oauth\":{\"github.com\":\"$GITHUB_OAUTH_TOKEN\"}}" > "${COMPOSER_H_DIR}/auth.json" && \
     ${WPCLI} core multisite-convert && \
+    ${WPCLI} config set ALLOW_UNFILTERED_UPLOADS true --raw && \
     IFS=',' read -a array <<< "${SITES}"; for site in "${array[@]}"; do ${WPCLI} site create --slug="${site##*\:}" --title="${site%%\:*}" --email=test@wp.org; done && \
     IFS=';' read -a array <<< "${DEPENDENCIES}"; for plugin_name in "${array[@]}"; do ${WPCLI} plugin install $plugin_name --activate-network; done && \
     if [ "latest" != "${ACF_PRO_VERSION}" ]; then DLINK="${DLINK}&t=${ACF_PRO_VERSION}"; fi && \
