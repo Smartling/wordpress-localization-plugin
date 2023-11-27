@@ -11,7 +11,7 @@ use Smartling\RestApi;
  * Plugin Name:       Smartling Connector
  * Plugin URI:        https://www.smartling.com/products/automate/integrations/wordpress/
  * Description:       Integrate your WordPress site with Smartling to upload your content and download translations.
- * Version:           3.7.0
+ * Version:           3.7.1
  * Author:            Smartling
  * Author URI:        https://www.smartling.com
  * License:           GPL-2.0+
@@ -20,7 +20,7 @@ use Smartling\RestApi;
  * Text Domain:       smartling-connector
  * Domain Path:       /languages
  * Requires PHP:      8.0
- * Elementor tested up to: 3.16.4
+ * Elementor tested up to: 3.17.1
  */
 
 // If this file is called directly, abort.
