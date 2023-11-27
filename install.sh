@@ -75,6 +75,7 @@ $WPCLI core download
 echo "Generating wp-config.php file"
 # Generating wp-config.php file
 $WPCLI core config --dbname=$MYSQL_BASE --dbuser=$MYSQL_USER --dbpass=$MYSQL_PASS
+$WPCLI config set ALLOW_UNFILTERED_UPLOADS true --raw
 echo "Trying to drop and create database"
 SQL_RESET_DB="DROP DATABASE IF EXISTS \`$MYSQL_BASE\`;CREATE DATABASE IF NOT EXISTS \`$MYSQL_BASE\` DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;"
 echo $SQL_RESET_DB > ./db-reset.sql
