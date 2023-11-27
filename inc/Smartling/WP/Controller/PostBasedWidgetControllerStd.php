@@ -565,7 +565,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
         return $result;
     }
 
-    public function save(mixed $post_id, mixed $post, mixed $update): void
+    public function save(mixed $post_id, mixed $post = null, mixed $update = null): void
     {
         $currentBlogId = $this->siteHelper->getCurrentBlogId();
         $this->getLogger()->debug(sprintf(
