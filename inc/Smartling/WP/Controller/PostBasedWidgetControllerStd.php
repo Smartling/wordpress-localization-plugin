@@ -565,11 +565,17 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
         return $result;
     }
 
-    /**
-     * @param mixed $post_id
-     */
-    public function save($post_id): void
+    public function save(mixed $post_id, mixed $post, mixed $update): void
     {
+        $currentBlogId = $this->siteHelper->getCurrentBlogId();
+        $this->getLogger()->debug(sprintf(
+            'Processing save hook postData="%s", postId="%s", post="%s", update="%s", currentBlogId=%d',
+            json_encode($_POST),
+            json_encode($post_id),
+            json_encode($post),
+            json_encode($update),
+            $currentBlogId,
+        ));
         remove_action('save_post', [$this, 'save']);
         if (!array_key_exists('post_type', $_POST)) {
             return;
@@ -581,20 +587,20 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                 vsprintf('Entering post save hook. post_id = \'%s\', blog_id = \'%s\'',
                     [
                         $post_id,
-                        $this->siteHelper->getCurrentBlogId(),
+                        $currentBlogId,
                     ])
             );
             // Handle case when a revision is being saved. Get post_id by
             // revision id.
             if ($parent_id = wp_is_post_revision($post_id)) {
+                $this->getLogger()->debug("Saving revision, postId=$post_id, parentId=$parent_id");
                 $post_id = $parent_id;
             }
 
-            $sourceBlog = $this->siteHelper->getCurrentBlogId();
             $originalId = (int)$post_id;
             $this->getLogger()->debug(vsprintf('Detecting changes for \'%s\' id=%d',
                 [$this->servedContentType, $post_id]));
-            $this->detectChange($sourceBlog, $originalId, $this->servedContentType);
+            $this->detectChange($currentBlogId, $originalId, $this->servedContentType);
 
             if (false === $this->runValidation($post_id)) {
                 return;
@@ -670,10 +676,10 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
                                 $jobInfo = new JobEntityWithBatchUid($batchUid, $data['jobName'], $data['jobId'], $profile->getProjectId());
                                 foreach ($locales as $blogId) {
-                                    if ($translationHelper->isRelatedSubmissionCreationNeeded($this->servedContentType, $sourceBlog, $originalId, (int)$blogId)) {
-                                        $submission = $translationHelper->tryPrepareRelatedContent($this->servedContentType, $sourceBlog, $originalId, (int)$blogId, $jobInfo);
+                                    if ($translationHelper->isRelatedSubmissionCreationNeeded($this->servedContentType, $currentBlogId, $originalId, (int)$blogId)) {
+                                        $submission = $translationHelper->tryPrepareRelatedContent($this->servedContentType, $currentBlogId, $originalId, (int)$blogId, $jobInfo);
                                     } else {
-                                        $submission = $translationHelper->getExistingSubmissionOrCreateNew($this->servedContentType, $sourceBlog, $originalId, (int)$blogId, $jobInfo);
+                                        $submission = $translationHelper->getExistingSubmissionOrCreateNew($this->servedContentType, $currentBlogId, $originalId, (int)$blogId, $jobInfo);
                                     }
 
                                     if (0 < $submission->getId()) {
@@ -688,7 +694,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                             static::$MSG_UPLOAD_ENQUEUE_ENTITY_JOB,
                                             [
                                                 $this->servedContentType,
-                                                $sourceBlog,
+                                                $currentBlogId,
                                                 $originalId,
                                                 (int)$blogId,
                                                 $submission->getTargetLocale(),
@@ -713,7 +719,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                                     ->find(
                                                         [
                                                             SubmissionEntity::FIELD_SOURCE_ID=> $originalId,
-                                                            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlog,
+                                                            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
                                                             SubmissionEntity::FIELD_CONTENT_TYPE => $this->servedContentType,
                                                             SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
                                                         ]
@@ -730,7 +736,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                                      $submission->getId(),
                                                      $submission->getStatus(),
                                                      $this->servedContentType,
-                                                     $sourceBlog,
+                                                     $currentBlogId,
                                                      $originalId,
                                                      $submission->getTargetBlogId(),
                                                      $submission->getTargetLocale(),
