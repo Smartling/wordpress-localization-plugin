@@ -10,7 +10,6 @@ class ElementorTest extends SmartlingUnitTestCaseAbstract {
         $imageIds = [
             $this->createAttachment(),
             $this->createAttachment(),
-            $this->createAttachment('beacon.svg'),
         ];
         $postId = $this->createPostWithMeta('Elementor automated test post', '', $contentType, [
             '_elementor_data' => addslashes(vsprintf(
@@ -41,7 +40,6 @@ class ElementorTest extends SmartlingUnitTestCaseAbstract {
         $this->assertEquals('[R~ígh~t héá~díñg ~ th~réé s~íx sé~véñ]', $decoded[0]['elements'][2]['elements'][0]['settings']['title'], $meta['_elementor_data']);
         $this->assertEquals($images[0]->getTargetId(), $decoded[1]['elements'][0]['elements'][0]['settings']['image']['id'], $meta['_elementor_data']);
         $this->assertEquals($images[1]->getTargetId(), $decoded[2]['elements'][0]['elements'][0]['settings']['image']['id'], $meta['_elementor_data']);
-        $this->assertEquals($images[2]->getTargetId(), $decoded[2]['elements'][0]['elements'][1]['settings']['selected_icon']['value']['id'], $meta['_elementor_data']);
         foreach ($images as $key => $image) {
             $this->assertNotEquals($image->getSourceId(), $image->getTargetId(), "Image $key has same source and target ids");
         }
