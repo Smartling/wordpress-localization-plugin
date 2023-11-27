@@ -34,7 +34,7 @@ class ElementorTest extends SmartlingUnitTestCaseAbstract {
         $meta = $this->getContentHelper()->readTargetMetadata($result);
         $decoded = json_decode(json: $meta['_elementor_data'], associative: true);
         $this->assertIsArray($decoded, base64_encode($meta['_elementor_data']));
-        $this->assertCount(3, $decoded, $meta['_elementor_data']);
+        $this->assertCount(2, $decoded, $meta['_elementor_data']);
         $this->assertEquals('<p>[L~éft t~éxt t~hréé ~síx s~évéñ]</p>', $decoded[0]['elements'][0]['elements'][0]['settings']['editor'], $meta['_elementor_data']);
         $this->assertEquals('<p>[M~íddl~é téx~t <span style="color: var( --e-global-color-text ); font-family: var( --e-global-typography-text-font-family ), Sans-serif, serif; font-weight: var( --e-global-typography-text-font-weight ); font-size: 2.1rem;">th~réé s~íx sé~véñ</span>]</p>', $decoded[0]['elements'][1]['elements'][0]['settings']['editor'], $meta['_elementor_data']);
         $this->assertEquals('[R~ígh~t héá~díñg ~ th~réé s~íx sé~véñ]', $decoded[0]['elements'][2]['elements'][0]['settings']['title'], $meta['_elementor_data']);
