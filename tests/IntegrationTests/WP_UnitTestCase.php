@@ -454,7 +454,7 @@ namespace {
         {
             $contents = file_get_contents($file);
             $upload = wp_upload_bits(basename($file), null, $contents);
-            if (array_key_exists('error', $upload)) {
+            if (array_key_exists('error', $upload) && is_string($upload['error'])) {
                 throw new \RuntimeException($upload['error']);
             }
             if (!$upload) {
