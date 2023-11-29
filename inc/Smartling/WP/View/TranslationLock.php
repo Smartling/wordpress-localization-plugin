@@ -1,6 +1,6 @@
 <?php
 defined('IFRAME_REQUEST') || define('IFRAME_REQUEST', true);
-define('WP_ADMIN', true);
+defined('WP_ADMIN') || define('WP_ADMIN', true);
 require_once(ABSPATH . '/wp-load.php');
 nocache_headers();
 require_once(ABSPATH . 'wp-admin/includes/admin.php');

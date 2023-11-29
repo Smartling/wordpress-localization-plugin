@@ -11,6 +11,7 @@ use Smartling\Helpers\CustomMenuContentTypeHelper;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\TranslationHelper;
+use Smartling\Models\LoggerWithStringContext;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Queue\QueueInterface;
@@ -167,7 +168,7 @@ abstract class SmartlingCoreAbstract
         $this->siteHelper = $siteHelper;
     }
 
-    public function getLogger(): LoggerInterface
+    public function getLogger(): LoggerWithStringContext
     {
         return $this->logger;
     }

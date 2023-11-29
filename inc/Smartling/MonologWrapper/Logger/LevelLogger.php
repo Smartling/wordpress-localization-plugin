@@ -3,14 +3,12 @@
 namespace Smartling\MonologWrapper\Logger;
 
 use InvalidArgumentException;
+use Smartling\Helpers\LogContextMixinHelper;
+use Smartling\Models\LoggerWithStringContext;
 use Smartling\Vendor\Monolog\Logger;
 use Smartling\Vendor\Psr\Log\LogLevel;
 
-/**
- * Class LevelLogger
- * @package LogConfigExample\Logger
- */
-class LevelLogger extends Logger
+class LevelLogger extends Logger implements LoggerWithStringContext
 {
 
     /**
@@ -19,15 +17,7 @@ class LevelLogger extends Logger
      */
     private $level = Logger::DEBUG;
 
-    /**
-     * LevelLogger constructor.
-     *
-     * @param string $name
-     * @param string $level
-     * @param array  $handlers
-     * @param array  $processors
-     */
-    public function __construct($name, $level = LogLevel::DEBUG, $handlers = [], $processors = [])
+    public function __construct(string $name, string $level = LogLevel::DEBUG, array $handlers = [], array $processors = [])
     {
         parent::__construct($name, $handlers, $processors);
 
@@ -53,4 +43,17 @@ class LevelLogger extends Logger
         return false;
     }
 
+    public function withStringContext(array $context, callable $callable): mixed
+    {
+        foreach ($context as $key => $value) {
+            LogContextMixinHelper::addToStringContext($key, $value);
+        }
+        try {
+            return $callable();
+        } finally {
+            foreach (array_keys($context) as $key) {
+                LogContextMixinHelper::removeFromStringContext($key);
+            }
+        }
+    }
 }

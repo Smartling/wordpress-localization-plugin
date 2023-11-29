@@ -4,6 +4,7 @@ namespace Smartling\Base;
 
 use Exception;
 use Smartling\ContentTypes\ExternalContentManager;
+use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
 use Smartling\Helpers\CommonLogMessagesTrait;
@@ -46,34 +47,60 @@ class SmartlingCore extends SmartlingCoreAbstract
 
     public function cloneContent(SubmissionEntity $submission): void
     {
-        $target = '';
-        if ($submission->getTargetId() !== 0) {
-            $target = $this->getSiteHelper()->withBlog($submission->getTargetBlogId(), function () use ($submission) {
-                $post = get_post($submission->getTargetId());
-                if ($post instanceof \WP_Post) {
-                    return $post->post_content;
-                }
-                return '';
-            });
-        }
-        $submission = $this->prepareTargetContent($submission);
-        $entity = $this->getContentHelper()->readTargetContent($submission);
-        $content = $entity->toArray();
-        foreach ($content as $key => $value) {
-            if (is_string($value)) {
-                if ($key === 'post_content') {
-                    $value = $this->postContentHelper->applyContentWithBlockLocks($target, $value);
-                }
-                $content[$key] = $this->gutenbergBlockHelper->replacePostTranslateBlockContent($value, $value, $submission);
+        $this->getLogger()->withStringContext([
+            'sourceBlogId' => $submission->getSourceBlogId(),
+            'sourceId' => $submission->getSourceId(),
+            'submissionId' => $submission->getId(),
+            'targetBlogId' => $submission->getTargetBlogId(),
+            'targetId' => $submission->getTargetId(),
+        ], function () use ($submission) {
+            $this->getLogger()->info('Start cloning submission');
+            if ($submission->isLocked()) {
+                $this->getLogger()->notice('Skip cloning submission, is locked');
             }
-        }
-        $this->getContentHelper()->writeTargetContent($submission, $entity->fromArray($content));
-        if ($submission->getStatus() === SubmissionEntity::SUBMISSION_STATUS_NEW) {
+            $lockedFields = $this->readLockedTranslationFieldsBySubmission($submission);
+            $target = ['entity' => [], 'metadata' => []];
+            if ($submission->getTargetId() !== 0) {
+                $target = $this->getSiteHelper()->withBlog($submission->getTargetBlogId(), function () use ($submission) {
+                    $entity = [];
+                    $metadata = [];
+                    try {
+                        $entity = $this->getContentHelper()->readTargetContent($submission)->toArray();
+                        $metadata = $this->getContentHelper()->readTargetMetadata($submission);
+                    } catch (EntityNotFoundException) {
+                        // No target entity exists, that's ok, will create one later
+                    }
+                    return ['entity' => $entity, 'metadata' => $metadata];
+                });
+            }
+            $submission = $this->prepareTargetContent($submission);
+            $entity = $this->getContentHelper()->readTargetContent($submission);
+            $content = $entity->toArray();
+            foreach ($content as $key => $value) {
+                if (array_key_exists($key, $lockedFields['entity'])) {
+                    $content[$key] = $lockedFields[$key];
+                    continue;
+                }
+                if (is_string($value)) {
+                    if ($key === 'post_content' && array_key_exists('post_content', $target['entity'])) {
+                        $value = $this->postContentHelper->applyContentWithBlockLocks($target['entity']['post_content'], $value);
+                    }
+                    $content[$key] = $this->gutenbergBlockHelper->replacePostTranslateBlockContent($value, $value, $submission);
+                }
+            }
+            $this->getContentHelper()->writeTargetContent($submission, $entity->fromArray($content));
+
+            $metadata = [];
+            foreach ($lockedFields['meta'] as $key => $value) {
+                $metadata[$key] = $value;
+            }
+            $this->getContentHelper()->writeTargetMetadata($submission, $metadata);
+
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
             $submission->setAppliedDate(DateTimeHelper::nowAsString());
             $this->getSubmissionManager()->storeEntity($submission);
-            $this->getLogger()->info("Cloned submissionId={$submission->getId()}, sourceBlogId={$submission->getSourceBlogId()}, sourceId={$submission->getSourceId()}, targetBlogId={$submission->getTargetBlogId()}, targetId={$submission->getTargetId()}");
-        }
+            $this->getLogger()->info('Cloned submission');
+        });
     }
 
     /**

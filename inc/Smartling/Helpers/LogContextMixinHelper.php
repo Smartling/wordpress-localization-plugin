@@ -2,38 +2,45 @@
 
 namespace Smartling\Helpers;
 
-/**
- * Class LogContextMixinHelper
- * @package Smartling\Helpers
- */
 class LogContextMixinHelper
 {
-    /**
-     * @var array
-     */
-    private static $mixin = [];
+    private static array $mixin = [];
+    private static array $mixinString = [];
 
-    /**
-     * @param string $key
-     * @param mixed  $value
-     */
-    public static function addToContext($key, $value)
+    public static function addToContext(string $key, string|int $value): void
     {
         static::$mixin[$key] = $value;
     }
 
-    /**
-     * @param string $key
-     */
-    public static function removeFromContext($key)
+    public static function removeFromContext(string $key): void
     {
         if (array_key_exists($key, self::$mixin)) {
             unset(static::$mixin[$key]);
         }
     }
 
-    public static function getContextMixin()
+    public static function getContextMixin(): array
     {
         return self::$mixin;
+    }
+
+    public static function addToStringContext(string $key, string|int $value): void
+    {
+        static::$mixinString[$key] = $value;
+    }
+
+    public static function removeFromStringContext(string $key): void
+    {
+        unset(static::$mixinString[$key]);
+    }
+
+    public static function getStringContext(): string
+    {
+        $strings = [];
+        foreach (static::$mixinString as $key => $value) {
+            $strings[] = $key . '"' . addslashes($value) . '"';
+        }
+
+        return implode(', ', $strings);
     }
 }

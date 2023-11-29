@@ -43,6 +43,7 @@ class SmartlingLogHandler extends AbstractHandler {
 
             if (class_exists(LogContextMixinHelper::class)) {
                 $context = array_merge($context, LogContextMixinHelper::getContextMixin());
+                $record['message'] .= LogContextMixinHelper::getStringContext();
             }
 
             $context['loggerChannel'] = $record['channel'];
