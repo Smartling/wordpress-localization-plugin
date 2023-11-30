@@ -3,19 +3,18 @@
 namespace Smartling\MonologWrapper\Logger;
 
 use InvalidArgumentException;
-use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Models\LoggerWithStringContext;
 use Smartling\Vendor\Monolog\Logger;
 use Smartling\Vendor\Psr\Log\LogLevel;
 
 class LevelLogger extends Logger implements LoggerWithStringContext
 {
+    private array $context = [];
 
     /**
      * Do not record messages lower than this level.
-     * @var int level
      */
-    private $level = Logger::DEBUG;
+    private int $level;
 
     public function __construct(string $name, string $level = LogLevel::DEBUG, array $handlers = [], array $processors = [])
     {
@@ -46,14 +45,63 @@ class LevelLogger extends Logger implements LoggerWithStringContext
     public function withStringContext(array $context, callable $callable): mixed
     {
         foreach ($context as $key => $value) {
-            LogContextMixinHelper::addToStringContext($key, $value);
+            $this->context[$key] = $value;
         }
         try {
             return $callable();
         } finally {
             foreach (array_keys($context) as $key) {
-                LogContextMixinHelper::removeFromStringContext($key);
+                unset($this->context[$key]);
             }
         }
+    }
+
+    private function addStringContext(string $message): string {
+        $strings = [];
+        foreach ($this->context as $key => $value) {
+            $strings[] = $key . '"' . addslashes($value) . '"';
+        }
+
+        return $message . implode(', ', $strings);
+    }
+
+    public function debug($message, array $context = [])
+    {
+        return parent::debug($this->addStringContext($message), $context);
+    }
+
+    public function info($message, array $context = [])
+    {
+        return parent::info($this->addStringContext($message), $context);
+    }
+
+    public function notice($message, array $context = [])
+    {
+        return parent::notice($this->addStringContext($message), $context);
+    }
+
+    public function warning($message, array $context = [])
+    {
+        return parent::warning($this->addStringContext($message), $context);
+    }
+
+    public function error($message, array $context = [])
+    {
+        return parent::error($this->addStringContext($message), $context);
+    }
+
+    public function alert($message, array $context = [])
+    {
+        return parent::alert($this->addStringContext($message), $context);
+    }
+
+    public function critical($message, array $context = [])
+    {
+        return parent::critical($this->addStringContext($message), $context);
+    }
+
+    public function emergency($message, array $context = [])
+    {
+        return parent::emergency($this->addStringContext($message), $context);
     }
 }

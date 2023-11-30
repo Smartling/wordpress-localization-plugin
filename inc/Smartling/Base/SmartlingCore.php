@@ -78,7 +78,7 @@ class SmartlingCore extends SmartlingCoreAbstract
             $content = $entity->toArray();
             foreach ($content as $key => $value) {
                 if (array_key_exists($key, $lockedFields['entity'])) {
-                    $content[$key] = $lockedFields[$key];
+                    $content[$key] = $lockedFields['entity'][$key];
                     continue;
                 }
                 if (is_string($value)) {
