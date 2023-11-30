@@ -57,12 +57,12 @@ class LevelLogger extends Logger implements LoggerWithStringContext
     }
 
     private function addStringContext(string $message): string {
-        $strings = [];
+        $strings = [$message];
         foreach ($this->context as $key => $value) {
-            $strings[] = $key . '"' . addslashes($value) . '"';
+            $strings[] = $key . '="' . addslashes(is_scalar($value) ? $value : 'Non-scalar: ' . json_encode($value)) . '"';
         }
 
-        return $message . implode(', ', $strings);
+        return implode(', ', $strings);
     }
 
     public function debug($message, array $context = [])
