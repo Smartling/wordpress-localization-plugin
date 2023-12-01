@@ -649,11 +649,11 @@ class SubmissionEntity extends SmartlingEntityAbstract
         return $unserialized;
     }
 
-    /**
-     * @param string|array $lockFields
-     */
-    public function setLockedFields($lockFields): void
+    public function setLockedFields(array|string $lockFields = null): void
     {
+        if (is_array($lockFields)) {
+            $lockFields = serialize($lockFields);
+        }
         $this->stateFields[static::FIELD_LOCKED_FIELDS] = $lockFields;
     }
 

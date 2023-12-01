@@ -168,7 +168,7 @@ trait SmartlingCoreUploadTrait
         return '';
     }
 
-    #[ArrayShape(['entity' => 'string', 'meta' => 'string'])]
+    #[ArrayShape(['entity' => 'string[]', 'meta' => 'string[]'])]
     private function readLockedTranslationFieldsBySubmission(SubmissionEntity $submission): array
     {
         $this->getLogger()

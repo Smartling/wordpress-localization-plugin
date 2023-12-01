@@ -2,16 +2,19 @@
 
 namespace Smartling\Tests\MonologWrapper;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Smartling\MonologWrapper\Logger\LevelLogger;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Vendor\Monolog\Handler\HandlerInterface;
 use Smartling\Vendor\Symfony\Component\Config\FileLocator;
 use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 use Smartling\Vendor\Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
 class LevelLoggerTest extends TestCase {
 
-  private $loader;
-  private $container;
+  private YamlFileLoader $loader;
+  private ContainerBuilder $container;
 
   public function setUp(): void {
     $this->container = new ContainerBuilder();
@@ -164,5 +167,61 @@ class LevelLoggerTest extends TestCase {
       'alert' => false,
       'emergency' => true,
     ], $result['records']);
+  }
+
+  public function testWithoutStringContext(): void
+  {
+      $x = new LevelLogger(name: 'test', handlers: [$this->getHandler(expected: 'message')]);
+      $x->info('message');
+  }
+
+    /**
+     * @dataProvider providerStringContext
+     */
+  public function testStringContext(array $context, string $expected): void
+  {
+      $x = new LevelLogger(name: 'test', handlers: [$this->getHandler(expected: $expected)]);
+      $x->withStringContext($context, function () use ($x) {
+          $x->info('message');
+      });
+  }
+
+  public function testNestedStringContext(): void
+  {
+      $x = new LevelLogger(name: 'test', handlers: [$this->getHandler(expected: 'message, testContext="value", nestedContext="nested"')]);
+      $x->withStringContext(['testContext' => 'value'], function () use ($x) {
+          $x->withStringContext(['nestedContext' => 'nested'], function () use ($x) {
+              $x->info('message');
+          });
+      });
+  }
+
+  public function providerStringContext(): array
+  {
+      return [
+          'empty string context' => [
+              [],
+              'message',
+          ],
+          'single string context value' => [
+              ['testContext' => 'value'],
+              'message, testContext="value"',
+          ],
+          'multiple string context values' => [
+              ['testContext' => 'value', 'numericValue' => 2, 'arrayValue' => ['a' => 'b']],
+              'message, testContext="value", numericValue="2", arrayValue="Non-scalar: {\"a\":\"b\"}"',
+          ],
+      ];
+  }
+
+  private function getHandler(string $expected): HandlerInterface|MockObject
+  {
+      $handler = $this->createMock(HandlerInterface::class);
+      $handler->method('isHandling')->willReturn(true);
+      $handler->expects($this->once())->method('handle')->willReturnCallback(function (array $record) use ($expected) {
+          $this->assertEquals($expected, $record['message']);
+      });
+
+      return $handler;
   }
 }
