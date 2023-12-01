@@ -14,6 +14,9 @@ $editing = false;
 set_current_screen();
 $title = __('Add Plugins');
 $parent_file = 'admin.php';
+if ($hook_suffix === null) {
+    $hook_suffix = '';
+}
 global $menu;
 $menu = [];
 include(ABSPATH . 'wp-admin/admin-header.php');
