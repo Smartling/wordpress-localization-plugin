@@ -142,6 +142,10 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         $attributes = $translated->getAttributes();
         $replacements = [];
         foreach ($translated->getInnerBlocks() as $index => $innerBlock) {
+            if (!array_key_exists($index, $original->getInnerBlocks())) {
+                $this->getLogger()->notice('No original block exists, skip applying post translation replacers for block lockId=' . $translated->getSmartlingLockId());
+                continue;
+            }
             $translated = $translated->withInnerBlock($this->applyPostTranslationReplacers($original->getInnerBlocks()[$index], $innerBlock, $submission), $index);
         }
         foreach ($this->rulesManager->getGutenbergReplacementRules($translated->getBlockName(), $attributes) as $rule) {
