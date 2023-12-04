@@ -85,7 +85,9 @@ class PostContentHelper
                     return $parent->withInnerBlock($replace, $index);
                 }
 
-                return $parent->withInnerBlock($this->replaceInnerBlock($block, implode('/', $parts), $replace), $index);
+                $replacement = $this->replaceInnerBlock($block, implode('/', $parts), $replace);
+
+                return $replacement ? $parent->withInnerBlock($replacement, $index) : $parent;
             }
         }
 
