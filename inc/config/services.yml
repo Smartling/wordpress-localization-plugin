@@ -105,11 +105,15 @@ services:
     class: Smartling\ContentTypes\ExternalContentElementor
     arguments:
       - "@content.type.helper"
+      - "@elementor.factory"
       - "@fields-filter.helper"
       - "@helper.plugins"
       - "@manager.submission"
       - "@wp.proxy"
       - "@wp.link.helper"
+
+  elementor.factory:
+    class: Smartling\ContentTypes\Elementor\ElementFactory
 
   content.gravity.forms:
     class: Smartling\ContentTypes\ExternalContentGravityForms

@@ -2,6 +2,7 @@
 
 namespace Smartling\ContentTypes;
 
+use Smartling\ContentTypes\Elementor\ElementFactory;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginHelper;
@@ -129,6 +130,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     public function __construct(
         private ContentTypeHelper $contentTypeHelper,
+        private ElementFactory $elementFactory,
         private FieldsFilterHelper $fieldsFilterHelper,
         PluginHelper $pluginHelper,
         SubmissionManager $submissionManager,
