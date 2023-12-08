@@ -2,22 +2,32 @@
 
 namespace Smartling\ContentTypes\Elementor\Elements;
 
+use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\Elementor\Element;
 use Smartling\ContentTypes\Elementor\ElementFactory;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Models\Content;
+use Smartling\Models\RelatedContentInfo;
 
 class Unknown implements Element {
-    public function __construct(
-        protected string $id = '',
-        protected string $type = ElementFactory::UNKNOWN_ELEMENT,
-        protected array $settings = [],
-        protected array $elements = [],
-    ) {
+    protected array $elements;
+    protected string $id;
+    protected array $raw;
+    protected array $settings;
+    protected string $type;
+
+    public function __construct(array $array = [])
+    {
+        $this->elements = $array['elements'] ?? [];
+        $this->id = $array['id'] ?? '';
+        $this->raw = $array;
+        $this->settings = $array['settings'] ?? [];
+        $this->type = $array['elType'] ?? ElementFactory::UNKNOWN_ELEMENT;
     }
 
     public function fromArray(array $array): static
     {
-        return new static($array['id'], $array['elType'], $array['settings'], $array['elements']);
+        return new static($array);
     }
 
     public function getId(): string
@@ -25,15 +35,31 @@ class Unknown implements Element {
         return $this->id;
     }
 
-    public function getRelated(): array
+    public function getIntSettingByKey(string $key, array $settings): ?int
     {
-        $return = [];
+        $setting = $this->getSettingByKey($key, $settings);
+
+        return is_int($setting) ? $setting : null;
+    }
+
+    public function getRelated(): RelatedContentInfo
+    {
+        $return = new RelatedContentInfo();
+        $keys = ['background_image/id'];
         foreach ($this->elements as $element) {
             if ($element instanceof Element) {
-                $return = $element->getRelated();
+                $return = $return->merge($element->getRelated());
             }
         }
-        return [$this->id => $return];
+
+        foreach ($keys as $key) {
+            $id = $this->getIntSettingByKey($key, $this->settings);
+            if ($id !== null) {
+                $return->addContent("$this->id/settings/$key", new Content($id, ContentTypeHelper::POST_TYPE_ATTACHMENT));
+            }
+        }
+
+        return $return;
     }
 
     public function getTranslatableStrings(): array
@@ -56,35 +82,23 @@ class Unknown implements Element {
         return [$this->id => $return];
     }
 
-    public function getType(): string
-    {
-        return ElementFactory::UNKNOWN_ELEMENT;
-    }
-
-    public function toArray(): array
-    {
-        return [
-            'id' => $this->id,
-            'elType' => $this->type,
-            'settings' => $this->settings,
-            'elements' => $this->elements,
-        ];
-    }
-
-    public function getSettingByKey(string $key, array $settings): ?string
+    public function getSettingByKey(string $key, array $settings): mixed
     {
         $parts = explode('/', $key);
         if (count($parts) > 1) {
             $path = array_shift($parts);
 
-            return array_key_exists($path, $settings) ? $this->getSettingByKey(implode('/', $parts), $settings[$path]) : null;
+            return is_array($settings[$path] ?? '')
+                ? $this->getSettingByKey(implode('/', $parts), $settings[$path])
+                : null;
         }
 
-        if (!array_key_exists($parts[0], $settings)) {
-            return null;
-        }
+        return $settings[$parts[0]] ?? null;
+    }
 
-        $setting = $settings[$parts[0]];
+    public function getStringSettingByKey(string $key, array $settings): ?string
+    {
+        $setting = $this->getSettingByKey($key, $settings);
 
         return is_string($setting) ? $setting : null;
     }
@@ -96,12 +110,22 @@ class Unknown implements Element {
         }
         $result = [];
         foreach ($keys as $key) {
-            $string = $this->getSettingByKey($key, $element->settings);
+            $string = $this->getStringSettingByKey($key, $element->settings);
             if ($string !== null) {
                 $result[$key] = $string;
             }
         }
 
         return $result;
+    }
+
+    public function getType(): string
+    {
+        return ElementFactory::UNKNOWN_ELEMENT;
+    }
+
+    public function toArray(): array
+    {
+        return $this->raw;
     }
 }

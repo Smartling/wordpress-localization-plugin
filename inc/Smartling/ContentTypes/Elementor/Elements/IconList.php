@@ -3,6 +3,8 @@
 namespace Smartling\ContentTypes\Elementor\Elements;
 
 use Smartling\ContentTypes\ContentTypeHelper;
+use Smartling\Models\Content;
+use Smartling\Models\RelatedContentInfo;
 
 class IconList extends Unknown {
     public function getType(): string
@@ -10,14 +12,18 @@ class IconList extends Unknown {
         return 'icon-list';
     }
 
-    public function getRelated(): array
+    public function getRelated(): RelatedContentInfo
     {
-        $return = [];
-        if (array_key_exists('image', $this->settings) && array_key_exists('id', $this->settings['image'])) {
-            $return['image/id'] = [ContentTypeHelper::POST_TYPE_ATTACHMENT => $this->settings['image']['id']];
+        $return = new RelatedContentInfo();
+        foreach ($this->settings['icon_list'] ?? [] as $index => $listItem) {
+            $key = "icon_list/$index/selected_icon/value/id";
+            $id = $this->getIntSettingByKey($key, $this->settings);
+            if ($id !== null) {
+                $return->addContent("$this->id/settings/$key", new Content($id, ContentTypeHelper::POST_TYPE_ATTACHMENT));
+            }
         }
 
-        return [$this->getId() => $return];
+        return $return;
     }
 
     public function getTranslatableStrings(): array

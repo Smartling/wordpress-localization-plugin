@@ -15,11 +15,7 @@ class ElementFactory {
         foreach (new \DirectoryIterator(__DIR__ . DIRECTORY_SEPARATOR . self::ELEMENTS) as $fileInfo) {
             if ($fileInfo->isFile() && $fileInfo->getExtension() === 'php') {
                 $className = $fileInfo->getFileInfo()->getBasename('.php');
-                try {
-                    $element = new (implode('\\', [__NAMESPACE__, self::ELEMENTS, $className]));
-                } catch (\Error) {
-                    continue;
-                }
+                $element = new (implode('\\', [__NAMESPACE__, self::ELEMENTS, $className]));
                 if ($element instanceof Element) {
                     $this->elements[$element->getType()] = $element;
                 }
