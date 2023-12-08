@@ -140,4 +140,14 @@ class ArrayHelper
             return (int)$value;
         }, $array);
     }
+
+    public function arrayMergePreserveKeys(...$arrays): array
+    {
+        $result = [];
+        foreach ($arrays as $array) {
+            $result += $array;
+        }
+
+        return $result;
+    }
 }

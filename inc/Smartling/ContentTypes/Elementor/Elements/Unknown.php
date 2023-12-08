@@ -4,6 +4,7 @@ namespace Smartling\ContentTypes\Elementor\Elements;
 
 use Smartling\ContentTypes\Elementor\Element;
 use Smartling\ContentTypes\Elementor\ElementFactory;
+use Smartling\Helpers\ArrayHelper;
 
 class Unknown implements Element {
     public function __construct(
@@ -38,14 +39,19 @@ class Unknown implements Element {
     public function getTranslatableStrings(): array
     {
         $return = [];
+        $keys = ['background_image/alt', 'text'];
         foreach ($this->elements as $element) {
             if ($element instanceof Element) {
                 $return[] = $element->getTranslatableStrings();
+                $stringsFromCommonKeys = $this->getTranslatableStringsByKeys($keys, $element);
+                if (count($stringsFromCommonKeys) > 0) {
+                    $return[] = [$element->getId() => $stringsFromCommonKeys];
+                }
             }
         }
-        $return = count($return) > 0 ? array_replace(...$return) : $return;
+        $return = count($return) > 0 ? (new ArrayHelper())->arrayMergePreserveKeys(...$return) : $return;
 
-        $return += $this->getTranslatableStringsByKeys(['background_image/alt']);
+        $return += $this->getTranslatableStringsByKeys($keys);
 
         return [$this->id => $return];
     }
@@ -65,11 +71,8 @@ class Unknown implements Element {
         ];
     }
 
-    public function getSettingByKey(string $key, array $settings = null): ?string
+    public function getSettingByKey(string $key, array $settings): ?string
     {
-        if ($settings === null) {
-            $settings = $this->settings;
-        }
         $parts = explode('/', $key);
         if (count($parts) > 1) {
             $path = array_shift($parts);
@@ -86,11 +89,14 @@ class Unknown implements Element {
         return is_string($setting) ? $setting : null;
     }
 
-    public function getTranslatableStringsByKeys(array $keys): array
+    public function getTranslatableStringsByKeys(array $keys, Element $element = null): array
     {
+        if ($element === null) {
+            $element = $this;
+        }
         $result = [];
         foreach ($keys as $key) {
-            $string = $this->getSettingByKey($key);
+            $string = $this->getSettingByKey($key, $element->settings);
             if ($string !== null) {
                 $result[$key] = $string;
             }
