@@ -10,11 +10,6 @@ class Heading extends Unknown {
 
     public function getTranslatableStrings(): array
     {
-        $return = [];
-        if (array_key_exists('title', $this->settings)) {
-            $return['title'] = $this->settings['title'];
-        }
-
-        return [$this->getId() => $return];
+        return [$this->getId() => $this->getTranslatableStringsByKeys(['title'])];
     }
 }

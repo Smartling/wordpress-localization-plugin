@@ -22,14 +22,6 @@ class Image extends Unknown {
 
     public function getTranslatableStrings(): array
     {
-        $return = [];
-        if (array_key_exists('caption', $this->settings)) {
-            $return['caption'] = $this->settings['caption'];
-        }
-        if (array_key_exists('image', $this->settings) && array_key_exists('alt', $this->settings['image'])) {
-            $return['image/alt'] = $this->settings['image']['alt'];
-        }
-
-        return [$this->getId() => $return];
+        return [$this->getId() => $this->getTranslatableStringsByKeys(['caption', 'image/alt'])];
     }
 }

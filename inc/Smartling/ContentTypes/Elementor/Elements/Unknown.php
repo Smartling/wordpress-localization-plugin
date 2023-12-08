@@ -43,7 +43,11 @@ class Unknown implements Element {
                 $return[] = $element->getTranslatableStrings();
             }
         }
-        return [$this->id => count($return) > 0 ? array_replace(...$return) : $return];
+        $return = count($return) > 0 ? array_replace(...$return) : $return;
+
+        $return += $this->getTranslatableStringsByKeys(['background_image/alt']);
+
+        return [$this->id => $return];
     }
 
     public function getType(): string
@@ -59,5 +63,39 @@ class Unknown implements Element {
             'settings' => $this->settings,
             'elements' => $this->elements,
         ];
+    }
+
+    public function getSettingByKey(string $key, array $settings = null): ?string
+    {
+        if ($settings === null) {
+            $settings = $this->settings;
+        }
+        $parts = explode('/', $key);
+        if (count($parts) > 1) {
+            $path = array_shift($parts);
+
+            return array_key_exists($path, $settings) ? $this->getSettingByKey(implode('/', $parts), $settings[$path]) : null;
+        }
+
+        if (!array_key_exists($parts[0], $settings)) {
+            return null;
+        }
+
+        $setting = $settings[$parts[0]];
+
+        return is_string($setting) ? $setting : null;
+    }
+
+    public function getTranslatableStringsByKeys(array $keys): array
+    {
+        $result = [];
+        foreach ($keys as $key) {
+            $string = $this->getSettingByKey($key);
+            if ($string !== null) {
+                $result[$key] = $string;
+            }
+        }
+
+        return $result;
     }
 }
