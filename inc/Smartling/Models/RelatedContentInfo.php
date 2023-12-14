@@ -2,15 +2,27 @@
 
 namespace Smartling\Models;
 
-class RelatedContentInfo {
-    /**
-     * @var Content[]
-     */
-    private array $info = [];
+use Smartling\Helpers\ArrayHelper;
 
-    public function addContent(string $path, Content $content): void
+class RelatedContentInfo {
+    private ArrayHelper $arrayHelper;
+    private array $info;
+
+    public function __construct(array $info = [])
     {
-        $this->info[$path] = $content;
+        $this->arrayHelper = new ArrayHelper();
+        foreach ($this->arrayHelper->flatten($info) as $item) {
+            assert($item instanceof Content);
+        }
+        $this->info = $info;
+    }
+
+    public function addContent(Content $content, string $containerId, string $path): void
+    {
+        if (!array_key_exists($containerId, $this->info)) {
+            $this->info[$containerId] = [];
+        }
+        $this->info[$containerId][$path] = $content;
     }
 
     public function getInfo(): array
@@ -18,10 +30,25 @@ class RelatedContentInfo {
         return $this->info;
     }
 
-    public function getRelatedContentFlat(): array
+    /**
+     * @return Content[]
+     */
+    public function getOwnRelatedContent(string $containerId): array
     {
+        return array_filter($this->info[$containerId] ?? [], static function ($item) {
+            return $item instanceof Content;
+        });
+    }
+
+    /**
+     * @return Content[]
+     */
+    public function getRelatedContentList(): array
+    {
+        $flat = $this->arrayHelper->flatten($this->info);
         $return = [];
-        foreach ($this->info as $item) {
+        foreach ($flat as $item) {
+            assert($item instanceof Content);
             if (!array_key_exists($item->getContentType(), $return)) {
                 $return[$item->getContentType()] = [];
             }
@@ -34,12 +61,18 @@ class RelatedContentInfo {
         return $return;
     }
 
+    public function include(self $info, string $containerId): self
+    {
+        $result = clone $this;
+        $result->info[$containerId] = array_merge($result->info[$containerId] ?? [], $info->info);
+
+        return $result;
+    }
+
     public function merge(self $info): self
     {
         $result = clone $this;
-        foreach ($info->info as $path => $relation) {
-            $result->addContent($path, $relation);
-        }
+        $result->info = array_merge($result->info, $info->info);
 
         return $result;
     }

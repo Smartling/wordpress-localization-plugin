@@ -8,6 +8,8 @@ use Smartling\ContentTypes\Elementor\ElementFactory;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
+use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 
 class Unknown implements Element {
     protected array $elements;
@@ -48,14 +50,14 @@ class Unknown implements Element {
         $keys = ['background_image/id'];
         foreach ($this->elements as $element) {
             if ($element instanceof Element) {
-                $return = $return->merge($element->getRelated());
+                $return = $return->include($element->getRelated(), $this->id);
             }
         }
 
         foreach ($keys as $key) {
             $id = $this->getIntSettingByKey($key, $this->settings);
             if ($id !== null) {
-                $return->addContent("$this->id/settings/$key", new Content($id, ContentTypeHelper::POST_TYPE_ATTACHMENT));
+                $return->addContent(new Content($id, ContentTypeHelper::POST_TYPE_ATTACHMENT), $this->id, "settings/$key");
             }
         }
 
@@ -75,7 +77,7 @@ class Unknown implements Element {
                 }
             }
         }
-        $return = count($return) > 0 ? (new ArrayHelper())->arrayMergePreserveKeys(...$return) : $return;
+        $return = count($return) > 0 ? (new ArrayHelper())->add(...$return) : $return;
 
         $return += $this->getTranslatableStringsByKeys($keys);
 
@@ -124,8 +126,63 @@ class Unknown implements Element {
         return ElementFactory::UNKNOWN_ELEMENT;
     }
 
+    public function setRelations(Content $content,
+        string $path,
+        SubmissionEntity $submission,
+        SubmissionManager $submissionManager,
+    ): Element
+    {
+        $result = clone $this;
+        $target = $submissionManager->findTargetBlogSubmission(
+            $content->getContentType(),
+            $submission->getSourceBlogId(),
+            $content->getContentId(),
+            $submission->getTargetBlogId(),
+        );
+        if ($target !== null) {
+            $result->raw = array_replace_recursive(
+                $result->raw,
+                (new ArrayHelper())->structurize([$path => $target->getTargetId()]),
+            );
+        }
+
+        return $result;
+    }
+
+    public function setTargetContent(
+        RelatedContentInfo $info,
+        array $strings,
+        SubmissionEntity $submission,
+        SubmissionManager $submissionManager,
+    ): Element
+    {
+        foreach ($this->elements as &$element) {
+            if ($element instanceof Element) {
+                $element = $element->setTargetContent(
+                    new RelatedContentInfo($info->getInfo()[$this->id] ?? []),
+                    $strings[$this->id][$element->id] ?? [],
+                    $submission,
+                    $submissionManager,
+                );
+            }
+        }
+        unset ($element);
+        foreach ($info->getOwnRelatedContent($this->id) as $path => $content) {
+            assert($content instanceof Content);
+            $this->raw['elements'] = $this->elements;
+            $this->raw = $this->setRelations($content, $path, $submission, $submissionManager)->toArray();
+        }
+        return new self($this->raw);
+    }
+
     public function toArray(): array
     {
+        foreach ($this->raw['elements'] ?? [] as $index => $element) {
+            if ($element instanceof Element) {
+                $this->raw['elements'][$index] = $element->toArray();
+            }
+        }
+
         return $this->raw;
     }
 }

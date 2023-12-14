@@ -19,7 +19,7 @@ class IconList extends Unknown {
             $key = "icon_list/$index/selected_icon/value/id";
             $id = $this->getIntSettingByKey($key, $this->settings);
             if ($id !== null) {
-                $return->addContent("$this->id/settings/$key", new Content($id, ContentTypeHelper::POST_TYPE_ATTACHMENT));
+                $return->addContent(new Content($id, ContentTypeHelper::POST_TYPE_ATTACHMENT), $this->id, "settings/$key");
             }
         }
 

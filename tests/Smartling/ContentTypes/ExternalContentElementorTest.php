@@ -4,6 +4,7 @@ namespace Smartling\Tests\Smartling\ContentTypes;
 
 use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\ContentTypePluggableInterface;
+use Smartling\ContentTypes\Elementor\ElementFactory;
 use Smartling\ContentTypes\ExternalContentElementor;
 use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\FieldsFilterHelper;
@@ -32,8 +33,9 @@ class ExternalContentElementorTest extends TestCase {
     {
         $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
         $proxy->method('getPostMeta')->willReturn($meta);
-        $this->assertEquals($expectedStrings, $this->getExternalContentElementor($proxy)->getContentFields($this->createMock(SubmissionEntity::class), false));
-        $this->assertEquals($expectedRelatedContent, $this->getExternalContentElementor($proxy)->getRelatedContent('', 0));
+        $x = $this->getExternalContentElementor($proxy);
+        $this->assertEquals($expectedStrings, $x->getContentFields($this->createMock(SubmissionEntity::class), false));
+        $this->assertEquals($expectedRelatedContent, $x->getRelatedContent('', 0));
     }
 
     public function extractElementorDataProvider(): array
@@ -62,7 +64,6 @@ class ExternalContentElementorTest extends TestCase {
             'mixed related content' => [
                 '[{"id":"ea10188","elType":"widget","settings":{"image":{"url":"http:\/\/localhost.localdomain\/wp-content\/uploads\/2021\/09\/elementor-image.png","id":597,"alt":"","source":"library"},"image_size":"medium"},"elements":[],"widgetType":"image"},{"id":"3b9b893","elType":"widget","settings":{"title":"I\'m actually a global widget"},"elements":[],"widgetType":"global","templateID":19366},{"id":"ea10189","elType":"widget","settings":{"image":{"url":"http:\/\/localhost.localdomain\/wp-content\/uploads\/2021\/09\/elementor-image*2.png","id":598,"alt":"","source":"library"},"image_size":"medium"},"elements":[],"widgetType":"image"}]',
                 [
-                    '3b9b893/title' => "I'm actually a global widget",
                     'ea10188/image/alt' => '',
                     'ea10189/image/alt' => '',
                 ],
@@ -70,15 +71,6 @@ class ExternalContentElementorTest extends TestCase {
                     ContentRelationsDiscoveryService::POST_BASED_PROCESSOR => [19366],
                     ContentTypeHelper::POST_TYPE_ATTACHMENT => [597, 598],
                 ]
-            ],
-            'global widget ' => [
-                '[{"id":"3b9b893","elType":"widget","settings":{"title":"I\'m actually a global widget"},"elements":[],"widgetType":"global","templateID":19366}]',
-                [
-                    '3b9b893/title' => "I'm actually a global widget",
-                ],
-                [
-                    ContentRelationsDiscoveryService::POST_BASED_PROCESSOR => [19366],
-                ],
             ],
             'realistic content with background images' => [
                 file_get_contents(__DIR__ . '/wp-834.json'),
@@ -282,6 +274,7 @@ and management of:',
 
         return new ExternalContentElementor(
             $contentTypeHelper,
+            new ElementFactory(),
             $fieldsFilterHelper,
             $pluginHelper,
             $submissionManager,

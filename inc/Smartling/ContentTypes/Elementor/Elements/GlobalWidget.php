@@ -17,7 +17,7 @@ class GlobalWidget extends Unknown {
         $result = new RelatedContentInfo();
         $id = $this->getIntSettingByKey('templateID', $this->raw);
         if ($id !== null) {
-            $result->addContent($this->id . '/templateID', new Content($id, ContentRelationsDiscoveryService::POST_BASED_PROCESSOR));
+            $result->addContent(new Content($id, ContentRelationsDiscoveryService::POST_BASED_PROCESSOR), $this->id, 'templateID');
         }
 
         return $result;
