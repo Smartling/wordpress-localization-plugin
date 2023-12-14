@@ -7,7 +7,6 @@ use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\MonologWrapper\MonologWrapper;
-use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
@@ -85,29 +84,9 @@ class FieldsFilterHelper
         return $output;
     }
 
-    /**
-     * @param array  $flatArray
-     * @param string $divider
-     *
-     * @return array
-     */
-    public function structurizeArray(array $flatArray, $divider = self::ARRAY_DIVIDER)
+    public function structurizeArray(array $flatArray, string $divider = self::ARRAY_DIVIDER): array
     {
-        $output = [];
-
-        foreach ($flatArray as $key => $element) {
-            $pathElements = explode($divider, $key);
-            $pointer = &$output;
-            for ($i = 0; $i < (count($pathElements) - 1); $i++) {
-                if (!isset($pointer[$pathElements[$i]])) {
-                    $pointer[$pathElements[$i]] = [];
-                }
-                $pointer = &$pointer[$pathElements[$i]];
-            }
-            $pointer[end($pathElements)] = $element;
-        }
-
-        return $output;
+        return (new ArrayHelper())->structurize($flatArray, $divider);
     }
 
     /**
