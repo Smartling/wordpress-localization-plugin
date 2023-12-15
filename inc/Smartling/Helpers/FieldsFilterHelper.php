@@ -84,6 +84,10 @@ class FieldsFilterHelper
         return $output;
     }
 
+    /**
+     * @deprecated
+     * @see ArrayHelper::structurize()
+     */
     public function structurizeArray(array $flatArray, string $divider = self::ARRAY_DIVIDER): array
     {
         return (new ArrayHelper())->structurize($flatArray, $divider);

@@ -28,8 +28,4 @@ class Image extends Unknown {
     {
         return [$this->getId() => $this->getTranslatableStringsByKeys(['caption', 'image/alt'])];
     }
-
-    private function getRelatedPaths(): array {
-
-    }
 }
