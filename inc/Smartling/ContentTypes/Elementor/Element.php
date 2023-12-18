@@ -18,7 +18,7 @@ interface Element {
         string $path,
         SubmissionEntity $submission,
         SubmissionManager $submissionManager,
-    ): Element;
+    ): self;
     public function setTargetContent(
         RelatedContentInfo $info,
         array $strings,

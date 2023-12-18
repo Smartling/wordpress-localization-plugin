@@ -2,6 +2,12 @@
 
 namespace Smartling\ContentTypes\Elementor;
 
+use Smartling\Helpers\ArrayHelper;
+use Smartling\Models\Content;
+use Smartling\Models\RelatedContentInfo;
+use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
+
 abstract class ElementAbstract implements Element {
     protected array $elements;
     protected string $id;
@@ -70,6 +76,63 @@ abstract class ElementAbstract implements Element {
         }
 
         return $result;
+    }
+
+    public function setRelations(
+        Content $content,
+        string $path,
+        SubmissionEntity $submission,
+        SubmissionManager $submissionManager,
+    ): static {
+        $result = clone $this;
+        $target = $submissionManager->findTargetBlogSubmission(
+            $content->getContentType(),
+            $submission->getSourceBlogId(),
+            $content->getContentId(),
+            $submission->getTargetBlogId(),
+        );
+        if ($target !== null) {
+            $result->raw = array_replace_recursive(
+                $result->raw,
+                (new ArrayHelper())->structurize([$path => $target->getTargetId()]),
+            );
+        }
+
+        return $result;
+    }
+
+    public function setTargetContent(
+        RelatedContentInfo $info,
+        array $strings,
+        SubmissionEntity $submission,
+        SubmissionManager $submissionManager,
+    ): static {
+        foreach ($this->elements as &$element) {
+            if ($element instanceof Element) {
+                $element = $element->setTargetContent(
+                    new RelatedContentInfo($info->getInfo()[$this->id] ?? []),
+                    $strings[$this->id] ?? $strings[$element->id] ?? [],
+                    $submission,
+                    $submissionManager,
+                );
+            }
+        }
+        unset ($element);
+        foreach ($strings[$this->id] ?? [] as $path => $string) {
+            if (!is_array($string)) {
+                $this->settings[$path] = $string;
+            }
+        }
+        if (count($this->settings) > 0) {
+            $this->raw['settings'] = $this->settings;
+        }
+        foreach ($info->getOwnRelatedContent($this->id) as $path => $content) {
+            assert($content instanceof Content);
+            $this->raw['elements'] = $this->elements;
+            $this->raw = $this->setRelations($content, $path, $submission, $submissionManager)->toArray();
+        }
+
+        return new static($this->raw);
     }
 
     public function toArray(): array
