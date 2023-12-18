@@ -4,6 +4,7 @@ namespace Smartling\ContentTypes\Elementor\Elements;
 
 use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\Elementor\Element;
+use Smartling\ContentTypes\Elementor\ElementAbstract;
 use Smartling\ContentTypes\Elementor\ElementFactory;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Models\Content;

@@ -1,9 +1,6 @@
 <?php
 
-namespace Smartling\ContentTypes\Elementor\Elements;
-
-use Smartling\ContentTypes\Elementor\Element;
-use Smartling\ContentTypes\Elementor\ElementFactory;
+namespace Smartling\ContentTypes\Elementor;
 
 abstract class ElementAbstract implements Element {
     protected array $elements;
