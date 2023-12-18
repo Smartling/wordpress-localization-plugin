@@ -14,4 +14,17 @@ class ExternalDataTest extends TestCase {
             ->addRelated(['post' => [1]]);
         $this->assertEquals(['attachment' => [2, 1], 'post' => [1]], $x->getRelated());
     }
+
+    public function testMergeStrings()
+    {
+        $x = (new ExternalData(['pathA' => 'stringA']));
+        $this->assertEquals(
+            ['pathA' => 'stringA', 'pathB' => 'stringB'],
+            $x->merge(new ExternalData(['pathB' => 'stringB']))->getStrings(),
+        );
+        $this->assertEquals(
+            ['pathA' => 'stringB'],
+            $x->merge(new ExternalData(['pathA' => 'stringB']))->getStrings(),
+        );
+    }
 }

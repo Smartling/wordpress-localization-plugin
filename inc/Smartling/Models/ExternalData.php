@@ -3,13 +3,19 @@
 namespace Smartling\Models;
 
 class ExternalData {
-    private array $related;
-    private array $strings;
+    private RelatedContentInfo $relatedContentInfo;
 
-    public function __construct(array $strings = [], array $related = [])
-    {
-        $this->related = $related;
-        $this->strings = $strings;
+    public function __construct(
+        private array $strings = [],
+        private array $related = [],
+        RelatedContentInfo $relatedContentInfo = null,
+    ) {
+        if ($relatedContentInfo === null) {
+            $this->relatedContentInfo = new RelatedContentInfo();
+        } else {
+            $this->related = $relatedContentInfo->getRelatedContentList();
+            $this->relatedContentInfo = $relatedContentInfo;
+        }
     }
 
     public function addRelated(array $related): self
@@ -28,9 +34,18 @@ class ExternalData {
         return $result;
     }
 
+    /**
+     * @deprecated
+     * @see getRelatedContentInfo()
+     */
     public function getRelated(): array
     {
         return $this->related;
+    }
+
+    public function getRelatedContentInfo(): RelatedContentInfo
+    {
+        return $this->relatedContentInfo;
     }
 
     public function getStrings(): array
@@ -42,11 +57,13 @@ class ExternalData {
     {
         $strings = $this->strings;
         $related = $this->related;
+        $relatedContentInfo = clone $this->relatedContentInfo;
         foreach ($externalData as $data) {
             $strings = array_merge($strings, $data->getStrings());
             $related = array_merge_recursive($related, $data->getRelated());
+            $relatedContentInfo = $relatedContentInfo->merge($data->getRelatedContentInfo());
         }
 
-        return new self($strings, $related);
+        return new self($strings, $related, $relatedContentInfo);
     }
 }
