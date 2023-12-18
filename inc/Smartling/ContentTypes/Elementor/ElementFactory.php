@@ -23,11 +23,6 @@ class ElementFactory {
         }
     }
 
-    public function addElement(Element $element): void
-    {
-        $this->elements[$element->getType()] = $element;
-    }
-
     public function fromArray(array $array): Element
     {
         foreach ($array['elements'] as &$element) {

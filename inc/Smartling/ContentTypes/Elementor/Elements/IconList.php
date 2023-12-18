@@ -30,7 +30,7 @@ class IconList extends Unknown {
     {
         $return = [];
         foreach ($this->settings['icon_list'] ?? [] as $index => $listItem) {
-            $key = 'icon_list/' . $listItem['_id'] ?? $index;
+            $key = 'icon_list/' . ($listItem['_id'] ?? $index);
             if (array_key_exists('text', $listItem)) {
                 $return[$key]['text'] = $listItem['text'];
             }
