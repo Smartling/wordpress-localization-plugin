@@ -2,12 +2,18 @@
 
 namespace Smartling\ContentTypes;
 
+use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Submissions\SubmissionEntity;
 
 class ExternalContentManager
 {
     use LoggerSafeTrait;
+
+    public function __construct(
+        private FieldsFilterHelper $fieldsFilterHelper,
+    ) {
+    }
 
     /**
      * @var ContentTypePluggableInterface[] $handlers
@@ -23,35 +29,23 @@ class ExternalContentManager
     public function getExternalContent(array $source, SubmissionEntity $submission, bool $raw): array
     {
         foreach ($this->handlers as $handler) {
-            switch ($handler->getSupportLevel($submission->getContentType(), $submission->getSourceId())) {
-                case ContentTypePluggableInterface::SUPPORTED:
-                    $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get fields");
-                    try {
-                        $submission->assertHasSource();
-                        $source[$handler->getPluginId()] = $handler->getContentFields($submission, $raw);
-                    } catch (\Throwable $e) {
-                        $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to get external content: ' . $e->getMessage());
-                    }
-                    if ($handler instanceof ContentTypeModifyingInterface) {
-                        try {
-                            $source = $handler->alterContentFieldsForUpload($source);
-                        } catch (\Throwable $e) {
-                            $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to alter content fields: ' . $e->getMessage());
-                        }
-                    }
-                    break;
-                case ContentTypePluggableInterface::VERSION_NOT_SUPPORTED:
-                    if ($handler instanceof ContentTypeModifyingInterface) {
-                        $this->getLogger()->warning("Detected not supported version for {$handler->getPluginId()}, will not include known problematic fields");
-                        try {
-                            $source = $handler->alterContentFieldsForUpload($source);
-                        } catch (\Throwable $e) {
-                            $this->getLogger()->warning('HandlerName="' . $handler->getPluginId() . '" got exception while trying to alter content fields: ' . $e->getMessage());
-                        }
-                    } else {
-                        $this->getLogger()->debug("Detected not supported version for {$handler->getPluginId()}, no actions taken");
-                    }
-                    break;
+            if ($handler->getSupportLevel($submission->getContentType(), $submission->getSourceId()) === ContentTypePluggableInterface::SUPPORTED) {
+                $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get fields");
+                try {
+                    $submission->assertHasSource();
+                    $source[$handler->getPluginId()] = $handler->getContentFields($submission, $raw);
+                } catch (\Throwable $e) {
+                    $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to get external content: ' . $e->getMessage());
+                }
+            }
+            if ($handler instanceof ContentTypeModifyingInterface) {
+                try {
+                    $previousCount = count($this->fieldsFilterHelper->flattenArray($source));
+                    $source = $handler->alterContentFieldsForUpload($source);
+                    $this->getLogger()->info('HandlerName="' . $handler->getPluginId() . '" altered content fields for upload, previousCount=' . $previousCount . ', count=' . count($this->fieldsFilterHelper->flattenArray($source)));
+                } catch (\Throwable $e) {
+                    $this->getLogger()->warning('HandlerName="' . $handler->getPluginId() . '" got exception while trying to alter content fields: ' . $e->getMessage());
+                }
             }
         }
 
