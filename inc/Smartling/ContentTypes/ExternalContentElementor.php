@@ -54,6 +54,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         'button',
         'button_text',
         'caption',
+        'content',
         'cta-text',
         'custom_text',
         'custom_text',
