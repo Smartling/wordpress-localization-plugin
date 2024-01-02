@@ -2,9 +2,13 @@
 
 namespace Smartling\ContentTypes;
 
+use Elementor\Core\Files\CSS\Post;
+use Elementor\Core\Files\Manager;
+use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginHelper;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\WordpressLinkHelper;
 use Smartling\Models\ExternalData;
@@ -132,12 +136,27 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         private ContentTypeHelper $contentTypeHelper,
         private FieldsFilterHelper $fieldsFilterHelper,
         PluginHelper $pluginHelper,
+        private SiteHelper $siteHelper,
         SubmissionManager $submissionManager,
         WordpressFunctionProxyHelper $wpProxy,
         private WordpressLinkHelper $wpLinkHelper,
     )
     {
+        add_action(ExportedAPI::ACTION_AFTER_TARGET_CONTENT_WRITTEN, [$this, 'afterContentWritten']);
         parent::__construct($pluginHelper, $submissionManager, $wpProxy);
+    }
+
+    public function afterContentWritten(SubmissionEntity $submission): void
+    {
+        try {
+            require_once WP_PLUGIN_DIR . '/elementor/core/files/css/post.php';
+            $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($submission) {
+                (new Post($submission->getTargetId()))->enqueue();
+            });
+            $this->getLogger()->debug(sprintf('Rebuilt Elementor css submissionId=%d, targetBlogId=%d, targetId=%d', $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId()));
+        } catch (\Throwable $e) {
+            $this->getLogger()->notice(sprintf('Unable to rebuild Elementor css submissionId=%d, targetBlogId=%d, targetId=%d: %s', $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $e->getMessage()));
+        }
     }
 
     public function alterContentFieldsForUpload(array $source): array
@@ -371,6 +390,15 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     public function setContentFields(array $original, array $translation, SubmissionEntity $submission): array
     {
+        try {
+            require_once WP_PLUGIN_DIR . '/elementor/core/files/manager.php';
+            $this->siteHelper->withBlog($submission->getTargetBlogId(), function () {
+                (new Manager())->clear_cache();
+            });
+            $this->getLogger()->debug('Cleared Elementor CSS cache');
+        } catch (\Throwable $e) {
+            $this->getLogger()->notice('Unable to clear Elementor CSS cache: ' . $e->getMessage());
+        }
         if (array_key_exists('meta', $original)) {
             foreach ($this->copyFields as $field) {
                 if (array_key_exists($field, $original['meta'])) {

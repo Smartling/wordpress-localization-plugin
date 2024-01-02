@@ -107,6 +107,7 @@ services:
       - "@content.type.helper"
       - "@fields-filter.helper"
       - "@helper.plugins"
+      - "@site.helper"
       - "@manager.submission"
       - "@wp.proxy"
       - "@wp.link.helper"
