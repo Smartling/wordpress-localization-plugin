@@ -139,7 +139,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         parent::__construct($pluginHelper, $submissionManager, $wpProxy);
     }
 
-    public function alterContentFieldsForUpload(array $source): array
+    public function removeUntranslatableFieldsForUpload(array $source): array
     {
         foreach (array_merge_recursive(['meta' => $this->copyFields], $this->removeOnUploadFields) as $key => $value) {
             if (array_key_exists($key, $source)) {

@@ -43,7 +43,7 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
         $this->submissionManager = $submissionManager;
     }
 
-    public function alterContentFieldsForUpload(array $source): array
+    public function removeUntranslatableFieldsForUpload(array $source): array
     {
         foreach ($this->removeOnUploadFields as $removeKey => $removeValue) {
             if (array_key_exists($removeKey, $source)) {

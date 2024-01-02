@@ -254,7 +254,7 @@ and management of:',
             'meta' => [
                 'x' => 'relevant',
             ],
-        ], $this->getExternalContentElementor()->alterContentFieldsForUpload([
+        ], $this->getExternalContentElementor()->removeUntranslatableFieldsForUpload([
             'entity' => [
                 'post_content' => 'irrelevant',
             ],

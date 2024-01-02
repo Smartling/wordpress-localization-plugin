@@ -49,7 +49,7 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
         }
     }
 
-    public function alterContentFieldsForUpload(array $source): array
+    public function removeUntranslatableFieldsForUpload(array $source): array
     {
         unset($source['entity']['displayMeta']);
         return $source;

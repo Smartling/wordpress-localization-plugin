@@ -41,8 +41,11 @@ class ExternalContentManager
             if ($handler instanceof ContentTypeModifyingInterface) {
                 try {
                     $previousCount = count($this->fieldsFilterHelper->flattenArray($source));
-                    $source = $handler->alterContentFieldsForUpload($source);
-                    $this->getLogger()->info('HandlerName="' . $handler->getPluginId() . '" altered content fields for upload, previousCount=' . $previousCount . ', count=' . count($this->fieldsFilterHelper->flattenArray($source)));
+                    $source = $handler->removeUntranslatableFieldsForUpload($source);
+                    $count = count($this->fieldsFilterHelper->flattenArray($source));
+                    if ($previousCount !== $count) {
+                        $this->getLogger()->info('HandlerName="' . $handler->getPluginId() . '" altered content fields for upload, previousCount=' . $previousCount . ', count=' . $count);
+                    }
                 } catch (\Throwable $e) {
                     $this->getLogger()->warning('HandlerName="' . $handler->getPluginId() . '" got exception while trying to alter content fields: ' . $e->getMessage());
                 }
