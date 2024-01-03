@@ -148,9 +148,11 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     public function afterContentWritten(SubmissionEntity $submission): void
     {
         try {
-            require_once WP_PLUGIN_DIR . '/elementor/core/files/css/post.php';
             $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($submission) {
-                (new Post($submission->getTargetId()))->enqueue();
+                if ($this->getSupportLevel($submission->getContentType(), $submission->getTargetId()) !== self::NOT_SUPPORTED) {
+                    require_once WP_PLUGIN_DIR . '/elementor/core/files/css/post.php';
+                    (new Post($submission->getTargetId()))->enqueue();
+                }
             });
             $this->getLogger()->debug(sprintf('Rebuilt Elementor css submissionId=%d, targetBlogId=%d, targetId=%d', $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId()));
         } catch (\Throwable $e) {
