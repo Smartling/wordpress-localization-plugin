@@ -45,12 +45,14 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
 
     public function removeUntranslatableFieldsForUpload(array $source): array
     {
-        foreach ($this->removeOnUploadFields as $removeKey => $removeValue) {
-            if (array_key_exists($removeKey, $source)) {
-                foreach ($removeValue as $field) {
-                    foreach ($source[$removeKey] as $sourceKey => $sourceValue) {
-                        if (preg_match("~$field~", $sourceKey)) {
-                            unset($source[$removeKey][$sourceKey]);
+        if (array_key_exists(self::META_FIELD_NAME, $source['meta'] ?? [])) {
+            foreach ($this->removeOnUploadFields as $removeKey => $removeValue) {
+                if (array_key_exists($removeKey, $source)) {
+                    foreach ($removeValue as $field) {
+                        foreach ($source[$removeKey] as $sourceKey => $sourceValue) {
+                            if (preg_match("~$field~", $sourceKey)) {
+                                unset($source[$removeKey][$sourceKey]);
+                            }
                         }
                     }
                 }

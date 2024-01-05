@@ -141,7 +141,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     public function removeUntranslatableFieldsForUpload(array $source): array
     {
-        if (array_key_exists(self::META_FIELD_NAME, $source['meta'])) {
+        if (array_key_exists(self::META_FIELD_NAME, $source['meta'] ?? [])) {
             $this->getLogger()->info('Detected elementor data, removing post content and elementor related meta fields');
             foreach (array_merge_recursive(['meta' => $this->copyFields], $this->removeOnUploadFields) as $key => $value) {
                 if (array_key_exists($key, $source)) {
