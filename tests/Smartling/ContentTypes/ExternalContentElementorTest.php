@@ -8,6 +8,7 @@ use Smartling\ContentTypes\ExternalContentElementor;
 use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\PluginHelper;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\WordpressLinkHelper;
 use Smartling\Services\ContentRelationsDiscoveryService;
@@ -284,6 +285,7 @@ and management of:',
             $contentTypeHelper,
             $fieldsFilterHelper,
             $pluginHelper,
+            new SiteHelper(),
             $submissionManager,
             $proxy,
             new WordpressLinkHelper($submissionManager, $proxy),
