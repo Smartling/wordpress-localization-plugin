@@ -9,6 +9,7 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
+use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
@@ -18,6 +19,7 @@ use Smartling\Helpers\XmlHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Replacers\ReplacerFactory;
 use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 use Smartling\Tests\Traits\DbAlMock;
@@ -55,7 +57,7 @@ class SmartlingCoreTest extends TestCase
             $wpProxy,
         );
         $this->core = new SmartlingCore(
-            new ExternalContentManager(),
+            new ExternalContentManager(new FieldsFilterHelper($this->createMock(SettingsManager::class), $this->createMock(AcfDynamicSupport::class))),
             $this->createMock(FileUriHelper::class),
             $gutenbergBlockHelper,
             new PostContentHelper($gutenbergBlockHelper),
