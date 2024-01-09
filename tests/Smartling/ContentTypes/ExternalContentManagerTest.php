@@ -2,13 +2,13 @@
 
 namespace Smartling\Tests\Smartling\ContentTypes;
 
-use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\ContentTypeModifyingInterface;
 use Smartling\ContentTypes\ContentTypePluggableInterface;
 use Smartling\ContentTypes\ExternalContentManager;
 use PHPUnit\Framework\TestCase;
-use Smartling\Helpers\PluginHelper;
-use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
+use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 
 class ExternalContentManagerTest extends TestCase {
@@ -24,7 +24,7 @@ class ExternalContentManagerTest extends TestCase {
         $content2->method('getContentFields')->willThrowException(new \TypeError());
         $content2->method('getRelatedContent')->willThrowException(new \ParseError());
         $content2->method('setContentFields')->willThrowException(new \Error());
-        $x = new ExternalContentManager();
+        $x = $this->getExternalContentManager();
         $x->addHandler($content1);
         $x->addHandler($content2);
         $submission = $this->createMock(SubmissionEntity::class);
@@ -42,7 +42,7 @@ class ExternalContentManagerTest extends TestCase {
         $content2->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::NOT_SUPPORTED);
         $content2->method('getContentFields')->willReturn(['content2' => ['content_2' => 'content 2']]);
         $content3 = $this->createMock(ContentTypePluggableInterface::class);
-        $x = new ExternalContentManager();
+        $x = $this->getExternalContentManager();
         $x->addHandler($content1);
         $x->addHandler($content2);
         $x->addHandler($content3);
@@ -73,7 +73,7 @@ class ExternalContentManagerTest extends TestCase {
         $content3->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::SUPPORTED);
         $content3->method('getContentFields')->willReturn(['content_3' => 'content 3']);
         $content3->method('getPluginId')->willReturn('content3');
-        $x = new ExternalContentManager();
+        $x = $this->getExternalContentManager();
         $x->addHandler($content1);
         $x->addHandler($content2);
         $x->addHandler($content3);
@@ -171,7 +171,7 @@ class ExternalContentManagerTest extends TestCase {
                 'content_3' => 'content 3',
             ],
         ]);
-        $x = new ExternalContentManager();
+        $x = $this->getExternalContentManager();
         $x->addHandler($content1);
         $x->addHandler($content2);
         $x->addHandler($content3);
@@ -195,10 +195,15 @@ class ExternalContentManagerTest extends TestCase {
             'image' => [2, 1],
             'other' => [3],
         ];
-        $x = new ExternalContentManager();
+        $x = $this->getExternalContentManager();
         $x->addHandler($content1);
         $x->addHandler($content2);
         $x->addHandler($content3);
         $this->assertEquals($expected, $x->getExternalRelations('post', 17));
+    }
+
+    private function getExternalContentManager(): ExternalContentManager
+    {
+        return new ExternalContentManager(new FieldsFilterHelper($this->createMock(SettingsManager::class), $this->createMock(AcfDynamicSupport::class)));
     }
 }
