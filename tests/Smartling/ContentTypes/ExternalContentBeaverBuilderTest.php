@@ -75,7 +75,7 @@ class ExternalContentBeaverBuilderTest extends TestCase {
         $this->assertEquals([
             'entity' => [],
             'meta' => ['x' => 'relevant'],
-        ], $this->getExternalContentBeaverBuilder()->alterContentFieldsForUpload([
+        ], $this->getExternalContentBeaverBuilder()->removeUntranslatableFieldsForUpload([
             'entity' => [
                 'post_content' => 'irrelevant',
             ],
