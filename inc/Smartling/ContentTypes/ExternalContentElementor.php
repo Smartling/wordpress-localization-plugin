@@ -48,7 +48,6 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         'alert_description',
         'alert_title',
         'alt',
-        'anchor',
         'anchor_note',
         'author_bio',
         'author_name',
