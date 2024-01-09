@@ -2,9 +2,12 @@
 
 namespace Smartling\ContentTypes;
 
+use Elementor\Core\Files\CSS\Post;
+use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginHelper;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\WordpressLinkHelper;
 use Smartling\Models\ExternalData;
@@ -45,7 +48,6 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         'alert_description',
         'alert_title',
         'alt',
-        'anchor',
         'anchor_note',
         'author_bio',
         'author_name',
@@ -54,6 +56,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         'button',
         'button_text',
         'caption',
+        'content',
         'cta-text',
         'custom_text',
         'custom_text',
@@ -131,12 +134,29 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         private ContentTypeHelper $contentTypeHelper,
         private FieldsFilterHelper $fieldsFilterHelper,
         PluginHelper $pluginHelper,
+        private SiteHelper $siteHelper,
         SubmissionManager $submissionManager,
         WordpressFunctionProxyHelper $wpProxy,
         private WordpressLinkHelper $wpLinkHelper,
     )
     {
+        add_action(ExportedAPI::ACTION_AFTER_TARGET_CONTENT_WRITTEN, [$this, 'afterContentWritten']);
         parent::__construct($pluginHelper, $submissionManager, $wpProxy);
+    }
+
+    public function afterContentWritten(SubmissionEntity $submission): void
+    {
+        try {
+            $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($submission) {
+                if ($this->getSupportLevel($submission->getContentType(), $submission->getTargetId()) !== self::NOT_SUPPORTED) {
+                    require_once WP_PLUGIN_DIR . '/elementor/core/files/css/post.php';
+                    (new Post($submission->getTargetId()))->enqueue();
+                }
+            });
+            $this->getLogger()->debug(sprintf('Rebuilt Elementor css submissionId=%d, targetBlogId=%d, targetId=%d', $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId()));
+        } catch (\Throwable $e) {
+            $this->getLogger()->notice(sprintf('Unable to rebuild Elementor css submissionId=%d, targetBlogId=%d, targetId=%d: %s', $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $e->getMessage()));
+        }
     }
 
     public function removeUntranslatableFieldsForUpload(array $source): array
