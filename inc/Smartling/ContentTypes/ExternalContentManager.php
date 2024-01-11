@@ -109,6 +109,8 @@ class ExternalContentManager
                 } catch (\Throwable $e) {
                     $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to set external content: ' . $e->getMessage());
                 }
+            } else {
+                $this->getLogger()->debug("No support for {$handler->getPluginId()} detected");
             }
         }
 

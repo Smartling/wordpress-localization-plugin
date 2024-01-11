@@ -2,6 +2,7 @@
 
 namespace Smartling\ContentTypes;
 
+use Elementor\Core\DynamicTags\Manager;
 use Elementor\Core\Files\CSS\Post;
 use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\FieldsFilterHelper;
@@ -20,7 +21,9 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     use LoggerSafeTrait;
 
     public const CONTENT_TYPE_ELEMENTOR_LIBRARY = 'elementor_library';
+    private const DYNAMIC = '__dynamic__';
     protected const META_FIELD_NAME = '_elementor_data';
+    private const POPUP = 'popup';
     private const PROPERTY_TEMPLATE_ID = 'templateID';
 
     private array $copyFields = [
@@ -130,6 +133,8 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         'user_placeholder',
     ];
 
+    private ?Manager $dynamicTagsManager = null;
+
     public function __construct(
         private ContentTypeHelper $contentTypeHelper,
         private FieldsFilterHelper $fieldsFilterHelper,
@@ -142,6 +147,12 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     {
         add_action(ExportedAPI::ACTION_AFTER_TARGET_CONTENT_WRITTEN, [$this, 'afterContentWritten']);
         parent::__construct($pluginHelper, $submissionManager, $wpProxy);
+        try {
+            require_once WP_PLUGIN_DIR . '/elementor/core/dynamic-tags/manager.php';
+            $this->dynamicTagsManager = new Manager();
+        } catch (\Throwable $e) {
+            $this->getLogger()->notice('Unable to initialize Elementor dynamic tags manager, Elementor tags processing not available: ' . $e->getMessage());
+        }
     }
 
     public function afterContentWritten(SubmissionEntity $submission): void
@@ -193,15 +204,12 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
             }
             if (isset($component['settings'])) {
                 foreach ($component['settings'] as $key => $setting) {
-                    if (str_starts_with($key, '_')) {
+                    if ($key !== self::DYNAMIC && str_starts_with($key, '_')) {
                         continue;
                     }
 
                     if (is_array($setting)) {
-                        $related = $this->getRelatedFromSetting($setting);
-                        if ($related !== null) {
-                            $result = $result->addRelated($related);
-                        }
+                        $result = $result->merge($this->getRelatedFromSetting($setting));
                         foreach ($setting as $id => $option) {
                             if (is_array($option)) {
                                 foreach ($option as $optionKey => $optionValue) {
@@ -239,7 +247,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     public function getMaxVersion(): string
     {
-        return '3.17';
+        return '3.18';
     }
 
     public function getMinVersion(): string
@@ -272,32 +280,42 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
         return null;
     }
-    
-    private function getRelatedFromSetting(array $setting): ?array {
+
+    private function getRelatedFromSetting(array $setting): ExternalData {
         if (($setting['source'] ?? '') === 'library' && ($setting['id'] ?? '') !== '') {
-            return [ContentTypeHelper::POST_TYPE_ATTACHMENT => [$setting['id']]];
+            return new ExternalData([], [ContentTypeHelper::POST_TYPE_ATTACHMENT => [$setting['id']]]);
         }
         if (($setting['library'] ?? '') === 'svg' && is_int($setting['value']['id'] ?? '')) {
-            return [ContentTypeHelper::POST_TYPE_ATTACHMENT => [$setting['value']['id']]];
+            return new ExternalData([], [ContentTypeHelper::POST_TYPE_ATTACHMENT => [$setting['value']['id']]]);
         }
         if (is_int($setting['selected_icon']['value']['id'] ?? '')) {
-            return [ContentTypeHelper::POST_TYPE_ATTACHMENT => [$setting['selected_icon']['value']['id']]];
+            return new ExternalData([], [ContentTypeHelper::POST_TYPE_ATTACHMENT => [$setting['selected_icon']['value']['id']]]);
         }
 
-        $ids = [];
+        $result = new ExternalData();
         foreach ($setting as $value) {
             if (is_array($value)) {
-                $related = $this->getRelatedFromSetting($value);
-                if ($related !== null) {
-                    $ids[] = array_values($related)[0][0];
+                $result = $result->merge($this->getRelatedFromSetting($value));
+            } elseif (is_string($value)) {
+                $relatedId = $this->getPopupId($value);
+                if ($relatedId !== null) {
+                    $detectedType = $this->wpProxy->get_post_type($relatedId);
+                    if (is_string($detectedType)) {
+                        $relatedType = ContentTypeHelper::POST_TYPE_ATTACHMENT;
+                        if ($this->contentTypeHelper->isPost($detectedType)) {
+                            $relatedType = ContentRelationsDiscoveryService::POST_BASED_PROCESSOR;
+                        } elseif ($this->contentTypeHelper->isTaxonomy($detectedType)) {
+                            $relatedType = ContentRelationsDiscoveryService::TERM_BASED_PROCESSOR;
+                        }
+                        $result = $result->addRelated([$relatedType => [$relatedId]]);
+                    } else {
+                        $this->getLogger()->debug("Skip adding relatedId=$relatedId, postType=$detectedType");
+                    }
                 }
             }
         }
 
-        if (count($ids) > 0) {
-            return [ContentTypeHelper::POST_TYPE_ATTACHMENT => $ids];
-        }
-        return null;
+        return $result;
     }
 
     private function mergeElementorData(array $original, array $translation, SubmissionEntity $submission, string $previousPrefix = ''): array
@@ -309,7 +327,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
             }
             if (array_key_exists('settings', $component)) {
                 foreach($component['settings'] as $settingIndex => $setting) {
-                    if (str_starts_with($settingIndex, '_')) {
+                    if ($settingIndex !== self::DYNAMIC && str_starts_with($settingIndex, '_')) {
                         continue;
                     }
                     if (is_array($setting)) {
@@ -361,6 +379,33 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                                             $original[$componentIndex]['settings'][$settingIndex][$optionIndex][$optionsIndex] = $translation[$key];
                                         }
                                     }
+                                } elseif ($this->dynamicTagsManager !== null && is_string($option) && str_starts_with($option, '[' . Manager::TAG_LABEL)) {
+                                    $this->getLogger()->debug("Processing Elementor tag $option");
+                                    $popupId = $this->getPopupId($option);
+                                    if ($popupId !== null) {
+                                        try {
+                                            $tagData = $this->dynamicTagsManager->tag_text_to_tag_data($option);
+                                        } catch (\Throwable $e) {
+                                            $this->getLogger()->warning("Unable to convert Elementor tagText=\"$option\" to array, popupId=$popupId: {$e->getMessage()}");
+                                            continue;
+                                        }
+                                        $targetSubmission = $this->submissionManager->findOne([
+                                            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
+                                            SubmissionEntity::FIELD_SOURCE_ID => $popupId,
+                                            SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
+                                        ]);
+                                        if ($targetSubmission !== null) {
+                                            $this->getLogger()->debug("Replacing $popupId with {$submission->getTargetId()}");
+                                            try {
+                                                $tagData['settings']['popup'] = (string)$targetSubmission->getTargetId();
+                                                $original[$componentIndex]['settings'][$settingIndex][$optionIndex] = $this->dynamicTagsManager->tag_data_to_tag_text(...array_values($tagData));
+                                            } catch (\Throwable $e) {
+                                                $this->getLogger()->warning("Unable to apply relation sourceId=$popupId, targetId={$targetSubmission->getTargetId()}: {$e->getMessage()}");
+                                            }
+                                        } else {
+                                            $this->getLogger()->debug("No target submission exists");
+                                        }
+                                    }
                                 } else {
                                     $key = implode(FieldsFilterHelper::ARRAY_DIVIDER, [$prefix, $settingIndex, $optionIndex]);
                                     if (array_key_exists($key, $translation) && in_array($optionIndex, $this->translatableFields, true)) {
@@ -405,5 +450,25 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         ), JSON_THROW_ON_ERROR);
         unset($translation[$this->getPluginId()]);
         return $translation;
+    }
+
+    private function getPopupId(string $value): ?int
+    {
+        $relatedId = null;
+        try {
+            if ($this->dynamicTagsManager !== null && str_starts_with($value, '[' . Manager::TAG_LABEL)) {
+                $relatedId = $this->dynamicTagsManager->parse_tag_text($value, [], function ($id, $name, $settings) {
+                    if (is_array($settings) && array_key_exists(self::POPUP, $settings)) {
+                        return (int)$settings[self::POPUP];
+                    }
+
+                    return null;
+                });
+            }
+        } catch (\Throwable $e) {
+            $this->getLogger()->notice('Failed to process Elementor tag ' . $value . ': ' . $e->getMessage());
+        }
+
+        return $relatedId;
     }
 }
