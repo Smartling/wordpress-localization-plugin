@@ -382,6 +382,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                                 } elseif ($this->dynamicTagsManager !== null && is_string($option) && str_starts_with($option, '[' . Manager::TAG_LABEL)) {
                                     $this->getLogger()->debug("Processing Elementor tag $option");
                                     $popupId = $this->getPopupId($option);
+                                    $this->getLogger()->debug("Got popupId $popupId");
                                     if ($popupId !== null) {
                                         try {
                                             $tagData = $this->dynamicTagsManager->tag_text_to_tag_data($option);
@@ -457,6 +458,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         $relatedId = null;
         try {
             if ($this->dynamicTagsManager !== null && str_starts_with($value, '[' . Manager::TAG_LABEL)) {
+                $this->getLogger()->debug("Parse tag text");
                 $relatedId = $this->dynamicTagsManager->parse_tag_text($value, [], function ($id, $name, $settings) {
                     if (is_array($settings) && array_key_exists(self::POPUP, $settings)) {
                         return (int)$settings[self::POPUP];
