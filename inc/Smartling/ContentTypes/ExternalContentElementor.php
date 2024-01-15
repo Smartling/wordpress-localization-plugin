@@ -455,6 +455,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     private function getPopupId(string $value): ?int
     {
+        $this->getLogger()->debug("Getting popupId of $value");
         $relatedId = null;
         try {
             if ($this->dynamicTagsManager !== null && str_starts_with($value, '[' . Manager::TAG_LABEL)) {
