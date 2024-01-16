@@ -64,4 +64,27 @@ class ElementorTest extends SmartlingUnitTestCaseAbstract {
         $this->assertCount(12, $decoded, $meta['_elementor_data']);
         $this->assertEquals(json_decode(json: file_get_contents(__DIR__ . '/../testdata/wp-860-expected.json'), associative: true), $decoded);
     }
+
+    public function testElementorPopups(): void
+    {
+        $contentType = 'post';
+        $sourceBlogId = 1;
+        $targetBlogId = 2;
+        $popupId = $this->createPost(title: "Popup");
+        $this->assertIsInt($popupId);
+        $popupSubmission = $this->uploadDownload($this->getTranslationHelper()->prepareSubmission($contentType, $sourceBlogId, $popupId, $targetBlogId));
+        $this->assertNotNull($popupSubmission);
+        $this->assertNotEquals(0, $popupSubmission->getTargetId());
+        $json = str_replace('popupId', $popupId, file_get_contents(__DIR__ . '/../testdata/wp-863-source.json'));
+        $postId = $this->createPostWithMeta('Elementor automated test post', '', $contentType, [
+            '_elementor_data' => addslashes($json),
+        ]);
+        $this->assertIsInt($postId);
+        $submission = $this->getTranslationHelper()->prepareSubmission($contentType, $sourceBlogId, $postId, $targetBlogId);
+        $result = $this->uploadDownload($submission);
+        $meta = $this->getContentHelper()->readTargetMetadata($result);
+        $decoded = json_decode(json: $meta['_elementor_data'], associative: true);
+        $this->assertIsArray($decoded, base64_encode($meta['_elementor_data']));
+        $this->assertEquals(json_decode(json: str_replace('popupId', $popupSubmission->getTargetId(), file_get_contents(__DIR__ . '/../testdata/wp-863-expected.json')), associative: true), $decoded);
+    }
 }

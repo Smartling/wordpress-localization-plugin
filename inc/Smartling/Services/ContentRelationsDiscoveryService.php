@@ -51,6 +51,7 @@ class ContentRelationsDiscoveryService
 {
     use LoggerSafeTrait;
     public const POST_BASED_PROCESSOR = 'PostBasedProcessor';
+    public const TERM_BASED_PROCESSOR = 'TermBasedProcessor';
 
     public function __construct(
         private AcfDynamicSupport $acfDynamicSupport,
@@ -579,8 +580,8 @@ class ContentRelationsDiscoveryService
             }
         }
 
-        if (isset($references['TermBasedProcessor'])) {
-            $termTypeIds = $references['TermBasedProcessor'];
+        if (isset($references[self::TERM_BASED_PROCESSOR])) {
+            $termTypeIds = $references[self::TERM_BASED_PROCESSOR];
             foreach ($termTypeIds as $termTypeId) {
                 $term = get_term($termTypeId, '', \ARRAY_A);
                 if (is_array($term)) {

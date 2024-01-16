@@ -129,7 +129,9 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
     public function setContentFields(array $original, array $translation, SubmissionEntity $submission): array
     {
         $translation['meta'][self::META_FIELD_NAME] = $this->buildData(unserialize($original['meta'][self::META_FIELD_NAME] ?? '') ?: [], $translation[$this->getPluginId()] ?? [], $submission);
-        $translation['meta'][self::META_SETTINGS_NAME] = $original['meta'][self::META_SETTINGS_NAME];
+        if (array_key_exists(self::META_SETTINGS_NAME, $original['meta'])) {
+            $translation['meta'][self::META_SETTINGS_NAME] = $original['meta'][self::META_SETTINGS_NAME];
+        }
         unset($translation[$this->getPluginId()]);
         return $translation;
     }

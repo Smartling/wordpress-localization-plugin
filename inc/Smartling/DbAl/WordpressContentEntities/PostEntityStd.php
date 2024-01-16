@@ -327,7 +327,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
 
         if (array_key_exists($key, $meta)) {
             /** @noinspection TypeUnsafeComparisonInspection */
-            return $value == $meta[$key];
+            return $value == $this->wordpressFunctionProxyHelper->maybe_unserialize($meta[$key]);
         }
 
         return false;
