@@ -400,6 +400,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                                             try {
                                                 $tagData['settings']['popup'] = (string)$targetSubmission->getTargetId();
                                                 $this->getLogger()->debug("Tag data: " . json_encode($tagData));
+                                                $this->getLogger()->debug('Tags: ' . json_encode($this->dynamicTagsManager->get_tags()));
                                                 $tagText = $this->dynamicTagsManager->tag_data_to_tag_text(...array_values($tagData));
                                                 $this->getLogger()->debug("Tag text: $tagText");
                                                 $original[$componentIndex]['settings'][$settingIndex][$optionIndex] = $tagText;
