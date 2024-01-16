@@ -399,7 +399,10 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                                             $this->getLogger()->debug("Replacing $popupId with {$submission->getTargetId()}");
                                             try {
                                                 $tagData['settings']['popup'] = (string)$targetSubmission->getTargetId();
-                                                $original[$componentIndex]['settings'][$settingIndex][$optionIndex] = $this->dynamicTagsManager->tag_data_to_tag_text(...array_values($tagData));
+                                                $this->getLogger()->debug("Tag data: " . json_encode($tagData));
+                                                $tagText = $this->dynamicTagsManager->tag_data_to_tag_text(...array_values($tagData));
+                                                $this->getLogger()->debug("Tag text: $tagText");
+                                                $original[$componentIndex]['settings'][$settingIndex][$optionIndex] = $tagText;
                                             } catch (\Throwable $e) {
                                                 $this->getLogger()->warning("Unable to apply relation sourceId=$popupId, targetId={$targetSubmission->getTargetId()}: {$e->getMessage()}");
                                             }
