@@ -382,7 +382,6 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                                 } elseif ($this->dynamicTagsManager !== null && is_string($option) && str_starts_with($option, '[' . Manager::TAG_LABEL)) {
                                     $this->getLogger()->debug("Processing Elementor tag $option");
                                     $popupId = $this->getPopupId($option);
-                                    $this->getLogger()->debug("Got popupId $popupId");
                                     if ($popupId !== null) {
                                         try {
                                             $tagData = $this->dynamicTagsManager->tag_text_to_tag_data($option);
@@ -396,13 +395,14 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                                             SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
                                         ]);
                                         if ($targetSubmission !== null) {
-                                            $this->getLogger()->debug("Replacing $popupId with {$submission->getTargetId()}");
+                                            $this->getLogger()->debug("Replacing popupId=$popupId with targetId={$submission->getTargetId()}");
                                             try {
                                                 $tagData['settings']['popup'] = (string)$targetSubmission->getTargetId();
-                                                $this->getLogger()->debug("Tag data: " . json_encode($tagData));
-                                                $this->getLogger()->debug('Tags: ' . json_encode($this->dynamicTagsManager->get_tags()));
                                                 $tagText = $this->dynamicTagsManager->tag_data_to_tag_text(...array_values($tagData));
-                                                $this->getLogger()->debug("Tag text: $tagText");
+                                                if ($tagText === '') {
+                                                    $this->getLogger()->info('No tag text returned by manager, fallback tag text creation');
+                                                    $tagText = sprintf('[%1$s id="%2$s" name="%3$s" settings="%4$s"]', Manager::TAG_LABEL, $tagData['id'] ?? '', $tagData['name'] ?? '', urlencode(json_encode($tagData['settings'] ?? [], JSON_FORCE_OBJECT)));
+                                                }
                                                 $original[$componentIndex]['settings'][$settingIndex][$optionIndex] = $tagText;
                                             } catch (\Throwable $e) {
                                                 $this->getLogger()->warning("Unable to apply relation sourceId=$popupId, targetId={$targetSubmission->getTargetId()}: {$e->getMessage()}");
@@ -459,11 +459,9 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     private function getPopupId(string $value): ?int
     {
-        $this->getLogger()->debug("Getting popupId of $value");
         $relatedId = null;
         try {
             if ($this->dynamicTagsManager !== null && str_starts_with($value, '[' . Manager::TAG_LABEL)) {
-                $this->getLogger()->debug("Parse tag text");
                 $relatedId = $this->dynamicTagsManager->parse_tag_text($value, [], function ($id, $name, $settings) {
                     if (is_array($settings) && array_key_exists(self::POPUP, $settings)) {
                         return (int)$settings[self::POPUP];
