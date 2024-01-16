@@ -72,9 +72,9 @@ class ElementorTest extends SmartlingUnitTestCaseAbstract {
         $targetBlogId = 2;
         $popupId = $this->createPost(title: "Popup");
         $this->assertIsInt($popupId);
-        $popupSubmission = $this->getTranslationHelper()->prepareSubmission($contentType, $sourceBlogId, $popupId, $targetBlogId);
-        $this->uploadDownload($popupSubmission);
+        $popupSubmission = $this->uploadDownload($this->getTranslationHelper()->prepareSubmission($contentType, $sourceBlogId, $popupId, $targetBlogId));
         $this->assertNotNull($popupSubmission);
+        $this->assertNotEquals(0, $popupSubmission->getTargetId());
         $json = str_replace('popupId', $popupId, file_get_contents(__DIR__ . '/../testdata/wp-863-source.json'));
         $postId = $this->createPostWithMeta('Elementor automated test post', '', $contentType, [
             '_elementor_data' => addslashes($json),
