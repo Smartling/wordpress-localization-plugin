@@ -2,13 +2,13 @@
 
 namespace Smartling\Tests\Smartling\ContentTypes;
 
-use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\ContentTypeModifyingInterface;
 use Smartling\ContentTypes\ContentTypePluggableInterface;
 use Smartling\ContentTypes\ExternalContentManager;
 use PHPUnit\Framework\TestCase;
-use Smartling\Helpers\PluginHelper;
-use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
+use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 
 class ExternalContentManagerTest extends TestCase {
@@ -24,7 +24,7 @@ class ExternalContentManagerTest extends TestCase {
         $content2->method('getContentFields')->willThrowException(new \TypeError());
         $content2->method('getRelatedContent')->willThrowException(new \ParseError());
         $content2->method('setContentFields')->willThrowException(new \Error());
-        $x = new ExternalContentManager();
+        $x = $this->getExternalContentManager();
         $x->addHandler($content1);
         $x->addHandler($content2);
         $submission = $this->createMock(SubmissionEntity::class);
@@ -42,7 +42,7 @@ class ExternalContentManagerTest extends TestCase {
         $content2->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::NOT_SUPPORTED);
         $content2->method('getContentFields')->willReturn(['content2' => ['content_2' => 'content 2']]);
         $content3 = $this->createMock(ContentTypePluggableInterface::class);
-        $x = new ExternalContentManager();
+        $x = $this->getExternalContentManager();
         $x->addHandler($content1);
         $x->addHandler($content2);
         $x->addHandler($content3);
@@ -73,7 +73,7 @@ class ExternalContentManagerTest extends TestCase {
         $content3->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::SUPPORTED);
         $content3->method('getContentFields')->willReturn(['content_3' => 'content 3']);
         $content3->method('getPluginId')->willReturn('content3');
-        $x = new ExternalContentManager();
+        $x = $this->getExternalContentManager();
         $x->addHandler($content1);
         $x->addHandler($content2);
         $x->addHandler($content3);
@@ -106,12 +106,12 @@ class ExternalContentManagerTest extends TestCase {
         $content1->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::SUPPORTED);
         $content1->method('getContentFields')->willReturn(['content_1' => 'content 1']);
         $content1->method('getPluginId')->willReturn('content1');
-        $content1->method('alterContentFieldsForUpload')->willReturnArgument(1);
+        $content1->method('removeUntranslatableFieldsForUpload')->willReturnArgument(1);
         $content2 = $this->createMock(ContentTypeModifyingInterface::class);
         $content2->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::SUPPORTED);
         $content2->method('getContentFields')->willReturn(['content_2' => 'content 2']);
         $content2->method('getPluginId')->willReturn('content2');
-        $content2->method('alterContentFieldsForUpload')->willReturnCallback(static function ($value) {
+        $content2->method('removeUntranslatableFieldsForUpload')->willReturnCallback(static function ($value) {
             unset ($value['meta']['removed_meta']);
             return $value;
         });
@@ -119,7 +119,7 @@ class ExternalContentManagerTest extends TestCase {
         $content3->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::SUPPORTED);
         $content3->method('getContentFields')->willReturn(['content_3' => 'content 3']);
         $content3->method('getPluginId')->willReturn('content3');
-        $content3->method('alterContentFieldsForUpload')->willReturnCallback(static function ($value) {
+        $content3->method('removeUntranslatableFieldsForUpload')->willReturnCallback(static function ($value) {
             unset ($value['entity']['post_content']);
             return $value;
         });
@@ -128,7 +128,7 @@ class ExternalContentManagerTest extends TestCase {
         $handlerUnsupportedVersion->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::VERSION_NOT_SUPPORTED);
         $handlerUnsupportedVersion->expects($this->never())->method('getContentFields')->willReturn(['content_4' => 'content 4']);
         $handlerUnsupportedVersion->method('getPluginId')->willReturn('content4');
-        $handlerUnsupportedVersion->method('alterContentFieldsForUpload')->willReturnCallback(static function ($value) {
+        $handlerUnsupportedVersion->method('removeUntranslatableFieldsForUpload')->willReturnCallback(static function ($value) {
             unset ($value['meta']['unsupported_meta']);
             return $value;
         });
@@ -137,7 +137,7 @@ class ExternalContentManagerTest extends TestCase {
         $handlerUnsupported->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::VERSION_NOT_SUPPORTED);
         $handlerUnsupported->expects($this->never())->method('getContentFields')->willReturn(['content_5' => 'content 5']);
         $handlerUnsupported->method('getPluginId')->willReturn('content5');
-        $handlerUnsupported->expects($this->never())->method('alterContentFieldsForUpload')->willReturnCallback(static function ($value) {
+        $handlerUnsupported->expects($this->never())->method('removeUntranslatableFieldsForUpload')->willReturnCallback(static function ($value) {
             unset ($value['entity']['post_title']);
             return $value;
         });
@@ -171,7 +171,7 @@ class ExternalContentManagerTest extends TestCase {
                 'content_3' => 'content 3',
             ],
         ]);
-        $x = new ExternalContentManager();
+        $x = $this->getExternalContentManager();
         $x->addHandler($content1);
         $x->addHandler($content2);
         $x->addHandler($content3);
@@ -195,10 +195,15 @@ class ExternalContentManagerTest extends TestCase {
             'image' => [2, 1],
             'other' => [3],
         ];
-        $x = new ExternalContentManager();
+        $x = $this->getExternalContentManager();
         $x->addHandler($content1);
         $x->addHandler($content2);
         $x->addHandler($content3);
         $this->assertEquals($expected, $x->getExternalRelations('post', 17));
+    }
+
+    private function getExternalContentManager(): ExternalContentManager
+    {
+        return new ExternalContentManager(new FieldsFilterHelper($this->createMock(SettingsManager::class), $this->createMock(AcfDynamicSupport::class)));
     }
 }
