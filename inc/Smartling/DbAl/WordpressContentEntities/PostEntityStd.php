@@ -243,8 +243,14 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
     /**
      * @return self[]
      */
-    public function getAll(int $limit = 0, int $offset = 0, string $orderBy = 'date', string $order = 'DESC', string $searchString = '', array $includeOnlyIds = []): array
-    {
+    public function getAll(
+        int $limit = 0,
+        int $offset = 0,
+        string $orderBy = 'date',
+        string $order = 'DESC',
+        string $searchString = '',
+        array $includeOnlyIds = [],
+    ): array {
         $arguments = [
             'posts_per_page'   => $limit,
             'offset'           => $offset,
