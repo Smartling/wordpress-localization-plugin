@@ -350,7 +350,7 @@ class SubmissionEntity extends SmartlingEntityAbstract
             static::SUBMISSION_STATUS_FAILED => 'red',
         ];
 
-        return $statusColors[$this->getStatus()];
+        return $statusColors[$this->getStatus()] ?? 'red';
     }
 
     public function getId(): ?int

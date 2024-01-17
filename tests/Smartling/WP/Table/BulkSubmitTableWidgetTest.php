@@ -91,7 +91,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $profile->method('getOriginalBlogId')->willReturn($locale);
             $profile->method('getProjectId')->willReturn($projectUid);
 
-            $x = new BulkSubmitTableWidget($this->createMock(LocalizationPluginProxyInterface::class), $this->createMock(SiteHelper::class), $core, $manager, $pluginInfo, $profile);
+            $x = new BulkSubmitTableWidget($this->createMock(LocalizationPluginProxyInterface::class), $this->createMock(SiteHelper::class), $core, $manager, $profile);
             $x->setSource([
                 'smartling-bulk-submit-page-content-type' => $submissionType,
                 'smartling-bulk-submit-page-submission' => ["$submissionId-$submissionType"],

@@ -23,15 +23,24 @@ class GravityFormsFormHandler implements EntityHandler {
         return new GravityFormsForm($data->getDisplayMeta(), $id, $data->getTitle(), $data->getUpdated());
     }
 
-    public function getAll(int $limit = 50, int $offset = 0, string $orderBy = '', string $order = '', string $searchString = ''): array
-    {
-        $condition = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
+    public function getAll(
+        int $limit = 50,
+        int $offset = 0,
+        string $orderBy = '',
+        string $order = '',
+        string $searchString = '',
+        array $includeOnlyIds = [],
+    ): array {
+        $where = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
         if ($searchString !== '') {
-            $condition->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'title', [$searchString]));
+            $where->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, 'title', $searchString));
+        }
+        if (count($includeOnlyIds) > 0) {
+            $where->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_IN, 'id', $includeOnlyIds));
         }
         $query = "select id, title, date_updated from {$this->getTableName()}";
-        if (count($condition->getConditions()) > 0) {
-            $query .= " where $condition";
+        if (count($where->getConditions()) > 0) {
+            $query .= " where $where";
         }
         $query .= " limit $offset, $limit";
 

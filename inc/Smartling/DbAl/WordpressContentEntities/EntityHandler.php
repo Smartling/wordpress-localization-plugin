@@ -14,7 +14,14 @@ interface EntityHandler {
     /**
      * @return Entity[]
      */
-    public function getAll(int $limit = 0, int $offset = 0, string $orderBy = '', string $order = '', string $searchString = ''): array;
+    public function getAll(
+        int $limit = 0,
+        int $offset = 0,
+        string $orderBy = '',
+        string $order = '',
+        string $searchString = '',
+        array $includeOnlyIds = [],
+    ): array;
 
     public function getTotal(): int;
 

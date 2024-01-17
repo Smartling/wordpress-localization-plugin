@@ -165,17 +165,17 @@ class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
 
     /**
      * Loads ALL entities from database
-     * @param int $limit
-     * @param int $offset
-     * @param string $orderBy
-     * @param string $order
-     * @param string $searchString
      * @return TaxonomyEntityStd[]
      * @throws SmartlingDbException
      */
-    public function getAll(int $limit = 0, int $offset = 0, string $orderBy = 'term_id', string $order = 'ASC', string $searchString = ''): array
-    {
-
+    public function getAll(
+        int $limit = 0,
+        int $offset = 0,
+        string $orderBy = 'term_id',
+        string $order = 'ASC',
+        string $searchString = '',
+        array $includeOnlyIds = [],
+    ): array {
         $result = [];
 
         $taxonomies = [
@@ -188,7 +188,7 @@ class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
             'hide_empty'        => false,
             'exclude'           => [],
             'exclude_tree'      => [],
-            'include'           => [],
+            'include'           => $includeOnlyIds,
             'number'            => $limit,
             'fields'            => 'all',
             'slug'              => '',

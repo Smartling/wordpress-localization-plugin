@@ -169,8 +169,15 @@ abstract class EntityAbstract extends EntityBase implements EntityHandler
      * @return static[]
      */
     // FIXME TODO : Method must be static or better moved out from this class
-    // It's not good idea to ask instence of Post\Tag class to return all objects
-    abstract public function getAll(int $limit = 0, int $offset = 0, string $orderBy = '', string $order = '', string $searchString = ''): array;
+    // It's not good idea to ask instance of Post\Tag class to return all objects
+    abstract public function getAll(
+        int $limit = 0,
+        int $offset = 0,
+        string $orderBy = '',
+        string $order = '',
+        string $searchString = '',
+        array $includeOnlyIds = []
+    ): array;
 
     /**
      * @return int

@@ -1,5 +1,6 @@
 <?php
 
+use Smartling\Helpers\ArrayHelper;
 use Smartling\WP\Table\BulkSubmitTableWidget;
 use Smartling\WP\WPAbstract;
 
@@ -35,6 +36,7 @@ $widgetName = 'bulk-submit-locales';
                     <input type="hidden" name="page" value="<?= $_REQUEST['page']; ?>"/>
                     <?= $bulkSubmitTable->contentTypeSelectRender(); ?>
                     <?= $bulkSubmitTable->titleFilterRender(); ?>
+                    <?= $bulkSubmitTable->submissionsStatusFilterRender()?>
                     <?= $bulkSubmitTable->renderSubmitButton(__('Apply Filter')); ?>
                 </form>
             </td>
@@ -79,7 +81,7 @@ $widgetName = 'bulk-submit-locales';
                                         $locales = $data->getProfile()
                                             ->getTargetLocales();
 
-                                        \Smartling\Helpers\ArrayHelper::sortLocales($locales);
+                                        ArrayHelper::sortLocales($locales);
 
                                         foreach ($locales as $locale) {
                                             if (!$locale->isEnabled()) {
