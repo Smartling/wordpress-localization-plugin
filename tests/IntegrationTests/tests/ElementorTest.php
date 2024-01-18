@@ -43,6 +43,9 @@ class ElementorTest extends SmartlingUnitTestCaseAbstract {
         foreach ($images as $key => $image) {
             $this->assertNotEquals($image->getSourceId(), $image->getTargetId(), "Image $key has same source and target ids");
         }
+        $contentArray = $content->toArray();
+        $this->assertArrayHasKey('post_content', $contentArray, json_encode($contentArray));
+        $this->assertEquals('', $contentArray['post_content'], $contentArray['post_content']);
     }
 
     public function testElementorComplexContent(): void
