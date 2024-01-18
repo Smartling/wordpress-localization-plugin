@@ -29,14 +29,14 @@ class GravityFormsFormHandler implements EntityHandler {
         string $orderBy = '',
         string $order = '',
         string $searchString = '',
-        array $includeOnlyIds = [],
+        array $ids = [],
     ): array {
         $where = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
         if ($searchString !== '') {
             $where->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, 'title', $searchString));
         }
-        if (count($includeOnlyIds) > 0) {
-            $where->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_IN, 'id', $includeOnlyIds));
+        if (count($ids) > 0) {
+            $where->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_IN, 'id', $ids));
         }
         $query = "select id, title, date_updated from {$this->getTableName()}";
         if (count($where->getConditions()) > 0) {

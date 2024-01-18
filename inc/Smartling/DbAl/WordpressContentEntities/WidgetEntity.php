@@ -120,7 +120,7 @@ class WidgetEntity extends VirtualEntityAbstract
         string $orderBy = '',
         string $order = '',
         string $searchString = '',
-        array $includeOnlyIds = [],
+        array $ids = [],
     ): array {
         $this->buildMap();
         $collection = [];
