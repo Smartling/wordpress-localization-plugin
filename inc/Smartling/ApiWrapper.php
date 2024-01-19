@@ -547,9 +547,7 @@ class ApiWrapper implements ApiWrapperInterface
 
     private function getBaseNameForDailyBucketJob(string $suffix = ''): string
     {
-        $date = DateTimeHelper::getWordpressDateFormat();
-
-        return ApiWrapperInterface::DAILY_BUCKET_JOB_NAME_PREFIX . " $date$suffix";
+        return ApiWrapperInterface::DAILY_BUCKET_JOB_NAME_PREFIX . ' ' . date(DateTimeHelper::getWordpressDateFormat()) . $suffix;
     }
 
     public function findLastJobByFileUri(ConfigurationProfileEntity $profile, string $fileUri): ?JobEntityWithStatus
@@ -593,7 +591,7 @@ class ApiWrapper implements ApiWrapperInterface
                     // If there is a CLOSED bucket job then we have to
                     // come up with new job name in order to avoid
                     // "Job name is already taken" error.
-                    $jobName = $this->getBaseNameForDailyBucketJob(' ' . DateTimeHelper::getWordpressTimeFormat());
+                    $jobName = $this->getBaseNameForDailyBucketJob(' ' . date(DateTimeHelper::getWordpressTimeFormat()));
                     $result = $this->createJob($profile, [
                         'name'        => $jobName,
                         'description' => 'Bucket job: contains updated content.',
