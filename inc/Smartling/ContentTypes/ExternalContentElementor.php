@@ -163,17 +163,34 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
             if ($supportLevel !== self::NOT_SUPPORTED) {
                 try {
                     require_once WP_PLUGIN_DIR . '/elementor/core/documents-manager.php';
+                    $meta = $this->getDataFromPostMeta($submission->getTargetId());
+                    $post = $this->wpProxy->get_post($submission->getTargetId());
+                    $manager = new Documents_Manager();
+                    do_action('elementor/documents/register', $manager);
+                    $document = $manager->get($submission->getTargetId());
+                    if ($document === false) {
+                        $this->getLogger()->notice('Could not get document');
+                    } else {
+                        $this->getLogger()->debug('Document is ' . get_class($document));
+                    }
+                    if (!$document->is_built_with_elementor()) {
+                        $this->getLogger()->notice('Document is not built with elementor. Meta: ' . json_encode($meta));
+                    }
+                    if (!$document->is_editable_by_current_user()) {
+                        $this->getLogger()->notice('Document is not editable by current user');
+                    }
+
                     /** @noinspection PhpParamsInspection */
-                    (new Documents_Manager())->ajax_save([
+                    $manager->ajax_save([
                         'editor_post_id' => $submission->getTargetId(),
-                        'elements' => json_decode($this->wpProxy->getPostMeta($submission->getTargetId(), self::META_FIELD_NAME, true),
+                        'elements' => json_decode($this->getDataFromPostMeta($submission->getTargetId()),
                             true,
                             512,
                             JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT),
-                        'status' => $this->wpProxy->get_post($submission->getTargetId())->post_status,
+                        'status' => $post->post_status,
                     ]);
                 } catch (\Throwable $e) {
-                    $this->getLogger()->notice(sprintf("Unable to do Elementor save actions for contentType=%s, submissionId=%d, targetBlogId=%d, targetId=%d: %s", $submission->getContentType(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $e->getMessage()));
+                    $this->getLogger()->notice(sprintf("Unable to do Elementor save actions for contentType=%s, submissionId=%d, targetBlogId=%d, targetId=%d: %s (%s), post: %s", $submission->getContentType(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $e->getMessage(), $e->getTraceAsString(), json_encode($post->to_array())));
                 }
             }
         });
