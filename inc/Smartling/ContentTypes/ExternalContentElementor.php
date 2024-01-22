@@ -174,7 +174,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                         $this->getLogger()->debug('Document is ' . get_class($document));
                     }
                     if (!$document->is_built_with_elementor()) {
-                        $this->getLogger()->notice('Document is not built with elementor. Meta: ' . json_encode($meta));
+                        $this->getLogger()->notice('Document is not built with elementor. Meta: ' . json_encode($meta) . ', mode: ' . $this->wpProxy->getPostMeta($submission->getTargetId(), '_elementor_edit_mode', true));
                     }
                     if (!$document->is_editable_by_current_user()) {
                         $this->getLogger()->notice('Document is not editable by current user');
