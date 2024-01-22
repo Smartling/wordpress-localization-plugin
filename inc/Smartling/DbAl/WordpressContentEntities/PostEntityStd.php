@@ -249,7 +249,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         string $orderBy = 'date',
         string $order = 'DESC',
         string $searchString = '',
-        array $includeOnlyIds = [],
+        array $ids = [],
     ): array {
         $arguments = [
             'posts_per_page'   => $limit,
@@ -257,7 +257,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
             'category'         => 0,
             'orderby'          => $orderBy,
             'order'            => $order,
-            'include'          => $includeOnlyIds,
+            'include'          => $ids,
             'exclude'          => [],
             'meta_key'         => '',
             'meta_value'       => '',

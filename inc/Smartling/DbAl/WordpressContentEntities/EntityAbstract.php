@@ -176,7 +176,7 @@ abstract class EntityAbstract extends EntityBase implements EntityHandler
         string $orderBy = '',
         string $order = '',
         string $searchString = '',
-        array $includeOnlyIds = [],
+        array $ids = [],
     ): array;
 
     /**

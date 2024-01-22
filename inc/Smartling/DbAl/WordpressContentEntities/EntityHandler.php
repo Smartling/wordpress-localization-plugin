@@ -20,7 +20,7 @@ interface EntityHandler {
         string $orderBy = '',
         string $order = '',
         string $searchString = '',
-        array $includeOnlyIds = [],
+        array $ids = [],
     ): array;
 
     public function getTotal(): int;

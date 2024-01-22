@@ -305,7 +305,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
 
         $io = $this->core->getContentIoFactory()->getMapper($contentTypeFilterValue);
         $searchString = $this->getTitleSearchTextFilterValue();
-        $contentIds = [];
+        $ids = [];
         if ($submissionStatusFilterValue !== null) {
             $parameters = [
                 SubmissionEntity::FIELD_CONTENT_TYPE => $contentTypeFilterValue,
@@ -314,9 +314,9 @@ class BulkSubmitTableWidget extends SmartlingListTable
             ];
             $submissions = $this->manager->find($parameters, $pageOptions['limit'], $pageOptions['page']);
             foreach ($submissions as $submission) {
-                $contentIds[] = $submission->getSourceId();
+                $ids[] = $submission->getSourceId();
             }
-            $data = count($submissions) > 0 ? $io->getAll(includeOnlyIds: $contentIds) : [];
+            $data = count($submissions) > 0 ? $io->getAll(ids: $ids) : [];
             $total = $this->manager->count($this->manager->buildConditionBlockFromSearchParameters($parameters));
         } else {
             $data = $io->getAll(

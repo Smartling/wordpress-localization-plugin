@@ -174,7 +174,7 @@ class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
         string $orderBy = 'term_id',
         string $order = 'ASC',
         string $searchString = '',
-        array $includeOnlyIds = [],
+        array $ids = [],
     ): array {
         $result = [];
 
@@ -188,7 +188,7 @@ class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
             'hide_empty'        => false,
             'exclude'           => [],
             'exclude_tree'      => [],
-            'include'           => $includeOnlyIds,
+            'include'           => $ids,
             'number'            => $limit,
             'fields'            => 'all',
             'slug'              => '',
