@@ -65,6 +65,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 = 3.8.4 =
 * Added Bulk Submit submission status filter
 * Fixed Elementor Posts widget excerpts appearing in original language after translation
+* Daily bucket jobs date format will now use WordPress settings instead of US defaults
 
 = 3.8.3 =
 * Added support for Elementor popups that reference related content
