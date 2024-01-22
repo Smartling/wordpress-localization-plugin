@@ -2,8 +2,8 @@
 
 namespace Smartling\ContentTypes;
 
+use Elementor\Core\Documents_Manager;
 use Elementor\Core\DynamicTags\Manager;
-use Elementor\Core\Files\CSS\Post;
 use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LoggerSafeTrait;
@@ -157,17 +157,26 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     public function afterContentWritten(SubmissionEntity $submission): void
     {
-        try {
-            $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($submission) {
-                if ($this->getSupportLevel($submission->getContentType(), $submission->getTargetId()) !== self::NOT_SUPPORTED) {
-                    require_once WP_PLUGIN_DIR . '/elementor/core/files/css/post.php';
-                    (new Post($submission->getTargetId()))->enqueue();
+        $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($submission) {
+            $supportLevel = $this->getSupportLevel($submission->getContentType(), $submission->getTargetId());
+            $this->getLogger()->debug(sprintf('Processing Elementor after content written hook, contentType=%s, sourceBlogId=%d, sourceId=%d, submissionId=%d, targetBlogId=%d, targetId=%d, supportLevel=%s', $submission->getContentType(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $supportLevel));
+            if ($supportLevel !== self::NOT_SUPPORTED) {
+                try {
+                    require_once WP_PLUGIN_DIR . '/elementor/core/documents-manager.php';
+                    /** @noinspection PhpParamsInspection */
+                    (new Documents_Manager())->ajax_save([
+                        'editor_post_id' => $submission->getTargetId(),
+                        'elements' => json_decode($this->wpProxy->getPostMeta($submission->getTargetId(), self::META_FIELD_NAME, true),
+                            true,
+                            512,
+                            JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT),
+                        'status' => $this->wpProxy->get_post($submission->getTargetId())->post_status,
+                    ]);
+                } catch (\Throwable $e) {
+                    $this->getLogger()->notice(sprintf("Unable to do Elementor save actions for contentType=%s, submissionId=%d, targetBlogId=%d, targetId=%d: %s", $submission->getContentType(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $e->getMessage()));
                 }
-            });
-            $this->getLogger()->debug(sprintf('Rebuilt Elementor css submissionId=%d, targetBlogId=%d, targetId=%d', $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId()));
-        } catch (\Throwable $e) {
-            $this->getLogger()->notice(sprintf('Unable to rebuild Elementor css submissionId=%d, targetBlogId=%d, targetId=%d: %s', $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $e->getMessage()));
-        }
+            }
+        });
     }
 
     public function removeUntranslatableFieldsForUpload(array $source): array
@@ -404,7 +413,11 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                                                 $tagText = $this->dynamicTagsManager->tag_data_to_tag_text(...array_values($tagData));
                                                 if ($tagText === '') {
                                                     $this->getLogger()->info('No tag text returned by manager, fallback tag text creation');
-                                                    $tagText = sprintf('[%1$s id="%2$s" name="%3$s" settings="%4$s"]', Manager::TAG_LABEL, $tagData['id'] ?? '', $tagData['name'] ?? '', urlencode(json_encode($tagData['settings'] ?? [], JSON_FORCE_OBJECT)));
+                                                    $tagText = sprintf('[%1$s id="%2$s" name="%3$s" settings="%4$s"]',
+                                                        Manager::TAG_LABEL,
+                                                        $tagData['id'] ?? '',
+                                                        $tagData['name'] ?? '',
+                                                        urlencode(json_encode($tagData['settings'] ?? [], JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT)));
                                                 }
                                                 $original[$componentIndex]['settings'][$settingIndex][$optionIndex] = $tagText;
                                             } catch (\Throwable $e) {
