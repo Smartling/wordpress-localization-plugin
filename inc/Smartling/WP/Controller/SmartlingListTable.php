@@ -23,7 +23,7 @@ class SmartlingListTable extends WP_List_Table
         return '0000-00-00 00:00:00' === $date ? __('Never') : DateTimeHelper::toWordpressLocalDateTime(DateTimeHelper::stringToDateTime($date));
     }
 
-    protected function getActiveContentTypes(SiteHelper $siteHelper, string $page = 'bulkSubmit'): array
+    protected function getActiveContentTypes(SiteHelper $siteHelper, string $page): array
     {
         $supportedTypes = WordpressContentTypeHelper::getLabelMap();
 

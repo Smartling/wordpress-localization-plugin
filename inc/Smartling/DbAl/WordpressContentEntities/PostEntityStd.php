@@ -241,22 +241,23 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
     }
 
     /**
-     * @param int $limit
-     * @param int $offset
-     * @param string $orderBy
-     * @param string $order
-     * @param string $searchString
      * @return self[]
      */
-    public function getAll(int $limit = 0, int $offset = 0, string $orderBy = 'date', string $order = 'DESC', string $searchString = ''): array
-    {
+    public function getAll(
+        int $limit = 0,
+        int $offset = 0,
+        string $orderBy = 'date',
+        string $order = 'DESC',
+        string $searchString = '',
+        array $ids = [],
+    ): array {
         $arguments = [
             'posts_per_page'   => $limit,
             'offset'           => $offset,
             'category'         => 0,
             'orderby'          => $orderBy,
             'order'            => $order,
-            'include'          => [],
+            'include'          => $ids,
             'exclude'          => [],
             'meta_key'         => '',
             'meta_value'       => '',
@@ -271,9 +272,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         $output = [];
 
         foreach ($posts as $post) {
-            // TODO : Remove this dirty workaround
-            $item = clone $this;
-            $output[] = $item->get($post->ID);
+            $output[] = $this->get($post->ID);
         }
 
         return $output;
