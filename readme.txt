@@ -64,6 +64,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 = 3.8.4 =
 * Added Bulk Submit submission status filter
+* Fixed Elementor Posts widget excerpts appearing in original language after translation
 
 = 3.8.3 =
 * Added support for Elementor popups that reference related content
