@@ -16,6 +16,7 @@ class ElementorTest extends SmartlingUnitTestCaseAbstract {
                 str_replace('"%d"', '%d', file_get_contents(__DIR__ . '/../testdata/elementor.json')),
                 $imageIds,
             )),
+            '_elementor_edit_mode' => 'builder',
         ]);
         $sourceBlogId = 1;
         $targetBlogId = 2;

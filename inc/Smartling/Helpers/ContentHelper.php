@@ -159,6 +159,9 @@ class ContentHelper
         if (0 < $result) {
             try {
                 $result = $wrapper->get($result);
+                if ($result->getId() !== null) {
+                    $submission->setTargetId($result->getId());
+                }
             } catch (EntityNotFoundException $e) {
                 $this->getLogger()->error(sprintf(
                     'Unable to get content after setting, contentId=%d, targetBlogId=%d, currentBlogId=%d',
