@@ -27,6 +27,38 @@ class GutenbergBlocksTest extends SmartlingUnitTestCaseAbstract
         $this->translationHelper = $this->getTranslationHelper();
     }
 
+    public function testAttributesLocking()
+    {
+        $postId = $this->createPost(title: 'Block attributes locking test', content: <<<HTML
+<!-- wp:columns {"smartlingLockId":"columns"} -->
+<div class="wp-block-columns"><!-- wp:column {"smartlingLockId":"leftcolumn"} -->
+<div class="wp-block-column"><!-- wp:paragraph {"fontSize":"large","smartlingLockId":"leftparagraph"} -->
+<p class="has-large-font-size">a left paragraph</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:column -->
+
+<!-- wp:column {"smartlingLockId":"rightcolumn"} -->
+<div class="wp-block-column"><!-- wp:paragraph {"fontSize":"large","smartlingLockId":"rightparagraph"} -->
+<p>a right paragraph</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:column --></div>
+<!-- /wp:columns -->
+
+<!-- wp:html {"fontSize":"large","otherAttribute":"otherValue","smartlingLockId":"rootunlocked"} -->
+<h1>:)</h1>
+<!-- /wp:html -->
+
+<!-- wp:paragraph {"fontSize":"large","smartlingLockId":"rootlocked"} -->
+<p class="has-large-font-size">Root level paragraph</p>
+<!-- /wp:paragraph -->
+HTML);
+        $submission = $this->uploadDownload($this->submissionManager->storeEntity(
+            $this->translationHelper->prepareSubmission('post', $this->sourceBlogId, $postId, $this->targetBlogId)),
+        );
+        $targetContent = $this->getTargetPost($this->siteHelper, $submission)->post_content;
+        $this->assertEquals('', $targetContent);
+    }
+
     public function testInnerBlocks()
     {
         $content = <<<HTML
@@ -55,7 +87,6 @@ HTML;
         $submissions[] = $this->translationHelper->prepareSubmission('post', $this->sourceBlogId, $postIds[3], $this->targetBlogId);
 
         foreach ($submissions as $submission) {
-            $submission->getFileUri();
             $this->submissionManager->storeEntity($submission);
         }
         $this->withBlockRules($this->rulesManager, ['test' => [
@@ -110,7 +141,6 @@ HTML;
 HTML;
         $postId = $this->createPost('post', 'main title', $content);
         $submission = $this->translationHelper->prepareSubmission('post', $this->sourceBlogId, $postId, $this->targetBlogId);
-        $submission->getFileUri();
         $this->submissionManager->storeEntity($submission);
         $this->withBlockRules($this->rulesManager, [
             'copy' => [
@@ -144,7 +174,6 @@ HTML;
         $post = $this->translationHelper->prepareSubmission('post', $this->sourceBlogId, $postId, $this->targetBlogId);
         $submissions = [$attachment, $post];
         foreach ($submissions as $submission) {
-            $submission->getFileUri();
             $this->submissionManager->storeEntity($submission);
         }
         $this->withBlockRules($this->rulesManager, ['test' => [
@@ -183,7 +212,6 @@ HTML;
         $post = $this->translationHelper->prepareSubmission('post', $this->sourceBlogId, $postId, $this->targetBlogId);
         $submissions = array_merge($attachments, [$post]);
         foreach ($submissions as $submission) {
-            $submission->getFileUri();
             $this->submissionManager->storeEntity($submission);
         }
         $this->withBlockRules($this->rulesManager, [
@@ -249,7 +277,6 @@ HTML;
         $post = $this->translationHelper->prepareSubmission('post', $this->sourceBlogId, $postId, $this->targetBlogId);
         $submissions = [$attachment, $post];
         foreach ($submissions as $submission) {
-            $submission->getFileUri();
             $this->submissionManager->storeEntity($submission);
         }
         $this->executeUpload();

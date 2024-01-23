@@ -159,7 +159,15 @@ class PostContentHelper
 
     public function setBlockByPath(array $blocks, string $path, GutenbergBlock $gutenbergBlock): array
     {
-        return $this->setBlock($blocks, $path, $gutenbergBlock)['block']->getInnerBlocks();
+        $result = $this->setBlock($blocks, $path, $gutenbergBlock);
+
+        if ($result['useInnerBlock']) {
+            return $result['block']->getInnerBlocks();
+        }
+
+        $blocks[$result['index']] = $result['block'];
+
+        return $blocks;
     }
 
     #[ArrayShape(['block' => GutenbergBlock::class, 'index' => '?integer', 'useInnerBlock' => 'boolean'])]
