@@ -55,8 +55,53 @@ HTML);
         $submission = $this->uploadDownload($this->submissionManager->storeEntity(
             $this->translationHelper->prepareSubmission('post', $this->sourceBlogId, $postId, $this->targetBlogId)),
         );
-        $targetContent = $this->getTargetPost($this->siteHelper, $submission)->post_content;
-        $this->assertEquals('', $targetContent);
+
+        $this->siteHelper->withBlog($this->targetBlogId, function () use ($submission) {
+            $post = get_post($submission->getTargetId());
+            $this->assertInstanceOf(\WP_Post::class, $post);
+            $count = 0;
+            $replaced = str_replace([
+                '{"fontSize":"[l~árgé]","smartlingLockId":"leftparagraph"}',
+                '{"fontSize":"[l~árgé]","smartlingLockId":"rightparagraph"}',
+                '{"fontSize":"[l~árgé]","otherAttribute":"[ó~thé~rVá~lúé]","smartlingLockId":"rootunlocked"}',
+                '{"fontSize":"[l~árgé]","smartlingLockId":"rootlocked"}',
+            ], [
+                '{"fontSize":"large","smartlingLockId":"leftparagraph","smartlingLockedAttributes":"fontSize"}',
+                '{"fontSize":"large","smartlingLockId":"rightparagraph"}',
+                '{"fontSize":"large","otherAttribute":"otherValue","smartlingLockId":"rootunlocked"}',
+                '{"fontSize":"large","smartlingLockId":"rootlocked","smartlingLockedAttributes":"fontSize"',
+            ], $post->post_content, $count);
+            $this->assertEquals(4, $count, 'Expected 4 replacements in ' . $post->post_content);
+            $post->post_content = $replaced;
+            $result = wp_update_post($post);
+            $this->assertEquals($result, $submission->getTargetId());
+        });
+
+        $this->forceSubmissionDownload($submission);
+        $this->assertEquals(<<<HTML
+<!-- wp:columns {"smartlingLockId":"columns"} -->
+<div class="wp-block-columns"><!-- wp:column {"smartlingLockId":"leftcolumn"} -->
+<div class="wp-block-column"><!-- wp:paragraph {"fontSize":"large","smartlingLockId":"leftparagraph"} -->
+<p class="has-large-font-size">[á ~léf~t pár~ágr~áph]</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:column -->
+
+<!-- wp:column {"smartlingLockId":"rightcolumn"} -->
+<div class="wp-block-column"><!-- wp:paragraph {"fontSize":"[l~árgé]","smartlingLockId":"rightparagraph"} -->
+<p>[á ~ríg~ht pá~rágr~áph]</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:column --></div>
+<!-- /wp:columns -->
+
+<!-- wp:html {"smartlingLockId":"rootunlocked"} -->
+<h1>[:~)]</h1>
+<!-- /wp:html -->
+
+<!-- wp:paragraph {"fontSize":"large","smartlingLockId":"rootlocked"} -->
+<p class="has-large-font-size">[R~óót ~lévé~l pá~rágr~áph]</p>
+<!-- /wp:paragraph -->
+HTML
+, $this->getTargetPost($this->siteHelper, $submission)->post_content);
     }
 
     public function testInnerBlocks()
