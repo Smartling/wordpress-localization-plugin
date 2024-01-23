@@ -69,7 +69,7 @@ HTML);
                 '{"fontSize":"large","smartlingLockId":"leftparagraph","smartlingLockedAttributes":"fontSize"}',
                 '{"fontSize":"large","smartlingLockId":"rightparagraph"}',
                 '{"fontSize":"large","otherAttribute":"otherValue","smartlingLockId":"rootunlocked"}',
-                '{"fontSize":"large","smartlingLockId":"rootlocked","smartlingLockedAttributes":"fontSize"',
+                '{"fontSize":"large","smartlingLockId":"rootlocked","smartlingLockedAttributes":"fontSize"}',
             ], $post->post_content, $count);
             $this->assertEquals(4, $count, 'Expected 4 replacements in ' . $post->post_content);
             $post->post_content = $replaced;
@@ -81,7 +81,7 @@ HTML);
         $this->assertEquals(<<<HTML
 <!-- wp:columns {"smartlingLockId":"columns"} -->
 <div class="wp-block-columns"><!-- wp:column {"smartlingLockId":"leftcolumn"} -->
-<div class="wp-block-column"><!-- wp:paragraph {"fontSize":"large","smartlingLockId":"leftparagraph"} -->
+<div class="wp-block-column"><!-- wp:paragraph {"fontSize":"large","smartlingLockId":"leftparagraph","smartlingLockedAttributes":"fontSize"} -->
 <p class="has-large-font-size">[á ~léf~t pár~ágr~áph]</p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:column -->
@@ -93,11 +93,11 @@ HTML);
 <!-- /wp:column --></div>
 <!-- /wp:columns -->
 
-<!-- wp:html {"smartlingLockId":"rootunlocked"} -->
+<!-- wp:html {"fontSize":"[l~árgé]","otherAttribute":"[ó~thé~rVá~lúé]","smartlingLockId":"rootunlocked"} -->
 <h1>[:~)]</h1>
 <!-- /wp:html -->
 
-<!-- wp:paragraph {"fontSize":"large","smartlingLockId":"rootlocked"} -->
+<!-- wp:paragraph {"fontSize":"large","smartlingLockId":"rootlocked","smartlingLockedAttributes":"fontSize"} -->
 <p class="has-large-font-size">[R~óót ~lévé~l pá~rágr~áph]</p>
 <!-- /wp:paragraph -->
 HTML
