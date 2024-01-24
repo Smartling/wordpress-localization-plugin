@@ -145,7 +145,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         private WordpressLinkHelper $wpLinkHelper,
     )
     {
-        add_action(ExportedAPI::ACTION_AFTER_TARGET_CONTENT_WRITTEN, [$this, 'afterContentWritten']);
+        add_action(ExportedAPI::ACTION_AFTER_TARGET_METADATA_WRITTEN, [$this, 'afterMetaWritten']);
         parent::__construct($pluginHelper, $submissionManager, $wpProxy);
         try {
             require_once WP_PLUGIN_DIR . '/elementor/core/dynamic-tags/manager.php';
@@ -155,7 +155,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         }
     }
 
-    public function afterContentWritten(SubmissionEntity $submission): void
+    public function afterMetaWritten(SubmissionEntity $submission): void
     {
         $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($submission) {
             $supportLevel = $this->getSupportLevel($submission->getContentType(), $submission->getTargetId());
