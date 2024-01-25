@@ -163,17 +163,35 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
             if ($supportLevel !== self::NOT_SUPPORTED) {
                 try {
                     require_once WP_PLUGIN_DIR . '/elementor/core/documents-manager.php';
+                    $meta = $this->getDataFromPostMeta($submission->getTargetId());
+                    $post = $this->wpProxy->get_post($submission->getTargetId());
+                    $manager = new Documents_Manager();
+                    do_action('elementor/documents/register', $manager);
+                    $document = $manager->get($submission->getTargetId());
+                    if ($document === false) {
+                        $this->getLogger()->notice('Could not get document');
+                    } else {
+                        $this->getLogger()->debug('Document is ' . get_class($document));
+                    }
+                    if (!$document->is_built_with_elementor()) {
+                        $this->getLogger()->notice('Document is not built with elementor. Meta: ' . json_encode($meta) . ', mode: ' . $this->wpProxy->getPostMeta($submission->getTargetId(), '_elementor_edit_mode', true));
+                    }
+                    if (!$document->is_editable_by_current_user()) {
+                        $this->getLogger()->notice('Document is not editable by current user');
+                        $this->elDebug($submission->getTargetId());
+                    }
+
                     /** @noinspection PhpParamsInspection */
-                    (new Documents_Manager())->ajax_save([
+                    $manager->ajax_save([
                         'editor_post_id' => $submission->getTargetId(),
-                        'elements' => json_decode($this->wpProxy->getPostMeta($submission->getTargetId(), self::META_FIELD_NAME, true),
+                        'elements' => json_decode($this->getDataFromPostMeta($submission->getTargetId()),
                             true,
                             512,
                             JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT),
-                        'status' => $this->wpProxy->get_post($submission->getTargetId())->post_status,
+                        'status' => $post->post_status,
                     ]);
                 } catch (\Throwable $e) {
-                    $this->getLogger()->notice(sprintf("Unable to do Elementor save actions for contentType=%s, submissionId=%d, targetBlogId=%d, targetId=%d: %s", $submission->getContentType(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $e->getMessage()));
+                    $this->getLogger()->notice(sprintf("Unable to do Elementor save actions for contentType=%s, submissionId=%d, targetBlogId=%d, targetId=%d: %s (%s), post: %s", $submission->getContentType(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $e->getMessage(), $e->getTraceAsString(), json_encode($post->to_array())));
                 }
             }
         });
@@ -471,6 +489,101 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         ), JSON_THROW_ON_ERROR);
         unset($translation[$this->getPluginId()]);
         return $translation;
+    }
+
+    private function elDebug(int $postId): void
+    {
+        $this->getLogger()->debug('Elementor debug for postId=' . $postId);
+        $this->is_current_user_can_edit($postId);
+    }
+
+    private function is_current_user_can_edit(int $post_id): bool
+    {
+        $post = get_post($post_id);
+
+        if (!$post) {
+            $this->getLogger()->debug('No post');
+            return false;
+        }
+
+        if ('trash' === get_post_status($post->ID)) {
+            $this->getLogger()->debug('Post is trash');
+            return false;
+        }
+
+        if (!$this->is_current_user_can_edit_post_type($post->post_type)) {
+            return false;
+        }
+
+        $post_type_object = get_post_type_object($post->post_type);
+
+        if (!isset($post_type_object->cap->edit_post)) {
+            $this->getLogger()->debug('Edit post capability not set for ' . json_encode($post_type_object));
+            return false;
+        }
+
+        $edit_cap = $post_type_object->cap->edit_post;
+        if (!current_user_can($edit_cap, $post->ID)) {
+            $this->getLogger()->debug('Current user cannot process ' . json_encode($post_type_object) . '(2)');
+            return false;
+        }
+
+        if ((int)get_option('page_for_posts') === $post->ID) {
+            $this->getLogger()->debug('Page for posts is equal to post ID (?)');
+            return false;
+        }
+
+        return true;
+    }
+
+    private function is_current_user_can_edit_post_type(string $post_type): bool
+    {
+        if (!$this->is_current_user_in_editing_black_list()) {
+            $this->getLogger()->debug('User in editing black list');
+            return false;
+        }
+
+        if (!$this->is_post_type_support($post_type)) {
+            $this->getLogger()->debug('Post type not supported');
+            return false;
+        }
+
+        $post_type_object = get_post_type_object($post_type);
+
+        if (!current_user_can($post_type_object->cap->edit_posts)) {
+            $this->getLogger()->debug('Current user cannot process ' . json_encode($post_type_object));
+            return false;
+        }
+
+        return true;
+    }
+
+    private function is_current_user_in_editing_black_list(): bool
+    {
+        $user = wp_get_current_user();
+        $exclude_roles = get_option('elementor_exclude_user_roles', []);
+
+        $compare_roles = array_intersect($user->roles, $exclude_roles);
+        if (!empty($compare_roles)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function is_post_type_support(string $post_type): bool
+    {
+        if (!post_type_exists($post_type)) {
+            $this->getLogger()->debug('Post type does not exist');
+            return false;
+        }
+
+        if (!post_type_supports($post_type, 'elementor')) {
+            $this->getLogger()->debug('Post type does not support Elementor');
+            return false;
+        }
+
+        return true;
     }
 
     private function getPopupId(string $value): ?int
