@@ -554,6 +554,9 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
         $post_type_object = get_post_type_object($post_type);
 
+        $user = wp_get_current_user();
+        $this->getLogger()->debug('Current user is ' . json_encode($user));
+
         if (!current_user_can($post_type_object->cap->edit_posts)) {
             $this->getLogger()->debug('Current user cannot process ' . json_encode($post_type_object));
             return false;
