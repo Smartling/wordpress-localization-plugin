@@ -25,20 +25,6 @@ namespace {
             return $a;
         }
     }
-
-    if (!function_exists('convert_to_screen')) {
-        if (defined('WP_INSTALL_DIR') && file_exists('/' . WP_INSTALL_DIR . '/wp-admin/includes/template.php')) {
-            require_once '/' . WP_INSTALL_DIR . '/wp-admin/includes/template.php';
-        } else {
-            function convert_to_screen($a)
-            {
-                $r = new \stdClass();
-                $r->id = $a;
-
-                return $r;
-            }
-        }
-    }
 }
 
 namespace Smartling\Tests\Smartling\WP\Table {
