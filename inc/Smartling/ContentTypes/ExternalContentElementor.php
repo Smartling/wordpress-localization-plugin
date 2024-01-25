@@ -157,6 +157,10 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     public function afterMetaWritten(SubmissionEntity $submission): void
     {
+        if ($submission->getTargetId() === 0) {
+            $this->getLogger()->debug('Processing Elementor after meta written hook aborted, targetId=0');
+            return;
+        }
         $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($submission) {
             $supportLevel = $this->getSupportLevel($submission->getContentType(), $submission->getTargetId());
             $this->getLogger()->debug(sprintf('Processing Elementor after content written hook, contentType=%s, sourceBlogId=%d, sourceId=%d, submissionId=%d, targetBlogId=%d, targetId=%d, supportLevel=%s', $submission->getContentType(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $supportLevel));
