@@ -162,6 +162,8 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
             return;
         }
         $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($submission) {
+            $originalUserId = get_current_user_id();
+            wp_set_current_user(1, 'smartling');
             $supportLevel = $this->getSupportLevel($submission->getContentType(), $submission->getTargetId());
             $this->getLogger()->debug(sprintf('Processing Elementor after content written hook, contentType=%s, sourceBlogId=%d, sourceId=%d, submissionId=%d, targetBlogId=%d, targetId=%d, supportLevel=%s', $submission->getContentType(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $supportLevel));
             if ($supportLevel !== self::NOT_SUPPORTED) {
@@ -196,6 +198,8 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                     ]);
                 } catch (\Throwable $e) {
                     $this->getLogger()->notice(sprintf("Unable to do Elementor save actions for contentType=%s, submissionId=%d, targetBlogId=%d, targetId=%d: %s (%s), post: %s", $submission->getContentType(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $e->getMessage(), $e->getTraceAsString(), json_encode($post->to_array())));
+                } finally {
+                    wp_set_current_user($originalUserId);
                 }
             }
         });

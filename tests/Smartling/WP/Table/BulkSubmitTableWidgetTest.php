@@ -25,6 +25,15 @@ namespace {
             return $a;
         }
     }
+
+    if (!function_exists('convert_to_screen')) {
+        function convert_to_screen($a)
+        {
+            $r = new \stdClass();
+            $r->id = $a;
+            return $r;
+        }
+    }
 }
 
 namespace Smartling\Tests\Smartling\WP\Table {
