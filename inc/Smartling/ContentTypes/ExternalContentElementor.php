@@ -147,7 +147,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         private WordpressLinkHelper $wpLinkHelper,
     )
     {
-        add_action(ExportedAPI::ACTION_AFTER_TARGET_CONTENT_WRITTEN, [$this, 'afterMetaWritten']);
+        add_action(ExportedAPI::ACTION_AFTER_TARGET_METADATA_WRITTEN, [$this, 'afterMetaWritten']);
         parent::__construct($pluginHelper, $submissionManager, $wpProxy);
         try {
             require_once WP_PLUGIN_DIR . '/elementor/core/dynamic-tags/manager.php';
@@ -160,7 +160,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     public function afterMetaWritten(SubmissionEntity $submission): void
     {
         if ($submission->getTargetId() === 0) {
-            $this->getLogger()->debug('Processing Elementor after meta written hook aborted, targetId=0' . json_encode(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), JSON_THROW_ON_ERROR));
+            $this->getLogger()->debug('Processing Elementor after meta written hook skipped, targetId=0');
             return;
         }
         $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($submission) {

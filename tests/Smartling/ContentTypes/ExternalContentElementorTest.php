@@ -9,6 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\SiteHelper;
+use Smartling\Helpers\UserHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\WordpressLinkHelper;
 use Smartling\Services\ContentRelationsDiscoveryService;
@@ -287,6 +288,7 @@ and management of:',
             $pluginHelper,
             new SiteHelper(),
             $submissionManager,
+            $this->createMock(UserHelper::class),
             $proxy,
             new WordpressLinkHelper($submissionManager, $proxy),
         );
