@@ -146,6 +146,11 @@ class WordpressFunctionProxyHelper
         return wp_get_active_network_plugins(...func_get_args());
     }
 
+    public function wp_get_current_user()
+    {
+        return wp_get_current_user(...func_get_args());
+    }
+
     public function wp_send_json()
     {
         return wp_send_json(...func_get_args());

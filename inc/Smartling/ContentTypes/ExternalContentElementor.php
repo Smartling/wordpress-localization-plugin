@@ -167,7 +167,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
             $supportLevel = $this->getSupportLevel($submission->getContentType(), $submission->getTargetId());
             $this->getLogger()->debug(sprintf('Processing Elementor after content written hook, contentType=%s, sourceBlogId=%d, sourceId=%d, submissionId=%d, targetBlogId=%d, targetId=%d, supportLevel=%s', $submission->getContentType(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $supportLevel));
             if ($supportLevel !== self::NOT_SUPPORTED) {
-                $this->userHelper->asAdministrator(function () use ($submission) {
+                $this->userHelper->asAdministratorOrEditor(function () use ($submission) {
                     try {
                         require_once WP_PLUGIN_DIR . '/elementor/core/documents-manager.php';
                         $manager = new Documents_Manager();
