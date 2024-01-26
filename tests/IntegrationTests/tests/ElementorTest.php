@@ -46,7 +46,10 @@ class ElementorTest extends SmartlingUnitTestCaseAbstract {
         }
         $contentArray = $content->toArray();
         $this->assertArrayHasKey('post_content', $contentArray, json_encode($contentArray));
-        $this->assertEquals('', $contentArray['post_content'], $contentArray['post_content']);
+        $this->assertEquals('<p>[L~éft t~éxt t~hréé ~síx s~évéñ]</p><p>[M~íddl~é téx~t th~réé s~íx sé~véñ]</p>		
+			<h2>[R~ígh~t héá~díñg ~ th~réé s~íx sé~véñ]</h2>		
+															<img width="300" height="225" src="http://test.com/WP_INSTALL_DIR/wp-content/uploads/sites/2/2024/01/canola-6-300x225.jpg" alt="" loading="lazy" srcset="http://test.com/WP_INSTALL_DIR/wp-content/uploads/sites/2/2024/01/canola-6-300x225.jpg 300w, http://test.com/WP_INSTALL_DIR/wp-content/uploads/sites/2/2024/01/canola-6.jpg 640w" sizes="(max-width: 300px) 100vw, 300px" />															
+															<img width="640" height="480" src="http://test.com/WP_INSTALL_DIR/wp-content/uploads/sites/2/2024/01/canola-7.jpg" alt="" loading="lazy" srcset="http://test.com/WP_INSTALL_DIR/wp-content/uploads/sites/2/2024/01/canola-7.jpg 640w, http://test.com/WP_INSTALL_DIR/wp-content/uploads/sites/2/2024/01/canola-7-300x225.jpg 300w" sizes="(max-width: 640px) 100vw, 640px" />', $contentArray['post_content']);
     }
 
     public function testElementorComplexContent(): void
