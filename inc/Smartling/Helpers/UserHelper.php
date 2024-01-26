@@ -21,7 +21,7 @@ class UserHelper {
         $originalUser = $this->wp->wp_get_current_user();
         if ($originalUser instanceof \WP_User && array_intersect([self::ADMINISTRATOR, self::EDITOR], $originalUser->roles)) {
             $this->getLogger()->debug("Current user userId={$originalUser->ID} is administrator or editor, no impersonation");
-            return $function();
+            // return $function();
         }
 
         $privilegedId = $this->getAdministratorOrEditorId();
@@ -42,12 +42,8 @@ class UserHelper {
     public function getAdministratorOrEditorId(): ?int
     {
         foreach ($this->db->fetch("select user_id, meta_value from {$this->db->getBasePrefix()}usermeta where meta_key='{$this->db->getPrefix()}capabilities'", ARRAY_A) as $row) {
-            try {
-                $array = json_decode($row['meta_value'], true, 512, JSON_THROW_ON_ERROR);
-            } catch (\Throwable) {
-                continue;
-            }
-            if (($array[self::ADMINISTRATOR] ?? false) === true || ($array[self::EDITOR] ?? false) === true) {
+            $value = unserialize($row['meta_value'], ['allowed_classes' => false]);
+            if (is_array($value) && (($value[self::ADMINISTRATOR] ?? false) === true || ($value[self::EDITOR] ?? false) === true)) {
                 return (int)$row['user_id'];
             }
         }
