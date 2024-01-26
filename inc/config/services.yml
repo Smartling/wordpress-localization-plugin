@@ -59,6 +59,12 @@ services:
     arguments:
       - "@helper.gutenberg"
 
+  helper.user:
+    class: Smartling\Helpers\UserHelper
+    arguments:
+      - "@site.db"
+      - "@wp.proxy"
+
   helper.xml:
     class: Smartling\Helpers\XmlHelper
     arguments:
@@ -109,6 +115,7 @@ services:
       - "@helper.plugins"
       - "@site.helper"
       - "@manager.submission"
+      - "@helper.user"
       - "@wp.proxy"
       - "@wp.link.helper"
 

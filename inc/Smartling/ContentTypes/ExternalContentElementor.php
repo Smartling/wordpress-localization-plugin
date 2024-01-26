@@ -9,6 +9,7 @@ use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\SiteHelper;
+use Smartling\Helpers\UserHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\WordpressLinkHelper;
 use Smartling\Models\ExternalData;
@@ -141,11 +142,12 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         PluginHelper $pluginHelper,
         private SiteHelper $siteHelper,
         SubmissionManager $submissionManager,
+        private UserHelper $userHelper,
         WordpressFunctionProxyHelper $wpProxy,
         private WordpressLinkHelper $wpLinkHelper,
     )
     {
-        add_action(ExportedAPI::ACTION_AFTER_TARGET_CONTENT_WRITTEN, [$this, 'afterContentWritten']);
+        add_action(ExportedAPI::ACTION_AFTER_TARGET_METADATA_WRITTEN, [$this, 'afterMetaWritten']);
         parent::__construct($pluginHelper, $submissionManager, $wpProxy);
         try {
             require_once WP_PLUGIN_DIR . '/elementor/core/dynamic-tags/manager.php';
@@ -155,26 +157,34 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         }
     }
 
-    public function afterContentWritten(SubmissionEntity $submission): void
+    public function afterMetaWritten(SubmissionEntity $submission): void
     {
+        if ($submission->getTargetId() === 0) {
+            $this->getLogger()->debug('Processing Elementor after meta written hook skipped, targetId=0');
+            return;
+        }
         $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($submission) {
             $supportLevel = $this->getSupportLevel($submission->getContentType(), $submission->getTargetId());
             $this->getLogger()->debug(sprintf('Processing Elementor after content written hook, contentType=%s, sourceBlogId=%d, sourceId=%d, submissionId=%d, targetBlogId=%d, targetId=%d, supportLevel=%s', $submission->getContentType(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $supportLevel));
             if ($supportLevel !== self::NOT_SUPPORTED) {
-                try {
-                    require_once WP_PLUGIN_DIR . '/elementor/core/documents-manager.php';
-                    /** @noinspection PhpParamsInspection */
-                    (new Documents_Manager())->ajax_save([
-                        'editor_post_id' => $submission->getTargetId(),
-                        'elements' => json_decode($this->wpProxy->getPostMeta($submission->getTargetId(), self::META_FIELD_NAME, true),
-                            true,
-                            512,
-                            JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT),
-                        'status' => $this->wpProxy->get_post($submission->getTargetId())->post_status,
-                    ]);
-                } catch (\Throwable $e) {
-                    $this->getLogger()->notice(sprintf("Unable to do Elementor save actions for contentType=%s, submissionId=%d, targetBlogId=%d, targetId=%d: %s", $submission->getContentType(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $e->getMessage()));
-                }
+                $this->userHelper->asAdministratorOrEditor(function () use ($submission) {
+                    try {
+                        require_once WP_PLUGIN_DIR . '/elementor/core/documents-manager.php';
+                        $manager = new Documents_Manager();
+                        do_action('elementor/documents/register', $manager);
+                        /** @noinspection PhpParamsInspection */
+                        $manager->ajax_save([
+                            'editor_post_id' => $submission->getTargetId(),
+                            'elements' => json_decode($this->getDataFromPostMeta($submission->getTargetId()),
+                                true,
+                                512,
+                                JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT),
+                            'status' => $this->wpProxy->get_post($submission->getTargetId())->post_status,
+                        ]);
+                    } catch (\Throwable $e) {
+                        $this->getLogger()->notice(sprintf("Unable to do Elementor save actions for contentType=%s, submissionId=%d, targetBlogId=%d, targetId=%d: %s (%s)", $submission->getContentType(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $e->getMessage(), $e->getTraceAsString()));
+                    }
+                });
             }
         });
     }

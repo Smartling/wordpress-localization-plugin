@@ -432,6 +432,17 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
         return $this->wpdb->prepare($query, ...$args);
     }
 
+    /**
+     * @return string the prefix without the blog number appended
+     */
+    public function getBasePrefix(): string
+    {
+        return $this->wpdb->base_prefix;
+    }
+
+    /**
+     * @return string the assigned WordPress table prefix for the blog
+     */
     public function getPrefix(): string
     {
         return $this->wpdb->prefix;
