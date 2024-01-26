@@ -59,6 +59,11 @@ services:
     arguments:
       - "@helper.gutenberg"
 
+  helper.user:
+    class: Smartling\Helpers\UserHelper
+    arguments:
+      - "@site.db"
+
   helper.xml:
     class: Smartling\Helpers\XmlHelper
     arguments:
