@@ -171,7 +171,7 @@ class SubmissionTableWidget extends SmartlingListTable
     /**
      * Handles actions for multiple objects
      */
-    private function processBulkAction(): void
+    public function processBulkAction(): void
     {
         $submissionsIds = array_map(static function ($value) {
             return (int)$value;

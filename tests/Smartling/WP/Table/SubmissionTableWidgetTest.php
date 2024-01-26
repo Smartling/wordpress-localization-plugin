@@ -18,13 +18,6 @@ namespace {
             }
         }
     }
-
-    if (!function_exists('__')) {
-        function __($a)
-        {
-            return $a;
-        }
-    }
 }
 
 namespace Smartling\Tests\Smartling\WP\Table {
@@ -76,7 +69,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 return (string)$submission->getId();
             }, $submissions)]);
 
-            $x->prepare_items();
+            $x->processBulkAction();
         }
     }
 }

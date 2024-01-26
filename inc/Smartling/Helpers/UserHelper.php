@@ -47,7 +47,7 @@ class UserHelper {
             } catch (\Throwable) {
                 continue;
             }
-            if ($array[self::ADMINISTRATOR] === true || $array[self::EDITOR] === true) {
+            if (($array[self::ADMINISTRATOR] ?? false) === true || ($array[self::EDITOR] ?? false) === true) {
                 return (int)$row['user_id'];
             }
         }
