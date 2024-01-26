@@ -3,6 +3,7 @@
 namespace Smartling\Helpers;
 
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Exception\SmartlingHumanReadableException;
 
 class UserHelper {
     use LoggerSafeTrait;
@@ -28,8 +29,7 @@ class UserHelper {
         $originalUserId = $this->wp->get_current_user_id();
 
         if ($privilegedId === null) {
-            $this->getLogger()->warning("Unable to get administrator or editor for blogId=" . $this->wp->get_current_blog_id() . ', running as original userId=' . $originalUserId);
-            return $function();
+            throw new SmartlingHumanReadableException('Unable to get administrator or editor to process content in blog ' . $this->wp->get_current_blog_id(), 'no.privileged.user', 403);
         }
 
         try {
