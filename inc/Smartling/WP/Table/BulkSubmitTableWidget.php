@@ -176,7 +176,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
     /**
      * Handles actions for multiply objects
      */
-    public function processBulkAction(): void
+    private function processBulkAction(): void
     {
         $action = $this->getFromSource('action', 'send');
         $submissions = $this->getFormElementValue('submission', []);

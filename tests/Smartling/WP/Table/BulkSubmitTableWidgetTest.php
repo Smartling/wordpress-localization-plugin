@@ -18,6 +18,22 @@ namespace {
             }
         }
     }
+
+    if (!function_exists('__')) {
+        function __($a)
+        {
+            return $a;
+        }
+    }
+
+    if (!function_exists('convert_to_screen')) {
+        function convert_to_screen($a)
+        {
+            $r = new \stdClass();
+            $r->id = $a;
+            return $r;
+        }
+    }
 }
 
 namespace Smartling\Tests\Smartling\WP\Table {
@@ -26,6 +42,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
     use Smartling\Base\SmartlingCore;
     use Smartling\DbAl\LocalizationPluginProxyInterface;
     use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
+    use Smartling\Helpers\PluginInfo;
     use Smartling\Helpers\SiteHelper;
     use Smartling\Jobs\JobEntityWithBatchUid;
     use Smartling\Processors\ContentEntitiesIOFactory;
@@ -40,14 +57,6 @@ namespace Smartling\Tests\Smartling\WP\Table {
     {
         public function testClone()
         {
-            if (!function_exists('convert_to_screen')) {
-                function convert_to_screen($a)
-                {
-                    $r = new \stdClass();
-                    $r->id = $a;
-                    return $r;
-                }
-            }
             WordpressFunctionsMockHelper::injectFunctionsMocks();
             $currentBlogId = 1;
             $projectUid = 'projectUid';
@@ -57,6 +66,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
 
             $manager = $this->createMock(SubmissionManager::class);
             $manager->method('getPageSize')->willReturn(7);
+            $pluginInfo = $this->createMock(PluginInfo::class);
 
             $contentEntitiesIOFactory = $this->createMock(ContentEntitiesIOFactory::class);
             $contentEntitiesIOFactory->method('getMapper')->willReturn($this->getMockForAbstractClass(EntityAbstract::class));
@@ -95,7 +105,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 ]]],
                 'action' => 'clone',
             ]);
-            $x->processBulkAction();
+            $x->prepare_items();
         }
     }
 }
