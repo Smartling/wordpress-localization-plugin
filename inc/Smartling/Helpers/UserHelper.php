@@ -21,7 +21,7 @@ class UserHelper {
         $originalUser = $this->wp->wp_get_current_user();
         if ($originalUser instanceof \WP_User && array_intersect([self::ADMINISTRATOR, self::EDITOR], $originalUser->roles)) {
             $this->getLogger()->debug("Current user userId={$originalUser->ID} is administrator or editor, no impersonation");
-            // return $function();
+            return $function();
         }
 
         $privilegedId = $this->getAdministratorOrEditorId();
@@ -33,6 +33,8 @@ class UserHelper {
         }
 
         try {
+            $this->getLogger()->info("Impersonating userId=$privilegedId by impersonatorId=$originalUserId");
+            $this->wp->wp_set_current_user($privilegedId, 'smartling');
             return $function();
         } finally {
             $this->wp->wp_set_current_user($originalUserId);

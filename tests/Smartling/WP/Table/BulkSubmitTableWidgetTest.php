@@ -40,6 +40,14 @@ namespace Smartling\Tests\Smartling\WP\Table {
     {
         public function testClone()
         {
+            if (!function_exists('convert_to_screen')) {
+                function convert_to_screen($a)
+                {
+                    $r = new \stdClass();
+                    $r->id = $a;
+                    return $r;
+                }
+            }
             WordpressFunctionsMockHelper::injectFunctionsMocks();
             $currentBlogId = 1;
             $projectUid = 'projectUid';
