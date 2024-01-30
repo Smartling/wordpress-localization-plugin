@@ -11,6 +11,10 @@ namespace Smartling\Helpers;
 
 class WordpressFunctionProxyHelper
 {
+    public function get_home_url()
+    {
+        return get_home_url(...func_get_args());
+    }
     public static function getPostTypes()
     {
         return get_post_types(...func_get_args());

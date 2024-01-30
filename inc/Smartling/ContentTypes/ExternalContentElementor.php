@@ -360,7 +360,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                                     $original[$componentIndex]['settings'][$settingIndex]['id'] = $targetAttachmentId;
                                 }
                             }
-                            $newPath = $this->wpLinkHelper->getTargetBlogLink($setting['url'], $submission->getTargetBlogId());
+                            $newPath = $this->wpLinkHelper->getTargetBlogLink($setting['url'], $submission->getTargetBlogId(), true);
                             if ($newPath !== null) {
                                 $original[$componentIndex]['settings'][$settingIndex]['url'] = $newPath;
                             }
@@ -372,7 +372,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                                 }
                             }
                             if (array_key_exists('url', $setting['value'])) {
-                                $newPath = $this->wpLinkHelper->getTargetBlogLink($setting['value']['url'], $submission->getTargetBlogId());
+                                $newPath = $this->wpLinkHelper->getTargetBlogLink($setting['value']['url'], $submission->getTargetBlogId(), true);
                                 if ($newPath !== null) {
                                     $original[$componentIndex]['settings'][$settingIndex]['value']['url'] = $newPath;
                                 }

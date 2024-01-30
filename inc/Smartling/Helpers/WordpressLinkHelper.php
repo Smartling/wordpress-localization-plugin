@@ -14,7 +14,7 @@ class WordpressLinkHelper {
     ) {
     }
 
-    public function getTargetBlogLink(string $sourceUrl, int $targetBlogId): ?string
+    public function getTargetBlogLink(string $sourceUrl, int $targetBlogId, bool $replaceHost = false): ?string
     {
         $sourcePostId = $this->wordpressProxy->url_to_postid($sourceUrl);
         $this->getLogger()->debug("Looking for replacement of sourceUrl=$sourceUrl, targetBlogId=$targetBlogId, sourcePostId=$sourcePostId");
@@ -34,6 +34,22 @@ class WordpressLinkHelper {
 
                 return $result;
             }
+        }
+        return $replaceHost ? $this->replaceHost($sourceUrl, $targetBlogId) : null;
+    }
+
+    public function replaceHost(string $sourceUrl, int $targetBlogId): ?string
+    {
+        $currentBlogHost = parse_url($this->wordpressProxy->get_home_url(), PHP_URL_HOST);
+        if (!is_string($currentBlogHost)) {
+            return null;
+        }
+        $parsed = parse_url($sourceUrl);
+        if (!is_array($parsed) || !array_key_exists('host', $parsed)) {
+            return null;
+        }
+        if ($parsed['host'] === $currentBlogHost) {
+            return str_replace("://$currentBlogHost", "://" . parse_url($this->wordpressProxy->get_home_url($targetBlogId), PHP_URL_HOST), $sourceUrl);
         }
 
         return null;
