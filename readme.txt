@@ -62,8 +62,11 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 3.8.7 =
+* Added support for Redirection plugin
+
 = 3.8.6 =
-* Fix Elementor Posts widget excerpts appearing in original language after translation
+* Fixed Elementor Posts widget excerpts appearing in original language after translation
 
 = 3.8.5 =
 * Fixed Gutenberg attributes locking

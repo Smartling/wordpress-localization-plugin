@@ -204,6 +204,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
 
     public function listProfiles()
     {
+        $link = $this->linkHelper->getRedirected('https://localhost.localdomain/test');
 
         $cnqTable = new QueueManagerTableWidget($this->getManager());
         $cnqTable->setQueue($this->getQueue());
