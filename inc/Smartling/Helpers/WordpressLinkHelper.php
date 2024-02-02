@@ -2,10 +2,12 @@
 
 namespace Smartling\Helpers;
 
+use Smartling\Extensions\StringHandler;
+use Smartling\Services\HandlerManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
-class WordpressLinkHelper {
+class WordpressLinkHelper implements StringHandler {
     use LoggerSafeTrait;
 
     public function __construct(
@@ -14,39 +16,8 @@ class WordpressLinkHelper {
     ) {
     }
 
-    public function getRedirected(string $url): string
-    {
-        $currentBlogHost = parse_url($this->wordpressProxy->get_home_url(), PHP_URL_HOST);
-        if (!is_string($currentBlogHost)) {
-            return $url;
-        }
-        $parsed = parse_url($url);
-
-        if (!is_array($parsed) || ($currentBlogHost && $currentBlogHost !== $parsed['host'])) {
-            return $url;
-        }
-
-        if (class_exists('\Red_Item') && array_key_exists('path', $parsed)) {
-            try {
-                $redirects = \Red_Item::get_for_url($parsed['path']);
-                foreach ((array)$redirects as $item) {
-                    $action = $item->get_match($parsed['path']);
-
-                    if ($action) {
-                        return $action->get_target();
-                    }
-                }
-            } catch (\Throwable $e) {
-                $this->getLogger()->notice("Caught exception while getting canonical for url=$url: {$e->getMessage()}");
-            }
-        }
-
-        return $url;
-    }
-
     public function getTargetBlogLink(string $sourceUrl, int $targetBlogId): ?string
     {
-        $sourceUrl = $this->getRedirected($sourceUrl);
         $sourcePostId = $this->wordpressProxy->url_to_postid($sourceUrl);
         $this->getLogger()->debug("Looking for replacement of sourceUrl=$sourceUrl, targetBlogId=$targetBlogId, sourcePostId=$sourcePostId");
         if (0 !== $sourcePostId) {
@@ -68,5 +39,13 @@ class WordpressLinkHelper {
         }
 
         return null;
+    }
+
+    public function handle(string $string, ?HandlerManager $handlerManager, ?SubmissionEntity $submission): string
+    {
+        if ($submission === null) {
+            return $string;
+        }
+        return $this->getTargetBlogLink($string, $submission->getTargetBlogId()) ?? $string;
     }
 }

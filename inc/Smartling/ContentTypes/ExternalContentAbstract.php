@@ -2,24 +2,22 @@
 
 namespace Smartling\ContentTypes;
 
+use Smartling\Extensions\PluggableAbstract;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
-abstract class ExternalContentAbstract implements ContentTypePluggableInterface {
+abstract class ExternalContentAbstract extends PluggableAbstract implements ContentTypePluggableInterface {
     use LoggerSafeTrait;
 
-    protected PluginHelper $pluginHelper;
-    protected SubmissionManager $submissionManager;
-    protected WordpressFunctionProxyHelper $wpProxy;
-
-    public function __construct(PluginHelper $pluginHelper, SubmissionManager $submissionManager, WordpressFunctionProxyHelper $wpProxy)
-    {
-        $this->pluginHelper = $pluginHelper;
-        $this->submissionManager = $submissionManager;
-        $this->wpProxy = $wpProxy;
+    public function __construct(
+        protected PluginHelper $pluginHelper,
+        protected SubmissionManager $submissionManager,
+        protected WordpressFunctionProxyHelper $wpProxy,
+    ) {
+        parent::__construct($pluginHelper, $wpProxy);
     }
 
     public function getSupportLevel(string $contentType, ?int $contentId = null): string

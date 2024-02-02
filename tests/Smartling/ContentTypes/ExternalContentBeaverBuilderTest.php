@@ -6,6 +6,7 @@ use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\ContentTypePluggableInterface;
 use Smartling\ContentTypes\ExternalContentBeaverBuilder;
 use PHPUnit\Framework\TestCase;
+use Smartling\Extensions\Pluggable;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
@@ -23,8 +24,8 @@ class ExternalContentBeaverBuilderTest extends TestCase {
         $proxy->method('getPostMeta')->willReturn('', []);
         $proxy->method('get_plugins')->willReturn([$pluginPath => []]);
         $proxy->method('is_plugin_active')->willReturn(true);
-        $this->assertEquals(ContentTypePluggableInterface::NOT_SUPPORTED, $this->getExternalContentBeaverBuilder($proxy)->getSupportLevel('post', 1));
-        $this->assertEquals(ContentTypePluggableInterface::SUPPORTED, $this->getExternalContentBeaverBuilder($proxy)->getSupportLevel('post', 1));
+        $this->assertEquals(Pluggable::NOT_SUPPORTED, $this->getExternalContentBeaverBuilder($proxy)->getSupportLevel('post', 1));
+        $this->assertEquals(Pluggable::SUPPORTED, $this->getExternalContentBeaverBuilder($proxy)->getSupportLevel('post', 1));
     }
 
     /**
