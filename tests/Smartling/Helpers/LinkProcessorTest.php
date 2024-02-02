@@ -34,7 +34,6 @@ class LinkProcessorTest extends TestCase {
 
     public function testProcessUrl(): void
     {
-        $siteHelper = $this->createPartialMock(SiteHelper::class, ['restoreBlogId', 'switchBlogId']);
         $submission = $this->createMock(SubmissionEntity::class);
         $noopHandler = $this->createMock(StringHandler::class);
         $noopHandler->method('handle')->willReturnArgument(0);
@@ -49,7 +48,7 @@ class LinkProcessorTest extends TestCase {
 
         $sourceUrl = '0';
 
-        $x = new LinkProcessor($siteHelper);
+        $x = new LinkProcessor($this->createPartialMock(SiteHelper::class, ['restoreBlogId', 'switchBlogId']));
         $x->addHandler($noopHandler, 1);
 
         $this->assertEquals($sourceUrl, $x->processUrl($sourceUrl, $submission));

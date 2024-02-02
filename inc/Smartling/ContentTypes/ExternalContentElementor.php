@@ -149,7 +149,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         private LinkProcessor $linkProcessor,
     )
     {
-        add_action(ExportedAPI::ACTION_AFTER_TARGET_METADATA_WRITTEN, [$this, 'afterMetaWritten']);
+        $wpProxy->add_action(ExportedAPI::ACTION_AFTER_TARGET_METADATA_WRITTEN, [$this, 'afterMetaWritten']);
         parent::__construct($pluginHelper, $submissionManager, $wpProxy);
         try {
             require_once WP_PLUGIN_DIR . '/elementor/core/dynamic-tags/manager.php';
