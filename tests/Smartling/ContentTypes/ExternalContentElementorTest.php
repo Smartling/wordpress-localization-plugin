@@ -3,16 +3,15 @@
 namespace Smartling\Tests\Smartling\ContentTypes;
 
 use Smartling\ContentTypes\ContentTypeHelper;
-use Smartling\ContentTypes\ContentTypePluggableInterface;
 use Smartling\ContentTypes\ExternalContentElementor;
 use PHPUnit\Framework\TestCase;
 use Smartling\Extensions\Pluggable;
 use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Helpers\LinkProcessor;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\UserHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
-use Smartling\Helpers\WordpressLinkHelperTest;
 use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -276,22 +275,24 @@ and management of:',
         $pluginHelper = $this->createMock(PluginHelper::class);
         $pluginHelper->method('versionInRange')->willReturn(true);
         if ($proxy === null) {
-            $proxy = new WordpressFunctionProxyHelper();
+            $proxy = $this->createPartialMock(WordpressFunctionProxyHelper::class, ['add_action']);
         }
         if ($submissionManager === null) {
             $submissionManager = $this->createMock(SubmissionManager::class);
         }
         $fieldsFilterHelper = $this->getMockBuilder(FieldsFilterHelper::class)->disableOriginalConstructor()->onlyMethods([])->getMock();
 
+        $siteHelper = $this->createPartialMock(SiteHelper::class, ['restoreBlogId', 'switchBlogId']);
+
         return new ExternalContentElementor(
             $contentTypeHelper,
             $fieldsFilterHelper,
             $pluginHelper,
-            new SiteHelper(),
+            $siteHelper,
             $submissionManager,
             $this->createMock(UserHelper::class),
             $proxy,
-            new WordpressLinkHelperTest($submissionManager, $proxy),
+            new LinkProcessor($siteHelper),
         );
     }
 

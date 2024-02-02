@@ -91,7 +91,18 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $profile->method('getOriginalBlogId')->willReturn($locale);
             $profile->method('getProjectId')->willReturn($projectUid);
 
-            $x = new BulkSubmitTableWidget($this->createMock(LocalizationPluginProxyInterface::class), $this->createMock(SiteHelper::class), $core, $manager, $profile);
+            $x = new class($this->createMock(LocalizationPluginProxyInterface::class), $this->createMock(SiteHelper::class), $core, $manager, $profile) extends BulkSubmitTableWidget {
+                /** @noinspection PhpMissingParentConstructorInspection */
+                public function __construct(LocalizationPluginProxyInterface $localizationPluginProxy, SiteHelper $siteHelper, SmartlingCore $core, SubmissionManager $manager, ConfigurationProfileEntity $profile)
+                {
+                    $this->core = $core;
+                    $this->localizationPluginProxy = $localizationPluginProxy;
+                    $this->manager = $manager;
+                    $this->setSource($_REQUEST);
+                    $this->profile = $profile;
+                    $this->siteHelper = $siteHelper;
+                }
+            };
             $x->setSource([
                 'smartling-bulk-submit-page-content-type' => $submissionType,
                 'smartling-bulk-submit-page-submission' => ["$submissionId-$submissionType"],
@@ -105,7 +116,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 ]]],
                 'action' => 'clone',
             ]);
-            $x->prepare_items();
+            $x->processBulkAction();
         }
     }
 }

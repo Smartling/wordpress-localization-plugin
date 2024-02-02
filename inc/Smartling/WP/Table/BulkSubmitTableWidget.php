@@ -56,12 +56,12 @@ class BulkSubmitTableWidget extends SmartlingListTable
 
     private bool $dataFiltered = false;
 
-    private ConfigurationProfileEntity $profile;
-    private LocalizationPluginProxyInterface $localizationPluginProxy;
-    private PluginInfo $pluginInfo;
-    private SiteHelper $siteHelper;
-    private SmartlingCore $core;
-    private SubmissionManager $manager;
+    protected ConfigurationProfileEntity $profile;
+    protected LocalizationPluginProxyInterface $localizationPluginProxy;
+    protected PluginInfo $pluginInfo;
+    protected SiteHelper $siteHelper;
+    protected SmartlingCore $core;
+    protected SubmissionManager $manager;
 
     public function getProfile(): ConfigurationProfileEntity
     {
@@ -173,10 +173,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
         return $sortable_columns;
     }
 
-    /**
-     * Handles actions for multiply objects
-     */
-    private function processBulkAction(): void
+    public function processBulkAction(): void
     {
         $action = $this->getFromSource('action', 'send');
         $submissions = $this->getFormElementValue('submission', []);
