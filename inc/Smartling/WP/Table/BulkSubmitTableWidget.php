@@ -56,12 +56,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
 
     private bool $dataFiltered = false;
 
-    protected ConfigurationProfileEntity $profile;
-    protected LocalizationPluginProxyInterface $localizationPluginProxy;
     protected PluginInfo $pluginInfo;
-    protected SiteHelper $siteHelper;
-    protected SmartlingCore $core;
-    protected SubmissionManager $manager;
 
     public function getProfile(): ConfigurationProfileEntity
     {
@@ -69,19 +64,13 @@ class BulkSubmitTableWidget extends SmartlingListTable
     }
 
     public function __construct(
-        LocalizationPluginProxyInterface $localizationPluginProxy,
-        SiteHelper $siteHelper,
-        SmartlingCore $core,
-        SubmissionManager $manager,
-        ConfigurationProfileEntity $profile
-    )
-    {
-        $this->core = $core;
-        $this->localizationPluginProxy = $localizationPluginProxy;
-        $this->manager = $manager;
+        protected LocalizationPluginProxyInterface $localizationPluginProxy,
+        protected SiteHelper $siteHelper,
+        protected SmartlingCore $core,
+        protected SubmissionManager $manager,
+        protected ConfigurationProfileEntity $profile,
+    ) {
         $this->setSource($_REQUEST);
-        $this->profile = $profile;
-        $this->siteHelper = $siteHelper;
 
         $filteredAllowedTypes = $this->getFilteredAllowedTypes();
         $this->defaultValues[static::CONTENT_TYPE_SELECT_ELEMENT_NAME] =

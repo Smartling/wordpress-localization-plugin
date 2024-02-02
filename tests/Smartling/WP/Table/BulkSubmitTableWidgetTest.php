@@ -57,7 +57,6 @@ namespace Smartling\Tests\Smartling\WP\Table {
 
             $manager = $this->createMock(SubmissionManager::class);
             $manager->method('getPageSize')->willReturn(7);
-            $pluginInfo = $this->createMock(PluginInfo::class);
 
             $contentEntitiesIOFactory = $this->createMock(ContentEntitiesIOFactory::class);
             $contentEntitiesIOFactory->method('getMapper')->willReturn($this->getMockForAbstractClass(EntityAbstract::class));
@@ -82,16 +81,21 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $profile->method('getOriginalBlogId')->willReturn($locale);
             $profile->method('getProjectId')->willReturn($projectUid);
 
-            $x = new class($this->createMock(LocalizationPluginProxyInterface::class), $this->createMock(SiteHelper::class), $core, $manager, $profile) extends BulkSubmitTableWidget {
+            $x = new class($this->createMock(
+                LocalizationPluginProxyInterface::class),
+                $this->createMock(SiteHelper::class),
+                $core,
+                $manager,
+                $profile,
+            ) extends BulkSubmitTableWidget {
                 /** @noinspection PhpMissingParentConstructorInspection */
-                public function __construct(LocalizationPluginProxyInterface $localizationPluginProxy, SiteHelper $siteHelper, SmartlingCore $core, SubmissionManager $manager, ConfigurationProfileEntity $profile)
-                {
-                    $this->core = $core;
-                    $this->localizationPluginProxy = $localizationPluginProxy;
-                    $this->manager = $manager;
-                    $this->setSource($_REQUEST);
-                    $this->profile = $profile;
-                    $this->siteHelper = $siteHelper;
+                public function __construct(
+                    protected LocalizationPluginProxyInterface $localizationPluginProxy,
+                    protected SiteHelper $siteHelper,
+                    protected SmartlingCore $core,
+                    protected SubmissionManager $manager,
+                    protected ConfigurationProfileEntity $profile,
+                ) {
                 }
             };
             $x->setSource([
