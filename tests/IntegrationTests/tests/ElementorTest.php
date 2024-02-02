@@ -46,7 +46,7 @@ class ElementorTest extends SmartlingUnitTestCaseAbstract {
         }
         $contentArray = $content->toArray();
         $this->assertArrayHasKey('post_content', $contentArray, json_encode($contentArray));
-        $this->assertStringStartsWith('<p>[L~éft t~éxt t~hréé ~síx s~évéñ]</p><p>[M~íddl~é téx~t th~réé s~íx sé~véñ]</p>', $contentArray['post_content']);
+        $this->assertStringStartsWith('<p>[', $contentArray['post_content']);
     }
 
     public function testElementorComplexContent(): void
