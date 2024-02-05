@@ -2,6 +2,7 @@
 
 namespace Smartling\ContentTypes;
 
+use Smartling\Extensions\Pluggable;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginHelper;
@@ -67,7 +68,7 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
         if ($this->contentTypeHelper->isPost($contentType) && $this->getDataFromPostMeta($contentId) !== '') {
             return parent::getSupportLevel($contentType, $contentId);
         }
-        return self::NOT_SUPPORTED;
+        return Pluggable::NOT_SUPPORTED;
     }
 
     private function extractContent(array $data): ExternalData {

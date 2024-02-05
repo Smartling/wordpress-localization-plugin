@@ -117,7 +117,7 @@ services:
       - "@manager.submission"
       - "@helper.user"
       - "@wp.proxy"
-      - "@wp.link.helper"
+      - "@link.processor"
 
   content.gravity.forms:
     class: Smartling\ContentTypes\ExternalContentGravityForms
@@ -141,6 +141,20 @@ services:
     class: Smartling\DbAl\WordpressContentEntities\GravityFormsFormHandler
     arguments:
       - "@site.db"
+
+  link.processor:
+    class: Smartling\Helpers\LinkProcessor
+    arguments:
+      - "@site.helper"
+    calls:
+      - ["addHandler", ["@plugin.redirection.handler", 1]]
+      - ["addHandler", ["@wp.link.helper"]]
+
+  plugin.redirection.handler:
+    class: Smartling\Extensions\Redirection
+    arguments:
+      - "@helper.plugins"
+      - "@wp.proxy"
 
   content.relations.handler:
     class: Smartling\Services\ContentRelationsHandler

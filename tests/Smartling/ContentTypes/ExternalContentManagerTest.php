@@ -7,6 +7,7 @@ use Smartling\ContentTypes\ContentTypePluggableInterface;
 use Smartling\ContentTypes\ExternalContentManager;
 use PHPUnit\Framework\TestCase;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
+use Smartling\Extensions\Pluggable;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
@@ -15,12 +16,12 @@ class ExternalContentManagerTest extends TestCase {
     public function testExceptionHandling()
     {
         $content1 = $this->createMock(ContentTypePluggableInterface::class);
-        $content1->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::SUPPORTED);
+        $content1->method('getSupportLevel')->willReturn(Pluggable::SUPPORTED);
         $content1->method('getContentFields')->willThrowException(new \JsonException());
         $content1->method('getRelatedContent')->willThrowException(new \Exception());
         $content1->method('setContentFields')->willThrowException(new \RuntimeException());
         $content2 = $this->createMock(ContentTypeModifyingInterface::class);
-        $content2->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::SUPPORTED);
+        $content2->method('getSupportLevel')->willReturn(Pluggable::SUPPORTED);
         $content2->method('getContentFields')->willThrowException(new \TypeError());
         $content2->method('getRelatedContent')->willThrowException(new \ParseError());
         $content2->method('setContentFields')->willThrowException(new \Error());
@@ -36,10 +37,10 @@ class ExternalContentManagerTest extends TestCase {
     public function testGetExternalContentNotAltered()
     {
         $content1 = $this->createMock(ContentTypePluggableInterface::class);
-        $content1->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::SUPPORTED);
+        $content1->method('getSupportLevel')->willReturn(Pluggable::SUPPORTED);
         $content1->method('getPluginId')->willReturn('content1');
         $content2 = $this->createMock(ContentTypePluggableInterface::class);
-        $content2->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::NOT_SUPPORTED);
+        $content2->method('getSupportLevel')->willReturn(Pluggable::NOT_SUPPORTED);
         $content2->method('getContentFields')->willReturn(['content2' => ['content_2' => 'content 2']]);
         $content3 = $this->createMock(ContentTypePluggableInterface::class);
         $x = $this->getExternalContentManager();
@@ -62,15 +63,15 @@ class ExternalContentManagerTest extends TestCase {
     public function testGetExternalContentExtraFields()
     {
         $content1 = $this->createMock(ContentTypePluggableInterface::class);
-        $content1->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::SUPPORTED);
+        $content1->method('getSupportLevel')->willReturn(Pluggable::SUPPORTED);
         $content1->method('getContentFields')->willReturn(['content_1' => 'content 1']);
         $content1->method('getPluginId')->willReturn('content1');
         $content2 = $this->createMock(ContentTypePluggableInterface::class);
-        $content2->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::SUPPORTED);
+        $content2->method('getSupportLevel')->willReturn(Pluggable::SUPPORTED);
         $content2->method('getContentFields')->willReturn(['content_2' => 'content 2']);
         $content2->method('getPluginId')->willReturn('content2');
         $content3 = $this->createMock(ContentTypePluggableInterface::class);
-        $content3->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::SUPPORTED);
+        $content3->method('getSupportLevel')->willReturn(Pluggable::SUPPORTED);
         $content3->method('getContentFields')->willReturn(['content_3' => 'content 3']);
         $content3->method('getPluginId')->willReturn('content3');
         $x = $this->getExternalContentManager();
@@ -103,12 +104,12 @@ class ExternalContentManagerTest extends TestCase {
     public function testGetExternalContentAlteringContent()
     {
         $content1 = $this->createMock(ContentTypeModifyingInterface::class);
-        $content1->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::SUPPORTED);
+        $content1->method('getSupportLevel')->willReturn(Pluggable::SUPPORTED);
         $content1->method('getContentFields')->willReturn(['content_1' => 'content 1']);
         $content1->method('getPluginId')->willReturn('content1');
         $content1->method('removeUntranslatableFieldsForUpload')->willReturnArgument(1);
         $content2 = $this->createMock(ContentTypeModifyingInterface::class);
-        $content2->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::SUPPORTED);
+        $content2->method('getSupportLevel')->willReturn(Pluggable::SUPPORTED);
         $content2->method('getContentFields')->willReturn(['content_2' => 'content 2']);
         $content2->method('getPluginId')->willReturn('content2');
         $content2->method('removeUntranslatableFieldsForUpload')->willReturnCallback(static function ($value) {
@@ -116,7 +117,7 @@ class ExternalContentManagerTest extends TestCase {
             return $value;
         });
         $content3 = $this->createMock(ContentTypeModifyingInterface::class);
-        $content3->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::SUPPORTED);
+        $content3->method('getSupportLevel')->willReturn(Pluggable::SUPPORTED);
         $content3->method('getContentFields')->willReturn(['content_3' => 'content 3']);
         $content3->method('getPluginId')->willReturn('content3');
         $content3->method('removeUntranslatableFieldsForUpload')->willReturnCallback(static function ($value) {
@@ -125,7 +126,7 @@ class ExternalContentManagerTest extends TestCase {
         });
 
         $handlerUnsupportedVersion = $this->createMock(ContentTypeModifyingInterface::class);
-        $handlerUnsupportedVersion->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::VERSION_NOT_SUPPORTED);
+        $handlerUnsupportedVersion->method('getSupportLevel')->willReturn(Pluggable::VERSION_NOT_SUPPORTED);
         $handlerUnsupportedVersion->expects($this->never())->method('getContentFields')->willReturn(['content_4' => 'content 4']);
         $handlerUnsupportedVersion->method('getPluginId')->willReturn('content4');
         $handlerUnsupportedVersion->method('removeUntranslatableFieldsForUpload')->willReturnCallback(static function ($value) {
@@ -134,7 +135,7 @@ class ExternalContentManagerTest extends TestCase {
         });
 
         $handlerUnsupported = $this->createMock(ContentTypeModifyingInterface::class);
-        $handlerUnsupported->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::VERSION_NOT_SUPPORTED);
+        $handlerUnsupported->method('getSupportLevel')->willReturn(Pluggable::VERSION_NOT_SUPPORTED);
         $handlerUnsupported->expects($this->never())->method('getContentFields')->willReturn(['content_5' => 'content 5']);
         $handlerUnsupported->method('getPluginId')->willReturn('content5');
         $handlerUnsupported->expects($this->never())->method('removeUntranslatableFieldsForUpload')->willReturnCallback(static function ($value) {
@@ -182,13 +183,13 @@ class ExternalContentManagerTest extends TestCase {
     public function testGetExternalRelations()
     {
         $content1 = $this->createMock(ContentTypePluggableInterface::class);
-        $content1->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::SUPPORTED);
+        $content1->method('getSupportLevel')->willReturn(Pluggable::SUPPORTED);
         $content1->method('getRelatedContent')->willReturn(['post' => 1]);
         $content2 = $this->createMock(ContentTypeModifyingInterface::class);
-        $content2->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::SUPPORTED);
+        $content2->method('getSupportLevel')->willReturn(Pluggable::SUPPORTED);
         $content2->method('getRelatedContent')->willReturn(['image' => 2]);
         $content3 = $this->createMock(ContentTypeModifyingInterface::class);
-        $content3->method('getSupportLevel')->willReturn(ContentTypePluggableInterface::SUPPORTED);
+        $content3->method('getSupportLevel')->willReturn(Pluggable::SUPPORTED);
         $content3->method('getRelatedContent')->willReturn(['post' => 2, 'image' => 1, 'other' => [3]]);
         $expected = [
             'post' => [1, 2],

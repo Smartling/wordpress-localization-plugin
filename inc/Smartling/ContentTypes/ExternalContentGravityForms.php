@@ -4,6 +4,7 @@ namespace Smartling\ContentTypes;
 
 use Smartling\DbAl\WordpressContentEntities\GravityFormFormData;
 use Smartling\DbAl\WordpressContentEntities\GravityFormsFormHandler;
+use Smartling\Extensions\Pluggable;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\LoggerSafeTrait;
@@ -43,7 +44,7 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
         $this->gutenbergBlockHelper = $gutenbergBlockHelper;
         $this->handler = $handler;
         $this->siteHelper = $siteHelper;
-        if (parent::getSupportLevel(self::CONTENT_TYPE) === self::SUPPORTED) {
+        if (parent::getSupportLevel(self::CONTENT_TYPE) === Pluggable::SUPPORTED) {
             $contentEntitiesIOFactory->registerHandler(self::CONTENT_TYPE, $handler);
             $contentTypeManager->addDescriptor($contentType);
         }
@@ -60,7 +61,7 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
         if ($contentType === self::CONTENT_TYPE || $this->contentTypeHelper->isPost($contentType)) {
             return parent::getSupportLevel($contentType, $contentId);
         }
-        return self::NOT_SUPPORTED;
+        return Pluggable::NOT_SUPPORTED;
     }
 
     public function getContentFields(SubmissionEntity $submission, bool $raw): array

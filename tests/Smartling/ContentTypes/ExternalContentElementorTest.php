@@ -3,15 +3,15 @@
 namespace Smartling\Tests\Smartling\ContentTypes;
 
 use Smartling\ContentTypes\ContentTypeHelper;
-use Smartling\ContentTypes\ContentTypePluggableInterface;
 use Smartling\ContentTypes\ExternalContentElementor;
 use PHPUnit\Framework\TestCase;
+use Smartling\Extensions\Pluggable;
 use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Helpers\LinkProcessor;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\UserHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
-use Smartling\Helpers\WordpressLinkHelper;
 use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -23,8 +23,8 @@ class ExternalContentElementorTest extends TestCase {
         $proxy->method('getPostMeta')->willReturn('', []);
         $proxy->method('get_plugins')->willReturn(['elementor/elementor.php' => []]);
         $proxy->method('is_plugin_active')->willReturn(true);
-        $this->assertEquals(ContentTypePluggableInterface::NOT_SUPPORTED, $this->getExternalContentElementor($proxy)->getSupportLevel('post', 1));
-        $this->assertEquals(ContentTypePluggableInterface::SUPPORTED, $this->getExternalContentElementor($proxy)->getSupportLevel('post', 1));
+        $this->assertEquals(Pluggable::NOT_SUPPORTED, $this->getExternalContentElementor($proxy)->getSupportLevel('post', 1));
+        $this->assertEquals(Pluggable::SUPPORTED, $this->getExternalContentElementor($proxy)->getSupportLevel('post', 1));
     }
 
     /**
@@ -275,22 +275,24 @@ and management of:',
         $pluginHelper = $this->createMock(PluginHelper::class);
         $pluginHelper->method('versionInRange')->willReturn(true);
         if ($proxy === null) {
-            $proxy = new WordpressFunctionProxyHelper();
+            $proxy = $this->createPartialMock(WordpressFunctionProxyHelper::class, ['add_action']);
         }
         if ($submissionManager === null) {
             $submissionManager = $this->createMock(SubmissionManager::class);
         }
         $fieldsFilterHelper = $this->getMockBuilder(FieldsFilterHelper::class)->disableOriginalConstructor()->onlyMethods([])->getMock();
 
+        $siteHelper = $this->createPartialMock(SiteHelper::class, ['restoreBlogId', 'switchBlogId']);
+
         return new ExternalContentElementor(
             $contentTypeHelper,
             $fieldsFilterHelper,
             $pluginHelper,
-            new SiteHelper(),
+            $siteHelper,
             $submissionManager,
             $this->createMock(UserHelper::class),
             $proxy,
-            new WordpressLinkHelper($submissionManager, $proxy),
+            new LinkProcessor($siteHelper),
         );
     }
 

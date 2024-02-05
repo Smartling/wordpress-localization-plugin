@@ -16,6 +16,7 @@ class ElementorTest extends SmartlingUnitTestCaseAbstract {
                 str_replace('"%d"', '%d', file_get_contents(__DIR__ . '/../testdata/elementor.json')),
                 $imageIds,
             )),
+            '_elementor_edit_mode' => 'builder',
         ]);
         $sourceBlogId = 1;
         $targetBlogId = 2;
@@ -45,7 +46,7 @@ class ElementorTest extends SmartlingUnitTestCaseAbstract {
         }
         $contentArray = $content->toArray();
         $this->assertArrayHasKey('post_content', $contentArray, json_encode($contentArray));
-        $this->assertEquals('', $contentArray['post_content'], $contentArray['post_content']);
+        $this->assertStringStartsWith('<p>[L~éft t~éxt t~hréé ~síx s~évéñ]</p>', $contentArray['post_content']);
     }
 
     public function testElementorComplexContent(): void

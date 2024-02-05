@@ -5,7 +5,9 @@ namespace Smartling\ContentTypes;
 use Elementor\Core\Documents_Manager;
 use Elementor\Core\DynamicTags\Manager;
 use Smartling\Base\ExportedAPI;
+use Smartling\Extensions\Pluggable;
 use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Helpers\LinkProcessor;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\SiteHelper;
@@ -144,10 +146,10 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         SubmissionManager $submissionManager,
         private UserHelper $userHelper,
         WordpressFunctionProxyHelper $wpProxy,
-        private WordpressLinkHelper $wpLinkHelper,
+        private LinkProcessor $linkProcessor,
     )
     {
-        add_action(ExportedAPI::ACTION_AFTER_TARGET_METADATA_WRITTEN, [$this, 'afterMetaWritten']);
+        $wpProxy->add_action(ExportedAPI::ACTION_AFTER_TARGET_METADATA_WRITTEN, [$this, 'afterMetaWritten']);
         parent::__construct($pluginHelper, $submissionManager, $wpProxy);
         try {
             require_once WP_PLUGIN_DIR . '/elementor/core/dynamic-tags/manager.php';
@@ -166,7 +168,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($submission) {
             $supportLevel = $this->getSupportLevel($submission->getContentType(), $submission->getTargetId());
             $this->getLogger()->debug(sprintf('Processing Elementor after content written hook, contentType=%s, sourceBlogId=%d, sourceId=%d, submissionId=%d, targetBlogId=%d, targetId=%d, supportLevel=%s', $submission->getContentType(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $supportLevel));
-            if ($supportLevel !== self::NOT_SUPPORTED) {
+            if ($supportLevel !== Pluggable::NOT_SUPPORTED) {
                 $this->userHelper->asAdministratorOrEditor(function () use ($submission) {
                     try {
                         require_once WP_PLUGIN_DIR . '/elementor/core/documents-manager.php';
@@ -210,7 +212,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         if ($this->contentTypeHelper->isPost($contentType) && $this->getDataFromPostMeta($contentId) !== '') {
             return parent::getSupportLevel($contentType, $contentId);
         }
-        return self::NOT_SUPPORTED;
+        return Pluggable::NOT_SUPPORTED;
     }
 
     private function extractContent(array $data, string $previousPrefix = ''): ExternalData {
@@ -360,10 +362,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                                     $original[$componentIndex]['settings'][$settingIndex]['id'] = $targetAttachmentId;
                                 }
                             }
-                            $newPath = $this->wpLinkHelper->getTargetBlogLink($setting['url'], $submission->getTargetBlogId());
-                            if ($newPath !== null) {
-                                $original[$componentIndex]['settings'][$settingIndex]['url'] = $newPath;
-                            }
+                            $original[$componentIndex]['settings'][$settingIndex]['url'] = $this->linkProcessor->processUrl($setting['url'], $submission);
                         } elseif (($setting['library'] ?? '') === 'svg' && array_key_exists('value', $setting)) {
                             if (array_key_exists('id', $setting['value'])) {
                                 $targetAttachmentId = $this->getTargetId($submission->getSourceBlogId(), $setting['value']['id'], $submission->getTargetBlogId());
@@ -372,10 +371,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                                 }
                             }
                             if (array_key_exists('url', $setting['value'])) {
-                                $newPath = $this->wpLinkHelper->getTargetBlogLink($setting['value']['url'], $submission->getTargetBlogId());
-                                if ($newPath !== null) {
-                                    $original[$componentIndex]['settings'][$settingIndex]['value']['url'] = $newPath;
-                                }
+                                $original[$componentIndex]['settings'][$settingIndex]['value']['url'] = $this->linkProcessor->processUrl($setting['value']['url'], $submission);
                             }
                         } else {
                             foreach ($setting as $optionIndex => $option) {

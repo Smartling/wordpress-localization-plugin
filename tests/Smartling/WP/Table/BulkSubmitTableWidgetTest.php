@@ -25,15 +25,6 @@ namespace {
             return $a;
         }
     }
-
-    if (!function_exists('convert_to_screen')) {
-        function convert_to_screen($a)
-        {
-            $r = new \stdClass();
-            $r->id = $a;
-            return $r;
-        }
-    }
 }
 
 namespace Smartling\Tests\Smartling\WP\Table {
@@ -66,7 +57,6 @@ namespace Smartling\Tests\Smartling\WP\Table {
 
             $manager = $this->createMock(SubmissionManager::class);
             $manager->method('getPageSize')->willReturn(7);
-            $pluginInfo = $this->createMock(PluginInfo::class);
 
             $contentEntitiesIOFactory = $this->createMock(ContentEntitiesIOFactory::class);
             $contentEntitiesIOFactory->method('getMapper')->willReturn($this->getMockForAbstractClass(EntityAbstract::class));
@@ -91,7 +81,23 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $profile->method('getOriginalBlogId')->willReturn($locale);
             $profile->method('getProjectId')->willReturn($projectUid);
 
-            $x = new BulkSubmitTableWidget($this->createMock(LocalizationPluginProxyInterface::class), $this->createMock(SiteHelper::class), $core, $manager, $profile);
+            $x = new class($this->createMock(
+                LocalizationPluginProxyInterface::class),
+                $this->createMock(SiteHelper::class),
+                $core,
+                $manager,
+                $profile,
+            ) extends BulkSubmitTableWidget {
+                /** @noinspection PhpMissingParentConstructorInspection */
+                public function __construct(
+                    protected LocalizationPluginProxyInterface $localizationPluginProxy,
+                    protected SiteHelper $siteHelper,
+                    protected SmartlingCore $core,
+                    protected SubmissionManager $manager,
+                    protected ConfigurationProfileEntity $profile,
+                ) {
+                }
+            };
             $x->setSource([
                 'smartling-bulk-submit-page-content-type' => $submissionType,
                 'smartling-bulk-submit-page-submission' => ["$submissionId-$submissionType"],
@@ -105,7 +111,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 ]]],
                 'action' => 'clone',
             ]);
-            $x->prepare_items();
+            $x->processBulkAction();
         }
     }
 }
