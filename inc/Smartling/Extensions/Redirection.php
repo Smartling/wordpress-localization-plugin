@@ -30,7 +30,7 @@ class Redirection extends PluggableAbstract implements StringHandler {
 
     public function handle(string $string, ?HandlerManager $handlerManager, ?SubmissionEntity $submission): string
     {
-        if ($this->getPluginSupportLevel() !== Pluggable::SUPPORTED || parse_url($string) === false) {
+        if ($submission === null || $this->getPluginSupportLevel() !== Pluggable::SUPPORTED || parse_url($string) === false) {
             return $string;
         }
 
@@ -39,20 +39,23 @@ class Redirection extends PluggableAbstract implements StringHandler {
             return $string;
         }
 
-        $parsed = parse_url($string);
-        if (!is_array($parsed) || ($currentBlogHost && $currentBlogHost !== $parsed['host'])) {
+        $source = parse_url($string);
+        if (!is_array($source) || (array_key_exists('host', $source) && $currentBlogHost !== $source['host'])) {
             return $string;
         }
 
-        if (class_exists('\Red_Item') && array_key_exists('path', $parsed)) {
+        if (class_exists('\Red_Item') && array_key_exists('path', $source)) {
             try {
-                $redirects = \Red_Item::get_for_url($parsed['path']);
-                foreach ((array)$redirects as $item) {
-                    $action = $item->get_match($parsed['path']);
-
-                    if ($action) {
-                        return $action->get_target();
+                if (count(\Red_Item::get_for_url($source['path'])) > 0) {
+                    $target = parse_url($this->wpProxy->get_home_url($submission->getTargetBlogId()));
+                    $result = $target['scheme'] . '://' . $target['host'] . $source['path'];
+                    if (array_key_exists('query', $source)) {
+                        $result .= '?' . $source['query'];
                     }
+                    if (array_key_exists('fragment', $source)) {
+                        $result .= '#' . $source['fragment'];
+                    }
+                    return $result;
                 }
             } catch (\Throwable $e) {
                 $this->getLogger()->notice("Caught exception while getting Redirection for url=$string: {$e->getMessage()}");
