@@ -10,7 +10,10 @@ use Smartling\Models\GutenbergBlock;
 require __DIR__ . '/../../wordpressBlocks.php';
 
 class PostContentHelperTest extends TestCase {
-    public function testApplyTranslationWithLockedBlocks()
+    /**
+     * @dataProvider applyTranslationWithLockedBlockDataProvider
+     */
+    public function testApplyTranslationWithLockedBlocks(string $targetPath, string $translationPath, string $expectedPath)
     {
         $blockHelper = $this->createMock(GutenbergBlockHelper::class);
         $blockHelper->method('parseBlocks')->willReturnCallback(function ($string) {
@@ -19,22 +22,20 @@ class PostContentHelperTest extends TestCase {
 
         $x = new PostContentHelper($blockHelper);
         $this->assertStringEqualsFile(
-            __DIR__ . '/Resources/WP733_expected.html',
+            __DIR__ . $expectedPath,
             $x->applyContentWithBlockLocks(
-                file_get_contents(__DIR__ . '/Resources/WP733_target.html'),
-                file_get_contents(__DIR__ . '/Resources/WP733_translation.html'),
+                file_get_contents(__DIR__ . $targetPath),
+                file_get_contents(__DIR__ . $translationPath),
             )
         );
     }
 
-    /**
-     * @return GutenbergBlock[]
-     */
-    private function getBlocksFromFile(string $path): array
+    public function applyTranslationWithLockedBlockDataProvider(): array
     {
-        return array_map(static function (array $array) {
-            return GutenbergBlock::fromArray($array);
-        }, json_decode(file_get_contents($path), true));
+        return [
+            ['/Resources/WP733_target.html', '/Resources/WP733_translation.html', '/Resources/WP733_expected.html'],
+            ['/Resources/WP-868_target.html', '/Resources/WP-868_translation.html', '/Resources/WP-868_expected.html'],
+        ];
     }
 
     public function testSetBlockByPath()
