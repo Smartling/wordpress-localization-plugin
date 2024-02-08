@@ -187,7 +187,7 @@ class PostContentHelper
                 }
                 $blockInfo = $this->setBlock($block->getInnerBlocks(), implode('/', $parts), $gutenbergBlock);
                 $replacement = $blockInfo['useInnerBlock'] ? $blockInfo['block']->getInnerBlocks()[$blockInfo['index']] : $blockInfo['block'];
-                $block = $block->withInnerBlock($replacement, $blockInfo['useInnerBlock'] ? $blockInfo['index'] : $index);
+                $block = $block->withInnerBlock($replacement, $blockInfo['index']);
             }
         }
         unset($block);
