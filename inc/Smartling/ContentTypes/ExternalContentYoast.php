@@ -73,11 +73,9 @@ class ExternalContentYoast extends ExternalContentAbstract implements ContentTyp
 
     public function getSupportLevel(string $contentType, ?int $contentId = null): string
     {
-        if ($this->contentTypeHelper->isPost($contentType) && $this->getDataFromPostMeta($contentId) !== '') {
-            return parent::getSupportLevel($contentType, $contentId);
-        }
-
-        return Pluggable::NOT_SUPPORTED;
+        return $this->contentTypeHelper->isPost($contentType)
+            ? parent::getSupportLevel($contentType, $contentId)
+            : Pluggable::NOT_SUPPORTED;
     }
 
     public function removeUntranslatableFieldsForUpload(array $source, SubmissionEntity $submission): array
