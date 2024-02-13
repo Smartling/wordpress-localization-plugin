@@ -84,8 +84,7 @@ class ExternalContentYoast extends ExternalContentAbstract implements ContentTyp
             $meta = $this->wpProxy->getPostMeta($submission->getSourceId(), $field, true);
             if (is_string($meta)) {
                 try {
-                    $decoded = json_decode($meta, true, 512, JSON_THROW_ON_ERROR);
-                    if (is_array($decoded)) {
+                    if (is_array(json_decode($meta, true, 512, JSON_THROW_ON_ERROR))) {
                         unset($source['meta'][$field]);
                     }
                 } catch (\JsonException) {
