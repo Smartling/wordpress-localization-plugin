@@ -142,6 +142,15 @@ services:
     arguments:
       - "@site.db"
 
+  content.yoast:
+    class: Smartling\ContentTypes\ExternalContentYoast
+    arguments:
+      - "@content.type.helper"
+      - "@fields-filter.helper"
+      - "@helper.plugins"
+      - "@manager.submission"
+      - "@wp.proxy"
+
   link.processor:
     class: Smartling\Helpers\LinkProcessor
     arguments:
@@ -198,6 +207,7 @@ services:
       - ["addHandler", ["@content.beaver.builder"]]
       - ["addHandler", ["@content.elementor"]]
       - ["addHandler", ["@content.gravity.forms"]]
+      - ["addHandler", ["@content.yoast"]]
 
   manager.job:
     class: Smartling\Jobs\JobManager

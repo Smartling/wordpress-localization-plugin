@@ -265,7 +265,7 @@ and management of:',
                 '_elementor_data' => 'irrelevant',
                 '_elementor_version' => 'irrelevant',
             ]
-        ]));
+        ], $this->createMock(SubmissionEntity::class)));
     }
 
     private function getExternalContentElementor(?WordpressFunctionProxyHelper $proxy = null, ?SubmissionManager $submissionManager = null): ExternalContentElementor

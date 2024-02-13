@@ -90,7 +90,7 @@ class ExternalContentBeaverBuilderTest extends TestCase {
                 '_fl_builder_history_state_100500' => 'irrelevant',
                 '_fl_builder_history_position' => 'irrelevant',
             ]
-        ]));
+        ], $this->createMock(SubmissionEntity::class)));
     }
 
     private function getExternalContentBeaverBuilder(?WordpressFunctionProxyHelper $proxy = null, ?SubmissionManager $submissionManager = null): ExternalContentBeaverBuilder

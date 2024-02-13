@@ -13,7 +13,6 @@ use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\UserHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
-use Smartling\Helpers\WordpressLinkHelper;
 use Smartling\Models\ExternalData;
 use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Submissions\SubmissionEntity;
@@ -191,7 +190,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         });
     }
 
-    public function removeUntranslatableFieldsForUpload(array $source): array
+    public function removeUntranslatableFieldsForUpload(array $source, SubmissionEntity $submission): array
     {
         if (array_key_exists(self::META_FIELD_NAME, $source['meta'] ?? [])) {
             $this->getLogger()->info('Detected elementor data, removing post content and elementor related meta fields');

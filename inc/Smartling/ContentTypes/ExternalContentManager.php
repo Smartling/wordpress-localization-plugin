@@ -21,7 +21,6 @@ class ExternalContentManager
      */
     private array $handlers = [];
 
-    /** @noinspection PhpUnused, used in DI */
     public function addHandler(ContentTypePluggableInterface $handler): void
     {
         $this->handlers[] = $handler;
@@ -42,7 +41,7 @@ class ExternalContentManager
             if ($handler instanceof ContentTypeModifyingInterface) {
                 try {
                     $previousCount = count($this->fieldsFilterHelper->flattenArray($source));
-                    $source = $handler->removeUntranslatableFieldsForUpload($source);
+                    $source = $handler->removeUntranslatableFieldsForUpload($source, $submission);
                     $count = count($this->fieldsFilterHelper->flattenArray($source));
                     if ($previousCount !== $count) {
                         $this->getLogger()->info('HandlerName="' . $handler->getPluginId() . '" altered content fields for upload, previousCount=' . $previousCount . ', count=' . $count);

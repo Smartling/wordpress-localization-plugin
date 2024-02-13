@@ -50,7 +50,7 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
         }
     }
 
-    public function removeUntranslatableFieldsForUpload(array $source): array
+    public function removeUntranslatableFieldsForUpload(array $source, SubmissionEntity $submission): array
     {
         unset($source['entity']['displayMeta']);
         return $source;
@@ -66,6 +66,9 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
 
     public function getContentFields(SubmissionEntity $submission, bool $raw): array
     {
+        if ($submission->getContentType() !== self::CONTENT_TYPE) {
+            return [];
+        }
         $formData = $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($submission) {
             return $this->handler->getFormData($submission->getSourceId());
         });
