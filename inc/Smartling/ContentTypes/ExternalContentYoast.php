@@ -13,7 +13,7 @@ use Smartling\Submissions\SubmissionManager;
 class ExternalContentYoast extends ExternalContentAbstract implements ContentTypeModifyingInterface {
     use LoggerSafeTrait;
 
-    private array $handledFields = [
+    public const handledFields = [
         '_yoast_wpseo_focuskeywords',
         '_yoast_wpseo_keywordsynonyms',
     ];
@@ -31,7 +31,7 @@ class ExternalContentYoast extends ExternalContentAbstract implements ContentTyp
     public function getContentFields(SubmissionEntity $submission, bool $raw): array
     {
         $result = [];
-        foreach ($this->handledFields as $field) {
+        foreach (self::handledFields as $field) {
             $meta = $this->wpProxy->getPostMeta($submission->getSourceId(), $field, true);
             if (is_string($meta)) {
                 try {
@@ -80,10 +80,17 @@ class ExternalContentYoast extends ExternalContentAbstract implements ContentTyp
 
     public function removeUntranslatableFieldsForUpload(array $source, SubmissionEntity $submission): array
     {
-        $meta = $this->wpProxy->getPostMeta($submission->getSourceId());
-        foreach ($this->handledFields as $field) {
-            if (array_key_exists($field, $meta)) {
-                unset($source['meta'][$field]);
+        foreach (self::handledFields as $field) {
+            $meta = $this->wpProxy->getPostMeta($submission->getSourceId(), $field, true);
+            if (is_string($meta)) {
+                try {
+                    $decoded = json_decode($meta, true, 512, JSON_THROW_ON_ERROR);
+                    if (is_array($decoded)) {
+                        unset($source['meta'][$field]);
+                    }
+                } catch (\JsonException) {
+                    // Not json, skip processing
+                }
             }
         }
 
