@@ -71,7 +71,7 @@ class ExternalContentElementorTest extends TestCase {
                 [
                     ContentRelationsDiscoveryService::POST_BASED_PROCESSOR => [19366],
                     ContentTypeHelper::POST_TYPE_ATTACHMENT => [597, 598],
-                ]
+                ],
             ],
             'global widget ' => [
                 '[{"id":"3b9b893","elType":"widget","settings":{"title":"I\'m actually a global widget"},"elements":[],"widgetType":"global","templateID":19366}]',
@@ -264,7 +264,7 @@ and management of:',
                 'x' => 'relevant',
                 '_elementor_data' => 'irrelevant',
                 '_elementor_version' => 'irrelevant',
-            ]
+            ],
         ], $this->createMock(SubmissionEntity::class)));
     }
 
@@ -303,12 +303,14 @@ and management of:',
         $sourceBlogId = 1;
         $sourceIcon1Id = 16326;
         $sourceIcon2Id = 16323;
+        $sourceQueriedPostId = 15414;
         $sourceWidgetId = 19366;
         $targetAttachmentId = 17;
         $targetBackgroundId = 37;
         $targetBlogId = 2;
         $targetIcon1Id = 13;
         $targetIcon2Id = 11;
+        $targetQueriedPostId = 23;
         $targetWidgetId = 23;
         $foundSubmissionAttachment = $this->createMock(SubmissionEntity::class);
         $foundSubmissionAttachment->method('getTargetId')->willReturn($targetAttachmentId);
@@ -325,7 +327,7 @@ and management of:',
         $translatedSubmission->method('getSourceBlogId')->willReturn($sourceBlogId);
         $translatedSubmission->method('getTargetBlogId')->willReturn($targetBlogId);
         $submissionManager = $this->createMock(SubmissionManager::class);
-        $matcher = $this->exactly(5);
+        $matcher = $this->exactly(8);
         $submissionManager->expects($matcher)->method('findOne')->willReturnCallback(
             function ($value) use (
                 $foundSubmissionAttachment,
@@ -338,8 +340,10 @@ and management of:',
                 $sourceBlogId,
                 $sourceIcon1Id,
                 $sourceIcon2Id,
+                $sourceQueriedPostId,
                 $sourceWidgetId,
                 $targetBlogId,
+                $targetQueriedPostId,
             ) {
                 switch ($matcher->getInvocationCount()) {
                     case 1:
@@ -379,6 +383,12 @@ and management of:',
 
                         return $foundSubmissionIcons[1];
                     case 5:
+                    case 6:
+                    case 7:
+                        $this->assertArrayNotHasKey(SubmissionEntity::FIELD_CONTENT_TYPE, $value);
+
+                        return $value[SubmissionEntity::FIELD_SOURCE_ID] === $sourceQueriedPostId ? (new SubmissionEntity())->setTargetId($targetQueriedPostId) : null;
+                    case 8:
                         $this->assertEquals([
                             SubmissionEntity::FIELD_CONTENT_TYPE => ExternalContentElementor::CONTENT_TYPE_ELEMENTOR_LIBRARY,
                             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
@@ -398,17 +408,37 @@ and management of:',
             ['meta' => ['_elementor_data' => '[]']],
             $x->setContentFields(['meta' => ['_elementor_data' => '[]']], ['elementor' => []], $this->createMock(SubmissionEntity::class))
         );
-        $original = json_encode(json_decode(sprintf(
+        $original = json_encode(json_decode(json: sprintf(
             file_get_contents(__DIR__ . '/testMergeElementorData.json'),
             $sourceBackgroundId,
             $sourceAttachmentId,
             $sourceIcon1Id,
             $sourceIcon2Id,
+            $sourceQueriedPostId,
             $sourceWidgetId,
-        )));
-        $expected = str_replace(
-            ['<p>Left text<\/p>', '<p>Middle text<\/p>', 'Right heading', $sourceBackgroundId, $sourceAttachmentId, $sourceIcon1Id, $sourceIcon2Id, $sourceWidgetId],
-            ['<p>Left text translated<\/p>', '<p>Middle text translated<\/p>', 'Right heading translated', $targetBackgroundId, $targetAttachmentId, $targetIcon1Id, $targetIcon2Id, $targetWidgetId],
+        ), flags: JSON_THROW_ON_ERROR));
+        $expected = str_replace([
+            '<p>Left text<\/p>',
+            '<p>Middle text<\/p>',
+            'Right heading',
+            $sourceBackgroundId,
+            $sourceAttachmentId,
+            $sourceIcon1Id,
+            $sourceIcon2Id,
+            $sourceQueriedPostId,
+            $sourceWidgetId,
+        ],
+            [
+                '<p>Left text translated<\/p>',
+                '<p>Middle text translated<\/p>',
+                'Right heading translated',
+                $targetBackgroundId,
+                $targetAttachmentId,
+                $targetIcon1Id,
+                $targetIcon2Id,
+                $targetQueriedPostId,
+                $targetWidgetId,
+            ],
             $original
         );
 
@@ -417,7 +447,7 @@ and management of:',
                 '590657a/b56da21/c799791/editor' => '<p>Left text translated</p>',
                 '590657a/0f3ad3c/0088b31/editor' => '<p>Middle text translated</p>',
                 '590657a/8798127/78d53a1/title' => 'Right heading translated',
-            ]
+            ],
         ], $translatedSubmission);
 
         $this->assertIsArray($result);

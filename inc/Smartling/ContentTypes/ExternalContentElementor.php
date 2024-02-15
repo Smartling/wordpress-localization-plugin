@@ -33,6 +33,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         '_elementor_css',
         '_elementor_edit_mode',
         '_elementor_page_assets',
+        '_elementor_page_settings',
         '_elementor_pro_version',
         '_elementor_template_type',
         '_elementor_version',
@@ -354,6 +355,14 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                         continue;
                     }
                     if (is_array($setting)) {
+                        if ($settingIndex === 'posts_posts_ids') {
+                            foreach ($setting as $key => $id) {
+                                $targetAttachmentId = $this->getTargetId($submission->getSourceBlogId(), $id, $submission->getTargetBlogId(), ContentTypeHelper::CONTENT_TYPE_UNKNOWN);
+                                if ($targetAttachmentId !== null) {
+                                    $original[$componentIndex]['settings'][$settingIndex][$key] = $targetAttachmentId;
+                                }
+                            }
+                        }
                         if (array_key_exists('url', $setting)) {
                             if (array_key_exists('id', $setting) && is_int($setting['id']) && ($setting['source'] ?? '') === 'library') {
                                 $targetAttachmentId = $this->getTargetId($submission->getSourceBlogId(), $setting['id'], $submission->getTargetBlogId());
