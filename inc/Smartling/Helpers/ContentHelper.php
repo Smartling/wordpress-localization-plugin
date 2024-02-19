@@ -150,6 +150,7 @@ class ContentHelper
 
     public function writeTargetContent(SubmissionEntity $submission, Entity $entity): Entity
     {
+        $this->getLogger()->info(sprintf('Writing target content for submissionId=%d, contentType=%s, sourceBlogId=%d, sourceId=%d, targetBlogId=%d, targetId=%d', $submission->getId(), $submission->getContentType(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getTargetBlogId(), $submission->getTargetId()));
         $wrapper = $this->getWrapper($submission->getContentType());
 
         $this->ensureTargetBlogId($submission);

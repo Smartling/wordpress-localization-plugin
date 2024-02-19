@@ -49,12 +49,15 @@ abstract class ExternalContentAbstract extends PluggableAbstract implements Cont
     protected function getTargetId(int $sourceBlogId, int $sourceId, int $targetBlogId, string $contentType = ContentTypeHelper::POST_TYPE_ATTACHMENT): ?int
     {
         $this->getLogger()->debug("Searching for target id to replace sourceId=$sourceId");
-        $targetSubmission = $this->submissionManager->findOne([
-            SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
+        $parameters = [
             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
             SubmissionEntity::FIELD_SOURCE_ID => $sourceId,
             SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
-        ]);
+        ];
+        if ($contentType !== ContentTypeHelper::CONTENT_TYPE_UNKNOWN) {
+            $parameters[SubmissionEntity::FIELD_CONTENT_TYPE] = $contentType;
+        }
+        $targetSubmission = $this->submissionManager->findOne($parameters);
         if ($targetSubmission === null) {
             return null;
         }
