@@ -39,6 +39,14 @@ class GravityFormsForm extends EntityBase {
         return $this->id;
     }
 
+    public function setId(int $id): static
+    {
+        $result = clone $this;
+        $this->id = $id;
+
+        return $result;
+    }
+
     public function getTitle(): string
     {
         return $this->title;

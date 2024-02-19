@@ -104,6 +104,14 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         return $this->ID;
     }
 
+    public function setId(int $id): static
+    {
+        $result = clone $this;
+        $result->ID = $id;
+
+        return $result;
+    }
+
     protected function getFieldNameByMethodName($method): string
     {
         $fieldName = parent::getFieldNameByMethodName($method);
