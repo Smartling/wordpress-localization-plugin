@@ -6,6 +6,7 @@ use DateTime;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Jobs\JobEntityWithStatus;
+use Smartling\Models\AssetUid;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Vendor\Jralph\Retry\Command;
@@ -57,6 +58,13 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
     {
         return $this->withRetry(function () use ($entity) {
             return $this->base->downloadFile($entity);
+        });
+    }
+
+    public function getSettings(string $projectUid): array
+    {
+        return $this->withRetry(function () use ($projectUid) {
+            return $this->base->getSettings($projectUid);
         });
     }
 
@@ -183,6 +191,48 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
     {
         $this->withRetry(function () use ($profile, $space, $object, $record, $data, $ttl) {
             $this->base->setNotificationRecord($profile, $space, $object, $record, $data, $ttl);
+        });
+    }
+
+    public function createSubmission(string $projectUid, string $translationRequestUid, AssetUid $assetUid, string $targetLocale): void
+    {
+        $this->withRetry(function () use ($projectUid, $assetUid, $targetLocale, $translationRequestUid) {
+            $this->base->createSubmission($projectUid, $translationRequestUid, $assetUid, $targetLocale);
+        });
+    }
+
+    public function createTranslationRequest(
+        string $projectUid,
+        string $assetUid,
+        string $title,
+        string $fileUri,
+        string $contentHash,
+        string $originalLocale,
+    ): string
+    {
+        return $this->withRetry(function () use ($projectUid, $assetUid, $title, $fileUri, $contentHash, $originalLocale) {
+            return $this->base->createTranslationRequest($projectUid, $assetUid, $title, $fileUri, $contentHash, $originalLocale);
+        });
+    }
+
+    public function searchSubmissions(string $projectUid, ?array $assetUidStrings = null, ?string $targetLocale = null, ?array $translationRequestIds = null): \Generator
+    {
+        return $this->withRetry(function () use ($projectUid, $assetUidStrings, $targetLocale, $translationRequestIds) {
+            return $this->base->searchSubmissions($projectUid, $assetUidStrings, $targetLocale, $translationRequestIds);
+        });
+    }
+
+    public function searchTranslationPackages(string $projectUid, string $sourceAssetUid, string $targetLocale): array
+    {
+        return $this->withRetry(function () use ($projectUid, $sourceAssetUid, $targetLocale) {
+            return $this->base->searchTranslationPackages($projectUid, $sourceAssetUid, $targetLocale);
+        });
+    }
+
+    public function searchTranslationRequests(string $projectUid, array $assetUidStrings): \Generator
+    {
+        return $this->withRetry(function () use ($projectUid, $assetUidStrings) {
+            return $this->base->searchTranslationRequests($projectUid, $assetUidStrings);
         });
     }
 

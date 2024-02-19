@@ -2,7 +2,7 @@
 
 namespace Smartling\Helpers;
 
-class DecodedXml
+class DecodedTranslation
 {
     private array $originalFields;
     private array $translatedFields;

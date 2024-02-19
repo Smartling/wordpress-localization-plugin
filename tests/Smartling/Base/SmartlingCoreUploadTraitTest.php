@@ -9,7 +9,7 @@ use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ContentHelper;
-use Smartling\Helpers\DecodedXml;
+use Smartling\Helpers\DecodedTranslation;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
@@ -121,7 +121,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $x = $this->getSmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager);
 
         $xmlHelper = $this->createMock(XmlHelper::class);
-        $xmlHelper->method('xmlDecode')->willReturn(new DecodedXml(
+        $xmlHelper->method('xmlDecode')->willReturn(new DecodedTranslation(
             ['meta' => $translatedFields],
             ['meta' => ['metaNotToTranslate' => 's:8:"Original"', 'metaToTranslate' => 'Original']]
         ));
@@ -158,7 +158,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
 
         $x = $this->getSmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager);
         $xmlHelper = $this->createMock(XmlHelper::class);
-        $xmlHelper->method('xmlDecode')->willReturn(new DecodedXml(
+        $xmlHelper->method('xmlDecode')->willReturn(new DecodedTranslation(
             ['meta' => ['metaToTranslate' => '~Translated~']],
             ['meta' => ['excludedField' => 'excluded', 'sourceMetaField' => 'set', 'metaToTranslate' => 'Original']]
         ));
@@ -312,7 +312,7 @@ HTML;
 
         $x = $this->getSmartlingCoreUpload($contentHelper, $fieldsFilterHelper, $settingsManager, $submissionManager);
         $xmlHelper = $this->createMock(XmlHelper::class);
-        $xmlHelper->method('xmlDecode')->willReturn(new DecodedXml(
+        $xmlHelper->method('xmlDecode')->willReturn(new DecodedTranslation(
             ['entity' => ['post_content' => $translatedContent]],
             ['entity' => ['post_content' => $originalContent]]
         ));

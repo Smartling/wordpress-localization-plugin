@@ -16,6 +16,7 @@ use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Models\ExternalData;
 use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\Submission;
 use Smartling\Submissions\SubmissionManager;
 
 class ExternalContentElementor extends ExternalContentAbstract implements ContentTypeModifyingInterface
@@ -342,7 +343,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return $result;
     }
 
-    private function mergeElementorData(array $original, array $translation, SubmissionEntity $submission, string $previousPrefix = ''): array
+    private function mergeElementorData(array $original, array $translation, Submission $submission, string $previousPrefix = ''): array
     {
         foreach ($original as $componentIndex => $component) {
             $prefix = $previousPrefix . $component['id'];
@@ -468,7 +469,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return $original;
     }
 
-    public function setContentFields(array $original, array $translation, SubmissionEntity $submission): array
+    public function setContentFields(array $original, array $translation, Submission $submission): array
     {
         if (array_key_exists('meta', $original)) {
             foreach ($this->copyFields as $field) {

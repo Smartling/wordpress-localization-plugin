@@ -36,7 +36,7 @@ use Smartling\Vendor\Psr\Log\LoggerInterface;
  * @property int         $outdated
  * @package Smartling\Submissions
  */
-class SubmissionEntity extends SmartlingEntityAbstract
+class SubmissionEntity extends SmartlingEntityAbstract implements Submission
 {
     public const FLAG_CONTENT_IS_OUT_OF_DATE = 1;
 

@@ -5,6 +5,7 @@ namespace Smartling\ContentTypes;
 use JetBrains\PhpStorm\ExpectedValues;
 use Smartling\Extensions\Pluggable;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\Submission;
 
 interface ContentTypePluggableInterface extends Pluggable {
 
@@ -17,5 +18,5 @@ interface ContentTypePluggableInterface extends Pluggable {
 
     public function getRelatedContent(string $contentType, int $contentId): array;
 
-    public function setContentFields(array $original, array $translation, SubmissionEntity $submission): ?array;
+    public function setContentFields(array $original, array $translation, Submission $submission): ?array;
 }

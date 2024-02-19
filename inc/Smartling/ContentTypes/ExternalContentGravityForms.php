@@ -13,6 +13,7 @@ use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\Submission;
 use Smartling\Submissions\SubmissionManager;
 
 class ExternalContentGravityForms extends ExternalContentAbstract implements ContentTypeModifyingInterface {
@@ -184,7 +185,7 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
         return $result;
     }
 
-    public function setContentFields(array $original, array $translation, SubmissionEntity $submission): ?array
+    public function setContentFields(array $original, array $translation, Submission $submission): ?array
     {
         if (!array_key_exists($this->getPluginId(), $translation)) {
             return null;

@@ -11,6 +11,8 @@ interface Entity {
 
     public function getId(): ?int;
 
+    public function setId(int $id): static;
+
     public function getRelatedTypes(): array;
 
     public function getTitle(): string;
