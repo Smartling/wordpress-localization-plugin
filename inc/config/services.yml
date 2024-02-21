@@ -170,30 +170,33 @@ services:
     arguments:
       - "@service.relations-discovery"
 
+  core.attachments:
+    class: Smartling\Base\SmartlingCoreAttachments
+    arguments:
+      - "@content.helper"
+      - "@manager.settings"
+      - "@site.helper"
+
   entrypoint:
     class: Smartling\Base\SmartlingCore
     arguments:
+      - "@api.wrapper.with.retries"
+      - "@site.cache"
+      - "@content.helper"
+      - "@content-serialization.helper"
       - "@manager.content.external"
+      - "@fields-filter.helper"
       - "@file.uri.helper"
       - "@helper.gutenberg"
       - "@helper.post.content"
-      - "@helper.xml"
+      - "@queue.db"
+      - "@manager.settings"
+      - "@site.helper"
+      - "@manager.submission"
       - "@test.run.helper"
+      - "@translation.helper"
       - "@wp.proxy"
-    calls:
-      - [ "setSubmissionManager", [ "@manager.submission" ]]
-      - [ "setSiteHelper", [ "@site.helper" ]]
-      - [ "setApiWrapper", [ "@api.wrapper.with.retries" ]]
-      - [ "setMultilangProxy", [ "@multilang.proxy" ]]
-      - [ "setContentIoFactory", [ "@factory.contentIO" ]]
-      - [ "setCache", [ "@site.cache" ]]
-      - [ "setCustomMenuHelper", [ "@helper.customMenu" ]]
-      - [ "setSettingsManager", [ "@manager.settings" ]]
-      - [ "setQueue", ["@queue.db"]]
-      - [ "setContentHelper", [ "@content.helper" ]]
-      - [ "setTranslationHelper", [ "@translation.helper" ]]
-      - [ "setFieldsFilter", [ "@fields-filter.helper" ] ]
-      - [ "setContentSerializationHelper", [ "@content-serialization.helper" ] ]
+      - "@helper.xml"
 
   factory.contentIO:
     class: Smartling\Processors\ContentEntitiesIOFactory
