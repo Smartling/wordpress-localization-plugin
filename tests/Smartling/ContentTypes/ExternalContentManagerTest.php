@@ -8,7 +8,9 @@ use Smartling\ContentTypes\ExternalContentManager;
 use PHPUnit\Framework\TestCase;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Extensions\Pluggable;
+use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -205,6 +207,13 @@ class ExternalContentManagerTest extends TestCase {
 
     private function getExternalContentManager(): ExternalContentManager
     {
-        return new ExternalContentManager(new FieldsFilterHelper($this->createMock(SettingsManager::class), $this->createMock(AcfDynamicSupport::class)));
+        return new ExternalContentManager(
+            new FieldsFilterHelper(
+                $this->createMock(AcfDynamicSupport::class),
+                $this->createMock(ContentSerializationHelper::class),
+                $this->createMock(SettingsManager::class),
+                $this->createMock(WordpressFunctionProxyHelper::class),
+            )
+        );
     }
 }

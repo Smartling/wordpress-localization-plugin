@@ -15,6 +15,7 @@ use Smartling\Helpers\Serializers\SerializerInterface;
 use Smartling\Models\GutenbergBlock;
 use Smartling\Replacers\ReplacerFactory;
 use Smartling\Replacers\ReplacerInterface;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tuner\MediaAttachmentRulesManager;
 use Smartling\Vendor\JsonPath\JsonObject;
@@ -27,26 +28,17 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     private const CDATA_SECTION_NODE_NAME = '#cdata-section';
     private const MAX_NODE_DEPTH = 10;
 
-    private AcfDynamicSupport $acfDynamicSupport;
-    private MediaAttachmentRulesManager $rulesManager;
-    private ReplacerFactory $replacerFactory;
-    private SerializerInterface $serializer;
-    private WordpressFunctionProxyHelper $wpProxy;
-
     public function __construct(
-        AcfDynamicSupport $acfDynamicSupport,
-        MediaAttachmentRulesManager $rulesManager,
-        ReplacerFactory $replacerFactory,
-        SerializerInterface $serializer,
-        WordpressFunctionProxyHelper $wpProxy
+        private AcfDynamicSupport $acfDynamicSupport,
+        ContentSerializationHelper $contentSerializationHelper,
+        private MediaAttachmentRulesManager $rulesManager,
+        private ReplacerFactory $replacerFactory,
+        private SerializerInterface $serializer,
+        SettingsManager $settingsManager,
+        private WordpressFunctionProxyHelper $wpProxy
     )
     {
-        parent::__construct();
-        $this->acfDynamicSupport = $acfDynamicSupport;
-        $this->replacerFactory = $replacerFactory;
-        $this->rulesManager = $rulesManager;
-        $this->serializer = $serializer;
-        $this->wpProxy = $wpProxy;
+        parent::__construct($contentSerializationHelper, $settingsManager);
     }
 
     /**

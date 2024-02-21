@@ -4,9 +4,11 @@ namespace Smartling\Tests\Smartling\Helpers;
 
 use DOMDocument;
 use PHPUnit\Framework\TestCase;
+use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\Helpers\PlaceholderHelper;
 use Smartling\Helpers\ShortcodeHelper;
+use Smartling\Settings\SettingsManager;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 
 class ShortcodeHelperTest extends TestCase
@@ -14,19 +16,15 @@ class ShortcodeHelperTest extends TestCase
     use InvokeMethodTrait;
 
     /**
-     * @covers       \Smartling\Helpers\ShortcodeHelper::getCdata
      * @dataProvider getCDATADataProvider
-     *
-     * @param string   $expectedString
-     * @param \DOMNode $node
      */
-    public function testGetCdata($expectedString, \DOMNode $node)
+    public function testGetCdata(string $expectedString, \DOMNode $node)
     {
-        self::assertEquals($expectedString, \Smartling\Helpers\ShortcodeHelper::getCdata($node));
+        self::assertEquals($expectedString, ShortcodeHelper::getCdata($node));
     }
 
     /**
-     * @covers  \Smartling\Helpers\ShortcodeHelper::extractTranslations
+     * @covers  ShortcodeHelper::extractTranslations
      */
     public function testExtractTranslations()
     {
@@ -80,7 +78,10 @@ class ShortcodeHelperTest extends TestCase
 
         $node = $nodelist->item(0);
 
-        $helper = new ShortcodeHelper();
+        $helper = new ShortcodeHelper(
+            $this->createMock(ContentSerializationHelper::class),
+            $this->createMock(SettingsManager::class),
+        );
 
         $this->invokeMethod($helper, 'extractTranslations', [$node]);
 
@@ -107,15 +108,12 @@ class ShortcodeHelperTest extends TestCase
     }
 
     /**
-     * @covers       \Smartling\Helpers\ShortcodeHelper::buildShortcodeAttributes
      * @dataProvider buildShortcodeAttributesDataProvider
-     * @param array  $attributes
-     * @param string $expectedAttributeString
      */
-    public function testBuildShortcodeAttributes(array $attributes, $expectedAttributeString)
+    public function testBuildShortcodeAttributes(array $attributes, string $expectedAttributeString)
     {
         self::assertEquals($expectedAttributeString,
-            $this->invokeMethod(new ShortcodeHelper(), 'buildShortcodeAttributes', [$attributes]));
+            $this->invokeMethod($this->getShortcodeHelper(), 'buildShortcodeAttributes', [$attributes]));
     }
 
     public function buildShortcodeAttributesDataProvider()
@@ -160,20 +158,13 @@ class ShortcodeHelperTest extends TestCase
     }
 
     /**
-     * @covers       \Smartling\Helpers\ShortcodeHelper::buildShortcode
      * @dataProvider buildShortcodeDataProvider
-     * @param string $name
-     * @param array  $attributes
-     * @param string $content
-     * @param string $openString
-     * @param string $closeString
-     * @param string $expectedString
      */
-    public function testBuildShortcode($name, $attributes, $content, $openString, $closeString, $expectedString)
+    public function testBuildShortcode(string $name, array $attributes, string $content, string $openString, string $closeString, string $expectedString)
     {
         self::assertEquals($expectedString,
             $this->invokeMethod(
-                new ShortcodeHelper(),
+                $this->getShortcodeHelper(),
                 'buildShortcode',
                 [
                     $name,
@@ -209,7 +200,7 @@ class ShortcodeHelperTest extends TestCase
     }
 
     /**
-     * @covers  \Smartling\Helpers\ShortcodeHelper::uploadShortcodeHandler
+     * @covers  ShortcodeHelper::uploadShortcodeHandler
      */
     public function testUploadShortcodeHandler()
     {
@@ -229,7 +220,7 @@ class ShortcodeHelperTest extends TestCase
         $nodeList = $xPath->query('/data/string');
         $node     = $nodeList->item(0);
 
-        $helper = new ShortcodeHelper();
+        $helper = $this->getShortcodeHelper();
 
         $name = 'vc_row';
 
@@ -257,8 +248,9 @@ class ShortcodeHelperTest extends TestCase
         $node->appendChild(new \DOMCdataSection($shortcode));
 
         $mock = $this
-            ->getMockBuilder('Smartling\Helpers\ShortcodeHelper')
-            ->setMethods(['preUploadFiltering'])
+            ->getMockBuilder(ShortcodeHelper::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['preUploadFiltering'])
             ->getMock();
 
         $mock->expects(self::once())
@@ -283,7 +275,7 @@ class ShortcodeHelperTest extends TestCase
     }
 
     /**
-     * @covers  \Smartling\Helpers\ShortcodeHelper::shortcodeApplierHandler
+     * @covers  ShortcodeHelper::shortcodeApplierHandler
      */
     public function testShortcodeApplierHandler()
     {
@@ -308,8 +300,9 @@ class ShortcodeHelperTest extends TestCase
         $content    = 'inner content';
 
         $mock = $this
-            ->getMockBuilder('Smartling\Helpers\ShortcodeHelper')
-            ->setMethods(['passPostDownloadFilters'])
+            ->getMockBuilder(ShortcodeHelper::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['passPostDownloadFilters'])
             ->getMock();
 
         $param = new TranslationStringFilterParameters();
@@ -319,7 +312,7 @@ class ShortcodeHelperTest extends TestCase
         $mock->setParams($param);
 
         $mock->extractTranslations($node);
-        $mock->unmask($node);
+        $mock->unmask();
 
         $mock->expects(self::once())
              ->method('passPostDownloadFilters')
@@ -372,5 +365,13 @@ class ShortcodeHelperTest extends TestCase
         }
 
         return $data;
+    }
+
+    private function getShortcodeHelper(): ShortcodeHelper
+    {
+        return new ShortcodeHelper(
+            $this->createMock(ContentSerializationHelper::class),
+            $this->createMock(SettingsManager::class),
+        );
     }
 }

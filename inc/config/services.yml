@@ -68,7 +68,9 @@ services:
   helper.xml:
     class: Smartling\Helpers\XmlHelper
     arguments:
+      - "@content-serialization.helper"
       - "@serializer.json"
+      - "@manager.settings"
 
   wrapper.sdk.api.smartling:
     class: Smartling\ApiWrapper
@@ -401,15 +403,20 @@ services:
     class: Smartling\Helpers\GutenbergBlockHelper
     arguments:
       - "@acf.dynamic.support"
+      - "@content-serialization.helper"
       - "@media.attachment.rules.manager"
       - "@factory.replacer"
       - "@serializer.json"
+      - "@manager.settings"
       - "@wp.proxy"
     calls:
       - [ "setFieldsFilter", [ "@fields-filter.helper" ]]
 
   helper.shortcode:
     class: Smartling\Helpers\ShortcodeHelper
+    arguments:
+      - "@content-serialization.helper"
+      - "@manager.settings"
     calls:
       - [ "setFieldsFilter", [ "@fields-filter.helper" ]]
 
@@ -478,13 +485,16 @@ services:
   fields-filter.helper:
     class: Smartling\Helpers\FieldsFilterHelper
     arguments:
-      - "@manager.settings"
       - "@acf.dynamic.support"
+      - "@content-serialization.helper"
+      - "@manager.settings"
+      - "@wp.proxy"
 
   content-serialization.helper:
     class: Smartling\Helpers\ContentSerializationHelper
     arguments:
     - "@content.helper"
+    - "@manager.settings"
 
   acf.dynamic.support:
     class: Smartling\Extensions\Acf\AcfDynamicSupport

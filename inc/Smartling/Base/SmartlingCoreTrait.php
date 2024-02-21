@@ -5,7 +5,6 @@ namespace Smartling\Base;
 use Smartling\DbAl\WordpressContentEntities\EntityWithPostStatus;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Helpers\ArrayHelper;
-use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
@@ -15,9 +14,9 @@ trait SmartlingCoreTrait
     use SmartlingCoreDownloadTrait;
     use SmartlingCoreAttachments;
 
-    private function prepareFieldProcessorValues(SubmissionEntity $submission): void
+    private function prepareFieldProcessorValues(SubmissionEntity $submission): array
     {
-        ContentSerializationHelper::prepareFieldProcessorValues($this->getSettingsManager(), $submission);
+        return $this->getContentSerializationHelper()->prepareFieldProcessorValues($submission);
     }
 
     public function prepareTargetContent(SubmissionEntity $submission): SubmissionEntity
