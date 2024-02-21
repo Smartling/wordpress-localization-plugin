@@ -25,7 +25,7 @@ services:
   smartling.helper.relative-image-path-support:
     class: Smartling\Helpers\RelativeLinkedAttachmentCoreHelper
     arguments:
-      - "@entrypoint"
+      - "@core.attachments"
       - "@acf.dynamic.support"
       - "@manager.submission"
       - "@wp.proxy"
@@ -34,7 +34,7 @@ services:
   smartling.helper.absolute-image-path-support:
       class: Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper
       arguments:
-        - "@entrypoint"
+        - "@core.attachments"
         - "@acf.dynamic.support"
         - "@manager.submission"
         - "@wp.proxy"
@@ -176,6 +176,7 @@ services:
       - "@content.helper"
       - "@manager.settings"
       - "@site.helper"
+      - "@translation.helper"
 
   entrypoint:
     class: Smartling\Base\SmartlingCore
