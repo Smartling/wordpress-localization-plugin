@@ -58,7 +58,6 @@ class XmlHelper
         foreach ($comments as $comment) {
             $document->appendChild($document->createComment(" $comment "));
         }
-        // TODO add settings
 
         return $document;
     }
