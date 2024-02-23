@@ -46,7 +46,6 @@ class XmlHelper
             'smartling.variants_enabled = true',
             'Smartling Wordpress Connector version: ' . Bootstrap::getCurrentVersion(),
             'Wordpress installation host: ' . Bootstrap::getHttpHostName(),
-            'smartling.placeholder_format_custom = ' . ShortcodeHelper::getMaskRegexp(),
             'smartling.placeholder_format_custom = #sl-start#.+?#sl-end#',
         ];
 
