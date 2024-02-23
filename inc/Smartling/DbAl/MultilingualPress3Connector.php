@@ -5,11 +5,13 @@ namespace Smartling\DbAl;
 use Inpsyde\MultilingualPress\Core\Admin\SiteSettingsRepository;
 use Inpsyde\MultilingualPress\Framework\Api\ContentRelations;
 use Smartling\Base\ExportedAPI;
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Submissions\SubmissionEntity;
 use function Inpsyde\MultilingualPress\resolve;
 
 class MultilingualPress3Connector extends MultilingualPressConnector implements LocalizationPluginProxyInterface
 {
+    use LoggerSafeTrait;
     public function addHooks(): void
     {
         add_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, [$this, 'linkObjects']);
@@ -30,19 +32,22 @@ class MultilingualPress3Connector extends MultilingualPressConnector implements 
         return $this->getEnglishNameFromMlpLanguagesTable($locale, 'locale', $wpdb);
     }
 
-    public function isActive(): bool
+    public function isActive(bool $logErrors = false): bool
     {
         try {
             resolve(ContentRelations::class);
             return true;
-        } catch (\Error $e) {
+        } catch (\Throwable $e) {
+            if ($logErrors) {
+                $this->getLogger()->debug('MultilingualPress 3 isActive check threw errorClass="' . $e::class . '": ' . $e->getMessage());
+            }
             return false;
         }
     }
 
     public function linkObjects(SubmissionEntity $submission): bool
     {
-        if ($this->isActive()) {
+        if ($this->isActive(true)) {
             try {
                 $contentRelations = resolve(ContentRelations::class);
                 $contentIds = $this->getContentIds($submission);
@@ -53,7 +58,8 @@ class MultilingualPress3Connector extends MultilingualPressConnector implements 
 
                 $contentRelations->createRelationship($contentIds, $submission->getContentType());
                 return true;
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
+                $this->getLogger()->notice('MultilingualPress 3 linkObjects failed errorClass="' . $e::class . '": ' . $e->getMessage());
                 return false;
             }
         }
@@ -67,6 +73,7 @@ class MultilingualPress3Connector extends MultilingualPressConnector implements 
                 return resolve(ContentRelations::class)
                     ->deleteRelation($this->getContentIds($submission), $submission->getContentType());
             } catch (\Exception $e) {
+                $this->getLogger()->notice('MultilingualPress 3 unlinkObjects failed errorClass="' . $e::class . '": ' . $e->getMessage());
                 return false;
             }
         }
