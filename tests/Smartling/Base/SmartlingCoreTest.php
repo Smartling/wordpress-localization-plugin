@@ -9,6 +9,7 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
+use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
@@ -51,19 +52,26 @@ class SmartlingCoreTest extends TestCase
         $wpProxy = new WordpressFunctionProxyHelper();
         $gutenbergBlockHelper = new GutenbergBlockHelper(
             $this->createMock(AcfDynamicSupport::class),
+            $this->createMock(ContentSerializationHelper::class),
             $this->createMock(MediaAttachmentRulesManager::class),
             $this->createMock(ReplacerFactory::class),
             new SerializerJsonWithFallback(),
+            $this->createMock(SettingsManager::class),
             $wpProxy,
         );
         $this->core = new SmartlingCore(
-            new ExternalContentManager(new FieldsFilterHelper($this->createMock(SettingsManager::class), $this->createMock(AcfDynamicSupport::class))),
+            new ExternalContentManager(new FieldsFilterHelper(
+                $this->createMock(AcfDynamicSupport::class),
+                $this->createMock(ContentSerializationHelper::class),
+                $this->createMock(SettingsManager::class),
+                $wpProxy,
+            )),
             $this->createMock(FileUriHelper::class),
             $gutenbergBlockHelper,
             new PostContentHelper($gutenbergBlockHelper),
             $this->createMock(TestRunHelper::class),
             $wpProxy,
-            new XmlHelper(new SerializerJsonWithFallback()),
+            new XmlHelper($this->createMock(ContentSerializationHelper::class), new SerializerJsonWithFallback(), $this->createMock(SettingsManager::class)),
         );
     }
 

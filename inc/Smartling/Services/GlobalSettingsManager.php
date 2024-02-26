@@ -238,4 +238,21 @@ class GlobalSettingsManager
             SimpleStorageHelper::set(self::SETTING_ADD_SLASHES_BEFORE_SAVING_META, $value);
         }
     }
+
+    public const SETTING_CUSTOM_DIRECTIVES = 'smartling_custom_directives';
+    public const SETTING_CUSTOM_DIRECTIVES_DEFAULT = '';
+
+    public static function getCustomDirectives(): string
+    {
+        return SimpleStorageHelper::get(self::SETTING_CUSTOM_DIRECTIVES, self::SETTING_CUSTOM_DIRECTIVES_DEFAULT);
+    }
+
+    public static function setCustomDirectives(string $value): void
+    {
+        if ($value === self::SETTING_CUSTOM_DIRECTIVES_DEFAULT) {
+            SimpleStorageHelper::drop(self::SETTING_CUSTOM_DIRECTIVES);
+        } else {
+            SimpleStorageHelper::set(self::SETTING_CUSTOM_DIRECTIVES, $value);
+        }
+    }
 }
