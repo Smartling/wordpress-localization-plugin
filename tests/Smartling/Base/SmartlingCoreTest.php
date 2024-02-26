@@ -69,9 +69,9 @@ class SmartlingCoreTest extends TestCase
             $this->createMock(FileUriHelper::class),
             $gutenbergBlockHelper,
             new PostContentHelper($gutenbergBlockHelper),
-            new XmlHelper($this->createMock(ContentSerializationHelper::class), new SerializerJsonWithFallback(), $this->createMock(SettingsManager::class)),
             $this->createMock(TestRunHelper::class),
             $wpProxy,
+            new XmlHelper($this->createMock(ContentSerializationHelper::class), new SerializerJsonWithFallback(), $this->createMock(SettingsManager::class)),
         );
     }
 

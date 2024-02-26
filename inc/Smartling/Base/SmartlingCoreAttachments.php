@@ -5,11 +5,29 @@ namespace Smartling\Base;
 use JetBrains\PhpStorm\ArrayShape;
 use Smartling\Exception\SmartlingWpDataIntegrityException;
 use Smartling\Helpers\AttachmentHelper;
+use Smartling\Helpers\ContentHelper;
+use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
+use Smartling\Helpers\TranslationHelper;
+use Smartling\Jobs\JobEntityWithBatchUid;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 
-trait SmartlingCoreAttachments
+class SmartlingCoreAttachments
 {
+    use LoggerSafeTrait;
+
+    public function __construct(
+        private ContentHelper $contentHelper,
+        private SettingsManager $settingsManager,
+        private SiteHelper $siteHelper,
+        private TranslationHelper $translationHelper,
+    ) {
+        add_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, [$this, 'regenerateTargetThumbnailsBySubmission']);
+        add_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, [$this, 'syncAttachment']);
+    }
+
     /**
      * @throws SmartlingWpDataIntegrityException
      */
@@ -29,13 +47,8 @@ trait SmartlingCoreAttachments
 
         $targetFileExists = AttachmentHelper::checkIfTargetFileExists($sourceFileFsPath, $targetFileFsPath);
 
-        $this->getLogger()->debug(
-            vsprintf('Starting syncing media attachment blog = \'%s\' attachment id = \'%s\'.', [
-                $submission->getTargetBlogId(),
-                $submission->getTargetId(),
-            ])
-        );
-        $profile = $this->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
+        $this->getLogger()->debug(sprintf('Starting syncing media attachment blogId=%d attachmentId=%d', $submission->getTargetBlogId(), $submission->getTargetId()));
+        $profile = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
         if (1 === $profile->getAlwaysSyncImagesOnUpload() || ($submission->getStatus() === SubmissionEntity::SUBMISSION_STATUS_NEW && !$targetFileExists)) {
             $this->syncMediaFile($submission);
         }
@@ -48,32 +61,23 @@ trait SmartlingCoreAttachments
      */
     private function syncMediaFile(SubmissionEntity $submission): void
     {
-        $this->getLogger()->debug(
-            vsprintf('Preparing to sync media file for blog = \'%s\' attachment id = \'%s\'.', [
-                $submission->getTargetBlogId(),
-                $submission->getTargetId(),
-            ])
-        );
+        $this->getLogger()->debug(sprintf('Preparing to sync media file for blogId=%d attachmentId=%d', $submission->getTargetBlogId(), $submission->getTargetId()));
 
         $fileData = $this->getAttachmentFileInfoBySubmission($submission);
-
 
         $sourceFileFsPath = $fileData['source_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
         $targetFileFsPath = $fileData['target_path_prefix'] . DIRECTORY_SEPARATOR . $fileData['relative_path'];
 
-
-
         $mediaCloneResult = AttachmentHelper::cloneFile($sourceFileFsPath, $targetFileFsPath, true);
 
         if (is_array($mediaCloneResult) && 0 < count($mediaCloneResult)) {
-            $message = vsprintf(
-                'Error(s) %s happened while working with attachment id=%s, blog=%s, submission=%s.',
-                [
-                    implode(',', $mediaCloneResult),
-                    $submission->getSourceId(),
-                    $submission->getSourceBlogId(),
-                    $submission->getId(),
-                ]
+            $message = sprintf(
+                'Error%s %s happened while working with attachmentId=%d, blogId=%d, submissionId=%d',
+                count($mediaCloneResult) > 1 ? 's' : '',
+                implode(',', $mediaCloneResult),
+                $submission->getSourceId(),
+                $submission->getSourceBlogId(),
+                $submission->getId(),
             );
             $this->getLogger()->error($message);
         }
@@ -81,8 +85,6 @@ trait SmartlingCoreAttachments
 
     /**
      * Forces image thumbnail re-generation
-     *
-     * @param SubmissionEntity $submission
      */
     public function regenerateTargetThumbnailsBySubmission(SubmissionEntity $submission): void
     {
@@ -93,58 +95,39 @@ trait SmartlingCoreAttachments
             ])
         );
 
-        $this->getContentHelper()->ensureTargetBlogId($submission);
+        $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($submission) {
+            $originalImage = get_attached_file($submission->getTargetId(), true);
 
-        $originalImage = get_attached_file($submission->getTargetId(), true);
+            if (!function_exists('wp_generate_attachment_metadata')) {
+                include_once(ABSPATH . 'wp-admin/includes/image.php'); //including the attachment function
+            }
+            if (!function_exists('wp_read_video_metadata')) {
+                include_once(ABSPATH . 'wp-admin/includes/media.php');
+            }
 
-        if (!function_exists('wp_generate_attachment_metadata')) {
-            include_once(ABSPATH . 'wp-admin/includes/image.php'); //including the attachment function
-        }
-        if (!function_exists('wp_read_video_metadata')) {
-            include_once(ABSPATH . 'wp-admin/includes/media.php');
-        }
+            $this->getLogger()->debug(sprintf('Generating metadata for file targetId=%d, [%s].', $submission->getTargetId(), $originalImage));
 
-        $this->getLogger()->debug(
-            vsprintf('Generating metadata for file id=\'%s\', [%s].', [
-                $submission->getTargetId(), $originalImage
-            ])
-        );
+            $metadata = wp_generate_attachment_metadata($submission->getTargetId(), $originalImage);
 
-        $metadata = wp_generate_attachment_metadata($submission->getTargetId(), $originalImage);
-
-        if (empty($metadata)) {
-            $this->getLogger()
-                ->error(sprintf("Couldn't regenerate thumbnails for blog='%s' attachment id='%s'.",
-                    $submission->getTargetBlogId(),
-                    $submission->getTargetId(),
-                ));
-        } else {
-            wp_update_attachment_metadata($submission->getTargetId(), $metadata);
-        }
-
-        $this->getContentHelper()->ensureRestoredBlogId();
+            if (empty($metadata)) {
+                $this->getLogger()->error(sprintf("Couldn't regenerate thumbnails for targetBlogId=%d attachmentId=%d", $submission->getTargetBlogId(), $submission->getTargetId()));
+            } else {
+                wp_update_attachment_metadata($submission->getTargetId(), $metadata);
+            }
+        });
     }
 
     private function getUploadDirForSite(int $siteId): array
     {
-        $this->getContentHelper()->ensureBlog($siteId);
-        $data = wp_upload_dir();
-        $this->getContentHelper()->ensureRestoredBlogId();
-
-        return $data;
+        return $this->siteHelper->withBlog($siteId, function () {
+            return wp_upload_dir();
+        });
     }
 
-    /** @noinspection PhpUnusedPrivateMethodInspection
-     * @see SmartlingCoreExportApi::getFullyRelateAttachmentPathByBlogId
-     */
-    private function getUploadPathForSite(int $siteId): string
+    public function getUploadPathForSite(int $siteId): string
     {
-        $this->getContentHelper()->ensureBlog($siteId);
         $prefix = $this->getUploadDirForSite($siteId);
-        $data = str_replace($prefix['subdir'], '', parse_url($prefix['url'], PHP_URL_PATH));
-        $this->getContentHelper()->ensureRestoredBlogId();
-
-        return $data;
+        return str_replace($prefix['subdir'], '', parse_url($prefix['url'], PHP_URL_PATH));
     }
 
     #[ArrayShape([
@@ -161,7 +144,7 @@ trait SmartlingCoreAttachments
      */
     private function getAttachmentFileInfoBySubmission(SubmissionEntity $submission): array
     {
-        $info = $this->getContentHelper()->readSourceContent($submission);
+        $info = $this->contentHelper->readSourceContent($submission);
         if (property_exists($info, 'guid')) {
             $guid = $info->guid;
         } else {
@@ -170,7 +153,7 @@ trait SmartlingCoreAttachments
         }
         $sourceSiteUploadInfo = $this->getUploadDirForSite($submission->getSourceBlogId());
         $targetSiteUploadInfo = $this->getUploadDirForSite($submission->getTargetBlogId());
-        $sourceMetadata = $this->getContentHelper()->readSourceMetadata($submission);
+        $sourceMetadata = $this->contentHelper->readSourceMetadata($submission);
 
         if (array_key_exists('_wp_attached_file', $sourceMetadata) &&
             !StringHelper::isNullOrEmpty($sourceMetadata['_wp_attached_file'])
@@ -201,5 +184,52 @@ trait SmartlingCoreAttachments
                 ]
             )
         );
+    }
+
+    public function getFullyRelateAttachmentPath(SubmissionEntity $postSubmission, string $foundRelativePath): string
+    {
+        return $this->getFullyRelateAttachmentPathByBlogId($postSubmission->getSourceBlogId(), $foundRelativePath);
+    }
+
+    public function getFullyRelateAttachmentPathByBlogId(int $blogId, string $foundRelativePath): string
+    {
+        return trim(str_replace($this->getUploadPathForSite($blogId), '', $foundRelativePath), '/');
+    }
+
+    public function sendAttachmentForTranslation(int $sourceBlogId, int $targetBlogId, int $sourceId, JobEntityWithBatchUid $jobInfo, bool $clone = false): SubmissionEntity
+    {
+        return $this->translationHelper->tryPrepareRelatedContent(
+            'attachment',
+            $sourceBlogId,
+            $sourceId,
+            $targetBlogId,
+            $jobInfo,
+            $clone
+        );
+    }
+
+    /**
+     * @throws SmartlingWpDataIntegrityException
+     */
+    public function getAttachmentRelativePathBySubmission(SubmissionEntity $submission): string
+    {
+        $info = $this->getAttachmentFileInfoBySubmission($submission);
+
+        return parse_url($info['base_url_target'] . '/' . $info['relative_path'], PHP_URL_PATH);
+    }
+
+    /**
+     * @throws SmartlingWpDataIntegrityException
+     */
+    public function getAttachmentAbsolutePathBySubmission(SubmissionEntity $submission): string
+    {
+        $info = $this->getAttachmentFileInfoBySubmission($submission);
+
+        return $info['base_url_target'] . '/' . $info['relative_path'];
+    }
+
+    public function getUploadFileInfo(int $siteId): array
+    {
+        return $this->getUploadDirForSite($siteId);
     }
 }

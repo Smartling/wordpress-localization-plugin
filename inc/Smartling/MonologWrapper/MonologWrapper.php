@@ -2,40 +2,24 @@
 
 namespace Smartling\MonologWrapper;
 
+use Smartling\Models\LoggerWithStringContext;
 use Smartling\MonologWrapper\Logger\DevNullLogger;
 use Smartling\MonologWrapper\Logger\LevelLogger;
-use Smartling\Vendor\Monolog\Logger;
 use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
-/**
- * Class MonologWrapper
- * @package LogConfigExample
- */
 class MonologWrapper
 {
-
-    /**
-     * @var Logger[]
-     */
-    private static $loggers = [];
+    private static array $loggers = [];
 
     /**
      * Remove all loggers from registry.
      */
-    public static function clear()
+    public static function clear(): void
     {
         static::$loggers = [];
     }
 
-    /**
-     * Init wrapper.
-     * Fills $loggers array with defined logger services (logger name -> object).
-     *
-     * @param \Symfony\Component\DependencyInjection\ContainerBuilder $container
-     *
-     * @throws \Throwable
-     */
-    public static function init(ContainerBuilder $container)
+    public static function init(ContainerBuilder $container): void
     {
         foreach ($container->getDefinitions() as $serviceId => $serviceDefinition) {
             if (in_array($serviceDefinition->getClass(),
@@ -47,10 +31,10 @@ class MonologWrapper
                 $service = $container->get($serviceId);
                 static::$loggers[$service->getName()] = $service;
             }
-        };
+        }
 
-        // Sort loggers: more longest names comes first.
-        uasort(static::$loggers, function ($a, $b) {
+        // Sort loggers: longest names come first.
+        uasort(static::$loggers, static function ($a, $b) {
             return strlen($a->getName()) > strlen($b->getName()) ? -1 : 1;
         });
     }
@@ -62,25 +46,21 @@ class MonologWrapper
      *    appropriate logger then it looks for 'default' logger.
      * 2. If $name isn't passed then it looks for 'default' logger.
      * 3. Fallback to DevNullLogger in order to not break anything.
-     *
-     * @param null $name
-     *
-     * @return DevNullLogger|\Monolog\Logger
      */
-    public static function getLogger($name = null)
+    public static function getLogger(?string $name = null): LoggerWithStringContext
     {
         if (!empty($name)) {
             // Look for full match (logger for class). Class logger has more priority
             // than namespace logger.
             foreach (static::$loggers as $loggerName => $logger) {
-                if ($name == $loggerName) {
+                if ($name === $loggerName) {
                     return $logger;
                 }
             }
 
             // Look for partial match (logger for namespace).
             foreach (static::$loggers as $loggerName => $logger) {
-                if (strpos($name, $loggerName) !== false) {
+                if (str_contains($name, $loggerName)) {
                     return $logger;
                 }
             }
@@ -95,5 +75,4 @@ class MonologWrapper
 
         return new DevNullLogger('NullLogger');
     }
-
 }

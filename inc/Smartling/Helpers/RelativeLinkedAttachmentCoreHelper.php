@@ -5,7 +5,7 @@ namespace Smartling\Helpers;
 use DOMDocument;
 use LibXMLError;
 use Smartling\Base\ExportedAPI;
-use Smartling\Base\SmartlingCore;
+use Smartling\Base\SmartlingCoreAttachments;
 use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
@@ -41,7 +41,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     }
 
     public function __construct(
-        protected SmartlingCore $core,
+        protected SmartlingCoreAttachments $attachments,
         private AcfDynamicSupport $acfDynamicSupport,
         protected SubmissionManager $submissionManager,
         protected WordpressFunctionProxyHelper $wordpressProxy,
@@ -112,9 +112,9 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     private function tryProcessThumbnail(string $path): ?ReplacementPair
     {
         $submission = $this->getParams()->getSubmission();
-        $dir = $this->core->getUploadFileInfo($submission->getSourceBlogId())['basedir'];
+        $dir = $this->attachments->getUploadFileInfo($submission->getSourceBlogId())['basedir'];
 
-        $fullFileName = $dir . DIRECTORY_SEPARATOR . $this->core->getFullyRelateAttachmentPath($submission, $path);
+        $fullFileName = $dir . DIRECTORY_SEPARATOR . $this->attachments->getFullyRelateAttachmentPath($submission, $path);
 
         if (FileHelper::testFile($fullFileName)) {
             $sourceFilePathInfo = pathinfo($fullFileName);
@@ -145,7 +145,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                             SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
                         ]);
                         if ($attachmentSubmission !== null) {
-                            $targetUploadInfo = $this->core->getUploadFileInfo($submission->getTargetBlogId());
+                            $targetUploadInfo = $this->attachments->getUploadFileInfo($submission->getTargetBlogId());
 
                             $fullTargetFileName = $targetUploadInfo['basedir'] . DIRECTORY_SEPARATOR .
                                 $sourceFilePathInfo['filename'] . '.' . $sourceFilePathInfo['extension'];
@@ -154,7 +154,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                                 $this->getLogger()->warning("Unknown error occurred while copying thumbnail from $fullFileName to $fullTargetFileName.");
                             }
 
-                            $targetFileRelativePath = $this->core
+                            $targetFileRelativePath = $this->attachments
                                 ->getAttachmentRelativePathBySubmission($attachmentSubmission);
 
                             $targetThumbnailPathInfo = pathinfo($targetFileRelativePath);
@@ -201,7 +201,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
             "SELECT `post_id` as `id` FROM `%s` WHERE `meta_key` = '_wp_attached_file' AND `meta_value`='%s' LIMIT 1;",
             [
                 RawDbQueryHelper::getTableName('postmeta'),
-                $this->core->getFullyRelateAttachmentPath($this->getParams()->getSubmission(), $relativePath),
+                $this->attachments->getFullyRelateAttachmentPath($this->getParams()->getSubmission(), $relativePath),
             ]
         ));
     }
@@ -345,7 +345,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                     SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
                 ]);
                 if ($attachmentSubmission !== null) {
-                    $result->addReplacementPair(new ReplacementPair($path, $this->core->getAttachmentRelativePathBySubmission($attachmentSubmission)));
+                    $result->addReplacementPair(new ReplacementPair($path, $this->attachments->getAttachmentRelativePathBySubmission($attachmentSubmission)));
                 } else {
                     $this->getLogger()->debug("Skipping replacing id attachmentId=$attachmentId: no target submissions found");
                 }

@@ -4,6 +4,7 @@ namespace Smartling\Tests\Smartling\Helpers;
 
 use PHPUnit\Framework\TestCase;
 use Smartling\Base\SmartlingCore;
+use Smartling\Base\SmartlingCoreAttachments;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
@@ -161,7 +162,7 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
             return $sourcePostRelations[$url] ?? 0;
         });
         $x = new RelativeLinkedAttachmentCoreHelper(
-            $this->createMock(SmartlingCore::class),
+            $this->createMock(SmartlingCoreAttachments::class),
             $this->createMock(AcfDynamicSupport::class),
             $submissionManager,
             $wordpressProxy,
