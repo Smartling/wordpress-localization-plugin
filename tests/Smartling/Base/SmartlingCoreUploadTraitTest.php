@@ -3,7 +3,6 @@
 namespace Smartling\Tests\Smartling\Base;
 
 use PHPUnit\Framework\TestCase;
-use Psr\Log\NullLogger;
 use Smartling\ApiWrapperInterface;
 use Smartling\Base\SmartlingCore;
 use Smartling\ContentTypes\ExternalContentManager;
