@@ -12,6 +12,7 @@ use Smartling\Exception\InvalidXMLException;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\Helpers\Serializers\SerializerInterface;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Services\GlobalSettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 
 class XmlHelper
@@ -41,13 +42,6 @@ class XmlHelper
         MonologWrapper::getLogger(get_called_class())->debug($message);
     }
 
-    private static $magicComments = [
-        'smartling.translate_paths = data/string/',
-        'smartling.string_format_paths = html : data/string/',
-        'smartling.source_key_paths = data/{string.key}',
-        'smartling.variants_enabled = true',
-    ];
-
     const XML_ROOT_NODE_NAME = 'data';
 
     const XML_STRING_NODE_NAME = 'string';
@@ -62,33 +56,27 @@ class XmlHelper
         return new DOMDocument('1.0', 'UTF-8');
     }
 
-    /**
-     * Sets comments about translation type (html)
-     *
-     * @param DOMDocument $document
-     *
-     * @return DOMDocument
-     */
-    private static function setTranslationComments(DOMDocument $document)
+    private function setTranslationComments(DOMDocument $document): DOMDocument
     {
-        foreach (self::$magicComments as $commentString) {
-            $document->appendChild($document->createComment(vsprintf(' %s ', [$commentString])));
-        }
-
-        $additionalComments = [
+        $comments = [
+            'smartling.translate_paths = data/string/',
+            'smartling.string_format_paths = html : data/string/',
+            'smartling.source_key_paths = data/{string.key}',
+            'smartling.variants_enabled = true',
             'Smartling Wordpress Connector version: ' . Bootstrap::getCurrentVersion(),
             'Wordpress installation host: ' . Bootstrap::getHttpHostName(),
-            vsprintf(
-                'smartling.placeholder_format_custom = %s',
-                [
-                    ShortcodeHelper::getMaskRegexp(),
-                ]
-            ),
+            'smartling.placeholder_format_custom = ' . ShortcodeHelper::getMaskRegexp(),
             'smartling.placeholder_format_custom = #sl-start#.+?#sl-end#',
         ];
 
-        foreach ($additionalComments as $extraComment) {
-            $document->appendChild($document->createComment(vsprintf(' %s ', [$extraComment])));
+        foreach (explode("\n", GlobalSettingsManager::getCustomDirectives()) as $comment) {
+            if ($comment !== '') {
+                $comments[] = $comment;
+            }
+        }
+
+        foreach ($comments as $comment) {
+            $document->appendChild($document->createComment(" $comment "));
         }
 
         return $document;
@@ -110,7 +98,7 @@ class XmlHelper
     public function xmlEncode(array $source, SubmissionEntity $submission, array $originalContent = []): string
     {
         static::logMessage(vsprintf('Started creating XML for fields: %s', [base64_encode(var_export($source, true))]));
-        $xml = self::setTranslationComments(self::initXml());
+        $xml = $this->setTranslationComments(self::initXml());
         $settings = self::getFieldProcessingParams();
         $rootNode = $xml->createElement(self::XML_ROOT_NODE_NAME);
         foreach ($source as $name => $value) {

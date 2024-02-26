@@ -224,6 +224,9 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
+                        <th colspan="2" class="center">Other Customizations</th>
+                    </tr>
+                    <tr>
                         <th><label for="<?= GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT?>"><?= __('Add slashes before saving post content')?></label></th>
                         <td>
                             <?=
@@ -261,6 +264,12 @@ $data = $this->getViewData();
                                 ]
                             )
                             ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="<?= GlobalSettingsManager::SETTING_CUSTOM_DIRECTIVES?>"><a href="https://help.smartling.com/hc/en-us/articles/360008000893-XML#directives"><?= __('Custom directives')?></a><?= __('. The connector will wrap each line from this text area into inline directives') ?><pre>&lt;!-- smartling.%%line%% --&gt;</pre><br><?= __('Invalid directives WILL BREAK PROCESSING.')?></label></th>
+                        <td>
+                            <textarea id="<?= GlobalSettingsManager::SETTING_CUSTOM_DIRECTIVES?>"><?= GlobalSettingsManager::getCustomDirectives()?></textarea>
                         </td>
                     </tr>
                     <tr>
