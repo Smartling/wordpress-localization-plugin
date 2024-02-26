@@ -4,13 +4,9 @@ namespace Smartling\Helpers;
 
 use JetBrains\PhpStorm\ExpectedValues;
 use Smartling\Base\ExportedAPI;
-use Smartling\Bootstrap;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
-use Smartling\MonologWrapper\MonologWrapper;
-use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 /**
  * Filtering goes in 3 steps.
@@ -22,56 +18,20 @@ use Smartling\Vendor\Psr\Log\LoggerInterface;
  */
 class FieldsFilterHelper
 {
-    const ARRAY_DIVIDER = '/';
+    use LoggerSafeTrait;
 
-    const FILTER_STRATEGY_UPLOAD = 'upload';
+    public const ARRAY_DIVIDER = '/';
 
-    const FILTER_STRATEGY_DOWNLOAD = 'download';
+    private const FILTER_STRATEGY_UPLOAD = 'upload';
 
-    private $acfDynamicSupport;
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    private const FILTER_STRATEGY_DOWNLOAD = 'download';
 
-    /**
-     * @var SettingsManager
-     */
-    private $settingsManager;
-
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
-    {
-        return $this->logger;
-    }
-
-    /**
-     * @return SettingsManager
-     */
-    public function getSettingsManager()
-    {
-        return $this->settingsManager;
-    }
-
-    /**
-     * @param SettingsManager $settingsManager
-     */
-    public function setSettingsManager($settingsManager)
-    {
-        $this->settingsManager = $settingsManager;
-    }
-
-    /**
-     * @param SettingsManager $settingsManager
-     * @param AcfDynamicSupport $acfDynamicSupport
-     */
-    public function __construct(SettingsManager $settingsManager, AcfDynamicSupport $acfDynamicSupport)
-    {
-        $this->acfDynamicSupport = $acfDynamicSupport;
-        $this->logger = MonologWrapper::getLogger(get_called_class());
-        $this->setSettingsManager($settingsManager);
+    public function __construct(
+        private AcfDynamicSupport $acfDynamicSupport,
+        private ContentSerializationHelper $contentSerializationHelper,
+        private SettingsManager $settingsManager,
+        private WordpressFunctionProxyHelper $wordpressFunctionProxyHelper,
+    ) {
     }
 
     public function flattenArray(array $array, string $base = '', string $divider = self::ARRAY_DIVIDER): array
@@ -85,13 +45,7 @@ class FieldsFilterHelper
         return $output;
     }
 
-    /**
-     * @param array  $flatArray
-     * @param string $divider
-     *
-     * @return array
-     */
-    public function structurizeArray(array $flatArray, $divider = self::ARRAY_DIVIDER)
+    public function structurizeArray(array $flatArray, string $divider = self::ARRAY_DIVIDER): array
     {
         $output = [];
 
@@ -110,14 +64,7 @@ class FieldsFilterHelper
         return $output;
     }
 
-    /**
-     * @param string $currentPath
-     * @param mixed  $elementValue
-     * @param string $divider
-     *
-     * @return array
-     */
-    private function processArrayElement($currentPath, $elementValue, $divider)
+    private function processArrayElement(string $currentPath, mixed $elementValue, string $divider): array
     {
         $valueType = gettype($elementValue);
         $result = [];
@@ -146,12 +93,7 @@ class FieldsFilterHelper
         return $result;
     }
 
-    /**
-     * @param array $sourceArray
-     *
-     * @return array
-     */
-    public function prepareSourceData(array $sourceArray)
+    public function prepareSourceData(array $sourceArray): array
     {
         if (array_key_exists('meta', $sourceArray) && is_array($sourceArray['meta'])) {
             $metadata = &$sourceArray['meta'];
@@ -163,7 +105,7 @@ class FieldsFilterHelper
                     $value = $this->prepareSourceData($metadata[$key]);
                 }
 
-                $value = maybe_unserialize($value);
+                $value = $this->wordpressFunctionProxyHelper->maybe_unserialize($value);
             }
             unset ($value);
         }
@@ -171,25 +113,16 @@ class FieldsFilterHelper
         return $sourceArray;
     }
 
-    /**
-     * @param SubmissionEntity $submission
-     * @param array            $data
-     *
-     * @return array
-     */
-    public function removeIgnoringFields(SubmissionEntity $submission, array $data)
+    public function removeIgnoringFields(SubmissionEntity $submission, array $data): array
     {
-        $settingsManager = $this->getSettingsManager();
-        ContentSerializationHelper::prepareFieldProcessorValues($settingsManager, $submission);
-        $profile = $settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
-
-        $data = $this->prepareSourceData($data);
-        $data = $this->flattenArray($data);
-
-        $settings = self::getFieldProcessingParams();
-        $data = $this->removeFields($data, $settings['ignore'], $profile->getFilterFieldNameRegExp());
-        $data = $this->structurizeArray($data);
-        return $data;
+        return $this->structurizeArray(
+            $this->removeFields(
+                $this->flattenArray(
+                    $this->prepareSourceData($data)
+                ),
+                $this->contentSerializationHelper->prepareFieldProcessorValues($submission)['ignore'],
+                $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId())->getFilterFieldNameRegExp()),
+        );
     }
 
     public function processStringsBeforeEncoding(
@@ -199,68 +132,49 @@ class FieldsFilterHelper
         string $strategy = self::FILTER_STRATEGY_UPLOAD
     ): array
     {
-        $settingsManager = $this->getSettingsManager();
-        ContentSerializationHelper::prepareFieldProcessorValues($settingsManager, $submission);
-        $profile = $settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
         $data = $this->prepareSourceData($data);
         if ($strategy === self::FILTER_STRATEGY_UPLOAD) {
             $data = $this->acfDynamicSupport->removePreTranslationFields($data);
         }
-        $data = $this->flattenArray($data);
 
-        $settings = self::getFieldProcessingParams();
-        $removeAsRegExp = $profile->getFilterFieldNameRegExp();
-        $data = $this->removeFields($data, $settings['ignore'], $removeAsRegExp);
+        $settings = $this->contentSerializationHelper->prepareFieldProcessorValues($submission);
 
-        $data = $this->passFieldProcessorsBeforeSendFilters($submission, $data);
-        $data = $this->passConnectionProfileFilters($data, $strategy, $removeAsRegExp);
-
-        return $data;
+        return $this->passConnectionProfileFilters(
+            $this->passFieldProcessorsBeforeSendFilters(
+                $submission,
+                $this->removeFields(
+                    $this->flattenArray($data),
+                    $settings['ignore'],
+                    $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId())->getFilterFieldNameRegExp(),
+                )
+            ),
+            $strategy,
+            $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId())->getFilterFieldNameRegExp(),
+            $settings,
+        );
     }
 
-    /**
-     * @param array $data
-     *
-     * @return array
-     */
-    public function processStringsAfterDecoding(array $data)
+    public function processStringsAfterDecoding(array $data): array
     {
         return $this->structurizeArray($data);
     }
 
-    public function filterValues(SubmissionEntity $submission, array $data, $strategy = self::FILTER_STRATEGY_UPLOAD)
+    public function applyTranslatedValues(SubmissionEntity $submission, array $originalValues, array $translatedValues, bool $applyFilters = true): array
     {
-        return $this->processStringsAfterDecoding($this->processStringsBeforeEncoding($submission, $data, $strategy));
-    }
-
-
-    /**
-     * Is used while downloading
-     *
-     * @param SubmissionEntity $submission
-     * @param array            $originalValues
-     * @param array            $translatedValues
-     * @param bool             $applyFilters
-     *
-     * @return array
-     */
-    public function applyTranslatedValues(SubmissionEntity $submission, array $originalValues, array $translatedValues, $applyFilters = true)
-    {
-        $originalValues = $this->prepareSourceData($originalValues);
-        $originalValues = $this->flattenArray($originalValues);
-
-        $translatedValues = $this->prepareSourceData($translatedValues);
-        $translatedValues = $this->flattenArray($translatedValues);
-
-        $result = [];
+        $originalValues = $this->flattenArray($this->prepareSourceData($originalValues));
+        $translatedValues = $this->flattenArray($this->prepareSourceData($translatedValues));
+        $result = $originalValues;
 
         if (true === $applyFilters) {
-            ContentSerializationHelper::prepareFieldProcessorValues($this->getSettingsManager(), $submission);
-
-            $filteredOriginalValues = $this->filterArray($originalValues, $submission, self::FILTER_STRATEGY_DOWNLOAD);
-            $result = array_merge($result, $filteredOriginalValues);
-        } else {
-            $result = $originalValues;
+            $result = array_merge(
+                [],
+                $this->filterArray(
+                    $originalValues,
+                    $submission,
+                    self::FILTER_STRATEGY_DOWNLOAD,
+                    $this->contentSerializationHelper->prepareFieldProcessorValues($submission),
+                ),
+            );
         }
 
         $result = array_merge($result, $translatedValues);
@@ -268,23 +182,21 @@ class FieldsFilterHelper
         return $this->structurizeArray($result);
     }
 
-    /**
-     * @param array            $array
-     * @param SubmissionEntity $submission
-     * @param string           $strategy
-     *
-     * @return array
-     */
-    private function filterArray(array $array, SubmissionEntity $submission, $strategy)
+    private function filterArray(array $array, SubmissionEntity $submission, string $strategy, array $settings): array
     {
-        $settings = self::getFieldProcessingParams();
-        $removeAsRegex = $this->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId())
-            ->getFilterFieldNameRegExp();
-        $array = $this->removeFields($array, $settings['ignore'], $removeAsRegex);
-
-        $array = $this->passFieldProcessorsFilters($submission, $array);
-        $array = $this->passConnectionProfileFilters($array, $strategy, $removeAsRegex);
-        return $array;
+        return $this->passConnectionProfileFilters(
+            $this->passFieldProcessorsFilters(
+                $submission,
+                $this->removeFields(
+                    $array,
+                    $settings['ignore'],
+                    $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId())->getFilterFieldNameRegExp(),
+                ),
+            ),
+            $strategy,
+            $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId())->getFilterFieldNameRegExp(),
+            $this->contentSerializationHelper->prepareFieldProcessorValues($submission),
+        );
     }
 
     public function passFieldProcessorsBeforeSendFilters(SubmissionEntity $submission, array $data): array
@@ -331,40 +243,19 @@ class FieldsFilterHelper
         return $data;
     }
 
-    /**
-     * @param array $data
-     * @param string $strategy
-     * @param bool $removeAsRegExp
-     * @return array
-     */
-    public function passConnectionProfileFilters(array $data, $strategy, $removeAsRegExp)
+    public function passConnectionProfileFilters(array $data, string $strategy, bool $removeAsRegExp, array $settings): array
     {
-        $settings = self::getFieldProcessingParams();
-
         if (self::FILTER_STRATEGY_UPLOAD === $strategy) {
-            $data = $this->removeFields($data, $settings['copy']['name'], $removeAsRegExp);
-            $data = $this->removeValuesByRegExp($data, $settings['copy']['regexp']);
+            $data = $this->removeValuesByRegExp(
+                $this->removeFields($data, $settings['copy']['name'], $removeAsRegExp),
+                $settings['copy']['regexp'],
+            );
         }
-        $data = $this->removeEmptyFields($data);
 
-        return $data;
+        return $this->removeEmptyFields($data);
     }
 
-    /**
-     * @return mixed
-     */
-    private static function getFieldProcessingParams()
-    {
-        return Bootstrap::getContainer()->getParameter('field.processor');
-    }
-
-    /**
-     * @param string[] $fields
-     * @param string[] $remove
-     * @param bool $removeAsRegExp
-     * @return string[]
-     */
-    public function removeFields(array $fields, array $remove, $removeAsRegExp)
+    public function removeFields(array $fields, array $remove, bool $removeAsRegExp): array
     {
         $result = [];
         if ([] === $remove) {
@@ -375,12 +266,11 @@ class FieldsFilterHelper
             return $this->removeFieldsRegExp($fields, $remove);
         }
 
-        $pattern = '#\/(' . implode('|', $remove) . ')$#us';
+        $pattern = '#/(' . implode('|', $remove) . ')$#us';
 
         foreach ($fields as $key => $value) {
             if (1 === preg_match($pattern, $key)) {
-                $debugMessage = vsprintf('Removed field by name \'%s\' because of configuration.', [$key]);
-                $this->getLogger()->debug($debugMessage);
+                $this->getLogger()->debug(sprintf('Removed fieldName="%s" because of configuration', $key));
                 continue;
             }
 
@@ -390,7 +280,8 @@ class FieldsFilterHelper
         return $result;
     }
 
-    private function removeFieldsRegExp(array $fields, array $remove) {
+    private function removeFieldsRegExp(array $fields, array $remove): array
+    {
         $result = [];
 
         foreach ($fields as $key => $value) {
@@ -398,7 +289,7 @@ class FieldsFilterHelper
                 $parts = explode('/', $key);
                 $userPart = array_pop($parts);
                 if (0 !== preg_match("/$regex/", $userPart)) {
-                    $debugMessage = "Removed field by name '$key' because of configuration (matches regex '$regex').";
+                    $debugMessage = "Removed fieldName=\"$key\" because of configuration (matches regex=\"$regex\").";
                     $this->getLogger()->debug($debugMessage);
                     continue 2;
                 }
@@ -415,8 +306,7 @@ class FieldsFilterHelper
         $rebuild = [];
         foreach ($array as $key => $value) {
             if (StringHelper::isNullOrEmpty((string)$value)) {
-                $debugMessage = vsprintf('Removed empty field \'%s\'.', [$key]);
-                $this->getLogger()->debug($debugMessage);
+                $this->getLogger()->debug(sprintf('Removed empty fieldName="%s"', $key));
                 continue;
             }
             $rebuild[$key] = $value;
@@ -425,21 +315,13 @@ class FieldsFilterHelper
         return $rebuild;
     }
 
-    /**
-     * @param $array
-     * @param $list
-     *
-     * @return array
-     */
-    public function removeValuesByRegExp($array, $list)
+    public function removeValuesByRegExp(array $array, array $list): array
     {
         $rebuild = [];
         foreach ($array as $key => $value) {
             foreach ($list as $item) {
-                if (preg_match("/{$item}/us", $value)) {
-                    $debugMessage = vsprintf('Removed field by value: filedName:\'%s\' fieldValue:\'%s\' filter:\'%s\'.',
-                                             [$key, $value, $item]);
-                    $this->getLogger()->debug($debugMessage);
+                if (preg_match("/$item/us", $value)) {
+                    $this->getLogger()->debug(sprintf('Removed field by value: filedName="%s" fieldValue="%s" filter="%s"', $key, $value, $item));
                     continue 2;
                 }
             }

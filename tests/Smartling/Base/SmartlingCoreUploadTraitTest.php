@@ -9,6 +9,7 @@ use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ContentHelper;
+use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\DecodedXml;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
@@ -24,6 +25,7 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 use Smartling\Tuner\MediaAttachmentRulesManager;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 require __DIR__ . '/../../wordpressBlocks.php';
 
@@ -42,12 +44,10 @@ class SmartlingCoreUpload {
     public function __construct(ContentHelper $contentHelper, ExternalContentManager $externalContentManager, FieldsFilterHelper $fieldsFilterHelper, SettingsManager $settingsManager, SubmissionManager $submissionManager, TestRunHelper $testRunHelper, WordpressFunctionProxyHelper $wpProxy)
     {
         $this->contentHelper = $contentHelper;
-        /** @noinspection UnusedConstructorDependenciesInspection the way this test works, this is needed */
         $this->externalContentManager = $externalContentManager;
         $this->fieldsFilterHelper = $fieldsFilterHelper;
         $this->settingsManager = $settingsManager;
         $this->submissionManager = $submissionManager;
-        /** @noinspection UnusedConstructorDependenciesInspection the way this test works, this is needed */
         $this->testRunHelper = $testRunHelper;
         $this->wpProxy = $wpProxy;
     }
@@ -143,7 +143,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $fieldsFilterHelper = $this->createPartialMock(FieldsFilterHelper::class, ['applyTranslatedValues', 'getLogger', 'processStringsAfterDecoding']);
         $fieldsFilterHelper->method('processStringsAfterDecoding')->willReturnArgument(0);
         $fieldsFilterHelper->method('applyTranslatedValues')->willReturnArgument(2);
-        $fieldsFilterHelper->method('getLogger')->willReturn(new NullLogger());
+        $fieldsFilterHelper->method('getLogger')->willReturn($this->createMock(LoggerInterface::class));
 
         $profile = $this->getMockBuilder(ConfigurationProfileEntity::class)->disableOriginalConstructor()->getMock();
         $profile->method('getCleanMetadataOnDownload')->willReturn(1);
@@ -300,7 +300,7 @@ HTML;
         $fieldsFilterHelper = $this->createPartialMock(FieldsFilterHelper::class, ['applyTranslatedValues', 'getLogger', 'processStringsAfterDecoding']);
         $fieldsFilterHelper->method('processStringsAfterDecoding')->willReturnArgument(0);
         $fieldsFilterHelper->method('applyTranslatedValues')->willReturnArgument(2);
-        $fieldsFilterHelper->method('getLogger')->willReturn(new NullLogger());
+        $fieldsFilterHelper->method('getLogger')->willReturn($this->createMock(LoggerInterface::class));
 
         $profile = $this->getMockBuilder(ConfigurationProfileEntity::class)->disableOriginalConstructor()->getMock();
 
@@ -330,9 +330,11 @@ HTML;
     {
         $postContentHelper = new PostContentHelper(new GutenbergBlockHelper(
             $this->createMock(AcfDynamicSupport::class),
+            $this->createMock(ContentSerializationHelper::class),
             $this->createMock(MediaAttachmentRulesManager::class),
             $this->createMock(ReplacerFactory::class),
             new SerializerJsonWithFallback(),
+            $this->createMock(SettingsManager::class),
             $this->createMock(WordpressFunctionProxyHelper::class),
         ));
         $result = $smartlingCoreUpload->applyXML($submission, ' ', $xmlHelper, $postContentHelper);
