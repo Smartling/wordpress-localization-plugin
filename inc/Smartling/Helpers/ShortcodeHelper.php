@@ -6,16 +6,22 @@ use DOMElement;
 use DOMNode;
 use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
+use Smartling\Settings\SettingsManager;
 
-/**
- * Class ShortcodeHelper
- *
- * @package Smartling\Helpers
- */
 class ShortcodeHelper extends SubstringProcessorHelperAbstract
 {
     private const SMARTLING_SHORTCODE_MASK_OLD = '##';
     private const SHORTCODE_SUBSTRING_NODE_NAME = 'shortcodeattribute';
+
+    public function __construct(
+        ContentSerializationHelper $contentSerializationHelper,
+        FieldsFilterHelper $fieldsFilterHelper,
+        private PlaceholderHelper $placeholderHelper,
+        SettingsManager $settingsManager,
+    ) {
+        parent::__construct($contentSerializationHelper, $settingsManager);
+        $this->setFieldsFilter($fieldsFilterHelper);
+    }
 
     /**
      * Returns a regexp for masked shortcodes
@@ -83,6 +89,9 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
      */
     private function hasShortcodes($string)
     {
+        if ($this->placeholderHelper->hasPlaceholders($string)) {
+            return true;
+        }
         $possibleShortcodes = $this->getRegisteredShortcodes();
 
         global $shortcode_tags;
