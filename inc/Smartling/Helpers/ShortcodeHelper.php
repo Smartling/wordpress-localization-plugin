@@ -18,6 +18,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
         FieldsFilterHelper $fieldsFilterHelper,
         private PlaceholderHelper $placeholderHelper,
         SettingsManager $settingsManager,
+        private WordpressFunctionProxyHelper $wpProxy,
     ) {
         parent::__construct($contentSerializationHelper, $settingsManager);
         $this->setFieldsFilter($fieldsFilterHelper);
@@ -403,7 +404,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     {
         $shortcodes = array_keys($this->getShortcodeAssignments());
         try {
-            $injectedShortcodes = apply_filters(ExportedAPI::FILTER_SMARTLING_INJECT_SHORTCODE, []);
+            $injectedShortcodes = $this->wpProxy->apply_filters(ExportedAPI::FILTER_SMARTLING_INJECT_SHORTCODE, []);
             if (!is_array($injectedShortcodes)) {
                 $this->getLogger()->critical('Injected shortcodes not an array after filter ' . ExportedAPI::FILTER_SMARTLING_INJECT_SHORTCODE . '. This is most likely due to an error outside of the plugins code.');
             }
@@ -429,7 +430,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     {
         global $shortcode_tags;
 
-        return $shortcode_tags;
+        return $shortcode_tags ?? [];
     }
 
     /**

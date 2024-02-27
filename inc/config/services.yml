@@ -419,6 +419,7 @@ services:
       - "@fields-filter.helper"
       - "@helper.placeholders"
       - "@manager.settings"
+      - "@wp.proxy"
 
   default.meta-field-processor:
     class: Smartling\Helpers\MetaFieldProcessor\DefaultMetaFieldProcessor

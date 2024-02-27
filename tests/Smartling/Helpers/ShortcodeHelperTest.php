@@ -4,10 +4,13 @@ namespace Smartling\Tests\Smartling\Helpers;
 
 use DOMDocument;
 use PHPUnit\Framework\TestCase;
+use Smartling\DbAl\Migrations\Migration160125;
 use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
+use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\PlaceholderHelper;
 use Smartling\Helpers\ShortcodeHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Settings\SettingsManager;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 
@@ -78,10 +81,7 @@ class ShortcodeHelperTest extends TestCase
 
         $node = $nodelist->item(0);
 
-        $helper = new ShortcodeHelper(
-            $this->createMock(ContentSerializationHelper::class),
-            $this->createMock(SettingsManager::class),
-        );
+        $helper = $this->getShortcodeHelper();
 
         $this->invokeMethod($helper, 'extractTranslations', [$node]);
 
@@ -105,6 +105,24 @@ class ShortcodeHelperTest extends TestCase
         ];
 
         self::assertEquals($expectedTranslations, $this->getProperty($helper, 'blockAttributes'));
+    }
+
+    public function testProcessTranslation()
+    {
+        $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $wpProxy->method('apply_filters')->willReturnArgument(1);
+
+        $xml = new DOMDocument('1.0', 'UTF-8');
+        $xml->loadXML('<test><string name="entity/post_content"><shortcodeattribute shortcode="custom-shortcode" hash="d3f06f0519040b5d46e6160b1a1e4d71" name="name"><![CDATA[split-content-partner-logos]]></shortcodeattribute><![CDATA[<div>#sl-start#[custom-shortcode name="split-content-partner-logos"]#sl-end#</div>]]></string></test>');
+
+        $parameters = new TranslationStringFilterParameters();
+        $parameters->setDom($xml);
+        $parameters->setNode((new \DOMXPath($xml))->query('/test/string')->item(0));
+
+        $this->assertEquals(
+            '<div>[custom-shortcode name="split-content-partner-logos"]</div>',
+            $this->getShortcodeHelper($wpProxy)->processTranslation($parameters)->getNode()->nodeValue,
+        );
     }
 
     /**
@@ -367,11 +385,17 @@ class ShortcodeHelperTest extends TestCase
         return $data;
     }
 
-    private function getShortcodeHelper(): ShortcodeHelper
+    private function getShortcodeHelper(WordpressFunctionProxyHelper $wpProxy = null): ShortcodeHelper
     {
+        if ($wpProxy === null) {
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        }
         return new ShortcodeHelper(
             $this->createMock(ContentSerializationHelper::class),
+            $this->createMock(FieldsFilterHelper::class),
+            new PlaceholderHelper(),
             $this->createMock(SettingsManager::class),
+            $wpProxy,
         );
     }
 }
