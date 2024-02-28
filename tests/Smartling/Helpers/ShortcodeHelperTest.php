@@ -4,7 +4,6 @@ namespace Smartling\Tests\Smartling\Helpers;
 
 use DOMDocument;
 use PHPUnit\Framework\TestCase;
-use Smartling\DbAl\Migrations\Migration160125;
 use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\Helpers\FieldsFilterHelper;
