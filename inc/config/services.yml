@@ -204,6 +204,7 @@ services:
     class: Smartling\ContentTypes\ExternalContentManager
     arguments:
       - "@fields-filter.helper"
+      - "@site.helper"
     calls:
       - ["addHandler", ["@content.aioseo"]]
       - ["addHandler", ["@content.beaver.builder"]]
