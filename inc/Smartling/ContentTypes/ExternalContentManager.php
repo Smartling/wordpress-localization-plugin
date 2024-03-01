@@ -5,6 +5,7 @@ namespace Smartling\ContentTypes;
 use Smartling\Extensions\Pluggable;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 class ExternalContentManager
@@ -13,6 +14,7 @@ class ExternalContentManager
 
     public function __construct(
         private FieldsFilterHelper $fieldsFilterHelper,
+        private SiteHelper $siteHelper,
     ) {
     }
 
@@ -28,31 +30,33 @@ class ExternalContentManager
 
     public function getExternalContent(array $source, SubmissionEntity $submission, bool $raw): array
     {
-        foreach ($this->handlers as $handler) {
-            if ($handler->getSupportLevel($submission->getContentType(), $submission->getSourceId()) === Pluggable::SUPPORTED) {
-                $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get fields");
-                try {
-                    $submission->assertHasSource();
-                    $source[$handler->getPluginId()] = $handler->getContentFields($submission, $raw);
-                } catch (\Throwable $e) {
-                    $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to get external content: ' . $e->getMessage());
-                }
-            }
-            if ($handler instanceof ContentTypeModifyingInterface) {
-                try {
-                    $previousCount = count($this->fieldsFilterHelper->flattenArray($source));
-                    $source = $handler->removeUntranslatableFieldsForUpload($source, $submission);
-                    $count = count($this->fieldsFilterHelper->flattenArray($source));
-                    if ($previousCount !== $count) {
-                        $this->getLogger()->info('HandlerName="' . $handler->getPluginId() . '" altered content fields for upload, previousCount=' . $previousCount . ', count=' . $count);
+        return $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($raw, $source, $submission) {
+            foreach ($this->handlers as $handler) {
+                if ($handler->getSupportLevel($submission->getContentType(), $submission->getSourceId()) === Pluggable::SUPPORTED) {
+                    $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get fields");
+                    try {
+                        $submission->assertHasSource();
+                        $source[$handler->getPluginId()] = $handler->getContentFields($submission, $raw);
+                    } catch (\Throwable $e) {
+                        $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to get external content: ' . $e->getMessage());
                     }
-                } catch (\Throwable $e) {
-                    $this->getLogger()->warning('HandlerName="' . $handler->getPluginId() . '" got exception while trying to alter content fields: ' . $e->getMessage());
+                }
+                if ($handler instanceof ContentTypeModifyingInterface) {
+                    try {
+                        $previousCount = count($this->fieldsFilterHelper->flattenArray($source));
+                        $source = $handler->removeUntranslatableFieldsForUpload($source, $submission);
+                        $count = count($this->fieldsFilterHelper->flattenArray($source));
+                        if ($previousCount !== $count) {
+                            $this->getLogger()->info('HandlerName="' . $handler->getPluginId() . '" altered content fields for upload, previousCount=' . $previousCount . ', count=' . $count);
+                        }
+                    } catch (\Throwable $e) {
+                        $this->getLogger()->warning('HandlerName="' . $handler->getPluginId() . '" got exception while trying to alter content fields: ' . $e->getMessage());
+                    }
                 }
             }
-        }
 
-        return $source;
+            return $source;
+        });
     }
 
     public function getExternalContentTypes(): array
