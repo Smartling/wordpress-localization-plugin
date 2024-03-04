@@ -15,6 +15,7 @@ use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\XmlHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
@@ -59,13 +60,17 @@ class SmartlingCoreTest extends TestCase
             $this->createMock(SettingsManager::class),
             $wpProxy,
         );
+
+
         $this->core = new SmartlingCore(
             new ExternalContentManager(new FieldsFilterHelper(
                 $this->createMock(AcfDynamicSupport::class),
                 $this->createMock(ContentSerializationHelper::class),
                 $this->createMock(SettingsManager::class),
                 $wpProxy,
-            )),
+            ),
+                $this->createMock(SiteHelper::class),
+            ),
             $this->createMock(FileUriHelper::class),
             $gutenbergBlockHelper,
             new PostContentHelper($gutenbergBlockHelper),
