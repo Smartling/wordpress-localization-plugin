@@ -616,8 +616,8 @@ class ContentRelationsDiscoveryService
     {
         $submission->setBatchUid($jobInfo->getBatchUid());
         $submission->setJobInfo($jobInfo->getJobInformationEntity());
-        $this->submissionManager->storeEntity($submission);
-        $this->logSubmissionCreated($submission, $description);
+
+        $this->logSubmissionCreated($this->submissionManager->storeEntity($submission), $description);
     }
 
     public function getTitle(SubmissionEntity $submission): string

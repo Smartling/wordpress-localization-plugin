@@ -428,12 +428,22 @@ trait SmartlingCoreUploadTrait
                 SubmissionEntity::FIELD_FILE_URI        => $submission->getFileUri(),
                 SubmissionEntity::FIELD_IS_CLONED       => [0],
                 SubmissionEntity::FIELD_IS_LOCKED       => [0],
-                SubmissionEntity::FIELD_TARGET_BLOG_ID  => $this->getSettingsManager()
-                                                                ->getProfileTargetBlogIdsByMainBlogId($submission->getSourceBlogId()),
             ];
 
             if ($submissionHasBatchUid) {
                 $params[SubmissionEntity::FIELD_BATCH_UID] = [$submission->getBatchUid()];
+            } else {
+                $activeProfileCount = 0;
+                foreach ($this->getSettingsManager()->getActiveProfiles() as $activeProfile) {
+                    if ($activeProfile->getOriginalBlogId()->getBlogId() === $submission->getSourceBlogId()) {
+                        ++$activeProfileCount;
+                    }
+                }
+                if ($activeProfileCount !== 1) {
+                    $this->getLogger()->notice("Active profile count=$activeProfileCount while processing upload of submission");
+                }
+                $params[SubmissionEntity::FIELD_TARGET_BLOG_ID] = $this->getSettingsManager()
+                    ->getProfileTargetBlogIdsByMainBlogId($submission->getSourceBlogId());
             }
 
             if (TestRunHelper::isTestRunBlog($submission->getTargetBlogId())) {
@@ -451,12 +461,11 @@ trait SmartlingCoreUploadTrait
                 /**
                  * If submission still doesn't have file URL - create it
                  */
-                $submissionFields = $_submission->toArray(false);
-                if (StringHelper::isNullOrEmpty($submissionFields[SubmissionEntity::FIELD_FILE_URI])) {
+                if ($_submission->getFileUri() === '') {
+                    $this->getLogger()->debug('Creating file URL while processing upload for submission');
                     $_submission->setFileUri($this->fileUriHelper->generateFileUri($_submission));
                     $_submission = $this->getSubmissionManager()->storeEntity($_submission);
                 }
-                unset ($submissionFields);
                 // Passing filters
                 $xml = $this->getXMLFiltered($_submission);
                 // Processing attachments
@@ -679,8 +688,15 @@ trait SmartlingCoreUploadTrait
                 if (empty(trim($submission->getBatchUid()))) {
                     $submission = $this->fixSubmissionBatchUid($submission);
                 }
-
-                $this->bulkSubmit($submission);
+                $this->getLogger()->withStringContext([
+                    'sourceBlogId' => $submission->getSourceBlogId(),
+                    'sourceId' => $submission->getSourceId(),
+                    'submissionId' => $submission->getId(),
+                    'targetBlogId' => $submission->getTargetBlogId(),
+                    'targetId' => $submission->getTargetId(),
+                ], function () use ($submission) {
+                    $this->bulkSubmit($submission);
+                });
             }
         } catch (EntityNotFoundException $e) {
             $this->getLogger()->error($e->getMessage());
