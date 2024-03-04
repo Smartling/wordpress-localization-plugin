@@ -417,9 +417,10 @@ services:
     class: Smartling\Helpers\ShortcodeHelper
     arguments:
       - "@content-serialization.helper"
+      - "@fields-filter.helper"
+      - "@helper.placeholders"
       - "@manager.settings"
-    calls:
-      - [ "setFieldsFilter", [ "@fields-filter.helper" ]]
+      - "@wp.proxy"
 
   default.meta-field-processor:
     class: Smartling\Helpers\MetaFieldProcessor\DefaultMetaFieldProcessor
