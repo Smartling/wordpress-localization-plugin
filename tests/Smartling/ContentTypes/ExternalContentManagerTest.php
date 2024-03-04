@@ -208,6 +208,11 @@ class ExternalContentManagerTest extends TestCase {
 
     private function getExternalContentManager(): ExternalContentManager
     {
+        $siteHelper = $this->createMock(SiteHelper::class);
+        $siteHelper->method('withBlog')->willReturnCallback(function ($blogId, $callable) {
+            return $callable();
+        });
+
         return new ExternalContentManager(
             new FieldsFilterHelper(
                 $this->createMock(AcfDynamicSupport::class),
@@ -215,7 +220,7 @@ class ExternalContentManagerTest extends TestCase {
                 $this->createMock(SettingsManager::class),
                 $this->createMock(WordpressFunctionProxyHelper::class),
             ),
-            $this->createMock(SiteHelper::class),
+            $siteHelper,
         );
     }
 }
