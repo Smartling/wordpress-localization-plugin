@@ -10,6 +10,7 @@ use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Extensions\Pluggable;
 use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
@@ -213,7 +214,8 @@ class ExternalContentManagerTest extends TestCase {
                 $this->createMock(ContentSerializationHelper::class),
                 $this->createMock(SettingsManager::class),
                 $this->createMock(WordpressFunctionProxyHelper::class),
-            )
+            ),
+            $this->createMock(SiteHelper::class),
         );
     }
 }
