@@ -9,6 +9,7 @@ class PostContentHelper
 {
     use LoggerSafeTrait;
 
+    private const NESTED_ATTRIBUTE_SEPARATOR = '.';
     public const SMARTLING_LOCK_ID = 'smartlingLockId';
     public const SMARTLING_LOCKED = 'smartlingLocked';
     public const SMARTLING_LOCKED_ATTRIBUTES = 'smartlingLockedAttributes';
@@ -76,10 +77,10 @@ class PostContentHelper
         return $result;
     }
 
-    private function getNestedAttributeValue(array $array, array|string $parents, string $glue = '.'): mixed
+    private function getNestedAttributeValue(array $array, array|string $parents): mixed
     {
         if (!is_array($parents)) {
-            $parents = explode($glue, $parents);
+            $parents = explode(self::NESTED_ATTRIBUTE_SEPARATOR, $parents);
         }
 
         $pointer = &$array;
@@ -94,10 +95,10 @@ class PostContentHelper
         return $pointer;
     }
 
-    private function setNestedAttributeValue(array &$array, array|string $parents, mixed $value, string $glue = '.'): void
+    private function setNestedAttributeValue(array &$array, array|string $parents, mixed $value): void
     {
         if (!is_array($parents)) {
-            $parents = explode($glue, $parents);
+            $parents = explode(self::NESTED_ATTRIBUTE_SEPARATOR, $parents);
         }
 
         $pointer = &$array;
