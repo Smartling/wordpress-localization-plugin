@@ -83,16 +83,16 @@ class PostContentHelper
             $parents = explode(self::NESTED_ATTRIBUTE_SEPARATOR, $parents);
         }
 
-        $pointer = &$array;
+        $reference = &$array;
         foreach ($parents as $parent) {
-            if (is_array($pointer) && array_key_exists($parent, $pointer)) {
-                $pointer = &$pointer[$parent];
+            if (is_array($reference) && array_key_exists($parent, $reference)) {
+                $reference = &$reference[$parent];
             } else {
                 return null;
             }
         }
 
-        return $pointer;
+        return $reference;
     }
 
     private function setNestedAttributeValue(array &$array, array|string $parents, mixed $value): void
@@ -101,16 +101,16 @@ class PostContentHelper
             $parents = explode(self::NESTED_ATTRIBUTE_SEPARATOR, $parents);
         }
 
-        $pointer = &$array;
+        $reference = &$array;
         foreach ($parents as $parent) {
-            if (isset($pointer) && !is_array($pointer)) {
-                $pointer = [];
+            if (isset($reference) && !is_array($reference)) {
+                $reference = [];
             }
 
-            $pointer = &$pointer[$parent];
+            $reference = &$reference[$parent];
         }
 
-        $pointer = $value;
+        $reference = $value;
     }
 
     private function replaceInnerBlock(GutenbergBlock $parent, string $path, GutenbergBlock $replace): ?GutenbergBlock
