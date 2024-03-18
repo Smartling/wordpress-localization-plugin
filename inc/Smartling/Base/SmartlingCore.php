@@ -88,6 +88,7 @@ class SmartlingCore extends SmartlingCoreAbstract
                     $content[$key] = $this->gutenbergBlockHelper->replacePostTranslateBlockContent($value, $value, $submission);
                 }
             }
+            $content = apply_filters(ExportedAPI::FILTER_BEFORE_CLONE_CONTENT_WRITTEN, $content, $submission);
             $this->getContentHelper()->writeTargetContent($submission, $entity->fromArray($content));
 
             $metadata = [];

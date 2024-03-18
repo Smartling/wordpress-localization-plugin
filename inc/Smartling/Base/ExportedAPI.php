@@ -206,6 +206,12 @@ interface ExportedAPI
     public const ACTION_AFTER_TRANSLATION_APPLIED = 'smartling_action_after_translation_applied';
 
     /**
+     * @param array content
+     * @param SubmissionEntity
+     * @return array content
+     */
+    public const FILTER_BEFORE_CLONE_CONTENT_WRITTEN = 'smartling_filter_before_clone_content_written';
+    /**
      * @param array translation
      * @param array lockedData
      * @param SubmissionEntity

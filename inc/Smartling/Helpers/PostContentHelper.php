@@ -38,8 +38,9 @@ class PostContentHelper
                 $targetBlock = $this->getBlockByPath($targetBlocks, $path);
                 assert($targetBlock !== null);
                 $attributes = $resultBlock->getAttributes();
-                if (array_key_exists($attribute, $targetBlock->toArray()['attrs'])) {
-                    $attributes[$attribute] = $targetBlock->getAttributes()[$attribute];
+                $targetValue = $this->getNestedAttributeValue($targetBlock->getAttributes(), $attribute);
+                if (!empty($targetValue)) {
+                    $this->setNestedAttributeValue($attributes, $attribute, $targetValue);
                 }
                 $resultBlocks = $this->setBlockByPath($resultBlocks, $path, $resultBlock->withAttributes($attributes));
             }
@@ -73,6 +74,42 @@ class PostContentHelper
         }
 
         return $result;
+    }
+
+    private function getNestedAttributeValue(array $array, array|string $parents, string $glue = '.'): mixed
+    {
+        if (!is_array($parents)) {
+            $parents = explode($glue, $parents);
+        }
+
+        $pointer = &$array;
+        foreach ($parents as $parent) {
+            if (is_array($pointer) && array_key_exists($parent, $pointer)) {
+                $pointer = &$pointer[$parent];
+            } else {
+                return null;
+            }
+        }
+
+        return $pointer;
+    }
+
+    private function setNestedAttributeValue(array &$array, array|string $parents, mixed $value, string $glue = '.'): void
+    {
+        if (!is_array($parents)) {
+            $parents = explode($glue, $parents);
+        }
+
+        $pointer = &$array;
+        foreach ($parents as $parent) {
+            if (isset($pointer) && !is_array($pointer)) {
+                $pointer = [];
+            }
+
+            $pointer = &$pointer[$parent];
+        }
+
+        $pointer = $value;
     }
 
     private function replaceInnerBlock(GutenbergBlock $parent, string $path, GutenbergBlock $replace): ?GutenbergBlock

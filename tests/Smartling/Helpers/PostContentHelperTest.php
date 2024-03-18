@@ -35,6 +35,7 @@ class PostContentHelperTest extends TestCase {
         return [
             ['/Resources/WP733_target.html', '/Resources/WP733_translation.html', '/Resources/WP733_expected.html'],
             ['/Resources/WP-868_target.html', '/Resources/WP-868_translation.html', '/Resources/WP-868_expected.html'],
+            ['/Resources/WP-880_target.html', '/Resources/WP-880_translation.html', '/Resources/WP-880_expected.html'],
         ];
     }
 
