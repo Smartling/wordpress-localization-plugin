@@ -9,12 +9,11 @@ class PostContentHelper
 {
     use LoggerSafeTrait;
 
-    private const NESTED_ATTRIBUTE_SEPARATOR = '.';
     public const SMARTLING_LOCK_ID = 'smartlingLockId';
     public const SMARTLING_LOCKED = 'smartlingLocked';
     public const SMARTLING_LOCKED_ATTRIBUTES = 'smartlingLockedAttributes';
 
-    public function __construct(private GutenbergBlockHelper $blockHelper)
+    public function __construct(private ArrayHelper $arrayHelper, private GutenbergBlockHelper $blockHelper)
     {
     }
 
@@ -39,9 +38,9 @@ class PostContentHelper
                 $targetBlock = $this->getBlockByPath($targetBlocks, $path);
                 assert($targetBlock !== null);
                 $attributes = $resultBlock->getAttributes();
-                $targetValue = $this->getNestedAttributeValue($targetBlock->getAttributes(), $attribute);
-                if (!empty($targetValue)) {
-                    $this->setNestedAttributeValue($attributes, $attribute, $targetValue);
+                $targetValue = ArrayHelper::getValue($targetBlock->getAttributes(), $attribute);
+                if ($targetValue !== null) {
+                    $attributes = $this->arrayHelper->setValue($attributes, $attribute, $targetValue);
                 }
                 $resultBlocks = $this->setBlockByPath($resultBlocks, $path, $resultBlock->withAttributes($attributes));
             }
@@ -75,42 +74,6 @@ class PostContentHelper
         }
 
         return $result;
-    }
-
-    private function getNestedAttributeValue(array $array, array|string $parents): mixed
-    {
-        if (!is_array($parents)) {
-            $parents = explode(self::NESTED_ATTRIBUTE_SEPARATOR, $parents);
-        }
-
-        $reference = &$array;
-        foreach ($parents as $parent) {
-            if (is_array($reference) && array_key_exists($parent, $reference)) {
-                $reference = &$reference[$parent];
-            } else {
-                return null;
-            }
-        }
-
-        return $reference;
-    }
-
-    private function setNestedAttributeValue(array &$array, array|string $parents, mixed $value): void
-    {
-        if (!is_array($parents)) {
-            $parents = explode(self::NESTED_ATTRIBUTE_SEPARATOR, $parents);
-        }
-
-        $reference = &$array;
-        foreach ($parents as $parent) {
-            if (isset($reference) && !is_array($reference)) {
-                $reference = [];
-            }
-
-            $reference = &$reference[$parent];
-        }
-
-        $reference = $value;
     }
 
     private function replaceInnerBlock(GutenbergBlock $parent, string $path, GutenbergBlock $replace): ?GutenbergBlock
