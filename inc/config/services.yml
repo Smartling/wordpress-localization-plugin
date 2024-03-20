@@ -40,6 +40,9 @@ services:
         - "@wp.proxy"
         - "@wp.link.helper"
 
+  helper.array:
+    class: Smartling\Helpers\ArrayHelper
+
   helper.customMenu:
     class: Smartling\Helpers\CustomMenuContentTypeHelper
     arguments:
@@ -57,6 +60,7 @@ services:
   helper.post.content:
     class: Smartling\Helpers\PostContentHelper
     arguments:
+      - "@helper.array"
       - "@helper.gutenberg"
 
   helper.user:
