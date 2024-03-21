@@ -124,16 +124,6 @@ class SubmissionManagerTest extends TestCase
         $x->findSubmissionForCloning();
     }
 
-    public function testFindSubmissionsForUploadJob()
-    {
-        $db = $this->db;
-        $x = $this->subject;
-        $x->method('getDbal')->willReturn($db);
-        $x->expects($this->once())->method('fetchData')->with("SELECT `id`, `source_title`, `source_blog_id`, `source_content_hash`, `content_type`, `source_id`, `file_uri`, `target_locale`, `target_blog_id`, `target_id`, `submitter`, `submission_date`, `applied_date`, `approved_string_count`, `completed_string_count`, `excluded_string_count`, `total_string_count`, `word_count`, `status`, `is_locked`, `is_cloned`, `last_modified`, `outdated`, `last_error`, `batch_uid`, `locked_fields`, `created_at` FROM `wp_smartling_submissions` WHERE ( `status` = 'New' AND `is_locked` = '0' AND `batch_uid` <> '' ) LIMIT 0,1")->willReturn([]);
-
-        $this->assertNull($x->findSubmissionForUploadJob());
-    }
-
     public function testStoreEmptyEntity()
     {
         $x = $this->subject;

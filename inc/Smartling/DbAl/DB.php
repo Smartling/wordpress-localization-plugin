@@ -407,6 +407,26 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
         return $results;
     }
 
+    public function getResultsArray(string $query): ?array
+    {
+        $results = $this->getWpdb()->get_results($query, ARRAY_A);
+        if ($results === null) {
+            $this->logFailedQuery($query);
+        }
+
+        return $results;
+    }
+
+    public function getRowArray(string $query, int $index = 0): ?array
+    {
+        $result = $this->getWpdb()->get_row($query, ARRAY_A, $index);
+        if ($result === null) {
+            $this->logFailedQuery($query);
+        }
+
+        return $result;
+    }
+
     public function fetchPrepared(string $query, ...$args): array
     {
         $result = $this->fetch($this->prepare($query, ...$args), ARRAY_A);

@@ -5,6 +5,7 @@ namespace Smartling\Tests\Smartling\Base;
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapper;
 use Smartling\ContentTypes\ExternalContentManager;
+use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
@@ -19,7 +20,7 @@ use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\XmlHelper;
-use Smartling\Jobs\JobEntityWithBatchUid;
+use Smartling\Jobs\JobEntity;
 use Smartling\Replacers\ReplacerFactory;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
@@ -75,6 +76,7 @@ class SmartlingCoreTest extends TestCase
             $this->createMock(FileUriHelper::class),
             $gutenbergBlockHelper,
             new PostContentHelper(new ArrayHelper(), $gutenbergBlockHelper),
+            $this->createMock(UploadQueueManager::class),
             new XmlHelper($this->createMock(ContentSerializationHelper::class), new SerializerJsonWithFallback(), $this->createMock(SettingsManager::class)),
             $this->createMock(TestRunHelper::class),
             $wpProxy,
@@ -471,7 +473,7 @@ class SmartlingCoreTest extends TestCase
             ->expects(self::once())
             ->method('retrieveJobInfoForDailyBucketJob')
             ->with($profile, false)
-            ->willReturn(new JobEntityWithBatchUid($batchUid,'jobName', '', ''));
+            ->willReturn(new JobEntity('jobName', '', ''));
 
         $obj->setApiWrapper($apiWrapperMock);
 

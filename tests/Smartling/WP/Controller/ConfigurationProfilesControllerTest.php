@@ -31,7 +31,7 @@ class ConfigurationProfilesControllerTest extends TestCase {
 
     public function testPurgeUploadQueue(): void
     {
-        $_REQUEST = ['_c_action' => ConfigurationProfilesController::ACTION_QUEUE_PURGE, 'argument' => QueueInterface::VIRTUAL_UPLOAD_QUEUE];
+        $_REQUEST = ['_c_action' => ConfigurationProfilesController::ACTION_QUEUE_PURGE, 'argument' => QueueInterface::UPLOAD_QUEUE];
 
         $submission = $this->createMock(SubmissionEntity::class);
 
