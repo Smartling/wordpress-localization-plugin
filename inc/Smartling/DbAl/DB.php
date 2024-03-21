@@ -2,88 +2,74 @@
 
 namespace Smartling\DbAl;
 
-use Smartling\Bootstrap;
 use Smartling\DbAl\Migrations\DbMigrationManager;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\DiagnosticsHelper;
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\SimpleStorageHelper;
 use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\SubmissionJobEntity;
-use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Models\UploadQueueItem;
 use Smartling\Queue\Queue;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\WPInstallableInterface;
 
 class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableInterface
 {
-    private const SMARTLING_DB_SCHEMA_VERSION = 'smartling_db_ver';
+    use LoggerSafeTrait;
 
-    /**
-     * Plugin tables definition based on array
-     * @var array
-     */
-    private array $tables = [];
+    private const SMARTLING_DB_SCHEMA_VERSION = 'smartling_db_ver';
 
     /**
      * @var \wpdb
      */
     private $wpdb;
 
-    private LoggerInterface $logger;
-
-    public function __construct()
+    public function __construct(private DbMigrationManager $migrationManager, $db = null)
     {
-        $this->logger = MonologWrapper::getLogger(get_called_class());
-        $this->buildTableDefinitions();
-        global $wpdb;
-        $this->wpdb = $wpdb;
+        if ($db === null) {
+            global $wpdb;
+            $this->wpdb = $wpdb;
+        } else {
+            $this->wpdb = $db; 
+        }
     }
 
-    public function getMigrationManager(): DbMigrationManager
+    private function getTableDefinitions(): array
     {
-        return Bootstrap::getContainer()->get('manager.db.migrations');
-    }
-
-    /**
-     * @return \wpdb
-     */
-    public function getWpdb()
-    {
-        return $this->wpdb;
-    }
-
-    private function buildTableDefinitions(): void
-    {
-        $this->tables[] = [
-            'columns' => JobEntity::getFieldDefinitions(),
-            'indexes' => JobEntity::getIndexes(),
-            'name' => JobEntity::getTableName(),
-        ];
-        // Submissions
-        $this->tables[] = [
-            'name'    => SubmissionEntity::getTableName(),
-            'columns' => SubmissionEntity::getFieldDefinitions(),
-            'indexes' => SubmissionEntity::getIndexes(),
-        ];
-        $this->tables[] = [
-            'columns' => SubmissionJobEntity::getFieldDefinitions(),
-            'indexes' => SubmissionJobEntity::getIndexes(),
-            'name' => SubmissionJobEntity::getTableName(),
-        ];
-        // Configuration profiles
-        $this->tables[] = [
-            'name'    => ConfigurationProfileEntity::getTableName(),
-            'columns' => ConfigurationProfileEntity::getFieldDefinitions(),
-            'indexes' => ConfigurationProfileEntity::getIndexes(),
-        ];
-        // Queue
-        $this->tables[] = [
-            'name'    => Queue::getTableName(),
-            'columns' => Queue::getFieldDefinitions(),
-            'indexes' => Queue::getIndexes(),
+        return [
+            [
+                'columns' => JobEntity::getFieldDefinitions(),
+                'indexes' => JobEntity::getIndexes(),
+                'name' => JobEntity::getTableName(),
+            ],
+            [
+                'name' => SubmissionEntity::getTableName(),
+                'columns' => SubmissionEntity::getFieldDefinitions(),
+                'indexes' => SubmissionEntity::getIndexes(),
+            ],
+            [
+                'columns' => SubmissionJobEntity::getFieldDefinitions(),
+                'indexes' => SubmissionJobEntity::getIndexes(),
+                'name' => SubmissionJobEntity::getTableName(),
+            ],
+            [
+                'name' => ConfigurationProfileEntity::getTableName(),
+                'columns' => ConfigurationProfileEntity::getFieldDefinitions(),
+                'indexes' => ConfigurationProfileEntity::getIndexes(),
+            ],
+            [
+                'name' => Queue::getTableName(),
+                'columns' => Queue::getFieldDefinitions(),
+                'indexes' => Queue::getIndexes(),
+            ],
+            [
+                'columns' => UploadQueueItem::getFieldDefinitions(),
+                'indexes' => UploadQueueItem::getIndexes(),
+                'name' => UploadQueueItem::getTableName(),
+            ],
         ];
     }
 
@@ -97,9 +83,8 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
             $currentDbVersion = $this->installDb();
 
             // check if there was 1.0.12 version
-            $this->getWpdb()
-                ->query('SHOW TABLES LIKE \'%smartling%\'');
-            $res = $this->getWpdb()->num_rows;
+            $this->wpdb->query('SHOW TABLES LIKE \'%smartling%\'');
+            $res = $this->wpdb->num_rows;
 
             if (0 < $res) {
                 // 1.0.12 detected
@@ -112,21 +97,20 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
 
     private function installDb(): int
     {
-        foreach ($this->tables as $tableDefinition) {
+        foreach ($this->getTableDefinitions() as $tableDefinition) {
             $query = $this->prepareSql($tableDefinition);
             $this->logger->info(vsprintf('Installing table: %s', [$query]));
-            $result = $this->getWpdb()->query($query);
+            $result = $this->wpdb->query($query);
 
             if (false === $result) {
-                $message = vsprintf('Executing query |%s| has finished with error: %s', [$query,
-                                                                                         $this->getWpdb()->last_error]);
+                $message = sprintf('Executing query |%s| has finished with error: %s', $query, $this->wpdb->last_error);
                 $this->logger->critical($message);
                 throw new SmartlingDbException($message);
 
             }
         }
 
-        $currentDbVersion = $this->getMigrationManager()->getLastMigration();
+        $currentDbVersion = $this->migrationManager->getLastMigration();
         $this->setSchemaVersion($currentDbVersion);
 
         return $currentDbVersion;
@@ -134,15 +118,15 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
 
     public function schemaUpdate(int $fromVersion): void
     {
-        $prefix = $this->getWpdb()->base_prefix;
-        foreach ($this->getMigrationManager()->getMigrations($fromVersion) as $migration) {
+        $prefix = $this->wpdb->base_prefix;
+        foreach ($this->migrationManager->getMigrations($fromVersion) as $migration) {
             $this->logger->info('Starting applying migration ' . $migration->getVersion());
             $queries = $migration->getQueries($prefix);
             foreach ($queries as $query) {
                 $this->logger->debug('Executing query: ' . $query);
-                $result = $this->getWpdb()->query($query);
+                $result = $this->wpdb->query($query);
                 if (false === $result) {
-                    $this->logger->error('Error executing query: ' . $this->getWpdb()->last_error);
+                    $this->logger->error('Error executing query: ' . $this->wpdb->last_error);
                     $message = vsprintf(
                         'Error applying migration <strong>#%s</strong>. <br/>
 Got error: <strong>%s</strong>.<br/>
@@ -150,7 +134,7 @@ While executing query: <strong>%s</strong>. <br/>
 Please download the log file (click <strong><a href="' . get_site_url() . '/wp-admin/admin-post.php?action=smartling_download_log_file">here</a></strong>) and contact <a href="mailto:support@smartling.com?subject=%s">support@smartling.com</a>.',
                         [
                             $migration->getVersion(),
-                            $this->getWpdb()->last_error,
+                            $this->wpdb->last_error,
                             $query,
                             str_replace(' ', '%20', vsprintf('Wordpress Connector. Error applying migration %s', [$migration->getVersion()])),
                         ]
@@ -207,11 +191,11 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
             return;
         }
 
-        foreach ($this->tables as $tableDefinition) {
+        foreach ($this->getTableDefinitions() as $tableDefinition) {
             $table = $this->getTableName($tableDefinition);
 
             $this->logger->info('uninstalling tables', [$table]);
-            $this->getWpdb()->query('DROP TABLE IF EXISTS ' . $table);
+            $this->wpdb->query('DROP TABLE IF EXISTS ' . $table);
         }
         delete_site_option(self::SMARTLING_DB_SCHEMA_VERSION);
     }
@@ -235,7 +219,7 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
      */
     private function getTableName(array $tableDefinition): string
     {
-        return $this->getWpdb()->base_prefix . $tableDefinition['name'];
+        return $this->wpdb->base_prefix . $tableDefinition['name'];
     }
 
     /**
@@ -286,12 +270,12 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
 
     private function getCharset(): string
     {
-        return $this->getWpdb()->charset;
+        return $this->wpdb->charset;
     }
 
     private function getCollate(): string
     {
-        return $this->getWpdb()->collate;
+        return $this->wpdb->collate;
     }
 
     /**
@@ -359,17 +343,17 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
 
     public function escape(string $string): string
     {
-        return $this->getWpdb()->_escape($string);
+        return $this->wpdb->_escape($string);
     }
 
     public function completeTableName(string $tableName): string
     {
-        return $this->getWpdb()->base_prefix . $tableName;
+        return $this->wpdb->base_prefix . $tableName;
     }
 
     public function completeMultisiteTableName(string $tableName): string
     {
-        return $this->getWpdb()->prefix . $tableName;
+        return $this->wpdb->prefix . $tableName;
     }
 
     private function loggedQuery(string $query): int|bool
@@ -399,7 +383,7 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
 
     public function fetch(string $query, string $output = OBJECT): array|object|null
     {
-        $results = $this->getWpdb()->get_results($query, $output);
+        $results = $this->wpdb->get_results($query, $output);
         if ($results === null) {
             $this->logFailedQuery($query);
         }
@@ -409,7 +393,7 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
 
     public function getResultsArray(string $query): ?array
     {
-        $results = $this->getWpdb()->get_results($query, ARRAY_A);
+        $results = $this->wpdb->get_results($query, ARRAY_A);
         if ($results === null) {
             $this->logFailedQuery($query);
         }
@@ -419,7 +403,7 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
 
     public function getRowArray(string $query, int $index = 0): ?array
     {
-        $result = $this->getWpdb()->get_row($query, ARRAY_A, $index);
+        $result = $this->wpdb->get_row($query, ARRAY_A, $index);
         if ($result === null) {
             $this->logFailedQuery($query);
         }
@@ -444,7 +428,7 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
 
     public function getLastErrorMessage(): string
     {
-        return $this->getWpdb()->last_error;
+        return $this->wpdb->last_error;
     }
 
     private function prepare(string $query, ...$args): string

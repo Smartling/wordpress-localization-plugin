@@ -9,11 +9,10 @@ use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Models\UploadQueueItem;
 
 class UploadQueueManager {
-    public const TABLE_NAME = 'smartling_upload_queue';
     private string $tableName;
     public function __construct(private SmartlingToCMSDatabaseAccessWrapperInterface $db)
     {
-        $this->tableName = $db->completeTableName(self::TABLE_NAME);
+        $this->tableName = $db->completeTableName(UploadQueueItem::TABLE_NAME);
     }
 
     public function count(): int

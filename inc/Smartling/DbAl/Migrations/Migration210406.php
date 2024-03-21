@@ -8,6 +8,10 @@ use Smartling\Jobs\SubmissionJobEntity;
 
 class Migration210406 implements SmartlingDbMigrationInterface
 {
+    public function __construct(private DB $db)
+    {
+    }
+
     public function getVersion(): int
     {
         return 210406;
@@ -15,14 +19,13 @@ class Migration210406 implements SmartlingDbMigrationInterface
 
     public function getQueries($tablePrefix = 'wp_'): array
     {
-        $db = new DB();
         return [
-            $db->prepareSql([
+            $this->db->prepareSql([
                 'columns' => JobEntity::getFieldDefinitions(),
                 'indexes' => JobEntity::getIndexes(),
                 'name' => JobEntity::getTableName(),
             ]),
-            $db->prepareSql([
+            $this->db->prepareSql([
                 'columns' => SubmissionJobEntity::getFieldDefinitions(),
                 'indexes' => SubmissionJobEntity::getIndexes(),
                 'name' => SubmissionJobEntity::getTableName(),

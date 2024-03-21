@@ -14,7 +14,6 @@ namespace {
 
 namespace Smartling\Tests\Services {
 
-    use PHPUnit\Framework\Constraint\IsInstanceOf;
     use PHPUnit\Framework\MockObject\MockObject;
     use PHPUnit\Framework\TestCase;
     use Smartling\ApiWrapper;
@@ -105,6 +104,7 @@ namespace Smartling\Tests\Services {
             $submission = $this->createMock(SubmissionEntity::class);
             $submission->expects(self::once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
             $submission->expects(self::never())->method('setSourceTitle');
+            $submission->method('getId')->willReturn(17);
 
             $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
 
@@ -115,7 +115,7 @@ namespace Smartling\Tests\Services {
                 'source_id' => $sourceId,
             ])->willReturn([$submission]);
 
-            $submissionManager->expects(self::once())->method('storeEntity')->with($submission);
+            $submissionManager->expects(self::once())->method('storeEntity')->with($submission)->willReturnArgument(0);
 
             $apiWrapper->expects($this->once())->method('createAuditLogRecord')->willReturnCallback(function (ConfigurationProfileEntity $configurationProfile, string $actionType, string $description, array $clientData, JobEntity $job, ?bool $isAuthorize = null) use ($jobName, $jobUid, $profile, $sourceBlogId, $sourceId, $targetBlogId): void {
                 $this->assertEquals($profile, $configurationProfile);
@@ -595,6 +595,7 @@ namespace Smartling\Tests\Services {
             $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
 
             $submission = $this->createMock(SubmissionEntity::class);
+            $submission->method('getId')->willReturn(3);
 
             $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
             $submissionManager->expects(self::once())->method('find')->with([
@@ -605,11 +606,23 @@ namespace Smartling\Tests\Services {
             ])->willReturn([$submission]);
 
             // Expects the original submission and 2 related submissions are stored to DB
-            $submissionManager->expects(self::exactly(3))->method('storeEntity')
-                ->withConsecutive([$submission], [new IsInstanceOf(SubmissionEntity::class)], [new IsInstanceOf(SubmissionEntity::class)])
-                ->willReturnArgument(0);
+            $matcher = $this->exactly(3);
+            $submissionManager->expects($matcher)->method('storeEntity')
+                ->willReturnCallback(function (SubmissionEntity $argument) use ($matcher, $submission) {
+                    if ($matcher->getInvocationCount() === 1) {
+                        $this->assertEquals($submission, $argument);
+                    }
 
-            $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
+                    return $argument;
+                });
+
+            $factorySubmission = $this->createMock(SubmissionEntity::class);
+            $factorySubmission->method('getId')->willReturn(11);
+
+            $submissionFactory = $this->createMock(SubmissionFactory::class);
+            $submissionFactory->method('fromArray')->willReturn($factorySubmission);
+
+            $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager, submissionFactory: $submissionFactory);
 
             $x->createSubmissions(UserTranslationRequest::fromArray([
                 'job' => [
