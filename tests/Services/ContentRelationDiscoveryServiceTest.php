@@ -804,6 +804,7 @@ namespace Smartling\Tests\Services {
                 $fieldsFilterHelper,
                 $this->createMock(FileUriHelper::class),
                 $metaFieldProcessorManager,
+                $this->createMock(UploadQueueManager::class),
                 $this->createMock(LocalizationPluginProxyInterface::class),
                 $this->createMock(AbsoluteLinkedAttachmentCoreHelper::class),
                 $this->createMock(ShortcodeHelper::class),

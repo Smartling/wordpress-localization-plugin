@@ -8,7 +8,6 @@ use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
 use Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\Models\NotificationParameters;
-use Smartling\Models\UploadQueueItem;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 

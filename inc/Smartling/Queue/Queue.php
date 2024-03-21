@@ -186,7 +186,7 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
         ));
     }
 
-    public function dequeue(string $queue): ?array
+    public function dequeue(string $queue): mixed
     {
         $result = $this->get($queue);
 

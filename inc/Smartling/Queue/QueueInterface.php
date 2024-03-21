@@ -13,7 +13,7 @@ interface QueueInterface
 
     public function enqueue(array $value, string $queue): void;
 
-    public function dequeue(string $queue): ?array;
+    public function dequeue(string $queue): mixed;
 
     public function purge(?string $queue = null): void;
 

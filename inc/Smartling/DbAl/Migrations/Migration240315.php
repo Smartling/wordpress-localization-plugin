@@ -18,7 +18,7 @@ class Migration240315 implements SmartlingDbMigrationInterface
         return [<<<SQL
 CREATE TABLE IF NOT EXISTS $tableName
 (
-    submissionId BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+    submissionId BIGINT UNSIGNED NOT NULL,
     jobUid TINYTEXT NOT NULL,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
