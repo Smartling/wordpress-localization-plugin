@@ -174,6 +174,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
 
     protected function uploadDownload(SubmissionEntity $submission): ?SubmissionEntity
     {
+        $this->addToUploadQueue($submission->getId());
         $this->executeUpload();
         $this->forceSubmissionDownload($submission);
 
