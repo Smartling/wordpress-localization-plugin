@@ -7,9 +7,6 @@ use Smartling\Models\UploadQueueItem;
 
 class Migration240315 implements SmartlingDbMigrationInterface
 {
-    public function __construct(private DB $db)
-    {
-    }
 
     public function getVersion(): int
     {
@@ -19,7 +16,7 @@ class Migration240315 implements SmartlingDbMigrationInterface
     public function getQueries($tablePrefix = 'wp_'): array
     {
         return [
-            $this->db->prepareSql([
+            (new DB(new DbMigrationManager()))->prepareSql([
                 'columns' => UploadQueueItem::getFieldDefinitions(),
                 'indexes' => UploadQueueItem::getIndexes(),
                 'name' => UploadQueueItem::getTableName(),

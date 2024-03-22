@@ -63,18 +63,12 @@ services:
 
   migration.210825:
     class: Smartling\DbAl\Migrations\Migration210825
-    arguments:
-      - "@site.db"
 
   migration.220701:
     class: Smartling\DbAl\Migrations\Migration220701
-    arguments:
-      - "@site.db"
 
   migration.240315:
     class: Smartling\DbAl\Migrations\Migration240315
-    arguments:
-      - "@site.db"
 
   manager.db.migrations:
     class: Smartling\DbAl\Migrations\DbMigrationManager
