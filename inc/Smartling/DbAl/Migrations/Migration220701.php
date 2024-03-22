@@ -15,7 +15,7 @@ class Migration220701 implements SmartlingDbMigrationInterface
 
     public function getQueries($tablePrefix = 'wp_'): array
     {
-        $tableName = (new DB(new DbMigrationManager()))->completeTableName(SubmissionEntity::getTableName());
+        $tableName = (new DB())->completeTableName(SubmissionEntity::getTableName());
         $columnName = SubmissionEntity::FIELD_CREATED_AT;
         return [
             "ALTER TABLE $tableName ADD $columnName " . SmartlingEntityAbstract::DB_TYPE_DATETIME,

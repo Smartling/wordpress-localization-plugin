@@ -2,6 +2,7 @@
 
 namespace Smartling\DbAl;
 
+use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
@@ -23,19 +24,26 @@ class UploadQueueManager {
     public function enqueue(UploadQueueItem $item): void
     {
         $this->db->query(QueryBuilder::buildInsertQuery($this->tableName, [
-            'jobUid' => $item->getJobUid(),
-            'submissionId' => $item->getSubmissionId(),
+            UploadQueueItem::FIELD_CREATED => DateTimeHelper::nowAsString(),
+            UploadQueueItem::FIELD_JOB_UID => $item->getJobUid(),
+            UploadQueueItem::FIELD_SUBMISSION_ID => $item->getSubmissionId(),
         ], true));
     }
 
     public function dequeue(): ?UploadQueueItem
     {
-        $result = $this->db->getRowArray(QueryBuilder::buildSelectQuery($this->tableName, ['jobUid', 'submissionId']));
+        $result = $this->db->getRowArray(QueryBuilder::buildSelectQuery($this->tableName, [
+            UploadQueueItem::FIELD_JOB_UID,
+            UploadQueueItem::FIELD_SUBMISSION_ID,
+        ]));
         if ($result === null) {
             return null;
         }
 
-        $item = new UploadQueueItem($result['submissionId'], $result['jobUid']);
+        $item = new UploadQueueItem(
+            $result[UploadQueueItem::FIELD_SUBMISSION_ID],
+            $result[UploadQueueItem::FIELD_JOB_UID],
+        );
         $conditionBlock = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
         $conditionBlock->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, 'jobUid', $item->getJobUid()));
         $conditionBlock->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, 'submissionId', $item->getSubmissionId()));

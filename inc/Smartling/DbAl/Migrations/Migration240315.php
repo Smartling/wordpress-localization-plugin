@@ -16,7 +16,7 @@ class Migration240315 implements SmartlingDbMigrationInterface
     public function getQueries($tablePrefix = 'wp_'): array
     {
         return [
-            (new DB(new DbMigrationManager()))->prepareSql([
+            (new DB())->prepareSql([
                 'columns' => UploadQueueItem::getFieldDefinitions(),
                 'indexes' => UploadQueueItem::getIndexes(),
                 'name' => UploadQueueItem::getTableName(),

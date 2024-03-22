@@ -2,6 +2,7 @@
 
 namespace Smartling\DbAl;
 
+use Smartling\Bootstrap;
 use Smartling\DbAl\Migrations\DbMigrationManager;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\DiagnosticsHelper;
@@ -27,14 +28,21 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
      */
     private $wpdb;
 
-    public function __construct(private DbMigrationManager $migrationManager, $db = null)
+    public function __construct($db = null)
     {
         if ($db === null) {
             global $wpdb;
             $this->wpdb = $wpdb;
-        } else {
-            $this->wpdb = $db; 
+        } else { // For testing purposes
+            $this->wpdb = $db;
         }
+    }
+
+    public function getMigrationManager(): DbMigrationManager // Bad design (circular dependency), needs refactoring
+    {
+        $manager = Bootstrap::getContainer()->get('manager.db.migrations');
+        assert($manager instanceof DbMigrationManager);
+        return $manager;
     }
 
     private function getTableDefinitions(): array
@@ -99,18 +107,17 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
     {
         foreach ($this->getTableDefinitions() as $tableDefinition) {
             $query = $this->prepareSql($tableDefinition);
-            $this->logger->info(vsprintf('Installing table: %s', [$query]));
+            $this->getLogger()->info("Installing table: $query");
             $result = $this->wpdb->query($query);
 
             if (false === $result) {
                 $message = sprintf('Executing query |%s| has finished with error: %s', $query, $this->wpdb->last_error);
-                $this->logger->critical($message);
+                $this->getLogger()->critical($message);
                 throw new SmartlingDbException($message);
-
             }
         }
 
-        $currentDbVersion = $this->migrationManager->getLastMigration();
+        $currentDbVersion = $this->getMigrationManager()->getLastMigration();
         $this->setSchemaVersion($currentDbVersion);
 
         return $currentDbVersion;
@@ -119,25 +126,24 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
     public function schemaUpdate(int $fromVersion): void
     {
         $prefix = $this->wpdb->base_prefix;
-        foreach ($this->migrationManager->getMigrations($fromVersion) as $migration) {
-            $this->logger->info('Starting applying migration ' . $migration->getVersion());
+        foreach ($this->getMigrationManager()->getMigrations($fromVersion) as $migration) {
+            $this->getLogger()->info("Starting applying migration {$migration->getVersion()}");
             $queries = $migration->getQueries($prefix);
             foreach ($queries as $query) {
-                $this->logger->debug('Executing query: ' . $query);
+                $this->getLogger()->debug(message: "Executing query: {$query}");
                 $result = $this->wpdb->query($query);
                 if (false === $result) {
-                    $this->logger->error('Error executing query: ' . $this->wpdb->last_error);
-                    $message = vsprintf(
+                    $this->getLogger()->error("Error executing query: {$this->wpdb->last_error}");
+                    $message = sprintf(
                         'Error applying migration <strong>#%s</strong>. <br/>
 Got error: <strong>%s</strong>.<br/>
 While executing query: <strong>%s</strong>. <br/>
-Please download the log file (click <strong><a href="' . get_site_url() . '/wp-admin/admin-post.php?action=smartling_download_log_file">here</a></strong>) and contact <a href="mailto:support@smartling.com?subject=%s">support@smartling.com</a>.',
-                        [
-                            $migration->getVersion(),
-                            $this->wpdb->last_error,
-                            $query,
-                            str_replace(' ', '%20', vsprintf('Wordpress Connector. Error applying migration %s', [$migration->getVersion()])),
-                        ]
+Please download the log file (click <strong><a href="%s">here</a></strong>) and contact <a href="mailto:support@smartling.com?subject=%s">support@smartling.com</a>.',
+                        $migration->getVersion(),
+                        $this->wpdb->last_error,
+                        $query,
+                        get_admin_url(path: 'admin-post.php?action=smartling_download_log_file'),
+                        str_replace(' ', '%20', "Wordpress Connector. Error applying migration {$migration->getVersion()}"),
                     );
 
                     DiagnosticsHelper::addDiagnosticsMessage($message, true);
@@ -146,7 +152,7 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
                 }
             }
 
-            $this->logger->info('Finished applying migration ' . $migration->getVersion());
+            $this->getLogger()->info('Finished applying migration ' . $migration->getVersion());
             $this->setSchemaVersion($migration->getVersion());
         }
     }
@@ -166,18 +172,12 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
         $message = 'Smartling db schema update ';
 
         if (true === $result) {
-            $message .= vsprintf('successfully completed from version %d to version %d.', [
-                $currentVersion,
-                $version,
-            ]);
+            $message .= "successfully completed from version $currentVersion to version $version.";
 
         } else {
-            $message .= vsprintf('failed from version %d to version %d.', [
-                $currentVersion,
-                $version,
-            ]);
+            $message .= "failed from version $currentVersion to version $version.";
         }
-        $this->logger->info($message);
+        $this->getLogger()->info($message);
 
         return $result;
     }
@@ -194,7 +194,7 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
         foreach ($this->getTableDefinitions() as $tableDefinition) {
             $table = $this->getTableName($tableDefinition);
 
-            $this->logger->info('uninstalling tables', [$table]);
+            $this->getLogger()->info('uninstalling tables', [$table]);
             $this->wpdb->query('DROP TABLE IF EXISTS ' . $table);
         }
         delete_site_option(self::SMARTLING_DB_SCHEMA_VERSION);
@@ -368,7 +368,7 @@ Please download the log file (click <strong><a href="' . get_site_url() . '/wp-a
 
     private function logFailedQuery(string $query): void
     {
-        $this->logger->notice("Query failed: $query, last error: {$this->getLastErrorMessage()}");
+        $this->getLogger()->notice("Query failed: $query, last error: {$this->getLastErrorMessage()}");
     }
 
     public function query(string $query): int|bool

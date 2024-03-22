@@ -267,8 +267,6 @@ services:
 
   site.db:
     class: Smartling\DbAl\DB
-    arguments:
-      - "@manager.db.migrations"
 
   site.cache:
     class: Smartling\Helpers\WpObjectCache
