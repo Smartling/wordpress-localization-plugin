@@ -45,8 +45,8 @@ class UploadQueueManager {
             $result[UploadQueueItem::FIELD_JOB_UID],
         );
         $conditionBlock = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
-        $conditionBlock->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, 'jobUid', $item->getJobUid()));
-        $conditionBlock->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, 'submissionId', $item->getSubmissionId()));
+        $conditionBlock->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, UploadQueueItem::FIELD_JOB_UID, $item->getJobUid()));
+        $conditionBlock->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, UploadQueueItem::FIELD_SUBMISSION_ID, $item->getSubmissionId()));
         $this->db->query(QueryBuilder::buildDeleteQuery($this->tableName, $conditionBlock));
 
         return $item;
