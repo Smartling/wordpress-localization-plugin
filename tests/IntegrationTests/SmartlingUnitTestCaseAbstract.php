@@ -6,6 +6,7 @@ use Psr\Log\LoggerInterface;
 use Smartling\Bootstrap;
 use Smartling\ContentTypes\CustomPostType;
 use Smartling\ContentTypes\CustomTaxonomyType;
+use Smartling\DbAl\UploadQueueManager;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
@@ -15,6 +16,7 @@ use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\SubmissionJobEntity;
 use Smartling\Jobs\UploadJob;
+use Smartling\Models\UploadQueueItem;
 use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Queue\Queue;
 use Smartling\Services\ContentRelationsDiscoveryService;
@@ -234,6 +236,11 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         return $this->get('helper.gutenberg');
     }
 
+    public function getUploadQueueManager(): UploadQueueManager
+    {
+        return $this->get('manager.upload.queue');
+    }
+
     /**
      * @return mixed
      * @noinspection PhpReturnDocTypeMismatchInspection
@@ -330,6 +337,11 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
     private function runCronTask(string $task): void
     {
         self::wpCliExec('cron', 'event', vsprintf('run %s', [$task]));
+    }
+
+    public function addToUploadQueue(int $submissionId, string $jobUid = ''): void
+    {
+        $this->getUploadQueueManager()->enqueue(new UploadQueueItem($submissionId, $jobUid));
     }
 
     protected function executeUpload(): void

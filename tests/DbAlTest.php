@@ -21,7 +21,7 @@ class DbAlTest extends TestCase
             }
         };
 
-        $result = (new DB($this->createMock(DbMigrationManager::class), $wpdb))->prepareSql([
+        $result = (new DB($wpdb))->prepareSql([
             'columns' => [],
             'indexes' => [],
             'name' => '',
