@@ -2,6 +2,7 @@
 
 namespace Smartling\DbAl;
 
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
@@ -19,15 +20,6 @@ class UploadQueueManager {
     public function count(): int
     {
         return (int)$this->db->getRowArray("SELECT COUNT(*) cnt from $this->tableName")['cnt'];
-    }
-
-    public function enqueue(UploadQueueItem $item): void
-    {
-        $this->db->query(QueryBuilder::buildInsertQuery($this->tableName, [
-            UploadQueueItem::FIELD_CREATED => DateTimeHelper::nowAsString(),
-            UploadQueueItem::FIELD_JOB_UID => $item->getJobUid(),
-            UploadQueueItem::FIELD_SUBMISSION_ID => $item->getSubmissionId(),
-        ], true));
     }
 
     public function dequeue(): ?UploadQueueItem
@@ -50,6 +42,25 @@ class UploadQueueManager {
         $this->db->query(QueryBuilder::buildDeleteQuery($this->tableName, $conditionBlock));
 
         return $item;
+    }
+
+    public function enqueue(UploadQueueItem $item): void
+    {
+        $this->db->query(QueryBuilder::buildInsertQuery($this->tableName, [
+            UploadQueueItem::FIELD_CREATED => DateTimeHelper::nowAsString(),
+            UploadQueueItem::FIELD_JOB_UID => $item->getJobUid(),
+            UploadQueueItem::FIELD_SUBMISSION_ID => $item->getSubmissionId(),
+        ], true));
+    }
+
+    public function filterSubmissionIdsInJob(array $submissionIds, string $jobUid): array
+    {
+        $conditionBlock = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
+        $conditionBlock->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, UploadQueueItem::FIELD_JOB_UID, $jobUid));
+
+        return array_intersect(ArrayHelper::toArrayOfIntegers($this->db->getColumnArray(
+            QueryBuilder::buildSelectQuery($this->tableName, [UploadQueueItem::FIELD_SUBMISSION_ID], $conditionBlock))
+        ), $submissionIds);
     }
 
     public function purge(): void

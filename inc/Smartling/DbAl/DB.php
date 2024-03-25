@@ -391,6 +391,11 @@ Please download the log file (click <strong><a href="%s">here</a></strong>) and 
         return $results;
     }
 
+    public function getColumnArray(string $query, int $index = 0): array
+    {
+        return $this->wpdb->get_col($query, $index);
+    }
+
     public function getResultsArray(string $query): ?array
     {
         $results = $this->wpdb->get_results($query, ARRAY_A);

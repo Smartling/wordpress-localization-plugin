@@ -445,14 +445,7 @@ trait SmartlingCoreUploadTrait
             if (TestRunHelper::isTestRunBlog($submission->getTargetBlogId())) {
                 $params[SubmissionEntity::FIELD_TARGET_BLOG_ID][] = $submission->getTargetBlogId();
             }
-
-            /**
-             * Looking for other locales to pass filters and create placeholders.
-             */
-            $submissions = $this->getSubmissionManager()->find($params);
-            if (count($submissions) > 0) {
-                $this->getLogger()->info("Found submissionCount=" . count($submissions) . " with same source");
-            }
+            $submissions = $this->findSubmissionsInJob($params, $jobUid);
 
             $locales = [$this->getSettingsManager()->getSmartlingLocaleBySubmission($submission)];
 
@@ -820,5 +813,34 @@ trait SmartlingCoreUploadTrait
         }
 
         return $this->xmlHelper->xmlEncode($filteredValues, $submission, $params->getPreparedFields());
+    }
+
+    public function findSubmissionsInJob(array $params, string $jobUid): array
+    {
+        $submissions = $this->getSubmissionManager()->find($params);
+        $initialCount = count($submissions);
+        if ($initialCount > 0) {
+            $this->getLogger()->info("Found submissionCount=$initialCount with same source");
+            $submissionIdsInJob = $this->uploadQueueManager->filterSubmissionIdsInJob(
+                array_reduce($submissions, static function (array $carry, SubmissionEntity $item) {
+                    $carry[] = $item->getId();
+
+                    return $carry;
+                }, []), $jobUid);
+            $result = [];
+            foreach ($submissions as $submission) {
+                if (in_array($submission->getId(), $submissionIdsInJob, true)) {
+                    $result[] = $submission;
+                }
+            }
+            $submissions = $result;
+
+            $finalCount = count($submissions);
+            if ($finalCount !== $initialCount) {
+                $this->getLogger()->info("Discarded submissions not from jobUid=$jobUid, submissionCount=$finalCount");
+            }
+        }
+
+        return $submissions;
     }
 }

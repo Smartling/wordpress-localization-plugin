@@ -23,6 +23,8 @@ interface SmartlingToCMSDatabaseAccessWrapperInterface
      */
     public function fetch(string $query, string $output = OBJECT);
 
+    public function getColumnArray(string $query, int $index = 0): array;
+
     public function getResultsArray(string $query): ?array;
 
     public function getRowArray(string $query, int $index = 0): ?array;
