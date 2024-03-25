@@ -4,7 +4,6 @@ namespace Smartling\Base;
 
 use Exception;
 use JetBrains\PhpStorm\ArrayShape;
-use Smartling\ApiWrapperInterface;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\DbAl\WordpressContentEntities\Entity;
 use Smartling\DbAl\WordpressContentEntities\EntityWithPostStatus;
@@ -25,7 +24,8 @@ use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\XmlHelper;
-use Smartling\Jobs\JobEntityWithBatchUid;
+use Smartling\Jobs\JobEntity;
+use Smartling\Models\UploadQueueItem;
 use Smartling\Replacers\ContentIdReplacer;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
@@ -143,7 +143,6 @@ trait SmartlingCoreUploadTrait
                     ]
                 );
                 $this->getLogger()->warning($message);
-                $submission->setBatchUid('');
                 $submission = $this->getSubmissionManager()
                     ->setErrorMessage($submission, 'There is no original content for translation.');
 
@@ -413,57 +412,47 @@ trait SmartlingCoreUploadTrait
         return $messages;
     }
 
-    public function bulkSubmit(SubmissionEntity $submission): void
+    public function bulkSubmit(SubmissionEntity $submission, string $jobUid): void
     {
-        $submissionHasBatchUid = !StringHelper::isNullOrEmpty($submission->getBatchUid());
         $profile = $this->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
         try {
-            $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
+            $fileUri = $this->fileUriHelper->generateFileUri($submission);
+            $submission->setFileUri($fileUri);
             $submission = $this->getSubmissionManager()->storeEntity($submission);
             $xml = $this->getXMLFiltered($submission);
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
             $submission = $this->getSubmissionManager()->storeEntity($submission);
             $params = [
-                SubmissionEntity::FIELD_STATUS          => [SubmissionEntity::SUBMISSION_STATUS_NEW],
-                SubmissionEntity::FIELD_FILE_URI        => $submission->getFileUri(),
-                SubmissionEntity::FIELD_IS_CLONED       => [0],
-                SubmissionEntity::FIELD_IS_LOCKED       => [0],
+                SubmissionEntity::FIELD_STATUS => [SubmissionEntity::SUBMISSION_STATUS_NEW],
+                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
+                SubmissionEntity::FIELD_SOURCE_ID => $submission->getSourceId(),
+                SubmissionEntity::FIELD_IS_CLONED => [0],
+                SubmissionEntity::FIELD_IS_LOCKED => [0],
             ];
 
-            if ($submissionHasBatchUid) {
-                $params[SubmissionEntity::FIELD_BATCH_UID] = [$submission->getBatchUid()];
-            } else {
-                $activeProfileCount = 0;
-                foreach ($this->getSettingsManager()->getActiveProfiles() as $activeProfile) {
-                    if ($activeProfile->getOriginalBlogId()->getBlogId() === $submission->getSourceBlogId()) {
-                        ++$activeProfileCount;
-                    }
+            $activeProfileCount = 0;
+            foreach ($this->getSettingsManager()->getActiveProfiles() as $activeProfile) {
+                if ($activeProfile->getOriginalBlogId()->getBlogId() === $submission->getSourceBlogId()) {
+                    ++$activeProfileCount;
                 }
-                if ($activeProfileCount !== 1) {
-                    $this->getLogger()->notice("Active profile count=$activeProfileCount while processing upload of submission");
-                }
-                $params[SubmissionEntity::FIELD_TARGET_BLOG_ID] = $this->getSettingsManager()
-                    ->getProfileTargetBlogIdsByMainBlogId($submission->getSourceBlogId());
             }
+            if ($activeProfileCount !== 1) {
+                $this->getLogger()->notice("Active profile count=$activeProfileCount while processing upload of submission");
+            }
+            $params[SubmissionEntity::FIELD_TARGET_BLOG_ID] = $this->getSettingsManager()
+                ->getProfileTargetBlogIdsByMainBlogId($submission->getSourceBlogId());
 
             if (TestRunHelper::isTestRunBlog($submission->getTargetBlogId())) {
                 $params[SubmissionEntity::FIELD_TARGET_BLOG_ID][] = $submission->getTargetBlogId();
             }
-
-            /**
-             * Looking for other locales to pass filters and create placeholders.
-             */
-            $submissions = $this->getSubmissionManager()->find($params);
+            $submissions = $this->findSubmissionsInJob($params, $jobUid);
 
             $locales = [$this->getSettingsManager()->getSmartlingLocaleBySubmission($submission)];
 
             foreach ($submissions as $_submission) {
-                /**
-                 * If submission still doesn't have file URL - create it
-                 */
-                if ($_submission->getFileUri() === '') {
-                    $this->getLogger()->debug('Creating file URL while processing upload for submission');
-                    $_submission->setFileUri($this->fileUriHelper->generateFileUri($_submission));
+                if ($_submission->getFileUri() !== $fileUri) {
+                    $this->getLogger()->info("Changing same batch submissionId={$_submission->getId()} fileUri={$_submission->getFileUri()} ");
+                    $_submission->setFileUri($fileUri);
                     $_submission = $this->getSubmissionManager()->storeEntity($_submission);
                 }
                 // Passing filters
@@ -484,7 +473,7 @@ trait SmartlingCoreUploadTrait
                         implode(',', array_values($locales)),
                     ])
                 );
-                if ($this->sendFile($submission, $xml, $locales)) {
+                if ($this->sendFile($profile, $submission, $jobUid, $xml, $locales)) {
                     LiveNotificationController::pushNotification(
                         $profile->getProjectId(),
                         LiveNotificationController::getContentId($submission),
@@ -495,7 +484,6 @@ trait SmartlingCoreUploadTrait
                         ])
                     );
                     foreach ($submissions as $_submission) {
-                        $_submission->setBatchUid('');
                         $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                         $_submission->setSubmissionDate(DateTimeHelper::nowAsString());
                     }
@@ -510,7 +498,6 @@ trait SmartlingCoreUploadTrait
                         ])
                     );
                     foreach ($submissions as $_submission) {
-                        $_submission->setBatchUid('');
                         $_submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
                         $this->getLogger()->debug("Failing submission {$_submission->getId()}: failed to send file. Additional information should be in prior logs");
                     }
@@ -518,18 +505,12 @@ trait SmartlingCoreUploadTrait
                 $this->getSubmissionManager()->storeSubmissions($submissions);
             }
 
-            $this->executeBatchIfNoSubmissionsPending($submission->getBatchUid(), $profile);
-            $submission->setBatchUid('');
             $this->getSubmissionManager()->storeSubmissions([$submission]);
         } catch (\Exception $e) {
             $caught = $e;
             do {
                 if (401 === $e->getCode()) {
                     $this->getLogger()->error('Invalid credentials. Check profile settings.');
-                    break;
-                }
-                if ($submissionHasBatchUid && str_contains($e->getMessage(), "batch.not.suitable")) {
-                    $this->handleBatchNotSuitable($profile, $submission);
                     break;
                 }
                 $e = $e->getPrevious();
@@ -550,68 +531,7 @@ trait SmartlingCoreUploadTrait
         }
     }
 
-    private function executeBatchIfNoSubmissionsPending(string $batchUid, ConfigurationProfileEntity $profile): void
-    {
-        $msg = vsprintf('Preparing to start batch "%s" execution...', [$batchUid]);
-        $this->getLogger()->debug($msg);
-        try {
-            $submissions = $this->getSubmissionManager()->searchByBatchUid($batchUid);
-
-            if (0 === count($submissions)) {
-                $this->getApiWrapper()->executeBatch($profile, $batchUid);
-
-                $msg = vsprintf('Batch "%s" executed', [$batchUid]);
-                $this->getLogger()->debug($msg);
-            }
-        } catch (Exception $e) {
-            $msg = vsprintf('Error executing batch "%s". Message: "%s"', [$batchUid, $e->getMessage()]);
-            $this->getLogger()->error($msg);
-        }
-    }
-
-    private function fixSubmissionBatchUid(SubmissionEntity $submission): SubmissionEntity
-    {
-        $submissionDump = base64_encode(serialize($submission->toArray(false)));
-
-        $this
-            ->getLogger()
-            ->info(
-                vsprintf(
-                    'Got submission \'%s\' without batchUid. Trying to get batchUid. Original trace:\n%s ',
-                    [
-                        $submissionDump,
-                        (new \Exception())->getTraceAsString()
-                    ]
-                )
-            );
-
-        try {
-            $profile = $this
-                ->getSettingsManager()
-                ->getSingleSettingsProfile($submission->getSourceBlogId());
-
-            $apiWrapper = $this->getApiWrapper();
-            $jobInfo = $apiWrapper->retrieveJobInfoForDailyBucketJob($profile, $profile->getAutoAuthorize());
-
-            $submission->setBatchUid($jobInfo->getBatchUid());
-            $submission->setJobInfo($jobInfo->getJobInformationEntity());
-            $submission = $this->getSubmissionManager()->storeEntity($submission);
-        } catch (\Exception $e) {
-            $msg = vsprintf(
-                'Failed getting batchUid for submission \'%s\'. Message: %s',
-                [$submissionDump, $e->getMessage(),]
-            );
-            $submission->setLastError('Cannot upload without BatchUid. Manual reupload needed.');
-            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
-            $this->getLogger()->warning($msg);
-            $this->getSubmissionManager()->storeEntity($submission);
-            throw $e;
-        }
-
-        return $submission;
-    }
-
-    public function sendForTranslationBySubmission(SubmissionEntity $submission): void
+    public function sendForTranslationBySubmission(SubmissionEntity $submission, string $jobUid = ''): void
     {
         if (1 === $submission->getIsLocked()) {
             $this->getLogger()
@@ -629,28 +549,26 @@ trait SmartlingCoreUploadTrait
             $submission = $this->getSubmissionManager()->storeEntity($submission);
 
             $this->getLogger()->info(
-                vsprintf(
-                    'Attachment submission id="%s" marked as cloned (blog="%s", content="%s", type="%s", batch="%s").',
-                    [
-                        $submission->getId(),
-                        $submission->getSourceBlogId(),
-                        $submission->getSourceId(),
-                        $submission->getContentType(),
-                        $submission->getBatchUid(),
-                    ]
+                sprintf(
+                    'Attachment submissionId="%s" marked as cloned (sourceBlogId="%s", sourceId="%s", contentType="%s", jobUid="%s").',
+                    $submission->getId(),
+                    $submission->getSourceBlogId(),
+                    $submission->getSourceId(),
+                    $submission->getContentType(),
+                    $jobUid,
                 )
             );
         }
 
         $this->getLogger()->debug(
             vsprintf(
-                'Preparing to send submission id="%s" (blog="%s", content="%s", type="%s", batch="%s").',
+                'Preparing to send submission id="%s" (blog="%s", content="%s", type="%s", jobUid="%s").',
                 [
                     $submission->getId(),
                     $submission->getSourceBlogId(),
                     $submission->getSourceId(),
                     $submission->getContentType(),
-                    $submission->getBatchUid(),
+                    $jobUid,
                 ]
             )
         );
@@ -685,17 +603,14 @@ trait SmartlingCoreUploadTrait
                     ])
                 );
             } else {
-                if (empty(trim($submission->getBatchUid()))) {
-                    $submission = $this->fixSubmissionBatchUid($submission);
-                }
                 $this->getLogger()->withStringContext([
                     'sourceBlogId' => $submission->getSourceBlogId(),
                     'sourceId' => $submission->getSourceId(),
                     'submissionId' => $submission->getId(),
                     'targetBlogId' => $submission->getTargetBlogId(),
                     'targetId' => $submission->getTargetId(),
-                ], function () use ($submission) {
-                    $this->bulkSubmit($submission);
+                ], function () use ($jobUid, $submission) {
+                    $this->bulkSubmit($submission, $jobUid);
                 });
             }
         } catch (EntityNotFoundException $e) {
@@ -745,7 +660,7 @@ trait SmartlingCoreUploadTrait
         }
     }
 
-    public function createForTranslation(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, JobEntityWithBatchUid $jobInfo, bool $clone): SubmissionEntity
+    public function createForTranslation(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, JobEntity $jobInfo, bool $clone): SubmissionEntity
     {
         $translationHelper = $this->getTranslationHelper();
         $submission = $translationHelper
@@ -766,10 +681,11 @@ trait SmartlingCoreUploadTrait
 
         $isCloned = true === $clone ? 1 : 0;
         $submission->setIsCloned($isCloned);
-        $submission->setBatchUid($jobInfo->getBatchUid());
-        $submission->setJobInfo($jobInfo->getJobInformationEntity());
+        $submission->setJobInfo($jobInfo);
+        $submission = $this->getSubmissionManager()->storeEntity($submission);
+        $this->uploadQueueManager->enqueue(new UploadQueueItem($submission->getId(), $jobInfo->getJobUid()));
 
-        return $this->getSubmissionManager()->storeEntity($submission);
+        return $submission;
     }
 
     private function removeExcludedFields(array $fields, ConfigurationProfileEntity $configurationProfile): array
@@ -899,30 +815,32 @@ trait SmartlingCoreUploadTrait
         return $this->xmlHelper->xmlEncode($filteredValues, $submission, $params->getPreparedFields());
     }
 
-    private function handleBatchNotSuitable(ConfigurationProfileEntity $profile, SubmissionEntity $submission): void
+    public function findSubmissionsInJob(array $params, string $jobUid): array
     {
-        $this->getLogger()->error("Batch {$submission->getBatchUid()} is not suitable for adding files");
-        $submissions = $this->getSubmissionManager()->find([
-            SubmissionEntity::FIELD_STATUS => [SubmissionEntity::SUBMISSION_STATUS_NEW],
-            SubmissionEntity::FIELD_BATCH_UID => [$submission->getBatchUid()],
-        ]);
-        $jobWithStatus = $this->getApiWrapper()->findLastJobByFileUri($profile, $submission->getFileUri());
-        $batchUid = '';
-        if ($jobWithStatus !== null) {
-            $job = $jobWithStatus->getJobInformationEntity();
-            if (str_starts_with($job->getJobName(), ApiWrapperInterface::DAILY_BUCKET_JOB_NAME_PREFIX) &&
-                in_array($jobWithStatus->getStatus(), ApiWrapperInterface::JOB_STATUSES_FOR_DAILY_BUCKET_JOB, true)) {
-                $batchUid = $this->getApiWrapper()->createBatch($profile, $job->getJobUid(), $profile->getAutoAuthorize());
-                $this->getLogger()->notice("Will retry daily bucket jobUid={$job->getJobUid()} batch");
+        $submissions = $this->getSubmissionManager()->find($params);
+        $initialCount = count($submissions);
+        if ($initialCount > 0) {
+            $this->getLogger()->info("Found submissionCount=$initialCount with same source");
+            $submissionIdsInJob = $this->uploadQueueManager->filterSubmissionIdsInJob(
+                array_reduce($submissions, static function (array $carry, SubmissionEntity $item) {
+                    $carry[] = $item->getId();
+
+                    return $carry;
+                }, []), $jobUid);
+            $result = [];
+            foreach ($submissions as $submission) {
+                if (in_array($submission->getId(), $submissionIdsInJob, true)) {
+                    $result[] = $submission;
+                }
+            }
+            $submissions = $result;
+
+            $finalCount = count($submissions);
+            if ($finalCount !== $initialCount) {
+                $this->getLogger()->info("Discarded submissions not from jobUid=$jobUid, submissionCount=$finalCount");
             }
         }
-        foreach ($submissions as $found) {
-            $found->setBatchUid($batchUid);
-            if ($batchUid === '') {
-                $found->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
-                $this->getLogger()->notice("Setting submission {$found->getId()} status to failed");
-            }
-        }
-        $this->getSubmissionManager()->storeSubmissions($submissions);
+
+        return $submissions;
     }
 }

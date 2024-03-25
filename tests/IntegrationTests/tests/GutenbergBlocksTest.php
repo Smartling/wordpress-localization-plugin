@@ -5,6 +5,7 @@ namespace IntegrationTests\tests;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\TranslationHelper;
+use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 use Smartling\Tuner\MediaAttachmentRulesManager;
@@ -132,7 +133,8 @@ HTML;
         $submissions[] = $this->translationHelper->prepareSubmission('post', $this->sourceBlogId, $postIds[3], $this->targetBlogId);
 
         foreach ($submissions as $submission) {
-            $this->submissionManager->storeEntity($submission);
+            $submission = $this->submissionManager->storeEntity($submission);
+            $this->addToUploadQueue($submission->getId());
         }
         $this->withBlockRules($this->rulesManager, ['test' => [
             'block' => 'sf/post',
@@ -186,7 +188,8 @@ HTML;
 HTML;
         $postId = $this->createPost('post', 'main title', $content);
         $submission = $this->translationHelper->prepareSubmission('post', $this->sourceBlogId, $postId, $this->targetBlogId);
-        $this->submissionManager->storeEntity($submission);
+        $submission = $this->submissionManager->storeEntity($submission);
+        $this->addToUploadQueue($submission->getId());
         $this->withBlockRules($this->rulesManager, [
             'copy' => [
                 'block' => 'si/block',
@@ -219,7 +222,8 @@ HTML;
         $post = $this->translationHelper->prepareSubmission('post', $this->sourceBlogId, $postId, $this->targetBlogId);
         $submissions = [$attachment, $post];
         foreach ($submissions as $submission) {
-            $this->submissionManager->storeEntity($submission);
+            $submission = $this->submissionManager->storeEntity($submission);
+            $this->addToUploadQueue($submission->getId());
         }
         $this->withBlockRules($this->rulesManager, ['test' => [
             'block' => 'si/test',
@@ -257,7 +261,8 @@ HTML;
         $post = $this->translationHelper->prepareSubmission('post', $this->sourceBlogId, $postId, $this->targetBlogId);
         $submissions = array_merge($attachments, [$post]);
         foreach ($submissions as $submission) {
-            $this->submissionManager->storeEntity($submission);
+            $submission = $this->submissionManager->storeEntity($submission);
+            $this->addToUploadQueue($submission->getId());
         }
         $this->withBlockRules($this->rulesManager, [
             'teste' => [
@@ -322,7 +327,9 @@ HTML;
         $post = $this->translationHelper->prepareSubmission('post', $this->sourceBlogId, $postId, $this->targetBlogId);
         $submissions = [$attachment, $post];
         foreach ($submissions as $submission) {
+            assert($submission instanceof SubmissionEntity);
             $this->submissionManager->storeEntity($submission);
+            $this->addToUploadQueue($submission->getId());
         }
         $this->executeUpload();
         $this->forceSubmissionDownload($submissions[0]);

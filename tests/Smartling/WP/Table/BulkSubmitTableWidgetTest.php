@@ -33,9 +33,8 @@ namespace Smartling\Tests\Smartling\WP\Table {
     use Smartling\Base\SmartlingCore;
     use Smartling\DbAl\LocalizationPluginProxyInterface;
     use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
-    use Smartling\Helpers\PluginInfo;
     use Smartling\Helpers\SiteHelper;
-    use Smartling\Jobs\JobEntityWithBatchUid;
+    use Smartling\Jobs\JobEntity;
     use Smartling\Processors\ContentEntitiesIOFactory;
     use Smartling\Settings\ConfigurationProfileEntity;
     use Smartling\Settings\Locale;
@@ -66,9 +65,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
 
             $core = $this->createMock(SmartlingCore::class);
             $core->method('getContentIoFactory')->willReturn($contentEntitiesIOFactory);
-            $core->expects($this->once())->method('createForTranslation')->with($submissionType, $currentBlogId, $submissionId, $targetBlogId)->willReturnCallback(function (string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, JobEntityWithBatchUid $jobInfo, bool $clone) use ($projectUid) {
-                $this->assertEquals('', $jobInfo->getBatchUid());
-                $jobInfo = $jobInfo->getJobInformationEntity();
+            $core->expects($this->once())->method('createForTranslation')->with($submissionType, $currentBlogId, $submissionId, $targetBlogId)->willReturnCallback(function (string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, JobEntity $jobInfo, bool $clone) use ($projectUid) {
                 $this->assertEquals(null, $jobInfo->getId());
                 $this->assertEquals('', $jobInfo->getJobName());
                 $this->assertEquals('', $jobInfo->getJobUid());

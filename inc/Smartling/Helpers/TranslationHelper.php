@@ -6,7 +6,7 @@ use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\SmartlingDataReadException;
-use Smartling\Jobs\JobEntityWithBatchUid;
+use Smartling\Jobs\JobEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use UnexpectedValueException;
@@ -147,7 +147,7 @@ class TranslationHelper
     /**
      * @throws SmartlingDataReadException
      */
-    public function getExistingSubmissionOrCreateNew(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId, JobEntityWithBatchUid $jobInfo): SubmissionEntity {
+    public function getExistingSubmissionOrCreateNew(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId, JobEntity $jobInfo): SubmissionEntity {
         $submission = $this->submissionManager->getSubmissionEntity($contentType, $sourceBlogId, $contentId, $targetBlogId, $this->multilangProxy);
         if ($submission->getTargetId() === 0) {
             $this->logger->debug("Got submission with 0 target id");
@@ -159,7 +159,7 @@ class TranslationHelper
     /**
      * @throws SmartlingDataReadException
      */
-    public function tryPrepareRelatedContent(string $contentType, int $sourceBlog, int $sourceId, int $targetBlog, JobEntityWithBatchUid $jobInfo, bool $clone = false): SubmissionEntity
+    public function tryPrepareRelatedContent(string $contentType, int $sourceBlog, int $sourceId, int $targetBlog, JobEntity $jobInfo, bool $clone = false): SubmissionEntity
     {
         $relatedSubmission = $this->prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone);
 
@@ -177,8 +177,7 @@ class TranslationHelper
                 ]
             );
 
-            $relatedSubmission->setBatchUid($jobInfo->getBatchUid());
-            $relatedSubmission->setJobInfo($jobInfo->getJobInformationEntity());
+            $relatedSubmission->setJobInfo($jobInfo);
             $serialized = $relatedSubmission->toArray(false);
             if (null === $serialized[SubmissionEntity::FIELD_FILE_URI]) {
                 $relatedSubmission->setFileUri($this->fileUriHelper->generateFileUri($relatedSubmission));
