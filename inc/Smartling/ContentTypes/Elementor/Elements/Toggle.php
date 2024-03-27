@@ -2,9 +2,9 @@
 
 namespace Smartling\ContentTypes\Elementor\Elements;
 
-class Accordion extends Tabs {
+class Toggle extends Tabs {
     public function getType(): string
     {
-        return 'accordion';
+        return 'toggle';
     }
 }
