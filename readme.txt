@@ -62,6 +62,10 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 3.8.13 =
+* Added support for nested JSON Gutenberg attributes locking
+* Added filter smartling_filter_before_clone_content_written
+
 = 3.8.12 =
 * Fixed Elementor and other known plugins content not being added for translation when cron is invoked from non-source blog for submission
 * Fixed strings not being added to some languages when uploading for multiple languages when there are more than one active profile for the source blog
