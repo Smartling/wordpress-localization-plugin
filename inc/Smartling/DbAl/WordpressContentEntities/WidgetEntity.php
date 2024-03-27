@@ -114,8 +114,14 @@ class WidgetEntity extends VirtualEntityAbstract
     /**
      * @return WidgetEntity[]
      */
-    public function getAll(int $limit = 0, int $offset = 0, string $orderBy = '', string $order = '', string $searchString = ''): array
-    {
+    public function getAll(
+        int $limit = 0,
+        int $offset = 0,
+        string $orderBy = '',
+        string $order = '',
+        string $searchString = '',
+        array $ids = [],
+    ): array {
         $this->buildMap();
         $collection = [];
         foreach ($this->map as $widget) {

@@ -2,26 +2,15 @@
 
 namespace Smartling\Helpers;
 
-use Smartling\Bootstrap;
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 class ContentSerializationHelper
 {
-    private LoggerInterface $logger;
-    private ContentHelper $contentHelper;
+    use LoggerSafeTrait;
 
-    public function getLogger(): LoggerInterface
+    public function __construct(private ContentHelper $contentHelper, private SettingsManager $settingsManager)
     {
-        return $this->logger;
-    }
-
-    public function __construct(ContentHelper $contentHelper)
-    {
-        $this->logger = MonologWrapper::getLogger(get_called_class());
-        $this->contentHelper = $contentHelper;
     }
 
     public function getRemoveFields(): array
@@ -94,12 +83,9 @@ class ContentSerializationHelper
         return $source;
     }
 
-    /**
-     * Sets field processor rules depending on profile settings
-     */
-    public static function prepareFieldProcessorValues(SettingsManager $settingsManager, SubmissionEntity $submission): void
+    public function prepareFieldProcessorValues(SubmissionEntity $submission): array
     {
-        $profiles = $settingsManager->findEntityByMainLocale($submission->getSourceBlogId());
+        $profiles = $this->settingsManager->findEntityByMainLocale($submission->getSourceBlogId());
 
         $filter = [
             'ignore' => [],
@@ -123,6 +109,6 @@ class ContentSerializationHelper
             LogContextMixinHelper::addToContext('projectId', $profile->getProjectId());
         }
 
-        Bootstrap::getContainer()->setParameter('field.processor', $filter);
+        return $filter;
     }
 }

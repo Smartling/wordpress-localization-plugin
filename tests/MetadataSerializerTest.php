@@ -5,7 +5,9 @@ namespace Smartling\Tests;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
+use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Traits\DummyLoggerMock;
 use Smartling\Tests\Traits\SettingsManagerMock;
@@ -24,7 +26,12 @@ class MetadataSerializerTest extends TestCase
      */
     public function testPrepareSourceData(array $entityFields, array $expectedResult)
     {
-        $obj = new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock());
+        $obj = new FieldsFilterHelper(
+            $this->getAcfDynamicSupportMock(),
+            $this->createMock(ContentSerializationHelper::class),
+            $this->getSettingsManagerMock(),
+            $this->getWpProxy(),
+        );
         $actualResult = $obj->prepareSourceData($entityFields);
         self::assertEquals($expectedResult, $actualResult);
     }
@@ -120,7 +127,12 @@ class MetadataSerializerTest extends TestCase
 
 
             ], $this->getLogger());
-        $obj = new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock());
+        $obj = new FieldsFilterHelper(
+            $this->getAcfDynamicSupportMock(),
+            $this->createMock(ContentSerializationHelper::class),
+            $this->getSettingsManagerMock(),
+            $this->getWpProxy(),
+        );
         $actualResult = $obj->applyTranslatedValues($submission, $originalValues, $translatedValues, false);
         self::assertEquals($expectedResult, $actualResult);
     }
@@ -201,5 +213,22 @@ class MetadataSerializerTest extends TestCase
     private function getAcfDynamicSupportMock()
     {
         return $this->getMockBuilder(AcfDynamicSupport::class)->disableOriginalConstructor()->getMock();
+    }
+
+    private function getWpProxy(): WordpressFunctionProxyHelper|MockObject
+    {
+        $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $wpProxy->method('maybe_unserialize')->willReturnCallback(function ($original) {
+            if (!is_string($original)) {
+                return $original;
+            }
+            try {
+                return unserialize($original) ?: $original;
+            } catch (\Throwable) {
+                return $original;
+            }
+        });
+
+        return $wpProxy;
     }
 }

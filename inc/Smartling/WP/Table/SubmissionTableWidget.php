@@ -52,13 +52,6 @@ class SubmissionTableWidget extends SmartlingListTable
     private const SUBMISSION_CLONED_STATE = 'state_cloned';
     private const SUBMISSION_TARGET_LOCALE = 'target-locale';
 
-    private LocalizationPluginProxyInterface $localizationPluginProxy;
-    private SettingsManager $settingsManager;
-    private SiteHelper $siteHelper;
-    private SubmissionManager $submissionManager;
-    private QueueInterface $queue;
-    private ApiWrapperInterface $apiWrapper;
-
     private string $_custom_controls_namespace = 'smartling-submissions-page';
 
     /**
@@ -75,17 +68,17 @@ class SubmissionTableWidget extends SmartlingListTable
 
     private array $_settings = ['singular' => 'submission', 'plural' => 'submissions', 'ajax' => false,];
 
-    public function __construct(ApiWrapperInterface $apiWrapper, LocalizationPluginProxyInterface $localizationPluginProxy, SettingsManager $settingsManager, SiteHelper $siteHelper, SubmissionManager $manager, QueueInterface $queue)
-    {
-        $this->apiWrapper = $apiWrapper;
-        $this->localizationPluginProxy = $localizationPluginProxy;
-        $this->queue = $queue;
-        $this->settingsManager = $settingsManager;
-        $this->siteHelper = $siteHelper;
-        $this->submissionManager = $manager;
+    public function __construct(
+        protected ApiWrapperInterface $apiWrapper,
+        protected LocalizationPluginProxyInterface $localizationPluginProxy,
+        protected SettingsManager $settingsManager,
+        protected SiteHelper $siteHelper,
+        protected SubmissionManager $submissionManager,
+        protected QueueInterface $queue,
+    ) {
         $this->setSource($_REQUEST);
 
-        $this->defaultValues[self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME] = $manager->getDefaultSubmissionStatus();
+        $this->defaultValues[self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME] = $this->submissionManager->getDefaultSubmissionStatus();
 
         parent::__construct($this->_settings);
     }
@@ -168,10 +161,7 @@ class SubmissionTableWidget extends SmartlingListTable
         ];
     }
 
-    /**
-     * Handles actions for multiple objects
-     */
-    private function processBulkAction(): void
+    public function processBulkAction(): void
     {
         $submissionsIds = array_map(static function ($value) {
             return (int)$value;

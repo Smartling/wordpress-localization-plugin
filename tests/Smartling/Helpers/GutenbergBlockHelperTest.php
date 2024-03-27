@@ -51,6 +51,7 @@ namespace Smartling\Tests\Smartling\Helpers {
     use PHPUnit\Framework\TestCase;
     use Smartling\Exception\EntityNotFoundException;
     use Smartling\Extensions\Acf\AcfDynamicSupport;
+    use Smartling\Helpers\ContentSerializationHelper;
     use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
     use Smartling\Helpers\FieldsFilterHelper;
     use Smartling\Helpers\GutenbergBlockHelper;
@@ -60,6 +61,7 @@ namespace Smartling\Tests\Smartling\Helpers {
     use Smartling\Models\GutenbergBlock;
     use Smartling\Replacers\ReplacerFactory;
     use Smartling\Replacers\ReplacerInterface;
+    use Smartling\Settings\SettingsManager;
     use Smartling\Submissions\SubmissionEntity;
     use Smartling\Submissions\SubmissionManager;
     use Smartling\Tests\Traits\InvokeMethodTrait;
@@ -94,9 +96,11 @@ namespace Smartling\Tests\Smartling\Helpers {
         return $this->getMockBuilder(GutenbergBlockHelper::class)
             ->setConstructorArgs([
                 $this->createMock(AcfDynamicSupport::class),
+                $this->createMock(ContentSerializationHelper::class),
                 $mediaAttachmentRulesManager,
                 $replacerFactory,
                 new SerializerJsonWithFallback(),
+                $this->createMock(SettingsManager::class),
                 $this->createMock(WordpressFunctionProxyHelper::class),
             ])
             ->onlyMethods($methods)
@@ -109,9 +113,11 @@ namespace Smartling\Tests\Smartling\Helpers {
     {
         $this->helper = new GutenbergBlockHelper(
             $this->createMock(AcfDynamicSupport::class),
+            $this->createMock(ContentSerializationHelper::class),
             $this->createMock(MediaAttachmentRulesManager::class),
             $this->createMock(ReplacerFactory::class),
             new SerializerJsonWithFallback(),
+            $this->createMock(SettingsManager::class),
             $this->createMock(WordpressFunctionProxyHelper::class),
         );
     }
@@ -220,7 +226,7 @@ namespace Smartling\Tests\Smartling\Helpers {
         $params->setDom(new \DOMDocument('1.0', 'utf8'));
 
         $helper->setParams($params);
-        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock()));
+        $helper->setFieldsFilter($this->getFieldsFilterHelper());
         $helper
                ->method('processAttributes')
                ->willReturnArgument(1);
@@ -385,7 +391,7 @@ namespace Smartling\Tests\Smartling\Helpers {
     {
         $helper = $this->mockHelper();
 
-        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock()));
+        $helper->setFieldsFilter($this->getFieldsFilterHelper());
 
         $helper
                ->method('postReceiveFiltering')
@@ -431,7 +437,7 @@ namespace Smartling\Tests\Smartling\Helpers {
             return AcfDynamicSupport::REFERENCED_TYPE_NONE;
         });
         $replacer = $this->createMock(ReplacerInterface::class);
-        $replacer->expects($this->exactly(2))->method('processAttributeOnDownload')->willReturnCallback(static function($originalValue, $translatedValue, $submission) {
+        $replacer->expects($this->exactly(2))->method('processAttributeOnDownload')->willReturnCallback(static function($originalValue) {
             $replacements = [
                 19350 => 13,
                 19351 => 17,
@@ -452,9 +458,11 @@ namespace Smartling\Tests\Smartling\Helpers {
 
         $x = new GutenbergBlockHelper(
             $acfDynamicSupport,
+            $this->createMock(ContentSerializationHelper::class),
             new MediaAttachmentRulesManager(),
             $replacerFactory,
             $this->createMock(SerializerJsonWithFallback::class),
+            $this->createMock(SettingsManager::class),
             new WordpressFunctionProxyHelper(),
         );
         $x->setFieldsFilter($this->createPartialMock(FieldsFilterHelper::class, []));
@@ -508,12 +516,12 @@ namespace Smartling\Tests\Smartling\Helpers {
         $node = $list->item(0);
         $helper = $this->mockHelper();
 
-        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock()));
+        $helper->setFieldsFilter($this->getFieldsFilterHelper());
         $helper
                ->method('postReceiveFiltering')
                ->willReturnArgument(0);
 
-        /** @noinspection PhpParamsInspection */
+        $this->assertInstanceOf(\DOMElement::class, $node);
         $result = $helper->renderTranslatedBlockNode($node, $this->createMock(SubmissionEntity::class), 0);
         self::assertEquals($expectedBlock, $result);
     }
@@ -561,10 +569,10 @@ XML;
 
         $helper = $this->mockHelper(['postReceiveFiltering'], $mediaAttachmentRulesManager, $replacerFactory);
 
-        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock()));
+        $helper->setFieldsFilter($this->getFieldsFilterHelper());
         $helper->method('postReceiveFiltering')->willReturnArgument(0);
 
-        /** @noinspection PhpParamsInspection */
+        $this->assertInstanceOf(\DOMElement::class, $node);
         $result = $helper->renderTranslatedBlockNode($node, $this->createMock(SubmissionEntity::class), 0);
         self::assertEquals($expectedBlock, $result, 'Expected both id attribute in Gutenberg block and inner image class to get replaced');
     }
@@ -577,7 +585,7 @@ XML;
         $node = $dom->childNodes->item(0);
 
         $helper = $this->mockHelper();
-        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock()));
+        $helper->setFieldsFilter($this->getFieldsFilterHelper());
         $helper->method('postReceiveFiltering')->willReturnArgument(0);
 
         self::assertEquals(
@@ -621,15 +629,23 @@ XML;
         }
         $submissionManager = $this->createMock(SubmissionManager::class);
         $submissionManager->method('findOne')->willReturn($submission);
-        $helper = new GutenbergBlockHelper($this->createMock(AcfDynamicSupport::class), $mediaAttachmentRulesManager, new ReplacerFactory($submissionManager), new SerializerJsonWithFallback(), new WordpressFunctionProxyHelper());
+        $helper = new GutenbergBlockHelper(
+            $this->createMock(AcfDynamicSupport::class),
+            $this->createMock(ContentSerializationHelper::class),
+            $mediaAttachmentRulesManager,
+            new ReplacerFactory($submissionManager),
+            new SerializerJsonWithFallback(),
+            $this->createMock(SettingsManager::class),
+            new WordpressFunctionProxyHelper(),
+        );
         $this->assertStringContainsString("wp-image-$targetId", $helper->replacePostTranslateBlockContent($sourceBlock, $sourceBlock, $submission));
     }
 
     public function testSortChildNodesContent()
     {
-        $dom = new \DOMDocument('1.0', 'utf8');
+        $dom = new \DOMDocument('1.0', 'utf8'); // This can't be moved inside closure
 
-        $createElement = function ($name, array $attributes = [], $cdata = null) use ($dom) {
+        $createElement = static function ($name, array $attributes = [], $cdata = null) use ($dom) {
             $element = $dom->createElement($name);
             foreach ($attributes as $attrName => $attrValue) {
                 $element->setAttributeNode(new \DOMAttr($attrName, $attrValue));
@@ -654,7 +670,7 @@ XML;
             'attributes' => ['attr_a' => 'attr a', 'attr_b' => 'attr b', 'attr_c' => 'attr c', 'attr_d' => 'attr d'],
         ];
         $helper = $this->mockHelper(['getLogger', 'postReceiveFiltering']);
-        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock()));
+        $helper->setFieldsFilter($this->getFieldsFilterHelper());
         $helper
                ->method('postReceiveFiltering')
                ->willReturnArgument(0);
@@ -701,7 +717,7 @@ XML;
                ->with($contentString)
                ->willReturn($parseResult);
 
-        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock()));
+        $helper->setFieldsFilter($this->getFieldsFilterHelper());
 
         $result = $helper->processString($params);
 
@@ -780,10 +796,8 @@ some par 2
 
     /**
      * @dataProvider processTranslationDataProvider
-     * @param string $inXML
-     * @param string $expectedXML
      */
-    public function testProcessTranslation(string $inXML, $expectedXML)
+    public function testProcessTranslation(string $inXML, string $expectedXML)
     {
 
         $dom = new \DOMDocument('1.0', 'uft8');
@@ -806,7 +820,7 @@ some par 2
                ->method('preSendFiltering')
                ->willReturnArgument(0);
 
-        $helper->setFieldsFilter(new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock()));
+        $helper->setFieldsFilter($this->getFieldsFilterHelper());
 
         $result = $helper->processTranslation($params);
 
@@ -863,10 +877,22 @@ some par 2
         }
         return new GutenbergBlockHelper(
             $this->createMock(AcfDynamicSupport::class),
+            $this->createMock(ContentSerializationHelper::class),
             $rulesManager,
             $replacerFactory,
             new SerializerJsonWithFallback(),
-            $this->createMock(WordpressFunctionProxyHelper::class)
+            $this->createMock(SettingsManager::class),
+            $this->createMock(WordpressFunctionProxyHelper::class),
+        );
+    }
+
+    private function getFieldsFilterHelper(): FieldsFilterHelper
+    {
+        return new FieldsFilterHelper(
+            $this->getAcfDynamicSupportMock(),
+            $this->createMock(ContentSerializationHelper::class),
+            $this->getSettingsManagerMock(),
+            $this->createMock(WordpressFunctionProxyHelper::class),
         );
     }
 }

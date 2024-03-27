@@ -176,6 +176,28 @@
     "widgetType": "icon-list"
   },
   {
+    "id": "7a874c8",
+    "elType": "section",
+    "settings": [],
+    "elements": [
+      {
+        "id": "78d53a2",
+        "elType": "widget",
+        "settings": {
+          "title": "Related post ids",
+          "posts_posts_ids": [
+            15413,
+            %d,
+            15415
+          ]
+        },
+        "elements": [],
+        "widgetType": "heading"
+      }
+    ],
+    "isInner": false
+  },
+  {
     "id": "3b9b893",
     "elType": "widget",
     "settings": {

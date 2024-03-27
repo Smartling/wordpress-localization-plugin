@@ -2,14 +2,13 @@
 
 namespace Smartling\Helpers;
 
-use Smartling\Bootstrap;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
-use Smartling\MonologWrapper\MonologWrapper;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
+use Smartling\Settings\SettingsManager;
 use Smartling\WP\WPHookInterface;
 
 abstract class SubstringProcessorHelperAbstract implements WPHookInterface
 {
+    use LoggerSafeTrait;
     /**
      * Returns a regexp for masked shortcodes
      * @return string
@@ -17,11 +16,6 @@ abstract class SubstringProcessorHelperAbstract implements WPHookInterface
     public static function getMaskRegexp() {
         return '';
     }
-
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
 
     /**
      * @var array
@@ -48,12 +42,10 @@ abstract class SubstringProcessorHelperAbstract implements WPHookInterface
      */
     private $fieldsFilter;
 
-    /**
-     * SubstringProcessorHelperAbstract constructor.
-     */
-    public function __construct()
-    {
-        $this->logger = MonologWrapper::getLogger(get_called_class());
+    public function __construct(
+        private ContentSerializationHelper $contentSerializationHelper,
+        private SettingsManager $settingsManager,
+    ) {
     }
 
     /**
@@ -154,11 +146,6 @@ abstract class SubstringProcessorHelperAbstract implements WPHookInterface
     public function addBlockAttribute($blockName, $attributeName, $translatedString, $originalHash)
     {
         $this->blockAttributes[$blockName][$attributeName][$originalHash] = $translatedString;
-    }
-
-    public function getLogger(): LoggerInterface
-    {
-        return $this->logger;
     }
 
     /**
@@ -268,10 +255,8 @@ abstract class SubstringProcessorHelperAbstract implements WPHookInterface
         $submission = $this->getParams()->getSubmission();
         $fFilter = $this->getFieldsFilter();
 
-        $settingsManager = $fFilter->getSettingsManager();
-        ContentSerializationHelper::prepareFieldProcessorValues($settingsManager, $submission);
-        $settings = Bootstrap::getContainer()->getParameter('field.processor');
-        $removeAsRegExp = $settingsManager->getSingleSettingsProfile($submission->getSourceBlogId())->getFilterFieldNameRegExp();
+        $settings = $this->contentSerializationHelper->prepareFieldProcessorValues($submission);
+        $removeAsRegExp = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId())->getFilterFieldNameRegExp();
         $attributes = $fFilter->removeFields($attributes, $settings['ignore'], $removeAsRegExp);
         $attributes = $fFilter->removeFields($attributes, $settings['copy']['name'], $removeAsRegExp);
 

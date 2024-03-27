@@ -11,84 +11,52 @@ use Smartling\Bootstrap;
 use Smartling\Exception\InvalidXMLException;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\Helpers\Serializers\SerializerInterface;
-use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Settings\SettingsManager;
+use Smartling\Services\GlobalSettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 
 class XmlHelper
 {
-    private SerializerInterface $serializer;
+    use LoggerSafeTrait;
 
-    public function __construct(SerializerInterface $serializer)
-    {
-        $this->serializer = $serializer;
+    public function __construct(
+        private ContentSerializationHelper $contentSerializationHelper,
+        private SerializerInterface $serializer,
+        private SettingsManager $settingsManager,
+    ) {
     }
-
-    /**
-     * @return mixed
-     */
-    private static function getFieldProcessingParams()
-    {
-        return Bootstrap::getContainer()->getParameter('field.processor');
-    }
-
-    /**
-     * Logs XML related message.
-     *
-     * @param $message
-     */
-    public static function logMessage($message)
-    {
-        MonologWrapper::getLogger(get_called_class())->debug($message);
-    }
-
-    private static $magicComments = [
-        'smartling.translate_paths = data/string/',
-        'smartling.string_format_paths = html : data/string/',
-        'smartling.source_key_paths = data/{string.key}',
-        'smartling.variants_enabled = true',
-    ];
 
     const XML_ROOT_NODE_NAME = 'data';
 
-    const XML_STRING_NODE_NAME = 'string';
+    private const XML_STRING_NODE_NAME = 'string';
 
-    const XML_SOURCE_NODE_NAME = 'source';
+    private const XML_SOURCE_NODE_NAME = 'source';
 
-    /**
-     * @return DOMDocument
-     */
-    private static function initXml()
+    private function initXml(): DOMDocument
     {
         return new DOMDocument('1.0', 'UTF-8');
     }
 
-    /**
-     * Sets comments about translation type (html)
-     *
-     * @param DOMDocument $document
-     *
-     * @return DOMDocument
-     */
-    private static function setTranslationComments(DOMDocument $document)
+    private function setTranslationComments(DOMDocument $document): DOMDocument
     {
-        foreach (self::$magicComments as $commentString) {
-            $document->appendChild($document->createComment(vsprintf(' %s ', [$commentString])));
-        }
-
-        $additionalComments = [
+        $comments = [
+            'smartling.translate_paths = data/string/',
+            'smartling.string_format_paths = html : data/string/',
+            'smartling.source_key_paths = data/{string.key}',
+            'smartling.variants_enabled = true',
             'Smartling Wordpress Connector version: ' . Bootstrap::getCurrentVersion(),
             'Wordpress installation host: ' . Bootstrap::getHttpHostName(),
-            vsprintf(
-                'smartling.placeholder_format_custom = %s',
-                [
-                    ShortcodeHelper::getMaskRegexp(),
-                ]
-            ),
             'smartling.placeholder_format_custom = #sl-start#.+?#sl-end#',
         ];
 
-        foreach ($additionalComments as $extraComment) {
-            $document->appendChild($document->createComment(vsprintf(' %s ', [$extraComment])));
+        foreach (explode("\n", GlobalSettingsManager::getCustomDirectives()) as $comment) {
+            if ($comment !== '') {
+                $comments[] = $comment;
+            }
+        }
+
+        foreach ($comments as $comment) {
+            $document->appendChild($document->createComment(" $comment "));
         }
 
         return $document;
@@ -104,17 +72,14 @@ class XmlHelper
         return $this->serializer->unserialize($source);
     }
 
-    /**
-     * TODO: refactor this and SmartlingCoreTrait::prepareFieldProcessorValues to get rid of self::getFieldProcessingParams() in favour of sending them as an argument
-     */
     public function xmlEncode(array $source, SubmissionEntity $submission, array $originalContent = []): string
     {
-        static::logMessage(vsprintf('Started creating XML for fields: %s', [base64_encode(var_export($source, true))]));
-        $xml = self::setTranslationComments(self::initXml());
-        $settings = self::getFieldProcessingParams();
+        $this->getLogger()->debug(sprintf('Started creating XML for fields: %s', base64_encode(var_export($source, true))));
+        $xml = $this->setTranslationComments($this->initXml());
+        $settings = $this->contentSerializationHelper->prepareFieldProcessorValues($submission);
         $rootNode = $xml->createElement(self::XML_ROOT_NODE_NAME);
         foreach ($source as $name => $value) {
-            $rootNode->appendChild(self::rowToXMLNode($xml, $name, $value, $settings['key'], $submission));
+            $rootNode->appendChild($this->rowToXMLNode($xml, $name, $value, $settings['key'], $submission));
         }
         $xml->appendChild($rootNode);
 
@@ -130,13 +95,13 @@ class XmlHelper
         $root->appendChild($node);
     }
 
-    private static function rowToXMLNode(DOMDocument $document, $name, $value, $keySettings, SubmissionEntity $submission)
+    private function rowToXMLNode(DOMDocument $document, $name, $value, $keySettings, SubmissionEntity $submission)
     {
         $node = $document->createElement(self::XML_STRING_NODE_NAME);
         $node->setAttributeNode(new DOMAttr('name', $name));
         foreach ($keySettings as $key => $fields) {
             foreach ($fields as $field) {
-                if (false !== strpos($name, $field)) {
+                if (str_contains($name, $field)) {
                     $node->setAttributeNode(new DOMAttr('key', $key));
                 }
             }
@@ -145,7 +110,7 @@ class XmlHelper
         $params = new TranslationStringFilterParameters();
         $params->setDom($document);
         $params->setNode($node);
-        $params->setFilterSettings(self::getFieldProcessingParams());
+        $params->setFilterSettings($this->contentSerializationHelper->prepareFieldProcessorValues($submission));
         $params->setSubmission($submission);
         $params = apply_filters(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING, $params);
 
@@ -153,16 +118,13 @@ class XmlHelper
     }
 
     /**
-     * @param string $xmlString
-     *
-     * @return DOMXPath
      * @throws InvalidXMLException
      */
-    private static function prepareXPath($xmlString)
+    private function prepareXPath(string $xmlString): DOMXPath
     {
-        self::preventLoadingExternalEntities();
+        $this->preventLoadingExternalEntities();
 
-        $xml = self::initXml();
+        $xml = $this->initXml();
         $result = @$xml->loadXML($xmlString);
         if (false === $result) {
             throw new InvalidXMLException('Invalid XML Contents');
@@ -171,7 +133,7 @@ class XmlHelper
         return new DOMXPath($xml);
     }
 
-    private static function preventLoadingExternalEntities(): void
+    private function preventLoadingExternalEntities(): void
     {
         // libxml_disable_entity_loader is deprecated in php8, using a null loader instead
         libxml_set_external_entity_loader(static function () {
@@ -185,34 +147,15 @@ class XmlHelper
     public function xmlDecode(string $content, SubmissionEntity $submission): DecodedXml
     {
         if ($content === '') {
-            static::logMessage('Skipped XML decoding: empty content');
+            $this->getLogger()->debug('Skipped XML decoding: empty content');
             return new DecodedXml([], []);
         }
-        static::logMessage(vsprintf('Starting XML file decoding : %s', [base64_encode(var_export($content, true))]));
-        $xpath = self::prepareXPath($content);
-        return new DecodedXml(self::getFields($xpath, $submission), $this->getSource($xpath));
+        $this->getLogger()->debug(sprintf('Starting XML file decoding : %s', base64_encode(var_export($content, true))));
+        $xpath = $this->prepareXPath($content);
+        return new DecodedXml($this->getFields($xpath, $submission), $this->getSource($xpath));
     }
 
-    /**
-     * @param string $xml
-     *
-     * @return bool
-     */
-    public static function hasStringsForTranslation($xml)
-    {
-        $xpath = self::prepareXPath($xml);
-        $stringPath = '/data/string';
-        $nodeList = $xpath->query($stringPath);
-
-        return $nodeList->length > 0;
-    }
-
-    /**
-     * @param DOMXPath $xpath
-     * @param SubmissionEntity $submission
-     * @return array
-     */
-    private static function getFields(DOMXPath $xpath, SubmissionEntity $submission)
+    private function getFields(DOMXPath $xpath, SubmissionEntity $submission): array
     {
         $nodeList = $xpath->query('/' . self::XML_ROOT_NODE_NAME . '/' . self::XML_STRING_NODE_NAME);
         $fields = [];
@@ -225,7 +168,7 @@ class XmlHelper
             $params = new TranslationStringFilterParameters();
             $params->setDom($item->ownerDocument);
             $params->setNode($item);
-            $params->setFilterSettings(self::getFieldProcessingParams());
+            $params->setFilterSettings($this->contentSerializationHelper->prepareFieldProcessorValues($submission));
             $params->setSubmission($submission);
 
             $params = apply_filters(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING_RECEIVED, $params);
@@ -250,7 +193,7 @@ class XmlHelper
             try {
                 return $this->decodeSource($query[0]->nodeValue);
             } catch (\Exception $e) {
-                self::logMessage("Failed to decode source: " . $e->getMessage());
+                $this->getLogger()->debug("Failed to decode source: " . $e->getMessage());
             }
         }
         return [];

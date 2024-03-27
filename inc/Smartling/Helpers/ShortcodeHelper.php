@@ -6,16 +6,23 @@ use DOMElement;
 use DOMNode;
 use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
+use Smartling\Settings\SettingsManager;
 
-/**
- * Class ShortcodeHelper
- *
- * @package Smartling\Helpers
- */
 class ShortcodeHelper extends SubstringProcessorHelperAbstract
 {
     private const SMARTLING_SHORTCODE_MASK_OLD = '##';
     private const SHORTCODE_SUBSTRING_NODE_NAME = 'shortcodeattribute';
+
+    public function __construct(
+        ContentSerializationHelper $contentSerializationHelper,
+        FieldsFilterHelper $fieldsFilterHelper,
+        private PlaceholderHelper $placeholderHelper,
+        SettingsManager $settingsManager,
+        private WordpressFunctionProxyHelper $wpProxy,
+    ) {
+        parent::__construct($contentSerializationHelper, $settingsManager);
+        $this->setFieldsFilter($fieldsFilterHelper);
+    }
 
     /**
      * Returns a regexp for masked shortcodes
@@ -83,6 +90,9 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
      */
     private function hasShortcodes($string)
     {
+        if ($this->placeholderHelper->hasPlaceholders($string)) {
+            return true;
+        }
         $possibleShortcodes = $this->getRegisteredShortcodes();
 
         global $shortcode_tags;
@@ -394,7 +404,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     {
         $shortcodes = array_keys($this->getShortcodeAssignments());
         try {
-            $injectedShortcodes = apply_filters(ExportedAPI::FILTER_SMARTLING_INJECT_SHORTCODE, []);
+            $injectedShortcodes = $this->wpProxy->apply_filters(ExportedAPI::FILTER_SMARTLING_INJECT_SHORTCODE, []);
             if (!is_array($injectedShortcodes)) {
                 $this->getLogger()->critical('Injected shortcodes not an array after filter ' . ExportedAPI::FILTER_SMARTLING_INJECT_SHORTCODE . '. This is most likely due to an error outside of the plugins code.');
             }
@@ -420,7 +430,7 @@ class ShortcodeHelper extends SubstringProcessorHelperAbstract
     {
         global $shortcode_tags;
 
-        return $shortcode_tags;
+        return $shortcode_tags ?? [];
     }
 
     /**

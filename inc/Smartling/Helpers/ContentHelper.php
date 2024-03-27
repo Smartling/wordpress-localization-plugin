@@ -150,6 +150,7 @@ class ContentHelper
 
     public function writeTargetContent(SubmissionEntity $submission, Entity $entity): Entity
     {
+        $this->getLogger()->info(sprintf('Writing target content for submissionId=%d, contentType=%s, sourceBlogId=%d, sourceId=%d, targetBlogId=%d, targetId=%d', $submission->getId(), $submission->getContentType(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getTargetBlogId(), $submission->getTargetId()));
         $wrapper = $this->getWrapper($submission->getContentType());
 
         $this->ensureTargetBlogId($submission);
@@ -187,6 +188,8 @@ class ContentHelper
             }
         }
         $this->ensureRestoredBlogId();
+
+        do_action(ExportedAPI::ACTION_AFTER_TARGET_METADATA_WRITTEN, $submission);
     }
 
     public function removeTargetMetadata(SubmissionEntity $submission): void

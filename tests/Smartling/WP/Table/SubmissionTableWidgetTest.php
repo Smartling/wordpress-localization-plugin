@@ -25,15 +25,6 @@ namespace {
             return $a;
         }
     }
-
-    if (!function_exists('convert_to_screen')) {
-        function convert_to_screen($a)
-        {
-            $r = new \stdClass();
-            $r->id = $a;
-            return $r;
-        }
-    }
 }
 
 namespace Smartling\Tests\Smartling\WP\Table {
@@ -65,27 +56,36 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $queue->expects($this->exactly(count($submissions)))->method('enqueue');
             $apiWrapper = $this->createMock(ApiWrapperInterface::class);
             $apiWrapper->expects($this->once())->method('createAuditLogRecord');
-            $x = $this->getMockBuilder(SubmissionTableWidget::class)->setConstructorArgs([
+            $x = new class(
                 $apiWrapper,
                 $this->createMock(LocalizationPluginProxyInterface::class),
                 $this->createMock(SettingsManager::class),
                 $this->createMock(SiteHelper::class),
                 $submissionManager,
                 $queue,
-            ]);
-            // Is this running with WordPress classes?
-            if (method_exists('WP_List_Table', 'current_action')) {
-                $x->onlyMethods(['current_action']);
-            } else {
-                $x->addMethods(['current_action']);
-            }
-            $x = $x->getMock();
-            $x->method('current_action')->willReturn(SubmissionTableWidget::ACTION_DOWNLOAD);
+            ) extends SubmissionTableWidget {
+                /** @noinspection PhpMissingParentConstructorInspection */
+                public function __construct(
+                    protected ApiWrapperInterface $apiWrapper,
+                    protected LocalizationPluginProxyInterface $localizationPluginProxy,
+                    protected SettingsManager $settingsManager,
+                    protected SiteHelper $siteHelper,
+                    protected SubmissionManager $submissionManager,
+                    protected QueueInterface $queue
+                ) {
+                }
+
+                public function current_action()
+                {
+                    return SubmissionTableWidget::ACTION_DOWNLOAD;
+                }
+            };
+
             $x->setSource(['submission' => array_map(static function (SubmissionEntity $submission): string {
                 return (string)$submission->getId();
             }, $submissions)]);
 
-            $x->prepare_items();
+            $x->processBulkAction();
         }
     }
 }

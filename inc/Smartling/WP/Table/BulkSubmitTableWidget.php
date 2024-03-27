@@ -3,11 +3,13 @@
 namespace Smartling\WP\Table;
 
 use DateTime;
+use JetBrains\PhpStorm\ArrayShape;
 use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Exception\BlogNotFoundException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DateTimeHelper;
@@ -34,22 +36,19 @@ class BulkSubmitTableWidget extends SmartlingListTable
      * base name of Content-type filtering select
      */
     private const CONTENT_TYPE_SELECT_ELEMENT_NAME = 'content-type';
-
+    private const SUBMISSION_STATUS_SELECT_ELEMENT_NAME = 'submission-status';
     /**
      * base name of title search textbox
      */
     private const TITLE_SEARCH_TEXTBOX_ELEMENT_NAME = 'title-search';
 
-    /**
-     * default values of custom form elements on page
-     * @var array
-     */
-    private $defaultValues = [
+    private array $defaultValues = [
         self::CONTENT_TYPE_SELECT_ELEMENT_NAME  => 'post',
+        self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME => 'All',
         self::TITLE_SEARCH_TEXTBOX_ELEMENT_NAME => '',
     ];
 
-    private $_settings = [
+    private array $_settings = [
         'singular' => 'submission',
         'plural'   => 'submissions',
         'ajax'     => false,
@@ -57,12 +56,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
 
     private bool $dataFiltered = false;
 
-    private ConfigurationProfileEntity $profile;
-    private LocalizationPluginProxyInterface $localizationPluginProxy;
-    private PluginInfo $pluginInfo;
-    private SiteHelper $siteHelper;
-    private SmartlingCore $core;
-    private SubmissionManager $manager;
+    protected PluginInfo $pluginInfo;
 
     public function getProfile(): ConfigurationProfileEntity
     {
@@ -70,21 +64,13 @@ class BulkSubmitTableWidget extends SmartlingListTable
     }
 
     public function __construct(
-        LocalizationPluginProxyInterface $localizationPluginProxy,
-        SiteHelper $siteHelper,
-        SmartlingCore $core,
-        SubmissionManager $manager,
-        PluginInfo $pluginInfo,
-        ConfigurationProfileEntity $profile
-    )
-    {
-        $this->core = $core;
-        $this->localizationPluginProxy = $localizationPluginProxy;
-        $this->manager = $manager;
+        protected LocalizationPluginProxyInterface $localizationPluginProxy,
+        protected SiteHelper $siteHelper,
+        protected SmartlingCore $core,
+        protected SubmissionManager $manager,
+        protected ConfigurationProfileEntity $profile,
+    ) {
         $this->setSource($_REQUEST);
-        $this->pluginInfo = $pluginInfo;
-        $this->profile = $profile;
-        $this->siteHelper = $siteHelper;
 
         $filteredAllowedTypes = $this->getFilteredAllowedTypes();
         $this->defaultValues[static::CONTENT_TYPE_SELECT_ELEMENT_NAME] =
@@ -99,29 +85,8 @@ class BulkSubmitTableWidget extends SmartlingListTable
         return $this->dataFiltered;
     }
 
-    /**
-     * @return SubmissionManager
-     */
-    public function getManager()
-    {
-        return $this->manager;
-    }
-
-    /**
-     * @return PluginInfo
-     */
-    public function getPluginInfo()
-    {
-        return $this->pluginInfo;
-    }
-
-    /**
-     * @param string $fieldNameKey
-     * @param string $orderDirectionKey
-     *
-     * @return array
-     */
-    public function getSortingOptions($fieldNameKey = 'orderby', $orderDirectionKey = 'order')
+    #[ArrayShape(['orderby' => 'string', 'order' => 'string'])]
+    public function getSortingOptions(string $fieldNameKey = 'orderby', string $orderDirectionKey = 'order'): array
     {
         $column = $this->getFromSource($fieldNameKey, false);
         $direction = 'ASC';
@@ -139,10 +104,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
 
     public function column_default($item, $column_name)
     {
-        switch ($column_name) {
-            default:
-                return $item[$column_name];
-        }
+        return $item[$column_name];
     }
 
     /**
@@ -152,7 +114,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
      *
      * @return string
      */
-    public function column_cb($item)
+    public function column_cb($item): string
     {
 
         $t = vsprintf('%s-%s', [$item['id'], $item['type']]);
@@ -166,10 +128,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
         ]);
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function get_columns()
+    public function get_columns(): array
     {
         return [
             'bulkActionCb' => HtmlTagGeneratorHelper::tag(
@@ -191,33 +150,19 @@ class BulkSubmitTableWidget extends SmartlingListTable
 
     public function get_sortable_columns(): array
     {
-        $fields = [
-            'title',
-            'author',
-            'updated',
-        ];
-
         $sortable_columns = [];
+        if ($this->getSubmissionStatusFilterValue() !== null) {
+            return $sortable_columns;
+        }
 
-        foreach ($fields as $field) {
+        foreach (['title', 'author', 'updated'] as $field) {
             $sortable_columns[$field] = [$field, false];
         }
 
         return $sortable_columns;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function get_bulk_actions()
-    {
-        return [];
-    }
-
-    /**
-     * Handles actions for multiply objects
-     */
-    private function processBulkAction()
+    public function processBulkAction(): void
     {
         $action = $this->getFromSource('action', 'send');
         $submissions = $this->getFormElementValue('submission', []);
@@ -301,18 +246,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
         }
     }
 
-    /**
-     * Handles actions
-     */
-    private function processAction()
-    {
-        $this->processBulkAction();
-    }
-
-    /**
-     * @return string|null
-     */
-    private function getContentTypeFilterValue()
+    private function getContentTypeFilterValue(): ?string
     {
         $value = $this->getFormElementValue(
             self::CONTENT_TYPE_SELECT_ELEMENT_NAME,
@@ -322,23 +256,22 @@ class BulkSubmitTableWidget extends SmartlingListTable
         return 'any' === $value ? null : $value;
     }
 
-    /**
-     * @return string|null
-     */
-    private function getTitleSearchTextFilterValue()
+    private function getSubmissionStatusFilterValue(): ?string
     {
-        $value = $this->getFormElementValue(
+        $value = $this->getFormElementValue(self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME, $this->defaultValues[self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME]);
+
+        return $this->defaultValues[self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME] === $value ? null : $value;
+    }
+
+    private function getTitleSearchTextFilterValue(): ?string
+    {
+        return $this->getFormElementValue(
             self::TITLE_SEARCH_TEXTBOX_ELEMENT_NAME,
             $this->defaultValues[self::TITLE_SEARCH_TEXTBOX_ELEMENT_NAME]
         );
-
-        return $value;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function prepare_items()
+    public function prepare_items(): void
     {
         $pageOptions = [
             'limit' => $this->manager->getPageSize(),
@@ -350,66 +283,81 @@ class BulkSubmitTableWidget extends SmartlingListTable
             ['id'],
             $this->get_sortable_columns(),
         ];
-        $this->processAction();
+        $this->processBulkAction();
 
         $contentTypeFilterValue = $this->getContentTypeFilterValue();
         $sortOptions = $this->getSortingOptions();
+        $submissionStatusFilterValue = $this->getSubmissionStatusFilterValue();
 
         $io = $this->core->getContentIoFactory()->getMapper($contentTypeFilterValue);
-
         $searchString = $this->getTitleSearchTextFilterValue();
-
-        $data = $io->getAll(
-            $pageOptions['limit'],
-            ($pageOptions['page'] - 1) * $pageOptions['limit'],
-            $sortOptions['orderby'],
-            $sortOptions['order'],
-            $searchString
-        );
-
-
-        $total = $io->getTotal();
+        $ids = [];
+        if ($submissionStatusFilterValue !== null) {
+            $parameters = [
+                SubmissionEntity::FIELD_CONTENT_TYPE => $contentTypeFilterValue,
+                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $this->siteHelper->getCurrentBlogId(),
+                SubmissionEntity::FIELD_STATUS => $submissionStatusFilterValue,
+            ];
+            $submissions = $this->manager->find($parameters, $pageOptions['limit'], $pageOptions['page']);
+            foreach ($submissions as $submission) {
+                $ids[] = $submission->getSourceId();
+            }
+            $data = count($submissions) > 0 ? $io->getAll(ids: $ids) : [];
+            $total = $this->manager->count($this->manager->buildConditionBlockFromSearchParameters($parameters));
+        } else {
+            $data = $io->getAll(
+                $pageOptions['limit'],
+                ($pageOptions['page'] - 1) * $pageOptions['limit'],
+                $sortOptions['orderby'],
+                $sortOptions['order'],
+                $searchString
+            );
+            $total = $io->getTotal();
+        }
 
         $dataAsArray = [];
-        if ($data) {
-            foreach ($data as $item) {
-                $row = $item->toBulkSubmitScreenRow()->toArray();
-                $entities = $this->getManager()->find([
-                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $this->siteHelper->getCurrentBlogId(),
-                    SubmissionEntity::FIELD_SOURCE_ID => $row['id'],
-                    SubmissionEntity::FIELD_CONTENT_TYPE => $this->getContentTypeFilterValue(),
-                ]);
+        foreach ($data as $item) {
+            $row = $item->toBulkSubmitScreenRow()->toArray();
+            $entities = $this->manager->find([
+                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $this->siteHelper->getCurrentBlogId(),
+                SubmissionEntity::FIELD_SOURCE_ID => $row['id'],
+                SubmissionEntity::FIELD_CONTENT_TYPE => $this->getContentTypeFilterValue(),
+            ]);
 
-                if (count($entities) > 0) {
-                    $locales = [];
-                    foreach ($entities as $entity) {
-                        $locales[] = $this->siteHelper
+            if (count($entities) > 0) {
+                $locales = [];
+                foreach ($entities as $entity) {
+                    try {
+                        $blogLabel = $this->siteHelper
                             ->getBlogLabelById($this->localizationPluginProxy, $entity->getTargetBlogId());
+                    } catch (BlogNotFoundException) {
+                        $blogLabel = "UNKNOWN (blogId={$entity->getTargetBlogId()})";
                     }
-
-                    $row['locales'] = implode(', ', $locales);
+                    $locales[] = "<div style=\"display: inline-block\">$blogLabel
+    <span class=\"widget-btn {$entity->getStatusColor()}\" style=\"margin-left: 3px; position: static\" title=\"{$entity->getStatus()} {$entity->getCompletionPercentage()}%\"/>
+</div>";
                 }
 
-                $file_uri_max_chars = 50;
-                if (mb_strlen($row['title'], 'utf8') > $file_uri_max_chars) {
-                    $orig = $row['title'];
-                    $shrinked = mb_substr($orig, 0, $file_uri_max_chars - 3, 'utf8') . '...';
-
-                    $row['title'] = HtmlTagGeneratorHelper::tag('span', $shrinked, ['title' => $orig]);
-                }
-
-                $updatedDate = '';
-                if (!StringHelper::isNullOrEmpty($row['updated'])) {
-                    $dt = DateTimeHelper::stringToDateTime($row['updated']);
-                    if ($dt instanceof DateTime) {
-                        $updatedDate = DateTimeHelper::toWordpressLocalDateTime($dt);
-                    }
-                }
-
-                $row['updated'] = $updatedDate;
-                $row['bulkActionCb'] = $this->column_cb($row);
-                $dataAsArray[] = $row;
+                $row['locales'] = implode(', ', $locales);
             }
+
+            $file_uri_max_chars = 50;
+            if (mb_strlen($row['title'], 'utf8') > $file_uri_max_chars) {
+                $orig = $row['title'];
+                $row['title'] = HtmlTagGeneratorHelper::tag('span', mb_substr($orig, 0, $file_uri_max_chars - 3, 'utf8') . '...', ['title' => $orig]);
+            }
+
+            $updatedDate = '';
+            if (!StringHelper::isNullOrEmpty($row['updated'])) {
+                $dt = DateTimeHelper::stringToDateTime($row['updated']);
+                if ($dt instanceof DateTime) {
+                    $updatedDate = DateTimeHelper::toWordpressLocalDateTime($dt);
+                }
+            }
+
+            $row['updated'] = $updatedDate;
+            $row['bulkActionCb'] = $this->column_cb($row);
+            $dataAsArray[] = $row;
         }
 
         $foundCount = count($dataAsArray);
@@ -426,7 +374,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
                                    ]);
     }
 
-    private function getFilteredAllowedTypes()
+    private function getFilteredAllowedTypes(): array
     {
         $types = $this->getActiveContentTypes($this->siteHelper, 'bulkSubmit');
 
@@ -444,10 +392,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
         return $typesFiltered;
     }
 
-    /**
-     * @return string
-     */
-    public function contentTypeSelectRender()
+    public function contentTypeSelectRender(): string
     {
         $controlName = self::CONTENT_TYPE_SELECT_ELEMENT_NAME;
         $typesFiltered = $this->getFilteredAllowedTypes();
@@ -457,7 +402,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
             $this->defaultValues[$controlName]
         );
 
-        $html = HtmlTagGeneratorHelper::tag(
+        return HtmlTagGeneratorHelper::tag(
                 'label',
                 __('Type'),
                 [
@@ -474,14 +419,30 @@ class BulkSubmitTableWidget extends SmartlingListTable
                     'name' => $this->buildHtmlTagName($controlName),
                 ]
             );
-
-        return $html;
     }
 
-    /**
-     * @return string
-     */
-    public function titleFilterRender()
+    public function submissionsStatusFilterRender(): string
+    {
+        return HtmlTagGeneratorHelper::tag('label', 'Submission Status', ['for' => $this->buildHtmlTagName(self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME)]) .
+            HtmlTagGeneratorHelper::tag(
+                'select',
+                HtmlTagGeneratorHelper::renderSelectOptions(
+                    $this->getFormElementValue(
+                        self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME,
+                        $this->defaultValues[self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME]
+                    ),
+                    array_merge(
+                        [$this->defaultValues[self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME] => $this->defaultValues[self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME]], SubmissionEntity::getSubmissionStatusLabels(),
+                    ),
+                ),
+                [
+                    'id' => $this->buildHtmlTagName(self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME),
+                    'name' => $this->buildHtmlTagName(self::SUBMISSION_STATUS_SELECT_ELEMENT_NAME),
+                ]
+            );
+    }
+
+    public function titleFilterRender(): string
     {
         $controlName = self::TITLE_SEARCH_TEXTBOX_ELEMENT_NAME;
 
@@ -490,7 +451,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
             $this->defaultValues[$controlName]
         );
 
-        $html = HtmlTagGeneratorHelper::tag(
+        return HtmlTagGeneratorHelper::tag(
                 'label',
                 __('Title Contains'),
                 [
@@ -506,25 +467,15 @@ class BulkSubmitTableWidget extends SmartlingListTable
                     'value' => $value,
                 ]
             );
-
-        return $html;
     }
 
-    /**
-     * Renders button
-     *
-     * @param $label
-     *
-     * @return string
-     */
-    public function renderSubmitButton($label)
+    public function renderSubmitButton(string $label): string
     {
-        $id = $name = $this->buildHtmlTagName('go-and-filter');
+        $id = $this->buildHtmlTagName('go-and-filter');
 
         $options = [
             'type'  => 'submit',
             'id'    => $id,
-            //'name'  => $name,
             'class' => 'button action',
             'value' => __($label),
 
@@ -535,25 +486,16 @@ class BulkSubmitTableWidget extends SmartlingListTable
 
     /**
      * Retrieves from source array value for input element
-     *
-     * @param string $name
-     * @param mixed  $defaultValue
-     *
-     * @return mixed
      */
-    private function getFormElementValue($name, $defaultValue)
+    private function getFormElementValue(string $name, mixed $defaultValue): mixed
     {
         return $this->getFromSource($this->buildHtmlTagName($name), $defaultValue);
     }
 
     /**
-     * Builds unique name attribute value for HTML Form element tag
-     *
-     * @param string $name
-     *
-     * @return string
+     * Builds namespaced attribute value for HTML Form element tag
      */
-    private function buildHtmlTagName($name)
+    private function buildHtmlTagName(string $name): string
     {
         return self::CUSTOM_CONTROLS_NAMESPACE . '-' . $name;
     }

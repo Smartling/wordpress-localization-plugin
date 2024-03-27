@@ -9,15 +9,20 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
+use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\ContentSerializationHelper;
+use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\XmlHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Replacers\ReplacerFactory;
 use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 use Smartling\Tests\Traits\DbAlMock;
@@ -49,17 +54,28 @@ class SmartlingCoreTest extends TestCase
         $wpProxy = new WordpressFunctionProxyHelper();
         $gutenbergBlockHelper = new GutenbergBlockHelper(
             $this->createMock(AcfDynamicSupport::class),
+            $this->createMock(ContentSerializationHelper::class),
             $this->createMock(MediaAttachmentRulesManager::class),
             $this->createMock(ReplacerFactory::class),
             new SerializerJsonWithFallback(),
+            $this->createMock(SettingsManager::class),
             $wpProxy,
         );
+
+
         $this->core = new SmartlingCore(
-            new ExternalContentManager(),
+            new ExternalContentManager(new FieldsFilterHelper(
+                $this->createMock(AcfDynamicSupport::class),
+                $this->createMock(ContentSerializationHelper::class),
+                $this->createMock(SettingsManager::class),
+                $wpProxy,
+            ),
+                $this->createMock(SiteHelper::class),
+            ),
             $this->createMock(FileUriHelper::class),
             $gutenbergBlockHelper,
-            new PostContentHelper($gutenbergBlockHelper),
-            new XmlHelper(new SerializerJsonWithFallback()),
+            new PostContentHelper(new ArrayHelper(), $gutenbergBlockHelper),
+            new XmlHelper($this->createMock(ContentSerializationHelper::class), new SerializerJsonWithFallback(), $this->createMock(SettingsManager::class)),
             $this->createMock(TestRunHelper::class),
             $wpProxy,
         );

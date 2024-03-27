@@ -4,7 +4,7 @@ Tags: translation, localization, localisation, translate, multilingual, smartlin
 Requires at least: 5.5
 Tested up to: 6.4.1
 Requires PHP: 8.0
-Stable tag: 3.8.1
+Stable tag: 3.8.13
 License: GPLv2 or later
 
 Translate content in WordPress quickly and seamlessly with Smartling, the industry-leading Translation Management System.
@@ -62,6 +62,46 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 3.8.12 =
+* Fixed Elementor and other known plugins content not being added for translation when cron is invoked from non-source blog for submission
+* Fixed strings not being added to some languages when uploading for multiple languages when there are more than one active profile for the source blog
+* Improved shortcode detection to avoid Smartling placeholders present in translated content with placeholders
+
+= 3.8.11 =
+* Added support for custom Smartling directives in the expert settings
+
+= 3.8.10 =
+* Added support for copying Elementor page settings on translation
+* Added support for Elementor post blocks that reference other posts
+
+= 3.8.9 =
+* Added support for Yoast premium multiple related key phrases and synonyms
+
+= 3.8.8 =
+* Fixed Gutenberg attributes locking with nested blocks
+
+= 3.8.7 =
+* Added support for Redirection plugin
+
+= 3.8.6 =
+* Fixed Elementor Posts widget excerpts appearing in original language after translation
+
+= 3.8.5 =
+* Fixed Gutenberg attributes locking
+
+= 3.8.4 =
+* Added Bulk Submit submission status filter
+* Fixed Elementor Posts widget excerpts appearing in original language after translation
+* Daily bucket jobs date format will now use WordPress settings instead of US defaults
+
+= 3.8.3 =
+* Added support for Elementor popups that reference related content
+
+= 3.8.2 =
+* Added Elementor widgets `content` field to translatable fields, removed `anchor` field from translatable fields.
+* Elementor CSS is now regenerated for downloaded content when translations are applied
+* Reworked supported external plugins to not include known problematic and irrelevant fields for translation, even if the plugins are not detected or disabled
+
 = 3.8.1 =
 * Fixed fatal error when downloading translations if a nested locked Gutenberg block was present in the target content, but not in the source
 

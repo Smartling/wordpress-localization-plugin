@@ -2,19 +2,27 @@
 
 namespace Smartling\ContentTypes;
 
+use Smartling\Extensions\Pluggable;
+use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 class ExternalContentManager
 {
     use LoggerSafeTrait;
 
+    public function __construct(
+        private FieldsFilterHelper $fieldsFilterHelper,
+        private SiteHelper $siteHelper,
+    ) {
+    }
+
     /**
      * @var ContentTypePluggableInterface[] $handlers
      */
     private array $handlers = [];
 
-    /** @noinspection PhpUnused, used in DI */
     public function addHandler(ContentTypePluggableInterface $handler): void
     {
         $this->handlers[] = $handler;
@@ -22,9 +30,9 @@ class ExternalContentManager
 
     public function getExternalContent(array $source, SubmissionEntity $submission, bool $raw): array
     {
-        foreach ($this->handlers as $handler) {
-            switch ($handler->getSupportLevel($submission->getContentType(), $submission->getSourceId())) {
-                case ContentTypePluggableInterface::SUPPORTED:
+        return $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($raw, $source, $submission) {
+            foreach ($this->handlers as $handler) {
+                if ($handler->getSupportLevel($submission->getContentType(), $submission->getSourceId()) === Pluggable::SUPPORTED) {
                     $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get fields");
                     try {
                         $submission->assertHasSource();
@@ -32,30 +40,23 @@ class ExternalContentManager
                     } catch (\Throwable $e) {
                         $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to get external content: ' . $e->getMessage());
                     }
-                    if ($handler instanceof ContentTypeModifyingInterface) {
-                        try {
-                            $source = $handler->alterContentFieldsForUpload($source);
-                        } catch (\Throwable $e) {
-                            $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to alter content fields: ' . $e->getMessage());
+                }
+                if ($handler instanceof ContentTypeModifyingInterface) {
+                    try {
+                        $previousCount = count($this->fieldsFilterHelper->flattenArray($source));
+                        $source = $handler->removeUntranslatableFieldsForUpload($source, $submission);
+                        $count = count($this->fieldsFilterHelper->flattenArray($source));
+                        if ($previousCount !== $count) {
+                            $this->getLogger()->info('HandlerName="' . $handler->getPluginId() . '" altered content fields for upload, previousCount=' . $previousCount . ', count=' . $count);
                         }
+                    } catch (\Throwable $e) {
+                        $this->getLogger()->warning('HandlerName="' . $handler->getPluginId() . '" got exception while trying to alter content fields: ' . $e->getMessage());
                     }
-                    break;
-                case ContentTypePluggableInterface::VERSION_NOT_SUPPORTED:
-                    if ($handler instanceof ContentTypeModifyingInterface) {
-                        $this->getLogger()->warning("Detected not supported version for {$handler->getPluginId()}, will not include known problematic fields");
-                        try {
-                            $source = $handler->alterContentFieldsForUpload($source);
-                        } catch (\Throwable $e) {
-                            $this->getLogger()->warning('HandlerName="' . $handler->getPluginId() . '" got exception while trying to alter content fields: ' . $e->getMessage());
-                        }
-                    } else {
-                        $this->getLogger()->debug("Detected not supported version for {$handler->getPluginId()}, no actions taken");
-                    }
-                    break;
+                }
             }
-        }
 
-        return $source;
+            return $source;
+        });
     }
 
     public function getExternalContentTypes(): array
@@ -72,7 +73,7 @@ class ExternalContentManager
     {
         $result = [];
         foreach ($this->handlers as $handler) {
-            if ($handler->getSupportLevel($contentType, $id) === ContentTypePluggableInterface::SUPPORTED) {
+            if ($handler->getSupportLevel($contentType, $id) === Pluggable::SUPPORTED) {
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to get related content");
                 try {
                     $result = array_merge_recursive($result, $handler->getRelatedContent($contentType, $id));
@@ -98,7 +99,7 @@ class ExternalContentManager
     public function setExternalContent(array $original, array $translation, SubmissionEntity $submission): array
     {
         foreach ($this->handlers as $handler) {
-            if ($handler->getSupportLevel($submission->getContentType(), $submission->getSourceId()) === ContentTypePluggableInterface::SUPPORTED) {
+            if ($handler->getSupportLevel($submission->getContentType(), $submission->getSourceId()) === Pluggable::SUPPORTED) {
                 $this->getLogger()->debug("Determined support for {$handler->getPluginId()}, will try to set fields");
                 try {
                     $externalContent = $handler->setContentFields($original, $translation, $submission);
@@ -109,6 +110,8 @@ class ExternalContentManager
                 } catch (\Throwable $e) {
                     $this->getLogger()->notice('HandlerName="' . $handler->getPluginId() . '" got exception while trying to set external content: ' . $e->getMessage());
                 }
+            } else {
+                $this->getLogger()->debug("No support for {$handler->getPluginId()} detected");
             }
         }
 
