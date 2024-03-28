@@ -65,11 +65,14 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     {
         $wpProxy->add_action(ExportedAPI::ACTION_AFTER_TARGET_METADATA_WRITTEN, [$this, 'afterMetaWritten']);
         parent::__construct($pluginHelper, $submissionManager, $wpProxy);
-        try {
-            require_once WP_PLUGIN_DIR . '/elementor/core/dynamic-tags/manager.php';
-            $this->dynamicTagsManager = new Manager();
-        } catch (\Throwable $e) {
-            $this->getLogger()->notice('Unable to initialize Elementor dynamic tags manager, Elementor tags processing not available: ' . $e->getMessage());
+        $managerPath = WP_PLUGIN_DIR . '/elementor/core/dynamic-tags/manager.php';
+        if (file_exists($managerPath)) {
+            try {
+                require_once $managerPath;
+                $this->dynamicTagsManager = new Manager();
+            } catch (\Throwable $e) {
+                $this->getLogger()->notice('Unable to initialize Elementor dynamic tags manager, Elementor tags processing not available: ' . $e->getMessage());
+            }
         }
     }
 
